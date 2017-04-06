@@ -1,7 +1,5 @@
 package com.google.firebase.database.utilities.encoding;
 
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
-
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.GenericTypeIndicator;
@@ -9,6 +7,7 @@ import com.google.firebase.database.IgnoreExtraProperties;
 import com.google.firebase.database.PropertyName;
 import com.google.firebase.database.ThrowOnExtraProperties;
 import com.google.firebase.internal.Log;
+
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -28,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
 
 /**
  * Helper class to convert to/from custom POJO classes and plain Java types.
@@ -95,29 +96,29 @@ public class CustomClassMapper {
   }
 
   @SuppressWarnings("unchecked")
-  private static <T> Object serialize(T o) {
-    if (o == null) {
+  private static <T> Object serialize(T obj) {
+    if (obj == null) {
       return null;
-    } else if (o instanceof Number) {
-      if (o instanceof Float) {
-        return ((Float) o).doubleValue();
-      } else if (o instanceof Short) {
+    } else if (obj instanceof Number) {
+      if (obj instanceof Float) {
+        return ((Float) obj).doubleValue();
+      } else if (obj instanceof Short) {
         throw new DatabaseException("Shorts are not supported, please use int or long");
-      } else if (o instanceof Byte) {
+      } else if (obj instanceof Byte) {
         throw new DatabaseException("Bytes are not supported, please use int or long");
       } else {
         // Long, Integer, Double
-        return o;
+        return obj;
       }
-    } else if (o instanceof String) {
-      return o;
-    } else if (o instanceof Boolean) {
-      return o;
-    } else if (o instanceof Character) {
+    } else if (obj instanceof String) {
+      return obj;
+    } else if (obj instanceof Boolean) {
+      return obj;
+    } else if (obj instanceof Character) {
       throw new DatabaseException("Characters are not supported, please strings");
-    } else if (o instanceof Map) {
+    } else if (obj instanceof Map) {
       Map<String, Object> result = new HashMap<>();
-      for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) o).entrySet()) {
+      for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) obj).entrySet()) {
         Object key = entry.getKey();
         if (key instanceof String) {
           String keyString = (String) key;
@@ -127,9 +128,9 @@ public class CustomClassMapper {
         }
       }
       return result;
-    } else if (o instanceof Collection) {
-      if (o instanceof List) {
-        List<Object> list = (List<Object>) o;
+    } else if (obj instanceof Collection) {
+      if (obj instanceof List) {
+        List<Object> list = (List<Object>) obj;
         List<Object> result = new ArrayList<>(list.size());
         for (Object object : list) {
           result.add(serialize(object));
@@ -139,26 +140,26 @@ public class CustomClassMapper {
         throw new DatabaseException(
             "Serializing Collections is not supported, " + "please use Lists instead");
       }
-    } else if (o.getClass().isArray()) {
+    } else if (obj.getClass().isArray()) {
       throw new DatabaseException(
           "Serializing Arrays is not supported, please use Lists " + "instead");
-    } else if (o instanceof Enum) {
-      return ((Enum<?>) o).name();
+    } else if (obj instanceof Enum) {
+      return ((Enum<?>) obj).name();
     } else {
-      Class<T> clazz = (Class<T>) o.getClass();
+      Class<T> clazz = (Class<T>) obj.getClass();
       BeanMapper<T> mapper = loadOrCreateBeanMapperForClass(clazz);
-      return mapper.serialize(o);
+      return mapper.serialize(obj);
     }
   }
 
-  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
-  private static <T> T deserializeToType(Object o, Type type) {
-    if (o == null) {
+  @SuppressWarnings( {"unchecked", "TypeParameterUnusedInFormals"})
+  private static <T> T deserializeToType(Object obj, Type type) {
+    if (obj == null) {
       return null;
     } else if (type instanceof ParameterizedType) {
-      return deserializeToParameterizedType(o, (ParameterizedType) type);
+      return deserializeToParameterizedType(obj, (ParameterizedType) type);
     } else if (type instanceof Class) {
-      return deserializeToClass(o, (Class<T>) type);
+      return deserializeToClass(obj, (Class<T>) type);
     } else if (type instanceof WildcardType) {
       throw new DatabaseException("Generic wildcard types are not supported");
     } else if (type instanceof GenericArrayType) {
@@ -170,16 +171,16 @@ public class CustomClassMapper {
   }
 
   @SuppressWarnings("unchecked")
-  private static <T> T deserializeToClass(Object o, Class<T> clazz) {
-    if (o == null) {
+  private static <T> T deserializeToClass(Object obj, Class<T> clazz) {
+    if (obj == null) {
       return null;
     } else if (clazz.isPrimitive()
         || Number.class.isAssignableFrom(clazz)
         || Boolean.class.isAssignableFrom(clazz)
         || Character.class.isAssignableFrom(clazz)) {
-      return deserializeToPrimitive(o, clazz);
+      return deserializeToPrimitive(obj, clazz);
     } else if (String.class.isAssignableFrom(clazz)) {
-      return (T) convertString(o);
+      return (T) convertString(obj);
     } else if (clazz.isArray()) {
       throw new DatabaseException(
           "Converting to Arrays is not supported, please use Lists" + "instead");
@@ -190,22 +191,22 @@ public class CustomClassMapper {
               + " has generic type "
               + "parameters, please use GenericTypeIndicator instead");
     } else if (clazz.equals(Object.class)) {
-      return (T) o;
+      return (T) obj;
     } else if (clazz.isEnum()) {
-      return deserializeToEnum(o, clazz);
+      return deserializeToEnum(obj, clazz);
     } else {
-      return convertBean(o, clazz);
+      return convertBean(obj, clazz);
     }
   }
 
-  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
-  private static <T> T deserializeToParameterizedType(Object o, ParameterizedType type) {
+  @SuppressWarnings( {"unchecked", "TypeParameterUnusedInFormals"})
+  private static <T> T deserializeToParameterizedType(Object obj, ParameterizedType type) {
     // getRawType should always return a Class<?>
     Class<?> rawType = (Class<?>) type.getRawType();
     if (List.class.isAssignableFrom(rawType)) {
       Type genericType = type.getActualTypeArguments()[0];
-      if (o instanceof List) {
-        List<Object> list = (List<Object>) o;
+      if (obj instanceof List) {
+        List<Object> list = (List<Object>) obj;
         List<Object> result = new ArrayList<>(list.size());
         for (Object object : list) {
           result.add(deserializeToType(object, genericType));
@@ -213,7 +214,7 @@ public class CustomClassMapper {
         return (T) result;
       } else {
         throw new DatabaseException(
-            "Expected a List while deserializing, but got a " + o.getClass());
+            "Expected a List while deserializing, but got a " + obj.getClass());
       }
     } else if (Map.class.isAssignableFrom(rawType)) {
       Type keyType = type.getActualTypeArguments()[0];
@@ -224,7 +225,7 @@ public class CustomClassMapper {
                 + "but found Map with key type "
                 + keyType);
       }
-      Map<String, Object> map = expectMap(o);
+      Map<String, Object> map = expectMap(obj);
       HashMap<String, Object> result = new HashMap<>();
       for (Map.Entry<String, Object> entry : map.entrySet()) {
         result.put(entry.getKey(), deserializeToType(entry.getValue(), valueType));
@@ -233,7 +234,7 @@ public class CustomClassMapper {
     } else if (Collection.class.isAssignableFrom(rawType)) {
       throw new DatabaseException("Collections are not supported, please use Lists instead");
     } else {
-      Map<String, Object> map = expectMap(o);
+      Map<String, Object> map = expectMap(obj);
       BeanMapper<T> mapper = (BeanMapper<T>) loadOrCreateBeanMapperForClass(rawType);
       HashMap<TypeVariable<Class<T>>, Type> typeMapping = new HashMap<>();
       TypeVariable<Class<T>>[] typeVariables = mapper.clazz.getTypeParameters();
@@ -250,17 +251,17 @@ public class CustomClassMapper {
   }
 
   @SuppressWarnings("unchecked")
-  private static <T> T deserializeToPrimitive(Object o, Class<T> clazz) {
+  private static <T> T deserializeToPrimitive(Object obj, Class<T> clazz) {
     if (Integer.class.isAssignableFrom(clazz) || int.class.isAssignableFrom(clazz)) {
-      return (T) convertInteger(o);
+      return (T) convertInteger(obj);
     } else if (Boolean.class.isAssignableFrom(clazz) || boolean.class.isAssignableFrom(clazz)) {
-      return (T) convertBoolean(o);
+      return (T) convertBoolean(obj);
     } else if (Double.class.isAssignableFrom(clazz) || double.class.isAssignableFrom(clazz)) {
-      return (T) convertDouble(o);
+      return (T) convertDouble(obj);
     } else if (Long.class.isAssignableFrom(clazz) || long.class.isAssignableFrom(clazz)) {
-      return (T) convertLong(o);
+      return (T) convertLong(obj);
     } else if (Float.class.isAssignableFrom(clazz) || float.class.isAssignableFrom(clazz)) {
-      return (T) (Float) convertDouble(o).floatValue();
+      return (T) (Float) convertDouble(obj).floatValue();
     } else if (Short.class.isAssignableFrom(clazz) || short.class.isAssignableFrom(clazz)) {
       throw new DatabaseException("Deserializing to shorts is not supported");
     } else if (Byte.class.isAssignableFrom(clazz) || byte.class.isAssignableFrom(clazz)) {
@@ -316,13 +317,13 @@ public class CustomClassMapper {
     }
   }
 
-  private static Integer convertInteger(Object o) {
-    if (o instanceof Integer) {
-      return (Integer) o;
-    } else if (o instanceof Long || o instanceof Double) {
-      double value = ((Number) o).doubleValue();
+  private static Integer convertInteger(Object obj) {
+    if (obj instanceof Integer) {
+      return (Integer) obj;
+    } else if (obj instanceof Long || obj instanceof Double) {
+      double value = ((Number) obj).doubleValue();
       if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
-        return ((Number) o).intValue();
+        return ((Number) obj).intValue();
       } else {
         throw new DatabaseException(
             "Numeric value out of 32-bit integer range: "
@@ -331,17 +332,17 @@ public class CustomClassMapper {
       }
     } else {
       throw new DatabaseException(
-          "Failed to convert a value of type " + o.getClass().getName() + " to int");
+          "Failed to convert a value of type " + obj.getClass().getName() + " to int");
     }
   }
 
-  private static Long convertLong(Object o) {
-    if (o instanceof Integer) {
-      return ((Integer) o).longValue();
-    } else if (o instanceof Long) {
-      return (Long) o;
-    } else if (o instanceof Double) {
-      Double value = (Double) o;
+  private static Long convertLong(Object obj) {
+    if (obj instanceof Integer) {
+      return ((Integer) obj).longValue();
+    } else if (obj instanceof Long) {
+      return (Long) obj;
+    } else if (obj instanceof Double) {
+      Double value = (Double) obj;
       if (value >= Long.MIN_VALUE && value <= Long.MAX_VALUE) {
         return value.longValue();
       } else {
@@ -352,58 +353,58 @@ public class CustomClassMapper {
       }
     } else {
       throw new DatabaseException(
-          "Failed to convert a value of type " + o.getClass().getName() + " to long");
+          "Failed to convert a value of type " + obj.getClass().getName() + " to long");
     }
   }
 
-  private static Double convertDouble(Object o) {
-    if (o instanceof Integer) {
-      return ((Integer) o).doubleValue();
-    } else if (o instanceof Long) {
-      Long value = (Long) o;
-      Double doubleValue = ((Long) o).doubleValue();
+  private static Double convertDouble(Object obj) {
+    if (obj instanceof Integer) {
+      return ((Integer) obj).doubleValue();
+    } else if (obj instanceof Long) {
+      Long value = (Long) obj;
+      Double doubleValue = ((Long) obj).doubleValue();
       if (doubleValue.longValue() == value) {
         return doubleValue;
       } else {
         throw new DatabaseException(
             "Loss of precision while converting number to "
                 + "double: "
-                + o
+                + obj
                 + ". Did you mean to use a 64-bit long instead?");
       }
-    } else if (o instanceof Double) {
-      return (Double) o;
+    } else if (obj instanceof Double) {
+      return (Double) obj;
     } else {
       throw new DatabaseException(
-          "Failed to convert a value of type " + o.getClass().getName() + " to double");
+          "Failed to convert a value of type " + obj.getClass().getName() + " to double");
     }
   }
 
-  private static Boolean convertBoolean(Object o) {
-    if (o instanceof Boolean) {
-      return (Boolean) o;
+  private static Boolean convertBoolean(Object obj) {
+    if (obj instanceof Boolean) {
+      return (Boolean) obj;
     } else {
       throw new DatabaseException(
-          "Failed to convert value of type " + o.getClass().getName() + " to boolean");
+          "Failed to convert value of type " + obj.getClass().getName() + " to boolean");
     }
   }
 
-  private static String convertString(Object o) {
-    if (o instanceof String) {
-      return (String) o;
+  private static String convertString(Object obj) {
+    if (obj instanceof String) {
+      return (String) obj;
     } else {
       throw new DatabaseException(
-          "Failed to convert value of type " + o.getClass().getName() + " to String");
+          "Failed to convert value of type " + obj.getClass().getName() + " to String");
     }
   }
 
-  private static <T> T convertBean(Object o, Class<T> clazz) {
+  private static <T> T convertBean(Object obj, Class<T> clazz) {
     BeanMapper<T> mapper = loadOrCreateBeanMapperForClass(clazz);
-    if (o instanceof Map) {
-      return mapper.deserialize(expectMap(o));
+    if (obj instanceof Map) {
+      return mapper.deserialize(expectMap(obj));
     } else {
       throw new DatabaseException(
-          "Can't convert object of type " + o.getClass().getName() + " to type " + clazz.getName());
+          "Can't convert object of type " + obj.getClass().getName() + " to type " + clazz.getName());
     }
   }
 
@@ -518,6 +519,147 @@ public class CustomClassMapper {
       if (properties.isEmpty()) {
         throw new DatabaseException("No properties to serialize found on class " + clazz.getName());
       }
+    }
+
+    private static boolean shouldIncludeGetter(Method method) {
+      if (!method.getName().startsWith("get") && !method.getName().startsWith("is")) {
+        return false;
+      }
+      // Exclude methods from Object.class
+      if (method.getDeclaringClass().equals(Object.class)) {
+        return false;
+      }
+      // Non-public methods
+      if (!Modifier.isPublic(method.getModifiers())) {
+        return false;
+      }
+      // Static methods
+      if (Modifier.isStatic(method.getModifiers())) {
+        return false;
+      }
+      // No return type
+      if (method.getReturnType().equals(Void.TYPE)) {
+        return false;
+      }
+      // Non-zero parameters
+      if (method.getParameterTypes().length != 0) {
+        return false;
+      }
+      // Excluded methods
+      if (method.isAnnotationPresent(Exclude.class)) {
+        return false;
+      }
+      return true;
+    }
+
+    private static boolean shouldIncludeSetter(Method method) {
+      if (!method.getName().startsWith("set")) {
+        return false;
+      }
+      // Exclude methods from Object.class
+      if (method.getDeclaringClass().equals(Object.class)) {
+        return false;
+      }
+      // Static methods
+      if (Modifier.isStatic(method.getModifiers())) {
+        return false;
+      }
+      // Has a return type
+      if (!method.getReturnType().equals(Void.TYPE)) {
+        return false;
+      }
+      // Methods without exactly one parameters
+      if (method.getParameterTypes().length != 1) {
+        return false;
+      }
+      // Excluded methods
+      if (method.isAnnotationPresent(Exclude.class)) {
+        return false;
+      }
+      return true;
+    }
+
+    private static boolean shouldIncludeField(Field field) {
+      // Exclude methods from Object.class
+      if (field.getDeclaringClass().equals(Object.class)) {
+        return false;
+      }
+      // Non-public fields
+      if (!Modifier.isPublic(field.getModifiers())) {
+        return false;
+      }
+      // Static fields
+      if (Modifier.isStatic(field.getModifiers())) {
+        return false;
+      }
+      // Transient fields
+      if (Modifier.isTransient(field.getModifiers())) {
+        return false;
+      }
+      // Excluded fields
+      if (field.isAnnotationPresent(Exclude.class)) {
+        return false;
+      }
+      return true;
+    }
+
+    private static boolean isSetterOverride(Method base, Method override) {
+      // We expect an overridden setter here
+      hardAssert(
+          base.getDeclaringClass().isAssignableFrom(override.getDeclaringClass()),
+          "Expected override from a base class");
+      hardAssert(base.getReturnType().equals(Void.TYPE), "Expected void return type");
+      hardAssert(override.getReturnType().equals(Void.TYPE), "Expected void return type");
+
+      Type[] baseParameterTypes = base.getParameterTypes();
+      Type[] overrideParameterTypes = override.getParameterTypes();
+      hardAssert(baseParameterTypes.length == 1, "Expected exactly one parameter");
+      hardAssert(overrideParameterTypes.length == 1, "Expected exactly one parameter");
+
+      return base.getName().equals(override.getName())
+          && baseParameterTypes[0].equals(overrideParameterTypes[0]);
+    }
+
+    private static String propertyName(Field field) {
+      String annotatedName = annotatedName(field);
+      return annotatedName != null ? annotatedName : field.getName();
+    }
+
+    private static String propertyName(Method method) {
+      String annotatedName = annotatedName(method);
+      return annotatedName != null ? annotatedName : serializedName(method.getName());
+    }
+
+    private static String annotatedName(AccessibleObject obj) {
+      if (obj.isAnnotationPresent(PropertyName.class)) {
+        PropertyName annotation = obj.getAnnotation(PropertyName.class);
+        return annotation.value();
+      }
+
+      return null;
+    }
+
+    private static String serializedName(String methodName) {
+      String[] prefixes = new String[] {"get", "set", "is"};
+      String methodPrefix = null;
+      for (String prefix : prefixes) {
+        if (methodName.startsWith(prefix)) {
+          methodPrefix = prefix;
+        }
+      }
+      if (methodPrefix == null) {
+        throw new IllegalArgumentException("Unknown Bean prefix for method: " + methodName);
+      }
+      String strippedName = methodName.substring(methodPrefix.length());
+
+      // Make sure the first word or upper-case prefix is converted to lower-case
+      char[] chars = strippedName.toCharArray();
+      int pos = 0;
+      while (pos < chars.length && Character.isUpperCase(chars[pos])) {
+        chars[pos] = Character.toLowerCase(chars[pos]);
+        pos++;
+      }
+      return new String(chars);
     }
 
     private void addProperty(String property) {
@@ -645,147 +787,6 @@ public class CustomClassMapper {
         result.put(property, serializedValue);
       }
       return result;
-    }
-
-    private static boolean shouldIncludeGetter(Method method) {
-      if (!method.getName().startsWith("get") && !method.getName().startsWith("is")) {
-        return false;
-      }
-      // Exclude methods from Object.class
-      if (method.getDeclaringClass().equals(Object.class)) {
-        return false;
-      }
-      // Non-public methods
-      if (!Modifier.isPublic(method.getModifiers())) {
-        return false;
-      }
-      // Static methods
-      if (Modifier.isStatic(method.getModifiers())) {
-        return false;
-      }
-      // No return type
-      if (method.getReturnType().equals(Void.TYPE)) {
-        return false;
-      }
-      // Non-zero parameters
-      if (method.getParameterTypes().length != 0) {
-        return false;
-      }
-      // Excluded methods
-      if (method.isAnnotationPresent(Exclude.class)) {
-        return false;
-      }
-      return true;
-    }
-
-    private static boolean shouldIncludeSetter(Method method) {
-      if (!method.getName().startsWith("set")) {
-        return false;
-      }
-      // Exclude methods from Object.class
-      if (method.getDeclaringClass().equals(Object.class)) {
-        return false;
-      }
-      // Static methods
-      if (Modifier.isStatic(method.getModifiers())) {
-        return false;
-      }
-      // Has a return type
-      if (!method.getReturnType().equals(Void.TYPE)) {
-        return false;
-      }
-      // Methods without exactly one parameters
-      if (method.getParameterTypes().length != 1) {
-        return false;
-      }
-      // Excluded methods
-      if (method.isAnnotationPresent(Exclude.class)) {
-        return false;
-      }
-      return true;
-    }
-
-    private static boolean shouldIncludeField(Field field) {
-      // Exclude methods from Object.class
-      if (field.getDeclaringClass().equals(Object.class)) {
-        return false;
-      }
-      // Non-public fields
-      if (!Modifier.isPublic(field.getModifiers())) {
-        return false;
-      }
-      // Static fields
-      if (Modifier.isStatic(field.getModifiers())) {
-        return false;
-      }
-      // Transient fields
-      if (Modifier.isTransient(field.getModifiers())) {
-        return false;
-      }
-      // Excluded fields
-      if (field.isAnnotationPresent(Exclude.class)) {
-        return false;
-      }
-      return true;
-    }
-
-    private static boolean isSetterOverride(Method base, Method override) {
-      // We expect an overridden setter here
-      hardAssert(
-          base.getDeclaringClass().isAssignableFrom(override.getDeclaringClass()),
-          "Expected override from a base class");
-      hardAssert(base.getReturnType().equals(Void.TYPE), "Expected void return type");
-      hardAssert(override.getReturnType().equals(Void.TYPE), "Expected void return type");
-
-      Type[] baseParameterTypes = base.getParameterTypes();
-      Type[] overrideParameterTypes = override.getParameterTypes();
-      hardAssert(baseParameterTypes.length == 1, "Expected exactly one parameter");
-      hardAssert(overrideParameterTypes.length == 1, "Expected exactly one parameter");
-
-      return base.getName().equals(override.getName())
-          && baseParameterTypes[0].equals(overrideParameterTypes[0]);
-    }
-
-    private static String propertyName(Field field) {
-      String annotatedName = annotatedName(field);
-      return annotatedName != null ? annotatedName : field.getName();
-    }
-
-    private static String propertyName(Method method) {
-      String annotatedName = annotatedName(method);
-      return annotatedName != null ? annotatedName : serializedName(method.getName());
-    }
-
-    private static String annotatedName(AccessibleObject obj) {
-      if (obj.isAnnotationPresent(PropertyName.class)) {
-        PropertyName annotation = obj.getAnnotation(PropertyName.class);
-        return annotation.value();
-      }
-
-      return null;
-    }
-
-    private static String serializedName(String methodName) {
-      String[] prefixes = new String[]{"get", "set", "is"};
-      String methodPrefix = null;
-      for (String prefix : prefixes) {
-        if (methodName.startsWith(prefix)) {
-          methodPrefix = prefix;
-        }
-      }
-      if (methodPrefix == null) {
-        throw new IllegalArgumentException("Unknown Bean prefix for method: " + methodName);
-      }
-      String strippedName = methodName.substring(methodPrefix.length());
-
-      // Make sure the first word or upper-case prefix is converted to lower-case
-      char[] chars = strippedName.toCharArray();
-      int pos = 0;
-      while (pos < chars.length && Character.isUpperCase(chars[pos])) {
-        chars[pos] = Character.toLowerCase(chars[pos]);
-        pos++;
-      }
-      return new String(chars);
     }
   }
 }

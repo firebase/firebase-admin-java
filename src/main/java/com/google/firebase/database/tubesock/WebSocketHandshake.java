@@ -1,13 +1,14 @@
 package com.google.firebase.database.tubesock;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import com.google.firebase.internal.Base64;
+
 import java.net.URI;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 class WebSocketHandshake {
 

@@ -9,14 +9,14 @@ import java.util.Iterator;
  */
 public class Joiner {
 
-  public static Joiner on(String separator) {
-    return new Joiner(separator);
-  }
-
   private final String separator;
 
   private Joiner(String separator) {
     this.separator = separator;
+  }
+
+  public static Joiner on(String separator) {
+    return new Joiner(separator);
   }
 
   /**

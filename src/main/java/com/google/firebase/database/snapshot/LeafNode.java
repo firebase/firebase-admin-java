@@ -2,6 +2,7 @@ package com.google.firebase.database.snapshot;
 
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.utilities.Utilities;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -12,20 +13,16 @@ import java.util.Map;
  */
 public abstract class LeafNode<T extends LeafNode> implements Node {
 
-  /** */
-  protected enum LeafType {
-    // The order here defines the ordering of leaf nodes
-    DeferredValue,
-    Boolean,
-    Number,
-    String
-  }
-
   protected final Node priority;
   private String lazyHash;
 
   LeafNode(Node priority) {
     this.priority = priority;
+  }
+
+  private static int compareLongDoubleNodes(LongNode longNode, DoubleNode doubleNode) {
+    Double longDoubleValue = Double.valueOf((Long) longNode.getValue());
+    return (longDoubleValue).compareTo((Double) doubleNode.getValue());
   }
 
   @Override
@@ -153,11 +150,6 @@ public abstract class LeafNode<T extends LeafNode> implements Node {
     return Collections.<NamedNode>emptyList().iterator();
   }
 
-  private static int compareLongDoubleNodes(LongNode longNode, DoubleNode doubleNode) {
-    Double longDoubleValue = Double.valueOf((Long) longNode.getValue());
-    return (longDoubleValue).compareTo((Double) doubleNode.getValue());
-  }
-
   @Override
   public int compareTo(Node other) {
     if (other.isEmpty()) {
@@ -201,5 +193,14 @@ public abstract class LeafNode<T extends LeafNode> implements Node {
   public String toString() {
     String str = getValue(true).toString();
     return str.length() <= 100 ? str : (str.substring(0, 100) + "...");
+  }
+
+  /** */
+  protected enum LeafType {
+    // The order here defines the ordering of leaf nodes
+    DeferredValue,
+    Boolean,
+    Number,
+    String
   }
 }

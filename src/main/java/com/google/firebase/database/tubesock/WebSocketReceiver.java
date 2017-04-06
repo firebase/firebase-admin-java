@@ -63,10 +63,10 @@ class WebSocketReceiver {
             websocket.onCloseOpReceived();
           } else if (opcode == WebSocket.OPCODE_PONG) {
             // NOTE: as a client, we don't expect PONGs. No-op
-          } else if (opcode == WebSocket.OPCODE_TEXT ||
-              opcode == WebSocket.OPCODE_BINARY ||
-              opcode == WebSocket.OPCODE_PING ||
-              opcode == WebSocket.OPCODE_NONE) {
+          } else if (opcode == WebSocket.OPCODE_TEXT
+              || opcode == WebSocket.OPCODE_BINARY
+              || opcode == WebSocket.OPCODE_PING
+              || opcode == WebSocket.OPCODE_NONE) {
             // It's some form of application data. Decode the payload
             appendBytes(fin, opcode, payload);
           } else {
@@ -129,14 +129,14 @@ class WebSocketReceiver {
 
   private long parseLong(byte[] buffer, int offset) {
     // Copied from DataInputStream#readLong
-    return (((long) buffer[offset + 0] << 56) +
-        ((long) (buffer[offset + 1] & 255) << 48) +
-        ((long) (buffer[offset + 2] & 255) << 40) +
-        ((long) (buffer[offset + 3] & 255) << 32) +
-        ((long) (buffer[offset + 4] & 255) << 24) +
-        ((buffer[offset + 5] & 255) << 16) +
-        ((buffer[offset + 6] & 255) << 8) +
-        ((buffer[offset + 7] & 255) << 0));
+    return (((long) buffer[offset + 0] << 56)
+        + ((long) (buffer[offset + 1] & 255) << 48)
+        + ((long) (buffer[offset + 2] & 255) << 40)
+        + ((long) (buffer[offset + 3] & 255) << 32)
+        + ((long) (buffer[offset + 4] & 255) << 24)
+        + ((buffer[offset + 5] & 255) << 16)
+        + ((buffer[offset + 6] & 255) << 8)
+        + ((buffer[offset + 7] & 255) << 0));
   }
 
   private int read(byte[] buffer, int offset, int length) throws IOException {

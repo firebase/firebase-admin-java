@@ -1,18 +1,19 @@
 package com.google.firebase.database.snapshot;
 
-import static net.java.quickcheck.generator.PrimitiveGenerators.characters;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.SynchronousConnection;
 import com.google.firebase.database.core.utilities.ChildKeyGenerator;
-import java.util.List;
-import java.util.Random;
 import net.java.quickcheck.Generator;
 import net.java.quickcheck.generator.support.IntegerGenerator;
 import net.java.quickcheck.generator.support.StringGenerator;
 import org.junit.Test;
+
+import java.util.List;
+import java.util.Random;
+
+import static net.java.quickcheck.generator.PrimitiveGenerators.characters;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class CompoundHashingIntegrationTestIT {
 
@@ -48,11 +49,6 @@ public class CompoundHashingIntegrationTestIT {
     return path;
   }
 
-  interface LeafVisitor {
-
-    void onLeaf(Path path, LeafNode<?> leaf);
-  }
-
   private static void forEachLeaf(
       final Path currentPath, Node node, final LeafVisitor leafVisitor) {
     if (node.isLeafNode()) {
@@ -76,7 +72,7 @@ public class CompoundHashingIntegrationTestIT {
   }
 
   private static Node extractRange(Node node, final Path optStart, final Path optEnd) {
-    final Node[] result = new Node[]{EmptyNode.Empty()};
+    final Node[] result = new Node[] {EmptyNode.Empty()};
     forEachLeaf(
         Path.getEmptyPath(),
         node,
@@ -186,5 +182,10 @@ public class CompoundHashingIntegrationTestIT {
     for (int i = 0; i < 30; i++) {
       oneRound();
     }
+  }
+
+  interface LeafVisitor {
+
+    void onLeaf(Path path, LeafNode<?> leaf);
   }
 }

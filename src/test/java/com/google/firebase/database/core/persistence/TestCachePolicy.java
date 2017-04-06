@@ -2,9 +2,9 @@ package com.google.firebase.database.core.persistence;
 
 public class TestCachePolicy implements CachePolicy {
 
-  private boolean timeToPrune = false;
   private final float percentToPruneAtOnce;
   private final long maxNumberToKeep;
+  private boolean timeToPrune = false;
 
   public TestCachePolicy(float percentToPruneAtOnce, long maxNumberToKeep) {
     this.percentToPruneAtOnce = percentToPruneAtOnce;

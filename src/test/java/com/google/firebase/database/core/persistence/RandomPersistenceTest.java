@@ -1,8 +1,5 @@
 package com.google.firebase.database.core.persistence;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
-
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.annotations.NotNull;
@@ -26,13 +23,17 @@ import com.google.firebase.database.core.view.Event;
 import com.google.firebase.database.core.view.QueryParams;
 import com.google.firebase.database.core.view.QuerySpec;
 import com.google.firebase.database.snapshot.Node;
+import org.junit.Test;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import org.junit.Test;
+
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
 
 public class RandomPersistenceTest {
 
@@ -41,52 +42,8 @@ public class RandomPersistenceTest {
 
   private static final double LISTEN_PROBABILITY = 0.1;
   private static final int MAX_LISTEN_DEPTH = 3;
-
-  private static class TestEventRegistration extends EventRegistration {
-
-    private QuerySpec query;
-
-    TestEventRegistration(@NotNull QuerySpec query) {
-      this.query = query;
-    }
-
-    @Override
-    public boolean respondsTo(Event.EventType eventType) {
-      return false;
-    }
-
-    @Override
-    public DataEvent createEvent(Change change, QuerySpec query) {
-      // no-op
-      return null;
-    }
-
-    @Override
-    public void fireEvent(DataEvent dataEvent) {
-      // no-op
-    }
-
-    @Override
-    public void fireCancelEvent(DatabaseError error) {
-      // no-op
-    }
-
-    @Override
-    public EventRegistration clone(QuerySpec newQuery) {
-      return new TestEventRegistration(newQuery);
-    }
-
-    @Override
-    public boolean isSameListener(EventRegistration other) {
-      return other == this;
-    }
-
-    @NotNull
-    @Override
-    public QuerySpec getQuerySpec() {
-      return query;
-    }
-  }
+  private long currentWriteId = 0;
+  private long currentUnackedWriteId = 0;
 
   private static Map<Path, Node> fromCompoundWrite(CompoundWrite write) {
     Map<Path, Node> map = new HashMap<>();
@@ -169,9 +126,6 @@ public class RandomPersistenceTest {
       }
     }
   }
-
-  private long currentWriteId = 0;
-  private long currentUnackedWriteId = 0;
 
   @Test
   public void randomOperations() {
@@ -265,6 +219,52 @@ public class RandomPersistenceTest {
           }
         }
       }
+    }
+  }
+
+  private static class TestEventRegistration extends EventRegistration {
+
+    private QuerySpec query;
+
+    TestEventRegistration(@NotNull QuerySpec query) {
+      this.query = query;
+    }
+
+    @Override
+    public boolean respondsTo(Event.EventType eventType) {
+      return false;
+    }
+
+    @Override
+    public DataEvent createEvent(Change change, QuerySpec query) {
+      // no-op
+      return null;
+    }
+
+    @Override
+    public void fireEvent(DataEvent dataEvent) {
+      // no-op
+    }
+
+    @Override
+    public void fireCancelEvent(DatabaseError error) {
+      // no-op
+    }
+
+    @Override
+    public EventRegistration clone(QuerySpec newQuery) {
+      return new TestEventRegistration(newQuery);
+    }
+
+    @Override
+    public boolean isSameListener(EventRegistration other) {
+      return other == this;
+    }
+
+    @NotNull
+    @Override
+    public QuerySpec getQuerySpec() {
+      return query;
     }
   }
 }

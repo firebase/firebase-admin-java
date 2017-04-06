@@ -4,6 +4,7 @@ import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Preconditions;
 import com.google.firebase.tasks.OnCompleteListener;
 import com.google.firebase.tasks.Task;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 

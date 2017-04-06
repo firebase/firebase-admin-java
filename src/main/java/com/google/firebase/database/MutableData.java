@@ -11,6 +11,7 @@ import com.google.firebase.database.snapshot.NodeUtilities;
 import com.google.firebase.database.snapshot.PriorityUtilities;
 import com.google.firebase.database.utilities.Validation;
 import com.google.firebase.database.utilities.encoding.CustomClassMapper;
+
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -27,7 +28,11 @@ public class MutableData {
   private final SnapshotHolder holder;
   private final Path prefixPath;
 
-  /** @param node The data */
+  /**
+   * Create a MutableData instance from a data node.
+   *
+   * @param node The data
+   */
   MutableData(Node node) {
     this(new SnapshotHolder(node), new Path(""));
   }
@@ -42,7 +47,9 @@ public class MutableData {
     return holder.getNode(prefixPath);
   }
 
-  /** @return True if the data at this location has children, false otherwise */
+  /**
+   * Returns true if the data at this location has children, and false otherwise.
+   */
   public boolean hasChildren() {
     Node node = getNode();
     return !node.isLeafNode() && !node.isEmpty();
@@ -68,16 +75,18 @@ public class MutableData {
     return new MutableData(holder, prefixPath.child(new Path(path)));
   }
 
-  /** @return The number of immediate children at this location */
+  /**
+   * @return The number of immediate children at this location
+   */
   public long getChildrenCount() {
     return getNode().getChildCount();
   }
 
   /**
    * Used to iterate over the immediate children at this location <code>
-   *     <br>for (MutableData child : parent.getChildren()) {
-   *         <br>&nbsp;&nbsp;&nbsp;&nbsp;...
-   *     <br>}
+   * <br>for (MutableData child : parent.getChildren()) {
+   * <br>&nbsp;&nbsp;&nbsp;&nbsp;...
+   * <br>}
    * </code>
    *
    * @return The immediate children at this location
@@ -133,7 +142,9 @@ public class MutableData {
     }
   }
 
-  /** @return The key name of this location, or null if it is the top-most location */
+  /**
+   * @return The key name of this location, or null if it is the top-most location
+   */
   public String getKey() {
     return prefixPath.getBack() != null ? prefixPath.getBack().asString() : null;
   }
@@ -143,12 +154,12 @@ public class MutableData {
    * returned are:
    *
    * <ul>
-   *   <li>Boolean
-   *   <li>String
-   *   <li>Long
-   *   <li>Double
-   *   <li>Map&lt;String, Object&gt;
-   *   <li>List&lt;Object&gt;
+   * <li>Boolean
+   * <li>String
+   * <li>Long
+   * <li>Double
+   * <li>Map&lt;String, Object&gt;
+   * <li>List&lt;Object&gt;
    * </ul>
    *
    * This list is recursive; the possible types for {@link java.lang.Object} in the above list is
@@ -161,14 +172,54 @@ public class MutableData {
   }
 
   /**
+   * Set the data at this location to the given value. The native types accepted by this method for
+   * the value correspond to the JSON types:
+   *
+   * <ul>
+   * <li>Boolean
+   * <li>Long
+   * <li>Double
+   * <li>Map&lt;String, Object&gt;
+   * <li>List&lt;Object&gt;
+   * </ul>
+   *
+   * <br>
+   * <br>
+   * In addition, you can set instances of your own class into this location, provided they satisfy
+   * the following constraints:
+   *
+   * <ol>
+   * <li>The class must have a default constructor that takes no arguments
+   * <li> The class must define public getters for the properties to be assigned. Properties
+   * without a public getter will be set to their default value when an instance is
+   * deserialized
+   * </ol>
+   *
+   * <br>
+   * <br>
+   * Generic collections of objects that satisfy the above constraints are also permitted, i.e.
+   * <code>Map&lt;String, MyPOJO&gt;</code>, as well as null values.
+   *
+   * <p>Note that this overrides the priority, which must be set separately.
+   *
+   * @param value The value to set at this location
+   */
+  public void setValue(Object value) throws DatabaseException {
+    ValidationPath.validateWithObject(prefixPath, value);
+    Object bouncedValue = CustomClassMapper.convertToPlainJavaTypes(value);
+    Validation.validateWritableObject(bouncedValue);
+    holder.update(prefixPath, NodeUtilities.NodeFromJSON(bouncedValue));
+  }
+
+  /**
    * This method is used to marshall the data contained in this instance into a class of your
    * choosing. The class must fit 2 simple constraints:
    *
    * <ol>
-   *   <li>The class must have a default constructor that takes no arguments
-   *   <li> The class must define public getters for the properties to be assigned. Properties
-   *       without a public getter will be set to their default value when an instance is
-   *       deserialized
+   * <li>The class must have a default constructor that takes no arguments
+   * <li> The class must define public getters for the properties to be assigned. Properties
+   * without a public getter will be set to their default value when an instance is
+   * deserialized
    * </ol>
    *
    * An example class might look like:
@@ -223,9 +274,9 @@ public class MutableData {
    * GenericTypeIndicator} for more details
    *
    * @param t A subclass of {@link GenericTypeIndicator} indicating the type of generic collection
-   *     to be returned.
+   * to be returned.
    * @param <T> The type to return. Implicitly defined from the {@link GenericTypeIndicator} passed
-   *     in
+   * in
    * @return A properly typed collection, populated with the data from this instance
    */
   public <T> T getValue(GenericTypeIndicator<T> t) {
@@ -234,43 +285,19 @@ public class MutableData {
   }
 
   /**
-   * Set the data at this location to the given value. The native types accepted by this method for
-   * the value correspond to the JSON types:
+   * Gets the current priority at this location. The possible return types are:
    *
    * <ul>
-   *   <li>Boolean
-   *   <li>Long
-   *   <li>Double
-   *   <li>Map&lt;String, Object&gt;
-   *   <li>List&lt;Object&gt;
+   * <li>Double
+   * <li>String
    * </ul>
    *
-   * <br>
-   * <br>
-   * In addition, you can set instances of your own class into this location, provided they satisfy
-   * the following constraints:
+   * Note that null is allowed
    *
-   * <ol>
-   *   <li>The class must have a default constructor that takes no arguments
-   *   <li> The class must define public getters for the properties to be assigned. Properties
-   *       without a public getter will be set to their default value when an instance is
-   *       deserialized
-   * </ol>
-   *
-   * <br>
-   * <br>
-   * Generic collections of objects that satisfy the above constraints are also permitted, i.e.
-   * <code>Map&lt;String, MyPOJO&gt;</code>, as well as null values.
-   *
-   * <p>Note that this overrides the priority, which must be set separately.
-   *
-   * @param value The value to set at this location
+   * @return The priority at this location as a native type
    */
-  public void setValue(Object value) throws DatabaseException {
-    ValidationPath.validateWithObject(prefixPath, value);
-    Object bouncedValue = CustomClassMapper.convertToPlainJavaTypes(value);
-    Validation.validateWritableObject(bouncedValue);
-    holder.update(prefixPath, NodeUtilities.NodeFromJSON(bouncedValue));
+  public Object getPriority() {
+    return getNode().getPriority().getValue();
   }
 
   /**
@@ -280,22 +307,6 @@ public class MutableData {
    */
   public void setPriority(Object priority) {
     holder.update(prefixPath, getNode().updatePriority(PriorityUtilities.parsePriority(priority)));
-  }
-
-  /**
-   * Gets the current priority at this location. The possible return types are:
-   *
-   * <ul>
-   *   <li>Double
-   *   <li>String
-   * </ul>
-   *
-   * Note that null is allowed
-   *
-   * @return The priority at this location as a native type
-   */
-  public Object getPriority() {
-    return getNode().getPriority().getValue();
   }
 
   @Override

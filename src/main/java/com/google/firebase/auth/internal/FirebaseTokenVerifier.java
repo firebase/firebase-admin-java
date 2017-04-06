@@ -12,6 +12,7 @@ import com.google.api.client.util.Clock;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.firebase.auth.FirebaseAuthException;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.security.GeneralSecurityException;
@@ -27,11 +28,18 @@ import java.util.Collections;
  */
 public final class FirebaseTokenVerifier extends IdTokenVerifier {
 
-  private static final String ISSUER_PREFIX = "https://securetoken.google.com/";
-
   @VisibleForTesting
   static final String CLIENT_CERT_URL = "https://www.googleapis.com/robot/v1/metadata/x509/"
       + "securetoken@system.gserviceaccount.com";
+  /**
+   * The default public keys manager for verifying projects use the correct public key
+   */
+  public static final GooglePublicKeysManager DEFAULT_KEY_MANAGER =
+      new GooglePublicKeysManager.Builder(new NetHttpTransport.Builder().build(), new GsonFactory())
+          .setClock(Clock.SYSTEM)
+          .setPublicCertsEncodedUrl(CLIENT_CERT_URL)
+          .build();
+  private static final String ISSUER_PREFIX = "https://securetoken.google.com/";
   private static final String FIREBASE_AUDIENCE =
       "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit";
   private static final String ERROR_CODE = "ERROR_INVALID_CREDENTIAL";
@@ -43,17 +51,7 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
           + "retrieve an ID token.";
   private static final String ALGORITHM = "RS256";
   private String projectId;
-
   private GooglePublicKeysManager publicKeysManager;
-
-  /**
-   * The default public keys manager for verifying projects use the correct public key
-   */
-  public static final GooglePublicKeysManager DEFAULT_KEY_MANAGER =
-      new GooglePublicKeysManager.Builder(new NetHttpTransport.Builder().build(), new GsonFactory())
-          .setClock(Clock.SYSTEM)
-          .setPublicCertsEncodedUrl(CLIENT_CERT_URL)
-          .build();
 
   protected FirebaseTokenVerifier(Builder builder) {
     super(builder);

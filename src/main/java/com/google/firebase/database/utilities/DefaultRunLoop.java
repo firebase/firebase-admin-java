@@ -7,6 +7,7 @@ import com.google.firebase.database.core.Context;
 import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.core.RunLoop;
 import com.google.firebase.internal.RevivingScheduledExecutor;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -15,8 +16,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public abstract class DefaultRunLoop implements RunLoop {
-
-  public abstract void handleException(Throwable e);
 
   private ScheduledThreadPoolExecutor executor;
 
@@ -38,8 +37,8 @@ public abstract class DefaultRunLoop implements RunLoop {
     executor =
         new RevivingScheduledExecutor(threadFactory, "FirebaseDatabaseWorker", periodicRestart) {
           @Override
-          protected void handleException(Throwable t) {
-            DefaultRunLoop.this.handleException(t);
+          protected void handleException(Throwable throwable) {
+            DefaultRunLoop.this.handleException(throwable);
           }
 
           @Override
@@ -61,6 +60,27 @@ public abstract class DefaultRunLoop implements RunLoop {
     // core threads
     executor.setKeepAliveTime(3, TimeUnit.SECONDS);
   }
+
+  public static String messageForException(Throwable t) {
+    if (t instanceof OutOfMemoryError) {
+      return "Firebase Database encountered an OutOfMemoryError. You may need to reduce the"
+          + " amount of data you are syncing to the client (e.g. by using queries or syncing"
+          + " a deeper path). See "
+          + "https://firebase.google" +
+          ".com/docs/database/ios/structure-data#best_practices_for_data_structure"
+          + " and "
+          + "https://firebase.google.com/docs/database/android/retrieve-data#filtering_data";
+    } else if (t instanceof DatabaseException) {
+      // Exception should be self-explanatory and they shouldn't contact support.
+      return "";
+    } else {
+      return "Uncaught exception in Firebase Database runloop ("
+          + FirebaseDatabase.getSdkVersion()
+          + "). Please report to firebase-database-client@google.com";
+    }
+  }
+
+  public abstract void handleException(Throwable e);
 
   public ScheduledExecutorService getExecutorService() {
     return this.executor;
@@ -85,23 +105,5 @@ public abstract class DefaultRunLoop implements RunLoop {
   @Override
   public void restart() {
     executor.setCorePoolSize(1);
-  }
-
-  public static String messageForException(Throwable t) {
-    if (t instanceof OutOfMemoryError) {
-      return "Firebase Database encountered an OutOfMemoryError. You may need to reduce the"
-          + " amount of data you are syncing to the client (e.g. by using queries or syncing"
-          + " a deeper path). See "
-          + "https://firebase.google.com/docs/database/ios/structure-data#best_practices_for_data_structure"
-          + " and "
-          + "https://firebase.google.com/docs/database/android/retrieve-data#filtering_data";
-    } else if (t instanceof DatabaseException) {
-      // Exception should be self-explanatory and they shouldn't contact support.
-      return "";
-    } else {
-      return "Uncaught exception in Firebase Database runloop ("
-          + FirebaseDatabase.getSdkVersion()
-          + "). Please report to firebase-database-client@google.com";
-    }
   }
 }

@@ -1,16 +1,14 @@
 package com.google.firebase.database;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import com.google.firebase.database.core.DatabaseConfig;
 import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -21,10 +19,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class QueryTestIT {
 
@@ -2976,7 +2972,8 @@ public class QueryTestIT {
                   ready.release(1);
                   return false;
                 }
-                // We already initialized the location, and now the remove has happened so that we have no more data
+                // We already initialized the location, and now the remove has happened so that
+                // we have no more data
                 return startChecking.get() && result == null;
               }
             });

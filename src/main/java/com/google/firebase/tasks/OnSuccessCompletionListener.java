@@ -2,39 +2,40 @@ package com.google.firebase.tasks;
 
 import com.google.firebase.internal.GuardedBy;
 import com.google.firebase.internal.NonNull;
+
 import java.util.concurrent.Executor;
 
 /**
  * A {@link TaskCompletionListener} that wraps an {@link OnSuccessListener}.
  */
-class OnSuccessCompletionListener<TResult> implements TaskCompletionListener<TResult> {
+class OnSuccessCompletionListener<T> implements TaskCompletionListener<T> {
 
-  private final Executor mExecutor;
-  private final Object mLock = new Object();
+  private final Executor executor;
+  private final Object lock = new Object();
 
-  @GuardedBy("mLock")
-  private OnSuccessListener<? super TResult> mOnSuccess;
+  @GuardedBy("lock")
+  private OnSuccessListener<? super T> onSuccess;
 
   public OnSuccessCompletionListener(
-      @NonNull Executor executor, @NonNull OnSuccessListener<? super TResult> onSuccess) {
-    mExecutor = executor;
-    mOnSuccess = onSuccess;
+      @NonNull Executor executor, @NonNull OnSuccessListener<? super T> onSuccess) {
+    this.executor = executor;
+    this.onSuccess = onSuccess;
   }
 
   @Override
-  public void onComplete(@NonNull final Task<TResult> task) {
+  public void onComplete(@NonNull final Task<T> task) {
     if (task.isSuccessful()) {
-      synchronized (mLock) {
-        if (mOnSuccess == null) {
+      synchronized (lock) {
+        if (onSuccess == null) {
           return;
         }
       }
-      mExecutor.execute(new Runnable() {
+      executor.execute(new Runnable() {
         @Override
         public void run() {
-          synchronized (mLock) {
-            if (mOnSuccess != null) {
-              mOnSuccess.onSuccess(task.getResult());
+          synchronized (lock) {
+            if (onSuccess != null) {
+              onSuccess.onSuccess(task.getResult());
             }
           }
         }
@@ -44,8 +45,8 @@ class OnSuccessCompletionListener<TResult> implements TaskCompletionListener<TRe
 
   @Override
   public void cancel() {
-    synchronized (mLock) {
-      mOnSuccess = null;
+    synchronized (lock) {
+      onSuccess = null;
     }
   }
 }

@@ -1,7 +1,5 @@
 package com.google.firebase.auth;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.testing.auth.oauth2.MockGoogleCredential;
 import com.google.api.client.googleapis.testing.auth.oauth2.MockGoogleCredential.Builder;
@@ -14,6 +12,13 @@ import com.google.firebase.auth.FirebaseCredentials.FirebaseAccessToken;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -24,12 +29,8 @@ import java.nio.file.Files;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Tests for {@link FirebaseCredentials}.
@@ -41,6 +42,8 @@ public class FirebaseCredentialsTest {
   private static final String CLIENT_SECRET = "mockclientsecret";
   private static final String CLIENT_ID = "mockclientid";
   private static final String REFRESH_TOKEN = "mockrefreshtoken";
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void defaultCredentialIsCached() {
@@ -161,9 +164,6 @@ public class FirebaseCredentialsTest {
       Assert.assertEquals("Expected", e.getCause().getCause().getMessage());
     }
   }
-
-  @Rule
-  public final ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void nullThrowsRuntimeExceptionFromCertificate()

@@ -1,11 +1,10 @@
 package com.google.firebase.database.connection;
 
-import static com.google.firebase.database.connection.ConnectionUtils.hardAssert;
-
 import com.google.firebase.database.connection.util.RetryHelper;
 import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.util.AndroidSupport;
 import com.google.firebase.database.util.GAuthToken;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -18,163 +17,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static com.google.firebase.database.connection.ConnectionUtils.hardAssert;
+
 public class PersistentConnectionImpl implements Connection.Delegate, PersistentConnection {
-
-  private interface ConnectionRequestCallback {
-
-    void onResponse(Map<String, Object> response);
-  }
-
-  private static class ListenQuerySpec {
-
-    private final List<String> path;
-    private final Map<String, Object> queryParams;
-
-    public ListenQuerySpec(List<String> path, Map<String, Object> queryParams) {
-      this.path = path;
-      this.queryParams = queryParams;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (!(o instanceof ListenQuerySpec)) {
-        return false;
-      }
-
-      ListenQuerySpec that = (ListenQuerySpec) o;
-
-      if (!path.equals(that.path)) {
-        return false;
-      }
-      return queryParams.equals(that.queryParams);
-    }
-
-    @Override
-    public int hashCode() {
-      int result = path.hashCode();
-      result = 31 * result + queryParams.hashCode();
-      return result;
-    }
-
-    @Override
-    public String toString() {
-      return ConnectionUtils.pathToString(this.path) + " (params: " + queryParams + ")";
-    }
-  }
-
-  private static class OutstandingListen {
-
-    private final RequestResultCallback resultCallback;
-    private final ListenQuerySpec query;
-    private final ListenHashProvider hashFunction;
-    private final Long tag;
-
-    private OutstandingListen(
-        RequestResultCallback callback,
-        ListenQuerySpec query,
-        Long tag,
-        ListenHashProvider hashFunction) {
-      this.resultCallback = callback;
-      this.query = query;
-      this.hashFunction = hashFunction;
-      this.tag = tag;
-    }
-
-    public ListenQuerySpec getQuery() {
-      return query;
-    }
-
-    public Long getTag() {
-      return this.tag;
-    }
-
-    public ListenHashProvider getHashFunction() {
-      return this.hashFunction;
-    }
-
-    @Override
-    public String toString() {
-      return query.toString() + " (Tag: " + this.tag + ")";
-    }
-  }
-
-  private static class OutstandingPut {
-
-    private String action;
-    private Map<String, Object> request;
-    private RequestResultCallback onComplete;
-    private boolean sent;
-
-    private OutstandingPut(
-        String action, Map<String, Object> request, RequestResultCallback onComplete) {
-      this.action = action;
-      this.request = request;
-      this.onComplete = onComplete;
-    }
-
-    public String getAction() {
-      return action;
-    }
-
-    public Map<String, Object> getRequest() {
-      return request;
-    }
-
-    public RequestResultCallback getOnComplete() {
-      return onComplete;
-    }
-
-    public void markSent() {
-      this.sent = true;
-    }
-
-    public boolean wasSent() {
-      return this.sent;
-    }
-  }
-
-  private static class OutstandingDisconnect {
-
-    private final String action;
-    private final List<String> path;
-    private final Object data;
-    private final RequestResultCallback onComplete;
-
-    private OutstandingDisconnect(
-        String action, List<String> path, Object data, RequestResultCallback onComplete) {
-      this.action = action;
-      this.path = path;
-      this.data = data;
-      this.onComplete = onComplete;
-    }
-
-    public String getAction() {
-      return action;
-    }
-
-    public List<String> getPath() {
-      return path;
-    }
-
-    public Object getData() {
-      return data;
-    }
-
-    public RequestResultCallback getOnComplete() {
-      return onComplete;
-    }
-  }
-
-  private enum ConnectionState {
-    Disconnected,
-    GettingToken,
-    Connecting,
-    Authenticating,
-    Connected
-  }
 
   private static final String REQUEST_ERROR = "error";
   private static final String REQUEST_QUERIES = "q";
@@ -221,27 +66,26 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   private static final String SERVER_DATA_TAG = "t";
   private static final String SERVER_DATA_WARNINGS = "w";
   private static final String SERVER_RESPONSE_DATA = "d";
-
   /**
    * Delay after which a established connection is considered successful
    */
   private static final long SUCCESSFUL_CONNECTION_ESTABLISHED_DELAY = 30 * 1000;
-
   private static final long IDLE_TIMEOUT = 60 * 1000;
-
   /**
    * If auth fails repeatedly, we'll assume something is wrong and log a warning / back off.
    */
   private static final long INVALID_AUTH_TOKEN_THRESHOLD = 3;
-
   private static final String SERVER_KILL_INTERRUPT_REASON = "server_kill";
   private static final String IDLE_INTERRUPT_REASON = "connection_idle";
   private static final String TOKEN_REFRESH_INTERRUPT_REASON = "token_refresh";
-
   private static long connectionIds = 0;
-
   private final Delegate delegate;
   private final HostInfo hostInfo;
+  private final ConnectionContext context;
+  private final ConnectionAuthTokenProvider authTokenProvider;
+  private final ScheduledExecutorService executorService;
+  private final LogWrapper logger;
+  private final RetryHelper retryHelper;
   private String cachedHost;
   private HashSet<String> interruptReasons = new HashSet<>();
   private boolean firstConnection = true;
@@ -251,26 +95,17 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   private long writeCounter = 0;
   private long requestCounter = 0;
   private Map<Long, ConnectionRequestCallback> requestCBHash;
-
   private List<OutstandingDisconnect> onDisconnectRequestQueue;
   private Map<Long, OutstandingPut> outstandingPuts;
-
   private Map<ListenQuerySpec, OutstandingListen> listens;
   private String authToken;
   private boolean forceAuthTokenRefresh;
-  private final ConnectionContext context;
-  private final ConnectionAuthTokenProvider authTokenProvider;
-  private final ScheduledExecutorService executorService;
-  private final LogWrapper logger;
-  private final RetryHelper retryHelper;
   private String lastSessionId;
   /**
    * Counter to check whether the callback is for the last getToken call
    */
   private long currentGetTokenAttempt = 0;
-
   private int invalidAuthTokenCount = 0;
-
   private ScheduledFuture<?> inactivityTimer = null;
   private long lastWriteTimestamp;
   private boolean hasOnDisconnects;
@@ -930,12 +765,12 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
         };
 
     Map<String, Object> request = new HashMap<>();
-    GAuthToken gAuthToken = GAuthToken.tryParseFromString(this.authToken);
-    if (gAuthToken != null) {
-      request.put(REQUEST_CREDENTIAL, gAuthToken.getToken());
-      if (gAuthToken.getAuth() != null) {
-        if (!gAuthToken.getAuth().isEmpty()) {
-          request.put(REQUEST_AUTHVAR, gAuthToken.getAuth());
+    GAuthToken googleAuthToken = GAuthToken.tryParseFromString(this.authToken);
+    if (googleAuthToken != null) {
+      request.put(REQUEST_CREDENTIAL, googleAuthToken.getToken());
+      if (googleAuthToken.getAuth() != null) {
+        if (!googleAuthToken.getAuth().isEmpty()) {
+          request.put(REQUEST_AUTHVAR, googleAuthToken.getAuth());
         }
       } else {
         request.put(REQUEST_NOAUTH, true);
@@ -1288,6 +1123,162 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   public void injectConnectionFailure() {
     if (this.realtime != null) {
       this.realtime.injectConnectionFailure();
+    }
+  }
+
+  private enum ConnectionState {
+    Disconnected,
+    GettingToken,
+    Connecting,
+    Authenticating,
+    Connected
+  }
+
+  private interface ConnectionRequestCallback {
+
+    void onResponse(Map<String, Object> response);
+  }
+
+  private static class ListenQuerySpec {
+
+    private final List<String> path;
+    private final Map<String, Object> queryParams;
+
+    public ListenQuerySpec(List<String> path, Map<String, Object> queryParams) {
+      this.path = path;
+      this.queryParams = queryParams;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (!(o instanceof ListenQuerySpec)) {
+        return false;
+      }
+
+      ListenQuerySpec that = (ListenQuerySpec) o;
+
+      if (!path.equals(that.path)) {
+        return false;
+      }
+      return queryParams.equals(that.queryParams);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = path.hashCode();
+      result = 31 * result + queryParams.hashCode();
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return ConnectionUtils.pathToString(this.path) + " (params: " + queryParams + ")";
+    }
+  }
+
+  private static class OutstandingListen {
+
+    private final RequestResultCallback resultCallback;
+    private final ListenQuerySpec query;
+    private final ListenHashProvider hashFunction;
+    private final Long tag;
+
+    private OutstandingListen(
+        RequestResultCallback callback,
+        ListenQuerySpec query,
+        Long tag,
+        ListenHashProvider hashFunction) {
+      this.resultCallback = callback;
+      this.query = query;
+      this.hashFunction = hashFunction;
+      this.tag = tag;
+    }
+
+    public ListenQuerySpec getQuery() {
+      return query;
+    }
+
+    public Long getTag() {
+      return this.tag;
+    }
+
+    public ListenHashProvider getHashFunction() {
+      return this.hashFunction;
+    }
+
+    @Override
+    public String toString() {
+      return query.toString() + " (Tag: " + this.tag + ")";
+    }
+  }
+
+  private static class OutstandingPut {
+
+    private String action;
+    private Map<String, Object> request;
+    private RequestResultCallback onComplete;
+    private boolean sent;
+
+    private OutstandingPut(
+        String action, Map<String, Object> request, RequestResultCallback onComplete) {
+      this.action = action;
+      this.request = request;
+      this.onComplete = onComplete;
+    }
+
+    public String getAction() {
+      return action;
+    }
+
+    public Map<String, Object> getRequest() {
+      return request;
+    }
+
+    public RequestResultCallback getOnComplete() {
+      return onComplete;
+    }
+
+    public void markSent() {
+      this.sent = true;
+    }
+
+    public boolean wasSent() {
+      return this.sent;
+    }
+  }
+
+  private static class OutstandingDisconnect {
+
+    private final String action;
+    private final List<String> path;
+    private final Object data;
+    private final RequestResultCallback onComplete;
+
+    private OutstandingDisconnect(
+        String action, List<String> path, Object data, RequestResultCallback onComplete) {
+      this.action = action;
+      this.path = path;
+      this.data = data;
+      this.onComplete = onComplete;
+    }
+
+    public String getAction() {
+      return action;
+    }
+
+    public List<String> getPath() {
+      return path;
+    }
+
+    public Object getData() {
+      return data;
+    }
+
+    public RequestResultCallback getOnComplete() {
+      return onComplete;
     }
   }
 }

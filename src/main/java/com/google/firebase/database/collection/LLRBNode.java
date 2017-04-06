@@ -9,24 +9,6 @@ import java.util.Comparator;
  */
 public interface LLRBNode<K, V> {
 
-  interface ShortCircuitingNodeVisitor<K, V> {
-
-    boolean shouldContinue(K key, V value);
-  }
-
-  abstract class NodeVisitor<K, V> implements ShortCircuitingNodeVisitor<K, V> {
-
-    @Override
-    public boolean shouldContinue(K key, V value) {
-      visitEntry(key, value);
-      return true;
-    }
-
-    abstract public void visitEntry(K key, V value);
-  }
-
-  enum Color {RED, BLACK}
-
   LLRBNode<K, V> copy(K key, V value, Color color, LLRBNode<K, V> left, LLRBNode<K, V> right);
 
   LLRBNode<K, V> insert(K key, V value, Comparator<K> comparator);
@@ -56,4 +38,22 @@ public interface LLRBNode<K, V> {
   boolean shortCircuitingInOrderTraversal(ShortCircuitingNodeVisitor<K, V> visitor);
 
   boolean shortCircuitingReverseOrderTraversal(ShortCircuitingNodeVisitor<K, V> visitor);
+
+  enum Color {RED, BLACK}
+
+  interface ShortCircuitingNodeVisitor<K, V> {
+
+    boolean shouldContinue(K key, V value);
+  }
+
+  abstract class NodeVisitor<K, V> implements ShortCircuitingNodeVisitor<K, V> {
+
+    @Override
+    public boolean shouldContinue(K key, V value) {
+      visitEntry(key, value);
+      return true;
+    }
+
+    abstract public void visitEntry(K key, V value);
+  }
 }

@@ -27,6 +27,18 @@ public class RBTreeSortedMap<K, V> extends ImmutableSortedMap<K, V> {
     this.comparator = comparator;
   }
 
+  public static <A, B, C> RBTreeSortedMap<A, C> buildFrom(List<A> keys, Map<B, C> values,
+                                                          ImmutableSortedMap.Builder
+                                                              .KeyTranslator<A, B> translator,
+                                                          Comparator<A> comparator) {
+    return Builder.buildFrom(keys, values, translator, comparator);
+  }
+
+  public static <A, B> RBTreeSortedMap<A, B> fromMap(Map<A, B> values, Comparator<A> comparator) {
+    return Builder.buildFrom(new ArrayList<>(values.keySet()), values,
+        ImmutableSortedMap.Builder.<A>identityTranslator(), comparator);
+  }
+
   // For testing purposes
   LLRBNode<K, V> getRoot() {
     return root;
@@ -182,18 +194,81 @@ public class RBTreeSortedMap<K, V> extends ImmutableSortedMap<K, V> {
     return comparator;
   }
 
-  public static <A, B, C> RBTreeSortedMap<A, C> buildFrom(List<A> keys, Map<B, C> values,
-      ImmutableSortedMap.Builder.KeyTranslator<A, B> translator,
-      Comparator<A> comparator) {
-    return Builder.buildFrom(keys, values, translator, comparator);
-  }
-
-  public static <A, B> RBTreeSortedMap<A, B> fromMap(Map<A, B> values, Comparator<A> comparator) {
-    return Builder.buildFrom(new ArrayList<>(values.keySet()), values,
-        ImmutableSortedMap.Builder.<A>identityTranslator(), comparator);
-  }
-
   private static class Builder<A, B, C> {
+
+    private final List<A> keys;
+    private final Map<B, C> values;
+    private final ImmutableSortedMap.Builder.KeyTranslator<A, B> keyTranslator;
+    private LLRBValueNode<A, C> root;
+    private LLRBValueNode<A, C> leaf;
+
+    private Builder(List<A> keys, Map<B, C> values,
+                    ImmutableSortedMap.Builder.KeyTranslator<A, B> translator) {
+      this.keys = keys;
+      this.values = values;
+      this.keyTranslator = translator;
+    }
+
+    public static <A, B, C> RBTreeSortedMap<A, C> buildFrom(List<A> keys, Map<B, C> values,
+                                                            ImmutableSortedMap.Builder
+                                                                .KeyTranslator<A, B> translator,
+                                                            Comparator<A> comparator) {
+      Builder<A, B, C> builder = new Builder<>(keys, values, translator);
+      Collections.sort(keys, comparator);
+      Iterator<BooleanChunk> iter = (new Base1_2(keys.size())).iterator();
+      int index = keys.size();
+      while (iter.hasNext()) {
+        BooleanChunk next = iter.next();
+        index -= next.chunkSize;
+        if (next.isOne) {
+          builder.buildPennant(LLRBNode.Color.BLACK, next.chunkSize, index);
+        } else {
+          builder.buildPennant(LLRBNode.Color.BLACK, next.chunkSize, index);
+          index -= next.chunkSize;
+          builder.buildPennant(LLRBNode.Color.RED, next.chunkSize, index);
+        }
+      }
+      return new RBTreeSortedMap<>(
+          builder.root == null ? LLRBEmptyNode.<A, C>getInstance() : builder.root, comparator);
+    }
+
+    private C getValue(A key) {
+      return values.get(keyTranslator.translate(key));
+    }
+
+    private LLRBNode<A, C> buildBalancedTree(int start, int size) {
+      if (size == 0) {
+        return LLRBEmptyNode.getInstance();
+      } else if (size == 1) {
+        A key = this.keys.get(start);
+        return new LLRBBlackValueNode<>(key, getValue(key), null, null);
+      } else {
+        int half = size / 2;
+        int middle = start + half;
+        LLRBNode<A, C> left = buildBalancedTree(start, half);
+        LLRBNode<A, C> right = buildBalancedTree(middle + 1, half);
+        A key = this.keys.get(middle);
+        return new LLRBBlackValueNode<>(key, getValue(key), left, right);
+      }
+    }
+
+    private void buildPennant(LLRBNode.Color color, int chunkSize, int start) {
+      LLRBNode<A, C> treeRoot = buildBalancedTree(start + 1, chunkSize - 1);
+      A key = this.keys.get(start);
+      LLRBValueNode<A, C> node;
+      if (color == LLRBNode.Color.RED) {
+        node = new LLRBRedValueNode<>(key, getValue(key), null, treeRoot);
+      } else {
+        node = new LLRBBlackValueNode<>(key, getValue(key), null, treeRoot);
+      }
+      if (root == null) {
+        root = node;
+        leaf = node;
+      } else {
+        leaf.setLeft(node);
+        leaf = node;
+      }
+    }
 
     static class BooleanChunk {
 
@@ -203,8 +278,8 @@ public class RBTreeSortedMap<K, V> extends ImmutableSortedMap<K, V> {
 
     static class Base1_2 implements Iterable<BooleanChunk> {
 
-      private long value;
       final private int length;
+      private long value;
 
 
       public Base1_2(int size) {
@@ -246,81 +321,6 @@ public class RBTreeSortedMap<K, V> extends ImmutableSortedMap<K, V> {
           }
         };
       }
-    }
-
-    private final List<A> keys;
-    private final Map<B, C> values;
-    private final ImmutableSortedMap.Builder.KeyTranslator<A, B> keyTranslator;
-
-    private LLRBValueNode<A, C> root;
-    private LLRBValueNode<A, C> leaf;
-
-    private Builder(List<A> keys, Map<B, C> values,
-        ImmutableSortedMap.Builder.KeyTranslator<A, B> translator) {
-      this.keys = keys;
-      this.values = values;
-      this.keyTranslator = translator;
-    }
-
-
-    private C getValue(A key) {
-      return values.get(keyTranslator.translate(key));
-    }
-
-    private LLRBNode<A, C> buildBalancedTree(int start, int size) {
-      if (size == 0) {
-        return LLRBEmptyNode.getInstance();
-      } else if (size == 1) {
-        A key = this.keys.get(start);
-        return new LLRBBlackValueNode<>(key, getValue(key), null, null);
-      } else {
-        int half = size / 2;
-        int middle = start + half;
-        LLRBNode<A, C> left = buildBalancedTree(start, half);
-        LLRBNode<A, C> right = buildBalancedTree(middle + 1, half);
-        A key = this.keys.get(middle);
-        return new LLRBBlackValueNode<>(key, getValue(key), left, right);
-      }
-    }
-
-    private void buildPennant(LLRBNode.Color color, int chunkSize, int start) {
-      LLRBNode<A, C> treeRoot = buildBalancedTree(start + 1, chunkSize - 1);
-      A key = this.keys.get(start);
-      LLRBValueNode<A, C> node;
-      if (color == LLRBNode.Color.RED) {
-        node = new LLRBRedValueNode<>(key, getValue(key), null, treeRoot);
-      } else {
-        node = new LLRBBlackValueNode<>(key, getValue(key), null, treeRoot);
-      }
-      if (root == null) {
-        root = node;
-        leaf = node;
-      } else {
-        leaf.setLeft(node);
-        leaf = node;
-      }
-    }
-
-    public static <A, B, C> RBTreeSortedMap<A, C> buildFrom(List<A> keys, Map<B, C> values,
-        ImmutableSortedMap.Builder.KeyTranslator<A, B> translator,
-        Comparator<A> comparator) {
-      Builder<A, B, C> builder = new Builder<>(keys, values, translator);
-      Collections.sort(keys, comparator);
-      Iterator<BooleanChunk> iter = (new Base1_2(keys.size())).iterator();
-      int index = keys.size();
-      while (iter.hasNext()) {
-        BooleanChunk next = iter.next();
-        index -= next.chunkSize;
-        if (next.isOne) {
-          builder.buildPennant(LLRBNode.Color.BLACK, next.chunkSize, index);
-        } else {
-          builder.buildPennant(LLRBNode.Color.BLACK, next.chunkSize, index);
-          index -= next.chunkSize;
-          builder.buildPennant(LLRBNode.Color.RED, next.chunkSize, index);
-        }
-      }
-      return new RBTreeSortedMap<>(
-          builder.root == null ? LLRBEmptyNode.<A, C>getInstance() : builder.root, comparator);
     }
   }
 }

@@ -1,14 +1,18 @@
 package com.google.firebase.database;
 
+import org.junit.Assert;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import org.junit.Assert;
 
 public class PerformanceBenchmarks {
+
+  private static String alphaNumeric =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
   private static void addChildren(DatabaseReference reference, int amount, int offset)
       throws InterruptedException {
@@ -36,6 +40,14 @@ public class PerformanceBenchmarks {
               }
             });
     Assert.assertTrue(semaphore.tryAcquire(60, TimeUnit.SECONDS));
+  }
+
+  private static String randomString(Random random, String characters, int length) {
+    char[] text = new char[length];
+    for (int i = 0; i < length; i++) {
+      text[i] = characters.charAt(random.nextInt(characters.length()));
+    }
+    return new String(text);
   }
 
   //@Test
@@ -91,17 +103,6 @@ public class PerformanceBenchmarks {
     Assert.assertEquals(totalNumberOfChildren, counter[0]);
     System.err.println(String.format("Test took %dms", System.currentTimeMillis() - start));
     ref.removeEventListener(listener);
-  }
-
-  private static String alphaNumeric =
-      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-  private static String randomString(Random random, String characters, int length) {
-    char[] text = new char[length];
-    for (int i = 0; i < length; i++) {
-      text[i] = characters.charAt(random.nextInt(characters.length()));
-    }
-    return new String(text);
   }
 
   private Object randomObject(int recursionDepth, int recursionFanOut) {

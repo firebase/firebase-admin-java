@@ -11,6 +11,7 @@ import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.utilities.ParsedUrl;
 import com.google.firebase.database.utilities.Utilities;
 import com.google.firebase.database.utilities.Validation;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,6 +40,12 @@ public class FirebaseDatabase {
   private final RepoInfo repoInfo;
   private final DatabaseConfig config;
   private Repo repo; // Usage must be guarded by a call to ensureRepo().
+
+  private FirebaseDatabase(FirebaseApp app, RepoInfo repoInfo, DatabaseConfig config) {
+    this.app = app;
+    this.repoInfo = repoInfo;
+    this.config = config;
+  }
 
   /**
    * Gets the default FirebaseDatabase instance.
@@ -137,10 +144,11 @@ public class FirebaseDatabase {
     return db;
   }
 
-  private FirebaseDatabase(FirebaseApp app, RepoInfo repoInfo, DatabaseConfig config) {
-    this.app = app;
-    this.repoInfo = repoInfo;
-    this.config = config;
+  /**
+   * @return The version for this build of the Firebase Database client
+   */
+  public static String getSdkVersion() {
+    return SDK_VERSION;
   }
 
   /**
@@ -296,13 +304,6 @@ public class FirebaseDatabase {
   public synchronized void setPersistenceCacheSizeBytes(long cacheSizeInBytes) {
     assertUnfrozen("setPersistenceCacheSizeBytes");
     this.config.setPersistenceCacheSizeBytes(cacheSizeInBytes);
-  }
-
-  /**
-   * @return The version for this build of the Firebase Database client
-   */
-  public static String getSdkVersion() {
-    return SDK_VERSION;
   }
 
   private void assertUnfrozen(String methodCalled) {

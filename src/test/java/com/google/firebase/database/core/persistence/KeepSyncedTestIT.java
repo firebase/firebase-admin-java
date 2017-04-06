@@ -1,7 +1,5 @@
 package com.google.firebase.database.core.persistence;
 
-import static org.junit.Assert.assertEquals;
-
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.EventRecord;
 import com.google.firebase.database.MapBuilder;
@@ -9,19 +7,22 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
-import java.util.List;
-import java.util.Map;
 import org.junit.After;
 import org.junit.Test;
 
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+
 public class KeepSyncedTestIT {
+
+  private static long globalKeepSyncedTestCounter = 0;
 
   @After
   public void tearDown() {
     TestHelpers.failOnFirstUncaughtException();
   }
-
-  private static long globalKeepSyncedTestCounter = 0;
 
   private void assertIsKeptSynced(Query query) throws Exception {
     DatabaseReference ref = query.getRef();

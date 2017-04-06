@@ -1,16 +1,5 @@
 package com.google.firebase.database.core.persistence;
 
-import static com.google.firebase.database.TestHelpers.asSet;
-import static com.google.firebase.database.TestHelpers.ck;
-import static com.google.firebase.database.TestHelpers.defaultQueryAt;
-import static com.google.firebase.database.TestHelpers.path;
-import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.utilities.TestClock;
 import com.google.firebase.database.core.view.QueryParams;
@@ -21,8 +10,13 @@ import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.snapshot.PathIndex;
 import com.google.firebase.database.utilities.Clock;
-import java.util.Collections;
 import org.junit.Test;
+
+import java.util.Collections;
+
+import static com.google.firebase.database.TestHelpers.*;
+import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
+import static org.junit.Assert.*;
 
 public class TrackedQueryManagerTest {
 

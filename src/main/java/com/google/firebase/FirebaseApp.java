@@ -1,8 +1,5 @@
 package com.google.firebase;
 
-import static com.google.firebase.internal.Base64Utils.encodeUrlSafeNoPadding;
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.AuthStateListener;
@@ -17,6 +14,7 @@ import com.google.firebase.internal.Objects;
 import com.google.firebase.internal.Preconditions;
 import com.google.firebase.tasks.Continuation;
 import com.google.firebase.tasks.Task;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -31,31 +29,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.google.firebase.internal.Base64Utils.encodeUrlSafeNoPadding;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * The entry point of Firebase SDKs. It holds common configuration and state for Firebase APIs. Most
- * applications don't need to directly interact with FirebaseApp.
- *
- * <p>Firebase APIs use the default FirebaseApp by default, unless a different one is explicitly
- * passed to the API via FirebaseFoo.getInstance(firebaseApp).
- *
- * <p>{@link FirebaseApp#initializeApp(FirebaseOptions)} initializes the default app instance. This
- * method should be invoked at startup.
+ * applications don't need to directly interact with FirebaseApp. * <p>Firebase APIs use the default
+ * FirebaseApp by default, unless a different one is explicitly passed to the API via
+ * FirebaseFoo.getInstance(firebaseApp). * <p>{@link FirebaseApp#initializeApp(FirebaseOptions)}
+ * initializes the default app instance. This method should be invoked at startup.
  */
 public class FirebaseApp {
-
-  private static final String DEFAULT_APP_NAME = "[DEFAULT]";
-
-  private static final long TOKEN_REFRESH_INTERVAL_MILLIS = TimeUnit.MINUTES.toMillis(55);
-  private static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
-      new TokenRefresher.Factory();
-
-  private static final Object sLock = new Object();
 
   /**
    * A map of (name, FirebaseApp) instances.
    */
   @GuardedBy("sLock")
-  static final Map<String, FirebaseApp> instances = new HashMap<>();
+  private static final Map<String, FirebaseApp> instances = new HashMap<>();
+  private static final String DEFAULT_APP_NAME = "[DEFAULT]";
+  private static final long TOKEN_REFRESH_INTERVAL_MILLIS = TimeUnit.MINUTES.toMillis(55);
+  private static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
+      new TokenRefresher.Factory();
+  private static final Object sLock = new Object();
 
   private final String name;
   private final FirebaseOptions options;
@@ -71,39 +66,12 @@ public class FirebaseApp {
   private final AtomicReference<GetTokenResult> currentToken = new AtomicReference<>();
 
   /**
-   * Returns the unique name of this app.
+   * Default constructor.
    */
-  @NonNull
-  public String getName() {
-    checkNotDeleted();
-    return name;
-  }
-
-  /**
-   * Returns the specified {@link FirebaseOptions}.
-   */
-  @NonNull
-  public FirebaseOptions getOptions() {
-    checkNotDeleted();
-    return options;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (!(o instanceof FirebaseApp)) {
-      return false;
-    }
-    return name.equals(((FirebaseApp) o).getName());
-  }
-
-  @Override
-  public int hashCode() {
-    return name.hashCode();
-  }
-
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this).add("name", name).add("options", options).toString();
+  private FirebaseApp(String name, FirebaseOptions options, TokenRefresher.Factory factory) {
+    this.name = Preconditions.checkNotEmpty(name);
+    this.options = Preconditions.checkNotNull(options);
+    tokenRefresher = Preconditions.checkNotNull(factory).create(this);
   }
 
   /**
@@ -157,8 +125,7 @@ public class FirebaseApp {
   /**
    * Initializes the default {@link FirebaseApp} instance. Same as {@link
    * #initializeApp(FirebaseOptions, String)}, but it uses {@link #DEFAULT_APP_NAME} as name.
-   *
-   * <p>The creation of the default instance is automatically triggered at app startup time, if
+   * * <p>The creation of the default instance is automatically triggered at app startup time, if
    * Firebase configuration values are available from resources - populated from
    * google-services.json.
    */
@@ -171,7 +138,7 @@ public class FirebaseApp {
    *
    * @param options represents the global {@link FirebaseOptions}
    * @param name unique name for the app. It is an error to initialize an app with an already
-   *     existing name. Starting and ending whitespace characters in the name are ignored (trimmed).
+   * existing name. Starting and ending whitespace characters in the name are ignored (trimmed).
    * @return an instance of {@link FirebaseApp}
    * @throws IllegalStateException if an app with the same name has already been initialized.
    */
@@ -180,7 +147,7 @@ public class FirebaseApp {
   }
 
   static FirebaseApp initializeApp(FirebaseOptions options, String name,
-      TokenRefresher.Factory tokenRefresherFactory) {
+                                   TokenRefresher.Factory tokenRefresherFactory) {
     FirebaseAppStore appStore = FirebaseAppStore.initialize();
     String normalizedName = normalize(name);
     final FirebaseApp firebaseApp;
@@ -198,13 +165,87 @@ public class FirebaseApp {
     return firebaseApp;
   }
 
+  @VisibleForTesting
+  static void clearInstancesForTest() {
+    // TODO(arondeak): also delete, once functionality is implemented.
+    synchronized (sLock) {
+      instances.clear();
+    }
+  }
+
+  /**
+   * Returns persistence key. Exists to support getting {@link FirebaseApp} persistence key after
+   * the app has been deleted.
+   */
+  static String getPersistenceKey(String name, FirebaseOptions options) {
+    return encodeUrlSafeNoPadding(name.getBytes(UTF_8));
+  }
+
+  private static List<String> getAllAppNames() {
+    Set<String> allAppNames = new HashSet<>();
+    synchronized (sLock) {
+      for (FirebaseApp app : instances.values()) {
+        allAppNames.add(app.getName());
+      }
+      FirebaseAppStore appStore = FirebaseAppStore.getInstance();
+      if (appStore != null) {
+        allAppNames.addAll(appStore.getAllPersistedAppNames());
+      }
+    }
+    List<String> sortedNameList = new ArrayList<>(allAppNames);
+    Collections.sort(sortedNameList);
+    return sortedNameList;
+  }
+
+  /**
+   * Normalizes the app name.
+   */
+  private static String normalize(@NonNull String name) {
+    return name.trim();
+  }
+
+  /**
+   * Returns the unique name of this app.
+   */
+  @NonNull
+  public String getName() {
+    checkNotDeleted();
+    return name;
+  }
+
+  /**
+   * Returns the specified {@link FirebaseOptions}.
+   */
+  @NonNull
+  public FirebaseOptions getOptions() {
+    checkNotDeleted();
+    return options;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof FirebaseApp)) {
+      return false;
+    }
+    return name.equals(((FirebaseApp) o).getName());
+  }
+
+  @Override
+  public int hashCode() {
+    return name.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this).add("name", name)
+        .add("options", options).toString();
+  }
+
   /**
    * Deletes the {@link FirebaseApp} and all its data. All calls to this {@link FirebaseApp}
    * instance will throw once it has been called.
    *
    * <p>A no-op if delete was called before.
-   *
-   * @hide
    */
   void delete() {
     boolean valueChanged = deleted.compareAndSet(false /* expected */, true);
@@ -225,15 +266,6 @@ public class FirebaseApp {
     notifyOnAppDeleted();
   }
 
-  /**
-   * Default constructor.
-   */
-  private FirebaseApp(String name, FirebaseOptions options, TokenRefresher.Factory factory) {
-    this.name = Preconditions.checkNotEmpty(name);
-    this.options = Preconditions.checkNotNull(options);
-    tokenRefresher = Preconditions.checkNotNull(factory).create(this);
-  }
-
   private void checkNotDeleted() {
     Preconditions.checkState(!deleted.get(), "FirebaseApp was deleted");
   }
@@ -242,7 +274,7 @@ public class FirebaseApp {
    * Internal-only method to fetch a valid Service Account OAuth2 Token.
    *
    * @param forceRefresh force refreshes the token. Should only be set to <code>true</code> if the
-   *     token is invalidated out of band.
+   * token is invalidated out of band.
    * @return a {@link Task}
    */
   Task<GetTokenResult> getToken(boolean forceRefresh) {
@@ -337,45 +369,6 @@ public class FirebaseApp {
     }
   }
 
-  @VisibleForTesting
-  static void clearInstancesForTest() {
-    // TODO(arondeak): also delete, once functionality is implemented.
-    synchronized (sLock) {
-      instances.clear();
-    }
-  }
-
-  /**
-   * Returns persistence key. Exists to support getting {@link FirebaseApp} persistence key after
-   * the app has been deleted.
-   */
-  static String getPersistenceKey(String name, FirebaseOptions options) {
-    return encodeUrlSafeNoPadding(name.getBytes(UTF_8));
-  }
-
-  private static List<String> getAllAppNames() {
-    Set<String> allAppNames = new HashSet<>();
-    synchronized (sLock) {
-      for (FirebaseApp app : instances.values()) {
-        allAppNames.add(app.getName());
-      }
-      FirebaseAppStore appStore = FirebaseAppStore.getInstance();
-      if (appStore != null) {
-        allAppNames.addAll(appStore.getAllPersistedAppNames());
-      }
-    }
-    List<String> sortedNameList = new ArrayList<>(allAppNames);
-    Collections.sort(sortedNameList);
-    return sortedNameList;
-  }
-
-  /**
-   * Normalizes the app name.
-   */
-  private static String normalize(@NonNull String name) {
-    return name.trim();
-  }
-
   static class TokenRefresher {
 
     private final FirebaseApp firebaseApp;
@@ -389,7 +382,7 @@ public class FirebaseApp {
      * Schedule a forced token refresh to be executed after a specified duration.
      *
      * @param delayMillis Duration in milliseconds, after which the token should be forcibly
-     *     refreshed.
+     * refreshed.
      */
     final synchronized void scheduleRefresh(long delayMillis) {
       cancelPrevious();

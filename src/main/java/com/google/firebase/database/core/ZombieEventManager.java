@@ -2,6 +2,7 @@ package com.google.firebase.database.core;
 
 import com.google.firebase.database.annotations.NotNull;
 import com.google.firebase.database.core.view.QuerySpec;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,6 +16,7 @@ import java.util.List;
  */
 public class ZombieEventManager implements EventRegistrationZombieListener {
 
+  private static ZombieEventManager defaultInstance = new ZombieEventManager();
   // This hashmap stores the original eventregistrations sent to the repo.
   // These are the registration instances that will get called with update events.
   // Since EventRegistration overrides equals and hashcode, we create temporary instances
@@ -22,8 +24,6 @@ public class ZombieEventManager implements EventRegistrationZombieListener {
   // Package private for testing purposes only
   final HashMap<EventRegistration, List<EventRegistration>> globalEventRegistrations =
       new HashMap<>();
-
-  private static ZombieEventManager defaultInstance = new ZombieEventManager();
 
   private ZombieEventManager() {
   }

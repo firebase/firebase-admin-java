@@ -20,6 +20,11 @@ import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -29,10 +34,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
 
 public class SyncPointTest {
 
@@ -60,128 +61,6 @@ public class SyncPointTest {
         this.listens.remove(query);
       }
     };
-  }
-
-  private static class TestEvent extends DataEvent {
-
-    private final EventType eventType;
-    private final DataSnapshot snapshot;
-    private final Object eventRegistration;
-
-    public TestEvent(
-        EventType eventType, DataSnapshot snapshot, String prevName, Object eventRegistration) {
-      super(eventType, null, snapshot, prevName);
-      this.eventType = eventType;
-      this.snapshot = snapshot;
-      this.eventRegistration = eventRegistration;
-    }
-
-    private static boolean equalsOrNull(Object one, Object two) {
-      if (one == null) {
-        return two == null;
-      } else {
-        return one.equals(two);
-      }
-    }
-
-    public static boolean eventsEqual(TestEvent one, TestEvent other) {
-      if (!one.getPath().equals(other.getPath())) {
-        return false;
-      }
-      if (!equalsOrNull(one.getSnapshot().getKey(), other.getSnapshot().getKey())) {
-        return false;
-      }
-      if (!equalsOrNull(one.getSnapshot().getPriority(), other.getSnapshot().getPriority())) {
-        return false;
-      }
-      if (!equalsOrNull(one.getSnapshot().getValue(), other.getSnapshot().getValue())) {
-        return false;
-      }
-      if (one.getPreviousName() == null) {
-        return other.getPreviousName() == null;
-      } else {
-        return one.getPreviousName().equals(other.getPreviousName());
-      }
-    }
-
-    public static void assertEquals(TestEvent expectedEvent, TestEvent actualEvent) {
-      Assert.assertEquals(expectedEvent.getPreviousName(), actualEvent.getPreviousName());
-      Assert.assertEquals(expectedEvent.getPath(), actualEvent.getPath());
-      Assert.assertEquals(
-          expectedEvent.getSnapshot().getValue(true), actualEvent.getSnapshot().getValue(true));
-    }
-
-    @Override
-    public Path getPath() {
-      Path path = this.snapshot.getRef().getPath();
-      if (this.eventType == EventType.VALUE) {
-        return path;
-      } else {
-        return path.getParent();
-      }
-    }
-
-    @Override
-    public void fire() {
-      throw new UnsupportedOperationException("Event doesn't support event runner for TestEvents");
-    }
-  }
-
-  private static class TestEventRegistration extends EventRegistration {
-
-    private QuerySpec query;
-
-    public TestEventRegistration(QuerySpec query) {
-      this.query = query;
-    }
-
-    @Override
-    public boolean respondsTo(Event.EventType eventType) {
-      return true;
-    }
-
-    @Override
-    public DataEvent createEvent(Change change, QuerySpec query) {
-      DataSnapshot snapshot;
-      if (change.getEventType() == Event.EventType.VALUE) {
-        snapshot =
-            InternalHelpers.createDataSnapshot(
-                InternalHelpers.createReference(null, query.getPath()), change.getIndexedNode());
-      } else {
-        snapshot =
-            InternalHelpers.createDataSnapshot(
-                InternalHelpers.createReference(null, query.getPath().child(change.getChildKey())),
-                change.getIndexedNode());
-      }
-      String prevName = change.getPrevName() != null ? change.getPrevName().asString() : null;
-      return new TestEvent(change.getEventType(), snapshot, prevName, this);
-    }
-
-    @Override
-    public void fireEvent(DataEvent dataEvent) {
-      throw new UnsupportedOperationException("Can't raise test events!");
-    }
-
-    @Override
-    public void fireCancelEvent(DatabaseError error) {
-      throw new UnsupportedOperationException("Can't raise test events!");
-    }
-
-    @Override
-    public EventRegistration clone(QuerySpec newQuery) {
-      return new TestEventRegistration(newQuery);
-    }
-
-    @Override
-    public boolean isSameListener(EventRegistration other) {
-      return other == this;
-    }
-
-    @NotNull
-    @Override
-    public QuerySpec getQuerySpec() {
-      return query;
-    }
   }
 
   private static EventRegistration getTestEventRegistration(QuerySpec query) {
@@ -1083,5 +962,127 @@ public class SyncPointTest {
   @Test
   public void deepUpdateRaisesAllEvents() {
     runOne("Deep update raises all events");
+  }
+
+  private static class TestEvent extends DataEvent {
+
+    private final EventType eventType;
+    private final DataSnapshot snapshot;
+    private final Object eventRegistration;
+
+    public TestEvent(
+        EventType eventType, DataSnapshot snapshot, String prevName, Object eventRegistration) {
+      super(eventType, null, snapshot, prevName);
+      this.eventType = eventType;
+      this.snapshot = snapshot;
+      this.eventRegistration = eventRegistration;
+    }
+
+    private static boolean equalsOrNull(Object one, Object two) {
+      if (one == null) {
+        return two == null;
+      } else {
+        return one.equals(two);
+      }
+    }
+
+    public static boolean eventsEqual(TestEvent one, TestEvent other) {
+      if (!one.getPath().equals(other.getPath())) {
+        return false;
+      }
+      if (!equalsOrNull(one.getSnapshot().getKey(), other.getSnapshot().getKey())) {
+        return false;
+      }
+      if (!equalsOrNull(one.getSnapshot().getPriority(), other.getSnapshot().getPriority())) {
+        return false;
+      }
+      if (!equalsOrNull(one.getSnapshot().getValue(), other.getSnapshot().getValue())) {
+        return false;
+      }
+      if (one.getPreviousName() == null) {
+        return other.getPreviousName() == null;
+      } else {
+        return one.getPreviousName().equals(other.getPreviousName());
+      }
+    }
+
+    public static void assertEquals(TestEvent expectedEvent, TestEvent actualEvent) {
+      Assert.assertEquals(expectedEvent.getPreviousName(), actualEvent.getPreviousName());
+      Assert.assertEquals(expectedEvent.getPath(), actualEvent.getPath());
+      Assert.assertEquals(
+          expectedEvent.getSnapshot().getValue(true), actualEvent.getSnapshot().getValue(true));
+    }
+
+    @Override
+    public Path getPath() {
+      Path path = this.snapshot.getRef().getPath();
+      if (this.eventType == EventType.VALUE) {
+        return path;
+      } else {
+        return path.getParent();
+      }
+    }
+
+    @Override
+    public void fire() {
+      throw new UnsupportedOperationException("Event doesn't support event runner for TestEvents");
+    }
+  }
+
+  private static class TestEventRegistration extends EventRegistration {
+
+    private QuerySpec query;
+
+    public TestEventRegistration(QuerySpec query) {
+      this.query = query;
+    }
+
+    @Override
+    public boolean respondsTo(Event.EventType eventType) {
+      return true;
+    }
+
+    @Override
+    public DataEvent createEvent(Change change, QuerySpec query) {
+      DataSnapshot snapshot;
+      if (change.getEventType() == Event.EventType.VALUE) {
+        snapshot =
+            InternalHelpers.createDataSnapshot(
+                InternalHelpers.createReference(null, query.getPath()), change.getIndexedNode());
+      } else {
+        snapshot =
+            InternalHelpers.createDataSnapshot(
+                InternalHelpers.createReference(null, query.getPath().child(change.getChildKey())),
+                change.getIndexedNode());
+      }
+      String prevName = change.getPrevName() != null ? change.getPrevName().asString() : null;
+      return new TestEvent(change.getEventType(), snapshot, prevName, this);
+    }
+
+    @Override
+    public void fireEvent(DataEvent dataEvent) {
+      throw new UnsupportedOperationException("Can't raise test events!");
+    }
+
+    @Override
+    public void fireCancelEvent(DatabaseError error) {
+      throw new UnsupportedOperationException("Can't raise test events!");
+    }
+
+    @Override
+    public EventRegistration clone(QuerySpec newQuery) {
+      return new TestEventRegistration(newQuery);
+    }
+
+    @Override
+    public boolean isSameListener(EventRegistration other) {
+      return other == this;
+    }
+
+    @NotNull
+    @Override
+    public QuerySpec getQuerySpec() {
+      return query;
+    }
   }
 }

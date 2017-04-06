@@ -6,6 +6,7 @@ import com.google.firebase.database.core.view.Change;
 import com.google.firebase.database.core.view.DataEvent;
 import com.google.firebase.database.core.view.Event;
 import com.google.firebase.database.core.view.QuerySpec;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class EventRegistration {

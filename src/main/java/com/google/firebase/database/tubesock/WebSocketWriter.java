@@ -15,13 +15,13 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 class WebSocketWriter {
 
-  private BlockingQueue<ByteBuffer> pendingBuffers;
   private final Random random = new Random();
+  private final Thread innerThread;
+  private BlockingQueue<ByteBuffer> pendingBuffers;
   private volatile boolean stop = false;
   private boolean closeSent = false;
   private WebSocket websocket;
   private WritableByteChannel channel;
-  private final Thread innerThread;
 
   WebSocketWriter(WebSocket websocket, String threadBaseName, int clientId) {
     innerThread = WebSocket.getThreadFactory().newThread(new Runnable() {

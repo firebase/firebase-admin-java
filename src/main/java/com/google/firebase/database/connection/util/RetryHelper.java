@@ -2,6 +2,7 @@ package com.google.firebase.database.connection.util;
 
 import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.logging.Logger;
+
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -111,11 +112,11 @@ public class RetryHelper {
   public static class Builder {
 
     private final ScheduledExecutorService service;
+    private final LogWrapper logger;
     private long minRetryDelayAfterFailure = 1000;
     private double jitterFactor = 0.5;
     private long retryMaxDelay = 30 * 1000;
     private double retryExponent = 1.3;
-    private final LogWrapper logger;
 
     public Builder(ScheduledExecutorService service, Logger logger, String tag) {
       this.service = service;

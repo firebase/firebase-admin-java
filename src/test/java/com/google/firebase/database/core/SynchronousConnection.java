@@ -1,8 +1,5 @@
 package com.google.firebase.database.core;
 
-import static com.google.firebase.database.TestHelpers.newFrozenTestConfig;
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
-
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.connection.HostInfo;
 import com.google.firebase.database.connection.ListenHashProvider;
@@ -17,11 +14,15 @@ import com.google.firebase.database.utilities.DefaultRunLoop;
 import com.google.firebase.database.utilities.Pair;
 import com.google.firebase.database.utilities.ParsedUrl;
 import com.google.firebase.database.utilities.Utilities;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
+
+import static com.google.firebase.database.TestHelpers.newFrozenTestConfig;
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
 
 public class SynchronousConnection implements PersistentConnection.Delegate {
 

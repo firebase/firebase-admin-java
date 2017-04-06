@@ -4,136 +4,159 @@ import com.google.firebase.internal.GuardedBy;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.Preconditions;
+
 import java.util.concurrent.Executor;
 
 /**
  * Default implementation of {@link Task}.
  */
-final class TaskImpl<TResult> extends Task<TResult> {
+final class TaskImpl<T> extends Task<T> {
 
-  private final Object mLock = new Object();
-  private final TaskCompletionListenerQueue<TResult> mListenerQueue =
+  private final Object lock = new Object();
+  private final TaskCompletionListenerQueue<T> listenerQueue =
       new TaskCompletionListenerQueue<>();
 
-  @GuardedBy("mLock")
-  private boolean mComplete;
+  @GuardedBy("lock")
+  private boolean complete;
 
-  @GuardedBy("mLock")
-  private TResult mResult;
+  @GuardedBy("lock")
+  private T result;
 
-  @GuardedBy("mLock")
-  private Exception mException;
+  @GuardedBy("lock")
+  private Exception exception;
 
   @Override
   public boolean isComplete() {
-    synchronized (mLock) {
-      return mComplete;
+    synchronized (lock) {
+      return complete;
     }
   }
 
   @Override
   public boolean isSuccessful() {
-    synchronized (mLock) {
-      return mComplete && mException == null;
+    synchronized (lock) {
+      return complete && exception == null;
     }
   }
 
   @Override
-  public TResult getResult() {
-    synchronized (mLock) {
+  public T getResult() {
+    synchronized (lock) {
       checkCompleteLocked();
 
-      if (mException != null) {
-        throw new RuntimeExecutionException(mException);
+      if (exception != null) {
+        throw new RuntimeExecutionException(exception);
       }
 
-      return mResult;
+      return result;
     }
   }
 
+  public void setResult(T result) {
+    synchronized (lock) {
+      checkNotCompleteLocked();
+      complete = true;
+      this.result = result;
+    }
+    // Intentionally outside the lock.
+    listenerQueue.flush(this);
+  }
+
   @Override
-  public <X extends Throwable> TResult getResult(@NonNull Class<X> exceptionType) throws X {
-    synchronized (mLock) {
+  public <X extends Throwable> T getResult(@NonNull Class<X> exceptionType) throws X {
+    synchronized (lock) {
       checkCompleteLocked();
 
-      if (exceptionType.isInstance(mException)) {
-        throw exceptionType.cast(mException);
+      if (exceptionType.isInstance(exception)) {
+        throw exceptionType.cast(exception);
       }
-      if (mException != null) {
-        throw new RuntimeExecutionException(mException);
+      if (exception != null) {
+        throw new RuntimeExecutionException(exception);
       }
 
-      return mResult;
+      return result;
     }
   }
 
   @Nullable
   @Override
   public Exception getException() {
-    synchronized (mLock) {
-      return mException;
+    synchronized (lock) {
+      return exception;
     }
+  }
+
+  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+  public void setException(@NonNull Exception e) {
+    Preconditions.checkNotNull(e, "Exception must not be null");
+    synchronized (lock) {
+      checkNotCompleteLocked();
+      complete = true;
+      exception = e;
+    }
+    // Intentionally outside the lock.
+    listenerQueue.flush(this);
   }
 
   @NonNull
   @Override
-  public Task<TResult> addOnSuccessListener(@NonNull OnSuccessListener<? super TResult> listener) {
+  public Task<T> addOnSuccessListener(@NonNull OnSuccessListener<? super T> listener) {
     return addOnSuccessListener(TaskExecutors.DEFAULT_THREAD_POOL, listener);
   }
 
   @NonNull
   @Override
-  public Task<TResult> addOnSuccessListener(
-      @NonNull Executor executor, @NonNull OnSuccessListener<? super TResult> listener) {
-    mListenerQueue.add(new OnSuccessCompletionListener<>(executor, listener));
+  public Task<T> addOnSuccessListener(
+      @NonNull Executor executor, @NonNull OnSuccessListener<? super T> listener) {
+    listenerQueue.add(new OnSuccessCompletionListener<>(executor, listener));
     flushIfComplete();
     return this;
   }
 
   @NonNull
   @Override
-  public Task<TResult> addOnFailureListener(@NonNull OnFailureListener listener) {
+  public Task<T> addOnFailureListener(@NonNull OnFailureListener listener) {
     return addOnFailureListener(TaskExecutors.DEFAULT_THREAD_POOL, listener);
   }
 
   @NonNull
   @Override
-  public Task<TResult> addOnFailureListener(
+  public Task<T> addOnFailureListener(
       @NonNull Executor executor, @NonNull OnFailureListener listener) {
-    mListenerQueue.add(new OnFailureCompletionListener<TResult>(executor, listener));
+    listenerQueue.add(new OnFailureCompletionListener<T>(executor, listener));
     flushIfComplete();
     return this;
   }
 
   @NonNull
   @Override
-  public Task<TResult> addOnCompleteListener(@NonNull OnCompleteListener<TResult> listener) {
+  public Task<T> addOnCompleteListener(@NonNull OnCompleteListener<T> listener) {
     return addOnCompleteListener(TaskExecutors.DEFAULT_THREAD_POOL, listener);
   }
 
   @NonNull
   @Override
-  public Task<TResult> addOnCompleteListener(
-      @NonNull Executor executor, @NonNull OnCompleteListener<TResult> listener) {
-    mListenerQueue.add(new OnCompleteCompletionListener<>(executor, listener));
+  public Task<T> addOnCompleteListener(
+      @NonNull Executor executor, @NonNull OnCompleteListener<T> listener) {
+    listenerQueue.add(new OnCompleteCompletionListener<>(executor, listener));
     flushIfComplete();
     return this;
   }
 
   @NonNull
   @Override
-  public <TContinuationResult> Task<TContinuationResult> continueWith(
-      @NonNull Continuation<TResult, TContinuationResult> continuation) {
+  public <R> Task<R> continueWith(
+      @NonNull Continuation<T, R> continuation) {
     return continueWith(TaskExecutors.DEFAULT_THREAD_POOL, continuation);
   }
 
   @NonNull
   @Override
-  public <TContinuationResult> Task<TContinuationResult> continueWith(
+  public <R> Task<R> continueWith(
       @NonNull Executor executor,
-      @NonNull Continuation<TResult, TContinuationResult> continuation) {
-    TaskImpl<TContinuationResult> continuationTask = new TaskImpl<>();
-    mListenerQueue.add(
+      @NonNull Continuation<T, R> continuation) {
+    TaskImpl<R> continuationTask = new TaskImpl<>();
+    listenerQueue.add(
         new ContinueWithCompletionListener<>(executor, continuation, continuationTask));
     flushIfComplete();
     return continuationTask;
@@ -141,90 +164,68 @@ final class TaskImpl<TResult> extends Task<TResult> {
 
   @NonNull
   @Override
-  public <TContinuationResult> Task<TContinuationResult> continueWithTask(
-      @NonNull Continuation<TResult, Task<TContinuationResult>> continuation) {
+  public <R> Task<R> continueWithTask(
+      @NonNull Continuation<T, Task<R>> continuation) {
     return continueWithTask(TaskExecutors.DEFAULT_THREAD_POOL, continuation);
   }
 
   @NonNull
   @Override
-  public <TContinuationResult> Task<TContinuationResult> continueWithTask(
+  public <R> Task<R> continueWithTask(
       @NonNull Executor executor,
-      @NonNull Continuation<TResult, Task<TContinuationResult>> continuation) {
-    TaskImpl<TContinuationResult> continuationTask = new TaskImpl<>();
-    mListenerQueue.add(
+      @NonNull Continuation<T, Task<R>> continuation) {
+    TaskImpl<R> continuationTask = new TaskImpl<>();
+    listenerQueue.add(
         new ContinueWithTaskCompletionListener<>(executor, continuation, continuationTask));
     flushIfComplete();
     return continuationTask;
   }
 
-  public void setResult(TResult result) {
-    synchronized (mLock) {
-      checkNotCompleteLocked();
-      mComplete = true;
-      mResult = result;
-    }
-    // Intentionally outside the lock.
-    mListenerQueue.flush(this);
-  }
-
-  public boolean trySetResult(TResult result) {
-    synchronized (mLock) {
-      if (mComplete) {
+  public boolean trySetResult(T result) {
+    synchronized (lock) {
+      if (complete) {
         return false;
       }
-      mComplete = true;
-      mResult = result;
+      complete = true;
+      this.result = result;
     }
     // Intentionally outside the lock.
-    mListenerQueue.flush(this);
+    listenerQueue.flush(this);
     return true;
-  }
-
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-  public void setException(@NonNull Exception e) {
-    Preconditions.checkNotNull(e, "Exception must not be null");
-    synchronized (mLock) {
-      checkNotCompleteLocked();
-      mComplete = true;
-      mException = e;
-    }
-    // Intentionally outside the lock.
-    mListenerQueue.flush(this);
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   public boolean trySetException(@NonNull Exception e) {
     Preconditions.checkNotNull(e, "Exception must not be null");
-    synchronized (mLock) {
-      if (mComplete) {
+    synchronized (lock) {
+      if (complete) {
         return false;
       }
-      mComplete = true;
-      mException = e;
+      complete = true;
+      exception = e;
     }
     // Intentionally outside the lock.
-    mListenerQueue.flush(this);
+    listenerQueue.flush(this);
     return true;
   }
 
-  @GuardedBy("mLock")
+  @GuardedBy("lock")
   private void checkCompleteLocked() {
-    Preconditions.checkState(mComplete, "Task is not yet complete");
+    Preconditions.checkState(complete, "Task is not yet complete");
   }
 
-  @GuardedBy("mLock")
+  @GuardedBy("lock")
   private void checkNotCompleteLocked() {
-    Preconditions.checkState(!mComplete, "Task is already complete");
+    Preconditions.checkState(!complete, "Task is already complete");
   }
 
   private void flushIfComplete() {
-    synchronized (mLock) {
-      if (!mComplete) {
+    synchronized (lock) {
+      if (!complete) {
         return;
       }
     }
     // Intentionally outside the lock.
-    mListenerQueue.flush(this);
+    listenerQueue.flush(this);
   }
 }

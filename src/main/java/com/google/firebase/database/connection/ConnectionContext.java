@@ -1,6 +1,7 @@
 package com.google.firebase.database.connection;
 
 import com.google.firebase.database.logging.Logger;
+
 import java.util.concurrent.ScheduledExecutorService;
 
 public class ConnectionContext {
@@ -13,11 +14,11 @@ public class ConnectionContext {
   private final String userAgent;
 
   public ConnectionContext(Logger logger,
-      ConnectionAuthTokenProvider authTokenProvider,
-      ScheduledExecutorService executorService,
-      boolean persistenceEnabled,
-      String clientSdkVersion,
-      String userAgent) {
+                           ConnectionAuthTokenProvider authTokenProvider,
+                           ScheduledExecutorService executorService,
+                           boolean persistenceEnabled,
+                           String clientSdkVersion,
+                           String userAgent) {
     this.logger = logger;
     this.authTokenProvider = authTokenProvider;
     this.executorService = executorService;

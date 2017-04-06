@@ -4,6 +4,7 @@ import com.google.firebase.database.collection.ImmutableSortedMap;
 import com.google.firebase.database.collection.StandardComparator;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.snapshot.ChildKey;
+
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,25 +16,12 @@ import java.util.Map;
 @SuppressWarnings("rawtypes")
 public class ImmutableTree<T> implements Iterable<Map.Entry<Path, T>> {
 
-  private final T value;
-  private final ImmutableSortedMap<ChildKey, ImmutableTree<T>> children;
-
-  /** */
-  public interface TreeVisitor<T, R> {
-
-    R onNodeValue(Path relativePath, T value, R accum);
-  }
-
   private static final ImmutableSortedMap EMPTY_CHILDREN =
       ImmutableSortedMap.Builder.emptyMap(StandardComparator.getComparator(ChildKey.class));
-
   @SuppressWarnings("unchecked")
   private static final ImmutableTree EMPTY = new ImmutableTree<>(null, EMPTY_CHILDREN);
-
-  @SuppressWarnings("unchecked")
-  public static <V> ImmutableTree<V> emptyInstance() {
-    return EMPTY;
-  }
+  private final T value;
+  private final ImmutableSortedMap<ChildKey, ImmutableTree<T>> children;
 
   public ImmutableTree(T value, ImmutableSortedMap<ChildKey, ImmutableTree<T>> children) {
     this.value = value;
@@ -43,6 +31,11 @@ public class ImmutableTree<T> implements Iterable<Map.Entry<Path, T>> {
   @SuppressWarnings("unchecked")
   public ImmutableTree(T value) {
     this(value, EMPTY_CHILDREN);
+  }
+
+  @SuppressWarnings("unchecked")
+  public static <V> ImmutableTree<V> emptyInstance() {
+    return EMPTY;
   }
 
   public T getValue() {
@@ -339,5 +332,11 @@ public class ImmutableTree<T> implements Iterable<Map.Entry<Path, T>> {
     int result = value != null ? value.hashCode() : 0;
     result = 31 * result + (children != null ? children.hashCode() : 0);
     return result;
+  }
+
+  /** */
+  public interface TreeVisitor<T, R> {
+
+    R onNodeValue(Path relativePath, T value, R accum);
   }
 }

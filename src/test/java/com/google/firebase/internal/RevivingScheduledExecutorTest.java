@@ -1,5 +1,8 @@
 package com.google.firebase.internal;
 
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.HashSet;
 import java.util.Set;
@@ -13,27 +16,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.Assert;
-import org.junit.Test;
 
 public class RevivingScheduledExecutorTest {
-
-  private static class ExceptionCatchingThreadFactory implements ThreadFactory {
-    @Override
-    public Thread newThread(Runnable r) {
-      if (r == null) {
-        return null;
-      }
-      Thread thread = Executors.defaultThreadFactory().newThread(r);
-      thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-        @Override
-        public void uncaughtException(Thread t, Throwable e) {
-          // ignore -- to prevent the test output from getting cluttered
-        }
-      });
-      return thread;
-    }
-  }
 
   private static final ThreadFactory THREAD_FACTORY = new ExceptionCatchingThreadFactory();
 
@@ -119,7 +103,7 @@ public class RevivingScheduledExecutorTest {
             100);
 
     @SuppressWarnings("unused")
-        Future<?> possiblyIgnoredError =
+    Future<?> possiblyIgnoredError =
         executor.schedule(
             new Runnable() {
               @Override
@@ -206,7 +190,7 @@ public class RevivingScheduledExecutorTest {
         };
 
     @SuppressWarnings("unused")
-        Future<?> possiblyIgnoredError =
+    Future<?> possiblyIgnoredError =
         executor.submit(
             new Runnable() {
               @Override
@@ -222,6 +206,23 @@ public class RevivingScheduledExecutorTest {
       Assert.assertEquals(0, afterSemaphore.availablePermits());
     } finally {
       executor.shutdownNow();
+    }
+  }
+
+  private static class ExceptionCatchingThreadFactory implements ThreadFactory {
+    @Override
+    public Thread newThread(Runnable r) {
+      if (r == null) {
+        return null;
+      }
+      Thread thread = Executors.defaultThreadFactory().newThread(r);
+      thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+          // ignore -- to prevent the test output from getting cluttered
+        }
+      });
+      return thread;
     }
   }
 }

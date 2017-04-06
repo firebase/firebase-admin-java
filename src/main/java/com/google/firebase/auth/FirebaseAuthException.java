@@ -16,11 +16,11 @@ import com.google.firebase.internal.Preconditions;
  */
 public class FirebaseAuthException extends FirebaseException {
 
-  private final String mErrorCode;
+  private final String errorCode;
 
   public FirebaseAuthException(@NonNull String errorCode, @NonNull String detailMessage) {
     super(detailMessage);
-    mErrorCode = Preconditions.checkNotEmpty(errorCode);
+    this.errorCode = Preconditions.checkNotEmpty(errorCode);
   }
 
   /**
@@ -28,6 +28,6 @@ public class FirebaseAuthException extends FirebaseException {
    */
   @NonNull
   public String getErrorCode() {
-    return mErrorCode;
+    return errorCode;
   }
 }

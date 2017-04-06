@@ -1,14 +1,9 @@
 package com.google.firebase.database.collection;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNull;
-import static junit.framework.Assert.assertTrue;
-import static net.java.quickcheck.generator.CombinedGeneratorsIterables.someMaps;
-import static net.java.quickcheck.generator.PrimitiveGenerators.booleans;
-import static net.java.quickcheck.generator.PrimitiveGenerators.fixedValues;
-import static net.java.quickcheck.generator.PrimitiveGenerators.integers;
-
 import com.google.firebase.database.utilities.Utilities;
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -16,8 +11,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.junit.Assert;
-import org.junit.Test;
+
+import static junit.framework.Assert.*;
+import static net.java.quickcheck.generator.CombinedGeneratorsIterables.someMaps;
+import static net.java.quickcheck.generator.PrimitiveGenerators.*;
 
 public class RBTreeSortedMapTest {
 

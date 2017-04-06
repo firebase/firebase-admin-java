@@ -18,28 +18,36 @@ import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.KeyIndex;
 import com.google.firebase.database.snapshot.NamedNode;
 import com.google.firebase.database.snapshot.Node;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class ViewProcessor {
 
+  /**
+   * An implementation of CompleteChildSource that never returns any additional children
+   */
+  private static final NodeFilter.CompleteChildSource NO_COMPLETE_SOURCE =
+      new NodeFilter.CompleteChildSource() {
+        @Override
+        public Node getCompleteChild(ChildKey childKey) {
+          return null;
+        }
+
+        @Override
+        public NamedNode getChildAfterChild(Index index, NamedNode child, boolean reverse) {
+          return null;
+        }
+      };
   private final NodeFilter filter;
 
   public ViewProcessor(NodeFilter filter) {
     this.filter = filter;
   }
 
-  /** */
-  public static class ProcessorResult {
-
-    public final ViewCache viewCache;
-    public final List<Change> changes;
-
-    public ProcessorResult(ViewCache viewCache, List<Change> changes) {
-      this.viewCache = viewCache;
-      this.changes = changes;
-    }
+  private static boolean cacheHasChild(ViewCache viewCache, ChildKey childKey) {
+    return viewCache.getEventCache().isCompleteForChild(childKey);
   }
 
   public ProcessorResult applyOperation(
@@ -385,10 +393,6 @@ public class ViewProcessor {
     return newViewCache;
   }
 
-  private static boolean cacheHasChild(ViewCache viewCache, ChildKey childKey) {
-    return viewCache.getEventCache().isCompleteForChild(childKey);
-  }
-
   private ViewCache applyUserMerge(
       final ViewCache viewCache,
       final Path path,
@@ -645,21 +649,17 @@ public class ViewProcessor {
         newViewCache, path, writesCache, NO_COMPLETE_SOURCE, accumulator);
   }
 
-  /**
-   * An implementation of CompleteChildSource that never returns any additional children
-   */
-  private static final NodeFilter.CompleteChildSource NO_COMPLETE_SOURCE =
-      new NodeFilter.CompleteChildSource() {
-        @Override
-        public Node getCompleteChild(ChildKey childKey) {
-          return null;
-        }
+  /** */
+  public static class ProcessorResult {
 
-        @Override
-        public NamedNode getChildAfterChild(Index index, NamedNode child, boolean reverse) {
-          return null;
-        }
-      };
+    public final ViewCache viewCache;
+    public final List<Change> changes;
+
+    public ProcessorResult(ViewCache viewCache, List<Change> changes) {
+      this.viewCache = viewCache;
+      this.changes = changes;
+    }
+  }
 
   /**
    * An implementation of CompleteChildSource that uses a WriteTree in addition to any other server

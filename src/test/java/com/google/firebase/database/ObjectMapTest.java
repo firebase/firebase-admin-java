@@ -1,97 +1,17 @@
 package com.google.firebase.database;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import com.google.firebase.database.snapshot.EmptyNode;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class ObjectMapTest {
-
-  @ThrowOnExtraProperties
-  private static class Author {
-
-    private String name;
-    private int id;
-
-    private Author() {
-    }
-
-    private Author(String name, int id) {
-      this.name = name;
-      this.id = id;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public int getId() {
-      return id;
-    }
-
-    @Override
-    public String toString() {
-      return "Name: " + name + " id: " + id;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return (o instanceof Author) && ((Author) o).name.equals(name) && ((Author) o).id == id;
-    }
-
-    @Override
-    public int hashCode() {
-      return id << 2 | name.hashCode();
-    }
-  }
-
-  @ThrowOnExtraProperties
-  private static class Message {
-
-    private String text;
-    private Author author;
-
-    private Message() {
-    }
-
-    private Message(String text, Author author) {
-      this.text = text;
-      this.author = author;
-    }
-
-    public String getText() {
-      return text;
-    }
-
-    public Author getAuthor() {
-      return author;
-    }
-
-    @Override
-    public String toString() {
-      return "Message: " + text + " Author: " + author.toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      return (o instanceof Message)
-          && ((Message) o).text.equals(text)
-          && (((((Message) o).author == null) && (author == null))
-          || ((Message) o).author.equals(author));
-    }
-
-    @Override
-    public int hashCode() {
-      return text.hashCode() << 2 | author.hashCode();
-    }
-  }
 
   private MutableData emptyData() {
     return new MutableData(EmptyNode.Empty());
@@ -209,33 +129,6 @@ public class ObjectMapTest {
     DeepEquals.assertEquals(authors, result);
   }
 
-  private static class AuthorMessages {
-
-    private Author author;
-    private List<Message> messages;
-
-    private AuthorMessages() {
-    }
-
-    private AuthorMessages(Author author, List<Message> messages) {
-      this.author = author;
-      this.messages = messages;
-    }
-
-    public Author getAuthor() {
-      return author;
-    }
-
-    public List<Message> getMessages() {
-      return messages;
-    }
-
-    @Override
-    public String toString() {
-      return "Author: " + author + " messages: " + messages;
-    }
-  }
-
   @Test
   public void nestedGenerics() throws IOException {
     MutableData data = emptyData();
@@ -251,28 +144,6 @@ public class ObjectMapTest {
 
     assertEquals(am.getAuthor(), result.getAuthor());
     DeepEquals.assertEquals(am.getMessages(), result.getMessages());
-  }
-
-  private static class Incomplete {
-
-    private int foo;
-    private int bar;
-
-    private Incomplete() {
-    }
-
-    private Incomplete(int foo, int bar) {
-      this.foo = foo;
-      this.bar = bar;
-    }
-
-    public int getFoo() {
-      return foo;
-    }
-
-    int getBar() {
-      return bar;
-    }
   }
 
   @Test
@@ -303,5 +174,133 @@ public class ObjectMapTest {
     data.setValue(3);
     value = data.getValue();
     assertEquals(Long.class, value.getClass());
+  }
+
+  @ThrowOnExtraProperties
+  private static class Author {
+
+    private String name;
+    private int id;
+
+    private Author() {
+    }
+
+    private Author(String name, int id) {
+      this.name = name;
+      this.id = id;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public int getId() {
+      return id;
+    }
+
+    @Override
+    public String toString() {
+      return "Name: " + name + " id: " + id;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return (o instanceof Author) && ((Author) o).name.equals(name) && ((Author) o).id == id;
+    }
+
+    @Override
+    public int hashCode() {
+      return id << 2 | name.hashCode();
+    }
+  }
+
+  @ThrowOnExtraProperties
+  private static class Message {
+
+    private String text;
+    private Author author;
+
+    private Message() {
+    }
+
+    private Message(String text, Author author) {
+      this.text = text;
+      this.author = author;
+    }
+
+    public String getText() {
+      return text;
+    }
+
+    public Author getAuthor() {
+      return author;
+    }
+
+    @Override
+    public String toString() {
+      return "Message: " + text + " Author: " + author.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return (o instanceof Message)
+          && ((Message) o).text.equals(text)
+          && (((((Message) o).author == null) && (author == null))
+          || ((Message) o).author.equals(author));
+    }
+
+    @Override
+    public int hashCode() {
+      return text.hashCode() << 2 | author.hashCode();
+    }
+  }
+
+  private static class AuthorMessages {
+
+    private Author author;
+    private List<Message> messages;
+
+    private AuthorMessages() {
+    }
+
+    private AuthorMessages(Author author, List<Message> messages) {
+      this.author = author;
+      this.messages = messages;
+    }
+
+    public Author getAuthor() {
+      return author;
+    }
+
+    public List<Message> getMessages() {
+      return messages;
+    }
+
+    @Override
+    public String toString() {
+      return "Author: " + author + " messages: " + messages;
+    }
+  }
+
+  private static class Incomplete {
+
+    private int foo;
+    private int bar;
+
+    private Incomplete() {
+    }
+
+    private Incomplete(int foo, int bar) {
+      this.foo = foo;
+      this.bar = bar;
+    }
+
+    public int getFoo() {
+      return foo;
+    }
+
+    int getBar() {
+      return bar;
+    }
   }
 }

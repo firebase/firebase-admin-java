@@ -1,10 +1,11 @@
 package com.google.firebase.database.core;
 
-import static org.junit.Assert.assertEquals;
-
 import com.google.firebase.database.TestConstants;
-import java.net.URI;
 import org.junit.Test;
+
+import java.net.URI;
+
+import static org.junit.Assert.assertEquals;
 
 public class RepoInfoTest {
 

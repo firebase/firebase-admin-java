@@ -15,6 +15,9 @@ public final class Log {
   private static final Level WTF_LEVEL = new Level("WTF", 1100) {
   };
 
+  private Log() {
+  }
+
   /**
    * Logs a message. Log levels correspond as follows:
    * <ul>
@@ -43,8 +46,5 @@ public final class Log {
 
   public static void wtf(String tag, String msg, Throwable thrown) {
     log(WTF_LEVEL, tag, msg, thrown);
-  }
-
-  private Log() {
   }
 }

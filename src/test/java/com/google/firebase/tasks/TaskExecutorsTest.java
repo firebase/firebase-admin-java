@@ -1,9 +1,10 @@
 package com.google.firebase.tasks;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class TaskExecutorsTest {
 

@@ -1,16 +1,5 @@
 package com.google.firebase.database.core.persistence;
 
-import static com.google.firebase.database.TestHelpers.childKeySet;
-import static com.google.firebase.database.TestHelpers.defaultQueryAt;
-import static com.google.firebase.database.TestHelpers.fromSingleQuotedString;
-import static com.google.firebase.database.TestHelpers.newFrozenTestConfig;
-import static com.google.firebase.database.TestHelpers.path;
-import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
-
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -39,6 +28,9 @@ import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.database.snapshot.EmptyNode;
 import com.google.firebase.database.snapshot.Node;
+import org.junit.After;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,8 +40,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
-import org.junit.After;
-import org.junit.Test;
+
+import static com.google.firebase.database.TestHelpers.*;
+import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
+import static junit.framework.Assert.*;
 
 public class PersistenceTestIT {
 
@@ -112,63 +106,6 @@ public class PersistenceTestIT {
   private DatabaseReference refWithConfig(DatabaseConfig ctx, PersistenceManager manager) {
     TestHelpers.setForcedPersistentCache(ctx, manager);
     return TestHelpers.rootWithConfig(ctx);
-  }
-
-  static class TestEventRegistration extends EventRegistration {
-
-    private final QuerySpec query;
-    private final Event.EventType[] types;
-
-    public TestEventRegistration(QuerySpec query, final Event.EventType... types) {
-      this.query = query;
-      this.types = types;
-    }
-
-    @Override
-    public boolean respondsTo(Event.EventType eventType) {
-      return Arrays.asList(types).contains(eventType);
-    }
-
-    @Override
-    public DataEvent createEvent(Change change, QuerySpec query) {
-      // We only need enough data filled for our tests
-      DatabaseReference ref;
-      DataSnapshot snapshot;
-      if (change.getEventType() == Event.EventType.VALUE) {
-        ref = InternalHelpers.createReference(null, query.getPath());
-        snapshot = InternalHelpers.createDataSnapshot(ref, change.getIndexedNode());
-      } else {
-        ref = InternalHelpers.createReference(null, query.getPath().child(change.getChildKey()));
-        snapshot = InternalHelpers.createDataSnapshot(ref, change.getIndexedNode());
-      }
-      return new DataEvent(Event.EventType.VALUE, this, snapshot, null);
-    }
-
-    @Override
-    public void fireEvent(DataEvent dataEvent) {
-      // no-op
-    }
-
-    @Override
-    public void fireCancelEvent(DatabaseError error) {
-      // no-op
-    }
-
-    @Override
-    public EventRegistration clone(QuerySpec newQuery) {
-      return new TestEventRegistration(newQuery, types);
-    }
-
-    @Override
-    public boolean isSameListener(EventRegistration other) {
-      return other == this;
-    }
-
-    @NotNull
-    @Override
-    public QuerySpec getQuerySpec() {
-      return query;
-    }
   }
 
   private EventRegistration testEventRegistration(
@@ -973,5 +910,62 @@ public class PersistenceTestIT {
 
   private void applyUserOverwrite(SyncTree tree, Path path, Node node, long id) {
     tree.applyUserOverwrite(path, node, node, id, /*visible=*/ true, /*persist=*/ true);
+  }
+
+  static class TestEventRegistration extends EventRegistration {
+
+    private final QuerySpec query;
+    private final Event.EventType[] types;
+
+    public TestEventRegistration(QuerySpec query, final Event.EventType... types) {
+      this.query = query;
+      this.types = types;
+    }
+
+    @Override
+    public boolean respondsTo(Event.EventType eventType) {
+      return Arrays.asList(types).contains(eventType);
+    }
+
+    @Override
+    public DataEvent createEvent(Change change, QuerySpec query) {
+      // We only need enough data filled for our tests
+      DatabaseReference ref;
+      DataSnapshot snapshot;
+      if (change.getEventType() == Event.EventType.VALUE) {
+        ref = InternalHelpers.createReference(null, query.getPath());
+        snapshot = InternalHelpers.createDataSnapshot(ref, change.getIndexedNode());
+      } else {
+        ref = InternalHelpers.createReference(null, query.getPath().child(change.getChildKey()));
+        snapshot = InternalHelpers.createDataSnapshot(ref, change.getIndexedNode());
+      }
+      return new DataEvent(Event.EventType.VALUE, this, snapshot, null);
+    }
+
+    @Override
+    public void fireEvent(DataEvent dataEvent) {
+      // no-op
+    }
+
+    @Override
+    public void fireCancelEvent(DatabaseError error) {
+      // no-op
+    }
+
+    @Override
+    public EventRegistration clone(QuerySpec newQuery) {
+      return new TestEventRegistration(newQuery, types);
+    }
+
+    @Override
+    public boolean isSameListener(EventRegistration other) {
+      return other == this;
+    }
+
+    @NotNull
+    @Override
+    public QuerySpec getQuerySpec() {
+      return query;
+    }
   }
 }

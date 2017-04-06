@@ -1,11 +1,11 @@
 package com.google.firebase.database;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-
 import com.firebase.security.token.TokenGenerator;
 import com.firebase.security.token.TokenOptions;
 import com.google.firebase.database.core.DatabaseConfig;
+import org.junit.After;
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -13,8 +13,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
-import org.junit.After;
-import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class AuthTestIT {
 

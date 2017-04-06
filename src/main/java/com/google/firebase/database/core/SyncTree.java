@@ -1,7 +1,5 @@
 package com.google.firebase.database.core;
 
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
-
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.annotations.NotNull;
 import com.google.firebase.database.annotations.Nullable;
@@ -32,6 +30,7 @@ import com.google.firebase.database.snapshot.RangeMerge;
 import com.google.firebase.database.utilities.Clock;
 import com.google.firebase.database.utilities.NodeSizeEstimator;
 import com.google.firebase.database.utilities.Pair;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -40,6 +39,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
 
 /**
  * SyncTree is the central class for managing event callback registration, data caching, views
@@ -63,93 +64,24 @@ public class SyncTree {
 
   // Size after which we start including the compound hash
   private static final long SIZE_THRESHOLD_FOR_COMPOUND_HASH = 1024;
-
-  /** */
-  public interface CompletionListener {
-
-    List<? extends Event> onListenComplete(DatabaseError error);
-  }
-
-  /** */
-  public interface ListenProvider {
-
-    void startListening(
-        QuerySpec query,
-        Tag tag,
-        final ListenHashProvider hash,
-        final CompletionListener onListenComplete);
-
-    void stopListening(QuerySpec query, Tag tag);
-  }
-
-  private class ListenContainer implements ListenHashProvider, CompletionListener {
-
-    private final View view;
-    private final Tag tag;
-
-    public ListenContainer(View view) {
-      this.view = view;
-      this.tag = SyncTree.this.tagForQuery(view.getQuery());
-    }
-
-    @Override
-    public com.google.firebase.database.connection.CompoundHash getCompoundHash() {
-      CompoundHash hash = CompoundHash.fromNode(view.getServerCache());
-      List<Path> pathPosts = hash.getPosts();
-      List<List<String>> posts = new ArrayList<>(pathPosts.size());
-      for (Path path : pathPosts) {
-        posts.add(path.asList());
-      }
-      return new com.google.firebase.database.connection.CompoundHash(posts, hash.getHashes());
-    }
-
-    @Override
-    public String getSimpleHash() {
-      return view.getServerCache().getHash();
-    }
-
-    @Override
-    public boolean shouldIncludeCompoundHash() {
-      return NodeSizeEstimator.estimateSerializedNodeSize(view.getServerCache())
-          > SIZE_THRESHOLD_FOR_COMPOUND_HASH;
-    }
-
-    @Override
-    public List<? extends Event> onListenComplete(DatabaseError error) {
-      if (error == null) {
-        QuerySpec query = this.view.getQuery();
-        if (tag != null) {
-          return SyncTree.this.applyTaggedListenComplete(tag);
-        } else {
-          return SyncTree.this.applyListenComplete(query.getPath());
-        }
-      } else {
-        logger.warn("Listen at " + view.getQuery().getPath() + " failed: " + error.toString());
-
-        // If a listen failed, kill all of the listeners here, not just the one that triggered the
-        // error. Note that this may need to be scoped to just this listener if we change
-        // permissions on filtered children
-        return SyncTree.this.removeAllEventRegistrations(view.getQuery(), error);
-      }
-    }
-  }
-
-  /**
-   * Tree of SyncPoints. There's a SyncPoint at any location that has 1 or more views.
-   */
-  private ImmutableTree<SyncPoint> syncPointTree;
-
   /**
    * A tree of all pending user writes (user-initiated set()'s, transaction()'s, update()'s, etc.).
    */
   private final WriteTree pendingWriteTree;
-
   private final Map<Tag, QuerySpec> tagToQueryMap;
   private final Map<QuerySpec, Tag> queryToTagMap;
   private final Set<QuerySpec> keepSyncedQueries;
   private final ListenProvider listenProvider;
   private final PersistenceManager persistenceManager;
   private final LogWrapper logger;
+  /**
+   * Tree of SyncPoints. There's a SyncPoint at any location that has 1 or more views.
+   */
+  private ImmutableTree<SyncPoint> syncPointTree;
+  /**
+   * Static tracker for next query tag.
+   */
+  private long nextQueryTag = 1L;
 
   public SyncTree(
       Context context, PersistenceManager persistenceManager, ListenProvider listenProvider) {
@@ -689,60 +621,6 @@ public class SyncTree {
         });
   }
 
-  private static class KeepSyncedEventRegistration extends EventRegistration {
-
-    private QuerySpec spec;
-
-    public KeepSyncedEventRegistration(@NotNull QuerySpec spec) {
-      this.spec = spec;
-    }
-
-    @Override
-    public boolean respondsTo(Event.EventType eventType) {
-      return false;
-    }
-
-    @Override
-    public DataEvent createEvent(Change change, QuerySpec query) {
-      return null;
-    }
-
-    @Override
-    public void fireEvent(DataEvent dataEvent) {
-    }
-
-    @Override
-    public void fireCancelEvent(DatabaseError error) {
-    }
-
-    @Override
-    public EventRegistration clone(QuerySpec newQuery) {
-      return new KeepSyncedEventRegistration(newQuery);
-    }
-
-    @Override
-    public boolean isSameListener(EventRegistration other) {
-      return other instanceof KeepSyncedEventRegistration;
-    }
-
-    @NotNull
-    @Override
-    public QuerySpec getQuerySpec() {
-      return spec;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-      return (other instanceof KeepSyncedEventRegistration
-          && ((KeepSyncedEventRegistration) other).spec.equals(spec));
-    }
-
-    @Override
-    public int hashCode() {
-      return spec.hashCode();
-    }
-  }
-
   public void keepSynced(final QuerySpec query, final boolean keep) {
     if (keep && !keepSyncedQueries.contains(query)) {
       // TODO[persistence]: Find better / more efficient way to do keep-synced listeners.
@@ -882,11 +760,6 @@ public class SyncTree {
   }
 
   /**
-   * Static tracker for next query tag.
-   */
-  private long nextQueryTag = 1L;
-
-  /**
    * Static accessor for query tags.
    */
   private Tag getNextQueryTag() {
@@ -1002,5 +875,129 @@ public class SyncTree {
   // Package private for testing purposes only
   ImmutableTree<SyncPoint> getSyncPointTree() {
     return syncPointTree;
+  }
+
+  /** */
+  public interface CompletionListener {
+
+    List<? extends Event> onListenComplete(DatabaseError error);
+  }
+
+  /** */
+  public interface ListenProvider {
+
+    void startListening(
+        QuerySpec query,
+        Tag tag,
+        final ListenHashProvider hash,
+        final CompletionListener onListenComplete);
+
+    void stopListening(QuerySpec query, Tag tag);
+  }
+
+  private static class KeepSyncedEventRegistration extends EventRegistration {
+
+    private QuerySpec spec;
+
+    public KeepSyncedEventRegistration(@NotNull QuerySpec spec) {
+      this.spec = spec;
+    }
+
+    @Override
+    public boolean respondsTo(Event.EventType eventType) {
+      return false;
+    }
+
+    @Override
+    public DataEvent createEvent(Change change, QuerySpec query) {
+      return null;
+    }
+
+    @Override
+    public void fireEvent(DataEvent dataEvent) {
+    }
+
+    @Override
+    public void fireCancelEvent(DatabaseError error) {
+    }
+
+    @Override
+    public EventRegistration clone(QuerySpec newQuery) {
+      return new KeepSyncedEventRegistration(newQuery);
+    }
+
+    @Override
+    public boolean isSameListener(EventRegistration other) {
+      return other instanceof KeepSyncedEventRegistration;
+    }
+
+    @NotNull
+    @Override
+    public QuerySpec getQuerySpec() {
+      return spec;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      return (other instanceof KeepSyncedEventRegistration
+          && ((KeepSyncedEventRegistration) other).spec.equals(spec));
+    }
+
+    @Override
+    public int hashCode() {
+      return spec.hashCode();
+    }
+  }
+
+  private class ListenContainer implements ListenHashProvider, CompletionListener {
+
+    private final View view;
+    private final Tag tag;
+
+    public ListenContainer(View view) {
+      this.view = view;
+      this.tag = SyncTree.this.tagForQuery(view.getQuery());
+    }
+
+    @Override
+    public com.google.firebase.database.connection.CompoundHash getCompoundHash() {
+      CompoundHash hash = CompoundHash.fromNode(view.getServerCache());
+      List<Path> pathPosts = hash.getPosts();
+      List<List<String>> posts = new ArrayList<>(pathPosts.size());
+      for (Path path : pathPosts) {
+        posts.add(path.asList());
+      }
+      return new com.google.firebase.database.connection.CompoundHash(posts, hash.getHashes());
+    }
+
+    @Override
+    public String getSimpleHash() {
+      return view.getServerCache().getHash();
+    }
+
+    @Override
+    public boolean shouldIncludeCompoundHash() {
+      return NodeSizeEstimator.estimateSerializedNodeSize(view.getServerCache())
+          > SIZE_THRESHOLD_FOR_COMPOUND_HASH;
+    }
+
+    @Override
+    public List<? extends Event> onListenComplete(DatabaseError error) {
+      if (error == null) {
+        QuerySpec query = this.view.getQuery();
+        if (tag != null) {
+          return SyncTree.this.applyTaggedListenComplete(tag);
+        } else {
+          return SyncTree.this.applyListenComplete(query.getPath());
+        }
+      } else {
+        logger.warn("Listen at " + view.getQuery().getPath() + " failed: " + error.toString());
+
+        // If a listen failed, kill all of the listeners here, not just the one that triggered the
+        // error. Note that this may need to be scoped to just this listener if we change
+        // permissions on filtered children
+        return SyncTree.this.removeAllEventRegistrations(view.getQuery(), error);
+      }
+    }
   }
 }

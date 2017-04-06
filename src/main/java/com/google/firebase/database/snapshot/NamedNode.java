@@ -2,11 +2,15 @@ package com.google.firebase.database.snapshot;
 
 public class NamedNode {
 
+  private static final NamedNode MIN_NODE = new NamedNode(ChildKey.getMinName(), EmptyNode.Empty());
+  private static final NamedNode MAX_NODE = new NamedNode(ChildKey.getMaxName(), Node.MAX_NODE);
   private final ChildKey name;
   private final Node node;
 
-  private static final NamedNode MIN_NODE = new NamedNode(ChildKey.getMinName(), EmptyNode.Empty());
-  private static final NamedNode MAX_NODE = new NamedNode(ChildKey.getMaxName(), Node.MAX_NODE);
+  public NamedNode(ChildKey name, Node node) {
+    this.name = name;
+    this.node = node;
+  }
 
   public static NamedNode getMinNode() {
     return MIN_NODE;
@@ -14,11 +18,6 @@ public class NamedNode {
 
   public static NamedNode getMaxNode() {
     return MAX_NODE;
-  }
-
-  public NamedNode(ChildKey name, Node node) {
-    this.name = name;
-    this.node = node;
   }
 
   public ChildKey getName() {

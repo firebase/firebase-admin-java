@@ -1,22 +1,18 @@
 package com.google.firebase.database;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 public class MutableDataTest {
 
@@ -49,13 +45,13 @@ public class MutableDataTest {
     Iterator<MutableData> iter = snap3.getChildren().iterator();
     assertTrue(iter.hasNext());
 
-    String[] children = new String[]{null, null};
+    String[] children = new String[] {null, null};
     int i = 0;
     for (MutableData child : snap3.getChildren()) {
       children[i] = child.getKey();
       i++;
     }
-    assertArrayEquals(children, new String[]{"a", "b"});
+    assertArrayEquals(children, new String[] {"a", "b"});
   }
 
   @Test

@@ -1,7 +1,9 @@
 package com.google.firebase.tasks;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import org.hamcrest.Matchers;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.rmi.RemoteException;
 import java.util.concurrent.Callable;
@@ -11,10 +13,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.hamcrest.Matchers;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class TasksTest {
 
@@ -22,11 +23,9 @@ public class TasksTest {
   private static final RemoteException EXCEPTION = new RemoteException();
   private static final int SCHEDULE_DELAY_MS = 50;
   private static final int TIMEOUT_MS = 200;
-
+  private final ScheduledExecutorService mExecutor = Executors.newSingleThreadScheduledExecutor();
   @Rule
   public ExpectedException mExpectedException = ExpectedException.none();
-
-  private final ScheduledExecutorService mExecutor = Executors.newSingleThreadScheduledExecutor();
 
   @Test
   public void testForResult() throws Exception {
@@ -247,7 +246,7 @@ public class TasksTest {
 
   private void scheduleResult(final TaskCompletionSource<Object> completionSource) {
     @SuppressWarnings("unused")
-        Future<?> possiblyIgnoredError =
+    Future<?> possiblyIgnoredError =
         mExecutor.schedule(
             new Runnable() {
               @Override
@@ -261,7 +260,7 @@ public class TasksTest {
 
   private void scheduleException(final TaskCompletionSource<?> completionSource) {
     @SuppressWarnings("unused")
-        Future<?> possiblyIgnoredError =
+    Future<?> possiblyIgnoredError =
         mExecutor.schedule(
             new Runnable() {
               @Override
@@ -276,7 +275,7 @@ public class TasksTest {
   private void scheduleInterrupt() {
     final Thread testThread = Thread.currentThread();
     @SuppressWarnings("unused")
-        Future<?> possiblyIgnoredError =
+    Future<?> possiblyIgnoredError =
         mExecutor.schedule(
             new Runnable() {
               @Override

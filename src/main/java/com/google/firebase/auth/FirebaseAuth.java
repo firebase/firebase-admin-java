@@ -15,6 +15,7 @@ import com.google.firebase.internal.NonNull;
 import com.google.firebase.tasks.Continuation;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,15 +30,33 @@ import java.util.Map;
 public class FirebaseAuth {
 
   /**
+   * A global, thread-safe Json Factory built using Gson.
+   */
+  private static final JsonFactory jsonFactory = new GsonFactory();
+  /**
    * A static map of FirebaseApp name to FirebaseAuth instance. To ensure thread-
    * safety, it should only be accessed in getInstance(), which is a synchronized method.
    */
   private static Map<String, FirebaseAuth> authInstances = new HashMap<>();
+  private final FirebaseApp firebaseApp;
+  private final GooglePublicKeysManager googlePublicKeysManager;
+  private final Clock clock;
+
+  private FirebaseAuth(FirebaseApp firebaseApp) {
+    this(firebaseApp, FirebaseTokenVerifier.DEFAULT_KEY_MANAGER, Clock.SYSTEM);
+  }
 
   /**
-   * A global, thread-safe Json Factory built using Gson.
+   * Constructor for injecting a GooglePublicKeysManager, which is used to verify tokens are
+   * correctly signed. This should only be used for testing to override the default key manager.
    */
-  private static JsonFactory jsonFactory = new GsonFactory();
+  @VisibleForTesting
+  FirebaseAuth(
+      FirebaseApp firebaseApp, GooglePublicKeysManager googlePublicKeysManager, Clock clock) {
+    this.firebaseApp = firebaseApp;
+    this.googlePublicKeysManager = googlePublicKeysManager;
+    this.clock = clock;
+  }
 
   /**
    * Gets the FirebaseAuth instance for the default {@link FirebaseApp}.
@@ -62,26 +81,6 @@ public class FirebaseAuth {
     return authInstances.get(app.getName());
   }
 
-  private final FirebaseApp firebaseApp;
-  private final GooglePublicKeysManager googlePublicKeysManager;
-  private final Clock clock;
-
-  private FirebaseAuth(FirebaseApp firebaseApp) {
-    this(firebaseApp, FirebaseTokenVerifier.DEFAULT_KEY_MANAGER, Clock.SYSTEM);
-  }
-
-  /**
-   * Constructor for injecting a GooglePublicKeysManager, which is used to verify tokens are
-   * correctly signed. This should only be used for testing to override the default key manager.
-   */
-  @VisibleForTesting
-  FirebaseAuth(
-      FirebaseApp firebaseApp, GooglePublicKeysManager googlePublicKeysManager, Clock clock) {
-    this.firebaseApp = firebaseApp;
-    this.googlePublicKeysManager = googlePublicKeysManager;
-    this.clock = clock;
-  }
-
   /**
    * Creates a Firebase Custom Token associated with the given UID. This token can then be provided
    * back to a client application for use with the signInWithCustomToken authentication API.
@@ -97,8 +96,8 @@ public class FirebaseAuth {
 
   /**
    * Creates a Firebase Custom Token associated with the given UID and additionally containing the
-   * specified developerClaims. This token can then be provided back to a client application for use
-   * with the signInWithCustomToken authentication API.
+   * specified developerClaims. This token can then be provided back to a client application for
+   * use with the signInWithCustomToken authentication API.
    *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
    * (Realtime Database, Storage, etc.). Should be less than 128 characters.

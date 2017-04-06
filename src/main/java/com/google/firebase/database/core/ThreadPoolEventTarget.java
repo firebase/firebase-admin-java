@@ -1,6 +1,7 @@
 package com.google.firebase.database.core;
 
 import com.google.firebase.internal.Preconditions;
+
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
@@ -33,7 +34,8 @@ class ThreadPoolEventTarget implements EventTarget {
                 Thread thread = wrappedFactory.newThread(r);
                 threadInitializer.setName(thread, "FirebaseDatabaseEventTarget");
                 threadInitializer.setDaemon(thread, true);
-                // TODO: should we set an uncaught exception handler here? Probably want to let exceptions happen...
+                // TODO: should we set an uncaught exception handler here? Probably want to let
+                // exceptions happen...
                 return thread;
               }
             });

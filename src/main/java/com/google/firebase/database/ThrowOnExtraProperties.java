@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  * annotation cause an exception to be thrown.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
+@Target( {ElementType.TYPE})
 public @interface ThrowOnExtraProperties {
 
 }

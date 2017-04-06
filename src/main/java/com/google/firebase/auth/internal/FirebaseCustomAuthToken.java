@@ -6,6 +6,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.util.Key;
 import com.google.firebase.auth.FirebaseToken;
+
 import java.io.IOException;
 
 /**
@@ -28,11 +29,9 @@ public final class FirebaseCustomAuthToken extends IdToken {
     super(header, payload, signatureBytes, signedContentBytes);
   }
 
-  @Override
-  public Payload getPayload() {
-    return (Payload) super.getPayload();
-  }
-
+  /**
+   * Parses a JWT token string and extracts its headers and payload fields.
+   */
   public static FirebaseCustomAuthToken parse(JsonFactory jsonFactory, String tokenString)
       throws IOException {
     JsonWebSignature jws = JsonWebSignature.parser(jsonFactory)
@@ -43,6 +42,11 @@ public final class FirebaseCustomAuthToken extends IdToken {
         (Payload) jws.getPayload(),
         jws.getSignatureBytes(),
         jws.getSignedContentBytes());
+  }
+
+  @Override
+  public Payload getPayload() {
+    return (Payload) super.getPayload();
   }
 
   /**

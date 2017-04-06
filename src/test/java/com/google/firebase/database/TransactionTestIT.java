@@ -1,19 +1,15 @@
 package com.google.firebase.database;
 
-import static com.google.firebase.database.TestHelpers.fromSingleQuotedString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import com.google.firebase.database.DatabaseReference.CompletionListener;
 import com.google.firebase.database.core.AuthTokenProvider;
 import com.google.firebase.database.core.DatabaseConfig;
 import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,9 +22,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
+
+import static com.google.firebase.database.TestHelpers.fromSingleQuotedString;
+import static org.junit.Assert.*;
 
 @SuppressWarnings("rawtypes")
 public class TransactionTestIT {
@@ -2000,7 +1996,7 @@ public class TransactionTestIT {
           public void getToken(boolean forceRefresh, final GetTokenCompletionListener listener) {
             // Return "bad-token" once to trigger a disconnect, and then a null token.
             @SuppressWarnings("unused")
-                Future<?> possiblyIgnoredError =
+            Future<?> possiblyIgnoredError =
                 TestHelpers.getExecutorService(cfg)
                     .schedule(
                         new Runnable() {

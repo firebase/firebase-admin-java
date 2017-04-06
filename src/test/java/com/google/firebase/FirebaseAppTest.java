@@ -1,16 +1,5 @@
 package com.google.firebase;
 
-import static com.google.firebase.internal.Base64Utils.decodeUrlSafeNoPadding;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
 import com.google.common.base.Defaults;
 import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.FirebaseOptions.Builder;
@@ -24,6 +13,12 @@ import com.google.firebase.tasks.TaskCompletionSource;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.FirebaseAppRule;
 import com.google.firebase.testing.ServiceAccount;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.mockito.Mockito;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -34,11 +29,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.Mockito;
+
+import static com.google.firebase.internal.Base64Utils.decodeUrlSafeNoPadding;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link com.google.firebase.FirebaseApp}.
@@ -55,6 +50,55 @@ public class FirebaseAppTest {
 
   @Rule
   public FirebaseAppRule firebaseAppRule = new FirebaseAppRule();
+
+  @SuppressWarnings("unused")
+  private static void assertAuthInitialized(FirebaseApp firebaseApp) {
+    // TODO(depoll): Re-enable once Auth is available.
+    // assertThat(FirebaseAuth.getInstancesForTest()).containsKey(firebaseApp.getPersistenceKey());
+    // FirebaseAuth firebaseAuth = FirebaseAuth.getInstance(firebaseApp);
+    // assertThat(firebaseAuth.getFirebaseApp()).isEqualTo(firebaseApp);
+  }
+
+  private static void assertCrashInitialized() {
+    // TODO(depoll): Re-enable if Crash becomes available.
+    // assertThat(FirebaseCrash.isSingletonInitialized()).isTrue();
+  }
+
+  private static void assertScionInitialized() {
+    // TODO(depoll): Re-enable once Scion becomes available.
+    // assertThat(Scion.getInstanceForTest()).isNotNull();
+  }
+
+  @SuppressWarnings("unused")
+  private static void assertIidInitialized(FirebaseApp firebaseApp) {
+    // TODO(depoll): Re-enable once IID becomes available.
+    // FirebaseInstanceId firebaseInstanceID =
+    //         FirebaseInstanceId.getInstancesForTest()
+    //                 .get(firebaseApp.getOptions().getApplicationId());
+    // assertThat(firebaseInstanceID).isNotNull();
+  }
+
+  // TODO(arondeak): reenable persistence. See b/28158809.
+  //    @Test
+  //    public void testGetApps_persistenceEnabled() {
+  //        FirebaseApp app1 = FirebaseApp.initializeApp(mTargetContext, OPTIONS, "app1");
+  //        FirebaseApp app2 = FirebaseApp.initializeApp(mTargetContext, OPTIONS, "app2");
+  //        FirebaseApp.clearInstancesForTest();
+  //        // Sanity check that instances have been cleared.
+  //        assertThat(FirebaseApp.instances).isEmpty();
+  //        FirebaseApp app3 = FirebaseApp.initializeApp(mTargetContext, OPTIONS, "app3");
+  //        // We rely on FirebaseApp's equals override, app1 and app2 are different instances.
+  //        assertThat(FirebaseApp.getApps(mTargetContext)).containsExactly(app1, app2, app3);
+  //    }
+
+  private static void invokePublicInstanceMethodWithDefaultValues(Object instance, Method method)
+      throws InvocationTargetException, IllegalAccessException {
+    List<Object> parameters = new ArrayList<>(method.getParameterTypes().length);
+    for (Class<?> parameterType : method.getParameterTypes()) {
+      parameters.add(Defaults.defaultValue(parameterType));
+    }
+    method.invoke(instance, parameters.toArray());
+  }
 
   @Before
   public void setUp() {
@@ -93,19 +137,6 @@ public class FirebaseAppTest {
     firebaseApp.delete();
     verify(listener, never()).onDeleted(appName, OPTIONS);
   }
-
-  // TODO(arondeak): reenable persistence. See b/28158809.
-  //    @Test
-  //    public void testGetApps_persistenceEnabled() {
-  //        FirebaseApp app1 = FirebaseApp.initializeApp(mTargetContext, OPTIONS, "app1");
-  //        FirebaseApp app2 = FirebaseApp.initializeApp(mTargetContext, OPTIONS, "app2");
-  //        FirebaseApp.clearInstancesForTest();
-  //        // Sanity check that instances have been cleared.
-  //        assertThat(FirebaseApp.instances).isEmpty();
-  //        FirebaseApp app3 = FirebaseApp.initializeApp(mTargetContext, OPTIONS, "app3");
-  //        // We rely on FirebaseApp's equals override, app1 and app2 are different instances.
-  //        assertThat(FirebaseApp.getApps(mTargetContext)).containsExactly(app1, app2, app3);
-  //    }
 
   @Test
   public void testGetApps() {
@@ -284,42 +315,6 @@ public class FirebaseAppTest {
 
     tokenRefresher.simulateDelay(35);
     verify(listener, times(3)).onAuthStateChanged(Mockito.any(GetTokenResult.class));
-  }
-
-  @SuppressWarnings("unused")
-  private static void assertAuthInitialized(FirebaseApp firebaseApp) {
-    // TODO(depoll): Re-enable once Auth is available.
-    // assertThat(FirebaseAuth.getInstancesForTest()).containsKey(firebaseApp.getPersistenceKey());
-    // FirebaseAuth firebaseAuth = FirebaseAuth.getInstance(firebaseApp);
-    // assertThat(firebaseAuth.getFirebaseApp()).isEqualTo(firebaseApp);
-  }
-
-  private static void assertCrashInitialized() {
-    // TODO(depoll): Re-enable if Crash becomes available.
-    // assertThat(FirebaseCrash.isSingletonInitialized()).isTrue();
-  }
-
-  private static void assertScionInitialized() {
-    // TODO(depoll): Re-enable once Scion becomes available.
-    // assertThat(Scion.getInstanceForTest()).isNotNull();
-  }
-
-  @SuppressWarnings("unused")
-  private static void assertIidInitialized(FirebaseApp firebaseApp) {
-    // TODO(depoll): Re-enable once IID becomes available.
-    // FirebaseInstanceId firebaseInstanceID =
-    //         FirebaseInstanceId.getInstancesForTest()
-    //                 .get(firebaseApp.getOptions().getApplicationId());
-    // assertThat(firebaseInstanceID).isNotNull();
-  }
-
-  private static void invokePublicInstanceMethodWithDefaultValues(Object instance, Method method)
-      throws InvocationTargetException, IllegalAccessException {
-    List<Object> parameters = new ArrayList<>(method.getParameterTypes().length);
-    for (Class<?> parameterType : method.getParameterTypes()) {
-      parameters.add(Defaults.defaultValue(parameterType));
-    }
-    method.invoke(instance, parameters.toArray());
   }
 
   private static class MockFirebaseCredential implements FirebaseCredential {

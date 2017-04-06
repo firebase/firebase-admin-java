@@ -11,10 +11,8 @@ public class PushIdGenerator {
       "-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
 
   private static final Random randGen = new Random();
-
-  private static long lastPushTime = 0L;
-
   private static final int[] lastRandChars = new int[12];
+  private static long lastPushTime = 0L;
 
   public static synchronized String generatePushChildName(long now) {
     boolean duplicateTime = (now == lastPushTime);

@@ -1,15 +1,16 @@
 package com.google.firebase.database.core;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
-
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.core.view.View;
 import com.google.firebase.database.core.view.ViewAccess;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.Semaphore;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 /**
  * Verifies that the zombie state matches the current registration list in a Repo

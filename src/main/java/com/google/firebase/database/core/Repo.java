@@ -1,7 +1,5 @@
 package com.google.firebase.database.core;
 
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
-
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
@@ -31,6 +29,7 @@ import com.google.firebase.database.snapshot.NodeUtilities;
 import com.google.firebase.database.snapshot.RangeMerge;
 import com.google.firebase.database.utilities.DefaultClock;
 import com.google.firebase.database.utilities.OffsetClock;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,28 +37,38 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
+
 public class Repo implements PersistentConnection.Delegate {
 
   private static final String INTERRUPT_REASON = "repo_interrupt";
-
+  /**
+   * If a transaction does not succeed after 25 retries, we abort it. Among other things this ensure
+   * that if there's ever a bug causing a mismatch between client / server hashes for some data, we
+   * won't retry indefinitely.
+   */
+  private static final int TRANSACTION_MAX_RETRIES = 25;
+  private static final String TRANSACTION_TOO_MANY_RETRIES = "maxretries";
+  private static final String TRANSACTION_OVERRIDE_BY_SET = "overriddenBySet";
   private final RepoInfo repoInfo;
   private final OffsetClock serverClock = new OffsetClock(new DefaultClock(), 0);
   private final PersistentConnection connection;
-  private SnapshotHolder infoData;
-  private SparseSnapshotTree onDisconnect;
-  private Tree<List<TransactionData>> transactionQueueTree;
-  private boolean hijackHash = false;
   private final EventRaiser eventRaiser;
   private final Context ctx;
   private final LogWrapper operationLogger;
   private final LogWrapper transactionLogger;
   private final LogWrapper dataLogger;
   public long dataUpdateCount = 0; // for testing.
+  private SnapshotHolder infoData;
+  private SparseSnapshotTree onDisconnect;
+  private Tree<List<TransactionData>> transactionQueueTree;
+  private boolean hijackHash = false;
   private long nextWriteId = 1;
   private SyncTree infoSyncTree;
   private SyncTree serverSyncTree;
   private FirebaseDatabase database;
   private boolean loggedTransactionPersistenceWarning = false;
+  private long transactionOrder = 0;
 
   Repo(RepoInfo repoInfo, Context ctx, FirebaseDatabase database) {
     this.repoInfo = repoInfo;
@@ -84,6 +93,20 @@ public class Repo implements PersistentConnection.Delegate {
           }
         });
   }
+
+  private static DatabaseError fromErrorCode(String optErrorCode, String optErrorReason) {
+    if (optErrorCode != null) {
+      return DatabaseError.fromStatus(optErrorCode, optErrorReason);
+    } else {
+      return null;
+    }
+  }
+
+  // Regarding the next three methods: scheduleNow, schedule, and postEvent:
+  // Please use these methods rather than accessing the context directly. This ensures that the
+  // context is correctly re-initialized if it was previously shut down. In practice, this means
+  // that when a task is submitted, we will guarantee at least one thread in the core pool for the
+  // run loop.
 
   /**
    * Defers any initialization that is potentially expensive (e.g. disk access) and must be run on
@@ -251,12 +274,6 @@ public class Repo implements PersistentConnection.Delegate {
   public RepoInfo getRepoInfo() {
     return this.repoInfo;
   }
-
-  // Regarding the next three methods: scheduleNow, schedule, and postEvent:
-  // Please use these methods rather than accessing the context directly. This ensures that the
-  // context is correctly re-initialized if it was previously shut down. In practice, this means
-  // that when a task is submitted, we will guarantee at least one thread in the core pool for the
-  // run loop.
 
   public void scheduleNow(Runnable r) {
     ctx.requireStarted();
@@ -627,6 +644,8 @@ public class Repo implements PersistentConnection.Delegate {
     serverSyncTree.keepSynced(query, keep);
   }
 
+  // Transaction code
+
   PersistentConnection getConnection() {
     return connection;
   }
@@ -677,87 +696,6 @@ public class Repo implements PersistentConnection.Delegate {
         && !(error.getCode() == DatabaseError.DATA_STALE
         || error.getCode() == DatabaseError.WRITE_CANCELED)) {
       operationLogger.warn(writeType + " at " + path.toString() + " failed: " + error.toString());
-    }
-  }
-
-  // Transaction code
-
-  /**
-   * If a transaction does not succeed after 25 retries, we abort it. Among other things this ensure
-   * that if there's ever a bug causing a mismatch between client / server hashes for some data, we
-   * won't retry indefinitely.
-   */
-  private static final int TRANSACTION_MAX_RETRIES = 25;
-
-  private static final String TRANSACTION_TOO_MANY_RETRIES = "maxretries";
-  private static final String TRANSACTION_OVERRIDE_BY_SET = "overriddenBySet";
-
-  private enum TransactionStatus {
-    INITIALIZING,
-    // We've run the transaction and updated transactionResultData_ with the result, but it isn't
-    // currently sent to the server.
-    // A transaction will go from RUN -> SENT -> RUN if it comes back from the server as rejected
-    // due to mismatched hash.
-    RUN,
-    // We've run the transaction and sent it to the server and it's currently outstanding (hasn't
-    // come back as accepted or rejected yet).
-    SENT,
-    // Temporary state used to mark completed transactions (whether successful or aborted). The
-    // transaction will be removed when we get a chance to prune completed ones.
-    COMPLETED,
-    // Used when an already-sent transaction needs to be aborted (e.g. due to a conflicting set()
-    // call that was made). If it comes back as unsuccessful, we'll abort it.
-    SENT_NEEDS_ABORT,
-    // Temporary state used to mark transactions that need to be aborted.
-    NEEDS_ABORT
-  }
-
-  private long transactionOrder = 0;
-
-  private static class TransactionData implements Comparable<TransactionData> {
-
-    private Path path;
-    private Transaction.Handler handler;
-    private ValueEventListener outstandingListener;
-    private TransactionStatus status;
-    private long order;
-    private boolean applyLocally;
-    private int retryCount;
-    private DatabaseError abortReason;
-    private long currentWriteId;
-    private Node currentInputSnapshot;
-    private Node currentOutputSnapshotRaw;
-    private Node currentOutputSnapshotResolved;
-
-    private TransactionData(
-        Path path,
-        Transaction.Handler handler,
-        ValueEventListener outstandingListener,
-        TransactionStatus status,
-        boolean applyLocally,
-        long order) {
-      this.path = path;
-      this.handler = handler;
-      this.outstandingListener = outstandingListener;
-      this.status = status;
-      this.retryCount = 0;
-      this.applyLocally = applyLocally;
-      this.order = order;
-      this.abortReason = null;
-      this.currentInputSnapshot = null;
-      this.currentOutputSnapshotRaw = null;
-      this.currentOutputSnapshotResolved = null;
-    }
-
-    @Override
-    public int compareTo(TransactionData o) {
-      if (order < o.order) {
-        return -1;
-      } else if (order == o.order) {
-        return 0;
-      } else {
-        return 1;
-      }
     }
   }
 
@@ -1357,11 +1295,70 @@ public class Repo implements PersistentConnection.Delegate {
     return infoSyncTree;
   }
 
-  private static DatabaseError fromErrorCode(String optErrorCode, String optErrorReason) {
-    if (optErrorCode != null) {
-      return DatabaseError.fromStatus(optErrorCode, optErrorReason);
-    } else {
-      return null;
+  private enum TransactionStatus {
+    INITIALIZING,
+    // We've run the transaction and updated transactionResultData_ with the result, but it isn't
+    // currently sent to the server.
+    // A transaction will go from RUN -> SENT -> RUN if it comes back from the server as rejected
+    // due to mismatched hash.
+    RUN,
+    // We've run the transaction and sent it to the server and it's currently outstanding (hasn't
+    // come back as accepted or rejected yet).
+    SENT,
+    // Temporary state used to mark completed transactions (whether successful or aborted). The
+    // transaction will be removed when we get a chance to prune completed ones.
+    COMPLETED,
+    // Used when an already-sent transaction needs to be aborted (e.g. due to a conflicting set()
+    // call that was made). If it comes back as unsuccessful, we'll abort it.
+    SENT_NEEDS_ABORT,
+    // Temporary state used to mark transactions that need to be aborted.
+    NEEDS_ABORT
+  }
+
+  private static class TransactionData implements Comparable<TransactionData> {
+
+    private Path path;
+    private Transaction.Handler handler;
+    private ValueEventListener outstandingListener;
+    private TransactionStatus status;
+    private long order;
+    private boolean applyLocally;
+    private int retryCount;
+    private DatabaseError abortReason;
+    private long currentWriteId;
+    private Node currentInputSnapshot;
+    private Node currentOutputSnapshotRaw;
+    private Node currentOutputSnapshotResolved;
+
+    private TransactionData(
+        Path path,
+        Transaction.Handler handler,
+        ValueEventListener outstandingListener,
+        TransactionStatus status,
+        boolean applyLocally,
+        long order) {
+      this.path = path;
+      this.handler = handler;
+      this.outstandingListener = outstandingListener;
+      this.status = status;
+      this.retryCount = 0;
+      this.applyLocally = applyLocally;
+      this.order = order;
+      this.abortReason = null;
+      this.currentInputSnapshot = null;
+      this.currentOutputSnapshotRaw = null;
+      this.currentOutputSnapshotResolved = null;
+    }
+
+    @Override
+    public int compareTo(TransactionData o) {
+      if (order < o.order) {
+        return -1;
+      } else if (order == o.order) {
+        return 0;
+      } else {
+        return 1;
+      }
     }
   }
 }

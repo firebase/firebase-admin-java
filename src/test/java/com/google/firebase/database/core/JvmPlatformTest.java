@@ -1,10 +1,10 @@
 package com.google.firebase.database.core;
 
-import static org.junit.Assert.assertEquals;
-
 import com.google.firebase.database.FirebaseDatabase;
 import org.junit.Assert;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 public class JvmPlatformTest {
 

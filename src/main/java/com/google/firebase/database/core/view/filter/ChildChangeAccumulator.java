@@ -3,6 +3,7 @@ package com.google.firebase.database.core.view.filter;
 import com.google.firebase.database.core.view.Change;
 import com.google.firebase.database.core.view.Event;
 import com.google.firebase.database.snapshot.ChildKey;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

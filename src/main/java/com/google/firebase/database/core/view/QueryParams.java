@@ -1,7 +1,5 @@
 package com.google.firebase.database.core.view;
 
-import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
-
 import com.google.firebase.database.core.view.filter.IndexedFilter;
 import com.google.firebase.database.core.view.filter.LimitedFilter;
 import com.google.firebase.database.core.view.filter.NodeFilter;
@@ -17,9 +15,12 @@ import com.google.firebase.database.snapshot.PriorityIndex;
 import com.google.firebase.database.snapshot.PriorityUtilities;
 import com.google.firebase.database.snapshot.StringNode;
 import com.google.firebase.database.util.JsonMapper;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
 
 public class QueryParams {
 
@@ -32,22 +33,68 @@ public class QueryParams {
   private static final String LIMIT = "l";
   private static final String VIEW_FROM = "vf";
   private static final String INDEX = "i";
-
-  private enum ViewFrom {
-    LEFT,
-    RIGHT
-  }
-
   private Integer limit;
   private ViewFrom viewFrom;
   private Node indexStartValue = null;
   private ChildKey indexStartName = null;
   private Node indexEndValue = null;
   private ChildKey indexEndName = null;
-
   private Index index = PriorityIndex.getInstance();
-
   private String jsonSerialization = null;
+
+  public static QueryParams fromQueryObject(Map<String, Object> map) {
+    QueryParams params = new QueryParams();
+    params.limit = (Integer) map.get(LIMIT);
+
+    if (map.containsKey(INDEX_START_VALUE)) {
+      Object indexStartValue = map.get(INDEX_START_VALUE);
+      params.indexStartValue = normalizeValue(NodeFromJSON(indexStartValue));
+      String indexStartName = (String) map.get(INDEX_START_NAME);
+      if (indexStartName != null) {
+        params.indexStartName = ChildKey.fromString(indexStartName);
+      }
+    }
+
+    if (map.containsKey(INDEX_END_VALUE)) {
+      Object indexEndValue = map.get(INDEX_END_VALUE);
+      params.indexEndValue = normalizeValue(NodeFromJSON(indexEndValue));
+      String indexEndName = (String) map.get(INDEX_END_NAME);
+      if (indexEndName != null) {
+        params.indexEndName = ChildKey.fromString(indexEndName);
+      }
+    }
+
+    String viewFrom = (String) map.get(VIEW_FROM);
+    if (viewFrom != null) {
+      params.viewFrom = viewFrom.equals("l") ? ViewFrom.LEFT : ViewFrom.RIGHT;
+    }
+
+    String indexStr = (String) map.get(INDEX);
+    if (indexStr != null) {
+      params.index = Index.fromQueryDefinition(indexStr);
+    }
+
+    return params;
+  }
+
+  private static Node normalizeValue(Node value) {
+    if (value instanceof StringNode
+        || value instanceof BooleanNode
+        || value instanceof DoubleNode
+        || value instanceof EmptyNode) {
+
+      return value;
+    } else if (value instanceof LongNode) {
+      // We normalize longs to doubles.  This is *ESSENTIAL* to prevent our persistence
+      // code from breaking, since integer-valued doubles get turned into longs after being
+      // saved to persistence (as JSON) and then read back. (see http://b/30153920/)
+      return new DoubleNode(
+          ((Long) value.getValue()).doubleValue(), PriorityUtilities.NullPriority());
+    } else {
+      throw new IllegalStateException(
+          "Unexpected value passed to normalizeValue: " + value.getValue());
+    }
+  }
 
   public boolean hasStart() {
     return indexStartValue != null;
@@ -232,41 +279,6 @@ public class QueryParams {
     return jsonSerialization;
   }
 
-  public static QueryParams fromQueryObject(Map<String, Object> map) {
-    QueryParams params = new QueryParams();
-    params.limit = (Integer) map.get(LIMIT);
-
-    if (map.containsKey(INDEX_START_VALUE)) {
-      Object indexStartValue = map.get(INDEX_START_VALUE);
-      params.indexStartValue = normalizeValue(NodeFromJSON(indexStartValue));
-      String indexStartName = (String) map.get(INDEX_START_NAME);
-      if (indexStartName != null) {
-        params.indexStartName = ChildKey.fromString(indexStartName);
-      }
-    }
-
-    if (map.containsKey(INDEX_END_VALUE)) {
-      Object indexEndValue = map.get(INDEX_END_VALUE);
-      params.indexEndValue = normalizeValue(NodeFromJSON(indexEndValue));
-      String indexEndName = (String) map.get(INDEX_END_NAME);
-      if (indexEndName != null) {
-        params.indexEndName = ChildKey.fromString(indexEndName);
-      }
-    }
-
-    String viewFrom = (String) map.get(VIEW_FROM);
-    if (viewFrom != null) {
-      params.viewFrom = viewFrom.equals("l") ? ViewFrom.LEFT : ViewFrom.RIGHT;
-    }
-
-    String indexStr = (String) map.get(INDEX);
-    if (indexStr != null) {
-      params.index = Index.fromQueryDefinition(indexStr);
-    }
-
-    return params;
-  }
-
   public NodeFilter getNodeFilter() {
     if (this.loadsAllData()) {
       return new IndexedFilter(this.getIndex());
@@ -339,22 +351,8 @@ public class QueryParams {
     return result;
   }
 
-  private static Node normalizeValue(Node value) {
-    if (value instanceof StringNode
-        || value instanceof BooleanNode
-        || value instanceof DoubleNode
-        || value instanceof EmptyNode) {
-
-      return value;
-    } else if (value instanceof LongNode) {
-      // We normalize longs to doubles.  This is *ESSENTIAL* to prevent our persistence
-      // code from breaking, since integer-valued doubles get turned into longs after being
-      // saved to persistence (as JSON) and then read back. (see http://b/30153920/)
-      return new DoubleNode(
-          ((Long) value.getValue()).doubleValue(), PriorityUtilities.NullPriority());
-    } else {
-      throw new IllegalStateException(
-          "Unexpected value passed to normalizeValue: " + value.getValue());
-    }
+  private enum ViewFrom {
+    LEFT,
+    RIGHT
   }
 }

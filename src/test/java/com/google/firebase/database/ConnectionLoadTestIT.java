@@ -1,8 +1,5 @@
 package com.google.firebase.database;
 
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
-import static org.junit.Assert.fail;
-
 import com.firebase.security.token.TokenGenerator;
 import com.firebase.security.token.TokenOptions;
 import com.google.firebase.database.connection.ConnectionAuthTokenProvider;
@@ -15,6 +12,9 @@ import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 import com.google.firebase.database.utilities.ParsedUrl;
 import com.google.firebase.database.utilities.Utilities;
+import org.junit.Ignore;
+import org.junit.Test;
+
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -27,8 +27,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
+import static org.junit.Assert.fail;
 
 /**
  * A test that stressed the connection lifecycle injecting auth errors, auth expirations etc.
@@ -38,80 +39,6 @@ public class ConnectionLoadTestIT implements PersistentConnectionImpl.Delegate {
   private static final long EXPIRATION_DELAY_MS = 2000;
   private static final long TIME_UNIT_MS = 50;
   private static final double AUTH_FAIL_PROBABILITY = 0.1;
-
-  private static class TestAuthTokenProvider implements ConnectionAuthTokenProvider {
-
-    private String currentToken;
-    private long currentExpirationTime;
-    private Random random;
-    private BlockingQueue<Runnable> queue;
-    private ScheduledExecutorService scheduledExecutorService;
-
-    public TestAuthTokenProvider(ScheduledExecutorService service) {
-      this.scheduledExecutorService = service;
-      this.random = new Random();
-      this.queue = new LinkedBlockingQueue<>();
-
-      new Thread(
-          new Runnable() {
-            @Override
-            public void run() {
-              while (true) {
-                try {
-                  Runnable runnable = queue.take();
-                  runnable.run();
-                } catch (InterruptedException e) {
-                  e.printStackTrace();
-                  throw new RuntimeException(e);
-                }
-              }
-            }
-          })
-          .start();
-    }
-
-    private void generateToken() {
-      this.currentExpirationTime =
-          System.currentTimeMillis() + random.nextInt((int) EXPIRATION_DELAY_MS);
-      TokenOptions options = new TokenOptions();
-      options.setExpires(new Date(this.currentExpirationTime));
-      TokenGenerator generator = new TokenGenerator(TestHelpers.getTestSecret());
-      Map<String, Object> authObj = new HashMap<>();
-      authObj.put("uid", "test-uid");
-      this.currentToken = generator.createToken(authObj, options);
-    }
-
-    @Override
-    public void getToken(final boolean forceRefresh, final GetTokenCallback callback) {
-      queue.add(
-          new Runnable() {
-            @Override
-            public void run() {
-              try {
-                Thread.sleep(random.nextInt((int) TIME_UNIT_MS));
-              } catch (InterruptedException e) {
-                e.printStackTrace();
-                throw new RuntimeException(e);
-              }
-              if (System.currentTimeMillis() > currentExpirationTime || forceRefresh) {
-                generateToken();
-              }
-              scheduledExecutorService.execute(
-                  new Runnable() {
-                    @Override
-                    public void run() {
-                      if (random.nextDouble() < AUTH_FAIL_PROBABILITY) {
-                        callback.onError("fail");
-                      } else {
-                        callback.onSuccess(currentToken);
-                      }
-                    }
-                  });
-            }
-          });
-    }
-  }
-
   private Random random = new Random();
   private Semaphore stopSemaphore = new Semaphore(0);
   private boolean connected = false;
@@ -146,7 +73,7 @@ public class ConnectionLoadTestIT implements PersistentConnectionImpl.Delegate {
     // Make sure the connection goes from idle to unidle again
     // Based on PersistentConnectionImpl.IDLE_TIMEOUT + 5 seconds
     @SuppressWarnings("unused")
-        Future<?> possiblyIgnoredError =
+    Future<?> possiblyIgnoredError =
         this.executorService.scheduleAtFixedRate(
             new Runnable() {
               @Override
@@ -166,7 +93,7 @@ public class ConnectionLoadTestIT implements PersistentConnectionImpl.Delegate {
 
   private void scheduleNextOp() {
     @SuppressWarnings("unused")
-        Future<?> possiblyIgnoredError =
+    Future<?> possiblyIgnoredError =
         this.executorService.schedule(
             new Runnable() {
               @Override
@@ -253,5 +180,78 @@ public class ConnectionLoadTestIT implements PersistentConnectionImpl.Delegate {
     ConnectionLoadTestIT loadTester = new ConnectionLoadTestIT();
     loadTester.run();
     loadTester.waitForCompletion();
+  }
+
+  private static class TestAuthTokenProvider implements ConnectionAuthTokenProvider {
+
+    private String currentToken;
+    private long currentExpirationTime;
+    private Random random;
+    private BlockingQueue<Runnable> queue;
+    private ScheduledExecutorService scheduledExecutorService;
+
+    public TestAuthTokenProvider(ScheduledExecutorService service) {
+      this.scheduledExecutorService = service;
+      this.random = new Random();
+      this.queue = new LinkedBlockingQueue<>();
+
+      new Thread(
+          new Runnable() {
+            @Override
+            public void run() {
+              while (true) {
+                try {
+                  Runnable runnable = queue.take();
+                  runnable.run();
+                } catch (InterruptedException e) {
+                  e.printStackTrace();
+                  throw new RuntimeException(e);
+                }
+              }
+            }
+          })
+          .start();
+    }
+
+    private void generateToken() {
+      this.currentExpirationTime =
+          System.currentTimeMillis() + random.nextInt((int) EXPIRATION_DELAY_MS);
+      TokenOptions options = new TokenOptions();
+      options.setExpires(new Date(this.currentExpirationTime));
+      TokenGenerator generator = new TokenGenerator(TestHelpers.getTestSecret());
+      Map<String, Object> authObj = new HashMap<>();
+      authObj.put("uid", "test-uid");
+      this.currentToken = generator.createToken(authObj, options);
+    }
+
+    @Override
+    public void getToken(final boolean forceRefresh, final GetTokenCallback callback) {
+      queue.add(
+          new Runnable() {
+            @Override
+            public void run() {
+              try {
+                Thread.sleep(random.nextInt((int) TIME_UNIT_MS));
+              } catch (InterruptedException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+              }
+              if (System.currentTimeMillis() > currentExpirationTime || forceRefresh) {
+                generateToken();
+              }
+              scheduledExecutorService.execute(
+                  new Runnable() {
+                    @Override
+                    public void run() {
+                      if (random.nextDouble() < AUTH_FAIL_PROBABILITY) {
+                        callback.onError("fail");
+                      } else {
+                        callback.onSuccess(currentToken);
+                      }
+                    }
+                  });
+            }
+          });
+    }
   }
 }

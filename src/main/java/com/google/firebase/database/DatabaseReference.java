@@ -17,6 +17,7 @@ import com.google.firebase.database.utilities.Utilities;
 import com.google.firebase.database.utilities.Validation;
 import com.google.firebase.database.utilities.encoding.CustomClassMapper;
 import com.google.firebase.tasks.Task;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Map;
@@ -31,24 +32,6 @@ import java.util.Map;
 public class DatabaseReference extends Query {
 
   private static DatabaseConfig defaultConfig;
-
-  /**
-   * This interface is used as a method of being notified when an operation has been acknowledged by
-   * the Database servers and can be considered complete
-   *
-   * @since 1.1
-   */
-  public interface CompletionListener {
-
-    /**
-     * This method will be triggered when the operation has either succeeded or failed. If it has
-     * failed, an error will be given. If it has succeeded, the error will be null
-     *
-     * @param error A description of any errors that occurred or null on success
-     * @param ref A reference to the specified Firebase Database location
-     */
-    void onComplete(final DatabaseError error, final DatabaseReference ref);
-  }
 
   /**
    * @param repo The repo for this ref
@@ -67,6 +50,47 @@ public class DatabaseReference extends Query {
 
   private DatabaseReference(ParsedUrl parsedUrl, DatabaseConfig config) {
     this(RepoManager.getRepo(config, parsedUrl.repoInfo), parsedUrl.path);
+  }
+
+  /**
+   * Manually disconnect the Firebase Database client from the server and disable automatic
+   * reconnection.
+   *
+   * <p>Note: Invoking this method will impact all Firebase Database connections.
+   */
+  public static void goOffline() {
+    goOffline(getDefaultConfig());
+  }
+
+  static void goOffline(DatabaseConfig config) {
+    RepoManager.interrupt(config);
+  }
+
+  /**
+   * Manually reestablish a connection to the Firebase Database server and enable automatic
+   * reconnection.
+   *
+   * <p>Note: Invoking this method will impact all Firebase Database connections.
+   */
+  public static void goOnline() {
+    goOnline(getDefaultConfig());
+  }
+
+  static void goOnline(DatabaseConfig config) {
+    RepoManager.resume(config);
+  }
+
+  /**
+   * Legacy method for legacy creation of DatabaseReference for tests.
+   *
+   * @return A reference to the default config object. This can be modified up until your first
+   * Database call
+   */
+  private static synchronized DatabaseConfig getDefaultConfig() {
+    if (defaultConfig == null) {
+      defaultConfig = new DatabaseConfig();
+    }
+    return defaultConfig;
   }
 
   /**
@@ -139,6 +163,8 @@ public class DatabaseReference extends Query {
   public Task<Void> setValue(Object value) {
     return setValueInternal(value, PriorityUtilities.parsePriority(null), null);
   }
+
+  // Set priority
 
   /**
    * Set the data and priority to the given values. Passing null to setValue() will delete the data
@@ -252,6 +278,8 @@ public class DatabaseReference extends Query {
     setValueInternal(value, PriorityUtilities.parsePriority(priority), listener);
   }
 
+  // Update
+
   private Task<Void> setValueInternal(Object value, Node priority, CompletionListener optListener) {
     Validation.validateWritablePath(getPath());
     ValidationPath.validateWithObject(getPath(), value);
@@ -268,8 +296,6 @@ public class DatabaseReference extends Query {
         });
     return wrapped.getFirst();
   }
-
-  // Set priority
 
   /**
    * Set a priority for the data at this Database location. Priorities can be used to provide a
@@ -337,6 +363,8 @@ public class DatabaseReference extends Query {
     setPriorityInternal(PriorityUtilities.parsePriority(priority), listener);
   }
 
+  // Remove
+
   private Task<Void> setPriorityInternal(final Node priority, CompletionListener optListener) {
     Validation.validateWritablePath(getPath());
 
@@ -352,8 +380,6 @@ public class DatabaseReference extends Query {
     return wrapped.getFirst();
   }
 
-  // Update
-
   /**
    * Update the specific child keys to the specified values. Passing null in a map to
    * updateChildren() will remove the value at the specified location.
@@ -365,6 +391,8 @@ public class DatabaseReference extends Query {
     return updateChildrenInternal(update, null);
   }
 
+  // Access to disconnect operations
+
   /**
    * Update the specific child keys to the specified values. Passing null in a map to
    * updateChildren() will remove the value at the specified location.
@@ -375,6 +403,8 @@ public class DatabaseReference extends Query {
   public void updateChildren(final Map<String, Object> update, final CompletionListener listener) {
     updateChildrenInternal(update, listener);
   }
+
+  // Transactions
 
   private Task<Void> updateChildrenInternal(
       final Map<String, Object> update, final CompletionListener optListener) {
@@ -397,8 +427,6 @@ public class DatabaseReference extends Query {
     return wrapped.getFirst();
   }
 
-  // Remove
-
   /**
    * Set the value at this location to 'null'
    *
@@ -407,6 +435,25 @@ public class DatabaseReference extends Query {
   public Task<Void> removeValue() {
     return setValue(null);
   }
+
+  // Manual Connection Management
+
+  /*
+   * The Firebase Database client automatically maintains a persistent connection to the Database
+   * server, which will remain active indefinitely and reconnect when disconnected. However, the
+   * goOffline( ) and goOnline( ) methods may be used to manually control the client connection in
+   * cases where a persistent connection is undesirable.
+   *
+   * <p>While offline, the Firebase Database client will no longer receive data updates from the
+   * server. However, all Database operations performed locally will continue to immediately fire
+   * events, allowing your application to continue behaving normally. Additionally, each operation
+   * performed locally will automatically be queued and retried upon reconnection to the Database
+   * server.
+   *
+   * <p>To reconnect to the Database server and begin receiving remote events, see goOnline( ). Once
+   * the connection is reestablished, the Database client will transmit the appropriate data and
+   * fire the appropriate events so that your client "catches up" automatically.
+   */
 
   /**
    * Set the value at this location to 'null'
@@ -417,8 +464,6 @@ public class DatabaseReference extends Query {
     setValue(null, listener);
   }
 
-  // Access to disconnect operations
-
   /**
    * Provides access to disconnect operations at this location
    *
@@ -428,8 +473,6 @@ public class DatabaseReference extends Query {
     Validation.validateWritablePath(getPath());
     return new OnDisconnect(repo, getPath());
   }
-
-  // Transactions
 
   /**
    * Run a transaction on the data at this location. For more information on running transactions,
@@ -461,53 +504,6 @@ public class DatabaseReference extends Query {
             repo.startTransaction(getPath(), handler, fireLocalEvents);
           }
         });
-  }
-
-  // Manual Connection Management
-
-  /*
-   * The Firebase Database client automatically maintains a persistent connection to the Database
-   * server, which will remain active indefinitely and reconnect when disconnected. However, the
-   * goOffline( ) and goOnline( ) methods may be used to manually control the client connection in
-   * cases where a persistent connection is undesirable.
-   *
-   * <p>While offline, the Firebase Database client will no longer receive data updates from the
-   * server. However, all Database operations performed locally will continue to immediately fire
-   * events, allowing your application to continue behaving normally. Additionally, each operation
-   * performed locally will automatically be queued and retried upon reconnection to the Database
-   * server.
-   *
-   * <p>To reconnect to the Database server and begin receiving remote events, see goOnline( ). Once
-   * the connection is reestablished, the Database client will transmit the appropriate data and
-   * fire the appropriate events so that your client "catches up" automatically.
-   */
-
-  /**
-   * Manually disconnect the Firebase Database client from the server and disable automatic
-   * reconnection.
-   *
-   * <p>Note: Invoking this method will impact all Firebase Database connections.
-   */
-  public static void goOffline() {
-    goOffline(getDefaultConfig());
-  }
-
-  static void goOffline(DatabaseConfig config) {
-    RepoManager.interrupt(config);
-  }
-
-  /**
-   * Manually reestablish a connection to the Firebase Database server and enable automatic
-   * reconnection.
-   *
-   * <p>Note: Invoking this method will impact all Firebase Database connections.
-   */
-  public static void goOnline() {
-    goOnline(getDefaultConfig());
-  }
-
-  static void goOnline(DatabaseConfig config) {
-    RepoManager.resume(config);
   }
 
   // Getters and other auxiliary methods
@@ -589,15 +585,20 @@ public class DatabaseReference extends Query {
   }
 
   /**
-   * Legacy method for legacy creation of DatabaseReference for tests.
+   * This interface is used as a method of being notified when an operation has been acknowledged by
+   * the Database servers and can be considered complete
    *
-   * @return A reference to the default config object. This can be modified up until your first
-   * Database call
+   * @since 1.1
    */
-  private static synchronized DatabaseConfig getDefaultConfig() {
-    if (defaultConfig == null) {
-      defaultConfig = new DatabaseConfig();
-    }
-    return defaultConfig;
+  public interface CompletionListener {
+
+    /**
+     * This method will be triggered when the operation has either succeeded or failed. If it has
+     * failed, an error will be given. If it has succeeded, the error will be null
+     *
+     * @param error A description of any errors that occurred or null on success
+     * @param ref A reference to the specified Firebase Database location
+     */
+    void onComplete(final DatabaseError error, final DatabaseReference ref);
   }
 }

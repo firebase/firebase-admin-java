@@ -13,6 +13,27 @@ public class TestClient {
   private AtomicBoolean inTest;
   private Semaphore testLatch;
 
+  public void startTest(String testNum) throws WebSocketException, InterruptedException {
+    URI uri = URI.create("ws://localhost:9001/runCase?case=" + testNum + "&agent=tubesock");
+    inTest = new AtomicBoolean(true);
+    testLatch = new Semaphore(0);
+    client = new WebSocket(uri);
+    client.setEventHandler(new Handler());
+    client.connect();
+    testLatch.acquire(1);
+    // Not required, but make sure the threads exit after the socket is closed
+    client.blockClose();
+  }
+
+  private void finishTest() {
+    if (inTest.compareAndSet(true, false)) {
+      testLatch.release(1);
+    } else {
+      // Sanity check to make sure we don't double-close
+      System.err.println("Tried to end a test that was already over");
+    }
+  }
+
   private class Handler implements WebSocketEventHandler {
 
     @Override
@@ -48,27 +69,6 @@ public class TestClient {
     @Override
     public void onLogMessage(String msg) {
       System.err.println(msg);
-    }
-  }
-
-  public void startTest(String testNum) throws WebSocketException, InterruptedException {
-    URI uri = URI.create("ws://localhost:9001/runCase?case=" + testNum + "&agent=tubesock");
-    inTest = new AtomicBoolean(true);
-    testLatch = new Semaphore(0);
-    client = new WebSocket(uri);
-    client.setEventHandler(new Handler());
-    client.connect();
-    testLatch.acquire(1);
-    // Not required, but make sure the threads exit after the socket is closed
-    client.blockClose();
-  }
-
-  private void finishTest() {
-    if (inTest.compareAndSet(true, false)) {
-      testLatch.release(1);
-    } else {
-      // Sanity check to make sure we don't double-close
-      System.err.println("Tried to end a test that was already over");
     }
   }
 }

@@ -15,41 +15,18 @@ import com.google.firebase.database.snapshot.Node;
 public class Transaction {
 
   /**
-   * Instances of this class represent the desired outcome of a single run of a {@link Handler}'s
-   * doTransaction method. The options are:
-   *
-   * <ul>
-   *   <li>Set the data to the new value (success)
-   *   <li>abort the transaction
-   * </ul>
-   *
-   * Instances are created using {@link Transaction#success(MutableData)} or {@link
-   * com.google.firebase.database.Transaction#abort()}.
+   * @return A {@link Result} that aborts the transaction
    */
-  public static class Result {
+  public static Result abort() {
+    return new Result(false, null);
+  }
 
-    private boolean success;
-    private Node data;
-
-    private Result(boolean success, Node data) {
-      this.success = success;
-      this.data = data;
-    }
-
-    /** @return Whether or not this result is a success */
-    public boolean isSuccess() {
-      return success;
-    }
-
-    /**
-     * <strong>For internal use</strong>
-     *
-     * @hide
-     * @return The data
-     */
-    public Node getNode() {
-      return data;
-    }
+  /**
+   * @param resultData The desired data at the location
+   * @return A {@link Result} indicating the new data to be stored at the location
+   */
+  public static Result success(MutableData resultData) {
+    return new Result(true, resultData.getNode());
   }
 
   /**
@@ -72,7 +49,7 @@ public class Transaction {
      * Best practices for this method are to rely only on the data that is passed in.
      *
      * @param currentData The current data at the location. Update this to the desired data at the
-     *     location
+     * location
      * @return Either the new data, or an indication to abort the transaction
      */
     Result doTransaction(MutableData currentData);
@@ -82,22 +59,49 @@ public class Transaction {
      *
      * @param error null if no errors occurred, otherwise it contains a description of the error
      * @param committed True if the transaction successfully completed, false if it was aborted or
-     *     an error occurred
+     * an error occurred
      * @param currentData The current data at the location
      */
     void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData);
   }
 
-  /** @return A {@link Result} that aborts the transaction */
-  public static Result abort() {
-    return new Result(false, null);
-  }
-
   /**
-   * @param resultData The desired data at the location
-   * @return A {@link Result} indicating the new data to be stored at the location
+   * Instances of this class represent the desired outcome of a single run of a {@link Handler}'s
+   * doTransaction method. The options are:
+   *
+   * <ul>
+   * <li>Set the data to the new value (success)
+   * <li>abort the transaction
+   * </ul>
+   *
+   * Instances are created using {@link Transaction#success(MutableData)} or {@link
+   * com.google.firebase.database.Transaction#abort()}.
    */
-  public static Result success(MutableData resultData) {
-    return new Result(true, resultData.getNode());
+  public static class Result {
+
+    private boolean success;
+    private Node data;
+
+    private Result(boolean success, Node data) {
+      this.success = success;
+      this.data = data;
+    }
+
+    /**
+     * @return Whether or not this result is a success
+     */
+    public boolean isSuccess() {
+      return success;
+    }
+
+    /**
+     * <strong>For internal use</strong>
+     *
+     * @return The data
+     * @hide
+     */
+    public Node getNode() {
+      return data;
+    }
   }
 }

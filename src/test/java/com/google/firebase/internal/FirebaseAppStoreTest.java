@@ -1,7 +1,5 @@
 package com.google.firebase.internal;
 
-import static org.junit.Assert.assertTrue;
-
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -10,6 +8,8 @@ import com.google.firebase.testing.FirebaseAppRule;
 import com.google.firebase.testing.ServiceAccount;
 import org.junit.Rule;
 import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
 
 public class FirebaseAppStoreTest {
 

@@ -1,7 +1,5 @@
 package com.google.firebase.database.utilities;
 
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
-
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.ServerValues;
@@ -10,11 +8,14 @@ import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
 import com.google.firebase.database.snapshot.PriorityUtilities;
+
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
+
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
 
 /**
  * User: greg Date: 5/29/13 Time: 11:08 AM

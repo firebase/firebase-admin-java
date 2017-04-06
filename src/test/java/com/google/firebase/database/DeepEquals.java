@@ -1,8 +1,7 @@
 package com.google.firebase.database;
 
-// Pulled from https://code.google.com/p/deep-equals/source/browse/deep-equals/java/com/cedarsoftware/util/DeepEquals.java?r=5
-
-import static org.junit.Assert.fail;
+// Pulled from https://code.google.com/p/deep-equals/source/browse/deep-equals/java/com
+// /cedarsoftware/util/DeepEquals.java?r=5
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -19,6 +18,8 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.junit.Assert.fail;
+
 /**
  * Deeply compare two (2) objects. This method will call any overridden equals() methods if they
  * exist. If not, it will then proceed to do a field-by-field comparison, and when a non-primitive
@@ -30,48 +31,13 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author John DeRegnaucourt
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings( {"unchecked", "rawtypes"})
 public class DeepEquals {
 
   private static final Map<Class, Boolean> _customEquals = new ConcurrentHashMap<>();
   private static final Map<Class, Boolean> _customHash = new ConcurrentHashMap<>();
   private static final Map<Class, Collection<Field>> _reflectedFields =
       new ConcurrentHashMap<>();
-
-  private static class DualKey {
-
-    private Object key1;
-    private Object key2;
-
-    private DualKey() {
-    }
-
-    private DualKey(Object k1, Object k2) {
-      key1 = k1;
-      key2 = k2;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-      if (other == null) {
-        return false;
-      }
-
-      if (!(other instanceof DualKey)) {
-        return false;
-      }
-
-      DualKey that = (DualKey) other;
-      return key1 == that.key1 && key2 == that.key2;
-    }
-
-    @Override
-    public int hashCode() {
-      int h1 = key1 != null ? key1.hashCode() : 0;
-      int h2 = key2 != null ? key2.hashCode() : 0;
-      return h1 + h2;
-    }
-  }
 
   public static boolean deepEquals(Object a, Object b) {
     Set visited = new HashSet<>();
@@ -297,8 +263,8 @@ public class DeepEquals {
     for (Object element1 : col1) {
       int len = copy.size();
       for (int i = 0;
-          i < len;
-          i++) { // recurse here (yes, that makes this a Stack-based implementation with
+           i < len;
+           i++) { // recurse here (yes, that makes this a Stack-based implementation with
         // partial recursion in the case of unordered Sets).
         if (deepEquals(element1, copy.get(i), visited)) {
           copy.remove(i); // Shrink 2nd Set
@@ -445,5 +411,40 @@ public class DeepEquals {
     }
     _reflectedFields.put(c, fields);
     return fields;
+  }
+
+  private static class DualKey {
+
+    private Object key1;
+    private Object key2;
+
+    private DualKey() {
+    }
+
+    private DualKey(Object k1, Object k2) {
+      key1 = k1;
+      key2 = k2;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      if (other == null) {
+        return false;
+      }
+
+      if (!(other instanceof DualKey)) {
+        return false;
+      }
+
+      DualKey that = (DualKey) other;
+      return key1 == that.key1 && key2 == that.key2;
+    }
+
+    @Override
+    public int hashCode() {
+      int h1 = key1 != null ? key1.hashCode() : 0;
+      int h2 = key2 != null ? key2.hashCode() : 0;
+      return h1 + h2;
+    }
   }
 }

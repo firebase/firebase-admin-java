@@ -2,24 +2,13 @@ package com.google.firebase.database.core.utilities;
 
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.snapshot.ChildKey;
+
 import java.util.Map;
 
 /**
  * User: greg Date: 5/16/13 Time: 4:16 PM
  */
 public class Tree<T> {
-
-  /** */
-  public interface TreeVisitor<T> {
-
-    void visitTree(Tree<T> tree);
-  }
-
-  /** */
-  public interface TreeFilter<T> {
-
-    boolean filterTreeNode(Tree<T> tree);
-  }
 
   private ChildKey name;
   private Tree<T> parent;
@@ -177,5 +166,17 @@ public class Tree<T> {
   String toString(String prefix) {
     String nodeName = name == null ? "<anon>" : name.asString();
     return prefix + nodeName + "\n" + node.toString(prefix + "\t");
+  }
+
+  /** */
+  public interface TreeVisitor<T> {
+
+    void visitTree(Tree<T> tree);
+  }
+
+  /** */
+  public interface TreeFilter<T> {
+
+    boolean filterTreeNode(Tree<T> tree);
   }
 }

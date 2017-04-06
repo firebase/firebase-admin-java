@@ -2,6 +2,7 @@ package com.google.firebase.tasks.testing;
 
 import com.google.firebase.internal.Preconditions;
 import com.google.firebase.tasks.OnSuccessListener;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 

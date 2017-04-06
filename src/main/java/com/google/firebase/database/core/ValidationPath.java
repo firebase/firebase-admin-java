@@ -2,6 +2,7 @@ package com.google.firebase.database.core;
 
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.snapshot.ChildKey;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -16,11 +17,10 @@ import java.util.Map;
  */
 public class ValidationPath {
 
-  private final List<String> parts = new ArrayList<>();
-  private int byteLength = 0;
-
   public static final int MAX_PATH_LENGTH_BYTES = 768;
   public static final int MAX_PATH_DEPTH = 32;
+  private final List<String> parts = new ArrayList<>();
+  private int byteLength = 0;
 
   private ValidationPath(Path path) throws DatabaseException {
     for (ChildKey key : path) {
@@ -39,7 +39,40 @@ public class ValidationPath {
     new ValidationPath(path).withObject(value);
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  private static String joinStringList(String delimeter, List<String> parts) {
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < parts.size(); i++) {
+      if (i > 0) {
+        sb.append(delimeter);
+      }
+      sb.append(parts.get(i));
+    }
+    return sb.toString();
+  }
+
+  /*
+   * Compute UTF-8 encoding size in bytes w/o realizing the string in
+   * memory (which is what String.getBytes('UTF-8').length would do).
+   */
+  private static int utf8Bytes(CharSequence sequence) {
+    int count = 0;
+    for (int i = 0, len = sequence.length(); i < len; i++) {
+      char ch = sequence.charAt(i);
+      if (ch <= 0x7F) {
+        count++;
+      } else if (ch <= 0x7FF) {
+        count += 2;
+      } else if (Character.isHighSurrogate(ch)) {
+        count += 4;
+        ++i;
+      } else {
+        count += 3;
+      }
+    }
+    return count;
+  }
+
+  @SuppressWarnings( {"unchecked", "rawtypes"})
   private void withObject(Object value) throws DatabaseException {
     if (value instanceof Map) {
       Map<String, Object> mapValue = (Map<String, Object>) value;
@@ -108,38 +141,5 @@ public class ValidationPath {
       return "";
     }
     return "in path \'" + joinStringList("/", parts) + "\'";
-  }
-
-  private static String joinStringList(String delimeter, List<String> parts) {
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < parts.size(); i++) {
-      if (i > 0) {
-        sb.append(delimeter);
-      }
-      sb.append(parts.get(i));
-    }
-    return sb.toString();
-  }
-
-  /*
-   * Compute UTF-8 encoding size in bytes w/o realizing the string in
-   * memory (which is what String.getBytes('UTF-8').length would do).
-   */
-  private static int utf8Bytes(CharSequence sequence) {
-    int count = 0;
-    for (int i = 0, len = sequence.length(); i < len; i++) {
-      char ch = sequence.charAt(i);
-      if (ch <= 0x7F) {
-        count++;
-      } else if (ch <= 0x7FF) {
-        count += 2;
-      } else if (Character.isHighSurrogate(ch)) {
-        count += 4;
-        ++i;
-      } else {
-        count += 3;
-      }
-    }
-    return count;
   }
 }

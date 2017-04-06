@@ -4,12 +4,12 @@ public class KeyIndex extends Index {
 
   private static final KeyIndex INSTANCE = new KeyIndex();
 
-  public static KeyIndex getInstance() {
-    return INSTANCE;
-  }
-
   private KeyIndex() {
     // prevent instantiation
+  }
+
+  public static KeyIndex getInstance() {
+    return INSTANCE;
   }
 
   @Override

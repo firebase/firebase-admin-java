@@ -22,6 +22,65 @@ public final class FirebaseOptions {
   private final FirebaseCredential firebaseCredential;
   private final Map<String, Object> databaseAuthVariableOverride;
 
+  private FirebaseOptions(
+      @Nullable String databaseUrl,
+      @NonNull FirebaseCredential firebaseCredential,
+      @Nullable Map<String, Object> databaseAuthVariableOverride) {
+    Preconditions.checkArgument(firebaseCredential != null, "Service Account must be provided.");
+
+    this.databaseUrl = databaseUrl;
+    this.firebaseCredential = firebaseCredential;
+    this.databaseAuthVariableOverride = databaseAuthVariableOverride;
+  }
+
+  /**
+   * Returns the Realtime Database URL to use for data storage.
+   *
+   * @return The Realtime Database URL supplied via {@link Builder#setDatabaseUrl}.
+   */
+  public String getDatabaseUrl() {
+    return databaseUrl;
+  }
+
+  FirebaseCredential getCredential() {
+    return firebaseCredential;
+  }
+
+  /**
+   * Returns the <code>auth</code> variable to be used in Security Rules.
+   *
+   * @return The <code>auth</code> variable supplied via
+   * {@link Builder#setDatabaseAuthVariableOverride}.
+   */
+  public Map<String, Object> getDatabaseAuthVariableOverride() {
+    return databaseAuthVariableOverride;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof FirebaseOptions)) {
+      return false;
+    }
+    FirebaseOptions other = (FirebaseOptions) obj;
+    return Objects.equal(databaseUrl, other.databaseUrl)
+        && Objects.equal(firebaseCredential, other.firebaseCredential)
+        && Objects.equal(databaseAuthVariableOverride, other.databaseAuthVariableOverride);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(databaseUrl, firebaseCredential, databaseAuthVariableOverride);
+  }
+
+  @Override
+  public String toString() {
+    return Objects.toStringHelper(this)
+        .add("databaseUrl", databaseUrl)
+        .add("credential", firebaseCredential)
+        .add("databaseAuthVariableOverride", databaseAuthVariableOverride)
+        .toString();
+  }
+
   /**
    * Builder for constructing {@link FirebaseOptions}.
    */
@@ -40,8 +99,7 @@ public final class FirebaseOptions {
 
     /**
      * Initializes the builder's values from the options object.
-     *
-     * <p>The new builder is not backed by this objects values, that is changes made to the new
+     * * <p>The new builder is not backed by this objects values, that is changes made to the new
      * builder don't change the values of the origin object.
      */
     public Builder(FirebaseOptions options) {
@@ -120,7 +178,7 @@ public final class FirebaseOptions {
      * documentation.
      *
      * @param databaseAuthVariableOverride The value to use for the <code>auth</code> variable in
-     *     the security rules for Realtime Database actions.
+     * the security rules for Realtime Database actions.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setDatabaseAuthVariableOverride(
@@ -150,65 +208,5 @@ public final class FirebaseOptions {
 
       return new FirebaseOptions(databaseUrl, firebaseCredential, databaseAuthVariableOverride);
     }
-  }
-
-  private FirebaseOptions(
-      @Nullable String databaseUrl,
-      @NonNull FirebaseCredential firebaseCredential,
-      @Nullable Map<String, Object> databaseAuthVariableOverride) {
-    Preconditions.checkArgument(firebaseCredential != null, "Service Account must be provided.");
-
-    this.databaseUrl = databaseUrl;
-    this.firebaseCredential = firebaseCredential;
-    this.databaseAuthVariableOverride = databaseAuthVariableOverride;
-  }
-
-  /**
-   * Returns the Realtime Database URL to use for data storage.
-   *
-   * @return The Realtime Database URL supplied via {@link Builder#setDatabaseUrl}.
-   */
-  public String getDatabaseUrl() {
-    return databaseUrl;
-  }
-
-
-  FirebaseCredential getCredential() {
-    return firebaseCredential;
-  }
-
-  /**
-   * Returns the <code>auth</code> variable to be used in Security Rules.
-   *
-   * @return The <code>auth</code> variable supplied via
-   * {@link Builder#setDatabaseAuthVariableOverride}.
-   */
-  public Map<String, Object> getDatabaseAuthVariableOverride() {
-    return databaseAuthVariableOverride;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof FirebaseOptions)) {
-      return false;
-    }
-    FirebaseOptions other = (FirebaseOptions) obj;
-    return Objects.equal(databaseUrl, other.databaseUrl)
-        && Objects.equal(firebaseCredential, other.firebaseCredential)
-        && Objects.equal(databaseAuthVariableOverride, other.databaseAuthVariableOverride);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(databaseUrl, firebaseCredential, databaseAuthVariableOverride);
-  }
-
-  @Override
-  public String toString() {
-    return Objects.toStringHelper(this)
-        .add("databaseUrl", databaseUrl)
-        .add("credential", firebaseCredential)
-        .add("databaseAuthVariableOverride", databaseAuthVariableOverride)
-        .toString();
   }
 }

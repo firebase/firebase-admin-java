@@ -13,15 +13,13 @@ import java.util.Map;
  */
 public class GAuthToken {
 
-  private final String token;
-  private final Map<String, Object> auth;
-
   // Normal tokens will be JWTs or possibly Firebase Secrets, neither of which will contain "|"
   // so this should be a safe prefix.
   private static final String TOKEN_PREFIX = "gauth|";
-
   private static final String AUTH_KEY = "auth";
   private static final String TOKEN_KEY = "token";
+  private final String token;
+  private final Map<String, Object> auth;
 
   public GAuthToken(String token, Map<String, Object> auth) {
     this.token = token;

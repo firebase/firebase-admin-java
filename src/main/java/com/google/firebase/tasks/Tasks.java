@@ -3,6 +3,7 @@ package com.google.firebase.tasks;
 import com.google.firebase.internal.GuardedBy;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Preconditions;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Callable;
@@ -17,11 +18,14 @@ import java.util.concurrent.TimeoutException;
  */
 public final class Tasks {
 
+  private Tasks() {
+  }
+
   /**
    * Returns a completed Task with the specified result.
    */
-  public static <TResult> Task<TResult> forResult(TResult result) {
-    TaskImpl<TResult> task = new TaskImpl<>();
+  public static <T> Task<T> forResult(T result) {
+    TaskImpl<T> task = new TaskImpl<>();
     task.setResult(result);
     return task;
   }
@@ -29,9 +33,9 @@ public final class Tasks {
   /**
    * Returns a completed Task with the specified exception.
    */
-  public static <TResult> Task<TResult> forException(@NonNull Exception e) {
-    TaskImpl<TResult> task = new TaskImpl<>();
-    task.setException(e);
+  public static <T> Task<T> forException(@NonNull Exception exception) {
+    TaskImpl<T> task = new TaskImpl<>();
+    task.setException(exception);
     return task;
   }
 
@@ -40,7 +44,7 @@ public final class Tasks {
    *
    * <p>The Callable will be called on a shared thread pool.
    */
-  public static <TResult> Task<TResult> call(@NonNull Callable<TResult> callable) {
+  public static <T> Task<T> call(@NonNull Callable<T> callable) {
     return call(TaskExecutors.DEFAULT_THREAD_POOL, callable);
   }
 
@@ -49,12 +53,12 @@ public final class Tasks {
    *
    * @param executor the Executor to use to call the Callable
    */
-  public static <TResult> Task<TResult> call(
-      @NonNull Executor executor, @NonNull final Callable<TResult> callable) {
+  public static <T> Task<T> call(
+      @NonNull Executor executor, @NonNull final Callable<T> callable) {
     Preconditions.checkNotNull(executor, "Executor must not be null");
     Preconditions.checkNotNull(callable, "Callback must not be null");
 
-    final TaskImpl<TResult> task = new TaskImpl<>();
+    final TaskImpl<T> task = new TaskImpl<>();
     executor.execute(
         new Runnable() {
           @Override
@@ -76,7 +80,7 @@ public final class Tasks {
    * @throws ExecutionException if the Task fails
    * @throws InterruptedException if an interrupt occurs while waiting for the Task to complete
    */
-  public static <TResult> TResult await(@NonNull Task<TResult> task)
+  public static <T> T await(@NonNull Task<T> task)
       throws ExecutionException, InterruptedException {
     Preconditions.checkNotNull(task, "Task must not be null");
 
@@ -99,8 +103,8 @@ public final class Tasks {
    * @throws InterruptedException if an interrupt occurs while waiting for the Task to complete
    * @throws TimeoutException if the specified timeout is reached before the Task completes
    */
-  public static <TResult> TResult await(
-      @NonNull Task<TResult> task, long timeout, @NonNull TimeUnit unit)
+  public static <T> T await(
+      @NonNull Task<T> task, long timeout, @NonNull TimeUnit unit)
       throws ExecutionException, InterruptedException, TimeoutException {
     Preconditions.checkNotNull(task, "Task must not be null");
     Preconditions.checkNotNull(unit, "TimeUnit must not be null");
@@ -155,7 +159,7 @@ public final class Tasks {
     return whenAll(Arrays.asList(tasks));
   }
 
-  private static <TResult> TResult getResultOrThrowExecutionException(Task<TResult> task)
+  private static <T> T getResultOrThrowExecutionException(Task<T> task)
       throws ExecutionException {
     if (task.isSuccessful()) {
       return task.getResult();
@@ -176,79 +180,76 @@ public final class Tasks {
 
   private static final class AwaitListener implements CombinedListener {
 
-    private final CountDownLatch mLatch = new CountDownLatch(1);
+    private final CountDownLatch latch = new CountDownLatch(1);
 
     @Override
-    public void onSuccess(Object o) {
-      mLatch.countDown();
+    public void onSuccess(Object obj) {
+      latch.countDown();
     }
 
     @Override
-    public void onFailure(@NonNull Exception e) {
-      mLatch.countDown();
+    public void onFailure(@NonNull Exception exception) {
+      latch.countDown();
     }
 
     public void await() throws InterruptedException {
-      mLatch.await();
+      latch.await();
     }
 
     public boolean await(long timeout, TimeUnit unit) throws InterruptedException {
-      return mLatch.await(timeout, unit);
+      return latch.await(timeout, unit);
     }
   }
 
   private static final class WhenAllListener implements CombinedListener {
 
-    private final Object mLock = new Object();
-    private final int mNumTasks;
-    private final TaskImpl<Void> mTask;
+    private final Object lock = new Object();
+    private final int numTasks;
+    private final TaskImpl<Void> task;
 
-    @GuardedBy("mLock")
-    private int mSuccessCounter;
+    @GuardedBy("lock")
+    private int successCounter;
 
-    @GuardedBy("mLock")
-    private int mFailuresCounter;
+    @GuardedBy("lock")
+    private int failuresCounter;
 
-    @GuardedBy("mLock")
-    private Exception mException;
+    @GuardedBy("lock")
+    private Exception exception;
 
     public WhenAllListener(int taskCount, TaskImpl<Void> task) {
-      mNumTasks = taskCount;
-      mTask = task;
+      numTasks = taskCount;
+      this.task = task;
     }
 
     @Override
-    public void onFailure(@NonNull Exception e) {
-      synchronized (mLock) {
-        mFailuresCounter++;
-        mException = e;
+    public void onFailure(@NonNull Exception exception) {
+      synchronized (lock) {
+        failuresCounter++;
+        this.exception = exception;
         checkForCompletionLocked();
       }
     }
 
     @Override
-    public void onSuccess(Object o) {
-      synchronized (mLock) {
-        mSuccessCounter++;
+    public void onSuccess(Object obj) {
+      synchronized (lock) {
+        successCounter++;
         checkForCompletionLocked();
       }
     }
 
-    @GuardedBy("mLock")
+    @GuardedBy("lock")
     private void checkForCompletionLocked() {
-      if (mSuccessCounter + mFailuresCounter == mNumTasks) {
-        if (mException == null) {
-          mTask.setResult(null);
+      if (successCounter + failuresCounter == numTasks) {
+        if (exception == null) {
+          task.setResult(null);
         } else {
-          mTask.setException(
+          task.setException(
               new ExecutionException(
-                  mFailuresCounter + " out of " + mNumTasks + " underlying tasks failed",
-                  mException));
+                  failuresCounter + " out of " + numTasks + " underlying tasks failed",
+                  exception));
         }
       }
     }
-  }
-
-  private Tasks() {
   }
 }

@@ -28,6 +28,45 @@ public class RandomViewProcessorTest {
   private static final int NUM_TESTS = 1000;
   private static final int OPERATIONS_PER_TEST = 300;
 
+  private static Node applyChange(Node node, Change change) {
+    if (change.getEventType() == Event.EventType.CHILD_ADDED) {
+      Assert.assertFalse(node.hasChild(change.getChildKey()));
+      return node.updateImmediateChild(change.getChildKey(), change.getIndexedNode().getNode());
+    } else if (change.getEventType() == Event.EventType.CHILD_REMOVED) {
+      Assert.assertTrue(node.hasChild(change.getChildKey()));
+      Assert.assertEquals(
+          node.getImmediateChild(change.getChildKey()), change.getIndexedNode().getNode());
+      return node.updateImmediateChild(change.getChildKey(), EmptyNode.Empty());
+    } else if (change.getEventType() == Event.EventType.CHILD_CHANGED) {
+      Assert.assertTrue(node.hasChild(change.getChildKey()));
+      Assert.assertEquals(
+          node.getImmediateChild(change.getChildKey()), change.getOldIndexedNode().getNode());
+      return node.updateImmediateChild(change.getChildKey(), change.getIndexedNode().getNode());
+    } else {
+      throw new IllegalArgumentException("Can't handle change of type: " + change.getEventType());
+    }
+  }
+
+  private static Node removePriority(Node node) {
+    node = node.updatePriority(PriorityUtilities.NullPriority());
+    // this loop only triggers updates on children nodes, so we don't overwrite leaf nodes
+    for (NamedNode childEntry : node) {
+      node = node.updateImmediateChild(childEntry.getName(), removePriority(childEntry.getNode()));
+    }
+    return node;
+  }
+
+  private static void assertNodesMatch(String message, Node one, Node two, boolean checkPriority) {
+    if (!checkPriority) {
+      if (!one.equals(two)) {
+        System.err.println(message + ": Priorities don't match!");
+      }
+      one = removePriority(one);
+      two = removePriority(two);
+    }
+    Assert.assertEquals(message, one, two);
+  }
+
   // This test still fails in some weird edge cases, nonetheless it helped find several bugs
   // Activate the test if you want to do some more soul searching...
   @Test
@@ -106,44 +145,5 @@ public class RandomViewProcessorTest {
         }
       }
     }
-  }
-
-  private static Node applyChange(Node node, Change change) {
-    if (change.getEventType() == Event.EventType.CHILD_ADDED) {
-      Assert.assertFalse(node.hasChild(change.getChildKey()));
-      return node.updateImmediateChild(change.getChildKey(), change.getIndexedNode().getNode());
-    } else if (change.getEventType() == Event.EventType.CHILD_REMOVED) {
-      Assert.assertTrue(node.hasChild(change.getChildKey()));
-      Assert.assertEquals(
-          node.getImmediateChild(change.getChildKey()), change.getIndexedNode().getNode());
-      return node.updateImmediateChild(change.getChildKey(), EmptyNode.Empty());
-    } else if (change.getEventType() == Event.EventType.CHILD_CHANGED) {
-      Assert.assertTrue(node.hasChild(change.getChildKey()));
-      Assert.assertEquals(
-          node.getImmediateChild(change.getChildKey()), change.getOldIndexedNode().getNode());
-      return node.updateImmediateChild(change.getChildKey(), change.getIndexedNode().getNode());
-    } else {
-      throw new IllegalArgumentException("Can't handle change of type: " + change.getEventType());
-    }
-  }
-
-  private static Node removePriority(Node node) {
-    node = node.updatePriority(PriorityUtilities.NullPriority());
-    // this loop only triggers updates on children nodes, so we don't overwrite leaf nodes
-    for (NamedNode childEntry : node) {
-      node = node.updateImmediateChild(childEntry.getName(), removePriority(childEntry.getNode()));
-    }
-    return node;
-  }
-
-  private static void assertNodesMatch(String message, Node one, Node two, boolean checkPriority) {
-    if (!checkPriority) {
-      if (!one.equals(two)) {
-        System.err.println(message + ": Priorities don't match!");
-      }
-      one = removePriority(one);
-      two = removePriority(two);
-    }
-    Assert.assertEquals(message, one, two);
   }
 }

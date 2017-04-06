@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
  * Marks a field as excluded from the Database.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.FIELD})
+@Target( {ElementType.METHOD, ElementType.FIELD})
 public @interface Exclude {
 
 }

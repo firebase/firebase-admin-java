@@ -1,13 +1,14 @@
 package com.google.firebase.tasks;
 
-import static org.mockito.Mockito.verifyZeroInteractions;
-
 import com.google.firebase.tasks.testing.TestOnCompleteListener;
 import com.google.firebase.testing.MockitoTestRule;
-import java.util.concurrent.Executor;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import java.util.concurrent.Executor;
+
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class OnCompleteCompletionListenerTest {
 

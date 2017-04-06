@@ -1,4 +1,3 @@
-// Copyright 2012 Google Inc. All Rights Reserved.
 package com.google.firebase.internal;
 
 /**
@@ -10,6 +9,12 @@ package com.google.firebase.internal;
  * @hide
  */
 public final class Preconditions {
+
+  private Preconditions() {
+    throw new AssertionError("Uninstantiable");
+  }
+
+  // The following method is copied from Android's TextUtils class
 
   /**
    * Ensures that an object reference passed as a parameter to the calling method is not null.
@@ -24,8 +29,6 @@ public final class Preconditions {
     }
     return reference;
   }
-
-  // The following method is copied from Android's TextUtils class
 
   /**
    * Returns true if the string is null or 0-length.
@@ -232,10 +235,6 @@ public final class Preconditions {
     if (!expression) {
       throw new IllegalArgumentException();
     }
-  }
-
-  private Preconditions() {
-    throw new AssertionError("Uninstantiable");
   }
 
   // The following methods are copied from google-common library Preconditions class

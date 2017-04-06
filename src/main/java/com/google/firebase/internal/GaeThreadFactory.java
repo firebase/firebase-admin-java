@@ -13,20 +13,44 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GaeThreadFactory implements ThreadFactory {
 
-  private static final String TAG = "GaeThreadFactory";
-  private static final String GAE_THREAD_MANAGER_CLASS = "com.google.appengine.api.ThreadManager";
-
-  private static final GaeThreadFactory instance = new GaeThreadFactory();
   public static final ScheduledExecutorService DEFAULT_EXECUTOR =
       new GaeScheduledExecutorService("FirebaseDefault");
-
+  private static final String TAG = "GaeThreadFactory";
+  private static final String GAE_THREAD_MANAGER_CLASS = "com.google.appengine.api.ThreadManager";
+  private static final GaeThreadFactory instance = new GaeThreadFactory();
   private final AtomicReference<ThreadFactoryWrapper> threadFactory = new AtomicReference<>(null);
+
+  private GaeThreadFactory() {
+  }
 
   public static GaeThreadFactory getInstance() {
     return instance;
   }
 
-  private GaeThreadFactory() {
+  /**
+   * Returns whether GaeThreadFactory can be used on this system (true for GAE).
+   */
+  public static boolean isAvailable() {
+    try {
+      Class.forName(GAE_THREAD_MANAGER_CLASS);
+      return System.getProperty("com.google.appengine.runtime.environment") != null;
+    } catch (ClassNotFoundException e) {
+      return false;
+    }
+  }
+
+  private static ThreadFactory createBackgroundFactory()
+      throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
+      IllegalAccessException {
+    Class<?> gaeThreadManager = Class.forName(GAE_THREAD_MANAGER_CLASS);
+    return (ThreadFactory) gaeThreadManager.getMethod("backgroundThreadFactory").invoke(null);
+  }
+
+  private static ThreadFactory createRequestScopedFactory()
+      throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
+      IllegalAccessException {
+    Class<?> gaeThreadManager = Class.forName(GAE_THREAD_MANAGER_CLASS);
+    return (ThreadFactory) gaeThreadManager.getMethod("currentRequestThreadFactory").invoke(null);
   }
 
   @Override
@@ -100,32 +124,6 @@ public class GaeThreadFactory implements ThreadFactory {
     ThreadFactoryWrapper wrapper = new ThreadFactoryWrapper(threadFactory, usesBackgroundThreads);
     this.threadFactory.compareAndSet(null, wrapper);
     return thread;
-  }
-
-  /**
-   * Returns whether GaeThreadFactory can be used on this system (true for GAE).
-   */
-  public static boolean isAvailable() {
-    try {
-      Class.forName(GAE_THREAD_MANAGER_CLASS);
-      return System.getProperty("com.google.appengine.runtime.environment") != null;
-    } catch (ClassNotFoundException e) {
-      return false;
-    }
-  }
-
-  private static ThreadFactory createBackgroundFactory()
-      throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
-      IllegalAccessException {
-    Class<?> gaeThreadManager = Class.forName(GAE_THREAD_MANAGER_CLASS);
-    return (ThreadFactory) gaeThreadManager.getMethod("backgroundThreadFactory").invoke(null);
-  }
-
-  private static ThreadFactory createRequestScopedFactory()
-      throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
-      IllegalAccessException {
-    Class<?> gaeThreadManager = Class.forName(GAE_THREAD_MANAGER_CLASS);
-    return (ThreadFactory) gaeThreadManager.getMethod("currentRequestThreadFactory").invoke(null);
   }
 
   private static class ThreadFactoryWrapper {

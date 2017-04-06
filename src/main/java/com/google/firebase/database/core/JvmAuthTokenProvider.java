@@ -1,7 +1,5 @@
 package com.google.firebase.database.core;
 
-import static com.google.firebase.internal.Preconditions.checkNotNull;
-
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.database.util.GAuthToken;
@@ -10,8 +8,11 @@ import com.google.firebase.internal.GetTokenResult;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.tasks.OnCompleteListener;
 import com.google.firebase.tasks.Task;
+
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
+
+import static com.google.firebase.internal.Preconditions.checkNotNull;
 
 public class JvmAuthTokenProvider implements AuthTokenProvider {
 
@@ -21,6 +22,18 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
   public JvmAuthTokenProvider(FirebaseApp firebaseApp, ScheduledExecutorService executorService) {
     this.executorService = executorService;
     this.firebaseApp = firebaseApp;
+  }
+
+  private static String wrapOAuthToken(FirebaseApp firebaseApp, GetTokenResult result) {
+    String oauthToken = result.getToken();
+    if (oauthToken == null) {
+      // This shouldn't happen in the actual production SDK, but can happen in tests.
+      return null;
+    } else {
+      Map<String, Object> authVariable = firebaseApp.getOptions().getDatabaseAuthVariableOverride();
+      GAuthToken gAuthToken = new GAuthToken(oauthToken, authVariable);
+      return gAuthToken.serializeToString();
+    }
   }
 
   @Override
@@ -97,18 +110,6 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
       return obj != null
           && obj instanceof TokenChangeListenerWrapper
           && ((TokenChangeListenerWrapper) obj).listener.equals(listener);
-    }
-  }
-
-  private static String wrapOAuthToken(FirebaseApp firebaseApp, GetTokenResult result) {
-    String oauthToken = result.getToken();
-    if (oauthToken == null) {
-      // This shouldn't happen in the actual production SDK, but can happen in tests.
-      return null;
-    } else {
-      Map<String, Object> authVariable = firebaseApp.getOptions().getDatabaseAuthVariableOverride();
-      GAuthToken gAuthToken = new GAuthToken(oauthToken, authVariable);
-      return gAuthToken.serializeToString();
     }
   }
 }

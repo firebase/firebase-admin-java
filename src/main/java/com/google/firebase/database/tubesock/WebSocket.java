@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
@@ -25,39 +26,15 @@ import javax.net.ssl.SSLSocketFactory;
  */
 public class WebSocket {
 
-  private static final String THREAD_BASE_NAME = "TubeSock";
-  private static final AtomicInteger clientCount = new AtomicInteger(0);
-
-  private enum State {
-    NONE,
-    CONNECTING,
-    CONNECTED,
-    DISCONNECTING,
-    DISCONNECTED
-  }
-
-  private static final Charset UTF8 = Charset.forName("UTF-8");
-
   static final byte OPCODE_NONE = 0x0;
   static final byte OPCODE_TEXT = 0x1;
   static final byte OPCODE_BINARY = 0x2;
   static final byte OPCODE_CLOSE = 0x8;
   static final byte OPCODE_PING = 0x9;
   static final byte OPCODE_PONG = 0xA;
-
-  private volatile State state = State.NONE;
-  private volatile Socket socket = null;
-
-  private WebSocketEventHandler eventHandler = null;
-
-  private final URI url;
-
-  private final WebSocketReceiver receiver;
-  private final WebSocketWriter writer;
-  private final WebSocketHandshake handshake;
-  private final int clientId = clientCount.incrementAndGet();
-
-  private final Thread innerThread;
+  private static final String THREAD_BASE_NAME = "TubeSock";
+  private static final AtomicInteger clientCount = new AtomicInteger(0);
+  private static final Charset UTF8 = Charset.forName("UTF-8");
   private static ThreadFactory threadFactory = Executors.defaultThreadFactory();
   private static ThreadInitializer intializer =
       new ThreadInitializer() {
@@ -66,19 +43,15 @@ public class WebSocket {
           t.setName(name);
         }
       };
-
-  static ThreadFactory getThreadFactory() {
-    return threadFactory;
-  }
-
-  static ThreadInitializer getIntializer() {
-    return intializer;
-  }
-
-  public static void setThreadFactory(ThreadFactory threadFactory, ThreadInitializer intializer) {
-    WebSocket.threadFactory = threadFactory;
-    WebSocket.intializer = intializer;
-  }
+  private final URI url;
+  private final WebSocketReceiver receiver;
+  private final WebSocketWriter writer;
+  private final WebSocketHandshake handshake;
+  private final int clientId = clientCount.incrementAndGet();
+  private final Thread innerThread;
+  private volatile State state = State.NONE;
+  private volatile Socket socket = null;
+  private WebSocketEventHandler eventHandler = null;
 
   /**
    * Create a websocket to connect to a given server
@@ -125,6 +98,23 @@ public class WebSocket {
     writer = new WebSocketWriter(this, THREAD_BASE_NAME, clientId);
   }
 
+  static ThreadFactory getThreadFactory() {
+    return threadFactory;
+  }
+
+  static ThreadInitializer getIntializer() {
+    return intializer;
+  }
+
+  public static void setThreadFactory(ThreadFactory threadFactory, ThreadInitializer intializer) {
+    WebSocket.threadFactory = threadFactory;
+    WebSocket.intializer = intializer;
+  }
+
+  WebSocketEventHandler getEventHandler() {
+    return this.eventHandler;
+  }
+
   /**
    * Must be called before connect(). Set the handler for all websocket-related events.
    *
@@ -132,10 +122,6 @@ public class WebSocket {
    */
   public void setEventHandler(WebSocketEventHandler eventHandler) {
     this.eventHandler = eventHandler;
-  }
-
-  WebSocketEventHandler getEventHandler() {
-    return this.eventHandler;
   }
 
   /**
@@ -398,5 +384,13 @@ public class WebSocket {
 
   Thread getInnerThread() {
     return innerThread;
+  }
+
+  private enum State {
+    NONE,
+    CONNECTING,
+    CONNECTED,
+    DISCONNECTING,
+    DISCONNECTED
   }
 }

@@ -7,13 +7,6 @@ package com.google.firebase.database.logging;
 public interface Logger {
 
   /**
-   * The log levels used by the Firebase Database library
-   */
-  enum Level {
-    DEBUG, INFO, WARN, ERROR, NONE
-  }
-
-  /**
    * This method will be triggered whenever the library has something to log
    *
    * @param level The level of the log message
@@ -24,4 +17,11 @@ public interface Logger {
   void onLogMessage(Level level, String tag, String message, long msTimestamp);
 
   Level getLogLevel();
+
+  /**
+   * The log levels used by the Firebase Database library
+   */
+  enum Level {
+    DEBUG, INFO, WARN, ERROR, NONE
+  }
 }

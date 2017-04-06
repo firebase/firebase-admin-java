@@ -1,60 +1,36 @@
 package com.google.firebase.database.connection;
 
 import com.google.firebase.database.logging.LogWrapper;
+
 import java.util.HashMap;
 import java.util.Map;
 
 class Connection implements WebsocketConnection.Delegate {
 
-  public enum DisconnectReason {
-    SERVER_RESET,
-    OTHER
-  }
-
-  public interface Delegate {
-
-    void onCacheHost(String host);
-
-    void onReady(long timestamp, String sessionId);
-
-    void onDataMessage(Map<String, Object> message);
-
-    void onDisconnect(DisconnectReason reason);
-
-    void onKill(String reason);
-  }
-
-  private static long connectionIds = 0;
-
-  private enum State {REALTIME_CONNECTING, REALTIME_CONNECTED, REALTIME_DISCONNECTED}
-
   private static final String REQUEST_TYPE = "t";
   private static final String REQUEST_TYPE_DATA = "d";
   private static final String REQUEST_PAYLOAD = "d";
-
   private static final String SERVER_ENVELOPE_TYPE = "t";
   private static final String SERVER_DATA_MESSAGE = "d";
   private static final String SERVER_CONTROL_MESSAGE = "c";
   private static final String SERVER_ENVELOPE_DATA = "d";
-
   private static final String SERVER_CONTROL_MESSAGE_TYPE = "t";
   private static final String SERVER_CONTROL_MESSAGE_SHUTDOWN = "s";
   private static final String SERVER_CONTROL_MESSAGE_RESET = "r";
   private static final String SERVER_CONTROL_MESSAGE_HELLO = "h";
   private static final String SERVER_CONTROL_MESSAGE_DATA = "d";
-
   private static final String SERVER_HELLO_TIMESTAMP = "ts";
   private static final String SERVER_HELLO_HOST = "h";
   private static final String SERVER_HELLO_SESSION_ID = "s";
-
+  private static long connectionIds = 0;
+  private final LogWrapper logger;
   private HostInfo hostInfo;
   private WebsocketConnection conn;
   private Delegate delegate;
   private State state;
-  private final LogWrapper logger;
 
   public Connection(ConnectionContext context, HostInfo hostInfo,
-      String cachedHost, Delegate delegate, String optLastSessionId) {
+                    String cachedHost, Delegate delegate, String optLastSessionId) {
     long connId = connectionIds++;
     this.hostInfo = hostInfo;
     this.delegate = delegate;
@@ -229,7 +205,8 @@ class Connection implements WebsocketConnection.Delegate {
     }
     delegate.onCacheHost(host);
 
-    // Explicitly close the connection with SERVER_RESET so calling code knows to reconnect immediately.
+    // Explicitly close the connection with SERVER_RESET so calling code knows to reconnect
+    // immediately.
     close(DisconnectReason.SERVER_RESET);
   }
 
@@ -249,5 +226,25 @@ class Connection implements WebsocketConnection.Delegate {
   // For testing
   public void injectConnectionFailure() {
     this.close();
+  }
+
+  public enum DisconnectReason {
+    SERVER_RESET,
+    OTHER
+  }
+
+  private enum State {REALTIME_CONNECTING, REALTIME_CONNECTED, REALTIME_DISCONNECTED}
+
+  public interface Delegate {
+
+    void onCacheHost(String host);
+
+    void onReady(long timestamp, String sessionId);
+
+    void onDataMessage(Map<String, Object> message);
+
+    void onDisconnect(DisconnectReason reason);
+
+    void onKill(String reason);
   }
 }

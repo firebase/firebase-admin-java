@@ -75,6 +75,7 @@ public class DatabaseError {
   public static final int UNKNOWN_ERROR = -999;
 
   private static final Map<Integer, String> errorReasons = new HashMap<>();
+  private static final Map<String, Integer> errorCodes = new HashMap<>();
 
   static {
     // Firebase Database error codes
@@ -98,8 +99,6 @@ public class DatabaseError {
     errorReasons.put(UNKNOWN_ERROR, "An unknown error occurred");
   }
 
-  private static final Map<String, Integer> errorCodes = new HashMap<>();
-
   static {
 
     // Firebase Database error codes
@@ -116,6 +115,20 @@ public class DatabaseError {
     // client codes
     errorCodes.put("network_error", NETWORK_ERROR);
     errorCodes.put("write_canceled", WRITE_CANCELED);
+  }
+
+  private final int code;
+  private final String message;
+  private final String details;
+
+  private DatabaseError(int code, String message) {
+    this(code, message, null);
+  }
+
+  private DatabaseError(int code, String message, String details) {
+    this.code = code;
+    this.message = message;
+    this.details = (details == null) ? "" : details;
   }
 
   /**
@@ -181,20 +194,6 @@ public class DatabaseError {
     e.printStackTrace(printWriter);
     String reason = errorReasons.get(USER_CODE_EXCEPTION) + stringWriter.toString();
     return new DatabaseError(USER_CODE_EXCEPTION, reason);
-  }
-
-  private final int code;
-  private final String message;
-  private final String details;
-
-  private DatabaseError(int code, String message) {
-    this(code, message, null);
-  }
-
-  private DatabaseError(int code, String message, String details) {
-    this.code = code;
-    this.message = message;
-    this.details = (details == null) ? "" : details;
   }
 
   /**

@@ -6,6 +6,7 @@ import com.google.firebase.database.snapshot.NamedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.utilities.Validation;
 import com.google.firebase.database.utilities.encoding.CustomClassMapper;
+
 import java.util.Iterator;
 
 /**
@@ -88,12 +89,12 @@ public class DataSnapshot {
    * returned are:
    *
    * <ul>
-   *   <li>Boolean
-   *   <li>String
-   *   <li>Long
-   *   <li>Double
-   *   <li>Map&lt;String, Object&gt;
-   *   <li>List&lt;Object&gt;
+   * <li>Boolean
+   * <li>String
+   * <li>Long
+   * <li>Double
+   * <li>Map&lt;String, Object&gt;
+   * <li>List&lt;Object&gt;
    * </ul>
    *
    * This list is recursive; the possible types for {@link java.lang.Object} in the above list is
@@ -110,12 +111,12 @@ public class DataSnapshot {
    * returned are:
    *
    * <ul>
-   *   <li>Boolean
-   *   <li>String
-   *   <li>Long
-   *   <li>Double
-   *   <li>Map&lt;String, Object&gt;
-   *   <li>List&lt;Object&gt;
+   * <li>Boolean
+   * <li>String
+   * <li>Long
+   * <li>Double
+   * <li>Map&lt;String, Object&gt;
+   * <li>List&lt;Object&gt;
    * </ul>
    *
    * This list is recursive; the possible types for {@link java.lang.Object} in the above list is
@@ -137,10 +138,10 @@ public class DataSnapshot {
    * choosing. The class must fit 2 simple constraints:
    *
    * <ol>
-   *   <li>The class must have a default constructor that takes no arguments
-   *   <li> The class must define public getters for the properties to be assigned. Properties
-   *       without a public getter will be set to their default value when an instance is
-   *       deserialized
+   * <li>The class must have a default constructor that takes no arguments
+   * <li> The class must define public getters for the properties to be assigned. Properties
+   * without a public getter will be set to their default value when an instance is
+   * deserialized
    * </ol>
    *
    * An example class might look like:
@@ -186,7 +187,9 @@ public class DataSnapshot {
    * instances, you will need to do something like the following:
    *
    * <pre><code>
-   *     GenericTypeIndicator&lt;List&lt;Message&gt;&gt; t = new GenericTypeIndicator&lt;List&lt;Message&gt;&gt;() {};
+   *     GenericTypeIndicator&lt;List&lt;Message&gt;&gt; t = new GenericTypeIndicator&lt;List&lt;
+   *     Message&gt;&gt;()
+   * {};
    *     List&lt;Message&gt; messages = snapshot.getValue(t);
    * </code></pre>
    *
@@ -194,9 +197,9 @@ public class DataSnapshot {
    * GenericTypeIndicator} for more details
    *
    * @param t A subclass of {@link GenericTypeIndicator} indicating the type of generic collection
-   *     to be returned.
+   * to be returned.
    * @param <T> The type to return. Implicitly defined from the {@link GenericTypeIndicator} passed
-   *     in
+   * in
    * @return A properly typed collection, populated with the data from this snapshot
    */
   public <T> T getValue(GenericTypeIndicator<T> t) {
@@ -204,7 +207,9 @@ public class DataSnapshot {
     return CustomClassMapper.convertToCustomClass(value, t);
   }
 
-  /** @return The number of immediate children in the this snapshot */
+  /**
+   * @return The number of immediate children in the this snapshot
+   */
   public long getChildrenCount() {
     return node.getNode().getChildCount();
   }
@@ -218,7 +223,9 @@ public class DataSnapshot {
     return query;
   }
 
-  /** @return the key name for the source location of this snapshot */
+  /**
+   * @return the key name for the source location of this snapshot
+   */
   public String getKey() {
     return query.getKey();
   }
@@ -266,8 +273,8 @@ public class DataSnapshot {
    * types:
    *
    * <ul>
-   *   <li>Double
-   *   <li>String
+   * <li>Double
+   * <li>String
    * </ul>
    *
    * Note that null is also allowed

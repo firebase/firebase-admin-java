@@ -1,6 +1,7 @@
 package com.google.firebase.database.snapshot;
 
 import com.google.firebase.database.collection.ImmutableSortedSet;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -22,13 +23,12 @@ public class IndexedNode implements Iterable<NamedNode> {
       new ImmutableSortedSet<>(Collections.<NamedNode>emptyList(), null);
 
   private final Node node;
+  private final Index index;
   /**
    * The indexed set is initialized lazily for cases where we don't need to access any order
    * specific methods
    */
   private ImmutableSortedSet<NamedNode> indexed;
-
-  private final Index index;
 
   private IndexedNode(Node node, Index index) {
     this.index = index;
@@ -41,6 +41,14 @@ public class IndexedNode implements Iterable<NamedNode> {
     this.index = index;
     this.node = node;
     this.indexed = indexed;
+  }
+
+  public static IndexedNode from(Node node) {
+    return new IndexedNode(node, PriorityIndex.getInstance());
+  }
+
+  public static IndexedNode from(Node node, Index index) {
+    return new IndexedNode(node, index);
   }
 
   private void ensureIndexed() {
@@ -63,14 +71,6 @@ public class IndexedNode implements Iterable<NamedNode> {
         }
       }
     }
-  }
-
-  public static IndexedNode from(Node node) {
-    return new IndexedNode(node, PriorityIndex.getInstance());
-  }
-
-  public static IndexedNode from(Node node, Index index) {
-    return new IndexedNode(node, index);
   }
 
   public boolean hasIndex(Index index) {

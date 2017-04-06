@@ -1,6 +1,7 @@
 package com.google.firebase.internal;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import java.security.AccessControlException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -96,10 +97,10 @@ public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
   }
 
   @Override
-  public void execute(Runnable r) {
+  public void execute(Runnable runnable) {
     // This gets called when the execute() method from Executor is directly invoked.
     ensureRunning();
-    super.execute(r);
+    super.execute(runnable);
   }
 
   @Override
@@ -119,10 +120,10 @@ public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
   }
 
   @Override
-  protected void afterExecute(Runnable r, Throwable t) {
-    super.afterExecute(r, t);
-    if (t == null && r instanceof Future<?>) {
-      Future<?> future = (Future<?>) r;
+  protected void afterExecute(Runnable runnable, Throwable throwable) {
+    super.afterExecute(runnable, throwable);
+    if (throwable == null && runnable instanceof Future<?>) {
+      Future<?> future = (Future<?>) runnable;
       try {
         // Not all Futures will be done, e.g. when used with scheduledAtFixedRate
         if (future.isDone()) {
@@ -131,18 +132,18 @@ public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
       } catch (CancellationException ce) {
         // Cancellation exceptions are okay, we expect them to happen sometimes
       } catch (ExecutionException ee) {
-        t = ee.getCause();
+        throwable = ee.getCause();
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
     }
 
-    if (t == REVIVE_THREAD_EXCEPTION) {
+    if (throwable == REVIVE_THREAD_EXCEPTION) {
       // Re-throwing this exception will kill the thread and cause ScheduledThreadPoolExecutor to
       // spawn a new thread.
-      throw (RuntimeException) t;
-    } else if (t != null) {
-      handleException(t);
+      throw (RuntimeException) throwable;
+    } else if (throwable != null) {
+      handleException(throwable);
     }
   }
 
@@ -150,7 +151,7 @@ public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
    * Called when an exception occurs during execution of a Runnable/Callable. The default
    * implementation does nothing.
    */
-  protected void handleException(Throwable t) {
+  protected void handleException(Throwable throwable) {
   }
 
   /**
@@ -175,15 +176,16 @@ public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
   private void schedulePeriodicShutdown() {
     if (timeoutMs >= 0) {
       @SuppressWarnings("unused")
-          Future<?> possiblyIgnoredError =
+      Future<?> possiblyIgnoredError =
           schedule(
               new Runnable() {
                 @Override
                 public void run() {
-                  // We have to manually reschedule this task here as periodic tasks get cancelled after
+                  // We have to manually reschedule this task here as periodic tasks get
+                  // cancelled after
                   // throwing exceptions.
                   @SuppressWarnings("unused")
-                      Future<?> possiblyIgnoredError1 =
+                  Future<?> possiblyIgnoredError1 =
                       RevivingScheduledExecutor.this.schedule(
                           this, timeoutMs, TimeUnit.MILLISECONDS);
                   requestedRestart.set(true);

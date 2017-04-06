@@ -4,6 +4,7 @@ import com.google.firebase.database.collection.ImmutableSortedMap;
 import com.google.firebase.database.collection.LLRBNode;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.utilities.Utilities;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -30,42 +31,6 @@ public class ChildrenNode implements Node {
 
   private String lazyHash = null;
 
-  private static class NamedNodeIterator implements Iterator<NamedNode> {
-
-    private final Iterator<Map.Entry<ChildKey, Node>> iterator;
-
-    public NamedNodeIterator(Iterator<Map.Entry<ChildKey, Node>> iterator) {
-      this.iterator = iterator;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return iterator.hasNext();
-    }
-
-    @Override
-    public NamedNode next() {
-      Map.Entry<ChildKey, Node> entry = iterator.next();
-      return new NamedNode(entry.getKey(), entry.getValue());
-    }
-
-    @Override
-    public void remove() {
-      iterator.remove();
-    }
-  }
-
-  /** */
-  public abstract static class ChildVisitor extends LLRBNode.NodeVisitor<ChildKey, Node> {
-
-    @Override
-    public void visitEntry(ChildKey key, Node value) {
-      visitChild(key, value);
-    }
-
-    public abstract void visitChild(ChildKey name, Node child);
-  }
-
   protected ChildrenNode() {
     this.children = ImmutableSortedMap.Builder.emptyMap(NAME_ONLY_COMPARATOR);
     this.priority = PriorityUtilities.NullPriority();
@@ -77,6 +42,12 @@ public class ChildrenNode implements Node {
     }
     this.priority = priority;
     this.children = children;
+  }
+
+  private static void addIndentation(StringBuilder builder, int indentation) {
+    for (int i = 0; i < indentation; i++) {
+      builder.append(" ");
+    }
   }
 
   @Override
@@ -388,12 +359,6 @@ public class ChildrenNode implements Node {
     return builder.toString();
   }
 
-  private static void addIndentation(StringBuilder builder, int indentation) {
-    for (int i = 0; i < indentation; i++) {
-      builder.append(" ");
-    }
-  }
-
   private void toString(StringBuilder builder, int indentation) {
     if (this.children.isEmpty() && this.priority.isEmpty()) {
       builder.append("{ }");
@@ -420,5 +385,41 @@ public class ChildrenNode implements Node {
       addIndentation(builder, indentation);
       builder.append("}");
     }
+  }
+
+  private static class NamedNodeIterator implements Iterator<NamedNode> {
+
+    private final Iterator<Map.Entry<ChildKey, Node>> iterator;
+
+    public NamedNodeIterator(Iterator<Map.Entry<ChildKey, Node>> iterator) {
+      this.iterator = iterator;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return iterator.hasNext();
+    }
+
+    @Override
+    public NamedNode next() {
+      Map.Entry<ChildKey, Node> entry = iterator.next();
+      return new NamedNode(entry.getKey(), entry.getValue());
+    }
+
+    @Override
+    public void remove() {
+      iterator.remove();
+    }
+  }
+
+  /** */
+  public abstract static class ChildVisitor extends LLRBNode.NodeVisitor<ChildKey, Node> {
+
+    @Override
+    public void visitEntry(ChildKey key, Node value) {
+      visitChild(key, value);
+    }
+
+    public abstract void visitChild(ChildKey name, Node child);
   }
 }

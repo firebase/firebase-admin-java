@@ -1,31 +1,26 @@
 package com.google.firebase.tasks;
 
-import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.tasks.testing.TestOnCompleteListener;
 import com.google.firebase.tasks.testing.TestOnFailureListener;
 import com.google.firebase.tasks.testing.TestOnSuccessListener;
-import java.rmi.RemoteException;
 import org.hamcrest.Matchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.rmi.RemoteException;
+
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assert.*;
+
 public class TaskImplTest {
 
-  @Rule
-  public ExpectedException mExpectedException = ExpectedException.none();
-
   private static final Exception EXCEPTION = new RemoteException();
-
   private static final Void NULL_RESULT = null;
   private static final String NON_NULL_RESULT = "Success";
+  @Rule
+  public ExpectedException mExpectedException = ExpectedException.none();
 
   @Test
   public void testIsComplete_notComplete() {

@@ -3,6 +3,7 @@ package com.google.firebase.database.core.view;
 import com.google.firebase.database.core.Context;
 import com.google.firebase.database.core.EventTarget;
 import com.google.firebase.database.logging.LogWrapper;
+
 import java.util.ArrayList;
 import java.util.List;
 

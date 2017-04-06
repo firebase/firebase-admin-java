@@ -8,6 +8,7 @@ import com.google.firebase.database.core.RepoInfo;
 import com.google.firebase.internal.Base64;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.TaskCompletionSource;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -78,7 +79,7 @@ public class Utilities {
 
   public static String[] splitIntoFrames(String src, int maxFrameSize) {
     if (src.length() <= maxFrameSize) {
-      return new String[]{src};
+      return new String[] {src};
     } else {
       ArrayList<String> segs = new ArrayList<>();
       for (int i = 0; i < src.length(); i += maxFrameSize) {

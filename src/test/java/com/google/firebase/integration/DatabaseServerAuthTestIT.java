@@ -1,9 +1,5 @@
 package com.google.firebase.integration;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -19,11 +15,6 @@ import com.google.firebase.tasks.OnCompleteListener;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -32,6 +23,14 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.*;
 
 public class DatabaseServerAuthTestIT {
 
@@ -88,6 +87,112 @@ public class DatabaseServerAuthTestIT {
             + "}";
 
     doServerAccountRestPut("/.settings/rules.json", rules);
+  }
+
+  private static void assertWriteSucceeds(DatabaseReference ref) throws InterruptedException {
+    doWrite(ref, /*shouldSucceed=*/ true, /*shouldTimeout=*/ false);
+  }
+
+  private static void assertWriteFails(DatabaseReference ref) throws InterruptedException {
+    doWrite(ref, /*shouldSucceed=*/ false, /*shouldTimeout=*/ false);
+  }
+
+  private static void assertWriteTimeout(DatabaseReference ref) throws InterruptedException {
+    doWrite(ref, /*shouldSucceed=*/ false, /*shouldTimeout=*/ true);
+  }
+
+  private static void doWrite(DatabaseReference ref,
+                              final boolean shouldSucceed,
+                              final boolean shouldTimeout) throws InterruptedException {
+    final CountDownLatch lock = new CountDownLatch(1);
+    ref.setValue("wrote something")
+        .addOnCompleteListener(
+            new OnCompleteListener<Void>() {
+              @Override
+              public void onComplete(@NonNull Task<Void> task) {
+                assertEquals(shouldSucceed, task.isSuccessful());
+                lock.countDown();
+              }
+            });
+    boolean finished = lock.await(TestUtils.ASYNC_WAIT_TIME_MS, TimeUnit.MILLISECONDS);
+    if (shouldTimeout) {
+      assertTrue("Write finished.", !finished);
+    } else {
+      assertTrue("Write timed out.", finished);
+    }
+  }
+
+  private static void assertReadSucceeds(DatabaseReference ref) throws InterruptedException {
+    doRead(ref, /*shouldSucceed=*/ true, /*shouldTimeout=*/ false);
+  }
+
+  private static void assertReadFails(DatabaseReference ref) throws InterruptedException {
+    doRead(ref, /*shouldSucceed=*/ false, /*shouldTimeout=*/ false);
+  }
+
+  private static void assertReadTimeout(DatabaseReference ref) throws InterruptedException {
+    doRead(ref, /*shouldSucceed=*/ false, /*shouldTimeout=*/ true);
+  }
+
+  private static void doRead(DatabaseReference ref,
+                             final boolean shouldSucceed,
+                             final boolean shouldTimeout) throws InterruptedException {
+    final CountDownLatch lock = new CountDownLatch(1);
+    ref.addListenerForSingleValueEvent(new ValueEventListener() {
+      @Override
+      public void onDataChange(DataSnapshot snapshot) {
+        assertTrue("Read succeeded.", shouldSucceed);
+        lock.countDown();
+      }
+
+      @Override
+      public void onCancelled(DatabaseError databaseError) {
+        assertTrue("Read cancelled.", !shouldSucceed);
+        lock.countDown();
+      }
+    });
+
+    boolean finished = lock.await(TestUtils.ASYNC_WAIT_TIME_MS, TimeUnit.MILLISECONDS);
+    if (shouldTimeout) {
+      assertTrue("Read finished.", !finished);
+    } else {
+      assertTrue("Read timed out.", finished);
+    }
+  }
+
+  private static void doFbLocalAdminRestPut(String endpoint, String data) {
+    doRestPut(SERVER_SDK_DB_URL + endpoint + "?key=" + FBLOCAL_ADMIN_KEY, data);
+  }
+
+  private static void doServerAccountRestPut(final String endpoint, final String data) {
+    // TODO(mikelehen): We should consider exposing getToken (or similar) publicly for the purpose
+    // of servers doing authenticated REST requests like this.
+    TestOnlyImplFirebaseTrampolines.getToken(masterApp, /*forceRefresh=*/ false)
+        .addOnCompleteListener(
+            new OnCompleteListener<GetTokenResult>() {
+              @Override
+              public void onComplete(@NonNull Task<GetTokenResult> task) {
+                assertNull("getToken failed.", task.getException());
+                String token = task.getResult().getToken();
+                doRestPut(SERVER_SDK_DB_URL + endpoint + "?access_token=" + token, data);
+              }
+            });
+  }
+
+  private static void doRestPut(String endpoint, String data) {
+    HttpResponse response;
+    try {
+      HttpPut put = new HttpPut(endpoint);
+      HttpEntity entity = new StringEntity(data, "UTF-8");
+      put.setEntity(entity);
+
+      HttpClient httpClient = new DefaultHttpClient();
+      response = httpClient.execute(put);
+    } catch (Exception e) {
+      throw new RuntimeException("doRestPut failed", e);
+    }
+    assertTrue("Rest put for " + endpoint + " failed: " + response.toString(),
+        response.getStatusLine().getStatusCode() == 200);
   }
 
   @Test
@@ -194,112 +299,5 @@ public class DatabaseServerAuthTestIT {
 
     assertWriteFails(testAuthOverridesDb.getReference("test-uid-only"));
     assertWriteSucceeds(testAuthOverridesDb.getReference("test-noauth-only"));
-  }
-
-
-  private static void assertWriteSucceeds(DatabaseReference ref) throws InterruptedException {
-    doWrite(ref, /*shouldSucceed=*/ true, /*shouldTimeout=*/ false);
-  }
-
-  private static void assertWriteFails(DatabaseReference ref) throws InterruptedException {
-    doWrite(ref, /*shouldSucceed=*/ false, /*shouldTimeout=*/ false);
-  }
-
-  private static void assertWriteTimeout(DatabaseReference ref) throws InterruptedException {
-    doWrite(ref, /*shouldSucceed=*/ false, /*shouldTimeout=*/ true);
-  }
-
-  private static void doWrite(DatabaseReference ref,
-      final boolean shouldSucceed,
-      final boolean shouldTimeout) throws InterruptedException {
-    final CountDownLatch lock = new CountDownLatch(1);
-    ref.setValue("wrote something")
-        .addOnCompleteListener(
-            new OnCompleteListener<Void>() {
-              @Override
-              public void onComplete(@NonNull Task<Void> task) {
-                assertEquals(shouldSucceed, task.isSuccessful());
-                lock.countDown();
-              }
-            });
-    boolean finished = lock.await(TestUtils.ASYNC_WAIT_TIME_MS, TimeUnit.MILLISECONDS);
-    if (shouldTimeout) {
-      assertTrue("Write finished.", !finished);
-    } else {
-      assertTrue("Write timed out.", finished);
-    }
-  }
-
-  private static void assertReadSucceeds(DatabaseReference ref) throws InterruptedException {
-    doRead(ref, /*shouldSucceed=*/ true, /*shouldTimeout=*/ false);
-  }
-
-  private static void assertReadFails(DatabaseReference ref) throws InterruptedException {
-    doRead(ref, /*shouldSucceed=*/ false, /*shouldTimeout=*/ false);
-  }
-
-  private static void assertReadTimeout(DatabaseReference ref) throws InterruptedException {
-    doRead(ref, /*shouldSucceed=*/ false, /*shouldTimeout=*/ true);
-  }
-
-  private static void doRead(DatabaseReference ref,
-      final boolean shouldSucceed,
-      final boolean shouldTimeout) throws InterruptedException {
-    final CountDownLatch lock = new CountDownLatch(1);
-    ref.addListenerForSingleValueEvent(new ValueEventListener() {
-      @Override
-      public void onDataChange(DataSnapshot snapshot) {
-        assertTrue("Read succeeded.", shouldSucceed);
-        lock.countDown();
-      }
-
-      @Override
-      public void onCancelled(DatabaseError databaseError) {
-        assertTrue("Read cancelled.", !shouldSucceed);
-        lock.countDown();
-      }
-    });
-
-    boolean finished = lock.await(TestUtils.ASYNC_WAIT_TIME_MS, TimeUnit.MILLISECONDS);
-    if (shouldTimeout) {
-      assertTrue("Read finished.", !finished);
-    } else {
-      assertTrue("Read timed out.", finished);
-    }
-  }
-
-  private static void doFbLocalAdminRestPut(String endpoint, String data) {
-    doRestPut(SERVER_SDK_DB_URL + endpoint + "?key=" + FBLOCAL_ADMIN_KEY, data);
-  }
-
-  private static void doServerAccountRestPut(final String endpoint, final String data) {
-    // TODO(mikelehen): We should consider exposing getToken (or similar) publicly for the purpose
-    // of servers doing authenticated REST requests like this.
-    TestOnlyImplFirebaseTrampolines.getToken(masterApp, /*forceRefresh=*/ false)
-        .addOnCompleteListener(
-            new OnCompleteListener<GetTokenResult>() {
-              @Override
-              public void onComplete(@NonNull Task<GetTokenResult> task) {
-                assertNull("getToken failed.", task.getException());
-                String token = task.getResult().getToken();
-                doRestPut(SERVER_SDK_DB_URL + endpoint + "?access_token=" + token, data);
-              }
-            });
-  }
-
-  private static void doRestPut(String endpoint, String data) {
-    HttpResponse response;
-    try {
-      HttpPut put = new HttpPut(endpoint);
-      HttpEntity entity = new StringEntity(data, "UTF-8");
-      put.setEntity(entity);
-
-      HttpClient httpClient = new DefaultHttpClient();
-      response = httpClient.execute(put);
-    } catch (Exception e) {
-      throw new RuntimeException("doRestPut failed", e);
-    }
-    assertTrue("Rest put for " + endpoint + " failed: " + response.toString(),
-        response.getStatusLine().getStatusCode() == 200);
   }
 }

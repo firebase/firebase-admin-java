@@ -1,7 +1,5 @@
 package com.google.firebase.database.core.persistence;
 
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
-
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.utilities.ImmutableTree;
 import com.google.firebase.database.core.utilities.Predicate;
@@ -11,6 +9,7 @@ import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.utilities.Clock;
 import com.google.firebase.database.utilities.Utilities;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -19,6 +18,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
 
 public class TrackedQueryManager {
 
@@ -55,30 +56,14 @@ public class TrackedQueryManager {
           return !IS_QUERY_PRUNABLE_PREDICATE.evaluate(query);
         }
       };
-
-  // In-memory cache of tracked queries.  Should always be in-sync with the DB.
-  private ImmutableTree<Map<QueryParams, TrackedQuery>> trackedQueryTree;
-
   // DB, where we permanently store tracked queries.
   private final PersistenceStorageEngine storageLayer;
-
   private final LogWrapper logger;
   private final Clock clock;
-
+  // In-memory cache of tracked queries.  Should always be in-sync with the DB.
+  private ImmutableTree<Map<QueryParams, TrackedQuery>> trackedQueryTree;
   // ID we'll assign to the next tracked query.
   private long currentQueryId = 0;
-
-  private static void assertValidTrackedQuery(QuerySpec query) {
-    hardAssert(
-        !query.loadsAllData() || query.isDefault(),
-        "Can't have tracked non-default query that loads all data");
-  }
-
-  private static QuerySpec normalizeQuery(QuerySpec query) {
-    // If the query loadsAllData, we don't care about orderBy.
-    // So just treat it as a default query.
-    return query.loadsAllData() ? QuerySpec.defaultQueryAtPath(query.getPath()) : query;
-  }
 
   public TrackedQueryManager(
       PersistenceStorageEngine storageLayer, LogWrapper logger, Clock clock) {
@@ -95,6 +80,32 @@ public class TrackedQueryManager {
       currentQueryId = Math.max(query.id + 1, currentQueryId);
       cacheTrackedQuery(query);
     }
+  }
+
+  private static void assertValidTrackedQuery(QuerySpec query) {
+    hardAssert(
+        !query.loadsAllData() || query.isDefault(),
+        "Can't have tracked non-default query that loads all data");
+  }
+
+  private static QuerySpec normalizeQuery(QuerySpec query) {
+    // If the query loadsAllData, we don't care about orderBy.
+    // So just treat it as a default query.
+    return query.loadsAllData() ? QuerySpec.defaultQueryAtPath(query.getPath()) : query;
+  }
+
+  private static long calculateCountToPrune(CachePolicy cachePolicy, long prunableCount) {
+    long countToKeep = prunableCount;
+
+    // prune by percentage.
+    float percentToKeep = 1 - cachePolicy.getPercentOfQueriesToPruneAtOnce();
+    countToKeep = (long) Math.floor(countToKeep * percentToKeep);
+
+    // Make sure we're not keeping more than the max.
+    countToKeep = Math.min(countToKeep, cachePolicy.getMaxNumberOfQueriesToKeep());
+
+    // Now we know how many to prune.
+    return prunableCount - countToKeep;
   }
 
   private void resetPreviouslyActiveTrackedQueries() {
@@ -238,20 +249,6 @@ public class TrackedQueryManager {
     }
 
     return forest;
-  }
-
-  private static long calculateCountToPrune(CachePolicy cachePolicy, long prunableCount) {
-    long countToKeep = prunableCount;
-
-    // prune by percentage.
-    float percentToKeep = 1 - cachePolicy.getPercentOfQueriesToPruneAtOnce();
-    countToKeep = (long) Math.floor(countToKeep * percentToKeep);
-
-    // Make sure we're not keeping more than the max.
-    countToKeep = Math.min(countToKeep, cachePolicy.getMaxNumberOfQueriesToKeep());
-
-    // Now we know how many to prune.
-    return prunableCount - countToKeep;
   }
 
   /**

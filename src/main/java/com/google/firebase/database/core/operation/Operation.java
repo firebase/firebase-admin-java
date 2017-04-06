@@ -5,14 +5,6 @@ import com.google.firebase.database.snapshot.ChildKey;
 
 public abstract class Operation {
 
-  /** */
-  public enum OperationType {
-    Overwrite,
-    Merge,
-    AckUserWrite,
-    ListenComplete
-  }
-
   protected final OperationType type;
   protected final OperationSource source;
   protected final Path path;
@@ -36,4 +28,12 @@ public abstract class Operation {
   }
 
   public abstract Operation operationForChild(ChildKey childKey);
+
+  /** */
+  public enum OperationType {
+    Overwrite,
+    Merge,
+    AckUserWrite,
+    ListenComplete
+  }
 }

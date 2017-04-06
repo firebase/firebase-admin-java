@@ -13,6 +13,24 @@ public class FirebaseClient {
   private WebSocket client;
   private Semaphore semaphore;
 
+  public static void main(String[] args) {
+    try {
+      new FirebaseClient().start();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+  }
+
+  public void start() throws WebSocketException, InterruptedException {
+    semaphore = new Semaphore(0);
+    URI uri = URI.create("wss://gsoltis.firebaseio-demo.com/.ws?v=5");
+    client = new WebSocket(uri);
+    client.setEventHandler(new Handler());
+    client.connect();
+    semaphore.acquire(1);
+    client.blockClose();
+  }
+
   private class Handler implements WebSocketEventHandler {
 
     @Override
@@ -39,24 +57,6 @@ public class FirebaseClient {
     @Override
     public void onLogMessage(String msg) {
       System.err.println(msg);
-    }
-  }
-
-  public void start() throws WebSocketException, InterruptedException {
-    semaphore = new Semaphore(0);
-    URI uri = URI.create("wss://gsoltis.firebaseio-demo.com/.ws?v=5");
-    client = new WebSocket(uri);
-    client.setEventHandler(new Handler());
-    client.connect();
-    semaphore.acquire(1);
-    client.blockClose();
-  }
-
-  public static void main(String[] args) {
-    try {
-      new FirebaseClient().start();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
     }
   }
 }

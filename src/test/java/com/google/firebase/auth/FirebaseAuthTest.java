@@ -1,13 +1,5 @@
 package com.google.firebase.auth;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import com.google.api.client.googleapis.testing.auth.oauth2.MockTokenServerTransport;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.gson.GsonFactory;
@@ -19,6 +11,16 @@ import com.google.firebase.auth.internal.FirebaseCustomAuthToken;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -31,15 +33,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class FirebaseAuthTest {
@@ -48,12 +44,19 @@ public class FirebaseAuthTest {
   private static final String CLIENT_SECRET = "mockclientsecret";
   private static final String CLIENT_ID = "mockclientid";
   private static final String REFRESH_TOKEN = "mockrefreshtoken";
+  private final FirebaseOptions firebaseOptions;
+  private final boolean isCertCredential;
+
+  public FirebaseAuthTest(FirebaseOptions baseOptions, boolean isCertCredential) {
+    this.firebaseOptions = baseOptions;
+    this.isCertCredential = isCertCredential;
+  }
 
   @Parameters
   public static Collection<Object[]> data() throws Exception {
     // Initialize this test suite with all available credential implementations.
     return Arrays.asList(
-        new Object[][]{
+        new Object[][] {
             {
                 new FirebaseOptions.Builder().setCredential(createCertificateCredential()).build(),
             /* isCertCredential */ true
@@ -69,25 +72,6 @@ public class FirebaseAuthTest {
             /* isCertCredential */ false
             },
         });
-  }
-
-  private final FirebaseOptions firebaseOptions;
-  private final boolean isCertCredential;
-
-  public FirebaseAuthTest(FirebaseOptions baseOptions, boolean isCertCredential) {
-    this.firebaseOptions = baseOptions;
-    this.isCertCredential = isCertCredential;
-  }
-
-  @Before
-  public void setup() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
-    FirebaseApp.initializeApp(firebaseOptions);
-  }
-
-  @After
-  public void cleanup() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
   private static FirebaseCredential createApplicationDefaultCredential() throws IOException {
@@ -138,6 +122,16 @@ public class FirebaseAuthTest {
         ServiceAccount.EDITOR.asStream(), transport, Utils.getDefaultJsonFactory());
   }
 
+  @Before
+  public void setup() {
+    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    FirebaseApp.initializeApp(firebaseOptions);
+  }
+
+  @After
+  public void cleanup() {
+    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+  }
 
   @Test
   public void testGetInstance() throws ExecutionException, InterruptedException {

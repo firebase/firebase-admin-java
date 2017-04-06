@@ -9,6 +9,7 @@ import com.google.firebase.database.TestFailure;
 import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.core.view.Event;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -22,15 +23,10 @@ import java.util.concurrent.TimeoutException;
  */
 public class ReadFuture implements Future<List<EventRecord>> {
 
-  public interface CompletionCondition {
-
-    boolean isComplete(List<EventRecord> events);
-  }
-
+  private final ValueEventListener valueEventListener;
   private List<EventRecord> events = new ArrayList<>();
   private Semaphore semaphore;
   private boolean wasCancelled = false;
-  private final ValueEventListener valueEventListener;
   private boolean done = false;
   private Exception exception;
 
@@ -201,5 +197,10 @@ public class ReadFuture implements Future<List<EventRecord>> {
   private void finish() {
     done = true;
     semaphore.release(1);
+  }
+
+  public interface CompletionCondition {
+
+    boolean isComplete(List<EventRecord> events);
   }
 }

@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  * values to indicate to the caller that he or she must check for null.
  */
 @Retention(RetentionPolicy.CLASS)
-@Target({ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE})
+@Target( {ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER, ElementType.LOCAL_VARIABLE})
 public @interface Nullable {
 
   String value() default "";

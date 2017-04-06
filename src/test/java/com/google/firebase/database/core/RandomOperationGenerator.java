@@ -27,6 +27,7 @@ import com.google.firebase.database.snapshot.PathIndex;
 import com.google.firebase.database.snapshot.PriorityIndex;
 import com.google.firebase.database.snapshot.PriorityUtilities;
 import com.google.firebase.database.snapshot.StringNode;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -66,7 +67,8 @@ public class RandomOperationGenerator {
 
   private static final int MAX_PRIO_VALUES = 10;
   private static final int MAX_KEY_VALUES = 100;
-
+  private final Random random;
+  private final long seed;
   private Node currentServerState;
   private long currentWriteId;
   private Queue<WriteOp> outstandingWrites;
@@ -75,8 +77,6 @@ public class RandomOperationGenerator {
   private Queue<QuerySpec> outstandingUnlistens;
   private QuerySpec completeDataJustSentForListen;
   private WriteOp writeOpForLastUpdate;
-  private final Random random;
-  private final long seed;
 
   public RandomOperationGenerator() {
     this(new Random().nextInt());
@@ -90,6 +90,56 @@ public class RandomOperationGenerator {
     this.outstandingListens = new LinkedList<>();
     this.outstandingUnlistens = new LinkedList<>();
     this.writeTree = new WriteTree();
+  }
+
+  private static Operation userOperationToServerOperation(Operation operation) {
+    assert operation.getSource().isFromUser();
+    switch (operation.getType()) {
+      case Overwrite: {
+        Overwrite overwrite = (Overwrite) operation;
+        return new Overwrite(
+            OperationSource.SERVER, overwrite.getPath(), overwrite.getSnapshot());
+      }
+      case Merge: {
+        Merge merge = (Merge) operation;
+        return new Merge(OperationSource.SERVER, merge.getPath(), merge.getChildren());
+      }
+      default: {
+        throw new IllegalArgumentException(
+            "Can't convert operation of type " + operation.getType() + " to node");
+      }
+    }
+  }
+
+  private static Node applyOperation(Operation operation, Node node) {
+    switch (operation.getType()) {
+      case Overwrite: {
+        Overwrite overwrite = (Overwrite) operation;
+        Path path = overwrite.getPath();
+        if (!path.isEmpty()
+            && path.getBack().isPriorityChildName()
+            && node.getChild(path.getParent()).isEmpty()) {
+          // Don't update priorities on empty nodes
+          return node;
+        } else {
+          return node.updateChild(overwrite.getPath(), overwrite.getSnapshot());
+        }
+      }
+      case Merge: {
+        Merge merge = (Merge) operation;
+        Path path = merge.getPath();
+        Node child = node.getChild(path);
+        return node.updateChild(path, merge.getChildren().apply(child));
+      }
+      case ListenComplete: {
+        // No-op
+        return node;
+      }
+      default: {
+        throw new IllegalArgumentException(
+            "Can't apply operation of type " + operation.getType() + " to node");
+      }
+    }
   }
 
   public void listen(QuerySpec query) {
@@ -293,17 +343,6 @@ public class RandomOperationGenerator {
     }
   }
 
-  private static class WriteOp {
-
-    private final long writeId;
-    private final Operation operation;
-
-    public WriteOp(Operation operation, long writeId) {
-      this.writeId = writeId;
-      this.operation = operation;
-    }
-  }
-
   private ChildKey getRandomKey(boolean allowPriority) {
     double randValue = random.nextDouble();
     if (allowPriority && randValue < PRIORITY_KEY_PROBABILITY) {
@@ -471,53 +510,14 @@ public class RandomOperationGenerator {
     return new Overwrite(source, path, node);
   }
 
-  private static Operation userOperationToServerOperation(Operation operation) {
-    assert operation.getSource().isFromUser();
-    switch (operation.getType()) {
-      case Overwrite: {
-        Overwrite overwrite = (Overwrite) operation;
-        return new Overwrite(
-            OperationSource.SERVER, overwrite.getPath(), overwrite.getSnapshot());
-      }
-      case Merge: {
-        Merge merge = (Merge) operation;
-        return new Merge(OperationSource.SERVER, merge.getPath(), merge.getChildren());
-      }
-      default: {
-        throw new IllegalArgumentException(
-            "Can't convert operation of type " + operation.getType() + " to node");
-      }
-    }
-  }
+  private static class WriteOp {
 
-  private static Node applyOperation(Operation operation, Node node) {
-    switch (operation.getType()) {
-      case Overwrite: {
-        Overwrite overwrite = (Overwrite) operation;
-        Path path = overwrite.getPath();
-        if (!path.isEmpty()
-            && path.getBack().isPriorityChildName()
-            && node.getChild(path.getParent()).isEmpty()) {
-          // Don't update priorities on empty nodes
-          return node;
-        } else {
-          return node.updateChild(overwrite.getPath(), overwrite.getSnapshot());
-        }
-      }
-      case Merge: {
-        Merge merge = (Merge) operation;
-        Path path = merge.getPath();
-        Node child = node.getChild(path);
-        return node.updateChild(path, merge.getChildren().apply(child));
-      }
-      case ListenComplete: {
-        // No-op
-        return node;
-      }
-      default: {
-        throw new IllegalArgumentException(
-            "Can't apply operation of type " + operation.getType() + " to node");
-      }
+    private final long writeId;
+    private final Operation operation;
+
+    public WriteOp(Operation operation, long writeId) {
+      this.writeId = writeId;
+      this.operation = operation;
     }
   }
 }

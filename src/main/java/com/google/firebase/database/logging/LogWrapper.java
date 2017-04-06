@@ -10,13 +10,6 @@ import java.io.StringWriter;
  */
 public class LogWrapper {
 
-  private static String exceptionStacktrace(Throwable e) {
-    StringWriter writer = new StringWriter();
-    PrintWriter printWriter = new PrintWriter(writer);
-    e.printStackTrace(printWriter);
-    return writer.toString();
-  }
-
   private final Logger logger;
   private final String component;
   private final String prefix;
@@ -29,6 +22,13 @@ public class LogWrapper {
     this.logger = logger;
     this.component = component;
     this.prefix = prefix;
+  }
+
+  private static String exceptionStacktrace(Throwable e) {
+    StringWriter writer = new StringWriter();
+    PrintWriter printWriter = new PrintWriter(writer);
+    e.printStackTrace(printWriter);
+    return writer.toString();
   }
 
   public void error(String message, Throwable e) {

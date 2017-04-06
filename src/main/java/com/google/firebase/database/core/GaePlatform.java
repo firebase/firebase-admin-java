@@ -15,6 +15,7 @@ import com.google.firebase.database.utilities.DefaultRunLoop;
 import com.google.firebase.internal.GaeThreadFactory;
 import com.google.firebase.internal.Preconditions;
 import com.google.firebase.internal.RevivingScheduledExecutor;
+
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -28,13 +29,15 @@ class GaePlatform implements Platform {
 
   private static final String TAG = "GaePlatform";
   private static final String PROCESS_PLATFORM = "AppEngine";
-
-  ThreadFactory threadFactoryInstance;
-
   private final FirebaseApp firebaseApp;
+  ThreadFactory threadFactoryInstance;
 
   public GaePlatform(FirebaseApp firebaseApp) {
     this.firebaseApp = firebaseApp;
+  }
+
+  public static boolean isActive() {
+    return GaeThreadFactory.isAvailable();
   }
 
   @Override
@@ -47,10 +50,6 @@ class GaePlatform implements Platform {
     Preconditions.checkState(threadFactory.isUsingBackgroundThreads(),
         "Failed to initialize a GAE background thread factory");
     return threadFactory;
-  }
-
-  public static boolean isActive() {
-    return GaeThreadFactory.isAvailable();
   }
 
   public void initialize() {

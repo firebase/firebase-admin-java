@@ -1,14 +1,15 @@
 package com.google.firebase.database.snapshot;
 
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
-
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.utilities.NodeSizeEstimator;
 import com.google.firebase.database.utilities.Utilities;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
+
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
 
 public class CompoundHash {
 
@@ -22,6 +23,44 @@ public class CompoundHash {
     }
     this.posts = posts;
     this.hashes = hashes;
+  }
+
+  public static CompoundHash fromNode(Node node) {
+    return fromNode(node, new SimpleSizeSplitStrategy(node));
+  }
+
+  public static CompoundHash fromNode(Node node, SplitStrategy strategy) {
+    if (node.isEmpty()) {
+      return new CompoundHash(Collections.<Path>emptyList(), Collections.singletonList(""));
+    } else {
+      CompoundHashBuilder state = new CompoundHashBuilder(strategy);
+      processNode(node, state);
+      state.finishHashing();
+      return new CompoundHash(state.currentPaths, state.currentHashes);
+    }
+  }
+
+  private static void processNode(Node node, final CompoundHashBuilder state) {
+    if (node.isLeafNode()) {
+      state.processLeaf((LeafNode<?>) node);
+    } else if (node.isEmpty()) {
+      throw new IllegalArgumentException("Can't calculate hash on empty node!");
+    } else {
+      if (!(node instanceof ChildrenNode)) {
+        throw new IllegalStateException("Expected children node, but got: " + node);
+      }
+      ChildrenNode childrenNode = (ChildrenNode) node;
+      ChildrenNode.ChildVisitor visitor =
+          new ChildrenNode.ChildVisitor() {
+            @Override
+            public void visitChild(ChildKey name, Node child) {
+              state.startChild(name);
+              processNode(child, state);
+              state.endChild();
+            }
+          };
+      childrenNode.forEachChild(visitor, /*includePriority=*/ true);
+    }
   }
 
   public List<Path> getPosts() {
@@ -64,10 +103,12 @@ public class CompoundHash {
 
   static class CompoundHashBuilder {
 
+    private final List<Path> currentPaths = new ArrayList<>();
+    private final List<String> currentHashes = new ArrayList<>();
+    private final SplitStrategy splitStrategy;
     // NOTE: We use the existence of this to know if we've started building a range (i.e.
     // encountered a leaf node).
     private StringBuilder optHashValueBuilder = null;
-
     // The current path as a stack. This is used in combination with currentPathDepth to
     // simultaneously store the last leaf node path. The depth is changed when descending and
     // ascending, at the same time the current key is set for the current depth. Because the keys
@@ -76,12 +117,7 @@ public class CompoundHash {
     private Stack<ChildKey> currentPath = new Stack<>();
     private int lastLeafDepth = -1;
     private int currentPathDepth;
-
     private boolean needsComma = true;
-
-    private final List<Path> currentPaths = new ArrayList<>();
-    private final List<String> currentHashes = new ArrayList<>();
-    private final SplitStrategy splitStrategy;
 
     public CompoundHashBuilder(SplitStrategy strategy) {
       this.splitStrategy = strategy;
@@ -183,44 +219,6 @@ public class CompoundHash {
       currentPaths.add(lastLeafPath);
 
       optHashValueBuilder = null;
-    }
-  }
-
-  public static CompoundHash fromNode(Node node) {
-    return fromNode(node, new SimpleSizeSplitStrategy(node));
-  }
-
-  public static CompoundHash fromNode(Node node, SplitStrategy strategy) {
-    if (node.isEmpty()) {
-      return new CompoundHash(Collections.<Path>emptyList(), Collections.singletonList(""));
-    } else {
-      CompoundHashBuilder state = new CompoundHashBuilder(strategy);
-      processNode(node, state);
-      state.finishHashing();
-      return new CompoundHash(state.currentPaths, state.currentHashes);
-    }
-  }
-
-  private static void processNode(Node node, final CompoundHashBuilder state) {
-    if (node.isLeafNode()) {
-      state.processLeaf((LeafNode<?>) node);
-    } else if (node.isEmpty()) {
-      throw new IllegalArgumentException("Can't calculate hash on empty node!");
-    } else {
-      if (!(node instanceof ChildrenNode)) {
-        throw new IllegalStateException("Expected children node, but got: " + node);
-      }
-      ChildrenNode childrenNode = (ChildrenNode) node;
-      ChildrenNode.ChildVisitor visitor =
-          new ChildrenNode.ChildVisitor() {
-            @Override
-            public void visitChild(ChildKey name, Node child) {
-              state.startChild(name);
-              processNode(child, state);
-              state.endChild();
-            }
-          };
-      childrenNode.forEachChild(visitor, /*includePriority=*/ true);
     }
   }
 }

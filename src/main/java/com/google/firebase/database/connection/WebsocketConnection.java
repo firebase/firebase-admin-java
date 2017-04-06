@@ -7,6 +7,7 @@ import com.google.firebase.database.tubesock.WebSocketEventHandler;
 import com.google.firebase.database.tubesock.WebSocketException;
 import com.google.firebase.database.tubesock.WebSocketMessage;
 import com.google.firebase.database.util.JsonMapper;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.URI;
@@ -19,137 +20,13 @@ import java.util.concurrent.TimeUnit;
 
 class WebsocketConnection {
 
-  private static long connectionId = 0;
   private static final long KEEP_ALIVE_TIMEOUT_MS = 45 * 1000; // 45 seconds
   private static final long CONNECT_TIMEOUT_MS = 30 * 1000; // 30 seconds
   private static final int MAX_FRAME_SIZE = 16384;
-
-  public interface Delegate {
-
-    void onMessage(Map<String, Object> message);
-
-    void onDisconnect(boolean wasEverConnected);
-  }
-
-  private interface WSClient {
-
-    void connect();
-
-    void close();
-
-    void send(String msg);
-  }
-
-  private class WSClientTubesock implements WSClient, WebSocketEventHandler {
-
-    private WebSocket ws;
-
-    private WSClientTubesock(WebSocket ws) {
-      this.ws = ws;
-      this.ws.setEventHandler(this);
-    }
-
-    @Override
-    public void onOpen() {
-      executorService.execute(
-          new Runnable() {
-            @Override
-            public void run() {
-              connectTimeout.cancel(false);
-              everConnected = true;
-              if (logger.logsDebug()) {
-                logger.debug("websocket opened");
-              }
-              resetKeepAlive();
-            }
-          });
-    }
-
-    @Override
-    public void onMessage(WebSocketMessage msg) {
-      final String str = msg.getText();
-      if (logger.logsDebug()) {
-        logger.debug("ws message: " + str);
-      }
-      executorService.execute(
-          new Runnable() {
-            @Override
-            public void run() {
-              handleIncomingFrame(str);
-            }
-          });
-    }
-
-    @Override
-    public void onClose() {
-      final String logMessage = "closed";
-      executorService.execute(
-          new Runnable() {
-            @Override
-            public void run() {
-              if (logger.logsDebug()) {
-                logger.debug(logMessage);
-              }
-              onClosed();
-            }
-          });
-    }
-
-    @Override
-    public void onError(final WebSocketException e) {
-      executorService.execute(
-          new Runnable() {
-            @Override
-            public void run() {
-              if (e.getCause() != null && e.getCause() instanceof EOFException) {
-                logger.debug("WebSocket reached EOF.");
-              } else {
-                logger.debug("WebSocket error.", e);
-              }
-              onClosed();
-            }
-          });
-    }
-
-    @Override
-    public void onLogMessage(String msg) {
-      if (logger.logsDebug()) {
-        logger.debug("Tubesock: " + msg);
-      }
-    }
-
-    @Override
-    public void send(String msg) {
-      ws.send(msg);
-    }
-
-    @Override
-    public void close() {
-      ws.close();
-    }
-
-    private void shutdown() {
-      ws.close();
-      try {
-        ws.blockClose();
-      } catch (InterruptedException e) {
-        logger.error("Interrupted while shutting down websocket threads", e);
-      }
-    }
-
-    @Override
-    public void connect() {
-      try {
-        ws.connect();
-      } catch (WebSocketException e) {
-        if (logger.logsDebug()) {
-          logger.debug("Error connecting", e);
-        }
-        shutdown();
-      }
-    }
-  }
-
+  private static long connectionId = 0;
+  private final ConnectionContext connectionContext;
+  private final ScheduledExecutorService executorService;
+  private final LogWrapper logger;
   private WSClient conn;
   private boolean everConnected = false;
   private boolean isClosed = false;
@@ -158,9 +35,6 @@ class WebsocketConnection {
   private Delegate delegate;
   private ScheduledFuture<?> keepAlive;
   private ScheduledFuture<?> connectTimeout;
-  private final ConnectionContext connectionContext;
-  private final ScheduledExecutorService executorService;
-  private final LogWrapper logger;
 
   public WebsocketConnection(
       ConnectionContext connectionContext,
@@ -174,6 +48,20 @@ class WebsocketConnection {
     long connId = connectionId++;
     logger = new LogWrapper(connectionContext.getLogger(), "WebSocket", "ws_" + connId);
     conn = createConnection(hostInfo, optCachedHost, optLastSessionId);
+  }
+
+  private static String[] splitIntoFrames(String src, int maxFrameSize) {
+    if (src.length() <= maxFrameSize) {
+      return new String[] {src};
+    } else {
+      ArrayList<String> segs = new ArrayList<>();
+      for (int i = 0; i < src.length(); i += maxFrameSize) {
+        int end = Math.min(i + maxFrameSize, src.length());
+        String seg = src.substring(i, end);
+        segs.add(seg);
+      }
+      return segs.toArray(new String[segs.size()]);
+    }
   }
 
   private WSClient createConnection(
@@ -340,8 +228,6 @@ class WebsocketConnection {
     return frameReader != null;
   }
 
-  // Close methods
-
   private void onClosed() {
     if (!isClosed) {
       if (logger.logsDebug()) {
@@ -360,6 +246,8 @@ class WebsocketConnection {
     delegate.onDisconnect(everConnected);
   }
 
+  // Close methods
+
   private void closeIfNeverConnected() {
     if (!everConnected && !isClosed) {
       if (logger.logsDebug()) {
@@ -369,17 +257,129 @@ class WebsocketConnection {
     }
   }
 
-  private static String[] splitIntoFrames(String src, int maxFrameSize) {
-    if (src.length() <= maxFrameSize) {
-      return new String[]{src};
-    } else {
-      ArrayList<String> segs = new ArrayList<>();
-      for (int i = 0; i < src.length(); i += maxFrameSize) {
-        int end = Math.min(i + maxFrameSize, src.length());
-        String seg = src.substring(i, end);
-        segs.add(seg);
+  public interface Delegate {
+
+    void onMessage(Map<String, Object> message);
+
+    void onDisconnect(boolean wasEverConnected);
+  }
+
+  private interface WSClient {
+
+    void connect();
+
+    void close();
+
+    void send(String msg);
+  }
+
+  private class WSClientTubesock implements WSClient, WebSocketEventHandler {
+
+    private WebSocket ws;
+
+    private WSClientTubesock(WebSocket ws) {
+      this.ws = ws;
+      this.ws.setEventHandler(this);
+    }
+
+    @Override
+    public void onOpen() {
+      executorService.execute(
+          new Runnable() {
+            @Override
+            public void run() {
+              connectTimeout.cancel(false);
+              everConnected = true;
+              if (logger.logsDebug()) {
+                logger.debug("websocket opened");
+              }
+              resetKeepAlive();
+            }
+          });
+    }
+
+    @Override
+    public void onMessage(WebSocketMessage msg) {
+      final String str = msg.getText();
+      if (logger.logsDebug()) {
+        logger.debug("ws message: " + str);
       }
-      return segs.toArray(new String[segs.size()]);
+      executorService.execute(
+          new Runnable() {
+            @Override
+            public void run() {
+              handleIncomingFrame(str);
+            }
+          });
+    }
+
+    @Override
+    public void onClose() {
+      final String logMessage = "closed";
+      executorService.execute(
+          new Runnable() {
+            @Override
+            public void run() {
+              if (logger.logsDebug()) {
+                logger.debug(logMessage);
+              }
+              onClosed();
+            }
+          });
+    }
+
+    @Override
+    public void onError(final WebSocketException e) {
+      executorService.execute(
+          new Runnable() {
+            @Override
+            public void run() {
+              if (e.getCause() != null && e.getCause() instanceof EOFException) {
+                logger.debug("WebSocket reached EOF.");
+              } else {
+                logger.debug("WebSocket error.", e);
+              }
+              onClosed();
+            }
+          });
+    }
+
+    @Override
+    public void onLogMessage(String msg) {
+      if (logger.logsDebug()) {
+        logger.debug("Tubesock: " + msg);
+      }
+    }
+
+    @Override
+    public void send(String msg) {
+      ws.send(msg);
+    }
+
+    @Override
+    public void close() {
+      ws.close();
+    }
+
+    private void shutdown() {
+      ws.close();
+      try {
+        ws.blockClose();
+      } catch (InterruptedException e) {
+        logger.error("Interrupted while shutting down websocket threads", e);
+      }
+    }
+
+    @Override
+    public void connect() {
+      try {
+        ws.connect();
+      } catch (WebSocketException e) {
+        if (logger.logsDebug()) {
+          logger.debug("Error connecting", e);
+        }
+        shutdown();
+      }
     }
   }
 }

@@ -1,48 +1,49 @@
 package com.google.firebase.tasks;
 
 import com.google.firebase.internal.NonNull;
+
 import java.util.concurrent.Executor;
 
 /**
  * A {@link TaskCompletionListener} that wraps a {@link Continuation}.
  */
-class ContinueWithCompletionListener<TResult, TContinuationResult>
-    implements TaskCompletionListener<TResult> {
+class ContinueWithCompletionListener<T, R>
+    implements TaskCompletionListener<T> {
 
-  private final Executor mExecutor;
-  private final Continuation<TResult, TContinuationResult> mContinuation;
-  private final TaskImpl<TContinuationResult> mContinuationTask;
+  private final Executor executor;
+  private final Continuation<T, R> continuation;
+  private final TaskImpl<R> continuationTask;
 
   public ContinueWithCompletionListener(
       @NonNull Executor executor,
-      @NonNull Continuation<TResult, TContinuationResult> continuation,
-      @NonNull TaskImpl<TContinuationResult> continuationTask) {
-    mExecutor = executor;
-    mContinuation = continuation;
-    mContinuationTask = continuationTask;
+      @NonNull Continuation<T, R> continuation,
+      @NonNull TaskImpl<R> continuationTask) {
+    this.executor = executor;
+    this.continuation = continuation;
+    this.continuationTask = continuationTask;
   }
 
   @Override
-  public void onComplete(@NonNull final Task<TResult> task) {
-    mExecutor.execute(new Runnable() {
+  public void onComplete(@NonNull final Task<T> task) {
+    executor.execute(new Runnable() {
       @Override
       public void run() {
-        TContinuationResult result;
+        R result;
         try {
-          result = mContinuation.then(task);
+          result = continuation.then(task);
         } catch (RuntimeExecutionException e) {
           if (e.getCause() instanceof Exception) {
-            mContinuationTask.setException((Exception) e.getCause());
+            continuationTask.setException((Exception) e.getCause());
           } else {
-            mContinuationTask.setException(e);
+            continuationTask.setException(e);
           }
           return;
         } catch (Exception e) {
-          mContinuationTask.setException(e);
+          continuationTask.setException(e);
           return;
         }
 
-        mContinuationTask.setResult(result);
+        continuationTask.setResult(result);
       }
     });
   }

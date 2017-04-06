@@ -3,6 +3,7 @@ package com.google.firebase.internal;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
@@ -14,6 +15,9 @@ public class FirebaseAppStore {
 
   private static final AtomicReference<FirebaseAppStore> sInstance = new AtomicReference<>();
 
+  FirebaseAppStore() {
+  }
+
   @Nullable
   public static FirebaseAppStore getInstance() {
     return sInstance.get();
@@ -23,9 +27,6 @@ public class FirebaseAppStore {
   public static FirebaseAppStore initialize() {
     sInstance.compareAndSet(null /* expected */, new FirebaseAppStore());
     return sInstance.get();
-  }
-
-  FirebaseAppStore() {
   }
 
   /**

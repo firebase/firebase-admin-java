@@ -3,6 +3,7 @@ package com.google.firebase.database.core;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.Logger;
+
 import java.util.List;
 
 /**
@@ -19,8 +20,8 @@ public class DatabaseConfig extends Context {
    * If you would like to provide a custom log target, pass an object that implements the {@link
    * com.google.firebase.database.Logger Logger} interface.
    *
-   * @hide
    * @param logger The custom logger that will be called with all log messages
+   * @hide
    */
   public synchronized void setLogger(com.google.firebase.database.logging.Logger logger) {
     assertUnfrozen();
@@ -81,7 +82,7 @@ public class DatabaseConfig extends Context {
    * the log level to {@link Logger.Level#DEBUG DEBUG}.
    *
    * @param debugComponents A list of components for which logs are desired, or null to enable all
-   *     components
+   * components
    */
   public synchronized void setDebugLogComponents(List<String> debugComponents) {
     assertUnfrozen();
@@ -122,8 +123,8 @@ public class DatabaseConfig extends Context {
    * be called before creating your first Database reference and only needs to be called once per
    * application.
    *
-   * @since 2.3
    * @param isEnabled Set to true to enable disk persistence, set to false to disable it.
+   * @since 2.3
    */
   public synchronized void setPersistenceEnabled(boolean isEnabled) {
     assertUnfrozen();
@@ -140,8 +141,8 @@ public class DatabaseConfig extends Context {
    * <p>Note that the specified cache size is only an approximation and the size on disk may
    * temporarily exceed it at times.
    *
-   * @since 2.3
    * @param cacheSizeInBytes The new size of the cache in bytes.
+   * @since 2.3
    */
   public synchronized void setPersistenceCacheSizeBytes(long cacheSizeInBytes) {
     assertUnfrozen();

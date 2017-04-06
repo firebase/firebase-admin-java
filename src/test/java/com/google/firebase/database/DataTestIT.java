@@ -1,19 +1,15 @@
 package com.google.firebase.database;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import com.google.firebase.database.core.DatabaseConfig;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.core.view.Event;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
+import org.junit.After;
+import org.junit.Ignore;
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,9 +24,9 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import org.junit.After;
-import org.junit.Ignore;
-import org.junit.Test;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.junit.Assert.*;
 
 public class DataTestIT {
 
@@ -1285,14 +1281,15 @@ public class DataTestIT {
                         + TestHelpers.repeatedString("k", maxPathLengthBytes / 2))),
             new BadGroup(
                 "Path specified exceeds the maximum depth",
-                Collections.singletonList(TestHelpers.repeatedString("key/", maxPathDepth) + "key")));
+                Collections.singletonList(TestHelpers.repeatedString("key/", maxPathDepth) +
+                    "key")));
 
     DatabaseReference node = TestHelpers.getRandomNode().getRoot();
 
     // Ensure "good keys" work from the root.
     for (String key : goodKeys) {
       Path path = new Path(key);
-      HashMap<String,Object> obj = TestHelpers.buildObjFromPath(path, "test_value");
+      HashMap<String, Object> obj = TestHelpers.buildObjFromPath(path, "test_value");
       node.setValue(obj);
       ReadFuture future = ReadFuture.untilNonNull(node);
       assertEquals("test_value", TestHelpers.applyPath(future.waitForLastValue(), path));
@@ -3029,11 +3026,6 @@ public class DataTestIT {
     assertEquals(writeSnaps.get(1).getPriority(), readSnaps.get(0).getPriority());
   }
 
-  private static class DumbBean {
-    public String name;
-    DumbBean nestedBean;
-  }
-
   @Test
   public void testBasicObjectMappingRoundTrip()
       throws InterruptedException, ExecutionException, TimeoutException, TestFailure {
@@ -3151,5 +3143,10 @@ public class DataTestIT {
         });
 
     TestHelpers.waitFor(done);
+  }
+
+  private static class DumbBean {
+    public String name;
+    DumbBean nestedBean;
   }
 }

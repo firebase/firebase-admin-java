@@ -1,14 +1,15 @@
 package com.google.firebase.tasks;
 
-import static org.mockito.Mockito.verifyZeroInteractions;
-
 import com.google.firebase.tasks.testing.TestOnFailureListener;
 import com.google.firebase.testing.MockitoTestRule;
-import java.rmi.RemoteException;
-import java.util.concurrent.Executor;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
+
+import java.rmi.RemoteException;
+import java.util.concurrent.Executor;
+
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class OnFailureCompletionListenerTest {
 

@@ -8,8 +8,7 @@ package com.google.firebase.database;
  * MutableData#getValue(GenericTypeIndicator)}) and returns a properly-typed generic collection.
  *
  * <p>As an example, you might do something like this to get a list of Message instances from a
- * {@link DataSnapshot}: <br>
- * <br>
+ * {@link DataSnapshot}: <br> <br>
  *
  * <pre><code>
  *     class Message {
@@ -34,7 +33,9 @@ package com.google.firebase.database;
  *
  *     // Later ...
  *
- *     GenericTypeIndicator&lt;List&lt;Message&gt;&gt; t = new GenericTypeIndicator&lt;List&lt;Message&gt;&gt;() {};
+ *     GenericTypeIndicator&lt;List&lt;Message&gt;&gt; t = new GenericTypeIndicator&lt;List&lt;
+ *     Message&gt;&gt;()
+ * {};
  *     List&lt;Message&gt; messages = snapshot.getValue(t);
  *
  * </code></pre>

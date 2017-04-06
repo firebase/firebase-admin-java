@@ -2,6 +2,7 @@ package com.google.firebase.database.core;
 
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.snapshot.ChildKey;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -10,27 +11,10 @@ import java.util.NoSuchElementException;
 
 public class Path implements Iterable<ChildKey>, Comparable<Path> {
 
-  public static Path getRelative(Path from, Path to) {
-    ChildKey outerFront = from.getFront();
-    ChildKey innerFront = to.getFront();
-    if (outerFront == null) {
-      return to;
-    } else if (outerFront.equals(innerFront)) {
-      return getRelative(from.popFront(), to.popFront());
-    } else {
-      throw new DatabaseException("INTERNAL ERROR: " + to + " is not contained in " + from);
-    }
-  }
-
+  private static final Path EMPTY_PATH = new Path("");
   private final ChildKey[] pieces;
   private final int start;
   private final int end;
-
-  private static final Path EMPTY_PATH = new Path("");
-
-  public static Path getEmptyPath() {
-    return EMPTY_PATH;
-  }
 
   public Path(ChildKey... segments) {
     this.pieces = Arrays.copyOf(segments, segments.length);
@@ -74,6 +58,22 @@ public class Path implements Iterable<ChildKey>, Comparable<Path> {
     this.pieces = pieces;
     this.start = start;
     this.end = end;
+  }
+
+  public static Path getRelative(Path from, Path to) {
+    ChildKey outerFront = from.getFront();
+    ChildKey innerFront = to.getFront();
+    if (outerFront == null) {
+      return to;
+    } else if (outerFront.equals(innerFront)) {
+      return getRelative(from.popFront(), to.popFront());
+    } else {
+      throw new DatabaseException("INTERNAL ERROR: " + to + " is not contained in " + from);
+    }
+  }
+
+  public static Path getEmptyPath() {
+    return EMPTY_PATH;
   }
 
   public Path child(Path path) {

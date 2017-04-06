@@ -4,6 +4,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.InternalHelpers;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,6 +14,11 @@ public class RepoManager {
 
   static {
     instance = new RepoManager();
+  }
+
+  private final Map<Context, Map<String, Repo>> repos = new HashMap<>();
+
+  public RepoManager() {
   }
 
   /**
@@ -54,11 +60,6 @@ public class RepoManager {
 
   public static void resume(Context ctx) {
     instance.resumeInternal(ctx);
-  }
-
-  private final Map<Context, Map<String, Repo>> repos = new HashMap<>();
-
-  public RepoManager() {
   }
 
   private Repo getLocalRepo(Context ctx, RepoInfo info) throws DatabaseException {

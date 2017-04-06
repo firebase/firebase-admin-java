@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
  * Marks a field to be renamed when serialized.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.METHOD, ElementType.FIELD})
+@Target( {ElementType.METHOD, ElementType.FIELD})
 public @interface PropertyName {
 
   String value();

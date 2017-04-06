@@ -27,14 +27,6 @@ public class RangedFilter implements NodeFilter {
     this.endPost = getEndPost(params);
   }
 
-  public NamedNode getStartPost() {
-    return this.startPost;
-  }
-
-  public NamedNode getEndPost() {
-    return this.endPost;
-  }
-
   private static NamedNode getStartPost(QueryParams params) {
     if (params.hasStart()) {
       ChildKey startName = params.getIndexStartName();
@@ -51,6 +43,14 @@ public class RangedFilter implements NodeFilter {
     } else {
       return params.getIndex().maxPost();
     }
+  }
+
+  public NamedNode getStartPost() {
+    return this.startPost;
+  }
+
+  public NamedNode getEndPost() {
+    return this.endPost;
   }
 
   public boolean matches(NamedNode node) {

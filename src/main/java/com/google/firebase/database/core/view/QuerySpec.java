@@ -2,21 +2,27 @@ package com.google.firebase.database.core.view;
 
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.snapshot.Index;
+
 import java.util.Map;
 
 public class QuerySpec {
 
-  public static QuerySpec defaultQueryAtPath(Path path) {
-    return new QuerySpec(path, QueryParams.DEFAULT_PARAMS);
-  }
+  private final Path path;
+  private final QueryParams params;
 
   public QuerySpec(Path path, QueryParams params) {
     this.path = path;
     this.params = params;
   }
 
-  private final Path path;
-  private final QueryParams params;
+  public static QuerySpec defaultQueryAtPath(Path path) {
+    return new QuerySpec(path, QueryParams.DEFAULT_PARAMS);
+  }
+
+  public static QuerySpec fromPathAndQueryObject(Path path, Map<String, Object> map) {
+    QueryParams params = QueryParams.fromQueryObject(map);
+    return new QuerySpec(path, params);
+  }
 
   public Path getPath() {
     return this.path;
@@ -24,11 +30,6 @@ public class QuerySpec {
 
   public QueryParams getParams() {
     return this.params;
-  }
-
-  public static QuerySpec fromPathAndQueryObject(Path path, Map<String, Object> map) {
-    QueryParams params = QueryParams.fromQueryObject(map);
-    return new QuerySpec(path, params);
   }
 
   public Index getIndex() {

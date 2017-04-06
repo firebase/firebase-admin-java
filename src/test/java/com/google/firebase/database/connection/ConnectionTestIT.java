@@ -1,13 +1,14 @@
 package com.google.firebase.database.connection;
 
-import static org.junit.Assert.assertFalse;
-
 import com.google.firebase.database.TestConstants;
 import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.core.DatabaseConfig;
+import org.junit.Test;
+
 import java.util.Map;
 import java.util.concurrent.Semaphore;
-import org.junit.Test;
+
+import static org.junit.Assert.assertFalse;
 
 // TODO(mikelehen): Move this test to separate firebase-database-connection
 // tests.

@@ -1,7 +1,5 @@
 package com.google.firebase.auth;
 
-import static com.google.firebase.internal.Preconditions.checkNotNull;
-
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
@@ -11,6 +9,9 @@ import com.google.firebase.internal.NonNull;
 import com.google.firebase.tasks.Continuation;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,8 +21,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
-import org.json.JSONException;
-import org.json.JSONObject;
+
+import static com.google.firebase.internal.Preconditions.checkNotNull;
 
 /**
  * Standard {@link FirebaseCredential} implementations for use with {@link
@@ -34,6 +35,94 @@ public class FirebaseCredentials {
           "https://www.googleapis.com/auth/firebase.database",
           "https://www.googleapis.com/auth/userinfo.email");
 
+  private static String streamToString(InputStream inputStream) throws IOException {
+    StringBuilder stringBuilder = new StringBuilder();
+    Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+    char[] buffer = new char[256];
+    int length;
+
+    while ((length = reader.read(buffer)) != -1) {
+      stringBuilder.append(buffer, 0, length);
+    }
+    inputStream.close();
+    return stringBuilder.toString();
+  }
+
+  /**
+   * Returns a {@link FirebaseCredential} based on Google Application Default
+   * Credentials which can be used to authenticate the SDK.
+   *
+   * <p>See <a
+   * href="https://developers.google.com/identity/protocols/application-default-credentials">
+   * Google Application Default Credentials</a>
+   * for details on Google Application Deafult Credentials.
+   *
+   * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a>
+   * for code samples and detailed documentation.
+   *
+   * @return A {@link FirebaseCredential} based on Google Application Default Credentials which can
+   * be used to authenticate the SDK.
+   */
+  @NonNull
+  public static FirebaseCredential applicationDefault() {
+    return DefaultCredentialsHolder.INSTANCE;
+  }
+
+  @VisibleForTesting
+  static FirebaseCredential applicationDefault(HttpTransport transport, JsonFactory jsonFactory) {
+    return new ApplicationDefaultCredential(transport, jsonFactory);
+  }
+
+  /**
+   * Returns a {@link FirebaseCredential} generated from the provided service
+   * account certificate which can be used to authenticate the SDK.
+   *
+   * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a>
+   * for code samples and detailed documentation.
+   *
+   * @param serviceAccount An <code>InputStream</code> containing the JSON representation of a
+   * service account certificate.
+   * @return A {@link FirebaseCredential} generated from the provided service account certificate
+   * which can be used to authenticate the SDK.
+   */
+  @NonNull
+  public static FirebaseCredential fromCertificate(InputStream serviceAccount) {
+    checkNotNull(serviceAccount);
+    return fromCertificate(
+        serviceAccount, Utils.getDefaultTransport(), Utils.getDefaultJsonFactory());
+  }
+
+  @VisibleForTesting
+  static FirebaseCredential fromCertificate(
+      InputStream serviceAccount, HttpTransport transport, JsonFactory jsonFactory) {
+    return new CertCredential(serviceAccount, transport, jsonFactory);
+  }
+
+  /**
+   * Returns a {@link FirebaseCredential} generated from the provided refresh
+   * token which can be used to authenticate the SDK.
+   *
+   * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a>
+   * for code samples and detailed documentation.
+   *
+   * @param refreshToken An <code>InputStream</code> containing the JSON representation of a refresh
+   * token.
+   * @return A {@link FirebaseCredential} generated from the provided service account credential
+   * which can be used to authenticate the SDK.
+   */
+  @NonNull
+  public static FirebaseCredential fromRefreshToken(InputStream refreshToken) {
+    checkNotNull(refreshToken);
+    return fromRefreshToken(
+        refreshToken, Utils.getDefaultTransport(), Utils.getDefaultJsonFactory());
+  }
+
+  @VisibleForTesting
+  static FirebaseCredential fromRefreshToken(
+      final InputStream refreshToken, HttpTransport transport, JsonFactory jsonFactory) {
+    return new RefreshTokenCredential(refreshToken, transport, jsonFactory);
+  }
+
   /**
    * Helper class that implements {@link FirebaseCredential} on top of {@link GoogleCredential} and
    * provides caching of access tokens and credentials.
@@ -43,9 +132,8 @@ public class FirebaseCredentials {
     final HttpTransport transport;
     final JsonFactory jsonFactory;
     final Clock clock;
-
-    private GoogleCredential googleCredential;
     private final Object accessTokenTaskLock = new Object();
+    private GoogleCredential googleCredential;
     private Task<FirebaseAccessToken> accessTokenTask;
 
     BaseCredential(HttpTransport transport, JsonFactory jsonFactory) {
@@ -99,7 +187,7 @@ public class FirebaseCredentials {
     }
 
     private boolean refreshRequired(@NonNull Task<FirebaseAccessToken> previousTask,
-        boolean forceRefresh) {
+                                    boolean forceRefresh) {
       return previousTask == null || (previousTask.isComplete() && (forceRefresh || !previousTask
           .isSuccessful() || previousTask.getResult().isExpired()));
     }
@@ -262,94 +350,6 @@ public class FirebaseCredentials {
         applicationDefault(Utils.getDefaultTransport(), Utils.getDefaultJsonFactory());
   }
 
-  private static String streamToString(InputStream inputStream) throws IOException {
-    StringBuilder stringBuilder = new StringBuilder();
-    Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-    char[] buffer = new char[256];
-    int length;
-
-    while ((length = reader.read(buffer)) != -1) {
-      stringBuilder.append(buffer, 0, length);
-    }
-    inputStream.close();
-    return stringBuilder.toString();
-  }
-
-  /**
-   * Returns a {@link FirebaseCredential} based on Google Application Default
-   * Credentials which can be used to authenticate the SDK.
-   *
-   * <p>See <a
-   * href="https://developers.google.com/identity/protocols/application-default-credentials">
-   * Google Application Default Credentials</a>
-   * for details on Google Application Deafult Credentials.
-   *
-   * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a>
-   * for code samples and detailed documentation.
-   *
-   * @return A {@link FirebaseCredential} based on Google Application Default Credentials which can
-   * be used to authenticate the SDK.
-   */
-  @NonNull
-  public static FirebaseCredential applicationDefault() {
-    return DefaultCredentialsHolder.INSTANCE;
-  }
-
-  @VisibleForTesting
-  static FirebaseCredential applicationDefault(HttpTransport transport, JsonFactory jsonFactory) {
-    return new ApplicationDefaultCredential(transport, jsonFactory);
-  }
-
-  /**
-   * Returns a {@link FirebaseCredential} generated from the provided service
-   * account certificate which can be used to authenticate the SDK.
-   *
-   * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a>
-   * for code samples and detailed documentation.
-   *
-   * @param serviceAccount An <code>InputStream</code> containing the JSON representation of a
-   * service account certificate.
-   * @return A {@link FirebaseCredential} generated from the provided service account certificate
-   * which can be used to authenticate the SDK.
-   */
-  @NonNull
-  public static FirebaseCredential fromCertificate(InputStream serviceAccount) {
-    checkNotNull(serviceAccount);
-    return fromCertificate(
-        serviceAccount, Utils.getDefaultTransport(), Utils.getDefaultJsonFactory());
-  }
-
-  @VisibleForTesting
-  static FirebaseCredential fromCertificate(
-      InputStream serviceAccount, HttpTransport transport, JsonFactory jsonFactory) {
-    return new CertCredential(serviceAccount, transport, jsonFactory);
-  }
-
-  /**
-   * Returns a {@link FirebaseCredential} generated from the provided refresh
-   * token which can be used to authenticate the SDK.
-   *
-   * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a>
-   * for code samples and detailed documentation.
-   *
-   * @param refreshToken An <code>InputStream</code> containing the JSON representation of a refresh
-   * token.
-   * @return A {@link FirebaseCredential} generated from the provided service account credential
-   * which can be used to authenticate the SDK.
-   */
-  @NonNull
-  public static FirebaseCredential fromRefreshToken(InputStream refreshToken) {
-    checkNotNull(refreshToken);
-    return fromRefreshToken(
-        refreshToken, Utils.getDefaultTransport(), Utils.getDefaultJsonFactory());
-  }
-
-  @VisibleForTesting
-  static FirebaseCredential fromRefreshToken(
-      final InputStream refreshToken, HttpTransport transport, JsonFactory jsonFactory) {
-    return new RefreshTokenCredential(refreshToken, transport, jsonFactory);
-  }
-
   static class Clock {
 
     protected long now() {
@@ -359,25 +359,25 @@ public class FirebaseCredentials {
 
   static class FirebaseAccessToken {
 
-    private final String mToken;
-    private final long mExpirationTime;
-    private final Clock mClock;
+    private final String token;
+    private final long expirationTime;
+    private final Clock clock;
 
     FirebaseAccessToken(GoogleCredential credential, Clock clock) {
       checkNotNull(credential, "Google credential is required");
       checkNotNull(clock, "Clock is required");
-      mToken = checkNotNull(credential.getAccessToken(),
+      token = checkNotNull(credential.getAccessToken(),
           "Access token should not be null after refresh.");
-      mExpirationTime = credential.getExpirationTimeMilliseconds();
-      mClock = clock;
+      expirationTime = credential.getExpirationTimeMilliseconds();
+      this.clock = clock;
     }
 
     String getToken() {
-      return mToken;
+      return token;
     }
 
     boolean isExpired() {
-      return mExpirationTime < mClock.now();
+      return expirationTime < clock.now();
     }
   }
 }

@@ -1,20 +1,21 @@
 package com.google.firebase.database.snapshot;
 
-import static com.google.firebase.database.TestHelpers.fromSingleQuotedString;
-import static com.google.firebase.database.TestHelpers.path;
-import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import com.google.firebase.database.MapBuilder;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.utilities.Utilities;
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import org.junit.Test;
+
+import static com.google.firebase.database.TestHelpers.fromSingleQuotedString;
+import static com.google.firebase.database.TestHelpers.path;
+import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class CompoundHashTest {
 
@@ -37,6 +38,18 @@ public class CompoundHashTest {
         return pathList.contains(state.currentPath());
       }
     };
+  }
+
+  private static void assertWithinPercent(int expected, int actual, double percent) {
+    double percentDecimal = percent / 100.0;
+    double lowerBound = expected * (1 - percentDecimal);
+    double upperBound = expected * (1 + percentDecimal);
+    assertTrue(
+        String.format("Not within range: (%02f, %02f): %d", lowerBound, upperBound, actual),
+        actual > lowerBound);
+    assertTrue(
+        String.format("Not within range: (%02f, %02f): %d", lowerBound, upperBound, actual),
+        actual < upperBound);
   }
 
   @Test
@@ -130,18 +143,6 @@ public class CompoundHashTest {
             "(\"\\\"\":(string:\"\\\\\"),\"\\\"\\\\\\\"\\\\\":(string:\"\\\"\\\\\\\"\\\\\"))");
     assertEquals(Arrays.asList(path("\"\\\"\\")), hash.getPosts());
     assertEquals(Arrays.asList(hashValue, ""), hash.getHashes());
-  }
-
-  private static void assertWithinPercent(int expected, int actual, double percent) {
-    double percentDecimal = percent / 100.0;
-    double lowerBound = expected * (1 - percentDecimal);
-    double upperBound = expected * (1 + percentDecimal);
-    assertTrue(
-        String.format("Not within range: (%02f, %02f): %d", lowerBound, upperBound, actual),
-        actual > lowerBound);
-    assertTrue(
-        String.format("Not within range: (%02f, %02f): %d", lowerBound, upperBound, actual),
-        actual < upperBound);
   }
 
   @Test

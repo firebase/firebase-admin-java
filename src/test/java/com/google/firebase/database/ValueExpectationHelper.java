@@ -1,27 +1,16 @@
 package com.google.firebase.database;
 
-import static org.junit.Assert.fail;
-
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 
+import static org.junit.Assert.fail;
+
 /**
  * User: greg Date: 6/4/13 Time: 2:45 PM
  */
 public class ValueExpectationHelper {
-
-  private static class QueryAndListener {
-
-    public Query query;
-    public ValueEventListener listener;
-
-    public QueryAndListener(Query query, ValueEventListener listener) {
-      this.query = query;
-      this.listener = listener;
-    }
-  }
 
   private Semaphore semaphore = new Semaphore(0);
   private int count = 0;
@@ -59,5 +48,16 @@ public class ValueExpectationHelper {
       pair.query.removeEventListener(pair.listener);
     }
     expectations.clear();
+  }
+
+  private static class QueryAndListener {
+
+    public Query query;
+    public ValueEventListener listener;
+
+    public QueryAndListener(Query query, ValueEventListener listener) {
+      this.query = query;
+      this.listener = listener;
+    }
   }
 }

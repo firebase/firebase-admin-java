@@ -3,11 +3,14 @@ package com.google.firebase.database;
 // Server values
 
 import com.google.firebase.database.core.ServerValues;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/** Contains placeholder values to use when writing data to the Firebase Database. */
+/**
+ * Contains placeholder values to use when writing data to the Firebase Database.
+ */
 public class ServerValue {
 
   /**

@@ -13,6 +13,7 @@ import com.google.firebase.database.snapshot.EmptyNode;
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.NamedNode;
 import com.google.firebase.database.snapshot.Node;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,9 +23,9 @@ public class View {
 
   private final QuerySpec query;
   private final ViewProcessor processor;
-  private ViewCache viewCache;
   private final List<EventRegistration> eventRegistrations;
   private final EventGenerator eventGenerator;
+  private ViewCache viewCache;
 
   public View(QuerySpec query, ViewCache initialViewCache) {
     this.query = query;
@@ -51,18 +52,6 @@ public class View {
     this.eventRegistrations = new ArrayList<>();
 
     this.eventGenerator = new EventGenerator(query);
-  }
-
-  /** */
-  public static class OperationResult {
-
-    public final List<DataEvent> events;
-    public final List<Change> changes;
-
-    public OperationResult(List<DataEvent> events, List<Change> changes) {
-      this.events = events;
-      this.changes = changes;
-    }
   }
 
   public QuerySpec getQuery() {
@@ -192,5 +181,17 @@ public class View {
   // Package private for testing purposes only
   List<EventRegistration> getEventRegistrations() {
     return eventRegistrations;
+  }
+
+  /** */
+  public static class OperationResult {
+
+    public final List<DataEvent> events;
+    public final List<Change> changes;
+
+    public OperationResult(List<DataEvent> events, List<Change> changes) {
+      this.events = events;
+      this.changes = changes;
+    }
   }
 }

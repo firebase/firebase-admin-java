@@ -25,7 +25,6 @@
       }
     ]
   },
-
   {
     "name": "Default listen handles a set at the same level",
     "steps": [
@@ -69,7 +68,6 @@
       }
     ]
   },
-
   {
     "name": "A query can get a complete cache then a merge",
     "steps": [
@@ -79,7 +77,9 @@
         "params": {
           "tag": 1,
           "limitToFirst": 3,
-          "startAt": {"index": null}
+          "startAt": {
+            "index": null
+          }
         },
         "events": []
       },
@@ -167,7 +167,6 @@
       }
     ]
   },
-
   {
     "name": "Server merge on listener with complete children",
     "steps": [
@@ -204,7 +203,10 @@
       {
         "type": "serverMerge",
         "path": "a/b",
-        "data": {"c": 3, "d": 4},
+        "data": {
+          "c": 3,
+          "d": 4
+        },
         "events": [
           {
             "path": "a/b",
@@ -223,20 +225,25 @@
           {
             "path": "a/b",
             "type": "value",
-            "data": {"c": 3, "d": 4}
+            "data": {
+              "c": 3,
+              "d": 4
+            }
           },
           {
             "path": "a",
             "type": "child_changed",
             "name": "b",
             "prevName": null,
-            "data": {"c": 3, "d": 4}
+            "data": {
+              "c": 3,
+              "d": 4
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Empty set doesn't prevent server updates",
     "steps": [
@@ -263,7 +270,7 @@
             "path": "",
             "type": "value",
             "data": {
-              "foo" : "bar"
+              "foo": "bar"
             }
           }
         ]
@@ -277,7 +284,9 @@
       {
         "type": "serverUpdate",
         "path": "",
-        "data": { "foo": "new-bar" },
+        "data": {
+          "foo": "new-bar"
+        },
         "events": [
           {
             "path": "",
@@ -290,14 +299,13 @@
             "path": "",
             "type": "value",
             "data": {
-              "foo" : "new-bar"
+              "foo": "new-bar"
             }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Deep merge on listener with complete children",
     "steps": [
@@ -351,7 +359,10 @@
       {
         "type": "serverMerge",
         "path": "a/x/y/z",
-        "data": {"c": 3, "d": 4},
+        "data": {
+          "c": 3,
+          "d": 4
+        },
         ".comment": "No events for the top-level listener, since it's not a complete child",
         "events": [
           {
@@ -371,13 +382,15 @@
           {
             "path": "a/x/y/z",
             "type": "value",
-            "data": {"c": 3, "d": 4}
+            "data": {
+              "c": 3,
+              "d": 4
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Update child listener twice",
     "steps": [
@@ -425,20 +438,23 @@
           {
             "path": "a/b",
             "type": "value",
-            "data": {"c": "foo"}
+            "data": {
+              "c": "foo"
+            }
           },
           {
             "path": "a",
             "type": "child_changed",
             "name": "b",
             "prevName": null,
-            "data": {"c": "foo"}
+            "data": {
+              "c": "foo"
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Update child of default listen that already has a complete cache",
     "steps": [
@@ -505,7 +521,6 @@
       }
     ]
   },
-
   {
     "name": "Update child of default listen that has no cache",
     "steps": [
@@ -531,7 +546,6 @@
       }
     ]
   },
-
   {
     "name": "Update (via set) the child of a co-located default listener and query",
     "steps": [
@@ -540,8 +554,14 @@
         "path": "a",
         "params": {
           "tag": 1,
-          "startAt": {"index": null, "name": "b"},
-          "endAt": {"index": null, "name": "g"}
+          "startAt": {
+            "index": null,
+            "name": "b"
+          },
+          "endAt": {
+            "index": null,
+            "name": "g"
+          }
         },
         "events": []
       },
@@ -598,12 +618,19 @@
           {
             "path": "a",
             "type": "value",
-            "data": {"a": 1, "c": 3, "d": 4}
+            "data": {
+              "a": 1,
+              "c": 3,
+              "d": 4
+            }
           },
           {
             "path": "a",
             "type": "value",
-            "data": {"c": 3, "d": 4}
+            "data": {
+              "c": 3,
+              "d": 4
+            }
           }
         ]
       },
@@ -630,18 +657,26 @@
           {
             "path": "a",
             "type": "value",
-            "data": {"a": 1, "b":2, "c": 3, "d": 4}
+            "data": {
+              "a": 1,
+              "b": 2,
+              "c": 3,
+              "d": 4
+            }
           },
           {
             "path": "a",
             "type": "value",
-            "data": {"b":2, "c": 3, "d": 4}
+            "data": {
+              "b": 2,
+              "c": 3,
+              "d": 4
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Update (via set) the child of a query with a full cache",
     "steps": [
@@ -650,8 +685,14 @@
         "path": "a",
         "params": {
           "tag": 1,
-          "startAt": {"index": null, "name": "b"},
-          "endAt": {"index": null, "name": "g"}
+          "startAt": {
+            "index": null,
+            "name": "b"
+          },
+          "endAt": {
+            "index": null,
+            "name": "g"
+          }
         },
         "events": []
       },
@@ -682,7 +723,10 @@
           {
             "path": "a",
             "type": "value",
-            "data": {"c": 3, "d": 4}
+            "data": {
+              "c": 3,
+              "d": 4
+            }
           }
         ]
       },
@@ -701,13 +745,16 @@
           {
             "path": "a",
             "type": "value",
-            "data": {"b": 2, "c": 3, "d": 4}
+            "data": {
+              "b": 2,
+              "c": 3,
+              "d": 4
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Update (via set) a child below an empty query",
     "steps": [
@@ -716,8 +763,14 @@
         "path": "a",
         "params": {
           "tag": 1,
-          "startAt": {"name": "b", "index": null},
-          "endAt": {"name": "g", "index": null}
+          "startAt": {
+            "name": "b",
+            "index": null
+          },
+          "endAt": {
+            "name": "g",
+            "index": null
+          }
         },
         "events": []
       },
@@ -745,7 +798,6 @@
       }
     ]
   },
-
   {
     "name": "Update descendant of default listener with full cache",
     "steps": [
@@ -824,7 +876,6 @@
       }
     ]
   },
-
   {
     "name": "Descendant set below an empty default listener is ignored",
     "steps": [
@@ -842,7 +893,6 @@
       }
     ]
   },
-
   {
     "name": "Update of a child. This can happen if a child listener is added and removed",
     "steps": [
@@ -867,7 +917,6 @@
       }
     ]
   },
-
   {
     "name": "Revert set with only child caches",
     "steps": [
@@ -940,7 +989,6 @@
       }
     ]
   },
-
   {
     "name": "Can revert a duplicate child set",
     "steps": [
@@ -1008,7 +1056,6 @@
       }
     ]
   },
-
   {
     "name": "Can revert a child set and see the underlying data",
     "steps": [
@@ -1099,14 +1146,16 @@
       }
     ]
   },
-
   {
     "name": "Revert child set with no server data",
     "steps": [
       {
         "type": "set",
         "path": "a/b",
-        "data": {"d": 4, "e": 5},
+        "data": {
+          "d": 4,
+          "e": 5
+        },
         "events": []
       },
       {
@@ -1118,21 +1167,28 @@
             "type": "child_added",
             "name": "b",
             "prevName": null,
-            "data": {"d": 4, "e": 5}
+            "data": {
+              "d": 4,
+              "e": 5
+            }
           }
         ]
       },
       {
         "type": "set",
         "path": "a/c",
-        "data": {"z": 26},
+        "data": {
+          "z": 26
+        },
         "events": [
           {
             "path": "a",
             "type": "child_added",
             "name": "c",
             "prevName": "b",
-            "data": {"z": 26}
+            "data": {
+              "z": 26
+            }
           }
         ]
       },
@@ -1145,20 +1201,25 @@
             "path": "a",
             "type": "child_removed",
             "name": "b",
-            "data": {"d": 4, "e": 5}
+            "data": {
+              "d": 4,
+              "e": 5
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Revert deep set with no server data",
     "steps": [
       {
         "type": "set",
         "path": "a/b/c",
-        "data": {"d": 4, "e": 5},
+        "data": {
+          "d": 4,
+          "e": 5
+        },
         "events": []
       },
       {
@@ -1169,7 +1230,9 @@
       {
         "type": "set",
         "path": "a/x/y",
-        "data": {"z": 26},
+        "data": {
+          "z": 26
+        },
         "events": []
       },
       {
@@ -1180,7 +1243,6 @@
       }
     ]
   },
-
   {
     "name": "Revert set covered by non-visible transaction",
     "steps": [
@@ -1238,7 +1300,6 @@
       }
     ]
   },
-
   {
     "name": "Clear parent shadowing server values set with server children",
     "steps": [
@@ -1262,7 +1323,10 @@
       {
         "type": "set",
         "path": "a",
-        "data": {"b": 28, "c": 3},
+        "data": {
+          "b": 28,
+          "c": 3
+        },
         "events": [
           {
             "path": "a/b",
@@ -1293,7 +1357,10 @@
           {
             "path": "a",
             "type": "value",
-            "data": {"b": 28, "c": 3}
+            "data": {
+              "b": 28,
+              "c": 3
+            }
           }
         ]
       },
@@ -1324,13 +1391,15 @@
           {
             "path": "a",
             "type": "value",
-            "data": {"b": 29, "c": 3}
+            "data": {
+              "b": 29,
+              "c": 3
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Clear child shadowing server values set with server children",
     "steps": [
@@ -1405,7 +1474,6 @@
       }
     ]
   },
-
   {
     "name": "Unrelated merge doesn't shadow server updates",
     "steps": [
@@ -1429,7 +1497,10 @@
       {
         "type": "update",
         "path": "a",
-        "data": {"b": 2, "c": 3},
+        "data": {
+          "b": 2,
+          "c": 3
+        },
         "events": [
           {
             "path": "a",
@@ -1448,7 +1519,10 @@
           {
             "path": "a",
             "type": "value",
-            "data": {"b": 2, "c": 3}
+            "data": {
+              "b": 2,
+              "c": 3
+            }
           }
         ]
       },
@@ -1467,13 +1541,16 @@
           {
             "path": "a",
             "type": "value",
-            "data": {"b": 2, "c": 3, "d": 4}
+            "data": {
+              "b": 2,
+              "c": 3,
+              "d": 4
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Can set alongside a remote merge",
     "steps": [
@@ -1509,14 +1586,19 @@
           {
             "path": "a",
             "type": "value",
-            "data": {"b": 2}
+            "data": {
+              "b": 2
+            }
           }
         ]
       },
       {
         "type": "serverMerge",
         "path": "a",
-        "data": {"b": 28, "c": 3},
+        "data": {
+          "b": 28,
+          "c": 3
+        },
         "events": [
           {
             "path": "a",
@@ -1528,13 +1610,15 @@
           {
             "path": "a",
             "type": "value",
-            "data": {"b": 2, "c": 3}
+            "data": {
+              "b": 2,
+              "c": 3
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "setPriority on a location with no cache",
     "steps": [
@@ -1557,13 +1641,15 @@
           {
             "path": "a",
             "type": "value",
-            "data": { ".priority": "foo", ".value": "bar" }
+            "data": {
+              ".priority": "foo",
+              ".value": "bar"
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "deep update deletes child from limit window and pulls in new child",
     "steps": [
@@ -1571,9 +1657,18 @@
         "type": "set",
         "path": "a",
         "data": {
-          "a": {"aa": 2, "aaa": 3},
-          "b": {"bb": 2, "bbb": 3},
-          "c": {"cc": 2, "ccc": 3}
+          "a": {
+            "aa": 2,
+            "aaa": 3
+          },
+          "b": {
+            "bb": 2,
+            "bbb": 3
+          },
+          "c": {
+            "cc": 2,
+            "ccc": 3
+          }
         },
         "events": []
       },
@@ -1590,21 +1685,33 @@
             "type": "child_added",
             "name": "b",
             "prevName": null,
-            "data": {"bb": 2, "bbb": 3}
+            "data": {
+              "bb": 2,
+              "bbb": 3
+            }
           },
           {
             "path": "a",
             "type": "child_added",
             "name": "c",
             "prevName": "b",
-            "data": {"cc": 2, "ccc": 3}
+            "data": {
+              "cc": 2,
+              "ccc": 3
+            }
           },
           {
             "path": "a",
             "type": "value",
             "data": {
-              "b": {"bb": 2, "bbb": 3},
-              "c": {"cc": 2, "ccc": 3}
+              "b": {
+                "bb": 2,
+                "bbb": 3
+              },
+              "c": {
+                "cc": 2,
+                "ccc": 3
+              }
             }
           }
         ]
@@ -1621,28 +1728,39 @@
             "path": "a",
             "type": "child_removed",
             "name": "b",
-            "data": {"bb": 2, "bbb": 3}
+            "data": {
+              "bb": 2,
+              "bbb": 3
+            }
           },
           {
             "path": "a",
             "type": "child_added",
             "name": "a",
             "prevName": null,
-            "data": {"aa": 2, "aaa": 3}
+            "data": {
+              "aa": 2,
+              "aaa": 3
+            }
           },
           {
             "path": "a",
             "type": "value",
             "data": {
-              "a": {"aa": 2, "aaa": 3},
-              "c": {"cc": 2, "ccc": 3}
+              "a": {
+                "aa": 2,
+                "aaa": 3
+              },
+              "c": {
+                "cc": 2,
+                "ccc": 3
+              }
             }
           }
         ]
       }
     ]
   },
-
   {
     "name": "deep set deletes child from limit window and pulls in new child",
     "steps": [
@@ -1650,9 +1768,15 @@
         "type": "set",
         "path": "a",
         "data": {
-          "a": {"aa": 2},
-          "b": {"bb": 2},
-          "c": {"cc": 2}
+          "a": {
+            "aa": 2
+          },
+          "b": {
+            "bb": 2
+          },
+          "c": {
+            "cc": 2
+          }
         },
         "events": []
       },
@@ -1669,21 +1793,29 @@
             "type": "child_added",
             "name": "b",
             "prevName": null,
-            "data": {"bb": 2}
+            "data": {
+              "bb": 2
+            }
           },
           {
             "path": "a",
             "type": "child_added",
             "name": "c",
             "prevName": "b",
-            "data": {"cc": 2}
+            "data": {
+              "cc": 2
+            }
           },
           {
             "path": "a",
             "type": "value",
             "data": {
-              "b": {"bb": 2},
-              "c": {"cc": 2}
+              "b": {
+                "bb": 2
+              },
+              "c": {
+                "cc": 2
+              }
             }
           }
         ]
@@ -1697,28 +1829,35 @@
             "path": "a",
             "type": "child_removed",
             "name": "b",
-            "data": {"bb": 2}
+            "data": {
+              "bb": 2
+            }
           },
           {
             "path": "a",
             "type": "child_added",
             "name": "a",
             "prevName": null,
-            "data": {"aa": 2}
+            "data": {
+              "aa": 2
+            }
           },
           {
             "path": "a",
             "type": "value",
             "data": {
-              "a": {"aa": 2},
-              "c": {"cc": 2}
+              "a": {
+                "aa": 2
+              },
+              "c": {
+                "cc": 2
+              }
             }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Edge case in newChildForChange_",
     "steps": [
@@ -1770,7 +1909,6 @@
       }
     ]
   },
-
   {
     "name": "Revert set in query window",
     "steps": [
@@ -1787,7 +1925,9 @@
         "type": "serverUpdate",
         "path": "a",
         "tag": 1,
-        "data": {"b": 2},
+        "data": {
+          "b": 2
+        },
         "events": [
           {
             "path": "a",
@@ -1799,7 +1939,9 @@
           {
             "path": "a",
             "type": "value",
-            "data": {"b": 2}
+            "data": {
+              "b": 2
+            }
           }
         ]
       },
@@ -1824,7 +1966,9 @@
           {
             "path": "a",
             "type": "value",
-            "data": {"c": 3}
+            "data": {
+              "c": 3
+            }
           }
         ]
       },
@@ -1849,13 +1993,14 @@
           {
             "path": "a",
             "type": "value",
-            "data": {"b": 2}
+            "data": {
+              "b": 2
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Handles a server value moving a child out of a query window",
     "steps": [
@@ -1867,19 +2012,44 @@
       {
         "type": "serverUpdate",
         "path": "a",
-        "data": {"b": {"c": {"value": 3}, "d": {"value": 4}}},
+        "data": {
+          "b": {
+            "c": {
+              "value": 3
+            },
+            "d": {
+              "value": 4
+            }
+          }
+        },
         "events": [
           {
             "path": "a",
             "type": "child_added",
             "name": "b",
             "prevName": null,
-            "data": {"c": {"value": 3}, "d": {"value": 4}}
+            "data": {
+              "c": {
+                "value": 3
+              },
+              "d": {
+                "value": 4
+              }
+            }
           },
           {
             "path": "a",
             "type": "value",
-            "data": {"b": {"c": {"value": 3}, "d": {"value": 4}}}
+            "data": {
+              "b": {
+                "c": {
+                  "value": 3
+                },
+                "d": {
+                  "value": 4
+                }
+              }
+            }
           }
         ]
       },
@@ -1897,12 +2067,18 @@
             "type": "child_added",
             "name": "d",
             "prevName": null,
-            "data": {"value": 4}
+            "data": {
+              "value": 4
+            }
           },
           {
             "path": "a/b",
             "type": "value",
-            "data": {"d": {"value": 4}}
+            "data": {
+              "d": {
+                "value": 4
+              }
+            }
           }
         ]
       },
@@ -1916,31 +2092,55 @@
             "type": "child_moved",
             "name": "d",
             "prevName": null,
-            "data": {"value": 5}
+            "data": {
+              "value": 5
+            }
           },
           {
             "path": "a/b",
             "type": "child_changed",
             "name": "d",
             "prevName": null,
-            "data": {"value": 5}
+            "data": {
+              "value": 5
+            }
           },
           {
             "path": "a/b",
             "type": "value",
-            "data": {"d": {"value": 5}}
+            "data": {
+              "d": {
+                "value": 5
+              }
+            }
           },
           {
             "path": "a",
             "type": "child_changed",
             "name": "b",
             "prevName": null,
-            "data": {"c": {"value": 3}, "d": {"value": 5}}
+            "data": {
+              "c": {
+                "value": 3
+              },
+              "d": {
+                "value": 5
+              }
+            }
           },
           {
             "path": "a",
             "type": "value",
-            "data": {"b": {"c": {"value": 3}, "d": {"value": 5}}}
+            "data": {
+              "b": {
+                "c": {
+                  "value": 3
+                },
+                "d": {
+                  "value": 5
+                }
+              }
+            }
           }
         ]
       },
@@ -1960,37 +2160,60 @@
             "path": "a/b",
             "type": "child_removed",
             "name": "d",
-            "data": {"value": 5}
+            "data": {
+              "value": 5
+            }
           },
           {
             "path": "a/b",
             "type": "child_added",
             "name": "c",
             "prevName": null,
-            "data": {"value": 3}
+            "data": {
+              "value": 3
+            }
           },
           {
             "path": "a/b",
             "type": "value",
-            "data": {"c": {"value": 3}}
+            "data": {
+              "c": {
+                "value": 3
+              }
+            }
           },
           {
             "path": "a",
             "type": "child_changed",
             "name": "b",
             "prevName": null,
-            "data": {"c": {"value": 3}, "d": {"value": 2}}
+            "data": {
+              "c": {
+                "value": 3
+              },
+              "d": {
+                "value": 2
+              }
+            }
           },
           {
             "path": "a",
             "type": "value",
-            "data": {"b": {"c": {"value": 3}, "d": {"value": 2}}}
+            "data": {
+              "b": {
+                "c": {
+                  "value": 3
+                },
+                "d": {
+                  "value": 2
+                }
+              }
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Update of indexed child works",
     "steps": [
@@ -2002,19 +2225,44 @@
       {
         "type": "serverUpdate",
         "path": "a",
-        "data": {"b": {"c": {"value": 3}, "d": {"value": 4}}},
+        "data": {
+          "b": {
+            "c": {
+              "value": 3
+            },
+            "d": {
+              "value": 4
+            }
+          }
+        },
         "events": [
           {
             "path": "a",
             "type": "child_added",
             "name": "b",
             "prevName": null,
-            "data": {"c": {"value": 3}, "d": {"value": 4}}
+            "data": {
+              "c": {
+                "value": 3
+              },
+              "d": {
+                "value": 4
+              }
+            }
           },
           {
             "path": "a",
             "type": "value",
-            "data": {"b": {"c": {"value": 3}, "d": {"value": 4}}}
+            "data": {
+              "b": {
+                "c": {
+                  "value": 3
+                },
+                "d": {
+                  "value": 4
+                }
+              }
+            }
           }
         ]
       },
@@ -2032,55 +2280,86 @@
             "type": "child_added",
             "name": "d",
             "prevName": null,
-            "data": {"value": 4}
+            "data": {
+              "value": 4
+            }
           },
           {
             "path": "a/b",
             "type": "value",
-            "data": {"d": {"value": 4}}
+            "data": {
+              "d": {
+                "value": 4
+              }
+            }
           }
         ]
       },
       {
         "type": "update",
         "path": "a/b/c",
-        "data": {"value": 5},
+        "data": {
+          "value": 5
+        },
         "events": [
           {
             "path": "a/b",
             "type": "child_removed",
             "name": "d",
-            "data": {"value": 4}
+            "data": {
+              "value": 4
+            }
           },
           {
             "path": "a/b",
             "type": "child_added",
             "name": "c",
             "prevName": null,
-            "data": {"value": 5}
+            "data": {
+              "value": 5
+            }
           },
           {
             "path": "a/b",
             "type": "value",
-            "data": {"c": {"value": 5}}
+            "data": {
+              "c": {
+                "value": 5
+              }
+            }
           },
           {
             "path": "a",
             "type": "child_changed",
             "name": "b",
             "prevName": null,
-            "data": {"c": {"value": 5}, "d": {"value": 4}}
+            "data": {
+              "c": {
+                "value": 5
+              },
+              "d": {
+                "value": 4
+              }
+            }
           },
           {
             "path": "a",
             "type": "value",
-            "data": {"b": {"c": {"value": 5}, "d": {"value": 4}}}
+            "data": {
+              "b": {
+                "c": {
+                  "value": 5
+                },
+                "d": {
+                  "value": 4
+                }
+              }
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Merge applied to empty limit",
     "steps": [
@@ -2109,7 +2388,9 @@
       {
         "type": "update",
         "path": "a",
-        "data": {"b": 1},
+        "data": {
+          "b": 1
+        },
         "events": [
           {
             "path": "a",
@@ -2121,13 +2402,14 @@
           {
             "path": "a",
             "type": "value",
-            "data": {"b": 1}
+            "data": {
+              "b": 1
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Limit is refilled from server data after merge",
     "steps": [
@@ -2148,7 +2430,13 @@
       {
         "type": "serverUpdate",
         "path": "a",
-        "data": {"a": 1, "b": {"c": 3, "d": 4}},
+        "data": {
+          "a": 1,
+          "b": {
+            "c": 3,
+            "d": 4
+          }
+        },
         "events": [
           {
             "path": "a/b",
@@ -2160,7 +2448,9 @@
           {
             "path": "a/b",
             "type": "value",
-            "data": {"d": 4}
+            "data": {
+              "d": 4
+            }
           },
           {
             "path": "a",
@@ -2174,19 +2464,30 @@
             "type": "child_added",
             "name": "b",
             "prevName": "a",
-            "data": {"c": 3, "d": 4}
+            "data": {
+              "c": 3,
+              "d": 4
+            }
           },
           {
             "path": "a",
             "type": "value",
-            "data": {"a": 1, "b": {"c": 3, "d": 4}}
+            "data": {
+              "a": 1,
+              "b": {
+                "c": 3,
+                "d": 4
+              }
+            }
           }
         ]
       },
       {
         "type": "update",
         "path": "a/b",
-        "data": {"d": null},
+        "data": {
+          "d": null
+        },
         "events": [
           {
             "path": "a/b",
@@ -2204,25 +2505,33 @@
           {
             "path": "a/b",
             "type": "value",
-            "data": {"c": 3}
+            "data": {
+              "c": 3
+            }
           },
           {
             "path": "a",
             "type": "child_changed",
             "name": "b",
             "prevName": "a",
-            "data": {"c": 3}
+            "data": {
+              "c": 3
+            }
           },
           {
             "path": "a",
             "type": "value",
-            "data": {"a": 1, "b": {"c": 3}}
+            "data": {
+              "a": 1,
+              "b": {
+                "c": 3
+              }
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Handle repeated listen with merge as first update",
     "steps": [
@@ -2236,12 +2545,13 @@
         ".comment": "This happens when a merge arriving from the server while the 2nd listen is in flight",
         "type": "serverMerge",
         "path": "a",
-        "data": {"c": 3},
+        "data": {
+          "c": 3
+        },
         "events": []
       }
     ]
   },
-
   {
     "name": "Limit is refilled from server data after set",
     "steps": [
@@ -2262,7 +2572,13 @@
       {
         "type": "serverUpdate",
         "path": "a",
-        "data": {"a": 1, "b": {"c": 3, "d": 4}},
+        "data": {
+          "a": 1,
+          "b": {
+            "c": 3,
+            "d": 4
+          }
+        },
         "events": [
           {
             "path": "a/b",
@@ -2274,7 +2590,9 @@
           {
             "path": "a/b",
             "type": "value",
-            "data": {"d": 4}
+            "data": {
+              "d": 4
+            }
           },
           {
             "path": "a",
@@ -2288,12 +2606,21 @@
             "type": "child_added",
             "name": "b",
             "prevName": "a",
-            "data": {"c": 3, "d": 4}
+            "data": {
+              "c": 3,
+              "d": 4
+            }
           },
           {
             "path": "a",
             "type": "value",
-            "data": {"a": 1, "b": {"c": 3, "d": 4}}
+            "data": {
+              "a": 1,
+              "b": {
+                "c": 3,
+                "d": 4
+              }
+            }
           }
         ]
       },
@@ -2318,25 +2645,33 @@
           {
             "path": "a/b",
             "type": "value",
-            "data": {"c": 3}
+            "data": {
+              "c": 3
+            }
           },
           {
             "path": "a",
             "type": "child_changed",
             "name": "b",
             "prevName": "a",
-            "data": {"c": 3}
+            "data": {
+              "c": 3
+            }
           },
           {
             "path": "a",
             "type": "value",
-            "data": {"a": 1, "b": {"c": 3}}
+            "data": {
+              "a": 1,
+              "b": {
+                "c": 3
+              }
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "query on weird path.",
     ".comment": "We used to use '|' as a separator, which broke with paths containing |",
@@ -2354,7 +2689,9 @@
         "type": "serverUpdate",
         "path": "foo|!@%^&*()_<>?+={}blah",
         "tag": 1,
-        "data": { "a": "a" },
+        "data": {
+          "a": "a"
+        },
         "events": [
           {
             "path": "foo|!@%^&*()_<>?+={}blah",
@@ -2366,13 +2703,14 @@
           {
             "path": "foo|!@%^&*()_<>?+={}blah",
             "type": "value",
-            "data": { "a": "a" }
+            "data": {
+              "a": "a"
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "runs, round2",
     "steps": [
@@ -2408,7 +2746,9 @@
           {
             "path": "foo",
             "type": "value",
-            "data": { "new" : "bar"}
+            "data": {
+              "new": "bar"
+            }
           }
         ]
       },
@@ -2426,7 +2766,9 @@
       {
         "type": "serverUpdate",
         "path": "foo",
-        "data": { "new" : "bar"},
+        "data": {
+          "new": "bar"
+        },
         "events": []
       },
       {
@@ -2437,7 +2779,10 @@
       {
         "type": "serverUpdate",
         "path": "foo",
-        "data": { "new" : true, "other" : "bar"},
+        "data": {
+          "new": true,
+          "other": "bar"
+        },
         "events": [
           {
             "path": "foo",
@@ -2456,13 +2801,15 @@
           {
             "path": "foo",
             "type": "value",
-            "data": { "new": true, "other": "bar"}
+            "data": {
+              "new": true,
+              "other": "bar"
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "handles nested listens",
     "steps": [
@@ -2508,7 +2855,10 @@
           {
             "path": "foo/bar",
             "type": "value",
-            "data": {"c": true, "d": false}
+            "data": {
+              "c": true,
+              "d": false
+            }
           },
           {
             "path": "foo",
@@ -2529,7 +2879,10 @@
             "type": "child_added",
             "name": "bar",
             "prevName": "b",
-            "data": {"c": true, "d": false}
+            "data": {
+              "c": true,
+              "d": false
+            }
           },
           {
             "path": "foo",
@@ -2640,7 +2993,6 @@
       }
     ]
   },
-
   {
     "name": "Handles a set below a listen",
     "steps": [
@@ -2666,7 +3018,6 @@
       }
     ]
   },
-
   {
     "name": "does non-default queries",
     "steps": [
@@ -2717,7 +3068,6 @@
       }
     ]
   },
-
   {
     "name": "handles a co-located default listener and query",
     "steps": [
@@ -2738,7 +3088,10 @@
       {
         "type": "set",
         "path": "foo",
-        "data": { "a": 1, "b": 2},
+        "data": {
+          "a": 1,
+          "b": 2
+        },
         "events": [
           {
             "path": "foo",
@@ -2757,7 +3110,10 @@
           {
             "path": "foo",
             "type": "value",
-            "data": { "a": 1, "b": 2}
+            "data": {
+              "a": 1,
+              "b": 2
+            }
           },
           {
             "path": "foo",
@@ -2769,13 +3125,14 @@
           {
             "path": "foo",
             "type": "value",
-            "data": {"b": 2}
+            "data": {
+              "b": 2
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Default and non-default listener at same location with server update",
     "steps": [
@@ -2796,7 +3153,10 @@
       {
         "type": "serverUpdate",
         "path": "foo",
-        "data": {"a": 1, "b": 2},
+        "data": {
+          "a": 1,
+          "b": 2
+        },
         "events": [
           {
             "path": "foo",
@@ -2815,7 +3175,10 @@
           {
             "path": "foo",
             "type": "value",
-            "data": {"a": 1, "b": 2}
+            "data": {
+              "a": 1,
+              "b": 2
+            }
           },
           {
             "path": "foo",
@@ -2827,13 +3190,14 @@
           {
             "path": "foo",
             "type": "value",
-            "data": {"b": 2}
+            "data": {
+              "b": 2
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Add a parent listener to a complete child listener, expect child event",
     "steps": [
@@ -2869,14 +3233,16 @@
       }
     ]
   },
-
   {
     "name": "Add listens to a set, expect correct events, including a child event",
     "steps": [
       {
         "type": "set",
         "path": "foo",
-        "data": {"bar": 1, "baz": 2},
+        "data": {
+          "bar": 1,
+          "baz": 2
+        },
         "events": []
       },
       {
@@ -2899,13 +3265,15 @@
             "type": "child_added",
             "name": "foo",
             "prevName": null,
-            "data": {"bar": 1, "baz": 2}
+            "data": {
+              "bar": 1,
+              "baz": 2
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "ServerUpdate to a child listener raises child events at parent",
     "steps": [
@@ -2940,7 +3308,6 @@
       }
     ]
   },
-
   {
     "name": "ServerUpdate to a child listener raises child events at parent query",
     "steps": [
@@ -2979,7 +3346,6 @@
       }
     ]
   },
-
   {
     "name": "Multiple complete children are handled properly",
     "steps": [
@@ -3038,7 +3404,6 @@
       }
     ]
   },
-
   {
     "name": "Write leaf node, overwrite at parent node",
     "steps": [
@@ -3101,7 +3466,6 @@
       }
     ]
   },
-
   {
     "name": "Confirm complete children from the server",
     "steps": [
@@ -3138,12 +3502,16 @@
         "type": "serverUpdate",
         "path": "a",
         ".comment": "At some point in the future, we might consider sending a hash here to avoid duplicate data",
-        "data": {"aa": 1},
+        "data": {
+          "aa": 1
+        },
         "events": [
           {
             "path": "a",
             "type": "value",
-            "data": {"aa": 1}
+            "data": {
+              "aa": 1
+            }
           }
         ]
       },
@@ -3174,7 +3542,6 @@
       }
     ]
   },
-
   {
     "name": "Write leaf, overwrite from parent",
     "steps": [
@@ -3217,7 +3584,9 @@
         ".comment": "Now set at the parent. Expect value events for everyone",
         "type": "set",
         "path": "a",
-        "data": {"aa": 2},
+        "data": {
+          "aa": 2
+        },
         "events": [
           {
             "path": "a/aa",
@@ -3239,13 +3608,14 @@
           {
             "path": "a",
             "type": "value",
-            "data": {"aa": 2}
+            "data": {
+              "aa": 2
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Basic update test",
     "steps": [
@@ -3366,7 +3736,10 @@
         "params": {
           "tag": 1,
           "limitToLast": 1,
-          "endAt": {"index": null, "name": "d"}
+          "endAt": {
+            "index": null,
+            "name": "d"
+          }
         },
         "events": []
       },
@@ -3383,7 +3756,9 @@
           {
             "path": "foo",
             "type": "value",
-            "data": { "c": 3 }
+            "data": {
+              "c": 3
+            }
           },
           {
             "path": "foo",
@@ -3410,7 +3785,7 @@
         "data": {
           "c": 3
         },
-        "events": [ ]
+        "events": []
       },
       {
         "type": "ackUserWrite",
@@ -3426,7 +3801,9 @@
           {
             "path": "foo",
             "type": "value",
-            "data": { "d": 4 }
+            "data": {
+              "d": 4
+            }
           },
           {
             "path": "foo",
@@ -3451,7 +3828,7 @@
         "data": {
           "d": 4
         },
-        "events": [ ]
+        "events": []
       },
       {
         "type": "ackUserWrite",
@@ -3463,16 +3840,19 @@
   },
   {
     "name": "Basic key index sanity check",
-    "steps":
-    [
+    "steps": [
       {
         "type": "listen",
         "path": "",
         "params": {
           "tag": 1,
           "orderByKey": true,
-          "startAt": { "index": "aa" },
-          "endAt": { "index": "e" }
+          "startAt": {
+            "index": "aa"
+          },
+          "endAt": {
+            "index": "e"
+          }
         },
         "events": []
       },
@@ -3480,12 +3860,30 @@
         "type": "set",
         "path": "",
         "data": {
-          "a": { ".priority": 10, ".value": "a" },
-          "b": { ".priority": 5, ".value": "b" },
-          "c": { ".priority": 20, ".value": "c" },
-          "d": { ".priority": 7, ".value": "d" },
-          "e": { ".priority": 30, ".value": "e" },
-          "f": { ".priority": 8, ".value": "f" }
+          "a": {
+            ".priority": 10,
+            ".value": "a"
+          },
+          "b": {
+            ".priority": 5,
+            ".value": "b"
+          },
+          "c": {
+            ".priority": 20,
+            ".value": "c"
+          },
+          "d": {
+            ".priority": 7,
+            ".value": "d"
+          },
+          "e": {
+            ".priority": 30,
+            ".value": "e"
+          },
+          "f": {
+            ".priority": 8,
+            ".value": "f"
+          }
         },
         "events": [
           {
@@ -3493,37 +3891,61 @@
             "type": "child_added",
             "name": "b",
             "prevName": null,
-            "data": {".priority": 5, ".value": "b"}
+            "data": {
+              ".priority": 5,
+              ".value": "b"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "c",
             "prevName": "b",
-            "data": {".priority": 20, ".value": "c"}
+            "data": {
+              ".priority": 20,
+              ".value": "c"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "d",
             "prevName": "c",
-            "data": {".priority": 7, ".value": "d"}
+            "data": {
+              ".priority": 7,
+              ".value": "d"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "e",
             "prevName": "d",
-            "data": {".priority": 30, ".value": "e"}
+            "data": {
+              ".priority": 30,
+              ".value": "e"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "b": { ".priority": 5, ".value": "b" },
-              "c": { ".priority": 20, ".value": "c" },
-              "d": { ".priority": 7, ".value": "d" },
-              "e": { ".priority": 30, ".value": "e" }
+              "b": {
+                ".priority": 5,
+                ".value": "b"
+              },
+              "c": {
+                ".priority": 20,
+                ".value": "c"
+              },
+              "d": {
+                ".priority": 7,
+                ".value": "d"
+              },
+              "e": {
+                ".priority": 30,
+                ".value": "e"
+              }
             }
           }
         ]
@@ -3533,15 +3955,14 @@
         "type": "set",
         "path": "a",
         "data": "hello!",
-        "events": [ ]
+        "events": []
       },
       {
         ".comment": "Add a new item within range and ensure we get ld_added.",
         "type": "set",
         "path": "bass",
         "data": 3.14,
-        "events":
-        [
+        "events": [
           {
             "path": "",
             "type": "child_added",
@@ -3553,11 +3974,23 @@
             "path": "",
             "type": "value",
             "data": {
-              "b": { ".priority": 5, ".value": "b" },
+              "b": {
+                ".priority": 5,
+                ".value": "b"
+              },
               "bass": 3.14,
-              "c": { ".priority": 20, ".value": "c" },
-              "d": { ".priority": 7, ".value": "d" },
-              "e": { ".priority": 30, ".value": "e" }
+              "c": {
+                ".priority": 20,
+                ".value": "c"
+              },
+              "d": {
+                ".priority": 7,
+                ".value": "d"
+              },
+              "e": {
+                ".priority": 30,
+                ".value": "e"
+              }
             }
           }
         ]
@@ -3567,8 +4000,7 @@
         "type": "set",
         "path": "b",
         "data": 42,
-        "events":
-        [
+        "events": [
           {
             "path": "",
             "type": "child_changed",
@@ -3582,9 +4014,18 @@
             "data": {
               "b": 42,
               "bass": 3.14,
-              "c": { ".priority": 20, ".value": "c" },
-              "d": { ".priority": 7, ".value": "d" },
-              "e": { ".priority": 30, ".value": "e" }
+              "c": {
+                ".priority": 20,
+                ".value": "c"
+              },
+              "d": {
+                ".priority": 7,
+                ".value": "d"
+              },
+              "e": {
+                ".priority": 30,
+                ".value": "e"
+              }
             }
           }
         ]
@@ -3593,8 +4034,7 @@
   },
   {
     "name": "Collect correct subviews to listen on",
-    "steps":
-    [
+    "steps": [
       {
         "type": "listen",
         "callbackId": 1,
@@ -3646,9 +4086,15 @@
         "type": "serverUpdate",
         "path": "",
         "data": {
-          "triceratops": {"vanished": -66000000},
-          "stegosaurus": {"vanished": -155000000},
-          "pterodactyl": {"vanished": -75000000}
+          "triceratops": {
+            "vanished": -66000000
+          },
+          "stegosaurus": {
+            "vanished": -155000000
+          },
+          "pterodactyl": {
+            "vanished": -75000000
+          }
         },
         "events": [
           {
@@ -3656,14 +4102,20 @@
             "type": "child_added",
             "name": "stegosaurus",
             "prevName": null,
-            "data": {"vanished": -155000000}
+            "data": {
+              "vanished": -155000000
+            }
           },
           {
             "path": "",
             "type": "value",
             "name": "",
             "prevName": null,
-            "data": {"stegosaurus": {"vanished": -155000000}}
+            "data": {
+              "stegosaurus": {
+                "vanished": -155000000
+              }
+            }
           }
         ]
       }
@@ -3686,9 +4138,15 @@
         "type": "serverUpdate",
         "path": "",
         "data": {
-          "triceratops": {"vanished": -66000000},
-          "stegosaurus": {"vanished": -155000000},
-          "pterodactyl": {"vanished": -75000000}
+          "triceratops": {
+            "vanished": -66000000
+          },
+          "stegosaurus": {
+            "vanished": -155000000
+          },
+          "pterodactyl": {
+            "vanished": -75000000
+          }
         },
         "events": [
           {
@@ -3696,14 +4154,20 @@
             "type": "child_added",
             "name": "triceratops",
             "prevName": null,
-            "data": {"vanished": -66000000}
+            "data": {
+              "vanished": -66000000
+            }
           },
           {
             "path": "",
             "type": "value",
             "name": "",
             "prevName": null,
-            "data": {"triceratops": {"vanished": -66000000}}
+            "data": {
+              "triceratops": {
+                "vanished": -66000000
+              }
+            }
           }
         ]
       }
@@ -3727,10 +4191,26 @@
         "tag": 1,
         "path": "",
         "data": {
-          "4": { "age": 41, "highscore": 400, "name": "old mama"},
-          "5": { "age": 18, "highscore": 1200, "name": "young mama"},
-          "6": { "age": 20, "highscore": 1003, "name": "micheal blub"},
-          "7": { "age": 30, "highscore": 10000, "name": "no. 7"}
+          "4": {
+            "age": 41,
+            "highscore": 400,
+            "name": "old mama"
+          },
+          "5": {
+            "age": 18,
+            "highscore": 1200,
+            "name": "young mama"
+          },
+          "6": {
+            "age": 20,
+            "highscore": 1003,
+            "name": "micheal blub"
+          },
+          "7": {
+            "age": 30,
+            "highscore": 10000,
+            "name": "no. 7"
+          }
         },
         "events": [
           {
@@ -3738,37 +4218,69 @@
             "type": "child_added",
             "name": "4",
             "prevName": "7",
-            "data": { "age": 41, "highscore": 400, "name": "old mama"}
+            "data": {
+              "age": 41,
+              "highscore": 400,
+              "name": "old mama"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "5",
             "prevName": null,
-            "data": { "age": 18, "highscore": 1200, "name": "young mama"}
+            "data": {
+              "age": 18,
+              "highscore": 1200,
+              "name": "young mama"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "6",
             "prevName": "5",
-            "data": { "age": 20, "highscore": 1003, "name": "micheal blub"}
+            "data": {
+              "age": 20,
+              "highscore": 1003,
+              "name": "micheal blub"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "7",
             "prevName": "6",
-            "data": { "age": 30, "highscore": 10000, "name": "no. 7"}
+            "data": {
+              "age": 30,
+              "highscore": 10000,
+              "name": "no. 7"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "4": { "age": 41, "highscore": 400, "name": "old mama"},
-              "5": { "age": 18, "highscore": 1200, "name": "young mama"},
-              "6": { "age": 20, "highscore": 1003, "name": "micheal blub"},
-              "7": { "age": 30, "highscore": 10000, "name": "no. 7"}
+              "4": {
+                "age": 41,
+                "highscore": 400,
+                "name": "old mama"
+              },
+              "5": {
+                "age": 18,
+                "highscore": 1200,
+                "name": "young mama"
+              },
+              "6": {
+                "age": 20,
+                "highscore": 1003,
+                "name": "micheal blub"
+              },
+              "7": {
+                "age": 30,
+                "highscore": 10000,
+                "name": "no. 7"
+              }
             }
           }
         ]
@@ -3785,30 +4297,53 @@
             "type": "child_moved",
             "name": "4",
             "prevName": "6",
-            "data": { "age": 25, "highscore": 400, "name": "old mama"}
+            "data": {
+              "age": 25,
+              "highscore": 400,
+              "name": "old mama"
+            }
           },
           {
             "path": "",
             "type": "child_changed",
             "name": "4",
             "prevName": "6",
-            "data": { "age": 25, "highscore": 400, "name": "old mama"}
+            "data": {
+              "age": 25,
+              "highscore": 400,
+              "name": "old mama"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "4": { "age": 25, "highscore": 400, "name": "old mama"},
-              "5": { "age": 18, "highscore": 1200, "name": "young mama"},
-              "6": { "age": 20, "highscore": 1003, "name": "micheal blub"},
-              "7": { "age": 30, "highscore": 10000, "name": "no. 7"}
+              "4": {
+                "age": 25,
+                "highscore": 400,
+                "name": "old mama"
+              },
+              "5": {
+                "age": 18,
+                "highscore": 1200,
+                "name": "young mama"
+              },
+              "6": {
+                "age": 20,
+                "highscore": 1003,
+                "name": "micheal blub"
+              },
+              "7": {
+                "age": 30,
+                "highscore": 10000,
+                "name": "no. 7"
+              }
             }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Can create startAt, endAt, equalTo queries with bool",
     "steps": [
@@ -3818,7 +4353,9 @@
         "params": {
           "tag": 1,
           "orderBy": "boolKey",
-          "startAt": {"index": true}
+          "startAt": {
+            "index": true
+          }
         },
         "events": []
       },
@@ -3828,7 +4365,9 @@
         "params": {
           "tag": 2,
           "orderBy": "boolKey",
-          "endAt": {"index": true}
+          "endAt": {
+            "index": true
+          }
         },
         "events": []
       },
@@ -3838,7 +4377,9 @@
         "params": {
           "tag": 3,
           "orderBy": "boolKey",
-          "equalTo": {"index": true}
+          "equalTo": {
+            "index": true
+          }
         },
         "events": []
       },
@@ -3865,7 +4406,11 @@
         "type": "serverUpdate",
         "path": "",
         "data": {
-          "foo": { "age": 10, "score": 100, "bar": "baz" }
+          "foo": {
+            "age": 10,
+            "score": 100,
+            "bar": "baz"
+          }
         },
         "events": [
           {
@@ -3873,13 +4418,21 @@
             "type": "child_added",
             "name": "foo",
             "prevName": null,
-            "data": { "age": 10, "score": 100, "bar": "baz" }
+            "data": {
+              "age": 10,
+              "score": 100,
+              "bar": "baz"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "foo": { "age": 10, "score": 100, "bar": "baz" }
+              "foo": {
+                "age": 10,
+                "score": 100,
+                "bar": "baz"
+              }
             }
           }
         ]
@@ -3898,13 +4451,21 @@
             "type": "child_added",
             "name": "foo",
             "prevName": null,
-            "data": { "age": 10, "score": 100, "bar": "baz" }
+            "data": {
+              "age": 10,
+              "score": 100,
+              "bar": "baz"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "foo": { "age": 10, "score": 100, "bar": "baz" }
+              "foo": {
+                "age": 10,
+                "score": 100,
+                "bar": "baz"
+              }
             }
           }
         ]
@@ -3913,8 +4474,7 @@
   },
   {
     "name": "Server data is not purged for non-server-indexed queries",
-    "steps":
-    [
+    "steps": [
       {
         "type": "listen",
         "path": "",
@@ -3930,9 +4490,18 @@
         "type": "serverUpdate",
         "path": "",
         "data": {
-          "a": { "highscore": 100, "value": "a" },
-          "b": { "highscore": 200, "value": "b" },
-          "c": { "highscore": 0, "value": "c" }
+          "a": {
+            "highscore": 100,
+            "value": "a"
+          },
+          "b": {
+            "highscore": 200,
+            "value": "b"
+          },
+          "c": {
+            "highscore": 0,
+            "value": "c"
+          }
         },
         "events": [
           {
@@ -3940,21 +4509,33 @@
             "type": "child_added",
             "name": "a",
             "prevName": null,
-            "data": { "highscore": 100, "value": "a" }
+            "data": {
+              "highscore": 100,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "b",
             "prevName": "a",
-            "data": { "highscore": 200, "value": "b" }
+            "data": {
+              "highscore": 200,
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "highscore": 100, "value": "a" },
-              "b": { "highscore": 200, "value": "b" }
+              "a": {
+                "highscore": 100,
+                "value": "a"
+              },
+              "b": {
+                "highscore": 200,
+                "value": "b"
+              }
             }
           }
         ]
@@ -3970,21 +4551,33 @@
             "type": "child_removed",
             "name": "a",
             "prevName": null,
-            "data": { "highscore": 100, "value": "a" }
+            "data": {
+              "highscore": 100,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "c",
             "prevName": "b",
-            "data": { "highscore": 300, "value": "c" }
+            "data": {
+              "highscore": 300,
+              "value": "c"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "b": { "highscore": 200, "value": "b" },
-              "c": { "highscore": 300, "value": "c" }
+              "b": {
+                "highscore": 200,
+                "value": "b"
+              },
+              "c": {
+                "highscore": 300,
+                "value": "c"
+              }
             }
           }
         ]
@@ -4008,10 +4601,18 @@
         "type": "serverUpdate",
         "path": "",
         "data": {
-          "a": { "age": 4 },
-          "b": { "age": 3 },
-          "c": { "age": 2 },
-          "d": { "age": 1 }
+          "a": {
+            "age": 4
+          },
+          "b": {
+            "age": 3
+          },
+          "c": {
+            "age": 2
+          },
+          "d": {
+            "age": 1
+          }
         },
         "events": [
           {
@@ -4019,13 +4620,17 @@
             "type": "child_added",
             "name": "a",
             "prevName": null,
-            "data": { "age": 4 }
+            "data": {
+              "age": 4
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "age": 4 }
+              "a": {
+                "age": 4
+              }
             }
           }
         ]
@@ -4040,20 +4645,26 @@
             "path": "",
             "type": "child_removed",
             "name": "a",
-            "data": { "age": 4 }
+            "data": {
+              "age": 4
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "b",
             "prevName": null,
-            "data": { "age": 3 }
+            "data": {
+              "age": 3
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "b": { "age": 3 }
+              "b": {
+                "age": 3
+              }
             }
           }
         ]
@@ -4062,16 +4673,19 @@
   },
   {
     "name": "startAt/endAt dominates limit",
-    "steps":
-    [
+    "steps": [
       {
         "type": "listen",
         "path": "",
         "params": {
           "tag": 1,
           "orderBy": "index",
-          "startAt": { "index": 1 },
-          "endAt": { "index": 2 },
+          "startAt": {
+            "index": 1
+          },
+          "endAt": {
+            "index": 2
+          },
           "limitToFirst": 2
         },
         "events": []
@@ -4081,8 +4695,14 @@
         "type": "serverUpdate",
         "path": "",
         "data": {
-          "a": { "index": 1, "value": "a" },
-          "b": { "index": 1000, "value": "b" }
+          "a": {
+            "index": 1,
+            "value": "a"
+          },
+          "b": {
+            "index": 1000,
+            "value": "b"
+          }
         },
         "events": [
           {
@@ -4090,13 +4710,19 @@
             "type": "child_added",
             "name": "a",
             "prevName": null,
-            "data": { "index": 1, "value": "a" }
+            "data": {
+              "index": 1,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "index": 1, "value": "a" }
+              "a": {
+                "index": 1,
+                "value": "a"
+              }
             }
           }
         ]
@@ -4106,8 +4732,14 @@
         "type": "serverMerge",
         "path": "",
         "data": {
-          "b": { "index": 1, "value": "b" },
-          "c": { "index": 2, "value": "c" }
+          "b": {
+            "index": 1,
+            "value": "b"
+          },
+          "c": {
+            "index": 2,
+            "value": "c"
+          }
         },
         "events": [
           {
@@ -4115,14 +4747,23 @@
             "type": "child_added",
             "name": "b",
             "prevName": "a",
-            "data": { "index": 1, "value": "b" }
+            "data": {
+              "index": 1,
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "index": 1, "value": "a" },
-              "b": { "index": 1, "value": "b" }
+              "a": {
+                "index": 1,
+                "value": "a"
+              },
+              "b": {
+                "index": 1,
+                "value": "b"
+              }
             }
           }
         ]
@@ -4137,21 +4778,33 @@
             "path": "",
             "type": "child_removed",
             "name": "a",
-            "data": { "index": 1, "value": "a" }
+            "data": {
+              "index": 1,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "c",
             "prevName": "b",
-            "data": { "index": 2, "value": "c" }
+            "data": {
+              "index": 2,
+              "value": "c"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "b": { "index": 1, "value": "b" },
-              "c": { "index": 2, "value": "c" }
+              "b": {
+                "index": 1,
+                "value": "b"
+              },
+              "c": {
+                "index": 2,
+                "value": "c"
+              }
             }
           }
         ]
@@ -4166,13 +4819,19 @@
             "path": "",
             "type": "child_removed",
             "name": "b",
-            "data": { "index": 1, "value": "b" }
+            "data": {
+              "index": 1,
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "c": { "index": 2, "value": "c" }
+              "c": {
+                "index": 2,
+                "value": "c"
+              }
             }
           }
         ]
@@ -4181,16 +4840,19 @@
   },
   {
     "name": "Update to single child that moves out of window",
-    "steps":
-    [
+    "steps": [
       {
         "type": "listen",
         "path": "",
         "params": {
           "tag": 1,
           "orderBy": "index",
-          "startAt": { "index": 1 },
-          "endAt": { "index": 10 },
+          "startAt": {
+            "index": 1
+          },
+          "endAt": {
+            "index": 10
+          },
           "limitToFirst": 2
         },
         "events": []
@@ -4200,9 +4862,18 @@
         "type": "serverUpdate",
         "path": "",
         "data": {
-          "a": { "index": 1, "value": "a" },
-          "b": { "index": 2, "value": "b" },
-          "c": { "index": 3, "value": "c" }
+          "a": {
+            "index": 1,
+            "value": "a"
+          },
+          "b": {
+            "index": 2,
+            "value": "b"
+          },
+          "c": {
+            "index": 3,
+            "value": "c"
+          }
         },
         "events": [
           {
@@ -4210,21 +4881,33 @@
             "type": "child_added",
             "name": "a",
             "prevName": null,
-            "data": { "index": 1, "value": "a" }
+            "data": {
+              "index": 1,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "b",
             "prevName": "a",
-            "data": { "index": 2, "value": "b" }
+            "data": {
+              "index": 2,
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "index": 1, "value": "a" },
-              "b": { "index": 2, "value": "b" }
+              "a": {
+                "index": 1,
+                "value": "a"
+              },
+              "b": {
+                "index": 2,
+                "value": "b"
+              }
             }
           }
         ]
@@ -4239,21 +4922,33 @@
             "path": "",
             "type": "child_removed",
             "name": "a",
-            "data": { "index": 1, "value": "a" }
+            "data": {
+              "index": 1,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "c",
             "prevName": "b",
-            "data": { "index": 3, "value": "c" }
+            "data": {
+              "index": 3,
+              "value": "c"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "b": { "index": 2, "value": "b" },
-              "c": { "index": 3, "value": "c" }
+              "b": {
+                "index": 2,
+                "value": "b"
+              },
+              "c": {
+                "index": 3,
+                "value": "c"
+              }
             }
           }
         ]
@@ -4268,13 +4963,19 @@
             "path": "",
             "type": "child_removed",
             "name": "b",
-            "data": { "index": 2, "value": "b" }
+            "data": {
+              "index": 2,
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "c": { "index": 3, "value": "c" }
+              "c": {
+                "index": 3,
+                "value": "c"
+              }
             }
           }
         ]
@@ -4283,16 +4984,19 @@
   },
   {
     "name": "Limited query doesn't pull in out of range child",
-    "steps":
-    [
+    "steps": [
       {
         "type": "listen",
         "path": "",
         "params": {
           "tag": 1,
           "orderBy": "index",
-          "startAt": { "index": 1 },
-          "endAt": { "index": 10 },
+          "startAt": {
+            "index": 1
+          },
+          "endAt": {
+            "index": 10
+          },
           "limitToFirst": 2
         },
         "events": []
@@ -4302,9 +5006,18 @@
         "type": "serverUpdate",
         "path": "",
         "data": {
-          "a": { "index": 1, "value": "a" },
-          "b": { "index": 2, "value": "b" },
-          "c": { "index": 1000, "value": "c" }
+          "a": {
+            "index": 1,
+            "value": "a"
+          },
+          "b": {
+            "index": 2,
+            "value": "b"
+          },
+          "c": {
+            "index": 1000,
+            "value": "c"
+          }
         },
         "events": [
           {
@@ -4312,21 +5025,33 @@
             "type": "child_added",
             "name": "a",
             "prevName": null,
-            "data": { "index": 1, "value": "a" }
+            "data": {
+              "index": 1,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "b",
             "prevName": "a",
-            "data": { "index": 2, "value": "b" }
+            "data": {
+              "index": 2,
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "index": 1, "value": "a" },
-              "b": { "index": 2, "value": "b" }
+              "a": {
+                "index": 1,
+                "value": "a"
+              },
+              "b": {
+                "index": 2,
+                "value": "b"
+              }
             }
           }
         ]
@@ -4341,13 +5066,19 @@
             "path": "",
             "type": "child_removed",
             "name": "a",
-            "data": { "index": 1, "value": "a" }
+            "data": {
+              "index": 1,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "b": { "index": 2, "value": "b" }
+              "b": {
+                "index": 2,
+                "value": "b"
+              }
             }
           }
         ]
@@ -4356,8 +5087,7 @@
   },
   {
     "name": "Merge for location with default and limited listener",
-    "steps":
-    [
+    "steps": [
       {
         "type": "listen",
         "path": "",
@@ -4368,10 +5098,22 @@
         "type": "serverUpdate",
         "path": "",
         "data": {
-          "a": { "index": 1, "value": "a" },
-          "b": { "index": 2, "value": "b" },
-          "c": { "index": 3, "value": "c" },
-          "d": { "index": 4, "value": "d" }
+          "a": {
+            "index": 1,
+            "value": "a"
+          },
+          "b": {
+            "index": 2,
+            "value": "b"
+          },
+          "c": {
+            "index": 3,
+            "value": "c"
+          },
+          "d": {
+            "index": 4,
+            "value": "d"
+          }
         },
         "events": [
           {
@@ -4379,37 +5121,61 @@
             "type": "child_added",
             "name": "a",
             "prevName": null,
-            "data": { "index": 1, "value": "a" }
+            "data": {
+              "index": 1,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "b",
             "prevName": "a",
-            "data": { "index": 2, "value": "b" }
+            "data": {
+              "index": 2,
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "c",
             "prevName": "b",
-            "data": { "index": 3, "value": "c" }
+            "data": {
+              "index": 3,
+              "value": "c"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "d",
             "prevName": "c",
-            "data": { "index": 4, "value": "d" }
+            "data": {
+              "index": 4,
+              "value": "d"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "index": 1, "value": "a" },
-              "b": { "index": 2, "value": "b" },
-              "c": { "index": 3, "value": "c" },
-              "d": { "index": 4, "value": "d" }
+              "a": {
+                "index": 1,
+                "value": "a"
+              },
+              "b": {
+                "index": 2,
+                "value": "b"
+              },
+              "c": {
+                "index": 3,
+                "value": "c"
+              },
+              "d": {
+                "index": 4,
+                "value": "d"
+              }
             }
           }
         ]
@@ -4428,21 +5194,33 @@
             "type": "child_added",
             "name": "a",
             "prevName": null,
-            "data": { "index": 1, "value": "a" }
+            "data": {
+              "index": 1,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "b",
             "prevName": "a",
-            "data": { "index": 2, "value": "b" }
+            "data": {
+              "index": 2,
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "index": 1, "value": "a" },
-              "b": { "index": 2, "value": "b" }
+              "a": {
+                "index": 1,
+                "value": "a"
+              },
+              "b": {
+                "index": 2,
+                "value": "b"
+              }
             }
           }
         ]
@@ -4460,41 +5238,65 @@
             "path": "",
             "type": "child_removed",
             "name": "a",
-            "data": { "index": 1, "value": "a" }
+            "data": {
+              "index": 1,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "child_removed",
             "name": "a",
-            "data": { "index": 1, "value": "a" }
+            "data": {
+              "index": 1,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "child_removed",
             "name": "d",
-            "data": { "index": 4, "value": "d" }
+            "data": {
+              "index": 4,
+              "value": "d"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "c",
             "prevName": "b",
-            "data": { "index": 3, "value": "c" }
-          },
-          {
-            "path": "",
-            "type": "value",
             "data": {
-              "b": { "index": 2, "value": "b" },
-              "c": { "index": 3, "value": "c" }
+              "index": 3,
+              "value": "c"
             }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "b": { "index": 2, "value": "b" },
-              "c": { "index": 3, "value": "c" }
+              "b": {
+                "index": 2,
+                "value": "b"
+              },
+              "c": {
+                "index": 3,
+                "value": "c"
+              }
+            }
+          },
+          {
+            "path": "",
+            "type": "value",
+            "data": {
+              "b": {
+                "index": 2,
+                "value": "b"
+              },
+              "c": {
+                "index": 3,
+                "value": "c"
+              }
             }
           }
         ]
@@ -4503,16 +5305,19 @@
   },
   {
     "name": "User merge pulls in correct values",
-    "steps":
-    [
+    "steps": [
       {
         "type": "listen",
         "path": "",
         "params": {
           "tag": 1,
           "orderBy": "index",
-          "startAt": { "index": 1 },
-          "endAt": { "index": 10 },
+          "startAt": {
+            "index": 1
+          },
+          "endAt": {
+            "index": 10
+          },
           "limitToFirst": 3
         },
         "events": []
@@ -4522,10 +5327,22 @@
         "type": "serverUpdate",
         "path": "",
         "data": {
-          "a": { "index": 1, "value": "a" },
-          "b": { "index": 2, "value": "b" },
-          "c": { "index": 3, "value": "c" },
-          "d": { "index": 1000, "value": "d" }
+          "a": {
+            "index": 1,
+            "value": "a"
+          },
+          "b": {
+            "index": 2,
+            "value": "b"
+          },
+          "c": {
+            "index": 3,
+            "value": "c"
+          },
+          "d": {
+            "index": 1000,
+            "value": "d"
+          }
         },
         "events": [
           {
@@ -4533,29 +5350,47 @@
             "type": "child_added",
             "name": "a",
             "prevName": null,
-            "data": { "index": 1, "value": "a" }
+            "data": {
+              "index": 1,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "b",
             "prevName": "a",
-            "data": { "index": 2, "value": "b" }
+            "data": {
+              "index": 2,
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "c",
             "prevName": "b",
-            "data": { "index": 3, "value": "c" }
+            "data": {
+              "index": 3,
+              "value": "c"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "index": 1, "value": "a" },
-              "b": { "index": 2, "value": "b" },
-              "c": { "index": 3, "value": "c" }
+              "a": {
+                "index": 1,
+                "value": "a"
+              },
+              "b": {
+                "index": 2,
+                "value": "b"
+              },
+              "c": {
+                "index": 3,
+                "value": "c"
+              }
             }
           }
         ]
@@ -4564,28 +5399,45 @@
         ".comment": "user merge pulls in existing value",
         "type": "update",
         "path": "d",
-        "data": { "index": 2 },
+        "data": {
+          "index": 2
+        },
         "events": [
           {
             "path": "",
             "type": "child_removed",
             "name": "c",
-            "data": { "index": 3, "value": "c" }
+            "data": {
+              "index": 3,
+              "value": "c"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "d",
             "prevName": "b",
-            "data": { "index": 2, "value": "d" }
+            "data": {
+              "index": 2,
+              "value": "d"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "index": 1, "value": "a" },
-              "b": { "index": 2, "value": "b" },
-              "d": { "index": 2, "value": "d" }
+              "a": {
+                "index": 1,
+                "value": "a"
+              },
+              "b": {
+                "index": 2,
+                "value": "b"
+              },
+              "d": {
+                "index": 2,
+                "value": "d"
+              }
             }
           }
         ]
@@ -4594,16 +5446,19 @@
   },
   {
     "name": "User deep set pulls in correct values",
-    "steps":
-    [
+    "steps": [
       {
         "type": "listen",
         "path": "",
         "params": {
           "tag": 1,
           "orderBy": "index",
-          "startAt": { "index": 1 },
-          "endAt": { "index": 10 },
+          "startAt": {
+            "index": 1
+          },
+          "endAt": {
+            "index": 10
+          },
           "limitToFirst": 3
         },
         "events": []
@@ -4613,10 +5468,22 @@
         "type": "serverUpdate",
         "path": "",
         "data": {
-          "a": { "index": 1, "value": "a" },
-          "b": { "index": 2, "value": "b" },
-          "c": { "index": 3, "value": "c" },
-          "d": { "index": 1000, "value": "d" }
+          "a": {
+            "index": 1,
+            "value": "a"
+          },
+          "b": {
+            "index": 2,
+            "value": "b"
+          },
+          "c": {
+            "index": 3,
+            "value": "c"
+          },
+          "d": {
+            "index": 1000,
+            "value": "d"
+          }
         },
         "events": [
           {
@@ -4624,29 +5491,47 @@
             "type": "child_added",
             "name": "a",
             "prevName": null,
-            "data": { "index": 1, "value": "a" }
+            "data": {
+              "index": 1,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "b",
             "prevName": "a",
-            "data": { "index": 2, "value": "b" }
+            "data": {
+              "index": 2,
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "c",
             "prevName": "b",
-            "data": { "index": 3, "value": "c" }
+            "data": {
+              "index": 3,
+              "value": "c"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "index": 1, "value": "a" },
-              "b": { "index": 2, "value": "b" },
-              "c": { "index": 3, "value": "c" }
+              "a": {
+                "index": 1,
+                "value": "a"
+              },
+              "b": {
+                "index": 2,
+                "value": "b"
+              },
+              "c": {
+                "index": 3,
+                "value": "c"
+              }
             }
           }
         ]
@@ -4661,22 +5546,37 @@
             "path": "",
             "type": "child_removed",
             "name": "c",
-            "data": { "index": 3, "value": "c" }
+            "data": {
+              "index": 3,
+              "value": "c"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "d",
             "prevName": "b",
-            "data": { "index": 2, "value": "d" }
+            "data": {
+              "index": 2,
+              "value": "d"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "index": 1, "value": "a" },
-              "b": { "index": 2, "value": "b" },
-              "d": { "index": 2, "value": "d" }
+              "a": {
+                "index": 1,
+                "value": "a"
+              },
+              "b": {
+                "index": 2,
+                "value": "b"
+              },
+              "d": {
+                "index": 2,
+                "value": "d"
+              }
             }
           }
         ]
@@ -4685,16 +5585,19 @@
   },
   {
     "name": "Queries with equalTo(null) work",
-    "steps":
-    [
+    "steps": [
       {
         "type": "listen",
         "path": "",
         "params": {
           "tag": 1,
           "orderBy": "index",
-          "startAt": { "index": null },
-          "endAt": { "index": null }
+          "startAt": {
+            "index": null
+          },
+          "endAt": {
+            "index": null
+          }
         },
         "events": []
       },
@@ -4703,9 +5606,16 @@
         "type": "serverUpdate",
         "path": "",
         "data": {
-          "a": { "value": "a" },
-          "b": { "value": "b" },
-          "c": { "value": "c", "index": 1 }
+          "a": {
+            "value": "a"
+          },
+          "b": {
+            "value": "b"
+          },
+          "c": {
+            "value": "c",
+            "index": 1
+          }
         },
         "events": [
           {
@@ -4713,21 +5623,29 @@
             "type": "child_added",
             "name": "a",
             "prevName": null,
-            "data": { "value": "a" }
+            "data": {
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "b",
             "prevName": "a",
-            "data": { "value": "b" }
+            "data": {
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "value": "a" },
-              "b": { "value": "b" }
+              "a": {
+                "value": "a"
+              },
+              "b": {
+                "value": "b"
+              }
             }
           }
         ]
@@ -4743,15 +5661,23 @@
             "type": "child_added",
             "name": "c",
             "prevName": "b",
-            "data": { "value": "c" }
+            "data": {
+              "value": "c"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "value": "a" },
-              "b": { "value": "b" },
-              "c": { "value": "c" }
+              "a": {
+                "value": "a"
+              },
+              "b": {
+                "value": "b"
+              },
+              "c": {
+                "value": "c"
+              }
             }
           }
         ]
@@ -4766,14 +5692,20 @@
             "path": "",
             "type": "child_removed",
             "name": "c",
-            "data": { "value": "c" }
+            "data": {
+              "value": "c"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "value": "a" },
-              "b": { "value": "b" }
+              "a": {
+                "value": "a"
+              },
+              "b": {
+                "value": "b"
+              }
             }
           }
         ]
@@ -4782,16 +5714,19 @@
   },
   {
     "name": "Reverted writes update query",
-    "steps":
-    [
+    "steps": [
       {
         "type": "listen",
         "path": "",
         "params": {
           "tag": 1,
           "orderBy": "index",
-          "startAt": { "index": 1 },
-          "endAt": { "index": 10 },
+          "startAt": {
+            "index": 1
+          },
+          "endAt": {
+            "index": 10
+          },
           "limitToFirst": 2
         },
         "events": []
@@ -4801,9 +5736,18 @@
         "type": "serverUpdate",
         "path": "",
         "data": {
-          "a": { "index": 1, "value": "a" },
-          "b": { "index": 5, "value": "b" },
-          "d": { "index": 6, "value": "d" }
+          "a": {
+            "index": 1,
+            "value": "a"
+          },
+          "b": {
+            "index": 5,
+            "value": "b"
+          },
+          "d": {
+            "index": 6,
+            "value": "d"
+          }
         },
         "events": [
           {
@@ -4811,21 +5755,33 @@
             "type": "child_added",
             "name": "a",
             "prevName": null,
-            "data": { "index": 1, "value": "a" }
+            "data": {
+              "index": 1,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "b",
             "prevName": "a",
-            "data": { "index": 5, "value": "b" }
+            "data": {
+              "index": 5,
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "index": 1, "value": "a" },
-              "b": { "index": 5, "value": "b" }
+              "a": {
+                "index": 1,
+                "value": "a"
+              },
+              "b": {
+                "index": 5,
+                "value": "b"
+              }
             }
           }
         ]
@@ -4835,29 +5791,47 @@
         "type": "set",
         "path": "",
         "data": {
-          "c": { "index": 2, "value": "c" },
-          "a": { "index": 1, "value": "a" }
+          "c": {
+            "index": 2,
+            "value": "c"
+          },
+          "a": {
+            "index": 1,
+            "value": "a"
+          }
         },
         "events": [
           {
             "path": "",
             "type": "child_removed",
             "name": "b",
-            "data": { "index": 5, "value": "b" }
+            "data": {
+              "index": 5,
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "c",
             "prevName": "a",
-            "data": { "index": 2, "value": "c" }
+            "data": {
+              "index": 2,
+              "value": "c"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "index": 1, "value": "a" },
-              "c": { "index": 2, "value": "c" }
+              "a": {
+                "index": 1,
+                "value": "a"
+              },
+              "c": {
+                "index": 2,
+                "value": "c"
+              }
             }
           }
         ]
@@ -4872,21 +5846,33 @@
             "path": "",
             "type": "child_removed",
             "name": "c",
-            "data": { "index": 2, "value": "c" }
+            "data": {
+              "index": 2,
+              "value": "c"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "b",
             "prevName": "a",
-            "data": { "index": 5, "value": "b" }
+            "data": {
+              "index": 5,
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "index": 1, "value": "a" },
-              "b": { "index": 5, "value": "b" }
+              "a": {
+                "index": 1,
+                "value": "a"
+              },
+              "b": {
+                "index": 5,
+                "value": "b"
+              }
             }
           }
         ]
@@ -4895,16 +5881,19 @@
   },
   {
     "name": "Deep set for non-local data doesn't raise events",
-    "steps":
-    [
+    "steps": [
       {
         "type": "listen",
         "path": "",
         "params": {
           "tag": 1,
           "orderBy": "index",
-          "startAt": { "index": 1 },
-          "endAt": { "index": 10 },
+          "startAt": {
+            "index": 1
+          },
+          "endAt": {
+            "index": 10
+          },
           "limitToFirst": 2
         },
         "events": []
@@ -4915,8 +5904,14 @@
         "path": "",
         "tag": 1,
         "data": {
-          "a": { "index": 1, "value": "a" },
-          "b": { "index": 5, "value": "b" }
+          "a": {
+            "index": 1,
+            "value": "a"
+          },
+          "b": {
+            "index": 5,
+            "value": "b"
+          }
         },
         "events": [
           {
@@ -4924,21 +5919,33 @@
             "type": "child_added",
             "name": "a",
             "prevName": null,
-            "data": { "index": 1, "value": "a" }
+            "data": {
+              "index": 1,
+              "value": "a"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "b",
             "prevName": "a",
-            "data": { "index": 5, "value": "b" }
+            "data": {
+              "index": 5,
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "index": 1, "value": "a" },
-              "b": { "index": 5, "value": "b" }
+              "a": {
+                "index": 1,
+                "value": "a"
+              },
+              "b": {
+                "index": 5,
+                "value": "b"
+              }
             }
           }
         ]
@@ -4948,7 +5955,7 @@
         "type": "set",
         "path": "c/index",
         "data": 1,
-        "events": [ ]
+        "events": []
       },
       {
         ".comment": "update from server now contains complete data",
@@ -4956,28 +5963,43 @@
         "path": "",
         "tag": 1,
         "data": {
-          "c": { "index": 1, "value": "c" }
+          "c": {
+            "index": 1,
+            "value": "c"
+          }
         },
         "events": [
           {
             "path": "",
             "type": "child_removed",
             "name": "b",
-            "data": { "index": 5, "value": "b" }
+            "data": {
+              "index": 5,
+              "value": "b"
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "c",
             "prevName": "a",
-            "data": { "index": 1, "value": "c" }
+            "data": {
+              "index": 1,
+              "value": "c"
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "a": { "index": 1, "value": "a" },
-              "c": { "index": 1, "value": "c" }
+              "a": {
+                "index": 1,
+                "value": "a"
+              },
+              "c": {
+                "index": 1,
+                "value": "c"
+              }
             }
           }
         ]
@@ -4986,8 +6008,7 @@
   },
   {
     "name": "User update with new children triggers events",
-    "steps":
-    [
+    "steps": [
       {
         "type": "listen",
         "path": "",
@@ -5002,8 +6023,12 @@
         "type": "serverUpdate",
         "path": "",
         "data": {
-          "a": { "value": 5 },
-          "c": { "value": 3 }
+          "a": {
+            "value": 5
+          },
+          "c": {
+            "value": 3
+          }
         },
         "events": [
           {
@@ -5011,21 +6036,29 @@
             "type": "child_added",
             "name": "c",
             "prevName": null,
-            "data": { "value": 3 }
+            "data": {
+              "value": 3
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "a",
             "prevName": "c",
-            "data": { "value": 5 }
+            "data": {
+              "value": 5
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "c": { "value": 3 },
-              "a": { "value": 5 }
+              "c": {
+                "value": 3
+              },
+              "a": {
+                "value": 5
+              }
             }
           }
         ]
@@ -5035,8 +6068,12 @@
         "type": "update",
         "path": "",
         "data": {
-          "b": { "value": 4 },
-          "d": { "value": 2 }
+          "b": {
+            "value": 4
+          },
+          "d": {
+            "value": 2
+          }
         },
         "events": [
           {
@@ -5044,23 +6081,35 @@
             "type": "child_added",
             "name": "d",
             "prevName": null,
-            "data": { "value": 2 }
+            "data": {
+              "value": 2
+            }
           },
           {
             "path": "",
             "type": "child_added",
             "name": "b",
             "prevName": "c",
-            "data": { "value": 4 }
+            "data": {
+              "value": 4
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
-              "d": { "value": 2 },
-              "c": { "value": 3 },
-              "b": { "value": 4 },
-              "a": { "value": 5 }
+              "d": {
+                "value": 2
+              },
+              "c": {
+                "value": 3
+              },
+              "b": {
+                "value": 4
+              },
+              "a": {
+                "value": 5
+              }
             }
           }
         ]
@@ -5070,8 +6119,12 @@
         "type": "serverMerge",
         "path": "",
         "data": {
-          "b": { "value": 4 },
-          "d": { "value": 2 }
+          "b": {
+            "value": 4
+          },
+          "d": {
+            "value": 2
+          }
         },
         "events": []
       },
@@ -5079,14 +6132,13 @@
         "type": "ackUserWrite",
         "writeId": 0,
         "revert": false,
-        "events": [ ]
+        "events": []
       }
     ]
   },
   {
     "name": "User write with deep user overwrite",
-    "steps":
-    [
+    "steps": [
       {
         "type": "listen",
         "path": "/foo",
@@ -5101,9 +6153,15 @@
         "type": "set",
         "path": "/foo",
         "data": {
-          "a": { "value": 1 },
-          "b": { "value": 5 },
-          "c": { "value": 10 }
+          "a": {
+            "value": 1
+          },
+          "b": {
+            "value": 5
+          },
+          "c": {
+            "value": 10
+          }
         },
         "events": [
           {
@@ -5111,29 +6169,41 @@
             "type": "child_added",
             "name": "a",
             "prevName": null,
-            "data": { "value": 1 }
+            "data": {
+              "value": 1
+            }
           },
           {
             "path": "/foo",
             "type": "child_added",
             "name": "b",
             "prevName": "a",
-            "data": { "value": 5 }
+            "data": {
+              "value": 5
+            }
           },
           {
             "path": "/foo",
             "type": "child_added",
             "name": "c",
             "prevName": "b",
-            "data": { "value": 10 }
+            "data": {
+              "value": 10
+            }
           },
           {
             "path": "/foo",
             "type": "value",
             "data": {
-              "a": { "value": 1 },
-              "b": { "value": 5 },
-              "c": { "value": 10 }
+              "a": {
+                "value": 1
+              },
+              "b": {
+                "value": 5
+              },
+              "c": {
+                "value": 10
+              }
             }
           }
         ]
@@ -5149,22 +6219,32 @@
             "type": "child_moved",
             "name": "c",
             "prevName": "a",
-            "data": { "value": 3 }
+            "data": {
+              "value": 3
+            }
           },
           {
             "path": "/foo",
             "type": "child_changed",
             "name": "c",
             "prevName": "a",
-            "data": { "value": 3 }
+            "data": {
+              "value": 3
+            }
           },
           {
             "path": "/foo",
             "type": "value",
             "data": {
-              "a": { "value": 1 },
-              "c": { "value": 3 },
-              "b": { "value": 5 }
+              "a": {
+                "value": 1
+              },
+              "c": {
+                "value": 3
+              },
+              "b": {
+                "value": 5
+              }
             }
           }
         ]
@@ -5174,32 +6254,37 @@
         "type": "serverUpdate",
         "path": "/foo",
         "data": {
-          "a": { "value": 1 },
-          "b": { "value": 5 },
-          "c": { "value": 10 }
+          "a": {
+            "value": 1
+          },
+          "b": {
+            "value": 5
+          },
+          "c": {
+            "value": 10
+          }
         },
-        "events": [ ]
+        "events": []
       },
       {
         "type": "ackUserWrite",
         "writeId": 0,
-        "events": [ ]
+        "events": []
       },
       {
         ".comment": "server sends update",
         "type": "serverUpdate",
         "path": "/foo/c/value",
         "data": 3,
-        "events": [ ]
+        "events": []
       },
       {
         "type": "ackUserWrite",
         "writeId": 1,
-        "events": [ ]
+        "events": []
       }
     ]
   },
-
   {
     "name": "Deep server merge",
     "steps": [
@@ -5213,8 +6298,14 @@
         "path": "",
         "data": {
           "foo": {
-            "bar1" : { "a": "baz1", "b": "qux1" },
-            "bar2" : { "a": "baz2", "b": "qux2" }
+            "bar1": {
+              "a": "baz1",
+              "b": "qux1"
+            },
+            "bar2": {
+              "a": "baz2",
+              "b": "qux2"
+            }
           }
         },
         "events": [
@@ -5223,21 +6314,33 @@
             "type": "child_added",
             "name": "bar1",
             "prevName": null,
-            "data": { "a": "baz1", "b": "qux1" }
+            "data": {
+              "a": "baz1",
+              "b": "qux1"
+            }
           },
           {
             "path": "foo",
             "type": "child_added",
             "name": "bar2",
             "prevName": "bar1",
-            "data": { "a": "baz2", "b": "qux2" }
+            "data": {
+              "a": "baz2",
+              "b": "qux2"
+            }
           },
           {
             "path": "foo",
             "type": "value",
             "data": {
-              "bar1" : { "a": "baz1", "b": "qux1" },
-              "bar2" : { "a": "baz2", "b": "qux2" }
+              "bar1": {
+                "a": "baz1",
+                "b": "qux1"
+              },
+              "bar2": {
+                "a": "baz2",
+                "b": "qux2"
+              }
             }
           }
         ]
@@ -5255,28 +6358,39 @@
             "type": "child_changed",
             "name": "bar1",
             "prevName": null,
-            "data": { "a": "newbaz1", "b": "qux1" }
+            "data": {
+              "a": "newbaz1",
+              "b": "qux1"
+            }
           },
           {
             "path": "foo",
             "type": "child_changed",
             "name": "bar2",
             "prevName": "bar1",
-            "data": { "a": "baz2", "b": "newqux2" }
+            "data": {
+              "a": "baz2",
+              "b": "newqux2"
+            }
           },
           {
             "path": "foo",
             "type": "value",
             "data": {
-              "bar1" : { "a": "newbaz1", "b": "qux1" },
-              "bar2" : { "a": "baz2", "b": "newqux2" }
+              "bar1": {
+                "a": "newbaz1",
+                "b": "qux1"
+              },
+              "bar2": {
+                "a": "baz2",
+                "b": "newqux2"
+              }
             }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Server updates priority",
     "steps": [
@@ -5293,7 +6407,9 @@
       {
         "type": "serverUpdate",
         "path": "a",
-        "data": { "foo": "bar" },
+        "data": {
+          "foo": "bar"
+        },
         "events": [
           {
             "path": "a/foo",
@@ -5310,7 +6426,9 @@
           {
             "path": "a",
             "type": "value",
-            "data": { "foo": "bar" }
+            "data": {
+              "foo": "bar"
+            }
           }
         ]
       },
@@ -5322,34 +6440,45 @@
           {
             "path": "a/foo",
             "type": "value",
-            "data": { ".value": "bar", ".priority": "qux" }
+            "data": {
+              ".value": "bar",
+              ".priority": "qux"
+            }
           },
           {
             "path": "a",
             "type": "child_changed",
             "name": "foo",
             "prevName": null,
-            "data": { ".value": "bar", ".priority": "qux" }
+            "data": {
+              ".value": "bar",
+              ".priority": "qux"
+            }
           },
           {
             "path": "a",
             "type": "child_moved",
             "name": "foo",
             "prevName": null,
-            "data": { ".value": "bar", ".priority": "qux" }
+            "data": {
+              ".value": "bar",
+              ".priority": "qux"
+            }
           },
           {
             "path": "a",
             "type": "value",
             "data": {
-              "foo": { ".value": "bar", ".priority": "qux" }
+              "foo": {
+                ".value": "bar",
+                ".priority": "qux"
+              }
             }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Revert underlying full overwrite",
     "steps": [
@@ -5482,11 +6611,10 @@
         "type": "ackUserWrite",
         "writeId": 0,
         "revert": true,
-        "events": [ ]
+        "events": []
       }
     ]
   },
-
   {
     "name": "User child overwrite for non-existent server node",
     "steps": [
@@ -5498,20 +6626,23 @@
       {
         "type": "set",
         "path": "foo",
-        "data": { "bar": "qux" },
+        "data": {
+          "bar": "qux"
+        },
         "events": [
           {
             "path": "",
             "type": "child_added",
             "name": "foo",
             "prevName": null,
-            "data": { "bar": "qux" }
+            "data": {
+              "bar": "qux"
+            }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Revert user overwrite of child on leaf node",
     "steps": [
@@ -5547,7 +6678,9 @@
           {
             "path": "",
             "type": "value",
-            "data": { "key": "value" }
+            "data": {
+              "key": "value"
+            }
           }
         ]
       },
@@ -5572,7 +6705,6 @@
       }
     ]
   },
-
   {
     "name": "Server overwrite with deep user delete",
     "steps": [
@@ -5642,7 +6774,6 @@
       }
     ]
   },
-
   {
     "name": "User overwrites leaf node with priority",
     "steps": [
@@ -5694,7 +6825,6 @@
       }
     ]
   },
-
   {
     "name": "User overwrites inherit priority values from leaf nodes",
     "steps": [
@@ -5786,7 +6916,6 @@
       }
     ]
   },
-
   {
     "name": "User update on user set leaf node with priority after server update",
     "steps": [
@@ -5832,15 +6961,15 @@
         "data": {
           "foo": "bar"
         },
-        "events": [ ]
+        "events": []
       },
       {
         ".comment": "user updates the node",
         "type": "update",
         "path": "deep/deeper",
         "data": {
-            "0-key": null,
-            "key": "value"
+          "0-key": null,
+          "key": "value"
         },
         "events": [
           {
@@ -5848,21 +6977,28 @@
             "type": "child_added",
             "name": "deep",
             "prevName": null,
-            "data": { "deeper": { "key": "value" } }
+            "data": {
+              "deeper": {
+                "key": "value"
+              }
+            }
           },
           {
             "path": "",
             "type": "value",
             "data": {
               ".priority": "prio",
-              "deep": { "deeper": { "key": "value" } }
+              "deep": {
+                "deeper": {
+                  "key": "value"
+                }
+              }
             }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Server deep delete on leaf node",
     ".comment": "This is a contrived example, as the server will probably not send null updates to leaf nodes",
@@ -5893,7 +7029,6 @@
       }
     ]
   },
-
   {
     "name": "User sets root priority",
     "steps": [
@@ -5942,7 +7077,6 @@
       }
     ]
   },
-
   {
     "name": "User updates priority on empty root",
     "steps": [
@@ -5998,7 +7132,6 @@
       }
     ]
   },
-
   {
     "name": "Revert set at root with priority",
     "steps": [
@@ -6093,7 +7226,6 @@
       }
     ]
   },
-
   {
     "name": "Server updates priority after user sets priority",
     "steps": [
@@ -6105,12 +7237,18 @@
       {
         "type": "serverUpdate",
         "path": "",
-        "data": { ".value": "foo", ".priority": "prio" },
+        "data": {
+          ".value": "foo",
+          ".priority": "prio"
+        },
         "events": [
           {
             "path": "",
             "type": "value",
-            "data": { ".value": "foo", ".priority": "prio" }
+            "data": {
+              ".value": "foo",
+              ".priority": "prio"
+            }
           }
         ]
       },
@@ -6123,7 +7261,10 @@
           {
             "path": "",
             "type": "value",
-            "data": { ".value": "foo", ".priority": "prio-2" }
+            "data": {
+              ".value": "foo",
+              ".priority": "prio-2"
+            }
           }
         ]
       },
@@ -6132,11 +7273,10 @@
         "type": "serverUpdate",
         "path": ".priority",
         "data": null,
-        "events": [ ]
+        "events": []
       }
     ]
   },
-
   {
     "name": "User updates priority twice, first is reverted",
     "steps": [
@@ -6148,7 +7288,9 @@
       {
         "type": "serverUpdate",
         "path": "",
-        "data": { "foo": "bar" },
+        "data": {
+          "foo": "bar"
+        },
         "events": [
           {
             "path": "",
@@ -6160,7 +7302,9 @@
           {
             "path": "",
             "type": "value",
-            "data": { "foo": "bar" }
+            "data": {
+              "foo": "bar"
+            }
           }
         ]
       },
@@ -6227,7 +7371,6 @@
       }
     ]
   },
-
   {
     "name": "Server acks root priority set after user deletes root node",
     "steps": [
@@ -6291,7 +7434,6 @@
       }
     ]
   },
-
   {
     "name": "A delete in a merge doesn't push out nodes",
     "steps": [
@@ -6301,7 +7443,9 @@
         "params": {
           "tag": 1,
           "limitToFirst": 3,
-          "startAt": {"index": null}
+          "startAt": {
+            "index": null
+          }
         },
         "events": []
       },
@@ -6381,7 +7525,6 @@
       }
     ]
   },
-
   {
     "name": "A tagged query fires events eventually",
     "steps": [
@@ -6495,7 +7638,6 @@
       }
     ]
   },
-
   {
     "name": "A server update that leaves user sets unchanged is not ignored",
     "steps": [
@@ -6591,7 +7733,6 @@
       }
     ]
   },
-
   {
     "name": "User write outside of limit is ignored for tagged queries",
     "steps": [
@@ -6601,7 +7742,9 @@
         "params": {
           "tag": 1,
           "limitToFirst": 2,
-          "startAt": {"index": null}
+          "startAt": {
+            "index": null
+          }
         },
         "events": []
       },
@@ -6771,7 +7914,6 @@
       }
     ]
   },
-
   {
     "name": "Ack for merge doesn't raise value event for later listen",
     "steps": [
@@ -6829,7 +7971,6 @@
       }
     ]
   },
-
   {
     "name": "Clear parent shadowing server values merge with server children",
     "steps": [
@@ -6853,7 +7994,10 @@
       {
         "type": "update",
         "path": "a",
-        "data": {"b": 28, "c": 3},
+        "data": {
+          "b": 28,
+          "c": 3
+        },
         "events": [
           {
             "path": "a/b",
@@ -6911,7 +8055,6 @@
       }
     ]
   },
-
   {
     "name": "Priorities don't make me sick",
     "steps": [
@@ -6965,7 +8108,6 @@
       }
     ]
   },
-
   {
     "name": "Merge that moves child from window to boundary does not cause child to be readded",
     "steps": [
@@ -6976,7 +8118,9 @@
         "params": {
           "tag": 1,
           "limitToFirst": 2,
-          "startAt": {"index": 1},
+          "startAt": {
+            "index": 1
+          },
           "orderBy": "index"
         }
       },
@@ -7015,8 +8159,12 @@
             "path": "a",
             "type": "value",
             "data": {
-              "2-a": { "index": 10 },
-              "1-b": { "index": 20 }
+              "2-a": {
+                "index": 10
+              },
+              "1-b": {
+                "index": 20
+              }
             }
           }
         ]
@@ -7026,51 +8174,70 @@
         "type": "update",
         "path": "a",
         "data": {
-          "1-b": { "index": 0 },
-          "2-a": { "index": 30 },
-          "3-c": { "index": 5 },
-          "4-d": { "index": 6 }
+          "1-b": {
+            "index": 0
+          },
+          "2-a": {
+            "index": 30
+          },
+          "3-c": {
+            "index": 5
+          },
+          "4-d": {
+            "index": 6
+          }
         },
         "events": [
           {
             "path": "a",
             "type": "child_removed",
             "name": "2-a",
-            "data": { "index": 10 }
+            "data": {
+              "index": 10
+            }
           },
           {
             "path": "a",
             "type": "child_removed",
             "name": "1-b",
-            "data": { "index": 20 }
+            "data": {
+              "index": 20
+            }
           },
           {
             "path": "a",
             "type": "child_added",
             "name": "3-c",
             "prevName": null,
-            "data": { "index": 5 }
+            "data": {
+              "index": 5
+            }
           },
           {
             "path": "a",
             "type": "child_added",
             "name": "4-d",
             "prevName": "3-c",
-            "data": { "index": 6 }
+            "data": {
+              "index": 6
+            }
           },
           {
             "path": "a",
             "type": "value",
             "data": {
-              "3-c": { "index": 5 },
-              "4-d": { "index": 6 }
+              "3-c": {
+                "index": 5
+              },
+              "4-d": {
+                "index": 6
+              }
             }
           }
         ]
       }
     ]
   },
-
   {
     "name": "Deep merge ack is handled correctly.",
     "steps": [
@@ -7141,7 +8308,6 @@
       }
     ]
   },
-
   {
     "name": "Deep merge ack (on incomplete data, and with server values)",
     "steps": [
@@ -7255,7 +8421,6 @@
       }
     ]
   },
-
   {
     "name": "Limit query handles deep server merge for out-of-view item.",
     "steps": [
@@ -7309,11 +8474,10 @@
         "data": {
           "val": "b-val"
         },
-        "events": [ ]
+        "events": []
       }
     ]
   },
-
   {
     "name": "Limit query handles deep user merge for out-of-view item.",
     "steps": [
@@ -7367,11 +8531,10 @@
         "data": {
           "val": "b-val"
         },
-        "events": [ ]
+        "events": []
       }
     ]
   },
-
   {
     "name": "Limit query handles deep user merge for out-of-view item followed by server update.",
     "steps": [
@@ -7425,7 +8588,7 @@
         "data": {
           "val": "b-val-new"
         },
-        "events": [ ]
+        "events": []
       },
       {
         ".comment": "Server update for 'b', bringing it into view.",
@@ -7470,7 +8633,6 @@
       }
     ]
   },
-
   {
     "name": "Unrelated, untagged update is not cached in tagged listen",
     "steps": [
@@ -7481,7 +8643,9 @@
           "tag": 1,
           "orderBy": "index",
           "limitToFirst": 1,
-          "startAt": {"index": null}
+          "startAt": {
+            "index": null
+          }
         },
         "events": []
       },
@@ -7563,19 +8727,23 @@
         ".comment": "Server now updates node out of view, should not mark view unfiltered",
         "type": "serverUpdate",
         "path": "key-3",
-        "data": { "index": 3, "other-key": "qux" },
+        "data": {
+          "index": 3,
+          "other-key": "qux"
+        },
         "events": []
       },
       {
         ".comment": "Server now updates node out of view, should not raise any events",
         "type": "serverMerge",
         "path": "key-2",
-        "data": { "index": 0 },
+        "data": {
+          "index": 0
+        },
         "events": []
       }
     ]
   },
-
   {
     "name": "Unrelated, acked set is not cached in tagged listen",
     "steps": [
@@ -7586,7 +8754,9 @@
           "tag": 1,
           "orderBy": "index",
           "limitToFirst": 1,
-          "startAt": {"index": null}
+          "startAt": {
+            "index": null
+          }
         },
         "events": []
       },
@@ -7668,12 +8838,13 @@
         ".comment": "Server now updates node out of view, should not raise any events",
         "type": "serverMerge",
         "path": "key-2",
-        "data": { "index": 0 },
+        "data": {
+          "index": 0
+        },
         "events": []
       }
     ]
   },
-
   {
     "name": "Unrelated, acked update is not cached in tagged listen",
     "steps": [
@@ -7684,7 +8855,9 @@
           "tag": 1,
           "orderBy": "index",
           "limitToFirst": 1,
-          "startAt": {"index": null}
+          "startAt": {
+            "index": null
+          }
         },
         "events": []
       },
@@ -7770,7 +8943,9 @@
         ".comment": "Server now updates node out of view, should not raise any events",
         "type": "serverMerge",
         "path": "key-2",
-        "data": { "index": 0 },
+        "data": {
+          "index": 0
+        },
         "events": []
       }
     ]
@@ -7943,7 +9118,9 @@
         "params": {
           "tag": 1,
           "orderBy": "idx",
-          "equalTo": { "index": true }
+          "equalTo": {
+            "index": true
+          }
         },
         "events": []
       },
@@ -8075,8 +9252,14 @@
         "type": "serverUpdate",
         "path": "",
         "data": {
-          "a": { "aa": 1, "ab": 2 },
-          "b": { "ba": 3, "bb": 4 }
+          "a": {
+            "aa": 1,
+            "ab": 2
+          },
+          "b": {
+            "ba": 3,
+            "bb": 4
+          }
         },
         "events": [
           {
@@ -8178,22 +9361,30 @@
             "type": "child_changed",
             "prevName": "aa",
             "name": "ab",
-            "data": { "abc": 1 }
+            "data": {
+              "abc": 1
+            }
           },
           {
             "path": "a",
             "type": "child_added",
             "prevName": "ab",
             "name": "ac",
-            "data": { "acd": 2 }
+            "data": {
+              "acd": 2
+            }
           },
           {
             "path": "a",
             "type": "value",
             "data": {
               "aa": 0,
-              "ab": { "abc": 1 },
-              "ac": { "acd": 2 }
+              "ab": {
+                "abc": 1
+              },
+              "ac": {
+                "acd": 2
+              }
             }
           }
         ]

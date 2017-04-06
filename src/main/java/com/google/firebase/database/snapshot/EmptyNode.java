@@ -1,6 +1,7 @@
 package com.google.firebase.database.snapshot;
 
 import com.google.firebase.database.core.Path;
+
 import java.util.Collections;
 import java.util.Iterator;
 

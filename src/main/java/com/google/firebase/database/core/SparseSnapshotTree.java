@@ -3,6 +3,7 @@ package com.google.firebase.database.core;
 import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.snapshot.ChildrenNode;
 import com.google.firebase.database.snapshot.Node;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,16 +18,6 @@ class SparseSnapshotTree {
   public SparseSnapshotTree() {
     this.value = null;
     this.children = null;
-  }
-
-  public interface SparseSnapshotTreeVisitor {
-
-    void visitTree(Path prefixPath, Node tree);
-  }
-
-  public interface SparseSnapshotChildVisitor {
-
-    void visitChild(ChildKey key, SparseSnapshotTree tree);
   }
 
   public void remember(Path path, Node data) {
@@ -120,5 +111,15 @@ class SparseSnapshotTree {
         visitor.visitChild(entry.getKey(), entry.getValue());
       }
     }
+  }
+
+  public interface SparseSnapshotTreeVisitor {
+
+    void visitTree(Path prefixPath, Node tree);
+  }
+
+  public interface SparseSnapshotChildVisitor {
+
+    void visitChild(ChildKey key, SparseSnapshotTree tree);
   }
 }

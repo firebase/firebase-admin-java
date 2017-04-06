@@ -1,11 +1,8 @@
 package com.google.firebase.database;
 
-import static com.google.firebase.database.TestHelpers.fromSingleQuotedString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
-
 import com.google.firebase.database.utilities.encoding.CustomClassMapper;
+import org.junit.Test;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,901 +11,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.junit.Test;
+
+import static com.google.firebase.database.TestHelpers.fromSingleQuotedString;
+import static org.junit.Assert.*;
 
 public class MapperTest {
 
   private static final double EPISLON = 0.00001f;
-
-  private static class StringBean {
-
-    private String value;
-
-    public String getValue() {
-      return value;
-    }
-  }
-
-  private static class DoubleBean {
-
-    private double value;
-
-    public double getValue() {
-      return value;
-    }
-  }
-
-  private static class FloatBean {
-
-    private float value;
-
-    public float getValue() {
-      return value;
-    }
-  }
-
-  private static class LongBean {
-
-    private long value;
-
-    public long getValue() {
-      return value;
-    }
-  }
-
-  private static class IntBean {
-
-    private int value;
-
-    public int getValue() {
-      return value;
-    }
-  }
-
-  private static class BooleanBean {
-
-    private boolean value;
-
-    public boolean isValue() {
-      return value;
-    }
-  }
-
-  private static class ShortBean {
-
-    private short value;
-
-    public short getValue() {
-      return value;
-    }
-  }
-
-  private static class ByteBean {
-
-    private byte value;
-
-    public byte getValue() {
-      return value;
-    }
-  }
-
-  private static class CharBean {
-
-    private char value;
-
-    public char getValue() {
-      return value;
-    }
-  }
-
-  private static class IntArrayBean {
-
-    private int[] values;
-
-    public int[] getValues() {
-      return this.values;
-    }
-  }
-
-  private static class StringArrayBean {
-
-    private String[] values;
-
-    public String[] getValues() {
-      return this.values;
-    }
-  }
-
-  private static class XMLAndURLBean {
-
-    private String XMLAndURL1;
-    public String XMLAndURL2;
-
-    public String getXMLAndURL1() {
-      return XMLAndURL1;
-    }
-
-    public void setXMLAndURL1(String value) {
-      this.XMLAndURL1 = value;
-    }
-  }
-
-  private static class SetterBean {
-
-    private String value;
-
-    public String getValue() {
-      return this.value;
-    }
-
-    public void setValue(String value) {
-      this.value = "setter:" + value;
-    }
-  }
-
-  private static class PrivateSetterBean {
-
-    public String value;
-
-    private void setValue(String value) {
-      this.value = "setter:" + value;
-    }
-  }
-
-  private static class GetterBean {
-
-    private String value;
-
-    public String getValue() {
-      return "getter:" + this.value;
-    }
-  }
-
-  private static class GetterPublicFieldBean {
-
-    public String value;
-
-    public String getValue() {
-      return "getter:" + this.value;
-    }
-  }
-
-  private static class GetterPublicFieldBeanCaseSensitive {
-
-    public String valueCase;
-
-    public String getValueCASE() {
-      return "getter:" + this.valueCase;
-    }
-  }
-
-  private static class CaseSensitiveGetterBean1 {
-
-    private String value;
-
-    public String getVALUE() {
-      return this.value;
-    }
-  }
-
-  private static class CaseSensitiveGetterBean2 {
-
-    private String value;
-
-    public String getvalue() {
-      return this.value;
-    }
-  }
-
-  private static class CaseSensitiveGetterBean3 {
-
-    private String value;
-
-    public String getVAlue() {
-      return this.value;
-    }
-  }
-
-  private static class CaseSensitiveGetterBean4 {
-
-    private String value;
-
-    public String getvaLUE() {
-      return this.value;
-    }
-  }
-
-  private static class CaseSensitiveSetterBean1 {
-
-    private String value;
-
-    public String getValue() {
-      return this.value;
-    }
-
-    public void setValue(String value) {
-      this.value = "setter:" + value;
-    }
-
-    public void setVAlue(String value) {
-      this.value = "wrong setter!";
-    }
-  }
-
-  private static class CaseSensitiveSetterBean2 {
-
-    private String value;
-
-    public String getValue() {
-      return this.value;
-    }
-
-    public void setValue(String value) {
-      this.value = "setter:" + value;
-    }
-
-    public void setvalue(String value) {
-      this.value = "wrong setter!";
-    }
-  }
-
-  private static class CaseSensitiveSetterBean3 {
-
-    private String value;
-
-    public String getValue() {
-      return this.value;
-    }
-
-    public void setvalue(String value) {
-      this.value = "setter:" + value;
-    }
-  }
-
-  private static class CaseSensitiveSetterBean4 {
-
-    private String value;
-
-    public String getValue() {
-      return this.value;
-    }
-
-    public void setVALUE(String value) {
-      this.value = "setter:" + value;
-    }
-  }
-
-  private static class CaseSensitiveSetterBean5 {
-
-    private String value;
-
-    public String getValue() {
-      return this.value;
-    }
-
-    public void SETVALUE(String value) {
-      this.value = "wrong setter!";
-    }
-  }
-
-  private static class CaseSensitiveSetterBean6 {
-
-    private String value;
-
-    public String getValue() {
-      return this.value;
-    }
-
-    public void setVaLUE(String value) {
-      this.value = "setter:" + value;
-    }
-  }
-
-  @SuppressWarnings("ConstantField")
-  private static class CaseSensitiveFieldBean1 {
-
-    public String VALUE;
-  }
-
-  private static class CaseSensitiveFieldBean2 {
-
-    public String value;
-  }
-
-  private static class CaseSensitiveFieldBean3 {
-
-    public String Value;
-  }
-
-  private static class CaseSensitiveFieldBean4 {
-
-    public String valUE;
-  }
-
-  private static class WrongSetterBean {
-
-    private String value;
-
-    public String getValue() {
-      return this.value;
-    }
-
-    public void setValue() {
-      this.value = "wrong setter!";
-    }
-
-    public void setValue(String one, String two) {
-      this.value = "wrong setter!";
-    }
-  }
-
-  private static class WrongTypeBean {
-
-    private Integer value;
-
-    public String getValue() {
-      return "" + this.value;
-    }
-  }
-
-  private static class RecursiveBean {
-
-    private StringBean bean;
-
-    public StringBean getBean() {
-      return this.bean;
-    }
-  }
-
-  private static class ObjectBean {
-
-    private Object value;
-
-    public Object getValue() {
-      return value;
-    }
-  }
-
-  private static class GenericBean<B> {
-
-    private B value;
-
-    public B getValue() {
-      return value;
-    }
-  }
-
-  private static class DoubleGenericBean<A, B> {
-
-    private A valueA;
-    private B valueB;
-
-    public A getValueA() {
-      return valueA;
-    }
-
-    public B getValueB() {
-      return valueB;
-    }
-  }
-
-  private static class ListBean {
-
-    private List<String> values;
-
-    public List<String> getValues() {
-      return this.values;
-    }
-  }
-
-  private static class SetBean {
-
-    private Set<String> values;
-
-    public Set<String> getValues() {
-      return this.values;
-    }
-  }
-
-  private static class CollectionBean {
-
-    private Collection<String> values;
-
-    public Collection<String> getValues() {
-      return this.values;
-    }
-  }
-
-  private static class MapBean {
-
-    private Map<String, String> values;
-
-    public Map<String, String> getValues() {
-      return this.values;
-    }
-  }
-
-  private static class RecursiveListBean {
-
-    private List<StringBean> values;
-
-    public List<StringBean> getValues() {
-      return this.values;
-    }
-  }
-
-  private static class RecursiveMapBean {
-
-    private Map<String, StringBean> values;
-
-    public Map<String, StringBean> getValues() {
-      return this.values;
-    }
-  }
-
-  private static class IllegalKeyMapBean {
-
-    private Map<Integer, StringBean> values;
-
-    public Map<Integer, StringBean> getValues() {
-      return this.values;
-    }
-  }
-
-  private static class PublicFieldBean {
-
-    public String value;
-  }
-
-  @ThrowOnExtraProperties
-  private static class ThrowOnUnknownPropertiesBean {
-
-    public String value;
-  }
-
-  @ThrowOnExtraProperties
-  private static class PackageFieldBean {
-
-    String value;
-  }
-
-  @ThrowOnExtraProperties
-  @SuppressWarnings("unused") // Unused, but required for the test
-  private static class PrivateFieldBean {
-
-    private String value;
-  }
-
-  private static class PackageGetterBean {
-
-    private String packageValue;
-    private String publicValue;
-
-    String getPackageValue() {
-      return this.packageValue;
-    }
-
-    public String getPublicValue() {
-      return this.publicValue;
-    }
-  }
-
-  private static class ExcludedBean {
-
-    @Exclude
-    public String excludedField = "no-value";
-
-    private String excludedGetter = "no-value";
-
-    private String includedGetter = "no-value";
-
-    @Exclude
-    public String getExcludedGetter() {
-      return this.excludedGetter;
-    }
-
-    public String getIncludedGetter() {
-      return this.includedGetter;
-    }
-  }
-
-  private static class ExcludedSetterBean {
-
-    private String value;
-
-    public String getValue() {
-      return this.value;
-    }
-
-    @Exclude
-    public void setValue(String value) {
-      this.value = "wrong setter";
-    }
-  }
-
-  private static class PropertyNameBean {
-
-    @PropertyName("my_key")
-    public String key;
-
-    private String value;
-
-    @PropertyName("my_value")
-    public String getValue() {
-      return this.value;
-    }
-
-    @PropertyName("my_value")
-    public void setValue(String value) {
-      this.value = value;
-    }
-  }
-
-  private static class PublicPrivateFieldBean {
-
-    public String value1;
-    String value2;
-    private String value3;
-  }
-
-  private static class TwoSetterBean {
-
-    private String value;
-
-    public String getValue() {
-      return this.value;
-    }
-
-    public void setValue(String value) {
-      this.value = "string:" + value;
-    }
-
-    public void setValue(Integer value) {
-      this.value = "int:" + value;
-    }
-  }
-
-  private static class TwoGetterBean {
-
-    private String value;
-
-    public String getValue() {
-      return this.value;
-    }
-
-    public String getVALUE() {
-      return this.value;
-    }
-  }
-
-  private static class GetterArgumentsBean {
-
-    private String value;
-
-    public String getValue1() {
-      return this.value + "1";
-    }
-
-    public void getValue2() {
-    }
-
-    public String getValue3(boolean flag) {
-      return this.value + "3";
-    }
-
-    public String getValue4() {
-      return this.value + "4";
-    }
-  }
-
-  @SuppressWarnings("ConstantField")
-  private static class UnicodeBean {
-
-    private String 漢字;
-
-    public String get漢字() {
-      return this.漢字;
-    }
-  }
-
-  private static class PublicConstructorBean {
-
-    private String value;
-
-    public PublicConstructorBean() {
-    }
-
-    public String getValue() {
-      return this.value;
-    }
-  }
-
-  private static class PrivateConstructorBean {
-
-    private String value;
-
-    private PrivateConstructorBean() {
-    }
-
-    public String getValue() {
-      return this.value;
-    }
-  }
-
-  private static class PackageConstructorBean {
-
-    private String value;
-
-    PackageConstructorBean() {
-    }
-
-    public String getValue() {
-      return this.value;
-    }
-  }
-
-  private static class ArgConstructorBean {
-
-    private String value;
-
-    public ArgConstructorBean(String value) {
-      this.value = value;
-    }
-
-    public String getValue() {
-      return this.value;
-    }
-  }
-
-  private static class MultipleConstructorBean {
-
-    private String value;
-
-    public MultipleConstructorBean(String value) {
-      this.value = "wrong-value";
-    }
-
-    public MultipleConstructorBean() {
-    }
-
-    public String getValue() {
-      return this.value;
-    }
-  }
-
-  private static class StaticFieldBean {
-
-    public static String value1 = "static-value";
-    public String value2;
-  }
-
-  private static class StaticMethodBean {
-
-    private static String value1 = "static-value";
-    public String value2;
-
-    public static String getValue1() {
-      return StaticMethodBean.value1;
-    }
-
-    public static void setValue1(String value1) {
-      StaticMethodBean.value1 = value1;
-    }
-  }
-
-  private enum Enum {
-    Foo,
-    Bar
-  }
-
-  private enum ComplexEnum {
-    One("one"),
-    Two("two");
-
-    private String value;
-
-    ComplexEnum(String value) {
-      this.value = value;
-    }
-
-    public String getValue() {
-      return this.value;
-    }
-
-    public void setValue(String value) {
-      this.value = value;
-    }
-  }
-
-  private static class EnumBean {
-
-    public Enum enumField;
-
-    private Enum enumValue;
-
-    public ComplexEnum complexEnum;
-
-    public Enum getEnumValue() {
-      return this.enumValue;
-    }
-
-    public void setEnumValue(Enum enumValue) {
-      this.enumValue = enumValue;
-    }
-  }
-
-  private static class BaseBean {
-
-    // Public field on base class
-    public String baseValue;
-
-    // Value that is accessed through overridden methods in subclasses
-    public String overrideValue;
-
-    // Field that is package private in base class
-    String packageBaseValue;
-
-    // Private field that is used in getter/setter in base class
-    private String baseMethodValue;
-
-    // Private field that has field with same name in subclasses
-    private String classPrivateValue;
-
-    public String getClassPrivateValue() {
-      return this.classPrivateValue;
-    }
-
-    public String getBaseMethod() {
-      return this.baseMethodValue;
-    }
-
-    public String getPackageBaseValue() {
-      return this.packageBaseValue;
-    }
-
-    public void setBaseMethod(String value) {
-      this.baseMethodValue = value;
-    }
-  }
-
-  private static class InheritedBean extends BaseBean {
-
-    public String inheritedValue;
-
-    private String inheritedMethodValue;
-
-    private String classPrivateValue;
-
-    @Override
-    public String getClassPrivateValue() {
-      return this.classPrivateValue;
-    }
-
-    public String getInheritedMethod() {
-      return this.inheritedMethodValue;
-    }
-
-    public void setInheritedMethod(String value) {
-      this.inheritedMethodValue = value;
-    }
-
-    public String getOverrideValue() {
-      return this.overrideValue + "-inherited";
-    }
-
-    public void setOverrideValue(String value) {
-      this.overrideValue = value + "-inherited";
-    }
-  }
-
-  private static final class FinalBean extends InheritedBean {
-
-    public String finalValue;
-
-    private String finalMethodValue;
-
-    private String classPrivateValue;
-
-    @Override
-    public String getClassPrivateValue() {
-      return this.classPrivateValue;
-    }
-
-    public String getFinalMethod() {
-      return this.finalMethodValue;
-    }
-
-    public void setFinalMethod(String value) {
-      this.finalMethodValue = value;
-    }
-
-    @Override
-    public String getOverrideValue() {
-      return this.overrideValue + "-final";
-    }
-
-    @Override
-    public void setOverrideValue(String value) {
-      this.overrideValue = value + "-final";
-    }
-  }
-
-  // Conflicting setters are not supported. When inheriting from a base class we require all
-  // setters be an override of a base class
-  private static class ConflictingSetterBean {
-
-    public int value;
-
-    // package private so override can be public
-    void setValue(int value) {
-      this.value = value;
-    }
-  }
-
-  private static class ConflictingSetterSubBean extends ConflictingSetterBean {
-
-    public void setValue(String value) {
-      this.value = -1;
-    }
-  }
-
-  private static class ConflictingSetterSubBean2 extends ConflictingSetterBean {
-
-    public void setValue(Integer value) {
-      this.value = -1;
-    }
-  }
-
-  private static class NonConflictingSetterSubBean extends ConflictingSetterBean {
-
-    @Override
-    public void setValue(int value) {
-      this.value = value * -1;
-    }
-  }
-
-  private static class GenericSetterBaseBean<T> {
-
-    public T value;
-
-    void setValue(T value) {
-      this.value = value;
-    }
-  }
-
-  private static class ConflictingGenericSetterSubBean<T> extends GenericSetterBaseBean<T> {
-
-    public void setValue(String value) {
-      // wrong setter
-    }
-  }
-
-  private static class NonConflictingGenericSetterSubBean extends GenericSetterBaseBean<String> {
-
-    @Override
-    public void setValue(String value) {
-      this.value = "subsetter:" + value;
-    }
-  }
-
-  private abstract static class GenericTypeIndicatorSubclass<T> extends GenericTypeIndicator<T> {
-
-  }
-
-  private abstract static class NonGenericTypeIndicatorSubclass
-      extends GenericTypeIndicator<GenericBean<String>> {
-
-  }
-
-  private static class NonGenericTypeIndicatorConcreteSubclass
-      extends GenericTypeIndicator<GenericBean<String>> {
-
-  }
-
-  private static class NonGenericTypeIndicatorSubclassConcreteSubclass
-      extends GenericTypeIndicatorSubclass<GenericBean<String>> {
-
-  }
 
   private static <T> T deserialize(String jsonString, Class<T> clazz) {
     Map<String, Object> json = fromSingleQuotedString(jsonString);
@@ -1574,14 +683,14 @@ public class MapperTest {
   @Test(expected = DatabaseException.class)
   public void intArraysCantBeSerialized() {
     IntArrayBean bean = new IntArrayBean();
-    bean.values = new int[]{1};
+    bean.values = new int[] {1};
     serialize(bean);
   }
 
   @Test(expected = DatabaseException.class)
   public void objectArraysCantBeSerialized() {
     StringArrayBean bean = new StringArrayBean();
-    bean.values = new String[]{"foo"};
+    bean.values = new String[] {"foo"};
     serialize(bean);
   }
 
@@ -2064,5 +1173,893 @@ public class MapperTest {
     NonConflictingGenericSetterSubBean bean =
         deserialize("{'value': 'value'}", NonConflictingGenericSetterSubBean.class);
     assertEquals("subsetter:value", bean.value);
+  }
+
+  private enum Enum {
+    Foo,
+    Bar
+  }
+
+  private enum ComplexEnum {
+    One("one"),
+    Two("two");
+
+    private String value;
+
+    ComplexEnum(String value) {
+      this.value = value;
+    }
+
+    public String getValue() {
+      return this.value;
+    }
+
+    public void setValue(String value) {
+      this.value = value;
+    }
+  }
+
+  private static class StringBean {
+
+    private String value;
+
+    public String getValue() {
+      return value;
+    }
+  }
+
+  private static class DoubleBean {
+
+    private double value;
+
+    public double getValue() {
+      return value;
+    }
+  }
+
+  private static class FloatBean {
+
+    private float value;
+
+    public float getValue() {
+      return value;
+    }
+  }
+
+  private static class LongBean {
+
+    private long value;
+
+    public long getValue() {
+      return value;
+    }
+  }
+
+  private static class IntBean {
+
+    private int value;
+
+    public int getValue() {
+      return value;
+    }
+  }
+
+  private static class BooleanBean {
+
+    private boolean value;
+
+    public boolean isValue() {
+      return value;
+    }
+  }
+
+  private static class ShortBean {
+
+    private short value;
+
+    public short getValue() {
+      return value;
+    }
+  }
+
+  private static class ByteBean {
+
+    private byte value;
+
+    public byte getValue() {
+      return value;
+    }
+  }
+
+  private static class CharBean {
+
+    private char value;
+
+    public char getValue() {
+      return value;
+    }
+  }
+
+  private static class IntArrayBean {
+
+    private int[] values;
+
+    public int[] getValues() {
+      return this.values;
+    }
+  }
+
+  private static class StringArrayBean {
+
+    private String[] values;
+
+    public String[] getValues() {
+      return this.values;
+    }
+  }
+
+  private static class XMLAndURLBean {
+
+    public String XMLAndURL2;
+    private String XMLAndURL1;
+
+    public String getXMLAndURL1() {
+      return XMLAndURL1;
+    }
+
+    public void setXMLAndURL1(String value) {
+      this.XMLAndURL1 = value;
+    }
+  }
+
+  private static class SetterBean {
+
+    private String value;
+
+    public String getValue() {
+      return this.value;
+    }
+
+    public void setValue(String value) {
+      this.value = "setter:" + value;
+    }
+  }
+
+  private static class PrivateSetterBean {
+
+    public String value;
+
+    private void setValue(String value) {
+      this.value = "setter:" + value;
+    }
+  }
+
+  private static class GetterBean {
+
+    private String value;
+
+    public String getValue() {
+      return "getter:" + this.value;
+    }
+  }
+
+  private static class GetterPublicFieldBean {
+
+    public String value;
+
+    public String getValue() {
+      return "getter:" + this.value;
+    }
+  }
+
+  private static class GetterPublicFieldBeanCaseSensitive {
+
+    public String valueCase;
+
+    public String getValueCASE() {
+      return "getter:" + this.valueCase;
+    }
+  }
+
+  private static class CaseSensitiveGetterBean1 {
+
+    private String value;
+
+    public String getVALUE() {
+      return this.value;
+    }
+  }
+
+  private static class CaseSensitiveGetterBean2 {
+
+    private String value;
+
+    public String getvalue() {
+      return this.value;
+    }
+  }
+
+  private static class CaseSensitiveGetterBean3 {
+
+    private String value;
+
+    public String getVAlue() {
+      return this.value;
+    }
+  }
+
+  private static class CaseSensitiveGetterBean4 {
+
+    private String value;
+
+    public String getvaLUE() {
+      return this.value;
+    }
+  }
+
+  private static class CaseSensitiveSetterBean1 {
+
+    private String value;
+
+    public String getValue() {
+      return this.value;
+    }
+
+    public void setValue(String value) {
+      this.value = "setter:" + value;
+    }
+
+    public void setVAlue(String value) {
+      this.value = "wrong setter!";
+    }
+  }
+
+  private static class CaseSensitiveSetterBean2 {
+
+    private String value;
+
+    public String getValue() {
+      return this.value;
+    }
+
+    public void setValue(String value) {
+      this.value = "setter:" + value;
+    }
+
+    public void setvalue(String value) {
+      this.value = "wrong setter!";
+    }
+  }
+
+  private static class CaseSensitiveSetterBean3 {
+
+    private String value;
+
+    public String getValue() {
+      return this.value;
+    }
+
+    public void setvalue(String value) {
+      this.value = "setter:" + value;
+    }
+  }
+
+  private static class CaseSensitiveSetterBean4 {
+
+    private String value;
+
+    public String getValue() {
+      return this.value;
+    }
+
+    public void setVALUE(String value) {
+      this.value = "setter:" + value;
+    }
+  }
+
+  private static class CaseSensitiveSetterBean5 {
+
+    private String value;
+
+    public String getValue() {
+      return this.value;
+    }
+
+    public void SETVALUE(String value) {
+      this.value = "wrong setter!";
+    }
+  }
+
+  private static class CaseSensitiveSetterBean6 {
+
+    private String value;
+
+    public String getValue() {
+      return this.value;
+    }
+
+    public void setVaLUE(String value) {
+      this.value = "setter:" + value;
+    }
+  }
+
+  @SuppressWarnings("ConstantField")
+  private static class CaseSensitiveFieldBean1 {
+
+    public String VALUE;
+  }
+
+  private static class CaseSensitiveFieldBean2 {
+
+    public String value;
+  }
+
+  private static class CaseSensitiveFieldBean3 {
+
+    public String Value;
+  }
+
+  private static class CaseSensitiveFieldBean4 {
+
+    public String valUE;
+  }
+
+  private static class WrongSetterBean {
+
+    private String value;
+
+    public String getValue() {
+      return this.value;
+    }
+
+    public void setValue() {
+      this.value = "wrong setter!";
+    }
+
+    public void setValue(String one, String two) {
+      this.value = "wrong setter!";
+    }
+  }
+
+  private static class WrongTypeBean {
+
+    private Integer value;
+
+    public String getValue() {
+      return "" + this.value;
+    }
+  }
+
+  private static class RecursiveBean {
+
+    private StringBean bean;
+
+    public StringBean getBean() {
+      return this.bean;
+    }
+  }
+
+  private static class ObjectBean {
+
+    private Object value;
+
+    public Object getValue() {
+      return value;
+    }
+  }
+
+  private static class GenericBean<B> {
+
+    private B value;
+
+    public B getValue() {
+      return value;
+    }
+  }
+
+  private static class DoubleGenericBean<A, B> {
+
+    private A valueA;
+    private B valueB;
+
+    public A getValueA() {
+      return valueA;
+    }
+
+    public B getValueB() {
+      return valueB;
+    }
+  }
+
+  private static class ListBean {
+
+    private List<String> values;
+
+    public List<String> getValues() {
+      return this.values;
+    }
+  }
+
+  private static class SetBean {
+
+    private Set<String> values;
+
+    public Set<String> getValues() {
+      return this.values;
+    }
+  }
+
+  private static class CollectionBean {
+
+    private Collection<String> values;
+
+    public Collection<String> getValues() {
+      return this.values;
+    }
+  }
+
+  private static class MapBean {
+
+    private Map<String, String> values;
+
+    public Map<String, String> getValues() {
+      return this.values;
+    }
+  }
+
+  private static class RecursiveListBean {
+
+    private List<StringBean> values;
+
+    public List<StringBean> getValues() {
+      return this.values;
+    }
+  }
+
+  private static class RecursiveMapBean {
+
+    private Map<String, StringBean> values;
+
+    public Map<String, StringBean> getValues() {
+      return this.values;
+    }
+  }
+
+  private static class IllegalKeyMapBean {
+
+    private Map<Integer, StringBean> values;
+
+    public Map<Integer, StringBean> getValues() {
+      return this.values;
+    }
+  }
+
+  private static class PublicFieldBean {
+
+    public String value;
+  }
+
+  @ThrowOnExtraProperties
+  private static class ThrowOnUnknownPropertiesBean {
+
+    public String value;
+  }
+
+  @ThrowOnExtraProperties
+  private static class PackageFieldBean {
+
+    String value;
+  }
+
+  @ThrowOnExtraProperties
+  @SuppressWarnings("unused") // Unused, but required for the test
+  private static class PrivateFieldBean {
+
+    private String value;
+  }
+
+  private static class PackageGetterBean {
+
+    private String packageValue;
+    private String publicValue;
+
+    String getPackageValue() {
+      return this.packageValue;
+    }
+
+    public String getPublicValue() {
+      return this.publicValue;
+    }
+  }
+
+  private static class ExcludedBean {
+
+    @Exclude
+    public String excludedField = "no-value";
+
+    private String excludedGetter = "no-value";
+
+    private String includedGetter = "no-value";
+
+    @Exclude
+    public String getExcludedGetter() {
+      return this.excludedGetter;
+    }
+
+    public String getIncludedGetter() {
+      return this.includedGetter;
+    }
+  }
+
+  private static class ExcludedSetterBean {
+
+    private String value;
+
+    public String getValue() {
+      return this.value;
+    }
+
+    @Exclude
+    public void setValue(String value) {
+      this.value = "wrong setter";
+    }
+  }
+
+  private static class PropertyNameBean {
+
+    @PropertyName("my_key")
+    public String key;
+
+    private String value;
+
+    @PropertyName("my_value")
+    public String getValue() {
+      return this.value;
+    }
+
+    @PropertyName("my_value")
+    public void setValue(String value) {
+      this.value = value;
+    }
+  }
+
+  private static class PublicPrivateFieldBean {
+
+    public String value1;
+    String value2;
+    private String value3;
+  }
+
+  private static class TwoSetterBean {
+
+    private String value;
+
+    public String getValue() {
+      return this.value;
+    }
+
+    public void setValue(Integer value) {
+      this.value = "int:" + value;
+    }
+
+    public void setValue(String value) {
+      this.value = "string:" + value;
+    }
+  }
+
+  private static class TwoGetterBean {
+
+    private String value;
+
+    public String getValue() {
+      return this.value;
+    }
+
+    public String getVALUE() {
+      return this.value;
+    }
+  }
+
+  private static class GetterArgumentsBean {
+
+    private String value;
+
+    public String getValue1() {
+      return this.value + "1";
+    }
+
+    public void getValue2() {
+    }
+
+    public String getValue3(boolean flag) {
+      return this.value + "3";
+    }
+
+    public String getValue4() {
+      return this.value + "4";
+    }
+  }
+
+  @SuppressWarnings("ConstantField")
+  private static class UnicodeBean {
+
+    private String 漢字;
+
+    public String get漢字() {
+      return this.漢字;
+    }
+  }
+
+  private static class PublicConstructorBean {
+
+    private String value;
+
+    public PublicConstructorBean() {
+    }
+
+    public String getValue() {
+      return this.value;
+    }
+  }
+
+  private static class PrivateConstructorBean {
+
+    private String value;
+
+    private PrivateConstructorBean() {
+    }
+
+    public String getValue() {
+      return this.value;
+    }
+  }
+
+  private static class PackageConstructorBean {
+
+    private String value;
+
+    PackageConstructorBean() {
+    }
+
+    public String getValue() {
+      return this.value;
+    }
+  }
+
+  private static class ArgConstructorBean {
+
+    private String value;
+
+    public ArgConstructorBean(String value) {
+      this.value = value;
+    }
+
+    public String getValue() {
+      return this.value;
+    }
+  }
+
+  private static class MultipleConstructorBean {
+
+    private String value;
+
+    public MultipleConstructorBean(String value) {
+      this.value = "wrong-value";
+    }
+
+    public MultipleConstructorBean() {
+    }
+
+    public String getValue() {
+      return this.value;
+    }
+  }
+
+  private static class StaticFieldBean {
+
+    public static String value1 = "static-value";
+    public String value2;
+  }
+
+  private static class StaticMethodBean {
+
+    private static String value1 = "static-value";
+    public String value2;
+
+    public static String getValue1() {
+      return StaticMethodBean.value1;
+    }
+
+    public static void setValue1(String value1) {
+      StaticMethodBean.value1 = value1;
+    }
+  }
+
+  private static class EnumBean {
+
+    public Enum enumField;
+    public ComplexEnum complexEnum;
+    private Enum enumValue;
+
+    public Enum getEnumValue() {
+      return this.enumValue;
+    }
+
+    public void setEnumValue(Enum enumValue) {
+      this.enumValue = enumValue;
+    }
+  }
+
+  private static class BaseBean {
+
+    // Public field on base class
+    public String baseValue;
+
+    // Value that is accessed through overridden methods in subclasses
+    public String overrideValue;
+
+    // Field that is package private in base class
+    String packageBaseValue;
+
+    // Private field that is used in getter/setter in base class
+    private String baseMethodValue;
+
+    // Private field that has field with same name in subclasses
+    private String classPrivateValue;
+
+    public String getClassPrivateValue() {
+      return this.classPrivateValue;
+    }
+
+    public String getBaseMethod() {
+      return this.baseMethodValue;
+    }
+
+    public void setBaseMethod(String value) {
+      this.baseMethodValue = value;
+    }
+
+    public String getPackageBaseValue() {
+      return this.packageBaseValue;
+    }
+  }
+
+  private static class InheritedBean extends BaseBean {
+
+    public String inheritedValue;
+
+    private String inheritedMethodValue;
+
+    private String classPrivateValue;
+
+    @Override
+    public String getClassPrivateValue() {
+      return this.classPrivateValue;
+    }
+
+    public String getInheritedMethod() {
+      return this.inheritedMethodValue;
+    }
+
+    public void setInheritedMethod(String value) {
+      this.inheritedMethodValue = value;
+    }
+
+    public String getOverrideValue() {
+      return this.overrideValue + "-inherited";
+    }
+
+    public void setOverrideValue(String value) {
+      this.overrideValue = value + "-inherited";
+    }
+  }
+
+  private static final class FinalBean extends InheritedBean {
+
+    public String finalValue;
+
+    private String finalMethodValue;
+
+    private String classPrivateValue;
+
+    @Override
+    public String getClassPrivateValue() {
+      return this.classPrivateValue;
+    }
+
+    public String getFinalMethod() {
+      return this.finalMethodValue;
+    }
+
+    public void setFinalMethod(String value) {
+      this.finalMethodValue = value;
+    }
+
+    @Override
+    public String getOverrideValue() {
+      return this.overrideValue + "-final";
+    }
+
+    @Override
+    public void setOverrideValue(String value) {
+      this.overrideValue = value + "-final";
+    }
+  }
+
+  // Conflicting setters are not supported. When inheriting from a base class we require all
+  // setters be an override of a base class
+  private static class ConflictingSetterBean {
+
+    public int value;
+
+    // package private so override can be public
+    void setValue(int value) {
+      this.value = value;
+    }
+  }
+
+  private static class ConflictingSetterSubBean extends ConflictingSetterBean {
+
+    public void setValue(String value) {
+      this.value = -1;
+    }
+  }
+
+  private static class ConflictingSetterSubBean2 extends ConflictingSetterBean {
+
+    public void setValue(Integer value) {
+      this.value = -1;
+    }
+  }
+
+  private static class NonConflictingSetterSubBean extends ConflictingSetterBean {
+
+    @Override
+    public void setValue(int value) {
+      this.value = value * -1;
+    }
+  }
+
+  private static class GenericSetterBaseBean<T> {
+
+    public T value;
+
+    void setValue(T value) {
+      this.value = value;
+    }
+  }
+
+  private static class ConflictingGenericSetterSubBean<T> extends GenericSetterBaseBean<T> {
+
+    public void setValue(String value) {
+      // wrong setter
+    }
+  }
+
+  private static class NonConflictingGenericSetterSubBean extends GenericSetterBaseBean<String> {
+
+    @Override
+    public void setValue(String value) {
+      this.value = "subsetter:" + value;
+    }
+  }
+
+  private abstract static class GenericTypeIndicatorSubclass<T> extends GenericTypeIndicator<T> {
+
+  }
+
+  private abstract static class NonGenericTypeIndicatorSubclass
+      extends GenericTypeIndicator<GenericBean<String>> {
+
+  }
+
+  private static class NonGenericTypeIndicatorConcreteSubclass
+      extends GenericTypeIndicator<GenericBean<String>> {
+
+  }
+
+  private static class NonGenericTypeIndicatorSubclassConcreteSubclass
+      extends GenericTypeIndicatorSubclass<GenericBean<String>> {
+
   }
 }

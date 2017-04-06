@@ -5,6 +5,7 @@ import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.utilities.ImmutableTree;
 import com.google.firebase.database.core.utilities.Predicate;
 import com.google.firebase.database.snapshot.ChildKey;
+
 import java.util.Set;
 
 /**
@@ -20,8 +21,6 @@ import java.util.Set;
  */
 public class PruneForest {
 
-  private final ImmutableTree<Boolean> pruneForest;
-
   private static final Predicate<Boolean> KEEP_PREDICATE =
       new Predicate<Boolean>() {
         @Override
@@ -29,7 +28,6 @@ public class PruneForest {
           return !prune;
         }
       };
-
   private static final Predicate<Boolean> PRUNE_PREDICATE =
       new Predicate<Boolean>() {
         @Override
@@ -37,9 +35,9 @@ public class PruneForest {
           return prune;
         }
       };
-
   private static final ImmutableTree<Boolean> PRUNE_TREE = new ImmutableTree<>(true);
   private static final ImmutableTree<Boolean> KEEP_TREE = new ImmutableTree<>(false);
+  private final ImmutableTree<Boolean> pruneForest;
 
   public PruneForest() {
     this.pruneForest = ImmutableTree.emptyInstance();

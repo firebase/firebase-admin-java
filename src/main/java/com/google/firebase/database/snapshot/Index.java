@@ -1,9 +1,23 @@
 package com.google.firebase.database.snapshot;
 
 import com.google.firebase.database.core.Path;
+
 import java.util.Comparator;
 
 public abstract class Index implements Comparator<NamedNode> {
+
+  public static Index fromQueryDefinition(String str) {
+    if (str.equals(".value")) {
+      return ValueIndex.getInstance();
+    } else if (str.equals(".key")) {
+      return KeyIndex.getInstance();
+    } else if (str.equals(".priority")) {
+      throw new IllegalStateException(
+          "queryDefinition shouldn't ever be .priority since it's the default");
+    } else {
+      return new PathIndex(new Path(str));
+    }
+  }
 
   public abstract boolean isDefinedOn(Node a);
 
@@ -22,19 +36,6 @@ public abstract class Index implements Comparator<NamedNode> {
   public abstract NamedNode maxPost();
 
   public abstract String getQueryDefinition();
-
-  public static Index fromQueryDefinition(String str) {
-    if (str.equals(".value")) {
-      return ValueIndex.getInstance();
-    } else if (str.equals(".key")) {
-      return KeyIndex.getInstance();
-    } else if (str.equals(".priority")) {
-      throw new IllegalStateException(
-          "queryDefinition shouldn't ever be .priority since it's the default");
-    } else {
-      return new PathIndex(new Path(str));
-    }
-  }
 
   public int compare(NamedNode one, NamedNode two, boolean reverse) {
     if (reverse) {

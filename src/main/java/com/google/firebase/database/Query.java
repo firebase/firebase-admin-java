@@ -1,7 +1,5 @@
 package com.google.firebase.database;
 
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
-
 import com.google.firebase.database.core.ChildEventRegistration;
 import com.google.firebase.database.core.EventRegistration;
 import com.google.firebase.database.core.Path;
@@ -23,6 +21,8 @@ import com.google.firebase.database.snapshot.PriorityUtilities;
 import com.google.firebase.database.snapshot.StringNode;
 import com.google.firebase.database.snapshot.ValueIndex;
 import com.google.firebase.database.utilities.Validation;
+
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
 
 /**
  * The Query class (and its subclass, {@link DatabaseReference}) are used for reading data.
@@ -64,7 +64,8 @@ public class Query {
   }
 
   /**
-   * This method validates that key index has been called with the correct combination of parameters
+   * This method validates that key index has been called with the correct combination of
+   * parameters.
    */
   private void validateQueryEndpoints(QueryParams params) {
     if (params.getIndex().equals(KeyIndex.getInstance())) {
@@ -97,7 +98,7 @@ public class Query {
   }
 
   /**
-   * This method validates that limit has been called with the correct combination or parameters
+   * This method validates that limit has been called with the correct combination or parameters.
    */
   private void validateLimit(QueryParams params) {
     if (params.hasStart() && params.hasEnd() && params.hasLimit() && !params.hasAnchoredLimit()) {
@@ -108,7 +109,7 @@ public class Query {
   }
 
   /**
-   * This method validates that the equalTo call can be made
+   * This method validates that the equalTo call can be made.
    */
   private void validateEqualToCall() {
     if (params.hasStart()) {
@@ -120,7 +121,7 @@ public class Query {
   }
 
   /**
-   * This method validates that only one order by call has been made
+   * This method validates that only one order by call has been made.
    */
   private void validateNoOrderByCall() {
     if (this.orderByCalled) {
@@ -142,7 +143,7 @@ public class Query {
 
   /**
    * Add a listener for child events occurring at this location. When child locations are added,
-   * removed, changed, or moved, the listener will be triggered for the appropriate event
+   * removed, changed, or moved, the listener will be triggered for the appropriate event.
    *
    * @param listener The listener to be called with changes
    * @return A reference to the listener provided. Save this to remove the listener later.
@@ -444,7 +445,7 @@ public class Query {
   }
 
   /**
-   * Create a query constrained to only return child nodes with the given value
+   * Create a query constrained to only return child nodes with the given value.
    *
    * @param value The value to query for
    * @return A query with the new constraint
@@ -455,7 +456,7 @@ public class Query {
   }
 
   /**
-   * Create a query constrained to only return child nodes with the given value
+   * Create a query constrained to only return child nodes with the given value.
    *
    * @param value The value to query for
    * @return A query with the new constraint
@@ -517,7 +518,7 @@ public class Query {
   }
 
   /**
-   * Create a query with limit and anchor it to the start of the window
+   * Create a query with limit and anchor it to the start of the window.
    *
    * @param limit The maximum number of child nodes to return
    * @return A Query with the new constraint
@@ -535,7 +536,7 @@ public class Query {
   }
 
   /**
-   * Create a query with limit and anchor it to the end of the window
+   * Create a query with limit and anchor it to the end of the window.
    *
    * @param limit The maximum number of child nodes to return
    * @return A Query with the new constraint

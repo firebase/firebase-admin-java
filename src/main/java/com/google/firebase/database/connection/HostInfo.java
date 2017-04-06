@@ -17,13 +17,8 @@ public class HostInfo {
     this.secure = secure;
   }
 
-  @Override
-  public String toString() {
-    return "http" + (secure ? "s" : "") + "://" + host;
-  }
-
   public static URI getConnectionUrl(String host, boolean secure, String namespace,
-      String optLastSessionId) {
+                                     String optLastSessionId) {
     String scheme = secure ? "wss" : "ws";
     String url = scheme + "://" + host + "/.ws?ns=" + namespace + "&"
         + VERSION_PARAM + "=" + Constants.WIRE_PROTOCOL_VERSION;
@@ -31,6 +26,11 @@ public class HostInfo {
       url += "&" + LAST_SESSION_ID_PARAM + "=" + optLastSessionId;
     }
     return URI.create(url);
+  }
+
+  @Override
+  public String toString() {
+    return "http" + (secure ? "s" : "") + "://" + host;
   }
 
   public String getHost() {

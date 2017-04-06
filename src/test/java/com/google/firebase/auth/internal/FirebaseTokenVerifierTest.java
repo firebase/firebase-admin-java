@@ -1,8 +1,5 @@
 package com.google.firebase.auth.internal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-
 import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.json.JsonFactory;
@@ -18,6 +15,12 @@ import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.TestOnlyImplFirebaseAuthTrampolines;
 import com.google.firebase.internal.Base64;
 import com.google.firebase.testing.ServiceAccount;
+import org.hamcrest.collection.IsIterableContainingInOrder;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -26,23 +29,17 @@ import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
-import org.hamcrest.collection.IsIterableContainingInOrder;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 /**
  * Unit tests for {@link FirebaseTokenVerifier}.
  */
 public class FirebaseTokenVerifierTest {
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
-
   private static final JsonFactory FACTORY = new GsonFactory();
   private static final FixedClock CLOCK = new FixedClock(2002000L * 1000);
-
   private static final String PROJECT_ID = "proj-test-101";
   private static final String ISSUER = "https://securetoken.google.com/" + PROJECT_ID;
   private static final String PRIVATE_KEY_ID = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd";
@@ -52,7 +49,8 @@ public class FirebaseTokenVerifierTest {
       + "InVpZCI6IjEiLCJhYmMiOiIwMTIzNDU2Nzg5fiFAIyQlXiYqKClfKy09YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4e"
       + "XpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWiwuLzsnW11cXDw-P1wie318In0sInYiOjAsImlhdCI6MTQ4MDk4Mj"
       + "U2NH0.ZWEpoHgIPCAz8Q-cNFBS8jiqClTJ3j27yuRkQo-QxyI";
-
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
   private PrivateKey privateKey;
   private FirebaseTokenVerifier verifier;
 
@@ -139,7 +137,8 @@ public class FirebaseTokenVerifierTest {
     header.setKeyId(null);
     Payload payload = createPayload();
     payload.setAudience(
-        "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit");
+        "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit" +
+            ".v1.IdentityToolkit");
     FirebaseToken token =
         TestOnlyImplFirebaseAuthTrampolines.parseToken(FACTORY, createToken(header, payload));
     thrown.expectMessage("verifyIdToken() expects an ID token, but was given a custom token.");

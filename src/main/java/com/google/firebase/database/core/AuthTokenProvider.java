@@ -3,6 +3,29 @@ package com.google.firebase.database.core;
 /** */
 public interface AuthTokenProvider {
 
+  /**
+   * Gets the token that should currently be used for authenticated requests.
+   *
+   * @param forceRefresh Pass true to get a new, up-to-date token rather than a (potentially
+   * expired) cached token.
+   * @param listener Listener to be notified after operation completes.
+   */
+  void getToken(boolean forceRefresh, GetTokenCompletionListener listener);
+
+  /**
+   * Adds a TokenChangeListener to be notified of token changes.
+   *
+   * @param listener Listener to be added.
+   */
+  void addTokenChangeListener(TokenChangeListener listener);
+
+  /**
+   * Removes a previously-registered TokenChangeListener.
+   *
+   * @param listener Listener to be removed.
+   */
+  void removeTokenChangeListener(TokenChangeListener listener);
+
   /** */
   interface GetTokenCompletionListener {
 
@@ -36,27 +59,4 @@ public interface AuthTokenProvider {
     /** */
     void onTokenChange();
   }
-
-  /**
-   * Gets the token that should currently be used for authenticated requests.
-   *
-   * @param forceRefresh Pass true to get a new, up-to-date token rather than a (potentially
-   * expired) cached token.
-   * @param listener Listener to be notified after operation completes.
-   */
-  void getToken(boolean forceRefresh, GetTokenCompletionListener listener);
-
-  /**
-   * Adds a TokenChangeListener to be notified of token changes.
-   *
-   * @param listener Listener to be added.
-   */
-  void addTokenChangeListener(TokenChangeListener listener);
-
-  /**
-   * Removes a previously-registered TokenChangeListener.
-   *
-   * @param listener Listener to be removed.
-   */
-  void removeTokenChangeListener(TokenChangeListener listener);
 }

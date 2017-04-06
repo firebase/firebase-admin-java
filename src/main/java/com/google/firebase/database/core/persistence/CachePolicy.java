@@ -2,14 +2,6 @@ package com.google.firebase.database.core.persistence;
 
 public interface CachePolicy {
 
-  boolean shouldPrune(long currentSizeBytes, long countOfPrunableQueries);
-
-  boolean shouldCheckCacheSize(long serverUpdatesSinceLastCheck);
-
-  float getPercentOfQueriesToPruneAtOnce();
-
-  long getMaxNumberOfQueriesToKeep();
-
   CachePolicy NONE =
       new CachePolicy() {
         @Override
@@ -32,4 +24,12 @@ public interface CachePolicy {
           return Long.MAX_VALUE;
         }
       };
+
+  boolean shouldPrune(long currentSizeBytes, long countOfPrunableQueries);
+
+  boolean shouldCheckCacheSize(long serverUpdatesSinceLastCheck);
+
+  float getPercentOfQueriesToPruneAtOnce();
+
+  long getMaxNumberOfQueriesToKeep();
 }

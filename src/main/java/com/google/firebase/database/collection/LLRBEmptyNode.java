@@ -11,18 +11,18 @@ public class LLRBEmptyNode<K, V> implements LLRBNode<K, V> {
 
   private static final LLRBEmptyNode INSTANCE = new LLRBEmptyNode();
 
+  private LLRBEmptyNode() {
+
+  }
+
   @SuppressWarnings("unchecked")
   public static <K, V> LLRBEmptyNode<K, V> getInstance() {
     return INSTANCE;
   }
 
-  private LLRBEmptyNode() {
-
-  }
-
   @Override
   public LLRBNode<K, V> copy(K key, V value, Color color, LLRBNode<K, V> left,
-      LLRBNode<K, V> right) {
+                             LLRBNode<K, V> right) {
     return this;
   }
 

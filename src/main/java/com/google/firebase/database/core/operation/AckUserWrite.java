@@ -1,10 +1,10 @@
 package com.google.firebase.database.core.operation;
 
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
-
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.utilities.ImmutableTree;
 import com.google.firebase.database.snapshot.ChildKey;
+
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
 
 public class AckUserWrite extends Operation {
 

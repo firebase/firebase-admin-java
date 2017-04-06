@@ -1,7 +1,5 @@
 package com.google.firebase.database.core.persistence;
 
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
-
 import com.google.firebase.database.core.CompoundWrite;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.UserWriteRecord;
@@ -11,10 +9,13 @@ import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.snapshot.EmptyNode;
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
 
 public class NoopPersistenceManager implements PersistenceManager {
 

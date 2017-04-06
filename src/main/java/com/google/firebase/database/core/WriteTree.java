@@ -7,6 +7,7 @@ import com.google.firebase.database.snapshot.EmptyNode;
 import com.google.firebase.database.snapshot.Index;
 import com.google.firebase.database.snapshot.NamedNode;
 import com.google.firebase.database.snapshot.Node;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -19,18 +20,26 @@ import java.util.Map;
 public class WriteTree {
 
   /**
+   * The default filter used when constructing the tree. Keep everything that's visible.
+   */
+  private static final Predicate<UserWriteRecord> DEFAULT_FILTER =
+      new Predicate<UserWriteRecord>() {
+        @Override
+        public boolean evaluate(UserWriteRecord write) {
+          return write.isVisible();
+        }
+      };
+  /**
    * A tree tracking the result of applying all visible writes. This does not include transactions
    * with applyLocally=false or writes that are completely shadowed by other writes.
    */
   private CompoundWrite visibleWrites;
-
   /**
    * A list of all pending writes, regardless of visibility and shadowed-ness. Used to calculate
    * arbitrary sets of the changed data, such as hidden writes (from transactions) or changes with
    * certain writes excluded (also used by transactions).
    */
   private List<UserWriteRecord> allWrites;
-
   private Long lastWriteId;
 
   /**
@@ -42,6 +51,56 @@ public class WriteTree {
     this.visibleWrites = CompoundWrite.emptyWrite();
     this.allWrites = new ArrayList<>();
     this.lastWriteId = -1L;
+  }
+
+  /**
+   * Static method. Given an array of WriteRecords, a filter for which ones to include, and a path,
+   * construct a merge at that path.
+   */
+  private static CompoundWrite layerTree(
+      List<UserWriteRecord> writes, Predicate<UserWriteRecord> filter, Path treeRoot) {
+    CompoundWrite compoundWrite = CompoundWrite.emptyWrite();
+    for (UserWriteRecord write : writes) {
+      // Theory, a later set will either:
+      // a) abort a relevant transaction, so no need to worry about excluding it from calculating
+      //    that transaction
+      // b) not be relevant to a transaction (separate branch), so again will not affect the data
+      //     for that transaction
+      if (filter.evaluate(write)) {
+        Path writePath = write.getPath();
+        if (write.isOverwrite()) {
+          if (treeRoot.contains(writePath)) {
+            Path relativePath = Path.getRelative(treeRoot, writePath);
+            compoundWrite = compoundWrite.addWrite(relativePath, write.getOverwrite());
+          } else if (writePath.contains(treeRoot)) {
+            compoundWrite =
+                compoundWrite.addWrite(
+                    Path.getEmptyPath(),
+                    write.getOverwrite().getChild(Path.getRelative(writePath, treeRoot)));
+          } else {
+            // There is no overlap between root path and write path, ignore write
+          }
+        } else {
+          if (treeRoot.contains(writePath)) {
+            Path relativePath = Path.getRelative(treeRoot, writePath);
+            compoundWrite = compoundWrite.addWrites(relativePath, write.getMerge());
+          } else if (writePath.contains(treeRoot)) {
+            Path relativePath = Path.getRelative(writePath, treeRoot);
+            if (relativePath.isEmpty()) {
+              compoundWrite = compoundWrite.addWrites(Path.getEmptyPath(), write.getMerge());
+            } else {
+              Node deepNode = write.getMerge().getCompleteNode(relativePath);
+              if (deepNode != null) {
+                compoundWrite = compoundWrite.addWrite(Path.getEmptyPath(), deepNode);
+              }
+            }
+          } else {
+            // There is no overlap between root path and write path, ignore write
+          }
+        }
+      }
+    }
+    return compoundWrite;
   }
 
   /**
@@ -395,66 +454,5 @@ public class WriteTree {
     } else {
       this.lastWriteId = -1L;
     }
-  }
-
-  /**
-   * The default filter used when constructing the tree. Keep everything that's visible.
-   */
-  private static final Predicate<UserWriteRecord> DEFAULT_FILTER =
-      new Predicate<UserWriteRecord>() {
-        @Override
-        public boolean evaluate(UserWriteRecord write) {
-          return write.isVisible();
-        }
-      };
-
-  /**
-   * Static method. Given an array of WriteRecords, a filter for which ones to include, and a path,
-   * construct a merge at that path.
-   */
-  private static CompoundWrite layerTree(
-      List<UserWriteRecord> writes, Predicate<UserWriteRecord> filter, Path treeRoot) {
-    CompoundWrite compoundWrite = CompoundWrite.emptyWrite();
-    for (UserWriteRecord write : writes) {
-      // Theory, a later set will either:
-      // a) abort a relevant transaction, so no need to worry about excluding it from calculating
-      //    that transaction
-      // b) not be relevant to a transaction (separate branch), so again will not affect the data
-      //     for that transaction
-      if (filter.evaluate(write)) {
-        Path writePath = write.getPath();
-        if (write.isOverwrite()) {
-          if (treeRoot.contains(writePath)) {
-            Path relativePath = Path.getRelative(treeRoot, writePath);
-            compoundWrite = compoundWrite.addWrite(relativePath, write.getOverwrite());
-          } else if (writePath.contains(treeRoot)) {
-            compoundWrite =
-                compoundWrite.addWrite(
-                    Path.getEmptyPath(),
-                    write.getOverwrite().getChild(Path.getRelative(writePath, treeRoot)));
-          } else {
-            // There is no overlap between root path and write path, ignore write
-          }
-        } else {
-          if (treeRoot.contains(writePath)) {
-            Path relativePath = Path.getRelative(treeRoot, writePath);
-            compoundWrite = compoundWrite.addWrites(relativePath, write.getMerge());
-          } else if (writePath.contains(treeRoot)) {
-            Path relativePath = Path.getRelative(writePath, treeRoot);
-            if (relativePath.isEmpty()) {
-              compoundWrite = compoundWrite.addWrites(Path.getEmptyPath(), write.getMerge());
-            } else {
-              Node deepNode = write.getMerge().getCompleteNode(relativePath);
-              if (deepNode != null) {
-                compoundWrite = compoundWrite.addWrite(Path.getEmptyPath(), deepNode);
-              }
-            }
-          } else {
-            // There is no overlap between root path and write path, ignore write
-          }
-        }
-      }
-    }
-    return compoundWrite;
   }
 }

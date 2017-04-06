@@ -110,16 +110,6 @@ public abstract class ImmutableSortedMap<K, V> implements Iterable<Map.Entry<K, 
      * don't expect much gain in real world performance.
      */
     static final int ARRAY_TO_RB_TREE_SIZE_THRESHOLD = 25;
-
-    public static <K, V> ImmutableSortedMap<K, V> emptyMap(Comparator<K> comparator) {
-      return new ArraySortedMap<>(comparator);
-    }
-
-    public interface KeyTranslator<C, D> {
-
-      D translate(C key);
-    }
-
     private static final KeyTranslator IDENTITY_TRANSLATOR = new KeyTranslator() {
       @Override
       public Object translate(Object key) {
@@ -127,13 +117,17 @@ public abstract class ImmutableSortedMap<K, V> implements Iterable<Map.Entry<K, 
       }
     };
 
+    public static <K, V> ImmutableSortedMap<K, V> emptyMap(Comparator<K> comparator) {
+      return new ArraySortedMap<>(comparator);
+    }
+
     @SuppressWarnings("unchecked")
     public static <A> KeyTranslator<A, A> identityTranslator() {
       return IDENTITY_TRANSLATOR;
     }
 
     public static <A, B> ImmutableSortedMap<A, B> fromMap(Map<A, B> values,
-        Comparator<A> comparator) {
+                                                          Comparator<A> comparator) {
       if (values.size() < ARRAY_TO_RB_TREE_SIZE_THRESHOLD) {
         return ArraySortedMap.fromMap(values, comparator);
       } else {
@@ -142,13 +136,19 @@ public abstract class ImmutableSortedMap<K, V> implements Iterable<Map.Entry<K, 
     }
 
     public static <A, B, C> ImmutableSortedMap<A, C> buildFrom(List<A> keys, Map<B, C> values,
-        ImmutableSortedMap.Builder.KeyTranslator<A, B> translator,
-        Comparator<A> comparator) {
+                                                               ImmutableSortedMap.Builder
+                                                                   .KeyTranslator<A, B> translator,
+                                                               Comparator<A> comparator) {
       if (keys.size() < ARRAY_TO_RB_TREE_SIZE_THRESHOLD) {
         return ArraySortedMap.buildFrom(keys, values, translator, comparator);
       } else {
         return RBTreeSortedMap.buildFrom(keys, values, translator, comparator);
       }
+    }
+
+    public interface KeyTranslator<C, D> {
+
+      D translate(C key);
     }
   }
 }

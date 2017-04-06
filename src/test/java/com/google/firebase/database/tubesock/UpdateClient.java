@@ -12,6 +12,26 @@ public class UpdateClient {
   private Semaphore completionLatch;
   private AtomicBoolean completed;
 
+  public void update() throws WebSocketException, InterruptedException {
+    Semaphore semaphore = new Semaphore(0);
+    URI uri = URI.create("ws://localhost:9001/updateReports?agent=tubesock");
+    completed = new AtomicBoolean(false);
+    completionLatch = semaphore;
+    WebSocket client = new WebSocket(uri);
+    client.setEventHandler(new Handler());
+    client.connect();
+    semaphore.acquire(1);
+    client.blockClose();
+  }
+
+  private void finish() {
+    if (completed.compareAndSet(false, true)) {
+      completionLatch.release(1);
+    } else {
+      System.err.println("Tried to end a test that was already over");
+    }
+  }
+
   private class Handler implements WebSocketEventHandler {
 
     @Override
@@ -35,26 +55,6 @@ public class UpdateClient {
     @Override
     public void onLogMessage(String msg) {
       System.err.println(msg);
-    }
-  }
-
-  public void update() throws WebSocketException, InterruptedException {
-    Semaphore semaphore = new Semaphore(0);
-    URI uri = URI.create("ws://localhost:9001/updateReports?agent=tubesock");
-    completed = new AtomicBoolean(false);
-    completionLatch = semaphore;
-    WebSocket client = new WebSocket(uri);
-    client.setEventHandler(new Handler());
-    client.connect();
-    semaphore.acquire(1);
-    client.blockClose();
-  }
-
-  private void finish() {
-    if (completed.compareAndSet(false, true)) {
-      completionLatch.release(1);
-    } else {
-      System.err.println("Tried to end a test that was already over");
     }
   }
 }

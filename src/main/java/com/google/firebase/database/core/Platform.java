@@ -5,6 +5,7 @@ import com.google.firebase.database.connection.HostInfo;
 import com.google.firebase.database.connection.PersistentConnection;
 import com.google.firebase.database.core.persistence.PersistenceManager;
 import com.google.firebase.database.logging.Logger;
+
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 

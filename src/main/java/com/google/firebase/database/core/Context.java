@@ -12,6 +12,7 @@ import com.google.firebase.database.core.persistence.PersistenceManager;
 import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.utilities.DefaultRunLoop;
+
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -35,6 +36,28 @@ public class Context {
   private boolean stopped = false;
 
   private Platform platform;
+
+  private static ConnectionAuthTokenProvider wrapAuthTokenProvider(
+      final AuthTokenProvider provider) {
+    return new ConnectionAuthTokenProvider() {
+      @Override
+      public void getToken(boolean forceRefresh, final GetTokenCallback callback) {
+        provider.getToken(
+            forceRefresh,
+            new AuthTokenProvider.GetTokenCompletionListener() {
+              @Override
+              public void onSuccess(String token) {
+                callback.onSuccess(token);
+              }
+
+              @Override
+              public void onError(String error) {
+                callback.onError(error);
+              }
+            });
+      }
+    };
+  }
 
   private Platform getPlatform() {
     if (platform == null) {
@@ -248,27 +271,5 @@ public class Context {
             .append("/")
             .append(platformAgent);
     return sb.toString();
-  }
-
-  private static ConnectionAuthTokenProvider wrapAuthTokenProvider(
-      final AuthTokenProvider provider) {
-    return new ConnectionAuthTokenProvider() {
-      @Override
-      public void getToken(boolean forceRefresh, final GetTokenCallback callback) {
-        provider.getToken(
-            forceRefresh,
-            new AuthTokenProvider.GetTokenCompletionListener() {
-              @Override
-              public void onSuccess(String token) {
-                callback.onSuccess(token);
-              }
-
-              @Override
-              public void onError(String error) {
-                callback.onError(error);
-              }
-            });
-      }
-    };
   }
 }

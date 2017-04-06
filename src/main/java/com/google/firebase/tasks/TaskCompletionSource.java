@@ -6,17 +6,17 @@ import com.google.firebase.internal.NonNull;
  * Provides the ability to create an incomplete {@link Task} and later complete it by either calling
  * {@link #setResult} or {@link #setException}.
  */
-public class TaskCompletionSource<TResult> {
+public class TaskCompletionSource<T> {
 
-  private final TaskImpl<TResult> mTask = new TaskImpl<>();
+  private final TaskImpl<T> task = new TaskImpl<>();
 
   /**
    * Completes the Task with the specified result.
    *
    * @throws IllegalStateException if the Task is already complete
    */
-  public void setResult(TResult result) {
-    mTask.setResult(result);
+  public void setResult(T result) {
+    task.setResult(result);
   }
 
   /**
@@ -25,8 +25,8 @@ public class TaskCompletionSource<TResult> {
    *
    * @return {@code true} if the result was set successfully, {@code false} otherwise
    */
-  public boolean trySetResult(TResult result) {
-    return mTask.trySetResult(result);
+  public boolean trySetResult(T result) {
+    return task.trySetResult(result);
   }
 
   /**
@@ -35,7 +35,7 @@ public class TaskCompletionSource<TResult> {
    * @throws IllegalStateException if the Task is already complete
    */
   public void setException(@NonNull Exception e) {
-    mTask.setException(e);
+    task.setException(e);
   }
 
   /**
@@ -45,14 +45,14 @@ public class TaskCompletionSource<TResult> {
    * @return {@code true} if the exception was set successfully, {@code false} otherwise
    */
   public boolean trySetException(@NonNull Exception e) {
-    return mTask.trySetException(e);
+    return task.trySetException(e);
   }
 
   /**
    * Returns the Task.
    */
   @NonNull
-  public Task<TResult> getTask() {
-    return mTask;
+  public Task<T> getTask() {
+    return task;
   }
 }

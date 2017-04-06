@@ -8,6 +8,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Logger.Level;
 import com.google.firebase.database.ValueEventListener;
+
 import java.util.concurrent.Semaphore;
 
 public class ShutdownExample {

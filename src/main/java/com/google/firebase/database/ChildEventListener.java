@@ -14,7 +14,7 @@ public interface ChildEventListener {
    *
    * @param snapshot An immutable snapshot of the data at the new child location
    * @param previousChildName The key name of sibling location ordered before the new child. This
-   *     will be null for the first child node of a location.
+   * will be null for the first child node of a location.
    */
   void onChildAdded(DataSnapshot snapshot, String previousChildName);
 
@@ -23,7 +23,7 @@ public interface ChildEventListener {
    *
    * @param snapshot An immutable snapshot of the data at the new data at the child location
    * @param previousChildName The key name of sibling location ordered before the child. This will
-   *     be null for the first child node of a location.
+   * be null for the first child node of a location.
    */
   void onChildChanged(DataSnapshot snapshot, String previousChildName);
 
@@ -43,7 +43,7 @@ public interface ChildEventListener {
    *
    * @param snapshot An immutable snapshot of the data at the location that moved.
    * @param previousChildName The key name of the sibling location ordered before the child
-   *     location. This will be null if this location is ordered first.
+   * location. This will be null if this location is ordered first.
    */
   void onChildMoved(DataSnapshot snapshot, String previousChildName);
 

@@ -10,30 +10,6 @@ public class ImmutableSortedSet<T> implements Iterable<T> {
 
   private final ImmutableSortedMap<T, Void> map;
 
-  private static class WrappedEntryIterator<T> implements Iterator<T> {
-
-    final Iterator<Map.Entry<T, Void>> iterator;
-
-    public WrappedEntryIterator(Iterator<Map.Entry<T, Void>> iterator) {
-      this.iterator = iterator;
-    }
-
-    @Override
-    public boolean hasNext() {
-      return this.iterator.hasNext();
-    }
-
-    @Override
-    public T next() {
-      return this.iterator.next().getKey();
-    }
-
-    @Override
-    public void remove() {
-      this.iterator.remove();
-    }
-  }
-
   public ImmutableSortedSet(List<T> elems, Comparator<T> comparator) {
     this.map = ImmutableSortedMap.Builder.buildFrom(elems, Collections.<T, Void>emptyMap(),
         ImmutableSortedMap.Builder.<T>identityTranslator(), comparator);
@@ -107,5 +83,29 @@ public class ImmutableSortedSet<T> implements Iterable<T> {
 
   public T getPredecessorEntry(T entry) {
     return this.map.getPredecessorKey(entry);
+  }
+
+  private static class WrappedEntryIterator<T> implements Iterator<T> {
+
+    final Iterator<Map.Entry<T, Void>> iterator;
+
+    public WrappedEntryIterator(Iterator<Map.Entry<T, Void>> iterator) {
+      this.iterator = iterator;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return this.iterator.hasNext();
+    }
+
+    @Override
+    public T next() {
+      return this.iterator.next().getKey();
+    }
+
+    @Override
+    public void remove() {
+      this.iterator.remove();
+    }
   }
 }

@@ -1,6 +1,7 @@
 package com.google.firebase.database;
 
 import com.google.firebase.database.core.view.Event;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,27 +18,6 @@ import java.util.concurrent.TimeUnit;
  * User: greg Date: 5/28/13 Time: 9:06 AM
  */
 class EventHelper {
-
-  private static class Expectation {
-
-    private Event.EventType eventType;
-    private String location;
-
-    private Expectation(Event.EventType eventType, String location) {
-      this.eventType = eventType;
-      this.location = location;
-    }
-
-    boolean matches(EventRecord record) {
-      return record.getEventType().equals(eventType)
-          && record.getSnapshot().getRef().toString().equals(location);
-    }
-
-    @Override
-    public String toString() {
-      return this.eventType + " => " + this.location;
-    }
-  }
 
   private List<Expectation> lookingFor;
   private Set<DatabaseReference> locations;
@@ -90,7 +70,7 @@ class EventHelper {
     semaphore.acquire(1);
     locations.addAll(toListen);
     List<DatabaseReference> locationList =
-        Arrays.asList(toListen.toArray(new DatabaseReference[]{}));
+        Arrays.asList(toListen.toArray(new DatabaseReference[] {}));
     Collections.sort(
         locationList,
         new Comparator<DatabaseReference>() {
@@ -239,6 +219,27 @@ class EventHelper {
     } else {
       semaphore.release(1);
       return success;
+    }
+  }
+
+  private static class Expectation {
+
+    private Event.EventType eventType;
+    private String location;
+
+    private Expectation(Event.EventType eventType, String location) {
+      this.eventType = eventType;
+      this.location = location;
+    }
+
+    boolean matches(EventRecord record) {
+      return record.getEventType().equals(eventType)
+          && record.getSnapshot().getRef().toString().equals(location);
+    }
+
+    @Override
+    public String toString() {
+      return this.eventType + " => " + this.location;
     }
   }
 }

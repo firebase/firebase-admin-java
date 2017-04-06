@@ -1,11 +1,5 @@
 package com.google.firebase.database;
 
-import static com.google.firebase.database.TestHelpers.fromSingleQuotedString;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.fail;
-
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseCredentials;
@@ -16,15 +10,44 @@ import com.google.firebase.database.core.persistence.MockPersistenceStorageEngin
 import com.google.firebase.database.core.persistence.PersistenceManager;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.testing.ServiceAccount;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static com.google.firebase.database.TestHelpers.fromSingleQuotedString;
+import static org.junit.Assert.*;
+
 public class FirebaseDatabaseTestIT {
+
+  private static DatabaseReference rootRefWithEngine(MockPersistenceStorageEngine engine) {
+    DatabaseConfig config = TestHelpers.newTestConfig();
+    PersistenceManager persistenceManager =
+        new DefaultPersistenceManager(config, engine, CachePolicy.NONE);
+    TestHelpers.setForcedPersistentCache(config, persistenceManager);
+    return TestHelpers.rootWithConfig(config);
+  }
+
+  private static FirebaseApp emptyApp(String appId) {
+    return appForDatabaseUrl(null, appId);
+  }
+
+  private static FirebaseApp appForDatabaseUrl(String url, String name) {
+    return FirebaseApp.initializeApp(
+        new FirebaseOptions.Builder()
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .setDatabaseUrl(url)
+            .build(),
+        name);
+  }
+
+  private static FirebaseDatabase dbForDatabaseUrl(String url, String name) {
+    return FirebaseDatabase.getInstance(appForDatabaseUrl(url, name));
+  }
 
   @Before
   public void setup() {
@@ -226,14 +249,6 @@ public class FirebaseDatabaseTestIT {
     // The default persistence key must be "default" to maintain backwards compatibility
     // with persisted data.
     assertEquals("default", db.getConfig().getSessionPersistenceKey());
-  }
-
-  private static DatabaseReference rootRefWithEngine(MockPersistenceStorageEngine engine) {
-    DatabaseConfig config = TestHelpers.newTestConfig();
-    PersistenceManager persistenceManager =
-        new DefaultPersistenceManager(config, engine, CachePolicy.NONE);
-    TestHelpers.setForcedPersistentCache(config, persistenceManager);
-    return TestHelpers.rootWithConfig(config);
   }
 
   @Test
@@ -547,22 +562,5 @@ public class FirebaseDatabaseTestIT {
     assertEquals(
         Arrays.asList("value-null", "value-1", "value-2", "value-null", "cancel-2", "cancel-1"),
         events);
-  }
-
-  private static FirebaseApp emptyApp(String appId) {
-    return appForDatabaseUrl(null, appId);
-  }
-
-  private static FirebaseApp appForDatabaseUrl(String url, String name) {
-    return FirebaseApp.initializeApp(
-        new FirebaseOptions.Builder()
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
-            .setDatabaseUrl(url)
-            .build(),
-        name);
-  }
-
-  private static FirebaseDatabase dbForDatabaseUrl(String url, String name) {
-    return FirebaseDatabase.getInstance(appForDatabaseUrl(url, name));
   }
 }

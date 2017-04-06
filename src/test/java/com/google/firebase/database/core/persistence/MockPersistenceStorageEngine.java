@@ -1,7 +1,5 @@
 package com.google.firebase.database.core.persistence;
 
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
-
 import com.google.firebase.database.core.CompoundWrite;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.UserWriteRecord;
@@ -11,6 +9,8 @@ import com.google.firebase.database.snapshot.EmptyNode;
 import com.google.firebase.database.snapshot.NamedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.utilities.Utilities;
+import org.codehaus.jackson.map.ObjectMapper;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,18 +20,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.codehaus.jackson.map.ObjectMapper;
+
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
 
 public class MockPersistenceStorageEngine implements PersistenceStorageEngine {
 
   private final Map<Long, UserWriteRecord> writes;
   private final Map<Long, TrackedQuery> trackedQueries;
   private final Map<Long, Set<ChildKey>> trackedQueryKeys;
-  private CompoundWrite serverCache = CompoundWrite.emptyWrite();
-  private boolean insideTransaction = false;
-
   // Minor hack for testing purposes.
   boolean disableTransactionCheck = false;
+  private CompoundWrite serverCache = CompoundWrite.emptyWrite();
+  private boolean insideTransaction = false;
 
   public MockPersistenceStorageEngine() {
     this(Collections.<UserWriteRecord>emptyList());

@@ -8,11 +8,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Stack;
 
-/**
- * User: greg
- * Date: 5/21/13
- * Time: 10:31 AM
- */
 public class ImmutableSortedMapIterator<K, V> implements Iterator<Map.Entry<K, V>> {
 
   private final Stack<LLRBValueNode<K, V>> nodeStack;
@@ -20,7 +15,7 @@ public class ImmutableSortedMapIterator<K, V> implements Iterator<Map.Entry<K, V
   private final boolean isReverse;
 
   ImmutableSortedMapIterator(LLRBNode<K, V> root, K startKey, Comparator<K> comparator,
-      boolean isReverse) {
+                             boolean isReverse) {
     this.nodeStack = new Stack<>();
     this.isReverse = isReverse;
 

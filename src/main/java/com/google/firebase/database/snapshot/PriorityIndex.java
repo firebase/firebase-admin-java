@@ -4,12 +4,12 @@ public class PriorityIndex extends Index {
 
   private static final PriorityIndex INSTANCE = new PriorityIndex();
 
-  public static PriorityIndex getInstance() {
-    return INSTANCE;
-  }
-
   private PriorityIndex() {
     // prevent creation
+  }
+
+  public static PriorityIndex getInstance() {
+    return INSTANCE;
   }
 
   @Override

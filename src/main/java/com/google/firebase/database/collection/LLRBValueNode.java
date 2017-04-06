@@ -9,14 +9,10 @@ import java.util.Comparator;
  */
 abstract public class LLRBValueNode<K, V> implements LLRBNode<K, V> {
 
-  private static Color oppositeColor(LLRBNode node) {
-    return node.isRed() ? Color.BLACK : Color.RED;
-  }
-
   final private K key;
   final private V value;
-  private LLRBNode<K, V> left;
   final private LLRBNode<K, V> right;
+  private LLRBNode<K, V> left;
 
   LLRBValueNode(K key, V value, LLRBNode<K, V> left, LLRBNode<K, V> right) {
     this.key = key;
@@ -25,9 +21,18 @@ abstract public class LLRBValueNode<K, V> implements LLRBNode<K, V> {
     this.right = right == null ? LLRBEmptyNode.<K, V>getInstance() : right;
   }
 
+  private static Color oppositeColor(LLRBNode node) {
+    return node.isRed() ? Color.BLACK : Color.RED;
+  }
+
   @Override
   public LLRBNode<K, V> getLeft() {
     return left;
+  }
+
+  // For use by the builder, which is package local
+  void setLeft(LLRBNode<K, V> left) {
+    this.left = left;
   }
 
   @Override
@@ -48,11 +53,11 @@ abstract public class LLRBValueNode<K, V> implements LLRBNode<K, V> {
   protected abstract Color getColor();
 
   protected abstract LLRBValueNode<K, V> copy(K key, V value, LLRBNode<K, V> left,
-      LLRBNode<K, V> right);
+                                              LLRBNode<K, V> right);
 
   @Override
   public LLRBValueNode<K, V> copy(K key, V value, Color color, LLRBNode<K, V> left,
-      LLRBNode<K, V> right) {
+                                  LLRBNode<K, V> right) {
     K newKey = key == null ? this.key : key;
     V newValue = value == null ? this.value : value;
     LLRBNode<K, V> newLeft = left == null ? this.left : left;
@@ -168,11 +173,6 @@ abstract public class LLRBValueNode<K, V> implements LLRBNode<K, V> {
       }
     }
     return false;
-  }
-
-  // For use by the builder, which is package local
-  void setLeft(LLRBNode<K, V> left) {
-    this.left = left;
   }
 
   private LLRBNode<K, V> removeMin() {

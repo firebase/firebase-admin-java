@@ -17,10 +17,28 @@ import java.util.Map;
  */
 public class ArraySortedMap<K, V> extends ImmutableSortedMap<K, V> {
 
+  private final K[] keys;
+  private final V[] values;
+  private final Comparator<K> comparator;
+
+  @SuppressWarnings("unchecked")
+  public ArraySortedMap(Comparator<K> comparator) {
+    this.keys = (K[]) new Object[0];
+    this.values = (V[]) new Object[0];
+    this.comparator = comparator;
+  }
+
+  @SuppressWarnings("unchecked")
+  private ArraySortedMap(Comparator<K> comparator, K[] keys, V[] values) {
+    this.keys = keys;
+    this.values = values;
+    this.comparator = comparator;
+  }
+
   @SuppressWarnings("unchecked")
   public static <A, B, C> ArraySortedMap<A, C> buildFrom(List<A> keys, Map<B, C> values,
-      Builder.KeyTranslator<A, B> translator,
-      Comparator<A> comparator) {
+                                                         Builder.KeyTranslator<A, B> translator,
+                                                         Comparator<A> comparator) {
     Collections.sort(keys, comparator);
     int size = keys.size();
     A[] keyArray = (A[]) new Object[size];
@@ -40,22 +58,32 @@ public class ArraySortedMap<K, V> extends ImmutableSortedMap<K, V> {
         comparator);
   }
 
-  private final K[] keys;
-  private final V[] values;
-  private final Comparator<K> comparator;
-
   @SuppressWarnings("unchecked")
-  public ArraySortedMap(Comparator<K> comparator) {
-    this.keys = (K[]) new Object[0];
-    this.values = (V[]) new Object[0];
-    this.comparator = comparator;
+  private static <T> T[] removeFromArray(T[] arr, int pos) {
+    int newSize = arr.length - 1;
+    T[] newArray = (T[]) new Object[newSize];
+    System.arraycopy(arr, 0, newArray, 0, pos);
+    System.arraycopy(arr, pos + 1, newArray, pos, newSize - pos);
+    return newArray;
   }
 
   @SuppressWarnings("unchecked")
-  private ArraySortedMap(Comparator<K> comparator, K[] keys, V[] values) {
-    this.keys = keys;
-    this.values = values;
-    this.comparator = comparator;
+  private static <T> T[] addToArray(T[] arr, int pos, T value) {
+    int newSize = arr.length + 1;
+    T[] newArray = (T[]) new Object[newSize];
+    System.arraycopy(arr, 0, newArray, 0, pos);
+    newArray[pos] = value;
+    System.arraycopy(arr, pos, newArray, pos + 1, newSize - pos - 1);
+    return newArray;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T> T[] replaceInArray(T[] arr, int pos, T value) {
+    int size = arr.length;
+    T[] newArray = (T[]) new Object[size];
+    System.arraycopy(arr, 0, newArray, 0, size);
+    newArray[pos] = value;
+    return newArray;
   }
 
   @Override
@@ -176,7 +204,8 @@ public class ArraySortedMap<K, V> extends ImmutableSortedMap<K, V> {
   @Override
   public Iterator<Map.Entry<K, V>> reverseIteratorFrom(K key) {
     int pos = findKeyOrInsertPosition(key);
-    // if there's no exact match, findKeyOrInsertPosition will return the index *after* the closest match, but
+    // if there's no exact match, findKeyOrInsertPosition will return the index *after* the
+    // closest match, but
     // since this is a reverse iterator, we want to start just *before* the closest match.
     if (pos < this.keys.length && this.comparator.compare(this.keys[pos], key) == 0) {
       return iterator(pos, true);
@@ -213,34 +242,6 @@ public class ArraySortedMap<K, V> extends ImmutableSortedMap<K, V> {
   @Override
   public Comparator<K> getComparator() {
     return comparator;
-  }
-
-  @SuppressWarnings("unchecked")
-  private static <T> T[] removeFromArray(T[] arr, int pos) {
-    int newSize = arr.length - 1;
-    T[] newArray = (T[]) new Object[newSize];
-    System.arraycopy(arr, 0, newArray, 0, pos);
-    System.arraycopy(arr, pos + 1, newArray, pos, newSize - pos);
-    return newArray;
-  }
-
-  @SuppressWarnings("unchecked")
-  private static <T> T[] addToArray(T[] arr, int pos, T value) {
-    int newSize = arr.length + 1;
-    T[] newArray = (T[]) new Object[newSize];
-    System.arraycopy(arr, 0, newArray, 0, pos);
-    newArray[pos] = value;
-    System.arraycopy(arr, pos, newArray, pos + 1, newSize - pos - 1);
-    return newArray;
-  }
-
-  @SuppressWarnings("unchecked")
-  private static <T> T[] replaceInArray(T[] arr, int pos, T value) {
-    int size = arr.length;
-    T[] newArray = (T[]) new Object[size];
-    System.arraycopy(arr, 0, newArray, 0, size);
-    newArray[pos] = value;
-    return newArray;
   }
 
   /**

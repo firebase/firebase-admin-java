@@ -13,6 +13,10 @@ import java.util.List;
  */
 public final class Objects {
 
+  private Objects() {
+    throw new AssertionError("Uninstantiable");
+  }
+
   /**
    * Determines whether two possibly-null objects are equal. Returns:
    *
@@ -26,8 +30,8 @@ public final class Objects {
    * <p>This assumes that any non-null objects passed to this function conform to the {@code
    * equals()} contract.
    */
-  public static boolean equal(@Nullable Object a, @Nullable Object b) {
-    return a == b || (a != null && a.equals(b));
+  public static boolean equal(@Nullable Object obj1, @Nullable Object obj2) {
+    return obj1 == obj2 || (obj1 != null && obj1.equals(obj2));
   }
 
   /**
@@ -80,15 +84,15 @@ public final class Objects {
    */
   public static final class ToStringHelper {
 
-    private final List<String> mFieldStrings;
-    private final Object mInstance;
+    private final List<String> fieldStrings;
+    private final Object instance;
 
     /**
      * Use {@link Objects#toStringHelper(Object)} to create an instance.
      */
     private ToStringHelper(Object instance) {
-      mInstance = Preconditions.checkNotNull(instance);
-      mFieldStrings = new ArrayList<>();
+      this.instance = Preconditions.checkNotNull(instance);
+      fieldStrings = new ArrayList<>();
     }
 
     /**
@@ -96,7 +100,7 @@ public final class Objects {
      * is {@code null}, the string {@code "null"} is used.
      */
     public ToStringHelper add(String name, Object value) {
-      mFieldStrings.add(Preconditions.checkNotNull(name) + "=" + String.valueOf(value));
+      fieldStrings.add(Preconditions.checkNotNull(name) + "=" + String.valueOf(value));
       return this;
     }
 
@@ -105,7 +109,7 @@ public final class Objects {
      * string {@code "null"} is used.
      */
     public ToStringHelper addValue(Object value) {
-      mFieldStrings.add(String.valueOf(value));
+      fieldStrings.add(String.valueOf(value));
       return this;
     }
 
@@ -115,20 +119,16 @@ public final class Objects {
     @Override
     public String toString() {
       StringBuilder builder =
-          new StringBuilder(100).append(mInstance.getClass().getSimpleName()).append('{');
+          new StringBuilder(100).append(instance.getClass().getSimpleName()).append('{');
 
-      int numFields = mFieldStrings.size();
+      int numFields = fieldStrings.size();
       for (int i = 0; i < numFields; i++) {
-        builder.append(mFieldStrings.get(i));
+        builder.append(fieldStrings.get(i));
         if (i < (numFields - 1)) {
           builder.append(", ");
         }
       }
       return builder.append('}').toString();
     }
-  }
-
-  private Objects() {
-    throw new AssertionError("Uninstantiable");
   }
 }

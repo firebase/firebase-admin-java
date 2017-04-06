@@ -1,8 +1,5 @@
 package com.google.firebase.auth.internal;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -11,23 +8,22 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.testing.TestUtils;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.util.Map;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 public class FirebaseTokenFactoryTest {
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
-
   private static final JsonFactory FACTORY = new GsonFactory();
-
   private static final String USER_ID = "fuber";
   private static final GenericJson EXTRA_CLAIMS = new GenericJson();
-
   private static final String ISSUER = "test-484@mg-test-1210.iam.gserviceaccount.com";
 
   static {
@@ -36,6 +32,9 @@ public class FirebaseTokenFactoryTest {
         .set("three", "four")
         .setFactory(FACTORY);
   }
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void checkSignatureForToken() throws Exception {

@@ -1,16 +1,15 @@
 package com.google.firebase.database;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
-import java.util.HashMap;
-import java.util.Iterator;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.Iterator;
+
+import static org.junit.Assert.*;
 
 public class DataSnapshotTestIT {
 
@@ -41,13 +40,13 @@ public class DataSnapshotTestIT {
     Iterator<DataSnapshot> iter = snap3.getChildren().iterator();
     assertTrue(iter.hasNext());
 
-    String[] children = new String[]{null, null};
+    String[] children = new String[] {null, null};
     int i = 0;
     for (DataSnapshot child : snap3.getChildren()) {
       children[i] = child.getKey();
       i++;
     }
-    assertArrayEquals(children, new String[]{"a", "b"});
+    assertArrayEquals(children, new String[] {"a", "b"});
   }
 
   @Test

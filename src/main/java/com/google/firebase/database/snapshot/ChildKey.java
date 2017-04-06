@@ -4,14 +4,16 @@ import com.google.firebase.database.utilities.Utilities;
 
 public class ChildKey implements Comparable<ChildKey> {
 
-  private final String key;
-
   private static final ChildKey MIN_KEY = new ChildKey("[MIN_KEY]");
   private static final ChildKey MAX_KEY = new ChildKey("[MAX_KEY]");
-
   // Singleton for priority child keys
   private static final ChildKey PRIORITY_CHILD_KEY = new ChildKey(".priority");
   private static final ChildKey INFO_CHILD_KEY = new ChildKey(".info");
+  private final String key;
+
+  private ChildKey(String key) {
+    this.key = key;
+  }
 
   public static ChildKey getMinName() {
     return MIN_KEY;
@@ -29,8 +31,16 @@ public class ChildKey implements Comparable<ChildKey> {
     return INFO_CHILD_KEY;
   }
 
-  private ChildKey(String key) {
-    this.key = key;
+  public static ChildKey fromString(String key) {
+    Integer intValue = Utilities.tryParseInt(key);
+    if (intValue != null) {
+      return new IntegerChildKey(key, intValue);
+    } else if (key.equals(".priority")) {
+      return PRIORITY_CHILD_KEY;
+    } else {
+      assert !key.contains("/");
+      return new ChildKey(key);
+    }
   }
 
   public String asString() {
@@ -91,18 +101,6 @@ public class ChildKey implements Comparable<ChildKey> {
     }
     ChildKey other = (ChildKey) obj;
     return this.key.equals(other.key);
-  }
-
-  public static ChildKey fromString(String key) {
-    Integer intValue = Utilities.tryParseInt(key);
-    if (intValue != null) {
-      return new IntegerChildKey(key, intValue);
-    } else if (key.equals(".priority")) {
-      return PRIORITY_CHILD_KEY;
-    } else {
-      assert !key.contains("/");
-      return new ChildKey(key);
-    }
   }
 
   private static class IntegerChildKey extends ChildKey {

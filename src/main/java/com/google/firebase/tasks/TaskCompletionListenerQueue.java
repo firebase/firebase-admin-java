@@ -2,6 +2,7 @@ package com.google.firebase.tasks;
 
 import com.google.firebase.internal.GuardedBy;
 import com.google.firebase.internal.NonNull;
+
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Queue;
@@ -9,55 +10,55 @@ import java.util.Queue;
 /**
  * A queue of listeners to call upon {@link Task} completion.
  *
- * @param <TResult> Task result type.
+ * @param <T> Task result type.
  */
-class TaskCompletionListenerQueue<TResult> {
+class TaskCompletionListenerQueue<T> {
 
-  private final Object mLock = new Object();
+  private final Object lock = new Object();
 
   /**
    * Lazily initialized, unbounded queue of listeners to call.
    */
-  @GuardedBy("mLock")
-  private Queue<TaskCompletionListener<TResult>> mQueue;
+  @GuardedBy("lock")
+  private Queue<TaskCompletionListener<T>> queue;
 
   /**
    * Indicates if a flush is already in progress. While this is true, further calls to flush()
    * will do nothing.
    */
-  @GuardedBy("mLock")
-  private boolean mFlushing;
+  @GuardedBy("lock")
+  private boolean flushing;
 
   // TODO(jstembridge): Define behaviour for duplicate listeners.
-  public void add(@NonNull TaskCompletionListener<TResult> listener) {
-    synchronized (mLock) {
-      if (mQueue == null) {
-        mQueue = new ArrayDeque<>();
+  public void add(@NonNull TaskCompletionListener<T> listener) {
+    synchronized (lock) {
+      if (queue == null) {
+        queue = new ArrayDeque<>();
       }
-      mQueue.add(listener);
+      queue.add(listener);
     }
   }
 
-  public boolean removeAll(@NonNull Collection<TaskCompletionListener<TResult>> listeners) {
-    synchronized (mLock) {
-      return mQueue == null || mQueue.removeAll(listeners);
+  public boolean removeAll(@NonNull Collection<TaskCompletionListener<T>> listeners) {
+    synchronized (lock) {
+      return queue == null || queue.removeAll(listeners);
     }
   }
 
-  public void flush(@NonNull Task<TResult> task) {
-    synchronized (mLock) {
-      if (mQueue == null || mFlushing) {
+  public void flush(@NonNull Task<T> task) {
+    synchronized (lock) {
+      if (queue == null || flushing) {
         return;
       }
-      mFlushing = true;
+      flushing = true;
     }
 
     while (true) {
-      TaskCompletionListener<TResult> next;
-      synchronized (mLock) {
-        next = mQueue.poll();
+      TaskCompletionListener<T> next;
+      synchronized (lock) {
+        next = queue.poll();
         if (next == null) {
-          mFlushing = false;
+          flushing = false;
           return;
         }
       }

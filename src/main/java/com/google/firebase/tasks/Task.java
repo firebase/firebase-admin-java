@@ -2,14 +2,15 @@ package com.google.firebase.tasks;
 
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
+
 import java.util.concurrent.Executor;
 
 /**
  * Represents an asynchronous operation.
  *
- * @param <TResult> the type of the result of the operation
+ * @param <T> the type of the result of the operation
  */
-public abstract class Task<TResult> {
+public abstract class Task<T> {
 
   /**
    * Returns {@code true} if the Task is complete; {@code false} otherwise.
@@ -27,7 +28,7 @@ public abstract class Task<TResult> {
    * @throws IllegalStateException if the Task is not yet complete
    * @throws RuntimeExecutionException if the Task failed with an exception
    */
-  public abstract TResult getResult();
+  public abstract T getResult();
 
   /**
    * Gets the result of the Task, if it has already completed.
@@ -36,7 +37,7 @@ public abstract class Task<TResult> {
    * @throws X if the Task failed with an exception of type X
    * @throws RuntimeExecutionException if the Task failed with an exception that was not of type X
    */
-  public abstract <X extends Throwable> TResult getResult(@NonNull Class<X> exceptionType)
+  public abstract <X extends Throwable> T getResult(@NonNull Class<X> exceptionType)
       throws X;
 
   /**
@@ -56,8 +57,8 @@ public abstract class Task<TResult> {
    * @return this Task
    */
   @NonNull
-  public abstract Task<TResult> addOnSuccessListener(
-      @NonNull OnSuccessListener<? super TResult> listener);
+  public abstract Task<T> addOnSuccessListener(
+      @NonNull OnSuccessListener<? super T> listener);
 
   /**
    * Adds a listener that is called if the Task completes successfully.
@@ -70,8 +71,8 @@ public abstract class Task<TResult> {
    * @return this Task
    */
   @NonNull
-  public abstract Task<TResult> addOnSuccessListener(
-      @NonNull Executor executor, @NonNull OnSuccessListener<? super TResult> listener);
+  public abstract Task<T> addOnSuccessListener(
+      @NonNull Executor executor, @NonNull OnSuccessListener<? super T> listener);
 
   /**
    * Adds a listener that is called if the Task fails.
@@ -83,7 +84,7 @@ public abstract class Task<TResult> {
    * @return this Task
    */
   @NonNull
-  public abstract Task<TResult> addOnFailureListener(@NonNull OnFailureListener listener);
+  public abstract Task<T> addOnFailureListener(@NonNull OnFailureListener listener);
 
   /**
    * Adds a listener that is called if the Task fails.
@@ -95,7 +96,7 @@ public abstract class Task<TResult> {
    * @return this Task
    */
   @NonNull
-  public abstract Task<TResult> addOnFailureListener(
+  public abstract Task<T> addOnFailureListener(
       @NonNull Executor executor, @NonNull OnFailureListener listener);
 
   /**
@@ -108,8 +109,8 @@ public abstract class Task<TResult> {
    * @return this Task
    */
   @NonNull
-  public Task<TResult> addOnCompleteListener(
-      @NonNull OnCompleteListener<TResult> listener) {
+  public Task<T> addOnCompleteListener(
+      @NonNull OnCompleteListener<T> listener) {
     throw new UnsupportedOperationException("addOnCompleteListener is not implemented");
   }
 
@@ -123,8 +124,8 @@ public abstract class Task<TResult> {
    * @return this Task
    */
   @NonNull
-  public Task<TResult> addOnCompleteListener(
-      @NonNull Executor executor, @NonNull OnCompleteListener<TResult> listener) {
+  public Task<T> addOnCompleteListener(
+      @NonNull Executor executor, @NonNull OnCompleteListener<T> listener) {
     throw new UnsupportedOperationException("addOnCompleteListener is not implemented");
   }
 
@@ -137,8 +138,8 @@ public abstract class Task<TResult> {
    * <p>The Continuation will be called on a shared thread pool.
    */
   @NonNull
-  public <TContinuationResult> Task<TContinuationResult> continueWith(
-      @NonNull Continuation<TResult, TContinuationResult> continuation) {
+  public <R> Task<R> continueWith(
+      @NonNull Continuation<T, R> continuation) {
     throw new UnsupportedOperationException("continueWith is not implemented");
   }
 
@@ -152,9 +153,9 @@ public abstract class Task<TResult> {
    * @see Continuation#then(Task)
    */
   @NonNull
-  public <TContinuationResult> Task<TContinuationResult> continueWith(
+  public <R> Task<R> continueWith(
       @NonNull Executor executor,
-      @NonNull Continuation<TResult, TContinuationResult> continuation) {
+      @NonNull Continuation<T, R> continuation) {
     throw new UnsupportedOperationException("continueWith is not implemented");
   }
 
@@ -167,8 +168,8 @@ public abstract class Task<TResult> {
    * <p>The Continuation will be called on a shared thread pool.
    */
   @NonNull
-  public <TContinuationResult> Task<TContinuationResult> continueWithTask(
-      @NonNull Continuation<TResult, Task<TContinuationResult>> continuation) {
+  public <R> Task<R> continueWithTask(
+      @NonNull Continuation<T, Task<R>> continuation) {
     throw new UnsupportedOperationException("continueWithTask is not implemented");
   }
 
@@ -182,9 +183,9 @@ public abstract class Task<TResult> {
    * @see Continuation#then(Task)
    */
   @NonNull
-  public <TContinuationResult> Task<TContinuationResult> continueWithTask(
+  public <R> Task<R> continueWithTask(
       @NonNull Executor executor,
-      @NonNull Continuation<TResult, Task<TContinuationResult>> continuation) {
+      @NonNull Continuation<T, Task<R>> continuation) {
     throw new UnsupportedOperationException("continueWithTask is not implemented");
   }
 }

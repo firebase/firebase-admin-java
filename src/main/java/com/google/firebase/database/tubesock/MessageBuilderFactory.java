@@ -18,6 +18,15 @@ import java.util.List;
  */
 class MessageBuilderFactory {
 
+  static Builder builder(byte opcode) {
+    if (opcode == WebSocket.OPCODE_BINARY) {
+      return new BinaryBuilder();
+    } else {
+      // Text
+      return new TextBuilder();
+    }
+  }
+
   interface Builder {
 
     boolean appendBytes(byte[] bytes);
@@ -86,7 +95,8 @@ class MessageBuilderFactory {
 
     @Override
     public boolean appendBytes(byte[] bytes) {
-      // Uncomment if you want slower but more precise decoding. Useful if you're splitting multi-byte utf8 chars
+      // Uncomment if you want slower but more precise decoding. Useful if you're splitting
+      // multi-byte utf8 chars
       // across websocket frames
       //String nextFrame = decodeStringStreaming(bytes);
       String nextFrame = decodeString(bytes);
@@ -178,15 +188,6 @@ class MessageBuilderFactory {
       } else {
         return ByteBuffer.wrap(bytes);
       }
-    }
-  }
-
-  static Builder builder(byte opcode) {
-    if (opcode == WebSocket.OPCODE_BINARY) {
-      return new BinaryBuilder();
-    } else {
-      // Text
-      return new TextBuilder();
     }
   }
 }

@@ -4,6 +4,7 @@ import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.util.Key;
+
 import java.io.IOException;
 import java.util.Map;
 
@@ -17,6 +18,29 @@ public final class FirebaseToken {
 
   FirebaseToken(FirebaseTokenImpl token) {
     this.token = token;
+  }
+
+  static FirebaseToken parse(JsonFactory jsonFactory, String tokenString)
+      throws IOException {
+    try {
+      JsonWebSignature jws =
+          JsonWebSignature.parser(jsonFactory)
+              .setPayloadClass(FirebaseTokenImpl.Payload.class)
+              .parse(tokenString);
+      return new FirebaseToken(
+          new FirebaseTokenImpl(
+              jws.getHeader(),
+              (FirebaseTokenImpl.Payload) jws.getPayload(),
+              jws.getSignatureBytes(),
+              jws.getSignedContentBytes()));
+    } catch (IOException e) {
+      throw new IOException(
+          "Decoding Firebase ID token failed. Make sure you passed the entire string JWT which "
+              + "represents an ID token. See https://firebase.google.com/docs/auth/admin/"
+              + "verify-id-tokens for details on how to retrieve an ID token.",
+          e);
+    }
+
   }
 
   /**
@@ -72,29 +96,6 @@ public final class FirebaseToken {
     return token;
   }
 
-  static FirebaseToken parse(JsonFactory jsonFactory, String tokenString)
-      throws IOException {
-    try {
-      JsonWebSignature jws =
-          JsonWebSignature.parser(jsonFactory)
-              .setPayloadClass(FirebaseTokenImpl.Payload.class)
-              .parse(tokenString);
-      return new FirebaseToken(
-          new FirebaseTokenImpl(
-              jws.getHeader(),
-              (FirebaseTokenImpl.Payload) jws.getPayload(),
-              jws.getSignatureBytes(),
-              jws.getSignedContentBytes()));
-    } catch (IOException e) {
-      throw new IOException(
-          "Decoding Firebase ID token failed. Make sure you passed the entire string JWT which "
-              + "represents an ID token. See https://firebase.google.com/docs/auth/admin/"
-              + "verify-id-tokens for details on how to retrieve an ID token.",
-          e);
-    }
-
-  }
-
   static class FirebaseTokenImpl extends IdToken {
 
     FirebaseTokenImpl(
@@ -133,7 +134,7 @@ public final class FirebaseToken {
       private boolean emailVerified;
 
       /**
-       * User's Display Name
+       * User's Display Name.
        */
       @Key
       private String name;

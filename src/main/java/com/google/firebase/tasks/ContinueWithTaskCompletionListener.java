@@ -1,44 +1,45 @@
 package com.google.firebase.tasks;
 
 import com.google.firebase.internal.NonNull;
+
 import java.util.concurrent.Executor;
 
 /**
  * A {@link TaskCompletionListener} that wraps a {@link Continuation} that returns a {@link Task}.
  */
-class ContinueWithTaskCompletionListener<TResult, TContinuationResult> implements
-    TaskCompletionListener<TResult>, OnSuccessListener<TContinuationResult>, OnFailureListener {
+class ContinueWithTaskCompletionListener<T, R> implements
+    TaskCompletionListener<T>, OnSuccessListener<R>, OnFailureListener {
 
-  private final Executor mExecutor;
-  private final Continuation<TResult, Task<TContinuationResult>> mContinuation;
-  private final TaskImpl<TContinuationResult> mContinuationTask;
+  private final Executor executor;
+  private final Continuation<T, Task<R>> continuation;
+  private final TaskImpl<R> continuationTask;
 
   public ContinueWithTaskCompletionListener(
       @NonNull Executor executor,
-      @NonNull Continuation<TResult, Task<TContinuationResult>> continuation,
-      @NonNull TaskImpl<TContinuationResult> continuationTask) {
-    mExecutor = executor;
-    mContinuation = continuation;
-    mContinuationTask = continuationTask;
+      @NonNull Continuation<T, Task<R>> continuation,
+      @NonNull TaskImpl<R> continuationTask) {
+    this.executor = executor;
+    this.continuation = continuation;
+    this.continuationTask = continuationTask;
   }
 
   @Override
-  public void onComplete(@NonNull final Task<TResult> task) {
-    mExecutor.execute(new Runnable() {
+  public void onComplete(@NonNull final Task<T> task) {
+    executor.execute(new Runnable() {
       @Override
       public void run() {
-        Task<TContinuationResult> resultTask;
+        Task<R> resultTask;
         try {
-          resultTask = mContinuation.then(task);
+          resultTask = continuation.then(task);
         } catch (RuntimeExecutionException e) {
           if (e.getCause() instanceof Exception) {
-            mContinuationTask.setException((Exception) e.getCause());
+            continuationTask.setException((Exception) e.getCause());
           } else {
-            mContinuationTask.setException(e);
+            continuationTask.setException(e);
           }
           return;
         } catch (Exception e) {
-          mContinuationTask.setException(e);
+          continuationTask.setException(e);
           return;
         }
 
@@ -56,13 +57,13 @@ class ContinueWithTaskCompletionListener<TResult, TContinuationResult> implement
   }
 
   @Override
-  public void onSuccess(TContinuationResult result) {
-    mContinuationTask.setResult(result);
+  public void onSuccess(R result) {
+    continuationTask.setResult(result);
   }
 
   @Override
   public void onFailure(@NonNull Exception e) {
-    mContinuationTask.setException(e);
+    continuationTask.setException(e);
   }
 
   @Override

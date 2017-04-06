@@ -4,6 +4,13 @@ import com.google.firebase.database.core.Path;
 
 public interface Event {
 
+  Path getPath();
+
+  void fire();
+
+  @Override
+  String toString();
+
   /** */
   enum EventType {
     // The order is important here and reflects the order events should be raised in
@@ -13,11 +20,4 @@ public interface Event {
     CHILD_CHANGED,
     VALUE
   }
-
-  Path getPath();
-
-  void fire();
-
-  @Override
-  String toString();
 }
