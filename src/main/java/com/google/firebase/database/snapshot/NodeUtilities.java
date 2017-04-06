@@ -1,0 +1,109 @@
+package com.google.firebase.database.snapshot;
+
+import com.google.firebase.database.DatabaseException;
+import com.google.firebase.database.collection.ImmutableSortedMap;
+import com.google.firebase.database.core.ServerValues;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Utility functions to convert Node data to and from JSON.
+ */
+public class NodeUtilities {
+
+  public static Node NodeFromJSON(Object value) throws DatabaseException {
+    return NodeFromJSON(value, PriorityUtilities.NullPriority());
+  }
+
+  public static Node NodeFromJSON(Object value, Node priority) throws DatabaseException {
+    try {
+      if (value instanceof Map) {
+        Map mapValue = (Map) value;
+        if (mapValue.containsKey(".priority")) {
+          priority = PriorityUtilities.parsePriority(mapValue.get(".priority"));
+        }
+
+        if (mapValue.containsKey(".value")) {
+          value = mapValue.get(".value");
+        }
+      }
+
+      if (value == null) {
+        return EmptyNode.Empty();
+      } else if (value instanceof String) {
+        return new StringNode((String) value, priority);
+      } else if (value instanceof Long) {
+        return new LongNode((Long) value, priority);
+      } else if (value instanceof Integer) {
+        return new LongNode((long) (Integer) value, priority);
+      } else if (value instanceof Double) {
+        return new DoubleNode((Double) value, priority);
+      } else if (value instanceof Boolean) {
+        return new BooleanNode((Boolean) value, priority);
+      } else if (value instanceof Map || value instanceof List) {
+        Map<ChildKey, Node> childData;
+        // TODO: refine this and use same code to iterate over array and map by building
+        // List<NamedNode>
+        if (value instanceof Map) {
+          Map mapValue = (Map) value;
+          if (mapValue.containsKey(ServerValues.NAME_SUBKEY_SERVERVALUE)) {
+            @SuppressWarnings("unchecked")
+            Node node = new DeferredValueNode(mapValue, priority);
+            return node;
+          } else {
+            childData = new HashMap<>(mapValue.size());
+            @SuppressWarnings("unchecked")
+            Iterator<String> keyIter = (Iterator<String>) mapValue.keySet().iterator();
+            while (keyIter.hasNext()) {
+              String key = keyIter.next();
+              if (!key.startsWith(".")) {
+                Node childNode = NodeFromJSON(mapValue.get(key));
+                if (!childNode.isEmpty()) {
+                  ChildKey childKey = ChildKey.fromString(key);
+                  childData.put(childKey, childNode);
+                }
+              }
+            }
+          }
+        } else { // List
+          List listValue = (List) value;
+          childData = new HashMap<>(listValue.size());
+          for (int i = 0; i < listValue.size(); ++i) {
+            String key = "" + i;
+            Node childNode = NodeFromJSON(listValue.get(i));
+            if (!childNode.isEmpty()) {
+              ChildKey childKey = ChildKey.fromString(key);
+              childData.put(childKey, childNode);
+            }
+          }
+        }
+
+        if (childData.isEmpty()) {
+          return EmptyNode.Empty();
+        } else {
+          ImmutableSortedMap<ChildKey, Node> childSet =
+              ImmutableSortedMap.Builder.fromMap(childData, ChildrenNode.NAME_ONLY_COMPARATOR);
+          return new ChildrenNode(childSet, priority);
+        }
+      } else {
+        throw new DatabaseException(
+            "Failed to parse node with class " + value.getClass().toString());
+      }
+    } catch (ClassCastException e) {
+      throw new DatabaseException("Failed to parse node", e);
+    }
+  }
+
+  public static int nameAndPriorityCompare(
+      ChildKey aKey, Node aPriority, ChildKey bKey, Node bPriority) {
+
+    int priCmp = aPriority.compareTo(bPriority);
+    if (priCmp != 0) {
+      return priCmp;
+    } else {
+      return aKey.compareTo(bKey);
+    }
+  }
+}
