@@ -36,9 +36,11 @@ public class ArraySortedMap<K, V> extends ImmutableSortedMap<K, V> {
   }
 
   @SuppressWarnings("unchecked")
-  public static <A, B, C> ArraySortedMap<A, C> buildFrom(List<A> keys, Map<B, C> values,
-                                                         Builder.KeyTranslator<A, B> translator,
-                                                         Comparator<A> comparator) {
+  public static <A, B, C> ArraySortedMap<A, C> buildFrom(
+      List<A> keys,
+      Map<B, C> values,
+      Builder.KeyTranslator<A, B> translator,
+      Comparator<A> comparator) {
     Collections.sort(keys, comparator);
     int size = keys.size();
     A[] keyArray = (A[]) new Object[size];
@@ -54,8 +56,8 @@ public class ArraySortedMap<K, V> extends ImmutableSortedMap<K, V> {
   }
 
   public static <K, V> ArraySortedMap<K, V> fromMap(Map<K, V> map, Comparator<K> comparator) {
-    return buildFrom(new ArrayList<>(map.keySet()), map, Builder.<K>identityTranslator(),
-        comparator);
+    return buildFrom(
+        new ArrayList<>(map.keySet()), map, Builder.<K>identityTranslator(), comparator);
   }
 
   @SuppressWarnings("unchecked")
@@ -246,8 +248,8 @@ public class ArraySortedMap<K, V> extends ImmutableSortedMap<K, V> {
   }
 
   /**
-   * This does a linear scan which is simpler than a binary search. For a small collection size
-   * this still should be as fast a as binary search.
+   * This does a linear scan which is simpler than a binary search. For a small collection size this
+   * still should be as fast a as binary search.
    */
   private int findKeyOrInsertPosition(K key) {
     int newPos = 0;
@@ -258,8 +260,8 @@ public class ArraySortedMap<K, V> extends ImmutableSortedMap<K, V> {
   }
 
   /**
-   * This does a linear scan which is simpler than a binary search. For a small collection size
-   * this still should be as fast a as binary search.
+   * This does a linear scan which is simpler than a binary search. For a small collection size this
+   * still should be as fast a as binary search.
    */
   private int findKey(K key) {
     int i = 0;

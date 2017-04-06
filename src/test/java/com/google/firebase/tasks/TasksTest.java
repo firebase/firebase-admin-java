@@ -24,8 +24,7 @@ public class TasksTest {
   private static final int SCHEDULE_DELAY_MS = 50;
   private static final int TIMEOUT_MS = 200;
   private final ScheduledExecutorService mExecutor = Executors.newSingleThreadScheduledExecutor();
-  @Rule
-  public ExpectedException mExpectedException = ExpectedException.none();
+  @Rule public ExpectedException mExpectedException = ExpectedException.none();
 
   @Test
   public void testForResult() throws Exception {

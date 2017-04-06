@@ -27,16 +27,20 @@ public class RBTreeSortedMap<K, V> extends ImmutableSortedMap<K, V> {
     this.comparator = comparator;
   }
 
-  public static <A, B, C> RBTreeSortedMap<A, C> buildFrom(List<A> keys, Map<B, C> values,
-                                                          ImmutableSortedMap.Builder
-                                                              .KeyTranslator<A, B> translator,
-                                                          Comparator<A> comparator) {
+  public static <A, B, C> RBTreeSortedMap<A, C> buildFrom(
+      List<A> keys,
+      Map<B, C> values,
+      ImmutableSortedMap.Builder.KeyTranslator<A, B> translator,
+      Comparator<A> comparator) {
     return Builder.buildFrom(keys, values, translator, comparator);
   }
 
   public static <A, B> RBTreeSortedMap<A, B> fromMap(Map<A, B> values, Comparator<A> comparator) {
-    return Builder.buildFrom(new ArrayList<>(values.keySet()), values,
-        ImmutableSortedMap.Builder.<A>identityTranslator(), comparator);
+    return Builder.buildFrom(
+        new ArrayList<>(values.keySet()),
+        values,
+        ImmutableSortedMap.Builder.<A>identityTranslator(),
+        comparator);
   }
 
   // For testing purposes
@@ -75,16 +79,16 @@ public class RBTreeSortedMap<K, V> extends ImmutableSortedMap<K, V> {
     if (!this.containsKey(key)) {
       return this;
     } else {
-      LLRBNode<K, V> newRoot = root.remove(key, this.comparator)
-          .copy(null, null, LLRBNode.Color.BLACK, null, null);
+      LLRBNode<K, V> newRoot =
+          root.remove(key, this.comparator).copy(null, null, LLRBNode.Color.BLACK, null, null);
       return new RBTreeSortedMap<>(newRoot, this.comparator);
     }
   }
 
   @Override
   public ImmutableSortedMap<K, V> insert(K key, V value) {
-    LLRBNode<K, V> newRoot = root.insert(key, value, this.comparator)
-        .copy(null, null, LLRBNode.Color.BLACK, null, null);
+    LLRBNode<K, V> newRoot =
+        root.insert(key, value, this.comparator).copy(null, null, LLRBNode.Color.BLACK, null, null);
     return new RBTreeSortedMap<>(newRoot, this.comparator);
   }
 
@@ -202,17 +206,18 @@ public class RBTreeSortedMap<K, V> extends ImmutableSortedMap<K, V> {
     private LLRBValueNode<A, C> root;
     private LLRBValueNode<A, C> leaf;
 
-    private Builder(List<A> keys, Map<B, C> values,
-                    ImmutableSortedMap.Builder.KeyTranslator<A, B> translator) {
+    private Builder(
+        List<A> keys, Map<B, C> values, ImmutableSortedMap.Builder.KeyTranslator<A, B> translator) {
       this.keys = keys;
       this.values = values;
       this.keyTranslator = translator;
     }
 
-    public static <A, B, C> RBTreeSortedMap<A, C> buildFrom(List<A> keys, Map<B, C> values,
-                                                            ImmutableSortedMap.Builder
-                                                                .KeyTranslator<A, B> translator,
-                                                            Comparator<A> comparator) {
+    public static <A, B, C> RBTreeSortedMap<A, C> buildFrom(
+        List<A> keys,
+        Map<B, C> values,
+        ImmutableSortedMap.Builder.KeyTranslator<A, B> translator,
+        Comparator<A> comparator) {
       Builder<A, B, C> builder = new Builder<>(keys, values, translator);
       Collections.sort(keys, comparator);
       Iterator<BooleanChunk> iter = (new Base1_2(keys.size())).iterator();
@@ -229,8 +234,7 @@ public class RBTreeSortedMap<K, V> extends ImmutableSortedMap<K, V> {
         }
       }
       return new RBTreeSortedMap<>(
-          builder.root == null ? LLRBEmptyNode.<A, C>getInstance() : builder.root,
-          comparator);
+          builder.root == null ? LLRBEmptyNode.<A, C>getInstance() : builder.root, comparator);
     }
 
     private C getValue(A key) {
@@ -277,11 +281,11 @@ public class RBTreeSortedMap<K, V> extends ImmutableSortedMap<K, V> {
       public int chunkSize;
     }
 
+    // CSOFF: TypeName
     static class Base1_2 implements Iterable<BooleanChunk> {
 
-      final private int length;
+      private final int length;
       private long value;
-
 
       public Base1_2(int size) {
         int toCalc = size + 1;
@@ -323,5 +327,6 @@ public class RBTreeSortedMap<K, V> extends ImmutableSortedMap<K, V> {
         };
       }
     }
+    // CSON: TypeName
   }
 }

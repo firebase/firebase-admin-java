@@ -66,7 +66,7 @@ public class EventGenerator {
     for (Change change : changes) {
       if (change.getEventType().equals(Event.EventType.CHILD_CHANGED)
           && index.indexedValueChanged(
-          change.getOldIndexedNode().getNode(), change.getIndexedNode().getNode())) {
+              change.getOldIndexedNode().getNode(), change.getIndexedNode().getNode())) {
         moves.add(Change.childMovedChange(change.getChildKey(), change.getIndexedNode()));
       }
     }
@@ -79,8 +79,7 @@ public class EventGenerator {
         events, Event.EventType.CHILD_MOVED, moves, eventRegistrations, eventCache);
     generateEventsForType(
         events, Event.EventType.CHILD_CHANGED, changes, eventRegistrations, eventCache);
-    generateEventsForType(events, Event.EventType.VALUE, changes, eventRegistrations,
-        eventCache);
+    generateEventsForType(events, Event.EventType.VALUE, changes, eventRegistrations, eventCache);
 
     return events;
   }

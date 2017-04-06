@@ -80,20 +80,16 @@ public class PerformanceBenchmarks {
           }
 
           @Override
-          public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
-          }
+          public void onChildChanged(DataSnapshot snapshot, String previousChildName) {}
 
           @Override
-          public void onChildRemoved(DataSnapshot snapshot) {
-          }
+          public void onChildRemoved(DataSnapshot snapshot) {}
 
           @Override
-          public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
-          }
+          public void onChildMoved(DataSnapshot snapshot, String previousChildName) {}
 
           @Override
-          public void onCancelled(DatabaseError error) {
-          }
+          public void onCancelled(DatabaseError error) {}
         };
     ref.startAt("p").endAt("q").addChildEventListener(listener);
 
@@ -164,24 +160,19 @@ public class PerformanceBenchmarks {
     ChildEventListener childListener =
         new ChildEventListener() {
           @Override
-          public void onChildAdded(DataSnapshot snapshot, String previousChildName) {
-          }
+          public void onChildAdded(DataSnapshot snapshot, String previousChildName) {}
 
           @Override
-          public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
-          }
+          public void onChildChanged(DataSnapshot snapshot, String previousChildName) {}
 
           @Override
-          public void onChildRemoved(DataSnapshot snapshot) {
-          }
+          public void onChildRemoved(DataSnapshot snapshot) {}
 
           @Override
-          public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
-          }
+          public void onChildMoved(DataSnapshot snapshot, String previousChildName) {}
 
           @Override
-          public void onCancelled(DatabaseError error) {
-          }
+          public void onCancelled(DatabaseError error) {}
         };
     ref.addChildEventListener(childListener);
 
@@ -193,15 +184,13 @@ public class PerformanceBenchmarks {
           }
 
           @Override
-          public void onCancelled(DatabaseError error) {
-          }
+          public void onCancelled(DatabaseError error) {}
         };
 
     ref.addValueEventListener(valueListener);
 
     semaphore.acquire();
-    System.err.println(String.format("Benchmark took %dms", System.currentTimeMillis() -
-        start));
+    System.err.println(String.format("Benchmark took %dms", System.currentTimeMillis() - start));
     ref.removeEventListener(childListener);
     ref.removeEventListener(valueListener);
   }
@@ -223,20 +212,16 @@ public class PerformanceBenchmarks {
           }
 
           @Override
-          public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
-          }
+          public void onChildChanged(DataSnapshot snapshot, String previousChildName) {}
 
           @Override
-          public void onChildRemoved(DataSnapshot snapshot) {
-          }
+          public void onChildRemoved(DataSnapshot snapshot) {}
 
           @Override
-          public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
-          }
+          public void onChildMoved(DataSnapshot snapshot, String previousChildName) {}
 
           @Override
-          public void onCancelled(DatabaseError error) {
-          }
+          public void onCancelled(DatabaseError error) {}
         };
     ref.addChildEventListener(listener);
 

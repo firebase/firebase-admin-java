@@ -7,14 +7,13 @@ import com.google.firebase.internal.NonNull;
 import com.google.firebase.tasks.Task;
 
 /**
- * Provides trampolines into package-private APIs used by components of Firebase.
- * Intentionally scarily-named to dissuade people from actually trying to use the class and to make
- * it less likely to appear in code completion.
+ * Provides trampolines into package-private APIs used by components of Firebase. Intentionally
+ * scarily-named to dissuade people from actually trying to use the class and to make it less likely
+ * to appear in code completion.
  */
 public final class ImplFirebaseTrampolines {
 
-  private ImplFirebaseTrampolines() {
-  }
+  private ImplFirebaseTrampolines() {}
 
   public static FirebaseCredential getCredential(@NonNull FirebaseApp app) {
     return app.getOptions().getCredential();

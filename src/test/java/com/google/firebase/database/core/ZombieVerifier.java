@@ -12,9 +12,7 @@ import java.util.concurrent.Semaphore;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
-/**
- * Verifies that the zombie state matches the current registration list in a Repo
- */
+/** Verifies that the zombie state matches the current registration list in a Repo */
 public class ZombieVerifier {
 
   public static void verifyRepoZombies(List<DatabaseReference> references)

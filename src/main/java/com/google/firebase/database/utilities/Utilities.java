@@ -46,9 +46,8 @@ public class Utilities {
       URI uri = new URI(original);
       // URLEncoding a space turns it into a '+', which is different
       // from our expected behavior. Do a manual replace to fix it.
-      String pathString = uri.getPath().replace("+", " ");
+      final String pathString = uri.getPath().replace("+", " ");
       Validation.validateRootPathString(pathString);
-      Path path = new Path(pathString);
       String scheme = uri.getScheme();
 
       RepoInfo repoInfo = new RepoInfo();
@@ -66,7 +65,7 @@ public class Utilities {
       repoInfo.namespace = parts[0].toLowerCase();
       repoInfo.internalHost = repoInfo.host;
       ParsedUrl parsedUrl = new ParsedUrl();
-      parsedUrl.path = path;
+      parsedUrl.path = new Path(pathString);
       parsedUrl.repoInfo = repoInfo;
       return parsedUrl;
 

@@ -80,7 +80,7 @@ public class WebSocket {
    * @param url The URL of a websocket server
    * @param protocol The protocol to include in the handshake. If null, it will be omitted
    * @param extraHeaders Any extra HTTP headers to be included with the initial request. Pass null
-   * if not extra headers are requested
+   *     if not extra headers are requested
    */
   public WebSocket(URI url, String protocol, Map<String, String> extraHeaders) {
     innerThread =
@@ -125,8 +125,8 @@ public class WebSocket {
   }
 
   /**
-   * Start up the socket. This is non-blocking, it will fire up the threads used by the library
-   * and then trigger the onOpen handler once the connection is established.
+   * Start up the socket. This is non-blocking, it will fire up the threads used by the library and
+   * then trigger the onOpen handler once the connection is established.
    */
   public synchronized void connect() {
     if (state != State.NONE) {
@@ -157,10 +157,6 @@ public class WebSocket {
     send(OPCODE_BINARY, data);
   }
 
-  synchronized void pong(byte[] data) {
-    send(OPCODE_PONG, data);
-  }
-
   private synchronized void send(byte opcode, byte[] data) {
     if (state != State.CONNECTED) {
       // We might have been disconnected on another thread, just report an error
@@ -173,6 +169,10 @@ public class WebSocket {
         close();
       }
     }
+  }
+
+  synchronized void pong(byte[] data) {
+    send(OPCODE_PONG, data);
   }
 
   void handleReceiverError(WebSocketException e) {
@@ -188,6 +188,7 @@ public class WebSocket {
    * closed.
    */
   public synchronized void close() {
+    // CSOFF: MissingSwitchDefaultCheck
     switch (state) {
       case NONE:
         state = State.DISCONNECTED;
@@ -206,6 +207,7 @@ public class WebSocket {
       case DISCONNECTED:
         return; // No-op
     }
+    // CSON: MissingSwitchDefaultCheck
   }
 
   void onCloseOpReceived() {

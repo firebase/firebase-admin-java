@@ -10,7 +10,5 @@ import java.lang.annotation.Target;
  * this annotation.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target( {ElementType.TYPE})
-public @interface IgnoreExtraProperties {
-
-}
+@Target({ElementType.TYPE})
+public @interface IgnoreExtraProperties {}

@@ -4,9 +4,7 @@ import java.net.URI;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * User: greg Date: 7/24/13 Time: 1:42 PM
- */
+/** User: greg Date: 7/24/13 Time: 1:42 PM */
 public class UpdateClient {
 
   private Semaphore completionLatch;
@@ -35,12 +33,10 @@ public class UpdateClient {
   private class Handler implements WebSocketEventHandler {
 
     @Override
-    public void onOpen() {
-    }
+    public void onOpen() {}
 
     @Override
-    public void onMessage(WebSocketMessage message) {
-    }
+    public void onMessage(WebSocketMessage message) {}
 
     @Override
     public void onClose() {

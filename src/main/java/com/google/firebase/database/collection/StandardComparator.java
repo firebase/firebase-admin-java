@@ -6,8 +6,7 @@ public class StandardComparator<A extends Comparable<A>> implements Comparator<A
 
   private static StandardComparator INSTANCE = new StandardComparator();
 
-  private StandardComparator() {
-  }
+  private StandardComparator() {}
 
   @SuppressWarnings("unchecked")
   public static <T extends Comparable<T>> StandardComparator<T> getComparator(Class<T> clazz) {

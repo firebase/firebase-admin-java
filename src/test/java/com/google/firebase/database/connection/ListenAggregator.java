@@ -45,8 +45,7 @@ public class ListenAggregator {
           allParamsStrings = new ArrayList<>();
         }
         String paramsString =
-            queryParams.isDefault() ? "default" : queryParams.getWireProtocolParams()
-                .toString();
+            queryParams.isDefault() ? "default" : queryParams.getWireProtocolParams().toString();
         allParamsStrings.add(paramsString);
         pathToQueryParamStrings.put(queryPath.toString(), allParamsStrings);
       }

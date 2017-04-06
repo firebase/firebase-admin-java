@@ -21,8 +21,8 @@ public class ChildChangeAccumulator {
     Event.EventType type = change.getEventType();
     ChildKey childKey = change.getChildKey();
     assert type == Event.EventType.CHILD_ADDED
-        || type == Event.EventType.CHILD_CHANGED
-        || type == Event.EventType.CHILD_REMOVED
+            || type == Event.EventType.CHILD_CHANGED
+            || type == Event.EventType.CHILD_REMOVED
         : "Only child changes supported for tracking";
     assert !change.getChildKey().isPriorityChildName();
     if (changeMap.containsKey(childKey)) {
@@ -33,15 +33,12 @@ public class ChildChangeAccumulator {
             change.getChildKey(),
             Change.childChangedChange(
                 childKey, change.getIndexedNode(), oldChange.getIndexedNode()));
-      } else if (type == Event.EventType.CHILD_REMOVED && oldType == Event.EventType
-          .CHILD_ADDED) {
+      } else if (type == Event.EventType.CHILD_REMOVED && oldType == Event.EventType.CHILD_ADDED) {
         changeMap.remove(childKey);
       } else if (type == Event.EventType.CHILD_REMOVED
           && oldType == Event.EventType.CHILD_CHANGED) {
-        changeMap.put(childKey, Change.childRemovedChange(childKey, oldChange
-            .getOldIndexedNode()));
-      } else if (type == Event.EventType.CHILD_CHANGED && oldType == Event.EventType
-          .CHILD_ADDED) {
+        changeMap.put(childKey, Change.childRemovedChange(childKey, oldChange.getOldIndexedNode()));
+      } else if (type == Event.EventType.CHILD_CHANGED && oldType == Event.EventType.CHILD_ADDED) {
         changeMap.put(childKey, Change.childAddedChange(childKey, change.getIndexedNode()));
       } else if (type == Event.EventType.CHILD_CHANGED
           && oldType == Event.EventType.CHILD_CHANGED) {

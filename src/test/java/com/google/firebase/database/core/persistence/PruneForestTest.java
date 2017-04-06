@@ -50,8 +50,7 @@ public class PruneForestTest {
     forest = forest.prune(new Path("foo/bar"));
     forest = forest.keep(new Path("foo/bar/baz"));
     forest =
-        forest.keepAll(
-            new Path("foo/bar"), new HashSet<>(Arrays.asList(ck("qux"), ck("quu"))));
+        forest.keepAll(new Path("foo/bar"), new HashSet<>(Arrays.asList(ck("qux"), ck("quu"))));
   }
 
   @Test
@@ -67,8 +66,7 @@ public class PruneForestTest {
     }
     try {
       forest =
-          forest.pruneAll(
-              new Path("foo/bar"), new HashSet<>(Arrays.asList(ck("qux"), ck("quu"))));
+          forest.pruneAll(new Path("foo/bar"), new HashSet<>(Arrays.asList(ck("qux"), ck("quu"))));
       fail("Didn't throw!");
     } catch (Exception ignore) {
       //
@@ -81,14 +79,12 @@ public class PruneForestTest {
     forest = forest.keep(new Path("foo/bar"));
     assertTrue(forest.child(ck("foo")).affectsPath(new Path("bar")));
     assertTrue(forest.child(ck("foo")).child(ck("bar")).affectsPath(new Path("")));
-    assertTrue(forest.child(ck("foo")).child(ck("bar")).child(ck("baz")).affectsPath(new Path
-        ("")));
+    assertTrue(forest.child(ck("foo")).child(ck("bar")).child(ck("baz")).affectsPath(new Path("")));
 
     forest = new PruneForest().prune(new Path("foo/bar"));
     assertTrue(forest.child(ck("foo")).affectsPath(new Path("bar")));
     assertTrue(forest.child(ck("foo")).child(ck("bar")).affectsPath(new Path("")));
-    assertTrue(forest.child(ck("foo")).child(ck("bar")).child(ck("baz")).affectsPath(new Path
-        ("")));
+    assertTrue(forest.child(ck("foo")).child(ck("bar")).child(ck("baz")).affectsPath(new Path("")));
 
     assertFalse(forest.child(ck("non-existent")).affectsPath(new Path("")));
   }
@@ -109,8 +105,7 @@ public class PruneForestTest {
     PruneForest forest = new PruneForest();
     forest = forest.prune(new Path("foo"));
     forest =
-        forest.keepAll(
-            new Path("foo/bar"), new HashSet<>(Arrays.asList(ck("qux"), ck("quu"))));
+        forest.keepAll(new Path("foo/bar"), new HashSet<>(Arrays.asList(ck("qux"), ck("quu"))));
     forest = forest.keep(new Path("foo/baz"));
     forest = forest.keep(new Path("bar"));
     final HashSet<Path> actualPaths = new HashSet<>();

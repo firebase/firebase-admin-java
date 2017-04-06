@@ -15,13 +15,13 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * A ScheduledExecutorService instance that can operate in the Google App Engine environment.
- * The scheduling operations (i.e. operations specific to the ScheduledExecutorService interface)
- * can only be used when background thread support is enabled. These operations will throw
+ * A ScheduledExecutorService instance that can operate in the Google App Engine environment. The
+ * scheduling operations (i.e. operations specific to the ScheduledExecutorService interface) can
+ * only be used when background thread support is enabled. These operations will throw
  * UnsupportedOperationException when invoked in an auto-scaled instance without background thread
  * support. Operations inherited from the ExecutorService and Executor interfaces will work
- * regardless of the background threads support. This implementation is also lazy loaded to
- * prevent unnecessary RPC calls to the GAE backend.
+ * regardless of the background threads support. This implementation is also lazy loaded to prevent
+ * unnecessary RPC calls to the GAE backend.
  */
 public class GaeScheduledExecutorService implements ScheduledExecutorService {
 
@@ -51,13 +51,14 @@ public class GaeScheduledExecutorService implements ScheduledExecutorService {
   }
 
   private ScheduledExecutorService ensureScheduledExecutorService() {
-    ScheduledExecutorService scheduledExecutorService = ensureExecutorWrapper()
-        .getScheduledExecutorService();
+    ScheduledExecutorService scheduledExecutorService =
+        ensureExecutorWrapper().getScheduledExecutorService();
     if (scheduledExecutorService != null) {
       return scheduledExecutorService;
     } else {
-      throw new UnsupportedOperationException("ScheduledExecutorService not available. "
-          + "A manually-scaled instance is required when running the Firebase Admin SDK on GAE.");
+      throw new UnsupportedOperationException(
+          "ScheduledExecutorService not available. A manually-scaled instance is "
+          + "required when running the Firebase Admin SDK on GAE.");
     }
   }
 
@@ -72,16 +73,15 @@ public class GaeScheduledExecutorService implements ScheduledExecutorService {
   }
 
   @Override
-  public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period,
-                                                TimeUnit unit) {
+  public ScheduledFuture<?> scheduleAtFixedRate(
+      Runnable command, long initialDelay, long period, TimeUnit unit) {
     return ensureScheduledExecutorService()
         .scheduleAtFixedRate(command, initialDelay, period, unit);
   }
 
   @Override
-  public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long
-      delay,
-                                                   TimeUnit unit) {
+  public ScheduledFuture<?> scheduleWithFixedDelay(
+      Runnable command, long initialDelay, long delay, TimeUnit unit) {
     return ensureScheduledExecutorService()
         .scheduleWithFixedDelay(command, initialDelay, delay, unit);
   }
@@ -108,8 +108,9 @@ public class GaeScheduledExecutorService implements ScheduledExecutorService {
   }
 
   @Override
-  public <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks, long timeout,
-                                       TimeUnit unit) throws InterruptedException {
+  public <T> List<Future<T>> invokeAll(
+      Collection<? extends Callable<T>> tasks, long timeout, TimeUnit unit)
+      throws InterruptedException {
     return ensureExecutorService().invokeAll(tasks, timeout, unit);
   }
 
@@ -155,7 +156,6 @@ public class GaeScheduledExecutorService implements ScheduledExecutorService {
     ensureExecutorService().execute(command);
   }
 
-
   private static class ExecutorWrapper {
 
     private final ExecutorService executorService;
@@ -164,14 +164,18 @@ public class GaeScheduledExecutorService implements ScheduledExecutorService {
     ExecutorWrapper(String threadName) {
       GaeThreadFactory threadFactory = GaeThreadFactory.getInstance();
       if (threadFactory.isUsingBackgroundThreads()) {
-        scheduledExecutorService = new RevivingScheduledExecutor(threadFactory,
-            threadName, true);
+        scheduledExecutorService = new RevivingScheduledExecutor(threadFactory, threadName, true);
         executorService = scheduledExecutorService;
       } else {
         scheduledExecutorService = null;
-        executorService = new ThreadPoolExecutor(0, Integer.MAX_VALUE,
-            0L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
-            threadFactory);
+        executorService =
+            new ThreadPoolExecutor(
+                0,
+                Integer.MAX_VALUE,
+                0L,
+                TimeUnit.SECONDS,
+                new SynchronousQueue<Runnable>(),
+                threadFactory);
       }
     }
 

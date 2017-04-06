@@ -1,5 +1,7 @@
 package com.google.firebase.database.core.view;
 
+import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
+
 import com.google.firebase.database.core.view.filter.IndexedFilter;
 import com.google.firebase.database.core.view.filter.LimitedFilter;
 import com.google.firebase.database.core.view.filter.NodeFilter;
@@ -19,8 +21,6 @@ import com.google.firebase.database.util.JsonMapper;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
-import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
 
 public class QueryParams {
 
@@ -102,16 +102,16 @@ public class QueryParams {
 
   public Node getIndexStartValue() {
     if (!hasStart()) {
-      throw new IllegalArgumentException("Cannot get index start value if start has not "
-          + "been set");
+      throw new IllegalArgumentException(
+          "Cannot get index start value if start has not " + "been set");
     }
     return indexStartValue;
   }
 
   public ChildKey getIndexStartName() {
     if (!hasStart()) {
-      throw new IllegalArgumentException("Cannot get index start name if start has not been"
-          + " set");
+      throw new IllegalArgumentException(
+          "Cannot get index start name if start has not been" + " set");
     }
     if (indexStartName != null) {
       return indexStartName;
@@ -126,16 +126,16 @@ public class QueryParams {
 
   public Node getIndexEndValue() {
     if (!hasEnd()) {
-      throw new IllegalArgumentException("Cannot get index end value if start has not been "
-          + "set");
+      throw new IllegalArgumentException(
+          "Cannot get index end value if start has not been " + "set");
     }
     return indexEndValue;
   }
 
   public ChildKey getIndexEndName() {
     if (!hasEnd()) {
-      throw new IllegalArgumentException("Cannot get index end name if start has not been "
-          + "set");
+      throw new IllegalArgumentException(
+          "Cannot get index end name if start has not been " + "set");
     }
     if (indexEndName != null) {
       return indexEndName;
@@ -245,14 +245,17 @@ public class QueryParams {
           viewFromToAdd = ViewFrom.RIGHT;
         }
       }
+      
+      // CSOFF: MissingSwitchDefaultCheck
       switch (viewFromToAdd) {
         case LEFT:
           queryObject.put(VIEW_FROM, "l");
           break;
         case RIGHT:
           queryObject.put(VIEW_FROM, "r");
-          break;
+          break;        
       }
+      // CSON: MissingSwitchDefaultCheck
     }
     if (!index.equals(PriorityIndex.getInstance())) {
       queryObject.put(INDEX, index.getQueryDefinition());

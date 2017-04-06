@@ -20,16 +20,13 @@ public class GaeThreadFactory implements ThreadFactory {
   private static final GaeThreadFactory instance = new GaeThreadFactory();
   private final AtomicReference<ThreadFactoryWrapper> threadFactory = new AtomicReference<>(null);
 
-  private GaeThreadFactory() {
-  }
+  private GaeThreadFactory() {}
 
   public static GaeThreadFactory getInstance() {
     return instance;
   }
 
-  /**
-   * Returns whether GaeThreadFactory can be used on this system (true for GAE).
-   */
+  /** Returns whether GaeThreadFactory can be used on this system (true for GAE). */
   public static boolean isAvailable() {
     try {
       Class.forName(GAE_THREAD_MANAGER_CLASS);
@@ -41,17 +38,16 @@ public class GaeThreadFactory implements ThreadFactory {
 
   private static ThreadFactory createBackgroundFactory()
       throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
-      IllegalAccessException {
+          IllegalAccessException {
     Class<?> gaeThreadManager = Class.forName(GAE_THREAD_MANAGER_CLASS);
     return (ThreadFactory) gaeThreadManager.getMethod("backgroundThreadFactory").invoke(null);
   }
 
   private static ThreadFactory createRequestScopedFactory()
       throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
-      IllegalAccessException {
+          IllegalAccessException {
     Class<?> gaeThreadManager = Class.forName(GAE_THREAD_MANAGER_CLASS);
-    return (ThreadFactory) gaeThreadManager.getMethod("currentRequestThreadFactory")
-        .invoke(null);
+    return (ThreadFactory) gaeThreadManager.getMethod("currentRequestThreadFactory").invoke(null);
   }
 
   @Override
@@ -64,9 +60,9 @@ public class GaeThreadFactory implements ThreadFactory {
   }
 
   /**
-   * Checks whether background thread support is available in the current environment.
-   * This method forces the ThreadFactory to get fully initialized (if not already initialized),
-   * by running a no-op thread.
+   * Checks whether background thread support is available in the current environment. This method
+   * forces the ThreadFactory to get fully initialized (if not already initialized), by running a
+   * no-op thread.
    *
    * @return true if background thread support is available, and false otherwise.
    */
@@ -79,10 +75,9 @@ public class GaeThreadFactory implements ThreadFactory {
     // Create a no-op thread to force initialize the ThreadFactory implementation.
     // Start the resulting thread, since GAE code seems to expect that.
     initThreadFactory(new Runnable() {
-      @Override
-      public void run() {
-      }
-    }).start();
+          @Override
+          public void run() {}
+        }).start();
     return threadFactory.get().isUsingBackgroundThreads();
   }
 
@@ -102,8 +97,10 @@ public class GaeThreadFactory implements ThreadFactory {
         thread = threadFactory.newThread(r);
         usesBackgroundThreads = true;
       } catch (IllegalStateException e) {
-        Log.w(TAG, "Falling back to GAE's request-scoped threads. Firebase requires "
-            + "manually-scaled instances for most operations.");
+        Log.w(
+            TAG,
+            "Falling back to GAE's request-scoped threads. Firebase requires "
+                + "manually-scaled instances for most operations.");
         threadFactory = createRequestScopedFactory();
         thread = threadFactory.newThread(r);
       }
@@ -111,19 +108,21 @@ public class GaeThreadFactory implements ThreadFactory {
         | InvocationTargetException
         | NoSuchMethodException
         | IllegalAccessException e) {
-      threadFactory = new ThreadFactory() {
-        @Override
-        public Thread newThread(Runnable r) {
-          Log.w(TAG, "Failed to initialize native GAE thread factory. "
-              + "GaeThreadFactory cannot be used in a non-GAE environment.");
-          return null;
-        }
-      };
+      threadFactory =
+          new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+              Log.w(
+                  TAG,
+                  "Failed to initialize native GAE thread factory. "
+                      + "GaeThreadFactory cannot be used in a non-GAE environment.");
+              return null;
+            }
+          };
       thread = null;
     }
 
-    ThreadFactoryWrapper wrapper = new ThreadFactoryWrapper(threadFactory,
-        usesBackgroundThreads);
+    ThreadFactoryWrapper wrapper = new ThreadFactoryWrapper(threadFactory, usesBackgroundThreads);
     this.threadFactory.compareAndSet(null, wrapper);
     return thread;
   }
@@ -147,4 +146,3 @@ public class GaeThreadFactory implements ThreadFactory {
     }
   }
 }
-

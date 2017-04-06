@@ -19,9 +19,7 @@ import java.util.Map;
  */
 public class WriteTree {
 
-  /**
-   * The default filter used when constructing the tree. Keep everything that's visible.
-   */
+  /** The default filter used when constructing the tree. Keep everything that's visible. */
   private static final Predicate<UserWriteRecord> DEFAULT_FILTER =
       new Predicate<UserWriteRecord>() {
         @Override
@@ -40,6 +38,7 @@ public class WriteTree {
    * certain writes excluded (also used by transactions).
    */
   private List<UserWriteRecord> allWrites;
+
   private Long lastWriteId;
 
   /**
@@ -54,8 +53,8 @@ public class WriteTree {
   }
 
   /**
-   * Static method. Given an array of WriteRecords, a filter for which ones to include, and a
-   * path, construct a merge at that path.
+   * Static method. Given an array of WriteRecords, a filter for which ones to include, and a path,
+   * construct a merge at that path.
    */
   private static CompoundWrite layerTree(
       List<UserWriteRecord> writes, Predicate<UserWriteRecord> filter, Path treeRoot) {
@@ -78,8 +77,7 @@ public class WriteTree {
             compoundWrite =
                 compoundWrite.addWrite(
                     Path.getEmptyPath(),
-                    write.getOverwrite().getChild(Path.getRelative(writePath,
-                        treeRoot)));
+                    write.getOverwrite().getChild(Path.getRelative(writePath, treeRoot)));
           } else {
             // There is no overlap between root path and write path, ignore write
           }
@@ -90,13 +88,11 @@ public class WriteTree {
           } else if (writePath.contains(treeRoot)) {
             Path relativePath = Path.getRelative(writePath, treeRoot);
             if (relativePath.isEmpty()) {
-              compoundWrite = compoundWrite.addWrites(Path.getEmptyPath(), write
-                  .getMerge());
+              compoundWrite = compoundWrite.addWrites(Path.getEmptyPath(), write.getMerge());
             } else {
               Node deepNode = write.getMerge().getCompleteNode(relativePath);
               if (deepNode != null) {
-                compoundWrite = compoundWrite.addWrite(Path.getEmptyPath(),
-                    deepNode);
+                compoundWrite = compoundWrite.addWrite(Path.getEmptyPath(), deepNode);
               }
             }
           } else {
@@ -109,16 +105,13 @@ public class WriteTree {
   }
 
   /**
-   * Create a new WriteTreeRef for the given path. For use with a new sync point at the given
-   * path.
+   * Create a new WriteTreeRef for the given path. For use with a new sync point at the given path.
    */
   public WriteTreeRef childWrites(Path path) {
     return new WriteTreeRef(path, this);
   }
 
-  /**
-   * Record a new overwrite from user code.
-   */
+  /** Record a new overwrite from user code. */
   public void addOverwrite(Path path, Node snap, Long writeId, boolean visible) {
     assert writeId > this.lastWriteId; // Stacking an older write on top of newer ones
     this.allWrites.add(new UserWriteRecord(writeId, path, snap, visible));
@@ -128,9 +121,7 @@ public class WriteTree {
     this.lastWriteId = writeId;
   }
 
-  /**
-   * Record a new merge from user code.
-   */
+  /** Record a new merge from user code. */
   public void addMerge(Path path, CompoundWrite changedChildren, Long writeId) {
     assert writeId > this.lastWriteId; // Stacking an older write on top of newer ones
     this.allWrites.add(new UserWriteRecord(writeId, path, changedChildren));
@@ -157,11 +148,11 @@ public class WriteTree {
 
   /**
    * Remove a write (either an overwrite or merge) that has been successfully acknowledge by the
-   * server. Recalculates the tree if necessary. We return whether the write may have been
-   * visible, meaning views need to reevaluate.
+   * server. Recalculates the tree if necessary. We return whether the write may have been visible,
+   * meaning views need to reevaluate.
    *
    * @return true if the write may have been visible (meaning we'll need to reevaluate / raise
-   * events as a result).
+   *     events as a result).
    */
   public boolean removeWrite(long writeId) {
     // Note: disabling this check. It could be a transaction that preempted another
@@ -220,8 +211,7 @@ public class WriteTree {
       } else {
         for (Map.Entry<Path, Node> entry : writeToRemove.getMerge()) {
           Path path = entry.getKey();
-          this.visibleWrites = this.visibleWrites.removeWrite(writeToRemove.getPath()
-              .child(path));
+          this.visibleWrites = this.visibleWrites.removeWrite(writeToRemove.getPath().child(path));
         }
       }
       return true;
@@ -229,16 +219,16 @@ public class WriteTree {
   }
 
   /**
-   * Return a complete snapshot for the given path if there's visible write data at that path,
-   * else null. No server data is considered.
+   * Return a complete snapshot for the given path if there's visible write data at that path, else
+   * null. No server data is considered.
    */
   public Node getCompleteWriteData(Path path) {
     return this.visibleWrites.getCompleteNode(path);
   }
 
   /**
-   * Given optional, underlying server data, and an optional set of constraints (exclude some
-   * sets, include hidden writes), attempt to calculate a complete snapshot for the given path
+   * Given optional, underlying server data, and an optional set of constraints (exclude some sets,
+   * include hidden writes), attempt to calculate a complete snapshot for the given path
    */
   public Node calcCompleteEventCache(Path treePath, Node completeServerCache) {
     return this.calcCompleteEventCache(treePath, completeServerCache, new ArrayList<Long>());
@@ -262,8 +252,7 @@ public class WriteTree {
         CompoundWrite subMerge = this.visibleWrites.childCompoundWrite(treePath);
         if (subMerge.isEmpty()) {
           return completeServerCache;
-        } else if (completeServerCache == null && !subMerge.hasCompleteWrite(Path
-            .getEmptyPath())) {
+        } else if (completeServerCache == null && !subMerge.hasCompleteWrite(Path.getEmptyPath())) {
           // We wouldn't have a complete snapshot, since there's no underlying data and
           // no complete
           // shadow
@@ -296,15 +285,12 @@ public class WriteTree {
                 public boolean evaluate(UserWriteRecord write) {
                   return (write.isVisible() || includeHiddenWrites)
                       && (!writeIdsToExclude.contains(write.getWriteId()))
-                      && (write.getPath().contains(treePath) || treePath.contains
-                      (write.getPath()));
+                      && (write.getPath().contains(treePath) || treePath.contains(write.getPath()));
                 }
               };
           Node layeredCache;
-          CompoundWrite mergeAtPath = WriteTree.layerTree(this.allWrites, filter,
-              treePath);
-          layeredCache = completeServerCache != null ? completeServerCache : EmptyNode
-              .Empty();
+          CompoundWrite mergeAtPath = WriteTree.layerTree(this.allWrites, filter, treePath);
+          layeredCache = completeServerCache != null ? completeServerCache : EmptyNode.Empty();
           return mergeAtPath.apply(layeredCache);
         }
       }
@@ -324,8 +310,7 @@ public class WriteTree {
         // we're shadowing everything. Return the children.
         for (NamedNode childEntry : topLevelSet) {
           completeChildren =
-              completeChildren.updateImmediateChild(childEntry.getName(), childEntry
-                  .getNode());
+              completeChildren.updateImmediateChild(childEntry.getName(), childEntry.getNode());
         }
       }
       return completeChildren;
@@ -336,14 +321,12 @@ public class WriteTree {
       // updates
       CompoundWrite merge = this.visibleWrites.childCompoundWrite(treePath);
       for (NamedNode entry : completeServerChildren) {
-        Node node = merge.childCompoundWrite(new Path(entry.getName())).apply(entry
-            .getNode());
+        Node node = merge.childCompoundWrite(new Path(entry.getName())).apply(entry.getNode());
         completeChildren = completeChildren.updateImmediateChild(entry.getName(), node);
       }
       // Add any complete children we have from the set
       for (NamedNode node : merge.getCompleteChildren()) {
-        completeChildren = completeChildren.updateImmediateChild(node.getName(), node
-            .getNode());
+        completeChildren = completeChildren.updateImmediateChild(node.getName(), node.getNode());
       }
       return completeChildren;
     }
@@ -420,9 +403,9 @@ public class WriteTree {
   }
 
   /**
-   * Returns a node if there is a complete overwrite for this path. More specifically, if there is
-   * a write at a higher path, this will return the child of that write relative to the write and
-   * this path. Returns null if there is no write at this path.
+   * Returns a node if there is a complete overwrite for this path. More specifically, if there is a
+   * write at a higher path, this will return the child of that write relative to the write and this
+   * path. Returns null if there is no write at this path.
    */
   public Node shadowingWrite(Path path) {
     return this.visibleWrites.getCompleteNode(path);
@@ -468,9 +451,7 @@ public class WriteTree {
     }
   }
 
-  /**
-   * Re-layer the writes and merges into a tree so we can efficiently calculate event snapshots
-   */
+  /** Re-layer the writes and merges into a tree so we can efficiently calculate event snapshots */
   private void resetTree() {
     this.visibleWrites =
         WriteTree.layerTree(this.allWrites, WriteTree.DEFAULT_FILTER, Path.getEmptyPath());

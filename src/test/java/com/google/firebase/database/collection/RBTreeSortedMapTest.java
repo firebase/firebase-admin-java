@@ -64,8 +64,7 @@ public class RBTreeSortedMapTest {
 
   @Test
   public void createNode() {
-    ImmutableSortedMap<String, Integer> map =
-        new RBTreeSortedMap<>(StringComparator);
+    ImmutableSortedMap<String, Integer> map = new RBTreeSortedMap<>(StringComparator);
     map = map.insert("a", 1);
 
     RBTreeSortedMap<String, Integer> rbMap = (RBTreeSortedMap<String, Integer>) map;
@@ -152,8 +151,7 @@ public class RBTreeSortedMapTest {
     for (Map<Integer, Integer> any : someMaps(integers(), integers())) {
       List<Integer> expectedKeys = new ArrayList<>(any.keySet());
       Integer fromKey =
-          (expectedKeys.isEmpty() || booleans().next()) ? integers().next() : expectedKeys
-              .get(0);
+          (expectedKeys.isEmpty() || booleans().next()) ? integers().next() : expectedKeys.get(0);
       Collections.sort(expectedKeys);
 
       Iterator<Integer> iterator = expectedKeys.iterator();
@@ -198,8 +196,7 @@ public class RBTreeSortedMapTest {
     for (Map<Integer, Integer> any : someMaps(integers(), integers())) {
       List<Integer> expectedKeys = new ArrayList<>(any.keySet());
       Integer fromKey =
-          (expectedKeys.isEmpty() || booleans().next()) ? integers().next() : expectedKeys
-              .get(0);
+          (expectedKeys.isEmpty() || booleans().next()) ? integers().next() : expectedKeys.get(0);
       Collections.sort(expectedKeys);
       Collections.reverse(expectedKeys);
 
@@ -286,5 +283,4 @@ public class RBTreeSortedMapTest {
     Assert.assertFalse(map.equals(copy.insert(copy.getMaxKey() + 1, 1)));
     Assert.assertFalse(map.equals(arraycopy.remove(arraycopy.getMaxKey())));
   }
-
 }

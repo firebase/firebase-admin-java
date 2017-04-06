@@ -39,8 +39,7 @@ public class FirebaseDatabaseTestIT {
   private static FirebaseApp appForDatabaseUrl(String url, String name) {
     return FirebaseApp.initializeApp(
         new FirebaseOptions.Builder()
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream
-                ()))
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
             .setDatabaseUrl(url)
             .build(),
         name);
@@ -386,7 +385,7 @@ public class FirebaseDatabaseTestIT {
     FirebaseDatabase app = ref.getDatabase();
 
     new WriteFuture(
-        ref, fromSingleQuotedString("{'foo': 'foo-value', 'bar': {'qux': 'qux-value'}}"))
+            ref, fromSingleQuotedString("{'foo': 'foo-value', 'bar': {'qux': 'qux-value'}}"))
         .timedGet();
 
     final List<Object> fooValues = new ArrayList<>();
@@ -402,8 +401,7 @@ public class FirebaseDatabaseTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     ref.child("bar/quu")
@@ -415,8 +413,7 @@ public class FirebaseDatabaseTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     ref.child("bar/qux")
@@ -428,8 +425,7 @@ public class FirebaseDatabaseTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     app.goOffline();
@@ -516,8 +512,7 @@ public class FirebaseDatabaseTestIT {
           }
 
           @Override
-          public void onCancelled(DatabaseError error) {
-          }
+          public void onCancelled(DatabaseError error) {}
         });
 
     // Make sure the first value event is fired

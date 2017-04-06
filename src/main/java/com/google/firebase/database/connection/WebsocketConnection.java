@@ -202,16 +202,14 @@ class WebsocketConnection {
       if (keepAlive != null) {
         keepAlive.cancel(false);
         if (logger.logsDebug()) {
-          logger.debug("Reset keepAlive. Remaining: " + keepAlive.getDelay(TimeUnit
-              .MILLISECONDS));
+          logger.debug("Reset keepAlive. Remaining: " + keepAlive.getDelay(TimeUnit.MILLISECONDS));
         }
       } else {
         if (logger.logsDebug()) {
           logger.debug("Reset keepAlive");
         }
       }
-      keepAlive = executorService.schedule(nop(), KEEP_ALIVE_TIMEOUT_MS, TimeUnit
-          .MILLISECONDS);
+      keepAlive = executorService.schedule(nop(), KEEP_ALIVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
     }
   }
 

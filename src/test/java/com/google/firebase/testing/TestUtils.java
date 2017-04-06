@@ -16,9 +16,7 @@ import java.util.Map;
 
 import static com.google.firebase.internal.Preconditions.checkNotNull;
 
-/**
- * Test Utils for use by all tests.
- */
+/** Test Utils for use by all tests. */
 public class TestUtils {
 
   // These constants are also used for the ServiceAccounts.

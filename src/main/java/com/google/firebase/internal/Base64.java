@@ -20,49 +20,36 @@ import java.io.UnsupportedEncodingException;
 /* TODO(depoll): clear use of this class with someone */
 
 /**
- * Utilities for encoding and decoding the Base64 representation of
- * binary data.  See RFCs <a
+ * Utilities for encoding and decoding the Base64 representation of binary data. See RFCs <a
  * href="http://www.ietf.org/rfc/rfc2045.txt">2045</a> and <a
  * href="http://www.ietf.org/rfc/rfc3548.txt">3548</a>.
  */
 public class Base64 {
 
-  /**
-   * Default values for encoder/decoder flags.
-   */
+  /** Default values for encoder/decoder flags. */
   public static final int DEFAULT = 0;
 
-  /**
-   * Encoder flag bit to omit the padding '=' characters at the end
-   * of the output (if any).
-   */
+  /** Encoder flag bit to omit the padding '=' characters at the end of the output (if any). */
   public static final int NO_PADDING = 1;
 
-  /**
-   * Encoder flag bit to omit all line terminators (i.e., the output
-   * will be on one long line).
-   */
+  /** Encoder flag bit to omit all line terminators (i.e., the output will be on one long line). */
   public static final int NO_WRAP = 2;
 
   /**
-   * Encoder flag bit to indicate lines should be terminated with a
-   * CRLF pair instead of just an LF.  Has no effect if {@code
-   * NO_WRAP} is specified as well.
+   * Encoder flag bit to indicate lines should be terminated with a CRLF pair instead of just an LF.
+   * Has no effect if {@code NO_WRAP} is specified as well.
    */
   public static final int CRLF = 4;
 
   /**
-   * Encoder/decoder flag bit to indicate using the "URL and
-   * filename safe" variant of Base64 (see RFC 3548 section 4) where
-   * {@code -} and {@code _} are used in place of {@code +} and
-   * {@code /}.
+   * Encoder/decoder flag bit to indicate using the "URL and filename safe" variant of Base64 (see
+   * RFC 3548 section 4) where {@code -} and {@code _} are used in place of {@code +} and {@code /}.
    */
   public static final int URL_SAFE = 8;
 
   /**
-   * Flag to pass to {@link Base64OutputStream} to indicate that it
-   * should not close the output stream it is wrapping when it
-   * itself is closed.
+   * Flag to pass to {@link Base64OutputStream} to indicate that it should not close the output
+   * stream it is wrapping when it itself is closed.
    */
   public static final int NO_CLOSE = 16;
 
@@ -70,23 +57,21 @@ public class Base64 {
   //  shared code
   //  --------------------------------------------------------
 
-  private Base64() {
-  }   // don't instantiate
+  private Base64() {} // don't instantiate
 
   //  --------------------------------------------------------
   //  decoding
   //  --------------------------------------------------------
 
   /**
-   * Decode the Base64-encoded data in input and return the data in
-   * a new byte array.
+   * Decode the Base64-encoded data in input and return the data in a new byte array.
    *
-   * <p>The padding '=' characters at the end are considered optional, but
-   * if any are present, there must be the correct number of them.
+   * <p>The padding '=' characters at the end are considered optional, but if any are present, there
+   * must be the correct number of them.
    *
    * @param str the input String to decode, which is converted to bytes using the default charset
    * @param flags controls certain features of the decoded output. Pass {@code DEFAULT} to decode
-   * standard Base64.
+   *     standard Base64.
    * @throws IllegalArgumentException if the input contains incorrect padding
    */
   public static byte[] decode(String str, int flags) {
@@ -94,15 +79,14 @@ public class Base64 {
   }
 
   /**
-   * Decode the Base64-encoded data in input and return the data in
-   * a new byte array.
+   * Decode the Base64-encoded data in input and return the data in a new byte array.
    *
-   * <p>The padding '=' characters at the end are considered optional, but
-   * if any are present, there must be the correct number of them.
+   * <p>The padding '=' characters at the end are considered optional, but if any are present, there
+   * must be the correct number of them.
    *
    * @param input the input array to decode
    * @param flags controls certain features of the decoded output. Pass {@code DEFAULT} to decode
-   * standard Base64.
+   *     standard Base64.
    * @throws IllegalArgumentException if the input contains incorrect padding
    */
   public static byte[] decode(byte[] input, int flags) {
@@ -110,17 +94,16 @@ public class Base64 {
   }
 
   /**
-   * Decode the Base64-encoded data in input and return the data in
-   * a new byte array.
+   * Decode the Base64-encoded data in input and return the data in a new byte array.
    *
-   * <p>The padding '=' characters at the end are considered optional, but
-   * if any are present, there must be the correct number of them.
+   * <p>The padding '=' characters at the end are considered optional, but if any are present, there
+   * must be the correct number of them.
    *
    * @param input the data to decode
    * @param offset the position within the input array at which to start
    * @param len the number of bytes of input to decode
    * @param flags controls certain features of the decoded output. Pass {@code DEFAULT} to decode
-   * standard Base64.
+   *     standard Base64.
    * @throws IllegalArgumentException if the input contains incorrect padding
    */
   public static byte[] decode(byte[] input, int offset, int len, int flags) {
@@ -145,12 +128,11 @@ public class Base64 {
   }
 
   /**
-   * Base64-encode the given data and return a newly allocated
-   * String with the result.
+   * Base64-encode the given data and return a newly allocated String with the result.
    *
    * @param input the data to encode
    * @param flags controls certain features of the encoded output. Passing {@code DEFAULT} results
-   * in output that adheres to RFC 2045.
+   *     in output that adheres to RFC 2045.
    */
   public static String encodeToString(byte[] input, int flags) {
     try {
@@ -166,14 +148,13 @@ public class Base64 {
   //  --------------------------------------------------------
 
   /**
-   * Base64-encode the given data and return a newly allocated
-   * String with the result.
+   * Base64-encode the given data and return a newly allocated String with the result.
    *
    * @param input the data to encode
    * @param offset the position within the input array at which to start
    * @param len the number of bytes of input to encode
    * @param flags controls certain features of the encoded output. Passing {@code DEFAULT} results
-   * in output that adheres to RFC 2045.
+   *     in output that adheres to RFC 2045.
    */
   public static String encodeToString(byte[] input, int offset, int len, int flags) {
     try {
@@ -185,154 +166,146 @@ public class Base64 {
   }
 
   /**
-   * Base64-encode the given data and return a newly allocated
-   * byte[] with the result.
+   * Base64-encode the given data and return a newly allocated byte[] with the result.
    *
    * @param input the data to encode
    * @param flags controls certain features of the encoded output. Passing {@code DEFAULT} results
-   * in output that adheres to RFC 2045.
+   *     in output that adheres to RFC 2045.
    */
   public static byte[] encode(byte[] input, int flags) {
     return encode(input, 0, input.length, flags);
   }
 
   /**
-   * Base64-encode the given data and return a newly allocated
-   * byte[] with the result.
+   * Base64-encode the given data and return a newly allocated byte[] with the result.
    *
    * @param input the data to encode
    * @param offset the position within the input array at which to start
    * @param len the number of bytes of input to encode
    * @param flags controls certain features of the encoded output. Passing {@code DEFAULT} results
-   * in output that adheres to RFC 2045.
+   *     in output that adheres to RFC 2045.
    */
   public static byte[] encode(byte[] input, int offset, int len, int flags) {
     Encoder encoder = new Encoder(flags, null);
 
     // Compute the exact length of the array we will produce.
-    int output_len = len / 3 * 4;
+    int outputLen = len / 3 * 4;
 
     // Account for the tail of the data and the padding bytes, if any.
-    if (encoder.do_padding) {
+    if (encoder.doPadding) {
       if (len % 3 > 0) {
-        output_len += 4;
+        outputLen += 4;
       }
     } else {
       switch (len % 3) {
         case 0:
           break;
         case 1:
-          output_len += 2;
+          outputLen += 2;
           break;
         case 2:
-          output_len += 3;
+          outputLen += 3;
           break;
+        default:
+          throw new RuntimeException();
       }
     }
 
     // Account for the newlines, if any.
-    if (encoder.do_newline && len > 0) {
-      output_len += (((len - 1) / (3 * Encoder.LINE_GROUPS)) + 1) *
-          (encoder.do_cr ? 2 : 1);
+    if (encoder.doNewline && len > 0) {
+      outputLen += (((len - 1) / (3 * Encoder.LINE_GROUPS)) + 1) * (encoder.doCr ? 2 : 1);
     }
 
-    encoder.output = new byte[output_len];
+    encoder.output = new byte[outputLen];
     encoder.process(input, offset, len, true);
 
-    assert encoder.op == output_len;
+    assert encoder.op == outputLen;
 
     return encoder.output;
   }
 
-  /* package */ static abstract class Coder {
+  /* package */ abstract static class Coder {
 
     public byte[] output;
     public int op;
 
     /**
-     * Encode/decode another block of input data.  this.output is
-     * provided by the caller, and must be big enough to hold all
-     * the coded data.  On exit, this.opwill be set to the length
-     * of the coded data.
+     * Encode/decode another block of input data. this.output is provided by the caller, and must be
+     * big enough to hold all the coded data. On exit, this.opwill be set to the length of the coded
+     * data.
      *
-     * @param finish true if this is the final call to process for this object.  Will finalize the
-     * coder state and include any final bytes in the output.
+     * @param finish true if this is the final call to process for this object. Will finalize the
+     *     coder state and include any final bytes in the output.
      * @return true if the input so far is good; false if some error has been detected in the input
-     * stream.
+     *     stream.
      */
     public abstract boolean process(byte[] input, int offset, int len, boolean finish);
 
     /**
      * @return the maximum number of bytes a call to process() could produce for the given number of
-     * input bytes.  This may be an overestimate.
+     *     input bytes. This may be an overestimate.
      */
     public abstract int maxOutputSize(int len);
   }
 
   /* package */ static class Decoder extends Coder {
 
-    /**
-     * Lookup table for turning bytes into their position in the
-     * Base64 alphabet.
-     */
-    private static final int DECODE[] = {
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
-        52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -2, -1, -1,
-        -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
-        -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
-        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    /** Lookup table for turning bytes into their position in the Base64 alphabet. */
+    private static final int[] DECODE = {
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
+      52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -2, -1, -1,
+      -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
+      -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+      41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     };
 
     /**
-     * Decode lookup table for the "web safe" variant (RFC 3548
-     * sec. 4) where - and _ replace + and /.
+     * Decode lookup table for the "web safe" variant (RFC 3548 sec. 4) where - and _ replace + and
+     * /.
      */
-    private static final int DECODE_WEBSAFE[] = {
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1,
-        52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -2, -1, -1,
-        -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
-        15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, 63,
-        -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
-        41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    private static final int[] DECODE_WEBSAFE = {
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1,
+      52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -2, -1, -1,
+      -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+      15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, 63,
+      -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40,
+      41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+      -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
     };
 
-    /**
-     * Non-data values in the DECODE arrays.
-     */
+    /** Non-data values in the DECODE arrays. */
     private static final int SKIP = -1;
+
     private static final int EQUALS = -2;
-    final private int[] alphabet;
+    private final int[] alphabet;
     /**
-     * States 0-3 are reading through the next input tuple.
-     * State 4 is having read one '=' and expecting exactly
-     * one more.
-     * State 5 is expecting no more data or padding characters
-     * in the input.
-     * State 6 is the error state; an error has been detected
-     * in the input and no future input can "fix" it.
+     * States 0-3 are reading through the next input tuple. State 4 is having read one '=' and
+     * expecting exactly one more. State 5 is expecting no more data or padding characters in the
+     * input. State 6 is the error state; an error has been detected in the input and no future
+     * input can "fix" it.
      */
-    private int state;   // state number (0 to 6)
+    private int state; // state number (0 to 6)
+
     private int value;
 
     public Decoder(int flags, byte[] output) {
@@ -343,7 +316,7 @@ public class Base64 {
       value = 0;
     }
 
-    /**
+    /** 
      * @return an overestimate for the number of bytes {@code len} bytes could decode to.
      */
     public int maxOutputSize(int len) {
@@ -353,8 +326,8 @@ public class Base64 {
     /**
      * Decode another block of input data.
      *
-     * @return true if the state machine is still healthy.  false if bad base-64 data has been
-     * detected in the input stream.
+     * @return true if the state machine is still healthy. false if bad base-64 data has been
+     *     detected in the input stream.
      */
     public boolean process(byte[] input, int offset, int len, boolean finish) {
       if (this.state == 6) {
@@ -391,11 +364,13 @@ public class Base64 {
         // You can remove this whole block and the output should
         // be the same, just slower.
         if (state == 0) {
-          while (p + 4 <= len &&
-              (value = ((alphabet[input[p] & 0xff] << 18)
-                  | (alphabet[input[p + 1] & 0xff] << 12)
-                  | (alphabet[input[p + 2] & 0xff] << 6)
-                  | (alphabet[input[p + 3] & 0xff]))) >= 0) {
+          while (p + 4 <= len
+              && (value =
+                      ((alphabet[input[p] & 0xff] << 18)
+                          | (alphabet[input[p + 1] & 0xff] << 12)
+                          | (alphabet[input[p + 2] & 0xff] << 6)
+                          | (alphabet[input[p + 3] & 0xff])))
+                  >= 0) {
             output[op + 2] = (byte) value;
             output[op + 1] = (byte) (value >> 8);
             output[op] = (byte) (value >> 16);
@@ -413,7 +388,8 @@ public class Base64 {
         // machine implementation.
 
         int d = alphabet[input[p++] & 0xff];
-
+        
+        // CSOFF: MissingSwitchDefaultCheck
         switch (state) {
           case 0:
             if (d >= 0) {
@@ -488,7 +464,8 @@ public class Base64 {
             }
             break;
         }
-      }
+      } 
+      // CSON: MissingSwitchDefaultCheck      
 
       if (!finish) {
         // We're out of input, but a future call could provide
@@ -502,6 +479,7 @@ public class Base64 {
       // Done reading input.  Now figure out where we are left in
       // the state machine and finish up.
 
+      // CSOFF: MissingSwitchDefaultCheck
       switch (state) {
         case 0:
           // Output length is a multiple of three.  Fine.
@@ -531,6 +509,7 @@ public class Base64 {
           // Fine.
           break;
       }
+      // CSON: MissingSwitchDefaultCheck
 
       this.state = state;
       this.op = op;
@@ -541,56 +520,50 @@ public class Base64 {
   /* package */ static class Encoder extends Coder {
 
     /**
-     * Emit a new line every this many output tuples.  Corresponds to
-     * a 76-character line length (the maximum allowable according to
-     * <a href="http://www.ietf.org/rfc/rfc2045.txt">RFC 2045</a>).
+     * Emit a new line every this many output tuples. Corresponds to a 76-character line length (the
+     * maximum allowable according to <a href="http://www.ietf.org/rfc/rfc2045.txt">RFC 2045</a>).
      */
     public static final int LINE_GROUPS = 19;
 
-    /**
-     * Lookup table for turning Base64 alphabet positions (6 bits)
-     * into output bytes.
-     */
-    private static final byte ENCODE[] = {
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-        'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
-        'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
-        'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/',
+    /** Lookup table for turning Base64 alphabet positions (6 bits) into output bytes. */
+    private static final byte[] ENCODE = {
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+      'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+      'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+      'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/',
     };
 
-    /**
-     * Lookup table for turning Base64 alphabet positions (6 bits)
-     * into output bytes.
-     */
-    private static final byte ENCODE_WEBSAFE[] = {
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
-        'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
-        'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
-        'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_',
+    /** Lookup table for turning Base64 alphabet positions (6 bits) into output bytes. */
+    private static final byte[] ENCODE_WEBSAFE = {
+      'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+      'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f',
+      'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
+      'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_',
     };
-    public final boolean do_padding;
-    public final boolean do_newline;
-    public final boolean do_cr;
+
+    public final boolean doPadding;
+    public final boolean doNewline;
+    public final boolean doCr;
     private final byte[] tail;
-    final private byte[] alphabet;
+    private final byte[] alphabet;
     /* package */ int tailLen;
     private int count;
 
     public Encoder(int flags, byte[] output) {
       this.output = output;
 
-      do_padding = (flags & NO_PADDING) == 0;
-      do_newline = (flags & NO_WRAP) == 0;
-      do_cr = (flags & CRLF) != 0;
+      doPadding = (flags & NO_PADDING) == 0;
+      doNewline = (flags & NO_WRAP) == 0;
+      doCr = (flags & CRLF) != 0;
       alphabet = ((flags & URL_SAFE) == 0) ? ENCODE : ENCODE_WEBSAFE;
 
       tail = new byte[2];
       tailLen = 0;
 
-      count = do_newline ? LINE_GROUPS : -1;
+      count = doNewline ? LINE_GROUPS : -1;
     }
 
-    /**
+    /** 
      * @return an overestimate for the number of bytes {@code len} bytes could encode to.
      */
     public int maxOutputSize(int len) {
@@ -612,6 +585,7 @@ public class Base64 {
       // with any input bytes available now and see if we can empty
       // the tail.
 
+      // CSOFF: MissingSwitchDefaultCheck
       switch (tailLen) {
         case 0:
           // There was no tail.
@@ -621,9 +595,7 @@ public class Base64 {
           if (p + 2 <= len) {
             // A 1-byte tail with at least 2 bytes of
             // input available now.
-            v = ((tail[0] & 0xff) << 16)
-                | ((input[p++] & 0xff) << 8)
-                | (input[p++] & 0xff);
+            v = ((tail[0] & 0xff) << 16) | ((input[p++] & 0xff) << 8) | (input[p++] & 0xff);
             tailLen = 0;
           }
           break;
@@ -631,13 +603,12 @@ public class Base64 {
         case 2:
           if (p + 1 <= len) {
             // A 2-byte tail with at least 1 byte of input.
-            v = ((tail[0] & 0xff) << 16)
-                | ((tail[1] & 0xff) << 8)
-                | (input[p++] & 0xff);
+            v = ((tail[0] & 0xff) << 16) | ((tail[1] & 0xff) << 8) | (input[p++] & 0xff);
             tailLen = 0;
           }
           break;
       }
+      // CSON: MissingSwitchDefaultCheck
 
       if (v != -1) {
         output[op++] = alphabet[(v >> 18) & 0x3f];
@@ -645,7 +616,7 @@ public class Base64 {
         output[op++] = alphabet[(v >> 6) & 0x3f];
         output[op++] = alphabet[v & 0x3f];
         if (--count == 0) {
-          if (do_cr) {
+          if (doCr) {
             output[op++] = '\r';
           }
           output[op++] = '\n';
@@ -659,9 +630,7 @@ public class Base64 {
       // The main loop, turning 3 input bytes into 4 output bytes on
       // each iteration.
       while (p + 3 <= len) {
-        v = ((input[p] & 0xff) << 16)
-            | ((input[p + 1] & 0xff) << 8)
-            | (input[p + 2] & 0xff);
+        v = ((input[p] & 0xff) << 16) | ((input[p + 1] & 0xff) << 8) | (input[p + 2] & 0xff);
         output[op] = alphabet[(v >> 18) & 0x3f];
         output[op + 1] = alphabet[(v >> 12) & 0x3f];
         output[op + 2] = alphabet[(v >> 6) & 0x3f];
@@ -669,7 +638,7 @@ public class Base64 {
         p += 3;
         op += 4;
         if (--count == 0) {
-          if (do_cr) {
+          if (doCr) {
             output[op++] = '\r';
           }
           output[op++] = '\n';
@@ -689,35 +658,36 @@ public class Base64 {
           tailLen -= t;
           output[op++] = alphabet[(v >> 6) & 0x3f];
           output[op++] = alphabet[v & 0x3f];
-          if (do_padding) {
+          if (doPadding) {
             output[op++] = '=';
             output[op++] = '=';
           }
-          if (do_newline) {
-            if (do_cr) {
+          if (doNewline) {
+            if (doCr) {
               output[op++] = '\r';
             }
             output[op++] = '\n';
           }
         } else if (p - tailLen == len - 2) {
           int t = 0;
-          v = (((tailLen > 1 ? tail[t++] : input[p++]) & 0xff) << 10)
-              | (((tailLen > 0 ? tail[t++] : input[p++]) & 0xff) << 2);
+          v =
+              (((tailLen > 1 ? tail[t++] : input[p++]) & 0xff) << 10)
+                  | (((tailLen > 0 ? tail[t++] : input[p++]) & 0xff) << 2);
           tailLen -= t;
           output[op++] = alphabet[(v >> 12) & 0x3f];
           output[op++] = alphabet[(v >> 6) & 0x3f];
           output[op++] = alphabet[v & 0x3f];
-          if (do_padding) {
+          if (doPadding) {
             output[op++] = '=';
           }
-          if (do_newline) {
-            if (do_cr) {
+          if (doNewline) {
+            if (doCr) {
               output[op++] = '\r';
             }
             output[op++] = '\n';
           }
-        } else if (do_newline && op > 0 && count != LINE_GROUPS) {
-          if (do_cr) {
+        } else if (doNewline && op > 0 && count != LINE_GROUPS) {
+          if (doCr) {
             output[op++] = '\r';
           }
           output[op++] = '\n';

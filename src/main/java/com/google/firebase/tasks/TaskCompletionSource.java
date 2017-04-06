@@ -39,8 +39,8 @@ public class TaskCompletionSource<T> {
   }
 
   /**
-   * Completes the Task with the specified exception, unless the Task has already completed. If
-   * the Task has already completed, the call does nothing.
+   * Completes the Task with the specified exception, unless the Task has already completed. If the
+   * Task has already completed, the call does nothing.
    *
    * @return {@code true} if the exception was set successfully, {@code false} otherwise
    */
@@ -48,9 +48,7 @@ public class TaskCompletionSource<T> {
     return task.trySetException(e);
   }
 
-  /**
-   * Returns the Task.
-   */
+  /** Returns the Task. */
   @NonNull
   public Task<T> getTask() {
     return task;

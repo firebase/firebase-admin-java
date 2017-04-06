@@ -6,18 +6,14 @@ import com.google.firebase.internal.NonNull;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-/**
+/** 
  * Standard {@link Executor} instances for use with {@link Task}.
  */
 public class TaskExecutors {
 
-  /**
-   * An Executor that uses a shared cached thread pool.
-   */
+  /** An Executor that uses a shared cached thread pool. */
   public static final Executor DEFAULT_THREAD_POOL;
-  /**
-   * An Executor that uses the calling thread.
-   */
+  /** An Executor that uses the calling thread. */
   static final Executor DIRECT =
       new Executor() {
         @Override
@@ -34,6 +30,5 @@ public class TaskExecutors {
     }
   }
 
-  private TaskExecutors() {
-  }
+  private TaskExecutors() {}
 }

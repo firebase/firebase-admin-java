@@ -2,9 +2,7 @@ package com.google.firebase.database.snapshot;
 
 import com.google.firebase.database.utilities.Utilities;
 
-/**
- * User: greg Date: 5/17/13 Time: 2:47 PM
- */
+/** User: greg Date: 5/17/13 Time: 2:47 PM */
 public class LongNode extends LeafNode<LongNode> {
 
   private final long value;
@@ -23,7 +21,7 @@ public class LongNode extends LeafNode<LongNode> {
   public String getHashRepresentation(HashVersion version) {
     String toHash = getPriorityHash(version);
     toHash += "number:";
-    toHash += Utilities.doubleToHashString((double) value);
+    toHash += Utilities.doubleToHashString(value);
     return toHash;
   }
 

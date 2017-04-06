@@ -80,8 +80,8 @@ public class DefaultPersistenceManagerTest {
     engine.disableTransactionCheck = true;
 
     Node initialData =
-        NodeFromJSON(fromSingleQuotedString("{'foo': {'bar': 'bar-value', 'baz': " +
-            "'baz-value'}}"));
+        NodeFromJSON(
+            fromSingleQuotedString("{'foo': {'bar': 'bar-value', 'baz': " + "'baz-value'}}"));
     engine.overwriteServerCache(path(""), initialData);
 
     DefaultPersistenceManager manager =

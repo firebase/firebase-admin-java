@@ -19,9 +19,7 @@ public abstract class DefaultRunLoop implements RunLoop {
 
   private ScheduledThreadPoolExecutor executor;
 
-  /**
-   * Creates a DefaultRunLoop that does not periodically restart its threads.
-   */
+  /** Creates a DefaultRunLoop that does not periodically restart its threads. */
   public DefaultRunLoop() {
     this(Executors.defaultThreadFactory(), false, null);
   }
@@ -35,8 +33,7 @@ public abstract class DefaultRunLoop implements RunLoop {
       final boolean periodicRestart,
       @Nullable final Context context) {
     executor =
-        new RevivingScheduledExecutor(threadFactory, "FirebaseDatabaseWorker",
-            periodicRestart) {
+        new RevivingScheduledExecutor(threadFactory, "FirebaseDatabaseWorker", periodicRestart) {
           @Override
           protected void handleException(Throwable throwable) {
             DefaultRunLoop.this.handleException(throwable);
@@ -67,8 +64,8 @@ public abstract class DefaultRunLoop implements RunLoop {
       return "Firebase Database encountered an OutOfMemoryError. You may need to reduce the"
           + " amount of data you are syncing to the client (e.g. by using queries or syncing"
           + " a deeper path). See "
-          + "https://firebase.google" +
-          ".com/docs/database/ios/structure-data#best_practices_for_data_structure"
+          + "https://firebase.google"
+          + ".com/docs/database/ios/structure-data#best_practices_for_data_structure"
           + " and "
           + "https://firebase.google.com/docs/database/android/retrieve-data#filtering_data";
     } else if (t instanceof DatabaseException) {

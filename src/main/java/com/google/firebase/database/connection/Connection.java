@@ -29,15 +29,18 @@ class Connection implements WebsocketConnection.Delegate {
   private Delegate delegate;
   private State state;
 
-  public Connection(ConnectionContext context, HostInfo hostInfo,
-                    String cachedHost, Delegate delegate, String optLastSessionId) {
+  public Connection(
+      ConnectionContext context,
+      HostInfo hostInfo,
+      String cachedHost,
+      Delegate delegate,
+      String optLastSessionId) {
     long connId = connectionIds++;
     this.hostInfo = hostInfo;
     this.delegate = delegate;
     this.logger = new LogWrapper(context.getLogger(), "Connection", "conn_" + connId);
     this.state = State.REALTIME_CONNECTING;
-    this.conn = new WebsocketConnection(context, hostInfo, cachedHost, this,
-        optLastSessionId);
+    this.conn = new WebsocketConnection(context, hostInfo, cachedHost, this, optLastSessionId);
   }
 
   public void open() {
@@ -83,14 +86,12 @@ class Connection implements WebsocketConnection.Delegate {
       String messageType = (String) message.get(SERVER_ENVELOPE_TYPE);
       if (messageType != null) {
         if (messageType.equals(SERVER_DATA_MESSAGE)) {
-          @SuppressWarnings("unchecked") Map<String, Object> data = (Map<String,
-              Object>) message
-              .get(SERVER_ENVELOPE_DATA);
+          @SuppressWarnings("unchecked")
+          Map<String, Object> data = (Map<String, Object>) message.get(SERVER_ENVELOPE_DATA);
           onDataMessage(data);
         } else if (messageType.equals(SERVER_CONTROL_MESSAGE)) {
-          @SuppressWarnings("unchecked") Map<String, Object> data = (Map<String,
-              Object>) message
-              .get(SERVER_ENVELOPE_DATA);
+          @SuppressWarnings("unchecked")
+          Map<String, Object> data = (Map<String, Object>) message.get(SERVER_ENVELOPE_DATA);
           onControlMessage(data);
         } else {
           if (logger.logsDebug()) {
@@ -99,9 +100,8 @@ class Connection implements WebsocketConnection.Delegate {
         }
       } else {
         if (logger.logsDebug()) {
-          logger
-              .debug("Failed to parse server message: missing message type:" + message
-                  .toString());
+          logger.debug(
+              "Failed to parse server message: missing message type:" + message.toString());
         }
         close();
       }
@@ -151,7 +151,8 @@ class Connection implements WebsocketConnection.Delegate {
           String host = (String) data.get(SERVER_CONTROL_MESSAGE_DATA);
           onReset(host);
         } else if (messageType.equals(SERVER_CONTROL_MESSAGE_HELLO)) {
-          @SuppressWarnings("unchecked") Map<String, Object> handshakeData =
+          @SuppressWarnings("unchecked")
+          Map<String, Object> handshakeData =
               (Map<String, Object>) data.get(SERVER_CONTROL_MESSAGE_DATA);
           onHandshake(handshakeData);
         } else {
@@ -203,8 +204,11 @@ class Connection implements WebsocketConnection.Delegate {
 
   private void onReset(String host) {
     if (logger.logsDebug()) {
-      logger.debug("Got a reset; killing connection to " + this.hostInfo.getHost()
-          + "; Updating internalHost to " + host);
+      logger.debug(
+          "Got a reset; killing connection to "
+              + this.hostInfo.getHost()
+              + "; Updating internalHost to "
+              + host);
     }
     delegate.onCacheHost(host);
 
@@ -236,7 +240,11 @@ class Connection implements WebsocketConnection.Delegate {
     OTHER
   }
 
-  private enum State {REALTIME_CONNECTING, REALTIME_CONNECTED, REALTIME_DISCONNECTED}
+  private enum State {
+    REALTIME_CONNECTING,
+    REALTIME_CONNECTED,
+    REALTIME_DISCONNECTED
+  }
 
   public interface Delegate {
 

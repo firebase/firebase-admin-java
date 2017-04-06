@@ -13,9 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-/**
- * User: greg Date: 5/16/13 Time: 4:47 PM
- */
+/** User: greg Date: 5/16/13 Time: 4:47 PM */
 public class ChildrenNode implements Node {
 
   public static final Comparator<ChildKey> NAME_ONLY_COMPARATOR =
@@ -251,8 +249,7 @@ public class ChildrenNode implements Node {
       assert PriorityUtilities.isValidPriority(newChildNode);
       return updatePriority(newChildNode);
     } else {
-      Node newImmediateChild = getImmediateChild(front).updateChild(path.popFront(),
-          newChildNode);
+      Node newImmediateChild = getImmediateChild(front).updateChild(path.popFront(), newChildNode);
       return updateImmediateChild(front, newImmediateChild);
     }
   }

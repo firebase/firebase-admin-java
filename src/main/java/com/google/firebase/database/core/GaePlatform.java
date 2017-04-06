@@ -47,7 +47,8 @@ class GaePlatform implements Platform {
 
   private ThreadFactory getGaeThreadFactory() {
     GaeThreadFactory threadFactory = GaeThreadFactory.getInstance();
-    Preconditions.checkState(threadFactory.isUsingBackgroundThreads(),
+    Preconditions.checkState(
+        threadFactory.isUsingBackgroundThreads(),
         "Failed to initialize a GAE background thread factory");
     return threadFactory;
   }
@@ -66,8 +67,7 @@ class GaePlatform implements Platform {
   @Override
   public EventTarget newEventTarget(Context ctx) {
     RevivingScheduledExecutor eventExecutor =
-        new RevivingScheduledExecutor(getGaeThreadFactory(), "FirebaseDatabaseEventTarget",
-            true);
+        new RevivingScheduledExecutor(getGaeThreadFactory(), "FirebaseDatabaseEventTarget", true);
     return new ThreadPoolEventTarget(eventExecutor);
   }
 

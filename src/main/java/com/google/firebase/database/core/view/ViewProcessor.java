@@ -25,21 +25,20 @@ import java.util.Map;
 
 public class ViewProcessor {
 
-  /**
-   * An implementation of CompleteChildSource that never returns any additional children
-   */
+  /** An implementation of CompleteChildSource that never returns any additional children */
   private static final NodeFilter.CompleteChildSource NO_COMPLETE_SOURCE =
       new NodeFilter.CompleteChildSource() {
-        @Override
-        public Node getCompleteChild(ChildKey childKey) {
-          return null;
-        }
+    @Override
+    public Node getCompleteChild(ChildKey childKey) {
+      return null;
+    }
 
-        @Override
-        public NamedNode getChildAfterChild(Index index, NamedNode child, boolean reverse) {
-          return null;
-        }
-      };
+    @Override
+    public NamedNode getChildAfterChild(Index index, NamedNode child, boolean reverse) {
+      return null;
+    }
+  };
+
   private final NodeFilter filter;
 
   public ViewProcessor(NodeFilter filter) {
@@ -58,7 +57,8 @@ public class ViewProcessor {
     ChildChangeAccumulator accumulator = new ChildChangeAccumulator();
     ViewCache newViewCache;
     switch (operation.getType()) {
-      case Overwrite: {
+      case Overwrite:
+      {
         Overwrite overwrite = (Overwrite) operation;
         if (overwrite.getSource().isFromUser()) {
           newViewCache =
@@ -78,7 +78,7 @@ public class ViewProcessor {
           // node unfiltered again
           boolean filterServerNode =
               overwrite.getSource().isTagged()
-                  || (oldViewCache.getServerCache().isFiltered()
+              || (oldViewCache.getServerCache().isFiltered()
                   && !overwrite.getPath().isEmpty());
           newViewCache =
               this.applyServerOverwrite(
@@ -92,7 +92,8 @@ public class ViewProcessor {
         }
         break;
       }
-      case Merge: {
+      case Merge:
+      {
         Merge merge = (Merge) operation;
         if (merge.getSource().isFromUser()) {
           newViewCache =
@@ -121,7 +122,8 @@ public class ViewProcessor {
         }
         break;
       }
-      case AckUserWrite: {
+      case AckUserWrite:
+      {
         AckUserWrite ackUserWrite = (AckUserWrite) operation;
         if (!ackUserWrite.isRevert()) {
           newViewCache =
@@ -143,13 +145,14 @@ public class ViewProcessor {
         }
         break;
       }
-      case ListenComplete: {
+      case ListenComplete:
+      {
         newViewCache =
-            this.listenComplete(oldViewCache, operation.getPath(), writesCache,
-                accumulator);
+            this.listenComplete(oldViewCache, operation.getPath(), writesCache, accumulator);
         break;
       }
-      default: {
+      default:
+      {
         throw new AssertionError("Unknown operation: " + operation.getType());
       }
     }
@@ -162,12 +165,10 @@ public class ViewProcessor {
       ViewCache oldViewCache, ViewCache newViewCache, List<Change> accumulator) {
     CacheNode eventSnap = newViewCache.getEventCache();
     if (eventSnap.isFullyInitialized()) {
-      boolean isLeafOrEmpty = eventSnap.getNode().isLeafNode() || eventSnap.getNode()
-          .isEmpty();
+      boolean isLeafOrEmpty = eventSnap.getNode().isLeafNode() || eventSnap.getNode().isEmpty();
       if (!accumulator.isEmpty()
           || !oldViewCache.getEventCache().isFullyInitialized()
-          || (isLeafOrEmpty && !eventSnap.getNode().equals(oldViewCache
-          .getCompleteEventSnap()))
+          || (isLeafOrEmpty && !eventSnap.getNode().equals(oldViewCache.getCompleteEventSnap()))
           || !eventSnap
           .getNode()
           .getPriority()
@@ -192,7 +193,7 @@ public class ViewProcessor {
       if (changePath.isEmpty()) {
         // TODO: figure out how this plays with "sliding ack windows"
         assert viewCache.getServerCache().isFullyInitialized()
-            : "If change path is empty, we must have complete server data";
+        : "If change path is empty, we must have complete server data";
         Node nodeWithLocalWrites;
         if (viewCache.getServerCache().isFiltered()) {
           // We need to special case this, because we need to only apply writes to
@@ -208,8 +209,7 @@ public class ViewProcessor {
           nodeWithLocalWrites =
               writesCache.calcCompleteEventCache(viewCache.getCompleteServerSnap());
         }
-        IndexedNode indexedNode = IndexedNode.from(nodeWithLocalWrites, this.filter
-            .getIndex());
+        IndexedNode indexedNode = IndexedNode.from(nodeWithLocalWrites, this.filter.getIndex());
         newEventCache =
             this.filter.updateFullNode(
                 viewCache.getEventCache().getIndexedNode(), indexedNode, accumulator);
@@ -221,12 +221,10 @@ public class ViewProcessor {
           Node serverNode = viewCache.getServerCache().getNode();
           // we might have overwrites for this priority
           Node updatedPriority =
-              writesCache.calcEventCacheAfterServerOverwrite(changePath, oldEventNode,
-                  serverNode);
+              writesCache.calcEventCacheAfterServerOverwrite(changePath, oldEventNode, serverNode);
           if (updatedPriority != null) {
             newEventCache =
-                this.filter.updatePriority(oldEventSnap.getIndexedNode(),
-                    updatedPriority);
+                this.filter.updatePriority(oldEventSnap.getIndexedNode(), updatedPriority);
           } else {
             // priority didn't change, keep old node
             newEventCache = oldEventSnap.getIndexedNode();
@@ -243,16 +241,15 @@ public class ViewProcessor {
             if (eventChildUpdate != null) {
               newEventChild =
                   oldEventSnap
-                      .getNode()
-                      .getImmediateChild(childKey)
-                      .updateChild(childChangePath, eventChildUpdate);
+                  .getNode()
+                  .getImmediateChild(childKey)
+                  .updateChild(childChangePath, eventChildUpdate);
             } else {
               // Nothing changed, just keep the old child
               newEventChild = oldEventSnap.getNode().getImmediateChild(childKey);
             }
           } else {
-            newEventChild = writesCache.calcCompleteChild(childKey, viewCache
-                .getServerCache());
+            newEventChild = writesCache.calcCompleteChild(childKey, viewCache.getServerCache());
           }
           if (newEventChild != null) {
             newEventCache =
@@ -301,10 +298,8 @@ public class ViewProcessor {
       ChildKey childKey = changePath.getFront();
       Path updatePath = changePath.popFront();
       Node newChild =
-          oldServerSnap.getNode().getImmediateChild(childKey).updateChild(updatePath,
-              changedSnap);
-      IndexedNode newServerNode = oldServerSnap.getIndexedNode().updateChild(childKey,
-          newChild);
+          oldServerSnap.getNode().getImmediateChild(childKey).updateChild(updatePath, changedSnap);
+      IndexedNode newServerNode = oldServerSnap.getIndexedNode().updateChild(childKey, newChild);
       newServerCache =
           serverFilter.updateFullNode(oldServerSnap.getIndexedNode(), newServerNode, null);
     } else {
@@ -317,8 +312,7 @@ public class ViewProcessor {
       Node childNode = oldServerSnap.getNode().getImmediateChild(childKey);
       Node newChildNode = childNode.updateChild(childChangePath, changedSnap);
       if (childKey.isPriorityChildName()) {
-        newServerCache = serverFilter.updatePriority(oldServerSnap.getIndexedNode(),
-            newChildNode);
+        newServerCache = serverFilter.updatePriority(oldServerSnap.getIndexedNode(), newChildNode);
       } else {
         newServerCache =
             serverFilter.updateChild(
@@ -357,14 +351,12 @@ public class ViewProcessor {
       IndexedNode newEventCache =
           this.filter.updateFullNode(
               oldViewCache.getEventCache().getIndexedNode(), newIndexed, accumulator);
-      newViewCache = oldViewCache.updateEventSnap(newEventCache, true, this.filter
-          .filtersNodes());
+      newViewCache = oldViewCache.updateEventSnap(newEventCache, true, this.filter.filtersNodes());
     } else {
       ChildKey childKey = changePath.getFront();
       if (childKey.isPriorityChildName()) {
         IndexedNode newEventCache =
-            this.filter.updatePriority(oldViewCache.getEventCache().getIndexedNode(),
-                changedSnap);
+            this.filter.updatePriority(oldViewCache.getEventCache().getIndexedNode(), changedSnap);
         newViewCache =
             oldViewCache.updateEventSnap(
                 newEventCache, oldEventSnap.isFullyInitialized(), oldEventSnap.isFiltered());
@@ -403,8 +395,7 @@ public class ViewProcessor {
                   accumulator);
           newViewCache =
               oldViewCache.updateEventSnap(
-                  newEventSnap, oldEventSnap.isFullyInitialized(), this.filter
-                      .filtersNodes());
+                  newEventSnap, oldEventSnap.isFullyInitialized(), this.filter.filtersNodes());
         } else {
           newViewCache = oldViewCache;
         }
@@ -512,7 +503,7 @@ public class ViewProcessor {
       CompoundWrite childCompoundWrite = childMerge.getValue();
       boolean isUnknownDeepMerge =
           !viewCache.getServerCache().isCompleteForChild(childKey)
-              && childCompoundWrite.rootWrite() == null;
+          && childCompoundWrite.rootWrite() == null;
       if (!serverNode.hasChild(childKey) && !isUnknownDeepMerge) {
         Node serverChild = serverNode.getImmediateChild(childKey);
         Node newChild = childMerge.getValue().apply(serverChild);
@@ -620,8 +611,7 @@ public class ViewProcessor {
         if (viewCache.getServerCache().isFullyInitialized()) {
           newNode = writesCache.calcCompleteEventCache(viewCache.getCompleteServerSnap());
         } else {
-          newNode = writesCache.calcCompleteEventChildren(viewCache.getServerCache()
-              .getNode());
+          newNode = writesCache.calcCompleteEventChildren(viewCache.getServerCache().getNode());
         }
         IndexedNode indexedNode = IndexedNode.from(newNode, this.filter.getIndex());
         newEventCache = this.filter.updateFullNode(oldEventCache, indexedNode, accumulator);
@@ -654,7 +644,7 @@ public class ViewProcessor {
       }
       boolean complete =
           viewCache.getServerCache().isFullyInitialized()
-              || writesCache.shadowingWrite(Path.getEmptyPath()) != null;
+          || writesCache.shadowingWrite(Path.getEmptyPath()) != null;
       return viewCache.updateEventSnap(newEventCache, complete, this.filter.filtersNodes());
     }
   }
@@ -686,8 +676,8 @@ public class ViewProcessor {
   }
 
   /**
-   * An implementation of CompleteChildSource that uses a WriteTree in addition to any other
-   * server data or old event caches available to calculate complete children.
+   * An implementation of CompleteChildSource that uses a WriteTree in addition to any other server
+   * data or old event caches available to calculate complete children.
    */
   private static class WriteTreeCompleteChildSource implements NodeFilter.CompleteChildSource {
 
@@ -727,7 +717,7 @@ public class ViewProcessor {
     public NamedNode getChildAfterChild(Index index, NamedNode child, boolean reverse) {
       Node completeServerData =
           optCompleteServerCache != null
-              ? optCompleteServerCache
+          ? optCompleteServerCache
               : viewCache.getCompleteServerSnap();
       return writes.calcNextNodeAfterPost(completeServerData, child, reverse, index);
     }

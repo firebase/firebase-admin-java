@@ -15,9 +15,7 @@ import java.util.Set;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-/**
- * Responsible for the persistence of FirebaseApps.
- */
+/** Responsible for the persistence of FirebaseApps. */
 // TODO(arondeak): reenable persistence. See b/28158809.
 // TODO(depoll): Make this an independent implementation using Preferences
 //   once the Shared Preferences version is stable and re-enabled.
@@ -39,15 +37,14 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
   private static final String VALUE_SEPARATOR = ",";
 
   /**
-   * Used to make multiple SharedPreferences reads/writes an atomic operation. Not necessary
-   * around single reads.
+   * Used to make multiple SharedPreferences reads/writes an atomic operation. Not necessary around
+   * single reads.
    */
   private final Object lock = new Object();
 
   private Preferences preferences;
 
-  SharedPrefsFirebaseAppStore() {
-  }
+  SharedPrefsFirebaseAppStore() {}
 
   private static String encodeValue(String value) {
     if (value == null) {
@@ -56,7 +53,7 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
     return Base64Utils.encodeUrlSafeNoPadding(value.getBytes(UTF_8));
   }
 
-  /**
+  /** 
    * @throws IllegalArgumentException if value is not valid websafe, no padding base64.
    */
   private static String decodeValue(String encodedValue) {
@@ -83,9 +80,7 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
     return null;
   }
 
-  /**
-   * The returned set is mutable.
-   */
+  /** The returned set is mutable. */
   @Override
   public Set<String> getAllPersistedAppNames() {
     ensurePrefsInitialized();
@@ -135,7 +130,7 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
     }
   }
 
-  /**
+  /** 
    * @return The restored {@link FirebaseOptions}, or null if it doesn't exist.
    */
   @Override
@@ -203,7 +198,7 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
     return encodedAppNames;
   }
 
-  /**
+  /** 
    * Clears all data in {@link Preferences}
    */
   @Override

@@ -17,9 +17,12 @@ public interface PersistentConnection {
 
   void refreshAuthToken(String token);
 
-  void listen(List<String> path, Map<String, Object> queryParams,
-              ListenHashProvider currentHashFn, Long tag,
-              RequestResultCallback onComplete);
+  void listen(
+      List<String> path,
+      Map<String, Object> queryParams,
+      ListenHashProvider currentHashFn,
+      Long tag,
+      RequestResultCallback onComplete);
 
   // Listens
 
@@ -31,8 +34,7 @@ public interface PersistentConnection {
 
   void put(List<String> path, Object data, RequestResultCallback onComplete);
 
-  void compareAndPut(List<String> path, Object data, String hash,
-                     RequestResultCallback onComplete);
+  void compareAndPut(List<String> path, Object data, String hash, RequestResultCallback onComplete);
 
   void merge(List<String> path, Map<String, Object> data, RequestResultCallback onComplete);
 
@@ -40,8 +42,8 @@ public interface PersistentConnection {
 
   // Disconnects
 
-  void onDisconnectMerge(List<String> path, Map<String, Object> updates,
-                         RequestResultCallback onComplete);
+  void onDisconnectMerge(
+      List<String> path, Map<String, Object> updates, RequestResultCallback onComplete);
 
   void onDisconnectCancel(List<String> path, RequestResultCallback onComplete);
 
@@ -67,5 +69,4 @@ public interface PersistentConnection {
 
     void onServerInfoUpdate(Map<String, Object> updates);
   }
-
 }

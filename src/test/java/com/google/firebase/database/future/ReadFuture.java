@@ -18,9 +18,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/**
- * User: greg Date: 5/24/13 Time: 11:52 AM
- */
+/** User: greg Date: 5/24/13 Time: 11:52 AM */
 public class ReadFuture implements Future<List<EventRecord>> {
 
   private final ValueEventListener valueEventListener;

@@ -8,15 +8,12 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * No-op base class of FirebaseAppStore.
- */
+/** No-op base class of FirebaseAppStore. */
 public class FirebaseAppStore {
 
   private static final AtomicReference<FirebaseAppStore> sInstance = new AtomicReference<>();
 
-  FirebaseAppStore() {
-  }
+  FirebaseAppStore() {}
 
   @Nullable
   public static FirebaseAppStore getInstance() {
@@ -29,9 +26,6 @@ public class FirebaseAppStore {
     return sInstance.get();
   }
 
-  /**
-   * @hide
-   */
   public static void setInstanceForTest(FirebaseAppStore firebaseAppStore) {
     sInstance.set(firebaseAppStore);
   }
@@ -45,26 +39,21 @@ public class FirebaseAppStore {
     sInstance.set(null);
   }
 
-  /**
-   * The returned set is mutable.
-   */
+  /** The returned set is mutable. */
   public Set<String> getAllPersistedAppNames() {
     return Collections.emptySet();
   }
 
-  public void persistApp(@NonNull FirebaseApp app) {
-  }
+  public void persistApp(@NonNull FirebaseApp app) {}
 
-  public void removeApp(@NonNull String name) {
-  }
+  public void removeApp(@NonNull String name) {}
 
-  /**
+  /** 
    * @return The restored {@link FirebaseOptions}, or null if it doesn't exist.
    */
   public FirebaseOptions restoreAppOptions(@NonNull String name) {
     return null;
   }
 
-  protected void resetStore() {
-  }
+  protected void resetStore() {}
 }

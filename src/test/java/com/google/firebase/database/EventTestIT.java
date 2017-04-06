@@ -33,11 +33,9 @@ public class EventTestIT {
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
 
-    EventHelper readerHelper = new EventHelper().addValueExpectation(reader).startListening
-        (true);
+    EventHelper readerHelper = new EventHelper().addValueExpectation(reader).startListening(true);
 
-    EventHelper writerHelper = new EventHelper().addValueExpectation(writer).startListening
-        (true);
+    EventHelper writerHelper = new EventHelper().addValueExpectation(writer).startListening(true);
 
     ZombieVerifier.verifyRepoZombies(refs);
 
@@ -109,19 +107,15 @@ public class EventTestIT {
   }
 
   @Test
-  public void setMultipleEventListenersOnSameNode() throws DatabaseException,
-      InterruptedException {
+  public void setMultipleEventListenersOnSameNode() throws DatabaseException, InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
 
-    EventHelper writeHelper = new EventHelper().addValueExpectation(writer).startListening
-        (true);
-    EventHelper writeHelper2 = new EventHelper().addValueExpectation(writer).startListening
-        (true);
+    EventHelper writeHelper = new EventHelper().addValueExpectation(writer).startListening(true);
+    EventHelper writeHelper2 = new EventHelper().addValueExpectation(writer).startListening(true);
     EventHelper readHelper = new EventHelper().addValueExpectation(reader).startListening(true);
-    EventHelper readHelper2 = new EventHelper().addValueExpectation(reader).startListening
-        (true);
+    EventHelper readHelper2 = new EventHelper().addValueExpectation(reader).startListening(true);
 
     ZombieVerifier.verifyRepoZombies(refs);
 
@@ -156,7 +150,7 @@ public class EventTestIT {
   @Test
   public void unsubscribeEventsAndConfirmEventsNoLongerFire()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
     final AtomicInteger callbackCount = new AtomicInteger(0);
@@ -205,8 +199,7 @@ public class EventTestIT {
     ValueEventListener listener =
         new ValueEventListener() {
           @Override
-          public void onDataChange(DataSnapshot snapshot) {
-          }
+          public void onDataChange(DataSnapshot snapshot) {}
 
           @Override
           public void onCancelled(DatabaseError error) {
@@ -232,8 +225,7 @@ public class EventTestIT {
     ValueEventListener listener =
         new ValueEventListener() {
           @Override
-          public void onDataChange(DataSnapshot snapshot) {
-          }
+          public void onDataChange(DataSnapshot snapshot) {}
 
           @Override
           public void onCancelled(DatabaseError error) {
@@ -281,8 +273,7 @@ public class EventTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     reader
@@ -303,8 +294,7 @@ public class EventTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     writer
@@ -321,8 +311,7 @@ public class EventTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     writer
@@ -343,8 +332,7 @@ public class EventTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     ZombieVerifier.verifyRepoZombies(refs);
@@ -394,7 +382,7 @@ public class EventTestIT {
   @Test
   public void canRegisterTheSameCallbackMultipleTimesNeedToUnregisterItMultipleTimes()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
     final AtomicInteger callbackCount = new AtomicInteger(0);
@@ -648,20 +636,16 @@ public class EventTestIT {
           }
 
           @Override
-          public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
-          }
+          public void onChildChanged(DataSnapshot snapshot, String previousChildName) {}
 
           @Override
-          public void onChildRemoved(DataSnapshot snapshot) {
-          }
+          public void onChildRemoved(DataSnapshot snapshot) {}
 
           @Override
-          public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
-          }
+          public void onChildMoved(DataSnapshot snapshot, String previousChildName) {}
 
           @Override
-          public void onCancelled(DatabaseError error) {
-          }
+          public void onCancelled(DatabaseError error) {}
         });
 
     ZombieVerifier.verifyRepoZombies(ref);
@@ -677,7 +661,7 @@ public class EventTestIT {
   @Test
   public void onceFiresExactlyOnce()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
     final AtomicBoolean called = new AtomicBoolean(false);
@@ -730,7 +714,7 @@ public class EventTestIT {
   @Test
   public void childEventsAreRaised()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
     Map<String, Object> firstValue =
@@ -789,8 +773,7 @@ public class EventTestIT {
           }
 
           @Override
-          public void onCancelled(DatabaseError error) {
-          }
+          public void onCancelled(DatabaseError error) {}
         });
     new WriteFuture(ref, firstValue).timedGet();
     events.clear();
@@ -817,7 +800,7 @@ public class EventTestIT {
   @Test
   public void childEventsAreRaisedWithAQuery()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
     Map<String, Object> firstValue =
@@ -877,8 +860,7 @@ public class EventTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
     new WriteFuture(ref, firstValue).timedGet();
     events.clear();

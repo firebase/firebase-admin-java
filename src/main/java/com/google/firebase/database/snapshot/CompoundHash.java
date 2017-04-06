@@ -1,5 +1,7 @@
 package com.google.firebase.database.snapshot;
 
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
+
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.utilities.NodeSizeEstimator;
 import com.google.firebase.database.utilities.Utilities;
@@ -8,8 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
-
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
 
 public class CompoundHash {
 
@@ -95,7 +95,7 @@ public class CompoundHash {
       // Never split on priorities
       return state.currentHashLength() > this.splitThreshold
           && (state.currentPath().isEmpty()
-          || !state.currentPath().getBack().equals(ChildKey.getPriorityKey()));
+              || !state.currentPath().getBack().equals(ChildKey.getPriorityKey()));
     }
   }
 

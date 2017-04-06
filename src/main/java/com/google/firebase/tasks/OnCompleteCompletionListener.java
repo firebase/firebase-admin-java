@@ -5,7 +5,7 @@ import com.google.firebase.internal.NonNull;
 
 import java.util.concurrent.Executor;
 
-/**
+/** 
  * A {@link TaskCompletionListener} that wraps an {@link OnCompleteListener}.
  */
 class OnCompleteCompletionListener<T> implements TaskCompletionListener<T> {
@@ -29,16 +29,17 @@ class OnCompleteCompletionListener<T> implements TaskCompletionListener<T> {
         return;
       }
     }
-    executor.execute(new Runnable() {
-      @Override
-      public void run() {
-        synchronized (lock) {
-          if (onComplete != null) {
-            onComplete.onComplete(task);
+    executor.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            synchronized (lock) {
+              if (onComplete != null) {
+                onComplete.onComplete(task);
+              }
+            }
           }
-        }
-      }
-    });
+        });
   }
 
   @Override

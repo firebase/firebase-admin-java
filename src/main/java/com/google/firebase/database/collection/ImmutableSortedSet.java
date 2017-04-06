@@ -11,8 +11,12 @@ public class ImmutableSortedSet<T> implements Iterable<T> {
   private final ImmutableSortedMap<T, Void> map;
 
   public ImmutableSortedSet(List<T> elems, Comparator<T> comparator) {
-    this.map = ImmutableSortedMap.Builder.buildFrom(elems, Collections.<T, Void>emptyMap(),
-        ImmutableSortedMap.Builder.<T>identityTranslator(), comparator);
+    this.map =
+        ImmutableSortedMap.Builder.buildFrom(
+            elems,
+            Collections.<T, Void>emptyMap(),
+            ImmutableSortedMap.Builder.<T>identityTranslator(),
+            comparator);
   }
 
   private ImmutableSortedSet(ImmutableSortedMap<T, Void> map) {

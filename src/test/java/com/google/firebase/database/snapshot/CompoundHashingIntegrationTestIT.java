@@ -69,8 +69,7 @@ public class CompoundHashingIntegrationTestIT {
                 }
               });
       if (!node.getPriority().isEmpty()) {
-        forEachLeaf(currentPath.child(ChildKey.getPriorityKey()), node.getPriority(),
-            leafVisitor);
+        forEachLeaf(currentPath.child(ChildKey.getPriorityKey()), node.getPriority(), leafVisitor);
       }
     }
   }
@@ -154,7 +153,7 @@ public class CompoundHashingIntegrationTestIT {
               public boolean shouldSplit(CompoundHash.CompoundHashBuilder state) {
                 return random.nextInt(10) == 0
                     && (state.currentPath().isEmpty()
-                    || !state.currentPath().getBack().isPriorityChildName());
+                        || !state.currentPath().getBack().isPriorityChildName());
               }
             });
 

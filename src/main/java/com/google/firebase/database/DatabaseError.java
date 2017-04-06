@@ -11,61 +11,39 @@ import java.util.Map;
  */
 public class DatabaseError {
 
-  /**
-   * <strong>Internal use.</strong>
-   */
+  /** <strong>Internal use.</strong> */
   public static final int DATA_STALE = -1;
-  /**
-   * The server indicated that this operation failed.
-   */
+  /** The server indicated that this operation failed. */
   public static final int OPERATION_FAILED = -2;
-  /**
-   * This client does not have permission to perform this operation.
-   */
+  /** This client does not have permission to perform this operation. */
   public static final int PERMISSION_DENIED = -3;
-  /**
-   * The operation had to be aborted due to a network disconnect.
-   */
+  /** The operation had to be aborted due to a network disconnect. */
   public static final int DISCONNECTED = -4;
 
   // Preempted was removed, this is for here for completeness and history
   // public static final int PREEMPTED = -5;
 
-  /**
-   * The supplied auth token has expired.
-   */
+  /** The supplied auth token has expired. */
   public static final int EXPIRED_TOKEN = -6;
   /**
    * The specified authentication token is invalid. This can occur when the token is malformed,
    * expired, or the secret that was used to generate it has been revoked.
    */
   public static final int INVALID_TOKEN = -7;
-  /**
-   * The transaction had too many retries
-   */
+  /** The transaction had too many retries */
   public static final int MAX_RETRIES = -8;
-  /**
-   * The transaction was overridden by a subsequent set
-   */
+  /** The transaction was overridden by a subsequent set */
   public static final int OVERRIDDEN_BY_SET = -9;
-  /**
-   * The service is unavailable.
-   */
+  /** The service is unavailable. */
   public static final int UNAVAILABLE = -10;
-  /**
-   * An exception occurred in user code.
-   */
+  /** An exception occurred in user code. */
   public static final int USER_CODE_EXCEPTION = -11;
 
   // client codes
-  /**
-   * The operation could not be performed due to a network error.
-   */
+  /** The operation could not be performed due to a network error. */
   public static final int NETWORK_ERROR = -24;
 
-  /**
-   * The write was canceled locally.
-   */
+  /** The write was canceled locally. */
   public static final int WRITE_CANCELED = -25;
 
   /**
@@ -196,21 +174,21 @@ public class DatabaseError {
     return new DatabaseError(USER_CODE_EXCEPTION, reason);
   }
 
-  /**
+  /** 
    * @return One of the defined status codes, depending on the error.
    */
   public int getCode() {
     return code;
   }
 
-  /**
+  /** 
    * @return A human-readable description of the error.
    */
   public String getMessage() {
     return message;
   }
 
-  /**
+  /** 
    * @return Human-readable details on the error and additional information, e.g. links to docs;
    */
   public String getDetails() {

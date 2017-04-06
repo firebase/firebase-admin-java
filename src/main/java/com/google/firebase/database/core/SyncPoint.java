@@ -60,8 +60,7 @@ public class SyncPoint {
 
   private List<DataEvent> applyOperationToView(
       View view, Operation operation, WriteTreeRef writes, Node optCompleteServerCache) {
-    View.OperationResult result = view.applyOperation(operation, writes,
-        optCompleteServerCache);
+    View.OperationResult result = view.applyOperation(operation, writes, optCompleteServerCache);
     // Not a default query, track active children
     if (!view.getQuery().loadsAllData()) {
       Set<ChildKey> removed = new HashSet<>();
@@ -92,16 +91,13 @@ public class SyncPoint {
       List<DataEvent> events = new ArrayList<>();
       for (Map.Entry<QueryParams, View> entry : this.views.entrySet()) {
         View view = entry.getValue();
-        events.addAll(applyOperationToView(view, operation, writesCache,
-            optCompleteServerCache));
+        events.addAll(applyOperationToView(view, operation, writesCache, optCompleteServerCache));
       }
       return events;
     }
   }
 
-  /**
-   * Add an event callback for the specified query.
-   */
+  /** Add an event callback for the specified query. */
   public List<DataEvent> addEventRegistration(
       @NotNull EventRegistration eventRegistration,
       WriteTreeRef writesCache,
@@ -144,14 +140,14 @@ public class SyncPoint {
   /**
    * Remove event callback(s). Return cancelEvents if a cancelError is specified.
    *
-   * <p>If query is the default query, we'll check all views for the specified eventRegistration.
-   * If eventRegistration is null, we'll remove all callbacks for the specified view(s).
+   * <p>If query is the default query, we'll check all views for the specified eventRegistration. If
+   * eventRegistration is null, we'll remove all callbacks for the specified view(s).
    *
-   * @param query
+   * @param query Query to remove the registration from.
    * @param eventRegistration If null, remove all callbacks.
    * @param cancelError If a cancelError is provided, appropriate cancel events will be returned.
    * @return {{removed:!Array.<!fb.api.Query>, events:!Array.<!fb.core.view.Event>}} removed queries
-   * and any cancel events
+   *     and any cancel events
    */
   public Pair<List<QuerySpec>, List<Event>> removeEventRegistration(
       @NotNull QuerySpec query,

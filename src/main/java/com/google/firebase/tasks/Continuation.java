@@ -16,9 +16,9 @@ public interface Continuation<T, R> {
    * Returns the result of applying this Continuation to {@code task}.
    *
    * <p>To propagate failure from the completed Task call {@link Task#getResult()} and allow the
-   * {@link RuntimeExecutionException} to propagate. The RuntimeExecutionException will be
-   * unwrapped such that the Task returned by {@link Task#continueWith(Continuation)} or
-   * {@link Task#continueWithTask(Continuation)} fails with the original exception.
+   * {@link RuntimeExecutionException} to propagate. The RuntimeExecutionException will be unwrapped
+   * such that the Task returned by {@link Task#continueWith(Continuation)} or {@link
+   * Task#continueWithTask(Continuation)} fails with the original exception.
    *
    * <p>To suppress specific failures call {@link Task#getResult(Class)} and catch the exception
    * types of interest:
@@ -38,8 +38,8 @@ public interface Continuation<T, R> {
    * }
    * </pre>
    *
-   * <p>To suppress all failures guard any calls to {@link Task#getResult()} with
-   * {@link Task#isSuccessful()}:
+   * <p>To suppress all failures guard any calls to {@link Task#getResult()} with {@link
+   * Task#isSuccessful()}:
    *
    * <pre class="prettyprint">
    * task.continueWith(new Continuation&lt;String, String&gt;() {

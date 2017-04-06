@@ -15,19 +15,23 @@ import java.security.cert.X509Certificate;
  * levels for the "mock-project-id" project defined in TestUtils.
  */
 public enum ServiceAccount {
-  OWNER("mock-project-id-owner@mock-project-id.iam.gserviceaccount.com",
+  OWNER(
+      "mock-project-id-owner@mock-project-id.iam.gserviceaccount.com",
       TestUtils.loadResource("service_accounts/owner.json"),
       TestUtils.loadResource("service_accounts/owner_public_key.pem")),
 
-  EDITOR("mock-project-id-editor@mock-project-id.iam.gserviceaccount.com",
+  EDITOR(
+      "mock-project-id-editor@mock-project-id.iam.gserviceaccount.com",
       TestUtils.loadResource("service_accounts/editor.json"),
       TestUtils.loadResource("service_accounts/editor_public_key.pem")),
 
-  VIEWER("mock-project-id-viewer@mock-project-id.iam.gserviceaccount.com",
+  VIEWER(
+      "mock-project-id-viewer@mock-project-id.iam.gserviceaccount.com",
       TestUtils.loadResource("service_accounts/viewer.json"),
       TestUtils.loadResource("service_accounts/viewer_public_key.pem")),
 
-  NONE("mock-project-id-none@mock-project-id.iam.gserviceaccount.com",
+  NONE(
+      "mock-project-id-none@mock-project-id.iam.gserviceaccount.com",
       TestUtils.loadResource("service_accounts/none.json"),
       TestUtils.loadResource("service_accounts/none_public_key.pem"));
 
@@ -59,27 +63,22 @@ public enum ServiceAccount {
     return email;
   }
 
-  /**
-   * Returns the String representation of the service account JSON.
-   */
+  /** Returns the String representation of the service account JSON. */
   public String asString() {
     return json;
   }
 
-  /**
-   * Returns a stream of the service account JSON.
-   */
+  /** Returns a stream of the service account JSON. */
   public InputStream asStream() {
     return new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
   }
 
-  /**
-   * Returns true if the given token was signed by this account.
-   */
+  /** Returns true if the given token was signed by this account. */
   public boolean verifySignature(JsonWebSignature token) throws Exception {
     CertificateFactory factory = SecurityUtils.getX509CertificateFactory();
-    X509Certificate x509Cert = (X509Certificate) factory.generateCertificate(
-        new ByteArrayInputStream(StringUtils.getBytesUtf8(cert)));
+    X509Certificate x509Cert =
+        (X509Certificate)
+            factory.generateCertificate(new ByteArrayInputStream(StringUtils.getBytesUtf8(cert)));
     return token.verifySignature(x509Cert.getPublicKey());
   }
 }

@@ -16,7 +16,7 @@ public class ConnectionTestIT {
 
   /**
    * @throws InterruptedException Test to see if we can get a sessionID from a Connection and pass
-   * it up to the Delegate
+   *     it up to the Delegate
    */
   @Test
   public void testObtainSessionID() throws InterruptedException {
@@ -31,20 +31,16 @@ public class ConnectionTestIT {
           }
 
           @Override
-          public void onDataMessage(Map<String, Object> message) {
-          }
+          public void onDataMessage(Map<String, Object> message) {}
 
           @Override
-          public void onDisconnect(Connection.DisconnectReason reason) {
-          }
+          public void onDisconnect(Connection.DisconnectReason reason) {}
 
           @Override
-          public void onKill(String reason) {
-          }
+          public void onKill(String reason) {}
 
           @Override
-          public void onCacheHost(String s) {
-          }
+          public void onCacheHost(String s) {}
         };
     HostInfo info =
         new HostInfo(

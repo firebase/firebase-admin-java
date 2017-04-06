@@ -8,9 +8,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-/**
- * User: greg Date: 5/16/13 Time: 4:42 PM
- */
+/** User: greg Date: 5/16/13 Time: 4:42 PM */
 public abstract class LeafNode<T extends LeafNode> implements Node {
 
   protected final Node priority;
@@ -60,8 +58,7 @@ public abstract class LeafNode<T extends LeafNode> implements Node {
       return this;
     } else {
       assert !path.getFront().isPriorityChildName() || path.size() == 1;
-      return updateImmediateChild(front, EmptyNode.Empty().updateChild(path.popFront(),
-          node));
+      return updateImmediateChild(front, EmptyNode.Empty().updateChild(path.popFront(), node));
     }
   }
 

@@ -35,9 +35,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for {@link com.google.firebase.FirebaseApp}.
- */
+/** Unit tests for {@link com.google.firebase.FirebaseApp}. */
 // TODO(arondeak): uncomment lines when Firebase API targets are in integ.
 public class FirebaseAppTest {
 
@@ -48,8 +46,7 @@ public class FirebaseAppTest {
   private static final FirebaseOptions MOCK_CREDENTIAL_OPTIONS =
       new Builder().setCredential(new MockFirebaseCredential()).build();
 
-  @Rule
-  public FirebaseAppRule firebaseAppRule = new FirebaseAppRule();
+  @Rule public FirebaseAppRule firebaseAppRule = new FirebaseAppRule();
 
   @SuppressWarnings("unused")
   private static void assertAuthInitialized(FirebaseApp firebaseApp) {
@@ -297,8 +294,7 @@ public class FirebaseAppTest {
   @Test
   public void testProactiveTokenRefresh() throws Exception {
     MockTokenRefresherFactory factory = new MockTokenRefresherFactory();
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS,
-        "myApp", factory);
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp", factory);
     MockTokenRefresher tokenRefresher = factory.instance;
     Assert.assertNotNull(tokenRefresher);
 
@@ -353,8 +349,8 @@ public class FirebaseAppTest {
     }
 
     /**
-     * Simulates passage of time. Advances the clock, and runs the scheduled task if exists.
-     * Also waits for the execution of any initiated tasks.
+     * Simulates passage of time. Advances the clock, and runs the scheduled task if exists. Also
+     * waits for the execution of any initiated tasks.
      *
      * @param delayMinutes Duration in minutes to advance the clock by
      */

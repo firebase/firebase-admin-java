@@ -13,12 +13,13 @@ public class ConnectionContext {
   private final String clientSdkVersion;
   private final String userAgent;
 
-  public ConnectionContext(Logger logger,
-                           ConnectionAuthTokenProvider authTokenProvider,
-                           ScheduledExecutorService executorService,
-                           boolean persistenceEnabled,
-                           String clientSdkVersion,
-                           String userAgent) {
+  public ConnectionContext(
+      Logger logger,
+      ConnectionAuthTokenProvider authTokenProvider,
+      ScheduledExecutorService executorService,
+      boolean persistenceEnabled,
+      String clientSdkVersion,
+      String userAgent) {
     this.logger = logger;
     this.authTokenProvider = authTokenProvider;
     this.executorService = executorService;

@@ -27,8 +27,7 @@ public class RevivingScheduledExecutorTest {
     final Set<Long> threadIds = new HashSet<>();
 
     RevivingScheduledExecutor executor =
-        new RevivingScheduledExecutor(
-            THREAD_FACTORY, "testAppEngineRunnable", 0, 100);
+        new RevivingScheduledExecutor(THREAD_FACTORY, "testAppEngineRunnable", 0, 100);
 
     for (int i = 0; i < 50; ++i) {
       // We delay the execution to give the cleanup handler a chance to run. Otherwise, the
@@ -59,8 +58,7 @@ public class RevivingScheduledExecutorTest {
     final Semaphore semaphore = new Semaphore(0);
 
     RevivingScheduledExecutor executor =
-        new RevivingScheduledExecutor(
-            THREAD_FACTORY, "testAppEnginePeriodicRunnable", 0, 100);
+        new RevivingScheduledExecutor(THREAD_FACTORY, "testAppEnginePeriodicRunnable", 0, 100);
 
     ScheduledFuture<?> future =
         executor.scheduleAtFixedRate(
@@ -194,8 +192,7 @@ public class RevivingScheduledExecutorTest {
         executor.submit(
             new Runnable() {
               @Override
-              public void run() {
-              }
+              public void run() {}
             });
 
     try {
@@ -216,12 +213,13 @@ public class RevivingScheduledExecutorTest {
         return null;
       }
       Thread thread = Executors.defaultThreadFactory().newThread(r);
-      thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
-        @Override
-        public void uncaughtException(Thread t, Throwable e) {
-          // ignore -- to prevent the test output from getting cluttered
-        }
-      });
+      thread.setUncaughtExceptionHandler(
+          new UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread t, Throwable e) {
+              // ignore -- to prevent the test output from getting cluttered
+            }
+          });
       return thread;
     }
   }

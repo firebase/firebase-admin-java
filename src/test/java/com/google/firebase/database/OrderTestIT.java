@@ -81,7 +81,7 @@ public class OrderTestIT {
   @Test
   public void pushABunchOfDataReconnectReadItBack()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
 
     DatabaseReference writer = refs.get(0);
@@ -112,7 +112,7 @@ public class OrderTestIT {
   @Test
   public void pushABunchOfDataWithExplicitPriorityReconnectReadBackInOrder()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
 
     DatabaseReference writer = refs.get(0);
@@ -143,7 +143,7 @@ public class OrderTestIT {
   @Test
   public void pushDataWithExponentialPriorityAndCheckOrder()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
 
     DatabaseReference writer = refs.get(0);
@@ -263,7 +263,7 @@ public class OrderTestIT {
   @Test
   public void verifyOrderOfMixedNumbersStringAndNoPriorities()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
@@ -332,7 +332,7 @@ public class OrderTestIT {
   @Test
   public void verifyOrderOfIntegerKeys()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference writer = refs.get(0);
 
@@ -360,7 +360,7 @@ public class OrderTestIT {
   @Test
   public void verifyOrderOfLargeIntegerKeys()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference writer = refs.get(0);
 
@@ -410,8 +410,7 @@ public class OrderTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     ref.setValue(new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build());
@@ -456,8 +455,7 @@ public class OrderTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     ref.setValue(new MapBuilder().put("b", 2).put("c", 3).put("d", 4).build());
@@ -505,8 +503,7 @@ public class OrderTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     ref.setValue(new MapBuilder().put("b", 2).put("c", 3).put("d", 4).build());
@@ -555,8 +552,7 @@ public class OrderTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     ref.child("a").setValue("a", 1);
@@ -616,8 +612,7 @@ public class OrderTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     ref.setValue(
@@ -668,7 +663,7 @@ public class OrderTestIT {
   @Test
   public void case595ShouldNotGetChildMovedWhenDeletingPrioritizedGrandChild()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
     ChildEventListener listener =
@@ -695,8 +690,7 @@ public class OrderTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     ref.child("test/foo").setValue(42, "5");
@@ -766,8 +760,7 @@ public class OrderTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     ref.setValue(

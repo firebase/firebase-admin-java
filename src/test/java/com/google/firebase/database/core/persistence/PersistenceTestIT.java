@@ -97,8 +97,7 @@ public class PersistenceTestIT {
             true);
       } else {
         tree.applyUserMerge(
-            record.getPath(), record.getMerge(), record.getMerge(), record.getWriteId(),
-            true);
+            record.getPath(), record.getMerge(), record.getMerge(), record.getWriteId(), true);
       }
     }
     return tree;
@@ -123,8 +122,7 @@ public class PersistenceTestIT {
     SyncTree tree = newTestSyncTree(manager);
 
     List<? extends Event> events =
-        tree.addEventRegistration(testEventRegistration(defaultFooQuery, Event.EventType
-            .VALUE));
+        tree.addEventRegistration(testEventRegistration(defaultFooQuery, Event.EventType.VALUE));
     assertEquals(1, events.size());
     DataEvent event = (DataEvent) events.get(0);
     assertEquals(new Path("foo"), event.getPath());
@@ -326,8 +324,7 @@ public class PersistenceTestIT {
             manager, Arrays.asList(new UserWriteRecord(1L, new Path("foo"), writeNode, true)));
 
     List<? extends Event> events =
-        tree.addEventRegistration(testEventRegistration(defaultFooQuery, Event.EventType
-            .VALUE));
+        tree.addEventRegistration(testEventRegistration(defaultFooQuery, Event.EventType.VALUE));
     assertEquals(1, events.size());
     DataEvent event = (DataEvent) events.get(0);
     assertEquals(new Path("foo"), event.getPath());
@@ -366,8 +363,8 @@ public class PersistenceTestIT {
     Node node = engine.getCurrentNode(new Path("foo"));
     Node expected =
         NodeFromJSON(
-            fromSingleQuotedString("{'foo':'foo-value', 'bar':'bar-value', " +
-                "'baz':'baz-value'}"));
+            fromSingleQuotedString(
+                "{'foo':'foo-value', 'bar':'bar-value', " + "'baz':'baz-value'}"));
     assertEquals(expected, node);
   }
 
@@ -414,8 +411,7 @@ public class PersistenceTestIT {
     tree.applyServerOverwrite(new Path("foo"), NodeFromJSON("leaf-value"));
 
     List<? extends Event> events =
-        tree.addEventRegistration(testEventRegistration(defaultFooQuery, Event.EventType
-            .VALUE));
+        tree.addEventRegistration(testEventRegistration(defaultFooQuery, Event.EventType.VALUE));
     assertEquals(1, events.size());
     DataEvent event = (DataEvent) events.get(0);
     assertEquals(new Path("foo"), event.getPath());
@@ -439,8 +435,8 @@ public class PersistenceTestIT {
     EventRegistration fooDeepReg = testEventRegistration(fooDeepQuery, Event.EventType.VALUE);
     tree.addEventRegistration(fooDeepReg);
 
-    Map<String, Object> data = fromSingleQuotedString("{'deep':'foo-deep', " +
-        "'deep2':'foo-deep2'}");
+    Map<String, Object> data =
+        fromSingleQuotedString("{'deep':'foo-deep', " + "'deep2':'foo-deep2'}");
     tree.applyServerOverwrite(new Path("foo"), NodeFromJSON(data));
 
     QuerySpec barQuery = defaultQueryAt("bar");
@@ -460,8 +456,7 @@ public class PersistenceTestIT {
     tree.applyServerOverwrite(new Path("baz"), NodeFromJSON("baz-val"));
 
     ArrayList<QuerySpec> expectedQueries =
-        new ArrayList<>(
-            Arrays.asList(fooQuery, fooDeepQuery, barQuery, barLimitQuery, bazQuery));
+        new ArrayList<>(Arrays.asList(fooQuery, fooDeepQuery, barQuery, barLimitQuery, bazQuery));
     assertTrackedQueriesMatch(expectedQueries, storage.loadTrackedQueries());
 
     data =
@@ -626,8 +621,8 @@ public class PersistenceTestIT {
     assertTrue(cacheNode.isFullyInitialized());
     Node expected =
         NodeFromJSON(
-            fromSingleQuotedString("{'foo':'foo-value', 'bar':'bar-value', " +
-                "'baz':'baz-value'}"));
+            fromSingleQuotedString(
+                "{'foo':'foo-value', 'bar':'bar-value', " + "'baz':'baz-value'}"));
     assertEquals(expected, cacheNode.getNode());
   }
 

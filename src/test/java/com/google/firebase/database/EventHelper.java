@@ -14,9 +14,7 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-/**
- * User: greg Date: 5/28/13 Time: 9:06 AM
- */
+/** User: greg Date: 5/28/13 Time: 9:06 AM */
 class EventHelper {
 
   private List<Expectation> lookingFor;
@@ -29,10 +27,8 @@ class EventHelper {
   private Semaphore semaphore;
   private Semaphore initializationSemaphore;
   private boolean waitingForInitialization = false;
-  private Map<DatabaseReference, ValueEventListener> valueListeners =
-      new HashMap<>();
-  private Map<DatabaseReference, ChildEventListener> childListeners =
-      new HashMap<>();
+  private Map<DatabaseReference, ValueEventListener> valueListeners = new HashMap<>();
+  private Map<DatabaseReference, ChildEventListener> childListeners = new HashMap<>();
 
   EventHelper() {
     lookingFor = new ArrayList<>();
@@ -53,8 +49,7 @@ class EventHelper {
   }
 
   public EventHelper addChildExpectation(
-      DatabaseReference ref, Event.EventType eventType, String childName) throws
-      DatabaseException {
+      DatabaseReference ref, Event.EventType eventType, String childName) throws DatabaseException {
     if (!locations.contains(ref)) {
       toListen.add(ref);
     }
@@ -135,8 +130,7 @@ class EventHelper {
               @Override
               public void onChildAdded(DataSnapshot snapshot, String previousChildName) {
                 recordEvent(
-                    new EventRecord(snapshot, Event.EventType.CHILD_ADDED,
-                        previousChildName));
+                    new EventRecord(snapshot, Event.EventType.CHILD_ADDED, previousChildName));
                 if (uninitializedRefs.contains(ref)) {
                   initializationEvents++;
                 }
@@ -148,8 +142,7 @@ class EventHelper {
                   initializationEvents++;
                 }
                 recordEvent(
-                    new EventRecord(snapshot, Event.EventType.CHILD_CHANGED,
-                        previousChildName));
+                    new EventRecord(snapshot, Event.EventType.CHILD_CHANGED, previousChildName));
               }
 
               @Override
@@ -166,8 +159,7 @@ class EventHelper {
                   initializationEvents++;
                 }
                 recordEvent(
-                    new EventRecord(snapshot, Event.EventType.CHILD_MOVED,
-                        previousChildName));
+                    new EventRecord(snapshot, Event.EventType.CHILD_MOVED, previousChildName));
               }
 
               @Override

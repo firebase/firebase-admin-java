@@ -203,9 +203,7 @@ public class MockPersistenceStorageEngine implements PersistenceStorageEngine {
     assert (this.trackedQueries.containsKey(trackedQueryId))
         : "Can't track keys for an untracked query.";
     Set<ChildKey> trackedKeys = this.trackedQueryKeys.get(trackedQueryId);
-    return trackedKeys != null
-        ? new HashSet<>(trackedKeys)
-        : Collections.<ChildKey>emptySet();
+    return trackedKeys != null ? new HashSet<>(trackedKeys) : Collections.<ChildKey>emptySet();
   }
 
   @Override
@@ -240,13 +238,11 @@ public class MockPersistenceStorageEngine implements PersistenceStorageEngine {
                         @Override
                         public CompoundWrite onNodeValue(
                             Path keepPath, Void value, CompoundWrite accum) {
-                          return accum.addWrite(keepPath, dataNode.getChild
-                              (keepPath));
+                          return accum.addWrite(keepPath, dataNode.getChild(keepPath));
                         }
                       });
           serverCache =
-              serverCache.removeWrite(absoluteDataPath).addWrites(absoluteDataPath,
-                  newCache);
+              serverCache.removeWrite(absoluteDataPath).addWrites(absoluteDataPath, newCache);
         } else {
           // NOTE: This is technically a valid scenario (e.g. you ask to prune at / but
           // only want to
@@ -277,8 +273,7 @@ public class MockPersistenceStorageEngine implements PersistenceStorageEngine {
   }
 
   @Override
-  public void setTransactionSuccessful() {
-  }
+  public void setTransactionSuccessful() {}
 
   private void verifyInsideTransaction() {
     hardAssert(

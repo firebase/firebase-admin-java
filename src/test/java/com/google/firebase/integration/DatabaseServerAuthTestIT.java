@@ -52,20 +52,26 @@ public class DatabaseServerAuthTestIT {
   }
 
   private static void createFirebaseApp() {
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setDatabaseUrl(SERVER_SDK_DB_URL)
-        .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
-        .build();
+    FirebaseOptions options =
+        new FirebaseOptions.Builder()
+            .setDatabaseUrl(SERVER_SDK_DB_URL)
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .build();
     masterApp = FirebaseApp.initializeApp(options, "DatabaseServerAuthTestIT");
   }
 
   private static void createTestDatabase() {
     // Make sure local server-sdk-test namespace exists mapped to the correct project_id and
     // number.
-    String creationParams = "{\n"
-        + "  \"project_id\": \"" + TestUtils.PROJECT_ID + "\",\n"
-        + "  \"project_number\": \"" + TestUtils.PROJECT_NUMBER + "\"\n"
-        + "}";
+    String creationParams =
+        "{\n"
+            + "  \"project_id\": \""
+            + TestUtils.PROJECT_ID
+            + "\",\n"
+            + "  \"project_number\": \""
+            + TestUtils.PROJECT_NUMBER
+            + "\"\n"
+            + "}";
 
     doFbLocalAdminRestPut("/.nsadmin/.json", creationParams);
   }
@@ -104,9 +110,9 @@ public class DatabaseServerAuthTestIT {
     doWrite(ref, /*shouldSucceed=*/ false, /*shouldTimeout=*/ true);
   }
 
-  private static void doWrite(DatabaseReference ref,
-                              final boolean shouldSucceed,
-                              final boolean shouldTimeout) throws InterruptedException {
+  private static void doWrite(
+      DatabaseReference ref, final boolean shouldSucceed, final boolean shouldTimeout)
+      throws InterruptedException {
     final CountDownLatch lock = new CountDownLatch(1);
     ref.setValue("wrote something")
         .addOnCompleteListener(
@@ -137,23 +143,24 @@ public class DatabaseServerAuthTestIT {
     doRead(ref, /*shouldSucceed=*/ false, /*shouldTimeout=*/ true);
   }
 
-  private static void doRead(DatabaseReference ref,
-                             final boolean shouldSucceed,
-                             final boolean shouldTimeout) throws InterruptedException {
+  private static void doRead(
+      DatabaseReference ref, final boolean shouldSucceed, final boolean shouldTimeout)
+      throws InterruptedException {
     final CountDownLatch lock = new CountDownLatch(1);
-    ref.addListenerForSingleValueEvent(new ValueEventListener() {
-      @Override
-      public void onDataChange(DataSnapshot snapshot) {
-        assertTrue("Read succeeded.", shouldSucceed);
-        lock.countDown();
-      }
+    ref.addListenerForSingleValueEvent(
+        new ValueEventListener() {
+          @Override
+          public void onDataChange(DataSnapshot snapshot) {
+            assertTrue("Read succeeded.", shouldSucceed);
+            lock.countDown();
+          }
 
-      @Override
-      public void onCancelled(DatabaseError databaseError) {
-        assertTrue("Read cancelled.", !shouldSucceed);
-        lock.countDown();
-      }
-    });
+          @Override
+          public void onCancelled(DatabaseError databaseError) {
+            assertTrue("Read cancelled.", !shouldSucceed);
+            lock.countDown();
+          }
+        });
 
     boolean finished = lock.await(TestUtils.ASYNC_WAIT_TIME_MS, TimeUnit.MILLISECONDS);
     if (shouldTimeout) {
@@ -195,7 +202,8 @@ public class DatabaseServerAuthTestIT {
     } catch (Exception e) {
       throw new RuntimeException("doRestPut failed", e);
     }
-    assertTrue("Rest put for " + endpoint + " failed: " + response.toString(),
+    assertTrue(
+        "Rest put for " + endpoint + " failed: " + response.toString(),
         response.getStatusLine().getStatusCode() == 200);
   }
 
@@ -204,10 +212,11 @@ public class DatabaseServerAuthTestIT {
     FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
     assertWriteSucceeds(db.getReference());
 
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setDatabaseUrl(SERVER_SDK_DB_URL)
-        .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.NONE.asStream()))
-        .build();
+    FirebaseOptions options =
+        new FirebaseOptions.Builder()
+            .setDatabaseUrl(SERVER_SDK_DB_URL)
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.NONE.asStream()))
+            .build();
     FirebaseApp app = FirebaseApp.initializeApp(options, "DatabaseServerAuthTestNoRole");
     db = FirebaseDatabase.getInstance(app);
     // TODO(klimt): Ideally, we would find a way to verify the correct log output.
@@ -220,10 +229,11 @@ public class DatabaseServerAuthTestIT {
     FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
     assertWriteSucceeds(db.getReference());
 
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setDatabaseUrl(SERVER_SDK_DB_URL)
-        .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.VIEWER.asStream()))
-        .build();
+    FirebaseOptions options =
+        new FirebaseOptions.Builder()
+            .setDatabaseUrl(SERVER_SDK_DB_URL)
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.VIEWER.asStream()))
+            .build();
     FirebaseApp app = FirebaseApp.initializeApp(options, "DatabaseServerAuthTestViewerRole");
     db = FirebaseDatabase.getInstance(app);
     assertReadSucceeds(db.getReference());
@@ -235,10 +245,11 @@ public class DatabaseServerAuthTestIT {
     FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
     assertWriteSucceeds(db.getReference());
 
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setDatabaseUrl(SERVER_SDK_DB_URL)
-        .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
-        .build();
+    FirebaseOptions options =
+        new FirebaseOptions.Builder()
+            .setDatabaseUrl(SERVER_SDK_DB_URL)
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .build();
     FirebaseApp app = FirebaseApp.initializeApp(options, "DatabaseServerAuthTestEditorRole");
     db = FirebaseDatabase.getInstance(app);
     assertReadSucceeds(db.getReference());
@@ -250,10 +261,11 @@ public class DatabaseServerAuthTestIT {
     FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
     assertWriteSucceeds(db.getReference());
 
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setDatabaseUrl(SERVER_SDK_DB_URL)
-        .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.OWNER.asStream()))
-        .build();
+    FirebaseOptions options =
+        new FirebaseOptions.Builder()
+            .setDatabaseUrl(SERVER_SDK_DB_URL)
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.OWNER.asStream()))
+            .build();
     FirebaseApp app = FirebaseApp.initializeApp(options, "DatabaseServerAuthTestOwnerRole");
     db = FirebaseDatabase.getInstance(app);
     assertReadSucceeds(db.getReference());
@@ -271,9 +283,10 @@ public class DatabaseServerAuthTestIT {
     Map<String, Object> authVariableOverrides = new HashMap<>();
     authVariableOverrides.put("uid", "test");
     authVariableOverrides.put("custom", "secret");
-    FirebaseOptions options = new FirebaseOptions.Builder(masterApp.getOptions())
-        .setDatabaseAuthVariableOverride(authVariableOverrides)
-        .build();
+    FirebaseOptions options =
+        new FirebaseOptions.Builder(masterApp.getOptions())
+            .setDatabaseAuthVariableOverride(authVariableOverrides)
+            .build();
     FirebaseApp testUidApp = FirebaseApp.initializeApp(options, "testGetAppWithUid");
 
     FirebaseDatabase masterDb = FirebaseDatabase.getInstance(masterApp);

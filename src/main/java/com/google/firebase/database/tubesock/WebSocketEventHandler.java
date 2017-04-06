@@ -1,6 +1,5 @@
 package com.google.firebase.database.tubesock;
 
-
 public interface WebSocketEventHandler {
 
   void onOpen();

@@ -55,13 +55,11 @@ public class OrderByTestIT {
           }
         };
     ref.push()
-        .setValue(TestHelpers.fromJsonString("{\"name\": \"Andrew\", \"nuggets\": 35}"),
-            listener);
+        .setValue(TestHelpers.fromJsonString("{\"name\": \"Andrew\", \"nuggets\": 35}"), listener);
     ref.push()
         .setValue(TestHelpers.fromJsonString("{\"name\": \"Rob\", \"nuggets\": 40}"), listener);
     ref.push()
-        .setValue(TestHelpers.fromJsonString("{\"name\": \"Greg\", \"nuggets\": 38}"),
-            listener);
+        .setValue(TestHelpers.fromJsonString("{\"name\": \"Greg\", \"nuggets\": 38}"), listener);
 
     TestHelpers.waitFor(semaphore, 3);
 
@@ -89,8 +87,7 @@ public class OrderByTestIT {
 
   @Test
   public void canUseAFallbackThenDefineTheSpecifiedIndex()
-      throws InterruptedException, ExecutionException, TimeoutException, TestFailure,
-      IOException {
+      throws InterruptedException, ExecutionException, TimeoutException, TestFailure, IOException {
 
     final List<String> warnMessages = new ArrayList<>();
     final Semaphore warnSemaphore = new Semaphore(0);
@@ -403,8 +400,7 @@ public class OrderByTestIT {
         query.addChildEventListener(
             new TestChildEventListener() {
               @Override
-              public void onChildAdded(DataSnapshot snapshot, String previousChildName) {
-              }
+              public void onChildAdded(DataSnapshot snapshot, String previousChildName) {}
 
               @Override
               public void onChildMoved(DataSnapshot snap, String previousChildName) {
@@ -414,8 +410,7 @@ public class OrderByTestIT {
               }
 
               @Override
-              public void onChildChanged(DataSnapshot snap, String previousChildName) {
-              }
+              public void onChildChanged(DataSnapshot snap, String previousChildName) {}
             });
 
     ref.setValue(initial);
@@ -435,8 +430,7 @@ public class OrderByTestIT {
 
   @Test
   public void multipleIndexesAtLocation()
-      throws IOException, ExecutionException, InterruptedException, TimeoutException,
-      TestFailure {
+      throws IOException, ExecutionException, InterruptedException, TimeoutException, TestFailure {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
@@ -512,8 +506,7 @@ public class OrderByTestIT {
     Assert.assertEquals(1, orderSnaps.size());
     Assert.assertEquals(orderExpected, orderSnaps.get(0).getValue());
 
-    new WriteFuture(writer.child("a"), new MapBuilder().put("order", -1L).put("foo", 1L)
-        .build())
+    new WriteFuture(writer.child("a"), new MapBuilder().put("order", -1L).put("foo", 1L).build())
         .timedGet();
 
     fooExpected = new HashMap<>();
@@ -743,7 +736,7 @@ public class OrderByTestIT {
   @Test
   public void queriesWorkOnLeafNodes()
       throws DatabaseException, InterruptedException, ExecutionException, TestFailure,
-      TimeoutException {
+          TimeoutException {
     DatabaseReference ref = TestHelpers.getRandomNode();
     final Semaphore semaphore = new Semaphore(0);
     new WriteFuture(ref, "leaf-node").timedGet();
@@ -822,8 +815,7 @@ public class OrderByTestIT {
 
   @Test
   public void serverRespectsValueIndex()
-      throws InterruptedException, ExecutionException, TimeoutException, TestFailure,
-      IOException {
+      throws InterruptedException, ExecutionException, TimeoutException, TestFailure, IOException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
@@ -872,8 +864,7 @@ public class OrderByTestIT {
 
   @Test
   public void deepUpdatesWorkWithQueries()
-      throws InterruptedException, ExecutionException, TimeoutException, TestFailure,
-      IOException {
+      throws InterruptedException, ExecutionException, TimeoutException, TestFailure, IOException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
@@ -995,12 +986,10 @@ public class OrderByTestIT {
             .addValueEventListener(
                 new ValueEventListener() {
                   @Override
-                  public void onDataChange(DataSnapshot snapshot) {
-                  }
+                  public void onDataChange(DataSnapshot snapshot) {}
 
                   @Override
-                  public void onCancelled(DatabaseError error) {
-                  }
+                  public void onCancelled(DatabaseError error) {}
                 });
 
     ref.addValueEventListener(listener);

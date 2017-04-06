@@ -1,5 +1,8 @@
 package com.google.firebase;
 
+import static com.google.firebase.internal.Base64Utils.encodeUrlSafeNoPadding;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.AuthStateListener;
@@ -29,23 +32,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.google.firebase.internal.Base64Utils.encodeUrlSafeNoPadding;
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 /**
  * The entry point of Firebase SDKs. It holds common configuration and state for Firebase APIs. Most
- * applications don't need to directly interact with FirebaseApp. * <p>Firebase APIs use the default
- * FirebaseApp by default, unless a different one is explicitly passed to the API via
- * FirebaseFoo.getInstance(firebaseApp). * <p>{@link FirebaseApp#initializeApp(FirebaseOptions)}
- * initializes the default app instance. This method should be invoked at startup.
+ * applications don't need to directly interact with FirebaseApp. *
+ *
+ * <p>Firebase APIs use the default FirebaseApp by default, unless a different one is explicitly
+ * passed to the API via FirebaseFoo.getInstance(firebaseApp). *
+ *
+ * <p>{@link FirebaseApp#initializeApp(FirebaseOptions)} initializes the default app instance. This
+ * method should be invoked at startup.
  */
 public class FirebaseApp {
 
-  /**
-   * A map of (name, FirebaseApp) instances.
-   */
+  /** A map of (name, FirebaseApp) instances. */
   @GuardedBy("sLock")
   private static final Map<String, FirebaseApp> instances = new HashMap<>();
+
   private static final String DEFAULT_APP_NAME = "[DEFAULT]";
   private static final long TOKEN_REFRESH_INTERVAL_MILLIS = TimeUnit.MINUTES.toMillis(55);
   private static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
@@ -65,18 +67,14 @@ public class FirebaseApp {
 
   private final AtomicReference<GetTokenResult> currentToken = new AtomicReference<>();
 
-  /**
-   * Default constructor.
-   */
+  /** Default constructor. */
   private FirebaseApp(String name, FirebaseOptions options, TokenRefresher.Factory factory) {
     this.name = Preconditions.checkNotEmpty(name);
     this.options = Preconditions.checkNotNull(options);
     tokenRefresher = Preconditions.checkNotNull(factory).create(this);
   }
 
-  /**
-   * Returns a mutable list of all FirebaseApps.
-   */
+  /** Returns a mutable list of all FirebaseApps. */
   public static List<FirebaseApp> getApps() {
     // TODO(arondeak): reenable persistence. See b/28158809.
     return new ArrayList<>(instances.values());
@@ -98,7 +96,7 @@ public class FirebaseApp {
    * @param name represents the name of the {@link FirebaseApp} instance.
    * @return the {@link FirebaseApp} corresponding to the name.
    * @throws IllegalStateException if the {@link FirebaseApp} was not initialized, either via {@link
-   * #initializeApp(FirebaseOptions, String)} or {@link #getApps()}.
+   *     #initializeApp(FirebaseOptions, String)} or {@link #getApps()}.
    */
   public static FirebaseApp getInstance(@NonNull String name) {
     synchronized (sLock) {
@@ -124,8 +122,9 @@ public class FirebaseApp {
 
   /**
    * Initializes the default {@link FirebaseApp} instance. Same as {@link
-   * #initializeApp(FirebaseOptions, String)}, but it uses {@link #DEFAULT_APP_NAME} as name.
-   * * <p>The creation of the default instance is automatically triggered at app startup time, if
+   * #initializeApp(FirebaseOptions, String)}, but it uses {@link #DEFAULT_APP_NAME} as name. *
+   *
+   * <p>The creation of the default instance is automatically triggered at app startup time, if
    * Firebase configuration values are available from resources - populated from
    * google-services.json.
    */
@@ -138,7 +137,7 @@ public class FirebaseApp {
    *
    * @param options represents the global {@link FirebaseOptions}
    * @param name unique name for the app. It is an error to initialize an app with an already
-   * existing name. Starting and ending whitespace characters in the name are ignored (trimmed).
+   *     existing name. Starting and ending whitespace characters in the name are ignored (trimmed).
    * @return an instance of {@link FirebaseApp}
    * @throws IllegalStateException if an app with the same name has already been initialized.
    */
@@ -146,8 +145,8 @@ public class FirebaseApp {
     return initializeApp(options, name, DEFAULT_TOKEN_REFRESHER_FACTORY);
   }
 
-  static FirebaseApp initializeApp(FirebaseOptions options, String name,
-                                   TokenRefresher.Factory tokenRefresherFactory) {
+  static FirebaseApp initializeApp(
+      FirebaseOptions options, String name, TokenRefresher.Factory tokenRefresherFactory) {
     FirebaseAppStore appStore = FirebaseAppStore.initialize();
     String normalizedName = normalize(name);
     final FirebaseApp firebaseApp;
@@ -181,6 +180,11 @@ public class FirebaseApp {
     return encodeUrlSafeNoPadding(name.getBytes(UTF_8));
   }
 
+  /** Use this key to store data per FirebaseApp. */
+  String getPersistenceKey() {
+    return FirebaseApp.getPersistenceKey(getName(), getOptions());
+  }
+
   private static List<String> getAllAppNames() {
     Set<String> allAppNames = new HashSet<>();
     synchronized (sLock) {
@@ -197,24 +201,20 @@ public class FirebaseApp {
     return sortedNameList;
   }
 
-  /**
-   * Normalizes the app name.
-   */
+  /** Normalizes the app name. */
   private static String normalize(@NonNull String name) {
     return name.trim();
   }
 
-  /**
-   * Returns the unique name of this app.
-   */
+  /** Returns the unique name of this app. */
   @NonNull
   public String getName() {
     checkNotDeleted();
     return name;
   }
 
-  /**
-   * Returns the specified {@link FirebaseOptions}.
+  /** 
+   * Returns the specified {@link FirebaseOptions}. 
    */
   @NonNull
   public FirebaseOptions getOptions() {
@@ -237,8 +237,7 @@ public class FirebaseApp {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("name", name)
-        .add("options", options).toString();
+    return Objects.toStringHelper(this).add("name", name).add("options", options).toString();
   }
 
   /**
@@ -274,38 +273,41 @@ public class FirebaseApp {
    * Internal-only method to fetch a valid Service Account OAuth2 Token.
    *
    * @param forceRefresh force refreshes the token. Should only be set to <code>true</code> if the
-   * token is invalidated out of band.
+   *     token is invalidated out of band.
    * @return a {@link Task}
    */
   Task<GetTokenResult> getToken(boolean forceRefresh) {
     checkNotDeleted();
-    return options.getCredential().getAccessToken(forceRefresh).continueWith(
-        new Continuation<String, GetTokenResult>() {
-          @Override
-          public GetTokenResult then(@NonNull Task<String> task) throws Exception {
-            GetTokenResult newToken = new GetTokenResult(task.getResult());
-            GetTokenResult oldToken = currentToken.get();
-            List<AuthStateListener> listenersCopy = null;
-            if (!newToken.equals(oldToken)) {
-              synchronized (authStateListeners) {
-                // Grab the lock before compareAndSet to avoid a potential race
-                // condition
-                // with addAuthStateListener
-                if (currentToken.compareAndSet(oldToken, newToken)) {
-                  listenersCopy = ImmutableList.copyOf(authStateListeners);
-                  tokenRefresher.scheduleRefresh(TOKEN_REFRESH_INTERVAL_MILLIS);
+    return options
+        .getCredential()
+        .getAccessToken(forceRefresh)
+        .continueWith(
+            new Continuation<String, GetTokenResult>() {
+              @Override
+              public GetTokenResult then(@NonNull Task<String> task) throws Exception {
+                GetTokenResult newToken = new GetTokenResult(task.getResult());
+                GetTokenResult oldToken = currentToken.get();
+                List<AuthStateListener> listenersCopy = null;
+                if (!newToken.equals(oldToken)) {
+                  synchronized (authStateListeners) {
+                    // Grab the lock before compareAndSet to avoid a potential race
+                    // condition
+                    // with addAuthStateListener
+                    if (currentToken.compareAndSet(oldToken, newToken)) {
+                      listenersCopy = ImmutableList.copyOf(authStateListeners);
+                      tokenRefresher.scheduleRefresh(TOKEN_REFRESH_INTERVAL_MILLIS);
+                    }
+                  }
                 }
-              }
-            }
 
-            if (listenersCopy != null) {
-              for (AuthStateListener listener : listenersCopy) {
-                listener.onAuthStateChanged(newToken);
+                if (listenersCopy != null) {
+                  for (AuthStateListener listener : listenersCopy) {
+                    listener.onAuthStateChanged(newToken);
+                  }
+                }
+                return newToken;
               }
-            }
-            return newToken;
-          }
-        });
+            });
   }
 
   boolean isDefaultApp() {
@@ -313,15 +315,7 @@ public class FirebaseApp {
   }
 
   /**
-   * Use this key to store data per FirebaseApp.
-   */
-  String getPersistenceKey() {
-    return FirebaseApp.getPersistenceKey(getName(), getOptions());
-  }
-
-  /**
-   * If an API has locally stored data it must register lifecycle listeners at initialization
-   * time.
+   * If an API has locally stored data it must register lifecycle listeners at initialization time.
    */
   // TODO(arondeak): make sure that all APIs that are interested in these events are
   // initialized using reflection when an app is deleted (for v5).
@@ -384,16 +378,18 @@ public class FirebaseApp {
      * Schedule a forced token refresh to be executed after a specified duration.
      *
      * @param delayMillis Duration in milliseconds, after which the token should be forcibly
-     * refreshed.
+     *     refreshed.
      */
     final synchronized void scheduleRefresh(long delayMillis) {
       cancelPrevious();
-      scheduleNext(new Callable<Task<GetTokenResult>>() {
-        @Override
-        public Task<GetTokenResult> call() throws Exception {
-          return firebaseApp.getToken(true);
-        }
-      }, delayMillis);
+      scheduleNext(
+          new Callable<Task<GetTokenResult>>() {
+            @Override
+            public Task<GetTokenResult> call() throws Exception {
+              return firebaseApp.getToken(true);
+            }
+          },
+          delayMillis);
     }
 
     protected void cancelPrevious() {
@@ -404,8 +400,9 @@ public class FirebaseApp {
 
     protected void scheduleNext(Callable<Task<GetTokenResult>> task, long delayMillis) {
       try {
-        future = FirebaseExecutors.DEFAULT_SCHEDULED_EXECUTOR.schedule(
-            task, delayMillis, TimeUnit.MILLISECONDS);
+        future =
+            FirebaseExecutors.DEFAULT_SCHEDULED_EXECUTOR.schedule(
+                task, delayMillis, TimeUnit.MILLISECONDS);
       } catch (UnsupportedOperationException ignored) {
         // Cannot support task scheduling in the current runtime.
       }

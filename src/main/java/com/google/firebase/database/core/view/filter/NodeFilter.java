@@ -16,8 +16,8 @@ import com.google.firebase.database.snapshot.Node;
 public interface NodeFilter {
 
   /**
-   * Update a single complete child in the snap. If the child equals the old child in the snap,
-   * this is a no-op. The method expects an indexed snap.
+   * Update a single complete child in the snap. If the child equals the old child in the snap, this
+   * is a no-op. The method expects an indexed snap.
    */
   IndexedNode updateChild(
       IndexedNode node,
@@ -27,20 +27,14 @@ public interface NodeFilter {
       CompleteChildSource source,
       ChildChangeAccumulator optChangeAccumulator);
 
-  /**
-   * Update a node in full and output any resulting change from this complete update.
-   */
+  /** Update a node in full and output any resulting change from this complete update. */
   IndexedNode updateFullNode(
       IndexedNode oldSnap, IndexedNode newSnap, ChildChangeAccumulator optChangeAccumulator);
 
-  /**
-   * Update the priority of the root node
-   */
+  /** Update the priority of the root node */
   IndexedNode updatePriority(IndexedNode oldSnap, Node newPriority);
 
-  /**
-   * Returns true if children might be filtered due to query criteria
-   */
+  /** Returns true if children might be filtered due to query criteria */
   boolean filtersNodes();
 
   /**
@@ -49,9 +43,7 @@ public interface NodeFilter {
    */
   NodeFilter getIndexedFilter();
 
-  /**
-   * Returns the index that this filter uses
-   */
+  /** Returns the index that this filter uses */
   Index getIndex();
 
   /**

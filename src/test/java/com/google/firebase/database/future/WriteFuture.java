@@ -13,9 +13,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/**
- * User: greg Date: 5/24/13 Time: 2:37 PM
- */
+/** User: greg Date: 5/24/13 Time: 2:37 PM */
 public class WriteFuture implements Future<DatabaseError> {
 
   private DatabaseError error;

@@ -8,9 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Contains placeholder values to use when writing data to the Firebase Database.
- */
+/** Contains placeholder values to use when writing data to the Firebase Database. */
 public class ServerValue {
 
   /**

@@ -7,9 +7,7 @@ import com.google.firebase.tasks.OnFailureListener;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Implementation of {@link OnFailureListener} for use in tests.
- */
+/** Implementation of {@link OnFailureListener} for use in tests. */
 public class TestOnFailureListener implements OnFailureListener {
 
   private static final long TIMEOUT_MS = 500;
@@ -25,24 +23,18 @@ public class TestOnFailureListener implements OnFailureListener {
     mLatch.countDown();
   }
 
-  /**
-   * Blocks until the {@link #onFailure} is called.
-   */
+  /** Blocks until the {@link #onFailure} is called. */
   public boolean await() throws InterruptedException {
     return mLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);
   }
 
-  /**
-   * Returns the exception passed to {@link #onFailure}.
-   */
+  /** Returns the exception passed to {@link #onFailure}. */
   public Exception getException() {
     Preconditions.checkState(mLatch.getCount() == 0, "onFailure has not been called");
     return mException;
   }
 
-  /**
-   * Returns the Thread that {@link #onFailure} was called on.
-   */
+  /** Returns the Thread that {@link #onFailure} was called on. */
   public Thread getThread() {
     Preconditions.checkState(mLatch.getCount() == 0, "onFailure has not been called");
     return mThread;

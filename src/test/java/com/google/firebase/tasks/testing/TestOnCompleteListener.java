@@ -8,9 +8,7 @@ import com.google.firebase.tasks.Task;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Implementation of {@link OnCompleteListener} for use in tests.
- */
+/** Implementation of {@link OnCompleteListener} for use in tests. */
 public class TestOnCompleteListener<TResult> implements OnCompleteListener<TResult> {
 
   private static final long TIMEOUT_MS = 500;
@@ -26,24 +24,18 @@ public class TestOnCompleteListener<TResult> implements OnCompleteListener<TResu
     mLatch.countDown();
   }
 
-  /**
-   * Blocks until the {@link #onComplete} is called.
-   */
+  /** Blocks until the {@link #onComplete} is called. */
   public boolean await() throws InterruptedException {
     return mLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS);
   }
 
-  /**
-   * Returns the Task passed to {@link #onComplete}.
-   */
+  /** Returns the Task passed to {@link #onComplete}. */
   public Task<TResult> getTask() {
     Preconditions.checkState(mLatch.getCount() == 0, "onComplete has not been called");
     return mTask;
   }
 
-  /**
-   * Returns the Thread that {@link #onComplete} was called on.
-   */
+  /** Returns the Thread that {@link #onComplete} was called on. */
   public Thread getThread() {
     Preconditions.checkState(mLatch.getCount() == 0, "onFailure has not been called");
     return mThread;

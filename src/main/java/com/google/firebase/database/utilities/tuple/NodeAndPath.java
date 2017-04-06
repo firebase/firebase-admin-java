@@ -3,9 +3,7 @@ package com.google.firebase.database.utilities.tuple;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.snapshot.Node;
 
-/**
- * User: greg Date: 5/22/13 Time: 8:35 AM
- */
+/** User: greg Date: 5/22/13 Time: 8:35 AM */
 public class NodeAndPath {
 
   private Node node;

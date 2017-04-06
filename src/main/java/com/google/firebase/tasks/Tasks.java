@@ -13,26 +13,21 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/**
- * /** {@link Task} utility methods.
+/** 
+ * {@link Task} utility methods.
  */
 public final class Tasks {
 
-  private Tasks() {
-  }
+  private Tasks() {}
 
-  /**
-   * Returns a completed Task with the specified result.
-   */
+  /** Returns a completed Task with the specified result. */
   public static <T> Task<T> forResult(T result) {
     TaskImpl<T> task = new TaskImpl<>();
     task.setResult(result);
     return task;
   }
 
-  /**
-   * Returns a completed Task with the specified exception.
-   */
+  /** Returns a completed Task with the specified exception. */
   public static <T> Task<T> forException(@NonNull Exception exception) {
     TaskImpl<T> task = new TaskImpl<>();
     task.setException(exception);
@@ -53,8 +48,7 @@ public final class Tasks {
    *
    * @param executor the Executor to use to call the Callable
    */
-  public static <T> Task<T> call(
-      @NonNull Executor executor, @NonNull final Callable<T> callable) {
+  public static <T> Task<T> call(@NonNull Executor executor, @NonNull final Callable<T> callable) {
     Preconditions.checkNotNull(executor, "Executor must not be null");
     Preconditions.checkNotNull(callable, "Callback must not be null");
 
@@ -80,8 +74,7 @@ public final class Tasks {
    * @throws ExecutionException if the Task fails
    * @throws InterruptedException if an interrupt occurs while waiting for the Task to complete
    */
-  public static <T> T await(@NonNull Task<T> task)
-      throws ExecutionException, InterruptedException {
+  public static <T> T await(@NonNull Task<T> task) throws ExecutionException, InterruptedException {
     Preconditions.checkNotNull(task, "Task must not be null");
 
     if (task.isComplete()) {
@@ -103,8 +96,7 @@ public final class Tasks {
    * @throws InterruptedException if an interrupt occurs while waiting for the Task to complete
    * @throws TimeoutException if the specified timeout is reached before the Task completes
    */
-  public static <T> T await(
-      @NonNull Task<T> task, long timeout, @NonNull TimeUnit unit)
+  public static <T> T await(@NonNull Task<T> task, long timeout, @NonNull TimeUnit unit)
       throws ExecutionException, InterruptedException, TimeoutException {
     Preconditions.checkNotNull(task, "Task must not be null");
     Preconditions.checkNotNull(unit, "TimeUnit must not be null");
@@ -159,8 +151,7 @@ public final class Tasks {
     return whenAll(Arrays.asList(tasks));
   }
 
-  private static <T> T getResultOrThrowExecutionException(Task<T> task)
-      throws ExecutionException {
+  private static <T> T getResultOrThrowExecutionException(Task<T> task) throws ExecutionException {
     if (task.isSuccessful()) {
       return task.getResult();
     } else {
@@ -174,9 +165,7 @@ public final class Tasks {
     task.addOnFailureListener(TaskExecutors.DIRECT, listener);
   }
 
-  interface CombinedListener extends OnSuccessListener<Object>, OnFailureListener {
-
-  }
+  interface CombinedListener extends OnSuccessListener<Object>, OnFailureListener {}
 
   private static final class AwaitListener implements CombinedListener {
 
@@ -246,8 +235,7 @@ public final class Tasks {
         } else {
           task.setException(
               new ExecutionException(
-                  failuresCounter + " out of " + numTasks + " underlying tasks failed",
-                  exception));
+                  failuresCounter + " out of " + numTasks + " underlying tasks failed", exception));
         }
       }
     }

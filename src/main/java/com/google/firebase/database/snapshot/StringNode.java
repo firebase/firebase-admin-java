@@ -2,9 +2,7 @@ package com.google.firebase.database.snapshot;
 
 import com.google.firebase.database.utilities.Utilities;
 
-/**
- * User: greg Date: 5/17/13 Time: 2:40 PM
- */
+/** User: greg Date: 5/17/13 Time: 2:40 PM */
 public class StringNode extends LeafNode<StringNode> {
 
   private final String value;
@@ -24,13 +22,10 @@ public class StringNode extends LeafNode<StringNode> {
     switch (version) {
       case V1:
         return getPriorityHash(version) + "string:" + value;
-      case V2: {
-        return getPriorityHash(version) + "string:" + Utilities
-            .stringHashV2Representation(value);
-      }
+      case V2:
+        return getPriorityHash(version) + "string:" + Utilities.stringHashV2Representation(value);
       default:
-        throw new IllegalArgumentException("Invalid hash version for string node: " +
-            version);
+        throw new IllegalArgumentException("Invalid hash version for string node: " + version);
     }
   }
 

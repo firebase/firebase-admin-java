@@ -142,11 +142,10 @@ public class View {
     }
     ViewCache oldViewCache = this.viewCache;
     ViewProcessor.ProcessorResult result =
-        this.processor.applyOperation(oldViewCache, operation, writesCache,
-            optCompleteServerCache);
+        this.processor.applyOperation(oldViewCache, operation, writesCache, optCompleteServerCache);
 
     assert result.viewCache.getServerCache().isFullyInitialized()
-        || !oldViewCache.getServerCache().isFullyInitialized()
+            || !oldViewCache.getServerCache().isFullyInitialized()
         : "Once a server snap is complete, it should never go back";
 
     this.viewCache = result.viewCache;
@@ -165,8 +164,7 @@ public class View {
     if (eventSnap.isFullyInitialized()) {
       initialChanges.add(Change.valueChange(eventSnap.getIndexedNode()));
     }
-    return this.generateEventsForChanges(initialChanges, eventSnap.getIndexedNode(),
-        registration);
+    return this.generateEventsForChanges(initialChanges, eventSnap.getIndexedNode(), registration);
   }
 
   private List<DataEvent> generateEventsForChanges(

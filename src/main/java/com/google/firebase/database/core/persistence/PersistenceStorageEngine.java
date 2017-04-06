@@ -48,9 +48,7 @@ public interface PersistenceStorageEngine {
    */
   List<UserWriteRecord> loadUserWrites();
 
-  /**
-   * Removes all user writes.
-   */
+  /** Removes all user writes. */
   void removeAllUserWrites();
 
   /**
@@ -99,8 +97,7 @@ public interface PersistenceStorageEngine {
 
   void saveTrackedQueryKeys(long trackedQueryId, Set<ChildKey> keys);
 
-  void updateTrackedQueryKeys(
-      long trackedQueryId, Set<ChildKey> added, Set<ChildKey> removed);
+  void updateTrackedQueryKeys(long trackedQueryId, Set<ChildKey> added, Set<ChildKey> removed);
 
   Set<ChildKey> loadTrackedQueryKeys(long trackedQueryId);
 

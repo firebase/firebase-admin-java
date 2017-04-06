@@ -5,7 +5,7 @@ import com.google.firebase.internal.NonNull;
 
 import java.util.concurrent.Executor;
 
-/**
+/** 
  * A {@link TaskCompletionListener} that wraps an {@link OnFailureListener}.
  */
 class OnFailureCompletionListener<T> implements TaskCompletionListener<T> {
@@ -30,16 +30,17 @@ class OnFailureCompletionListener<T> implements TaskCompletionListener<T> {
           return;
         }
       }
-      executor.execute(new Runnable() {
-        @Override
-        public void run() {
-          synchronized (lock) {
-            if (onFailure != null) {
-              onFailure.onFailure(task.getException());
+      executor.execute(
+          new Runnable() {
+            @Override
+            public void run() {
+              synchronized (lock) {
+                if (onFailure != null) {
+                  onFailure.onFailure(task.getException());
+                }
+              }
             }
-          }
-        }
-      });
+          });
     }
   }
 

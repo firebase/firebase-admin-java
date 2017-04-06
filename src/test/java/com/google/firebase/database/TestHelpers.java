@@ -51,9 +51,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
 
-/**
- * User: greg Date: 5/23/13 Time: 5:32 PM
- */
+/** User: greg Date: 5/23/13 Time: 5:32 PM */
 public class TestHelpers {
 
   private static List<DatabaseConfig> contexts = new ArrayList<>();
@@ -108,8 +106,7 @@ public class TestHelpers {
     List<DatabaseReference> results = new ArrayList<>(count);
     String name = null;
     for (int i = 0; i < count; ++i) {
-      DatabaseReference ref = new DatabaseReference(TestConstants.TEST_NAMESPACE, contexts
-          .get(i));
+      DatabaseReference ref = new DatabaseReference(TestConstants.TEST_NAMESPACE, contexts.get(i));
       if (name == null) {
         name = ref.push().getKey();
       }
@@ -145,8 +142,7 @@ public class TestHelpers {
   public static void setForcedPersistentCache(Context ctx, PersistenceManager manager) {
     try {
       Method method =
-          Context.class.getDeclaredMethod("forcePersistenceManager", PersistenceManager
-              .class);
+          Context.class.getDeclaredMethod("forcePersistenceManager", PersistenceManager.class);
       method.setAccessible(true);
       method.invoke(ctx, manager);
     } catch (Exception e) {
@@ -170,8 +166,7 @@ public class TestHelpers {
       try {
         InputStream response =
             new URL(TestConstants.TEST_NAMESPACE + "/.nsadmin/.json?key=1234").openStream();
-        TypeReference<Map<String, Object>> t = new TypeReference<Map<String, Object>>() {
-        };
+        TypeReference<Map<String, Object>> t = new TypeReference<Map<String, Object>>() {};
         Map<String, Object> data = new ObjectMapper().readValue(response, t);
         testSecret = (String) ((List) data.get("secrets")).get(0);
       } catch (Throwable e) {
@@ -279,8 +274,7 @@ public class TestHelpers {
   public static Map<String, Object> fromJsonString(String json) {
     try {
       ObjectMapper mapper = new ObjectMapper();
-      return mapper.readValue(json, new TypeReference<Map<String, Object>>() {
-      });
+      return mapper.readValue(json, new TypeReference<Map<String, Object>>() {});
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -292,8 +286,7 @@ public class TestHelpers {
 
   public static void waitForRoundtrip(DatabaseReference reader) {
     try {
-      new WriteFuture(reader.getRoot().child(UUID.randomUUID().toString()), null, null)
-          .timedGet();
+      new WriteFuture(reader.getRoot().child(UUID.randomUUID().toString()), null, null).timedGet();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -411,8 +404,7 @@ public class TestHelpers {
       appInitialized = true;
       FirebaseApp.initializeApp(
           new FirebaseOptions.Builder()
-              .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR
-                  .asStream()))
+              .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
               .setDatabaseUrl(TestConstants.TEST_NAMESPACE)
               .build());
     }
@@ -459,12 +451,10 @@ public class TestHelpers {
     }
 
     @Override
-    public void shutdown() {
-    }
+    public void shutdown() {}
 
     @Override
-    public void restart() {
-    }
+    public void restart() {}
   }
 
   private static class TestRunLoop extends DefaultRunLoop {

@@ -16,15 +16,13 @@ class TaskCompletionListenerQueue<T> {
 
   private final Object lock = new Object();
 
-  /**
-   * Lazily initialized, unbounded queue of listeners to call.
-   */
+  /** Lazily initialized, unbounded queue of listeners to call. */
   @GuardedBy("lock")
   private Queue<TaskCompletionListener<T>> queue;
 
   /**
-   * Indicates if a flush is already in progress. While this is true, further calls to flush()
-   * will do nothing.
+   * Indicates if a flush is already in progress. While this is true, further calls to flush() will
+   * do nothing.
    */
   @GuardedBy("lock")
   private boolean flushing;

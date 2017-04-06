@@ -7,14 +7,13 @@ import com.google.firebase.internal.Preconditions;
 
 import java.util.concurrent.Executor;
 
-/**
+/** 
  * Default implementation of {@link Task}.
  */
 final class TaskImpl<T> extends Task<T> {
 
   private final Object lock = new Object();
-  private final TaskCompletionListenerQueue<T> listenerQueue =
-      new TaskCompletionListenerQueue<>();
+  private final TaskCompletionListenerQueue<T> listenerQueue = new TaskCompletionListenerQueue<>();
 
   @GuardedBy("lock")
   private boolean complete;
@@ -52,16 +51,6 @@ final class TaskImpl<T> extends Task<T> {
     }
   }
 
-  public void setResult(T result) {
-    synchronized (lock) {
-      checkNotCompleteLocked();
-      complete = true;
-      this.result = result;
-    }
-    // Intentionally outside the lock.
-    listenerQueue.flush(this);
-  }
-
   @Override
   public <X extends Throwable> T getResult(@NonNull Class<X> exceptionType) throws X {
     synchronized (lock) {
@@ -76,6 +65,16 @@ final class TaskImpl<T> extends Task<T> {
 
       return result;
     }
+  }
+
+  public void setResult(T result) {
+    synchronized (lock) {
+      checkNotCompleteLocked();
+      complete = true;
+      this.result = result;
+    }
+    // Intentionally outside the lock.
+    listenerQueue.flush(this);
   }
 
   @Nullable
@@ -145,16 +144,14 @@ final class TaskImpl<T> extends Task<T> {
 
   @NonNull
   @Override
-  public <R> Task<R> continueWith(
-      @NonNull Continuation<T, R> continuation) {
+  public <R> Task<R> continueWith(@NonNull Continuation<T, R> continuation) {
     return continueWith(TaskExecutors.DEFAULT_THREAD_POOL, continuation);
   }
 
   @NonNull
   @Override
   public <R> Task<R> continueWith(
-      @NonNull Executor executor,
-      @NonNull Continuation<T, R> continuation) {
+      @NonNull Executor executor, @NonNull Continuation<T, R> continuation) {
     TaskImpl<R> continuationTask = new TaskImpl<>();
     listenerQueue.add(
         new ContinueWithCompletionListener<>(executor, continuation, continuationTask));
@@ -164,16 +161,14 @@ final class TaskImpl<T> extends Task<T> {
 
   @NonNull
   @Override
-  public <R> Task<R> continueWithTask(
-      @NonNull Continuation<T, Task<R>> continuation) {
+  public <R> Task<R> continueWithTask(@NonNull Continuation<T, Task<R>> continuation) {
     return continueWithTask(TaskExecutors.DEFAULT_THREAD_POOL, continuation);
   }
 
   @NonNull
   @Override
   public <R> Task<R> continueWithTask(
-      @NonNull Executor executor,
-      @NonNull Continuation<T, Task<R>> continuation) {
+      @NonNull Executor executor, @NonNull Continuation<T, Task<R>> continuation) {
     TaskImpl<R> continuationTask = new TaskImpl<>();
     listenerQueue.add(
         new ContinueWithTaskCompletionListener<>(executor, continuation, continuationTask));

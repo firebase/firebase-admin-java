@@ -24,12 +24,15 @@ class WebSocketWriter {
   private WritableByteChannel channel;
 
   WebSocketWriter(WebSocket websocket, String threadBaseName, int clientId) {
-    innerThread = WebSocket.getThreadFactory().newThread(new Runnable() {
-      @Override
-      public void run() {
-        runWriter();
-      }
-    });
+    innerThread =
+        WebSocket.getThreadFactory()
+            .newThread(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    runWriter();
+                  }
+                });
 
     WebSocket.getIntializer().setName(getInnerThread(), threadBaseName + "Writer-" + clientId);
     this.websocket = websocket;
@@ -60,7 +63,7 @@ class WebSocketWriter {
     byte startByte = (byte) (fin | opcode);
     frame.put(startByte);
 
-    int length_field;
+    int lengthField;
 
     if (length < 126) {
       if (masking) {
@@ -68,19 +71,19 @@ class WebSocketWriter {
       }
       frame.put((byte) length);
     } else if (length <= 65535) {
-      length_field = 126;
+      lengthField = 126;
       if (masking) {
-        length_field = 0x80 | length_field;
+        lengthField = 0x80 | lengthField;
       }
-      frame.put((byte) length_field);
+      frame.put((byte) lengthField);
       // We check the size above, so we know we aren't losing anything with the cast
       frame.putShort((short) length);
     } else {
-      length_field = 127;
+      lengthField = 127;
       if (masking) {
-        length_field = 0x80 | length_field;
+        lengthField = 0x80 | lengthField;
       }
-      frame.put((byte) length_field);
+      frame.put((byte) lengthField);
       // Since an integer occupies just 4 bytes we fill the 4 leading length bytes with zero
       frame.putInt(0);
       frame.putInt(length);

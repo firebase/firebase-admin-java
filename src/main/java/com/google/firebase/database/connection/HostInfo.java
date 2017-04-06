@@ -17,11 +17,19 @@ public class HostInfo {
     this.secure = secure;
   }
 
-  public static URI getConnectionUrl(String host, boolean secure, String namespace,
-                                     String optLastSessionId) {
+  public static URI getConnectionUrl(
+      String host, boolean secure, String namespace, String optLastSessionId) {
     String scheme = secure ? "wss" : "ws";
-    String url = scheme + "://" + host + "/.ws?ns=" + namespace + "&"
-        + VERSION_PARAM + "=" + Constants.WIRE_PROTOCOL_VERSION;
+    String url =
+        scheme
+            + "://"
+            + host
+            + "/.ws?ns="
+            + namespace
+            + "&"
+            + VERSION_PARAM
+            + "="
+            + Constants.WIRE_PROTOCOL_VERSION;
     if (optLastSessionId != null) {
       url += "&" + LAST_SESSION_ID_PARAM + "=" + optLastSessionId;
     }

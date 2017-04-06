@@ -1,8 +1,6 @@
 package com.google.firebase.internal;
 
-/**
- * An event listener for receiving authentication state change events (i.e. token renewals).
- */
+/** An event listener for receiving authentication state change events (i.e. token renewals). */
 public interface AuthStateListener {
 
   /**

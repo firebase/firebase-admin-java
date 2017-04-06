@@ -78,8 +78,8 @@ public class CompoundHashTest {
     CompoundHash hash = CompoundHash.fromNode(node, splitAtPaths("foo/.priority"));
     String firstHash =
         Utilities.sha1HexDigest(
-            "(\"foo\":(\"!beforePriority\":(string:\"before\"),\".priority\":" +
-                "(string:\"prio\")))");
+            "(\"foo\":(\"!beforePriority\":(string:\"before\"),\".priority\":"
+                + "(string:\"prio\")))");
     String secondHash =
         Utilities.sha1HexDigest(
             "(\"foo\":(\"afterPriority\":(string:\"after\")),\"qux\":(string:\"qux\"))");
@@ -103,8 +103,8 @@ public class CompoundHashTest {
     Node node = NodeFromJSON(fromSingleQuotedString("{'1': 'one', '2': 'two', '10': 'ten'}"));
     // 10 is after 2 in Firebase key semantics, but would be before 2 in string semantics
     CompoundHash hash = CompoundHash.fromNode(node, splitAtPaths("2"));
-    String firstHash = Utilities.sha1HexDigest("(\"1\":(string:\"one\"),\"2\":" +
-        "(string:\"two\"))");
+    String firstHash =
+        Utilities.sha1HexDigest("(\"1\":(string:\"one\"),\"2\":" + "(string:\"two\"))");
     String secondHash = Utilities.sha1HexDigest("(\"10\":(string:\"ten\"))");
     assertEquals(Arrays.asList(path("2"), path("10")), hash.getPosts());
     assertEquals(Arrays.asList(firstHash, secondHash, ""), hash.getHashes());
@@ -114,12 +114,12 @@ public class CompoundHashTest {
   public void hashingOnChildBoundariesWorks() {
     Node node =
         NodeFromJSON(
-            fromSingleQuotedString("{'bar': {'deep': 'value'}, 'foo': {'other-deep': " +
-                "'value'}}"));
+            fromSingleQuotedString(
+                "{'bar': {'deep': 'value'}, 'foo': {'other-deep': " + "'value'}}"));
     CompoundHash hash = CompoundHash.fromNode(node, splitAtPaths("bar/deep"));
     String firstHash = Utilities.sha1HexDigest("(\"bar\":(\"deep\":(string:\"value\")))");
-    String secondHash = Utilities.sha1HexDigest("(\"foo\":(\"other-deep\":(string:\"value\"))" +
-        ")");
+    String secondHash =
+        Utilities.sha1HexDigest("(\"foo\":(\"other-deep\":(string:\"value\"))" + ")");
     assertEquals(Arrays.asList(path("bar/deep"), path("foo/other-deep")), hash.getPosts());
     assertEquals(Arrays.asList(firstHash, secondHash, ""), hash.getHashes());
   }
@@ -128,21 +128,20 @@ public class CompoundHashTest {
   public void commasAreSetForNestedChildren() {
     Node node =
         NodeFromJSON(
-            fromSingleQuotedString("{'bar': {'deep': 'value'}, 'foo': {'other-deep': " +
-                "'value'}}"));
+            fromSingleQuotedString(
+                "{'bar': {'deep': 'value'}, 'foo': {'other-deep': " + "'value'}}"));
     CompoundHash hash = CompoundHash.fromNode(node, NEVER_SPLIT_STRATEGY);
     String hashValue =
         Utilities.sha1HexDigest(
-            "(\"bar\":(\"deep\":(string:\"value\")),\"foo\":(\"other-deep\":" +
-                "(string:\"value\")))");
+            "(\"bar\":(\"deep\":(string:\"value\")),\"foo\":(\"other-deep\":"
+                + "(string:\"value\")))");
     assertEquals(Arrays.asList(path("foo/other-deep")), hash.getPosts());
     assertEquals(Arrays.asList(hashValue, ""), hash.getHashes());
   }
 
   @Test
   public void quotedStringsAndKeys() {
-    Map<String, Object> data = new MapBuilder().put("\"\\\"\\", "\"\\\"\\").put("\"", "\\")
-        .build();
+    Map<String, Object> data = new MapBuilder().put("\"\\\"\\", "\"\\\"\\").put("\"", "\\").build();
     Node node = NodeFromJSON(data);
     CompoundHash hash = CompoundHash.fromNode(node, NEVER_SPLIT_STRATEGY);
     String hashValue =
@@ -160,19 +159,16 @@ public class CompoundHashTest {
     for (int i = 0; i < 500; i++) {
       // roughly 15-20 bytes serialized per node, 100k total
       node10k =
-          node10k.updateImmediateChild(ChildKey.fromString("key-" + i), NodeFromJSON
-              ("value"));
+          node10k.updateImmediateChild(ChildKey.fromString("key-" + i), NodeFromJSON("value"));
     }
     for (int i = 0; i < 5000; i++) {
       // roughly 15-20 bytes serialized per node, 100k total
       node100k =
-          node100k.updateImmediateChild(ChildKey.fromString("key-" + i), NodeFromJSON
-              ("value"));
+          node100k.updateImmediateChild(ChildKey.fromString("key-" + i), NodeFromJSON("value"));
     }
     for (int i = 0; i < 50000; i++) {
       // roughly 15-20 bytes serialized per node, 1M total
-      node1M = node1M.updateImmediateChild(ChildKey.fromString("key-" + i), NodeFromJSON
-          ("value"));
+      node1M = node1M.updateImmediateChild(ChildKey.fromString("key-" + i), NodeFromJSON("value"));
     }
     CompoundHash hash10K = CompoundHash.fromNode(node10k);
     CompoundHash hash100K = CompoundHash.fromNode(node100k);

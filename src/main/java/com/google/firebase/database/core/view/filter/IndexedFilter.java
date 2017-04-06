@@ -8,9 +8,7 @@ import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.NamedNode;
 import com.google.firebase.database.snapshot.Node;
 
-/**
- * Doesn't really filter nodes but applies an index to the node and keeps track of any changes
- */
+/** Doesn't really filter nodes but applies an index to the node and keeps track of any changes */
 public class IndexedFilter implements NodeFilter {
 
   private final Index index;
@@ -58,8 +56,7 @@ public class IndexedFilter implements NodeFilter {
       } else if (oldChild.isEmpty()) {
         optChangeAccumulator.trackChildChange(Change.childAddedChange(key, newChild));
       } else {
-        optChangeAccumulator.trackChildChange(Change.childChangedChange(key, newChild,
-            oldChild));
+        optChangeAccumulator.trackChildChange(Change.childChangedChange(key, newChild, oldChild));
       }
     }
     if (snap.isLeafNode() && newChild.isEmpty()) {
@@ -73,8 +70,8 @@ public class IndexedFilter implements NodeFilter {
   @Override
   public IndexedNode updateFullNode(
       IndexedNode oldSnap, IndexedNode newSnap, ChildChangeAccumulator optChangeAccumulator) {
-    assert newSnap.hasIndex(this.index) : "Can't use IndexedNode that doesn't have filter's " +
-        "index";
+    assert newSnap.hasIndex(this.index)
+        : "Can't use IndexedNode that doesn't have filter's " + "index";
     if (optChangeAccumulator != null) {
       for (NamedNode child : oldSnap.getNode()) {
         if (!newSnap.getNode().hasChild(child.getName())) {
@@ -88,8 +85,7 @@ public class IndexedFilter implements NodeFilter {
             Node oldChild = oldSnap.getNode().getImmediateChild(child.getName());
             if (!oldChild.equals(child.getNode())) {
               optChangeAccumulator.trackChildChange(
-                  Change.childChangedChange(child.getName(), child.getNode(),
-                      oldChild));
+                  Change.childChangedChange(child.getName(), child.getNode(), oldChild));
             }
           } else {
             optChangeAccumulator.trackChildChange(

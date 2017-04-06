@@ -15,31 +15,23 @@ import com.google.firebase.database.snapshot.Node;
  */
 public class InternalHelpers {
 
-  /**
-   * So Repo, etc. can create DatabaseReference instances.
-   */
+  /** So Repo, etc. can create DatabaseReference instances. */
   public static DatabaseReference createReference(Repo repo, Path path) {
     return new DatabaseReference(repo, path);
   }
 
-  /**
-   * So Repo, etc. can create DataSnapshots.
-   */
+  /** So Repo, etc. can create DataSnapshots. */
   public static DataSnapshot createDataSnapshot(DatabaseReference ref, IndexedNode node) {
     return new DataSnapshot(ref, node);
   }
 
-  /**
-   * So Repo can create FirebaseDatabase objects to keep legacy tests working.
-   */
+  /** So Repo can create FirebaseDatabase objects to keep legacy tests working. */
   public static FirebaseDatabase createDatabaseForTests(
       FirebaseApp app, RepoInfo repoInfo, DatabaseConfig config) {
     return FirebaseDatabase.createForTests(app, repoInfo, config);
   }
 
-  /**
-   * For Repo to create MutableData objects.
-   */
+  /** For Repo to create MutableData objects. */
   public static MutableData createMutableData(Node node) {
     return new MutableData(node);
   }

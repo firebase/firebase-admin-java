@@ -57,22 +57,20 @@ public class FirebaseAuthTest {
     // Initialize this test suite with all available credential implementations.
     return Arrays.asList(
         new Object[][] {
-            {
-                new FirebaseOptions.Builder().setCredential(createCertificateCredential())
-                    .build(),
+          {
+            new FirebaseOptions.Builder().setCredential(createCertificateCredential()).build(),
             /* isCertCredential */ true
-            },
-            {
-                new FirebaseOptions.Builder().setCredential(createRefreshTokenCredential())
-                    .build(),
+          },
+          {
+            new FirebaseOptions.Builder().setCredential(createRefreshTokenCredential()).build(),
             /* isCertCredential */ false
-            },
-            {
-                new FirebaseOptions.Builder()
-                    .setCredential(createApplicationDefaultCredential())
-                    .build(),
+          },
+          {
+            new FirebaseOptions.Builder()
+                .setCredential(createApplicationDefaultCredential())
+                .build(),
             /* isCertCredential */ false
-            },
+          },
         });
   }
 
@@ -84,8 +82,7 @@ public class FirebaseAuthTest {
     // credentials. This requires us to write the credentials to the location specified by the
     // environment variable.
     File credentialsFile = File.createTempFile("google-test-credentials", "json");
-    PrintWriter writer = new PrintWriter(Files.newBufferedWriter(credentialsFile.toPath(),
-        UTF_8));
+    PrintWriter writer = new PrintWriter(Files.newBufferedWriter(credentialsFile.toPath(), UTF_8));
     writer.print(ServiceAccount.EDITOR.asString());
     writer.close();
     Map<String, String> environmentVariables =
@@ -159,8 +156,7 @@ public class FirebaseAuthTest {
 
   @Test
   public void testAppWithAuthVariableOverrides() throws ExecutionException, InterruptedException {
-    Map<String, Object> authVariableOverrides = Collections.singletonMap("uid", (Object)
-        "uid1");
+    Map<String, Object> authVariableOverrides = Collections.singletonMap("uid", (Object) "uid1");
     FirebaseOptions options =
         new FirebaseOptions.Builder(firebaseOptions)
             .setDatabaseAuthVariableOverride(authVariableOverrides)
@@ -182,8 +178,7 @@ public class FirebaseAuthTest {
 
     String token = Tasks.await(auth.createCustomToken("user1"));
 
-    FirebaseCustomAuthToken parsedToken = FirebaseCustomAuthToken.parse(new GsonFactory(),
-        token);
+    FirebaseCustomAuthToken parsedToken = FirebaseCustomAuthToken.parse(new GsonFactory(), token);
     assertEquals(parsedToken.getPayload().getUid(), "user1");
     assertEquals(parsedToken.getPayload().getSubject(), ServiceAccount.EDITOR.getEmail());
     assertEquals(parsedToken.getPayload().getIssuer(), ServiceAccount.EDITOR.getEmail());
@@ -202,11 +197,9 @@ public class FirebaseAuthTest {
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
 
     String token =
-        Tasks.await(auth.createCustomToken("user1", ImmutableMap.of("claim", (Object)
-            "value")));
+        Tasks.await(auth.createCustomToken("user1", ImmutableMap.of("claim", (Object) "value")));
 
-    FirebaseCustomAuthToken parsedToken = FirebaseCustomAuthToken.parse(new GsonFactory(),
-        token);
+    FirebaseCustomAuthToken parsedToken = FirebaseCustomAuthToken.parse(new GsonFactory(), token);
     assertEquals(parsedToken.getPayload().getUid(), "user1");
     assertEquals(parsedToken.getPayload().getSubject(), ServiceAccount.EDITOR.getEmail());
     assertEquals(parsedToken.getPayload().getIssuer(), ServiceAccount.EDITOR.getEmail());
@@ -219,12 +212,11 @@ public class FirebaseAuthTest {
   public void testServiceAccountUsedAsRefreshToken() throws Exception {
     FirebaseOptions options =
         new FirebaseOptions.Builder()
-            .setCredential(FirebaseCredentials.fromRefreshToken(ServiceAccount.EDITOR
-                .asStream()))
+            .setCredential(FirebaseCredentials.fromRefreshToken(ServiceAccount.EDITOR.asStream()))
             .build();
     FirebaseApp app = FirebaseApp.initializeApp(options, "testCreateCustomToken");
-    Assert.assertNotNull(Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
-        app, false)).getToken());
+    Assert.assertNotNull(
+        Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(app, false)).getToken());
   }
 
   @Test

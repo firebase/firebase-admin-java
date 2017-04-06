@@ -31,6 +31,22 @@ public final class Preconditions {
   }
 
   /**
+   * Ensures that an object reference passed as a parameter to the calling method is not null.
+   *
+   * @param reference an object reference
+   * @param errorMessage the exception message to use if the check fails; will be converted to a
+   *     string using {@link String#valueOf(Object)}
+   * @return the non-null reference that was validated
+   * @throws NullPointerException if {@code reference} is null
+   */
+  public static <T> T checkNotNull(T reference, Object errorMessage) {
+    if (reference == null) {
+      throw new NullPointerException(String.valueOf(errorMessage));
+    }
+    return reference;
+  }
+
+  /**
    * Returns true if the string is null or 0-length.
    *
    * @param str the string to be examined
@@ -63,7 +79,7 @@ public final class Preconditions {
    *
    * @param string the String to test
    * @param errorMessage the exception message to use if the check fails; will be converted to a
-   * string using {@link String#valueOf(Object)}
+   *     string using {@link String#valueOf(Object)}
    * @return the non-null non-empty String that was validated
    * @throws IllegalArgumentException if {@code string} is null or empty
    */
@@ -75,27 +91,11 @@ public final class Preconditions {
   }
 
   /**
-   * Ensures that an object reference passed as a parameter to the calling method is not null.
-   *
-   * @param reference an object reference
-   * @param errorMessage the exception message to use if the check fails; will be converted to a
-   * string using {@link String#valueOf(Object)}
-   * @return the non-null reference that was validated
-   * @throws NullPointerException if {@code reference} is null
-   */
-  public static <T> T checkNotNull(T reference, Object errorMessage) {
-    if (reference == null) {
-      throw new NullPointerException(String.valueOf(errorMessage));
-    }
-    return reference;
-  }
-
-  /**
    * Ensures that an integer passed as a parameter to the calling method is not zero.
    *
    * @param value an integer
    * @param errorMessage the exception message to use if the check fails; will be converted to a
-   * string using {@link String#valueOf(Object)}
+   *     string using {@link String#valueOf(Object)}
    * @return the value that was validated
    * @throws IllegalArgumentException if {@code value} is zero
    */
@@ -125,7 +125,7 @@ public final class Preconditions {
    *
    * @param value a long
    * @param errorMessage the exception message to use if the check fails; will be converted to a
-   * string using {@link String#valueOf(Object)}
+   *     string using {@link String#valueOf(Object)}
    * @return the value that was validated
    * @throws IllegalArgumentException if {@code value} is zero
    */
@@ -169,7 +169,7 @@ public final class Preconditions {
    *
    * @param expression a boolean expression
    * @param errorMessage the exception message to use if the check fails; will be converted to a
-   * string using {@link String#valueOf(Object)}
+   *     string using {@link String#valueOf(Object)}
    * @throws IllegalStateException if {@code expression} is false
    */
   public static void checkState(boolean expression, Object errorMessage) {
@@ -184,7 +184,7 @@ public final class Preconditions {
    *
    * @param expression a boolean expression
    * @param errorMessage the exception message to use if the check fails; will be formatted using
-   * {@link String#format(String, Object...)} with the errorMessageArgs
+   *     {@link String#format(String, Object...)} with the errorMessageArgs
    * @param errorMessageArgs the arguments to use in the errorMessage
    * @throws IllegalStateException if {@code expression} is false
    */
@@ -200,7 +200,7 @@ public final class Preconditions {
    *
    * @param expression a boolean expression
    * @param errorMessage the exception message to use if the check fails; will be converted to a
-   * string using {@link String#valueOf(Object)}
+   *     string using {@link String#valueOf(Object)}
    * @throws IllegalArgumentException if {@code expression} is false
    */
   public static void checkArgument(boolean expression, Object errorMessage) {
@@ -214,7 +214,7 @@ public final class Preconditions {
    *
    * @param expression a boolean expression
    * @param errorMessage the exception message to use if the check fails; will be formatted using
-   * {@link String#format(String, Object...)} with the errorMessageArgs
+   *     {@link String#format(String, Object...)} with the errorMessageArgs
    * @param errorMessageArgs the arguments to use in the errorMessage
    * @throws IllegalArgumentException if {@code expression} is false
    */
@@ -240,15 +240,13 @@ public final class Preconditions {
   // The following methods are copied from google-common library Preconditions class
 
   /**
-   * Ensures that {@code index} specifies a valid <i>element</i> in an array, list or string of
-   * size {@code size}. An element index may range from zero, inclusive, to {@code size},
-   * exclusive.
+   * Ensures that {@code index} specifies a valid <i>element</i> in an array, list or string of size
+   * {@code size}. An element index may range from zero, inclusive, to {@code size}, exclusive.
    *
    * @param index a user-supplied index identifying an element of an array, list or string
    * @param size the size of that array, list or string
    * @return the value of {@code index}
-   * @throws IndexOutOfBoundsException if {@code index} is negative or is not less than {@code
-   * size}
+   * @throws IndexOutOfBoundsException if {@code index} is negative or is not less than {@code size}
    * @throws IllegalArgumentException if {@code size} is negative
    */
   public static int checkElementIndex(int index, int size) {
@@ -256,16 +254,14 @@ public final class Preconditions {
   }
 
   /**
-   * Ensures that {@code index} specifies a valid <i>element</i> in an array, list or string of
-   * size {@code size}. An element index may range from zero, inclusive, to {@code size},
-   * exclusive.
+   * Ensures that {@code index} specifies a valid <i>element</i> in an array, list or string of size
+   * {@code size}. An element index may range from zero, inclusive, to {@code size}, exclusive.
    *
    * @param index a user-supplied index identifying an element of an array, list or string
    * @param size the size of that array, list or string
    * @param desc the text to use to describe this index in an error message
    * @return the value of {@code index}
-   * @throws IndexOutOfBoundsException if {@code index} is negative or is not less than {@code
-   * size}
+   * @throws IndexOutOfBoundsException if {@code index} is negative or is not less than {@code size}
    * @throws IllegalArgumentException if {@code size} is negative
    */
   public static int checkElementIndex(int index, int size, String desc) {
@@ -338,7 +334,7 @@ public final class Preconditions {
    * @param end a user-supplied index identifying a ending position in an array, list or string
    * @param size the size of that array, list or string
    * @throws IndexOutOfBoundsException if either index is negative or is greater than {@code size},
-   * or if {@code end} is less than {@code start}
+   *     or if {@code end} is less than {@code start}
    * @throws IllegalArgumentException if {@code size} is negative
    */
   public static void checkPositionIndexes(int start, int end, int size) {
@@ -360,14 +356,14 @@ public final class Preconditions {
   }
 
   /**
-   * Substitutes each {@code %s} in {@code template} with an argument. These are matched by
-   * position - the first {@code %s} gets {@code args[0]}, etc. If there are more arguments than
+   * Substitutes each {@code %s} in {@code template} with an argument. These are matched by position
+   * - the first {@code %s} gets {@code args[0]}, etc. If there are more arguments than
    * placeholders, the unmatched arguments will be appended to the end of the formatted message in
    * square braces.
    *
    * @param template a non-null string containing 0 or more {@code %s} placeholders.
    * @param args the arguments to be substituted into the message template. Arguments are converted
-   * to strings using {@link String#valueOf(Object)}. Arguments can be null.
+   *     to strings using {@link String#valueOf(Object)}. Arguments can be null.
    */
   static String format(String template, Object... args) {
     // start substituting the arguments into the '%s' placeholders

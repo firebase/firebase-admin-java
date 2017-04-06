@@ -2,9 +2,7 @@ package com.google.firebase.database.utilities.tuple;
 
 import com.google.firebase.database.core.Path;
 
-/**
- * User: greg Date: 5/22/13 Time: 12:21 PM
- */
+/** User: greg Date: 5/22/13 Time: 12:21 PM */
 public class PathAndId {
 
   private Path path;

@@ -1,5 +1,7 @@
 package com.google.firebase.database;
 
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
+
 import com.google.firebase.database.core.ChildEventRegistration;
 import com.google.firebase.database.core.EventRegistration;
 import com.google.firebase.database.core.Path;
@@ -22,8 +24,6 @@ import com.google.firebase.database.snapshot.StringNode;
 import com.google.firebase.database.snapshot.ValueIndex;
 import com.google.firebase.database.utilities.Validation;
 
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
-
 /**
  * The Query class (and its subclass, {@link DatabaseReference}) are used for reading data.
  * Listeners are attached, and they will be triggered when the corresponding data changes. <br>
@@ -32,25 +32,15 @@ import static com.google.firebase.database.utilities.Utilities.hardAssert;
  */
 public class Query {
 
-  /**
-   * @hide
-   */
   protected final Repo repo;
-  /**
-   * @hide
-   */
   protected final Path path;
-  /**
-   * @hide
-   */
   protected final QueryParams params;
   // we can't use params index, because the default query params have priority index set as
   // default,
   // but we don't want to allow multiple orderByPriority calls, so track them here
   private final boolean orderByCalled;
 
-  Query(Repo repo, Path path, QueryParams params, boolean orderByCalled) throws
-      DatabaseException {
+  Query(Repo repo, Path path, QueryParams params, boolean orderByCalled) throws DatabaseException {
     this.repo = repo;
     this.path = path;
     this.params = params;
@@ -90,10 +80,8 @@ public class Query {
         }
       }
     } else if (params.getIndex().equals(PriorityIndex.getInstance())) {
-      if ((params.hasStart() && !PriorityUtilities.isValidPriority(params
-          .getIndexStartValue()))
-          || (params.hasEnd() && !PriorityUtilities.isValidPriority(params.getIndexEndValue
-          ()))) {
+      if ((params.hasStart() && !PriorityUtilities.isValidPriority(params.getIndexStartValue()))
+          || (params.hasEnd() && !PriorityUtilities.isValidPriority(params.getIndexEndValue()))) {
         throw new IllegalArgumentException(
             "When using orderByPriority(), values provided to startAt(), "
                 + "endAt(), or equalTo() must be valid priorities.");
@@ -105,17 +93,14 @@ public class Query {
    * This method validates that limit has been called with the correct combination or parameters.
    */
   private void validateLimit(QueryParams params) {
-    if (params.hasStart() && params.hasEnd() && params.hasLimit() && !params.hasAnchoredLimit
-        ()) {
+    if (params.hasStart() && params.hasEnd() && params.hasLimit() && !params.hasAnchoredLimit()) {
       throw new IllegalArgumentException(
           "Can't combine startAt(), endAt() and limit(). "
               + "Use limitToFirst() or limitToLast() instead");
     }
   }
 
-  /**
-   * This method validates that the equalTo call can be made.
-   */
+  /** This method validates that the equalTo call can be made. */
   private void validateEqualToCall() {
     if (params.hasStart()) {
       throw new IllegalArgumentException("Can't call equalTo() and startAt() combined");
@@ -125,9 +110,7 @@ public class Query {
     }
   }
 
-  /**
-   * This method validates that only one order by call has been made.
-   */
+  /** This method validates that only one order by call has been made. */
   private void validateNoOrderByCall() {
     if (this.orderByCalled) {
       throw new IllegalArgumentException("You can't combine multiple orderBy calls!");
@@ -135,8 +118,8 @@ public class Query {
   }
 
   /**
-   * Add a listener for changes in the data at this location. Each time time the data changes,
-   * your listener will be called with an immutable snapshot of the data.
+   * Add a listener for changes in the data at this location. Each time time the data changes, your
+   * listener will be called with an immutable snapshot of the data.
    *
    * @param listener The listener to be called with changes
    * @return A reference to the listener provided. Save this to remove the listener later.
@@ -234,11 +217,11 @@ public class Query {
   /**
    * By calling `keepSynced(true)` on a location, the data for that location will automatically be
    * downloaded and kept in sync, even when no listeners are attached for that location.
-   * Additionally, while a location is kept synced, it will not be evicted from the persistent
-   * disk cache.
+   * Additionally, while a location is kept synced, it will not be evicted from the persistent disk
+   * cache.
    *
    * @param keepSynced Pass `true` to keep this location synchronized, pass `false` to stop
-   * synchronization.
+   *     synchronization.
    * @since 2.3
    */
   public void keepSynced(final boolean keepSynced) {
@@ -267,8 +250,8 @@ public class Query {
   }*/
 
   /**
-   * Create a query constrained to only return child nodes with a value greater than or equal to
-   * the given value, using the given orderBy directive or priority as default.
+   * Create a query constrained to only return child nodes with a value greater than or equal to the
+   * given value, using the given orderBy directive or priority as default.
    *
    * @param value The value to start at, inclusive
    * @return A Query with the new constraint
@@ -278,8 +261,8 @@ public class Query {
   }
 
   /**
-   * Create a query constrained to only return child nodes with a value greater than or equal to
-   * the given value, using the given orderBy directive or priority as default.
+   * Create a query constrained to only return child nodes with a value greater than or equal to the
+   * given value, using the given orderBy directive or priority as default.
    *
    * @param value The value to start at, inclusive
    * @return A Query with the new constraint
@@ -289,8 +272,8 @@ public class Query {
   }
 
   /**
-   * Create a query constrained to only return child nodes with a value greater than or equal to
-   * the given value, using the given orderBy directive or priority as default.
+   * Create a query constrained to only return child nodes with a value greater than or equal to the
+   * given value, using the given orderBy directive or priority as default.
    *
    * @param value The value to start at, inclusive
    * @return A Query with the new constraint
@@ -301,9 +284,9 @@ public class Query {
   }
 
   /**
-   * Create a query constrained to only return child nodes with a value greater than or equal to
-   * the given value, using the given orderBy directive or priority as default, and additionally
-   * only child nodes with a key greater than or equal to the given key.
+   * Create a query constrained to only return child nodes with a value greater than or equal to the
+   * given value, using the given orderBy directive or priority as default, and additionally only
+   * child nodes with a key greater than or equal to the given key.
    *
    * @param value The priority to start at, inclusive
    * @param key The key to start at, inclusive
@@ -311,15 +294,14 @@ public class Query {
    */
   public Query startAt(String value, String key) {
     Node node =
-        value != null ? new StringNode(value, PriorityUtilities.NullPriority()) : EmptyNode
-            .Empty();
+        value != null ? new StringNode(value, PriorityUtilities.NullPriority()) : EmptyNode.Empty();
     return startAt(node, key);
   }
 
   /**
-   * Create a query constrained to only return child nodes with a value greater than or equal to
-   * the given value, using the given orderBy directive or priority as default, and additionally
-   * only child nodes with a key greater than or equal to the given key.
+   * Create a query constrained to only return child nodes with a value greater than or equal to the
+   * given value, using the given orderBy directive or priority as default, and additionally only
+   * child nodes with a key greater than or equal to the given key.
    *
    * @param value The priority to start at, inclusive
    * @param key The key name to start at, inclusive
@@ -330,9 +312,9 @@ public class Query {
   }
 
   /**
-   * Create a query constrained to only return child nodes with a value greater than or equal to
-   * the given value, using the given orderBy directive or priority as default, and additionally
-   * only child nodes with a key greater than or equal to the given key.
+   * Create a query constrained to only return child nodes with a value greater than or equal to the
+   * given value, using the given orderBy directive or priority as default, and additionally only
+   * child nodes with a key greater than or equal to the given key.
    *
    * @param value The priority to start at, inclusive
    * @param key The key to start at, inclusive
@@ -404,8 +386,7 @@ public class Query {
    */
   public Query endAt(String value, String key) {
     Node node =
-        value != null ? new StringNode(value, PriorityUtilities.NullPriority()) : EmptyNode
-            .Empty();
+        value != null ? new StringNode(value, PriorityUtilities.NullPriority()) : EmptyNode.Empty();
     return endAt(node, key);
   }
 
@@ -631,7 +612,7 @@ public class Query {
     return new Query(repo, path, params.orderBy(ValueIndex.getInstance()), true);
   }
 
-  /**
+  /** 
    * @return A DatabaseReference to this location
    */
   public DatabaseReference getRef() {

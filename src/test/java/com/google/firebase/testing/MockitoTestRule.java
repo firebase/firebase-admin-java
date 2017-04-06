@@ -7,8 +7,8 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 /**
- * Test rule that calls {@link MockitoAnnotations#initMocks} before the test and
- * {@link Mockito#validateMockitoUsage()} after.
+ * Test rule that calls {@link MockitoAnnotations#initMocks} before the test and {@link
+ * Mockito#validateMockitoUsage()} after.
  */
 public class MockitoTestRule implements MethodRule {
 

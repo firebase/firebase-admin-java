@@ -38,15 +38,15 @@ public class KeepSyncedTestIT {
     ref.getDatabase().goOffline();
 
     new ReadFuture(
-        query,
-        new ReadFuture.CompletionCondition() {
-          @Override
-          public boolean isComplete(List<EventRecord> events) {
-            assertEquals(1, events.size());
-            assertEquals(value, events.get(0).getSnapshot().getValue());
-            return true;
-          }
-        })
+            query,
+            new ReadFuture.CompletionCondition() {
+              @Override
+              public boolean isComplete(List<EventRecord> events) {
+                assertEquals(1, events.size());
+                assertEquals(value, events.get(0).getSnapshot().getValue());
+                return true;
+              }
+            })
         .timedGet();
 
     // All good, go back online
@@ -151,13 +151,13 @@ public class KeepSyncedTestIT {
 
     // This will add and remove a listener.
     new ReadFuture(
-        ref,
-        new ReadFuture.CompletionCondition() {
-          @Override
-          public boolean isComplete(List<EventRecord> events) {
-            return true;
-          }
-        })
+            ref,
+            new ReadFuture.CompletionCondition() {
+              @Override
+              public boolean isComplete(List<EventRecord> events) {
+                return true;
+              }
+            })
         .timedGet();
 
     assertIsKeptSynced(ref);
@@ -179,8 +179,7 @@ public class KeepSyncedTestIT {
             new ReadFuture.CompletionCondition() {
               @Override
               public boolean isComplete(List<EventRecord> events) {
-                return events.get(events.size() - 1).getSnapshot().getValue().equals
-                    ("done");
+                return events.get(events.size() - 1).getSnapshot().getValue().equals("done");
               }
             });
 

@@ -4,11 +4,10 @@ import com.google.firebase.internal.NonNull;
 
 import java.util.concurrent.Executor;
 
-/**
+/** 
  * A {@link TaskCompletionListener} that wraps a {@link Continuation}.
  */
-class ContinueWithCompletionListener<T, R>
-    implements TaskCompletionListener<T> {
+class ContinueWithCompletionListener<T, R> implements TaskCompletionListener<T> {
 
   private final Executor executor;
   private final Continuation<T, R> continuation;
@@ -25,27 +24,28 @@ class ContinueWithCompletionListener<T, R>
 
   @Override
   public void onComplete(@NonNull final Task<T> task) {
-    executor.execute(new Runnable() {
-      @Override
-      public void run() {
-        R result;
-        try {
-          result = continuation.then(task);
-        } catch (RuntimeExecutionException e) {
-          if (e.getCause() instanceof Exception) {
-            continuationTask.setException((Exception) e.getCause());
-          } else {
-            continuationTask.setException(e);
-          }
-          return;
-        } catch (Exception e) {
-          continuationTask.setException(e);
-          return;
-        }
+    executor.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            R result;
+            try {
+              result = continuation.then(task);
+            } catch (RuntimeExecutionException e) {
+              if (e.getCause() instanceof Exception) {
+                continuationTask.setException((Exception) e.getCause());
+              } else {
+                continuationTask.setException(e);
+              }
+              return;
+            } catch (Exception e) {
+              continuationTask.setException(e);
+              return;
+            }
 
-        continuationTask.setResult(result);
-      }
-    });
+            continuationTask.setResult(result);
+          }
+        });
   }
 
   @Override

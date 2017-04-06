@@ -35,8 +35,7 @@ public class CompoundWrite implements Iterable<Map.Entry<Path, Node>> {
   public static CompoundWrite fromValue(Map<String, Object> merge) {
     ImmutableTree<Node> writeTree = ImmutableTree.emptyInstance();
     for (Map.Entry<String, Object> entry : merge.entrySet()) {
-      ImmutableTree<Node> tree =
-          new ImmutableTree<>(NodeUtilities.NodeFromJSON(entry.getValue()));
+      ImmutableTree<Node> tree = new ImmutableTree<>(NodeUtilities.NodeFromJSON(entry.getValue()));
       writeTree = writeTree.setTree(new Path(entry.getKey()), tree);
     }
     return new CompoundWrite(writeTree);
@@ -95,8 +94,7 @@ public class CompoundWrite implements Iterable<Map.Entry<Path, Node>> {
         this,
         new ImmutableTree.TreeVisitor<Node, CompoundWrite>() {
           @Override
-          public CompoundWrite onNodeValue(Path relativePath, Node value, CompoundWrite
-              accum) {
+          public CompoundWrite onNodeValue(Path relativePath, Node value, CompoundWrite accum) {
             return accum.addWrite(path.child(relativePath), value);
           }
         });
@@ -135,9 +133,9 @@ public class CompoundWrite implements Iterable<Map.Entry<Path, Node>> {
   }
 
   /**
-   * Returns a node for a path if and only if the node is a "complete" overwrite at that path.
-   * This will not aggregate writes from deeper paths, but will return child nodes from a more
-   * shallow path.
+   * Returns a node for a path if and only if the node is a "complete" overwrite at that path. This
+   * will not aggregate writes from deeper paths, but will return child nodes from a more shallow
+   * path.
    *
    * @param path The path to get a complete write
    * @return The node if complete at that path, or null otherwise.
@@ -210,8 +208,7 @@ public class CompoundWrite implements Iterable<Map.Entry<Path, Node>> {
       return node.updateChild(relativePath, writeTree.getValue());
     } else {
       Node priorityWrite = null;
-      for (Map.Entry<ChildKey, ImmutableTree<Node>> childTreeEntry : writeTree.getChildren
-          ()) {
+      for (Map.Entry<ChildKey, ImmutableTree<Node>> childTreeEntry : writeTree.getChildren()) {
         ImmutableTree<Node> childTree = childTreeEntry.getValue();
         ChildKey childKey = childTreeEntry.getKey();
         if (childKey.isPriorityChildName()) {
@@ -226,8 +223,7 @@ public class CompoundWrite implements Iterable<Map.Entry<Path, Node>> {
       }
       // If there was a priority write, we only apply it if the node is not empty
       if (!node.getChild(relativePath).isEmpty() && priorityWrite != null) {
-        node = node.updateChild(relativePath.child(ChildKey.getPriorityKey()),
-            priorityWrite);
+        node = node.updateChild(relativePath.child(ChildKey.getPriorityKey()), priorityWrite);
       }
       return node;
     }

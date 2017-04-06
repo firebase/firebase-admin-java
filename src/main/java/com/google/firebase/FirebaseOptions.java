@@ -11,9 +11,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Configurable Firebase options.
- */
+/** Configurable Firebase options. */
 public final class FirebaseOptions {
 
   // TODO(arondeak): deprecate and remove it once we can fetch these from Remote Config.
@@ -26,8 +24,7 @@ public final class FirebaseOptions {
       @Nullable String databaseUrl,
       @NonNull FirebaseCredential firebaseCredential,
       @Nullable Map<String, Object> databaseAuthVariableOverride) {
-    Preconditions.checkArgument(firebaseCredential != null,
-        "Service Account must be provided.");
+    Preconditions.checkArgument(firebaseCredential != null, "Service Account must be provided.");
 
     this.databaseUrl = databaseUrl;
     this.firebaseCredential = firebaseCredential;
@@ -50,8 +47,8 @@ public final class FirebaseOptions {
   /**
    * Returns the <code>auth</code> variable to be used in Security Rules.
    *
-   * @return The <code>auth</code> variable supplied via
-   * {@link Builder#setDatabaseAuthVariableOverride}.
+   * @return The <code>auth</code> variable supplied via {@link
+   *     Builder#setDatabaseAuthVariableOverride}.
    */
   public Map<String, Object> getDatabaseAuthVariableOverride() {
     return databaseAuthVariableOverride;
@@ -82,8 +79,8 @@ public final class FirebaseOptions {
         .toString();
   }
 
-  /**
-   * Builder for constructing {@link FirebaseOptions}.
+  /** 
+   * Builder for constructing {@link FirebaseOptions}. 
    */
   public static final class Builder {
 
@@ -92,16 +89,14 @@ public final class FirebaseOptions {
     private FirebaseCredential serviceAccountCredential;
     private Map<String, Object> databaseAuthVariableOverride = new HashMap<>();
 
-    /**
-     * Constructs an empty builder.
-     */
-    public Builder() {
-    }
+    /** Constructs an empty builder. */
+    public Builder() {}
 
     /**
-     * Initializes the builder's values from the options object. * <p>The new builder is not
-     * backed by this objects values, that is changes made to the new builder don't change the
-     * values of the origin object.
+     * Initializes the builder's values from the options object. *
+     *
+     * <p>The new builder is not backed by this objects values, that is changes made to the new
+     * builder don't change the values of the origin object.
      */
     public Builder(FirebaseOptions options) {
       databaseUrl = options.databaseUrl;
@@ -112,9 +107,8 @@ public final class FirebaseOptions {
     /**
      * Sets the Realtime Database URL to use for data storage.
      *
-     * <p>See
-     * <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a>
-     * for code samples and detailed documentation.
+     * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a> for code samples
+     * and detailed documentation.
      *
      * @param databaseUrl The Realtime Database URL to use for data storage.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
@@ -127,14 +121,13 @@ public final class FirebaseOptions {
     /**
      * Sets the service account to use to authenticate the SDK.
      *
-     * <p>This method is deprecated in favor of the {@link #setCredential}
-     * method. Only one of the <code>setCredential()</code> and
-     * <code>setServiceAccount()</code> methods can be used.
+     * <p>This method is deprecated in favor of the {@link #setCredential} method. Only one of the
+     * <code>setCredential()</code> and <code>setServiceAccount()</code> methods can be used.
      *
      * @param stream A stream containing the service account contents as JSON.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      * @deprecated Use {@link #setCredential} instead and obtain credentials via {@link
-     * FirebaseCredentials}.
+     *     FirebaseCredentials}.
      */
     @Deprecated
     public Builder setServiceAccount(@NonNull InputStream stream) {
@@ -147,12 +140,11 @@ public final class FirebaseOptions {
      *
      * <p>This method replaces the deprecated {@link #setServiceAccount} method.
      *
-     * <p>See
-     * <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a>
-     * for code samples and detailed documentation.
+     * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a> for code samples
+     * and detailed documentation.
      *
      * @param credential A <code>FirebaseCredential</code> used to authenticate the SDK. See {@link
-     * FirebaseCredentials} for default implementations.
+     *     FirebaseCredentials} for default implementations.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setCredential(@NonNull FirebaseCredential credential) {
@@ -164,21 +156,19 @@ public final class FirebaseOptions {
     /**
      * Sets the <code>auth</code> variable to be used by the Realtime Database rules.
      *
-     * <p>When set, security rules for Realtime Database actions are evaluated using the
-     * provided auth object. During evaluation the object is available on the <code>auth</code>
-     * variable. Use this option to enforce schema validation and additional security for this
-     * app instance.
+     * <p>When set, security rules for Realtime Database actions are evaluated using the provided
+     * auth object. During evaluation the object is available on the <code>auth</code> variable. Use
+     * this option to enforce schema validation and additional security for this app instance.
      *
      * <p>If this option is not provided, security rules are bypassed entirely for this app
-     * instance. If this option is set to <code>null</code>, security rules are evaluated
-     * against an unauthenticated user. That is, the <code>auth</code> variable is
-     * <code>null</code>.
+     * instance. If this option is set to <code>null</code>, security rules are evaluated against an
+     * unauthenticated user. That is, the <code>auth</code> variable is <code>null</code>.
      *
-     * <p>See <a href="/docs/database/admin/start#authenticate-with-limited-privileges">
-     * Authenticate with limited privileges</a> for code samples and detailed documentation.
+     * <p>See <a href="/docs/database/admin/start#authenticate-with-limited-privileges">Authenticate
+     * with limited privileges</a> for code samples and detailed documentation.
      *
      * @param databaseAuthVariableOverride The value to use for the <code>auth</code> variable in
-     * the security rules for Realtime Database actions.
+     *     the security rules for Realtime Database actions.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setDatabaseAuthVariableOverride(
@@ -188,8 +178,7 @@ public final class FirebaseOptions {
     }
 
     /**
-     * Builds the {@link FirebaseOptions} instance from the previously set
-     * options.
+     * Builds the {@link FirebaseOptions} instance from the previously set options.
      *
      * @return A {@link FirebaseOptions} instance created from the previously set options.
      */

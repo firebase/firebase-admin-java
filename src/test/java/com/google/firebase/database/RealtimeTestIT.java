@@ -276,8 +276,7 @@ public class RealtimeTestIT {
     // Wait for initial (null) value on both reader and writer.
     TestHelpers.waitFor(valSemaphore, 2);
 
-    Map<String, Object> initialValues = new MapBuilder().put("bar", "a").put("baz", "b")
-        .build();
+    Map<String, Object> initialValues = new MapBuilder().put("bar", "a").put("baz", "b").build();
     writer
         .child("foo")
         .setValue(
@@ -290,8 +289,7 @@ public class RealtimeTestIT {
             });
     TestHelpers.waitFor(opSemaphore);
 
-    Map<String, Object> updatedValues = new MapBuilder().put("baz", "c").put("bat", "d")
-        .build();
+    Map<String, Object> updatedValues = new MapBuilder().put("baz", "c").put("bat", "d").build();
     writer
         .child("foo")
         .onDisconnect()
@@ -755,8 +753,7 @@ public class RealtimeTestIT {
     // Wait for initial (null) value on both reader and writer.
     TestHelpers.waitFor(valSemaphore, 2);
 
-    Map<String, Object> initialValues = new MapBuilder().put("bar", "a").put("baz", "b")
-        .build();
+    Map<String, Object> initialValues = new MapBuilder().put("bar", "a").put("baz", "b").build();
     writer
         .child("foo")
         .setValue(
@@ -769,8 +766,7 @@ public class RealtimeTestIT {
             });
     TestHelpers.waitFor(opSemaphore);
 
-    Map<String, Object> updatedValues = new MapBuilder().put("baz", "c").put("bat", "d")
-        .build();
+    Map<String, Object> updatedValues = new MapBuilder().put("baz", "c").put("bat", "d").build();
     writer
         .child("foo")
         .onDisconnect()
@@ -868,7 +864,7 @@ public class RealtimeTestIT {
     assertEquals(snap.getPriority(), snap.child("b").getPriority());
     assertEquals(snap.child("a").getValue(), snap.child("b").getValue());
     assert (Math.abs(
-        System.currentTimeMillis() - Long.parseLong(snap.child("a").getValue().toString()))
+            System.currentTimeMillis() - Long.parseLong(snap.child("a").getValue().toString()))
         < 2000);
   }
 
@@ -910,8 +906,7 @@ public class RealtimeTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     // Wait for us to be connected so we send the buffered put

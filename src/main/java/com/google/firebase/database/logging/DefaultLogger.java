@@ -70,7 +70,8 @@ public class DefaultLogger implements Logger {
 
   protected boolean shouldLog(Level level, String tag) {
     return (level.ordinal() >= minLevel.ordinal()
-        && (enabledComponents == null || level.ordinal() > Level.DEBUG.ordinal()
-        || enabledComponents.contains(tag)));
+        && (enabledComponents == null
+            || level.ordinal() > Level.DEBUG.ordinal()
+            || enabledComponents.contains(tag)));
   }
 }

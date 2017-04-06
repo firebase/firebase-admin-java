@@ -19,8 +19,7 @@ public class TaskImplTest {
   private static final Exception EXCEPTION = new RemoteException();
   private static final Void NULL_RESULT = null;
   private static final String NON_NULL_RESULT = "Success";
-  @Rule
-  public ExpectedException mExpectedException = ExpectedException.none();
+  @Rule public ExpectedException mExpectedException = ExpectedException.none();
 
   @Test
   public void testIsComplete_notComplete() {

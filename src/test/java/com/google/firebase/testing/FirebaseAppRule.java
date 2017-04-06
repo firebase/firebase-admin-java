@@ -6,9 +6,7 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-/**
- * Makes sure that all FirebaseApp state is cleared before and after tests.
- */
+/** Makes sure that all FirebaseApp state is cleared before and after tests. */
 public class FirebaseAppRule implements TestRule {
 
   @Override

@@ -4,9 +4,7 @@ import com.google.firebase.database.core.Path;
 
 import java.util.Iterator;
 
-/**
- * User: greg Date: 5/16/13 Time: 4:38 PM
- */
+/** User: greg Date: 5/16/13 Time: 4:38 PM */
 public interface Node extends Comparable<Node>, Iterable<NamedNode> {
 
   ChildrenNode MAX_NODE =

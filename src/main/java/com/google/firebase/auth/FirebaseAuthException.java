@@ -23,9 +23,7 @@ public class FirebaseAuthException extends FirebaseException {
     this.errorCode = Preconditions.checkNotEmpty(errorCode);
   }
 
-  /**
-   * Returns an error code that may provide more information about the error.
-   */
+  /** Returns an error code that may provide more information about the error. */
   @NonNull
   public String getErrorCode() {
     return errorCode;

@@ -41,9 +41,7 @@ public class DatabaseReference extends Query {
     super(repo, path);
   }
 
-  /**
-   * Legacy method left here (as package private) for tests.
-   */
+  /** Legacy method left here (as package private) for tests. */
   DatabaseReference(String url, DatabaseConfig config) {
     this(Utilities.parseUrl(url), config);
   }
@@ -84,7 +82,7 @@ public class DatabaseReference extends Query {
    * Legacy method for legacy creation of DatabaseReference for tests.
    *
    * @return A reference to the default config object. This can be modified up until your first
-   * Database call
+   *     Database call
    */
   private static synchronized DatabaseConfig getDefaultConfig() {
     if (defaultConfig == null) {
@@ -114,10 +112,10 @@ public class DatabaseReference extends Query {
   }
 
   /**
-   * Create a reference to an auto-generated child location. The child key is generated
-   * client-side and incorporates an estimate of the server's time for sorting purposes. Locations
-   * generated on a single client will be sorted in the order that they are created, and will be
-   * sorted approximately in order across all clients.
+   * Create a reference to an auto-generated child location. The child key is generated client-side
+   * and incorporates an estimate of the server's time for sorting purposes. Locations generated on
+   * a single client will be sorted in the order that they are created, and will be sorted
+   * approximately in order across all clients.
    *
    * @return A DatabaseReference pointing to the new location
    */
@@ -132,18 +130,30 @@ public class DatabaseReference extends Query {
    * data at the specified location. The native types accepted by this method for the value
    * correspond to the JSON types:
    *
-   * <ul> <li>Boolean <li>Long <li>Double <li>Map&lt;String, Object&gt; <li>List&lt;Object&gt;
+   * <ul>
+   *   <li>Boolean
+   *   <li>Long
+   *   <li>Double
+   *   <li>Map&lt;String, Object&gt;
+   *   <li>List&lt;Object&gt;
    * </ul>
    *
-   * <br> <br> In addition, you can set instances of your own class into this location, provided
-   * they satisfy the following constraints:
+   * <br>
+   * <br>
+   * In addition, you can set instances of your own class into this location, provided they satisfy
+   * the following constraints:
    *
-   * <ol> <li>The class must have a default constructor that takes no arguments <li> The class
-   * must define public getters for the properties to be assigned. Properties without a public
-   * getter will be set to their default value when an instance is deserialized </ol>
+   * <ol>
+   *   <li>The class must have a default constructor that takes no arguments
+   *   <li>The class must define public getters for the properties to be assigned. Properties
+   *       without a public getter will be set to their default value when an instance is
+   *       deserialized
+   * </ol>
    *
-   * <br> <br> Generic collections of objects that satisfy the above constraints are also
-   * permitted, i.e. <code>Map&lt;String, MyPOJO&gt;</code>, as well as null values.
+   * <br>
+   * <br>
+   * Generic collections of objects that satisfy the above constraints are also permitted, i.e.
+   * <code>Map&lt;String, MyPOJO&gt;</code>, as well as null values.
    *
    * @param value The value to set at this location
    * @return The {@link Task} for this operation.
@@ -155,22 +165,34 @@ public class DatabaseReference extends Query {
   // Set priority
 
   /**
-   * Set the data and priority to the given values. Passing null to setValue() will delete the
-   * data at the specified location. The native types accepted by this method for the value
-   * correspond to the JSON types:
+   * Set the data and priority to the given values. Passing null to setValue() will delete the data
+   * at the specified location. The native types accepted by this method for the value correspond to
+   * the JSON types:
    *
-   * <ul> <li>Boolean <li>Long <li>Double <li>Map&lt;String, Object&gt; <li>List&lt;Object&gt;
+   * <ul>
+   *   <li>Boolean
+   *   <li>Long
+   *   <li>Double
+   *   <li>Map&lt;String, Object&gt;
+   *   <li>List&lt;Object&gt;
    * </ul>
    *
-   * <br> <br> In addition, you can set instances of your own class into this location, provided
-   * they satisfy the following constraints:
+   * <br>
+   * <br>
+   * In addition, you can set instances of your own class into this location, provided they satisfy
+   * the following constraints:
    *
-   * <ol> <li>The class must have a default constructor that takes no arguments <li> The class
-   * must define public getters for the properties to be assigned. Properties without a public
-   * getter will be set to their default value when an instance is deserialized </ol>
+   * <ol>
+   *   <li>The class must have a default constructor that takes no arguments
+   *   <li>The class must define public getters for the properties to be assigned. Properties
+   *       without a public getter will be set to their default value when an instance is
+   *       deserialized
+   * </ol>
    *
-   * <br> <br> Generic collections of objects that satisfy the above constraints are also
-   * permitted, i.e. <code>Map&lt;String, MyPOJO&gt;</code>, as well as null values.
+   * <br>
+   * <br>
+   * Generic collections of objects that satisfy the above constraints are also permitted, i.e.
+   * <code>Map&lt;String, MyPOJO&gt;</code>, as well as null values.
    *
    * @param value The value to set at this location
    * @param priority The priority to set at this location
@@ -185,18 +207,30 @@ public class DatabaseReference extends Query {
    * data at the specified location. The native types accepted by this method for the value
    * correspond to the JSON types:
    *
-   * <ul> <li>Boolean <li>Long <li>Double <li>Map&lt;String, Object&gt; <li>List&lt;Object&gt;
+   * <ul>
+   *   <li>Boolean
+   *   <li>Long
+   *   <li>Double
+   *   <li>Map&lt;String, Object&gt;
+   *   <li>List&lt;Object&gt;
    * </ul>
    *
-   * <br> <br> In addition, you can set instances of your own class into this location, provided
-   * they satisfy the following constraints:
+   * <br>
+   * <br>
+   * In addition, you can set instances of your own class into this location, provided they satisfy
+   * the following constraints:
    *
-   * <ol> <li>The class must have a default constructor that takes no arguments <li> The class
-   * must define public getters for the properties to be assigned. Properties without a public
-   * getter will be set to their default value when an instance is deserialized </ol>
+   * <ol>
+   *   <li>The class must have a default constructor that takes no arguments
+   *   <li>The class must define public getters for the properties to be assigned. Properties
+   *       without a public getter will be set to their default value when an instance is
+   *       deserialized
+   * </ol>
    *
-   * <br> <br> Generic collections of objects that satisfy the above constraints are also
-   * permitted, i.e. <code>Map&lt;String, MyPOJO&gt;</code>, as well as null values.
+   * <br>
+   * <br>
+   * Generic collections of objects that satisfy the above constraints are also permitted, i.e.
+   * <code>Map&lt;String, MyPOJO&gt;</code>, as well as null values.
    *
    * @param value The value to set at this location
    * @param listener A listener that will be triggered with the results of the operation
@@ -206,21 +240,33 @@ public class DatabaseReference extends Query {
   }
 
   /**
-   * Set the data and priority to the given values. The native types accepted by this method for
-   * the value correspond to the JSON types:
+   * Set the data and priority to the given values. The native types accepted by this method for the
+   * value correspond to the JSON types:
    *
-   * <ul> <li>Boolean <li>Long <li>Double <li>Map&lt;String, Object&gt; <li>List&lt;Object&gt;
+   * <ul>
+   *   <li>Boolean
+   *   <li>Long
+   *   <li>Double
+   *   <li>Map&lt;String, Object&gt;
+   *   <li>List&lt;Object&gt;
    * </ul>
    *
-   * <br> <br> In addition, you can set instances of your own class into this location, provided
-   * they satisfy the following constraints:
+   * <br>
+   * <br>
+   * In addition, you can set instances of your own class into this location, provided they satisfy
+   * the following constraints:
    *
-   * <ol> <li>The class must have a default constructor that takes no arguments <li> The class
-   * must define public getters for the properties to be assigned. Properties without a public
-   * getter will be set to their default value when an instance is deserialized </ol>
+   * <ol>
+   *   <li>The class must have a default constructor that takes no arguments
+   *   <li>The class must define public getters for the properties to be assigned. Properties
+   *       without a public getter will be set to their default value when an instance is
+   *       deserialized
+   * </ol>
    *
-   * <br> <br> Generic collections of objects that satisfy the above constraints are also
-   * permitted, i.e. <code>Map&lt;String, MyPOJO&gt;</code>, as well as null values.
+   * <br>
+   * <br>
+   * Generic collections of objects that satisfy the above constraints are also permitted, i.e.
+   * <code>Map&lt;String, MyPOJO&gt;</code>, as well as null values.
    *
    * @param value The value to set at this location
    * @param priority The priority to set at this location
@@ -232,8 +278,7 @@ public class DatabaseReference extends Query {
 
   // Update
 
-  private Task<Void> setValueInternal(Object value, Node priority, CompletionListener
-      optListener) {
+  private Task<Void> setValueInternal(Object value, Node priority, CompletionListener optListener) {
     Validation.validateWritablePath(getPath());
     ValidationPath.validateWithObject(getPath(), value);
     Object bouncedValue = CustomClassMapper.convertToPlainJavaTypes(value);
@@ -253,21 +298,28 @@ public class DatabaseReference extends Query {
   /**
    * Set a priority for the data at this Database location. Priorities can be used to provide a
    * custom ordering for the children at a location (if no priorities are specified, the children
-   * are ordered by key). <br> <br> You cannot set a priority on an empty location. For this
-   * reason setValue(data, priority) should be used when setting initial data with a specific
-   * priority and setPriority should be used when updating the priority of existing data. <br>
-   * <br> Children are sorted based on this priority using the following rules:
+   * are ordered by key). <br>
+   * <br>
+   * You cannot set a priority on an empty location. For this reason setValue(data, priority) should
+   * be used when setting initial data with a specific priority and setPriority should be used when
+   * updating the priority of existing data. <br>
+   * <br>
+   * Children are sorted based on this priority using the following rules:
    *
-   * <ul> <li>Children with no priority come first. <li>Children with a number as their priority
-   * come next. They are sorted numerically by priority (small to large). <li>Children with a
-   * string as their priority come last. They are sorted lexicographically by priority.
-   * <li>Whenever two children have the same priority (including no priority), they are sorted by
-   * key. Numeric keys come first (sorted numerically), followed by the remaining keys (sorted
-   * lexicographically). </ul>
+   * <ul>
+   *   <li>Children with no priority come first.
+   *   <li>Children with a number as their priority come next. They are sorted numerically by
+   *       priority (small to large).
+   *   <li>Children with a string as their priority come last. They are sorted lexicographically by
+   *       priority.
+   *   <li>Whenever two children have the same priority (including no priority), they are sorted by
+   *       key. Numeric keys come first (sorted numerically), followed by the remaining keys (sorted
+   *       lexicographically).
+   * </ul>
    *
-   * Note that numerical priorities are parsed and ordered as IEEE 754 double-precision
-   * floating-point numbers. Keys are always stored as strings and are treated as numeric only
-   * when they can be parsed as a 32-bit integer.
+   * <p>Note that numerical priorities are parsed and ordered as IEEE 754 double-precision
+   * floating-point numbers. Keys are always stored as strings and are treated as numeric only when
+   * they can be parsed as a 32-bit integer.
    *
    * @param priority The priority to set at the specified location.
    * @return The {@link Task} for this operation.
@@ -279,21 +331,28 @@ public class DatabaseReference extends Query {
   /**
    * Set a priority for the data at this Database location. Priorities can be used to provide a
    * custom ordering for the children at a location (if no priorities are specified, the children
-   * are ordered by key). <br> <br> You cannot set a priority on an empty location. For this
-   * reason setValue(data, priority) should be used when setting initial data with a specific
-   * priority and setPriority should be used when updating the priority of existing data. <br>
-   * <br> Children are sorted based on this priority using the following rules:
+   * are ordered by key). <br>
+   * <br>
+   * You cannot set a priority on an empty location. For this reason setValue(data, priority) should
+   * be used when setting initial data with a specific priority and setPriority should be used when
+   * updating the priority of existing data. <br>
+   * <br>
+   * Children are sorted based on this priority using the following rules:
    *
-   * <ul> <li>Children with no priority come first. <li>Children with a number as their priority
-   * come next. They are sorted numerically by priority (small to large). <li>Children with a
-   * string as their priority come last. They are sorted lexicographically by priority.
-   * <li>Whenever two children have the same priority (including no priority), they are sorted by
-   * key. Numeric keys come first (sorted numerically), followed by the remaining keys (sorted
-   * lexicographically). </ul>
+   * <ul>
+   *   <li>Children with no priority come first.
+   *   <li>Children with a number as their priority come next. They are sorted numerically by
+   *       priority (small to large).
+   *   <li>Children with a string as their priority come last. They are sorted lexicographically by
+   *       priority.
+   *   <li>Whenever two children have the same priority (including no priority), they are sorted by
+   *       key. Numeric keys come first (sorted numerically), followed by the remaining keys (sorted
+   *       lexicographically).
+   * </ul>
    *
-   * Note that numerical priorities are parsed and ordered as IEEE 754 double-precision
-   * floating-point numbers. Keys are always stored as strings and are treated as numeric only
-   * when they can be parsed as a 32-bit integer.
+   * <p>Note that numerical priorities are parsed and ordered as IEEE 754 double-precision
+   * floating-point numbers. Keys are always stored as strings and are treated as numeric only when
+   * they can be parsed as a 32-bit integer.
    *
    * @param priority The priority to set at the specified location.
    * @param listener A listener that will be triggered with results of the operation
@@ -339,8 +398,7 @@ public class DatabaseReference extends Query {
    * @param update The paths to update and their new values
    * @param listener A listener that will be triggered with results of the operation
    */
-  public void updateChildren(final Map<String, Object> update, final CompletionListener
-      listener) {
+  public void updateChildren(final Map<String, Object> update, final CompletionListener listener) {
     updateChildrenInternal(update, listener);
   }
 
@@ -430,7 +488,7 @@ public class DatabaseReference extends Query {
    *
    * @param handler An object to handle running the transaction
    * @param fireLocalEvents Defaults to true. If set to false, events will only be fired for the
-   * final result state of the transaction, and not for any intermediate states
+   *     final result state of the transaction, and not for any intermediate states
    */
   public void runTransaction(final Transaction.Handler handler, final boolean fireLocalEvents) {
     if (handler == null) {
@@ -457,7 +515,7 @@ public class DatabaseReference extends Query {
     return this.repo.getDatabase();
   }
 
-  /**
+  /** 
    * @return The full location url for this reference
    */
   @Override
@@ -467,8 +525,7 @@ public class DatabaseReference extends Query {
       return repo.toString();
     } else {
       try {
-        return parent.toString() + "/" + URLEncoder.encode(getKey(), "UTF-8").replace
-            ("+", "%20");
+        return parent.toString() + "/" + URLEncoder.encode(getKey(), "UTF-8").replace("+", "%20");
       } catch (UnsupportedEncodingException e) {
         throw new DatabaseException("Failed to URLEncode key: " + getKey(), e);
       }
@@ -477,7 +534,7 @@ public class DatabaseReference extends Query {
 
   /**
    * @return A DatabaseReference to the parent location, or null if this instance references the
-   * root location
+   *     root location
    */
   public DatabaseReference getParent() {
     Path parentPath = getPath().getParent();
@@ -488,14 +545,14 @@ public class DatabaseReference extends Query {
     }
   }
 
-  /**
+  /** 
    * @return A reference to the root location of this Firebase Database
    */
   public DatabaseReference getRoot() {
     return new DatabaseReference(repo, new Path(""));
   }
 
-  /**
+  /** 
    * @return The last token in the location pointed to by this reference
    */
   public String getKey() {
@@ -526,16 +583,16 @@ public class DatabaseReference extends Query {
   }
 
   /**
-   * This interface is used as a method of being notified when an operation has been acknowledged
-   * by the Database servers and can be considered complete
+   * This interface is used as a method of being notified when an operation has been acknowledged by
+   * the Database servers and can be considered complete
    *
    * @since 1.1
    */
   public interface CompletionListener {
 
     /**
-     * This method will be triggered when the operation has either succeeded or failed. If it
-     * has failed, an error will be given. If it has succeeded, the error will be null
+     * This method will be triggered when the operation has either succeeded or failed. If it has
+     * failed, an error will be given. If it has succeeded, the error will be null
      *
      * @param error A description of any errors that occurred or null on success
      * @param ref A reference to the specified Firebase Database location

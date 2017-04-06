@@ -40,8 +40,7 @@ public class FirebaseClient {
     }
 
     @Override
-    public void onMessage(WebSocketMessage message) {
-    }
+    public void onMessage(WebSocketMessage message) {}
 
     @Override
     public void onClose() {

@@ -50,19 +50,18 @@ public class FirebaseCredentials {
   }
 
   /**
-   * Returns a {@link FirebaseCredential} based on Google Application Default
-   * Credentials which can be used to authenticate the SDK.
+   * Returns a {@link FirebaseCredential} based on Google Application Default Credentials which can
+   * be used to authenticate the SDK.
    *
    * <p>See <a
-   * href="https://developers.google.com/identity/protocols/application-default-credentials">
-   * Google Application Default Credentials</a>
-   * for details on Google Application Deafult Credentials.
+   * href="https://developers.google.com/identity/protocols/application-default-credentials">Google
+   * Application Default Credentials</a> for details on Google Application Deafult Credentials.
    *
-   * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a>
-   * for code samples and detailed documentation.
+   * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a> for code samples
+   * and detailed documentation.
    *
    * @return A {@link FirebaseCredential} based on Google Application Default Credentials which can
-   * be used to authenticate the SDK.
+   *     be used to authenticate the SDK.
    */
   @NonNull
   public static FirebaseCredential applicationDefault() {
@@ -75,16 +74,16 @@ public class FirebaseCredentials {
   }
 
   /**
-   * Returns a {@link FirebaseCredential} generated from the provided service
-   * account certificate which can be used to authenticate the SDK.
+   * Returns a {@link FirebaseCredential} generated from the provided service account certificate
+   * which can be used to authenticate the SDK.
    *
-   * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a>
-   * for code samples and detailed documentation.
+   * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a> for code samples
+   * and detailed documentation.
    *
    * @param serviceAccount An <code>InputStream</code> containing the JSON representation of a
-   * service account certificate.
+   *     service account certificate.
    * @return A {@link FirebaseCredential} generated from the provided service account certificate
-   * which can be used to authenticate the SDK.
+   *     which can be used to authenticate the SDK.
    */
   @NonNull
   public static FirebaseCredential fromCertificate(InputStream serviceAccount) {
@@ -100,16 +99,16 @@ public class FirebaseCredentials {
   }
 
   /**
-   * Returns a {@link FirebaseCredential} generated from the provided refresh
-   * token which can be used to authenticate the SDK.
+   * Returns a {@link FirebaseCredential} generated from the provided refresh token which can be
+   * used to authenticate the SDK.
    *
-   * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a>
-   * for code samples and detailed documentation.
+   * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a> for code samples
+   * and detailed documentation.
    *
    * @param refreshToken An <code>InputStream</code> containing the JSON representation of a refresh
-   * token.
+   *     token.
    * @return A {@link FirebaseCredential} generated from the provided service account credential
-   * which can be used to authenticate the SDK.
+   *     which can be used to authenticate the SDK.
    */
   @NonNull
   public static FirebaseCredential fromRefreshToken(InputStream refreshToken) {
@@ -125,8 +124,8 @@ public class FirebaseCredentials {
   }
 
   /**
-   * Helper class that implements {@link FirebaseCredential} on top of {@link GoogleCredential}
-   * and provides caching of access tokens and credentials.
+   * Helper class that implements {@link FirebaseCredential} on top of {@link GoogleCredential} and
+   * provides caching of access tokens and credentials.
    */
   abstract static class BaseCredential implements FirebaseCredential {
 
@@ -147,14 +146,10 @@ public class FirebaseCredentials {
       this.clock = checkNotNull(clock, "Clock must not be null");
     }
 
-    /**
-     * Retrieves a GoogleCredential. Should not use caching.
-     */
+    /** Retrieves a GoogleCredential. Should not use caching. */
     abstract GoogleCredential fetchCredential() throws Exception;
 
-    /**
-     * Retrieves an access token from a GoogleCredential. Should not use caching.
-     */
+    /** Retrieves an access token from a GoogleCredential. Should not use caching. */
     abstract FirebaseAccessToken fetchToken(GoogleCredential credential) throws Exception;
 
     /**
@@ -187,10 +182,13 @@ public class FirebaseCredentials {
           });
     }
 
-    private boolean refreshRequired(@NonNull Task<FirebaseAccessToken> previousTask,
-                                    boolean forceRefresh) {
-      return previousTask == null || (previousTask.isComplete() && (forceRefresh || !previousTask
-          .isSuccessful() || previousTask.getResult().isExpired()));
+    private boolean refreshRequired(
+        @NonNull Task<FirebaseAccessToken> previousTask, boolean forceRefresh) {
+      return previousTask == null
+          || (previousTask.isComplete()
+              && (forceRefresh
+                  || !previousTask.isSuccessful()
+                  || previousTask.getResult().isExpired()));
     }
 
     /**
@@ -202,22 +200,25 @@ public class FirebaseCredentials {
     public final Task<String> getAccessToken(boolean forceRefresh) {
       synchronized (accessTokenTaskLock) {
         if (refreshRequired(accessTokenTask, forceRefresh)) {
-          accessTokenTask = getCertificate(forceRefresh).continueWith(
-              new Continuation<GoogleCredential, FirebaseAccessToken>() {
-                @Override
-                public FirebaseAccessToken then(@NonNull Task<GoogleCredential> task)
-                    throws Exception {
-                  return fetchToken(task.getResult());
-                }
-              });
+          accessTokenTask =
+              getCertificate(forceRefresh)
+                  .continueWith(
+                      new Continuation<GoogleCredential, FirebaseAccessToken>() {
+                        @Override
+                        public FirebaseAccessToken then(@NonNull Task<GoogleCredential> task)
+                            throws Exception {
+                          return fetchToken(task.getResult());
+                        }
+                      });
         }
 
-        return accessTokenTask.continueWith(new Continuation<FirebaseAccessToken, String>() {
-          @Override
-          public String then(@NonNull Task<FirebaseAccessToken> task) throws Exception {
-            return task.getResult().getToken();
-          }
-        });
+        return accessTokenTask.continueWith(
+            new Continuation<FirebaseAccessToken, String>() {
+              @Override
+              public String then(@NonNull Task<FirebaseAccessToken> task) throws Exception {
+                return task.getResult().getToken();
+              }
+            });
       }
     }
   }
@@ -297,7 +298,6 @@ public class FirebaseCredentials {
       credential.refreshToken();
       return new FirebaseAccessToken(credential, clock);
     }
-
   }
 
   static class RefreshTokenCredential extends BaseCredential {
@@ -367,8 +367,9 @@ public class FirebaseCredentials {
     FirebaseAccessToken(GoogleCredential credential, Clock clock) {
       checkNotNull(credential, "Google credential is required");
       checkNotNull(clock, "Clock is required");
-      token = checkNotNull(credential.getAccessToken(),
-          "Access token should not be null after refresh.");
+      token =
+          checkNotNull(
+              credential.getAccessToken(), "Access token should not be null after refresh.");
       expirationTime = credential.getExpirationTimeMilliseconds();
       this.clock = clock;
     }

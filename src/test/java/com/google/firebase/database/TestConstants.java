@@ -1,8 +1,6 @@
 package com.google.firebase.database;
 
-/**
- * User: greg Date: 5/23/13 Time: 5:32 PM
- */
+/** User: greg Date: 5/23/13 Time: 5:32 PM */
 public class TestConstants {
 
   public static final String TEST_NAMESPACE = "http://tests.fblocal.com:9000";

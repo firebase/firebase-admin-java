@@ -21,8 +21,7 @@ public class FirebaseAppStoreTest {
           .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
           .build();
 
-  @Rule
-  public FirebaseAppRule mFirebaseAppRule = new FirebaseAppRule();
+  @Rule public FirebaseAppRule mFirebaseAppRule = new FirebaseAppRule();
 
   // TODO(arondeak): reenable persistence. See b/28158809.
   //    @Test
@@ -55,15 +54,15 @@ public class FirebaseAppStoreTest {
     FirebaseApp.initializeApp(ALL_VALUES_OPTIONS, name);
   }
 
-
   @Test
   public void incompatibleAppInitializedDoesntThrow() {
     String name = "myApp";
     FirebaseApp.initializeApp(ALL_VALUES_OPTIONS, name);
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
-        .build();
+    FirebaseOptions options =
+        new FirebaseOptions.Builder()
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .build();
     FirebaseApp.initializeApp(options, name);
   }
 
@@ -71,9 +70,10 @@ public class FirebaseAppStoreTest {
   public void incompatibleDefaultAppInitializedDoesntThrow() {
     FirebaseApp.initializeApp(ALL_VALUES_OPTIONS);
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
-        .build();
+    FirebaseOptions options =
+        new FirebaseOptions.Builder()
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .build();
     FirebaseApp.initializeApp(options);
   }
 

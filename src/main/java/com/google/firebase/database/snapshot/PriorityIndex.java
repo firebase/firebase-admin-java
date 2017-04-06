@@ -13,10 +13,11 @@ public class PriorityIndex extends Index {
   }
 
   @Override
-  public int compare(NamedNode a, NamedNode b) {
-    Node aPrio = a.getNode().getPriority();
-    Node bPrio = b.getNode().getPriority();
-    return NodeUtilities.nameAndPriorityCompare(a.getName(), aPrio, b.getName(), bPrio);
+  public int compare(NamedNode node1, NamedNode node2) {
+    Node priority1 = node1.getNode().getPriority();
+    Node priority2 = node2.getNode().getPriority();
+    return NodeUtilities.nameAndPriorityCompare(
+        node1.getName(), priority1, node2.getName(), priority2);
   }
 
   @Override

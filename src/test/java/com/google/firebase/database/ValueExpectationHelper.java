@@ -7,9 +7,7 @@ import java.util.concurrent.Semaphore;
 
 import static org.junit.Assert.fail;
 
-/**
- * User: greg Date: 6/4/13 Time: 2:45 PM
- */
+/** User: greg Date: 6/4/13 Time: 2:45 PM */
 public class ValueExpectationHelper {
 
   private Semaphore semaphore = new Semaphore(0);

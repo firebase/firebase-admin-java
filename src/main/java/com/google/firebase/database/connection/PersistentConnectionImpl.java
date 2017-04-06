@@ -66,15 +66,13 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   private static final String SERVER_DATA_TAG = "t";
   private static final String SERVER_DATA_WARNINGS = "w";
   private static final String SERVER_RESPONSE_DATA = "d";
-  /**
-   * Delay after which a established connection is considered successful.
-   */
+  /** Delay after which a established connection is considered successful. */
   private static final long SUCCESSFUL_CONNECTION_ESTABLISHED_DELAY = 30 * 1000;
+
   private static final long IDLE_TIMEOUT = 60 * 1000;
-  /**
-   * If auth fails repeatedly, we'll assume something is wrong and log a warning / back off.
-   */
+  /** If auth fails repeatedly, we'll assume something is wrong and log a warning / back off. */
   private static final long INVALID_AUTH_TOKEN_THRESHOLD = 3;
+
   private static final String SERVER_KILL_INTERRUPT_REASON = "server_kill";
   private static final String IDLE_INTERRUPT_REASON = "connection_idle";
   private static final String TOKEN_REFRESH_INTERRUPT_REASON = "token_refresh";
@@ -101,10 +99,9 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   private String authToken;
   private boolean forceAuthTokenRefresh;
   private String lastSessionId;
-  /**
-   * Counter to check whether the callback is for the last getToken call.
-   */
+  /** Counter to check whether the callback is for the last getToken call. */
   private long currentGetTokenAttempt = 0;
+
   private int invalidAuthTokenCount = 0;
   private ScheduledFuture<?> inactivityTimer = null;
   private long lastWriteTimestamp;
@@ -1105,7 +1102,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
 
   /**
    * @return Returns true if the connection is currently not being used (for listen, outstanding
-   * operations).
+   *     operations).
    */
   private boolean isIdle() {
     return this.listens.isEmpty()

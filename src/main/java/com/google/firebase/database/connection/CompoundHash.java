@@ -10,8 +10,8 @@ public class CompoundHash {
 
   public CompoundHash(List<List<String>> posts, List<String> hashes) {
     if (posts.size() != hashes.size() - 1) {
-      throw new IllegalArgumentException("Number of posts need to be n-1 for n hashes in "
-          + "CompoundHash");
+      throw new IllegalArgumentException(
+          "Number of posts need to be n-1 for n hashes in " + "CompoundHash");
     }
     this.posts = posts;
     this.hashes = hashes;

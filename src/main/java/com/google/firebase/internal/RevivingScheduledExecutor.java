@@ -23,15 +23,11 @@ public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
 
   private static final String TAG = "RevivingScheduledExecutor";
 
-  /**
-   * Exception to throw to shut down the core threads.
-   */
+  /** Exception to throw to shut down the core threads. */
   private static final RuntimeException REVIVE_THREAD_EXCEPTION =
       new RuntimeException("Restarting Firebase Worker Thread");
 
-  /**
-   * The lifetime of a thread. Maximum lifetime of a thread on GAE is 24 hours.
-   */
+  /** The lifetime of a thread. Maximum lifetime of a thread on GAE is 24 hours. */
   private static final long PERIODIC_RESTART_INTERVAL_MS = TimeUnit.HOURS.toMillis(12);
 
   /**
@@ -50,8 +46,8 @@ public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
   private AtomicBoolean requestedRestart = new AtomicBoolean();
 
   /**
-   * Creates a new RevivingScheduledExecutor that optionally restarts its worker thread every
-   * twelve hours.
+   * Creates a new RevivingScheduledExecutor that optionally restarts its worker thread every twelve
+   * hours.
    *
    * @param threadFactory Thread factory to use to restart threads.
    * @param threadName Name of the threads in the pool.
@@ -152,20 +148,13 @@ public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
    * Called when an exception occurs during execution of a Runnable/Callable. The default
    * implementation does nothing.
    */
-  protected void handleException(Throwable throwable) {
-  }
+  protected void handleException(Throwable throwable) {}
 
-  /**
-   * Called before the worker thread gets shutdown before a restart.
-   */
-  protected void beforeRestart() {
-  }
+  /** Called before the worker thread gets shutdown before a restart. */
+  protected void beforeRestart() {}
 
-  /**
-   * Called after the worker thread got recreated after a restart.
-   */
-  protected void afterRestart() {
-  }
+  /** Called after the worker thread got recreated after a restart. */
+  protected void afterRestart() {}
 
   private synchronized void ensureRunning() {
     if (getCorePoolSize() == 0) {

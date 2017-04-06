@@ -118,14 +118,12 @@ public class ObjectMapTest {
   public void basicGenerics() {
     List<Author> authors = new ArrayList<>();
     authors.addAll(
-        Arrays.asList(new Author("Greg", 3), new Author("Vikrum", 4), new Author("Michael",
-            5)));
+        Arrays.asList(new Author("Greg", 3), new Author("Vikrum", 4), new Author("Michael", 5)));
 
     MutableData data = emptyData();
     data.setValue(authors);
 
-    GenericTypeIndicator<List<Author>> t = new GenericTypeIndicator<List<Author>>() {
-    };
+    GenericTypeIndicator<List<Author>> t = new GenericTypeIndicator<List<Author>>() {};
     List<Author> result = data.getValue(t);
     DeepEquals.assertEquals(authors, result);
   }
@@ -166,8 +164,7 @@ public class ObjectMapTest {
 
     // Verify that jackson does the right thing when it encounters a number too large for an int
     data.setValue(new MapBuilder().put("foo", (long) Integer.MAX_VALUE + 1).build());
-    Map<String, Object> output = data.getValue(new GenericTypeIndicator<Map<String, Object>>() {
-    });
+    Map<String, Object> output = data.getValue(new GenericTypeIndicator<Map<String, Object>>() {});
     Object value = output.get("foo");
     assertEquals(Long.class, value.getClass());
 
@@ -183,8 +180,7 @@ public class ObjectMapTest {
     private String name;
     private int id;
 
-    private Author() {
-    }
+    private Author() {}
 
     private Author(String name, int id) {
       this.name = name;
@@ -221,8 +217,7 @@ public class ObjectMapTest {
     private String text;
     private Author author;
 
-    private Message() {
-    }
+    private Message() {}
 
     private Message(String text, Author author) {
       this.text = text;
@@ -247,7 +242,7 @@ public class ObjectMapTest {
       return (o instanceof Message)
           && ((Message) o).text.equals(text)
           && (((((Message) o).author == null) && (author == null))
-          || ((Message) o).author.equals(author));
+              || ((Message) o).author.equals(author));
     }
 
     @Override
@@ -261,8 +256,7 @@ public class ObjectMapTest {
     private Author author;
     private List<Message> messages;
 
-    private AuthorMessages() {
-    }
+    private AuthorMessages() {}
 
     private AuthorMessages(Author author, List<Message> messages) {
       this.author = author;
@@ -288,8 +282,7 @@ public class ObjectMapTest {
     private int foo;
     private int bar;
 
-    private Incomplete() {
-    }
+    private Incomplete() {}
 
     private Incomplete(int foo, int bar) {
       this.foo = foo;

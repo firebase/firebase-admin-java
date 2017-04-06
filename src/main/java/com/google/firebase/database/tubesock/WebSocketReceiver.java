@@ -19,7 +19,6 @@ class WebSocketReceiver {
 
   private volatile boolean stop = false;
 
-
   WebSocketReceiver(WebSocket websocket) {
     this.websocket = websocket;
   }
@@ -39,15 +38,15 @@ class WebSocketReceiver {
         if (rsv) {
           throw new WebSocketException("Invalid frame received");
         } else {
-          byte opcode = (byte) (inputHeader[0] & 0xf);
+          final byte opcode = (byte) (inputHeader[0] & 0xf);
           offset += read(inputHeader, offset, 1);
           byte length = inputHeader[1];
-          long payload_length = 0;
+          long payloadLength = 0;
           if (length < 126) {
-            payload_length = length;
+            payloadLength = length;
           } else if (length == 126) {
             offset += read(inputHeader, offset, 2);
-            payload_length = ((0xff & inputHeader[2]) << 8) | (0xff & inputHeader[3]);
+            payloadLength = ((0xff & inputHeader[2]) << 8) | (0xff & inputHeader[3]);
           } else if (length == 127) {
             // Does work up to MAX_VALUE of long (2^63-1) after that minus values are
             // returned.
@@ -55,11 +54,11 @@ class WebSocketReceiver {
             // TODO: add Limit for WebSocket Payload Length.
             offset += read(inputHeader, offset, 8);
             // Parse the bytes we just read
-            payload_length = parseLong(inputHeader, offset - 8);
+            payloadLength = parseLong(inputHeader, offset - 8);
           }
 
-          byte[] payload = new byte[(int) payload_length];
-          read(payload, 0, (int) payload_length);
+          byte[] payload = new byte[(int) payloadLength];
+          read(payload, 0, (int) payloadLength);
           if (opcode == WebSocket.OPCODE_CLOSE) {
             websocket.onCloseOpReceived();
           } else if (opcode == WebSocket.OPCODE_PONG) {
@@ -98,8 +97,8 @@ class WebSocketReceiver {
         throw new WebSocketException("Failed to continue outstanding frame");
       } else if (pendingBuilder == null && opcode == WebSocket.OPCODE_NONE) {
         // Trying to continue something, but there's nothing to continue
-        throw new WebSocketException("Received continuing frame, but there's nothing to " +
-            "continue");
+        throw new WebSocketException(
+            "Received continuing frame, but there's nothing to " + "continue");
       } else {
         if (pendingBuilder == null) {
           // We aren't continuing another message

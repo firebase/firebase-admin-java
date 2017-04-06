@@ -13,8 +13,7 @@ import com.google.firebase.tasks.Task;
  */
 public final class TestOnlyImplFirebaseTrampolines {
 
-  private TestOnlyImplFirebaseTrampolines() {
-  }
+  private TestOnlyImplFirebaseTrampolines() {}
 
   /* FirebaseApp */
   public static void clearInstancesForTest() {
@@ -25,4 +24,3 @@ public final class TestOnlyImplFirebaseTrampolines {
     return app.getToken(forceRefresh);
   }
 }
-

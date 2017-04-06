@@ -2,9 +2,7 @@ package com.google.firebase.database.utilities;
 
 import java.util.Random;
 
-/**
- * User: greg Date: 5/23/13 Time: 1:27 PM
- */
+/** User: greg Date: 5/23/13 Time: 1:27 PM */
 public class PushIdGenerator {
 
   private static final String PUSH_CHARS =
@@ -15,7 +13,7 @@ public class PushIdGenerator {
   private static long lastPushTime = 0L;
 
   public static synchronized String generatePushChildName(long now) {
-    boolean duplicateTime = (now == lastPushTime);
+    final boolean duplicateTime = (now == lastPushTime);
     lastPushTime = now;
 
     char[] timeStampChars = new char[8];

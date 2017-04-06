@@ -24,5 +24,4 @@ public class LLRBBlackValueNode<K, V> extends LLRBValueNode<K, V> {
     LLRBNode<K, V> newRight = right == null ? this.getRight() : right;
     return new LLRBBlackValueNode<>(newKey, newValue, newLeft, newRight);
   }
-
 }

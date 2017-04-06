@@ -2,8 +2,7 @@ package com.google.firebase.database.snapshot;
 
 public class NamedNode {
 
-  private static final NamedNode MIN_NODE = new NamedNode(ChildKey.getMinName(), EmptyNode
-      .Empty());
+  private static final NamedNode MIN_NODE = new NamedNode(ChildKey.getMinName(), EmptyNode.Empty());
   private static final NamedNode MAX_NODE = new NamedNode(ChildKey.getMaxName(), Node.MAX_NODE);
   private final ChildKey name;
   private final Node node;

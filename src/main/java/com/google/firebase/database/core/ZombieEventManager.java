@@ -25,8 +25,7 @@ public class ZombieEventManager implements EventRegistrationZombieListener {
   final HashMap<EventRegistration, List<EventRegistration>> globalEventRegistrations =
       new HashMap<>();
 
-  private ZombieEventManager() {
-  }
+  private ZombieEventManager() {}
 
   @NotNull
   public static ZombieEventManager getInstance() {
@@ -46,8 +45,7 @@ public class ZombieEventManager implements EventRegistrationZombieListener {
       // We need to match that behavior here and zombie all the relevant registrations.
       if (!registration.getQuerySpec().isDefault()) {
         EventRegistration defaultRegistration =
-            registration.clone(QuerySpec.defaultQueryAtPath(registration.getQuerySpec()
-                .getPath()));
+            registration.clone(QuerySpec.defaultQueryAtPath(registration.getQuerySpec().getPath()));
         registrationList = globalEventRegistrations.get(defaultRegistration);
         if (registrationList == null) {
           registrationList = new ArrayList<>();
@@ -65,8 +63,7 @@ public class ZombieEventManager implements EventRegistrationZombieListener {
     synchronized (globalEventRegistrations) {
       boolean found = false;
 
-      List<EventRegistration> registrationList = globalEventRegistrations.get
-          (zombiedRegistration);
+      List<EventRegistration> registrationList = globalEventRegistrations.get(zombiedRegistration);
       if (registrationList != null) {
         for (int i = 0; i < registrationList.size(); i++) {
           if (registrationList.get(i) == zombiedRegistration) {

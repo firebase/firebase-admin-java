@@ -14,9 +14,8 @@ import java.io.IOException;
  *
  * <p>These JWTs are minted by the developer's application and signed by the developer's Private Key
  * and used to trigger an authentication event. These will be exchanged with SecureTokenService for
- * a {@link FirebaseToken}, which is what will actually be sent to Google to perform actions
- * against the Firebase APIs on behalf of the user created, or signed in, using a
- * FirebaseCustomAuthToken.
+ * a {@link FirebaseToken}, which is what will actually be sent to Google to perform actions against
+ * the Firebase APIs on behalf of the user created, or signed in, using a FirebaseCustomAuthToken.
  */
 public final class FirebaseCustomAuthToken extends IdToken {
 
@@ -29,14 +28,11 @@ public final class FirebaseCustomAuthToken extends IdToken {
     super(header, payload, signatureBytes, signedContentBytes);
   }
 
-  /**
-   * Parses a JWT token string and extracts its headers and payload fields.
-   */
+  /** Parses a JWT token string and extracts its headers and payload fields. */
   public static FirebaseCustomAuthToken parse(JsonFactory jsonFactory, String tokenString)
       throws IOException {
-    JsonWebSignature jws = JsonWebSignature.parser(jsonFactory)
-        .setPayloadClass(Payload.class)
-        .parse(tokenString);
+    JsonWebSignature jws =
+        JsonWebSignature.parser(jsonFactory).setPayloadClass(Payload.class).parse(tokenString);
     return new FirebaseCustomAuthToken(
         jws.getHeader(),
         (Payload) jws.getPayload(),
@@ -49,14 +45,10 @@ public final class FirebaseCustomAuthToken extends IdToken {
     return (Payload) super.getPayload();
   }
 
-  /**
-   * Represents a FirebaseCustomAuthToken Payload.
-   */
+  /** Represents a FirebaseCustomAuthToken Payload. */
   public static class Payload extends IdToken.Payload {
 
-    /**
-     * The uid of the user to store in the Firebase data store.
-     */
+    /** The uid of the user to store in the Firebase data store. */
     @Key("uid")
     private String uid;
 

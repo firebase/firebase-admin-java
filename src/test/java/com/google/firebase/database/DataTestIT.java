@@ -52,7 +52,7 @@ public class DataTestIT {
   @Test
   public void readAndWrite()
       throws DatabaseException, ExecutionException, InterruptedException, TimeoutException,
-      TestFailure {
+          TestFailure {
     DatabaseReference ref = TestHelpers.getRandomNode();
     ReadFuture future = ReadFuture.untilNonNull(ref);
 
@@ -95,7 +95,7 @@ public class DataTestIT {
   @Test
   public void writeAValueReconnectRead()
       throws DatabaseException, ExecutionException, TimeoutException, InterruptedException,
-      TestFailure {
+          TestFailure {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
@@ -114,7 +114,7 @@ public class DataTestIT {
   @Test
   public void writeABunchOfDataReconnectRead()
       throws DatabaseException, ExecutionException, TimeoutException, InterruptedException,
-      TestFailure {
+          TestFailure {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
@@ -138,8 +138,7 @@ public class DataTestIT {
     ReadFuture readFuture = new ReadFuture(reader);
 
     GenericTypeIndicator<Map<String, Object>> t =
-        new GenericTypeIndicator<Map<String, Object>>() {
-        };
+        new GenericTypeIndicator<Map<String, Object>>() {};
     Map<String, Object> result = readFuture.timedGet().get(0).getSnapshot().getValue(t);
     DeepEquals.assertEquals(expected, result);
   }
@@ -183,8 +182,7 @@ public class DataTestIT {
                   }
 
                   @Override
-                  public void onCancelled(DatabaseError error) {
-                  }
+                  public void onCancelled(DatabaseError error) {}
                 });
 
     EventHelper helper =
@@ -236,7 +234,7 @@ public class DataTestIT {
   @Test
   public void writeLeafNodeRemoveParentWaitForEvents()
       throws DatabaseException, InterruptedException, TimeoutException, TestFailure,
-      ExecutionException {
+          ExecutionException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
@@ -312,7 +310,7 @@ public class DataTestIT {
   @Test
   public void writeLeafNodeRemoveLeafNodeWaitForEvents()
       throws DatabaseException, InterruptedException, TimeoutException, TestFailure,
-      ExecutionException {
+          ExecutionException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
@@ -540,7 +538,7 @@ public class DataTestIT {
   @Test
   public void removeCallbackIsHit()
       throws DatabaseException, ExecutionException, TimeoutException, InterruptedException,
-      TestFailure {
+          TestFailure {
     final DatabaseReference ref = TestHelpers.getRandomNode();
 
     WriteFuture writeFuture = new WriteFuture(ref, 42);
@@ -611,7 +609,7 @@ public class DataTestIT {
   @Test
   public void onceWithCallbackHitsServerToGetData()
       throws DatabaseException, InterruptedException, ExecutionException, TimeoutException,
-      TestFailure {
+          TestFailure {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(3);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
@@ -659,7 +657,7 @@ public class DataTestIT {
   @Test
   public void setAndThenListenForValueEvents()
       throws DatabaseException, ExecutionException, TimeoutException, InterruptedException,
-      TestFailure {
+          TestFailure {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
     new WriteFuture(ref, "cabbage").timedGet();
@@ -714,7 +712,7 @@ public class DataTestIT {
   @Test
   public void setANodeWithChildrenToAPrimitiveThenBack()
       throws DatabaseException, ExecutionException, TimeoutException, InterruptedException,
-      TestFailure {
+          TestFailure {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference reader = refs.get(0);
     final DatabaseReference writer = refs.get(1);
@@ -770,7 +768,7 @@ public class DataTestIT {
   @Test
   public void writeLeafNodeRemoveItTryToAddChildToRemovedNode()
       throws DatabaseException, ExecutionException, TimeoutException, InterruptedException,
-      TestFailure {
+          TestFailure {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
@@ -787,7 +785,7 @@ public class DataTestIT {
   @Test
   public void listenForValueThenWriteOnANodeWithExistingData()
       throws DatabaseException, ExecutionException, TimeoutException, InterruptedException,
-      TestFailure {
+          TestFailure {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
@@ -847,7 +845,7 @@ public class DataTestIT {
   @Test
   public void setWithPrioritySetsPriorityAndValue()
       throws DatabaseException, ExecutionException, TimeoutException, InterruptedException,
-      TestFailure {
+          TestFailure {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference ref1 = refs.get(0);
     DatabaseReference ref2 = refs.get(1);
@@ -873,7 +871,7 @@ public class DataTestIT {
   @Test
   public void setOverwritesPriorityOfTopLevelNodesAndSubnodes()
       throws DatabaseException, ExecutionException, TimeoutException, InterruptedException,
-      TestFailure {
+          TestFailure {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference ref1 = refs.get(0);
     DatabaseReference ref2 = refs.get(1);
@@ -892,7 +890,7 @@ public class DataTestIT {
   @Test
   public void setWithPriorityOfALeafSavesCorrectly()
       throws DatabaseException, ExecutionException, TimeoutException, InterruptedException,
-      TestFailure {
+          TestFailure {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference ref1 = refs.get(0);
     DatabaseReference ref2 = refs.get(1);
@@ -907,7 +905,7 @@ public class DataTestIT {
   @Test
   public void setPriorityOfAnObjectSavesCorrectly()
       throws DatabaseException, ExecutionException, TimeoutException, InterruptedException,
-      TestFailure {
+          TestFailure {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference ref1 = refs.get(0);
     DatabaseReference ref2 = refs.get(1);
@@ -956,8 +954,7 @@ public class DataTestIT {
             .put(
                 "foo",
                 new MapBuilder()
-                    .put("bar", new MapBuilder().put(".priority", 7.0).put(".value", 5L)
-                        .build())
+                    .put("bar", new MapBuilder().put(".priority", 7.0).put(".value", 5L).build())
                     .put(".priority", "hi")
                     .build())
             .build();
@@ -980,23 +977,23 @@ public class DataTestIT {
     ref1.setValue("hi", 100);
 
     new ReadFuture(
-        ref2,
-        new ReadFuture.CompletionCondition() {
-          @Override
-          public boolean isComplete(List<EventRecord> events) {
-            DataSnapshot snap = events.get(events.size() - 1).getSnapshot();
-            Object priority = snap.getPriority();
-            if (priority != null && priority.equals(100.0)) {
-              try {
-                ref2.setValue("whatever");
-              } catch (DatabaseException e) {
-                fail("Shouldn't happen: " + e.toString());
+            ref2,
+            new ReadFuture.CompletionCondition() {
+              @Override
+              public boolean isComplete(List<EventRecord> events) {
+                DataSnapshot snap = events.get(events.size() - 1).getSnapshot();
+                Object priority = snap.getPriority();
+                if (priority != null && priority.equals(100.0)) {
+                  try {
+                    ref2.setValue("whatever");
+                  } catch (DatabaseException e) {
+                    fail("Shouldn't happen: " + e.toString());
+                  }
+                  return true;
+                }
+                return false;
               }
-              return true;
-            }
-            return false;
-          }
-        })
+            })
         .timedGet();
 
     List<EventRecord> events = readFuture.timedGet();
@@ -1007,7 +1004,7 @@ public class DataTestIT {
   @Test
   public void largeNumericPrioritiesWork()
       throws DatabaseException, TestFailure, TimeoutException, InterruptedException,
-      ExecutionException {
+          ExecutionException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference ref1 = refs.get(0);
     DatabaseReference ref2 = refs.get(1);
@@ -1022,12 +1019,11 @@ public class DataTestIT {
   @Test
   public void urlEncodingAndDecodingWorks()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     DatabaseConfig ctx = TestHelpers.getContext(0);
 
     DatabaseReference ref =
-        new DatabaseReference(TestConstants.TEST_NAMESPACE + "/a%b&c@d/space: /non-ascii:ø",
-            ctx);
+        new DatabaseReference(TestConstants.TEST_NAMESPACE + "/a%b&c@d/space: /non-ascii:ø", ctx);
     String result = ref.toString();
     String expected =
         TestConstants.TEST_NAMESPACE + "/a%25b%26c%40d/space%3A%20/non-ascii%3A%C3%B8";
@@ -1042,7 +1038,7 @@ public class DataTestIT {
   @Test
   public void nameWorksForRootAndNonRootLocations()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     DatabaseConfig ctx = TestHelpers.getContext(0);
 
     DatabaseReference ref = new DatabaseReference(TestConstants.TEST_NAMESPACE, ctx);
@@ -1054,7 +1050,7 @@ public class DataTestIT {
   @Test
   public void nameAndRefWorkForSnapshots()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     DatabaseConfig ctx = TestHelpers.getContext(0);
 
     DatabaseReference ref = new DatabaseReference(TestConstants.TEST_ALT_NAMESPACE, ctx);
@@ -1101,7 +1097,7 @@ public class DataTestIT {
   @Test
   public void setAChildAndListenAtTheRoot()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference ref1 = refs.get(0);
     DatabaseReference ref2 = refs.get(1);
@@ -1165,8 +1161,7 @@ public class DataTestIT {
 
     List<String> badKeys =
         Arrays.asList(
-            ".test", "test.", "fo$o", "[what", "ever]", "ha#sh", "/thing", "thi/ing",
-            "thing/", "");
+            ".test", "test.", "fo$o", "[what", "ever]", "ha#sh", "/thing", "thi/ing", "thing/", "");
 
     List<Object> badObjects = new ArrayList<>();
     for (String key : badKeys) {
@@ -1209,8 +1204,7 @@ public class DataTestIT {
             new MapBuilder().put("/a/b", "t").put("/a/b/.priority", 1.0).build(),
             new MapBuilder().put("/a/b/.sv", "timestamp").build(),
             new MapBuilder().put("/a/b/.value", "t").build(),
-            new MapBuilder().put("/a/b/.priority", new MapBuilder().put("x", "y").build())
-                .build());
+            new MapBuilder().put("/a/b/.priority", new MapBuilder().put("x", "y").build()).build());
     for (Map<String, Object> badUpdate : badUpdates) {
       try {
         ref.updateChildren(badUpdate);
@@ -1235,7 +1229,7 @@ public class DataTestIT {
     // Test all controls characters PLUS 0x7F (127).
     for (int i = 0; i <= 32; i++) {
       String ch = new String(Character.toChars(i < 32 ? i : 127));
-      HashMap obj = TestHelpers.buildObjFromPath(new Path(ch), "test_value");
+      HashMap<String, Object> obj = TestHelpers.buildObjFromPath(new Path(ch), "test_value");
       try {
         node.setValue(obj);
         fail("Ascii control character should not be allowed in path.");
@@ -1286,8 +1280,8 @@ public class DataTestIT {
                         + TestHelpers.repeatedString("k", maxPathLengthBytes / 2))),
             new BadGroup(
                 "Path specified exceeds the maximum depth",
-                Collections.singletonList(TestHelpers.repeatedString("key/", maxPathDepth) +
-                    "key")));
+                Collections.singletonList(
+                    TestHelpers.repeatedString("key/", maxPathDepth) + "key")));
 
     DatabaseReference node = TestHelpers.getRandomNode().getRoot();
 
@@ -1341,8 +1335,7 @@ public class DataTestIT {
 
     for (BadGroup badGroup : badGroups) {
       for (String key : badGroup.keys) {
-        HashMap<String, Object> obj = TestHelpers.buildObjFromPath(new Path(key),
-            "test_value");
+        HashMap<String, Object> obj = TestHelpers.buildObjFromPath(new Path(key), "test_value");
         try {
           node.setValue(obj);
           fail("Expected setValue(bad key) to throw exception: " + key);
@@ -1362,11 +1355,9 @@ public class DataTestIT {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
-          Map<String, Object> deepUpdate = new MapBuilder().put(key, "test_value")
-              .build();
+          Map<String, Object> deepUpdate = new MapBuilder().put(key, "test_value").build();
           node.updateChildren(deepUpdate);
-          fail("Expected updateChildrean(bad deep update key) to throw exception: " +
-              key);
+          fail("Expected updateChildrean(bad deep update key) to throw exception: " + key);
         } catch (DatabaseException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
@@ -1378,18 +1369,16 @@ public class DataTestIT {
         }
         try {
           node.onDisconnect().updateChildren(obj);
-          fail("Expected onDisconnect.updateChildren(bad key) to throw exception: " +
-              key);
+          fail("Expected onDisconnect.updateChildren(bad key) to throw exception: " + key);
         } catch (DatabaseException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
-          Map<String, Object> deepUpdate = new MapBuilder().put(key, "test_value")
-              .build();
+          Map<String, Object> deepUpdate = new MapBuilder().put(key, "test_value").build();
           node.onDisconnect().updateChildren(deepUpdate);
           fail(
-              "Expected onDisconnect.updateChildren(bad deep update key) to throw " +
-                  "exception: "
+              "Expected onDisconnect.updateChildren(bad deep update key) to throw "
+                  + "exception: "
                   + key);
         } catch (DatabaseException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
@@ -1401,7 +1390,7 @@ public class DataTestIT {
   @Test
   public void namespaceAreCaseInsensitive()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     DatabaseConfig ctx1 = TestHelpers.getContext(0);
     DatabaseConfig ctx2 = TestHelpers.getContext(1);
 
@@ -1440,7 +1429,7 @@ public class DataTestIT {
   @Test
   public void setANodeWithAQuotedKey()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
     Map<String, Object> expected = new MapBuilder().put("\"herp\"", 1234L).build();
@@ -1452,7 +1441,7 @@ public class DataTestIT {
   @Test
   public void setAChildWithAQuote()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
     ReadFuture readFuture = new ReadFuture(ref);
@@ -1483,7 +1472,7 @@ public class DataTestIT {
   @Test
   public void onAfterSetWaitsForLatestData()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference ref1 = refs.get(0);
     DatabaseReference ref2 = refs.get(1);
@@ -1498,7 +1487,7 @@ public class DataTestIT {
   @Test
   public void onceWaitsForLatestDataEachTime()
       throws DatabaseException, InterruptedException, TestFailure, ExecutionException,
-      TimeoutException {
+          TimeoutException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference ref1 = refs.get(0);
     DatabaseReference ref2 = refs.get(1);
@@ -1559,7 +1548,7 @@ public class DataTestIT {
   @Test
   public void memoryFreeingOnUnlistenDoesNotCorruptData()
       throws DatabaseException, TestFailure, TimeoutException, InterruptedException,
-      ExecutionException {
+          ExecutionException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference ref1 = refs.get(0);
     DatabaseReference ref2 = refs.get(1);
@@ -1654,13 +1643,13 @@ public class DataTestIT {
   @Test
   public void updateRaisesCorrectRemoteEvents()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
 
     new WriteFuture(
-        writer, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4).build())
+            writer, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4).build())
         .timedGet();
 
     EventHelper helper =
@@ -1686,7 +1675,7 @@ public class DataTestIT {
   @Test
   public void updateRaisesChildEventsOnNewListener()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
     EventHelper helper =
         new EventHelper()
@@ -1708,7 +1697,7 @@ public class DataTestIT {
   @Test
   public void updateAfterSetLeafNodeWorks()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
     final Semaphore semaphore = new Semaphore(0);
     final Map<String, Object> expected = new MapBuilder().put("a", 1L).put("b", 2L).build();
@@ -1723,8 +1712,7 @@ public class DataTestIT {
           }
 
           @Override
-          public void onCancelled(DatabaseError error) {
-          }
+          public void onCancelled(DatabaseError error) {}
         });
     ref.setValue(42);
     ref.updateChildren(expected);
@@ -1735,13 +1723,13 @@ public class DataTestIT {
   @Test
   public void updateChangesAreStoredCorrectlyByTheServer()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
 
     new WriteFuture(
-        writer, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4).build())
+            writer, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4).build())
         .timedGet();
 
     final Semaphore semaphore = new Semaphore(0);
@@ -1786,13 +1774,12 @@ public class DataTestIT {
   @Test
   public void updateDoesntAffectPriorityRemotely()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
 
-    new WriteFuture(writer, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build(),
-        "testpri")
+    new WriteFuture(writer, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build(), "testpri")
         .timedGet();
 
     DataSnapshot snap = TestHelpers.getSnap(reader);
@@ -1859,8 +1846,7 @@ public class DataTestIT {
     writer.setValue(
         new MapBuilder().put("a", new MapBuilder().put("aa", 1).put("ab", 2).build()).build());
     Map<String, Object> expected =
-        new MapBuilder().put("a", new MapBuilder().put("aa", 10L).put("ab", 20L).build())
-            .build();
+        new MapBuilder().put("a", new MapBuilder().put("aa", 10L).put("ab", 20L).build()).build();
     Map<String, Object> update =
         new MapBuilder()
             .put("a/aa", 10)
@@ -1919,7 +1905,7 @@ public class DataTestIT {
   @Test
   public void updateFiresCorrectEventWhenAChildIsDeleted()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
@@ -1956,7 +1942,7 @@ public class DataTestIT {
   @Test
   public void updateFiresCorrectEventOnNewChildren()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
@@ -2005,7 +1991,7 @@ public class DataTestIT {
   @Test
   public void updateFiresCorrectEventWhenAllChildrenAreDeleted()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
@@ -2041,7 +2027,7 @@ public class DataTestIT {
   @Test
   public void updateFiresCorrectEventOnChangedChildren()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
@@ -2081,8 +2067,7 @@ public class DataTestIT {
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
 
-    Map<String, Object> writeValue = new MapBuilder().put("a", 5).put(".priority", "pri1")
-        .build();
+    Map<String, Object> writeValue = new MapBuilder().put("a", 5).put(".priority", "pri1").build();
 
     Map<String, Object> updateValue =
         new MapBuilder()
@@ -2148,8 +2133,7 @@ public class DataTestIT {
                   }
 
                   @Override
-                  public void onCancelled(DatabaseError error) {
-                  }
+                  public void onCancelled(DatabaseError error) {}
                 });
     writer.child(childName).setValue("foo");
     // Make sure we get the data in the listener before we delete it
@@ -2286,7 +2270,7 @@ public class DataTestIT {
     assertEquals(snap.getPriority(), snap.child("b").getPriority());
     assertEquals(snap.child("a").getValue(), snap.child("b").getValue());
     assert (Math.abs(
-        System.currentTimeMillis() - Long.parseLong(snap.child("a").getValue().toString()))
+            System.currentTimeMillis() - Long.parseLong(snap.child("a").getValue().toString()))
         < 2000);
   }
 
@@ -2303,20 +2287,16 @@ public class DataTestIT {
     reader.addChildEventListener(
         new ChildEventListener() {
           @Override
-          public void onChildAdded(DataSnapshot snapshot, String previousChildName) {
-          }
+          public void onChildAdded(DataSnapshot snapshot, String previousChildName) {}
 
           @Override
-          public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
-          }
+          public void onChildChanged(DataSnapshot snapshot, String previousChildName) {}
 
           @Override
-          public void onChildRemoved(DataSnapshot snapshot) {
-          }
+          public void onChildRemoved(DataSnapshot snapshot) {}
 
           @Override
-          public void onCancelled(DatabaseError error) {
-          }
+          public void onCancelled(DatabaseError error) {}
 
           @Override
           public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
@@ -2422,7 +2402,7 @@ public class DataTestIT {
     assertEquals(snap.child("a/b/c").getValue().getClass(), Long.class);
     assertEquals(snap.child("a/b/d").getValue().getClass(), Long.class);
     assert (Math.abs(
-        System.currentTimeMillis() - Long.parseLong(snap.child("a/b/c").getValue().toString()))
+            System.currentTimeMillis() - Long.parseLong(snap.child("a/b/c").getValue().toString()))
         < 2000);
   }
 
@@ -2478,7 +2458,7 @@ public class DataTestIT {
     assertEquals(snap.getPriority(), snap.child("b").getPriority());
     assertEquals(snap.child("a").getValue(), snap.child("b").getValue());
     assert (Math.abs(
-        System.currentTimeMillis() - Long.parseLong(snap.child("a").getValue().toString()))
+            System.currentTimeMillis() - Long.parseLong(snap.child("a").getValue().toString()))
         < 2000);
   }
 
@@ -2494,20 +2474,16 @@ public class DataTestIT {
     writer.addChildEventListener(
         new ChildEventListener() {
           @Override
-          public void onChildAdded(DataSnapshot snapshot, String previousChildName) {
-          }
+          public void onChildAdded(DataSnapshot snapshot, String previousChildName) {}
 
           @Override
-          public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
-          }
+          public void onChildChanged(DataSnapshot snapshot, String previousChildName) {}
 
           @Override
-          public void onChildRemoved(DataSnapshot snapshot) {
-          }
+          public void onChildRemoved(DataSnapshot snapshot) {}
 
           @Override
-          public void onCancelled(DatabaseError error) {
-          }
+          public void onCancelled(DatabaseError error) {}
 
           @Override
           public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
@@ -2611,7 +2587,7 @@ public class DataTestIT {
     assertEquals(snap.child("a/b/c").getValue().getClass(), Long.class);
     assertEquals(snap.child("a/b/d").getValue().getClass(), Long.class);
     assert (Math.abs(
-        System.currentTimeMillis() - Long.parseLong(snap.child("a/b/c").getValue().toString()))
+            System.currentTimeMillis() - Long.parseLong(snap.child("a/b/c").getValue().toString()))
         < 2000);
   }
 
@@ -2663,8 +2639,7 @@ public class DataTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
-              currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
             if (error != null || !committed) {
               fail("Transaction should succeed");
             }
@@ -2713,8 +2688,7 @@ public class DataTestIT {
                   }
 
                   @Override
-                  public void onCancelled(DatabaseError error) {
-                  }
+                  public void onCancelled(DatabaseError error) {}
                 });
 
             ref.child("b").setValue("b");
@@ -2779,8 +2753,7 @@ public class DataTestIT {
                   }
 
                   @Override
-                  public void onCancelled(DatabaseError error) {
-                  }
+                  public void onCancelled(DatabaseError error) {}
                 });
           }
         });
@@ -2810,8 +2783,7 @@ public class DataTestIT {
                           null,
                           new DatabaseReference.CompletionListener() {
                             @Override
-                            public void onComplete(DatabaseError error,
-                                                   DatabaseReference ref) {
+                            public void onComplete(DatabaseError error, DatabaseReference ref) {
                               assertEquals(1, ref2.repo.dataUpdateCount);
                               done.release();
                             }
@@ -2820,8 +2792,7 @@ public class DataTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     TestHelpers.waitFor(done);
@@ -2869,8 +2840,7 @@ public class DataTestIT {
                       }
 
                       @Override
-                      public void onCancelled(DatabaseError error) {
-                      }
+                      public void onCancelled(DatabaseError error) {}
                     });
           }
         });
@@ -2908,8 +2878,7 @@ public class DataTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     TestHelpers.waitFor(done);
@@ -2946,8 +2915,7 @@ public class DataTestIT {
               }
 
               @Override
-              public void onCancelled(DatabaseError error) {
-              }
+              public void onCancelled(DatabaseError error) {}
             });
 
     TestHelpers.waitFor(readSemaphore);
@@ -2971,11 +2939,11 @@ public class DataTestIT {
   @Test
   public void negativeIntegersDontCreateArrayValue()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-      InterruptedException {
+          InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
     new WriteFuture(
-        ref, new MapBuilder().put("-1", "minus-one").put("0", "zero").put("1", "one").build())
+            ref, new MapBuilder().put("-1", "minus-one").put("0", "zero").put("1", "one").build())
         .timedGet();
 
     DataSnapshot snap = TestHelpers.getSnap(ref);
@@ -2999,8 +2967,7 @@ public class DataTestIT {
     reader.addValueEventListener(
         new ValueEventListener() {
           @Override
-          public void onCancelled(DatabaseError error) {
-          }
+          public void onCancelled(DatabaseError error) {}
 
           @Override
           public void onDataChange(DataSnapshot snapshot) {
@@ -3014,8 +2981,7 @@ public class DataTestIT {
     writer.addValueEventListener(
         new ValueEventListener() {
           @Override
-          public void onCancelled(DatabaseError error) {
-          }
+          public void onCancelled(DatabaseError error) {}
 
           @Override
           public void onDataChange(DataSnapshot snapshot) {
@@ -3073,8 +3039,7 @@ public class DataTestIT {
           }
 
           @Override
-          public void onCancelled(DatabaseError error) {
-          }
+          public void onCancelled(DatabaseError error) {}
         });
 
     TestHelpers.waitFor(done);
@@ -3109,16 +3074,14 @@ public class DataTestIT {
           @Override
           public void onDataChange(DataSnapshot snapshot) {
             Map<String, DumbBean> beans =
-                snapshot.getValue(new GenericTypeIndicator<Map<String, DumbBean>>() {
-                });
+                snapshot.getValue(new GenericTypeIndicator<Map<String, DumbBean>>() {});
             assertEquals("bean1", beans.get("bean1").name);
             assertEquals("bean2", beans.get("bean2").name);
             done.release();
           }
 
           @Override
-          public void onCancelled(DatabaseError error) {
-          }
+          public void onCancelled(DatabaseError error) {}
         });
 
     TestHelpers.waitFor(done);
@@ -3158,8 +3121,7 @@ public class DataTestIT {
           }
 
           @Override
-          public void onCancelled(DatabaseError error) {
-          }
+          public void onCancelled(DatabaseError error) {}
         });
 
     TestHelpers.waitFor(done);

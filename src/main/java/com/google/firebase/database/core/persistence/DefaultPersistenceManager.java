@@ -120,8 +120,8 @@ public class DefaultPersistenceManager implements PersistenceManager {
   }
 
   /**
-   * Returns any cached node or children as a CacheNode. The query is *not* used to filter the
-   * node but rather to determine if it can be considered complete.
+   * Returns any cached node or children as a CacheNode. The query is *not* used to filter the node
+   * but rather to determine if it can be considered complete.
    *
    * @param query The query at the path
    * @return The cached node or an empty CacheNode if no cache is available
@@ -210,8 +210,7 @@ public class DefaultPersistenceManager implements PersistenceManager {
   }
 
   @Override
-  public void updateTrackedQueryKeys(QuerySpec query, Set<ChildKey> added, Set<ChildKey>
-      removed) {
+  public void updateTrackedQueryKeys(QuerySpec query, Set<ChildKey> added, Set<ChildKey> removed) {
     assert !query.loadsAllData() : "We should only track keys for filtered queries.";
     TrackedQuery trackedQuery = this.trackedQueryManager.findTrackedQuery(query);
     assert trackedQuery != null && trackedQuery.active

@@ -14,7 +14,7 @@ import com.google.firebase.database.snapshot.Node;
  */
 public class Transaction {
 
-  /**
+  /** 
    * @return A {@link Result} that aborts the transaction
    */
   public static Result abort() {
@@ -30,24 +30,26 @@ public class Transaction {
   }
 
   /**
-   * An object implementing this interface is used to run a transaction, and will be notified of
-   * the results of the transaction.
+   * An object implementing this interface is used to run a transaction, and will be notified of the
+   * results of the transaction.
    */
   public interface Handler {
 
     /**
-     * This method will be called, <em>possibly multiple times</em>, with the current data at
-     * this location. It is responsible for inspecting that data and returning a {@link Result}
+     * This method will be called, <em>possibly multiple times</em>, with the current data at this
+     * location. It is responsible for inspecting that data and returning a {@link Result}
      * specifying either the desired new data at the location or that the transaction should be
-     * aborted. <br> <br> Since this method may be called repeatedly for the same transaction,
-     * be extremely careful of any side effects that may be triggered by this method. In
-     * addition, this method is called from within the Firebase Database library's run loop, so
-     * care is also required when accessing data that may be in use by other threads in your
-     * application. <br> <br> Best practices for this method are to rely only on the data that
-     * is passed in.
+     * aborted. <br>
+     * <br>
+     * Since this method may be called repeatedly for the same transaction, be extremely careful of
+     * any side effects that may be triggered by this method. In addition, this method is called
+     * from within the Firebase Database library's run loop, so care is also required when accessing
+     * data that may be in use by other threads in your application. <br>
+     * <br>
+     * Best practices for this method are to rely only on the data that is passed in.
      *
      * @param currentData The current data at the location. Update this to the desired data at the
-     * location
+     *     location
      * @return Either the new data, or an indication to abort the transaction
      */
     Result doTransaction(MutableData currentData);
@@ -57,7 +59,7 @@ public class Transaction {
      *
      * @param error null if no errors occurred, otherwise it contains a description of the error
      * @param committed True if the transaction successfully completed, false if it was aborted or
-     * an error occurred
+     *     an error occurred
      * @param currentData The current data at the location
      */
     void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData);
@@ -68,11 +70,11 @@ public class Transaction {
    * doTransaction method. The options are:
    *
    * <ul>
-   * <li>Set the data to the new value (success)
-   * <li>abort the transaction
+   *   <li>Set the data to the new value (success)
+   *   <li>abort the transaction
    * </ul>
    *
-   * Instances are created using {@link Transaction#success(MutableData)} or {@link
+   * <p>Instances are created using {@link Transaction#success(MutableData)} or {@link
    * com.google.firebase.database.Transaction#abort()}.
    */
   public static class Result {
@@ -85,7 +87,7 @@ public class Transaction {
       this.data = data;
     }
 
-    /**
+    /** 
      * @return Whether or not this result is a success
      */
     public boolean isSuccess() {

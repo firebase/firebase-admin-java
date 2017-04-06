@@ -1,5 +1,7 @@
 package com.google.firebase.database.utilities;
 
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
+
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.ServerValues;
@@ -15,16 +17,13 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
-
-/**
- * User: greg Date: 5/29/13 Time: 11:08 AM
- */
 public class Validation {
 
   private static final Pattern INVALID_PATH_REGEX = Pattern.compile("[\\[\\]\\.#$]");
+  // CSOFF: AvoidEscapedUnicodeCharacters
   private static final Pattern INVALID_KEY_REGEX =
       Pattern.compile("[\\[\\]\\.#\\$\\/\\u0000-\\u001F\\u007F]");
+  // CSON: AvoidEscapedUnicodeCharacters
 
   private static boolean isValidPathString(String pathString) {
     return !INVALID_PATH_REGEX.matcher(pathString).find();
@@ -53,8 +52,8 @@ public class Validation {
     return key != null
         && key.length() > 0
         && (key.equals(".value")
-        || key.equals(".priority")
-        || (!key.startsWith(".") && !INVALID_KEY_REGEX.matcher(key).find()));
+            || key.equals(".priority")
+            || (!key.startsWith(".") && !INVALID_KEY_REGEX.matcher(key).find()));
   }
 
   private static boolean isValidKey(String key) {
@@ -118,8 +117,8 @@ public class Validation {
       Object newValue = entry.getValue();
       ValidationPath.validateWithObject(path.child(updatePath), newValue);
       String childName = !updatePath.isEmpty() ? updatePath.getBack().asString() : "";
-      if (childName.equals(ServerValues.NAME_SUBKEY_SERVERVALUE) || childName.equals("" +
-          ".value")) {
+      if (childName.equals(ServerValues.NAME_SUBKEY_SERVERVALUE)
+          || childName.equals("" + ".value")) {
         throw new DatabaseException(
             "Path '" + updatePath + "' contains disallowed child name: " + childName);
       }

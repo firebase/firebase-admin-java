@@ -4,9 +4,7 @@ import java.net.URI;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * User: greg Date: 7/24/13 Time: 11:41 AM
- */
+/** User: greg Date: 7/24/13 Time: 11:41 AM */
 public class TestClient {
 
   private WebSocket client;
@@ -37,8 +35,7 @@ public class TestClient {
   private class Handler implements WebSocketEventHandler {
 
     @Override
-    public void onOpen() {
-    }
+    public void onOpen() {}
 
     @Override
     public void onMessage(WebSocketMessage message) {

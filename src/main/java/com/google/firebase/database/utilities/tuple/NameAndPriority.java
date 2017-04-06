@@ -4,9 +4,7 @@ import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
 
-/**
- * User: greg Date: 5/17/13 Time: 3:19 PM
- */
+/** User: greg Date: 5/17/13 Time: 3:19 PM */
 public class NameAndPriority implements Comparable<NameAndPriority> {
 
   private ChildKey name;

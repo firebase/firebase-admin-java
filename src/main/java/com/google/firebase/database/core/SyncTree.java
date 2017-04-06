@@ -65,23 +65,19 @@ public class SyncTree {
   // Size after which we start including the compound hash
   private static final long SIZE_THRESHOLD_FOR_COMPOUND_HASH = 1024;
   /**
-   * A tree of all pending user writes (user-initiated set()'s, transaction()'s, update()'s,
-   * etc.).
+   * A tree of all pending user writes (user-initiated set()'s, transaction()'s, update()'s, etc.).
    */
   private final WriteTree pendingWriteTree;
+
   private final Map<Tag, QuerySpec> tagToQueryMap;
   private final Map<QuerySpec, Tag> queryToTagMap;
   private final Set<QuerySpec> keepSyncedQueries;
   private final ListenProvider listenProvider;
   private final PersistenceManager persistenceManager;
   private final LogWrapper logger;
-  /**
-   * Tree of SyncPoints. There's a SyncPoint at any location that has 1 or more views.
-   */
+  /** Tree of SyncPoints. There's a SyncPoint at any location that has 1 or more views. */
   private ImmutableTree<SyncPoint> syncPointTree;
-  /**
-   * Static tracker for next query tag.
-   */
+  /** Static tracker for next query tag. */
   private long nextQueryTag = 1L;
 
   public SyncTree(
@@ -100,9 +96,7 @@ public class SyncTree {
     return this.syncPointTree.isEmpty();
   }
 
-  /**
-   * Apply the data changes for a user-generated set() or transaction() call.
-   */
+  /** Apply the data changes for a user-generated set() or transaction() call. */
   public List<? extends Event> applyUserOverwrite(
       final Path path,
       final Node newDataUnresolved,
@@ -123,16 +117,13 @@ public class SyncTree {
             if (!visible) {
               return Collections.emptyList();
             } else {
-              return applyOperationToSyncPoints(new Overwrite(OperationSource.USER,
-                  path, newData));
+              return applyOperationToSyncPoints(new Overwrite(OperationSource.USER, path, newData));
             }
           }
         });
   }
 
-  /**
-   * Apply the data from a user-generated update() call.
-   */
+  /** Apply the data from a user-generated update() call. */
   public List<? extends Event> applyUserMerge(
       final Path path,
       final CompoundWrite unresolvedChildren,
@@ -148,8 +139,7 @@ public class SyncTree {
             }
             pendingWriteTree.addMerge(path, children, writeId);
 
-            return applyOperationToSyncPoints(new Merge(OperationSource.USER, path,
-                children));
+            return applyOperationToSyncPoints(new Merge(OperationSource.USER, path, children));
           }
         });
   }
@@ -202,9 +192,7 @@ public class SyncTree {
         });
   }
 
-  /**
-   * Removes all local writes.
-   */
+  /** Removes all local writes. */
   public List<? extends Event> removeAllWrites() {
     return this.persistenceManager.runInTransaction(
         new Callable<List<? extends Event>>() {
@@ -223,9 +211,7 @@ public class SyncTree {
         });
   }
 
-  /**
-   * Apply new server data for the specified path.
-   */
+  /** Apply new server data for the specified path. */
   public List<? extends Event> applyServerOverwrite(final Path path, final Node newData) {
     return persistenceManager.runInTransaction(
         new Callable<List<? extends Event>>() {
@@ -237,9 +223,7 @@ public class SyncTree {
         });
   }
 
-  /**
-   * Apply new server data to be merged in at the specified path.
-   */
+  /** Apply new server data to be merged in at the specified path. */
   public List<? extends Event> applyServerMerge(
       final Path path, final Map<Path, Node> changedChildren) {
     return persistenceManager.runInTransaction(
@@ -253,9 +237,7 @@ public class SyncTree {
         });
   }
 
-  /**
-   * Apply a range merge.
-   */
+  /** Apply a range merge. */
   public List<? extends Event> applyServerRangeMerges(
       final Path path, List<RangeMerge> rangeMerges) {
     SyncPoint syncPoint = syncPointTree.get(path);
@@ -302,9 +284,7 @@ public class SyncTree {
     }
   }
 
-  /**
-   * Apply a listen complete to a path.
-   */
+  /** Apply a listen complete to a path. */
   public List<? extends Event> applyListenComplete(final Path path) {
     return persistenceManager.runInTransaction(
         new Callable<List<? extends Event>>() {
@@ -316,9 +296,7 @@ public class SyncTree {
         });
   }
 
-  /**
-   * Apply a listen complete to a path.
-   */
+  /** Apply a listen complete to a path. */
   public List<? extends Event> applyTaggedListenComplete(final Tag tag) {
     return persistenceManager.runInTransaction(
         new Callable<List<? extends Event>>() {
@@ -347,9 +325,7 @@ public class SyncTree {
     return syncPoint.applyOperation(operation, writesCache, /*serverCache*/ null);
   }
 
-  /**
-   * Apply new server data for the specified tagged query.
-   */
+  /** Apply new server data for the specified tagged query. */
   public List<? extends Event> applyTaggedQueryOverwrite(
       final Path path, final Node snap, final Tag tag) {
     return persistenceManager.runInTransaction(
@@ -374,9 +350,7 @@ public class SyncTree {
         });
   }
 
-  /**
-   * Apply server data to be merged in for the specified tagged query.
-   */
+  /** Apply server data to be merged in for the specified tagged query. */
   public List<? extends Event> applyTaggedQueryMerge(
       final Path path, final Map<Path, Node> changedChildren, final Tag tag) {
     return persistenceManager.runInTransaction(
@@ -400,9 +374,7 @@ public class SyncTree {
         });
   }
 
-  /**
-   * Add an event callback for the specified query.
-   */
+  /** Add an event callback for the specified query. */
   public List<? extends Event> addEventRegistration(
       @NotNull final EventRegistration eventRegistration) {
     return persistenceManager.runInTransaction(
@@ -508,15 +480,6 @@ public class SyncTree {
   }
 
   /**
-   * Remove event callback(s).
-   *
-   * <p>If query is the default query, we'll check all queries for the specified eventRegistration.
-   */
-  public List<Event> removeEventRegistration(@NotNull EventRegistration eventRegistration) {
-    return this.removeEventRegistration(eventRegistration.getQuerySpec(), eventRegistration, null);
-  }
-
-  /**
    * Remove all event callback(s).
    *
    * <p>If query is the default query, we'll check all queries for the specified eventRegistration.
@@ -526,10 +489,19 @@ public class SyncTree {
     return this.removeEventRegistration(query, null, error);
   }
 
+  /**
+   * Remove event callback(s).
+   *
+   * <p>If query is the default query, we'll check all queries for the specified eventRegistration.
+   */
+  public List<Event> removeEventRegistration(@NotNull EventRegistration eventRegistration) {
+    return this.removeEventRegistration(eventRegistration.getQuerySpec(), eventRegistration, null);
+  }
+
   private List<Event> removeEventRegistration(
-      final @NotNull QuerySpec query,
-      final @Nullable EventRegistration eventRegistration,
-      final @Nullable DatabaseError cancelError) {
+      @NotNull final QuerySpec query,
+      @Nullable final EventRegistration eventRegistration,
+      @Nullable final DatabaseError cancelError) {
     return persistenceManager.runInTransaction(
         new Callable<List<Event>>() {
           @Override
@@ -572,7 +544,7 @@ public class SyncTree {
                 covered =
                     covered
                         || (currentTree.getValue() != null
-                        && currentTree.getValue().hasCompleteView());
+                            && currentTree.getValue().hasCompleteView());
                 if (covered || currentTree.isEmpty()) {
                   break;
                 }
@@ -683,9 +655,7 @@ public class SyncTree {
     }
   }
 
-  /**
-   * For a given new listen, manage the de-duplication of outstanding subscriptions.
-   */
+  /** For a given new listen, manage the de-duplication of outstanding subscriptions. */
   private void setupListener(QuerySpec query, View view) {
     Path path = query.getPath();
     Tag tag = this.tagForQuery(query);
@@ -722,16 +692,12 @@ public class SyncTree {
     }
   }
 
-  /**
-   * Return the query associated with the given tag, if we have one.
-   */
+  /** Return the query associated with the given tag, if we have one. */
   private QuerySpec queryForTag(Tag tag) {
     return this.tagToQueryMap.get(tag);
   }
 
-  /**
-   * Return the tag associated with the given query.
-   */
+  /** Return the tag associated with the given query. */
   private Tag tagForQuery(QuerySpec query) {
     return this.queryToTagMap.get(query);
   }
@@ -764,9 +730,7 @@ public class SyncTree {
     return this.pendingWriteTree.calcCompleteEventCache(path, serverCache, writeIdsToExclude, true);
   }
 
-  /**
-   * Static accessor for query tags.
-   */
+  /** Static accessor for query tags. */
   private Tag getNextQueryTag() {
     return new Tag(nextQueryTag++);
   }
@@ -791,9 +755,7 @@ public class SyncTree {
         this.pendingWriteTree.childWrites(Path.getEmptyPath()));
   }
 
-  /**
-   * Recursive helper for applyOperationToSyncPoints.
-   */
+  /** Recursive helper for applyOperationToSyncPoints. */
   private List<Event> applyOperationHelper(
       Operation operation,
       ImmutableTree<SyncPoint> syncPointTree,
@@ -831,9 +793,7 @@ public class SyncTree {
     }
   }
 
-  /**
-   * Recursive helper for applyOperationToSyncPoints.
-   */
+  /** Recursive helper for applyOperationToSyncPoints. */
   private List<Event> applyOperationDescendantsHelper(
       final Operation operation,
       ImmutableTree<SyncPoint> syncPointTree,
@@ -917,12 +877,10 @@ public class SyncTree {
     }
 
     @Override
-    public void fireEvent(DataEvent dataEvent) {
-    }
+    public void fireEvent(DataEvent dataEvent) {}
 
     @Override
-    public void fireCancelEvent(DatabaseError error) {
-    }
+    public void fireCancelEvent(DatabaseError error) {}
 
     @Override
     public EventRegistration clone(QuerySpec newQuery) {

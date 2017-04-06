@@ -8,7 +8,7 @@ import java.util.Map;
  * Represents a "gauth" token used by the Server SDK, which can contain a token and optionally a
  * auth payload.
  *
- * HACK: Rather than plumb GAuthToken through our internals we serialize it to/from a string
+ * <p>HACK: Rather than plumb GAuthToken through our internals we serialize it to/from a string
  * (using JSON) and pass it through our normal plumbing that expects token to be a String.
  */
 public class GAuthToken {

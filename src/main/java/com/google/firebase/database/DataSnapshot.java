@@ -89,16 +89,16 @@ public class DataSnapshot {
    * returned are:
    *
    * <ul>
-   * <li>Boolean
-   * <li>String
-   * <li>Long
-   * <li>Double
-   * <li>Map&lt;String, Object&gt;
-   * <li>List&lt;Object&gt;
+   *   <li>Boolean
+   *   <li>String
+   *   <li>Long
+   *   <li>Double
+   *   <li>Map&lt;String, Object&gt;
+   *   <li>List&lt;Object&gt;
    * </ul>
    *
-   * This list is recursive; the possible types for {@link java.lang.Object} in the above list is
-   * given by the same list. These types correspond to the types available in JSON.
+   * <p>This list is recursive; the possible types for {@link java.lang.Object} in the above list
+   * is given by the same list. These types correspond to the types available in JSON.
    *
    * @return The data contained in this snapshot as native types
    */
@@ -110,15 +110,21 @@ public class DataSnapshot {
    * getValue() returns the data contained in this snapshot as native types. The possible types
    * returned are:
    *
-   * <ul> <li>Boolean <li>String <li>Long <li>Double <li>Map&lt;String, Object&gt;
-   * <li>List&lt;Object&gt; </ul>
+   * <ul>
+   *   <li>Boolean
+   *   <li>String
+   *   <li>Long
+   *   <li>Double
+   *   <li>Map&lt;String, Object&gt;
+   *   <li>List&lt;Object&gt;
+   * </ul>
    *
-   * This list is recursive; the possible types for {@link java.lang.Object} in the above list is
+   * <p>This list is recursive; the possible types for {@link java.lang.Object} in the above list is
    * given by the same list. These types correspond to the types available in JSON.
    *
    * <p>If useExportFormat is set to true, priority information will be included in the output.
-   * Priority information shows up as a .priority key in a map. For data that would not otherwise
-   * be a map, the map will also include a .value key with the data.
+   * Priority information shows up as a .priority key in a map. For data that would not otherwise be
+   * a map, the map will also include a .value key with the data.
    *
    * @param useExportFormat Whether or not to include priority information
    * @return The data, along with its priority, in native types
@@ -132,13 +138,13 @@ public class DataSnapshot {
    * choosing. The class must fit 2 simple constraints:
    *
    * <ol>
-   * <li>The class must have a default constructor that takes no arguments
-   * <li> The class must define public getters for the properties to be assigned. Properties
-   * without a public getter will be set to their default value when an instance is
-   * deserialized
+   *   <li>The class must have a default constructor that takes no arguments
+   *   <li>The class must define public getters for the properties to be assigned. Properties
+   *       without a public getter will be set to their default value when an instance is
+   *       deserialized
    * </ol>
    *
-   * An example class might look like:
+   * <p>An example class might look like:
    *
    * <pre><code>
    *     class Message {
@@ -187,13 +193,13 @@ public class DataSnapshot {
    *     List&lt;Message&gt; messages = snapshot.getValue(t);
    * </code></pre>
    *
-   * It is important to use a subclass of {@link GenericTypeIndicator}. See {@link
+   * <p>It is important to use a subclass of {@link GenericTypeIndicator}. See {@link
    * GenericTypeIndicator} for more details
    *
    * @param t A subclass of {@link GenericTypeIndicator} indicating the type of generic collection
-   * to be returned.
+   *     to be returned.
    * @param <T> The type to return. Implicitly defined from the {@link GenericTypeIndicator} passed
-   * in
+   *     in
    * @return A properly typed collection, populated with the data from this snapshot
    */
   public <T> T getValue(GenericTypeIndicator<T> t) {
@@ -201,7 +207,7 @@ public class DataSnapshot {
     return CustomClassMapper.convertToCustomClass(value, t);
   }
 
-  /**
+  /** 
    * @return The number of immediate children in the this snapshot
    */
   public long getChildrenCount() {
@@ -217,7 +223,7 @@ public class DataSnapshot {
     return query;
   }
 
-  /**
+  /** 
    * @return the key name for the source location of this snapshot
    */
   public String getKey() {
@@ -250,8 +256,7 @@ public class DataSnapshot {
           public DataSnapshot next() {
             NamedNode namedNode = iter.next();
             return new DataSnapshot(
-                query.child(namedNode.getName().asString()), IndexedNode.from
-                (namedNode.getNode()));
+                query.child(namedNode.getName().asString()), IndexedNode.from(namedNode.getNode()));
           }
 
           @Override
@@ -268,11 +273,11 @@ public class DataSnapshot {
    * types:
    *
    * <ul>
-   * <li>Double
-   * <li>String
+   *   <li>Double
+   *   <li>String
    * </ul>
    *
-   * Note that null is also allowed
+   * <p>Note that null is also allowed.
    *
    * @return the priority of the data contained in this snapshot as a native type
    */

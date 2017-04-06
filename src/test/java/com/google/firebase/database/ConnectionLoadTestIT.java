@@ -31,9 +31,7 @@ import java.util.concurrent.TimeUnit;
 import static com.google.firebase.database.utilities.Utilities.hardAssert;
 import static org.junit.Assert.fail;
 
-/**
- * A test that stressed the connection lifecycle injecting auth errors, auth expirations etc.
- */
+/** A test that stressed the connection lifecycle injecting auth errors, auth expirations etc. */
 public class ConnectionLoadTestIT implements PersistentConnectionImpl.Delegate {
 
   private static final long EXPIRATION_DELAY_MS = 2000;
@@ -196,20 +194,20 @@ public class ConnectionLoadTestIT implements PersistentConnectionImpl.Delegate {
       this.queue = new LinkedBlockingQueue<>();
 
       new Thread(
-          new Runnable() {
-            @Override
-            public void run() {
-              while (true) {
-                try {
-                  Runnable runnable = queue.take();
-                  runnable.run();
-                } catch (InterruptedException e) {
-                  e.printStackTrace();
-                  throw new RuntimeException(e);
+              new Runnable() {
+                @Override
+                public void run() {
+                  while (true) {
+                    try {
+                      Runnable runnable = queue.take();
+                      runnable.run();
+                    } catch (InterruptedException e) {
+                      e.printStackTrace();
+                      throw new RuntimeException(e);
+                    }
+                  }
                 }
-              }
-            }
-          })
+              })
           .start();
     }
 

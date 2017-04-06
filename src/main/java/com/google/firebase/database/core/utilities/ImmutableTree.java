@@ -17,8 +17,10 @@ public class ImmutableTree<T> implements Iterable<Map.Entry<Path, T>> {
 
   private static final ImmutableSortedMap EMPTY_CHILDREN =
       ImmutableSortedMap.Builder.emptyMap(StandardComparator.getComparator(ChildKey.class));
+
   @SuppressWarnings("unchecked")
   private static final ImmutableTree EMPTY = new ImmutableTree<>(null, EMPTY_CHILDREN);
+
   private final T value;
   private final ImmutableSortedMap<ChildKey, ImmutableTree<T>> children;
 

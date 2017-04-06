@@ -124,6 +124,25 @@ public class StringListReader extends Reader {
   }
 
   @Override
+  public int read(char[] cbuf, int off, int len) throws IOException {
+    checkState();
+    int charsCopied = 0;
+    String current = currentString();
+    while (current != null && charsCopied < len) {
+      int copyLength = Math.min(currentStringRemainingChars(), len - charsCopied);
+      current.getChars(charPos, charPos + copyLength, cbuf, off + charsCopied);
+      charsCopied += copyLength;
+      advance(copyLength);
+      current = currentString();
+    }
+    if (charsCopied > 0 || current != null) {
+      return charsCopied;
+    } else {
+      return -1;
+    }
+  }
+
+  @Override
   public long skip(long n) throws IOException {
     checkState();
     return advance(n);
@@ -145,25 +164,6 @@ public class StringListReader extends Reader {
     checkState();
     markedCharPos = charPos;
     markedStringListPos = stringListPos;
-  }
-
-  @Override
-  public int read(char[] cbuf, int off, int len) throws IOException {
-    checkState();
-    int charsCopied = 0;
-    String current = currentString();
-    while (current != null && charsCopied < len) {
-      int copyLength = Math.min(currentStringRemainingChars(), len - charsCopied);
-      current.getChars(charPos, charPos + copyLength, cbuf, off + charsCopied);
-      charsCopied += copyLength;
-      advance(copyLength);
-      current = currentString();
-    }
-    if (charsCopied > 0 || current != null) {
-      return charsCopied;
-    } else {
-      return -1;
-    }
   }
 
   @Override

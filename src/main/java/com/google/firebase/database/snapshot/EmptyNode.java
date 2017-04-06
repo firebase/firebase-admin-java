@@ -13,9 +13,11 @@ public class EmptyNode extends ChildrenNode implements Node {
     // prevent instantiation
   }
 
+  // CSOFF: MethodName
   public static EmptyNode Empty() {
     return empty;
   }
+  // CSON: MethodName
 
   @Override
   public boolean isLeafNode() {

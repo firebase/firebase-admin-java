@@ -9,8 +9,7 @@ public class PathIndex extends Index {
   public PathIndex(Path indexPath) {
     if (indexPath.size() == 1 && indexPath.getFront().isPriorityChildName()) {
       throw new IllegalArgumentException(
-          "Can't create PathIndex with '.priority' as key. Please use PriorityIndex " +
-              "instead!");
+          "Can't create PathIndex with '.priority' as key. Please use PriorityIndex " + "instead!");
     }
     this.indexPath = indexPath;
   }
@@ -21,12 +20,12 @@ public class PathIndex extends Index {
   }
 
   @Override
-  public int compare(NamedNode a, NamedNode b) {
-    Node aChild = a.getNode().getChild(this.indexPath);
-    Node bChild = b.getNode().getChild(this.indexPath);
-    int indexCmp = aChild.compareTo(bChild);
+  public int compare(NamedNode node1, NamedNode node2) {
+    Node child1 = node1.getNode().getChild(this.indexPath);
+    Node child2 = node2.getNode().getChild(this.indexPath);
+    int indexCmp = child1.compareTo(child2);
     if (indexCmp == 0) {
-      return a.getName().compareTo(b.getName());
+      return node1.getName().compareTo(node2.getName());
     } else {
       return indexCmp;
     }

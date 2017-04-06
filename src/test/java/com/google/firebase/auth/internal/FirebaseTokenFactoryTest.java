@@ -27,14 +27,10 @@ public class FirebaseTokenFactoryTest {
   private static final String ISSUER = "test-484@mg-test-1210.iam.gserviceaccount.com";
 
   static {
-    EXTRA_CLAIMS
-        .set("one", 2)
-        .set("three", "four")
-        .setFactory(FACTORY);
+    EXTRA_CLAIMS.set("one", 2).set("three", "four").setFactory(FACTORY);
   }
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
+  @Rule public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void checkSignatureForToken() throws Exception {
@@ -46,8 +42,9 @@ public class FirebaseTokenFactoryTest {
 
     FirebaseTokenFactory tokenFactory = new FirebaseTokenFactory(FACTORY, clock);
 
-    String jwt = tokenFactory.createSignedCustomAuthTokenForUser(USER_ID, EXTRA_CLAIMS, ISSUER,
-        keys.getPrivate());
+    String jwt =
+        tokenFactory.createSignedCustomAuthTokenForUser(
+            USER_ID, EXTRA_CLAIMS, ISSUER, keys.getPrivate());
 
     FirebaseCustomAuthToken signedJwt = FirebaseCustomAuthToken.parse(FACTORY, jwt);
     assertEquals("RS256", signedJwt.getHeader().getAlgorithm());
@@ -84,8 +81,8 @@ public class FirebaseTokenFactoryTest {
     FirebaseTokenFactory tokenFactory = new FirebaseTokenFactory(FACTORY, clock);
 
     thrown.expect(IllegalStateException.class);
-    tokenFactory.createSignedCustomAuthTokenForUser(Strings.repeat("a", 129), ISSUER,
-        keys.getPrivate());
+    tokenFactory.createSignedCustomAuthTokenForUser(
+        Strings.repeat("a", 129), ISSUER, keys.getPrivate());
   }
 
   @Test
@@ -114,7 +111,7 @@ public class FirebaseTokenFactoryTest {
 
     Map<String, Object> extraClaims = ImmutableMap.<String, Object>of("iss", "repeat issuer");
     thrown.expect(IllegalArgumentException.class);
-    tokenFactory.createSignedCustomAuthTokenForUser(USER_ID, extraClaims, ISSUER,
-        keys.getPrivate());
+    tokenFactory.createSignedCustomAuthTokenForUser(
+        USER_ID, extraClaims, ISSUER, keys.getPrivate());
   }
 }

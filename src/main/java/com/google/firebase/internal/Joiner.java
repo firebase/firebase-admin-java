@@ -4,9 +4,7 @@ package com.google.firebase.internal;
 
 import java.util.Iterator;
 
-/**
- * Joins pieces of text with a separator.
- */
+/** Joins pieces of text with a separator. */
 public class Joiner {
 
   private final String separator;
@@ -19,9 +17,7 @@ public class Joiner {
     return new Joiner(separator);
   }
 
-  /**
-   * Appends each of part, using the configured separator between each.
-   */
+  /** Appends each of part, using the configured separator between each. */
   public final StringBuilder appendTo(StringBuilder builder, Iterable<?> parts) {
     Iterator<?> iterator = parts.iterator();
     if (iterator.hasNext()) {

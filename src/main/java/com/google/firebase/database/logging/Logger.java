@@ -1,8 +1,8 @@
 package com.google.firebase.database.logging;
 
 /**
- * Private (internal) logging interface used by Firebase Database.
- * See {@link com.google.firebase.database.Config Config} for more information.
+ * Private (internal) logging interface used by Firebase Database. See {@link
+ * com.google.firebase.database.Config Config} for more information.
  */
 public interface Logger {
 
@@ -18,10 +18,12 @@ public interface Logger {
 
   Level getLogLevel();
 
-  /**
-   * The log levels used by the Firebase Database library
-   */
+  /** The log levels used by the Firebase Database library */
   enum Level {
-    DEBUG, INFO, WARN, ERROR, NONE
+    DEBUG,
+    INFO,
+    WARN,
+    ERROR,
+    NONE
   }
 }

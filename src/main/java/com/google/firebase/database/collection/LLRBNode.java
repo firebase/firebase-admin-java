@@ -34,7 +34,10 @@ public interface LLRBNode<K, V> {
 
   boolean shortCircuitingReverseOrderTraversal(ShortCircuitingNodeVisitor<K, V> visitor);
 
-  enum Color {RED, BLACK}
+  enum Color {
+    RED,
+    BLACK
+  }
 
   interface ShortCircuitingNodeVisitor<K, V> {
 
@@ -49,6 +52,6 @@ public interface LLRBNode<K, V> {
       return true;
     }
 
-    abstract public void visitEntry(K key, V value);
+    public abstract void visitEntry(K key, V value);
   }
 }

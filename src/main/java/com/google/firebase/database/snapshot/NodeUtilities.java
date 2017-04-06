@@ -9,11 +9,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Utility functions to convert Node data to and from JSON.
- */
+/** Utility functions to convert Node data to and from JSON. */
 public class NodeUtilities {
 
+  // CSOFF: MethodName
   public static Node NodeFromJSON(Object value) throws DatabaseException {
     return NodeFromJSON(value, PriorityUtilities.NullPriority());
   }
@@ -56,7 +55,7 @@ public class NodeUtilities {
           } else {
             childData = new HashMap<>(mapValue.size());
             @SuppressWarnings("unchecked")
-            Iterator<String> keyIter = (Iterator<String>) mapValue.keySet().iterator();
+            Iterator<String> keyIter = mapValue.keySet().iterator();
             while (keyIter.hasNext()) {
               String key = keyIter.next();
               if (!key.startsWith(".")) {
@@ -96,6 +95,7 @@ public class NodeUtilities {
       throw new DatabaseException("Failed to parse node", e);
     }
   }
+  // CSON: MethodName
 
   public static int nameAndPriorityCompare(
       ChildKey key1, Node priority1, ChildKey key2, Node priority2) {

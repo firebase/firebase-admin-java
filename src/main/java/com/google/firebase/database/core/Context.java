@@ -212,8 +212,7 @@ public class Context {
 
   public PersistentConnection newPersistentConnection(
       HostInfo info, PersistentConnection.Delegate delegate) {
-    return getPlatform().newPersistentConnection(this, this.getConnectionContext(), info,
-        delegate);
+    return getPlatform().newPersistentConnection(this, this.getConnectionContext(), info, delegate);
   }
 
   private ScheduledExecutorService getExecutorService() {

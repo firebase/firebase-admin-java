@@ -49,8 +49,7 @@ public class ValueEventRegistration extends EventRegistration {
   public DataEvent createEvent(Change change, QuerySpec query) {
     DatabaseReference ref = InternalHelpers.createReference(repo, query.getPath());
 
-    DataSnapshot dataSnapshot = InternalHelpers.createDataSnapshot(ref, change.getIndexedNode
-        ());
+    DataSnapshot dataSnapshot = InternalHelpers.createDataSnapshot(ref, change.getIndexedNode());
     return new DataEvent(Event.EventType.VALUE, this, dataSnapshot, null);
   }
 

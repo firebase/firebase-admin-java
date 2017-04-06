@@ -31,13 +31,12 @@ import static org.junit.Assert.fail;
  *
  * @author John DeRegnaucourt
  */
-@SuppressWarnings( {"unchecked", "rawtypes"})
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class DeepEquals {
 
   private static final Map<Class, Boolean> _customEquals = new ConcurrentHashMap<>();
   private static final Map<Class, Boolean> _customHash = new ConcurrentHashMap<>();
-  private static final Map<Class, Collection<Field>> _reflectedFields =
-      new ConcurrentHashMap<>();
+  private static final Map<Class, Collection<Field>> _reflectedFields = new ConcurrentHashMap<>();
 
   public static boolean deepEquals(Object a, Object b) {
     Set visited = new HashSet<>();
@@ -84,8 +83,7 @@ public class DeepEquals {
         }
 
         for (int i = 0; i < len; i++) {
-          DualKey dk = new DualKey(Array.get(dualKey.key1, i), Array.get(dualKey.key2,
-              i));
+          DualKey dk = new DualKey(Array.get(dualKey.key1, i), Array.get(dualKey.key2, i));
           if (!visited.contains(dk)) {
             stack.addFirst(dk);
           }
@@ -217,7 +215,7 @@ public class DeepEquals {
    * @param visited Collection of objects already compared (prevents cycles)
    * @param stack add items to compare to the Stack (Stack versus recursion)
    * @return boolean false if the Collections are not the same length, otherwise place collection
-   * items on Stack to be further compared.
+   *     items on Stack to be further compared.
    */
   private static boolean compareOrdered(
       DualKey dualKey, LinkedList<DualKey> stack, Collection visited) {
@@ -241,8 +239,8 @@ public class DeepEquals {
 
   /**
    * Deeply compare the two sets referenced by dualKey. This method attempts to quickly determine
-   * inequality by length, then hash, and finally does a deepEquals on each element if the two
-   * Sets passed by the prior tests.
+   * inequality by length, then hash, and finally does a deepEquals on each element if the two Sets
+   * passed by the prior tests.
    *
    * @param col1 Collection one
    * @param col2 Collection two
@@ -266,8 +264,8 @@ public class DeepEquals {
     for (Object element1 : col1) {
       int len = copy.size();
       for (int i = 0;
-           i < len;
-           i++) { // recurse here (yes, that makes this a Stack-based implementation with
+          i < len;
+          i++) { // recurse here (yes, that makes this a Stack-based implementation with
         // partial recursion in the case of unordered Sets).
         if (deepEquals(element1, copy.get(i), visited)) {
           copy.remove(i); // Shrink 2nd Set
@@ -373,8 +371,8 @@ public class DeepEquals {
   /**
    * @param c Class instance
    * @return Collection of only the fields in the passed in class that would need further processing
-   * (reference fields). This makes field traversal on a class faster as it does not need to
-   * continually process known fields like primitives.
+   *     (reference fields). This makes field traversal on a class faster as it does not need to
+   *     continually process known fields like primitives.
    */
   public static Collection<Field> getDeepDeclaredFields(Class c) {
     if (_reflectedFields.containsKey(c)) {
@@ -400,7 +398,7 @@ public class DeepEquals {
           if (!Modifier.isStatic(modifiers)
               && !field.getName().startsWith("this$")
               && !Modifier.isTransient(
-              modifiers)) { // speed up: do not count static fields, not go back up to enclosing
+                  modifiers)) { // speed up: do not count static fields, not go back up to enclosing
             // object in nested case
             fields.add(field);
           }
@@ -421,8 +419,7 @@ public class DeepEquals {
     private Object key1;
     private Object key2;
 
-    private DualKey() {
-    }
+    private DualKey() {}
 
     private DualKey(Object k1, Object k2) {
       key1 = k1;

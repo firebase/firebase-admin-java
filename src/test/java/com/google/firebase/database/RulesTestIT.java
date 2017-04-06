@@ -32,12 +32,10 @@ public class RulesTestIT {
         new MapBuilder()
             .put("read_only", new MapBuilder().put(".read", true).build())
             .put("write_only", new MapBuilder().put(".write", true).build())
-            .put("read_and_write", new MapBuilder().put(".write", true).put(".read", true)
-                .build())
+            .put("read_and_write", new MapBuilder().put(".write", true).put(".read", true).build())
             .put(
                 "any_auth",
-                new MapBuilder().put(".write", "auth != null").put(".read", "auth != null")
-                    .build())
+                new MapBuilder().put(".write", "auth != null").put(".read", "auth != null").build())
             .put(
                 "revocable",
                 new MapBuilder()
@@ -63,8 +61,9 @@ public class RulesTestIT {
                             .put(
                                 "age",
                                 new MapBuilder()
-                                    .put(".validate", "newData.isNumber() && newData.val() > " +
-                                        "13")
+                                    .put(
+                                        ".validate",
+                                        "newData.isNumber() && newData.val() > " + "13")
                                     .build())
                             .build())
                     .build())
@@ -257,7 +256,7 @@ public class RulesTestIT {
   public void listenRevocation()
       throws TestFailure, ExecutionException, TimeoutException, InterruptedException {
     new WriteFuture(
-        writer.child("revocable"), new MapBuilder().put("public", true).put("data", 1).build())
+            writer.child("revocable"), new MapBuilder().put("public", true).put("data", 1).build())
         .timedGet();
 
     final AtomicBoolean valueHit = new AtomicBoolean(false);
@@ -400,7 +399,7 @@ public class RulesTestIT {
   @Test
   public void stillAuthedAfterReconnect()
       throws InterruptedException, ExecutionException, TestFailure, TimeoutException,
-      JSONException {
+          JSONException {
     DatabaseConfig config = TestHelpers.newTestConfig();
     TestTokenProvider provider = new TestTokenProvider(TestHelpers.getExecutorService(config));
     config.setAuthTokenProvider(provider);

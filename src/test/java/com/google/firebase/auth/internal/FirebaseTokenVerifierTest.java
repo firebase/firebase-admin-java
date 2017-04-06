@@ -33,9 +33,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
-/**
- * Unit tests for {@link FirebaseTokenVerifier}.
- */
+/** Unit tests for {@link FirebaseTokenVerifier}. */
 public class FirebaseTokenVerifierTest {
 
   private static final JsonFactory FACTORY = new GsonFactory();
@@ -47,13 +45,11 @@ public class FirebaseTokenVerifierTest {
   private static final String ALGORITHM = "RS256";
   private static final String LEGACY_CUSTOM_TOKEN =
       "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkIjp7"
-          +
-          "InVpZCI6IjEiLCJhYmMiOiIwMTIzNDU2Nzg5fiFAIyQlXiYqKClfKy09YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4e"
-          + "XpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWiwuLzsnW11cXDw" +
-          "-P1wie318In0sInYiOjAsImlhdCI6MTQ4MDk4Mj"
+          + "InVpZCI6IjEiLCJhYmMiOiIwMTIzNDU2Nzg5fiFAIyQlXiYqKClfKy09YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4e"
+          + "XpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWiwuLzsnW11cXDw"
+          + "-P1wie318In0sInYiOjAsImlhdCI6MTQ4MDk4Mj"
           + "U2NH0.ZWEpoHgIPCAz8Q-cNFBS8jiqClTJ3j27yuRkQo-QxyI";
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
+  @Rule public ExpectedException thrown = ExpectedException.none();
   private PrivateKey privateKey;
   private FirebaseTokenVerifier verifier;
 
@@ -140,8 +136,8 @@ public class FirebaseTokenVerifierTest {
     header.setKeyId(null);
     Payload payload = createPayload();
     payload.setAudience(
-        "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit" +
-            ".v1.IdentityToolkit");
+        "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit"
+            + ".v1.IdentityToolkit");
     FirebaseToken token =
         TestOnlyImplFirebaseAuthTrampolines.parseToken(FACTORY, createToken(header, payload));
     thrown.expectMessage("verifyIdToken() expects an ID token, but was given a custom token.");
@@ -210,8 +206,7 @@ public class FirebaseTokenVerifierTest {
     Payload payload = createPayload();
     payload.setSubject(
         "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv"
-            +
-            "wxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
+            + "wxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
     FirebaseToken token =
         TestOnlyImplFirebaseAuthTrampolines.parseToken(
             FACTORY, createToken(createHeader(), payload));

@@ -10,9 +10,7 @@ import com.google.firebase.database.snapshot.NamedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.PriorityUtilities;
 
-/**
- * Filters nodes by range and uses an IndexFilter to track any changes after filtering the node
- */
+/** Filters nodes by range and uses an IndexFilter to track any changes after filtering the node */
 public class RangedFilter implements NodeFilter {
 
   private final IndexedFilter indexedFilter;
@@ -36,6 +34,10 @@ public class RangedFilter implements NodeFilter {
     }
   }
 
+  public NamedNode getStartPost() {
+    return this.startPost;
+  }
+
   private static NamedNode getEndPost(QueryParams params) {
     if (params.hasEnd()) {
       ChildKey endName = params.getIndexEndName();
@@ -43,10 +45,6 @@ public class RangedFilter implements NodeFilter {
     } else {
       return params.getIndex().maxPost();
     }
-  }
-
-  public NamedNode getStartPost() {
-    return this.startPost;
   }
 
   public NamedNode getEndPost() {

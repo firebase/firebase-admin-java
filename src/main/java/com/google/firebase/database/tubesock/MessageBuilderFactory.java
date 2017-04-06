@@ -65,28 +65,28 @@ class MessageBuilderFactory {
 
   static class TextBuilder implements Builder {
 
-    private static ThreadLocal<CharsetDecoder> localDecoder = new ThreadLocal<CharsetDecoder>
-        () {
-      @Override
-      protected CharsetDecoder initialValue() {
-        Charset utf8 = Charset.forName("UTF8");
-        CharsetDecoder decoder = utf8.newDecoder();
-        decoder.onMalformedInput(CodingErrorAction.REPORT);
-        decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
-        return decoder;
-      }
-    };
-    private static ThreadLocal<CharsetEncoder> localEncoder = new ThreadLocal<CharsetEncoder>
-        () {
-      @Override
-      protected CharsetEncoder initialValue() {
-        Charset utf8 = Charset.forName("UTF8");
-        CharsetEncoder encoder = utf8.newEncoder();
-        encoder.onMalformedInput(CodingErrorAction.REPORT);
-        encoder.onUnmappableCharacter(CodingErrorAction.REPORT);
-        return encoder;
-      }
-    };
+    private static ThreadLocal<CharsetDecoder> localDecoder =
+        new ThreadLocal<CharsetDecoder>() {
+          @Override
+          protected CharsetDecoder initialValue() {
+            Charset utf8 = Charset.forName("UTF8");
+            CharsetDecoder decoder = utf8.newDecoder();
+            decoder.onMalformedInput(CodingErrorAction.REPORT);
+            decoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+            return decoder;
+          }
+        };
+    private static ThreadLocal<CharsetEncoder> localEncoder =
+        new ThreadLocal<CharsetEncoder>() {
+          @Override
+          protected CharsetEncoder initialValue() {
+            Charset utf8 = Charset.forName("UTF8");
+            CharsetEncoder encoder = utf8.newEncoder();
+            encoder.onMalformedInput(CodingErrorAction.REPORT);
+            encoder.onUnmappableCharacter(CodingErrorAction.REPORT);
+            return encoder;
+          }
+        };
 
     private StringBuilder builder;
     private ByteBuffer carryOver;

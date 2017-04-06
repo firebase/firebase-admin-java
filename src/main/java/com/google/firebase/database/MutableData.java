@@ -47,9 +47,7 @@ public class MutableData {
     return holder.getNode(prefixPath);
   }
 
-  /**
-   * Returns true if the data at this location has children, and false otherwise.
-   */
+  /** Returns true if the data at this location has children, and false otherwise. */
   public boolean hasChildren() {
     Node node = getNode();
     return !node.isLeafNode() && !node.isEmpty();
@@ -75,7 +73,7 @@ public class MutableData {
     return new MutableData(holder, prefixPath.child(new Path(path)));
   }
 
-  /**
+  /** 
    * @return The number of immediate children at this location
    */
   public long getChildrenCount() {
@@ -142,7 +140,7 @@ public class MutableData {
     }
   }
 
-  /**
+  /** 
    * @return The key name of this location, or null if it is the top-most location
    */
   public String getKey() {
@@ -154,15 +152,15 @@ public class MutableData {
    * returned are:
    *
    * <ul>
-   * <li>Boolean
-   * <li>String
-   * <li>Long
-   * <li>Double
-   * <li>Map&lt;String, Object&gt;
-   * <li>List&lt;Object&gt;
+   *   <li>Boolean
+   *   <li>String
+   *   <li>Long
+   *   <li>Double
+   *   <li>Map&lt;String, Object&gt;
+   *   <li>List&lt;Object&gt;
    * </ul>
    *
-   * This list is recursive; the possible types for {@link java.lang.Object} in the above list is
+   * <p>This list is recursive; the possible types for {@link java.lang.Object} in the above list is
    * given by the same list. These types correspond to the types available in JSON.
    *
    * @return The data contained in this instance as native types
@@ -172,31 +170,28 @@ public class MutableData {
   }
 
   /**
-   * Set the data at this location to the given value. The native types accepted by this method
-   * for the value correspond to the JSON types:
+   * Due to the way that Java implements generics, it takes an extra step to get back a
+   * properly-typed Collection. So, in the case where you want a {@link java.util.List} of Message
+   * instances, you will need to do something like the following:
    *
-   * <ul> <li>Boolean <li>Long <li>Double <li>Map&lt;String, Object&gt; <li>List&lt;Object&gt;
-   * </ul>
+   * <pre><code>
+   *     GenericTypeIndicator&lt;List&lt;Message&gt;&gt; t =
+   *         new GenericTypeIndicator&lt;List&lt;Message&gt;&gt;() {};
+   *     List&lt;Message&gt; messages = mutableData.getValue(t);
+   * </code></pre>
    *
-   * <br> <br> In addition, you can set instances of your own class into this location, provided
-   * they satisfy the following constraints:
+   * <p>It is important to use a subclass of {@link GenericTypeIndicator}. See {@link
+   * GenericTypeIndicator} for more details
    *
-   * <ol> <li>The class must have a default constructor that takes no arguments <li> The class
-   * must define public getters for the properties to be assigned. Properties without a public
-   * getter will be set to their default value when an instance is deserialized </ol>
-   *
-   * <br> <br> Generic collections of objects that satisfy the above constraints are also
-   * permitted, i.e. <code>Map&lt;String, MyPOJO&gt;</code>, as well as null values.
-   *
-   * <p>Note that this overrides the priority, which must be set separately.
-   *
-   * @param value The value to set at this location
+   * @param t A subclass of {@link GenericTypeIndicator} indicating the type of generic collection
+   *     to be returned.
+   * @param <T> The type to return. Implicitly defined from the {@link GenericTypeIndicator} passed
+   *     in
+   * @return A properly typed collection, populated with the data from this instance
    */
-  public void setValue(Object value) throws DatabaseException {
-    ValidationPath.validateWithObject(prefixPath, value);
-    Object bouncedValue = CustomClassMapper.convertToPlainJavaTypes(value);
-    Validation.validateWritableObject(bouncedValue);
-    holder.update(prefixPath, NodeUtilities.NodeFromJSON(bouncedValue));
+  public <T> T getValue(GenericTypeIndicator<T> t) {
+    Object value = getNode().getValue();
+    return CustomClassMapper.convertToCustomClass(value, t);
   }
 
   /**
@@ -204,13 +199,13 @@ public class MutableData {
    * choosing. The class must fit 2 simple constraints:
    *
    * <ol>
-   * <li>The class must have a default constructor that takes no arguments
-   * <li> The class must define public getters for the properties to be assigned. Properties
-   * without a public getter will be set to their default value when an instance is
-   * deserialized
+   *   <li>The class must have a default constructor that takes no arguments
+   *   <li>The class must define public getters for the properties to be assigned. Properties
+   *       without a public getter will be set to their default value when an instance is
+   *       deserialized
    * </ol>
    *
-   * An example class might look like:
+   * <p>An example class might look like:
    *
    * <pre><code>
    *     class Message {
@@ -248,39 +243,54 @@ public class MutableData {
   }
 
   /**
-   * Due to the way that Java implements generics, it takes an extra step to get back a
-   * properly-typed Collection. So, in the case where you want a {@link java.util.List} of Message
-   * instances, you will need to do something like the following:
+   * Set the data at this location to the given value. The native types accepted by this method for
+   * the value correspond to the JSON types:
    *
-   * <pre><code>
-   *     GenericTypeIndicator&lt;List&lt;Message&gt;&gt; t =
-   *         new GenericTypeIndicator&lt;List&lt;Message&gt;&gt;() {};
-   *     List&lt;Message&gt; messages = mutableData.getValue(t);
-   * </code></pre>
+   * <ul>
+   *   <li>Boolean
+   *   <li>Long
+   *   <li>Double
+   *   <li>Map&lt;String, Object&gt;
+   *   <li>List&lt;Object&gt;
+   * </ul>
    *
-   * It is important to use a subclass of {@link GenericTypeIndicator}. See {@link
-   * GenericTypeIndicator} for more details
+   * <br>
+   * <br>
+   * In addition, you can set instances of your own class into this location, provided they satisfy
+   * the following constraints:
    *
-   * @param t A subclass of {@link GenericTypeIndicator} indicating the type of generic collection
-   * to be returned.
-   * @param <T> The type to return. Implicitly defined from the {@link GenericTypeIndicator} passed
-   * in
-   * @return A properly typed collection, populated with the data from this instance
+   * <ol>
+   *   <li>The class must have a default constructor that takes no arguments
+   *   <li>The class must define public getters for the properties to be assigned. Properties
+   *       without a public getter will be set to their default value when an instance is
+   *       deserialized
+   * </ol>
+   *
+   * <br>
+   * <br>
+   * Generic collections of objects that satisfy the above constraints are also permitted, i.e.
+   * <code>Map&lt;String, MyPOJO&gt;</code>, as well as null values.
+   *
+   * <p>Note that this overrides the priority, which must be set separately.
+   *
+   * @param value The value to set at this location
    */
-  public <T> T getValue(GenericTypeIndicator<T> t) {
-    Object value = getNode().getValue();
-    return CustomClassMapper.convertToCustomClass(value, t);
+  public void setValue(Object value) throws DatabaseException {
+    ValidationPath.validateWithObject(prefixPath, value);
+    Object bouncedValue = CustomClassMapper.convertToPlainJavaTypes(value);
+    Validation.validateWritableObject(bouncedValue);
+    holder.update(prefixPath, NodeUtilities.NodeFromJSON(bouncedValue));
   }
 
   /**
    * Gets the current priority at this location. The possible return types are:
    *
    * <ul>
-   * <li>Double
-   * <li>String
+   *   <li>Double
+   *   <li>String
    * </ul>
    *
-   * Note that null is allowed
+   * <p>Note that null is allowed.
    *
    * @return The priority at this location as a native type
    */

@@ -30,8 +30,8 @@ public class FirebaseDatabase {
    * safety, it should only be accessed in getInstance(), which is a synchronized method.
    *
    * <p>TODO(mikelehen): This serves a duplicate purpose as RepoManager. We should clean up.
-   * TODO(mikelehen): We should maybe be conscious of leaks and make this a weak map or similar
-   * but we have a lot of work to do to allow FirebaseDatabase/Repo etc. to be GC'd.
+   * TODO(mikelehen): We should maybe be conscious of leaks and make this a weak map or similar but
+   * we have a lot of work to do to allow FirebaseDatabase/Repo etc. to be GC'd.
    */
   private static final Map<String /* App name */, Map<RepoInfo, FirebaseDatabase>>
       databaseInstances = new HashMap<>();
@@ -134,9 +134,7 @@ public class FirebaseDatabase {
     return database;
   }
 
-  /**
-   * This exists so Repo can create FirebaseDatabase objects to keep legacy tests working.
-   */
+  /** This exists so Repo can create FirebaseDatabase objects to keep legacy tests working. */
   static FirebaseDatabase createForTests(
       FirebaseApp app, RepoInfo repoInfo, DatabaseConfig config) {
     FirebaseDatabase db = new FirebaseDatabase(app, repoInfo, config);
@@ -144,7 +142,7 @@ public class FirebaseDatabase {
     return db;
   }
 
-  /**
+  /** 
    * @return The version for this build of the Firebase Database client
    */
   public static String getSdkVersion() {
@@ -225,10 +223,9 @@ public class FirebaseDatabase {
    * there may be a large number of writes waiting to be sent. Calling this method will purge all
    * outstanding writes so they are abandoned.
    *
-   * <p>All writes will be purged, including transactions and {@link
-   * DatabaseReference#onDisconnect} writes. The writes will be rolled back locally, perhaps
-   * triggering events for affected event listeners, and the client will not (re-)send them to the
-   * Firebase backend.
+   * <p>All writes will be purged, including transactions and {@link DatabaseReference#onDisconnect}
+   * writes. The writes will be rolled back locally, perhaps triggering events for affected event
+   * listeners, and the client will not (re-)send them to the Firebase backend.
    */
   public void purgeOutstandingWrites() {
     ensureRepo();
@@ -251,8 +248,7 @@ public class FirebaseDatabase {
   }
 
   /**
-   * Shuts down our connection to the Firebase Database backend until {@link #goOnline()} is
-   * called.
+   * Shuts down our connection to the Firebase Database backend until {@link #goOnline()} is called.
    */
   public void goOffline() {
     ensureRepo();
@@ -277,12 +273,11 @@ public class FirebaseDatabase {
    * initiated while your application is running. It seamlessly handles intermittent network
    * connections and re-sends write operations when the network connection is restored.
    *
-   * <p>However by default your write operations and cached data are only stored in-memory and
-   * will be lost when your app restarts. By setting this value to `true`, the data will be
-   * persisted to on-device (disk) storage and will thus be available again when the app is
-   * restarted (even when there is no network connectivity at that time). Note that this method
-   * must be called before creating your first Database reference and only needs to be called once
-   * per application.
+   * <p>However by default your write operations and cached data are only stored in-memory and will
+   * be lost when your app restarts. By setting this value to `true`, the data will be persisted to
+   * on-device (disk) storage and will thus be available again when the app is restarted (even when
+   * there is no network connectivity at that time). Note that this method must be called before
+   * creating your first Database reference and only needs to be called once per application.
    *
    * @param isEnabled Set to true to enable disk persistence, set to false to disable it.
    */
@@ -294,9 +289,9 @@ public class FirebaseDatabase {
   /**
    * By default Firebase Database will use up to 10MB of disk space to cache data. If the cache
    * grows beyond this size, Firebase Database will start removing data that hasn't been recently
-   * used. If you find that your application caches too little or too much data, call this method
-   * to change the cache size. This method must be called before creating your first Database
-   * reference and only needs to be called once per application.
+   * used. If you find that your application caches too little or too much data, call this method to
+   * change the cache size. This method must be called before creating your first Database reference
+   * and only needs to be called once per application.
    *
    * <p>Note that the specified cache size is only an approximation and the size on disk may
    * temporarily exceed it at times. Cache sizes smaller than 1 MB or greater than 100 MB are not

@@ -12,12 +12,12 @@ import java.util.concurrent.Executor;
  */
 public abstract class Task<T> {
 
-  /**
+  /** 
    * Returns {@code true} if the Task is complete; {@code false} otherwise.
    */
   public abstract boolean isComplete();
 
-  /**
+  /** 
    * Returns {@code true} if the Task has completed successfully; {@code false} otherwise.
    */
   public abstract boolean isSuccessful();
@@ -37,12 +37,11 @@ public abstract class Task<T> {
    * @throws X if the Task failed with an exception of type X
    * @throws RuntimeExecutionException if the Task failed with an exception that was not of type X
    */
-  public abstract <X extends Throwable> T getResult(@NonNull Class<X> exceptionType)
-      throws X;
+  public abstract <X extends Throwable> T getResult(@NonNull Class<X> exceptionType) throws X;
 
   /**
-   * Returns the exception that caused the Task to fail. Returns {@code null}
-   * if the Task is not yet complete, or completed successfully.
+   * Returns the exception that caused the Task to fail. Returns {@code null} if the Task is not yet
+   * complete, or completed successfully.
    */
   @Nullable
   public abstract Exception getException();
@@ -50,22 +49,21 @@ public abstract class Task<T> {
   /**
    * Adds a listener that is called if the Task completes successfully.
    *
-   * <p>The listener will be called on a shared thread pool. If the Task has already
-   * completed successfully, a call to the listener will be immediately scheduled. If multiple
-   * listeners are added, they will be called in the order in which they were added.
+   * <p>The listener will be called on a shared thread pool. If the Task has already completed
+   * successfully, a call to the listener will be immediately scheduled. If multiple listeners are
+   * added, they will be called in the order in which they were added.
    *
    * @return this Task
    */
   @NonNull
-  public abstract Task<T> addOnSuccessListener(
-      @NonNull OnSuccessListener<? super T> listener);
+  public abstract Task<T> addOnSuccessListener(@NonNull OnSuccessListener<? super T> listener);
 
   /**
    * Adds a listener that is called if the Task completes successfully.
    *
-   * <p>If multiple listeners are added, they will be called in the order in which they were
-   * added.  If the Task has already completed successfully, a call to the listener will be
-   * immediately scheduled.
+   * <p>If multiple listeners are added, they will be called in the order in which they were added.
+   * If the Task has already completed successfully, a call to the listener will be immediately
+   * scheduled.
    *
    * @param executor the executor to use to call the listener
    * @return this Task
@@ -77,9 +75,9 @@ public abstract class Task<T> {
   /**
    * Adds a listener that is called if the Task fails.
    *
-   * <p>The listener will be called on a shared thread pool. If the Task has already failed, a
-   * call to the listener will be immediately scheduled. If multiple listeners are added, they
-   * will be called in the order in which they were added.
+   * <p>The listener will be called on a shared thread pool. If the Task has already failed, a call
+   * to the listener will be immediately scheduled. If multiple listeners are added, they will be
+   * called in the order in which they were added.
    *
    * @return this Task
    */
@@ -102,15 +100,14 @@ public abstract class Task<T> {
   /**
    * Adds a listener that is called when the Task completes.
    *
-   * <p>The listener will be called on a shared thread pool. If the Task is already complete, a
-   * call to the listener will be immediately scheduled. If multiple listeners are added, they
-   * will be called in the order in which they were added.
+   * <p>The listener will be called on a shared thread pool. If the Task is already complete, a call
+   * to the listener will be immediately scheduled. If multiple listeners are added, they will be
+   * called in the order in which they were added.
    *
    * @return this Task
    */
   @NonNull
-  public Task<T> addOnCompleteListener(
-      @NonNull OnCompleteListener<T> listener) {
+  public Task<T> addOnCompleteListener(@NonNull OnCompleteListener<T> listener) {
     throw new UnsupportedOperationException("addOnCompleteListener is not implemented");
   }
 
@@ -138,8 +135,7 @@ public abstract class Task<T> {
    * <p>The Continuation will be called on a shared thread pool.
    */
   @NonNull
-  public <R> Task<R> continueWith(
-      @NonNull Continuation<T, R> continuation) {
+  public <R> Task<R> continueWith(@NonNull Continuation<T, R> continuation) {
     throw new UnsupportedOperationException("continueWith is not implemented");
   }
 
@@ -154,8 +150,7 @@ public abstract class Task<T> {
    */
   @NonNull
   public <R> Task<R> continueWith(
-      @NonNull Executor executor,
-      @NonNull Continuation<T, R> continuation) {
+      @NonNull Executor executor, @NonNull Continuation<T, R> continuation) {
     throw new UnsupportedOperationException("continueWith is not implemented");
   }
 
@@ -168,8 +163,7 @@ public abstract class Task<T> {
    * <p>The Continuation will be called on a shared thread pool.
    */
   @NonNull
-  public <R> Task<R> continueWithTask(
-      @NonNull Continuation<T, Task<R>> continuation) {
+  public <R> Task<R> continueWithTask(@NonNull Continuation<T, Task<R>> continuation) {
     throw new UnsupportedOperationException("continueWithTask is not implemented");
   }
 
@@ -184,8 +178,7 @@ public abstract class Task<T> {
    */
   @NonNull
   public <R> Task<R> continueWithTask(
-      @NonNull Executor executor,
-      @NonNull Continuation<T, Task<R>> continuation) {
+      @NonNull Executor executor, @NonNull Continuation<T, Task<R>> continuation) {
     throw new UnsupportedOperationException("continueWithTask is not implemented");
   }
 }

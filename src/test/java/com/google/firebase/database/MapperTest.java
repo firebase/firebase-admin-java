@@ -252,8 +252,7 @@ public class MapperTest {
   public void publicPrivateFieldDeserialze() {
     PublicPrivateFieldBean bean =
         deserialize(
-            "{'value1': 'foo', 'value2': 'bar', 'value3': 'baz'}", PublicPrivateFieldBean
-                .class);
+            "{'value1': 'foo', 'value2': 'bar', 'value3': 'baz'}", PublicPrivateFieldBean.class);
     assertEquals("foo", bean.value1);
     assertEquals(null, bean.value2);
     assertEquals(null, bean.value3);
@@ -287,8 +286,7 @@ public class MapperTest {
 
   @Test
   public void ignoreExtraProperties() {
-    PublicFieldBean bean = deserialize("{'value': 'foo', 'unknown': 'bar'}", PublicFieldBean
-        .class);
+    PublicFieldBean bean = deserialize("{'value': 'foo', 'unknown': 'bar'}", PublicFieldBean.class);
     assertEquals("foo", bean.value);
   }
 
@@ -334,22 +332,19 @@ public class MapperTest {
 
   @Test
   public void caseSensitiveSetterIsCalledWhenPresent1() {
-    CaseSensitiveSetterBean3 bean = deserialize("{'value': 'foo'}",
-        CaseSensitiveSetterBean3.class);
+    CaseSensitiveSetterBean3 bean = deserialize("{'value': 'foo'}", CaseSensitiveSetterBean3.class);
     assertEquals("setter:foo", bean.value);
   }
 
   @Test
   public void caseSensitiveSetterIsCalledWhenPresent2() {
-    CaseSensitiveSetterBean4 bean = deserialize("{'value': 'foo'}",
-        CaseSensitiveSetterBean4.class);
+    CaseSensitiveSetterBean4 bean = deserialize("{'value': 'foo'}", CaseSensitiveSetterBean4.class);
     assertEquals("setter:foo", bean.value);
   }
 
   @Test
   public void caseSensitiveSetterIsCalledWhenPresent3() {
-    CaseSensitiveSetterBean5 bean = deserialize("{'value': 'foo'}",
-        CaseSensitiveSetterBean5.class);
+    CaseSensitiveSetterBean5 bean = deserialize("{'value': 'foo'}", CaseSensitiveSetterBean5.class);
     assertEquals("foo", bean.value);
   }
 
@@ -385,8 +380,7 @@ public class MapperTest {
 
   @Test
   public void beansCanContainBeanLists() {
-    RecursiveListBean bean = deserialize("{'values': [{'value': 'foo'}]}", RecursiveListBean
-        .class);
+    RecursiveListBean bean = deserialize("{'values': [{'value': 'foo'}]}", RecursiveListBean.class);
     assertEquals(1, bean.values.size());
     assertEquals("foo", bean.values.get(0).value);
   }
@@ -750,8 +744,7 @@ public class MapperTest {
 
   @Test
   public void multipleConstructorsCanBeDeserialized() {
-    MultipleConstructorBean bean = deserialize("{'value': 'foo'}", MultipleConstructorBean
-        .class);
+    MultipleConstructorBean bean = deserialize("{'value': 'foo'}", MultipleConstructorBean.class);
     assertEquals("foo", bean.value);
   }
 
@@ -849,46 +842,38 @@ public class MapperTest {
     assertNull(CustomClassMapper.convertToCustomClass(null, Boolean.class));
     assertNull(CustomClassMapper.convertToCustomClass(null, StringBean.class));
     assertNull(CustomClassMapper.convertToCustomClass(null, Object.class));
-    assertNull(CustomClassMapper.convertToCustomClass(null, new GenericTypeIndicator<String>() {
-    }));
+    assertNull(CustomClassMapper.convertToCustomClass(null, new GenericTypeIndicator<String>() {}));
     assertNull(
         CustomClassMapper.convertToCustomClass(
-            null, new GenericTypeIndicator<Map<String, String>>() {
-            }));
+            null, new GenericTypeIndicator<Map<String, String>>() {}));
   }
 
   @Test
   public void parsingGenericBeansSupportedUsingGenericTypeIndicator() {
     GenericBean<String> stringBean =
-        deserialize("{'value': 'foo'}", new GenericTypeIndicator<GenericBean<String>>() {
-        });
+        deserialize("{'value': 'foo'}", new GenericTypeIndicator<GenericBean<String>>() {});
     assertEquals("foo", stringBean.value);
 
     GenericBean<Map<String, String>> mapBean =
         deserialize(
             "{'value': {'foo': 'bar'}}",
-            new GenericTypeIndicator<GenericBean<Map<String, String>>>() {
-            });
+            new GenericTypeIndicator<GenericBean<Map<String, String>>>() {});
     assertEquals(Collections.singletonMap("foo", "bar"), mapBean.value);
 
     GenericBean<List<String>> listBean =
-        deserialize("{'value': ['foo']}", new GenericTypeIndicator<GenericBean<List<String>>>
-            () {
-        });
+        deserialize("{'value': ['foo']}", new GenericTypeIndicator<GenericBean<List<String>>>() {});
     assertEquals(Collections.singletonList("foo"), listBean.value);
 
     GenericBean<GenericBean<String>> recursiveBean =
         deserialize(
             "{'value': {'value': 'foo'}}",
-            new GenericTypeIndicator<GenericBean<GenericBean<String>>>() {
-            });
+            new GenericTypeIndicator<GenericBean<GenericBean<String>>>() {});
     assertEquals("foo", recursiveBean.value.value);
 
     DoubleGenericBean<String, Integer> doubleBean =
         deserialize(
             "{'valueA': 'foo', 'valueB': 1}",
-            new GenericTypeIndicator<DoubleGenericBean<String, Integer>>() {
-            });
+            new GenericTypeIndicator<DoubleGenericBean<String, Integer>>() {});
     assertEquals("foo", doubleBean.valueA);
     assertEquals((Integer) 1, doubleBean.valueB);
   }
@@ -932,14 +917,12 @@ public class MapperTest {
 
   @Test(expected = DatabaseException.class)
   public void extendingGenericTypeIndicatorIsForbidden1() {
-    deserialize("{'value': 'foo'}", new GenericTypeIndicatorSubclass<GenericBean<String>>() {
-    });
+    deserialize("{'value': 'foo'}", new GenericTypeIndicatorSubclass<GenericBean<String>>() {});
   }
 
   @Test(expected = DatabaseException.class)
   public void extendingGenericTypeIndicatorIsForbidden2() {
-    deserialize("{'value': 'foo'}", new NonGenericTypeIndicatorSubclass() {
-    });
+    deserialize("{'value': 'foo'}", new NonGenericTypeIndicatorSubclass() {});
   }
 
   @Test(expected = DatabaseException.class)
@@ -956,8 +939,7 @@ public class MapperTest {
 
   @Test(expected = DatabaseException.class)
   public void unknownTypeParametersNotSupported() {
-    deserialize("{'value': 'foo'}", new GenericTypeIndicatorSubclass<GenericBean<?>>() {
-    });
+    deserialize("{'value': 'foo'}", new GenericTypeIndicatorSubclass<GenericBean<?>>() {});
   }
 
   @Test(expected = DatabaseException.class)
@@ -965,8 +947,7 @@ public class MapperTest {
     GenericBean<? extends String> bean =
         deserialize(
             "{'value': 'foo'}",
-            new GenericTypeIndicatorSubclass<GenericBean<? extends String>>() {
-            });
+            new GenericTypeIndicatorSubclass<GenericBean<? extends String>>() {});
     assertEquals("foo", bean.value);
   }
 
@@ -1012,8 +993,7 @@ public class MapperTest {
 
   @Test
   public void staticFieldsAreNotParsed() {
-    StaticFieldBean bean = deserialize("{'value1': 'foo', 'value2': 'bar'}", StaticFieldBean
-        .class);
+    StaticFieldBean bean = deserialize("{'value1': 'foo', 'value2': 'bar'}", StaticFieldBean.class);
     assertEquals("static-value", StaticFieldBean.value1);
     assertEquals("bar", bean.value2);
   }
@@ -1047,8 +1027,7 @@ public class MapperTest {
     bean.complexEnum = ComplexEnum.One;
     bean.setEnumValue(Enum.Foo);
 
-    assertJson("{'enumField': 'Bar', 'enumValue': 'Foo', 'complexEnum': 'One'}", serialize
-        (bean));
+    assertJson("{'enumField': 'Bar', 'enumValue': 'Foo', 'complexEnum': 'One'}", serialize(bean));
   }
 
   @Test
@@ -1684,8 +1663,7 @@ public class MapperTest {
 
   private static class ExcludedBean {
 
-    @Exclude
-    public String excludedField = "no-value";
+    @Exclude public String excludedField = "no-value";
 
     private String excludedGetter = "no-value";
 
@@ -1778,8 +1756,7 @@ public class MapperTest {
       return this.value + "1";
     }
 
-    public void getValue2() {
-    }
+    public void getValue2() {}
 
     public String getValue3(boolean flag) {
       return this.value + "3";
@@ -1804,8 +1781,7 @@ public class MapperTest {
 
     private String value;
 
-    public PublicConstructorBean() {
-    }
+    public PublicConstructorBean() {}
 
     public String getValue() {
       return this.value;
@@ -1816,8 +1792,7 @@ public class MapperTest {
 
     private String value;
 
-    private PrivateConstructorBean() {
-    }
+    private PrivateConstructorBean() {}
 
     public String getValue() {
       return this.value;
@@ -1828,8 +1803,7 @@ public class MapperTest {
 
     private String value;
 
-    PackageConstructorBean() {
-    }
+    PackageConstructorBean() {}
 
     public String getValue() {
       return this.value;
@@ -1857,8 +1831,7 @@ public class MapperTest {
       this.value = "wrong-value";
     }
 
-    public MultipleConstructorBean() {
-    }
+    public MultipleConstructorBean() {}
 
     public String getValue() {
       return this.value;
@@ -2054,22 +2027,14 @@ public class MapperTest {
     }
   }
 
-  private abstract static class GenericTypeIndicatorSubclass<T> extends GenericTypeIndicator<T> {
-
-  }
+  private abstract static class GenericTypeIndicatorSubclass<T> extends GenericTypeIndicator<T> {}
 
   private abstract static class NonGenericTypeIndicatorSubclass
-      extends GenericTypeIndicator<GenericBean<String>> {
-
-  }
+      extends GenericTypeIndicator<GenericBean<String>> {}
 
   private static class NonGenericTypeIndicatorConcreteSubclass
-      extends GenericTypeIndicator<GenericBean<String>> {
-
-  }
+      extends GenericTypeIndicator<GenericBean<String>> {}
 
   private static class NonGenericTypeIndicatorSubclassConcreteSubclass
-      extends GenericTypeIndicatorSubclass<GenericBean<String>> {
-
-  }
+      extends GenericTypeIndicatorSubclass<GenericBean<String>> {}
 }

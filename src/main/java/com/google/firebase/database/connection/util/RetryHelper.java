@@ -12,24 +12,16 @@ public class RetryHelper {
 
   private final ScheduledExecutorService executorService;
   private final LogWrapper logger;
-  /**
-   * The minimum delay for a retry in ms.
-   */
+  /** The minimum delay for a retry in ms. */
   private final long minRetryDelayAfterFailure;
-  /**
-   * The maximum retry delay in ms.
-   */
+  /** The maximum retry delay in ms. */
   private final long maxRetryDelay;
   /**
-   * The range of the delay that will be used at random.
-   * 0 => no randomness
-   * 0.5 => at least half the current delay
-   * 1 => any delay between [min, max)
+   * The range of the delay that will be used at random. 0 => no randomness 0.5 => at least half the
+   * current delay 1 => any delay between [min, max)
    */
   private final double jitterFactor;
-  /**
-   * The backoff exponent.
-   */
+  /** The backoff exponent. */
   private final double retryExponent;
 
   private final Random random = new Random();
@@ -54,15 +46,7 @@ public class RetryHelper {
     this.jitterFactor = jitterFactor;
   }
 
-  public void retry(final Runnable runnable) {
-    Runnable wrapped =
-        new Runnable() {
-          @Override
-          public void run() {
-            scheduledRetry = null;
-            runnable.run();
-          }
-        };
+  public void retry(final Runnable runnable) {    
     long delay;
     if (this.scheduledRetry != null) {
       logger.debug("Cancelling previous scheduled retry");
@@ -85,6 +69,14 @@ public class RetryHelper {
     }
     this.lastWasSuccess = false;
     logger.debug("Scheduling retry in %dms", delay);
+    Runnable wrapped =
+        new Runnable() {
+          @Override
+          public void run() {
+            scheduledRetry = null;
+            runnable.run();
+          }
+        };
     this.scheduledRetry = this.executorService.schedule(wrapped, delay, TimeUnit.MILLISECONDS);
   }
 

@@ -1,5 +1,7 @@
 package com.google.firebase.database.core;
 
+import static com.google.firebase.internal.Preconditions.checkNotNull;
+
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.database.util.GAuthToken;
@@ -11,8 +13,6 @@ import com.google.firebase.tasks.Task;
 
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
-
-import static com.google.firebase.internal.Preconditions.checkNotNull;
 
 public class JvmAuthTokenProvider implements AuthTokenProvider {
 
@@ -30,10 +30,9 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
       // This shouldn't happen in the actual production SDK, but can happen in tests.
       return null;
     } else {
-      Map<String, Object> authVariable = firebaseApp.getOptions()
-          .getDatabaseAuthVariableOverride();
-      GAuthToken gAuthToken = new GAuthToken(oauthToken, authVariable);
-      return gAuthToken.serializeToString();
+      Map<String, Object> authVariable = firebaseApp.getOptions().getDatabaseAuthVariableOverride();
+      GAuthToken googleAuthToken = new GAuthToken(oauthToken, authVariable);
+      return googleAuthToken.serializeToString();
     }
   }
 
@@ -70,8 +69,8 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
 
   /**
    * Wraps a TokenChangeListener instance inside a FirebaseApp.AuthStateListener. Equality
-   * comparisons are delegated to the TokenChangeListener so that listener addition and removal
-   * will work as expected in FirebaseApp.
+   * comparisons are delegated to the TokenChangeListener so that listener addition and removal will
+   * work as expected in FirebaseApp.
    */
   private static class TokenChangeListenerWrapper implements AuthStateListener {
 
@@ -114,4 +113,3 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
     }
   }
 }
-

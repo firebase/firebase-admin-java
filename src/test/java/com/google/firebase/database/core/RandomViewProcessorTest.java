@@ -31,8 +31,7 @@ public class RandomViewProcessorTest {
   private static Node applyChange(Node node, Change change) {
     if (change.getEventType() == Event.EventType.CHILD_ADDED) {
       Assert.assertFalse(node.hasChild(change.getChildKey()));
-      return node.updateImmediateChild(change.getChildKey(), change.getIndexedNode()
-          .getNode());
+      return node.updateImmediateChild(change.getChildKey(), change.getIndexedNode().getNode());
     } else if (change.getEventType() == Event.EventType.CHILD_REMOVED) {
       Assert.assertTrue(node.hasChild(change.getChildKey()));
       Assert.assertEquals(
@@ -42,11 +41,9 @@ public class RandomViewProcessorTest {
       Assert.assertTrue(node.hasChild(change.getChildKey()));
       Assert.assertEquals(
           node.getImmediateChild(change.getChildKey()), change.getOldIndexedNode().getNode());
-      return node.updateImmediateChild(change.getChildKey(), change.getIndexedNode()
-          .getNode());
+      return node.updateImmediateChild(change.getChildKey(), change.getIndexedNode().getNode());
     } else {
-      throw new IllegalArgumentException("Can't handle change of type: " + change
-          .getEventType());
+      throw new IllegalArgumentException("Can't handle change of type: " + change.getEventType());
     }
   }
 
@@ -54,14 +51,12 @@ public class RandomViewProcessorTest {
     node = node.updatePriority(PriorityUtilities.NullPriority());
     // this loop only triggers updates on children nodes, so we don't overwrite leaf nodes
     for (NamedNode childEntry : node) {
-      node = node.updateImmediateChild(childEntry.getName(), removePriority(childEntry
-          .getNode()));
+      node = node.updateImmediateChild(childEntry.getName(), removePriority(childEntry.getNode()));
     }
     return node;
   }
 
-  private static void assertNodesMatch(String message, Node one, Node two, boolean
-      checkPriority) {
+  private static void assertNodesMatch(String message, Node one, Node two, boolean checkPriority) {
     if (!checkPriority) {
       if (!one.equals(two)) {
         System.err.println(message + ": Priorities don't match!");
@@ -95,8 +90,7 @@ public class RandomViewProcessorTest {
         Operation op = generator.nextOperation();
         System.out.println(j + ": Applying " + op);
         // TODO: get optCompleteServerCache
-        WriteTreeRef writeTreeRef = new WriteTreeRef(Path.getEmptyPath(), generator
-            .getWriteTree());
+        WriteTreeRef writeTreeRef = new WriteTreeRef(Path.getEmptyPath(), generator.getWriteTree());
         ViewProcessor.ProcessorResult result =
             processor.applyOperation(viewCache, op, writeTreeRef, null);
         viewCache = result.viewCache;
@@ -126,8 +120,7 @@ public class RandomViewProcessorTest {
               currentValueNode,
               false);
           Assert.assertTrue(
-              "Change node did not remove all children for leaf node",
-              currentChangeNode.isEmpty());
+              "Change node did not remove all children for leaf node", currentChangeNode.isEmpty());
         } else {
           assertNodesMatch(
               "Cache event snap did not equal expected event snap",

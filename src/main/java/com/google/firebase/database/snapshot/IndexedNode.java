@@ -16,8 +16,8 @@ import java.util.List;
 public class IndexedNode implements Iterable<NamedNode> {
 
   /**
-   * This is a sentinal value, so it's fine to just use null for the comparator as it will never
-   * be invoked.
+   * This is a sentinal value, so it's fine to just use null for the comparator as it will never be
+   * invoked.
    */
   private static final ImmutableSortedSet<NamedNode> FALLBACK_INDEX =
       new ImmutableSortedSet<>(Collections.<NamedNode>emptyList(), null);
@@ -110,8 +110,7 @@ public class IndexedNode implements Iterable<NamedNode> {
       return new IndexedNode(newNode, this.index, null);
     } else {
       Node oldChild = this.node.getImmediateChild(key);
-      ImmutableSortedSet<NamedNode> newIndexed = this.indexed.remove(new NamedNode(key,
-          oldChild));
+      ImmutableSortedSet<NamedNode> newIndexed = this.indexed.remove(new NamedNode(key, oldChild));
       if (!child.isEmpty()) {
         newIndexed = newIndexed.insert(new NamedNode(key, child));
       }

@@ -7,8 +7,8 @@ import java.util.concurrent.Executor;
 /**
  * A {@link TaskCompletionListener} that wraps a {@link Continuation} that returns a {@link Task}.
  */
-class ContinueWithTaskCompletionListener<T, R> implements
-    TaskCompletionListener<T>, OnSuccessListener<R>, OnFailureListener {
+class ContinueWithTaskCompletionListener<T, R>
+    implements TaskCompletionListener<T>, OnSuccessListener<R>, OnFailureListener {
 
   private final Executor executor;
   private final Continuation<T, Task<R>> continuation;
@@ -25,35 +25,36 @@ class ContinueWithTaskCompletionListener<T, R> implements
 
   @Override
   public void onComplete(@NonNull final Task<T> task) {
-    executor.execute(new Runnable() {
-      @Override
-      public void run() {
-        Task<R> resultTask;
-        try {
-          resultTask = continuation.then(task);
-        } catch (RuntimeExecutionException e) {
-          if (e.getCause() instanceof Exception) {
-            continuationTask.setException((Exception) e.getCause());
-          } else {
-            continuationTask.setException(e);
+    executor.execute(
+        new Runnable() {
+          @Override
+          public void run() {
+            Task<R> resultTask;
+            try {
+              resultTask = continuation.then(task);
+            } catch (RuntimeExecutionException e) {
+              if (e.getCause() instanceof Exception) {
+                continuationTask.setException((Exception) e.getCause());
+              } else {
+                continuationTask.setException(e);
+              }
+              return;
+            } catch (Exception e) {
+              continuationTask.setException(e);
+              return;
+            }
+
+            if (resultTask == null) {
+              onFailure(new NullPointerException("Continuation returned null"));
+              return;
+            }
+
+            resultTask.addOnSuccessListener(
+                TaskExecutors.DIRECT, ContinueWithTaskCompletionListener.this);
+            resultTask.addOnFailureListener(
+                TaskExecutors.DIRECT, ContinueWithTaskCompletionListener.this);
           }
-          return;
-        } catch (Exception e) {
-          continuationTask.setException(e);
-          return;
-        }
-
-        if (resultTask == null) {
-          onFailure(new NullPointerException("Continuation returned null"));
-          return;
-        }
-
-        resultTask.addOnSuccessListener(
-            TaskExecutors.DIRECT, ContinueWithTaskCompletionListener.this);
-        resultTask.addOnFailureListener(
-            TaskExecutors.DIRECT, ContinueWithTaskCompletionListener.this);
-      }
-    });
+        });
   }
 
   @Override

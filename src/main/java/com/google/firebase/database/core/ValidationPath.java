@@ -72,7 +72,7 @@ public class ValidationPath {
     return count;
   }
 
-  @SuppressWarnings( {"unchecked", "rawtypes"})
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private void withObject(Object value) throws DatabaseException {
     if (value instanceof Map) {
       Map<String, Object> mapValue = (Map<String, Object>) value;

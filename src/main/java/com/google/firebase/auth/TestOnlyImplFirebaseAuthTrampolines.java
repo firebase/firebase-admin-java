@@ -20,8 +20,7 @@ import java.io.IOException;
  */
 public final class TestOnlyImplFirebaseAuthTrampolines {
 
-  private TestOnlyImplFirebaseAuthTrampolines() {
-  }
+  private TestOnlyImplFirebaseAuthTrampolines() {}
 
   /* FirebaseApp */
   public static FirebaseToken.FirebaseTokenImpl getToken(FirebaseToken tokenHolder) {
@@ -54,4 +53,3 @@ public final class TestOnlyImplFirebaseAuthTrampolines {
     return new FirebaseAuth(firebaseApp, googlePublicKeysManager, clock);
   }
 }
-

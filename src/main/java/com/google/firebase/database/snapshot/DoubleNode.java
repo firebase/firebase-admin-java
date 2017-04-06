@@ -2,9 +2,7 @@ package com.google.firebase.database.snapshot;
 
 import com.google.firebase.database.utilities.Utilities;
 
-/**
- * User: greg Date: 5/17/13 Time: 2:51 PM
- */
+/** User: greg Date: 5/17/13 Time: 2:51 PM */
 public class DoubleNode extends LeafNode<DoubleNode> {
 
   private final Double value;

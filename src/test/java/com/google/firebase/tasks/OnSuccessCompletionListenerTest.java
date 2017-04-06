@@ -13,11 +13,9 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class OnSuccessCompletionListenerTest {
 
-  @Rule
-  public MockitoTestRule mMockitoTestRule = new MockitoTestRule();
+  @Rule public MockitoTestRule mMockitoTestRule = new MockitoTestRule();
 
-  @Mock
-  private Executor mMockExecutor;
+  @Mock private Executor mMockExecutor;
 
   @Test
   public void testOnComplete_nothingExecutedAfterCancel() {

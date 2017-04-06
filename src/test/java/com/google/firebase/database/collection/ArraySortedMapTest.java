@@ -170,8 +170,7 @@ public class ArraySortedMapTest {
   @Test
   public void addWorks() {
     for (Map<Integer, Integer> any : someMaps(integers(), integers())) {
-      ImmutableSortedMap<Integer, Integer> map =
-          new ArraySortedMap<>(IntComparator);
+      ImmutableSortedMap<Integer, Integer> map = new ArraySortedMap<>(IntComparator);
       for (Map.Entry<Integer, Integer> entry : any.entrySet()) {
         map = map.insert(entry.getKey(), entry.getValue());
       }
@@ -213,8 +212,7 @@ public class ArraySortedMapTest {
     for (Map<Integer, Integer> any : someMaps(integers(), integers())) {
       List<Integer> expectedKeys = new ArrayList<>(any.keySet());
       Integer fromKey =
-          (expectedKeys.isEmpty() || booleans().next()) ? integers().next() : expectedKeys
-              .get(0);
+          (expectedKeys.isEmpty() || booleans().next()) ? integers().next() : expectedKeys.get(0);
       Collections.sort(expectedKeys);
 
       Iterator<Integer> iterator = expectedKeys.iterator();
@@ -259,8 +257,7 @@ public class ArraySortedMapTest {
     for (Map<Integer, Integer> any : someMaps(integers(), integers())) {
       List<Integer> expectedKeys = new ArrayList<>(any.keySet());
       Integer fromKey =
-          (expectedKeys.isEmpty() || booleans().next()) ? integers().next() : expectedKeys
-              .get(0);
+          (expectedKeys.isEmpty() || booleans().next()) ? integers().next() : expectedKeys.get(0);
       Collections.sort(expectedKeys);
       Collections.reverse(expectedKeys);
 

@@ -15,9 +15,7 @@ import java.util.concurrent.Semaphore;
 
 import static org.junit.Assert.*;
 
-/**
- * Tests for {@link FirebaseOptions}.
- */
+/** Tests for {@link FirebaseOptions}. */
 public class FirebaseOptionsTest {
 
   private static final String FIREBASE_DB_URL = "https://ghconfigtest-644f2.firebaseio.com";
@@ -34,8 +32,7 @@ public class FirebaseOptionsTest {
     FirebaseOptions firebaseOptions =
         new FirebaseOptions.Builder()
             .setDatabaseUrl(FIREBASE_DB_URL)
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream
-                ()))
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
             .build();
     assertEquals(FIREBASE_DB_URL, firebaseOptions.getDatabaseUrl());
     TestOnlyImplFirebaseAuthTrampolines.getCertificate(firebaseOptions.getCredential())
@@ -43,8 +40,8 @@ public class FirebaseOptionsTest {
             new OnSuccessListener<GoogleCredential>() {
               @Override
               public void onSuccess(GoogleCredential googleCredential) {
-                assertEquals(ServiceAccount.EDITOR.getEmail(),
-                    googleCredential.getServiceAccountId());
+                assertEquals(
+                    ServiceAccount.EDITOR.getEmail(), googleCredential.getServiceAccountId());
                 semaphore.release();
               }
             });
@@ -64,8 +61,8 @@ public class FirebaseOptionsTest {
             new OnSuccessListener<GoogleCredential>() {
               @Override
               public void onSuccess(GoogleCredential googleCredential) {
-                assertEquals(ServiceAccount.EDITOR.getEmail(),
-                    googleCredential.getServiceAccountId());
+                assertEquals(
+                    ServiceAccount.EDITOR.getEmail(), googleCredential.getServiceAccountId());
                 semaphore.release();
               }
             });
@@ -77,8 +74,7 @@ public class FirebaseOptionsTest {
     final Semaphore semaphore = new Semaphore(0);
     FirebaseOptions firebaseOptions =
         new FirebaseOptions.Builder()
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream
-                ()))
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
             .build();
     TestOnlyImplFirebaseAuthTrampolines.getCertificate(firebaseOptions.getCredential())
         .addOnSuccessListener(
@@ -86,9 +82,10 @@ public class FirebaseOptionsTest {
               @Override
               public void onSuccess(GoogleCredential googleCredential) {
                 try {
-                  assertEquals(GoogleCredential.fromStream(ServiceAccount.EDITOR
-                      .asStream())
-                      .getServiceAccountId(), googleCredential.getServiceAccountId());
+                  assertEquals(
+                      GoogleCredential.fromStream(ServiceAccount.EDITOR.asStream())
+                          .getServiceAccountId(),
+                      googleCredential.getServiceAccountId());
                   semaphore.release();
                 } catch (IOException e) {
                   fail();
@@ -102,8 +99,7 @@ public class FirebaseOptionsTest {
   public void createOptionsWithServiceAccountSetsProjectId() throws Exception {
     FirebaseOptions firebaseOptions =
         new FirebaseOptions.Builder()
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream
-                ()))
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
             .build();
     Task<String> projectId =
         TestOnlyImplFirebaseAuthTrampolines.getProjectId(firebaseOptions.getCredential());

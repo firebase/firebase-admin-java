@@ -21,10 +21,10 @@ public final class Objects {
    * Determines whether two possibly-null objects are equal. Returns:
    *
    * <ul>
-   * <li>{@code true} if {@code a} and {@code b} are both null.
-   * <li>{@code true} if {@code a} and {@code b} are both non-null and they are equal according to
-   * {@link Object#equals(Object)}.
-   * <li>{@code false} in all other situations.
+   *   <li>{@code true} if {@code a} and {@code b} are both null.
+   *   <li>{@code true} if {@code a} and {@code b} are both non-null and they are equal according to
+   *       {@link Object#equals(Object)}.
+   *   <li>{@code false} in all other situations.
    * </ul>
    *
    * <p>This assumes that any non-null objects passed to this function conform to the {@code
@@ -72,14 +72,14 @@ public final class Objects {
    *   }</tt>
    * </pre>
    *
-   * Assuming the values of {@code x} and {@code y} are 1 and 2, this code snippet returns the
+   * <p>Assuming the values of {@code x} and {@code y} are 1 and 2, this code snippet returns the
    * string <tt>"ClassName{x=1, y=2}"</tt>.
    */
   public static ToStringHelper toStringHelper(Object object) {
     return new ToStringHelper(object);
   }
 
-  /**
+  /** 
    * Support class for {@link Objects#toStringHelper}.
    */
   public static final class ToStringHelper {
@@ -87,7 +87,7 @@ public final class Objects {
     private final List<String> fieldStrings;
     private final Object instance;
 
-    /**
+    /** 
      * Use {@link Objects#toStringHelper(Object)} to create an instance.
      */
     private ToStringHelper(Object instance) {
@@ -96,8 +96,8 @@ public final class Objects {
     }
 
     /**
-     * Adds a name/value pair to the formatted output in {@code name=value} format. If {@code
-     * value} is {@code null}, the string {@code "null"} is used.
+     * Adds a name/value pair to the formatted output in {@code name=value} format. If {@code value}
+     * is {@code null}, the string {@code "null"} is used.
      */
     public ToStringHelper add(String name, Object value) {
       fieldStrings.add(Preconditions.checkNotNull(name) + "=" + String.valueOf(value));
@@ -113,9 +113,7 @@ public final class Objects {
       return this;
     }
 
-    /**
-     * Returns the formatted string.
-     */
+    /** Returns the formatted string. */
     @Override
     public String toString() {
       StringBuilder builder =

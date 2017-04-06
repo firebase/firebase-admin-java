@@ -38,34 +38,29 @@ public class FirebaseTokenFactory {
     return instance;
   }
 
-  public String createSignedCustomAuthTokenForUser(
-      String uid,
-      String issuer,
-      PrivateKey privateKey) throws GeneralSecurityException, IOException {
+  public String createSignedCustomAuthTokenForUser(String uid, String issuer, PrivateKey privateKey)
+      throws GeneralSecurityException, IOException {
     return createSignedCustomAuthTokenForUser(uid, null, issuer, privateKey);
   }
 
   public String createSignedCustomAuthTokenForUser(
-      String uid,
-      Map<String, Object> developerClaims,
-      String issuer,
-      PrivateKey privateKey) throws GeneralSecurityException, IOException {
+      String uid, Map<String, Object> developerClaims, String issuer, PrivateKey privateKey)
+      throws GeneralSecurityException, IOException {
     Preconditions.checkState(uid != null, "Uid must be provided.");
-    Preconditions.checkState(issuer != null && !"".equals(issuer),
-        "Must provide an issuer.");
+    Preconditions.checkState(issuer != null && !"".equals(issuer), "Must provide an issuer.");
     Preconditions.checkState(uid.length() <= 128, "Uid must be shorter than 128 characters.");
 
-    JsonWebSignature.Header header = new JsonWebSignature.Header()
-        .setAlgorithm("RS256");
+    JsonWebSignature.Header header = new JsonWebSignature.Header().setAlgorithm("RS256");
 
     long issuedAt = clock.currentTimeMillis() / 1000;
-    FirebaseCustomAuthToken.Payload payload = new FirebaseCustomAuthToken.Payload()
-        .setUid(uid)
-        .setIssuer(issuer)
-        .setSubject(issuer)
-        .setAudience(FirebaseCustomAuthToken.FIREBASE_AUDIENCE)
-        .setIssuedAtTimeSeconds(issuedAt)
-        .setExpirationTimeSeconds(issuedAt + FirebaseCustomAuthToken.TOKEN_DURATION_SECONDS);
+    FirebaseCustomAuthToken.Payload payload =
+        new FirebaseCustomAuthToken.Payload()
+            .setUid(uid)
+            .setIssuer(issuer)
+            .setSubject(issuer)
+            .setAudience(FirebaseCustomAuthToken.FIREBASE_AUDIENCE)
+            .setIssuedAtTimeSeconds(issuedAt)
+            .setExpirationTimeSeconds(issuedAt + FirebaseCustomAuthToken.TOKEN_DURATION_SECONDS);
 
     if (developerClaims != null) {
       Collection<String> reservedNames = payload.getClassInfo().getNames();

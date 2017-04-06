@@ -53,80 +53,85 @@ public class RandomPersistenceTest {
     return map;
   }
 
-  private void applyOperation(SyncTree syncTree, Operation operation, Map<QuerySpec, Tag>
-      tagMap) {
+  private void applyOperation(SyncTree syncTree, Operation operation, Map<QuerySpec, Tag> tagMap) {
     if (operation.getSource().isTagged()) {
       Tag tag =
-          tagMap.get(new QuerySpec(operation.getPath(), operation.getSource()
-              .getQueryParams()));
+          tagMap.get(new QuerySpec(operation.getPath(), operation.getSource().getQueryParams()));
       assert tag != null;
       switch (operation.getType()) {
-        case ListenComplete: {
-          syncTree.applyTaggedListenComplete(tag);
-          break;
-        }
-        case Overwrite: {
-          Overwrite overwrite = (Overwrite) operation;
-          syncTree.applyTaggedQueryOverwrite(operation.getPath(), overwrite.getSnapshot
-              (), tag);
-          break;
-        }
-        case Merge: {
-          Merge merge = (Merge) operation;
-          syncTree.applyTaggedQueryMerge(
-              operation.getPath(), fromCompoundWrite(merge.getChildren()), tag);
-          break;
-        }
-        default: {
-          throw new IllegalArgumentException("Can't have tagged operation: " + operation);
-        }
+        case ListenComplete:
+          {
+            syncTree.applyTaggedListenComplete(tag);
+            break;
+          }
+        case Overwrite:
+          {
+            Overwrite overwrite = (Overwrite) operation;
+            syncTree.applyTaggedQueryOverwrite(operation.getPath(), overwrite.getSnapshot(), tag);
+            break;
+          }
+        case Merge:
+          {
+            Merge merge = (Merge) operation;
+            syncTree.applyTaggedQueryMerge(
+                operation.getPath(), fromCompoundWrite(merge.getChildren()), tag);
+            break;
+          }
+        default:
+          {
+            throw new IllegalArgumentException("Can't have tagged operation: " + operation);
+          }
       }
     } else {
       switch (operation.getType()) {
-        case ListenComplete: {
-          syncTree.applyListenComplete(operation.getPath());
-          break;
-        }
-        case Overwrite: {
-          Overwrite overwrite = (Overwrite) operation;
-          if (operation.getSource().isFromServer()) {
-            syncTree.applyServerOverwrite(operation.getPath(), overwrite.getSnapshot());
-          } else {
-            syncTree.applyUserOverwrite(
-                operation.getPath(),
-                overwrite.getSnapshot(),
-                overwrite.getSnapshot(),
-                currentWriteId++, /*visible=*/
-                true, /*persist=*/
-                true);
+        case ListenComplete:
+          {
+            syncTree.applyListenComplete(operation.getPath());
+            break;
           }
-          break;
-        }
-        case Merge: {
-          Merge merge = (Merge) operation;
-          if (operation.getSource().isFromServer()) {
-            syncTree.applyServerMerge(
-                operation.getPath(), fromCompoundWrite(merge.getChildren()));
-          } else {
-            syncTree.applyUserMerge(
-                operation.getPath(),
-                merge.getChildren(),
-                merge.getChildren(),
-                currentWriteId++, /*persist=*/
-                true);
+        case Overwrite:
+          {
+            Overwrite overwrite = (Overwrite) operation;
+            if (operation.getSource().isFromServer()) {
+              syncTree.applyServerOverwrite(operation.getPath(), overwrite.getSnapshot());
+            } else {
+              syncTree.applyUserOverwrite(
+                  operation.getPath(),
+                  overwrite.getSnapshot(),
+                  overwrite.getSnapshot(),
+                  currentWriteId++, /*visible=*/
+                  true, /*persist=*/
+                  true);
+            }
+            break;
           }
-          break;
-        }
-        case AckUserWrite: {
-          AckUserWrite userWrite = (AckUserWrite) operation;
-          syncTree.ackUserWrite(
-              currentUnackedWriteId++, userWrite.isRevert(), /*persist=*/ true, new
-                  TestClock());
-          break;
-        }
-        default: {
-          throw new IllegalArgumentException("Can't have tagged operation: " + operation);
-        }
+        case Merge:
+          {
+            Merge merge = (Merge) operation;
+            if (operation.getSource().isFromServer()) {
+              syncTree.applyServerMerge(
+                  operation.getPath(), fromCompoundWrite(merge.getChildren()));
+            } else {
+              syncTree.applyUserMerge(
+                  operation.getPath(),
+                  merge.getChildren(),
+                  merge.getChildren(),
+                  currentWriteId++, /*persist=*/
+                  true);
+            }
+            break;
+          }
+        case AckUserWrite:
+          {
+            AckUserWrite userWrite = (AckUserWrite) operation;
+            syncTree.ackUserWrite(
+                currentUnackedWriteId++, userWrite.isRevert(), /*persist=*/ true, new TestClock());
+            break;
+          }
+        default:
+          {
+            throw new IllegalArgumentException("Can't have tagged operation: " + operation);
+          }
       }
     }
   }
@@ -193,8 +198,7 @@ public class RandomPersistenceTest {
           }
           if (op instanceof ListenComplete) {
             if (op.getSource().getQueryParams() != null) {
-              completeListens.add(new QuerySpec(op.getPath(), op.getSource()
-                  .getQueryParams()));
+              completeListens.add(new QuerySpec(op.getPath(), op.getSource().getQueryParams()));
             } else {
               completeListens.add(QuerySpec.defaultQueryAtPath(op.getPath()));
             }

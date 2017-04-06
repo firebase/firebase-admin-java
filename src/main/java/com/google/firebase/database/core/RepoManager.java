@@ -18,8 +18,7 @@ public class RepoManager {
 
   private final Map<Context, Map<String, Repo>> repos = new HashMap<>();
 
-  public RepoManager() {
-  }
+  public RepoManager() {}
 
   /**
    * Used for legacy unit tests. The public API should go through FirebaseDatabase which calls

@@ -30,8 +30,8 @@ public class AckUserWrite extends Operation {
   public Operation operationForChild(ChildKey childKey) {
     if (!this.path.isEmpty()) {
       hardAssert(
-          this.path.getFront().equals(childKey), "operationForChild called for unrelated "
-              + "child.");
+          this.path.getFront().equals(childKey),
+          "operationForChild called for unrelated " + "child.");
       return new AckUserWrite(this.path.popFront(), this.affectedTree, this.revert);
     } else if (this.affectedTree.getValue() != null) {
       hardAssert(

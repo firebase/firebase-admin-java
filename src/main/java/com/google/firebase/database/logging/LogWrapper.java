@@ -3,11 +3,7 @@ package com.google.firebase.database.logging;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-/**
- * User: greg
- * Date: 6/12/13
- * Time: 2:23 PM
- */
+/** User: greg Date: 6/12/13 Time: 2:23 PM */
 public class LogWrapper {
 
   private final Logger logger;
@@ -56,13 +52,7 @@ public class LogWrapper {
     this.debug(message, null, args);
   }
 
-  public boolean logsDebug() {
-    return this.logger.getLogLevel().ordinal() <= Logger.Level.DEBUG.ordinal();
-  }
-
-  /**
-   * Log a non-fatal exception. Typically something like an IO error on a failed connection
-   */
+  /** Log a non-fatal exception. Typically something like an IO error on a failed connection */
   public void debug(String message, Throwable e, Object... args) {
     if (this.logsDebug()) {
       String logMsg = toLog(message, args);
@@ -71,6 +61,10 @@ public class LogWrapper {
       }
       logger.onLogMessage(Logger.Level.DEBUG, component, logMsg, now());
     }
+  }
+
+  public boolean logsDebug() {
+    return this.logger.getLogLevel().ordinal() <= Logger.Level.DEBUG.ordinal();
   }
 
   private long now() {

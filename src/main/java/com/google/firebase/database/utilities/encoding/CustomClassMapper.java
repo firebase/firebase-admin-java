@@ -30,9 +30,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * Helper class to convert to/from custom POJO classes and plain Java types.
- */
+/** Helper class to convert to/from custom POJO classes and plain Java types. */
 public class CustomClassMapper {
 
   private static final String LOG_TAG = "ClassMapper";
@@ -70,8 +68,8 @@ public class CustomClassMapper {
   }
 
   /**
-   * Converts a standard library Java representation of JSON data to an object of the class
-   * provided through the GenericTypeIndicator
+   * Converts a standard library Java representation of JSON data to an object of the class provided
+   * through the GenericTypeIndicator
    *
    * @param object The representation of the JSON data
    * @param typeIndicator The indicator providing class of the object to convert to
@@ -152,7 +150,7 @@ public class CustomClassMapper {
     }
   }
 
-  @SuppressWarnings( {"unchecked", "TypeParameterUnusedInFormals"})
+  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
   private static <T> T deserializeToType(Object obj, Type type) {
     if (obj == null) {
       return null;
@@ -199,7 +197,7 @@ public class CustomClassMapper {
     }
   }
 
-  @SuppressWarnings( {"unchecked", "TypeParameterUnusedInFormals"})
+  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
   private static <T> T deserializeToParameterizedType(Object obj, ParameterizedType type) {
     // getRawType should always return a Class<?>
     Class<?> rawType = (Class<?>) type.getRawType();
@@ -240,8 +238,7 @@ public class CustomClassMapper {
       TypeVariable<Class<T>>[] typeVariables = mapper.clazz.getTypeParameters();
       Type[] types = type.getActualTypeArguments();
       if (types.length != typeVariables.length) {
-        throw new IllegalStateException(
-            "Mismatched lengths for type variables and actual types");
+        throw new IllegalStateException("Mismatched lengths for type variables and actual types");
       }
       for (int i = 0; i < typeVariables.length; i++) {
         typeMapping.put(typeVariables[i], types[i]);
@@ -283,8 +280,7 @@ public class CustomClassMapper {
         return (T) Enum.valueOf((Class) clazz, value);
       } catch (IllegalArgumentException e) {
         throw new DatabaseException(
-            "Could not find enum value of " + clazz.getName() + " for value \""
-                + value + "\"");
+            "Could not find enum value of " + clazz.getName() + " for value \"" + value + "\"");
       }
     } else {
       throw new DatabaseException(
@@ -405,8 +401,10 @@ public class CustomClassMapper {
       return mapper.deserialize(expectMap(obj));
     } else {
       throw new DatabaseException(
-          "Can't convert object of type " + obj.getClass().getName() + " to type " + clazz
-              .getName());
+          "Can't convert object of type "
+              + obj.getClass().getName()
+              + " to type "
+              + clazz.getName());
     }
   }
 
@@ -519,8 +517,7 @@ public class CustomClassMapper {
       } while (currentClass != null && !currentClass.equals(Object.class));
 
       if (properties.isEmpty()) {
-        throw new DatabaseException("No properties to serialize found on class " + clazz
-            .getName());
+        throw new DatabaseException("No properties to serialize found on class " + clazz.getName());
       }
     }
 

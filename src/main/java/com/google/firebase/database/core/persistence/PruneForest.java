@@ -52,8 +52,8 @@ public class PruneForest {
   }
 
   /**
-   * Indicates that path is marked for pruning, so anything below it that didn't have keep()
-   * called on it should be pruned.
+   * Indicates that path is marked for pruning, so anything below it that didn't have keep() called
+   * on it should be pruned.
    *
    * @param path The path in question
    * @return True if we should prune descendants that didn't have keep() called on them.
@@ -79,8 +79,7 @@ public class PruneForest {
       childPruneTree = new ImmutableTree<>(this.pruneForest.getValue());
     } else {
       if (childPruneTree.getValue() == null && this.pruneForest.getValue() != null) {
-        childPruneTree = childPruneTree.set(Path.getEmptyPath(), this.pruneForest
-            .getValue());
+        childPruneTree = childPruneTree.set(Path.getEmptyPath(), this.pruneForest.getValue());
       }
     }
     return new PruneForest(childPruneTree);
@@ -162,8 +161,7 @@ public class PruneForest {
       childrenMap = childrenMap.insert(key, keepOrPruneTree);
     }
     return new PruneForest(
-        this.pruneForest.setTree(
-            path, new ImmutableTree<>(subtree.getValue(), childrenMap)));
+        this.pruneForest.setTree(path, new ImmutableTree<>(subtree.getValue(), childrenMap)));
   }
 
   @Override

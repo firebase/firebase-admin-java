@@ -23,23 +23,22 @@ import java.util.Collections;
 /**
  * Verifies that a JWT returned by Firebase is valid for use in the this project.
  *
- * <p>This class should be kept as a Singleton within the server in order to maximize caching of
- * the public signing keys.
+ * <p>This class should be kept as a Singleton within the server in order to maximize caching of the
+ * public signing keys.
  */
 public final class FirebaseTokenVerifier extends IdTokenVerifier {
 
   @VisibleForTesting
-  static final String CLIENT_CERT_URL = "https://www.googleapis.com/robot/v1/metadata/x509/"
-      + "securetoken@system.gserviceaccount.com";
-  /**
-   * The default public keys manager for verifying projects use the correct public key.
-   */
+  static final String CLIENT_CERT_URL =
+      "https://www.googleapis.com/robot/v1/metadata/x509/"
+          + "securetoken@system.gserviceaccount.com";
+  /** The default public keys manager for verifying projects use the correct public key. */
   public static final GooglePublicKeysManager DEFAULT_KEY_MANAGER =
-      new GooglePublicKeysManager.Builder(new NetHttpTransport.Builder().build(), new
-          GsonFactory())
+      new GooglePublicKeysManager.Builder(new NetHttpTransport.Builder().build(), new GsonFactory())
           .setClock(Clock.SYSTEM)
           .setPublicCertsEncodedUrl(CLIENT_CERT_URL)
           .build();
+
   private static final String ISSUER_PREFIX = "https://securetoken.google.com/";
   private static final String FIREBASE_AUDIENCE =
       "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit";
@@ -63,8 +62,8 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
   }
 
   /**
-   * We are changing the semantics of the super-class method in order to provide more details on
-   * why this is failing to the developer.
+   * We are changing the semantics of the super-class method in order to provide more details on why
+   * this is failing to the developer.
    */
   public boolean verifyTokenAndSignature(IdToken token) throws FirebaseAuthException {
     Payload payload = token.getPayload();
@@ -149,13 +148,12 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
   }
 
   /**
-   * Verifies the cryptographic signature on the FirebaseToken. Can block on a web request to
-   * fetch the keys if they have expired.
+   * Verifies the cryptographic signature on the FirebaseToken. Can block on a web request to fetch
+   * the keys if they have expired.
    *
-   * TODO(jeffcraig): Wrap these blocking steps in a Task.
+   * <p>TODO(jeffcraig): Wrap these blocking steps in a Task.
    */
-  private boolean verifySignature(IdToken token)
-      throws GeneralSecurityException, IOException {
+  private boolean verifySignature(IdToken token) throws GeneralSecurityException, IOException {
     for (PublicKey key : publicKeysManager.getPublicKeys()) {
       if (token.verifySignature(key)) {
         return true;
@@ -168,7 +166,7 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
     return projectId;
   }
 
-  /**
+  /** 
    * Builder for {@link FirebaseTokenVerifier}.
    */
   public static class Builder extends IdTokenVerifier.Builder {
@@ -199,9 +197,7 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
       return publicKeysManager;
     }
 
-    /**
-     * Override the GooglePublicKeysManager from the default.
-     */
+    /** Override the GooglePublicKeysManager from the default. */
     public Builder setPublicKeysManager(GooglePublicKeysManager publicKeysManager) {
       this.publicKeysManager = publicKeysManager;
       return this;

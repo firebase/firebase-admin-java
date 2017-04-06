@@ -2,7 +2,7 @@ package com.google.firebase.database.collection;
 
 import java.util.Comparator;
 
-abstract public class LLRBValueNode<K, V> implements LLRBNode<K, V> {
+public abstract class LLRBValueNode<K, V> implements LLRBNode<K, V> {
 
   private final K key;
   private final V value;
@@ -47,12 +47,12 @@ abstract public class LLRBValueNode<K, V> implements LLRBNode<K, V> {
 
   protected abstract Color getColor();
 
-  protected abstract LLRBValueNode<K, V> copy(K key, V value, LLRBNode<K, V> left,
-                                              LLRBNode<K, V> right);
+  protected abstract LLRBValueNode<K, V> copy(
+      K key, V value, LLRBNode<K, V> left, LLRBNode<K, V> right);
 
   @Override
-  public LLRBValueNode<K, V> copy(K key, V value, Color color, LLRBNode<K, V> left,
-                                  LLRBNode<K, V> right) {
+  public LLRBValueNode<K, V> copy(
+      K key, V value, Color color, LLRBNode<K, V> left, LLRBNode<K, V> right) {
     K newKey = key == null ? this.key : key;
     V newValue = value == null ? this.value : value;
     LLRBNode<K, V> newLeft = left == null ? this.left : left;
@@ -88,8 +88,7 @@ abstract public class LLRBValueNode<K, V> implements LLRBNode<K, V> {
     LLRBValueNode<K, V> n = this;
 
     if (comparator.compare(key, n.key) < 0) {
-      if (!n.left.isEmpty() && !n.left.isRed() && !((LLRBValueNode<K, V>) n.left).left
-          .isRed()) {
+      if (!n.left.isEmpty() && !n.left.isRed() && !((LLRBValueNode<K, V>) n.left).left.isRed()) {
         n = n.moveRedLeft();
       }
       n = n.copy(null, null, n.left.remove(key, comparator), null);
@@ -98,8 +97,7 @@ abstract public class LLRBValueNode<K, V> implements LLRBNode<K, V> {
         n = n.rotateRight();
       }
 
-      if (!n.right.isEmpty() && !n.right.isRed() && !((LLRBValueNode<K, V>) n.right).left
-          .isRed()) {
+      if (!n.right.isEmpty() && !n.right.isRed() && !((LLRBValueNode<K, V>) n.right).left.isRed()) {
         n = n.moveRedRight();
       }
 
@@ -108,8 +106,12 @@ abstract public class LLRBValueNode<K, V> implements LLRBNode<K, V> {
           return LLRBEmptyNode.getInstance();
         } else {
           LLRBNode<K, V> smallest = n.right.getMin();
-          n = n.copy(smallest.getKey(), smallest.getValue(), null,
-              ((LLRBValueNode<K, V>) n.right).removeMin());
+          n =
+              n.copy(
+                  smallest.getKey(),
+                  smallest.getValue(),
+                  null,
+                  ((LLRBValueNode<K, V>) n.right).removeMin());
         }
       }
       n = n.copy(null, null, null, n.right.remove(key, comparator));
@@ -220,14 +222,14 @@ abstract public class LLRBValueNode<K, V> implements LLRBNode<K, V> {
   }
 
   private LLRBValueNode<K, V> rotateLeft() {
-    LLRBValueNode<K, V> newLeft = this
-        .copy(null, null, Color.RED, null, ((LLRBValueNode<K, V>) (this.right)).left);
+    LLRBValueNode<K, V> newLeft =
+        this.copy(null, null, Color.RED, null, ((LLRBValueNode<K, V>) (this.right)).left);
     return (LLRBValueNode<K, V>) this.right.copy(null, null, this.getColor(), newLeft, null);
   }
 
   private LLRBValueNode<K, V> rotateRight() {
-    LLRBValueNode<K, V> newRight = this
-        .copy(null, null, Color.RED, ((LLRBValueNode<K, V>) (this.left)).right, null);
+    LLRBValueNode<K, V> newRight =
+        this.copy(null, null, Color.RED, ((LLRBValueNode<K, V>) (this.left)).right, null);
     return (LLRBValueNode<K, V>) this.left.copy(null, null, this.getColor(), null, newRight);
   }
 
@@ -237,5 +239,4 @@ abstract public class LLRBValueNode<K, V> implements LLRBNode<K, V> {
 
     return this.copy(null, null, oppositeColor(this), newLeft, newRight);
   }
-
 }
