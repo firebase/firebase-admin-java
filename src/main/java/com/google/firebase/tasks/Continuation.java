@@ -5,12 +5,12 @@ import com.google.firebase.internal.NonNull;
 /**
  * A function that is called to continue execution after completion of a {@link Task}.
  *
- * @param <TResult> the Task's result type
- * @param <TContinuationResult> the Continuation's result type
+ * @param <T> the Task's result type
+ * @param <R> the Continuation's result type
  * @see Task#continueWith(Continuation)
  * @see Task#continueWithTask(Continuation)
  */
-public interface Continuation<TResult, TContinuationResult> {
+public interface Continuation<T, R> {
 
   /**
    * Returns the result of applying this Continuation to {@code task}.
@@ -57,5 +57,5 @@ public interface Continuation<TResult, TContinuationResult> {
    * @param task the completed Task. Never null
    * @throws Exception if the result couldn't be produced
    */
-  TContinuationResult then(@NonNull Task<TResult> task) throws Exception;
+  R then(@NonNull Task<T> task) throws Exception;
 }

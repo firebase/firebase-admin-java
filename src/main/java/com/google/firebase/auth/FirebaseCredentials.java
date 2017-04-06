@@ -12,9 +12,6 @@ import com.google.firebase.tasks.Continuation;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,6 +21,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Standard {@link FirebaseCredential} implementations for use with {@link

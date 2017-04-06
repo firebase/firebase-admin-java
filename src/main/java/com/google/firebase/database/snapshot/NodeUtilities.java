@@ -98,13 +98,13 @@ public class NodeUtilities {
   }
 
   public static int nameAndPriorityCompare(
-      ChildKey aKey, Node aPriority, ChildKey bKey, Node bPriority) {
+      ChildKey key1, Node priority1, ChildKey key2, Node priority2) {
 
-    int priCmp = aPriority.compareTo(bPriority);
+    int priCmp = priority1.compareTo(priority2);
     if (priCmp != 0) {
       return priCmp;
     } else {
-      return aKey.compareTo(bKey);
+      return key1.compareTo(key2);
     }
   }
 }

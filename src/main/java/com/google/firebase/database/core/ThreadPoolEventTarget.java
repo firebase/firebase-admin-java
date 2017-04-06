@@ -28,7 +28,6 @@ class ThreadPoolEventTarget implements EventTarget {
             TimeUnit.SECONDS,
             queue,
             new ThreadFactory() {
-
               @Override
               public Thread newThread(Runnable r) {
                 Thread thread = wrappedFactory.newThread(r);
@@ -39,7 +38,7 @@ class ThreadPoolEventTarget implements EventTarget {
                 // exceptions happen...
                 return thread;
               }
-            });
+        });
   }
 
   public ThreadPoolEventTarget(final ThreadPoolExecutor executor) {

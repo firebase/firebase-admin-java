@@ -5,15 +5,15 @@ import com.google.firebase.internal.NonNull;
 /**
  * Listener called when a {@link Task} completes.
  *
- * @param <TResult> the Task's result type
+ * @param <T> the Task's result type
  * @see Task#addOnCompleteListener(OnCompleteListener)
  */
-public interface OnCompleteListener<TResult> {
+public interface OnCompleteListener<T> {
 
   /**
    * Called when the Task completes.
    *
    * @param task the completed Task. Never null
    */
-  void onComplete(@NonNull Task<TResult> task);
+  void onComplete(@NonNull Task<T> task);
 }

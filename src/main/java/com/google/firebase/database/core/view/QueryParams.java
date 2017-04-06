@@ -102,16 +102,16 @@ public class QueryParams {
 
   public Node getIndexStartValue() {
     if (!hasStart()) {
-      throw new IllegalArgumentException("Cannot get index start value if start has not " +
-          "been set");
+      throw new IllegalArgumentException("Cannot get index start value if start has not "
+          + "been set");
     }
     return indexStartValue;
   }
 
   public ChildKey getIndexStartName() {
     if (!hasStart()) {
-      throw new IllegalArgumentException("Cannot get index start name if start has not been" +
-          " set");
+      throw new IllegalArgumentException("Cannot get index start name if start has not been"
+          + " set");
     }
     if (indexStartName != null) {
       return indexStartName;
@@ -126,16 +126,16 @@ public class QueryParams {
 
   public Node getIndexEndValue() {
     if (!hasEnd()) {
-      throw new IllegalArgumentException("Cannot get index end value if start has not been " +
-          "set");
+      throw new IllegalArgumentException("Cannot get index end value if start has not been "
+          + "set");
     }
     return indexEndValue;
   }
 
   public ChildKey getIndexEndName() {
     if (!hasEnd()) {
-      throw new IllegalArgumentException("Cannot get index end name if start has not been " +
-          "set");
+      throw new IllegalArgumentException("Cannot get index end name if start has not been "
+          + "set");
     }
     if (indexEndName != null) {
       return indexEndName;

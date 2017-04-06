@@ -5,11 +5,11 @@ import com.google.firebase.internal.NonNull;
 /**
  * A listener that is called upon {@link Task} completion.
  *
- * @param <TResult> Task result type.
+ * @param <T> Task result type.
  */
-interface TaskCompletionListener<TResult> {
+interface TaskCompletionListener<T> {
 
-  void onComplete(@NonNull Task<TResult> task);
+  void onComplete(@NonNull Task<T> task);
 
   void cancel();
 }

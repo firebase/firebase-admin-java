@@ -216,8 +216,7 @@ public class ViewProcessor {
       } else {
         ChildKey childKey = changePath.getFront();
         if (childKey.isPriorityChildName()) {
-          assert changePath.size() == 1 : "Can't have a priority with additional path " +
-              "components";
+          assert changePath.size() == 1 : "Can't have a priority with additional path components";
           Node oldEventNode = oldEventSnap.getNode();
           Node serverNode = viewCache.getServerCache().getNode();
           // we might have overwrites for this priority
@@ -298,8 +297,7 @@ public class ViewProcessor {
       // we want to filter the server node, but we didn't filter the server node yet, so
       // simulate a
       // full update
-      assert !changePath.isEmpty() : "An empty path should have been caught in the other " +
-          "branch";
+      assert !changePath.isEmpty() : "An empty path should have been caught in the other branch";
       ChildKey childKey = changePath.getFront();
       Path updatePath = changePath.popFront();
       Node newChild =
@@ -369,8 +367,7 @@ public class ViewProcessor {
                 changedSnap);
         newViewCache =
             oldViewCache.updateEventSnap(
-                newEventCache, oldEventSnap.isFullyInitialized(), oldEventSnap.isFiltered
-                    ());
+                newEventCache, oldEventSnap.isFullyInitialized(), oldEventSnap.isFiltered());
       } else {
         Path childChangePath = changePath.popFront();
         Node oldChild = oldEventSnap.getNode().getImmediateChild(childKey);
@@ -591,8 +588,7 @@ public class ViewProcessor {
         Path serverCachePath = ackPath.child(mergePath);
         if (serverCache.isCompleteForPath(serverCachePath)) {
           changedChildren =
-              changedChildren.addWrite(mergePath, serverCache.getNode().getChild
-                  (serverCachePath));
+              changedChildren.addWrite(mergePath, serverCache.getNode().getChild(serverCachePath));
         }
       }
       return applyServerMerge(
