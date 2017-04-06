@@ -191,8 +191,7 @@ public class Path implements Iterable<ChildKey>, Comparable<Path> {
 
       @Override
       public void remove() {
-        throw new UnsupportedOperationException("Can't remove component from immutable " +
-            "Path!");
+        throw new UnsupportedOperationException("Can't remove component from immutable Path!");
       }
     };
   }

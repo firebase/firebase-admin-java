@@ -186,8 +186,7 @@ public class ArraySortedMap<K, V> extends ImmutableSortedMap<K, V> {
 
       @Override
       public void remove() {
-        throw new UnsupportedOperationException("Can't remove elements from " +
-            "ImmutableSortedMap");
+        throw new UnsupportedOperationException("Can't remove elements from ImmutableSortedMap");
       }
     };
   }

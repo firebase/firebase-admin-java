@@ -110,8 +110,7 @@ public class DatabaseConfig extends Context {
   public synchronized void setSessionPersistenceKey(String sessionKey) {
     assertUnfrozen();
     if (sessionKey == null || sessionKey.isEmpty()) {
-      throw new IllegalArgumentException("Session identifier is not allowed to be empty or " +
-          "null!");
+      throw new IllegalArgumentException("Session identifier is not allowed to be empty or null!");
     }
     this.persistenceKey = sessionKey;
   }

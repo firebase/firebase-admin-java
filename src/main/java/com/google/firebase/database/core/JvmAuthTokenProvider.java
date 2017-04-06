@@ -85,8 +85,7 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
         ScheduledExecutorService executorService) {
       this.listener = checkNotNull(listener, "Listener must not be null");
       this.firebaseApp = checkNotNull(firebaseApp, "FirebaseApp must not be null");
-      this.executorService = checkNotNull(executorService, "ExecutorService must not be " +
-          "null");
+      this.executorService = checkNotNull(executorService, "ExecutorService must not be null");
     }
 
     @Override

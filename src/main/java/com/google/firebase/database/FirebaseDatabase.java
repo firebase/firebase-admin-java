@@ -181,8 +181,7 @@ public class FirebaseDatabase {
 
     if (path == null) {
       throw new NullPointerException(
-          "Can't pass null for argument 'pathString' in " + "FirebaseDatabase.getReference" +
-              "()");
+          "Can't pass null for argument 'pathString' in " + "FirebaseDatabase.getReference()");
     }
     Validation.validateRootPathString(path);
 
@@ -204,8 +203,7 @@ public class FirebaseDatabase {
 
     if (url == null) {
       throw new NullPointerException(
-          "Can't pass null for argument 'url' in " + "FirebaseDatabase.getReferenceFromUrl" +
-              "()");
+          "Can't pass null for argument 'url' in " + "FirebaseDatabase.getReferenceFromUrl()");
     }
 
     ParsedUrl parsedUrl = Utilities.parseUrl(url);

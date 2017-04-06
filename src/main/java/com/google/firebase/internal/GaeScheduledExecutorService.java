@@ -57,8 +57,7 @@ public class GaeScheduledExecutorService implements ScheduledExecutorService {
       return scheduledExecutorService;
     } else {
       throw new UnsupportedOperationException("ScheduledExecutorService not available. "
-          + "A manually-scaled instance is required when running the Firebase Admin SDK on " +
-          "GAE.");
+          + "A manually-scaled instance is required when running the Firebase Admin SDK on GAE.");
     }
   }
 

@@ -26,8 +26,8 @@ public final class FirebaseOptions {
       @Nullable String databaseUrl,
       @NonNull FirebaseCredential firebaseCredential,
       @Nullable Map<String, Object> databaseAuthVariableOverride) {
-    Preconditions.checkArgument(firebaseCredential != null, "Service Account must be provided" +
-        ".");
+    Preconditions.checkArgument(firebaseCredential != null,
+        "Service Account must be provided.");
 
     this.databaseUrl = databaseUrl;
     this.firebaseCredential = firebaseCredential;

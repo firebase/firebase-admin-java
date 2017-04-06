@@ -349,8 +349,7 @@ public class DatabaseReference extends Query {
   private Task<Void> updateChildrenInternal(
       final Map<String, Object> update, final CompletionListener optListener) {
     if (update == null) {
-      throw new NullPointerException("Can't pass null for argument 'update' in " +
-          "updateChildren()");
+      throw new NullPointerException("Can't pass null for argument 'update' in updateChildren()");
     }
     final Map<String, Object> bouncedUpdate = CustomClassMapper.convertToPlainJavaTypes(update);
     final Map<Path, Node> parsedUpdate =
@@ -435,8 +434,7 @@ public class DatabaseReference extends Query {
    */
   public void runTransaction(final Transaction.Handler handler, final boolean fireLocalEvents) {
     if (handler == null) {
-      throw new NullPointerException("Can't pass null for argument 'handler' in " +
-          "runTransaction()");
+      throw new NullPointerException("Can't pass null for argument 'handler' in runTransaction()");
     }
     Validation.validateWritablePath(getPath());
     repo.scheduleNow(

@@ -44,8 +44,7 @@ public class RulesTestIT {
                     .put(".write", true)
                     .put(
                         ".read",
-                        "data.child('public').val() == true && data.child('hidden').val() != " +
-                            "true")
+                        "data.child('public').val() == true && data.child('hidden').val() != true")
                     .build())
             .put(
                 "users",

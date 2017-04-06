@@ -218,8 +218,7 @@ public class CompoundWrite implements Iterable<Map.Entry<Path, Node>> {
           // Apply priorities at the end so we don't update priorities for either empty
           // nodes or
           // forget to apply priorities to empty nodes that are later filled
-          assert childTree.getValue() != null : "Priority writes must always be leaf " +
-              "nodes";
+          assert childTree.getValue() != null : "Priority writes must always be leaf nodes";
           priorityWrite = childTree.getValue();
         } else {
           node = applySubtreeWrite(relativePath.child(childKey), childTree, node);

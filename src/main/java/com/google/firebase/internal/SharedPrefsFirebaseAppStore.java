@@ -1,5 +1,9 @@
 package com.google.firebase.internal;
 
+import static com.google.firebase.internal.Preconditions.checkState;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
+
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -10,10 +14,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
-
-import static com.google.firebase.internal.Preconditions.checkState;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.asList;
 
 /**
  * Responsible for the persistence of FirebaseApps.
@@ -105,14 +105,12 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
       String encodedAppNamesValue = prefs.get(KEY_FIREBASE_APP_NAMES, "");
       List<String> encodedAppNames = asList(encodedAppNamesValue.split(VALUE_SEPARATOR));
 
-      if (!ImplFirebaseTrampolines.isDefaultApp(app) && encodedAppNames.contains
-          (encodedAppName)) {
+      if (!ImplFirebaseTrampolines.isDefaultApp(app) && encodedAppNames.contains(encodedAppName)) {
         checkPersistedAppCompatible(app);
         return;
       }
       FirebaseOptions options = app.getOptions();
-      prefs.put(KEY_FIREBASE_APP_NAMES, encodedAppNamesValue + VALUE_SEPARATOR +
-          encodedAppName);
+      prefs.put(KEY_FIREBASE_APP_NAMES, encodedAppNamesValue + VALUE_SEPARATOR + encodedAppName);
       // TODO(depoll): Make sure this has all of the options -- not just the DB URL.
       writeValue(prefs, KEY_PREFIX_DATABASE_URL + encodedAppName, options.getDatabaseUrl());
     }
@@ -127,8 +125,7 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
       List<String> encodedAppNames = asList(encodedAppNamesValue.split(VALUE_SEPARATOR));
       List<String> updatedEncodedAppNames = new ArrayList<>(encodedAppNames);
       updatedEncodedAppNames.remove(encodedAppName);
-      prefs.put(KEY_FIREBASE_APP_NAMES, Joiner.on(VALUE_SEPARATOR).join
-          (updatedEncodedAppNames));
+      prefs.put(KEY_FIREBASE_APP_NAMES, Joiner.on(VALUE_SEPARATOR).join(updatedEncodedAppNames));
       prefs.remove(KEY_PREFIX_API_KEY + encodedAppName);
       prefs.remove(KEY_PREFIX_APP_ID + encodedAppName);
       prefs.remove(KEY_PREFIX_DATABASE_URL + encodedAppName);

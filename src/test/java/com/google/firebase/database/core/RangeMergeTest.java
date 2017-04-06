@@ -76,16 +76,16 @@ public class RangeMergeTest {
   public void endIsInclusive() {
     Node node =
         NodeFromJSON(
-            fromSingleQuotedString("{'bar': 'bar-value', 'foo': 'foo-value', 'quu': " +
-                "'quu-value'}"));
+            fromSingleQuotedString("{'bar': 'bar-value', 'foo': 'foo-value', 'quu': "
+                + "'quu-value'}"));
     Node update = NodeFromJSON(fromSingleQuotedString("{'baz': 'baz-value' }"));
     RangeMerge merge = new RangeMerge(path("bar"), path("foo"), update); // foo should be
     // deleted
     Node actual = merge.applyTo(node);
     Node expected =
         NodeFromJSON(
-            fromSingleQuotedString("{'bar': 'bar-value', 'baz': 'baz-value', 'quu': " +
-                "'quu-value'}"));
+            fromSingleQuotedString("{'bar': 'bar-value', 'baz': 'baz-value', 'quu': "
+                + "'quu-value'}"));
     assertEquals(expected, actual);
   }
 

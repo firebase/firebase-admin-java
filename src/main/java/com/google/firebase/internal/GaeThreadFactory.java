@@ -50,8 +50,8 @@ public class GaeThreadFactory implements ThreadFactory {
       throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException,
       IllegalAccessException {
     Class<?> gaeThreadManager = Class.forName(GAE_THREAD_MANAGER_CLASS);
-    return (ThreadFactory) gaeThreadManager.getMethod("currentRequestThreadFactory").invoke
-        (null);
+    return (ThreadFactory) gaeThreadManager.getMethod("currentRequestThreadFactory")
+        .invoke(null);
   }
 
   @Override

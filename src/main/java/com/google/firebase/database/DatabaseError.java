@@ -83,8 +83,7 @@ public class DatabaseError {
     errorReasons.put(OPERATION_FAILED, "The server indicated that this operation failed");
     errorReasons.put(
         PERMISSION_DENIED, "This client does not have permission to perform this operation");
-    errorReasons.put(DISCONNECTED, "The operation had to be aborted due to a network " +
-        "disconnect");
+    errorReasons.put(DISCONNECTED, "The operation had to be aborted due to a network disconnect");
     errorReasons.put(EXPIRED_TOKEN, "The supplied auth token has expired");
     errorReasons.put(INVALID_TOKEN, "The supplied auth token was invalid");
     errorReasons.put(MAX_RETRIES, "The transaction had too many retries");
@@ -95,8 +94,7 @@ public class DatabaseError {
         "User code called from the Firebase Database runloop threw an exception:\n");
 
     // client codes
-    errorReasons.put(NETWORK_ERROR, "The operation could not be performed due to a network " +
-        "error");
+    errorReasons.put(NETWORK_ERROR, "The operation could not be performed due to a network error");
     errorReasons.put(WRITE_CANCELED, "The write was canceled by the user.");
     errorReasons.put(UNKNOWN_ERROR, "An unknown error occurred");
   }
@@ -157,21 +155,6 @@ public class DatabaseError {
   }
 
   /**
-   * <strong>For internal use.</strong>
-   *
-   * @param code The error code
-   * @return An error corresponding the to the code
-   * @hide
-   */
-  public static DatabaseError fromCode(int code) {
-    if (!errorReasons.containsKey(code)) {
-      throw new IllegalArgumentException("Invalid Firebase Database error code: " + code);
-    }
-    String message = errorReasons.get(code);
-    return new DatabaseError(code, message, null);
-  }
-
-  /**
    * <strong>For internal use</strong>
    *
    * @param status The status string
@@ -188,6 +171,21 @@ public class DatabaseError {
 
     String message = reason == null ? errorReasons.get(code) : reason;
     return new DatabaseError(code, message, details);
+  }
+
+  /**
+   * <strong>For internal use.</strong>
+   *
+   * @param code The error code
+   * @return An error corresponding the to the code
+   * @hide
+   */
+  public static DatabaseError fromCode(int code) {
+    if (!errorReasons.containsKey(code)) {
+      throw new IllegalArgumentException("Invalid Firebase Database error code: " + code);
+    }
+    String message = errorReasons.get(code);
+    return new DatabaseError(code, message, null);
   }
 
   public static DatabaseError fromException(Throwable e) {

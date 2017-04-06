@@ -110,8 +110,7 @@ public class MutableData {
 
             @Override
             public void remove() {
-              throw new UnsupportedOperationException("remove called on immutable " +
-                  "collection");
+              throw new UnsupportedOperationException("remove called on immutable collection");
             }
           };
         }
@@ -135,8 +134,7 @@ public class MutableData {
 
             @Override
             public void remove() {
-              throw new UnsupportedOperationException("remove called on immutable " +
-                  "collection");
+              throw new UnsupportedOperationException("remove called on immutable collection");
             }
           };
         }

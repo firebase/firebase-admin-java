@@ -5,30 +5,30 @@ package com.google.firebase.internal;
  */
 public class GetTokenResult {
 
-  private String mToken;
+  private String token;
 
   /**
    * @param token represents the {@link String} access token.
    * @hide
    */
   public GetTokenResult(String token) {
-    mToken = token;
+    this.token = token;
   }
 
   @Nullable
   public String getToken() {
-    return mToken;
+    return token;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(mToken);
+    return Objects.hashCode(token);
   }
 
   @Override
   public boolean equals(Object obj) {
     return obj != null
         && obj instanceof GetTokenResult
-        && Objects.equal(mToken, ((GetTokenResult) obj).mToken);
+        && Objects.equal(token, ((GetTokenResult) obj).token);
   }
 }

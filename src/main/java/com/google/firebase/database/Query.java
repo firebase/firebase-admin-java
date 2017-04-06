@@ -73,8 +73,7 @@ public class Query {
     if (params.getIndex().equals(KeyIndex.getInstance())) {
       String message =
           "You must use startAt(String value), endAt(String value) or "
-              + "equalTo(String value) in combination with orderByKey(). Other type of " +
-              "values or "
+              + "equalTo(String value) in combination with orderByKey(). Other type of values or "
               + "using the version with 2 parameters is not supported";
       if (params.hasStart()) {
         Node startNode = params.getIndexStartValue();

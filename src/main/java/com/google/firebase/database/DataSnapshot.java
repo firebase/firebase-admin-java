@@ -256,8 +256,7 @@ public class DataSnapshot {
 
           @Override
           public void remove() {
-            throw new UnsupportedOperationException("remove called on immutable " +
-                "collection");
+            throw new UnsupportedOperationException("remove called on immutable collection");
           }
         };
       }

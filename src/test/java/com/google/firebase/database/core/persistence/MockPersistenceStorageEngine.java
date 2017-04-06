@@ -212,8 +212,7 @@ public class MockPersistenceStorageEngine implements PersistenceStorageEngine {
   public Set<ChildKey> loadTrackedQueryKeys(Set<Long> trackedQueryIds) {
     HashSet<ChildKey> keys = new HashSet<>();
     for (Long id : trackedQueryIds) {
-      assert (this.trackedQueries.containsKey(id)) : "Can't track keys for an untracked " +
-          "query.";
+      assert (this.trackedQueries.containsKey(id)) : "Can't track keys for an untracked query.";
       keys.addAll(loadTrackedQueryKeys(id));
     }
     return keys;

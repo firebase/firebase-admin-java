@@ -158,8 +158,7 @@ public class RBTreeSortedMap<K, V> extends ImmutableSortedMap<K, V> {
         node = node.getRight();
       }
     }
-    throw new IllegalArgumentException("Couldn't find predecessor key of non-present key: " +
-        key);
+    throw new IllegalArgumentException("Couldn't find predecessor key of non-present key: " + key);
   }
 
   @Override
@@ -187,8 +186,7 @@ public class RBTreeSortedMap<K, V> extends ImmutableSortedMap<K, V> {
         node = node.getLeft();
       }
     }
-    throw new IllegalArgumentException("Couldn't find successor key of non-present key: " +
-        key);
+    throw new IllegalArgumentException("Couldn't find successor key of non-present key: " + key);
   }
 
   @Override

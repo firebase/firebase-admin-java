@@ -1,5 +1,7 @@
 package com.google.firebase.database.utilities.encoding;
 
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
+
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.Exclude;
 import com.google.firebase.database.GenericTypeIndicator;
@@ -27,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
 
 /**
  * Helper class to convert to/from custom POJO classes and plain Java types.
@@ -152,7 +152,7 @@ public class CustomClassMapper {
     }
   }
 
-  @SuppressWarnings( {"unchecked", "TypeParameterUnusedInFormals"})
+  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
   private static <T> T deserializeToType(Object obj, Type type) {
     if (obj == null) {
       return null;
@@ -199,7 +199,7 @@ public class CustomClassMapper {
     }
   }
 
-  @SuppressWarnings( {"unchecked", "TypeParameterUnusedInFormals"})
+  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
   private static <T> T deserializeToParameterizedType(Object obj, ParameterizedType type) {
     // getRawType should always return a Class<?>
     Class<?> rawType = (Class<?>) type.getRawType();
@@ -241,7 +241,7 @@ public class CustomClassMapper {
       Type[] types = type.getActualTypeArguments();
       if (types.length != typeVariables.length) {
         throw new IllegalStateException(
-            "Mismatched lengths for type variables and " + "actual types");
+            "Mismatched lengths for type variables and actual types");
       }
       for (int i = 0; i < typeVariables.length; i++) {
         typeMapping.put(typeVariables[i], types[i]);
@@ -283,8 +283,8 @@ public class CustomClassMapper {
         return (T) Enum.valueOf((Class) clazz, value);
       } catch (IllegalArgumentException e) {
         throw new DatabaseException(
-            "Could not find enum value of " + clazz.getName() + " for value \"" + value +
-                "\"");
+            "Could not find enum value of " + clazz.getName() + " for value \""
+                + value + "\"");
       }
     } else {
       throw new DatabaseException(
@@ -449,8 +449,7 @@ public class CustomClassMapper {
           addProperty(propertyName);
           method.setAccessible(true);
           if (getters.containsKey(propertyName)) {
-            throw new DatabaseException("Found conflicting getters for name: " +
-                method.getName());
+            throw new DatabaseException("Found conflicting getters for name: " + method.getName());
           }
           getters.put(propertyName, method);
         }
@@ -478,8 +477,7 @@ public class CustomClassMapper {
             if (existingPropertyName != null) {
               if (!existingPropertyName.equals(propertyName)) {
                 throw new DatabaseException(
-                    "Found setter with invalid " + "case-sensitive name: " +
-                        method.getName());
+                    "Found setter with invalid case-sensitive name: " + method.getName());
               } else {
                 Method existingSetter = setters.get(propertyName);
                 if (existingSetter == null) {
@@ -684,17 +682,12 @@ public class CustomClassMapper {
     public T deserialize(Map<String, Object> values, Map<TypeVariable<Class<T>>, Type> types) {
       if (this.constructor == null) {
         throw new DatabaseException(
-            "Class " + this.clazz.getName() + " is missing a " + "constructor with no " +
-                "arguments");
+            "Class " + this.clazz.getName() + " is missing a constructor with no arguments");
       }
       T instance;
       try {
         instance = this.constructor.newInstance();
-      } catch (InstantiationException e) {
-        throw new RuntimeException(e);
-      } catch (IllegalAccessException e) {
-        throw new RuntimeException(e);
-      } catch (InvocationTargetException e) {
+      } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
         throw new RuntimeException(e);
       }
       for (Map.Entry<String, Object> entry : values.entrySet()) {
@@ -709,9 +702,7 @@ public class CustomClassMapper {
           Object value = CustomClassMapper.deserializeToType(entry.getValue(), resolvedType);
           try {
             setter.invoke(instance, value);
-          } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-          } catch (InvocationTargetException e) {
+          } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
           }
         } else if (this.fields.containsKey(propertyName)) {
