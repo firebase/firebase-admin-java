@@ -26,7 +26,8 @@ public final class FirebaseOptions {
       @Nullable String databaseUrl,
       @NonNull FirebaseCredential firebaseCredential,
       @Nullable Map<String, Object> databaseAuthVariableOverride) {
-    Preconditions.checkArgument(firebaseCredential != null, "Service Account must be provided.");
+    Preconditions.checkArgument(firebaseCredential != null, "Service Account must be provided" +
+        ".");
 
     this.databaseUrl = databaseUrl;
     this.firebaseCredential = firebaseCredential;
@@ -98,9 +99,9 @@ public final class FirebaseOptions {
     }
 
     /**
-     * Initializes the builder's values from the options object.
-     * * <p>The new builder is not backed by this objects values, that is changes made to the new
-     * builder don't change the values of the origin object.
+     * Initializes the builder's values from the options object. * <p>The new builder is not
+     * backed by this objects values, that is changes made to the new builder don't change the
+     * values of the origin object.
      */
     public Builder(FirebaseOptions options) {
       databaseUrl = options.databaseUrl;
@@ -131,9 +132,10 @@ public final class FirebaseOptions {
      * <code>setServiceAccount()</code> methods can be used.
      *
      * @param stream A stream containing the service account contents as JSON.
-     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be
+     *     chained.
      * @deprecated Use {@link #setCredential} instead and obtain credentials via {@link
-     * FirebaseCredentials}.
+     *     FirebaseCredentials}.
      */
     @Deprecated
     public Builder setServiceAccount(@NonNull InputStream stream) {
@@ -161,24 +163,23 @@ public final class FirebaseOptions {
     }
 
     /**
-     * Sets the <code>auth</code> variable to be used by the Realtime Database
-     * rules.
+     * Sets the <code>auth</code> variable to be used by the Realtime Database rules.
      *
-     * <p>When set, security rules for Realtime Database actions are evaluated using the provided
-     * auth object. During evaluation the object is available on the <code>auth</code> variable.
-     * Use this option to enforce schema validation and additional security for this app instance.
+     * <p>When set, security rules for Realtime Database actions are evaluated using the
+     * provided auth object. During evaluation the object is available on the <code>auth</code>
+     * variable. Use this option to enforce schema validation and additional security for this
+     * app instance.
      *
      * <p>If this option is not provided, security rules are bypassed entirely for this app
-     * instance. If this option is set to <code>null</code>, security rules are evaluated against
-     * an unauthenticated user. That is, the <code>auth</code> variable is <code>null</code>.
+     * instance. If this option is set to <code>null</code>, security rules are evaluated
+     * against an unauthenticated user. That is, the <code>auth</code> variable is
+     * <code>null</code>.
      *
-     * <p>See
-     * <a href="/docs/database/admin/start#authenticate-with-limited-privileges">
-     * Authenticate with limited privileges</a> for code samples and detailed
-     * documentation.
+     * <p>See <a href="/docs/database/admin/start#authenticate-with-limited-privileges">
+     * Authenticate with limited privileges</a> for code samples and detailed documentation.
      *
      * @param databaseAuthVariableOverride The value to use for the <code>auth</code> variable in
-     * the security rules for Realtime Database actions.
+     *     the security rules for Realtime Database actions.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setDatabaseAuthVariableOverride(

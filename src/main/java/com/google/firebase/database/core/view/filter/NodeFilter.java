@@ -16,8 +16,8 @@ import com.google.firebase.database.snapshot.Node;
 public interface NodeFilter {
 
   /**
-   * Update a single complete child in the snap. If the child equals the old child in the snap, this
-   * is a no-op. The method expects an indexed snap.
+   * Update a single complete child in the snap. If the child equals the old child in the snap,
+   * this is a no-op. The method expects an indexed snap.
    */
   IndexedNode updateChild(
       IndexedNode node,

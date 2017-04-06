@@ -113,7 +113,8 @@ public class SyncPointTest {
         }
       }
       Assert.assertTrue(
-          "Expected events did not contain actual event: " + actual + "\nExpected: " + expectedList,
+          "Expected events did not contain actual event: " + actual + "\nExpected: " +
+              expectedList,
           found);
     }
     Assert.assertTrue("Missing expected events: " + currentExpected, currentExpected.isEmpty());
@@ -128,7 +129,8 @@ public class SyncPointTest {
         currentPath = currentEvent.getPath();
       }
       if (!currentPathRegistrationMap.containsKey(currentEvent.eventRegistration)) {
-        currentPathRegistrationMap.put(currentEvent.eventRegistration, new ArrayList<TestEvent>());
+        currentPathRegistrationMap.put(currentEvent.eventRegistration, new
+            ArrayList<TestEvent>());
       }
       List<TestEvent> registrationList =
           currentPathRegistrationMap.get(currentEvent.eventRegistration);
@@ -239,10 +241,12 @@ public class SyncPointTest {
       throw new RuntimeException("Unknown event type: " + eventTypeStr);
     }
     String childName = (String) eventSpec.get("name");
-    String prevName = eventSpec.get("prevName") != null ? (String) eventSpec.get("prevName") : null;
+    String prevName = eventSpec.get("prevName") != null ? (String) eventSpec.get("prevName")
+        : null;
     Object data = eventSpec.get("data");
 
-    DatabaseReference rootRef = basePath != null ? ref.getRoot().child(basePath) : ref.getRoot();
+    DatabaseReference rootRef = basePath != null ? ref.getRoot().child(basePath) : ref
+        .getRoot();
     DatabaseReference pathRef = rootRef.child(path);
     if (childName != null) {
       pathRef = pathRef.child(childName);
@@ -317,7 +321,8 @@ public class SyncPointTest {
             registrations.put(callbackId, eventRegistration);
           }
         }
-        List<TestEvent> actual = testEvents(syncTree.addEventRegistration(eventRegistration));
+        List<TestEvent> actual = testEvents(syncTree.addEventRegistration
+            (eventRegistration));
         assertEventExactMatch(expected, actual);
       } else if (type.equals("unlisten")) {
         EventRegistration eventRegistration = null;
@@ -327,7 +332,8 @@ public class SyncPointTest {
               "Couldn't find previous listen will callbackId " + callbackId);
         }
         eventRegistration = registrations.get(callbackId);
-        List<TestEvent> actual = testEvents(syncTree.removeEventRegistration(eventRegistration));
+        List<TestEvent> actual = testEvents(syncTree.removeEventRegistration
+            (eventRegistration));
         assertEventExactMatch(expected, actual);
       } else if (type.equals("serverUpdate")) {
         Node update = NodeUtilities.NodeFromJSON(spec.get("data"));
@@ -335,7 +341,8 @@ public class SyncPointTest {
         if (spec.containsKey("tag")) {
           actual =
               testEvents(
-                  syncTree.applyTaggedQueryOverwrite(path, update, parseTag(spec.get("tag"))));
+                  syncTree.applyTaggedQueryOverwrite(path, update, parseTag(spec.get
+                      ("tag"))));
         } else {
           actual = testEvents(syncTree.applyServerOverwrite(path, update));
         }
@@ -345,14 +352,16 @@ public class SyncPointTest {
         List<TestEvent> actual;
         if (spec.containsKey("tag")) {
           actual =
-              testEvents(syncTree.applyTaggedQueryMerge(path, merges, parseTag(spec.get("tag"))));
+              testEvents(syncTree.applyTaggedQueryMerge(path, merges, parseTag(spec.get
+                  ("tag"))));
         } else {
           actual = testEvents(syncTree.applyServerMerge(path, merges));
         }
         assertEventSetsMatch(expected, actual);
       } else if (type.equals("set")) {
         Node toSet = NodeUtilities.NodeFromJSON(spec.get("data"));
-        boolean visible = spec.containsKey("visible") ? (Boolean) spec.get("visible") : true;
+        boolean visible = spec.containsKey("visible") ? (Boolean) spec.get("visible") :
+            true;
         boolean persist = visible; // for now, assume anything visible should be persisted.
         List<TestEvent> actual =
             testEvents(
@@ -360,9 +369,11 @@ public class SyncPointTest {
                     path, toSet, toSet, currentWriteId++, visible, persist));
         assertEventSetsMatch(expected, actual);
       } else if (type.equals("update")) {
-        CompoundWrite merges = CompoundWrite.fromValue((Map<String, Object>) spec.get("data"));
+        CompoundWrite merges = CompoundWrite.fromValue((Map<String, Object>) spec.get
+            ("data"));
         List<TestEvent> actual =
-            testEvents(syncTree.applyUserMerge(path, merges, merges, currentWriteId++, true));
+            testEvents(syncTree.applyUserMerge(path, merges, merges, currentWriteId++,
+                true));
         assertEventSetsMatch(expected, actual);
       } else if (type.equals("ackUserWrite")) {
         int toClear = (Integer) spec.get("writeId");
@@ -371,7 +382,8 @@ public class SyncPointTest {
             testEvents(syncTree.ackUserWrite(toClear, revert, true, new TestClock()));
         assertEventSetsMatch(expected, actual);
       } else if (type.equals("suppressWarning")) {
-        // Do nothing. This is a hack so JS's Jasmine tests don't throw warnings for "expect no
+        // Do nothing. This is a hack so JS's Jasmine tests don't throw warnings for
+        // "expect no
         // errors" tests.
       } else {
         throw new RuntimeException("Unknown step: " + type);
@@ -931,7 +943,8 @@ public class SyncPointTest {
 
   @Test
   public void limitQueryHandlesDeepUserMergeForOutOfViewItemFollowedByServerUpdate() {
-    runOne("Limit query handles deep user merge for out-of-view item followed by server update.");
+    runOne("Limit query handles deep user merge for out-of-view item followed by server " +
+        "update.");
   }
 
   @Test

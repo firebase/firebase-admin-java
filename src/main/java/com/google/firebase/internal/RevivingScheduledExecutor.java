@@ -50,8 +50,8 @@ public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
   private AtomicBoolean requestedRestart = new AtomicBoolean();
 
   /**
-   * Creates a new RevivingScheduledExecutor that optionally restarts its worker thread every twelve
-   * hours.
+   * Creates a new RevivingScheduledExecutor that optionally restarts its worker thread every
+   * twelve hours.
    *
    * @param threadFactory Thread factory to use to restart threads.
    * @param threadName Name of the threads in the pool.
@@ -139,7 +139,8 @@ public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
     }
 
     if (throwable == REVIVE_THREAD_EXCEPTION) {
-      // Re-throwing this exception will kill the thread and cause ScheduledThreadPoolExecutor to
+      // Re-throwing this exception will kill the thread and cause
+      // ScheduledThreadPoolExecutor to
       // spawn a new thread.
       throw (RuntimeException) throwable;
     } else if (throwable != null) {

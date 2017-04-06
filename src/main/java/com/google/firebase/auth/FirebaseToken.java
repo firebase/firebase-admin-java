@@ -35,7 +35,8 @@ public final class FirebaseToken {
               jws.getSignedContentBytes()));
     } catch (IOException e) {
       throw new IOException(
-          "Decoding Firebase ID token failed. Make sure you passed the entire string JWT which "
+          "Decoding Firebase ID token failed. Make sure you passed the entire string JWT " +
+              "which "
               + "represents an ID token. See https://firebase.google.com/docs/auth/admin/"
               + "verify-id-tokens for details on how to retrieve an ID token.",
           e);
@@ -115,8 +116,8 @@ public final class FirebaseToken {
     public static class Payload extends IdToken.Payload {
 
       /**
-       * Timestamp of the last time this user authenticated with Firebase on the device receiving
-       * this token.
+       * Timestamp of the last time this user authenticated with Firebase on the device
+       * receiving this token.
        */
       @Key("auth_time")
       private long authTime;
@@ -154,8 +155,8 @@ public final class FirebaseToken {
       }
 
       /**
-       * Returns the time in seconds from the Unix Epoch that this user last authenticated with
-       * Firebase on this device.
+       * Returns the time in seconds from the Unix Epoch that this user last authenticated
+       * with Firebase on this device.
        */
       public long getAuthTime() {
         return authTime;
@@ -169,7 +170,8 @@ public final class FirebaseToken {
       }
 
       /**
-       * Indicates if the email address returned by {@link #getEmail()} has been verified as good.
+       * Indicates if the email address returned by {@link #getEmail()} has been verified as
+       * good.
        */
       public boolean isEmailVerified() {
         return emailVerified;

@@ -70,7 +70,8 @@ public class ChildKey implements Comparable<ChildKey> {
     } else if (this.isInt()) {
       if (other.isInt()) {
         int cmp = Utilities.compareInts(this.intValue(), other.intValue());
-        return cmp == 0 ? Utilities.compareInts(this.key.length(), other.key.length()) : cmp;
+        return cmp == 0 ? Utilities.compareInts(this.key.length(), other.key.length()) :
+            cmp;
       } else {
         return -1;
       }

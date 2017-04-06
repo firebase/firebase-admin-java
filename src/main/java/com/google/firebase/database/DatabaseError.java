@@ -83,7 +83,8 @@ public class DatabaseError {
     errorReasons.put(OPERATION_FAILED, "The server indicated that this operation failed");
     errorReasons.put(
         PERMISSION_DENIED, "This client does not have permission to perform this operation");
-    errorReasons.put(DISCONNECTED, "The operation had to be aborted due to a network disconnect");
+    errorReasons.put(DISCONNECTED, "The operation had to be aborted due to a network " +
+        "disconnect");
     errorReasons.put(EXPIRED_TOKEN, "The supplied auth token has expired");
     errorReasons.put(INVALID_TOKEN, "The supplied auth token was invalid");
     errorReasons.put(MAX_RETRIES, "The transaction had too many retries");
@@ -94,7 +95,8 @@ public class DatabaseError {
         "User code called from the Firebase Database runloop threw an exception:\n");
 
     // client codes
-    errorReasons.put(NETWORK_ERROR, "The operation could not be performed due to a network error");
+    errorReasons.put(NETWORK_ERROR, "The operation could not be performed due to a network " +
+        "error");
     errorReasons.put(WRITE_CANCELED, "The write was canceled by the user.");
     errorReasons.put(UNKNOWN_ERROR, "An unknown error occurred");
   }

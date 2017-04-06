@@ -46,7 +46,8 @@ public class ZombieEventManager implements EventRegistrationZombieListener {
       // We need to match that behavior here and zombie all the relevant registrations.
       if (!registration.getQuerySpec().isDefault()) {
         EventRegistration defaultRegistration =
-            registration.clone(QuerySpec.defaultQueryAtPath(registration.getQuerySpec().getPath()));
+            registration.clone(QuerySpec.defaultQueryAtPath(registration.getQuerySpec()
+                .getPath()));
         registrationList = globalEventRegistrations.get(defaultRegistration);
         if (registrationList == null) {
           registrationList = new ArrayList<>();
@@ -64,7 +65,8 @@ public class ZombieEventManager implements EventRegistrationZombieListener {
     synchronized (globalEventRegistrations) {
       boolean found = false;
 
-      List<EventRegistration> registrationList = globalEventRegistrations.get(zombiedRegistration);
+      List<EventRegistration> registrationList = globalEventRegistrations.get
+          (zombiedRegistration);
       if (registrationList != null) {
         for (int i = 0; i < registrationList.size(); i++) {
           if (registrationList.get(i) == zombiedRegistration) {
@@ -107,16 +109,22 @@ public class ZombieEventManager implements EventRegistrationZombieListener {
       List<EventRegistration> registrationList = globalEventRegistrations.get(registration);
       if (registrationList != null && !registrationList.isEmpty()) {
         if (registration.getQuerySpec().isDefault()) {
-          // The behavior here has to match the behavior of SyncPoint.removeEventRegistration.
+          // The behavior here has to match the behavior of SyncPoint
+          // .removeEventRegistration.
           // If the query is default, it remove a single instance of the registration
-          // from each unique query.  So for example, if you had 3 copies registered under default,
+          // from each unique query.  So for example, if you had 3 copies registered
+          // under default,
           // you would end up with 2 still registered.
-          // If you had 1 registration in default and 2 in query a', you'd end up with just
+          // If you had 1 registration in default and 2 in query a', you'd end up with
+          // just
           // a single registration in a'.
-          // To implement this, we just store in a hashset queries that we remove so we can still
+          // To implement this, we just store in a hashset queries that we remove so we
+          // can still
           // keep a fairly simple structure.
-          // Note that we *could* use the same logic for non-default as the list there only has a
-          // a single query, but its somewhat wasteful to enumerate the list when we know we will
+          // Note that we *could* use the same logic for non-default as the list there
+          // only has a
+          // a single query, but its somewhat wasteful to enumerate the list when we
+          // know we will
           // only grab 1.
           HashSet<QuerySpec> zombiedQueries = new HashSet<>();
           // Walk down the list so that removes do not mess up the enumeration.

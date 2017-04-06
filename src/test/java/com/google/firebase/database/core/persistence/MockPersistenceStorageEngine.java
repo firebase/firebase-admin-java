@@ -212,7 +212,8 @@ public class MockPersistenceStorageEngine implements PersistenceStorageEngine {
   public Set<ChildKey> loadTrackedQueryKeys(Set<Long> trackedQueryIds) {
     HashSet<ChildKey> keys = new HashSet<>();
     for (Long id : trackedQueryIds) {
-      assert (this.trackedQueries.containsKey(id)) : "Can't track keys for an untracked query.";
+      assert (this.trackedQueries.containsKey(id)) : "Can't track keys for an untracked " +
+          "query.";
       keys.addAll(loadTrackedQueryKeys(id));
     }
     return keys;
@@ -240,15 +241,20 @@ public class MockPersistenceStorageEngine implements PersistenceStorageEngine {
                         @Override
                         public CompoundWrite onNodeValue(
                             Path keepPath, Void value, CompoundWrite accum) {
-                          return accum.addWrite(keepPath, dataNode.getChild(keepPath));
+                          return accum.addWrite(keepPath, dataNode.getChild
+                              (keepPath));
                         }
                       });
           serverCache =
-              serverCache.removeWrite(absoluteDataPath).addWrites(absoluteDataPath, newCache);
+              serverCache.removeWrite(absoluteDataPath).addWrites(absoluteDataPath,
+                  newCache);
         } else {
-          // NOTE: This is technically a valid scenario (e.g. you ask to prune at / but only want to
-          // prune 'foo' and 'bar' and ignore everything else).  But currently our pruning will
-          // explicitly prune or keep everything we know about, so if we hit this it means our
+          // NOTE: This is technically a valid scenario (e.g. you ask to prune at / but
+          // only want to
+          // prune 'foo' and 'bar' and ignore everything else).  But currently our
+          // pruning will
+          // explicitly prune or keep everything we know about, so if we hit this it
+          // means our
           // tracked queries and the server cache are out of sync.
           hardAssert(
               pruneForest.shouldKeep(dataPath),

@@ -77,12 +77,12 @@ public class DatabaseConfig extends Context {
   }
 
   /**
-   * Used primarily for debugging. Limits the debug output to the specified components. By default,
-   * this is null, which enables logging from all components. Setting this explicitly will also set
-   * the log level to {@link Logger.Level#DEBUG DEBUG}.
+   * Used primarily for debugging. Limits the debug output to the specified components. By
+   * default, this is null, which enables logging from all components. Setting this explicitly
+   * will also set the log level to {@link Logger.Level#DEBUG DEBUG}.
    *
    * @param debugComponents A list of components for which logs are desired, or null to enable all
-   * components
+   *     components
    */
   public synchronized void setDebugLogComponents(List<String> debugComponents) {
     assertUnfrozen();
@@ -110,7 +110,8 @@ public class DatabaseConfig extends Context {
   public synchronized void setSessionPersistenceKey(String sessionKey) {
     assertUnfrozen();
     if (sessionKey == null || sessionKey.isEmpty()) {
-      throw new IllegalArgumentException("Session identifier is not allowed to be empty or null!");
+      throw new IllegalArgumentException("Session identifier is not allowed to be empty or " +
+          "null!");
     }
     this.persistenceKey = sessionKey;
   }
@@ -119,9 +120,9 @@ public class DatabaseConfig extends Context {
    * By default the Firebase Database client will keep data in memory while your application is
    * running, but not when it is restarted. By setting this value to `true`, the data will be
    * persisted to on-device (disk) storage and will thus be available again when the app is
-   * restarted (even when there is no network connectivity at that time). Note that this method must
-   * be called before creating your first Database reference and only needs to be called once per
-   * application.
+   * restarted (even when there is no network connectivity at that time). Note that this method
+   * must be called before creating your first Database reference and only needs to be called once
+   * per application.
    *
    * @param isEnabled Set to true to enable disk persistence, set to false to disable it.
    * @since 2.3
@@ -134,9 +135,9 @@ public class DatabaseConfig extends Context {
   /**
    * By default Firebase Database will use up to 10MB of disk space to cache data. If the cache
    * grows beyond this size, Firebase Database will start removing data that hasn't been recently
-   * used. If you find that your application caches too little or too much data, call this method to
-   * change the cache size. This method must be called before creating your first Database reference
-   * and only needs to be called once per application.
+   * used. If you find that your application caches too little or too much data, call this method
+   * to change the cache size. This method must be called before creating your first Database
+   * reference and only needs to be called once per application.
    *
    * <p>Note that the specified cache size is only an approximation and the size on disk may
    * temporarily exceed it at times.

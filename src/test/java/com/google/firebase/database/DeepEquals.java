@@ -84,7 +84,8 @@ public class DeepEquals {
         }
 
         for (int i = 0; i < len; i++) {
-          DualKey dk = new DualKey(Array.get(dualKey.key1, i), Array.get(dualKey.key2, i));
+          DualKey dk = new DualKey(Array.get(dualKey.key1, i), Array.get(dualKey.key2,
+              i));
           if (!visited.contains(dk)) {
             stack.addFirst(dk);
           }
@@ -162,7 +163,8 @@ public class DeepEquals {
         for (Map.Entry entry1 : map1.entrySet()) {
           Map.Entry saveEntry2 = null;
           for (Map.Entry entry2 :
-              map2.entrySet()) { // recurse here (yes, that makes this a Stack-based implementation
+              map2.entrySet()) { // recurse here (yes, that makes this a Stack-based
+            // implementation
             // with partial recursion in the case of Map keys).
             if (deepEquals(entry1.getKey(), entry2.getKey(), visited)) {
               saveEntry2 = entry2;
@@ -239,8 +241,8 @@ public class DeepEquals {
 
   /**
    * Deeply compare the two sets referenced by dualKey. This method attempts to quickly determine
-   * inequality by length, then hash, and finally does a deepEquals on each element if the two Sets
-   * passed by the prior tests.
+   * inequality by length, then hash, and finally does a deepEquals on each element if the two
+   * Sets passed by the prior tests.
    *
    * @param col1 Collection one
    * @param col2 Collection two
@@ -254,7 +256,8 @@ public class DeepEquals {
 
     int h1 = deepHashCode(col1);
     int h2 = deepHashCode(col2);
-    if (h1 != h2) { // Faster than deep equals compare (O(n^2) comparison skipped when not equal)
+    if (h1 != h2) { // Faster than deep equals compare (O(n^2) comparison skipped when not
+      // equal)
       return false;
     }
 
@@ -369,7 +372,8 @@ public class DeepEquals {
 
   /**
    * @param c Class instance
-   * @return Collection of only the fields in the passed in class that would need further processing
+   * @return Collection of only the fields in the passed in class that would need further
+   * processing
    * (reference fields). This makes field traversal on a class faster as it does not need to
    * continually process known fields like primitives.
    */

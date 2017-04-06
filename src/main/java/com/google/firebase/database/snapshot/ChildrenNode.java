@@ -251,7 +251,8 @@ public class ChildrenNode implements Node {
       assert PriorityUtilities.isValidPriority(newChildNode);
       return updatePriority(newChildNode);
     } else {
-      Node newImmediateChild = getImmediateChild(front).updateChild(path.popFront(), newChildNode);
+      Node newImmediateChild = getImmediateChild(front).updateChild(path.popFront(),
+          newChildNode);
       return updateImmediateChild(front, newImmediateChild);
     }
   }

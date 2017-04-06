@@ -108,7 +108,8 @@ public class CompoundWriteTest {
     Path path = new Path("child-1");
     compoundWrite = compoundWrite.addWrite(path, LEAF_NODE);
     Assert.assertEquals(
-        baseNode.updateImmediateChild(path.getFront(), LEAF_NODE), compoundWrite.apply(baseNode));
+        baseNode.updateImmediateChild(path.getFront(), LEAF_NODE), compoundWrite.apply
+            (baseNode));
   }
 
   @Test
@@ -299,8 +300,10 @@ public class CompoundWriteTest {
   public void rootUpdateRemovesRootPriority() {
     CompoundWrite compoundWrite = CompoundWrite.emptyWrite();
     compoundWrite = compoundWrite.addWrite(new Path(".priority"), PRIO_NODE);
-    compoundWrite = compoundWrite.addWrite(Path.getEmptyPath(), NodeUtilities.NodeFromJSON("foo"));
-    Assert.assertEquals(NodeUtilities.NodeFromJSON("foo"), compoundWrite.apply(EmptyNode.Empty()));
+    compoundWrite = compoundWrite.addWrite(Path.getEmptyPath(), NodeUtilities.NodeFromJSON
+        ("foo"));
+    Assert.assertEquals(NodeUtilities.NodeFromJSON("foo"), compoundWrite.apply(EmptyNode
+        .Empty()));
   }
 
   @Test
@@ -373,7 +376,8 @@ public class CompoundWriteTest {
     CompoundWrite compoundWrite = CompoundWrite.emptyWrite();
     compoundWrite = compoundWrite.addWrite(new Path("child-1"), EmptyNode.Empty());
     Assert.assertEquals(
-        Collections.singletonList(new NamedNode(ChildKey.fromString("child-1"), EmptyNode.Empty())),
+        Collections.singletonList(new NamedNode(ChildKey.fromString("child-1"), EmptyNode
+            .Empty())),
         compoundWrite.getCompleteChildren());
   }
 
@@ -381,7 +385,8 @@ public class CompoundWriteTest {
   public void completeChildrenDoesntReturnDeepOverwrites() {
     CompoundWrite compoundWrite = CompoundWrite.emptyWrite();
     compoundWrite = compoundWrite.addWrite(new Path("child-1/deep/path"), LEAF_NODE);
-    Assert.assertEquals(Collections.<NamedNode>emptyList(), compoundWrite.getCompleteChildren());
+    Assert.assertEquals(Collections.<NamedNode>emptyList(), compoundWrite.getCompleteChildren
+        ());
   }
 
   @Test

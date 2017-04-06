@@ -63,7 +63,8 @@ class SparseSnapshotTree {
                 }
               });
 
-          // We've cleared out the value and set the children. Call this method again to hit the
+          // We've cleared out the value and set the children. Call this method again
+          // to hit the
           // next case
           return forget(path);
         }

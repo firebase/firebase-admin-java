@@ -114,7 +114,8 @@ public class NodeTest {
     assertEquals(node, node.updateChild(new Path(".priority"), EmptyNode.Empty()));
     assertEquals(node, node.updateChild(new Path("child"), EmptyNode.Empty()));
     assertEquals(node, node.updateChild(new Path("child/.priority"), EmptyNode.Empty()));
-    assertEquals(node, node.updateImmediateChild(ChildKey.fromString("child"), EmptyNode.Empty()));
+    assertEquals(node, node.updateImmediateChild(ChildKey.fromString("child"), EmptyNode
+        .Empty()));
     assertEquals(node, node.updateImmediateChild(ChildKey.getPriorityKey(), EmptyNode.Empty()));
   }
 

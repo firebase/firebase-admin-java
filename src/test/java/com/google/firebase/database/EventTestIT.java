@@ -33,9 +33,11 @@ public class EventTestIT {
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
 
-    EventHelper readerHelper = new EventHelper().addValueExpectation(reader).startListening(true);
+    EventHelper readerHelper = new EventHelper().addValueExpectation(reader).startListening
+        (true);
 
-    EventHelper writerHelper = new EventHelper().addValueExpectation(writer).startListening(true);
+    EventHelper writerHelper = new EventHelper().addValueExpectation(writer).startListening
+        (true);
 
     ZombieVerifier.verifyRepoZombies(refs);
 
@@ -107,15 +109,19 @@ public class EventTestIT {
   }
 
   @Test
-  public void setMultipleEventListenersOnSameNode() throws DatabaseException, InterruptedException {
+  public void setMultipleEventListenersOnSameNode() throws DatabaseException,
+      InterruptedException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
 
-    EventHelper writeHelper = new EventHelper().addValueExpectation(writer).startListening(true);
-    EventHelper writeHelper2 = new EventHelper().addValueExpectation(writer).startListening(true);
+    EventHelper writeHelper = new EventHelper().addValueExpectation(writer).startListening
+        (true);
+    EventHelper writeHelper2 = new EventHelper().addValueExpectation(writer).startListening
+        (true);
     EventHelper readHelper = new EventHelper().addValueExpectation(reader).startListening(true);
-    EventHelper readHelper2 = new EventHelper().addValueExpectation(reader).startListening(true);
+    EventHelper readHelper2 = new EventHelper().addValueExpectation(reader).startListening
+        (true);
 
     ZombieVerifier.verifyRepoZombies(refs);
 
@@ -478,8 +484,10 @@ public class EventTestIT {
               }
               ref.removeEventListener(this);
               try {
-                // this doesn't block immediately because we are already on the repo thread.
-                // we kick off the verify and let the unit test block on the endingsemaphore
+                // this doesn't block immediately because we are already on the repo
+                // thread.
+                // we kick off the verify and let the unit test block on the
+                // endingsemaphore
                 ZombieVerifier.verifyRepoZombies(ref, endingSemaphore);
               } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -526,8 +534,10 @@ public class EventTestIT {
                   }
                   ref.removeEventListener(this);
                   try {
-                    // this doesn't block immediately because we are already on the repo thread.
-                    // we kick off the verify and let the unit test block on the endingsemaphore
+                    // this doesn't block immediately because we are already on the
+                    // repo thread.
+                    // we kick off the verify and let the unit test block on the
+                    // endingsemaphore
                     ZombieVerifier.verifyRepoZombies(ref, endingSemaphore);
                   } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -575,8 +585,10 @@ public class EventTestIT {
               }
               ref.removeEventListener(this);
               try {
-                // this doesn't block immediately because we are already on the repo thread.
-                // we kick off the verify and let the unit test block on the endingsemaphore
+                // this doesn't block immediately because we are already on the repo
+                // thread.
+                // we kick off the verify and let the unit test block on the
+                // endingsemaphore
                 ZombieVerifier.verifyRepoZombies(ref, endingSemaphore);
               } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -624,8 +636,10 @@ public class EventTestIT {
               }
               ref.removeEventListener(this);
               try {
-                // this doesn't block immediately because we are already on the repo thread.
-                // we kick off the verify and let the unit test block on the endingsemaphore
+                // this doesn't block immediately because we are already on the repo
+                // thread.
+                // we kick off the verify and let the unit test block on the
+                // endingsemaphore
                 ZombieVerifier.verifyRepoZombies(ref, endingSemaphore);
               } catch (InterruptedException e) {
                 e.printStackTrace();

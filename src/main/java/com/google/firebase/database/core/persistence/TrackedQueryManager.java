@@ -1,5 +1,7 @@
 package com.google.firebase.database.core.persistence;
 
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
+
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.utilities.ImmutableTree;
 import com.google.firebase.database.core.utilities.Predicate;
@@ -18,8 +20,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
 
 public class TrackedQueryManager {
 

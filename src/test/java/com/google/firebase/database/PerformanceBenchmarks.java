@@ -200,7 +200,8 @@ public class PerformanceBenchmarks {
     ref.addValueEventListener(valueListener);
 
     semaphore.acquire();
-    System.err.println(String.format("Benchmark took %dms", System.currentTimeMillis() - start));
+    System.err.println(String.format("Benchmark took %dms", System.currentTimeMillis() -
+        start));
     ref.removeEventListener(childListener);
     ref.removeEventListener(valueListener);
   }

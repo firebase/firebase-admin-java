@@ -36,7 +36,8 @@ public class ImmutableSortedMapIterator<K, V> implements Iterator<Map.Entry<K, V
           node = node.getRight();
         }
       } else if (cmp == 0) {
-        // This node is exactly equal to our start key. Push it on the stack, but stop iterating;
+        // This node is exactly equal to our start key. Push it on the stack, but stop
+        // iterating;
         this.nodeStack.push((LLRBValueNode<K, V>) node);
         break;
       } else {

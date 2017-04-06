@@ -36,7 +36,8 @@ public class DatabaseServerAuthTestIT {
 
   // You can swap in the production Firebase URL to test against production.
   private static final String SERVER_SDK_DB_URL = "http://server-sdk-test.fblocal.com:9000";
-  //private static final String SERVER_SDK_DB_URL = "https://server-sdk-test-3ff90.firebaseio.com";
+  //private static final String SERVER_SDK_DB_URL = "https://server-sdk-test-3ff90.firebaseio
+  // .com";
 
   private static final String FBLOCAL_ADMIN_KEY = "1234";
   private static FirebaseApp masterApp;
@@ -59,7 +60,8 @@ public class DatabaseServerAuthTestIT {
   }
 
   private static void createTestDatabase() {
-    // Make sure local server-sdk-test namespace exists mapped to the correct project_id and number.
+    // Make sure local server-sdk-test namespace exists mapped to the correct project_id and
+    // number.
     String creationParams = "{\n"
         + "  \"project_id\": \"" + TestUtils.PROJECT_ID + "\",\n"
         + "  \"project_number\": \"" + TestUtils.PROJECT_NUMBER + "\"\n"
@@ -70,7 +72,8 @@ public class DatabaseServerAuthTestIT {
 
   private static void setDatabaseRules() {
     // TODO(depoll): Use more than uid in rule
-    // Set rules so the only allowed operation is writing to /test-uid-only by user with uid 'test'.
+    // Set rules so the only allowed operation is writing to /test-uid-only by user with uid
+    // 'test'.
     String rules =
         "{\n"
             + "  \"rules\": {\n"
@@ -165,7 +168,8 @@ public class DatabaseServerAuthTestIT {
   }
 
   private static void doServerAccountRestPut(final String endpoint, final String data) {
-    // TODO(mikelehen): We should consider exposing getToken (or similar) publicly for the purpose
+    // TODO(mikelehen): We should consider exposing getToken (or similar) publicly for the
+    // purpose
     // of servers doing authenticated REST requests like this.
     TestOnlyImplFirebaseTrampolines.getToken(masterApp, /*forceRefresh=*/ false)
         .addOnCompleteListener(

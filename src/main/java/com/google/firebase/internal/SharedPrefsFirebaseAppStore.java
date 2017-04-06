@@ -39,8 +39,8 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
   private static final String VALUE_SEPARATOR = ",";
 
   /**
-   * Used to make multiple SharedPreferences reads/writes an atomic operation. Not necessary around
-   * single reads.
+   * Used to make multiple SharedPreferences reads/writes an atomic operation. Not necessary
+   * around single reads.
    */
   private final Object lock = new Object();
 
@@ -105,12 +105,14 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
       String encodedAppNamesValue = prefs.get(KEY_FIREBASE_APP_NAMES, "");
       List<String> encodedAppNames = asList(encodedAppNamesValue.split(VALUE_SEPARATOR));
 
-      if (!ImplFirebaseTrampolines.isDefaultApp(app) && encodedAppNames.contains(encodedAppName)) {
+      if (!ImplFirebaseTrampolines.isDefaultApp(app) && encodedAppNames.contains
+          (encodedAppName)) {
         checkPersistedAppCompatible(app);
         return;
       }
       FirebaseOptions options = app.getOptions();
-      prefs.put(KEY_FIREBASE_APP_NAMES, encodedAppNamesValue + VALUE_SEPARATOR + encodedAppName);
+      prefs.put(KEY_FIREBASE_APP_NAMES, encodedAppNamesValue + VALUE_SEPARATOR +
+          encodedAppName);
       // TODO(depoll): Make sure this has all of the options -- not just the DB URL.
       writeValue(prefs, KEY_PREFIX_DATABASE_URL + encodedAppName, options.getDatabaseUrl());
     }
@@ -125,7 +127,8 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
       List<String> encodedAppNames = asList(encodedAppNamesValue.split(VALUE_SEPARATOR));
       List<String> updatedEncodedAppNames = new ArrayList<>(encodedAppNames);
       updatedEncodedAppNames.remove(encodedAppName);
-      prefs.put(KEY_FIREBASE_APP_NAMES, Joiner.on(VALUE_SEPARATOR).join(updatedEncodedAppNames));
+      prefs.put(KEY_FIREBASE_APP_NAMES, Joiner.on(VALUE_SEPARATOR).join
+          (updatedEncodedAppNames));
       prefs.remove(KEY_PREFIX_API_KEY + encodedAppName);
       prefs.remove(KEY_PREFIX_APP_ID + encodedAppName);
       prefs.remove(KEY_PREFIX_DATABASE_URL + encodedAppName);

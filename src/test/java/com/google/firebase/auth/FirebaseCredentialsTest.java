@@ -57,7 +57,8 @@ public class FirebaseCredentialsTest {
     transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
 
     File credentialsFile = File.createTempFile("google-test-credentials", "json");
-    PrintWriter writer = new PrintWriter(Files.newBufferedWriter(credentialsFile.toPath(), UTF_8));
+    PrintWriter writer = new PrintWriter(Files.newBufferedWriter(credentialsFile.toPath(),
+        UTF_8));
     writer.print(ServiceAccount.EDITOR.asString());
     writer.close();
     Map<String, String> environmentVariables =
@@ -106,7 +107,8 @@ public class FirebaseCredentialsTest {
             ServiceAccount.EDITOR.asString().getBytes(Charset.defaultCharset()));
 
     FirebaseCredential credential =
-        FirebaseCredentials.fromCertificate(inputStream, transport, Utils.getDefaultJsonFactory());
+        FirebaseCredentials.fromCertificate(inputStream, transport, Utils
+            .getDefaultJsonFactory());
 
     Assert.assertEquals(0, inputStream.available());
     inputStream.close();
@@ -126,7 +128,8 @@ public class FirebaseCredentialsTest {
     ByteArrayInputStream inputStream =
         new ByteArrayInputStream(accountWithoutProjectId.getBytes(Charset.defaultCharset()));
     FirebaseCredential credential =
-        FirebaseCredentials.fromCertificate(inputStream, transport, Utils.getDefaultJsonFactory());
+        FirebaseCredentials.fromCertificate(inputStream, transport, Utils
+            .getDefaultJsonFactory());
 
     try {
       Tasks.await(credential.getAccessToken(false));
@@ -154,13 +157,15 @@ public class FirebaseCredentialsTest {
         };
 
     FirebaseCredential credential =
-        FirebaseCredentials.fromCertificate(inputStream, transport, Utils.getDefaultJsonFactory());
+        FirebaseCredentials.fromCertificate(inputStream, transport, Utils
+            .getDefaultJsonFactory());
 
     try {
       Tasks.await(credential.getAccessToken(false));
       Assert.fail();
     } catch (Exception e) {
-      Assert.assertEquals("java.io.IOException: Failed to read service account", e.getMessage());
+      Assert.assertEquals("java.io.IOException: Failed to read service account", e
+          .getMessage());
       Assert.assertEquals("Expected", e.getCause().getCause().getMessage());
     }
   }
@@ -195,10 +200,12 @@ public class FirebaseCredentialsTest {
     secretJson.put("client_secret", CLIENT_SECRET);
     secretJson.put("refresh_token", REFRESH_TOKEN);
     secretJson.put("type", "authorized_user");
-    InputStream inputStream = new ByteArrayInputStream(secretJson.toString(0).getBytes("UTF-8"));
+    InputStream inputStream = new ByteArrayInputStream(secretJson.toString(0).getBytes
+        ("UTF-8"));
 
     FirebaseCredential credential =
-        FirebaseCredentials.fromRefreshToken(inputStream, transport, Utils.getDefaultJsonFactory());
+        FirebaseCredentials.fromRefreshToken(inputStream, transport, Utils
+            .getDefaultJsonFactory());
 
     Assert.assertEquals(0, inputStream.available());
     inputStream.close();
@@ -222,13 +229,15 @@ public class FirebaseCredentialsTest {
         };
 
     FirebaseCredential credential =
-        FirebaseCredentials.fromRefreshToken(inputStream, transport, Utils.getDefaultJsonFactory());
+        FirebaseCredentials.fromRefreshToken(inputStream, transport, Utils
+            .getDefaultJsonFactory());
 
     try {
       Tasks.await(credential.getAccessToken(false));
       Assert.fail();
     } catch (Exception e) {
-      Assert.assertEquals("java.io.IOException: Failed to read refresh token", e.getMessage());
+      Assert.assertEquals("java.io.IOException: Failed to read refresh token", e.getMessage
+          ());
       Assert.assertEquals("Expected", e.getCause().getCause().getMessage());
     }
   }

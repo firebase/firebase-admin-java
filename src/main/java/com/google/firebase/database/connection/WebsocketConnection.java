@@ -100,7 +100,8 @@ class WebsocketConnection {
       logger.debug("websocket is being closed");
     }
     isClosed = true;
-    // Although true is passed for both of these, they each run on the same event loop, so they will
+    // Although true is passed for both of these, they each run on the same event loop, so
+    // they will
     // never be running.
     conn.close();
     if (connectTimeout != null) {
@@ -201,14 +202,16 @@ class WebsocketConnection {
       if (keepAlive != null) {
         keepAlive.cancel(false);
         if (logger.logsDebug()) {
-          logger.debug("Reset keepAlive. Remaining: " + keepAlive.getDelay(TimeUnit.MILLISECONDS));
+          logger.debug("Reset keepAlive. Remaining: " + keepAlive.getDelay(TimeUnit
+              .MILLISECONDS));
         }
       } else {
         if (logger.logsDebug()) {
           logger.debug("Reset keepAlive");
         }
       }
-      keepAlive = executorService.schedule(nop(), KEEP_ALIVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+      keepAlive = executorService.schedule(nop(), KEEP_ALIVE_TIMEOUT_MS, TimeUnit
+          .MILLISECONDS);
     }
   }
 

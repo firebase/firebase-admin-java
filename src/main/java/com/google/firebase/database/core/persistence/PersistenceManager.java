@@ -64,8 +64,8 @@ public interface PersistenceManager {
   List<UserWriteRecord> loadUserWrites();
 
   /**
-   * Returns any cached node or children as a CacheNode. The query is *not* used to filter the node
-   * but rather to determine if it can be considered complete.
+   * Returns any cached node or children as a CacheNode. The query is *not* used to filter the
+   * node but rather to determine if it can be considered complete.
    *
    * @param query The query at the path
    * @return The cached node or an empty CacheNode if no cache is available
@@ -73,8 +73,8 @@ public interface PersistenceManager {
   CacheNode serverCache(QuerySpec query);
 
   /**
-   * Overwrite the server cache with the given node for a given query. The query is considered to be
-   * complete after saving this node.
+   * Overwrite the server cache with the given node for a given query. The query is considered to
+   * be complete after saving this node.
    *
    * @param query The query for which to apply this overwrite.
    * @param node The node to replace in the cache at the given path
@@ -84,8 +84,8 @@ public interface PersistenceManager {
   /**
    * Update the server cache at the given path with the given merge.
    *
-   * <p>NOTE: This doesn't mark any queries complete, since the common case is that there's already
-   * a complete query above this location.
+   * <p>NOTE: This doesn't mark any queries complete, since the common case is that there's
+   * already a complete query above this location.
    *
    * @param path The path for this merge
    * @param children The children to update

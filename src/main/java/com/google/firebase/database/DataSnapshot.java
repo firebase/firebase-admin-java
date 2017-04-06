@@ -110,21 +110,15 @@ public class DataSnapshot {
    * getValue() returns the data contained in this snapshot as native types. The possible types
    * returned are:
    *
-   * <ul>
-   * <li>Boolean
-   * <li>String
-   * <li>Long
-   * <li>Double
-   * <li>Map&lt;String, Object&gt;
-   * <li>List&lt;Object&gt;
-   * </ul>
+   * <ul> <li>Boolean <li>String <li>Long <li>Double <li>Map&lt;String, Object&gt;
+   * <li>List&lt;Object&gt; </ul>
    *
    * This list is recursive; the possible types for {@link java.lang.Object} in the above list is
    * given by the same list. These types correspond to the types available in JSON.
    *
    * <p>If useExportFormat is set to true, priority information will be included in the output.
-   * Priority information shows up as a .priority key in a map. For data that would not otherwise be
-   * a map, the map will also include a .value key with the data.
+   * Priority information shows up as a .priority key in a map. For data that would not otherwise
+   * be a map, the map will also include a .value key with the data.
    *
    * @param useExportFormat Whether or not to include priority information
    * @return The data, along with its priority, in native types
@@ -197,9 +191,9 @@ public class DataSnapshot {
    * GenericTypeIndicator} for more details
    *
    * @param t A subclass of {@link GenericTypeIndicator} indicating the type of generic collection
-   * to be returned.
+   *     to be returned.
    * @param <T> The type to return. Implicitly defined from the {@link GenericTypeIndicator} passed
-   * in
+   *     in
    * @return A properly typed collection, populated with the data from this snapshot
    */
   public <T> T getValue(GenericTypeIndicator<T> t) {
@@ -256,12 +250,14 @@ public class DataSnapshot {
           public DataSnapshot next() {
             NamedNode namedNode = iter.next();
             return new DataSnapshot(
-                query.child(namedNode.getName().asString()), IndexedNode.from(namedNode.getNode()));
+                query.child(namedNode.getName().asString()), IndexedNode.from
+                (namedNode.getNode()));
           }
 
           @Override
           public void remove() {
-            throw new UnsupportedOperationException("remove called on immutable collection");
+            throw new UnsupportedOperationException("remove called on immutable " +
+                "collection");
           }
         };
       }

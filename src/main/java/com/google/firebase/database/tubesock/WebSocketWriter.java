@@ -41,7 +41,8 @@ class WebSocketWriter {
   }
 
   private ByteBuffer frameInBuffer(byte opcode, boolean masking, byte[] data) throws IOException {
-    int headerLength = 2; // This is just an assumed headerLength, as we use a ByteArrayOutputStream
+    int headerLength = 2; // This is just an assumed headerLength, as we use a
+    // ByteArrayOutputStream
     if (masking) {
       headerLength += 4;
     }

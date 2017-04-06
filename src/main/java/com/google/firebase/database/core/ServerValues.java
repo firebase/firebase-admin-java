@@ -45,7 +45,8 @@ public class ServerValues {
         new SparseSnapshotTree.SparseSnapshotTreeVisitor() {
           @Override
           public void visitTree(Path prefixPath, Node tree) {
-            resolvedTree.remember(prefixPath, resolveDeferredValueSnapshot(tree, serverValues));
+            resolvedTree.remember(prefixPath, resolveDeferredValueSnapshot(tree,
+                serverValues));
           }
         });
     return resolvedTree;

@@ -45,10 +45,13 @@ public class FirebaseTokenVerifierTest {
   private static final String PRIVATE_KEY_ID = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd";
   private static final String UID = "someUid";
   private static final String ALGORITHM = "RS256";
-  private static final String LEGACY_CUSTOM_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkIjp7"
-      + "InVpZCI6IjEiLCJhYmMiOiIwMTIzNDU2Nzg5fiFAIyQlXiYqKClfKy09YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4e"
-      + "XpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWiwuLzsnW11cXDw-P1wie318In0sInYiOjAsImlhdCI6MTQ4MDk4Mj"
-      + "U2NH0.ZWEpoHgIPCAz8Q-cNFBS8jiqClTJ3j27yuRkQo-QxyI";
+  private static final String LEGACY_CUSTOM_TOKEN =
+      "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkIjp7"
+          +
+          "InVpZCI6IjEiLCJhYmMiOiIwMTIzNDU2Nzg5fiFAIyQlXiYqKClfKy09YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4e"
+          + "XpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWiwuLzsnW11cXDw" +
+          "-P1wie318In0sInYiOjAsImlhdCI6MTQ4MDk4Mj"
+          + "U2NH0.ZWEpoHgIPCAz8Q-cNFBS8jiqClTJ3j27yuRkQo-QxyI";
   @Rule
   public ExpectedException thrown = ExpectedException.none();
   private PrivateKey privateKey;
@@ -207,7 +210,8 @@ public class FirebaseTokenVerifierTest {
     Payload payload = createPayload();
     payload.setSubject(
         "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv"
-            + "wxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
+            +
+            "wxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
     FirebaseToken token =
         TestOnlyImplFirebaseAuthTrampolines.parseToken(
             FACTORY, createToken(createHeader(), payload));

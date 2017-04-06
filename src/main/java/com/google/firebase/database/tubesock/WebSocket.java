@@ -80,7 +80,7 @@ public class WebSocket {
    * @param url The URL of a websocket server
    * @param protocol The protocol to include in the handshake. If null, it will be omitted
    * @param extraHeaders Any extra HTTP headers to be included with the initial request. Pass null
-   * if not extra headers are requested
+   *     if not extra headers are requested
    */
   public WebSocket(URI url, String protocol, Map<String, String> extraHeaders) {
     innerThread =
@@ -125,8 +125,8 @@ public class WebSocket {
   }
 
   /**
-   * Start up the socket. This is non-blocking, it will fire up the threads used by the library and
-   * then trigger the onOpen handler once the connection is established.
+   * Start up the socket. This is non-blocking, it will fire up the threads used by the library
+   * and then trigger the onOpen handler once the connection is established.
    */
   public synchronized void connect() {
     if (state != State.NONE) {
@@ -294,7 +294,8 @@ public class WebSocket {
    * convenience method to make sure everything shuts down, if desired.
    */
   public void blockClose() throws InterruptedException {
-    // If the thread is new, it will never run, since we closed the connection before we actually
+    // If the thread is new, it will never run, since we closed the connection before we
+    // actually
     // connected
     if (writer.getInnerThread().getState() != Thread.State.NEW) {
       writer.getInnerThread().join();
@@ -308,7 +309,8 @@ public class WebSocket {
       synchronized (this) {
         WebSocket.this.socket = socket;
         if (WebSocket.this.state == WebSocket.State.DISCONNECTED) {
-          // The connection has been closed while creating the socket, close it immediately and
+          // The connection has been closed while creating the socket, close it
+          // immediately and
           // return
           try {
             WebSocket.this.socket.close();

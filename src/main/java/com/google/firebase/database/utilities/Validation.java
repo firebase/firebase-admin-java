@@ -118,7 +118,8 @@ public class Validation {
       Object newValue = entry.getValue();
       ValidationPath.validateWithObject(path.child(updatePath), newValue);
       String childName = !updatePath.isEmpty() ? updatePath.getBack().asString() : "";
-      if (childName.equals(ServerValues.NAME_SUBKEY_SERVERVALUE) || childName.equals(".value")) {
+      if (childName.equals(ServerValues.NAME_SUBKEY_SERVERVALUE) || childName.equals("" +
+          ".value")) {
         throw new DatabaseException(
             "Path '" + updatePath + "' contains disallowed child name: " + childName);
       }

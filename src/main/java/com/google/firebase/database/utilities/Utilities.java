@@ -129,7 +129,8 @@ public class Utilities {
     return sb.toString();
   }
 
-  // NOTE: We could use Ints.tryParse from guava, but I don't feel like pulling in guava (~2mb) for
+  // NOTE: We could use Ints.tryParse from guava, but I don't feel like pulling in guava (~2mb)
+  // for
   // that small purpose.
   public static Integer tryParseInt(String num) {
     if (num.length() > 11 || num.length() == 0) {

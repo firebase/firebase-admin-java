@@ -79,7 +79,8 @@ public class EventGenerator {
         events, Event.EventType.CHILD_MOVED, moves, eventRegistrations, eventCache);
     generateEventsForType(
         events, Event.EventType.CHILD_CHANGED, changes, eventRegistrations, eventCache);
-    generateEventsForType(events, Event.EventType.VALUE, changes, eventRegistrations, eventCache);
+    generateEventsForType(events, Event.EventType.VALUE, changes, eventRegistrations,
+        eventCache);
 
     return events;
   }

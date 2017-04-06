@@ -44,11 +44,13 @@ public class Query {
    * @hide
    */
   protected final QueryParams params;
-  // we can't use params index, because the default query params have priority index set as default,
+  // we can't use params index, because the default query params have priority index set as
+  // default,
   // but we don't want to allow multiple orderByPriority calls, so track them here
   private final boolean orderByCalled;
 
-  Query(Repo repo, Path path, QueryParams params, boolean orderByCalled) throws DatabaseException {
+  Query(Repo repo, Path path, QueryParams params, boolean orderByCalled) throws
+      DatabaseException {
     this.repo = repo;
     this.path = path;
     this.params = params;
@@ -71,7 +73,8 @@ public class Query {
     if (params.getIndex().equals(KeyIndex.getInstance())) {
       String message =
           "You must use startAt(String value), endAt(String value) or "
-              + "equalTo(String value) in combination with orderByKey(). Other type of values or "
+              + "equalTo(String value) in combination with orderByKey(). Other type of " +
+              "values or "
               + "using the version with 2 parameters is not supported";
       if (params.hasStart()) {
         Node startNode = params.getIndexStartValue();
@@ -88,8 +91,10 @@ public class Query {
         }
       }
     } else if (params.getIndex().equals(PriorityIndex.getInstance())) {
-      if ((params.hasStart() && !PriorityUtilities.isValidPriority(params.getIndexStartValue()))
-          || (params.hasEnd() && !PriorityUtilities.isValidPriority(params.getIndexEndValue()))) {
+      if ((params.hasStart() && !PriorityUtilities.isValidPriority(params
+          .getIndexStartValue()))
+          || (params.hasEnd() && !PriorityUtilities.isValidPriority(params.getIndexEndValue
+          ()))) {
         throw new IllegalArgumentException(
             "When using orderByPriority(), values provided to startAt(), "
                 + "endAt(), or equalTo() must be valid priorities.");
@@ -101,7 +106,8 @@ public class Query {
    * This method validates that limit has been called with the correct combination or parameters.
    */
   private void validateLimit(QueryParams params) {
-    if (params.hasStart() && params.hasEnd() && params.hasLimit() && !params.hasAnchoredLimit()) {
+    if (params.hasStart() && params.hasEnd() && params.hasLimit() && !params.hasAnchoredLimit
+        ()) {
       throw new IllegalArgumentException(
           "Can't combine startAt(), endAt() and limit(). "
               + "Use limitToFirst() or limitToLast() instead");
@@ -130,8 +136,8 @@ public class Query {
   }
 
   /**
-   * Add a listener for changes in the data at this location. Each time time the data changes, your
-   * listener will be called with an immutable snapshot of the data.
+   * Add a listener for changes in the data at this location. Each time time the data changes,
+   * your listener will be called with an immutable snapshot of the data.
    *
    * @param listener The listener to be called with changes
    * @return A reference to the listener provided. Save this to remove the listener later.
@@ -166,7 +172,8 @@ public class Query {
             new ValueEventListener() {
               @Override
               public void onDataChange(DataSnapshot snapshot) {
-                // Removing the event listener will also prevent any further calls into onDataChange
+                // Removing the event listener will also prevent any further calls into
+                // onDataChange
                 removeEventListener(this);
                 listener.onDataChange(snapshot);
               }
@@ -228,11 +235,11 @@ public class Query {
   /**
    * By calling `keepSynced(true)` on a location, the data for that location will automatically be
    * downloaded and kept in sync, even when no listeners are attached for that location.
-   * Additionally, while a location is kept synced, it will not be evicted from the persistent disk
-   * cache.
+   * Additionally, while a location is kept synced, it will not be evicted from the persistent
+   * disk cache.
    *
    * @param keepSynced Pass `true` to keep this location synchronized, pass `false` to stop
-   * synchronization.
+   *     synchronization.
    * @since 2.3
    */
   public void keepSynced(final boolean keepSynced) {
@@ -261,8 +268,8 @@ public class Query {
   }*/
 
   /**
-   * Create a query constrained to only return child nodes with a value greater than or equal to the
-   * given value, using the given orderBy directive or priority as default.
+   * Create a query constrained to only return child nodes with a value greater than or equal to
+   * the given value, using the given orderBy directive or priority as default.
    *
    * @param value The value to start at, inclusive
    * @return A Query with the new constraint
@@ -272,8 +279,8 @@ public class Query {
   }
 
   /**
-   * Create a query constrained to only return child nodes with a value greater than or equal to the
-   * given value, using the given orderBy directive or priority as default.
+   * Create a query constrained to only return child nodes with a value greater than or equal to
+   * the given value, using the given orderBy directive or priority as default.
    *
    * @param value The value to start at, inclusive
    * @return A Query with the new constraint
@@ -283,8 +290,8 @@ public class Query {
   }
 
   /**
-   * Create a query constrained to only return child nodes with a value greater than or equal to the
-   * given value, using the given orderBy directive or priority as default.
+   * Create a query constrained to only return child nodes with a value greater than or equal to
+   * the given value, using the given orderBy directive or priority as default.
    *
    * @param value The value to start at, inclusive
    * @return A Query with the new constraint
@@ -295,9 +302,9 @@ public class Query {
   }
 
   /**
-   * Create a query constrained to only return child nodes with a value greater than or equal to the
-   * given value, using the given orderBy directive or priority as default, and additionally only
-   * child nodes with a key greater than or equal to the given key.
+   * Create a query constrained to only return child nodes with a value greater than or equal to
+   * the given value, using the given orderBy directive or priority as default, and additionally
+   * only child nodes with a key greater than or equal to the given key.
    *
    * @param value The priority to start at, inclusive
    * @param key The key to start at, inclusive
@@ -305,14 +312,15 @@ public class Query {
    */
   public Query startAt(String value, String key) {
     Node node =
-        value != null ? new StringNode(value, PriorityUtilities.NullPriority()) : EmptyNode.Empty();
+        value != null ? new StringNode(value, PriorityUtilities.NullPriority()) : EmptyNode
+            .Empty();
     return startAt(node, key);
   }
 
   /**
-   * Create a query constrained to only return child nodes with a value greater than or equal to the
-   * given value, using the given orderBy directive or priority as default, and additionally only
-   * child nodes with a key greater than or equal to the given key.
+   * Create a query constrained to only return child nodes with a value greater than or equal to
+   * the given value, using the given orderBy directive or priority as default, and additionally
+   * only child nodes with a key greater than or equal to the given key.
    *
    * @param value The priority to start at, inclusive
    * @param key The key name to start at, inclusive
@@ -323,9 +331,9 @@ public class Query {
   }
 
   /**
-   * Create a query constrained to only return child nodes with a value greater than or equal to the
-   * given value, using the given orderBy directive or priority as default, and additionally only
-   * child nodes with a key greater than or equal to the given key.
+   * Create a query constrained to only return child nodes with a value greater than or equal to
+   * the given value, using the given orderBy directive or priority as default, and additionally
+   * only child nodes with a key greater than or equal to the given key.
    *
    * @param value The priority to start at, inclusive
    * @param key The key to start at, inclusive
@@ -397,7 +405,8 @@ public class Query {
    */
   public Query endAt(String value, String key) {
     Node node =
-        value != null ? new StringNode(value, PriorityUtilities.NullPriority()) : EmptyNode.Empty();
+        value != null ? new StringNode(value, PriorityUtilities.NullPriority()) : EmptyNode
+            .Empty();
     return endAt(node, key);
   }
 

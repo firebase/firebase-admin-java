@@ -83,11 +83,13 @@ class Connection implements WebsocketConnection.Delegate {
       String messageType = (String) message.get(SERVER_ENVELOPE_TYPE);
       if (messageType != null) {
         if (messageType.equals(SERVER_DATA_MESSAGE)) {
-          @SuppressWarnings("unchecked") Map<String, Object> data = (Map<String, Object>) message
+          @SuppressWarnings("unchecked") Map<String, Object> data = (Map<String,
+              Object>) message
               .get(SERVER_ENVELOPE_DATA);
           onDataMessage(data);
         } else if (messageType.equals(SERVER_CONTROL_MESSAGE)) {
-          @SuppressWarnings("unchecked") Map<String, Object> data = (Map<String, Object>) message
+          @SuppressWarnings("unchecked") Map<String, Object> data = (Map<String,
+              Object>) message
               .get(SERVER_ENVELOPE_DATA);
           onControlMessage(data);
         } else {
@@ -98,7 +100,8 @@ class Connection implements WebsocketConnection.Delegate {
       } else {
         if (logger.logsDebug()) {
           logger
-              .debug("Failed to parse server message: missing message type:" + message.toString());
+              .debug("Failed to parse server message: missing message type:" + message
+                  .toString());
         }
         close();
       }

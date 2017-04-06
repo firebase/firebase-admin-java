@@ -652,7 +652,8 @@ public class DataTestIT {
     TestHelpers.waitFor(semaphore);
   }
 
-  // NOTE: skipping forEach abort test. Not relevant, we return an iterable that can be stopped any
+  // NOTE: skipping forEach abort test. Not relevant, we return an iterable that can be stopped
+  // any
   // time.
 
   @Test
@@ -955,7 +956,8 @@ public class DataTestIT {
             .put(
                 "foo",
                 new MapBuilder()
-                    .put("bar", new MapBuilder().put(".priority", 7.0).put(".value", 5L).build())
+                    .put("bar", new MapBuilder().put(".priority", 7.0).put(".value", 5L)
+                        .build())
                     .put(".priority", "hi")
                     .build())
             .build();
@@ -1024,7 +1026,8 @@ public class DataTestIT {
     DatabaseConfig ctx = TestHelpers.getContext(0);
 
     DatabaseReference ref =
-        new DatabaseReference(TestConstants.TEST_NAMESPACE + "/a%b&c@d/space: /non-ascii:ø", ctx);
+        new DatabaseReference(TestConstants.TEST_NAMESPACE + "/a%b&c@d/space: /non-ascii:ø",
+            ctx);
     String result = ref.toString();
     String expected =
         TestConstants.TEST_NAMESPACE + "/a%25b%26c%40d/space%3A%20/non-ascii%3A%C3%B8";
@@ -1162,7 +1165,8 @@ public class DataTestIT {
 
     List<String> badKeys =
         Arrays.asList(
-            ".test", "test.", "fo$o", "[what", "ever]", "ha#sh", "/thing", "thi/ing", "thing/", "");
+            ".test", "test.", "fo$o", "[what", "ever]", "ha#sh", "/thing", "thi/ing",
+            "thing/", "");
 
     List<Object> badObjects = new ArrayList<>();
     for (String key : badKeys) {
@@ -1205,7 +1209,8 @@ public class DataTestIT {
             new MapBuilder().put("/a/b", "t").put("/a/b/.priority", 1.0).build(),
             new MapBuilder().put("/a/b/.sv", "timestamp").build(),
             new MapBuilder().put("/a/b/.value", "t").build(),
-            new MapBuilder().put("/a/b/.priority", new MapBuilder().put("x", "y").build()).build());
+            new MapBuilder().put("/a/b/.priority", new MapBuilder().put("x", "y").build())
+                .build());
     for (Map<String, Object> badUpdate : badUpdates) {
       try {
         ref.updateChildren(badUpdate);
@@ -1336,7 +1341,8 @@ public class DataTestIT {
 
     for (BadGroup badGroup : badGroups) {
       for (String key : badGroup.keys) {
-        HashMap<String, Object> obj = TestHelpers.buildObjFromPath(new Path(key), "test_value");
+        HashMap<String, Object> obj = TestHelpers.buildObjFromPath(new Path(key),
+            "test_value");
         try {
           node.setValue(obj);
           fail("Expected setValue(bad key) to throw exception: " + key);
@@ -1356,9 +1362,11 @@ public class DataTestIT {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
-          Map<String, Object> deepUpdate = new MapBuilder().put(key, "test_value").build();
+          Map<String, Object> deepUpdate = new MapBuilder().put(key, "test_value")
+              .build();
           node.updateChildren(deepUpdate);
-          fail("Expected updateChildrean(bad deep update key) to throw exception: " + key);
+          fail("Expected updateChildrean(bad deep update key) to throw exception: " +
+              key);
         } catch (DatabaseException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
@@ -1370,15 +1378,18 @@ public class DataTestIT {
         }
         try {
           node.onDisconnect().updateChildren(obj);
-          fail("Expected onDisconnect.updateChildren(bad key) to throw exception: " + key);
+          fail("Expected onDisconnect.updateChildren(bad key) to throw exception: " +
+              key);
         } catch (DatabaseException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
-          Map<String, Object> deepUpdate = new MapBuilder().put(key, "test_value").build();
+          Map<String, Object> deepUpdate = new MapBuilder().put(key, "test_value")
+              .build();
           node.onDisconnect().updateChildren(deepUpdate);
           fail(
-              "Expected onDisconnect.updateChildren(bad deep update key) to throw exception: "
+              "Expected onDisconnect.updateChildren(bad deep update key) to throw " +
+                  "exception: "
                   + key);
         } catch (DatabaseException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
@@ -1780,7 +1791,8 @@ public class DataTestIT {
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
 
-    new WriteFuture(writer, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build(), "testpri")
+    new WriteFuture(writer, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build(),
+        "testpri")
         .timedGet();
 
     DataSnapshot snap = TestHelpers.getSnap(reader);
@@ -1847,7 +1859,8 @@ public class DataTestIT {
     writer.setValue(
         new MapBuilder().put("a", new MapBuilder().put("aa", 1).put("ab", 2).build()).build());
     Map<String, Object> expected =
-        new MapBuilder().put("a", new MapBuilder().put("aa", 10L).put("ab", 20L).build()).build();
+        new MapBuilder().put("a", new MapBuilder().put("aa", 10L).put("ab", 20L).build())
+            .build();
     Map<String, Object> update =
         new MapBuilder()
             .put("a/aa", 10)
@@ -2068,7 +2081,8 @@ public class DataTestIT {
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
 
-    Map<String, Object> writeValue = new MapBuilder().put("a", 5).put(".priority", "pri1").build();
+    Map<String, Object> writeValue = new MapBuilder().put("a", 5).put(".priority", "pri1")
+        .build();
 
     Map<String, Object> updateValue =
         new MapBuilder()
@@ -2097,7 +2111,8 @@ public class DataTestIT {
     assertEquals(10L, snap.child("b/c").getValue());
   }
 
-  // NOTE: skipping test for circular data structures. StackOverflowError is thrown, they'll see it.
+  // NOTE: skipping test for circular data structures. StackOverflowError is thrown, they'll
+  // see it.
 
   // NOTE: skipping test for creating a child name 'hasOwnProperty'
 
@@ -2648,7 +2663,8 @@ public class DataTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             if (error != null || !committed) {
               fail("Transaction should succeed");
             }
@@ -2732,7 +2748,8 @@ public class DataTestIT {
   public void testDeltaSyncNoDataUpdatesAfterReconnect() throws InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
-    // Create a fresh connection so we can be sure we won't get any other data updates for stuff.
+    // Create a fresh connection so we can be sure we won't get any other data updates for
+    // stuff.
     DatabaseConfig ctx = TestHelpers.newTestConfig();
     final DatabaseReference ref2 = new DatabaseReference(ref.toString(), ctx);
 
@@ -2784,7 +2801,8 @@ public class DataTestIT {
               @Override
               public void onDataChange(DataSnapshot snapshot) {
                 if ((Boolean) snapshot.getValue()) {
-                  // We're connected.  Do one more round-trip to make sure all state restoration is
+                  // We're connected.  Do one more round-trip to make sure all state
+                  // restoration is
                   // done
                   ref2.getRoot()
                       .child("foobar/empty/blah")
@@ -2792,7 +2810,8 @@ public class DataTestIT {
                           null,
                           new DatabaseReference.CompletionListener() {
                             @Override
-                            public void onComplete(DatabaseError error, DatabaseReference ref) {
+                            public void onComplete(DatabaseError error,
+                                                   DatabaseReference ref) {
                               assertEquals(1, ref2.repo.dataUpdateCount);
                               done.release();
                             }
@@ -2812,7 +2831,8 @@ public class DataTestIT {
   public void testDeltaSyncWithQueryNoDataUpdatesAfterReconnect() throws InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
-    // Create a fresh connection so we can be sure we won't get any other data updates for stuff.
+    // Create a fresh connection so we can be sure we won't get any other data updates for
+    // stuff.
     DatabaseConfig ctx = TestHelpers.newTestConfig();
     final DatabaseReference ref2 = new DatabaseReference(ref.toString(), ctx);
 

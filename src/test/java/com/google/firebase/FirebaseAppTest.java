@@ -54,7 +54,8 @@ public class FirebaseAppTest {
   @SuppressWarnings("unused")
   private static void assertAuthInitialized(FirebaseApp firebaseApp) {
     // TODO(depoll): Re-enable once Auth is available.
-    // assertThat(FirebaseAuth.getInstancesForTest()).containsKey(firebaseApp.getPersistenceKey());
+    // assertThat(FirebaseAuth.getInstancesForTest()).containsKey(firebaseApp
+    // .getPersistenceKey());
     // FirebaseAuth firebaseAuth = FirebaseAuth.getInstance(firebaseApp);
     // assertThat(firebaseAuth.getFirebaseApp()).isEqualTo(firebaseApp);
   }

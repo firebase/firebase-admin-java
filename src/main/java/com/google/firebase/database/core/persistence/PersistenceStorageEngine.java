@@ -17,7 +17,7 @@ import java.util.Set;
 public interface PersistenceStorageEngine {
 
   /**
-   * Save a user overwrite
+   * Save a user overwrite.
    *
    * @param path The path for this write
    * @param node The node for this write
@@ -26,7 +26,7 @@ public interface PersistenceStorageEngine {
   void saveUserOverwrite(Path path, Node node, long writeId);
 
   /**
-   * Save a user merge
+   * Save a user merge.
    *
    * @param path The path for this merge
    * @param children The children for this merge
@@ -42,14 +42,14 @@ public interface PersistenceStorageEngine {
   void removeUserWrite(long writeId);
 
   /**
-   * Return a list of all writes that were persisted
+   * Return a list of all writes that were persisted.
    *
    * @return The list of writes
    */
   List<UserWriteRecord> loadUserWrites();
 
   /**
-   * Removes all user writes
+   * Removes all user writes.
    */
   void removeAllUserWrites();
 

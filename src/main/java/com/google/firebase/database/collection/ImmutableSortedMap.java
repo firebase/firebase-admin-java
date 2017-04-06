@@ -103,11 +103,11 @@ public abstract class ImmutableSortedMap<K, V> implements Iterable<Map.Entry<K, 
   public static class Builder {
 
     /**
-     * The size threshold where we use a tree backed sorted map instead of an array backed sorted
-     * map. This is a more or less arbitrary chosen value, that was chosen to be large enough to fit
-     * most of object kind of Database data, but small enough to not notice degradation in
-     * performance for inserting and lookups. Feel free to empirically determine this constant, but
-     * don't expect much gain in real world performance.
+     * The size threshold where we use a tree backed sorted map instead of an array backed
+     * sorted map. This is a more or less arbitrary chosen value, that was chosen to be large
+     * enough to fit most of object kind of Database data, but small enough to not notice
+     * degradation in performance for inserting and lookups. Feel free to empirically determine
+     * this constant, but don't expect much gain in real world performance.
      */
     static final int ARRAY_TO_RB_TREE_SIZE_THRESHOLD = 25;
     private static final KeyTranslator IDENTITY_TRANSLATOR = new KeyTranslator() {

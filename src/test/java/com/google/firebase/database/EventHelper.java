@@ -53,7 +53,8 @@ class EventHelper {
   }
 
   public EventHelper addChildExpectation(
-      DatabaseReference ref, Event.EventType eventType, String childName) throws DatabaseException {
+      DatabaseReference ref, Event.EventType eventType, String childName) throws
+      DatabaseException {
     if (!locations.contains(ref)) {
       toListen.add(ref);
     }
@@ -134,7 +135,8 @@ class EventHelper {
               @Override
               public void onChildAdded(DataSnapshot snapshot, String previousChildName) {
                 recordEvent(
-                    new EventRecord(snapshot, Event.EventType.CHILD_ADDED, previousChildName));
+                    new EventRecord(snapshot, Event.EventType.CHILD_ADDED,
+                        previousChildName));
                 if (uninitializedRefs.contains(ref)) {
                   initializationEvents++;
                 }
@@ -146,7 +148,8 @@ class EventHelper {
                   initializationEvents++;
                 }
                 recordEvent(
-                    new EventRecord(snapshot, Event.EventType.CHILD_CHANGED, previousChildName));
+                    new EventRecord(snapshot, Event.EventType.CHILD_CHANGED,
+                        previousChildName));
               }
 
               @Override
@@ -163,7 +166,8 @@ class EventHelper {
                   initializationEvents++;
                 }
                 recordEvent(
-                    new EventRecord(snapshot, Event.EventType.CHILD_MOVED, previousChildName));
+                    new EventRecord(snapshot, Event.EventType.CHILD_MOVED,
+                        previousChildName));
               }
 
               @Override

@@ -49,7 +49,8 @@ class WebSocketReceiver {
             offset += read(inputHeader, offset, 2);
             payload_length = ((0xff & inputHeader[2]) << 8) | (0xff & inputHeader[3]);
           } else if (length == 127) {
-            // Does work up to MAX_VALUE of long (2^63-1) after that minus values are returned.
+            // Does work up to MAX_VALUE of long (2^63-1) after that minus values are
+            // returned.
             // However frames with such a high payload length are vastly unrealistic.
             // TODO: add Limit for WebSocket Payload Length.
             offset += read(inputHeader, offset, 8);
@@ -97,7 +98,8 @@ class WebSocketReceiver {
         throw new WebSocketException("Failed to continue outstanding frame");
       } else if (pendingBuilder == null && opcode == WebSocket.OPCODE_NONE) {
         // Trying to continue something, but there's nothing to continue
-        throw new WebSocketException("Received continuing frame, but there's nothing to continue");
+        throw new WebSocketException("Received continuing frame, but there's nothing to " +
+            "continue");
       } else {
         if (pendingBuilder == null) {
           // We aren't continuing another message

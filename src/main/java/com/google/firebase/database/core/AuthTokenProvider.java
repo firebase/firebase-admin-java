@@ -7,7 +7,7 @@ public interface AuthTokenProvider {
    * Gets the token that should currently be used for authenticated requests.
    *
    * @param forceRefresh Pass true to get a new, up-to-date token rather than a (potentially
-   * expired) cached token.
+   *     expired) cached token.
    * @param listener Listener to be notified after operation completes.
    */
   void getToken(boolean forceRefresh, GetTokenCompletionListener listener);
@@ -26,7 +26,6 @@ public interface AuthTokenProvider {
    */
   void removeTokenChangeListener(TokenChangeListener listener);
 
-  /** */
   interface GetTokenCompletionListener {
 
     /**
@@ -43,20 +42,18 @@ public interface AuthTokenProvider {
     void onError(String error);
   }
 
-  /** */
   interface TokenChangeListener {
 
     /**
-     * Called whenever an event happens that will affect the current auth token (e.g. user logging
-     * in or out). Use {@link #getToken(boolean, GetTokenCompletionListener)} method to get the
-     * updated token.
+     * Called whenever an event happens that will affect the current auth token (e.g. user
+     * logging in or out). Use {@link #getToken(boolean, GetTokenCompletionListener)} method to
+     * get the updated token.
      */
     void onTokenChange(String token);
 
     // TODO(mikelehen): Remove this once AndroidAuthTokenProvider is updated to call
     // the other method.
 
-    /** */
     void onTokenChange();
   }
 }

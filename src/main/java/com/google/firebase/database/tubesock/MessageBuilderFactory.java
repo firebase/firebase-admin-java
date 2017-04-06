@@ -65,7 +65,8 @@ class MessageBuilderFactory {
 
   static class TextBuilder implements Builder {
 
-    private static ThreadLocal<CharsetDecoder> localDecoder = new ThreadLocal<CharsetDecoder>() {
+    private static ThreadLocal<CharsetDecoder> localDecoder = new ThreadLocal<CharsetDecoder>
+        () {
       @Override
       protected CharsetDecoder initialValue() {
         Charset utf8 = Charset.forName("UTF8");
@@ -75,7 +76,8 @@ class MessageBuilderFactory {
         return decoder;
       }
     };
-    private static ThreadLocal<CharsetEncoder> localEncoder = new ThreadLocal<CharsetEncoder>() {
+    private static ThreadLocal<CharsetEncoder> localEncoder = new ThreadLocal<CharsetEncoder>
+        () {
       @Override
       protected CharsetEncoder initialValue() {
         Charset utf8 = Charset.forName("UTF8");

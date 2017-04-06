@@ -12,13 +12,14 @@ import com.google.firebase.database.snapshot.StringNode;
 public class NodeSizeEstimator {
 
   /**
-   * Account for extra overhead due to the extra JSON object and the ".value" and ".priority" keys,
-   * colons, and comma
+   * Account for extra overhead due to the extra JSON object and the ".value" and ".priority"
+   * keys, colons, and comma
    */
   private static final int LEAF_PRIORITY_OVERHEAD = 2 + 8 + 11 + 2 + 1;
 
   private static long estimateLeafNodeSize(LeafNode<?> node) {
-    // These values are somewhat arbitrary, but we don't need an exact value so prefer performance
+    // These values are somewhat arbitrary, but we don't need an exact value so prefer
+    // performance
     // over exact value
     long valueSize;
     if (node instanceof DoubleNode) {

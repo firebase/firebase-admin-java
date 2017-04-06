@@ -383,7 +383,8 @@ public class QueryTestIT {
   }
 
   @Test
-  public void setVariousLimitsEnsureDataIsCorrect() throws DatabaseException, InterruptedException {
+  public void setVariousLimitsEnsureDataIsCorrect() throws DatabaseException,
+      InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
     ValueExpectationHelper expectations = new ValueExpectationHelper();
@@ -406,12 +407,16 @@ public class QueryTestIT {
 
     ValueExpectationHelper expectations = new ValueExpectationHelper();
     expectations.add(ref.startAt(null).limitToFirst(1), new MapBuilder().put("a", 1L).build());
-    expectations.add(ref.startAt(null, "c").limitToFirst(1), new MapBuilder().put("c", 3L).build());
-    expectations.add(ref.startAt(null, "b").limitToFirst(1), new MapBuilder().put("b", 2L).build());
+    expectations.add(ref.startAt(null, "c").limitToFirst(1), new MapBuilder().put("c", 3L)
+        .build());
+    expectations.add(ref.startAt(null, "b").limitToFirst(1), new MapBuilder().put("b", 2L)
+        .build());
     expectations.add(
-        ref.startAt(null, "b").limitToFirst(2), new MapBuilder().put("b", 2L).put("c", 3L).build());
+        ref.startAt(null, "b").limitToFirst(2), new MapBuilder().put("b", 2L).put("c", 3L)
+            .build());
     expectations.add(
-        ref.startAt(null, "b").limitToFirst(3), new MapBuilder().put("b", 2L).put("c", 3L).build());
+        ref.startAt(null, "b").limitToFirst(3), new MapBuilder().put("b", 2L).put("c", 3L)
+            .build());
 
     ref.setValue(new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build());
 
@@ -424,21 +429,28 @@ public class QueryTestIT {
       TimeoutException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
-    // TODO: this test kinda has race conditions. The listens are added sequentially, so we get a
+    // TODO: this test kinda has race conditions. The listens are added sequentially, so we
+    // get a
     // lot of partial data back from the server. This all correct, and we end up in the correct
-    // state, but it's still kinda weird. Consider having ValueExpectationHelper deal with initial
+    // state, but it's still kinda weird. Consider having ValueExpectationHelper deal with
+    // initial
     // state.
 
-    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build()).timedGet();
+    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build())
+        .timedGet();
 
     ValueExpectationHelper expectations = new ValueExpectationHelper();
     expectations.add(ref.startAt(null).limitToFirst(1), new MapBuilder().put("a", 1L).build());
-    expectations.add(ref.startAt(null, "c").limitToFirst(1), new MapBuilder().put("c", 3L).build());
-    expectations.add(ref.startAt(null, "b").limitToFirst(1), new MapBuilder().put("b", 2L).build());
+    expectations.add(ref.startAt(null, "c").limitToFirst(1), new MapBuilder().put("c", 3L)
+        .build());
+    expectations.add(ref.startAt(null, "b").limitToFirst(1), new MapBuilder().put("b", 2L)
+        .build());
     expectations.add(
-        ref.startAt(null, "b").limitToFirst(2), new MapBuilder().put("b", 2L).put("c", 3L).build());
+        ref.startAt(null, "b").limitToFirst(2), new MapBuilder().put("b", 2L).put("c", 3L)
+            .build());
     expectations.add(
-        ref.startAt(null, "b").limitToFirst(3), new MapBuilder().put("b", 2L).put("c", 3L).build());
+        ref.startAt(null, "b").limitToFirst(3), new MapBuilder().put("b", 2L).put("c", 3L)
+            .build());
 
     expectations.waitForEvents();
   }
@@ -480,7 +492,8 @@ public class QueryTestIT {
               }
             });
 
-    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build()).timedGet();
+    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build())
+        .timedGet();
     List<String> expected = new ArrayList<>();
     expected.add("b");
     expected.add("c");
@@ -503,7 +516,8 @@ public class QueryTestIT {
     final List<String> added = new ArrayList<>();
     final List<String> removed = new ArrayList<>();
 
-    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build()).timedGet();
+    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build())
+        .timedGet();
     final Semaphore semaphore = new Semaphore(0);
     ref.limitToLast(2)
         .addChildEventListener(
@@ -586,7 +600,8 @@ public class QueryTestIT {
               }
             });
 
-    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build()).timedGet();
+    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build())
+        .timedGet();
     List<String> expected = new ArrayList<>();
     expected.add("a");
     expected.add("b");
@@ -609,7 +624,8 @@ public class QueryTestIT {
     final List<String> added = new ArrayList<>();
     final List<String> removed = new ArrayList<>();
 
-    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build()).timedGet();
+    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build())
+        .timedGet();
     final Semaphore semaphore = new Semaphore(0);
     ref.startAt(null, "a")
         .limitToFirst(2)
@@ -797,7 +813,8 @@ public class QueryTestIT {
               }
             });
 
-    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build()).timedGet();
+    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build())
+        .timedGet();
     List<String> expected = new ArrayList<>();
     expected.add("b");
     expected.add("c");
@@ -814,12 +831,14 @@ public class QueryTestIT {
   }
 
   @Test
-  public void setLimitEnsureChildAddedAndChildRemovedAreFiredWhenAnElementIsRemovedUsingServerData()
+  public void
+  setLimitEnsureChildAddedAndChildRemovedAreFiredWhenAnElementIsRemovedUsingServerData()
       throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
       InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
-    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build()).timedGet();
+    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build())
+        .timedGet();
     final List<String> added = new ArrayList<>();
     final List<String> removed = new ArrayList<>();
     final Semaphore semaphore = new Semaphore(0);
@@ -944,7 +963,8 @@ public class QueryTestIT {
                   }
 
                   @Override
-                  public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
+                  public void onChildChanged(DataSnapshot snapshot, String
+                      previousChildName) {
                     // no-op
                   }
 
@@ -1038,7 +1058,8 @@ public class QueryTestIT {
         new MapBuilder().put("a", 1L).put("b", 2L).put("c", 3L).put("d", 4L).build());
     helper.add(
         ref.startAt(1, "b").endAt(2, "c"), new MapBuilder().put("b", 2L).put("c", 3L).build());
-    helper.add(ref.startAt(1, "c").endAt(2), new MapBuilder().put("c", 3L).put("d", 4L).build());
+    helper.add(ref.startAt(1, "c").endAt(2), new MapBuilder().put("c", 3L).put("d", 4L).build
+        ());
 
     ref.setValue(
         new MapBuilder()
@@ -1070,7 +1091,8 @@ public class QueryTestIT {
         new MapBuilder().put("a", 1L).put("b", 2L).put("c", 3L).put("d", 4L).build());
     helper.add(
         ref.startAt(1, "b").endAt(2, "c"), new MapBuilder().put("b", 2L).put("c", 3L).build());
-    helper.add(ref.startAt(1, "c").endAt(2), new MapBuilder().put("c", 3L).put("d", 4L).build());
+    helper.add(ref.startAt(1, "c").endAt(2), new MapBuilder().put("c", 3L).put("d", 4L).build
+        ());
 
     helper.waitForEvents();
   }
@@ -1086,7 +1108,8 @@ public class QueryTestIT {
         new MapBuilder().put("a", 1L).put("b", 2L).put("c", 3L).put("d", 4L).build());
     helper.add(
         ref.startAt(1, "d").endAt(2, "a"), new MapBuilder().put("d", 4L).put("a", 1L).build());
-    helper.add(ref.startAt(1, "e").endAt(2), new MapBuilder().put("a", 1L).put("b", 2L).build());
+    helper.add(ref.startAt(1, "e").endAt(2), new MapBuilder().put("a", 1L).put("b", 2L).build
+        ());
 
     ref.setValue(
         new MapBuilder()
@@ -1118,7 +1141,8 @@ public class QueryTestIT {
         new MapBuilder().put("a", 1L).put("b", 2L).put("c", 3L).put("d", 4L).build());
     helper.add(
         ref.startAt(1, "d").endAt(2, "a"), new MapBuilder().put("d", 4L).put("a", 1L).build());
-    helper.add(ref.startAt(1, "e").endAt(2), new MapBuilder().put("a", 1L).put("b", 2L).build());
+    helper.add(ref.startAt(1, "e").endAt(2), new MapBuilder().put("a", 1L).put("b", 2L).build
+        ());
 
     helper.waitForEvents();
   }
@@ -1249,7 +1273,8 @@ public class QueryTestIT {
                   }
 
                   @Override
-                  public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
+                  public void onChildChanged(DataSnapshot snapshot, String
+                      previousChildName) {
                     // No-op
                   }
 
@@ -1323,7 +1348,8 @@ public class QueryTestIT {
   }
 
   @Test
-  public void filteringToOnlyNullPrioritiesWorks() throws DatabaseException, InterruptedException {
+  public void filteringToOnlyNullPrioritiesWorks() throws DatabaseException,
+      InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
     ref.setValue(
@@ -1355,7 +1381,8 @@ public class QueryTestIT {
             .build());
 
     DataSnapshot snap = TestHelpers.getSnap(ref.endAt(2));
-    Map<String, Object> expected = new MapBuilder().put("a", 0L).put("b", 1L).put("c", 2L).build();
+    Map<String, Object> expected = new MapBuilder().put("a", 0L).put("b", 1L).put("c", 2L)
+        .build();
     Object result = snap.getValue();
     DeepEquals.assertEquals(expected, result);
   }
@@ -1374,7 +1401,8 @@ public class QueryTestIT {
             .build());
 
     DataSnapshot snap = TestHelpers.getSnap(ref.startAt(2));
-    Map<String, Object> expected = new MapBuilder().put("c", 2L).put("d", 3L).put("e", 4L).build();
+    Map<String, Object> expected = new MapBuilder().put("c", 2L).put("d", 3L).put("e", 4L)
+        .build();
     Object result = snap.getValue();
     DeepEquals.assertEquals(expected, result);
   }
@@ -1689,7 +1717,8 @@ public class QueryTestIT {
                   }
 
                   @Override
-                  public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
+                  public void onChildChanged(DataSnapshot snapshot, String
+                      previousChildName) {
                     // No-op
                   }
 
@@ -1882,7 +1911,8 @@ public class QueryTestIT {
               }
             });
 
-    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build()).timedGet();
+    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build())
+        .timedGet();
     assertEquals(1, cSnaps.size());
     Map<String, Object> cExpected = new MapBuilder().put("c", 3L).build();
     DeepEquals.assertEquals(cExpected, cSnaps.get(0).getValue());
@@ -2131,7 +2161,8 @@ public class QueryTestIT {
       InterruptedException {
     DatabaseReference ref = TestHelpers.getRandomNode();
 
-    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build()).timedGet();
+    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build())
+        .timedGet();
 
     final AtomicBoolean onCalled = new AtomicBoolean(false);
     final Semaphore semaphore = new Semaphore(0);
@@ -2150,7 +2181,8 @@ public class QueryTestIT {
         });
 
     DataSnapshot snap = TestHelpers.getSnap(ref.limitToLast(5));
-    Map<String, Object> expected = new MapBuilder().put("a", 1L).put("b", 2L).put("c", 3L).build();
+    Map<String, Object> expected = new MapBuilder().put("a", 1L).put("b", 2L).put("c", 3L)
+        .build();
 
     DeepEquals.assertEquals(expected, snap.getValue());
   }
@@ -2941,7 +2973,8 @@ public class QueryTestIT {
               }
               return false;
             } else {
-              Map<String, Object> expected = new MapBuilder().put("d", 4L).put("e", 3L).build();
+              Map<String, Object> expected = new MapBuilder().put("d", 4L).put("e", 3L)
+                  .build();
               DeepEquals.assertEquals(expected, events.get(1).getSnapshot().getValue());
               return true;
             }
@@ -2972,7 +3005,8 @@ public class QueryTestIT {
                   ready.release(1);
                   return false;
                 }
-                // We already initialized the location, and now the remove has happened so that
+                // We already initialized the location, and now the remove has happened
+                // so that
                 // we have no more data
                 return startChecking.get() && result == null;
               }

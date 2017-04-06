@@ -96,8 +96,8 @@ public final class Objects {
     }
 
     /**
-     * Adds a name/value pair to the formatted output in {@code name=value} format. If {@code value}
-     * is {@code null}, the string {@code "null"} is used.
+     * Adds a name/value pair to the formatted output in {@code name=value} format. If {@code
+     * value} is {@code null}, the string {@code "null"} is used.
      */
     public ToStringHelper add(String name, Object value) {
       fieldStrings.add(Preconditions.checkNotNull(name) + "=" + String.valueOf(value));

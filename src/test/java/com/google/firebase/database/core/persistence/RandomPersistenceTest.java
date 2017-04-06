@@ -53,10 +53,12 @@ public class RandomPersistenceTest {
     return map;
   }
 
-  private void applyOperation(SyncTree syncTree, Operation operation, Map<QuerySpec, Tag> tagMap) {
+  private void applyOperation(SyncTree syncTree, Operation operation, Map<QuerySpec, Tag>
+      tagMap) {
     if (operation.getSource().isTagged()) {
       Tag tag =
-          tagMap.get(new QuerySpec(operation.getPath(), operation.getSource().getQueryParams()));
+          tagMap.get(new QuerySpec(operation.getPath(), operation.getSource()
+              .getQueryParams()));
       assert tag != null;
       switch (operation.getType()) {
         case ListenComplete: {
@@ -65,7 +67,8 @@ public class RandomPersistenceTest {
         }
         case Overwrite: {
           Overwrite overwrite = (Overwrite) operation;
-          syncTree.applyTaggedQueryOverwrite(operation.getPath(), overwrite.getSnapshot(), tag);
+          syncTree.applyTaggedQueryOverwrite(operation.getPath(), overwrite.getSnapshot
+              (), tag);
           break;
         }
         case Merge: {
@@ -117,7 +120,8 @@ public class RandomPersistenceTest {
         case AckUserWrite: {
           AckUserWrite userWrite = (AckUserWrite) operation;
           syncTree.ackUserWrite(
-              currentUnackedWriteId++, userWrite.isRevert(), /*persist=*/ true, new TestClock());
+              currentUnackedWriteId++, userWrite.isRevert(), /*persist=*/ true, new
+                  TestClock());
           break;
         }
         default: {
@@ -189,7 +193,8 @@ public class RandomPersistenceTest {
           }
           if (op instanceof ListenComplete) {
             if (op.getSource().getQueryParams() != null) {
-              completeListens.add(new QuerySpec(op.getPath(), op.getSource().getQueryParams()));
+              completeListens.add(new QuerySpec(op.getPath(), op.getSource()
+                  .getQueryParams()));
             } else {
               completeListens.add(QuerySpec.defaultQueryAtPath(op.getPath()));
             }

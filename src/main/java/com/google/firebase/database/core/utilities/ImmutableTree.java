@@ -275,9 +275,12 @@ public class ImmutableTree<T> implements Iterable<Map.Entry<Path, T>> {
 
   @Override
   public Iterator<Map.Entry<Path, T>> iterator() {
-    // This could probably be done more efficient than prefilling a list, however, it's also a bit
-    // tricky as we have to potentially scan all subtrees for a value that exists. Since iterators
-    // are consumed fully in most cases, this should give a fairly efficient implementation in most
+    // This could probably be done more efficient than prefilling a list, however, it's also
+    // a bit
+    // tricky as we have to potentially scan all subtrees for a value that exists. Since
+    // iterators
+    // are consumed fully in most cases, this should give a fairly efficient implementation
+    // in most
     // cases.
     final List<Map.Entry<Path, T>> list = new ArrayList<>();
     this.foreach(

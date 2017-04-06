@@ -45,7 +45,8 @@ public class Tree<T> {
     ChildKey next = path.getFront();
     while (next != null) {
       TreeNode<T> childNode =
-          child.node.children.containsKey(next) ? child.node.children.get(next) : new TreeNode<T>();
+          child.node.children.containsKey(next) ? child.node.children.get(next) : new
+              TreeNode<T>();
       child = new Tree<>(next, child, childNode);
       path = path.popFront();
       next = path.getFront();

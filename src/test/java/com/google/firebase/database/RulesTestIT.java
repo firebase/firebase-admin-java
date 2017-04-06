@@ -32,17 +32,20 @@ public class RulesTestIT {
         new MapBuilder()
             .put("read_only", new MapBuilder().put(".read", true).build())
             .put("write_only", new MapBuilder().put(".write", true).build())
-            .put("read_and_write", new MapBuilder().put(".write", true).put(".read", true).build())
+            .put("read_and_write", new MapBuilder().put(".write", true).put(".read", true)
+                .build())
             .put(
                 "any_auth",
-                new MapBuilder().put(".write", "auth != null").put(".read", "auth != null").build())
+                new MapBuilder().put(".write", "auth != null").put(".read", "auth != null")
+                    .build())
             .put(
                 "revocable",
                 new MapBuilder()
                     .put(".write", true)
                     .put(
                         ".read",
-                        "data.child('public').val() == true && data.child('hidden').val() != true")
+                        "data.child('public').val() == true && data.child('hidden').val() != " +
+                            "true")
                     .build())
             .put(
                 "users",
@@ -61,7 +64,8 @@ public class RulesTestIT {
                             .put(
                                 "age",
                                 new MapBuilder()
-                                    .put(".validate", "newData.isNumber() && newData.val() > 13")
+                                    .put(".validate", "newData.isNumber() && newData.val() > " +
+                                        "13")
                                     .build())
                             .build())
                     .build())
@@ -130,7 +134,8 @@ public class RulesTestIT {
 
     TestHelpers.waitFor(semaphore);
 
-    // All of the other writing methods are just testing the server. We're just testing the error
+    // All of the other writing methods are just testing the server. We're just testing the
+    // error
     // propagation
   }
 

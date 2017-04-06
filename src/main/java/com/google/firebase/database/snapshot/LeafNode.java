@@ -60,7 +60,8 @@ public abstract class LeafNode<T extends LeafNode> implements Node {
       return this;
     } else {
       assert !path.getFront().isPriorityChildName() || path.size() == 1;
-      return updateImmediateChild(front, EmptyNode.Empty().updateChild(path.popFront(), node));
+      return updateImmediateChild(front, EmptyNode.Empty().updateChild(path.popFront(),
+          node));
     }
   }
 

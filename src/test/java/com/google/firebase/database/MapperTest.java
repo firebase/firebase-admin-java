@@ -252,7 +252,8 @@ public class MapperTest {
   public void publicPrivateFieldDeserialze() {
     PublicPrivateFieldBean bean =
         deserialize(
-            "{'value1': 'foo', 'value2': 'bar', 'value3': 'baz'}", PublicPrivateFieldBean.class);
+            "{'value1': 'foo', 'value2': 'bar', 'value3': 'baz'}", PublicPrivateFieldBean
+                .class);
     assertEquals("foo", bean.value1);
     assertEquals(null, bean.value2);
     assertEquals(null, bean.value3);
@@ -286,7 +287,8 @@ public class MapperTest {
 
   @Test
   public void ignoreExtraProperties() {
-    PublicFieldBean bean = deserialize("{'value': 'foo', 'unknown': 'bar'}", PublicFieldBean.class);
+    PublicFieldBean bean = deserialize("{'value': 'foo', 'unknown': 'bar'}", PublicFieldBean
+        .class);
     assertEquals("foo", bean.value);
   }
 
@@ -332,19 +334,22 @@ public class MapperTest {
 
   @Test
   public void caseSensitiveSetterIsCalledWhenPresent1() {
-    CaseSensitiveSetterBean3 bean = deserialize("{'value': 'foo'}", CaseSensitiveSetterBean3.class);
+    CaseSensitiveSetterBean3 bean = deserialize("{'value': 'foo'}",
+        CaseSensitiveSetterBean3.class);
     assertEquals("setter:foo", bean.value);
   }
 
   @Test
   public void caseSensitiveSetterIsCalledWhenPresent2() {
-    CaseSensitiveSetterBean4 bean = deserialize("{'value': 'foo'}", CaseSensitiveSetterBean4.class);
+    CaseSensitiveSetterBean4 bean = deserialize("{'value': 'foo'}",
+        CaseSensitiveSetterBean4.class);
     assertEquals("setter:foo", bean.value);
   }
 
   @Test
   public void caseSensitiveSetterIsCalledWhenPresent3() {
-    CaseSensitiveSetterBean5 bean = deserialize("{'value': 'foo'}", CaseSensitiveSetterBean5.class);
+    CaseSensitiveSetterBean5 bean = deserialize("{'value': 'foo'}",
+        CaseSensitiveSetterBean5.class);
     assertEquals("foo", bean.value);
   }
 
@@ -380,7 +385,8 @@ public class MapperTest {
 
   @Test
   public void beansCanContainBeanLists() {
-    RecursiveListBean bean = deserialize("{'values': [{'value': 'foo'}]}", RecursiveListBean.class);
+    RecursiveListBean bean = deserialize("{'values': [{'value': 'foo'}]}", RecursiveListBean
+        .class);
     assertEquals(1, bean.values.size());
     assertEquals("foo", bean.values.get(0).value);
   }
@@ -744,7 +750,8 @@ public class MapperTest {
 
   @Test
   public void multipleConstructorsCanBeDeserialized() {
-    MultipleConstructorBean bean = deserialize("{'value': 'foo'}", MultipleConstructorBean.class);
+    MultipleConstructorBean bean = deserialize("{'value': 'foo'}", MultipleConstructorBean
+        .class);
     assertEquals("foo", bean.value);
   }
 
@@ -865,7 +872,8 @@ public class MapperTest {
     assertEquals(Collections.singletonMap("foo", "bar"), mapBean.value);
 
     GenericBean<List<String>> listBean =
-        deserialize("{'value': ['foo']}", new GenericTypeIndicator<GenericBean<List<String>>>() {
+        deserialize("{'value': ['foo']}", new GenericTypeIndicator<GenericBean<List<String>>>
+            () {
         });
     assertEquals(Collections.singletonList("foo"), listBean.value);
 
@@ -1004,7 +1012,8 @@ public class MapperTest {
 
   @Test
   public void staticFieldsAreNotParsed() {
-    StaticFieldBean bean = deserialize("{'value1': 'foo', 'value2': 'bar'}", StaticFieldBean.class);
+    StaticFieldBean bean = deserialize("{'value1': 'foo', 'value2': 'bar'}", StaticFieldBean
+        .class);
     assertEquals("static-value", StaticFieldBean.value1);
     assertEquals("bar", bean.value2);
   }
@@ -1038,7 +1047,8 @@ public class MapperTest {
     bean.complexEnum = ComplexEnum.One;
     bean.setEnumValue(Enum.Foo);
 
-    assertJson("{'enumField': 'Bar', 'enumValue': 'Foo', 'complexEnum': 'One'}", serialize(bean));
+    assertJson("{'enumField': 'Bar', 'enumValue': 'Foo', 'complexEnum': 'One'}", serialize
+        (bean));
   }
 
   @Test

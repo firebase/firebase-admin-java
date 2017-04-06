@@ -39,7 +39,8 @@ public class FirebaseDatabaseTestIT {
   private static FirebaseApp appForDatabaseUrl(String url, String name) {
     return FirebaseApp.initializeApp(
         new FirebaseOptions.Builder()
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream
+                ()))
             .setDatabaseUrl(url)
             .build(),
         name);

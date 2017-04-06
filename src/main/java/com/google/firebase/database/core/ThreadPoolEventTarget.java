@@ -34,7 +34,8 @@ class ThreadPoolEventTarget implements EventTarget {
                 Thread thread = wrappedFactory.newThread(r);
                 threadInitializer.setName(thread, "FirebaseDatabaseEventTarget");
                 threadInitializer.setDaemon(thread, true);
-                // TODO: should we set an uncaught exception handler here? Probably want to let
+                // TODO: should we set an uncaught exception handler here? Probably want
+                // to let
                 // exceptions happen...
                 return thread;
               }
@@ -53,8 +54,8 @@ class ThreadPoolEventTarget implements EventTarget {
 
   /**
    * Our implementation of shutdown is not immediate, it merely lowers the required number of
-   * threads to 0. Depending on what we set as our timeout on the executor, this will reap the event
-   * target thread after some amount of time if there's no activity
+   * threads to 0. Depending on what we set as our timeout on the executor, this will reap the
+   * event target thread after some amount of time if there's no activity
    */
   @Override
   public void shutdown() {
@@ -63,8 +64,8 @@ class ThreadPoolEventTarget implements EventTarget {
 
   /**
    * Rather than launching anything, this method will ensure that our executor has at least one
-   * thread available. This will keep the process alive and launch the thread if it has been reaped.
-   * If the thread already exists, this is a no-op
+   * thread available. This will keep the process alive and launch the thread if it has been
+   * reaped. If the thread already exists, this is a no-op
    */
   @Override
   public void restart() {

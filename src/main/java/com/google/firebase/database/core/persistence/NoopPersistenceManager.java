@@ -95,7 +95,8 @@ public class NoopPersistenceManager implements PersistenceManager {
   }
 
   @Override
-  public void updateTrackedQueryKeys(QuerySpec query, Set<ChildKey> added, Set<ChildKey> removed) {
+  public void updateTrackedQueryKeys(QuerySpec query, Set<ChildKey> added, Set<ChildKey>
+      removed) {
     verifyInsideTransaction();
   }
 

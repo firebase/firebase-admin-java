@@ -268,7 +268,8 @@ public class OrderTestIT {
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
 
-    // Need to use a String set to null rather than null literal, otherwise method call setValue is
+    // Need to use a String set to null rather than null literal, otherwise method call
+    // setValue is
     // ambiguous. The null could also refer to the CompletionListener
     String noPriority = null;
     writer.child("alpha42").setValue(1, "zed");

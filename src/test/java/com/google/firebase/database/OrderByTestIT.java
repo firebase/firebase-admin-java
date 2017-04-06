@@ -55,11 +55,13 @@ public class OrderByTestIT {
           }
         };
     ref.push()
-        .setValue(TestHelpers.fromJsonString("{\"name\": \"Andrew\", \"nuggets\": 35}"), listener);
+        .setValue(TestHelpers.fromJsonString("{\"name\": \"Andrew\", \"nuggets\": 35}"),
+            listener);
     ref.push()
         .setValue(TestHelpers.fromJsonString("{\"name\": \"Rob\", \"nuggets\": 40}"), listener);
     ref.push()
-        .setValue(TestHelpers.fromJsonString("{\"name\": \"Greg\", \"nuggets\": 38}"), listener);
+        .setValue(TestHelpers.fromJsonString("{\"name\": \"Greg\", \"nuggets\": 38}"),
+            listener);
 
     TestHelpers.waitFor(semaphore, 3);
 
@@ -87,7 +89,8 @@ public class OrderByTestIT {
 
   @Test
   public void canUseAFallbackThenDefineTheSpecifiedIndex()
-      throws InterruptedException, ExecutionException, TimeoutException, TestFailure, IOException {
+      throws InterruptedException, ExecutionException, TimeoutException, TestFailure,
+      IOException {
 
     final List<String> warnMessages = new ArrayList<>();
     final Semaphore warnSemaphore = new Semaphore(0);
@@ -432,7 +435,8 @@ public class OrderByTestIT {
 
   @Test
   public void multipleIndexesAtLocation()
-      throws IOException, ExecutionException, InterruptedException, TimeoutException, TestFailure {
+      throws IOException, ExecutionException, InterruptedException, TimeoutException,
+      TestFailure {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
@@ -508,7 +512,8 @@ public class OrderByTestIT {
     Assert.assertEquals(1, orderSnaps.size());
     Assert.assertEquals(orderExpected, orderSnaps.get(0).getValue());
 
-    new WriteFuture(writer.child("a"), new MapBuilder().put("order", -1L).put("foo", 1L).build())
+    new WriteFuture(writer.child("a"), new MapBuilder().put("order", -1L).put("foo", 1L)
+        .build())
         .timedGet();
 
     fooExpected = new HashMap<>();
@@ -778,7 +783,8 @@ public class OrderByTestIT {
     DatabaseReference reader = refs.get(1);
 
     Map<String, Object> initial = new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build();
-    // If the server doesn't respect the index, it will send down limited data, but with no offset,
+    // If the server doesn't respect the index, it will send down limited data, but with no
+    // offset,
     // so the expected
     // and actual data don't match
     Query query = reader.orderByKey().startAt("b").limitToFirst(2);
@@ -816,7 +822,8 @@ public class OrderByTestIT {
 
   @Test
   public void serverRespectsValueIndex()
-      throws InterruptedException, ExecutionException, TimeoutException, TestFailure, IOException {
+      throws InterruptedException, ExecutionException, TimeoutException, TestFailure,
+      IOException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
@@ -827,7 +834,8 @@ public class OrderByTestIT {
     TestHelpers.uploadRules(writer, rules);
 
     Map<String, Object> initial = new MapBuilder().put("a", 1).put("c", 2).put("b", 3).build();
-    // If the server doesn't respect the index, it will send down limited data, but with no offset,
+    // If the server doesn't respect the index, it will send down limited data, but with no
+    // offset,
     // so the expected and actual data don't match
     Query query = reader.orderByValue().startAt(2).limitToFirst(2);
 
@@ -864,7 +872,8 @@ public class OrderByTestIT {
 
   @Test
   public void deepUpdatesWorkWithQueries()
-      throws InterruptedException, ExecutionException, TimeoutException, TestFailure, IOException {
+      throws InterruptedException, ExecutionException, TimeoutException, TestFailure,
+      IOException {
     List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);

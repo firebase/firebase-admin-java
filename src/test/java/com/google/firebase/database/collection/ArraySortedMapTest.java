@@ -213,7 +213,8 @@ public class ArraySortedMapTest {
     for (Map<Integer, Integer> any : someMaps(integers(), integers())) {
       List<Integer> expectedKeys = new ArrayList<>(any.keySet());
       Integer fromKey =
-          (expectedKeys.isEmpty() || booleans().next()) ? integers().next() : expectedKeys.get(0);
+          (expectedKeys.isEmpty() || booleans().next()) ? integers().next() : expectedKeys
+              .get(0);
       Collections.sort(expectedKeys);
 
       Iterator<Integer> iterator = expectedKeys.iterator();
@@ -258,7 +259,8 @@ public class ArraySortedMapTest {
     for (Map<Integer, Integer> any : someMaps(integers(), integers())) {
       List<Integer> expectedKeys = new ArrayList<>(any.keySet());
       Integer fromKey =
-          (expectedKeys.isEmpty() || booleans().next()) ? integers().next() : expectedKeys.get(0);
+          (expectedKeys.isEmpty() || booleans().next()) ? integers().next() : expectedKeys
+              .get(0);
       Collections.sort(expectedKeys);
       Collections.reverse(expectedKeys);
 

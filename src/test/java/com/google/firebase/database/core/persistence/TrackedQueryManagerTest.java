@@ -27,7 +27,8 @@ public class TrackedQueryManagerTest {
           .endAt(NodeFromJSON("endVal"), ChildKey.fromString("endKey"))
           .limitToLast(5);
 
-  private static final QuerySpec SAMPLE_FOO_QUERY = new QuerySpec(path("foo"), SAMPLE_QUERYPARAMS);
+  private static final QuerySpec SAMPLE_FOO_QUERY = new QuerySpec(path("foo"),
+      SAMPLE_QUERYPARAMS);
   private static final QuerySpec DEFAULT_FOO_QUERY = defaultQueryAt("foo");
   private static final QuerySpec DEFAULT_BAR_QUERY = defaultQueryAt("bar");
 
@@ -109,12 +110,14 @@ public class TrackedQueryManagerTest {
 
     assertTrue(manager.findTrackedQuery(defaultQueryAt("foo")).complete);
     assertTrue(manager.findTrackedQuery(defaultQueryAt("foo/bar")).complete);
-    assertTrue(manager.findTrackedQuery(new QuerySpec(path("foo"), SAMPLE_QUERYPARAMS)).complete);
+    assertTrue(manager.findTrackedQuery(new QuerySpec(path("foo"), SAMPLE_QUERYPARAMS))
+        .complete);
     assertTrue(
         manager.findTrackedQuery(new QuerySpec(path("foo/baz"), SAMPLE_QUERYPARAMS)).complete);
     assertFalse(manager.findTrackedQuery(defaultQueryAt("elsewhere")).complete);
     assertFalse(
-        manager.findTrackedQuery(new QuerySpec(path("elsewhere"), SAMPLE_QUERYPARAMS)).complete);
+        manager.findTrackedQuery(new QuerySpec(path("elsewhere"), SAMPLE_QUERYPARAMS))
+            .complete);
     manager.verifyCache();
   }
 
@@ -198,7 +201,8 @@ public class TrackedQueryManagerTest {
     }
 
     PruneForest forest =
-        manager.pruneOldQueries(new TestCachePolicy(/*percentToPrune=*/ 0.2f, /*maxToKeep=*/ 10));
+        manager.pruneOldQueries(new TestCachePolicy(/*percentToPrune=*/ 0.2f, /*maxToKeep=*/
+            10));
 
     // Should prune down to the max of 10, so 5 pruned.
     PruneForest expected = new PruneForest();
@@ -258,7 +262,8 @@ public class TrackedQueryManagerTest {
 
     TrackedQueryManager manager = newManager(engine, null);
 
-    assertEquals(Collections.<ChildKey>emptySet(), manager.getKnownCompleteChildren(path("foo")));
+    assertEquals(Collections.<ChildKey>emptySet(), manager.getKnownCompleteChildren(path
+        ("foo")));
 
     manager.setQueryActive(defaultQueryAt("foo/a"));
     manager.setQueryCompleteIfExists(defaultQueryAt("foo/a"));
@@ -270,7 +275,8 @@ public class TrackedQueryManagerTest {
     TrackedQuery trackedQuery = manager.findTrackedQuery(SAMPLE_FOO_QUERY);
     engine.saveTrackedQueryKeys(trackedQuery.id, asSet(ck("d"), ck("e")));
 
-    assertEquals(asSet(ck("a"), ck("d"), ck("e")), manager.getKnownCompleteChildren(path("foo")));
+    assertEquals(asSet(ck("a"), ck("d"), ck("e")), manager.getKnownCompleteChildren(path
+        ("foo")));
     assertEquals(Collections.<ChildKey>emptySet(), manager.getKnownCompleteChildren(path("")));
     assertEquals(
         Collections.<ChildKey>emptySet(), manager.getKnownCompleteChildren(path("foo/baz")));

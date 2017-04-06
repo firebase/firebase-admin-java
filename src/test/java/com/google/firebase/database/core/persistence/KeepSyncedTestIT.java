@@ -32,7 +32,8 @@ public class KeepSyncedTestIT {
     final Map<String, Object> value = new MapBuilder().put("child", counter).build();
     new WriteFuture(ref, value).timedGet();
 
-    // Next go offline, if it's kept synced we should have kept the value, after going offline no
+    // Next go offline, if it's kept synced we should have kept the value, after going
+    // offline no
     // way to get the value except from cache
     ref.getDatabase().goOffline();
 
@@ -112,7 +113,8 @@ public class KeepSyncedTestIT {
     ref.keepSynced(false);
     assertNotKeptSynced(ref);
     assertNotKeptSynced(
-        query); //currently, setting false on the default query affects all queries at that location
+        query); //currently, setting false on the default query affects all queries at that
+    // location
   }
 
   @Test
@@ -177,7 +179,8 @@ public class KeepSyncedTestIT {
             new ReadFuture.CompletionCondition() {
               @Override
               public boolean isComplete(List<EventRecord> events) {
-                return events.get(events.size() - 1).getSnapshot().getValue().equals("done");
+                return events.get(events.size() - 1).getSnapshot().getValue().equals
+                    ("done");
               }
             });
 

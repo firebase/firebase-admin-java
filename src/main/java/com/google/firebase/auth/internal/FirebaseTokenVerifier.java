@@ -23,8 +23,8 @@ import java.util.Collections;
 /**
  * Verifies that a JWT returned by Firebase is valid for use in the this project.
  *
- * This class should be kept as a Singleton within the server in order to maximize caching of the
- * public signing keys.
+ * <p>This class should be kept as a Singleton within the server in order to maximize caching of
+ * the public signing keys.
  */
 public final class FirebaseTokenVerifier extends IdTokenVerifier {
 
@@ -32,10 +32,11 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
   static final String CLIENT_CERT_URL = "https://www.googleapis.com/robot/v1/metadata/x509/"
       + "securetoken@system.gserviceaccount.com";
   /**
-   * The default public keys manager for verifying projects use the correct public key
+   * The default public keys manager for verifying projects use the correct public key.
    */
   public static final GooglePublicKeysManager DEFAULT_KEY_MANAGER =
-      new GooglePublicKeysManager.Builder(new NetHttpTransport.Builder().build(), new GsonFactory())
+      new GooglePublicKeysManager.Builder(new NetHttpTransport.Builder().build(), new
+          GsonFactory())
           .setClock(Clock.SYSTEM)
           .setPublicCertsEncodedUrl(CLIENT_CERT_URL)
           .build();
@@ -62,8 +63,8 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
   }
 
   /**
-   * We are changing the semantics of the super-class method in order to provide more details on why
-   * this is failing to the developer.
+   * We are changing the semantics of the super-class method in order to provide more details on
+   * why this is failing to the developer.
    */
   public boolean verifyTokenAndSignature(IdToken token) throws FirebaseAuthException {
     Payload payload = token.getPayload();

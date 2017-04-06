@@ -68,12 +68,15 @@ public class LimitedFilter implements NodeFilter {
     boolean inRange = rangedFilter.matches(newChildNamedNode);
     if (oldIndexed.getNode().hasChild(childKey)) {
       Node oldChildSnap = oldIndexed.getNode().getImmediateChild(childKey);
-      NamedNode nextChild = source.getChildAfterChild(this.index, windowBoundary, this.reverse);
+      NamedNode nextChild = source.getChildAfterChild(this.index, windowBoundary, this
+          .reverse);
       while (nextChild != null
           && (nextChild.getName().equals(childKey)
           || oldIndexed.getNode().hasChild(nextChild.getName()))) {
-        // There is a weird edge case where a node is updated as part of a merge in the write tree,
-        // but hasn't been applied to the limited filter yet. Ignore this next child which will be
+        // There is a weird edge case where a node is updated as part of a merge in the
+        // write tree,
+        // but hasn't been applied to the limited filter yet. Ignore this next child
+        // which will be
         // updated later in the limited filter...
         nextChild = source.getChildAfterChild(this.index, nextChild, this.reverse);
       }
@@ -88,7 +91,8 @@ public class LimitedFilter implements NodeFilter {
         return oldIndexed.updateChild(childKey, childSnap);
       } else {
         if (optChangeAccumulator != null) {
-          optChangeAccumulator.trackChildChange(Change.childRemovedChange(childKey, oldChildSnap));
+          optChangeAccumulator.trackChildChange(Change.childRemovedChange(childKey,
+              oldChildSnap));
         }
         IndexedNode newIndexed = oldIndexed.updateChild(childKey, EmptyNode.Empty());
         boolean nextChildInRange = nextChild != null && rangedFilter.matches(nextChild);
@@ -109,8 +113,10 @@ public class LimitedFilter implements NodeFilter {
       if (this.index.compare(windowBoundary, newChildNamedNode, this.reverse) >= 0) {
         if (optChangeAccumulator != null) {
           optChangeAccumulator.trackChildChange(
-              Change.childRemovedChange(windowBoundary.getName(), windowBoundary.getNode()));
-          optChangeAccumulator.trackChildChange(Change.childAddedChange(childKey, childSnap));
+              Change.childRemovedChange(windowBoundary.getName(), windowBoundary
+                  .getNode()));
+          optChangeAccumulator.trackChildChange(Change.childAddedChange(childKey,
+              childSnap));
         }
         return oldIndexed
             .updateChild(childKey, childSnap)

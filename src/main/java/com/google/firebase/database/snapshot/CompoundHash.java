@@ -111,8 +111,10 @@ public class CompoundHash {
     private StringBuilder optHashValueBuilder = null;
     // The current path as a stack. This is used in combination with currentPathDepth to
     // simultaneously store the last leaf node path. The depth is changed when descending and
-    // ascending, at the same time the current key is set for the current depth. Because the keys
-    // are left unchanged for ascending the path will also contain the path of the last visited leaf
+    // ascending, at the same time the current key is set for the current depth. Because the
+    // keys
+    // are left unchanged for ascending the path will also contain the path of the last
+    // visited leaf
     // node (using lastLeafDepth elements)
     private Stack<ChildKey> currentPath = new Stack<>();
     private int lastLeafDepth = -1;

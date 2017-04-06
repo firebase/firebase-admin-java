@@ -27,7 +27,8 @@ public class InfoTestIT {
     DatabaseReference root = getRootNode();
 
     assertEquals(TestConstants.TEST_NAMESPACE + "/.info", root.child(".info").toString());
-    assertEquals(TestConstants.TEST_NAMESPACE + "/.info/foo", root.child(".info/foo").toString());
+    assertEquals(TestConstants.TEST_NAMESPACE + "/.info/foo", root.child(".info/foo")
+        .toString());
 
     DatabaseConfig ctx = TestHelpers.getContext(0);
     DatabaseReference ref = new DatabaseReference(TestConstants.TEST_NAMESPACE + "/.info", ctx);

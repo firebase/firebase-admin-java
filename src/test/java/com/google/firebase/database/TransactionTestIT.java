@@ -85,7 +85,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             // No-op
           }
         });
@@ -112,7 +113,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             if (error != null || !committed) {
               fail("Transaction should succeed");
             } else {
@@ -140,7 +142,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertFalse(committed);
             assertNull(currentData.getValue());
@@ -204,7 +207,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertFalse(committed);
             assertEquals(42L, currentData.getValue());
@@ -256,7 +260,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             if (error != null || !committed) {
               fail("Transaction should succeed");
             } else {
@@ -306,7 +311,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertTrue(committed);
             Map expected = new MapBuilder().put("a", 42L).put("b", 87L).build();
@@ -343,7 +349,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertTrue(committed);
             semaphore.release(1);
@@ -377,7 +384,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertTrue(committed);
             first.release(1);
           }
@@ -400,7 +408,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertTrue(committed);
             second.release(1);
           }
@@ -420,9 +429,11 @@ public class TransactionTestIT {
     // Only #1 is sent to the server immediately (since 2 depends on 1 and 3 depends on 2).
     // We set /foo to 0.
     // - Transaction #1 should complete as planned (since it was already sent).
-    // - Transaction #2 should be aborted by the set. We keep it from completing by hijacking the
+    // - Transaction #2 should be aborted by the set. We keep it from completing by hijacking
+    // the
     //   hash
-    // - Transaction #3 should be re-run after #2 is reverted, and then be sent to the server and
+    // - Transaction #3 should be re-run after #2 is reverted, and then be sent to the server
+    // and
     //   succeed.
 
     final DatabaseReference ref = TestHelpers.getRandomNode();
@@ -499,7 +510,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot snapshot) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              snapshot) {
             ref.getRepo().setHijackHash(false);
             assertFalse(committed);
             secondDone.set(true);
@@ -517,7 +529,8 @@ public class TransactionTestIT {
                   currentData.setValue("first");
                   return Transaction.success(currentData);
                 } else {
-                  // NOTE: This may get hit more than once because the previous transaction
+                  // NOTE: This may get hit more than once because the previous
+                  // transaction
                   // may still be hijacking transaction hashes.
                   assertNull(currentData.getValue());
                   currentData.setValue("second");
@@ -545,7 +558,8 @@ public class TransactionTestIT {
     assertTrue(firstDone.get());
     assertTrue(secondDone.get());
 
-    // Note that the set actually raises two events, one overlaid on top of the original transaction
+    // Note that the set actually raises two events, one overlaid on top of the original
+    // transaction
     // value, and a second one with the re-run value from the third transaction
   }
 
@@ -563,7 +577,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertTrue(committed);
             semaphore.release(1);
@@ -604,7 +619,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertTrue(committed);
             semaphore.release(1);
@@ -626,7 +642,8 @@ public class TransactionTestIT {
     DatabaseReference ref1 = refs.get(0);
     DatabaseReference ref2 = refs.get(1);
 
-    // Add an event listener at this node so we hang on to local state in-between transaction runs
+    // Add an event listener at this node so we hang on to local state in-between transaction
+    // runs
     ref1.addValueEventListener(
         new ValueEventListener() {
           @Override
@@ -647,7 +664,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertTrue(committed);
             assertEquals("hello!", currentData.getValue());
@@ -666,7 +684,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertFalse(committed);
             assertEquals("hello!", currentData.getValue());
@@ -689,7 +708,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertFalse(committed);
             assertEquals("hello!", currentData.getValue());
@@ -716,7 +736,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNotNull(error);
             assertEquals(DatabaseError.MAX_RETRIES, error.getCode());
             assertFalse(committed);
@@ -747,7 +768,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertEquals(DatabaseError.OVERRIDDEN_BY_SET, error.getCode());
             assertFalse(committed);
             semaphore.release(1);
@@ -826,7 +848,8 @@ public class TransactionTestIT {
             assertTrue(
                 "Should have gotten cancelled before the update",
                 fooTransaction.availablePermits() > 0);
-            assertTrue("Should run after the update", barTransaction.availablePermits() == 0);
+            assertTrue("Should run after the update", barTransaction.availablePermits()
+                == 0);
             ref.setHijackHash(false);
           }
         });
@@ -854,7 +877,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertTrue(committed);
             assertEquals("♖♘♗♕♔♗♘♖", currentData.getValue());
@@ -878,7 +902,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertFalse(committed);
             semaphore.release(1);
@@ -911,7 +936,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertTrue(committed);
             ArrayList<String> expected = new ArrayList<>(3);
@@ -948,11 +974,13 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertTrue(committed);
             assertEquals(nodeName, currentData.getKey());
             Object val = currentData.getValue();
-            // Per new behavior, will include the accepted value of the transaction, if it was
+            // Per new behavior, will include the accepted value of the transaction, if
+            // it was
             // successful.
             Map<String, Object> expected = new MapBuilder().put("a", 1L).build();
             DeepEquals.assertEquals(expected, val);
@@ -1006,7 +1034,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertFalse(committed);
             assertEquals(DatabaseError.DISCONNECTED, error.getCode());
             semaphore.release(1);
@@ -1053,7 +1082,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             try {
               TestHelpers.waitFor(semaphore);
               assertTrue(committed);
@@ -1130,7 +1160,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertTrue(committed);
             assertEquals("txn result", currentData.getValue());
@@ -1184,7 +1215,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertTrue(committed);
             assertEquals(2, runs.get());
@@ -1225,7 +1257,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertTrue(committed);
             done.release(1);
           }
@@ -1245,7 +1278,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertTrue(committed);
             done.release(1);
           }
@@ -1275,7 +1309,8 @@ public class TransactionTestIT {
                     .runTransaction(
                         new Transaction.Handler() {
                           @Override
-                          public Transaction.Result doTransaction(MutableData currentData) {
+                          public Transaction.Result doTransaction(MutableData
+                                                                      currentData) {
                             if (currentData.getValue() == null) {
                               currentData.child("x").setValue(5);
                               return Transaction.success(currentData);
@@ -1286,7 +1321,8 @@ public class TransactionTestIT {
 
                           @Override
                           public void onComplete(
-                              DatabaseError error, boolean committed, DataSnapshot currentData) {
+                              DatabaseError error, boolean committed, DataSnapshot
+                              currentData) {
                           }
                         });
 
@@ -1363,7 +1399,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertTrue(committed);
             assertNull(currentData.getValue());
             assertNull(error);
@@ -1388,7 +1425,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertFalse(committed);
             assertEquals(DatabaseError.USER_CODE_EXCEPTION, error.getCode());
             done.release(1);
@@ -1406,7 +1444,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertFalse(committed);
             assertEquals(DatabaseError.USER_CODE_EXCEPTION, error.getCode());
             done.release(1);
@@ -1486,7 +1525,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertTrue(committed);
             assertEquals(50L, currentData.getValue());
@@ -1550,7 +1590,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             if (error != null || !committed) {
               fail("Transaction should succeed");
             }
@@ -1564,10 +1605,12 @@ public class TransactionTestIT {
 
     assertEquals(readSnaps.size(), 1);
     assertEquals(writeSnaps.size(), 2);
-    assertTrue(Math.abs(System.currentTimeMillis() - (Long) writeSnaps.get(0).getValue()) < 3000);
+    assertTrue(Math.abs(System.currentTimeMillis() - (Long) writeSnaps.get(0).getValue()) <
+        3000);
     assertTrue(
         Math.abs(System.currentTimeMillis() - (Double) writeSnaps.get(0).getPriority()) < 3000);
-    assertTrue(Math.abs(System.currentTimeMillis() - (Long) writeSnaps.get(1).getValue()) < 3000);
+    assertTrue(Math.abs(System.currentTimeMillis() - (Long) writeSnaps.get(1).getValue()) <
+        3000);
     assertTrue(
         Math.abs(System.currentTimeMillis() - (Double) writeSnaps.get(1).getPriority()) < 3000);
     assertFalse(writeSnaps.get(0).getValue().equals(writeSnaps.get(1).getValue()));
@@ -1590,11 +1633,13 @@ public class TransactionTestIT {
                 .addChildEventListener(
                     new ChildEventListener() {
                       @Override
-                      public void onChildAdded(DataSnapshot snapshot, String previousChildName) {
+                      public void onChildAdded(DataSnapshot snapshot, String
+                          previousChildName) {
                       }
 
                       @Override
-                      public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
+                      public void onChildChanged(DataSnapshot snapshot, String
+                          previousChildName) {
                       }
 
                       @Override
@@ -1602,7 +1647,8 @@ public class TransactionTestIT {
                       }
 
                       @Override
-                      public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
+                      public void onChildMoved(DataSnapshot snapshot, String
+                          previousChildName) {
                       }
 
                       @Override
@@ -1620,7 +1666,8 @@ public class TransactionTestIT {
 
                       @Override
                       public void onComplete(
-                          DatabaseError error, boolean committed, DataSnapshot currentData) {
+                          DatabaseError error, boolean committed, DataSnapshot
+                          currentData) {
                         assertNull(error);
                         assertTrue(committed);
                         assertEquals(1L, currentData.getValue());
@@ -1691,7 +1738,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertTrue(committed);
             assertEquals("it was null!", currentData.getValue());
@@ -1720,7 +1768,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertTrue(committed);
             semaphore.release();
@@ -1753,7 +1802,8 @@ public class TransactionTestIT {
           }
 
           @Override
-          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot
+              currentData) {
             assertNull(error);
             assertTrue(committed);
             assertEquals("it was null!", currentData.getValue());
@@ -1785,8 +1835,10 @@ public class TransactionTestIT {
                         .runTransaction(
                             new Transaction.Handler() {
                               @Override
-                              public Transaction.Result doTransaction(MutableData currentData) {
-                                Assert.assertEquals(initialData, currentData.getValue());
+                              public Transaction.Result doTransaction(MutableData
+                                                                          currentData) {
+                                Assert.assertEquals(initialData, currentData.getValue
+                                    ());
                                 currentData.setValue(null);
                                 return Transaction.success(currentData);
                               }

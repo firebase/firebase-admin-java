@@ -8,8 +8,8 @@ package com.google.firebase.database.core;
 public interface EventTarget {
 
   /**
-   * This method will be called from the library's event loop whenever there is a new callback to be
-   * triggered.
+   * This method will be called from the library's event loop whenever there is a new callback to
+   * be triggered.
    *
    * @param r The callback to be run
    */

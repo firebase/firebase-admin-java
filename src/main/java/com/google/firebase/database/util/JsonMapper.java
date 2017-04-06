@@ -90,7 +90,8 @@ public class JsonMapper {
   }
 
   @SuppressWarnings("unchecked")
-  private static Map<String, Object> unwrapJsonObject(JSONObject jsonObject) throws JSONException {
+  private static Map<String, Object> unwrapJsonObject(JSONObject jsonObject) throws
+      JSONException {
     Map<String, Object> map = new HashMap<>(jsonObject.length());
     Iterator<String> keys = jsonObject.keys();
     while (keys.hasNext()) {

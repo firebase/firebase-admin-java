@@ -157,7 +157,8 @@ public class RandomOperationGenerator {
         OperationSource source;
         if (!params.loadsAllData()) {
           source =
-              OperationSource.forServerTaggedQuery(this.completeDataJustSentForListen.getParams());
+              OperationSource.forServerTaggedQuery(this.completeDataJustSentForListen
+                  .getParams());
         } else {
           source = OperationSource.SERVER;
         }
@@ -175,8 +176,10 @@ public class RandomOperationGenerator {
               params
                   .getNodeFilter()
                   .updateFullNode(
-                      emptyNode, IndexedNode.from(currentServerNode, params.getIndex()), null);
-          OperationSource source = OperationSource.forServerTaggedQuery(listen.getParams());
+                      emptyNode, IndexedNode.from(currentServerNode, params.getIndex())
+                      , null);
+          OperationSource source = OperationSource.forServerTaggedQuery(listen
+              .getParams());
           return new Overwrite(source, path, node.getNode());
         } else {
           return new Overwrite(OperationSource.SERVER, path, currentServerNode);
@@ -184,7 +187,8 @@ public class RandomOperationGenerator {
       } else if (!outstandingUnlistens.isEmpty()
           && random.nextDouble() < SERVER_LISTEN_RESPONSE_PROBABILITY) {
         throw new RuntimeException("NOT IMPL!");
-      } else if (outstandingWrites.size() > 0 && random.nextDouble() < SERVER_ACK_PROBABILITY) {
+      } else if (outstandingWrites.size() > 0 && random.nextDouble() <
+          SERVER_ACK_PROBABILITY) {
         WriteOp op = outstandingWrites.peek();
         Path path = op.operation.getPath();
         boolean isEmptyPriorityError =
@@ -211,8 +215,10 @@ public class RandomOperationGenerator {
           Overwrite overwrite = getRandomOverwrite(OperationSource.SERVER);
           if (overwrite.getPath().getBack() != null
               && overwrite.getPath().getBack().isPriorityChildName()
-              && this.currentServerState.getChild(overwrite.getPath().getParent()).isEmpty()) {
-            // This is a case where we would overwrite a priority on an empty node which is an
+              && this.currentServerState.getChild(overwrite.getPath().getParent())
+              .isEmpty()) {
+            // This is a case where we would overwrite a priority on an empty node
+            // which is an
             // illegal update
             return nextOperation();
           }
@@ -226,13 +232,15 @@ public class RandomOperationGenerator {
         WriteOp writeOp = new WriteOp(merge, currentWriteId++);
         outstandingWrites.add(writeOp);
         writeTree.addMerge(
-            merge.getPath(), CompoundWrite.fromChildMerge(getMergeMap(merge)), writeOp.writeId);
+            merge.getPath(), CompoundWrite.fromChildMerge(getMergeMap(merge)), writeOp
+                .writeId);
         return merge;
       } else {
         Overwrite overwrite = getRandomOverwrite(OperationSource.USER);
         WriteOp writeOp = new WriteOp(overwrite, currentWriteId++);
         outstandingWrites.add(writeOp);
-        writeTree.addOverwrite(overwrite.getPath(), overwrite.getSnapshot(), writeOp.writeId, true);
+        writeTree.addOverwrite(overwrite.getPath(), overwrite.getSnapshot(), writeOp
+            .writeId, true);
         return overwrite;
       }
     }
@@ -257,7 +265,8 @@ public class RandomOperationGenerator {
   public CacheNode getExpectedClientState(QueryParams params) {
     CacheNode cacheNode;
     // TODO: this is broken for multiple listens
-    if (!outstandingListens.isEmpty() && !(writeTree.shadowingWrite(Path.getEmptyPath()) != null)) {
+    if (!outstandingListens.isEmpty() && !(writeTree.shadowingWrite(Path.getEmptyPath()) !=
+        null)) {
       // special case when data has not been sent, maybe have incomplete user writes
       Node node = EmptyNode.Empty();
       // first: gather any complete children
@@ -280,7 +289,8 @@ public class RandomOperationGenerator {
             }
           }
         } else {
-          throw new IllegalStateException("Unknown user write operation: " + op.operation);
+          throw new IllegalStateException("Unknown user write operation: " + op
+              .operation);
         }
       }
       // second: apply all overwrites for complete children
@@ -396,7 +406,8 @@ public class RandomOperationGenerator {
       } else if (randValue < 0.4) {
         return getRandomLeafNode();
       } else {
-        int numChildren = 1 + random.nextInt(curDepth == 0 ? MAX_TOP_CHILDREN : MAX_OTHER_CHILDREN);
+        int numChildren = 1 + random.nextInt(curDepth == 0 ? MAX_TOP_CHILDREN :
+            MAX_OTHER_CHILDREN);
         Node currentNode = EmptyNode.Empty();
         for (int i = 0; i < numChildren; i++) {
           ChildKey randomKey = getRandomKey(false);

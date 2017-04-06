@@ -32,7 +32,8 @@ public class FirebaseAppStoreTest {
   //        FirebaseAppStore appStore = new SharedPrefsFirebaseAppStore(mTargetContext)
   //        assertThat(appStore.getAllPersistedAppNames().contains(name)).isTrue();
   //        FirebaseApp.clearInstancesForTest();
-  //        FirebaseApp restoredApp = Iterables.getOnlyElement(FirebaseApp.getApps(mTargetContext));
+  //        FirebaseApp restoredApp = Iterables.getOnlyElement(FirebaseApp.getApps
+  // (mTargetContext));
   //        assertThat(restoredApp.getOptions()).isEqualTo(ALL_VALUES_OPTIONS);
   //    }
   //

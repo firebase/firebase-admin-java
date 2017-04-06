@@ -1,5 +1,7 @@
 package com.google.firebase.database.core;
 
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
+
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.annotations.NotNull;
 import com.google.firebase.database.annotations.Nullable;
@@ -40,8 +42,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
-
 /**
  * SyncTree is the central class for managing event callback registration, data caching, views
  * (query processing), and event generation. There are typically two SyncTree instances for each
@@ -65,7 +65,8 @@ public class SyncTree {
   // Size after which we start including the compound hash
   private static final long SIZE_THRESHOLD_FOR_COMPOUND_HASH = 1024;
   /**
-   * A tree of all pending user writes (user-initiated set()'s, transaction()'s, update()'s, etc.).
+   * A tree of all pending user writes (user-initiated set()'s, transaction()'s, update()'s,
+   * etc.).
    */
   private final WriteTree pendingWriteTree;
   private final Map<Tag, QuerySpec> tagToQueryMap;
@@ -122,7 +123,8 @@ public class SyncTree {
             if (!visible) {
               return Collections.emptyList();
             } else {
-              return applyOperationToSyncPoints(new Overwrite(OperationSource.USER, path, newData));
+              return applyOperationToSyncPoints(new Overwrite(OperationSource.USER,
+                  path, newData));
             }
           }
         });
@@ -146,7 +148,8 @@ public class SyncTree {
             }
             pendingWriteTree.addMerge(path, children, writeId);
 
-            return applyOperationToSyncPoints(new Merge(OperationSource.USER, path, children));
+            return applyOperationToSyncPoints(new Merge(OperationSource.USER, path,
+                children));
           }
         });
   }
@@ -260,7 +263,8 @@ public class SyncTree {
       // Removed view, so it's safe to just ignore this update
       return Collections.emptyList();
     } else {
-      // This could be for any "complete" (unfiltered) view, and if there is more than one complete
+      // This could be for any "complete" (unfiltered) view, and if there is more than one
+      // complete
       // view, they should each have the same cache so it doesn't matter which one we use.
       View view = syncPoint.getCompleteView();
       if (view != null) {
@@ -270,7 +274,8 @@ public class SyncTree {
         }
         return applyServerOverwrite(path, serverNode);
       } else {
-        // There doesn't exist a view for this update, so it was removed and it's safe to just
+        // There doesn't exist a view for this update, so it was removed and it's safe to
+        // just
         // ignore this range merge
         return Collections.emptyList();
       }
@@ -718,7 +723,7 @@ public class SyncTree {
   }
 
   /**
-   * Return the query associated with the given tag, if we have one
+   * Return the query associated with the given tag, if we have one.
    */
   private QuerySpec queryForTag(Tag tag) {
     return this.tagToQueryMap.get(tag);
@@ -787,7 +792,7 @@ public class SyncTree {
   }
 
   /**
-   * Recursive helper for applyOperationToSyncPoints
+   * Recursive helper for applyOperationToSyncPoints.
    */
   private List<Event> applyOperationHelper(
       Operation operation,
@@ -827,7 +832,7 @@ public class SyncTree {
   }
 
   /**
-   * Recursive helper for applyOperationToSyncPoints
+   * Recursive helper for applyOperationToSyncPoints.
    */
   private List<Event> applyOperationDescendantsHelper(
       final Operation operation,

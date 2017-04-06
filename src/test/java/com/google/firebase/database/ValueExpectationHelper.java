@@ -26,7 +26,8 @@ public class ValueExpectationHelper {
                 Object result = snapshot.getValue();
                 // Hack to handle race condition in initial data
                 if (DeepEquals.deepEquals(expected, result)) {
-                  // We may pass through intermediate states, but we should end up with the correct
+                  // We may pass through intermediate states, but we should end up with
+                  // the correct
                   // state
                   semaphore.release(1);
                 }

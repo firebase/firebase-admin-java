@@ -82,13 +82,14 @@ public class FirebaseAuth {
   }
 
   /**
-   * Creates a Firebase Custom Token associated with the given UID. This token can then be provided
-   * back to a client application for use with the signInWithCustomToken authentication API.
+   * Creates a Firebase Custom Token associated with the given UID. This token can then be
+   * provided back to a client application for use with the signInWithCustomToken authentication
+   * API.
    *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
-   * (Firebase Database, Firebase Auth, etc.)
-   * @return A {@link Task} which will complete successfully with the created Firebase Custom Token,
-   * or unsuccessfully with the failure Exception.
+   *     (Firebase Database, Firebase Auth, etc.)
+   * @return A {@link Task} which will complete successfully with the created Firebase Custom
+   *     Token, or unsuccessfully with the failure Exception.
    */
   public Task<String> createCustomToken(String uid) {
     return createCustomToken(uid, null);
@@ -100,12 +101,12 @@ public class FirebaseAuth {
    * use with the signInWithCustomToken authentication API.
    *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
-   * (Realtime Database, Storage, etc.). Should be less than 128 characters.
+   *     (Realtime Database, Storage, etc.). Should be less than 128 characters.
    * @param developerClaims Additional claims to be stored in the token (and made available to
-   * security rules in Database, Storage, etc.). These must be able to be serialized to JSON (e.g.
-   * contain only Maps, Arrays, Strings, Booleans, Numbers, etc.)
+   *     security rules in Database, Storage, etc.). These must be able to be serialized to JSON
+   *     (e.g. contain only Maps, Arrays, Strings, Booleans, Numbers, etc.)
    * @return A {@link Task} which will complete successfully with the created Firebase Custom Token,
-   * or unsuccessfully with the failure Exception.
+   *     or unsuccessfully with the failure Exception.
    */
   public Task<String> createCustomToken(
       final String uid, final Map<String, Object> developerClaims) {
@@ -138,8 +139,8 @@ public class FirebaseAuth {
    * Parses and verifies a Firebase ID Token.
    *
    * <p>A Firebase application can identify itself to a trusted backend server by sending its
-   * Firebase ID Token (accessible via the getToken API in the Firebase Authentication client) with
-   * its request.
+   * Firebase ID Token (accessible via the getToken API in the Firebase Authentication client)
+   * with its request.
    *
    * <p>The backend server can then use the verifyIdToken() method to verify the token is valid,
    * meaning: the token is properly signed, has not expired, and it was issued for the project
@@ -147,19 +148,21 @@ public class FirebaseAuth {
    * account)
    *
    * <p>If the token is valid, the returned {@link Task} will complete successfully and provide a
-   * parsed version of the token from which the UID and other claims in the token can be inspected.
-   * If the token is invalid, the Task will fail with an exception indicating the failure.
+   * parsed version of the token from which the UID and other claims in the token can be
+   * inspected. If the token is invalid, the Task will fail with an exception indicating the
+   * failure.
    *
    * @param token A Firebase ID Token to verify and parse.
    * @return A {@link Task} which will complete successfully with the parsed token, or
-   * unsuccessfully with the failure Exception.
+   *     unsuccessfully with the failure Exception.
    */
   public Task<FirebaseToken> verifyIdToken(final String token) {
     FirebaseCredential credential = ImplFirebaseTrampolines.getCredential(firebaseApp);
     if (!(credential instanceof FirebaseCredentials.CertCredential)) {
       return Tasks.forException(
           new FirebaseException(
-              "Must initialize FirebaseApp with a certificate credential to call verifyIdToken()"));
+              "Must initialize FirebaseApp with a certificate credential to call "
+                  + "verifyIdToken()"));
     }
     return ((FirebaseCredentials.CertCredential) credential)
         .getProjectId(false)

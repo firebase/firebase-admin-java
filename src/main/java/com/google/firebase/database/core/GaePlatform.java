@@ -66,7 +66,8 @@ class GaePlatform implements Platform {
   @Override
   public EventTarget newEventTarget(Context ctx) {
     RevivingScheduledExecutor eventExecutor =
-        new RevivingScheduledExecutor(getGaeThreadFactory(), "FirebaseDatabaseEventTarget", true);
+        new RevivingScheduledExecutor(getGaeThreadFactory(), "FirebaseDatabaseEventTarget",
+            true);
     return new ThreadPoolEventTarget(eventExecutor);
   }
 

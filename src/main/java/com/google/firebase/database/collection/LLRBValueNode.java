@@ -2,16 +2,11 @@ package com.google.firebase.database.collection;
 
 import java.util.Comparator;
 
-/**
- * User: greg
- * Date: 5/17/13
- * Time: 8:51 AM
- */
 abstract public class LLRBValueNode<K, V> implements LLRBNode<K, V> {
 
-  final private K key;
-  final private V value;
-  final private LLRBNode<K, V> right;
+  private final K key;
+  private final V value;
+  private final LLRBNode<K, V> right;
   private LLRBNode<K, V> left;
 
   LLRBValueNode(K key, V value, LLRBNode<K, V> left, LLRBNode<K, V> right) {
@@ -93,7 +88,8 @@ abstract public class LLRBValueNode<K, V> implements LLRBNode<K, V> {
     LLRBValueNode<K, V> n = this;
 
     if (comparator.compare(key, n.key) < 0) {
-      if (!n.left.isEmpty() && !n.left.isRed() && !((LLRBValueNode<K, V>) n.left).left.isRed()) {
+      if (!n.left.isEmpty() && !n.left.isRed() && !((LLRBValueNode<K, V>) n.left).left
+          .isRed()) {
         n = n.moveRedLeft();
       }
       n = n.copy(null, null, n.left.remove(key, comparator), null);
@@ -102,7 +98,8 @@ abstract public class LLRBValueNode<K, V> implements LLRBNode<K, V> {
         n = n.rotateRight();
       }
 
-      if (!n.right.isEmpty() && !n.right.isRed() && !((LLRBValueNode<K, V>) n.right).left.isRed()) {
+      if (!n.right.isEmpty() && !n.right.isRed() && !((LLRBValueNode<K, V>) n.right).left
+          .isRed()) {
         n = n.moveRedRight();
       }
 

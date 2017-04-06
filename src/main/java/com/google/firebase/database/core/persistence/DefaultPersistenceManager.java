@@ -41,7 +41,7 @@ public class DefaultPersistenceManager implements PersistenceManager {
   }
 
   /**
-   * Save a user overwrite
+   * Save a user overwrite.
    *
    * @param path The path for this write
    * @param node The node for this write
@@ -53,7 +53,7 @@ public class DefaultPersistenceManager implements PersistenceManager {
   }
 
   /**
-   * Save a user merge
+   * Save a user merge.
    *
    * @param path The path for this merge
    * @param children The children for this merge
@@ -81,11 +81,15 @@ public class DefaultPersistenceManager implements PersistenceManager {
 
   @Override
   public void applyUserWriteToServerCache(Path path, Node node) {
-    // This is a hack to guess whether we already cached this because we got a server data update
-    // for this write via an existing active default query.  If we didn't, then we'll manually cache
+    // This is a hack to guess whether we already cached this because we got a server data
+    // update
+    // for this write via an existing active default query.  If we didn't, then we'll
+    // manually cache
     // this and add a tracked query to mark it complete and keep it cached.
-    // Unfortunately this is just a guess and it's possible that we *did* get an update (e.g. via a
-    // filtered query) and by overwriting the cache here, we'll actually store an incorrect value
+    // Unfortunately this is just a guess and it's possible that we *did* get an update (e.g.
+    // via a
+    // filtered query) and by overwriting the cache here, we'll actually store an incorrect
+    // value
     // (e.g. in the case that we wrote a ServerValue.TIMESTAMP and the server resolved it to a
     // different value).
     // TODO[persistence]: Consider reworking.
@@ -106,7 +110,7 @@ public class DefaultPersistenceManager implements PersistenceManager {
   }
 
   /**
-   * Return a list of all writes that were persisted
+   * Return a list of all writes that were persisted.
    *
    * @return The list of writes
    */
@@ -116,8 +120,8 @@ public class DefaultPersistenceManager implements PersistenceManager {
   }
 
   /**
-   * Returns any cached node or children as a CacheNode. The query is *not* used to filter the node
-   * but rather to determine if it can be considered complete.
+   * Returns any cached node or children as a CacheNode. The query is *not* used to filter the
+   * node but rather to determine if it can be considered complete.
    *
    * @param query The query at the path
    * @return The cached node or an empty CacheNode if no cache is available
@@ -141,7 +145,8 @@ public class DefaultPersistenceManager implements PersistenceManager {
       trackedKeys = trackedQueryManager.getKnownCompleteChildren(query.getPath());
     }
 
-    // TODO[persistence]: Only load the tracked key data rather than load everything and then filter
+    // TODO[persistence]: Only load the tracked key data rather than load everything and then
+    // filter
     Node serverCacheNode = storageLayer.serverCache(query.getPath());
     if (trackedKeys != null) {
       Node filteredNode = EmptyNode.Empty();
@@ -205,7 +210,8 @@ public class DefaultPersistenceManager implements PersistenceManager {
   }
 
   @Override
-  public void updateTrackedQueryKeys(QuerySpec query, Set<ChildKey> added, Set<ChildKey> removed) {
+  public void updateTrackedQueryKeys(QuerySpec query, Set<ChildKey> added, Set<ChildKey>
+      removed) {
     assert !query.loadsAllData() : "We should only track keys for filtered queries.";
     TrackedQuery trackedQuery = this.trackedQueryManager.findTrackedQuery(query);
     assert trackedQuery != null && trackedQuery.active

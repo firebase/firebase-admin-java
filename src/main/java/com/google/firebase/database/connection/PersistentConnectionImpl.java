@@ -1,5 +1,7 @@
 package com.google.firebase.database.connection;
 
+import static com.google.firebase.database.connection.ConnectionUtils.hardAssert;
+
 import com.google.firebase.database.connection.util.RetryHelper;
 import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.util.AndroidSupport;
@@ -16,8 +18,6 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-
-import static com.google.firebase.database.connection.ConnectionUtils.hardAssert;
 
 public class PersistentConnectionImpl implements Connection.Delegate, PersistentConnection {
 
@@ -1105,7 +1105,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
 
   /**
    * @return Returns true if the connection is currently not being used (for listen, outstanding
-   * operations).
+   *     operations).
    */
   private boolean isIdle() {
     return this.listens.isEmpty()

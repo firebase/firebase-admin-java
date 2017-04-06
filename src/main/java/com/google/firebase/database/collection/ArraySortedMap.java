@@ -116,7 +116,8 @@ public class ArraySortedMap<K, V> extends ImmutableSortedMap<K, V> {
       if (this.keys[pos] == key && this.values[pos] == value) {
         return this;
       } else {
-        // The key and/or value might have changed, even though the comparison might still yield 0
+        // The key and/or value might have changed, even though the comparison might
+        // still yield 0
         K[] newKeys = replaceInArray(this.keys, pos, key);
         V[] newValues = replaceInArray(this.values, pos, value);
         return new ArraySortedMap<>(this.comparator, newKeys, newValues);
@@ -185,7 +186,8 @@ public class ArraySortedMap<K, V> extends ImmutableSortedMap<K, V> {
 
       @Override
       public void remove() {
-        throw new UnsupportedOperationException("Can't remove elements from ImmutableSortedMap");
+        throw new UnsupportedOperationException("Can't remove elements from " +
+            "ImmutableSortedMap");
       }
     };
   }
@@ -245,8 +247,8 @@ public class ArraySortedMap<K, V> extends ImmutableSortedMap<K, V> {
   }
 
   /**
-   * This does a linear scan which is simpler than a binary search. For a small collection size this
-   * still should be as fast a as binary search.
+   * This does a linear scan which is simpler than a binary search. For a small collection size
+   * this still should be as fast a as binary search.
    */
   private int findKeyOrInsertPosition(K key) {
     int newPos = 0;
@@ -257,8 +259,8 @@ public class ArraySortedMap<K, V> extends ImmutableSortedMap<K, V> {
   }
 
   /**
-   * This does a linear scan which is simpler than a binary search. For a small collection size this
-   * still should be as fast a as binary search.
+   * This does a linear scan which is simpler than a binary search. For a small collection size
+   * this still should be as fast a as binary search.
    */
   private int findKey(K key) {
     int i = 0;

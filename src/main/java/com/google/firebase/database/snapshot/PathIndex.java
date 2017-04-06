@@ -9,7 +9,8 @@ public class PathIndex extends Index {
   public PathIndex(Path indexPath) {
     if (indexPath.size() == 1 && indexPath.getFront().isPriorityChildName()) {
       throw new IllegalArgumentException(
-          "Can't create PathIndex with '.priority' as key. Please use PriorityIndex instead!");
+          "Can't create PathIndex with '.priority' as key. Please use PriorityIndex " +
+              "instead!");
     }
     this.indexPath = indexPath;
   }

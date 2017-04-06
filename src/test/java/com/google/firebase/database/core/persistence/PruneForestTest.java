@@ -81,12 +81,14 @@ public class PruneForestTest {
     forest = forest.keep(new Path("foo/bar"));
     assertTrue(forest.child(ck("foo")).affectsPath(new Path("bar")));
     assertTrue(forest.child(ck("foo")).child(ck("bar")).affectsPath(new Path("")));
-    assertTrue(forest.child(ck("foo")).child(ck("bar")).child(ck("baz")).affectsPath(new Path("")));
+    assertTrue(forest.child(ck("foo")).child(ck("bar")).child(ck("baz")).affectsPath(new Path
+        ("")));
 
     forest = new PruneForest().prune(new Path("foo/bar"));
     assertTrue(forest.child(ck("foo")).affectsPath(new Path("bar")));
     assertTrue(forest.child(ck("foo")).child(ck("bar")).affectsPath(new Path("")));
-    assertTrue(forest.child(ck("foo")).child(ck("bar")).child(ck("baz")).affectsPath(new Path("")));
+    assertTrue(forest.child(ck("foo")).child(ck("bar")).child(ck("baz")).affectsPath(new Path
+        ("")));
 
     assertFalse(forest.child(ck("non-existent")).affectsPath(new Path("")));
   }

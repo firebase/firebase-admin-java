@@ -118,7 +118,8 @@ public class ObjectMapTest {
   public void basicGenerics() {
     List<Author> authors = new ArrayList<>();
     authors.addAll(
-        Arrays.asList(new Author("Greg", 3), new Author("Vikrum", 4), new Author("Michael", 5)));
+        Arrays.asList(new Author("Greg", 3), new Author("Vikrum", 4), new Author("Michael",
+            5)));
 
     MutableData data = emptyData();
     data.setValue(authors);

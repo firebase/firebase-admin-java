@@ -71,8 +71,10 @@ public class ViewProcessor {
                   accumulator);
         } else {
           assert overwrite.getSource().isFromServer();
-          // We filter the node if it's a tagged update or the node has been previously filtered
-          // and the update is not at the root in which case it is ok (and necessary) to mark the
+          // We filter the node if it's a tagged update or the node has been previously
+          // filtered
+          // and the update is not at the root in which case it is ok (and necessary)
+          // to mark the
           // node unfiltered again
           boolean filterServerNode =
               overwrite.getSource().isTagged()
@@ -103,7 +105,8 @@ public class ViewProcessor {
                   accumulator);
         } else {
           assert merge.getSource().isFromServer();
-          // We filter the node if it's a tagged update or the node has been previously filtered
+          // We filter the node if it's a tagged update or the node has been previously
+          // filtered
           boolean filterServerNode =
               merge.getSource().isTagged() || oldViewCache.getServerCache().isFiltered();
           newViewCache =
@@ -142,7 +145,8 @@ public class ViewProcessor {
       }
       case ListenComplete: {
         newViewCache =
-            this.listenComplete(oldViewCache, operation.getPath(), writesCache, accumulator);
+            this.listenComplete(oldViewCache, operation.getPath(), writesCache,
+                accumulator);
         break;
       }
       default: {
@@ -158,10 +162,12 @@ public class ViewProcessor {
       ViewCache oldViewCache, ViewCache newViewCache, List<Change> accumulator) {
     CacheNode eventSnap = newViewCache.getEventCache();
     if (eventSnap.isFullyInitialized()) {
-      boolean isLeafOrEmpty = eventSnap.getNode().isLeafNode() || eventSnap.getNode().isEmpty();
+      boolean isLeafOrEmpty = eventSnap.getNode().isLeafNode() || eventSnap.getNode()
+          .isEmpty();
       if (!accumulator.isEmpty()
           || !oldViewCache.getEventCache().isFullyInitialized()
-          || (isLeafOrEmpty && !eventSnap.getNode().equals(oldViewCache.getCompleteEventSnap()))
+          || (isLeafOrEmpty && !eventSnap.getNode().equals(oldViewCache
+          .getCompleteEventSnap()))
           || !eventSnap
           .getNode()
           .getPriority()
@@ -189,8 +195,10 @@ public class ViewProcessor {
             : "If change path is empty, we must have complete server data";
         Node nodeWithLocalWrites;
         if (viewCache.getServerCache().isFiltered()) {
-          // We need to special case this, because we need to only apply writes to complete
-          // children, or we might end up raising events for incomplete children. If the server data
+          // We need to special case this, because we need to only apply writes to
+          // complete
+          // children, or we might end up raising events for incomplete children. If
+          // the server data
           // is filtered deep writes cannot be guaranteed to be complete
           Node serverCache = viewCache.getCompleteServerSnap();
           Node completeChildren =
@@ -200,22 +208,26 @@ public class ViewProcessor {
           nodeWithLocalWrites =
               writesCache.calcCompleteEventCache(viewCache.getCompleteServerSnap());
         }
-        IndexedNode indexedNode = IndexedNode.from(nodeWithLocalWrites, this.filter.getIndex());
+        IndexedNode indexedNode = IndexedNode.from(nodeWithLocalWrites, this.filter
+            .getIndex());
         newEventCache =
             this.filter.updateFullNode(
                 viewCache.getEventCache().getIndexedNode(), indexedNode, accumulator);
       } else {
         ChildKey childKey = changePath.getFront();
         if (childKey.isPriorityChildName()) {
-          assert changePath.size() == 1 : "Can't have a priority with additional path components";
+          assert changePath.size() == 1 : "Can't have a priority with additional path " +
+              "components";
           Node oldEventNode = oldEventSnap.getNode();
           Node serverNode = viewCache.getServerCache().getNode();
           // we might have overwrites for this priority
           Node updatedPriority =
-              writesCache.calcEventCacheAfterServerOverwrite(changePath, oldEventNode, serverNode);
+              writesCache.calcEventCacheAfterServerOverwrite(changePath, oldEventNode,
+                  serverNode);
           if (updatedPriority != null) {
             newEventCache =
-                this.filter.updatePriority(oldEventSnap.getIndexedNode(), updatedPriority);
+                this.filter.updatePriority(oldEventSnap.getIndexedNode(),
+                    updatedPriority);
           } else {
             // priority didn't change, keep old node
             newEventCache = oldEventSnap.getIndexedNode();
@@ -240,7 +252,8 @@ public class ViewProcessor {
               newEventChild = oldEventSnap.getNode().getImmediateChild(childKey);
             }
           } else {
-            newEventChild = writesCache.calcCompleteChild(childKey, viewCache.getServerCache());
+            newEventChild = writesCache.calcCompleteChild(childKey, viewCache
+                .getServerCache());
           }
           if (newEventChild != null) {
             newEventCache =
@@ -282,14 +295,18 @@ public class ViewProcessor {
               IndexedNode.from(changedSnap, serverFilter.getIndex()),
               null);
     } else if (serverFilter.filtersNodes() && !oldServerSnap.isFiltered()) {
-      // we want to filter the server node, but we didn't filter the server node yet, so simulate a
+      // we want to filter the server node, but we didn't filter the server node yet, so
+      // simulate a
       // full update
-      assert !changePath.isEmpty() : "An empty path should have been caught in the other branch";
+      assert !changePath.isEmpty() : "An empty path should have been caught in the other " +
+          "branch";
       ChildKey childKey = changePath.getFront();
       Path updatePath = changePath.popFront();
       Node newChild =
-          oldServerSnap.getNode().getImmediateChild(childKey).updateChild(updatePath, changedSnap);
-      IndexedNode newServerNode = oldServerSnap.getIndexedNode().updateChild(childKey, newChild);
+          oldServerSnap.getNode().getImmediateChild(childKey).updateChild(updatePath,
+              changedSnap);
+      IndexedNode newServerNode = oldServerSnap.getIndexedNode().updateChild(childKey,
+          newChild);
       newServerCache =
           serverFilter.updateFullNode(oldServerSnap.getIndexedNode(), newServerNode, null);
     } else {
@@ -302,7 +319,8 @@ public class ViewProcessor {
       Node childNode = oldServerSnap.getNode().getImmediateChild(childKey);
       Node newChildNode = childNode.updateChild(childChangePath, changedSnap);
       if (childKey.isPriorityChildName()) {
-        newServerCache = serverFilter.updatePriority(oldServerSnap.getIndexedNode(), newChildNode);
+        newServerCache = serverFilter.updatePriority(oldServerSnap.getIndexedNode(),
+            newChildNode);
       } else {
         newServerCache =
             serverFilter.updateChild(
@@ -341,15 +359,18 @@ public class ViewProcessor {
       IndexedNode newEventCache =
           this.filter.updateFullNode(
               oldViewCache.getEventCache().getIndexedNode(), newIndexed, accumulator);
-      newViewCache = oldViewCache.updateEventSnap(newEventCache, true, this.filter.filtersNodes());
+      newViewCache = oldViewCache.updateEventSnap(newEventCache, true, this.filter
+          .filtersNodes());
     } else {
       ChildKey childKey = changePath.getFront();
       if (childKey.isPriorityChildName()) {
         IndexedNode newEventCache =
-            this.filter.updatePriority(oldViewCache.getEventCache().getIndexedNode(), changedSnap);
+            this.filter.updatePriority(oldViewCache.getEventCache().getIndexedNode(),
+                changedSnap);
         newViewCache =
             oldViewCache.updateEventSnap(
-                newEventCache, oldEventSnap.isFullyInitialized(), oldEventSnap.isFiltered());
+                newEventCache, oldEventSnap.isFullyInitialized(), oldEventSnap.isFiltered
+                    ());
       } else {
         Path childChangePath = changePath.popFront();
         Node oldChild = oldEventSnap.getNode().getImmediateChild(childKey);
@@ -362,7 +383,8 @@ public class ViewProcessor {
           if (childNode != null) {
             if (childChangePath.getBack().isPriorityChildName()
                 && childNode.getChild(childChangePath.getParent()).isEmpty()) {
-              // This is a priority update on an empty node. If this node exists on the server, the
+              // This is a priority update on an empty node. If this node exists on
+              // the server, the
               // server will send down the priority in the update, so ignore for now
               newChild = childNode;
             } else {
@@ -384,7 +406,8 @@ public class ViewProcessor {
                   accumulator);
           newViewCache =
               oldViewCache.updateEventSnap(
-                  newEventSnap, oldEventSnap.isFullyInitialized(), this.filter.filtersNodes());
+                  newEventSnap, oldEventSnap.isFullyInitialized(), this.filter
+                      .filtersNodes());
         } else {
           newViewCache = oldViewCache;
         }
@@ -404,7 +427,8 @@ public class ViewProcessor {
     // window leaving room for new items.  It's important we process these changes first, so we
     // iterate the changes twice, first processing any that affect items currently in view.
     // TODO: I consider an item "in view" if cacheHasChild is true, which checks both the server
-    // and event snap.  I'm not sure if this will result in edge cases when a child is in one but
+    // and event snap.  I'm not sure if this will result in edge cases when a child is in one
+    // but
     // not the other.
     assert changedChildren.rootWrite() == null : "Can't have a merge that is an overwrite";
     ViewCache currentViewCache = viewCache;
@@ -457,7 +481,8 @@ public class ViewProcessor {
     // window leaving room for new items.  It's important we process these changes first, so we
     // iterate the changes twice, first processing any that affect items currently in view.
     // TODO: I consider an item "in view" if cacheHasChild is true, which checks both the server
-    // and event snap.  I'm not sure if this will result in edge cases when a child is in one but
+    // and event snap.  I'm not sure if this will result in edge cases when a child is in one
+    // but
     // not the other.
     ViewCache curViewCache = viewCache;
     assert changedChildren.rootWrite() == null : "Can't have a merge that is an overwrite";
@@ -523,7 +548,8 @@ public class ViewProcessor {
     // Only filter server node if it is currently filtered
     boolean filterServerNode = viewCache.getServerCache().isFiltered();
 
-    // Essentially we'll just get our existing server cache for the affected paths and re-apply it
+    // Essentially we'll just get our existing server cache for the affected paths and
+    // re-apply it
     // as a server update now that it won't be shadowed.
     CacheNode serverCache = viewCache.getServerCache();
     if (affectedTree.getValue() != null) {
@@ -539,7 +565,8 @@ public class ViewProcessor {
             filterServerNode,
             accumulator);
       } else if (ackPath.isEmpty()) {
-        // This is a goofy edge case where we are acking data at this location but don't have full
+        // This is a goofy edge case where we are acking data at this location but don't
+        // have full
         // data. We should just re-apply whatever we have in our cache as a merge.
         CompoundWrite changedChildren = CompoundWrite.emptyWrite();
         for (NamedNode child : serverCache.getNode()) {
@@ -564,7 +591,8 @@ public class ViewProcessor {
         Path serverCachePath = ackPath.child(mergePath);
         if (serverCache.isCompleteForPath(serverCachePath)) {
           changedChildren =
-              changedChildren.addWrite(mergePath, serverCache.getNode().getChild(serverCachePath));
+              changedChildren.addWrite(mergePath, serverCache.getNode().getChild
+                  (serverCachePath));
         }
       }
       return applyServerMerge(
@@ -596,7 +624,8 @@ public class ViewProcessor {
         if (viewCache.getServerCache().isFullyInitialized()) {
           newNode = writesCache.calcCompleteEventCache(viewCache.getCompleteServerSnap());
         } else {
-          newNode = writesCache.calcCompleteEventChildren(viewCache.getServerCache().getNode());
+          newNode = writesCache.calcCompleteEventChildren(viewCache.getServerCache()
+              .getNode());
         }
         IndexedNode indexedNode = IndexedNode.from(newNode, this.filter.getIndex());
         newEventCache = this.filter.updateFullNode(oldEventCache, indexedNode, accumulator);
@@ -662,8 +691,8 @@ public class ViewProcessor {
   }
 
   /**
-   * An implementation of CompleteChildSource that uses a WriteTree in addition to any other server
-   * data or old event caches available to calculate complete children.
+   * An implementation of CompleteChildSource that uses a WriteTree in addition to any other
+   * server data or old event caches available to calculate complete children.
    */
   private static class WriteTreeCompleteChildSource implements NodeFilter.CompleteChildSource {
 

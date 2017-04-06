@@ -93,11 +93,13 @@ public class SynchronousConnection implements PersistentConnection.Delegate {
                     node.getValue(true),
                     new RequestResultCallback() {
                       @Override
-                      public void onRequestResult(String optErrorCode, String optErrorMessage) {
+                      public void onRequestResult(String optErrorCode, String
+                          optErrorMessage) {
                         errorBox[0] =
                             (optErrorCode == null)
                                 ? null
-                                : DatabaseError.fromStatus(optErrorCode, optErrorMessage);
+                                : DatabaseError.fromStatus(optErrorCode,
+                                optErrorMessage);
                         if (semaphore != null) {
                           semaphore.release();
                         }
@@ -159,7 +161,8 @@ public class SynchronousConnection implements PersistentConnection.Delegate {
                     null,
                     new RequestResultCallback() {
                       @Override
-                      public void onRequestResult(String optErrorCode, String optErrorMessage) {
+                      public void onRequestResult(String optErrorCode, String
+                          optErrorMessage) {
                         semaphore.release();
                       }
                     });

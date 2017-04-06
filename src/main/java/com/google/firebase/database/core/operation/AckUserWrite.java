@@ -1,10 +1,10 @@
 package com.google.firebase.database.core.operation;
 
+import static com.google.firebase.database.utilities.Utilities.hardAssert;
+
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.utilities.ImmutableTree;
 import com.google.firebase.database.snapshot.ChildKey;
-
-import static com.google.firebase.database.utilities.Utilities.hardAssert;
 
 public class AckUserWrite extends Operation {
 
@@ -30,7 +30,8 @@ public class AckUserWrite extends Operation {
   public Operation operationForChild(ChildKey childKey) {
     if (!this.path.isEmpty()) {
       hardAssert(
-          this.path.getFront().equals(childKey), "operationForChild called for unrelated child.");
+          this.path.getFront().equals(childKey), "operationForChild called for unrelated " +
+              "child.");
       return new AckUserWrite(this.path.popFront(), this.affectedTree, this.revert);
     } else if (this.affectedTree.getValue() != null) {
       hardAssert(

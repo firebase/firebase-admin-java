@@ -25,8 +25,8 @@ public class CacheNode {
   }
 
   /**
-   * Returns whether this node was fully initialized with either server data or a complete overwrite
-   * by the client
+   * Returns whether this node was fully initialized with either server data or a complete
+   * overwrite by the client
    */
   public boolean isFullyInitialized() {
     return this.fullyInitialized;

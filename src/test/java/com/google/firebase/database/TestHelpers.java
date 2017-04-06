@@ -108,7 +108,8 @@ public class TestHelpers {
     List<DatabaseReference> results = new ArrayList<>(count);
     String name = null;
     for (int i = 0; i < count; ++i) {
-      DatabaseReference ref = new DatabaseReference(TestConstants.TEST_NAMESPACE, contexts.get(i));
+      DatabaseReference ref = new DatabaseReference(TestConstants.TEST_NAMESPACE, contexts
+          .get(i));
       if (name == null) {
         name = ref.push().getKey();
       }
@@ -144,7 +145,8 @@ public class TestHelpers {
   public static void setForcedPersistentCache(Context ctx, PersistenceManager manager) {
     try {
       Method method =
-          Context.class.getDeclaredMethod("forcePersistenceManager", PersistenceManager.class);
+          Context.class.getDeclaredMethod("forcePersistenceManager", PersistenceManager
+              .class);
       method.setAccessible(true);
       method.invoke(ctx, manager);
     } catch (Exception e) {
@@ -290,7 +292,8 @@ public class TestHelpers {
 
   public static void waitForRoundtrip(DatabaseReference reader) {
     try {
-      new WriteFuture(reader.getRoot().child(UUID.randomUUID().toString()), null, null).timedGet();
+      new WriteFuture(reader.getRoot().child(UUID.randomUUID().toString()), null, null)
+          .timedGet();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -408,7 +411,8 @@ public class TestHelpers {
       appInitialized = true;
       FirebaseApp.initializeApp(
           new FirebaseOptions.Builder()
-              .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+              .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR
+                  .asStream()))
               .setDatabaseUrl(TestConstants.TEST_NAMESPACE)
               .build());
     }

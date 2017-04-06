@@ -97,7 +97,8 @@ public class FirebaseApp {
    *
    * @param name represents the name of the {@link FirebaseApp} instance.
    * @return the {@link FirebaseApp} corresponding to the name.
-   * @throws IllegalStateException if the {@link FirebaseApp} was not initialized, either via {@link
+   * @throws IllegalStateException if the {@link FirebaseApp} was not initialized, either via
+   * {@link
    * #initializeApp(FirebaseOptions, String)} or {@link #getApps()}.
    */
   public static FirebaseApp getInstance(@NonNull String name) {
@@ -138,7 +139,7 @@ public class FirebaseApp {
    *
    * @param options represents the global {@link FirebaseOptions}
    * @param name unique name for the app. It is an error to initialize an app with an already
-   * existing name. Starting and ending whitespace characters in the name are ignored (trimmed).
+   *     existing name. Starting and ending whitespace characters in the name are ignored (trimmed).
    * @return an instance of {@link FirebaseApp}
    * @throws IllegalStateException if an app with the same name has already been initialized.
    */
@@ -274,7 +275,7 @@ public class FirebaseApp {
    * Internal-only method to fetch a valid Service Account OAuth2 Token.
    *
    * @param forceRefresh force refreshes the token. Should only be set to <code>true</code> if the
-   * token is invalidated out of band.
+   *     token is invalidated out of band.
    * @return a {@link Task}
    */
   Task<GetTokenResult> getToken(boolean forceRefresh) {
@@ -288,7 +289,8 @@ public class FirebaseApp {
             List<AuthStateListener> listenersCopy = null;
             if (!newToken.equals(oldToken)) {
               synchronized (authStateListeners) {
-                // Grab the lock before compareAndSet to avoid a potential race condition
+                // Grab the lock before compareAndSet to avoid a potential race
+                // condition
                 // with addAuthStateListener
                 if (currentToken.compareAndSet(oldToken, newToken)) {
                   listenersCopy = ImmutableList.copyOf(authStateListeners);
@@ -319,7 +321,8 @@ public class FirebaseApp {
   }
 
   /**
-   * If an API has locally stored data it must register lifecycle listeners at initialization time.
+   * If an API has locally stored data it must register lifecycle listeners at initialization
+   * time.
    */
   // TODO(arondeak): make sure that all APIs that are interested in these events are
   // initialized using reflection when an app is deleted (for v5).
@@ -382,7 +385,7 @@ public class FirebaseApp {
      * Schedule a forced token refresh to be executed after a specified duration.
      *
      * @param delayMillis Duration in milliseconds, after which the token should be forcibly
-     * refreshed.
+     *     refreshed.
      */
     final synchronized void scheduleRefresh(long delayMillis) {
       cancelPrevious();

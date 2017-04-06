@@ -55,8 +55,8 @@ public class WriteTreeRef {
   }
 
   /**
-   * If possible, returns a children node containing all of the complete children we have data for.
-   * The returned data is a mix of the given server data and write data.
+   * If possible, returns a children node containing all of the complete children we have data
+   * for. The returned data is a mix of the given server data and write data.
    */
   public Node calcCompleteEventChildren(Node completeServerChildren) {
     return this.writeTree.calcCompleteEventChildren(this.treePath, completeServerChildren);
@@ -84,9 +84,9 @@ public class WriteTreeRef {
   }
 
   /**
-   * Returns a node if there is a complete overwrite for this path. More specifically, if there is a
-   * write at a higher path, this will return the child of that write relative to the write and this
-   * path. Returns null if there is no write at this path.
+   * Returns a node if there is a complete overwrite for this path. More specifically, if there is
+   * a write at a higher path, this will return the child of that write relative to the write and
+   * this path. Returns null if there is no write at this path.
    */
   public Node shadowingWrite(Path path) {
     return this.writeTree.shadowingWrite(this.treePath.child(path));

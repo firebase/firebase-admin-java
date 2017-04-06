@@ -32,13 +32,16 @@ public class IndexedFilter implements NodeFilter {
     Node oldChild = snap.getImmediateChild(key);
     // Check if anything actually changed.
     if (oldChild.getChild(affectedPath).equals(newChild.getChild(affectedPath))) {
-      // There's an edge case where a child can enter or leave the view because affectedPath was
-      // set to null. In this case, affectedPath will appear null in both the old and new snapshots.
+      // There's an edge case where a child can enter or leave the view because
+      // affectedPath was
+      // set to null. In this case, affectedPath will appear null in both the old and new
+      // snapshots.
       // So we need to avoid treating these cases as "nothing changed."
       if (oldChild.isEmpty() == newChild.isEmpty()) {
         // Nothing changed.
 
-        // This assert should be valid, but it's expensive (can dominate perf testing) so don't
+        // This assert should be valid, but it's expensive (can dominate perf testing) so
+        // don't
         // actually do it.
         //assert oldChild.equals(newChild): "Old and new snapshots should be equal.";
         return indexedNode;
@@ -55,7 +58,8 @@ public class IndexedFilter implements NodeFilter {
       } else if (oldChild.isEmpty()) {
         optChangeAccumulator.trackChildChange(Change.childAddedChange(key, newChild));
       } else {
-        optChangeAccumulator.trackChildChange(Change.childChangedChange(key, newChild, oldChild));
+        optChangeAccumulator.trackChildChange(Change.childChangedChange(key, newChild,
+            oldChild));
       }
     }
     if (snap.isLeafNode() && newChild.isEmpty()) {
@@ -69,7 +73,8 @@ public class IndexedFilter implements NodeFilter {
   @Override
   public IndexedNode updateFullNode(
       IndexedNode oldSnap, IndexedNode newSnap, ChildChangeAccumulator optChangeAccumulator) {
-    assert newSnap.hasIndex(this.index) : "Can't use IndexedNode that doesn't have filter's index";
+    assert newSnap.hasIndex(this.index) : "Can't use IndexedNode that doesn't have filter's " +
+        "index";
     if (optChangeAccumulator != null) {
       for (NamedNode child : oldSnap.getNode()) {
         if (!newSnap.getNode().hasChild(child.getName())) {
@@ -83,7 +88,8 @@ public class IndexedFilter implements NodeFilter {
             Node oldChild = oldSnap.getNode().getImmediateChild(child.getName());
             if (!oldChild.equals(child.getNode())) {
               optChangeAccumulator.trackChildChange(
-                  Change.childChangedChange(child.getName(), child.getNode(), oldChild));
+                  Change.childChangedChange(child.getName(), child.getNode(),
+                      oldChild));
             }
           } else {
             optChangeAccumulator.trackChildChange(

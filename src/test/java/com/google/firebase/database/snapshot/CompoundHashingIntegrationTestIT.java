@@ -39,9 +39,12 @@ public class CompoundHashingIntegrationTestIT {
       path = path.child(keys[random.nextInt(keys.length)]);
     }
     boolean addPriority = Math.random() < 0.05;
-    // There is an edge case where the server can (rightfully) send a node with only priority to the
-    // client. Since this is parsed as empty node without priority on the client, the range merge
-    // fails. For simplicity (and because priority has a whole bunch of other broken edge cases) we
+    // There is an edge case where the server can (rightfully) send a node with only priority
+    // to the
+    // client. Since this is parsed as empty node without priority on the client, the range
+    // merge
+    // fails. For simplicity (and because priority has a whole bunch of other broken edge
+    // cases) we
     // will ignore it for now
     if (false && addPriority) {
       path = path.child(ChildKey.getPriorityKey());
@@ -66,7 +69,8 @@ public class CompoundHashingIntegrationTestIT {
                 }
               });
       if (!node.getPriority().isEmpty()) {
-        forEachLeaf(currentPath.child(ChildKey.getPriorityKey()), node.getPriority(), leafVisitor);
+        forEachLeaf(currentPath.child(ChildKey.getPriorityKey()), node.getPriority(),
+            leafVisitor);
       }
     }
   }

@@ -35,7 +35,8 @@ public abstract class DefaultRunLoop implements RunLoop {
       final boolean periodicRestart,
       @Nullable final Context context) {
     executor =
-        new RevivingScheduledExecutor(threadFactory, "FirebaseDatabaseWorker", periodicRestart) {
+        new RevivingScheduledExecutor(threadFactory, "FirebaseDatabaseWorker",
+            periodicRestart) {
           @Override
           protected void handleException(Throwable throwable) {
             DefaultRunLoop.this.handleException(throwable);

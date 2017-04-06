@@ -25,10 +25,12 @@ public class StringNode extends LeafNode<StringNode> {
       case V1:
         return getPriorityHash(version) + "string:" + value;
       case V2: {
-        return getPriorityHash(version) + "string:" + Utilities.stringHashV2Representation(value);
+        return getPriorityHash(version) + "string:" + Utilities
+            .stringHashV2Representation(value);
       }
       default:
-        throw new IllegalArgumentException("Invalid hash version for string node: " + version);
+        throw new IllegalArgumentException("Invalid hash version for string node: " +
+            version);
     }
   }
 

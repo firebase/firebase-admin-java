@@ -70,8 +70,8 @@ public class CustomClassMapper {
   }
 
   /**
-   * Converts a standard library Java representation of JSON data to an object of the class provided
-   * through the GenericTypeIndicator
+   * Converts a standard library Java representation of JSON data to an object of the class
+   * provided through the GenericTypeIndicator
    *
    * @param object The representation of the JSON data
    * @param typeIndicator The indicator providing class of the object to convert to
@@ -283,7 +283,8 @@ public class CustomClassMapper {
         return (T) Enum.valueOf((Class) clazz, value);
       } catch (IllegalArgumentException e) {
         throw new DatabaseException(
-            "Could not find enum value of " + clazz.getName() + " for value \"" + value + "\"");
+            "Could not find enum value of " + clazz.getName() + " for value \"" + value +
+                "\"");
       }
     } else {
       throw new DatabaseException(
@@ -404,7 +405,8 @@ public class CustomClassMapper {
       return mapper.deserialize(expectMap(obj));
     } else {
       throw new DatabaseException(
-          "Can't convert object of type " + obj.getClass().getName() + " to type " + clazz.getName());
+          "Can't convert object of type " + obj.getClass().getName() + " to type " + clazz
+              .getName());
     }
   }
 
@@ -447,7 +449,8 @@ public class CustomClassMapper {
           addProperty(propertyName);
           method.setAccessible(true);
           if (getters.containsKey(propertyName)) {
-            throw new DatabaseException("Found conflicting getters for name: " + method.getName());
+            throw new DatabaseException("Found conflicting getters for name: " +
+                method.getName());
           }
           getters.put(propertyName, method);
         }
@@ -475,7 +478,8 @@ public class CustomClassMapper {
             if (existingPropertyName != null) {
               if (!existingPropertyName.equals(propertyName)) {
                 throw new DatabaseException(
-                    "Found setter with invalid " + "case-sensitive name: " + method.getName());
+                    "Found setter with invalid " + "case-sensitive name: " +
+                        method.getName());
               } else {
                 Method existingSetter = setters.get(propertyName);
                 if (existingSetter == null) {
@@ -517,7 +521,8 @@ public class CustomClassMapper {
       } while (currentClass != null && !currentClass.equals(Object.class));
 
       if (properties.isEmpty()) {
-        throw new DatabaseException("No properties to serialize found on class " + clazz.getName());
+        throw new DatabaseException("No properties to serialize found on class " + clazz
+            .getName());
       }
     }
 
@@ -679,7 +684,8 @@ public class CustomClassMapper {
     public T deserialize(Map<String, Object> values, Map<TypeVariable<Class<T>>, Type> types) {
       if (this.constructor == null) {
         throw new DatabaseException(
-            "Class " + this.clazz.getName() + " is missing a " + "constructor with no arguments");
+            "Class " + this.clazz.getName() + " is missing a " + "constructor with no " +
+                "arguments");
       }
       T instance;
       try {

@@ -110,7 +110,8 @@ public class MutableData {
 
             @Override
             public void remove() {
-              throw new UnsupportedOperationException("remove called on immutable collection");
+              throw new UnsupportedOperationException("remove called on immutable " +
+                  "collection");
             }
           };
         }
@@ -134,7 +135,8 @@ public class MutableData {
 
             @Override
             public void remove() {
-              throw new UnsupportedOperationException("remove called on immutable collection");
+              throw new UnsupportedOperationException("remove called on immutable " +
+                  "collection");
             }
           };
         }
@@ -172,33 +174,21 @@ public class MutableData {
   }
 
   /**
-   * Set the data at this location to the given value. The native types accepted by this method for
-   * the value correspond to the JSON types:
+   * Set the data at this location to the given value. The native types accepted by this method
+   * for the value correspond to the JSON types:
    *
-   * <ul>
-   * <li>Boolean
-   * <li>Long
-   * <li>Double
-   * <li>Map&lt;String, Object&gt;
-   * <li>List&lt;Object&gt;
+   * <ul> <li>Boolean <li>Long <li>Double <li>Map&lt;String, Object&gt; <li>List&lt;Object&gt;
    * </ul>
    *
-   * <br>
-   * <br>
-   * In addition, you can set instances of your own class into this location, provided they satisfy
-   * the following constraints:
+   * <br> <br> In addition, you can set instances of your own class into this location, provided
+   * they satisfy the following constraints:
    *
-   * <ol>
-   * <li>The class must have a default constructor that takes no arguments
-   * <li> The class must define public getters for the properties to be assigned. Properties
-   * without a public getter will be set to their default value when an instance is
-   * deserialized
-   * </ol>
+   * <ol> <li>The class must have a default constructor that takes no arguments <li> The class
+   * must define public getters for the properties to be assigned. Properties without a public
+   * getter will be set to their default value when an instance is deserialized </ol>
    *
-   * <br>
-   * <br>
-   * Generic collections of objects that satisfy the above constraints are also permitted, i.e.
-   * <code>Map&lt;String, MyPOJO&gt;</code>, as well as null values.
+   * <br> <br> Generic collections of objects that satisfy the above constraints are also
+   * permitted, i.e. <code>Map&lt;String, MyPOJO&gt;</code>, as well as null values.
    *
    * <p>Note that this overrides the priority, which must be set separately.
    *
@@ -274,9 +264,9 @@ public class MutableData {
    * GenericTypeIndicator} for more details
    *
    * @param t A subclass of {@link GenericTypeIndicator} indicating the type of generic collection
-   * to be returned.
+   *     to be returned.
    * @param <T> The type to return. Implicitly defined from the {@link GenericTypeIndicator} passed
-   * in
+   *     in
    * @return A properly typed collection, populated with the data from this instance
    */
   public <T> T getValue(GenericTypeIndicator<T> t) {

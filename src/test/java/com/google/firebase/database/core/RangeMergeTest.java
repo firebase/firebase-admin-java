@@ -40,7 +40,8 @@ public class RangeMergeTest {
   public void startIsExclusive() {
     Node node =
         NodeFromJSON(
-            fromSingleQuotedString("{'bar': 'bar-value', 'foo': 'foo-value', 'quu': 'quu-value'}"));
+            fromSingleQuotedString("{'bar': 'bar-value', 'foo': 'foo-value', 'quu': " +
+                "'quu-value'}"));
     Node update = NodeFromJSON(fromSingleQuotedString("{'foo': 'new-foo-value' }"));
     RangeMerge merge = new RangeMerge(path("bar"), path("foo"), update);
     Node actual = merge.applyTo(node);
@@ -55,7 +56,8 @@ public class RangeMergeTest {
   public void startIsExclusiveButIncludesChildren() {
     Node node =
         NodeFromJSON(
-            fromSingleQuotedString("{'bar': 'bar-value', 'foo': 'foo-value', 'quu': 'quu-value'}"));
+            fromSingleQuotedString("{'bar': 'bar-value', 'foo': 'foo-value', 'quu': " +
+                "'quu-value'}"));
     Node update =
         NodeFromJSON(
             fromSingleQuotedString(
@@ -74,13 +76,16 @@ public class RangeMergeTest {
   public void endIsInclusive() {
     Node node =
         NodeFromJSON(
-            fromSingleQuotedString("{'bar': 'bar-value', 'foo': 'foo-value', 'quu': 'quu-value'}"));
+            fromSingleQuotedString("{'bar': 'bar-value', 'foo': 'foo-value', 'quu': " +
+                "'quu-value'}"));
     Node update = NodeFromJSON(fromSingleQuotedString("{'baz': 'baz-value' }"));
-    RangeMerge merge = new RangeMerge(path("bar"), path("foo"), update); // foo should be deleted
+    RangeMerge merge = new RangeMerge(path("bar"), path("foo"), update); // foo should be
+    // deleted
     Node actual = merge.applyTo(node);
     Node expected =
         NodeFromJSON(
-            fromSingleQuotedString("{'bar': 'bar-value', 'baz': 'baz-value', 'quu': 'quu-value'}"));
+            fromSingleQuotedString("{'bar': 'bar-value', 'baz': 'baz-value', 'quu': " +
+                "'quu-value'}"));
     assertEquals(expected, actual);
   }
 
@@ -158,11 +163,13 @@ public class RangeMergeTest {
 
   @Test
   public void updatingRangeWithUnboundedLeftPostWorks() {
-    Node node = NodeFromJSON(fromSingleQuotedString("{'bar': 'bar-value', 'foo': 'foo-value'}"));
+    Node node = NodeFromJSON(fromSingleQuotedString("{'bar': 'bar-value', 'foo': " +
+        "'foo-value'}"));
     Node update = NodeFromJSON(fromSingleQuotedString("{'bar': 'new-bar'}"));
     RangeMerge merge = new RangeMerge(null, path("bar"), update);
     Node actual = merge.applyTo(node);
-    Node expected = NodeFromJSON(fromSingleQuotedString("{'bar': 'new-bar', 'foo': 'foo-value'}"));
+    Node expected = NodeFromJSON(fromSingleQuotedString("{'bar': 'new-bar', 'foo': " +
+        "'foo-value'}"));
     assertEquals(expected, actual);
   }
 
@@ -203,7 +210,8 @@ public class RangeMergeTest {
   public void updatingLeafIncludesPriority() {
     Node node =
         NodeFromJSON(
-            fromSingleQuotedString("{'bar': 'bar-value', 'foo': 'foo-value', 'quu': 'quu-value'}"));
+            fromSingleQuotedString("{'bar': 'bar-value', 'foo': 'foo-value', 'quu': " +
+                "'quu-value'}"));
     Node update =
         NodeFromJSON(
             fromSingleQuotedString("{'foo': { '.value': 'new-foo', '.priority': 'prio' }}"));
@@ -219,13 +227,16 @@ public class RangeMergeTest {
 
   @Test
   public void updatingPriorityInChildrenNodeWorks() {
-    Node node = NodeFromJSON(fromSingleQuotedString("{'bar': 'bar-value', 'foo': 'foo-value'}"));
-    Node update = NodeFromJSON(fromSingleQuotedString("{'bar': 'new-bar', '.priority': 'prio' }"));
+    Node node = NodeFromJSON(fromSingleQuotedString("{'bar': 'bar-value', 'foo': " +
+        "'foo-value'}"));
+    Node update = NodeFromJSON(fromSingleQuotedString("{'bar': 'new-bar', '.priority': 'prio'" +
+        " }"));
     RangeMerge merge = new RangeMerge(null, path("bar"), update);
     Node actual = merge.applyTo(node);
     Node expected =
         NodeFromJSON(
-            fromSingleQuotedString("{'bar': 'new-bar', 'foo': 'foo-value', '.priority': 'prio'}"));
+            fromSingleQuotedString("{'bar': 'new-bar', 'foo': 'foo-value', '.priority': " +
+                "'prio'}"));
     assertEquals(expected, actual);
   }
 
@@ -233,7 +244,8 @@ public class RangeMergeTest {
   @Test
   @Ignore
   public void updatingPriorityInChildrenNodeWorksAlone() {
-    Node node = NodeFromJSON(fromSingleQuotedString("{'bar': 'bar-value', 'foo': 'foo-value'}"));
+    Node node = NodeFromJSON(fromSingleQuotedString("{'bar': 'bar-value', 'foo': " +
+        "'foo-value'}"));
     Node update = NodeFromJSON(fromSingleQuotedString("{'.priority': 'prio' }"));
     RangeMerge merge = new RangeMerge(null, path(".priority"), update);
     Node actual = merge.applyTo(node);
@@ -265,7 +277,8 @@ public class RangeMergeTest {
     Node update = NodeFromJSON(fromSingleQuotedString("{'bar': 'new-bar'}"));
     RangeMerge merge = new RangeMerge(null, path("bar"), update); // deletes priority
     Node actual = merge.applyTo(node);
-    Node expected = NodeFromJSON(fromSingleQuotedString("{'bar': 'new-bar', 'foo': 'foo-value'}"));
+    Node expected = NodeFromJSON(fromSingleQuotedString("{'bar': 'new-bar', 'foo': " +
+        "'foo-value'}"));
     assertEquals(expected, actual);
   }
 
