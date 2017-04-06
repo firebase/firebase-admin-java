@@ -12,7 +12,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-/** */
 @SuppressWarnings("rawtypes")
 public class ImmutableTree<T> implements Iterable<Map.Entry<Path, T>> {
 
@@ -337,7 +336,6 @@ public class ImmutableTree<T> implements Iterable<Map.Entry<Path, T>> {
     return result;
   }
 
-  /** */
   public interface TreeVisitor<T, R> {
 
     R onNodeValue(Path relativePath, T value, R accum);

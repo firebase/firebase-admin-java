@@ -185,7 +185,6 @@ public class View {
     return eventRegistrations;
   }
 
-  /** */
   public static class OperationResult {
 
     public final List<DataEvent> events;

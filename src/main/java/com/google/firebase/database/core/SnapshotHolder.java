@@ -3,9 +3,6 @@ package com.google.firebase.database.core;
 import com.google.firebase.database.snapshot.EmptyNode;
 import com.google.firebase.database.snapshot.Node;
 
-/**
- * User: greg Date: 5/16/13 Time: 4:11 PM
- */
 public class SnapshotHolder {
 
   private Node rootNode;

@@ -7,9 +7,6 @@ import com.google.firebase.database.snapshot.Node;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * User: greg Date: 5/20/13 Time: 11:54 AM
- */
 class SparseSnapshotTree {
 
   private Node value;

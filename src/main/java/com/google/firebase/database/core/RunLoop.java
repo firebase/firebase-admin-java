@@ -11,14 +11,14 @@ import java.util.concurrent.ScheduledFuture;
 public interface RunLoop {
 
   /**
-   * Append this operation to the queue
+   * Append this operation to the queue.
    *
    * @param r The operation to run
    */
   void scheduleNow(Runnable r);
 
   /**
-   * Schedule this operation to run after the specified delay
+   * Schedule this operation to run after the specified delay.
    *
    * @param r The operation to run
    * @param milliseconds The delay, in milliseconds

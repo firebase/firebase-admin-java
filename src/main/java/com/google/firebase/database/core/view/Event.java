@@ -11,7 +11,6 @@ public interface Event {
   @Override
   String toString();
 
-  /** */
   enum EventType {
     // The order is important here and reflects the order events should be raised in
     CHILD_REMOVED,

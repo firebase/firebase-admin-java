@@ -108,7 +108,6 @@ public class RetryHelper {
     this.currentRetryDelay = 0;
   }
 
-  /** */
   public static class Builder {
 
     private final ScheduledExecutorService service;

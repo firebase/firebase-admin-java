@@ -71,9 +71,7 @@ public class CompoundHash {
     return Collections.unmodifiableList(this.hashes);
   }
 
-  /** */
   public interface SplitStrategy {
-
     boolean shouldSplit(CompoundHashBuilder state);
   }
 

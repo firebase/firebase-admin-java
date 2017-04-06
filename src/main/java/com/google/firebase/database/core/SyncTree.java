@@ -203,7 +203,7 @@ public class SyncTree {
   }
 
   /**
-   * Removes all local writes
+   * Removes all local writes.
    */
   public List<? extends Event> removeAllWrites() {
     return this.persistenceManager.runInTransaction(
@@ -254,7 +254,7 @@ public class SyncTree {
   }
 
   /**
-   * Apply a range merge
+   * Apply a range merge.
    */
   public List<? extends Event> applyServerRangeMerges(
       final Path path, List<RangeMerge> rangeMerges) {
@@ -303,7 +303,7 @@ public class SyncTree {
   }
 
   /**
-   * Apply a listen complete to a path
+   * Apply a listen complete to a path.
    */
   public List<? extends Event> applyListenComplete(final Path path) {
     return persistenceManager.runInTransaction(
@@ -317,7 +317,7 @@ public class SyncTree {
   }
 
   /**
-   * Apply a listen complete to a path
+   * Apply a listen complete to a path.
    */
   public List<? extends Event> applyTaggedListenComplete(final Tag tag) {
     return persistenceManager.runInTransaction(
@@ -882,13 +882,11 @@ public class SyncTree {
     return syncPointTree;
   }
 
-  /** */
   public interface CompletionListener {
 
     List<? extends Event> onListenComplete(DatabaseError error);
   }
 
-  /** */
   public interface ListenProvider {
 
     void startListening(

@@ -67,7 +67,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   private static final String SERVER_DATA_WARNINGS = "w";
   private static final String SERVER_RESPONSE_DATA = "d";
   /**
-   * Delay after which a established connection is considered successful
+   * Delay after which a established connection is considered successful.
    */
   private static final long SUCCESSFUL_CONNECTION_ESTABLISHED_DELAY = 30 * 1000;
   private static final long IDLE_TIMEOUT = 60 * 1000;
@@ -102,7 +102,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   private boolean forceAuthTokenRefresh;
   private String lastSessionId;
   /**
-   * Counter to check whether the callback is for the last getToken call
+   * Counter to check whether the callback is for the last getToken call.
    */
   private long currentGetTokenAttempt = 0;
   private int invalidAuthTokenCount = 0;

@@ -293,7 +293,7 @@ public class RBTreeSortedMap<K, V> extends ImmutableSortedMap<K, V> {
       }
 
       /**
-       * Iterates over booleans for whether or not a particular digit is a '1' in base {1, 2}
+       * Iterates over booleans for whether or not a particular digit is a '1' in base {1, 2}.
        *
        * @return A reverse iterator over the base {1, 2} number
        */

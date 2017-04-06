@@ -2,9 +2,6 @@ package com.google.firebase.database.core;
 
 import java.net.URI;
 
-/**
- * User: greg Date: 5/15/13 Time: 3:55 PM
- */
 public class RepoInfo {
 
   private static final String VERSION_PARAM = "v";

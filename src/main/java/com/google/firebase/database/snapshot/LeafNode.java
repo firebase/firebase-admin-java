@@ -196,7 +196,6 @@ public abstract class LeafNode<T extends LeafNode> implements Node {
     return str.length() <= 100 ? str : (str.substring(0, 100) + "...");
   }
 
-  /** */
   protected enum LeafType {
     // The order here defines the ordering of leaf nodes
     DeferredValue,

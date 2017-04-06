@@ -29,7 +29,6 @@ public abstract class Operation {
 
   public abstract Operation operationForChild(ChildKey childKey);
 
-  /** */
   public enum OperationType {
     Overwrite,
     Merge,

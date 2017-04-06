@@ -2,9 +2,6 @@ package com.google.firebase.database.core;
 
 import com.google.firebase.database.snapshot.ChildKey;
 
-/**
- * User: greg Date: 5/16/13 Time: 3:52 PM
- */
 public class Constants {
 
   public static final ChildKey DOT_INFO = ChildKey.fromString(".info");

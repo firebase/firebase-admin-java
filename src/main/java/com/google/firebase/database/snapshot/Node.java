@@ -85,7 +85,6 @@ public interface Node extends Comparable<Node>, Iterable<NamedNode> {
 
   Iterator<NamedNode> reverseIterator();
 
-  /** */
   enum HashVersion {
     // V1 is the initial hashing schema used by Firebase Database
     V1,

@@ -236,7 +236,7 @@ public class CompoundWrite implements Iterable<Map.Entry<Path, Node>> {
 
   /**
    * Applies this CompoundWrite to a node. The node is returned with all writes from this
-   * CompoundWrite applied to the node
+   * CompoundWrite applied to the node.
    *
    * @param node The node to apply this CompoundWrite to
    * @return The node with all writes applied
@@ -246,7 +246,7 @@ public class CompoundWrite implements Iterable<Map.Entry<Path, Node>> {
   }
 
   /**
-   * Returns a serializable version of this CompoundWrite
+   * Returns a serializable version of this CompoundWrite.
    *
    * @param exportFormat Nodes to write are saved in their export format
    * @return The map representing this CompoundWrite

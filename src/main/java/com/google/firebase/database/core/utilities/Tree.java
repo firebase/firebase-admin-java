@@ -5,9 +5,6 @@ import com.google.firebase.database.snapshot.ChildKey;
 
 import java.util.Map;
 
-/**
- * User: greg Date: 5/16/13 Time: 4:16 PM
- */
 public class Tree<T> {
 
   private ChildKey name;
@@ -169,13 +166,11 @@ public class Tree<T> {
     return prefix + nodeName + "\n" + node.toString(prefix + "\t");
   }
 
-  /** */
   public interface TreeVisitor<T> {
 
     void visitTree(Tree<T> tree);
   }
 
-  /** */
   public interface TreeFilter<T> {
 
     boolean filterTreeNode(Tree<T> tree);

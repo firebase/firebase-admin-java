@@ -2,11 +2,6 @@ package com.google.firebase.database.collection;
 
 import java.util.Comparator;
 
-/**
- * User: greg
- * Date: 5/17/13
- * Time: 8:48 AM
- */
 public class LLRBEmptyNode<K, V> implements LLRBNode<K, V> {
 
   private static final LLRBEmptyNode INSTANCE = new LLRBEmptyNode();

@@ -10,9 +10,6 @@ import com.google.firebase.database.utilities.Clock;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * User: robertdimarco Date: 6/5/13 Time: 11:15 AM
- */
 @SuppressWarnings("rawtypes")
 public class ServerValues {
 

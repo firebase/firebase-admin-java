@@ -15,7 +15,7 @@ import java.util.concurrent.Callable;
 public interface PersistenceManager {
 
   /**
-   * Save a user overwrite
+   * Save a user overwrite.
    *
    * @param path The path for this write
    * @param node The node for this write
@@ -24,7 +24,7 @@ public interface PersistenceManager {
   void saveUserOverwrite(Path path, Node node, long writeId);
 
   /**
-   * Save a user merge
+   * Save a user merge.
    *
    * @param path The path for this merge
    * @param children The children for this merge
@@ -40,7 +40,7 @@ public interface PersistenceManager {
   void removeUserWrite(long writeId);
 
   /**
-   * Removes all writes
+   * Removes all writes.
    */
   void removeAllUserWrites();
 
@@ -57,7 +57,7 @@ public interface PersistenceManager {
   void applyUserWriteToServerCache(Path path, CompoundWrite merge);
 
   /**
-   * Return a list of all writes that were persisted
+   * Return a list of all writes that were persisted.
    *
    * @return The list of writes
    */

@@ -2,11 +2,6 @@ package com.google.firebase.database.collection;
 
 import java.util.Comparator;
 
-/**
- * User: greg
- * Date: 5/17/13
- * Time: 8:48 AM
- */
 public interface LLRBNode<K, V> {
 
   LLRBNode<K, V> copy(K key, V value, Color color, LLRBNode<K, V> left, LLRBNode<K, V> right);

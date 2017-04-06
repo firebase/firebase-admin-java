@@ -413,7 +413,6 @@ public class ChildrenNode implements Node {
     }
   }
 
-  /** */
   public abstract static class ChildVisitor extends LLRBNode.NodeVisitor<ChildKey, Node> {
 
     @Override

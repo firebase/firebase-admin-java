@@ -678,7 +678,6 @@ public class ViewProcessor {
         newViewCache, path, writesCache, NO_COMPLETE_SOURCE, accumulator);
   }
 
-  /** */
   public static class ProcessorResult {
 
     public final ViewCache viewCache;
