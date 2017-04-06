@@ -84,7 +84,7 @@ public class DatabaseReference extends Query {
    * Legacy method for legacy creation of DatabaseReference for tests.
    *
    * @return A reference to the default config object. This can be modified up until your first
-   *     Database call
+   * Database call
    */
   private static synchronized DatabaseConfig getDefaultConfig() {
     if (defaultConfig == null) {
@@ -430,7 +430,7 @@ public class DatabaseReference extends Query {
    *
    * @param handler An object to handle running the transaction
    * @param fireLocalEvents Defaults to true. If set to false, events will only be fired for the
-   *     final result state of the transaction, and not for any intermediate states
+   * final result state of the transaction, and not for any intermediate states
    */
   public void runTransaction(final Transaction.Handler handler, final boolean fireLocalEvents) {
     if (handler == null) {
@@ -477,7 +477,7 @@ public class DatabaseReference extends Query {
 
   /**
    * @return A DatabaseReference to the parent location, or null if this instance references the
-   *     root location
+   * root location
    */
   public DatabaseReference getParent() {
     Path parentPath = getPath().getParent();

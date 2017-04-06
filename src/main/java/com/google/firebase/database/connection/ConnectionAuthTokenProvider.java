@@ -6,7 +6,7 @@ public interface ConnectionAuthTokenProvider {
    * Gets the token that should currently be used for authenticated requests.
    *
    * @param forceRefresh Pass true to get a new, up-to-date token rather than a (potentially
-   *     expired) cached token.
+   * expired) cached token.
    * @param callback Callback to be notified after operation completes.
    */
   void getToken(boolean forceRefresh, GetTokenCallback callback);

@@ -10,8 +10,8 @@ package com.google.firebase.internal;
 public final class Base64Utils {
 
   /**
-   * @param encodedData String to decode into byte array. If input is null, output data will be
-   *     null as well.
+   * @param encodedData String to decode into byte array. If input is null, output data will be null
+   * as well.
    * @return byte array corresponding to encoded string.
    */
   public static byte[] decode(String encodedData) {
@@ -24,7 +24,7 @@ public final class Base64Utils {
 
   /**
    * @param encodedData String to decode into byte array using the URL_SAFE option. If input is
-   *     null, output data will be null as well.
+   * null, output data will be null as well.
    * @return byte array corresponding to encoded string.
    */
   public static byte[] decodeUrlSafe(String encodedData) {
@@ -36,8 +36,8 @@ public final class Base64Utils {
   }
 
   /**
-   * @param encodedData String to decode into byte array using the URL_SAFE, NO_WRAP, and
-   *     NO_PADDING options. If input is null, output data will be null as well.
+   * @param encodedData String to decode into byte array using the URL_SAFE, NO_WRAP, and NO_PADDING
+   * options. If input is null, output data will be null as well.
    * @return byte array corresponding to encoded string.
    */
   public static byte[] decodeUrlSafeNoPadding(String encodedData) {
@@ -51,8 +51,8 @@ public final class Base64Utils {
   /**
    * This is the equivalent of {@link #decodeUrlSafeNoPadding(String)} except it accepts a byte[].
    *
-   * @param encodedData byte[] to decode into byte array using the URL_SAFE, NO_WRAP, and
-   *     NO_PADDING options. If input is null, output data will be null as well.
+   * @param encodedData byte[] to decode into byte array using the URL_SAFE, NO_WRAP, and NO_PADDING
+   * options. If input is null, output data will be null as well.
    * @return byte array corresponding to encoded string.
    */
   public static byte[] decodeUrlSafeNoPadding(byte[] encodedData) {
@@ -65,7 +65,7 @@ public final class Base64Utils {
 
   /**
    * @param data Byte array to encode with Base64. If input data is null, output will be null as
-   *     well.
+   * well.
    * @return String representing encoded data.
    */
   public static String encode(byte[] data) {
@@ -77,8 +77,8 @@ public final class Base64Utils {
   }
 
   /**
-   * @param data Byte array to encode with Base64 using the URL_SAFE option. If input data is
-   *     null, output will be null as well.
+   * @param data Byte array to encode with Base64 using the URL_SAFE option. If input data is null,
+   * output will be null as well.
    * @return String representing encoded data.
    */
   public static String encodeUrlSafe(byte[] data) {
@@ -91,7 +91,7 @@ public final class Base64Utils {
 
   /**
    * @param data Byte array to encode with Base64 using the URL_SAFE, NO_WRAP, and NO_PADDING
-   *     options. If input data is null, output will be null as well.
+   * options. If input data is null, output will be null as well.
    * @return String representing encoded data.
    */
   public static String encodeUrlSafeNoPadding(byte[] data) {

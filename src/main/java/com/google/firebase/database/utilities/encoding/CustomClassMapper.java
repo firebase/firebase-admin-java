@@ -152,7 +152,7 @@ public class CustomClassMapper {
     }
   }
 
-  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
+  @SuppressWarnings( {"unchecked", "TypeParameterUnusedInFormals"})
   private static <T> T deserializeToType(Object obj, Type type) {
     if (obj == null) {
       return null;
@@ -199,7 +199,7 @@ public class CustomClassMapper {
     }
   }
 
-  @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
+  @SuppressWarnings( {"unchecked", "TypeParameterUnusedInFormals"})
   private static <T> T deserializeToParameterizedType(Object obj, ParameterizedType type) {
     // getRawType should always return a Class<?>
     Class<?> rawType = (Class<?>) type.getRawType();

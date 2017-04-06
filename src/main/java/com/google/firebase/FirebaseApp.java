@@ -97,8 +97,7 @@ public class FirebaseApp {
    *
    * @param name represents the name of the {@link FirebaseApp} instance.
    * @return the {@link FirebaseApp} corresponding to the name.
-   * @throws IllegalStateException if the {@link FirebaseApp} was not initialized, either via
-   * {@link
+   * @throws IllegalStateException if the {@link FirebaseApp} was not initialized, either via {@link
    * #initializeApp(FirebaseOptions, String)} or {@link #getApps()}.
    */
   public static FirebaseApp getInstance(@NonNull String name) {
@@ -139,7 +138,7 @@ public class FirebaseApp {
    *
    * @param options represents the global {@link FirebaseOptions}
    * @param name unique name for the app. It is an error to initialize an app with an already
-   *     existing name. Starting and ending whitespace characters in the name are ignored (trimmed).
+   * existing name. Starting and ending whitespace characters in the name are ignored (trimmed).
    * @return an instance of {@link FirebaseApp}
    * @throws IllegalStateException if an app with the same name has already been initialized.
    */
@@ -275,7 +274,7 @@ public class FirebaseApp {
    * Internal-only method to fetch a valid Service Account OAuth2 Token.
    *
    * @param forceRefresh force refreshes the token. Should only be set to <code>true</code> if the
-   *     token is invalidated out of band.
+   * token is invalidated out of band.
    * @return a {@link Task}
    */
   Task<GetTokenResult> getToken(boolean forceRefresh) {
@@ -385,7 +384,7 @@ public class FirebaseApp {
      * Schedule a forced token refresh to be executed after a specified duration.
      *
      * @param delayMillis Duration in milliseconds, after which the token should be forcibly
-     *     refreshed.
+     * refreshed.
      */
     final synchronized void scheduleRefresh(long delayMillis) {
       cancelPrevious();

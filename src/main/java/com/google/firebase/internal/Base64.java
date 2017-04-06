@@ -86,7 +86,7 @@ public class Base64 {
    *
    * @param str the input String to decode, which is converted to bytes using the default charset
    * @param flags controls certain features of the decoded output. Pass {@code DEFAULT} to decode
-   *     standard Base64.
+   * standard Base64.
    * @throws IllegalArgumentException if the input contains incorrect padding
    */
   public static byte[] decode(String str, int flags) {
@@ -102,7 +102,7 @@ public class Base64 {
    *
    * @param input the input array to decode
    * @param flags controls certain features of the decoded output. Pass {@code DEFAULT} to decode
-   *     standard Base64.
+   * standard Base64.
    * @throws IllegalArgumentException if the input contains incorrect padding
    */
   public static byte[] decode(byte[] input, int flags) {
@@ -120,7 +120,7 @@ public class Base64 {
    * @param offset the position within the input array at which to start
    * @param len the number of bytes of input to decode
    * @param flags controls certain features of the decoded output. Pass {@code DEFAULT} to decode
-   *     standard Base64.
+   * standard Base64.
    * @throws IllegalArgumentException if the input contains incorrect padding
    */
   public static byte[] decode(byte[] input, int offset, int len, int flags) {
@@ -150,7 +150,7 @@ public class Base64 {
    *
    * @param input the data to encode
    * @param flags controls certain features of the encoded output. Passing {@code DEFAULT} results
-   *     in output that adheres to RFC 2045.
+   * in output that adheres to RFC 2045.
    */
   public static String encodeToString(byte[] input, int flags) {
     try {
@@ -173,7 +173,7 @@ public class Base64 {
    * @param offset the position within the input array at which to start
    * @param len the number of bytes of input to encode
    * @param flags controls certain features of the encoded output. Passing {@code DEFAULT} results
-   *     in output that adheres to RFC 2045.
+   * in output that adheres to RFC 2045.
    */
   public static String encodeToString(byte[] input, int offset, int len, int flags) {
     try {
@@ -190,7 +190,7 @@ public class Base64 {
    *
    * @param input the data to encode
    * @param flags controls certain features of the encoded output. Passing {@code DEFAULT} results
-   *     in output that adheres to RFC 2045.
+   * in output that adheres to RFC 2045.
    */
   public static byte[] encode(byte[] input, int flags) {
     return encode(input, 0, input.length, flags);
@@ -204,7 +204,7 @@ public class Base64 {
    * @param offset the position within the input array at which to start
    * @param len the number of bytes of input to encode
    * @param flags controls certain features of the encoded output. Passing {@code DEFAULT} results
-   *     in output that adheres to RFC 2045.
+   * in output that adheres to RFC 2045.
    */
   public static byte[] encode(byte[] input, int offset, int len, int flags) {
     Encoder encoder = new Encoder(flags, null);
@@ -256,15 +256,15 @@ public class Base64 {
      * of the coded data.
      *
      * @param finish true if this is the final call to process for this object.  Will finalize the
-     *     coder state and include any final bytes in the output.
-     * @return true if the input so far is good; false if some error has been detected in the
-     *     input stream.
+     * coder state and include any final bytes in the output.
+     * @return true if the input so far is good; false if some error has been detected in the input
+     * stream.
      */
     public abstract boolean process(byte[] input, int offset, int len, boolean finish);
 
     /**
-     * @return the maximum number of bytes a call to process() could produce for the given
-     *     number of input bytes.  This may be an overestimate.
+     * @return the maximum number of bytes a call to process() could produce for the given number of
+     * input bytes.  This may be an overestimate.
      */
     public abstract int maxOutputSize(int len);
   }
@@ -354,7 +354,7 @@ public class Base64 {
      * Decode another block of input data.
      *
      * @return true if the state machine is still healthy.  false if bad base-64 data has been
-     *     detected in the input stream.
+     * detected in the input stream.
      */
     public boolean process(byte[] input, int offset, int len, boolean finish) {
       if (this.state == 6) {

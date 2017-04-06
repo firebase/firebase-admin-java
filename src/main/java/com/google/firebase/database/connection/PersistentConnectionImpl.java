@@ -1105,7 +1105,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
 
   /**
    * @return Returns true if the connection is currently not being used (for listen, outstanding
-   *     operations).
+   * operations).
    */
   private boolean isIdle() {
     return this.listens.isEmpty()

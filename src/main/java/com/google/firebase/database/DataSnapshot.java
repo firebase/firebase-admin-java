@@ -191,9 +191,9 @@ public class DataSnapshot {
    * GenericTypeIndicator} for more details
    *
    * @param t A subclass of {@link GenericTypeIndicator} indicating the type of generic collection
-   *     to be returned.
+   * to be returned.
    * @param <T> The type to return. Implicitly defined from the {@link GenericTypeIndicator} passed
-   *     in
+   * in
    * @return A properly typed collection, populated with the data from this snapshot
    */
   public <T> T getValue(GenericTypeIndicator<T> t) {

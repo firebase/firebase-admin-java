@@ -38,7 +38,7 @@ class ThreadPoolEventTarget implements EventTarget {
                 // exceptions happen...
                 return thread;
               }
-        });
+            });
   }
 
   public ThreadPoolEventTarget(final ThreadPoolExecutor executor) {

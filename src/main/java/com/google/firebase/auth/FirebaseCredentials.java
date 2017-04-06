@@ -61,8 +61,8 @@ public class FirebaseCredentials {
    * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a>
    * for code samples and detailed documentation.
    *
-   * @return A {@link FirebaseCredential} based on Google Application Default Credentials which
-   *     can be used to authenticate the SDK.
+   * @return A {@link FirebaseCredential} based on Google Application Default Credentials which can
+   * be used to authenticate the SDK.
    */
   @NonNull
   public static FirebaseCredential applicationDefault() {
@@ -82,9 +82,9 @@ public class FirebaseCredentials {
    * for code samples and detailed documentation.
    *
    * @param serviceAccount An <code>InputStream</code> containing the JSON representation of a
-   *     service account certificate.
+   * service account certificate.
    * @return A {@link FirebaseCredential} generated from the provided service account certificate
-   *     which can be used to authenticate the SDK.
+   * which can be used to authenticate the SDK.
    */
   @NonNull
   public static FirebaseCredential fromCertificate(InputStream serviceAccount) {
@@ -106,10 +106,10 @@ public class FirebaseCredentials {
    * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a>
    * for code samples and detailed documentation.
    *
-   * @param refreshToken An <code>InputStream</code> containing the JSON representation of a
-   *     refresh token.
+   * @param refreshToken An <code>InputStream</code> containing the JSON representation of a refresh
+   * token.
    * @return A {@link FirebaseCredential} generated from the provided service account credential
-   *     which can be used to authenticate the SDK.
+   * which can be used to authenticate the SDK.
    */
   @NonNull
   public static FirebaseCredential fromRefreshToken(InputStream refreshToken) {

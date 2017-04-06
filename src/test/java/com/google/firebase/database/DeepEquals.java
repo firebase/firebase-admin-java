@@ -372,8 +372,7 @@ public class DeepEquals {
 
   /**
    * @param c Class instance
-   * @return Collection of only the fields in the passed in class that would need further
-   * processing
+   * @return Collection of only the fields in the passed in class that would need further processing
    * (reference fields). This makes field traversal on a class faster as it does not need to
    * continually process known fields like primitives.
    */

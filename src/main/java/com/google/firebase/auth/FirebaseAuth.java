@@ -87,9 +87,9 @@ public class FirebaseAuth {
    * API.
    *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
-   *     (Firebase Database, Firebase Auth, etc.)
-   * @return A {@link Task} which will complete successfully with the created Firebase Custom
-   *     Token, or unsuccessfully with the failure Exception.
+   * (Firebase Database, Firebase Auth, etc.)
+   * @return A {@link Task} which will complete successfully with the created Firebase Custom Token,
+   * or unsuccessfully with the failure Exception.
    */
   public Task<String> createCustomToken(String uid) {
     return createCustomToken(uid, null);
@@ -101,12 +101,12 @@ public class FirebaseAuth {
    * use with the signInWithCustomToken authentication API.
    *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
-   *     (Realtime Database, Storage, etc.). Should be less than 128 characters.
+   * (Realtime Database, Storage, etc.). Should be less than 128 characters.
    * @param developerClaims Additional claims to be stored in the token (and made available to
-   *     security rules in Database, Storage, etc.). These must be able to be serialized to JSON
-   *     (e.g. contain only Maps, Arrays, Strings, Booleans, Numbers, etc.)
+   * security rules in Database, Storage, etc.). These must be able to be serialized to JSON (e.g.
+   * contain only Maps, Arrays, Strings, Booleans, Numbers, etc.)
    * @return A {@link Task} which will complete successfully with the created Firebase Custom Token,
-   *     or unsuccessfully with the failure Exception.
+   * or unsuccessfully with the failure Exception.
    */
   public Task<String> createCustomToken(
       final String uid, final Map<String, Object> developerClaims) {
@@ -154,7 +154,7 @@ public class FirebaseAuth {
    *
    * @param token A Firebase ID Token to verify and parse.
    * @return A {@link Task} which will complete successfully with the parsed token, or
-   *     unsuccessfully with the failure Exception.
+   * unsuccessfully with the failure Exception.
    */
   public Task<FirebaseToken> verifyIdToken(final String token) {
     FirebaseCredential credential = ImplFirebaseTrampolines.getCredential(firebaseApp);

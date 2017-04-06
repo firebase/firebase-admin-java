@@ -238,7 +238,7 @@ public class Query {
    * disk cache.
    *
    * @param keepSynced Pass `true` to keep this location synchronized, pass `false` to stop
-   *     synchronization.
+   * synchronization.
    * @since 2.3
    */
   public void keepSynced(final boolean keepSynced) {

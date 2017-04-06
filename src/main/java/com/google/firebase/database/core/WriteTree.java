@@ -161,7 +161,7 @@ public class WriteTree {
    * visible, meaning views need to reevaluate.
    *
    * @return true if the write may have been visible (meaning we'll need to reevaluate / raise
-   *     events as a result).
+   * events as a result).
    */
   public boolean removeWrite(long writeId) {
     // Note: disabling this check. It could be a transaction that preempted another

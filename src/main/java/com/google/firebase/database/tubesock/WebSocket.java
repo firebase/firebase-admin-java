@@ -80,7 +80,7 @@ public class WebSocket {
    * @param url The URL of a websocket server
    * @param protocol The protocol to include in the handshake. If null, it will be omitted
    * @param extraHeaders Any extra HTTP headers to be included with the initial request. Pass null
-   *     if not extra headers are requested
+   * if not extra headers are requested
    */
   public WebSocket(URI url, String protocol, Map<String, String> extraHeaders) {
     innerThread =

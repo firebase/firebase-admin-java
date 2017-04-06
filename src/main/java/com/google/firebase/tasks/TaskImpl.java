@@ -52,6 +52,16 @@ final class TaskImpl<T> extends Task<T> {
     }
   }
 
+  public void setResult(T result) {
+    synchronized (lock) {
+      checkNotCompleteLocked();
+      complete = true;
+      this.result = result;
+    }
+    // Intentionally outside the lock.
+    listenerQueue.flush(this);
+  }
+
   @Override
   public <X extends Throwable> T getResult(@NonNull Class<X> exceptionType) throws X {
     synchronized (lock) {
@@ -66,16 +76,6 @@ final class TaskImpl<T> extends Task<T> {
 
       return result;
     }
-  }
-
-  public void setResult(T result) {
-    synchronized (lock) {
-      checkNotCompleteLocked();
-      complete = true;
-      this.result = result;
-    }
-    // Intentionally outside the lock.
-    listenerQueue.flush(this);
   }
 
   @Nullable

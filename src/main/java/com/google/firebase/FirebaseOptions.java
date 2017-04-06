@@ -132,10 +132,9 @@ public final class FirebaseOptions {
      * <code>setServiceAccount()</code> methods can be used.
      *
      * @param stream A stream containing the service account contents as JSON.
-     * @return This <code>Builder</code> instance is returned so subsequent calls can be
-     *     chained.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      * @deprecated Use {@link #setCredential} instead and obtain credentials via {@link
-     *     FirebaseCredentials}.
+     * FirebaseCredentials}.
      */
     @Deprecated
     public Builder setServiceAccount(@NonNull InputStream stream) {
@@ -179,7 +178,7 @@ public final class FirebaseOptions {
      * Authenticate with limited privileges</a> for code samples and detailed documentation.
      *
      * @param databaseAuthVariableOverride The value to use for the <code>auth</code> variable in
-     *     the security rules for Realtime Database actions.
+     * the security rules for Realtime Database actions.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setDatabaseAuthVariableOverride(

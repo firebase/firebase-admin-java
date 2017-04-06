@@ -82,7 +82,7 @@ public class DatabaseConfig extends Context {
    * will also set the log level to {@link Logger.Level#DEBUG DEBUG}.
    *
    * @param debugComponents A list of components for which logs are desired, or null to enable all
-   *     components
+   * components
    */
   public synchronized void setDebugLogComponents(List<String> debugComponents) {
     assertUnfrozen();

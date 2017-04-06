@@ -46,8 +46,8 @@ public class Transaction {
      * application. <br> <br> Best practices for this method are to rely only on the data that
      * is passed in.
      *
-     * @param currentData The current data at the location. Update this to the desired data
-     *     at the location
+     * @param currentData The current data at the location. Update this to the desired data at the
+     * location
      * @return Either the new data, or an indication to abort the transaction
      */
     Result doTransaction(MutableData currentData);
@@ -57,7 +57,7 @@ public class Transaction {
      *
      * @param error null if no errors occurred, otherwise it contains a description of the error
      * @param committed True if the transaction successfully completed, false if it was aborted or
-     *     an error occurred
+     * an error occurred
      * @param currentData The current data at the location
      */
     void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData);
