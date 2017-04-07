@@ -1,5 +1,16 @@
 package com.google.firebase;
 
+import static com.google.firebase.internal.Base64Utils.decodeUrlSafeNoPadding;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import com.google.common.base.Defaults;
 import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.FirebaseOptions.Builder;
@@ -13,12 +24,6 @@ import com.google.firebase.tasks.TaskCompletionSource;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.FirebaseAppRule;
 import com.google.firebase.testing.ServiceAccount;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.Mockito;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -29,13 +34,15 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.mockito.Mockito;
 
-import static com.google.firebase.internal.Base64Utils.decodeUrlSafeNoPadding;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
-
-/** Unit tests for {@link com.google.firebase.FirebaseApp}. */
+/** 
+ * Unit tests for {@link com.google.firebase.FirebaseApp}.
+ */
 // TODO(arondeak): uncomment lines when Firebase API targets are in integ.
 public class FirebaseAppTest {
 

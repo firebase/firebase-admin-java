@@ -8,12 +8,11 @@ import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
 import com.google.firebase.database.snapshot.PriorityUtilities;
 import com.google.firebase.database.snapshot.StringNode;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class CompoundWriteTest {
 
@@ -181,7 +180,7 @@ public class CompoundWriteTest {
     CompoundWrite compoundWrite = CompoundWrite.emptyWrite();
     Map<String, Object> base =
         new MapBuilder().put("child-1", "value-1").put("child-2", "value-2").build();
-    Node baseNode = NodeUtilities.NodeFromJSON(base);
+    final Node baseNode = NodeUtilities.NodeFromJSON(base);
     Node updateOne =
         NodeUtilities.NodeFromJSON(
             new MapBuilder().put("foo", "foo-value").put("bar", "bar-value").build());
@@ -207,7 +206,7 @@ public class CompoundWriteTest {
     CompoundWrite compoundWrite = CompoundWrite.emptyWrite();
     Map<String, Object> base =
         new MapBuilder().put("child-1", "value-1").put("child-2", "value-2").build();
-    Node baseNode = NodeUtilities.NodeFromJSON(base);
+    final Node baseNode = NodeUtilities.NodeFromJSON(base);
     Node updateOne = NodeUtilities.NodeFromJSON("new-foo-value");
     Node updateTwo = NodeUtilities.NodeFromJSON("baz-value");
     Node updateThree =
@@ -315,7 +314,7 @@ public class CompoundWriteTest {
   @Test
   public void addingUpdatesAtPathWorks() {
     CompoundWrite compoundWrite = CompoundWrite.emptyWrite();
-    Map<String, Object> base =
+    final Map<String, Object> base =
         new MapBuilder().put("child-1", "value-1").put("child-2", "value-2").build();
     Map<ChildKey, Node> updates = new HashMap<>();
     updates.put(ChildKey.fromString("foo"), NodeUtilities.NodeFromJSON("foo-value"));
@@ -333,14 +332,14 @@ public class CompoundWriteTest {
   }
 
   @Test
-  public void addingUpdatesAtRootWorks() {
-    CompoundWrite compoundWrite = CompoundWrite.emptyWrite();
-    Map<String, Object> base =
+  public void addingUpdatesAtRootWorks() {    
+    final Map<String, Object> base =
         new MapBuilder().put("child-1", "value-1").put("child-2", "value-2").build();
     Map<ChildKey, Node> updates = new HashMap<>();
     updates.put(ChildKey.fromString("child-1"), NodeUtilities.NodeFromJSON("new-value-1"));
     updates.put(ChildKey.fromString("child-2"), EmptyNode.Empty());
     updates.put(ChildKey.fromString("child-3"), NodeUtilities.NodeFromJSON("value-3"));
+    CompoundWrite compoundWrite = CompoundWrite.emptyWrite();
     compoundWrite =
         compoundWrite.addWrites(Path.getEmptyPath(), CompoundWrite.fromChildMerge(updates));
 
@@ -476,7 +475,7 @@ public class CompoundWriteTest {
     CompoundWrite compoundWrite = CompoundWrite.emptyWrite();
     Map<String, Object> base =
         new MapBuilder().put("child-1", "value-1").put("child-2", "value-2").build();
-    Node baseNode = NodeUtilities.NodeFromJSON(base);
+    final Node baseNode = NodeUtilities.NodeFromJSON(base);
     Node updateOne =
         NodeUtilities.NodeFromJSON(
             new MapBuilder().put("foo", "foo-value").put("bar", "bar-value").build());
@@ -503,7 +502,7 @@ public class CompoundWriteTest {
     CompoundWrite compoundWrite = CompoundWrite.emptyWrite();
     Map<String, Object> base =
         new MapBuilder().put("child-1", "value-1").put("child-2", "value-2").build();
-    Node baseNode = NodeUtilities.NodeFromJSON(base);
+    final Node baseNode = NodeUtilities.NodeFromJSON(base);
     Node updateOne =
         NodeUtilities.NodeFromJSON(
             new MapBuilder().put("foo", "foo-value").put("bar", "bar-value").build());
@@ -534,14 +533,14 @@ public class CompoundWriteTest {
   }
 
   @Test
-  public void removingOnlyAffectsRemovedPath() {
-    CompoundWrite compoundWrite = CompoundWrite.emptyWrite();
-    Map<String, Object> base =
+  public void removingOnlyAffectsRemovedPath() {    
+    final Map<String, Object> base =
         new MapBuilder().put("child-1", "value-1").put("child-2", "value-2").build();
     Map<ChildKey, Node> updates = new HashMap<>();
     updates.put(ChildKey.fromString("child-1"), NodeUtilities.NodeFromJSON("new-value-1"));
     updates.put(ChildKey.fromString("child-2"), EmptyNode.Empty());
     updates.put(ChildKey.fromString("child-3"), NodeUtilities.NodeFromJSON("value-3"));
+    CompoundWrite compoundWrite = CompoundWrite.emptyWrite();
     compoundWrite =
         compoundWrite.addWrites(Path.getEmptyPath(), CompoundWrite.fromChildMerge(updates));
     compoundWrite = compoundWrite.removeWrite(new Path("child-2"));
@@ -561,7 +560,7 @@ public class CompoundWriteTest {
     CompoundWrite compoundWrite = CompoundWrite.emptyWrite();
     Map<String, Object> base =
         new MapBuilder().put("child-1", "value-1").put("child-2", "value-2").build();
-    Node baseNode = NodeUtilities.NodeFromJSON(base);
+    final Node baseNode = NodeUtilities.NodeFromJSON(base);
     Node updateTwo = NodeUtilities.NodeFromJSON("baz-value");
     Node updateThree = NodeUtilities.NodeFromJSON("new-foo-value");
     compoundWrite = compoundWrite.addWrite(new Path("child-1/baz"), updateTwo);

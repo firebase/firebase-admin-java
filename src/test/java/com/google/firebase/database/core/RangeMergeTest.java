@@ -1,15 +1,15 @@
 package com.google.firebase.database.core;
 
+import static com.google.firebase.database.TestHelpers.fromSingleQuotedString;
+import static com.google.firebase.database.TestHelpers.path;
+import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
+import static org.junit.Assert.assertEquals;
+
 import com.google.firebase.database.snapshot.EmptyNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.RangeMerge;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import static com.google.firebase.database.TestHelpers.fromSingleQuotedString;
-import static com.google.firebase.database.TestHelpers.path;
-import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
-import static org.junit.Assert.assertEquals;
 
 public class RangeMergeTest {
 

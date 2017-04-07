@@ -1,14 +1,13 @@
 package com.google.firebase.database.snapshot;
 
-import com.google.firebase.database.MapBuilder;
-import com.google.firebase.database.core.Path;
-import org.junit.Test;
-
-import java.util.Map;
-
 import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import com.google.firebase.database.MapBuilder;
+import com.google.firebase.database.core.Path;
+import java.util.Map;
+import org.junit.Test;
 
 public class NodeTest {
 

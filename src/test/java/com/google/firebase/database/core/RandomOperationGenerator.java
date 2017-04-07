@@ -27,7 +27,6 @@ import com.google.firebase.database.snapshot.PathIndex;
 import com.google.firebase.database.snapshot.PriorityIndex;
 import com.google.firebase.database.snapshot.PriorityUtilities;
 import com.google.firebase.database.snapshot.StringNode;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -95,57 +94,50 @@ public class RandomOperationGenerator {
   private static Operation userOperationToServerOperation(Operation operation) {
     assert operation.getSource().isFromUser();
     switch (operation.getType()) {
-      case Overwrite:
-        {
-          Overwrite overwrite = (Overwrite) operation;
-          return new Overwrite(
-              OperationSource.SERVER, overwrite.getPath(), overwrite.getSnapshot());
-        }
-      case Merge:
-        {
-          Merge merge = (Merge) operation;
-          return new Merge(OperationSource.SERVER, merge.getPath(), merge.getChildren());
-        }
-      default:
-        {
-          throw new IllegalArgumentException(
-              "Can't convert operation of type " + operation.getType() + " to node");
-        }
+      case Overwrite: {
+        Overwrite overwrite = (Overwrite) operation;
+        return new Overwrite(
+            OperationSource.SERVER, overwrite.getPath(), overwrite.getSnapshot());
+      }
+      case Merge: {
+        Merge merge = (Merge) operation;
+        return new Merge(OperationSource.SERVER, merge.getPath(), merge.getChildren());
+      }
+      default: {
+        throw new IllegalArgumentException(
+            "Can't convert operation of type " + operation.getType() + " to node");
+      }
     }
   }
 
   private static Node applyOperation(Operation operation, Node node) {
     switch (operation.getType()) {
-      case Overwrite:
-        {
-          Overwrite overwrite = (Overwrite) operation;
-          Path path = overwrite.getPath();
-          if (!path.isEmpty()
-              && path.getBack().isPriorityChildName()
-              && node.getChild(path.getParent()).isEmpty()) {
-            // Don't update priorities on empty nodes
-            return node;
-          } else {
-            return node.updateChild(overwrite.getPath(), overwrite.getSnapshot());
-          }
-        }
-      case Merge:
-        {
-          Merge merge = (Merge) operation;
-          Path path = merge.getPath();
-          Node child = node.getChild(path);
-          return node.updateChild(path, merge.getChildren().apply(child));
-        }
-      case ListenComplete:
-        {
-          // No-op
+      case Overwrite: {
+        Overwrite overwrite = (Overwrite) operation;
+        Path path = overwrite.getPath();
+        if (!path.isEmpty()
+            && path.getBack().isPriorityChildName()
+            && node.getChild(path.getParent()).isEmpty()) {
+          // Don't update priorities on empty nodes
           return node;
+        } else {
+          return node.updateChild(overwrite.getPath(), overwrite.getSnapshot());
         }
-      default:
-        {
-          throw new IllegalArgumentException(
-              "Can't apply operation of type " + operation.getType() + " to node");
-        }
+      }
+      case Merge: {
+        Merge merge = (Merge) operation;
+        Path path = merge.getPath();
+        Node child = node.getChild(path);
+        return node.updateChild(path, merge.getChildren().apply(child));
+      }
+      case ListenComplete: {
+        // No-op
+        return node;
+      }
+      default: {
+        throw new IllegalArgumentException(
+            "Can't apply operation of type " + operation.getType() + " to node");
+      }
     }
   }
 
@@ -427,7 +419,7 @@ public class RandomOperationGenerator {
       double type = random.nextDouble();
       boolean hasEnd = random.nextBoolean();
       boolean hasStart = random.nextBoolean();
-      boolean hasLimit = random.nextBoolean();
+      final boolean hasLimit = random.nextBoolean();
       QueryParams params = QueryParams.DEFAULT_PARAMS;
       Node start;
       Node end;

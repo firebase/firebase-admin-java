@@ -1,7 +1,9 @@
 package com.google.firebase.database;
 
-// Pulled from https://code.google.com/p/deep-equals/source/browse/deep-equals/java/com
-// /cedarsoftware/util/DeepEquals.java?r=5
+//Pulled from https://code.google.com/p/deep-equals/source/browse/deep-equals/java/com
+///cedarsoftware/util/DeepEquals.java?r=5
+
+import static org.junit.Assert.fail;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -17,8 +19,6 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static org.junit.Assert.fail;
 
 /**
  * Deeply compare two (2) objects. This method will call any overridden equals() methods if they
@@ -41,16 +41,6 @@ public class DeepEquals {
   public static boolean deepEquals(Object a, Object b) {
     Set visited = new HashSet<>();
     return deepEquals(a, b, visited);
-  }
-
-  public static void assertEquals(Object a, Object b) {
-    if (!deepEquals(a, b)) {
-      fail("Values different.\nExpected: " + a + "\nActual: " + b);
-    }
-  }
-
-  private static boolean weakTypeMatch(Object a, Object b) {
-    return (a instanceof Map && b instanceof Map) || (a instanceof List && b instanceof List);
   }
 
   private static boolean deepEquals(Object a, Object b, Set visited) {
@@ -206,6 +196,16 @@ public class DeepEquals {
     }
 
     return true;
+  }
+  
+  public static void assertEquals(Object a, Object b) {
+    if (!deepEquals(a, b)) {
+      fail("Values different.\nExpected: " + a + "\nActual: " + b);
+    }
+  }
+
+  private static boolean weakTypeMatch(Object a, Object b) {
+    return (a instanceof Map && b instanceof Map) || (a instanceof List && b instanceof List);
   }
 
   /**

@@ -1,11 +1,11 @@
 package com.google.firebase.database.core.utilities;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.snapshot.ChildKey;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class TreeTest {
 

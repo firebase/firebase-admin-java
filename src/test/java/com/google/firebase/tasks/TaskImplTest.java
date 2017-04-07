@@ -1,25 +1,28 @@
 package com.google.firebase.tasks;
 
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.tasks.testing.TestOnCompleteListener;
 import com.google.firebase.tasks.testing.TestOnFailureListener;
 import com.google.firebase.tasks.testing.TestOnSuccessListener;
+import java.rmi.RemoteException;
 import org.hamcrest.Matchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-
-import java.rmi.RemoteException;
-
-import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.*;
 
 public class TaskImplTest {
 
   private static final Exception EXCEPTION = new RemoteException();
   private static final Void NULL_RESULT = null;
   private static final String NON_NULL_RESULT = "Success";
-  @Rule public ExpectedException mExpectedException = ExpectedException.none();
+  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void testIsComplete_notComplete() {
@@ -114,8 +117,8 @@ public class TaskImplTest {
     TaskImpl<Void> task = new TaskImpl<>();
     task.setException(EXCEPTION);
 
-    mExpectedException.expect(RuntimeExecutionException.class);
-    mExpectedException.expectCause(Matchers.is(EXCEPTION));
+    expectedException.expect(RuntimeExecutionException.class);
+    expectedException.expectCause(Matchers.is(EXCEPTION));
 
     task.getResult();
   }
@@ -125,7 +128,7 @@ public class TaskImplTest {
     TaskImpl<Void> task = new TaskImpl<>();
     task.setException(EXCEPTION);
 
-    mExpectedException.expect(Matchers.is(EXCEPTION));
+    expectedException.expect(Matchers.is(EXCEPTION));
 
     task.getResult(RemoteException.class);
   }
@@ -136,8 +139,8 @@ public class TaskImplTest {
     Exception exception = new RuntimeException();
     task.setException(exception);
 
-    mExpectedException.expect(RuntimeExecutionException.class);
-    mExpectedException.expectCause(Matchers.is(exception));
+    expectedException.expect(RuntimeExecutionException.class);
+    expectedException.expectCause(Matchers.is(exception));
 
     task.getResult(RemoteException.class);
   }

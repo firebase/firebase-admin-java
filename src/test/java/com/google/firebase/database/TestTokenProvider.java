@@ -1,7 +1,6 @@
 package com.google.firebase.database;
 
 import com.google.firebase.database.core.AuthTokenProvider;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Future;

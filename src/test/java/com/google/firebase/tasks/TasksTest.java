@@ -1,9 +1,7 @@
 package com.google.firebase.tasks;
 
-import org.hamcrest.Matchers;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.rmi.RemoteException;
 import java.util.concurrent.Callable;
@@ -13,9 +11,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import org.hamcrest.Matchers;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class TasksTest {
 
@@ -23,8 +22,8 @@ public class TasksTest {
   private static final RemoteException EXCEPTION = new RemoteException();
   private static final int SCHEDULE_DELAY_MS = 50;
   private static final int TIMEOUT_MS = 200;
-  private final ScheduledExecutorService mExecutor = Executors.newSingleThreadScheduledExecutor();
-  @Rule public ExpectedException mExpectedException = ExpectedException.none();
+  private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void testForResult() throws Exception {
@@ -126,8 +125,8 @@ public class TasksTest {
 
   @Test
   public void testAwait_exception() throws Exception {
-    mExpectedException.expect(ExecutionException.class);
-    mExpectedException.expectCause(Matchers.is(EXCEPTION));
+    expectedException.expect(ExecutionException.class);
+    expectedException.expectCause(Matchers.is(EXCEPTION));
 
     TaskCompletionSource<Void> completionSource = new TaskCompletionSource<>();
     scheduleException(completionSource);
@@ -137,8 +136,8 @@ public class TasksTest {
 
   @Test
   public void testAwait_noTimeoutException() throws Exception {
-    mExpectedException.expect(ExecutionException.class);
-    mExpectedException.expectCause(Matchers.is(EXCEPTION));
+    expectedException.expect(ExecutionException.class);
+    expectedException.expectCause(Matchers.is(EXCEPTION));
 
     TaskCompletionSource<Void> completionSource = new TaskCompletionSource<>();
     scheduleException(completionSource);
@@ -148,8 +147,8 @@ public class TasksTest {
 
   @Test
   public void testAwait_alreadyFailed() throws Exception {
-    mExpectedException.expect(ExecutionException.class);
-    mExpectedException.expectCause(Matchers.is(EXCEPTION));
+    expectedException.expect(ExecutionException.class);
+    expectedException.expectCause(Matchers.is(EXCEPTION));
 
     Task<Object> task = Tasks.forException(EXCEPTION);
     Tasks.await(task, TIMEOUT_MS, TimeUnit.MILLISECONDS);
@@ -157,8 +156,8 @@ public class TasksTest {
 
   @Test
   public void testAwait_noTimeoutAlreadyFailed() throws Exception {
-    mExpectedException.expect(ExecutionException.class);
-    mExpectedException.expectCause(Matchers.is(EXCEPTION));
+    expectedException.expect(ExecutionException.class);
+    expectedException.expectCause(Matchers.is(EXCEPTION));
 
     Task<Object> task = Tasks.forException(EXCEPTION);
     Tasks.await(task);
@@ -214,8 +213,8 @@ public class TasksTest {
 
   @Test
   public void testWhenAll_completedFailure() throws Exception {
-    mExpectedException.expect(ExecutionException.class);
-    mExpectedException.expectCause(Matchers.any(ExecutionException.class));
+    expectedException.expect(ExecutionException.class);
+    expectedException.expectCause(Matchers.any(ExecutionException.class));
 
     Task<Object> task1 = Tasks.forResult(RESULT);
     Task<Object> task2 = Tasks.forException(EXCEPTION);
@@ -246,7 +245,7 @@ public class TasksTest {
   private void scheduleResult(final TaskCompletionSource<Object> completionSource) {
     @SuppressWarnings("unused")
     Future<?> possiblyIgnoredError =
-        mExecutor.schedule(
+        executor.schedule(
             new Runnable() {
               @Override
               public void run() {
@@ -260,7 +259,7 @@ public class TasksTest {
   private void scheduleException(final TaskCompletionSource<?> completionSource) {
     @SuppressWarnings("unused")
     Future<?> possiblyIgnoredError =
-        mExecutor.schedule(
+        executor.schedule(
             new Runnable() {
               @Override
               public void run() {
@@ -275,7 +274,7 @@ public class TasksTest {
     final Thread testThread = Thread.currentThread();
     @SuppressWarnings("unused")
     Future<?> possiblyIgnoredError =
-        mExecutor.schedule(
+        executor.schedule(
             new Runnable() {
               @Override
               public void run() {

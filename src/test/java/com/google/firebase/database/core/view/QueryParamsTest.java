@@ -1,13 +1,12 @@
 package com.google.firebase.database.core.view;
 
-import com.google.firebase.database.snapshot.EmptyNode;
-import org.junit.Test;
-
-import java.util.Map;
-
 import static com.google.firebase.database.TestHelpers.ck;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import com.google.firebase.database.snapshot.EmptyNode;
+import java.util.Map;
+import org.junit.Test;
 
 public class QueryParamsTest {
 

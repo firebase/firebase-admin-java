@@ -3,7 +3,6 @@ package com.google.firebase.testing;
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.util.SecurityUtils;
 import com.google.api.client.util.StringUtils;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;

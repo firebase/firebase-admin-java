@@ -6,7 +6,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.TestConstants;
 import com.google.firebase.database.TestFailure;
 import com.google.firebase.database.TestHelpers;
-
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;

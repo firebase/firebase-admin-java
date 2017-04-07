@@ -1,13 +1,12 @@
 package com.google.firebase.database;
 
-import org.junit.Assert;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import org.junit.Assert;
 
 public class PerformanceBenchmarks {
 

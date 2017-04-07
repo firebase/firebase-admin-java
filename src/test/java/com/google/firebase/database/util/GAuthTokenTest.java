@@ -1,11 +1,12 @@
 package com.google.firebase.database.util;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import com.google.firebase.database.MapBuilder;
-import org.junit.Test;
-
 import java.util.Map;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class GAuthTokenTest {
 

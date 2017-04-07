@@ -1,5 +1,9 @@
 package com.google.firebase.database;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseCredentials;
@@ -14,18 +18,6 @@ import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 import com.google.firebase.testing.ServiceAccount;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
@@ -48,10 +40,18 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.type.TypeReference;
 
-import static org.junit.Assert.*;
-
-/** User: greg Date: 5/23/13 Time: 5:32 PM */
 public class TestHelpers {
 
   private static List<DatabaseConfig> contexts = new ArrayList<>();
@@ -92,14 +92,6 @@ public class TestHelpers {
     return getRandomNode(1).get(0);
   }
 
-  public static void goOffline(DatabaseConfig cfg) {
-    DatabaseReference.goOffline(cfg);
-  }
-
-  public static void goOnline(DatabaseConfig cfg) {
-    DatabaseReference.goOnline(cfg);
-  }
-
   public static List<DatabaseReference> getRandomNode(int count) throws DatabaseException {
     ensureContexts(count);
 
@@ -115,6 +107,14 @@ public class TestHelpers {
     return results;
   }
 
+  public static void goOffline(DatabaseConfig cfg) {
+    DatabaseReference.goOffline(cfg);
+  }
+
+  public static void goOnline(DatabaseConfig cfg) {
+    DatabaseReference.goOnline(cfg);
+  }
+
   public static DatabaseConfig newFrozenTestConfig() {
     DatabaseConfig cfg = newTestConfig();
     CoreTestHelpers.freezeContext(cfg);
@@ -125,7 +125,7 @@ public class TestHelpers {
     TestHelpers.ensureAppInitialized();
     return newTestConfig(FirebaseApp.getInstance());
   }
-  
+
   public static DatabaseConfig newTestConfig(FirebaseApp app) {
     TestRunLoop runLoop = new TestRunLoop();
     DatabaseConfig config = new DatabaseConfig();
@@ -420,33 +420,27 @@ public class TestHelpers {
     int poolSize = 1;
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     ThreadPoolExecutor executor =
-        new ThreadPoolExecutor(
-            poolSize,
-            poolSize,
-            0,
-            TimeUnit.NANOSECONDS,
-            queue,
-            new ThreadFactory() {
+        new ThreadPoolExecutor(poolSize, poolSize, 0, TimeUnit.NANOSECONDS, queue,
+          new ThreadFactory() {
+            ThreadFactory wrappedFactory = Executors.defaultThreadFactory();
 
-              ThreadFactory wrappedFactory = Executors.defaultThreadFactory();
-
-              @Override
-              public Thread newThread(Runnable r) {
-                Thread thread = wrappedFactory.newThread(r);
-                thread.setName("FirebaseDatabaseTestsEventTarget");
-                // TODO: should we set an uncaught exception handler here? Probably want to let
-                // exceptions happen...
-                thread.setUncaughtExceptionHandler(
-                    new Thread.UncaughtExceptionHandler() {
-                      @Override
-                      public void uncaughtException(Thread t, Throwable e) {
-                        e.printStackTrace();
-                        caughtException.set(e);
-                      }
-                    });
-                return thread;
-              }
-            });
+            @Override
+            public Thread newThread(Runnable r) {
+              Thread thread = wrappedFactory.newThread(r);
+              thread.setName("FirebaseDatabaseTestsEventTarget");
+              // TODO: should we set an uncaught exception handler here? Probably want to let
+              // exceptions happen...
+              thread.setUncaughtExceptionHandler(
+                  new Thread.UncaughtExceptionHandler() {
+                    @Override
+                    public void uncaughtException(Thread t, Throwable e) {
+                      e.printStackTrace();
+                      caughtException.set(e);
+                    }
+                  });
+              return thread;
+            }
+          });
 
     @Override
     public void postEvent(Runnable r) {

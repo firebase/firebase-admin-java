@@ -1,5 +1,8 @@
 package com.google.firebase.database.core.persistence;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.annotations.NotNull;
@@ -23,17 +26,13 @@ import com.google.firebase.database.core.view.Event;
 import com.google.firebase.database.core.view.QueryParams;
 import com.google.firebase.database.core.view.QuerySpec;
 import com.google.firebase.database.snapshot.Node;
-import org.junit.Test;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
+import org.junit.Test;
 
 public class RandomPersistenceTest {
 
@@ -59,79 +58,70 @@ public class RandomPersistenceTest {
           tagMap.get(new QuerySpec(operation.getPath(), operation.getSource().getQueryParams()));
       assert tag != null;
       switch (operation.getType()) {
-        case ListenComplete:
-          {
-            syncTree.applyTaggedListenComplete(tag);
-            break;
-          }
-        case Overwrite:
-          {
-            Overwrite overwrite = (Overwrite) operation;
-            syncTree.applyTaggedQueryOverwrite(operation.getPath(), overwrite.getSnapshot(), tag);
-            break;
-          }
-        case Merge:
-          {
-            Merge merge = (Merge) operation;
-            syncTree.applyTaggedQueryMerge(
-                operation.getPath(), fromCompoundWrite(merge.getChildren()), tag);
-            break;
-          }
-        default:
-          {
-            throw new IllegalArgumentException("Can't have tagged operation: " + operation);
-          }
+        case ListenComplete: {
+          syncTree.applyTaggedListenComplete(tag);
+          break;
+        }
+        case Overwrite: {
+          Overwrite overwrite = (Overwrite) operation;
+          syncTree.applyTaggedQueryOverwrite(operation.getPath(), overwrite.getSnapshot(), tag);
+          break;
+        }
+        case Merge: {
+          Merge merge = (Merge) operation;
+          syncTree.applyTaggedQueryMerge(
+              operation.getPath(), fromCompoundWrite(merge.getChildren()), tag);
+          break;
+        }
+        default: {
+          throw new IllegalArgumentException("Can't have tagged operation: " + operation);
+        }
       }
     } else {
       switch (operation.getType()) {
-        case ListenComplete:
-          {
-            syncTree.applyListenComplete(operation.getPath());
-            break;
+        case ListenComplete: {
+          syncTree.applyListenComplete(operation.getPath());
+          break;
+        }
+        case Overwrite: {
+          Overwrite overwrite = (Overwrite) operation;
+          if (operation.getSource().isFromServer()) {
+            syncTree.applyServerOverwrite(operation.getPath(), overwrite.getSnapshot());
+          } else {
+            syncTree.applyUserOverwrite(
+                operation.getPath(),
+                overwrite.getSnapshot(),
+                overwrite.getSnapshot(),
+                currentWriteId++, /*visible=*/
+                true, /*persist=*/
+                true);
           }
-        case Overwrite:
-          {
-            Overwrite overwrite = (Overwrite) operation;
-            if (operation.getSource().isFromServer()) {
-              syncTree.applyServerOverwrite(operation.getPath(), overwrite.getSnapshot());
-            } else {
-              syncTree.applyUserOverwrite(
-                  operation.getPath(),
-                  overwrite.getSnapshot(),
-                  overwrite.getSnapshot(),
-                  currentWriteId++, /*visible=*/
-                  true, /*persist=*/
-                  true);
-            }
-            break;
+          break;
+        }
+        case Merge: {
+          Merge merge = (Merge) operation;
+          if (operation.getSource().isFromServer()) {
+            syncTree.applyServerMerge(
+                operation.getPath(), fromCompoundWrite(merge.getChildren()));
+          } else {
+            syncTree.applyUserMerge(
+                operation.getPath(),
+                merge.getChildren(),
+                merge.getChildren(),
+                currentWriteId++, /*persist=*/
+                true);
           }
-        case Merge:
-          {
-            Merge merge = (Merge) operation;
-            if (operation.getSource().isFromServer()) {
-              syncTree.applyServerMerge(
-                  operation.getPath(), fromCompoundWrite(merge.getChildren()));
-            } else {
-              syncTree.applyUserMerge(
-                  operation.getPath(),
-                  merge.getChildren(),
-                  merge.getChildren(),
-                  currentWriteId++, /*persist=*/
-                  true);
-            }
-            break;
-          }
-        case AckUserWrite:
-          {
-            AckUserWrite userWrite = (AckUserWrite) operation;
-            syncTree.ackUserWrite(
-                currentUnackedWriteId++, userWrite.isRevert(), /*persist=*/ true, new TestClock());
-            break;
-          }
-        default:
-          {
-            throw new IllegalArgumentException("Can't have tagged operation: " + operation);
-          }
+          break;
+        }
+        case AckUserWrite: {
+          AckUserWrite userWrite = (AckUserWrite) operation;
+          syncTree.ackUserWrite(
+              currentUnackedWriteId++, userWrite.isRevert(), /*persist=*/ true, new TestClock());
+          break;
+        }
+        default: {
+          throw new IllegalArgumentException("Can't have tagged operation: " + operation);
+        }
       }
     }
   }
@@ -157,27 +147,24 @@ public class RandomPersistenceTest {
           new DefaultPersistenceManager(cfg, storageEngine, CachePolicy.NONE);
       final HashMap<QuerySpec, Tag> tagMap = new HashMap<>();
       SyncTree syncTree =
-          new SyncTree(
-              cfg,
-              manager,
-              new SyncTree.ListenProvider() {
-                @Override
-                public void startListening(
-                    QuerySpec query,
-                    Tag tag,
-                    ListenHashProvider hash,
-                    SyncTree.CompletionListener onListenComplete) {
-                  generator.listen(query);
-                  if (tag != null) {
-                    tagMap.put(query, tag);
-                  }
+          new SyncTree(cfg, manager, new SyncTree.ListenProvider() {
+              @Override
+              public void startListening(
+                  QuerySpec query,
+                  Tag tag,
+                  ListenHashProvider hash,
+                  SyncTree.CompletionListener onListenComplete) {
+                generator.listen(query);
+                if (tag != null) {
+                  tagMap.put(query, tag);
                 }
+              }
 
-                @Override
-                public void stopListening(QuerySpec query, Tag tag) {
-                  // TODO: unlisten
-                }
-              });
+              @Override
+              public void stopListening(QuerySpec query, Tag tag) {
+                // TODO: unlisten
+              }
+            });
 
       for (int j = 0; j < OPERATIONS_PER_TEST; j++) {
         if (activeListens.isEmpty() || random.nextDouble() < LISTEN_PROBABILITY) {

@@ -1,15 +1,17 @@
 package com.google.firebase.database.core.persistence;
 
+import static com.google.firebase.database.TestHelpers.ck;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.utilities.ImmutableTree;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-
-import static com.google.firebase.database.TestHelpers.ck;
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class PruneForestTest {
 

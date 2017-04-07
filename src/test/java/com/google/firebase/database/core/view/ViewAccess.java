@@ -1,7 +1,6 @@
 package com.google.firebase.database.core.view;
 
 import com.google.firebase.database.core.EventRegistration;
-
 import java.util.List;
 
 public class ViewAccess {

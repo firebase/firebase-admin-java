@@ -1,5 +1,7 @@
 package com.google.firebase.internal;
 
+import static org.junit.Assert.assertTrue;
+
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -8,8 +10,6 @@ import com.google.firebase.testing.FirebaseAppRule;
 import com.google.firebase.testing.ServiceAccount;
 import org.junit.Rule;
 import org.junit.Test;
-
-import static org.junit.Assert.assertTrue;
 
 public class FirebaseAppStoreTest {
 
@@ -21,7 +21,7 @@ public class FirebaseAppStoreTest {
           .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
           .build();
 
-  @Rule public FirebaseAppRule mFirebaseAppRule = new FirebaseAppRule();
+  @Rule public FirebaseAppRule firebaseAppRule = new FirebaseAppRule();
 
   // TODO(arondeak): reenable persistence. See b/28158809.
   //    @Test

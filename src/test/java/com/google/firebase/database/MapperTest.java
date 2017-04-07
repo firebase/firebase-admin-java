@@ -1,8 +1,11 @@
 package com.google.firebase.database;
 
-import com.google.firebase.database.utilities.encoding.CustomClassMapper;
-import org.junit.Test;
+import static com.google.firebase.database.TestHelpers.fromSingleQuotedString;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
+import com.google.firebase.database.utilities.encoding.CustomClassMapper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,9 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static com.google.firebase.database.TestHelpers.fromSingleQuotedString;
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class MapperTest {
 
@@ -301,7 +302,7 @@ public class MapperTest {
   }
 
   @Test
-  public void XMLAndURLBean() {
+  public void testXmlAndUrlBean() {
     XMLAndURLBean bean =
         deserialize("{'xmlandURL1': 'foo', 'XMLAndURL2': 'bar'}", XMLAndURLBean.class);
     assertEquals("foo", bean.XMLAndURL1);
@@ -596,7 +597,7 @@ public class MapperTest {
   }
 
   @Test
-  public void serializeUPPERCASE() {
+  public void serializeUpperCase() {
     XMLAndURLBean bean = new XMLAndURLBean();
     bean.XMLAndURL1 = "foo";
     bean.XMLAndURL2 = "bar";
@@ -1287,6 +1288,7 @@ public class MapperTest {
     }
   }
 
+  // CSOFF: MemberName
   private static class XMLAndURLBean {
 
     public String XMLAndURL2;
@@ -1350,6 +1352,7 @@ public class MapperTest {
     }
   }
 
+  // CSOFF: AbbreviationAsWordInNameCheck
   private static class CaseSensitiveGetterBean1 {
 
     private String value;
@@ -1357,7 +1360,7 @@ public class MapperTest {
     public String getVALUE() {
       return this.value;
     }
-  }
+  }  
 
   private static class CaseSensitiveGetterBean2 {
 
@@ -1446,6 +1449,7 @@ public class MapperTest {
     }
   }
 
+  //CSOFF: MethodName
   private static class CaseSensitiveSetterBean5 {
 
     private String value;
@@ -1747,6 +1751,7 @@ public class MapperTest {
       return this.value;
     }
   }
+  //CSON: AbbreviationAsWordInNameCheck
 
   private static class GetterArgumentsBean {
 
@@ -1776,6 +1781,8 @@ public class MapperTest {
       return this.漢字;
     }
   }
+  //CSON: MethodName
+  //CSON: MemberName
 
   private static class PublicConstructorBean {
 

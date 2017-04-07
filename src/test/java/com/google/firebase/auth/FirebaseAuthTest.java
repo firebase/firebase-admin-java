@@ -1,5 +1,13 @@
 package com.google.firebase.auth;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.google.api.client.googleapis.testing.auth.oauth2.MockTokenServerTransport;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.gson.GsonFactory;
@@ -11,16 +19,6 @@ import com.google.firebase.auth.internal.FirebaseCustomAuthToken;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -33,9 +31,15 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.*;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class FirebaseAuthTest {

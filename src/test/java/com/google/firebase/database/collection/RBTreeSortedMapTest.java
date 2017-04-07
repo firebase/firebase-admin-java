@@ -1,9 +1,14 @@
 package com.google.firebase.database.collection;
 
-import com.google.firebase.database.utilities.Utilities;
-import org.junit.Assert;
-import org.junit.Test;
+import static net.java.quickcheck.generator.CombinedGeneratorsIterables.someMaps;
+import static net.java.quickcheck.generator.PrimitiveGenerators.booleans;
+import static net.java.quickcheck.generator.PrimitiveGenerators.fixedValues;
+import static net.java.quickcheck.generator.PrimitiveGenerators.integers;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
+import com.google.firebase.database.utilities.Utilities;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -11,10 +16,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import static junit.framework.Assert.*;
-import static net.java.quickcheck.generator.CombinedGeneratorsIterables.someMaps;
-import static net.java.quickcheck.generator.PrimitiveGenerators.*;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class RBTreeSortedMapTest {
 
@@ -250,18 +253,20 @@ public class RBTreeSortedMapTest {
 
   @Test
   public void equalsIsCorrect() {
-    ImmutableSortedMap<Integer, Integer> map, copy, arraycopy, copyWithDifferentComparator;
+    ImmutableSortedMap<Integer, Integer> map;
+    ImmutableSortedMap<Integer, Integer> copy;
+    ImmutableSortedMap<Integer, Integer> arraycopy;
+    ImmutableSortedMap<Integer, Integer> copyWithDifferentComparator;
     map = new RBTreeSortedMap<>(IntComparator);
     copy = new RBTreeSortedMap<>(IntComparator);
     arraycopy = new ArraySortedMap<>(IntComparator);
     copyWithDifferentComparator =
-        new ArraySortedMap<>(
-            new Comparator<Integer>() {
-              @Override
-              public int compare(Integer o1, Integer o2) {
-                return Utilities.compareInts(o1, o2);
-              }
-            });
+        new ArraySortedMap<>(new Comparator<Integer>() {
+            @Override
+            public int compare(Integer o1, Integer o2) {
+              return Utilities.compareInts(o1, o2);
+            }
+          });
 
     int size = ArraySortedMap.Builder.ARRAY_TO_RB_TREE_SIZE_THRESHOLD - 1;
     Map<Integer, Integer> any =

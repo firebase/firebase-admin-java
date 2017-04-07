@@ -20,11 +20,6 @@ import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -34,6 +29,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class SyncPointTest {
 
@@ -435,7 +434,7 @@ public class SyncPointTest {
   }
 
   @Test
-  public void aQueryCanGetACompleteCacheThenAMerge() {
+  public void testQueryCanGetCompleteCacheThenMerge() {
     runOne("A query can get a complete cache then a merge");
   }
 
@@ -870,17 +869,17 @@ public class SyncPointTest {
   }
 
   @Test
-  public void aDeleteInAMergeDoesntPushOutNodes() {
+  public void deleteInAMergeDoesntPushOutNodes() {
     runOne("A delete in a merge doesn't push out nodes");
   }
 
   @Test
-  public void aTaggedQueryFiresEventsEventually() {
+  public void taggedQueryFiresEventsEventually() {
     runOne("A tagged query fires events eventually");
   }
 
   @Test
-  public void aServerUpdateThatLeavesUserSetsUnchangedIsNotIgnored() {
+  public void serverUpdateThatLeavesUserSetsUnchangedIsNotIgnored() {
     runOne("A server update that leaves user sets unchanged is not ignored");
   }
 

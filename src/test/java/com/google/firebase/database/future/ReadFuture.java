@@ -9,7 +9,6 @@ import com.google.firebase.database.TestFailure;
 import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.core.view.Event;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;

@@ -1,5 +1,7 @@
 package com.google.firebase.testing;
 
+import static com.google.firebase.internal.Preconditions.checkNotNull;
+
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.common.io.CharStreams;
 import java.io.IOException;
@@ -12,8 +14,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.google.firebase.internal.Preconditions.checkNotNull;
 
 /** Test Utils for use by all tests. */
 public class TestUtils {

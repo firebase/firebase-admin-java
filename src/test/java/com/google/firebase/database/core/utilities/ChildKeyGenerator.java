@@ -19,6 +19,7 @@ public class ChildKeyGenerator implements Generator<ChildKey> {
   private final DoubleGenerator priority;
   private final boolean includePriority;
 
+  // CSOFF: AvoidEscapedUnicodeCharactersCheck
   public ChildKeyGenerator(int maxSize, boolean includePriority) {
     this.latinCharacters = new CharacterGenerator('\u0020', '\u007e');
     this.unicodeCharacters = new CharacterGenerator('\u0000', '\uffff');
@@ -53,6 +54,7 @@ public class ChildKeyGenerator implements Generator<ChildKey> {
         return true;
     }
   }
+  //CSON: AvoidEscapedUnicodeCharactersCheck
 
   @Override
   public ChildKey next() {
@@ -69,7 +71,8 @@ public class ChildKeyGenerator implements Generator<ChildKey> {
         do {
           boolean unicode = this.characterChooser.nextInt() == 0;
           next = unicode ? this.unicodeCharacters.nextChar() : this.latinCharacters.nextChar();
-        } while (!isValidChildKeyCharacter(next));
+        } 
+        while (!isValidChildKeyCharacter(next));
         builder.append(next);
       }
 

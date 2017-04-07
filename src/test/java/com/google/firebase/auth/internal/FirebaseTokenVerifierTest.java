@@ -1,5 +1,8 @@
 package com.google.firebase.auth.internal;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+
 import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.json.JsonFactory;
@@ -15,12 +18,6 @@ import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.TestOnlyImplFirebaseAuthTrampolines;
 import com.google.firebase.internal.Base64;
 import com.google.firebase.testing.ServiceAccount;
-import org.hamcrest.collection.IsIterableContainingInOrder;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -29,11 +26,15 @@ import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
+import org.hamcrest.collection.IsIterableContainingInOrder;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-
-/** Unit tests for {@link FirebaseTokenVerifier}. */
+/** 
+ * Unit tests for {@link FirebaseTokenVerifier}.
+ */
 public class FirebaseTokenVerifierTest {
 
   private static final JsonFactory FACTORY = new GsonFactory();
@@ -45,8 +46,8 @@ public class FirebaseTokenVerifierTest {
   private static final String ALGORITHM = "RS256";
   private static final String LEGACY_CUSTOM_TOKEN =
       "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkIjp7"
-          + "InVpZCI6IjEiLCJhYmMiOiIwMTIzNDU2Nzg5fiFAIyQlXiYqKClfKy09YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4e"
-          + "XpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWiwuLzsnW11cXDw"
+          + "InVpZCI6IjEiLCJhYmMiOiIwMTIzNDU2Nzg5fiFAIyQlXiYqKClfKy09YWJjZGVmZ2hpamtsbW5vcHF"
+          + "yc3R1dnd4eXpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWiwuLzsnW11cXDw"
           + "-P1wie318In0sInYiOjAsImlhdCI6MTQ4MDk4Mj"
           + "U2NH0.ZWEpoHgIPCAz8Q-cNFBS8jiqClTJ3j27yuRkQo-QxyI";
   @Rule public ExpectedException thrown = ExpectedException.none();

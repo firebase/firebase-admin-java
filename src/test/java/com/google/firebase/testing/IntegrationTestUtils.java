@@ -17,22 +17,24 @@ import java.util.List;
 import org.json.JSONObject;
 
 public class IntegrationTestUtils {
-  
+
   public static final long ASYNC_WAIT_TIME_MS = 2000;
-  
+
   private static JSONObject IT_SERVICE_ACCOUNT;
-  
+
   public static String getDatabaseUrl() {
     String url = System.getProperty("firebase.it.url");
-    return Preconditions.checkNotEmpty(url, "Database URL not set. Set the firebase.it.url "
-        + "system property and try again.");
+    return Preconditions.checkNotEmpty(
+        url, "Database URL not set. Set the firebase.it.url " + "system property and try again.");
   }
-  
-  private synchronized static JSONObject ensureServiceAccount() {
+
+  private static synchronized JSONObject ensureServiceAccount() {
     if (IT_SERVICE_ACCOUNT == null) {
       String certificatePath = System.getProperty("firebase.it.certificate");
-      Preconditions.checkNotEmpty(certificatePath, "Service account certificate path not set. Set the "
-          + "file.it.certificate system property and try again.");
+      Preconditions.checkNotEmpty(
+          certificatePath,
+          "Service account certificate path not set. Set the "
+              + "file.it.certificate system property and try again.");
       try (InputStreamReader reader = new InputStreamReader(new FileInputStream(certificatePath))) {
         IT_SERVICE_ACCOUNT = new JSONObject(CharStreams.toString(reader));
       } catch (IOException e) {
@@ -41,19 +43,19 @@ public class IntegrationTestUtils {
     }
     return IT_SERVICE_ACCOUNT;
   }
-  
+
   public static InputStream getServiceAccountCertificate() {
     return new ByteArrayInputStream(ensureServiceAccount().toString().getBytes());
   }
-  
+
   public static String getProjectId() {
     return ensureServiceAccount().get("project_id").toString();
   }
-  
+
   public static String getProjectNumber() {
     return ensureServiceAccount().get("client_id").toString();
   }
-  
+
   public static FirebaseApp initDefaultApp() {
     FirebaseOptions options =
         new FirebaseOptions.Builder()
@@ -62,11 +64,11 @@ public class IntegrationTestUtils {
             .build();
     return FirebaseApp.initializeApp(options);
   }
-  
+
   public static DatabaseReference getRandomNode(FirebaseApp app) {
     return getRandomNodes(app, 1).get(0);
   }
-  
+
   public static List<DatabaseReference> getRandomNodes(FirebaseApp app, int count) {
     FirebaseDatabase database = FirebaseDatabase.getInstance(app);
     ImmutableList.Builder<DatabaseReference> builder = ImmutableList.builder();
@@ -75,5 +77,4 @@ public class IntegrationTestUtils {
     }
     return builder.build();
   }
-  
 }

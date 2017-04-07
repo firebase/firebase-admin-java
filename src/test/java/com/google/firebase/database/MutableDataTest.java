@@ -1,18 +1,22 @@
 package com.google.firebase.database;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.Assert.*;
+import org.junit.Test;
 
 public class MutableDataTest {
 

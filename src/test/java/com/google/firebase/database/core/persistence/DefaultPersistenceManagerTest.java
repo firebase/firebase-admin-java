@@ -1,5 +1,15 @@
 package com.google.firebase.database.core.persistence;
 
+import static com.google.firebase.database.TestHelpers.childKeySet;
+import static com.google.firebase.database.TestHelpers.defaultQueryAt;
+import static com.google.firebase.database.TestHelpers.fromSingleQuotedString;
+import static com.google.firebase.database.TestHelpers.newFrozenTestConfig;
+import static com.google.firebase.database.TestHelpers.path;
+import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import com.google.firebase.database.core.CompoundWrite;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.view.CacheNode;
@@ -10,10 +20,6 @@ import com.google.firebase.database.snapshot.Index;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.PathIndex;
 import org.junit.Test;
-
-import static com.google.firebase.database.TestHelpers.*;
-import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
-import static org.junit.Assert.*;
 
 public class DefaultPersistenceManagerTest {
 

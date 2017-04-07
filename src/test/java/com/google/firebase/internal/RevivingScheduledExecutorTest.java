@@ -1,8 +1,5 @@
 package com.google.firebase.internal;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.HashSet;
 import java.util.Set;
@@ -16,6 +13,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.Assert;
+import org.junit.Test;
 
 public class RevivingScheduledExecutorTest {
 
@@ -88,17 +87,16 @@ public class RevivingScheduledExecutorTest {
     final AtomicInteger threads = new AtomicInteger(0);
 
     RevivingScheduledExecutor executor =
-        new RevivingScheduledExecutor(
-            new ThreadFactory() {
-              @Override
-              public Thread newThread(Runnable r) {
-                threads.incrementAndGet();
-                return THREAD_FACTORY.newThread(r);
-              }
-            },
-            "testAppEngineDelayedRunnable",
-            0,
-            100);
+        new RevivingScheduledExecutor(new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+              threads.incrementAndGet();
+              return THREAD_FACTORY.newThread(r);
+            }
+          },
+          "testAppEngineDelayedRunnable",
+          0,
+          100);
 
     @SuppressWarnings("unused")
     Future<?> possiblyIgnoredError =
@@ -127,17 +125,16 @@ public class RevivingScheduledExecutorTest {
     final AtomicInteger threads = new AtomicInteger(0);
 
     RevivingScheduledExecutor executor =
-        new RevivingScheduledExecutor(
-            new ThreadFactory() {
-              @Override
-              public Thread newThread(Runnable r) {
-                threads.incrementAndGet();
-                return THREAD_FACTORY.newThread(r);
-              }
-            },
-            "testAppEngineDelayedCallable",
-            0,
-            100);
+        new RevivingScheduledExecutor(new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+              threads.incrementAndGet();
+              return THREAD_FACTORY.newThread(r);
+            }
+          },
+          "testAppEngineDelayedCallable",
+          0,
+          100);
 
     ScheduledFuture<Boolean> future =
         executor.schedule(
@@ -165,27 +162,26 @@ public class RevivingScheduledExecutorTest {
     final AtomicInteger threads = new AtomicInteger(0);
 
     RevivingScheduledExecutor executor =
-        new RevivingScheduledExecutor(
-            new ThreadFactory() {
-              @Override
-              public Thread newThread(Runnable r) {
-                threads.incrementAndGet();
-                return THREAD_FACTORY.newThread(r);
-              }
-            },
-            "testAppEngineCleanup",
-            0,
-            100) {
-          @Override
-          protected void beforeRestart() {
-            beforeSemaphore.release();
-          }
+        new RevivingScheduledExecutor(new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+              threads.incrementAndGet();
+              return THREAD_FACTORY.newThread(r);
+            }
+          },
+          "testAppEngineCleanup",
+          0,
+          100) {
+        @Override
+        protected void beforeRestart() {
+          beforeSemaphore.release();
+        }
 
-          @Override
-          protected void afterRestart() {
-            afterSemaphore.release();
-          }
-        };
+        @Override
+        protected void afterRestart() {
+          afterSemaphore.release();
+        }
+      };
 
     @SuppressWarnings("unused")
     Future<?> possiblyIgnoredError =

@@ -1,7 +1,6 @@
 package com.google.firebase.database;
 
 import com.google.firebase.database.core.view.Event;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;

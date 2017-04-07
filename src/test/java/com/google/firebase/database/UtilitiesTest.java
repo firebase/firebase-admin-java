@@ -1,11 +1,11 @@
 package com.google.firebase.database;
 
+import static org.junit.Assert.assertEquals;
+
 import com.google.firebase.database.core.DatabaseConfig;
 import com.google.firebase.database.utilities.Utilities;
 import org.junit.Assert;
 import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class UtilitiesTest {
 
