@@ -123,13 +123,16 @@ public class TestHelpers {
 
   public static DatabaseConfig newTestConfig() {
     TestHelpers.ensureAppInitialized();
-
+    return newTestConfig(FirebaseApp.getInstance());
+  }
+  
+  public static DatabaseConfig newTestConfig(FirebaseApp app) {
     TestRunLoop runLoop = new TestRunLoop();
     DatabaseConfig config = new DatabaseConfig();
     config.setLogLevel(Logger.Level.DEBUG);
     config.setEventTarget(new TestEventTarget());
     config.setRunLoop(runLoop);
-    config.setFirebaseApp(FirebaseApp.getInstance());
+    config.setFirebaseApp(app);
     config.setAuthTokenProvider(new TestTokenProvider(runLoop.getExecutorService()));
     return config;
   }

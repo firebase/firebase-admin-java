@@ -11,8 +11,11 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.internal.GetTokenResult;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.tasks.Continuation;
 import com.google.firebase.tasks.OnCompleteListener;
 import com.google.firebase.tasks.Task;
+import com.google.firebase.tasks.Tasks;
+import com.google.firebase.testing.IntegrationTestUtils;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import org.apache.http.HttpEntity;
@@ -21,59 +24,96 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
 public class DatabaseServerAuthTestIT {
-
-  // You can swap in the production Firebase URL to test against production.
-  private static final String SERVER_SDK_DB_URL = "http://server-sdk-test.fblocal.com:9000";
-  //private static final String SERVER_SDK_DB_URL = "https://server-sdk-test-3ff90.firebaseio
-  // .com";
-
-  private static final String FBLOCAL_ADMIN_KEY = "1234";
+  
   private static FirebaseApp masterApp;
 
   @BeforeClass
-  public static void setup() {
-    createFirebaseApp();
-    if (SERVER_SDK_DB_URL.contains("fblocal")) {
-      createTestDatabase();
-    }
+  public static void setUpClass() {    
+    masterApp = IntegrationTestUtils.initDefaultApp();
     setDatabaseRules();
   }
-
-  private static void createFirebaseApp() {
+  
+  @AfterClass
+  public static void tearDownClass() {
+    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+  }
+  
+  @Test
+  public void testAuthWithInvalidCertificateCredential() throws InterruptedException {
     FirebaseOptions options =
         new FirebaseOptions.Builder()
-            .setDatabaseUrl(SERVER_SDK_DB_URL)
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .setDatabaseUrl(IntegrationTestUtils.getDatabaseUrl())
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.NONE.asStream()))
             .build();
-    masterApp = FirebaseApp.initializeApp(options, "DatabaseServerAuthTestIT");
+    FirebaseApp app = FirebaseApp.initializeApp(options, "DatabaseServerAuthTestNoRole");
+    FirebaseDatabase db = FirebaseDatabase.getInstance(app);
+    // TODO(klimt): Ideally, we would find a way to verify the correct log output.
+    assertWriteTimeout(db.getReference());
+  }
+  
+  @Test
+  public void testAuthWithValidCertificateCredential() throws InterruptedException {
+    FirebaseDatabase db = FirebaseDatabase.getInstance();
+    assertWriteSucceeds(db.getReference());
+    assertReadSucceeds(db.getReference());
+  }
+  
+  @Test
+  public void testDatabaseAuthVariablesAuthorization() throws InterruptedException {
+    Map<String, Object> authVariableOverrides = new HashMap<>();
+    authVariableOverrides.put("uid", "test");
+    authVariableOverrides.put("custom", "secret");
+    FirebaseOptions options =
+        new FirebaseOptions.Builder(masterApp.getOptions())
+            .setDatabaseAuthVariableOverride(authVariableOverrides)
+            .build();
+    FirebaseApp testUidApp = FirebaseApp.initializeApp(options, "testGetAppWithUid");
+
+    FirebaseDatabase masterDb = FirebaseDatabase.getInstance(masterApp);
+    FirebaseDatabase testAuthOverridesDb = FirebaseDatabase.getInstance(testUidApp);
+
+    assertWriteSucceeds(masterDb.getReference());
+
+    // "test" UID can only read/write to /test-uid-only and /test-custom-field-only locations.
+    assertWriteFails(testAuthOverridesDb.getReference());
+    assertWriteSucceeds(testAuthOverridesDb.getReference("test-uid-only"));
+    assertReadSucceeds(testAuthOverridesDb.getReference("test-uid-only"));
+    assertWriteSucceeds(testAuthOverridesDb.getReference("test-custom-field-only"));
+    assertReadSucceeds(testAuthOverridesDb.getReference("test-custom-field-only"));
   }
 
-  private static void createTestDatabase() {
-    // Make sure local server-sdk-test namespace exists mapped to the correct project_id and
-    // number.
-    String creationParams =
-        "{\n"
-            + "  \"project_id\": \""
-            + TestUtils.PROJECT_ID
-            + "\",\n"
-            + "  \"project_number\": \""
-            + TestUtils.PROJECT_NUMBER
-            + "\"\n"
-            + "}";
+  @Test
+  public void testDatabaseAuthVariablesNoAuthorization() throws InterruptedException {
+    FirebaseOptions options =
+        new FirebaseOptions.Builder(masterApp.getOptions())
+            .setDatabaseAuthVariableOverride(null)
+            .build();
+    FirebaseApp testUidApp =
+        FirebaseApp.initializeApp(options, "testServiceAccountDatabaseWithNoAuth");
 
-    doFbLocalAdminRestPut("/.nsadmin/.json", creationParams);
+    FirebaseDatabase masterDb = FirebaseDatabase.getInstance(masterApp);
+    FirebaseDatabase testAuthOverridesDb = FirebaseDatabase.getInstance(testUidApp);
+
+    assertWriteSucceeds(masterDb.getReference());
+
+    assertWriteFails(testAuthOverridesDb.getReference("test-uid-only"));
+    assertReadFails(testAuthOverridesDb.getReference("test-uid-only"));
+    assertWriteFails(testAuthOverridesDb.getReference("test-custom-field-only"));
+    assertReadFails(testAuthOverridesDb.getReference("test-custom-field-only"));
+    assertWriteSucceeds(testAuthOverridesDb.getReference("test-noauth-only"));    
   }
 
   private static void setDatabaseRules() {
@@ -84,9 +124,11 @@ public class DatabaseServerAuthTestIT {
         "{\n"
             + "  \"rules\": {\n"
             + "    \"test-uid-only\": {\n"
+            + "      \".read\":  \"auth.uid == 'test'\",\n"
             + "      \".write\": \"auth.uid == 'test'\"\n"
             + "    },\n"
             + "    \"test-custom-field-only\": {\n"
+            + "      \".read\": \"auth.custom == 'secret'\",\n"
             + "      \".write\": \"auth.custom == 'secret'\"\n"
             + "    },\n"
             + "    \"test-noauth-only\": {\n"
@@ -139,10 +181,6 @@ public class DatabaseServerAuthTestIT {
     doRead(ref, /*shouldSucceed=*/ false, /*shouldTimeout=*/ false);
   }
 
-  private static void assertReadTimeout(DatabaseReference ref) throws InterruptedException {
-    doRead(ref, /*shouldSucceed=*/ false, /*shouldTimeout=*/ true);
-  }
-
   private static void doRead(
       DatabaseReference ref, final boolean shouldSucceed, final boolean shouldTimeout)
       throws InterruptedException {
@@ -170,24 +208,26 @@ public class DatabaseServerAuthTestIT {
     }
   }
 
-  private static void doFbLocalAdminRestPut(String endpoint, String data) {
-    doRestPut(SERVER_SDK_DB_URL + endpoint + "?key=" + FBLOCAL_ADMIN_KEY, data);
-  }
-
   private static void doServerAccountRestPut(final String endpoint, final String data) {
     // TODO(mikelehen): We should consider exposing getToken (or similar) publicly for the
-    // purpose
-    // of servers doing authenticated REST requests like this.
-    TestOnlyImplFirebaseTrampolines.getToken(masterApp, /*forceRefresh=*/ false)
-        .addOnCompleteListener(
-            new OnCompleteListener<GetTokenResult>() {
-              @Override
-              public void onComplete(@NonNull Task<GetTokenResult> task) {
-                assertNull("getToken failed.", task.getException());
-                String token = task.getResult().getToken();
-                doRestPut(SERVER_SDK_DB_URL + endpoint + "?access_token=" + token, data);
-              }
-            });
+    // purpose of servers doing authenticated REST requests like this.
+    FirebaseApp masterApp = FirebaseApp.getInstance();
+    Task<Void> task = TestOnlyImplFirebaseTrampolines.getToken(masterApp, false)
+        .continueWith(new Continuation<GetTokenResult, Void>(){
+          @Override
+          public Void then(Task<GetTokenResult> task) throws Exception {
+            assertNull("getToken failed.", task.getException());
+            String token = task.getResult().getToken();
+            doRestPut(IntegrationTestUtils.getDatabaseUrl() + endpoint 
+                + "?access_token=" + token, data);
+            return null;
+          }          
+        });
+    try {
+      Tasks.await(task);
+    } catch (ExecutionException | InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private static void doRestPut(String endpoint, String data) {
@@ -205,116 +245,6 @@ public class DatabaseServerAuthTestIT {
     assertTrue(
         "Rest put for " + endpoint + " failed: " + response.toString(),
         response.getStatusLine().getStatusCode() == 200);
-  }
+  }  
 
-  @Test
-  public void testServiceAccountWithNoRole() throws InterruptedException {
-    FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
-    assertWriteSucceeds(db.getReference());
-
-    FirebaseOptions options =
-        new FirebaseOptions.Builder()
-            .setDatabaseUrl(SERVER_SDK_DB_URL)
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.NONE.asStream()))
-            .build();
-    FirebaseApp app = FirebaseApp.initializeApp(options, "DatabaseServerAuthTestNoRole");
-    db = FirebaseDatabase.getInstance(app);
-    // TODO(klimt): Ideally, we would find a way to verify the correct log output.
-    assertReadTimeout(db.getReference());
-    assertWriteTimeout(db.getReference());
-  }
-
-  @Test
-  public void testServiceAccountWithViewerRole() throws InterruptedException {
-    FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
-    assertWriteSucceeds(db.getReference());
-
-    FirebaseOptions options =
-        new FirebaseOptions.Builder()
-            .setDatabaseUrl(SERVER_SDK_DB_URL)
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.VIEWER.asStream()))
-            .build();
-    FirebaseApp app = FirebaseApp.initializeApp(options, "DatabaseServerAuthTestViewerRole");
-    db = FirebaseDatabase.getInstance(app);
-    assertReadSucceeds(db.getReference());
-    assertWriteFails(db.getReference());
-  }
-
-  @Test
-  public void testServiceAccountWithEditorRole() throws InterruptedException {
-    FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
-    assertWriteSucceeds(db.getReference());
-
-    FirebaseOptions options =
-        new FirebaseOptions.Builder()
-            .setDatabaseUrl(SERVER_SDK_DB_URL)
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
-            .build();
-    FirebaseApp app = FirebaseApp.initializeApp(options, "DatabaseServerAuthTestEditorRole");
-    db = FirebaseDatabase.getInstance(app);
-    assertReadSucceeds(db.getReference());
-    assertWriteSucceeds(db.getReference());
-  }
-
-  @Test
-  public void testServiceAccountWithOwnerRole() throws InterruptedException {
-    FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
-    assertWriteSucceeds(db.getReference());
-
-    FirebaseOptions options =
-        new FirebaseOptions.Builder()
-            .setDatabaseUrl(SERVER_SDK_DB_URL)
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.OWNER.asStream()))
-            .build();
-    FirebaseApp app = FirebaseApp.initializeApp(options, "DatabaseServerAuthTestOwnerRole");
-    db = FirebaseDatabase.getInstance(app);
-    assertReadSucceeds(db.getReference());
-    assertWriteSucceeds(db.getReference());
-  }
-
-  @Test
-  public void testServiceAccountDatabaseAuth() throws IOException, InterruptedException {
-    FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
-    assertWriteSucceeds(db.getReference());
-  }
-
-  @Test
-  public void testServiceAccountDatabaseAuthVariables() throws IOException, InterruptedException {
-    Map<String, Object> authVariableOverrides = new HashMap<>();
-    authVariableOverrides.put("uid", "test");
-    authVariableOverrides.put("custom", "secret");
-    FirebaseOptions options =
-        new FirebaseOptions.Builder(masterApp.getOptions())
-            .setDatabaseAuthVariableOverride(authVariableOverrides)
-            .build();
-    FirebaseApp testUidApp = FirebaseApp.initializeApp(options, "testGetAppWithUid");
-
-    FirebaseDatabase masterDb = FirebaseDatabase.getInstance(masterApp);
-    FirebaseDatabase testAuthOverridesDb = FirebaseDatabase.getInstance(testUidApp);
-
-    assertWriteSucceeds(masterDb.getReference());
-
-    // "test" UID can only write to /test-uid-only/ and /test-custom-field-only/ locations.
-    assertWriteFails(testAuthOverridesDb.getReference());
-    assertWriteSucceeds(testAuthOverridesDb.getReference("test-uid-only"));
-    assertWriteSucceeds(testAuthOverridesDb.getReference("test-custom-field-only"));
-  }
-
-  @Test
-  public void testServiceAccountDatabaseWithNoAuth() throws IOException, InterruptedException {
-    FirebaseOptions options =
-        new FirebaseOptions.Builder(masterApp.getOptions())
-            .setDatabaseAuthVariableOverride(null)
-            .build();
-    FirebaseApp testUidApp =
-        FirebaseApp.initializeApp(options, "testServiceAccountDatabaseWithNoAuth");
-
-    FirebaseDatabase masterDb = FirebaseDatabase.getInstance(masterApp);
-    FirebaseDatabase testAuthOverridesDb = FirebaseDatabase.getInstance(testUidApp);
-
-    assertWriteSucceeds(masterDb.getReference());
-
-    assertWriteFails(testAuthOverridesDb.getReference("test-uid-only"));
-    assertWriteSucceeds(testAuthOverridesDb.getReference("test-noauth-only"));
-  }
 }

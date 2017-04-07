@@ -1,9 +1,13 @@
 package com.google.firebase.database;
 
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
-import org.junit.Before;
+import com.google.firebase.testing.IntegrationTestUtils;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -12,10 +16,17 @@ import java.util.Iterator;
 import static org.junit.Assert.*;
 
 public class DataSnapshotTestIT {
+  
+  private static FirebaseApp masterApp;
 
-  @Before
-  public void setUp() {
-    TestHelpers.ensureAppInitialized();
+  @BeforeClass
+  public static void setUpClass() {    
+    masterApp = IntegrationTestUtils.initDefaultApp();
+  }
+  
+  @AfterClass
+  public static void tearDownClass() {
+    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
   private DataSnapshot snapFor(Object data, DatabaseReference ref) {
@@ -24,8 +35,8 @@ public class DataSnapshotTestIT {
   }
 
   @Test
-  public void basicIterationWorks() {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+  public void testBasicIteration() {
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
     DataSnapshot snap1 = snapFor(null, ref);
 
     assertFalse(snap1.hasChildren());
@@ -50,12 +61,11 @@ public class DataSnapshotTestIT {
   }
 
   @Test
-  @SuppressWarnings("rawtypes")
   public void existsWorks() {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
     DataSnapshot snap;
 
-    snap = snapFor(new HashMap(), ref);
+    snap = snapFor(new HashMap<>(), ref);
     assertFalse(snap.exists());
 
     snap = snapFor(new MapBuilder().put(".priority", 1).build(), ref);

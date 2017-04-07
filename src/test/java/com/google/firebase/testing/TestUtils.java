@@ -2,7 +2,6 @@ package com.google.firebase.testing;
 
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.common.io.CharStreams;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
