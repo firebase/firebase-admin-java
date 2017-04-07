@@ -51,7 +51,7 @@ public class TrackedQueryManagerTest {
       engine = e;
     }
     LogWrapper logWrapper =
-        new LogWrapper(new DefaultLogger(Logger.Level.DEBUG, null), "TrackedQueryManagerTest");
+        new LogWrapper(new DefaultLogger(Logger.Level.WARN, null), "TrackedQueryManagerTest");
     return new TrackedQueryManager(engine, logWrapper, clock);
   }
 

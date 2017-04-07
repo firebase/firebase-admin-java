@@ -131,9 +131,6 @@ public class RandomPersistenceTest {
     Boolean verbose = false; // set to true for debugging.
     for (int i = 0; i < NUM_TESTS; i++) {
       final RandomOperationGenerator generator = new RandomOperationGenerator();
-      System.out.println("Test " + i);
-      System.out.println("==========");
-      System.out.println("Running with seed " + generator.getSeed());
       Random random = new Random(generator.getSeed());
 
       Set<QuerySpec> activeListens = new HashSet<>();

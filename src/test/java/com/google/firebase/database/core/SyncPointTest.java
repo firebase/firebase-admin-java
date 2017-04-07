@@ -273,7 +273,7 @@ public class SyncPointTest {
   @SuppressWarnings("unchecked")
   private static void runTest(Map<String, Object> testSpec, String basePath) {
     DatabaseConfig config = TestHelpers.newTestConfig();
-    TestHelpers.setLogger(config, new DefaultLogger(Logger.Level.DEBUG, null));
+    TestHelpers.setLogger(config, new DefaultLogger(Logger.Level.WARN, null));
     LogWrapper logger = config.getLogger("SyncPointTest");
 
     logger.info("Running \"" + testSpec.get("name") + '"');
