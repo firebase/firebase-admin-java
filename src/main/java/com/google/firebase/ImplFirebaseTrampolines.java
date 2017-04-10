@@ -26,6 +26,10 @@ public final class ImplFirebaseTrampolines {
   public static String getPersistenceKey(@NonNull FirebaseApp app) {
     return app.getPersistenceKey();
   }
+  
+  public static String getPersistenceKey(String name, FirebaseOptions options) {
+    return FirebaseApp.getPersistenceKey(name, options);
+  }
 
   public static void addLifecycleEventListener(
       @NonNull FirebaseApp app, @NonNull FirebaseAppLifecycleListener listener) {
