@@ -51,7 +51,8 @@ public class RulesTestIT {
   private static final ObjectMapper mapper = new ObjectMapper();
   
   static {
-    testRules = new MapBuilder().put("read_only", MapBuilder.of(".read", true))
+    testRules = new MapBuilder()
+        .put("read_only", MapBuilder.of(".read", true))
         .put("write_only", MapBuilder.of(".write", true))
         .put("read_and_write",
             new MapBuilder().put(".write", true)
@@ -116,7 +117,7 @@ public class RulesTestIT {
   }
 
   @Test
-  public void writeOperationSetsErrorOnFailure() throws InterruptedException {
+  public void testWriteOperationSetsErrorOnFailure() throws InterruptedException {
     DatabaseReference ref = writer.child("read_only");
 
     final Semaphore semaphore = new Semaphore(0);
@@ -138,7 +139,7 @@ public class RulesTestIT {
   }
 
   @Test
-  public void failedListensDontDisruptOtherListens()
+  public void testFailedListensDoNotDisruptOtherListens()
       throws TestFailure, TimeoutException, InterruptedException {
     // Wait until we're connected
     ReadFuture.untilEquals(reader.getRoot().child(".info/connected"), true).timedGet();
@@ -191,7 +192,7 @@ public class RulesTestIT {
   }
 
   @Test
-  public void failedListensDontDisruptOtherListens2()
+  public void testFailedListensDoNotDisruptOtherListens2()
       throws TestFailure, TimeoutException, InterruptedException {
     // Wait until we're connected
     ReadFuture.untilEquals(reader.getRoot().child(".info/connected"), true).timedGet();
@@ -245,7 +246,7 @@ public class RulesTestIT {
   }
 
   @Test
-  public void listenRevocation()
+  public void testListenRevocation()
       throws TestFailure, ExecutionException, TimeoutException, InterruptedException {
     new WriteFuture(writer.child("revocable"),
         new MapBuilder().put("public", true).put("data", 1).build()).timedGet();
@@ -299,7 +300,7 @@ public class RulesTestIT {
   }
 
   @Test
-  public void failedSetsRolledBack()
+  public void testFailedSetsRolledBack()
       throws TestFailure, ExecutionException, TimeoutException, InterruptedException {
     DatabaseReference fredRef = reader.child("users/fred");
 
@@ -336,7 +337,7 @@ public class RulesTestIT {
   }
 
   @Test
-  public void failedUpdatesRolledBack()
+  public void testFailedUpdatesRolledBack()
       throws TestFailure, ExecutionException, TimeoutException, InterruptedException {
     DatabaseReference fredRef = reader.child("users/fred");
 
@@ -374,7 +375,7 @@ public class RulesTestIT {
   }
 
   @Test
-  public void stillAuthenticatedAfterReconnect()
+  public void testStillAuthenticatedAfterReconnect()
       throws InterruptedException, ExecutionException, TestFailure, TimeoutException {
     DatabaseConfig config = TestHelpers.getDatabaseConfig(masterApp);
     DatabaseReference root = FirebaseDatabase.getInstance(masterApp).getReference();
@@ -386,7 +387,7 @@ public class RulesTestIT {
   }
 
   @Test
-  public void connectionAuthenticatedImmediatelyAfterTokenChange() throws Exception {
+  public void testAuthenticatedImmediatelyAfterTokenChange() throws Exception {
     DatabaseConfig config = TestHelpers.getDatabaseConfig(masterApp);
     TestTokenProvider provider = new TestTokenProvider(TestHelpers.getExecutorService(config));
     config.setAuthTokenProvider(provider);
