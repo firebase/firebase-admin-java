@@ -417,6 +417,10 @@ public class TestHelpers {
     }
   }
 
+  public static void setHijackHash(DatabaseReference ref, boolean hijackHash) {
+    ref.setHijackHash(hijackHash);
+  }
+
   private static class TestEventTarget implements EventTarget {
 
     AtomicReference<Throwable> caughtException = new AtomicReference<>(null);

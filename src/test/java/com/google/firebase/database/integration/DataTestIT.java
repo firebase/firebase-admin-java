@@ -1162,7 +1162,8 @@ public class DataTestIT {
     final String fire = new String(Character.toChars(128293));
     final String base = new String(Character.toChars(26594));
 
-    List<String> goodKeys = ImmutableList.of(TestHelpers.repeatedString("k", maxPathLengthBytes - 1),
+    List<String> goodKeys = ImmutableList.of(
+        TestHelpers.repeatedString("k", maxPathLengthBytes - 1),
         TestHelpers.repeatedString(fire, maxPathLengthBytes / 4 - 1),
         TestHelpers.repeatedString(base, maxPathLengthBytes / 3 - 1),
         TestHelpers.repeatedString("key/", maxPathDepth - 1) + "key");
