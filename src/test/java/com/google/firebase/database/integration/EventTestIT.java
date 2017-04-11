@@ -1,11 +1,26 @@
-package com.google.firebase.database;
+package com.google.firebase.database.integration;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import com.google.common.collect.ImmutableMap;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.EventRecord;
+import com.google.firebase.database.TestFailure;
+import com.google.firebase.database.TestHelpers;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.core.ZombieVerifier;
 import com.google.firebase.database.core.view.Event;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
-import org.junit.After;
-import org.junit.Test;
+import com.google.firebase.testing.IntegrationTestUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,26 +31,36 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.Assert.*;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 public class EventTestIT {
 
-  @After
-  public void tearDown() {
-    TestHelpers.failOnFirstUncaughtException();
+  private static FirebaseApp masterApp;
+
+  @BeforeClass
+  public static void setUpClass() throws TestFailure, TimeoutException, InterruptedException {
+    masterApp = IntegrationTestUtils.initDefaultApp();
   }
+
+  @AfterClass
+  public static void tearDownClass() {
+    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+  }
+  
   // NOTE: skipping test on valid types.
 
   @Test
-  public void writeLeafNodeExpectValue() throws DatabaseException, InterruptedException {
-    List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
+  public void testWriteLeafNodeExpectValue() throws InterruptedException {
+    List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 2);
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
 
-    EventHelper readerHelper = new EventHelper().addValueExpectation(reader).startListening(true);
-
-    EventHelper writerHelper = new EventHelper().addValueExpectation(writer).startListening(true);
+    final EventHelper readerHelper = new EventHelper().addValueExpectation(reader)
+        .startListening(true);
+    final EventHelper writerHelper = new EventHelper().addValueExpectation(writer)
+        .startListening(true);
 
     ZombieVerifier.verifyRepoZombies(refs);
 
@@ -48,8 +73,8 @@ public class EventTestIT {
   }
 
   @Test
-  public void writeNestedLeafNodeWaitForEvents() throws DatabaseException, InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+  public void testWriteNestedLeafNodeWaitForEvents() throws InterruptedException {
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
     EventHelper helper =
         new EventHelper()
             .addChildExpectation(ref, Event.EventType.CHILD_ADDED, "foo")
@@ -64,12 +89,12 @@ public class EventTestIT {
   }
 
   @Test
-  public void writeTwoLeafNodeThenChangeThem() throws DatabaseException, InterruptedException {
-    List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
+  public void testWriteTwoLeafNodeThenChangeThem() throws InterruptedException {
+    List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 2);
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
 
-    EventHelper readHelper =
+    final EventHelper readHelper =
         new EventHelper()
             .addValueExpectation(reader.child("foo"))
             .addChildExpectation(reader, Event.EventType.CHILD_ADDED, "foo")
@@ -82,7 +107,7 @@ public class EventTestIT {
             .addValueExpectation(reader)
             .startListening(true);
 
-    EventHelper writeHelper =
+    final EventHelper writeHelper =
         new EventHelper()
             .addValueExpectation(writer.child("foo"))
             .addChildExpectation(writer, Event.EventType.CHILD_ADDED, "foo")
@@ -107,15 +132,19 @@ public class EventTestIT {
   }
 
   @Test
-  public void setMultipleEventListenersOnSameNode() throws DatabaseException, InterruptedException {
-    List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
+  public void testSetMultipleEventListenersOnSameNode() throws InterruptedException {
+    List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 2);
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
 
-    EventHelper writeHelper = new EventHelper().addValueExpectation(writer).startListening(true);
-    EventHelper writeHelper2 = new EventHelper().addValueExpectation(writer).startListening(true);
-    EventHelper readHelper = new EventHelper().addValueExpectation(reader).startListening(true);
-    EventHelper readHelper2 = new EventHelper().addValueExpectation(reader).startListening(true);
+    final EventHelper writeHelper = new EventHelper().addValueExpectation(writer)
+        .startListening(true);
+    final EventHelper writeHelper2 = new EventHelper().addValueExpectation(writer)
+        .startListening(true);
+    final EventHelper readHelper = new EventHelper().addValueExpectation(reader)
+        .startListening(true);
+    final EventHelper readHelper2 = new EventHelper().addValueExpectation(reader)
+        .startListening(true);
 
     ZombieVerifier.verifyRepoZombies(refs);
 
@@ -128,9 +157,9 @@ public class EventTestIT {
   }
 
   @Test
-  public void setDataMultipleTimesEnsureValueIsCalledAppropriately()
-      throws DatabaseException, TestFailure, TimeoutException, InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+  public void testSetDataMultipleTimesEnsureValueIsCalledAppropriately()
+      throws TestFailure, TimeoutException, InterruptedException {
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
     ReadFuture readFuture = ReadFuture.untilEquals(ref, 2L, /*ignoreFirstNull=*/ true);
     ZombieVerifier.verifyRepoZombies(ref);
@@ -148,14 +177,14 @@ public class EventTestIT {
   }
 
   @Test
-  public void unsubscribeEventsAndConfirmEventsNoLongerFire()
-      throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
+  public void testUnsubscribeEventsAndConfirmEventsNoLongerFire()
+      throws TestFailure, ExecutionException, TimeoutException,
           InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
     final AtomicInteger callbackCount = new AtomicInteger(0);
 
-    ValueEventListener listener =
+    final ValueEventListener listener =
         ref.addValueEventListener(
             new ValueEventListener() {
               @Override
@@ -192,9 +221,9 @@ public class EventTestIT {
   }
 
   @Test
-  public void subscribeThenUnsubscribeWithoutProblems()
-      throws DatabaseException, InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+  public void testSubscribeThenUnsubscribeWithoutProblems()
+      throws InterruptedException {
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
     ValueEventListener listener =
         new ValueEventListener() {
@@ -218,9 +247,9 @@ public class EventTestIT {
   }
 
   @Test
-  public void subscribeThenUnsubscribeWithoutProblemsWithLimit()
-      throws DatabaseException, InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+  public void testSubscribeThenUnsubscribeWithoutProblemsWithLimit()
+      throws InterruptedException {
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
     ValueEventListener listener =
         new ValueEventListener() {
@@ -244,9 +273,8 @@ public class EventTestIT {
   }
 
   @Test
-  public void writeChunkOfJSONButGetMoreGranularEventsForIndividualChanges()
-      throws DatabaseException, InterruptedException {
-    List<DatabaseReference> refs = TestHelpers.getRandomNode(2);
+  public void testWriteJsonAndGetGranularEvents() throws InterruptedException {
+    List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 2);
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
 
@@ -337,19 +365,19 @@ public class EventTestIT {
 
     ZombieVerifier.verifyRepoZombies(refs);
 
-    writer.setValue(new MapBuilder().put("a", 10).put("b", 20).build());
+    writer.setValue(ImmutableMap.of("a", 10, "b", 20));
     TestHelpers.waitFor(writerReady, 2);
     TestHelpers.waitFor(readerReady, 2);
 
-    writer.setValue(new MapBuilder().put("a", 10).put("b", 30).build());
+    writer.setValue(ImmutableMap.of("a", 10, "b", 30));
     TestHelpers.waitFor(writerReady);
     TestHelpers.waitFor(readerReady);
   }
 
   @Test
-  public void valueIsTriggeredForEmptyNodes()
-      throws DatabaseException, TestFailure, TimeoutException, InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+  public void testValueIsTriggeredForEmptyNodes()
+      throws TestFailure, TimeoutException, InterruptedException {
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
     DataSnapshot snap = new ReadFuture(ref).timedGet().get(0).getSnapshot();
     ZombieVerifier.verifyRepoZombies(ref);
@@ -357,16 +385,16 @@ public class EventTestIT {
   }
 
   @Test
-  public void correctEventsAreRaisedWhenALeafNodeTurnsIntoAnInternalNode()
-      throws DatabaseException, TestFailure, TimeoutException, InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+  public void testLeafNodeTurnsIntoAnInternalNode()
+      throws TestFailure, TimeoutException, InterruptedException {
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
-    ReadFuture readFuture = ReadFuture.untilCountAfterNull(ref, 4);
+    final ReadFuture readFuture = ReadFuture.untilCountAfterNull(ref, 4);
 
     ZombieVerifier.verifyRepoZombies(ref);
 
     ref.setValue(42);
-    ref.setValue(new MapBuilder().put("a", 2).build());
+    ref.setValue(ImmutableMap.of("a", 2));
     ref.setValue(84);
     ref.setValue(null);
 
@@ -380,10 +408,9 @@ public class EventTestIT {
   }
 
   @Test
-  public void canRegisterTheSameCallbackMultipleTimesNeedToUnregisterItMultipleTimes()
-      throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
-          InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+  public void testRegisterTheSameCallbackMultipleTimes()
+      throws TestFailure, ExecutionException, TimeoutException, InterruptedException {
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
     final AtomicInteger callbackCount = new AtomicInteger(0);
     ValueEventListener listener =
@@ -426,9 +453,9 @@ public class EventTestIT {
   }
 
   @Test
-  public void unregisterSameCallbackTooManyTimesSilentlyDoesNothing()
-      throws DatabaseException, InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+  public void testUnregisterSameCallbackTooManyTimes()
+      throws InterruptedException {
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
     ValueEventListener listener =
         ref.addValueEventListener(
@@ -452,9 +479,9 @@ public class EventTestIT {
   }
 
   @Test
-  public void removesHappenImmediately()
+  public void testRemovesHappenImmediately()
       throws InterruptedException, ExecutionException, TimeoutException, TestFailure {
-    final DatabaseReference ref = TestHelpers.getRandomNode();
+    final DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
     final Semaphore blockSem = new Semaphore(0);
     final Semaphore endingSemaphore = new Semaphore(0);
 
@@ -499,9 +526,9 @@ public class EventTestIT {
   }
 
   @Test
-  public void removesHappenImmediatelyOnOuterRef()
+  public void testRemovesHappenImmediatelyOnOuterRef()
       throws InterruptedException, ExecutionException, TimeoutException, TestFailure {
-    final DatabaseReference ref = TestHelpers.getRandomNode();
+    final DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
     final Semaphore gotInitialEvent = new Semaphore(0);
     final Semaphore blockSem = new Semaphore(0);
     final Semaphore endingSemaphore = new Semaphore(0);
@@ -551,9 +578,9 @@ public class EventTestIT {
   }
 
   @Test
-  public void removesHappenImmediatelyOnMultipleRef()
+  public void testRemovesHappenImmediatelyOnMultipleRef()
       throws InterruptedException, ExecutionException, TimeoutException, TestFailure {
-    final DatabaseReference ref = TestHelpers.getRandomNode();
+    final DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
     final Semaphore gotInitialEvent = new Semaphore(0);
     final Semaphore blockSem = new Semaphore(0);
     final Semaphore endingSemaphore = new Semaphore(0);
@@ -604,9 +631,9 @@ public class EventTestIT {
   }
 
   @Test
-  public void removesHappenImmediatelyChild()
+  public void testRemovesHappenImmediatelyChild()
       throws InterruptedException, ExecutionException, TimeoutException, TestFailure {
-    final DatabaseReference ref = TestHelpers.getRandomNode();
+    final DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
     final Semaphore blockSem = new Semaphore(0);
     final Semaphore endingSemaphore = new Semaphore(0);
 
@@ -659,10 +686,10 @@ public class EventTestIT {
   }
 
   @Test
-  public void onceFiresExactlyOnce()
-      throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
+  public void testOnceFiresExactlyOnce()
+      throws TestFailure, ExecutionException, TimeoutException,
           InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
     final AtomicBoolean called = new AtomicBoolean(false);
     ref.addListenerForSingleValueEvent(
@@ -689,9 +716,9 @@ public class EventTestIT {
   // NOTE: skipped tests on testing 'once' with child events. Not supported in Java SDK
 
   @Test
-  public void valueOnEmptyChildFires()
-      throws DatabaseException, TestFailure, TimeoutException, InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+  public void testValueOnEmptyChildFires()
+      throws TestFailure, TimeoutException, InterruptedException {
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
     DataSnapshot snap = new ReadFuture(ref.child("test")).timedGet().get(0).getSnapshot();
     assertNull(snap.getValue());
@@ -699,9 +726,9 @@ public class EventTestIT {
   }
 
   @Test
-  public void valueOnEmptyChildFiresImmediatelyEvenAfterParentIsSynced()
-      throws DatabaseException, TestFailure, TimeoutException, InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+  public void testValueOnEmptyChildFiresImmediately()
+      throws TestFailure, TimeoutException, InterruptedException {
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
     // Sync parent
     new ReadFuture(ref).timedGet();
@@ -712,41 +739,41 @@ public class EventTestIT {
   }
 
   @Test
-  public void childEventsAreRaised()
-      throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
+  public void testChildEventsAreRaised()
+      throws TestFailure, ExecutionException, TimeoutException,
           InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
-    Map<String, Object> firstValue =
-        new MapBuilder()
-            .put("a", new MapBuilder().put(".value", "x").put(".priority", 0).build())
-            .put("b", new MapBuilder().put(".value", "x").put(".priority", 1).build())
-            .put("c", new MapBuilder().put(".value", "x").put(".priority", 2).build())
-            .put("d", new MapBuilder().put(".value", "x").put(".priority", 3).build())
-            .put("e", new MapBuilder().put(".value", "x").put(".priority", 4).build())
-            .put("f", new MapBuilder().put(".value", "x").put(".priority", 5).build())
-            .put("g", new MapBuilder().put(".value", "x").put(".priority", 6).build())
-            .put("h", new MapBuilder().put(".value", "x").put(".priority", 7).build())
+    final Map<String, Object> firstValue =
+        ImmutableMap.<String, Object>builder()
+            .put("a", ImmutableMap.of(".value", "x", ".priority", 0))
+            .put("b", ImmutableMap.of(".value", "x", ".priority", 1))
+            .put("c", ImmutableMap.of(".value", "x", ".priority", 2))
+            .put("d", ImmutableMap.of(".value", "x", ".priority", 3))
+            .put("e", ImmutableMap.of(".value", "x", ".priority", 4))
+            .put("f", ImmutableMap.of(".value", "x", ".priority", 5))
+            .put("g", ImmutableMap.of(".value", "x", ".priority", 6))
+            .put("h", ImmutableMap.of(".value", "x", ".priority", 7))
             .build();
 
-    Map<String, Object> secondValue =
-        new MapBuilder()
+    final Map<String, Object> secondValue =
+        ImmutableMap.<String, Object>builder()
             // added
-            .put("aa", new MapBuilder().put(".value", "x").put(".priority", 0).build())
-            .put("b", new MapBuilder().put(".value", "x").put(".priority", 1).build())
+            .put("aa", ImmutableMap.of(".value", "x", ".priority", 0))
+            .put("b", ImmutableMap.of(".value", "x", ".priority", 1))
             // added
-            .put("bb", new MapBuilder().put(".value", "x").put(".priority", 2).build())
+            .put("bb", ImmutableMap.of(".value", "x", ".priority", 2))
             // removed c
             // changed
-            .put("d", new MapBuilder().put(".value", "y").put(".priority", 3).build())
-            .put("e", new MapBuilder().put(".value", "x").put(".priority", 4).build())
-            // moved + changed
-            .put("a", new MapBuilder().put(".value", "x").put(".priority", 6).build())
-            // moved + changed
-            .put("f", new MapBuilder().put(".value", "x").put(".priority", 7).build())
+            .put("d", ImmutableMap.of(".value", "y", ".priority", 3))
+            .put("e", ImmutableMap.of(".value", "x", ".priority", 4))
+            // moved
+            .put("a", ImmutableMap.of(".value", "x", ".priority", 6))
+            // moved
+            .put("f", ImmutableMap.of(".value", "x", ".priority", 7))
             // removed g
             // changed
-            .put("h", new MapBuilder().put(".value", "y").put(".priority", 7).build())
+            .put("h", ImmutableMap.of(".value", "y", ".priority", 7))
             .build();
 
     final List<String> events = new ArrayList<>();
@@ -798,41 +825,41 @@ public class EventTestIT {
   }
 
   @Test
-  public void childEventsAreRaisedWithAQuery()
-      throws DatabaseException, TestFailure, ExecutionException, TimeoutException,
+  public void testChildEventsAreRaisedWithAQuery()
+      throws TestFailure, ExecutionException, TimeoutException,
           InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
-    Map<String, Object> firstValue =
-        new MapBuilder()
-            .put("a", new MapBuilder().put(".value", "x").put(".priority", 0).build())
-            .put("b", new MapBuilder().put(".value", "x").put(".priority", 1).build())
-            .put("c", new MapBuilder().put(".value", "x").put(".priority", 2).build())
-            .put("d", new MapBuilder().put(".value", "x").put(".priority", 3).build())
-            .put("e", new MapBuilder().put(".value", "x").put(".priority", 4).build())
-            .put("f", new MapBuilder().put(".value", "x").put(".priority", 5).build())
-            .put("g", new MapBuilder().put(".value", "x").put(".priority", 6).build())
-            .put("h", new MapBuilder().put(".value", "x").put(".priority", 7).build())
+    final Map<String, Object> firstValue =
+        ImmutableMap.<String, Object>builder()
+            .put("a", ImmutableMap.of(".value", "x", ".priority", 0))
+            .put("b", ImmutableMap.of(".value", "x", ".priority", 1))
+            .put("c", ImmutableMap.of(".value", "x", ".priority", 2))
+            .put("d", ImmutableMap.of(".value", "x", ".priority", 3))
+            .put("e", ImmutableMap.of(".value", "x", ".priority", 4))
+            .put("f", ImmutableMap.of(".value", "x", ".priority", 5))
+            .put("g", ImmutableMap.of(".value", "x", ".priority", 6))
+            .put("h", ImmutableMap.of(".value", "x", ".priority", 7))
             .build();
 
-    Map<String, Object> secondValue =
-        new MapBuilder()
+    final Map<String, Object> secondValue =
+        ImmutableMap.<String, Object>builder()
             // added
-            .put("aa", new MapBuilder().put(".value", "x").put(".priority", 0).build())
-            .put("b", new MapBuilder().put(".value", "x").put(".priority", 1).build())
+            .put("aa", ImmutableMap.of(".value", "x", ".priority", 0))
+            .put("b", ImmutableMap.of(".value", "x", ".priority", 1))
             // added
-            .put("bb", new MapBuilder().put(".value", "x").put(".priority", 2).build())
+            .put("bb", ImmutableMap.of(".value", "x", ".priority", 2))
             // removed c
             // changed
-            .put("d", new MapBuilder().put(".value", "y").put(".priority", 3).build())
-            .put("e", new MapBuilder().put(".value", "x").put(".priority", 4).build())
+            .put("d", ImmutableMap.of(".value", "y", ".priority", 3))
+            .put("e", ImmutableMap.of(".value", "x", ".priority", 4))
             // moved
-            .put("a", new MapBuilder().put(".value", "x").put(".priority", 6).build())
+            .put("a", ImmutableMap.of(".value", "x", ".priority", 6))
             // moved
-            .put("f", new MapBuilder().put(".value", "x").put(".priority", 7).build())
+            .put("f", ImmutableMap.of(".value", "x", ".priority", 7))
             // removed g
             // changed
-            .put("h", new MapBuilder().put(".value", "y").put(".priority", 7).build())
+            .put("h", ImmutableMap.of(".value", "y", ".priority", 7))
             .build();
 
     final List<String> events = new ArrayList<>();
@@ -885,11 +912,11 @@ public class EventTestIT {
   }
 
   @Test
-  public void priorityChangeShouldRaiseChildMovedAndChildChangedAndValueOnParentAndChild()
-      throws DatabaseException, InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+  public void testPriorityChange()
+      throws InterruptedException {
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
-    EventHelper helper =
+    final EventHelper helper =
         new EventHelper()
             .addValueExpectation(ref.child("bar"))
             .addChildExpectation(ref, Event.EventType.CHILD_ADDED, "bar")
@@ -918,9 +945,9 @@ public class EventTestIT {
   }
 
   @Test
-  public void priorityChangeShouldRaiseChildMovedAndChildChangedAndValueOnParentAndChild2()
-      throws DatabaseException, InterruptedException {
-    DatabaseReference ref = TestHelpers.getRandomNode();
+  public void testPriorityChange2()
+      throws InterruptedException {
+    DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
     EventHelper helper =
         new EventHelper()
@@ -933,10 +960,9 @@ public class EventTestIT {
 
     ZombieVerifier.verifyRepoZombies(ref);
     ref.setValue(
-        new MapBuilder()
-            .put("bar", new MapBuilder().put(".value", 42).put(".priority", 10).build())
-            .put("foo", new MapBuilder().put(".value", 42).put(".priority", 20).build())
-            .build());
+        ImmutableMap.of(
+            "bar", ImmutableMap.of(".value", 42, ".priority", 10),
+            "foo", ImmutableMap.of(".value", 42, ".priority", 20)));
     assertTrue(helper.waitForEvents());
     helper
         .addValueExpectation(ref.child("bar"))
@@ -947,10 +973,9 @@ public class EventTestIT {
 
     ZombieVerifier.verifyRepoZombies(ref);
     ref.setValue(
-        new MapBuilder()
-            .put("foo", new MapBuilder().put(".value", 42).put(".priority", 20).build())
-            .put("bar", new MapBuilder().put(".value", 42).put(".priority", 30).build())
-            .build());
+        ImmutableMap.of(
+            "foo", ImmutableMap.of(".value", 42, ".priority", 20),
+            "bar", ImmutableMap.of(".value", 42, ".priority", 30)));
     assertTrue(helper.waitForEvents());
     helper.cleanup();
     ZombieVerifier.verifyRepoZombies(ref);
