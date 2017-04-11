@@ -7,7 +7,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-class TestTokenProvider implements AuthTokenProvider {
+public class TestTokenProvider implements AuthTokenProvider {
 
   private String token;
   private String nextToken;

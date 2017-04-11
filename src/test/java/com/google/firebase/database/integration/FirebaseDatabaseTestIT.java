@@ -40,22 +40,24 @@ public class FirebaseDatabaseTestIT {
     FirebaseDatabase db = FirebaseDatabase.getInstance(app);
     assertEquals(app.getOptions().getDatabaseUrl(), db.getReference().toString());
   }
-  
+
+  @Test
   public void testNullDatabaseUrl() {
     FirebaseApp app = appWithDbUrl(null, "nullDbUrl");
     try {
       FirebaseDatabase.getInstance(app);
       fail("no error thrown for getInstance() with null URL");
-    } catch (DatabaseException expected) {      
+    } catch (DatabaseException expected) { // ignore
     }
   }
-  
+
+  @Test
   public void testMalformedDatabaseUrlInOptions() {
     FirebaseApp app = appWithDbUrl("not-a-url", "malformedDbUrlInOptions");
     try {
       FirebaseDatabase.getInstance(app);
       fail("no error thrown for getInstance() with malformed URL");
-    } catch (DatabaseException expected) {      
+    } catch (DatabaseException expected) { // ignore
     }
   }
   
@@ -65,7 +67,7 @@ public class FirebaseDatabaseTestIT {
     try {
       FirebaseDatabase.getInstance(app, "not-a-url");
       fail("no error thrown for getInstance() with malformed URL");
-    } catch (DatabaseException expected) {      
+    } catch (DatabaseException expected) { // ignore
     }
   }
   
@@ -76,7 +78,7 @@ public class FirebaseDatabaseTestIT {
     try {      
       FirebaseDatabase.getInstance(app);
       fail("no error thrown for DB URL with path");
-    } catch (DatabaseException expected) {
+    } catch (DatabaseException expected) { // ignore
     }
   }
   
@@ -87,7 +89,7 @@ public class FirebaseDatabaseTestIT {
       FirebaseDatabase.getInstance(app, IntegrationTestUtils.getDatabaseUrl() 
           + "/paths/are/not/allowed");
       fail("no error thrown for DB URL with path");
-    } catch (DatabaseException expected) {
+    } catch (DatabaseException expected) { // ignore
     }
   }
   

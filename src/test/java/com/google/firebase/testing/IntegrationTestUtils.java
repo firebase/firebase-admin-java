@@ -10,7 +10,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.internal.GetTokenResult;
 import com.google.firebase.internal.Preconditions;
-import com.google.firebase.tasks.Continuation;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
 import java.io.ByteArrayInputStream;
@@ -78,15 +77,31 @@ public class IntegrationTestUtils {
     return FirebaseApp.initializeApp(options);
   }
 
-  public static DatabaseReference getRandomNode(FirebaseApp app) {
-    return getRandomNodes(app, 1).get(0);
+  public static FirebaseApp initApp(String name) {
+    FirebaseOptions options =
+        new FirebaseOptions.Builder()
+            .setDatabaseUrl(getDatabaseUrl())
+            .setCredential(FirebaseCredentials.fromCertificate(getServiceAccountCertificate()))
+            .build();
+    return FirebaseApp.initializeApp(options, name);
   }
 
-  public static List<DatabaseReference> getRandomNodes(FirebaseApp app, int count) {
+  public static DatabaseReference getRandomNode(FirebaseApp app) {
+    return getRandomNode(app, 1).get(0);
+  }
+
+  public static List<DatabaseReference> getRandomNode(FirebaseApp app, int count) {
     FirebaseDatabase database = FirebaseDatabase.getInstance(app);
     ImmutableList.Builder<DatabaseReference> builder = ImmutableList.builder();
+    String name = null;
     for (int i = 0; i < count; i++) {
-      builder.add(database.getReference().push());
+      if (name == null) {
+        DatabaseReference ref = database.getReference().push();
+        builder.add(ref);
+        name = ref.getKey();
+      } else {
+        builder.add(database.getReference().child(name));
+      }
     }
     return builder.build();
   }

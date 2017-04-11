@@ -129,12 +129,16 @@ public class TestHelpers {
   public static DatabaseConfig newTestConfig(FirebaseApp app) {
     TestRunLoop runLoop = new TestRunLoop();
     DatabaseConfig config = new DatabaseConfig();
-    config.setLogLevel(Logger.Level.DEBUG);
+    config.setLogLevel(Logger.Level.WARN);
     config.setEventTarget(new TestEventTarget());
     config.setRunLoop(runLoop);
     config.setFirebaseApp(app);
     config.setAuthTokenProvider(new TestTokenProvider(runLoop.getExecutorService()));
     return config;
+  }
+
+  public static DatabaseConfig getDatabaseConfig(FirebaseApp app) {
+    return FirebaseDatabase.getInstance(app).getConfig();
   }
 
   public static ScheduledExecutorService getExecutorService(DatabaseConfig config) {

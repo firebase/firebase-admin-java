@@ -1,5 +1,13 @@
-package com.google.firebase.database;
+package com.google.firebase.database.integration;
 
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseException;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.EventRecord;
+import com.google.firebase.database.TestConstants;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.core.view.Event;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,7 +21,6 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-/** User: greg Date: 5/28/13 Time: 9:06 AM */
 class EventHelper {
 
   private List<Expectation> lookingFor;
