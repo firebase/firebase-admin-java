@@ -48,7 +48,7 @@ public class FirebaseApp {
   @GuardedBy("sLock")
   private static final Map<String, FirebaseApp> instances = new HashMap<>();
 
-  private static final String DEFAULT_APP_NAME = "[DEFAULT]";
+  public static final String DEFAULT_APP_NAME = "[DEFAULT]";
   private static final long TOKEN_REFRESH_INTERVAL_MILLIS = TimeUnit.MINUTES.toMillis(55);
   private static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
       new TokenRefresher.Factory();
