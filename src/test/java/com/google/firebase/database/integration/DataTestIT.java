@@ -36,7 +36,6 @@ import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.testing.IntegrationTestUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -214,9 +213,9 @@ public class DataTestIT {
         .addValueExpectation(ref.child("a")).startListening(true);
 
     ref.child("a/aa").setValue(1);
-    ref.child("a").setValue(new MapBuilder().put("aa", 2).build());
-    ref.child("a").setValue(new MapBuilder().put("aa", 3).build());
-    ref.child("a").setValue(new MapBuilder().put("aa", 3).build());
+    ref.child("a").setValue(MapBuilder.of("aa", 2));
+    ref.child("a").setValue(MapBuilder.of("aa", 3));
+    ref.child("a").setValue(MapBuilder.of("aa", 3));
 
     assertTrue(helper.waitForEvents());
     helper.cleanup();
@@ -470,8 +469,8 @@ public class DataTestIT {
     ref.child("4").setValue("echo");
 
     DataSnapshot snap = TestHelpers.getSnap(ref);
-    List<Object> expected = new ArrayList<>();
-    expected.addAll(Arrays.asList((Object) "alpha", "bravo", "charlie", "delta", "echo"));
+    List<Object> expected = ImmutableList.of((Object) "alpha", "bravo", "charlie",
+        "delta", "echo");
     DeepEquals.assertEquals(expected, snap.getValue());
   }
 
@@ -484,7 +483,7 @@ public class DataTestIT {
         .put("a", new MapBuilder().put("aa", 5L).put("ab", 3L).build())
         .put("b",
             new MapBuilder().put("ba", "hey there!")
-                .put("bb", new MapBuilder().put("bba", false).build()).build())
+                .put("bb", MapBuilder.of("bba", false)).build())
         .put("c", ImmutableList.of(0L, new MapBuilder().put("c_1", 4L).build(), "hey", true, false,
             "dude"))
         .build();
@@ -978,7 +977,7 @@ public class DataTestIT {
 
     DatabaseReference ref = FirebaseDatabase.getInstance(masterApp).getReference();
     // Clear any data there
-    new WriteFuture(ref, new MapBuilder().put("foo", 10).build()).timedGet();
+    new WriteFuture(ref, MapBuilder.of("foo", 10)).timedGet();
 
     DataSnapshot snap = TestHelpers.getSnap(ref);
     assertNull(snap.getKey());
@@ -1025,13 +1024,13 @@ public class DataTestIT {
 
     new WriteFuture(ref1.child("foo"), "hi").timedGet();
     DataSnapshot snap = new ReadFuture(ref2).timedGet().get(0).getSnapshot();
-    Map<String, Object> expected = new MapBuilder().put("foo", "hi").build();
+    Map<String, Object> expected = MapBuilder.of("foo", "hi");
     DeepEquals.assertEquals(expected, snap.getValue());
   }
 
   @Test
   public void testInvalidPaths() throws InterruptedException {
-    List<String> badPaths = Arrays.asList(".test", "test.", "fo$o", "[what", "ever]", "ha#sh");
+    List<String> badPaths = ImmutableList.of(".test", "test.", "fo$o", "[what", "ever]", "ha#sh");
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
     DatabaseReference root = FirebaseDatabase.getInstance(masterApp).getReference();
     DataSnapshot snap = TestHelpers.getSnap(ref);
@@ -1083,9 +1082,8 @@ public class DataTestIT {
 
     List<Object> badObjects = new ArrayList<>();
     for (String key : badKeys) {
-      badObjects.add(new MapBuilder().put(key, "test").build());
-      badObjects
-          .add(new MapBuilder().put("deeper", new MapBuilder().put(key, "test").build()).build());
+      badObjects.add(MapBuilder.of(key, "test"));
+      badObjects.add(MapBuilder.of("deeper", MapBuilder.of(key, "test")));
     }
 
     // Skipping 'push' portion, that api doesn't exist in Java client
@@ -1113,7 +1111,7 @@ public class DataTestIT {
   public void testInvalidUpdates() throws DatabaseException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    List<Map<String, Object>> badUpdates = Arrays.asList(
+    List<Map<String, Object>> badUpdates = ImmutableList.of(
         new MapBuilder().put("/", "t").put("a", "t").build(),
         new MapBuilder().put("a", "t").put("a/b", "t").build(),
         new MapBuilder().put("/a", "t").put("a/b", "t").build(),
@@ -1121,7 +1119,7 @@ public class DataTestIT {
         new MapBuilder().put("/a/b", "t").put("/a/b/.priority", 1.0).build(),
         new MapBuilder().put("/a/b/.sv", "timestamp").build(),
         new MapBuilder().put("/a/b/.value", "t").build(),
-        new MapBuilder().put("/a/b/.priority", new MapBuilder().put("x", "y").build()).build());
+        new MapBuilder().put("/a/b/.priority", MapBuilder.of("x", "y")).build());
     for (Map<String, Object> badUpdate : badUpdates) {
       try {
         ref.updateChildren(badUpdate);
@@ -1164,7 +1162,7 @@ public class DataTestIT {
     final String fire = new String(Character.toChars(128293));
     final String base = new String(Character.toChars(26594));
 
-    List<String> goodKeys = Arrays.asList(TestHelpers.repeatedString("k", maxPathLengthBytes - 1),
+    List<String> goodKeys = ImmutableList.of(TestHelpers.repeatedString("k", maxPathLengthBytes - 1),
         TestHelpers.repeatedString(fire, maxPathLengthBytes / 4 - 1),
         TestHelpers.repeatedString(base, maxPathLengthBytes / 3 - 1),
         TestHelpers.repeatedString("key/", maxPathDepth - 1) + "key");
@@ -1180,9 +1178,9 @@ public class DataTestIT {
       }
     }
 
-    List<BadGroup> badGroups = Arrays.asList(
+    List<BadGroup> badGroups = ImmutableList.of(
         new BadGroup("key path longer than 768 bytes",
-            Arrays.asList(TestHelpers.repeatedString("k", maxPathLengthBytes),
+            ImmutableList.of(TestHelpers.repeatedString("k", maxPathLengthBytes),
                 TestHelpers.repeatedString(fire, maxPathLengthBytes / 4),
                 TestHelpers.repeatedString(base, maxPathLengthBytes / 3),
                 TestHelpers.repeatedString("j", maxPathLengthBytes / 2) + '/'
@@ -1233,7 +1231,7 @@ public class DataTestIT {
         // expected
       }
       try {
-        Map<String, Object> deepUpdate = new MapBuilder().put(key, "test_value").build();
+        Map<String, Object> deepUpdate = MapBuilder.of(key, "test_value");
         nodeChild.updateChildren(deepUpdate);
         fail("Too-long path in deep update for updateChildren should throw exception.");
       } catch (DatabaseException e) {
@@ -1263,7 +1261,7 @@ public class DataTestIT {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
-          Map<String, Object> deepUpdate = new MapBuilder().put(key, "test_value").build();
+          Map<String, Object> deepUpdate = MapBuilder.of(key, "test_value");
           node.updateChildren(deepUpdate);
           fail("Expected updateChildrean(bad deep update key) to throw exception: " + key);
         } catch (DatabaseException e) {
@@ -1282,7 +1280,7 @@ public class DataTestIT {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
-          Map<String, Object> deepUpdate = new MapBuilder().put(key, "test_value").build();
+          Map<String, Object> deepUpdate = MapBuilder.of(key, "test_value");
           node.onDisconnect().updateChildren(deepUpdate);
           fail("Expected onDisconnect.updateChildren(bad deep update key) to throw " + "exception: "
               + key);
@@ -1326,7 +1324,7 @@ public class DataTestIT {
       throws TestFailure, ExecutionException, TimeoutException, InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    Map<String, Object> expected = new MapBuilder().put("\"herp\"", 1234L).build();
+    Map<String, Object> expected = MapBuilder.of("\"herp\"", 1234L);
     new WriteFuture(ref, expected).timedGet();
     DataSnapshot snap = TestHelpers.getSnap(ref);
     DeepEquals.assertEquals(expected, snap.getValue());
@@ -1350,7 +1348,7 @@ public class DataTestIT {
     EventHelper helper = new EventHelper().addValueExpectation(ref.child("a/aa/aaa"))
         .addValueExpectation(ref.child("a/aa")).addValueExpectation(ref.child("a"))
         .startListening();
-    ref.setValue(new MapBuilder().put("b", 5).build());
+    ref.setValue(MapBuilder.of("b", 5));
 
     assertTrue(helper.waitForEvents());
     helper.cleanup();
@@ -1596,7 +1594,7 @@ public class DataTestIT {
         new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4).build()).timedGet();
 
     final Semaphore semaphore = new Semaphore(0);
-    writer.updateChildren(new MapBuilder().put("a", 42).build(),
+    writer.updateChildren(MapBuilder.of("a", 42),
         new DatabaseReference.CompletionListener() {
           @Override
           public void onComplete(DatabaseError error, DatabaseReference ref) {
@@ -1622,7 +1620,7 @@ public class DataTestIT {
     ReadFuture readFuture = ReadFuture.untilCountAfterNull(ref, 2);
 
     ref.setValue(new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build(), "testpri");
-    ref.updateChildren(new MapBuilder().put("a", 4).build());
+    ref.updateChildren(MapBuilder.of("a", 4));
 
     List<EventRecord> events = readFuture.timedGet();
     DataSnapshot snap = events.get(0).getSnapshot();
@@ -1647,7 +1645,7 @@ public class DataTestIT {
     assertEquals("testpri", snap.getPriority());
 
     final Semaphore semaphore = new Semaphore(0);
-    writer.updateChildren(new MapBuilder().put("a", 4).build(),
+    writer.updateChildren(MapBuilder.of("a", 4),
         new DatabaseReference.CompletionListener() {
           @Override
           public void onComplete(DatabaseError error, DatabaseReference ref) {
@@ -1673,8 +1671,7 @@ public class DataTestIT {
     writer.setValue(
         new MapBuilder().put("a", new MapBuilder().put("aa", 1).put("ab", 2).build()).build());
     final Semaphore semaphore = new Semaphore(0);
-    Map<String, Object> expected = new MapBuilder().put("a", new MapBuilder().put("aa", 1L).build())
-        .build();
+    Map<String, Object> expected = MapBuilder.of("a", MapBuilder.of("aa", 1L));
     writer.updateChildren(expected, new DatabaseReference.CompletionListener() {
       @Override
       public void onComplete(DatabaseError error, DatabaseReference ref) {
@@ -1774,10 +1771,10 @@ public class DataTestIT {
 
     TestHelpers.waitFor(semaphore);
 
-    writer.updateChildren(new MapBuilder().put("a", null).build());
+    writer.updateChildren(MapBuilder.of("a", null));
     DataSnapshot snap = writerFuture.timedGet().get(1).getSnapshot();
 
-    Map<String, Object> expected = new MapBuilder().put("b", 6L).build();
+    Map<String, Object> expected = MapBuilder.of("b", 6L);
     DeepEquals.assertEquals(expected, snap.getValue());
 
     snap = readerFuture.timedGet().get(1).getSnapshot();
@@ -1816,10 +1813,10 @@ public class DataTestIT {
     TestHelpers.waitFor(readerInitializedSemaphore);
     TestHelpers.waitFor(writerInitializedSemaphore);
 
-    writer.updateChildren(new MapBuilder().put("a", 42).build());
+    writer.updateChildren(MapBuilder.of("a", 42));
     DataSnapshot snap = writerFuture.timedGet().get(1).getSnapshot();
 
-    Map<String, Object> expected = new MapBuilder().put("a", 42L).build();
+    Map<String, Object> expected = MapBuilder.of("a", 42L);
     DeepEquals.assertEquals(expected, snap.getValue());
 
     snap = readerFuture.timedGet().get(1).getSnapshot();
@@ -1835,7 +1832,7 @@ public class DataTestIT {
     DatabaseReference reader = refs.get(1);
 
     final ReadFuture writerFuture = ReadFuture.untilCountAfterNull(writer, 2);
-    new WriteFuture(writer, new MapBuilder().put("a", 12).build()).timedGet();
+    new WriteFuture(writer, MapBuilder.of("a", 12)).timedGet();
     final Semaphore semaphore = new Semaphore(0);
     final ReadFuture readerFuture = new ReadFuture(reader, new ReadFuture.CompletionCondition() {
       @Override
@@ -1849,7 +1846,7 @@ public class DataTestIT {
 
     TestHelpers.waitFor(semaphore);
 
-    writer.updateChildren(new MapBuilder().put("a", null).build());
+    writer.updateChildren(MapBuilder.of("a", null));
     DataSnapshot snap = writerFuture.timedGet().get(1).getSnapshot();
 
     assertNull(snap.getValue());
@@ -1867,7 +1864,7 @@ public class DataTestIT {
     DatabaseReference reader = refs.get(1);
 
     final ReadFuture writerFuture = ReadFuture.untilCountAfterNull(writer, 2);
-    new WriteFuture(writer, new MapBuilder().put("a", 12).build()).timedGet();
+    new WriteFuture(writer, MapBuilder.of("a", 12)).timedGet();
     final Semaphore semaphore = new Semaphore(0);
     final ReadFuture readerFuture = new ReadFuture(reader, new ReadFuture.CompletionCondition() {
       @Override
@@ -1881,10 +1878,10 @@ public class DataTestIT {
 
     TestHelpers.waitFor(semaphore);
 
-    writer.updateChildren(new MapBuilder().put("a", 11).build());
+    writer.updateChildren(MapBuilder.of("a", 11));
     DataSnapshot snap = writerFuture.timedGet().get(1).getSnapshot();
 
-    Map<String, Object> expected = new MapBuilder().put("a", 11L).build();
+    Map<String, Object> expected = MapBuilder.of("a", 11L);
     DeepEquals.assertEquals(expected, snap.getValue());
 
     snap = readerFuture.timedGet().get(1).getSnapshot();
@@ -2052,8 +2049,10 @@ public class DataTestIT {
     TestHelpers.waitFor(valSemaphore, 1);
 
     Map<String, Object> initialValues = new MapBuilder()
-        .put("a", ServerValue.TIMESTAMP).put("b", new MapBuilder()
-            .put(".value", ServerValue.TIMESTAMP).put(".priority", ServerValue.TIMESTAMP).build())
+        .put("a", ServerValue.TIMESTAMP)
+        .put("b", new MapBuilder()
+            .put(".value", ServerValue.TIMESTAMP)
+            .put(".priority", ServerValue.TIMESTAMP).build())
         .build();
 
     writer.setValue(initialValues, ServerValue.TIMESTAMP,
@@ -2108,8 +2107,12 @@ public class DataTestIT {
       }
     });
 
-    Map<String, Object> initialValues = new MapBuilder().put("a", 1)
-        .put("b", new MapBuilder().put(".value", 1).put(".priority", 1).build()).build();
+    Map<String, Object> initialValues = new MapBuilder()
+        .put("a", 1)
+        .put("b", new MapBuilder()
+            .put(".value", 1)
+            .put(".priority", 1).build())
+        .build();
 
     writer.setValue(initialValues, new DatabaseReference.CompletionListener() {
       @Override
@@ -2163,8 +2166,10 @@ public class DataTestIT {
         });
     TestHelpers.waitFor(opSemaphore);
 
-    Map<String, Object> updatedValue = new MapBuilder().put("b",
-        new MapBuilder().put("c", ServerValue.TIMESTAMP).put("d", ServerValue.TIMESTAMP).build())
+    Map<String, Object> updatedValue = new MapBuilder()
+        .put("b", new MapBuilder()
+            .put("c", ServerValue.TIMESTAMP)
+            .put("d", ServerValue.TIMESTAMP).build())
         .build();
 
     writer.child("a").updateChildren(updatedValue, new DatabaseReference.CompletionListener() {
@@ -2204,8 +2209,10 @@ public class DataTestIT {
     TestHelpers.waitFor(valSemaphore, 1);
 
     Map<String, Object> initialValues = new MapBuilder()
-        .put("a", ServerValue.TIMESTAMP).put("b", new MapBuilder()
-            .put(".value", ServerValue.TIMESTAMP).put(".priority", ServerValue.TIMESTAMP).build())
+        .put("a", ServerValue.TIMESTAMP)
+        .put("b", new MapBuilder()
+            .put(".value", ServerValue.TIMESTAMP)
+            .put(".priority", ServerValue.TIMESTAMP).build())
         .build();
 
     writer.setValue(initialValues, ServerValue.TIMESTAMP,
@@ -2258,8 +2265,12 @@ public class DataTestIT {
       }
     });
 
-    Map<String, Object> initialValues = new MapBuilder().put("a", 1)
-        .put("b", new MapBuilder().put(".value", 1).put(".priority", 1).build()).build();
+    Map<String, Object> initialValues = new MapBuilder()
+        .put("a", 1)
+        .put("b", new MapBuilder()
+            .put(".value", 1)
+            .put(".priority", 1).build())
+        .build();
 
     writer.setValue(initialValues, new DatabaseReference.CompletionListener() {
       @Override
@@ -2310,8 +2321,10 @@ public class DataTestIT {
         });
     TestHelpers.waitFor(opSemaphore);
 
-    Map<String, Object> updatedValue = new MapBuilder().put("b",
-        new MapBuilder().put("c", ServerValue.TIMESTAMP).put("d", ServerValue.TIMESTAMP).build())
+    Map<String, Object> updatedValue = new MapBuilder()
+        .put("b", new MapBuilder()
+            .put("c", ServerValue.TIMESTAMP)
+            .put("d", ServerValue.TIMESTAMP).build())
         .build();
 
     writer.child("a").updateChildren(updatedValue, new DatabaseReference.CompletionListener() {
@@ -2397,7 +2410,7 @@ public class DataTestIT {
     final DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
     final Semaphore doneSemaphore = new Semaphore(0);
 
-    Map<String, Object> initial = new MapBuilder().put("a", "a").build();
+    Map<String, Object> initial = MapBuilder.of("a", "a");
     ref.setValue(initial, new DatabaseReference.CompletionListener() {
       @Override
       public void onComplete(DatabaseError error, DatabaseReference ref) {
@@ -2418,7 +2431,7 @@ public class DataTestIT {
 
         ref.child("b").setValue("b");
 
-        Map<String, Object> update = new MapBuilder().put("c", "c").build();
+        Map<String, Object> update = MapBuilder.of("c", "c");
         ref.updateChildren(update);
       }
     });

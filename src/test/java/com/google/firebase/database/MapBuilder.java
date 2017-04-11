@@ -3,7 +3,6 @@ package com.google.firebase.database;
 import java.util.HashMap;
 import java.util.Map;
 
-/** User: greg Date: 5/24/13 Time: 6:52 PM */
 public class MapBuilder {
 
   private Map<String, Object> map = new HashMap<>();
@@ -15,5 +14,9 @@ public class MapBuilder {
 
   public Map<String, Object> build() {
     return map;
+  }
+
+  public static Map<String, Object> of(String k1, Object v1) {
+    return new MapBuilder().put(k1, v1).build();
   }
 }
