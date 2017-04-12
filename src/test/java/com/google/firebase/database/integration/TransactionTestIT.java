@@ -17,7 +17,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.DatabaseReference.CompletionListener;
-import com.google.firebase.database.DeepEquals;
 import com.google.firebase.database.EventRecord;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.MapBuilder;
@@ -34,6 +33,7 @@ import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.testing.IntegrationTestUtils;
+import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -903,7 +903,7 @@ public class TransactionTestIT {
         ArrayList<String> expected = new ArrayList<>(3);
         expected.addAll(Arrays.asList("cat", "horse", "dog"));
         Object result = currentData.getValue();
-        DeepEquals.assertEquals(expected, result);
+        TestUtils.assertDeepEquals(expected, result);
         semaphore.release(1);
       }
     });
@@ -926,7 +926,7 @@ public class TransactionTestIT {
         Object val = currentData.getValue();
         if (val != null) {
           Map<String, Object> expected = new MapBuilder().put("a", 0L).build();
-          DeepEquals.assertEquals(expected, val);
+          TestUtils.assertDeepEquals(expected, val);
         }
         currentData.setValue(new MapBuilder().put("a", 1L).build());
         return Transaction.success(currentData);
@@ -942,7 +942,7 @@ public class TransactionTestIT {
         // it was
         // successful.
         Map<String, Object> expected = new MapBuilder().put("a", 1L).build();
-        DeepEquals.assertEquals(expected, val);
+        TestUtils.assertDeepEquals(expected, val);
         semaphore.release(1);
       }
     });

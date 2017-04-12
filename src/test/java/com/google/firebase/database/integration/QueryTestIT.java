@@ -16,7 +16,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.DeepEquals;
 import com.google.firebase.database.EventRecord;
 import com.google.firebase.database.MapBuilder;
 import com.google.firebase.database.Query;
@@ -27,6 +26,7 @@ import com.google.firebase.database.ValueExpectationHelper;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.testing.IntegrationTestUtils;
+import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,6 +37,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -454,7 +455,7 @@ public class QueryTestIT {
     });
 
     new WriteFuture(ref, ImmutableMap.of("a", 1, "b", 2,"c", 3)).timedGet();
-    DeepEquals.assertEquals(ImmutableList.of("b", "c"), added);
+    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), added);
     assertTrue(removed.isEmpty());
 
     added.clear();
@@ -503,7 +504,7 @@ public class QueryTestIT {
     });
 
     TestHelpers.waitFor(semaphore, 2);
-    DeepEquals.assertEquals(ImmutableList.of("b", "c"), added);
+    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), added);
     assertTrue(removed.isEmpty());
     added.clear();
 
@@ -549,7 +550,7 @@ public class QueryTestIT {
     });
 
     new WriteFuture(ref, ImmutableMap.of("a", 1,"b", 2,"c", 3)).timedGet();
-    DeepEquals.assertEquals(ImmutableList.of("a", "b"), added);
+    TestUtils.assertDeepEquals(ImmutableList.of("a", "b"), added);
     assertTrue(removed.isEmpty());
     added.clear();
 
@@ -598,7 +599,7 @@ public class QueryTestIT {
     });
 
     TestHelpers.waitFor(semaphore, 2);
-    DeepEquals.assertEquals(ImmutableList.of("a", "b"), added);
+    TestUtils.assertDeepEquals(ImmutableList.of("a", "b"), added);
     assertTrue(removed.isEmpty());
 
     added.clear();
@@ -644,12 +645,12 @@ public class QueryTestIT {
     });
 
     new WriteFuture(ref, ImmutableMap.of("c", 3)).timedGet();
-    DeepEquals.assertEquals(ImmutableList.of("c"), added);
+    TestUtils.assertDeepEquals(ImmutableList.of("c"), added);
     assertTrue(removed.isEmpty());
     added.clear();
 
     new WriteFuture(ref.child("b"), 4).timedGet();
-    DeepEquals.assertEquals(ImmutableList.of("b"), added);
+    TestUtils.assertDeepEquals(ImmutableList.of("b"), added);
     assertTrue(removed.isEmpty());
   }
 
@@ -691,12 +692,12 @@ public class QueryTestIT {
     });
 
     TestHelpers.waitFor(semaphore);
-    DeepEquals.assertEquals(ImmutableList.of("c"), added);
+    TestUtils.assertDeepEquals(ImmutableList.of("c"), added);
     assertTrue(removed.isEmpty());
     added.clear();
 
     new WriteFuture(ref.child("b"), 4).timedGet();
-    DeepEquals.assertEquals(ImmutableList.of("b"), added);
+    TestUtils.assertDeepEquals(ImmutableList.of("b"), added);
     assertTrue(removed.isEmpty());
   }
 
@@ -735,13 +736,13 @@ public class QueryTestIT {
     });
 
     new WriteFuture(ref, ImmutableMap.of("a", 1,"b", 2,"c", 3)).timedGet();
-    DeepEquals.assertEquals(ImmutableList.of("b", "c"), added);
+    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), added);
     assertTrue(removed.isEmpty());
     added.clear();
 
     new WriteFuture(ref.child("b"), null).timedGet();
-    DeepEquals.assertEquals(ImmutableList.of("a"), added);
-    DeepEquals.assertEquals(ImmutableList.of("b"), removed);
+    TestUtils.assertDeepEquals(ImmutableList.of("a"), added);
+    TestUtils.assertDeepEquals(ImmutableList.of("b"), removed);
   }
 
   @Test
@@ -782,13 +783,13 @@ public class QueryTestIT {
     });
 
     TestHelpers.waitFor(semaphore, 2);
-    DeepEquals.assertEquals(ImmutableList.of("b", "c"), added);
+    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), added);
     assertTrue(removed.isEmpty());
 
     added.clear();
     new WriteFuture(ref.child("b"), null).timedGet();
-    DeepEquals.assertEquals(ImmutableList.of("a"), added);
-    DeepEquals.assertEquals(ImmutableList.of("b"), removed);
+    TestUtils.assertDeepEquals(ImmutableList.of("a"), added);
+    TestUtils.assertDeepEquals(ImmutableList.of("b"), removed);
   }
 
   @Test
@@ -826,17 +827,17 @@ public class QueryTestIT {
     });
 
     new WriteFuture(ref, ImmutableMap.of("b", 2,"c", 3)).timedGet();
-    DeepEquals.assertEquals(ImmutableList.of("b", "c"), added);
+    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), added);
     assertTrue(removed.isEmpty());
     added.clear();
 
     new WriteFuture(ref.child("b"), null).timedGet();
     assertTrue(added.isEmpty());
-    DeepEquals.assertEquals(ImmutableList.of("b"), removed);
+    TestUtils.assertDeepEquals(ImmutableList.of("b"), removed);
 
     new WriteFuture(ref.child("c"), null).timedGet();
     assertTrue(added.isEmpty());
-    DeepEquals.assertEquals(ImmutableList.of("b", "c"), removed);
+    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), removed);
   }
 
   @Test
@@ -877,16 +878,16 @@ public class QueryTestIT {
         });
 
     TestHelpers.waitFor(semaphore, 2);
-    DeepEquals.assertEquals(ImmutableList.of("b", "c"), added);
+    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), added);
     assertTrue(removed.isEmpty());
 
     added.clear();
     new WriteFuture(ref.child("b"), null).timedGet();
     assertTrue(added.isEmpty());
-    DeepEquals.assertEquals(ImmutableList.of("b"), removed);
+    TestUtils.assertDeepEquals(ImmutableList.of("b"), removed);
     new WriteFuture(ref.child("c"), null).timedGet();
     assertTrue(added.isEmpty());
-    DeepEquals.assertEquals(ImmutableList.of("b", "c"), removed);
+    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), removed);
     ref.limitToLast(2).removeEventListener(listener);
   }
 
@@ -1056,7 +1057,7 @@ public class QueryTestIT {
     ref.child("b").setValue(2);
     new WriteFuture(ref.child("d"), 4).timedGet();
 
-    DeepEquals.assertEquals(ImmutableList.of("a null", "c a", "b null", "d c"), names);
+    TestUtils.assertDeepEquals(ImmutableList.of("a null", "c a", "b null", "d c"), names);
   }
 
   // NOTE: skipping server data test here, it really doesn't test anything
@@ -1104,7 +1105,7 @@ public class QueryTestIT {
     ref.child("c").setPriority(35);
     new WriteFuture(ref.child("b"), "b", 33).timedGet();
 
-    DeepEquals.assertEquals(ImmutableList.of("c d", "c null"), names);
+    TestUtils.assertDeepEquals(ImmutableList.of("c d", "c null"), names);
   }
 
   // NOTE: skipping server data version of the above test, it doesn't really
@@ -1166,7 +1167,7 @@ public class QueryTestIT {
         "3 added", "2 removed", "4 added").build();
     // Make sure we wait for all the events
     TestHelpers.waitFor(semaphore, 5);
-    DeepEquals.assertEquals(expected, events);
+    TestUtils.assertDeepEquals(expected, events);
     reader.limitToLast(2).removeEventListener(listener);
   }
 
@@ -1212,7 +1213,7 @@ public class QueryTestIT {
     DataSnapshot snap = TestHelpers.getSnap(ref.endAt(null));
     Map<String, Long> expected = ImmutableMap.of("a", 0L,"b", 1L);
     Object result = snap.getValue();
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -1230,7 +1231,7 @@ public class QueryTestIT {
     DataSnapshot snap = TestHelpers.getSnap(ref.endAt(2));
     Map<String, Long> expected = ImmutableMap.of("a", 0L, "b", 1L, "c", 2L);
     Object result = snap.getValue();
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -1248,7 +1249,7 @@ public class QueryTestIT {
     DataSnapshot snap = TestHelpers.getSnap(ref.startAt(2));
     Object result = snap.getValue();
     Map<String, Long> expected = ImmutableMap.of("c", 2L, "d", 3L, "e", 4L);
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -1299,7 +1300,8 @@ public class QueryTestIT {
     });
 
     TestHelpers.waitFor(semaphore, 5);
-    DeepEquals.assertEquals(ImmutableList.of("Sally", "James", "Andrew", "Mike", "Vikrum"), names);
+    TestUtils.assertDeepEquals(ImmutableList.of("Sally", "James", "Andrew", "Mike", "Vikrum"),
+        names);
   }
 
   @Test
@@ -1316,7 +1318,7 @@ public class QueryTestIT {
           @Override
           public void onDataChange(DataSnapshot snapshot) {
             Map<String, String> expected = ImmutableMap.of("a", "blah");
-            DeepEquals.assertEquals(expected, snapshot.getValue(true));
+            TestUtils.assertDeepEquals(expected, snapshot.getValue(true));
             semaphore.release();
           }
 
@@ -1379,7 +1381,8 @@ public class QueryTestIT {
         });
     ref.setValue(toSet);
     TestHelpers.waitFor(semaphore, 5);
-    DeepEquals.assertEquals(ImmutableList.of("Sally", "James", "Andrew", "Mike", "Vikrum"), names);
+    TestUtils.assertDeepEquals(ImmutableList.of("Sally", "James", "Andrew", "Mike", "Vikrum"),
+        names);
     ref.limitToLast(5).removeEventListener(listener);
   }
 
@@ -1407,13 +1410,13 @@ public class QueryTestIT {
 
     Map<String, Long> expected = ImmutableMap.of("b", 2L, "c", 3L);
     Object result = snap.getValue();
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
 
     // The original set is still outstanding (synchronous API), so we have a
     // full cache to re-window against
     snap = events.get(2).getSnapshot();
     result = snap.getValue();
-    DeepEquals.assertEquals(ImmutableMap.of("a", 1L), result);
+    TestUtils.assertDeepEquals(ImmutableMap.of("a", 1L), result);
   }
 
   @Test
@@ -1443,13 +1446,13 @@ public class QueryTestIT {
     Object result = snap.getValue();
 
     Map<String, Long> expected = ImmutableMap.of("b", 2L);
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
 
     snap = events.get(1).getSnapshot();
     result = snap.getValue();
 
     expected = ImmutableMap.of("c", 3L);
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
     assertEquals(1, childSnaps.size());
     assertEquals(1L, childSnaps.get(0).getValue());
   }
@@ -1487,15 +1490,15 @@ public class QueryTestIT {
 
     result = events.get(0).getSnapshot().getValue();
     expected = ImmutableMap.of("a", 1L);
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
 
     result = events.get(1).getSnapshot().getValue();
     expected = ImmutableMap.of("b", 2L);
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
 
     result = events.get(0).getSnapshot().getValue();
     expected = ImmutableMap.of("a", 1L);
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
     ref.child("a").removeEventListener(listener);
   }
 
@@ -1536,15 +1539,15 @@ public class QueryTestIT {
     new WriteFuture(ref, ImmutableMap.of("a", 1, "b", 2, "c", 3)).timedGet();
     assertEquals(1, cSnaps.size());
     final Map<String, Object> cExpected = ImmutableMap.<String, Object>of("c", 3L);
-    DeepEquals.assertEquals(cExpected, cSnaps.get(0).getValue());
+    TestUtils.assertDeepEquals(cExpected, cSnaps.get(0).getValue());
 
     new WriteFuture(ref.child("d"), 4).timedGet();
     assertEquals(1, cSnaps.size());
 
     assertEquals(2, dSnaps.size());
-    DeepEquals.assertEquals(cExpected, dSnaps.get(0).getValue());
+    TestUtils.assertDeepEquals(cExpected, dSnaps.get(0).getValue());
 
-    DeepEquals.assertEquals(ImmutableMap.of("d", 4L), dSnaps.get(1).getValue());
+    TestUtils.assertDeepEquals(ImmutableMap.of("d", 4L), dSnaps.get(1).getValue());
   }
 
   @Test
@@ -1587,7 +1590,7 @@ public class QueryTestIT {
     ref.setValue(ImmutableMap.of("a", 1, "b", 2));
     ref.child("b").removeValue();
     TestHelpers.waitFor(semaphore);
-    DeepEquals.assertEquals(ImmutableList.of(2L, 1L), values);
+    TestUtils.assertDeepEquals(ImmutableList.of(2L, 1L), values);
   }
 
   @Test
@@ -1692,7 +1695,7 @@ public class QueryTestIT {
     TestHelpers.waitFor(semaphore);
 
     DataSnapshot snap = TestHelpers.getSnap(ref.limitToLast(1));
-    DeepEquals.assertEquals(ImmutableMap.of("f", 6L), snap.getValue());
+    TestUtils.assertDeepEquals(ImmutableMap.of("f", 6L), snap.getValue());
   }
 
   @Test
@@ -1721,7 +1724,7 @@ public class QueryTestIT {
     TestHelpers.waitFor(semaphore);
 
     DataSnapshot snap = TestHelpers.getSnap(ref.limitToLast(1));
-    DeepEquals.assertEquals(ImmutableMap.of("f", 6L), snap.getValue());
+    TestUtils.assertDeepEquals(ImmutableMap.of("f", 6L), snap.getValue());
   }
 
   @Test
@@ -1747,7 +1750,7 @@ public class QueryTestIT {
     });
 
     DataSnapshot snap = TestHelpers.getSnap(ref.limitToLast(5));
-    DeepEquals.assertEquals(ImmutableMap.of("a", 1L, "b", 2L, "c", 3L), snap.getValue());
+    TestUtils.assertDeepEquals(ImmutableMap.of("a", 1L, "b", 2L, "c", 3L), snap.getValue());
   }
 
   @Test
@@ -1773,8 +1776,8 @@ public class QueryTestIT {
           }
         }).timedGet();
 
-    DeepEquals.assertEquals(expected, events.get(0).getSnapshot().getValue());
-    DeepEquals.assertEquals(
+    TestUtils.assertDeepEquals(expected, events.get(0).getSnapshot().getValue());
+    TestUtils.assertDeepEquals(
         ImmutableMap.<String, Object>of("a", "a", "b", "b", "d", "d", "e", "e"),
         events.get(1).getSnapshot().getValue());
   }
@@ -1794,7 +1797,7 @@ public class QueryTestIT {
     Map<String, Object> expected = ImmutableMap.<String, Object>builder().put("b", "b")
         .put("c", "c").put("d", "d").put("e", "e").put("f", "f").build();
 
-    DeepEquals.assertEquals(expected, snap.getValue());
+    TestUtils.assertDeepEquals(expected, snap.getValue());
   }
 
   @Test
@@ -1828,11 +1831,11 @@ public class QueryTestIT {
     Map<String, Object> expected = ImmutableMap.<String, Object>of(
         "a", 1L, "b", 2L, "c", 3L, "d", 4L);
     Object result = events.get(0).getSnapshot().getValue();
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
 
     expected = ImmutableMap.<String, Object>of("a", 1L, "c", "a", "cc", "new", "cd", "new2");
     result = events.get(1).getSnapshot().getValue();
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -1866,11 +1869,11 @@ public class QueryTestIT {
     Map<String, Object> expected = ImmutableMap.<String, Object>of("bar", "a", "baz", "b", "bam",
         "c");
     Object result = events.get(0).getSnapshot().getValue();
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
 
     expected = ImmutableMap.<String, Object>of("bar", "d", "baz", "b", "bat", "e");
     result = events.get(1).getSnapshot().getValue();
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -1900,7 +1903,7 @@ public class QueryTestIT {
           assertEquals("b", snapshot.getValue());
         } else if (count == 2) {
           assertEquals("c", snapshot.getKey());
-          DeepEquals.assertEquals(deepObject, snapshot.getValue());
+          TestUtils.assertDeepEquals(deepObject, snapshot.getValue());
         } else {
           fail("Too many events");
         }
@@ -1979,7 +1982,7 @@ public class QueryTestIT {
           assertEquals("b", snapshot.getValue());
         } else if (count == 2) {
           assertEquals("c", snapshot.getKey());
-          DeepEquals.assertEquals(deepObject, snapshot.getValue());
+          TestUtils.assertDeepEquals(deepObject, snapshot.getValue());
         } else {
           fail("Too many events");
         }
@@ -2418,7 +2421,7 @@ public class QueryTestIT {
       @Override
       public boolean isComplete(List<EventRecord> events) {
         if (events.size() == 1) {
-          DeepEquals.assertEquals(toSet, events.get(0).getSnapshot().getValue());
+          TestUtils.assertDeepEquals(toSet, events.get(0).getSnapshot().getValue());
           try {
             writer.child("d").setValue(4);
           } catch (DatabaseException e) { // ignore
@@ -2427,7 +2430,7 @@ public class QueryTestIT {
           return false;
         } else {
           Map<String, Long> expected = ImmutableMap.of("d", 4L, "e", 3L);
-          DeepEquals.assertEquals(expected, events.get(1).getSnapshot().getValue());
+          TestUtils.assertDeepEquals(expected, events.get(1).getSnapshot().getValue());
           return true;
         }
       }
@@ -2487,7 +2490,7 @@ public class QueryTestIT {
               public void onDataChange(DataSnapshot snapshot) {
                 Map<String, Object> expected = ImmutableMap.<String, Object>of(
                     "80", true, "550", true, "600", true);
-                DeepEquals.assertEquals(expected, snapshot.getValue());
+                TestUtils.assertDeepEquals(expected, snapshot.getValue());
                 done.release();
               }
 
@@ -2517,7 +2520,7 @@ public class QueryTestIT {
               public void onDataChange(DataSnapshot snapshot) {
                 Map<String, Object> expected = ImmutableMap.<String, Object>of(
                     "1", true, "6", true, "8", true, "50", true);
-                DeepEquals.assertEquals(expected, snapshot.getValue());
+                TestUtils.assertDeepEquals(expected, snapshot.getValue());
                 done.release();
               }
 
@@ -2548,7 +2551,7 @@ public class QueryTestIT {
                   public void onDataChange(DataSnapshot snapshot) {
                     Map<String, Object> expected = ImmutableMap.<String, Object>of(
                         "50", true, "70", true, "80", true);
-                    DeepEquals.assertEquals(expected, snapshot.getValue());
+                    TestUtils.assertDeepEquals(expected, snapshot.getValue());
                     done.release();
                   }
 
@@ -2692,13 +2695,13 @@ public class QueryTestIT {
 
     TestHelpers.waitFor(semaphore);
     Map<String, Object> expected = ImmutableMap.<String, Object>of("a", "foo");
-    DeepEquals.assertEquals(expected, snapshotHolder[0].getValue());
+    TestUtils.assertDeepEquals(expected, snapshotHolder[0].getValue());
 
     ref.removeEventListener(listener);
 
     new WriteFuture(ref.child("a"), "bar", 100).timedGet();
     // the listener is removed the value should have not changed
-    DeepEquals.assertEquals(expected, snapshotHolder[0].getValue());
+    TestUtils.assertDeepEquals(expected, snapshotHolder[0].getValue());
   }
 
   @Test
@@ -2748,7 +2751,7 @@ public class QueryTestIT {
     });
 
     TestHelpers.waitFor(done);
-    DeepEquals.assertEquals(ImmutableList.of("b", "c", "a"), children);
+    TestUtils.assertDeepEquals(ImmutableList.of("b", "c", "a"), children);
   }
 
   @Test

@@ -30,8 +30,6 @@ import org.json.JSONObject;
 
 public class IntegrationTestUtils {
 
-  public static final long ASYNC_WAIT_TIME_MS = 5000;
-
   private static JSONObject IT_SERVICE_ACCOUNT;
 
   public static String getDatabaseUrl() {
@@ -62,10 +60,6 @@ public class IntegrationTestUtils {
 
   public static String getProjectId() {
     return ensureServiceAccount().get("project_id").toString();
-  }
-
-  public static String getProjectNumber() {
-    return ensureServiceAccount().get("client_id").toString();
   }
 
   public static FirebaseApp initDefaultApp() {

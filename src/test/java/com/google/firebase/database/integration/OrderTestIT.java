@@ -13,7 +13,6 @@ import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.DeepEquals;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.MapBuilder;
 import com.google.firebase.database.TestFailure;
@@ -22,6 +21,7 @@ import com.google.firebase.database.core.view.Event;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.testing.IntegrationTestUtils;
+import com.google.firebase.testing.TestUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeoutException;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -326,14 +327,14 @@ public class OrderTestIT {
     for (DataSnapshot child : snap.getChildren()) {
       actual.add(child.getKey());
     }
-    DeepEquals.assertEquals(expected, actual);
+    TestUtils.assertDeepEquals(expected, actual);
 
     actual.clear();
     snap = TestHelpers.getSnap(reader);
     for (DataSnapshot child : snap.getChildren()) {
       actual.add(child.getKey());
     }
-    DeepEquals.assertEquals(expected, actual);
+    TestUtils.assertDeepEquals(expected, actual);
   }
 
   @Test
@@ -360,7 +361,7 @@ public class OrderTestIT {
     for (DataSnapshot child : snap.getChildren()) {
       actual.add(child.getKey());
     }
-    DeepEquals.assertEquals(expected, actual);
+    TestUtils.assertDeepEquals(expected, actual);
   }
 
   @Test
@@ -378,7 +379,7 @@ public class OrderTestIT {
     for (DataSnapshot child : snap.getChildren()) {
       actual.add(child.getKey());
     }
-    DeepEquals.assertEquals(expected, actual);
+    TestUtils.assertDeepEquals(expected, actual);
   }
 
   @Test
@@ -420,7 +421,7 @@ public class OrderTestIT {
 
     TestHelpers.waitFor(semaphore, 3);
     List<String> expected = Arrays.asList("a", null, "b", "a", "c", "b");
-    DeepEquals.assertEquals(expected, results);
+    TestUtils.assertDeepEquals(expected, results);
     ref.removeEventListener(listener);
   }
 
@@ -466,7 +467,7 @@ public class OrderTestIT {
 
     TestHelpers.waitFor(semaphore, 5);
     List<String> expected = Arrays.asList("b", null, "c", "b", "d", "c", "a", null, "e", "d");
-    DeepEquals.assertEquals(expected, results);
+    TestUtils.assertDeepEquals(expected, results);
     ref.removeEventListener(listener);
   }
 
@@ -511,7 +512,7 @@ public class OrderTestIT {
 
     TestHelpers.waitFor(semaphore, 5);
     List<String> expected = Arrays.asList("b", null, "c", "b", "d", "c", "a", null, "e", "d");
-    DeepEquals.assertEquals(expected, results);
+    TestUtils.assertDeepEquals(expected, results);
     ref.removeEventListener(listener);
   }
 
@@ -565,7 +566,7 @@ public class OrderTestIT {
 
     List<String> expected = ImmutableList.of("MOVED:d/null", "CHANGED:d/null", "MOVED:a/c",
         "CHANGED:a/c", "MOVED:c/d", "CHANGED:c/d");
-    DeepEquals.assertEquals(expected, results);
+    TestUtils.assertDeepEquals(expected, results);
     ref.removeEventListener(listener);
   }
 
@@ -640,7 +641,7 @@ public class OrderTestIT {
 
     List<String> expected = ImmutableList.of("MOVED:d/null", "CHANGED:d/null", "MOVED:a/c",
         "CHANGED:a/c", "MOVED:c/d", "CHANGED:c/d");
-    DeepEquals.assertEquals(expected, results);
+    TestUtils.assertDeepEquals(expected, results);
     ref.removeEventListener(listener);
   }
 

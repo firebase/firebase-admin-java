@@ -23,29 +23,6 @@ public class FirebaseAppStoreTest {
 
   @Rule public FirebaseAppRule firebaseAppRule = new FirebaseAppRule();
 
-  // TODO(arondeak): reenable persistence. See b/28158809.
-  //    @Test
-  //    public void persistThenRestoreOneApp() {
-  //        String name = "myApp";
-  //        FirebaseApp.initializeApp(mTargetContext, ALL_VALUES_OPTIONS, name);
-  //        FirebaseAppStore appStore = new SharedPrefsFirebaseAppStore(mTargetContext)
-  //        assertThat(appStore.getAllPersistedAppNames().contains(name)).isTrue();
-  //        FirebaseApp.clearInstancesForTest();
-  //        FirebaseApp restoredApp = Iterables.getOnlyElement(FirebaseApp.getApps
-  // (mTargetContext));
-  //        assertThat(restoredApp.getOptions()).isEqualTo(ALL_VALUES_OPTIONS);
-  //    }
-  //
-  //    @Test
-  //    public void persistThenRemoveOneApp() {
-  //        String name = "myApp";
-  //        FirebaseApp.initializeApp(mTargetContext, ALL_VALUES_OPTIONS, name);
-  //        FirebaseAppStore appStore = new SharedPrefsFirebaseAppStore(mTargetContext);
-  //        assertThat(appStore.getAllPersistedAppNames().contains(name)).isTrue();
-  //        appStore.removeApp(name);
-  //        assertThat(appStore.getAllPersistedAppNames()).doesNotContain(name);
-  //    }
-
   @Test
   public void compatibleAppInitializedInNextRunOk() {
     String name = "myApp";

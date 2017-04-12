@@ -8,6 +8,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.cedarsoftware.util.DeepEquals;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -16,7 +17,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.DeepEquals;
 import com.google.firebase.database.EventRecord;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.GenericTypeIndicator;
@@ -34,6 +34,7 @@ import com.google.firebase.database.core.view.Event;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.testing.IntegrationTestUtils;
+import com.google.firebase.testing.TestUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -109,7 +110,7 @@ public class DataTestIT {
     List<EventRecord> events = future.timedGet();
     EventRecord eventRecord = events.get(events.size() - 1);
     Object result = eventRecord.getSnapshot().getValue();
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -165,7 +166,7 @@ public class DataTestIT {
     GenericTypeIndicator<Map<String, Object>> t = new GenericTypeIndicator<Map<String, Object>>() {
     };
     Map<String, Object> result = readFuture.timedGet().get(0).getSnapshot().getValue(t);
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -430,8 +431,8 @@ public class DataTestIT {
     DataSnapshot writerSnap = TestHelpers.getSnap(writer);
     Map<String, Object> expected = new MapBuilder()
         .put("a", new MapBuilder().put("bb", 24L).build()).build();
-    DeepEquals.assertEquals(expected, readerSnap.getValue());
-    DeepEquals.assertEquals(expected, writerSnap.getValue());
+    TestUtils.assertDeepEquals(expected, readerSnap.getValue());
+    TestUtils.assertDeepEquals(expected, writerSnap.getValue());
 
     readHelper.cleanup();
     writeHelper.cleanup();
@@ -471,7 +472,7 @@ public class DataTestIT {
     DataSnapshot snap = TestHelpers.getSnap(ref);
     List<Object> expected = ImmutableList.of((Object) "alpha", "bravo", "charlie",
         "delta", "echo");
-    DeepEquals.assertEquals(expected, snap.getValue());
+    TestUtils.assertDeepEquals(expected, snap.getValue());
   }
 
   @Test
@@ -493,7 +494,7 @@ public class DataTestIT {
     ref.setValue(expected);
     List<EventRecord> events = readFuture.timedGet();
     Object result = events.get(events.size() - 1).getSnapshot().getValue();
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
   }
 
   // NOTE: skipping test for value in callback. DataSnapshot is same instance in
@@ -527,7 +528,7 @@ public class DataTestIT {
     });
 
     readFuture.timedGet();
-    assertTrue(callbackHit.tryAcquire(1, IntegrationTestUtils.ASYNC_WAIT_TIME_MS, MILLISECONDS));
+    assertTrue(callbackHit.tryAcquire(1, TestUtils.TEST_TIMEOUT_MILLIS, MILLISECONDS));
     // We test the value in the completion condition
   }
 
@@ -552,7 +553,7 @@ public class DataTestIT {
     });
 
     assertTrue(
-        callbackHit.tryAcquire(2, IntegrationTestUtils.ASYNC_WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+        callbackHit.tryAcquire(2, TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
   }
 
   @Test
@@ -700,7 +701,7 @@ public class DataTestIT {
     List<EventRecord> events = readFuture.timedGet();
     DataSnapshot readSnap = events.get(0).getSnapshot();
     assertTrue(readSnap.hasChildren());
-    DeepEquals.assertEquals(json, readSnap.getValue());
+    TestUtils.assertDeepEquals(json, readSnap.getValue());
 
     readSnap = events.get(1).getSnapshot();
     assertFalse(readSnap.hasChildren());
@@ -708,7 +709,7 @@ public class DataTestIT {
 
     readSnap = events.get(2).getSnapshot();
     assertTrue(readSnap.hasChildren());
-    DeepEquals.assertEquals(json, readSnap.getValue());
+    TestUtils.assertDeepEquals(json, readSnap.getValue());
   }
 
   @Test
@@ -760,8 +761,7 @@ public class DataTestIT {
       }
     });
 
-    assertTrue(semaphore.tryAcquire(1, IntegrationTestUtils.ASYNC_WAIT_TIME_MS,
-        TimeUnit.MILLISECONDS));
+    assertTrue(semaphore.tryAcquire(1, TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
   }
 
   @Test
@@ -779,8 +779,7 @@ public class DataTestIT {
       }
     });
 
-    assertTrue(semaphore.tryAcquire(1, IntegrationTestUtils.ASYNC_WAIT_TIME_MS,
-        TimeUnit.MILLISECONDS));
+    assertTrue(semaphore.tryAcquire(1, TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
   }
 
   @Test
@@ -896,7 +895,7 @@ public class DataTestIT {
     ref.setValue(expected);
     DataSnapshot snap = readFuture.timedGet().get(0).getSnapshot();
     Object result = snap.getValue(true);
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -1025,7 +1024,7 @@ public class DataTestIT {
     new WriteFuture(ref1.child("foo"), "hi").timedGet();
     DataSnapshot snap = new ReadFuture(ref2).timedGet().get(0).getSnapshot();
     Map<String, Object> expected = MapBuilder.of("foo", "hi");
-    DeepEquals.assertEquals(expected, snap.getValue());
+    TestUtils.assertDeepEquals(expected, snap.getValue());
   }
 
   @Test
@@ -1143,7 +1142,7 @@ public class DataTestIT {
     // Test all controls characters PLUS 0x7F (127).
     for (int i = 0; i <= 32; i++) {
       String ch = new String(Character.toChars(i < 32 ? i : 127));
-      HashMap<String, Object> obj = TestHelpers.buildObjFromPath(new Path(ch), "test_value");
+      Map<String, Object> obj = TestHelpers.buildObjFromPath(new Path(ch), "test_value");
       try {
         node.setValue(obj);
         fail("Ascii control character should not be allowed in path.");
@@ -1189,12 +1188,12 @@ public class DataTestIT {
         new BadGroup("Path specified exceeds the maximum depth",
             Collections.singletonList(TestHelpers.repeatedString("key/", maxPathDepth) + "key")));
 
-    DatabaseReference node = TestHelpers.getRandomNode().getRoot();
+    DatabaseReference node = FirebaseDatabase.getInstance(masterApp).getReference();
 
     // Ensure "good keys" work from the root.
     for (String key : goodKeys) {
       Path path = new Path(key);
-      HashMap<String, Object> obj = TestHelpers.buildObjFromPath(path, "test_value");
+      Map<String, Object> obj = TestHelpers.buildObjFromPath(path, "test_value");
       node.setValue(obj);
       ReadFuture future = ReadFuture.untilNonNull(node);
       assertEquals("test_value", TestHelpers.applyPath(future.waitForLastValue(), path));
@@ -1212,7 +1211,7 @@ public class DataTestIT {
     // long).
     DatabaseReference nodeChild = IntegrationTestUtils.getRandomNode(masterApp);
     for (String key : goodKeys) {
-      HashMap<String, Object> obj = TestHelpers.buildObjFromPath(new Path(key), "test_value");
+      Map<String, Object> obj = TestHelpers.buildObjFromPath(new Path(key), "test_value");
       try {
         nodeChild.setValue(obj);
         fail("Too-long path for setValue should throw exception.");
@@ -1242,7 +1241,7 @@ public class DataTestIT {
 
     for (BadGroup badGroup : badGroups) {
       for (String key : badGroup.keys) {
-        HashMap<String, Object> obj = TestHelpers.buildObjFromPath(new Path(key), "test_value");
+        Map<String, Object> obj = TestHelpers.buildObjFromPath(new Path(key), "test_value");
         try {
           node.setValue(obj);
           fail("Expected setValue(bad key) to throw exception: " + key);
@@ -1328,7 +1327,7 @@ public class DataTestIT {
     Map<String, Object> expected = MapBuilder.of("\"herp\"", 1234L);
     new WriteFuture(ref, expected).timedGet();
     DataSnapshot snap = TestHelpers.getSnap(ref);
-    DeepEquals.assertEquals(expected, snap.getValue());
+    TestUtils.assertDeepEquals(expected, snap.getValue());
   }
 
   @Test
@@ -1514,7 +1513,7 @@ public class DataTestIT {
     Map<String, Object> expected = new MapBuilder().put("a", 4L).put("b", 2L).put("c", 3L)
         .put("d", 1L).build();
     Object result = events.get(events.size() - 1).getSnapshot().getValue();
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -1541,7 +1540,7 @@ public class DataTestIT {
     Map<String, Object> expected = new MapBuilder().put("a", 4L).put("b", 2L).put("c", 3L)
         .put("d", 1L).build();
     Object result = snap.getValue();
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -1610,7 +1609,7 @@ public class DataTestIT {
     Map<String, Object> expected = new MapBuilder().put("a", 42L).put("b", 2L).put("c", 3L)
         .put("d", 4L).build();
     Object result = snap.getValue();
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -1684,10 +1683,10 @@ public class DataTestIT {
     TestHelpers.waitFor(semaphore);
 
     DataSnapshot snap = TestHelpers.getSnap(reader);
-    DeepEquals.assertEquals(expected, snap.getValue());
+    TestUtils.assertDeepEquals(expected, snap.getValue());
 
     snap = readFuture.timedGet().get(1).getSnapshot();
-    DeepEquals.assertEquals(expected, snap.getValue());
+    TestUtils.assertDeepEquals(expected, snap.getValue());
   }
 
   @Test
@@ -1717,11 +1716,11 @@ public class DataTestIT {
     TestHelpers.waitFor(semaphore);
 
     DataSnapshot snap = TestHelpers.getSnap(reader);
-    DeepEquals.assertEquals(expected, snap.getValue());
+    TestUtils.assertDeepEquals(expected, snap.getValue());
     assertEquals(3.0, snap.getPriority());
 
     snap = readFuture.timedGet().get(1).getSnapshot();
-    DeepEquals.assertEquals(expected, snap.getValue());
+    TestUtils.assertDeepEquals(expected, snap.getValue());
     assertEquals(3.0, snap.getPriority());
 
     snap = TestHelpers.getSnap(reader.child("a/ab"));
@@ -1776,11 +1775,11 @@ public class DataTestIT {
     DataSnapshot snap = writerFuture.timedGet().get(1).getSnapshot();
 
     Map<String, Object> expected = MapBuilder.of("b", 6L);
-    DeepEquals.assertEquals(expected, snap.getValue());
+    TestUtils.assertDeepEquals(expected, snap.getValue());
 
     snap = readerFuture.timedGet().get(1).getSnapshot();
 
-    DeepEquals.assertEquals(expected, snap.getValue());
+    TestUtils.assertDeepEquals(expected, snap.getValue());
   }
 
   @Test
@@ -1818,11 +1817,11 @@ public class DataTestIT {
     DataSnapshot snap = writerFuture.timedGet().get(1).getSnapshot();
 
     Map<String, Object> expected = MapBuilder.of("a", 42L);
-    DeepEquals.assertEquals(expected, snap.getValue());
+    TestUtils.assertDeepEquals(expected, snap.getValue());
 
     snap = readerFuture.timedGet().get(1).getSnapshot();
 
-    DeepEquals.assertEquals(expected, snap.getValue());
+    TestUtils.assertDeepEquals(expected, snap.getValue());
   }
 
   @Test
@@ -1883,11 +1882,11 @@ public class DataTestIT {
     DataSnapshot snap = writerFuture.timedGet().get(1).getSnapshot();
 
     Map<String, Object> expected = MapBuilder.of("a", 11L);
-    DeepEquals.assertEquals(expected, snap.getValue());
+    TestUtils.assertDeepEquals(expected, snap.getValue());
 
     snap = readerFuture.timedGet().get(1).getSnapshot();
 
-    DeepEquals.assertEquals(expected, snap.getValue());
+    TestUtils.assertDeepEquals(expected, snap.getValue());
   }
 
   @Test
@@ -2491,7 +2490,7 @@ public class DataTestIT {
     });
 
     TestHelpers.waitFor(gotData);
-    DeepEquals.assertEquals(data, result.get());
+    TestUtils.assertDeepEquals(data, result.get());
 
     final Semaphore done = new Semaphore(0);
 
@@ -2570,7 +2569,7 @@ public class DataTestIT {
 
     TestHelpers.waitFor(gotData);
     assertEquals(1, updateCount.get());
-    DeepEquals.assertEquals(expected, result.get());
+    TestUtils.assertDeepEquals(expected, result.get());
 
     final Semaphore done = new Semaphore(0);
 
@@ -2637,7 +2636,7 @@ public class DataTestIT {
     });
 
     TestHelpers.waitFor(readSemaphore);
-    DeepEquals.assertEquals(longList, readSnapshots.get(0).getValue());
+    TestUtils.assertDeepEquals(longList, readSnapshots.get(0).getValue());
 
     // Add a new child while readRef is offline.
     readRef.getDatabase().goOffline();
@@ -2651,7 +2650,7 @@ public class DataTestIT {
     // Go back online and make sure we get the new item.
     readRef.getDatabase().goOnline();
     TestHelpers.waitFor(readSemaphore);
-    DeepEquals.assertEquals(longList, readSnapshots.get(1).getValue());
+    TestUtils.assertDeepEquals(longList, readSnapshots.get(1).getValue());
   }
 
   @Test
@@ -2667,7 +2666,7 @@ public class DataTestIT {
     Map<String, Object> expected = new MapBuilder().put("-1", "minus-one").put("0", "zero")
         .put("1", "one").build();
     Object result = snap.getValue();
-    DeepEquals.assertEquals(expected, result);
+    TestUtils.assertDeepEquals(expected, result);
   }
 
   @Test

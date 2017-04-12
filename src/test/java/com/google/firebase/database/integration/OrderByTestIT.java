@@ -12,7 +12,6 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.DatabaseReference.CompletionListener;
-import com.google.firebase.database.DeepEquals;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.MapBuilder;
 import com.google.firebase.database.Query;
@@ -23,6 +22,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.testing.IntegrationTestUtils;
+import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeoutException;
+
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -864,7 +865,7 @@ public class OrderByTestIT {
     Query query = reader.orderByChild("idx").equalTo(true);
 
     DataSnapshot snap = TestHelpers.getSnap(query);
-    DeepEquals.assertEquals(
+    TestUtils.assertDeepEquals(
         new MapBuilder()
             .put("a", ImmutableMap.of("data", "foo", "idx", true))
             .put("b", ImmutableMap.of("data", "bar", "idx", true))
@@ -886,7 +887,7 @@ public class OrderByTestIT {
     TestHelpers.waitFor(semaphore);
 
     snap = TestHelpers.getSnap(query);
-    DeepEquals.assertEquals(
+    TestUtils.assertDeepEquals(
         new MapBuilder()
             .put("b", ImmutableMap.of("data", "blah", "idx", true))
             .put("c", ImmutableMap.of("data", "baz", "idx", true))

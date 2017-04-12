@@ -6,9 +6,10 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.EventRecord;
-import com.google.firebase.database.TestConstants;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.core.view.Event;
+import com.google.firebase.testing.TestUtils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -99,7 +100,7 @@ class EventHelper {
     toListen.clear();
     if (waitForInitialization) {
       initializationSemaphore.tryAcquire(
-          locationList.size(), TestConstants.TEST_TIMEOUT, TimeUnit.MILLISECONDS);
+          locationList.size(), TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
       // Cut out the initialization events
       synchronized (this) {
         waitingForInitialization = false;
@@ -216,7 +217,7 @@ class EventHelper {
 
   public boolean waitForEvents() throws InterruptedException {
     // Try waiting on the semaphore
-    if (!semaphore.tryAcquire(1, TestConstants.TEST_TIMEOUT, TimeUnit.MILLISECONDS)) {
+    if (!semaphore.tryAcquire(1, TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
       return false;
     } else {
       semaphore.release(1);

@@ -2,7 +2,6 @@ package com.google.firebase.database;
 
 import com.google.firebase.database.core.view.Event;
 
-/** User: greg Date: 5/28/13 Time: 10:01 AM */
 public class EventRecord {
 
   private DataSnapshot snapshot;

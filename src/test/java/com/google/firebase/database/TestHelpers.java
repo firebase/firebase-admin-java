@@ -1,27 +1,21 @@
 package com.google.firebase.database;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseCredentials;
-import com.google.firebase.database.core.Context;
 import com.google.firebase.database.core.CoreTestHelpers;
 import com.google.firebase.database.core.DatabaseConfig;
 import com.google.firebase.database.core.EventTarget;
 import com.google.firebase.database.core.Path;
-import com.google.firebase.database.core.persistence.PersistenceManager;
 import com.google.firebase.database.core.view.QuerySpec;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 import com.google.firebase.testing.ServiceAccount;
+import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Method;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -40,80 +34,13 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.params.CoreProtocolPNames;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
+
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
 
 public class TestHelpers {
 
-  private static List<DatabaseConfig> contexts = new ArrayList<>();
-  private static String testSecret = null;
   private static boolean appInitialized = false;
-
-  public static void failOnFirstUncaughtException() {
-    for (Context ctx : contexts) {
-      TestEventTarget eventTarget = (TestEventTarget) ctx.getEventTarget();
-      Throwable t = eventTarget.caughtException.getAndSet(null);
-      if (t != null) {
-        t.printStackTrace();
-        fail("Found error on event target");
-      }
-      TestRunLoop runLoop = (TestRunLoop) ctx.getRunLoop();
-      t = runLoop.caughtException.getAndSet(null);
-      if (t != null) {
-        t.printStackTrace();
-        fail("Found error on run loop");
-      }
-    }
-  }
-
-  public static DatabaseConfig getContext(int i) {
-    ensureContexts(i + 1);
-    return contexts.get(i);
-  }
-
-  public static DatabaseReference rootWithNewContext() throws DatabaseException {
-    return rootWithConfig(newTestConfig());
-  }
-
-  public static DatabaseReference rootWithConfig(DatabaseConfig config) {
-    return new DatabaseReference(TestConstants.TEST_NAMESPACE, config);
-  }
-
-  public static DatabaseReference getRandomNode() throws DatabaseException {
-    return getRandomNode(1).get(0);
-  }
-
-  public static List<DatabaseReference> getRandomNode(int count) throws DatabaseException {
-    ensureContexts(count);
-
-    List<DatabaseReference> results = new ArrayList<>(count);
-    String name = null;
-    for (int i = 0; i < count; ++i) {
-      DatabaseReference ref = new DatabaseReference(TestConstants.TEST_NAMESPACE, contexts.get(i));
-      if (name == null) {
-        name = ref.push().getKey();
-      }
-      results.add(ref.child(name));
-    }
-    return results;
-  }
-
-  public static void goOffline(DatabaseConfig cfg) {
-    DatabaseReference.goOffline(cfg);
-  }
-
-  public static void goOnline(DatabaseConfig cfg) {
-    DatabaseReference.goOnline(cfg);
-  }
 
   public static DatabaseConfig newFrozenTestConfig() {
     DatabaseConfig cfg = newTestConfig();
@@ -122,11 +49,18 @@ public class TestHelpers {
   }
 
   public static DatabaseConfig newTestConfig() {
-    TestHelpers.ensureAppInitialized();
+    if (!appInitialized) {
+      appInitialized = true;
+      FirebaseApp.initializeApp(
+          new FirebaseOptions.Builder()
+              .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+              .setDatabaseUrl("http://tests.fblocal.com:9000")
+              .build());
+    }
     return newTestConfig(FirebaseApp.getInstance());
   }
 
-  public static DatabaseConfig newTestConfig(FirebaseApp app) {
+  private static DatabaseConfig newTestConfig(FirebaseApp app) {
     TestRunLoop runLoop = new TestRunLoop();
     DatabaseConfig config = new DatabaseConfig();
     config.setLogLevel(Logger.Level.WARN);
@@ -146,55 +80,17 @@ public class TestHelpers {
     return runLoop.getExecutorService();
   }
 
-  public static void setForcedPersistentCache(Context ctx, PersistenceManager manager) {
-    try {
-      Method method =
-          Context.class.getDeclaredMethod("forcePersistenceManager", PersistenceManager.class);
-      method.setAccessible(true);
-      method.invoke(ctx, manager);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static void setLogger(
-      DatabaseConfig ctx, com.google.firebase.database.logging.Logger logger) {
-    ctx.setLogger(logger);
-  }
-
-  private static void ensureContexts(int count) {
-    for (int i = contexts.size(); i < count; ++i) {
-      contexts.add(newTestConfig());
-    }
-  }
-
-  public static String getTestSecret() {
-    if (testSecret == null) {
-      try {
-        InputStream response =
-            new URL(TestConstants.TEST_NAMESPACE + "/.nsadmin/.json?key=1234").openStream();
-        TypeReference<Map<String, Object>> t = new TypeReference<Map<String, Object>>() {};
-        Map<String, Object> data = new ObjectMapper().readValue(response, t);
-        testSecret = (String) ((List) data.get("secrets")).get(0);
-      } catch (Throwable e) {
-        fail("Could not get test secret.");
-      }
-    }
-    return testSecret;
-  }
-
   public static void waitFor(Semaphore semaphore) throws InterruptedException {
     waitFor(semaphore, 1);
   }
 
   public static void waitFor(Semaphore semaphore, int count) throws InterruptedException {
-    waitFor(semaphore, count, TestConstants.TEST_TIMEOUT, TimeUnit.MILLISECONDS);
+    waitFor(semaphore, count, TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   public static void waitFor(Semaphore semaphore, int count, long timeout, TimeUnit unit)
       throws InterruptedException {
     boolean success = semaphore.tryAcquire(count, timeout, unit);
-    failOnFirstUncaughtException();
     assertTrue("Operation timed out", success);
   }
 
@@ -219,63 +115,8 @@ public class TestHelpers {
           }
         });
 
-    semaphore.tryAcquire(1, TestConstants.TEST_TIMEOUT, TimeUnit.MILLISECONDS);
+    semaphore.tryAcquire(1, TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     return snapshotList.get(0);
-  }
-
-  public static void uploadRules(DatabaseReference ref, String rules) throws IOException {
-    // TODO: There's some weird flakiness in the rules tests where sometimes most of the tests
-    // fail in such a way that it *seems* like the rules didn't successfully upload or got
-    // replaced mid-test.  Until we've figured it out, I've added some dumb upload logging.
-    System.out.println("UPLOADING RULES.");
-    HttpClient httpClient = new DefaultHttpClient();
-    HttpEntity entity = new StringEntity(rules, "UTF-8");
-    String url = ref.getRoot().toString() + "/.settings/rules.json?auth=" + getTestSecret();
-    HttpPut put = new HttpPut(url);
-    put.setEntity(entity);
-
-    HttpParams httpParameters = httpClient.getParams();
-    httpParameters.setBooleanParameter(CoreProtocolPNames.USE_EXPECT_CONTINUE, false);
-    HttpConnectionParams.setTcpNoDelay(httpParameters, true);
-
-    HttpResponse response = httpClient.execute(put);
-    assertTrue(response.getStatusLine().getStatusCode() == 200);
-    if (rules.length() < 100) {
-      System.out.println("UPLOADED default rules.");
-    } else {
-      System.out.println("UPLOADED custom rules.");
-    }
-  }
-
-  public static void assertSuccessfulAuth(
-      DatabaseReference ref, TestTokenProvider provider, String credential) {
-    DatabaseReference authRef = ref.getRoot().child(".info/authenticated");
-    final Semaphore semaphore = new Semaphore(0);
-    final List<Boolean> authStates = new ArrayList<>();
-    ValueEventListener listener =
-        authRef.addValueEventListener(
-            new ValueEventListener() {
-              @Override
-              public void onDataChange(DataSnapshot snapshot) {
-                authStates.add(snapshot.getValue(Boolean.class));
-                semaphore.release();
-              }
-
-              @Override
-              public void onCancelled(DatabaseError error) {
-                throw new RuntimeException("Should not happen");
-              }
-            });
-
-    provider.setToken(credential);
-
-    try {
-      TestHelpers.waitFor(semaphore, 2);
-      assertEquals(Arrays.asList(false, true), authStates);
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
-    authRef.removeEventListener(listener);
   }
 
   public static Map<String, Object> fromJsonString(String json) {
@@ -316,38 +157,18 @@ public class TestHelpers {
     }
   }
 
-  public static void waitForEvents(DatabaseReference ref) {
-    try {
-      // Make sure queue is done and all events are queued
-      TestHelpers.waitForQueue(ref);
-      // Next, all events were queued, make sure all events are done raised
-      final Semaphore semaphore = new Semaphore(0);
-      ref.getRepo()
-          .postEvent(
-              new Runnable() {
-                @Override
-                public void run() {
-                  semaphore.release();
-                }
-              });
-      semaphore.acquire();
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   public static String repeatedString(String s, int n) {
-    String result = "";
+    StringBuilder result = new StringBuilder("");
 
     for (int i = 0; i < n; i++) {
-      result += s;
+      result.append(s);
     }
-    return result;
+    return result.toString();
   }
 
-  // Create a (test) object which places a test value at then end of the
+  // Create a (test) object which places a test value at the end of the
   // object path (e.g., a/b/c would yield {a: {b: {c: "test_value"}}}
-  public static HashMap<String, Object> buildObjFromPath(Path path, Object testValue) {
+  public static Map<String, Object> buildObjFromPath(Path path, Object testValue) {
     final HashMap<String, Object> result = new HashMap<>();
 
     HashMap<String, Object> parent = result;
@@ -366,10 +187,9 @@ public class TestHelpers {
   }
 
   // Lookup the value at the path in HashMap (e.g., "a/b/c").
-  @SuppressWarnings("unchecked")
   public static Object applyPath(Object value, Path path) {
     for (ChildKey key : path) {
-      value = ((HashMap<String, Object>) value).get(key.asString());
+      value = ((Map) value).get(key.asString());
     }
     return value;
   }
@@ -399,22 +219,11 @@ public class TestHelpers {
   }
 
   public static Set<ChildKey> childKeySet(String... stringKeys) {
-    HashSet<ChildKey> childKeys = new HashSet<>();
+    Set<ChildKey> childKeys = new HashSet<>();
     for (String k : stringKeys) {
       childKeys.add(ChildKey.fromString(k));
     }
     return childKeys;
-  }
-
-  public static void ensureAppInitialized() {
-    if (!appInitialized) {
-      appInitialized = true;
-      FirebaseApp.initializeApp(
-          new FirebaseOptions.Builder()
-              .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
-              .setDatabaseUrl(TestConstants.TEST_NAMESPACE)
-              .build());
-    }
   }
 
   public static void setHijackHash(DatabaseReference ref, boolean hijackHash) {

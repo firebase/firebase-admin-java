@@ -14,9 +14,6 @@ import com.google.firebase.database.core.view.Change;
 import com.google.firebase.database.core.view.DataEvent;
 import com.google.firebase.database.core.view.Event;
 import com.google.firebase.database.core.view.QuerySpec;
-import com.google.firebase.database.logging.DefaultLogger;
-import com.google.firebase.database.logging.LogWrapper;
-import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
@@ -30,13 +27,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class SyncPointTest {
 
-  private static SyncTree.ListenProvider getNewListenProvider(final LogWrapper logger) {
+  private static SyncTree.ListenProvider getNewListenProvider() {
     return new SyncTree.ListenProvider() {
       private final HashSet<QuerySpec> listens = new HashSet<>();
 
@@ -47,7 +43,6 @@ public class SyncPointTest {
           ListenHashProvider hash,
           SyncTree.CompletionListener onListenComplete) {
         Path path = query.getPath();
-        logger.debug("Listening at " + path + " for Tag " + tag + ")");
         assert !listens.contains(query) : "Duplicate listen";
         this.listens.add(query);
       }
@@ -55,7 +50,6 @@ public class SyncPointTest {
       @Override
       public void stopListening(QuerySpec query, Tag tag) {
         Path path = query.getPath();
-        logger.debug("Stop listening at " + path + " for Tag " + tag + ")");
         assert this.listens.contains(query) : "Stopped listening for query already";
         this.listens.remove(query);
       }
@@ -273,11 +267,7 @@ public class SyncPointTest {
   @SuppressWarnings("unchecked")
   private static void runTest(Map<String, Object> testSpec, String basePath) {
     DatabaseConfig config = TestHelpers.newTestConfig();
-    TestHelpers.setLogger(config, new DefaultLogger(Logger.Level.WARN, null));
-    LogWrapper logger = config.getLogger("SyncPointTest");
-
-    logger.info("Running \"" + testSpec.get("name") + '"');
-    SyncTree.ListenProvider listenProvider = getNewListenProvider(logger);
+    SyncTree.ListenProvider listenProvider = getNewListenProvider();
     SyncTree syncTree = new SyncTree(config, new NoopPersistenceManager(), listenProvider);
 
     int currentWriteId = 0;
@@ -285,9 +275,6 @@ public class SyncPointTest {
     List<Map<String, Object>> steps = (List<Map<String, Object>>) testSpec.get("steps");
     Map<Integer, EventRegistration> registrations = new HashMap<>();
     for (Map<String, Object> spec : steps) {
-      if (spec.containsKey(".comment")) {
-        logger.info(" > " + spec.get(".comment"));
-      }
       String pathStr = (String) spec.get("path");
       Path path =
           pathStr != null
@@ -376,11 +363,6 @@ public class SyncPointTest {
         throw new RuntimeException("Unknown step: " + type);
       }
     }
-  }
-
-  @After
-  public void tearDown() {
-    TestHelpers.failOnFirstUncaughtException();
   }
 
   @SuppressWarnings("unchecked")

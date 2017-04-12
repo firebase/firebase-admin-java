@@ -26,6 +26,7 @@ import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.IntegrationTestUtils;
+import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -37,6 +38,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
 import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -396,7 +398,7 @@ public class RulesTestIT {
     DatabaseReference ref = root.child(writer.getPath().toString());
 
     String token = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(masterApp, true),
-        IntegrationTestUtils.ASYNC_WAIT_TIME_MS, TimeUnit.MILLISECONDS).getToken();
+        TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).getToken();
     provider.setToken(token);
 
     DatabaseError err = new WriteFuture(ref.child("any_auth"), true).timedGet();
