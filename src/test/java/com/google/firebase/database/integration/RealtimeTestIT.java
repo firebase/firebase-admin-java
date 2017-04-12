@@ -25,7 +25,6 @@ import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.database.utilities.ParsedUrl;
 import com.google.firebase.database.utilities.Utilities;
 import com.google.firebase.testing.IntegrationTestUtils;
-import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -119,8 +118,8 @@ public class RealtimeTestIT {
 
     RepoManager.resume(ctx);
 
-    TestUtils.assertDeepEquals(expected, writerEventRecord.getSnapshot().getValue());
-    TestUtils.assertDeepEquals(expected, readerEventRecord.getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(expected, writerEventRecord.getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(expected, readerEventRecord.getSnapshot().getValue());
   }
 
   @Test
@@ -173,10 +172,10 @@ public class RealtimeTestIT {
 
     RepoManager.resume(ctx);
 
-    TestUtils.assertDeepEquals(true, writerEventRecord.getSnapshot().getValue());
-    TestUtils.assertDeepEquals(expectedPriority, writerEventRecord.getSnapshot().getPriority());
-    TestUtils.assertDeepEquals(true, readerEventRecord.getSnapshot().getValue());
-    TestUtils.assertDeepEquals(expectedPriority, readerEventRecord.getSnapshot().getPriority());
+    TestHelpers.assertDeepEquals(true, writerEventRecord.getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(expectedPriority, writerEventRecord.getSnapshot().getPriority());
+    TestHelpers.assertDeepEquals(true, readerEventRecord.getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(expectedPriority, readerEventRecord.getSnapshot().getPriority());
   }
 
   @Test
@@ -233,8 +232,8 @@ public class RealtimeTestIT {
 
     RepoManager.resume(ctx);
 
-    TestUtils.assertDeepEquals(null, writerEventRecord.getSnapshot().getValue());
-    TestUtils.assertDeepEquals(null, readerEventRecord.getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(null, writerEventRecord.getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(null, readerEventRecord.getSnapshot().getValue());
   }
 
   @Test
@@ -297,8 +296,8 @@ public class RealtimeTestIT {
     Map<String, Object> expected = new MapBuilder().put("bar", "a").put("baz", "c").put("bat", "d")
         .build();
 
-    TestUtils.assertDeepEquals(expected, writerEventRecord.getSnapshot().getValue());
-    TestUtils.assertDeepEquals(expected, readerEventRecord.getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(expected, writerEventRecord.getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(expected, readerEventRecord.getSnapshot().getValue());
   }
 
   @Test
@@ -358,7 +357,7 @@ public class RealtimeTestIT {
 
     Map<String, Object> expected = new MapBuilder()
         .put("foo", new MapBuilder().put("bam", "c").put("bar", "a").build()).build();
-    TestUtils.assertDeepEquals(expected, writerEventRecord.getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(expected, writerEventRecord.getSnapshot().getValue());
     assertTrue(callbackCount.get() == 2);
   }
 
@@ -420,7 +419,7 @@ public class RealtimeTestIT {
 
     Map<String, Object> expected = new MapBuilder()
         .put("foo", new MapBuilder().put("bam", "c").put("bar", "a").build()).build();
-    TestUtils.assertDeepEquals(expected, readerEventRecord.getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(expected, readerEventRecord.getSnapshot().getValue());
     assertTrue(callbackCount.get() == 2);
   }
 
@@ -481,7 +480,7 @@ public class RealtimeTestIT {
 
     Map<String, Object> expected = new MapBuilder()
         .put("foo", new MapBuilder().put("bam", "c").put("bar", "a").build()).build();
-    TestUtils.assertDeepEquals(expected, writerEventRecord.getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(expected, writerEventRecord.getSnapshot().getValue());
     assertTrue(callbackCount.get() == 2);
   }
 
@@ -542,7 +541,7 @@ public class RealtimeTestIT {
 
     Map<String, Object> expected = new MapBuilder()
         .put("foo", new MapBuilder().put("bam", "c").put("bar", "a").build()).build();
-    TestUtils.assertDeepEquals(expected, readerEventRecord.getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(expected, readerEventRecord.getSnapshot().getValue());
     assertTrue(callbackCount.get() == 2);
   }
 
@@ -605,7 +604,7 @@ public class RealtimeTestIT {
 
     Map<String, Object> expected = new MapBuilder().put("a", 1L).put("b", new MapBuilder()
         .put("c", false).put("e", new MapBuilder().put("f", "hooray").build()).build()).build();
-    TestUtils.assertDeepEquals(expected, readerEventRecord.getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(expected, readerEventRecord.getSnapshot().getValue());
     assertEquals(4, callbackCount.get());
   }
 
@@ -676,8 +675,8 @@ public class RealtimeTestIT {
 
     Map<String, Object> expected = new MapBuilder().put("bar", "a").put("baz", "c").build();
 
-    TestUtils.assertDeepEquals(expected, writerEventRecord.getSnapshot().getValue());
-    TestUtils.assertDeepEquals(expected, readerEventRecord.getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(expected, writerEventRecord.getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(expected, readerEventRecord.getSnapshot().getValue());
   }
 
   @Test

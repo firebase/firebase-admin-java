@@ -54,21 +54,6 @@ public class TestUtils {
     }
   }
 
-  /**
-   * Deeply compares two (2) objects. This method will call any overridden equals() methods if they
-   * exist. If not, it will then proceed to do a field-by-field comparison, and when a non-primitive
-   * field is encountered, recursively continue the deep comparison. When an array is found, it will
-   * also ensure that the array contents are deeply equal, not requiring the array instance
-   * (container) to be identical. This method will successfully compare object graphs that have
-   * cycles (A->B->C->A). There is no need to ever use the Arrays.deepEquals() method as this is
-   * a true and more effective super set.
-   */
-  public static void assertDeepEquals(Object a, Object b) {
-    if (!deepEquals(a, b)) {
-      fail("Values different.\nExpected: " + a + "\nActual: " + b);
-    }
-  }
-
   static String loadResource(String path) {
     InputStream stream = TestUtils.class.getClassLoader().getResourceAsStream(path);
     checkNotNull(stream, "Failed to load resource: " + path);

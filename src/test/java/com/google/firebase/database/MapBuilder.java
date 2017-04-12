@@ -19,4 +19,13 @@ public class MapBuilder {
   public static Map<String, Object> of(String k1, Object v1) {
     return new MapBuilder().put(k1, v1).build();
   }
+
+  public static Map<String, Object> of(String k1, Object v1, String k2, Object v2) {
+    return new MapBuilder().put(k1, v1).put(k2, v2).build();
+  }
+
+  public static Map<String, Object> of(String k1, Object v1, String k2, Object v2, String k3,
+                                       Object v3) {
+    return new MapBuilder().put(k1, v1).put(k2, v2).put(k3, v3).build();
+  }
 }

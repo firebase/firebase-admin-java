@@ -10,7 +10,7 @@ import static org.junit.Assert.fail;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
-import com.google.firebase.testing.TestUtils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -91,9 +91,9 @@ public class MutableDataTest {
     expectedPriorities.addAll(
         Arrays.asList("fifth", "first", "fourth", "second", "seventh", "sixth", "third"));
 
-    TestUtils.assertDeepEquals(expectedNames, names);
-    TestUtils.assertDeepEquals(expectedValues, values);
-    TestUtils.assertDeepEquals(expectedPriorities, priorities);
+    TestHelpers.assertDeepEquals(expectedNames, names);
+    TestHelpers.assertDeepEquals(expectedValues, values);
+    TestHelpers.assertDeepEquals(expectedPriorities, priorities);
   }
 
   @Test
@@ -110,7 +110,7 @@ public class MutableDataTest {
     childData.setValue(3);
 
     Map<String, Object> expected = new MapBuilder().put("a", 1L).put("b", 3L).build();
-    TestUtils.assertDeepEquals(expected, data.getValue());
+    TestHelpers.assertDeepEquals(expected, data.getValue());
 
     int count = 0;
     for (MutableData unused : data.getChildren()) {
@@ -145,7 +145,7 @@ public class MutableDataTest {
             .put("b", 2L)
             .put("c", new MapBuilder().put("d", 4L).build())
             .build();
-    TestUtils.assertDeepEquals(expected, data.getValue());
+    TestHelpers.assertDeepEquals(expected, data.getValue());
   }
 
   @Test

@@ -8,7 +8,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.ChildEventListener;
@@ -26,7 +25,6 @@ import com.google.firebase.database.ValueExpectationHelper;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.testing.IntegrationTestUtils;
-import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -310,10 +308,10 @@ public class QueryTestIT {
           }
         });
 
-    ref.setValue(ImmutableMap.of("a", 5, "b", 6));
+    ref.setValue(MapBuilder.of("a", 5, "b", 6));
     TestHelpers.waitFor(semaphore, 1);
     ref.limitToLast(5).removeEventListener(listener);
-    new WriteFuture(ref, ImmutableMap.of("a", 6, "b", 5)).timedGet();
+    new WriteFuture(ref, MapBuilder.of("a", 6, "b", 5)).timedGet();
     TestHelpers.waitForQueue(ref);
 
     assertEquals(0, semaphore.availablePermits());
@@ -324,8 +322,8 @@ public class QueryTestIT {
       throws TestFailure, TimeoutException, InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.setValue(ImmutableMap.builder().put("a", 1).put("b", 2).put("c", 3).put("d", 4).put("e", 5)
-        .put("f", 6).build());
+    ref.setValue(new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4)
+        .put("e", 5).put("f", 6).build());
 
     DataSnapshot snap = new ReadFuture(ref.limitToLast(5)).timedGet().get(0).getSnapshot();
 
@@ -361,15 +359,15 @@ public class QueryTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
     ValueExpectationHelper expectations = new ValueExpectationHelper();
-    expectations.add(ref.limitToLast(1), ImmutableMap.of("c", 3L));
-    expectations.add(ref.endAt(null).limitToLast(1), ImmutableMap.of("c", 3L));
-    expectations.add(ref.limitToLast(2), ImmutableMap.of("b", 2L, "c", 3L));
+    expectations.add(ref.limitToLast(1), MapBuilder.of("c", 3L));
+    expectations.add(ref.endAt(null).limitToLast(1), MapBuilder.of("c", 3L));
+    expectations.add(ref.limitToLast(2), MapBuilder.of("b", 2L, "c", 3L));
     expectations.add(ref.limitToLast(3),
-        ImmutableMap.of("a", 1L, "b", 2L, "c", 3L));
+        MapBuilder.of("a", 1L, "b", 2L, "c", 3L));
     expectations.add(ref.limitToLast(4),
-        ImmutableMap.of("a", 1L, "b", 2L, "c", 3L));
+        MapBuilder.of("a", 1L, "b", 2L, "c", 3L));
 
-    ref.setValue(ImmutableMap.of("a", 1L, "b", 2L, "c", 3L));
+    ref.setValue(MapBuilder.of("a", 1L, "b", 2L, "c", 3L));
 
     expectations.waitForEvents();
   }
@@ -380,17 +378,17 @@ public class QueryTestIT {
 
     ValueExpectationHelper expectations = new ValueExpectationHelper();
     expectations.add(ref.startAt(null).limitToFirst(1),
-        ImmutableMap.of("a", 1L));
+        MapBuilder.of("a", 1L));
     expectations.add(ref.startAt(null, "c").limitToFirst(1),
-        ImmutableMap.of("c", 3L));
+        MapBuilder.of("c", 3L));
     expectations.add(ref.startAt(null, "b").limitToFirst(1),
-        ImmutableMap.of("b", 2L));
+        MapBuilder.of("b", 2L));
     expectations.add(ref.startAt(null, "b").limitToFirst(2),
-        ImmutableMap.of("b", 2L, "c", 3L));
+        MapBuilder.of("b", 2L, "c", 3L));
     expectations.add(ref.startAt(null, "b").limitToFirst(3),
-        ImmutableMap.of("b", 2L, "c", 3L));
+        MapBuilder.of("b", 2L, "c", 3L));
 
-    ref.setValue(ImmutableMap.of("a", 1, "b", 2, "c", 3));
+    ref.setValue(MapBuilder.of("a", 1, "b", 2, "c", 3));
     expectations.waitForEvents();
   }
 
@@ -404,18 +402,18 @@ public class QueryTestIT {
     // end up in the correct state, but it's still kinda weird. Consider having
     // ValueExpectationHelper deal with initial state.
 
-    new WriteFuture(ref, ImmutableMap.of("a", 1L, "b", 2L, "c", 3L)).timedGet();
+    new WriteFuture(ref, MapBuilder.of("a", 1L, "b", 2L, "c", 3L)).timedGet();
 
     ValueExpectationHelper expectations = new ValueExpectationHelper();
-    expectations.add(ref.startAt(null).limitToFirst(1), ImmutableMap.of("a", 1L));
+    expectations.add(ref.startAt(null).limitToFirst(1), MapBuilder.of("a", 1L));
     expectations.add(ref.startAt(null, "c").limitToFirst(1),
-        ImmutableMap.of("c", 3L));
+        MapBuilder.of("c", 3L));
     expectations.add(ref.startAt(null, "b").limitToFirst(1),
-        ImmutableMap.of("b", 2L));
+        MapBuilder.of("b", 2L));
     expectations.add(ref.startAt(null, "b").limitToFirst(2),
-        ImmutableMap.of("b", 2L, "c", 3L));
+        MapBuilder.of("b", 2L, "c", 3L));
     expectations.add(ref.startAt(null, "b").limitToFirst(3),
-        ImmutableMap.of("b", 2L, "c", 3L));
+        MapBuilder.of("b", 2L, "c", 3L));
 
     expectations.waitForEvents();
   }
@@ -454,8 +452,8 @@ public class QueryTestIT {
       }
     });
 
-    new WriteFuture(ref, ImmutableMap.of("a", 1, "b", 2,"c", 3)).timedGet();
-    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), added);
+    new WriteFuture(ref, MapBuilder.of("a", 1, "b", 2,"c", 3)).timedGet();
+    TestHelpers.assertDeepEquals(ImmutableList.of("b", "c"), added);
     assertTrue(removed.isEmpty());
 
     added.clear();
@@ -474,7 +472,7 @@ public class QueryTestIT {
     final List<String> added = new ArrayList<>();
     final List<String> removed = new ArrayList<>();
 
-    new WriteFuture(ref, ImmutableMap.of("a", 1,"b", 2,"c", 3)).timedGet();
+    new WriteFuture(ref, MapBuilder.of("a", 1,"b", 2,"c", 3)).timedGet();
     final Semaphore semaphore = new Semaphore(0);
     ref.limitToLast(2).addChildEventListener(new ChildEventListener() {
       @Override
@@ -504,7 +502,7 @@ public class QueryTestIT {
     });
 
     TestHelpers.waitFor(semaphore, 2);
-    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), added);
+    TestHelpers.assertDeepEquals(ImmutableList.of("b", "c"), added);
     assertTrue(removed.isEmpty());
     added.clear();
 
@@ -549,8 +547,8 @@ public class QueryTestIT {
       }
     });
 
-    new WriteFuture(ref, ImmutableMap.of("a", 1,"b", 2,"c", 3)).timedGet();
-    TestUtils.assertDeepEquals(ImmutableList.of("a", "b"), added);
+    new WriteFuture(ref, MapBuilder.of("a", 1,"b", 2,"c", 3)).timedGet();
+    TestHelpers.assertDeepEquals(ImmutableList.of("a", "b"), added);
     assertTrue(removed.isEmpty());
     added.clear();
 
@@ -569,7 +567,7 @@ public class QueryTestIT {
     final List<String> added = new ArrayList<>();
     final List<String> removed = new ArrayList<>();
 
-    new WriteFuture(ref, ImmutableMap.of("a", 1,"b", 2,"c", 3)).timedGet();
+    new WriteFuture(ref, MapBuilder.of("a", 1,"b", 2,"c", 3)).timedGet();
     final Semaphore semaphore = new Semaphore(0);
     ref.startAt(null, "a").limitToFirst(2).addChildEventListener(new ChildEventListener() {
       @Override
@@ -599,7 +597,7 @@ public class QueryTestIT {
     });
 
     TestHelpers.waitFor(semaphore, 2);
-    TestUtils.assertDeepEquals(ImmutableList.of("a", "b"), added);
+    TestHelpers.assertDeepEquals(ImmutableList.of("a", "b"), added);
     assertTrue(removed.isEmpty());
 
     added.clear();
@@ -644,13 +642,13 @@ public class QueryTestIT {
       }
     });
 
-    new WriteFuture(ref, ImmutableMap.of("c", 3)).timedGet();
-    TestUtils.assertDeepEquals(ImmutableList.of("c"), added);
+    new WriteFuture(ref, MapBuilder.of("c", 3)).timedGet();
+    TestHelpers.assertDeepEquals(ImmutableList.of("c"), added);
     assertTrue(removed.isEmpty());
     added.clear();
 
     new WriteFuture(ref.child("b"), 4).timedGet();
-    TestUtils.assertDeepEquals(ImmutableList.of("b"), added);
+    TestHelpers.assertDeepEquals(ImmutableList.of("b"), added);
     assertTrue(removed.isEmpty());
   }
 
@@ -659,7 +657,7 @@ public class QueryTestIT {
       throws TestFailure, ExecutionException, TimeoutException, InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    new WriteFuture(ref, ImmutableMap.of("c", 3)).timedGet();
+    new WriteFuture(ref, MapBuilder.of("c", 3)).timedGet();
 
     final List<String> added = new ArrayList<>();
     final List<String> removed = new ArrayList<>();
@@ -692,12 +690,12 @@ public class QueryTestIT {
     });
 
     TestHelpers.waitFor(semaphore);
-    TestUtils.assertDeepEquals(ImmutableList.of("c"), added);
+    TestHelpers.assertDeepEquals(ImmutableList.of("c"), added);
     assertTrue(removed.isEmpty());
     added.clear();
 
     new WriteFuture(ref.child("b"), 4).timedGet();
-    TestUtils.assertDeepEquals(ImmutableList.of("b"), added);
+    TestHelpers.assertDeepEquals(ImmutableList.of("b"), added);
     assertTrue(removed.isEmpty());
   }
 
@@ -735,14 +733,14 @@ public class QueryTestIT {
       }
     });
 
-    new WriteFuture(ref, ImmutableMap.of("a", 1,"b", 2,"c", 3)).timedGet();
-    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), added);
+    new WriteFuture(ref, MapBuilder.of("a", 1,"b", 2,"c", 3)).timedGet();
+    TestHelpers.assertDeepEquals(ImmutableList.of("b", "c"), added);
     assertTrue(removed.isEmpty());
     added.clear();
 
     new WriteFuture(ref.child("b"), null).timedGet();
-    TestUtils.assertDeepEquals(ImmutableList.of("a"), added);
-    TestUtils.assertDeepEquals(ImmutableList.of("b"), removed);
+    TestHelpers.assertDeepEquals(ImmutableList.of("a"), added);
+    TestHelpers.assertDeepEquals(ImmutableList.of("b"), removed);
   }
 
   @Test
@@ -750,7 +748,7 @@ public class QueryTestIT {
       throws TestFailure, ExecutionException, TimeoutException, InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    new WriteFuture(ref, ImmutableMap.of("a", 1,"b", 2,"c", 3)).timedGet();
+    new WriteFuture(ref, MapBuilder.of("a", 1,"b", 2,"c", 3)).timedGet();
     final List<String> added = new ArrayList<>();
     final List<String> removed = new ArrayList<>();
     final Semaphore semaphore = new Semaphore(0);
@@ -783,13 +781,13 @@ public class QueryTestIT {
     });
 
     TestHelpers.waitFor(semaphore, 2);
-    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), added);
+    TestHelpers.assertDeepEquals(ImmutableList.of("b", "c"), added);
     assertTrue(removed.isEmpty());
 
     added.clear();
     new WriteFuture(ref.child("b"), null).timedGet();
-    TestUtils.assertDeepEquals(ImmutableList.of("a"), added);
-    TestUtils.assertDeepEquals(ImmutableList.of("b"), removed);
+    TestHelpers.assertDeepEquals(ImmutableList.of("a"), added);
+    TestHelpers.assertDeepEquals(ImmutableList.of("b"), removed);
   }
 
   @Test
@@ -826,18 +824,18 @@ public class QueryTestIT {
       }
     });
 
-    new WriteFuture(ref, ImmutableMap.of("b", 2,"c", 3)).timedGet();
-    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), added);
+    new WriteFuture(ref, MapBuilder.of("b", 2,"c", 3)).timedGet();
+    TestHelpers.assertDeepEquals(ImmutableList.of("b", "c"), added);
     assertTrue(removed.isEmpty());
     added.clear();
 
     new WriteFuture(ref.child("b"), null).timedGet();
     assertTrue(added.isEmpty());
-    TestUtils.assertDeepEquals(ImmutableList.of("b"), removed);
+    TestHelpers.assertDeepEquals(ImmutableList.of("b"), removed);
 
     new WriteFuture(ref.child("c"), null).timedGet();
     assertTrue(added.isEmpty());
-    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), removed);
+    TestHelpers.assertDeepEquals(ImmutableList.of("b", "c"), removed);
   }
 
   @Test
@@ -845,7 +843,7 @@ public class QueryTestIT {
       throws TestFailure, ExecutionException, TimeoutException, InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    new WriteFuture(ref, ImmutableMap.of("b", 2,"c", 3)).timedGet();
+    new WriteFuture(ref, MapBuilder.of("b", 2,"c", 3)).timedGet();
     final List<String> added = new ArrayList<>();
     final List<String> removed = new ArrayList<>();
     final Semaphore semaphore = new Semaphore(0);
@@ -878,16 +876,16 @@ public class QueryTestIT {
         });
 
     TestHelpers.waitFor(semaphore, 2);
-    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), added);
+    TestHelpers.assertDeepEquals(ImmutableList.of("b", "c"), added);
     assertTrue(removed.isEmpty());
 
     added.clear();
     new WriteFuture(ref.child("b"), null).timedGet();
     assertTrue(added.isEmpty());
-    TestUtils.assertDeepEquals(ImmutableList.of("b"), removed);
+    TestHelpers.assertDeepEquals(ImmutableList.of("b"), removed);
     new WriteFuture(ref.child("c"), null).timedGet();
     assertTrue(added.isEmpty());
-    TestUtils.assertDeepEquals(ImmutableList.of("b", "c"), removed);
+    TestHelpers.assertDeepEquals(ImmutableList.of("b", "c"), removed);
     ref.limitToLast(2).removeEventListener(listener);
   }
 
@@ -897,16 +895,16 @@ public class QueryTestIT {
 
     ValueExpectationHelper helper = new ValueExpectationHelper();
     helper.add(ref.startAt("w").endAt("y"),
-        ImmutableMap.of("b", 2L, "c", 3L, "d", 4L));
-    helper.add(ref.startAt("w").endAt("w"), ImmutableMap.of("d", 4L));
+        MapBuilder.of("b", 2L, "c", 3L, "d", 4L));
+    helper.add(ref.startAt("w").endAt("w"), MapBuilder.of("d", 4L));
     helper.add(ref.startAt("a").endAt("c"), null);
 
     ref.setValue(
-        ImmutableMap.of(
-            "a", ImmutableMap.of(".value", 1, ".priority", "z"),
-            "b", ImmutableMap.of(".value", 2, ".priority", "y"),
-            "c", ImmutableMap.of(".value", 3, ".priority", "x"),
-            "d", ImmutableMap.of(".value", 4, ".priority", "w")));
+        new MapBuilder()
+            .put("a", MapBuilder.of(".value", 1, ".priority", "z"))
+            .put("b", MapBuilder.of(".value", 2, ".priority", "y"))
+            .put("c", MapBuilder.of(".value", 3, ".priority", "x"))
+            .put("d", MapBuilder.of(".value", 4, ".priority", "w")).build());
 
     helper.waitForEvents();
   }
@@ -916,16 +914,16 @@ public class QueryTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
     ref.setValue(
-        ImmutableMap.of(
-            "a", ImmutableMap.of(".value", 1, ".priority", "z"),
-            "b", ImmutableMap.of(".value", 2, ".priority", "y"),
-            "c", ImmutableMap.of(".value", 3, ".priority", "x"),
-            "d", ImmutableMap.of(".value", 4, ".priority", "w")));
+        new MapBuilder()
+            .put("a", MapBuilder.of(".value", 1, ".priority", "z"))
+            .put("b", MapBuilder.of(".value", 2, ".priority", "y"))
+            .put("c", MapBuilder.of(".value", 3, ".priority", "x"))
+            .put("d", MapBuilder.of(".value", 4, ".priority", "w")).build());
 
     ValueExpectationHelper helper = new ValueExpectationHelper();
     helper.add(ref.startAt("w").endAt("y"),
-        ImmutableMap.of("b", 2L, "c", 3L, "d", 4L));
-    helper.add(ref.startAt("w").endAt("w"), ImmutableMap.of("d", 4L));
+        MapBuilder.of("b", 2L, "c", 3L, "d", 4L));
+    helper.add(ref.startAt("w").endAt("w"), MapBuilder.of("d", 4L));
     helper.add(ref.startAt("a").endAt("c"), null);
 
     helper.waitForEvents();
@@ -937,18 +935,18 @@ public class QueryTestIT {
 
     ValueExpectationHelper helper = new ValueExpectationHelper();
     helper.add(ref.startAt(1, "a").endAt(2, "d"),
-        ImmutableMap.of("a", 1L, "b", 2L, "c", 3L, "d", 4L));
+        new MapBuilder().put("a", 1L).put("b", 2L).put("c", 3L).put("d", 4L).build());
     helper.add(ref.startAt(1, "b").endAt(2, "c"),
-        ImmutableMap.of("b", 2L, "c", 3L));
+        MapBuilder.of("b", 2L, "c", 3L));
     helper.add(ref.startAt(1, "c").endAt(2),
-        ImmutableMap.of("c", 3L, "d", 4L));
+        MapBuilder.of("c", 3L, "d", 4L));
 
     ref.setValue(
-        ImmutableMap.of(
-            "a", ImmutableMap.of(".value", 1, ".priority", 1),
-            "b", ImmutableMap.of(".value", 2, ".priority", 1),
-            "c", ImmutableMap.of(".value", 3, ".priority", 2),
-            "d", ImmutableMap.of(".value", 4, ".priority", 2)));
+        new MapBuilder()
+            .put("a", MapBuilder.of(".value", 1, ".priority", 1))
+            .put("b", MapBuilder.of(".value", 2, ".priority", 1))
+            .put("c", MapBuilder.of(".value", 3, ".priority", 2))
+            .put("d", MapBuilder.of(".value", 4, ".priority", 2)).build());
 
     helper.waitForEvents();
   }
@@ -959,18 +957,18 @@ public class QueryTestIT {
 
     ValueExpectationHelper helper = new ValueExpectationHelper();
     helper.add(ref.startAt(1, "c").endAt(2, "b"),
-        ImmutableMap.of("a", 1L,"b", 2L,"c", 3L, "d", 4L));
+        new MapBuilder().put("a", 1L).put("b", 2L).put("c", 3L).put("d", 4L).build());
     helper.add(ref.startAt(1, "d").endAt(2, "a"),
-        ImmutableMap.of("d", 4L, "a", 1L));
+        MapBuilder.of("d", 4L, "a", 1L));
     helper.add(ref.startAt(1, "e").endAt(2),
-        ImmutableMap.of("a", 1L, "b", 2L));
+        MapBuilder.of("a", 1L, "b", 2L));
 
     ref.setValue(
-        ImmutableMap.of(
-            "c", ImmutableMap.of(".value", 3, ".priority", 1),
-            "d", ImmutableMap.of(".value", 4, ".priority", 1),
-            "a", ImmutableMap.of(".value", 1, ".priority", 2),
-            "b", ImmutableMap.of(".value", 2, ".priority", 2)));
+        new MapBuilder()
+            .put("c", MapBuilder.of(".value", 3, ".priority", 1))
+            .put("d", MapBuilder.of(".value", 4, ".priority", 1))
+            .put("a", MapBuilder.of(".value", 1, ".priority", 2))
+            .put("b", MapBuilder.of(".value", 2, ".priority", 2)).build());
 
     helper.waitForEvents();
   }
@@ -980,19 +978,19 @@ public class QueryTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
     ref.setValue(
-        ImmutableMap.of(
-            "a", ImmutableMap.of(".value", 1, ".priority", 1),
-            "b", ImmutableMap.of(".value", 2, ".priority", 1),
-            "c", ImmutableMap.of(".value", 3, ".priority", 2),
-            "d", ImmutableMap.of(".value", 4, ".priority", 2)));
+        new MapBuilder()
+            .put("a", MapBuilder.of(".value", 1, ".priority", 1))
+            .put("b", MapBuilder.of(".value", 2, ".priority", 1))
+            .put("c", MapBuilder.of(".value", 3, ".priority", 2))
+            .put("d", MapBuilder.of(".value", 4, ".priority", 2)).build());
 
     ValueExpectationHelper helper = new ValueExpectationHelper();
     helper.add(ref.startAt(1, "a").endAt(2, "d"),
-        ImmutableMap.of("a", 1L, "b", 2L, "c", 3L, "d", 4L));
+        new MapBuilder().put("a", 1L).put("b", 2L).put("c", 3L).put("d", 4L).build());
     helper.add(ref.startAt(1, "b").endAt(2, "c"),
-        ImmutableMap.of("b", 2L, "c", 3L));
+        MapBuilder.of("b", 2L, "c", 3L));
     helper.add(ref.startAt(1, "c").endAt(2),
-        ImmutableMap.of("c", 3L, "d", 4L));
+        MapBuilder.of("c", 3L, "d", 4L));
 
     helper.waitForEvents();
   }
@@ -1003,19 +1001,19 @@ public class QueryTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
     ref.setValue(
-        ImmutableMap.of(
-            "c", ImmutableMap.of(".value", 3, ".priority", 1),
-            "d", ImmutableMap.of(".value", 4, ".priority", 1),
-            "a", ImmutableMap.of(".value", 1, ".priority", 2),
-            "b", ImmutableMap.of(".value", 2, ".priority", 2)));
+        new MapBuilder()
+            .put("c", MapBuilder.of(".value", 3, ".priority", 1))
+            .put("d", MapBuilder.of(".value", 4, ".priority", 1))
+            .put("a", MapBuilder.of(".value", 1, ".priority", 2))
+            .put("b", MapBuilder.of(".value", 2, ".priority", 2)).build());
 
     ValueExpectationHelper helper = new ValueExpectationHelper();
     helper.add(ref.startAt(1, "c").endAt(2, "b"),
-        ImmutableMap.of("a", 1L, "b", 2L, "c", 3L, "d", 4L));
+        new MapBuilder().put("a", 1L).put("b", 2L).put("c", 3L).put("d", 4L).build());
     helper.add(ref.startAt(1, "d").endAt(2, "a"),
-        ImmutableMap.of("d", 4L, "a", 1L));
+        MapBuilder.of("d", 4L, "a", 1L));
     helper.add(ref.startAt(1, "e").endAt(2),
-        ImmutableMap.of("a", 1L, "b", 2L));
+        MapBuilder.of("a", 1L, "b", 2L));
 
     helper.waitForEvents();
   }
@@ -1057,7 +1055,7 @@ public class QueryTestIT {
     ref.child("b").setValue(2);
     new WriteFuture(ref.child("d"), 4).timedGet();
 
-    TestUtils.assertDeepEquals(ImmutableList.of("a null", "c a", "b null", "d c"), names);
+    TestHelpers.assertDeepEquals(ImmutableList.of("a null", "c a", "b null", "d c"), names);
   }
 
   // NOTE: skipping server data test here, it really doesn't test anything
@@ -1105,7 +1103,7 @@ public class QueryTestIT {
     ref.child("c").setPriority(35);
     new WriteFuture(ref.child("b"), "b", 33).timedGet();
 
-    TestUtils.assertDeepEquals(ImmutableList.of("c d", "c null"), names);
+    TestHelpers.assertDeepEquals(ImmutableList.of("c d", "c null"), names);
   }
 
   // NOTE: skipping server data version of the above test, it doesn't really
@@ -1167,7 +1165,7 @@ public class QueryTestIT {
         "3 added", "2 removed", "4 added").build();
     // Make sure we wait for all the events
     TestHelpers.waitFor(semaphore, 5);
-    TestUtils.assertDeepEquals(expected, events);
+    TestHelpers.assertDeepEquals(expected, events);
     reader.limitToLast(2).removeEventListener(listener);
   }
 
@@ -1211,9 +1209,9 @@ public class QueryTestIT {
             .put("e", new MapBuilder().put(".priority", "hi").put(".value", 4).build()).build());
 
     DataSnapshot snap = TestHelpers.getSnap(ref.endAt(null));
-    Map<String, Long> expected = ImmutableMap.of("a", 0L,"b", 1L);
+    Map<String, Object> expected = MapBuilder.of("a", 0L,"b", 1L);
     Object result = snap.getValue();
-    TestUtils.assertDeepEquals(expected, result);
+    TestHelpers.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -1221,17 +1219,17 @@ public class QueryTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
     ref.setValue(
-        ImmutableMap.of(
-            "a", new MapBuilder().put(".priority", null).put(".value", 0).build(),
-            "b", new MapBuilder().put(".priority", null).put(".value", 1).build(),
-            "c", ImmutableMap.of(".priority", 2, ".value", 2),
-            "d", ImmutableMap.of(".priority", 3, ".value", 3),
-            "e", ImmutableMap.of(".priority", "hi", ".value", 4)));
+        new MapBuilder()
+            .put("a", MapBuilder.of(".priority", null, ".value", 0))
+            .put("b", MapBuilder.of(".priority", null, ".value", 1))
+            .put("c", MapBuilder.of(".priority", 2, ".value", 2))
+            .put("d", MapBuilder.of(".priority", 3, ".value", 3))
+            .put("e", MapBuilder.of(".priority", "hi", ".value", 4)).build());
 
     DataSnapshot snap = TestHelpers.getSnap(ref.endAt(2));
-    Map<String, Long> expected = ImmutableMap.of("a", 0L, "b", 1L, "c", 2L);
+    Map<String, Object> expected = MapBuilder.of("a", 0L, "b", 1L, "c", 2L);
     Object result = snap.getValue();
-    TestUtils.assertDeepEquals(expected, result);
+    TestHelpers.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -1248,8 +1246,8 @@ public class QueryTestIT {
 
     DataSnapshot snap = TestHelpers.getSnap(ref.startAt(2));
     Object result = snap.getValue();
-    Map<String, Long> expected = ImmutableMap.of("c", 2L, "d", 3L, "e", 4L);
-    TestUtils.assertDeepEquals(expected, result);
+    Map<String, Object> expected = MapBuilder.of("c", 2L, "d", 3L, "e", 4L);
+    TestHelpers.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -1300,7 +1298,7 @@ public class QueryTestIT {
     });
 
     TestHelpers.waitFor(semaphore, 5);
-    TestUtils.assertDeepEquals(ImmutableList.of("Sally", "James", "Andrew", "Mike", "Vikrum"),
+    TestHelpers.assertDeepEquals(ImmutableList.of("Sally", "James", "Andrew", "Mike", "Vikrum"),
         names);
   }
 
@@ -1309,7 +1307,7 @@ public class QueryTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
     final Semaphore semaphore = new Semaphore(0);
 
-    final Map<String, String> data = ImmutableMap.of("a", "blah", ".priority", "priority");
+    final Map<String, Object> data = MapBuilder.of("a", "blah", ".priority", "priority");
 
     ref.setValue(data, new DatabaseReference.CompletionListener() {
       @Override
@@ -1317,8 +1315,8 @@ public class QueryTestIT {
         ref.limitToLast(2).addListenerForSingleValueEvent(new ValueEventListener() {
           @Override
           public void onDataChange(DataSnapshot snapshot) {
-            Map<String, String> expected = ImmutableMap.of("a", "blah");
-            TestUtils.assertDeepEquals(expected, snapshot.getValue(true));
+            Map<String, Object> expected = MapBuilder.of("a", "blah");
+            TestHelpers.assertDeepEquals(expected, snapshot.getValue(true));
             semaphore.release();
           }
 
@@ -1381,7 +1379,7 @@ public class QueryTestIT {
         });
     ref.setValue(toSet);
     TestHelpers.waitFor(semaphore, 5);
-    TestUtils.assertDeepEquals(ImmutableList.of("Sally", "James", "Andrew", "Mike", "Vikrum"),
+    TestHelpers.assertDeepEquals(ImmutableList.of("Sally", "James", "Andrew", "Mike", "Vikrum"),
         names);
     ref.limitToLast(5).removeEventListener(listener);
   }
@@ -1399,24 +1397,24 @@ public class QueryTestIT {
     TestHelpers.waitForRoundtrip(ref);
 
     ref.setValue(
-        ImmutableMap.of(
-            "a", ImmutableMap.of(".value", 1, ".priority", 1),
-            "b", ImmutableMap.of(".value", 2, ".priority", 2),
-            "c", ImmutableMap.of(".value", 3, ".priority", 3)));
+        MapBuilder.of(
+            "a", MapBuilder.of(".value", 1, ".priority", 1),
+            "b", MapBuilder.of(".value", 2, ".priority", 2),
+            "c", MapBuilder.of(".value", 3, ".priority", 3)));
 
     ref.updateChildren(new MapBuilder().put("b", null).put("c", null).build());
     List<EventRecord> events = readFuture.timedGet();
     DataSnapshot snap = events.get(1).getSnapshot();
 
-    Map<String, Long> expected = ImmutableMap.of("b", 2L, "c", 3L);
+    Map<String, Object> expected = MapBuilder.of("b", 2L, "c", 3L);
     Object result = snap.getValue();
-    TestUtils.assertDeepEquals(expected, result);
+    TestHelpers.assertDeepEquals(expected, result);
 
     // The original set is still outstanding (synchronous API), so we have a
     // full cache to re-window against
     snap = events.get(2).getSnapshot();
     result = snap.getValue();
-    TestUtils.assertDeepEquals(ImmutableMap.of("a", 1L), result);
+    TestHelpers.assertDeepEquals(MapBuilder.of("a", 1L), result);
   }
 
   @Test
@@ -1438,21 +1436,21 @@ public class QueryTestIT {
       }
     });
 
-    new WriteFuture(ref, ImmutableMap.of("a", 1, "b", 2)).timedGet();
+    new WriteFuture(ref, MapBuilder.of("a", 1, "b", 2)).timedGet();
     assertEquals(1L, childSnaps.get(0).getValue());
-    ref.updateChildren(ImmutableMap.<String, Object>of("c", 3));
+    ref.updateChildren(MapBuilder.of("c", 3));
     List<EventRecord> events = parentFuture.timedGet();
     DataSnapshot snap = events.get(0).getSnapshot();
     Object result = snap.getValue();
 
-    Map<String, Long> expected = ImmutableMap.of("b", 2L);
-    TestUtils.assertDeepEquals(expected, result);
+    Map<String, Object> expected = MapBuilder.of("b", 2L);
+    TestHelpers.assertDeepEquals(expected, result);
 
     snap = events.get(1).getSnapshot();
     result = snap.getValue();
 
-    expected = ImmutableMap.of("c", 3L);
-    TestUtils.assertDeepEquals(expected, result);
+    expected = MapBuilder.of("c", 3L);
+    TestHelpers.assertDeepEquals(expected, result);
     assertEquals(1, childSnaps.size());
     assertEquals(1L, childSnaps.get(0).getValue());
   }
@@ -1477,7 +1475,7 @@ public class QueryTestIT {
           }
         });
 
-    new WriteFuture(ref, ImmutableMap.of("a", 1)).timedGet();
+    new WriteFuture(ref, MapBuilder.of("a", 1)).timedGet();
     assertEquals(1L, childSnaps.get(0).getValue());
     new WriteFuture(ref.child("b"), 2).timedGet();
     assertEquals(1, childSnaps.size());
@@ -1486,19 +1484,19 @@ public class QueryTestIT {
     assertEquals(1, childSnaps.size());
 
     Object result;
-    Map<String, Long> expected;
+    Map<String, Object> expected;
 
     result = events.get(0).getSnapshot().getValue();
-    expected = ImmutableMap.of("a", 1L);
-    TestUtils.assertDeepEquals(expected, result);
+    expected = MapBuilder.of("a", 1L);
+    TestHelpers.assertDeepEquals(expected, result);
 
     result = events.get(1).getSnapshot().getValue();
-    expected = ImmutableMap.of("b", 2L);
-    TestUtils.assertDeepEquals(expected, result);
+    expected = MapBuilder.of("b", 2L);
+    TestHelpers.assertDeepEquals(expected, result);
 
     result = events.get(0).getSnapshot().getValue();
-    expected = ImmutableMap.of("a", 1L);
-    TestUtils.assertDeepEquals(expected, result);
+    expected = MapBuilder.of("a", 1L);
+    TestHelpers.assertDeepEquals(expected, result);
     ref.child("a").removeEventListener(listener);
   }
 
@@ -1536,18 +1534,18 @@ public class QueryTestIT {
       }
     });
 
-    new WriteFuture(ref, ImmutableMap.of("a", 1, "b", 2, "c", 3)).timedGet();
+    new WriteFuture(ref, MapBuilder.of("a", 1, "b", 2, "c", 3)).timedGet();
     assertEquals(1, cSnaps.size());
-    final Map<String, Object> cExpected = ImmutableMap.<String, Object>of("c", 3L);
-    TestUtils.assertDeepEquals(cExpected, cSnaps.get(0).getValue());
+    final Map<String, Object> cExpected = MapBuilder.of("c", 3L);
+    TestHelpers.assertDeepEquals(cExpected, cSnaps.get(0).getValue());
 
     new WriteFuture(ref.child("d"), 4).timedGet();
     assertEquals(1, cSnaps.size());
 
     assertEquals(2, dSnaps.size());
-    TestUtils.assertDeepEquals(cExpected, dSnaps.get(0).getValue());
+    TestHelpers.assertDeepEquals(cExpected, dSnaps.get(0).getValue());
 
-    TestUtils.assertDeepEquals(ImmutableMap.of("d", 4L), dSnaps.get(1).getValue());
+    TestHelpers.assertDeepEquals(MapBuilder.of("d", 4L), dSnaps.get(1).getValue());
   }
 
   @Test
@@ -1587,17 +1585,17 @@ public class QueryTestIT {
       }
     });
 
-    ref.setValue(ImmutableMap.of("a", 1, "b", 2));
+    ref.setValue(MapBuilder.of("a", 1, "b", 2));
     ref.child("b").removeValue();
     TestHelpers.waitFor(semaphore);
-    TestUtils.assertDeepEquals(ImmutableList.of(2L, 1L), values);
+    TestHelpers.assertDeepEquals(ImmutableList.of(2L, 1L), values);
   }
 
   @Test
   public void testStartAtLimit() throws InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.setValue(ImmutableMap.of("a", 1, "b", 2));
+    ref.setValue(MapBuilder.of("a", 1, "b", 2));
     DataSnapshot snap = TestHelpers.getSnap(ref.limitToFirst(1));
 
     assertEquals(1L, snap.child("a").getValue());
@@ -1607,7 +1605,7 @@ public class QueryTestIT {
   public void testStartAtLimitWhenChildIsRemoved() throws InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.setValue(ImmutableMap.of("a", 1, "b", 2));
+    ref.setValue(MapBuilder.of("a", 1, "b", 2));
     final List<Long> values = new ArrayList<>();
     final Semaphore semaphore = new Semaphore(0);
     ref.limitToFirst(1).addChildEventListener(new ChildEventListener() {
@@ -1652,9 +1650,9 @@ public class QueryTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
     new WriteFuture(ref,
-        ImmutableMap.of(
-            "Walker", ImmutableMap.of("name", "Walker", "score", 20, ".priority", 20),
-            "Michael", ImmutableMap.of("name", "Michael", "score", 100, ".priority", 100)))
+        MapBuilder.of(
+            "Walker", MapBuilder.of("name", "Walker", "score", 20, ".priority", 20),
+            "Michael", MapBuilder.of("name", "Michael", "score", 100, ".priority", 100)))
         .timedGet();
 
     DataSnapshot snap = TestHelpers.getSnap(ref.startAt(20, "Walker").limitToFirst(2));
@@ -1672,7 +1670,7 @@ public class QueryTestIT {
       throws TestFailure, ExecutionException, TimeoutException, InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    new WriteFuture(ref, ImmutableMap.builder().put("a", 1).put("b", 2).put("c", 3).put("d", 4)
+    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4)
         .put("e", 5).put("f", 6).build()).timedGet();
 
     final AtomicBoolean limit2Called = new AtomicBoolean(false);
@@ -1695,7 +1693,7 @@ public class QueryTestIT {
     TestHelpers.waitFor(semaphore);
 
     DataSnapshot snap = TestHelpers.getSnap(ref.limitToLast(1));
-    TestUtils.assertDeepEquals(ImmutableMap.of("f", 6L), snap.getValue());
+    TestHelpers.assertDeepEquals(MapBuilder.of("f", 6L), snap.getValue());
   }
 
   @Test
@@ -1703,7 +1701,7 @@ public class QueryTestIT {
       throws TestFailure, ExecutionException, TimeoutException, InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    new WriteFuture(ref, ImmutableMap.builder().put("a", 1).put("b", 2).put("c", 3).put("d", 4)
+    new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4)
         .put("e", 5).put("f", 6).build()).timedGet();
 
     final AtomicBoolean onCalled = new AtomicBoolean(false);
@@ -1724,7 +1722,7 @@ public class QueryTestIT {
     TestHelpers.waitFor(semaphore);
 
     DataSnapshot snap = TestHelpers.getSnap(ref.limitToLast(1));
-    TestUtils.assertDeepEquals(ImmutableMap.of("f", 6L), snap.getValue());
+    TestHelpers.assertDeepEquals(MapBuilder.of("f", 6L), snap.getValue());
   }
 
   @Test
@@ -1732,7 +1730,7 @@ public class QueryTestIT {
       throws TestFailure, ExecutionException, TimeoutException, InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    new WriteFuture(ref, ImmutableMap.of("a", 1, "b", 2, "c", 3)).timedGet();
+    new WriteFuture(ref, MapBuilder.of("a", 1, "b", 2, "c", 3)).timedGet();
 
     final AtomicBoolean onCalled = new AtomicBoolean(false);
     final Semaphore semaphore = new Semaphore(0);
@@ -1750,7 +1748,7 @@ public class QueryTestIT {
     });
 
     DataSnapshot snap = TestHelpers.getSnap(ref.limitToLast(5));
-    TestUtils.assertDeepEquals(ImmutableMap.of("a", 1L, "b", 2L, "c", 3L), snap.getValue());
+    TestHelpers.assertDeepEquals(MapBuilder.of("a", 1L, "b", 2L, "c", 3L), snap.getValue());
   }
 
   @Test
@@ -1760,8 +1758,8 @@ public class QueryTestIT {
     final DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
 
-    Map<String, Object> expected = ImmutableMap.<String, Object>of(
-        "a", "a", "b", "b", "c", "c", "d", "d", "e", "e");
+    Map<String, Object> expected = new MapBuilder()
+        .put("a", "a").put("b", "b").put("c", "c").put("d", "d").put("e", "e").build();
 
     new WriteFuture(writer, expected).timedGet();
 
@@ -1776,9 +1774,9 @@ public class QueryTestIT {
           }
         }).timedGet();
 
-    TestUtils.assertDeepEquals(expected, events.get(0).getSnapshot().getValue());
-    TestUtils.assertDeepEquals(
-        ImmutableMap.<String, Object>of("a", "a", "b", "b", "d", "d", "e", "e"),
+    TestHelpers.assertDeepEquals(expected, events.get(0).getSnapshot().getValue());
+    TestHelpers.assertDeepEquals(
+        new MapBuilder().put("a", "a").put("b", "b").put("d", "d").put("e", "e").build(),
         events.get(1).getSnapshot().getValue());
   }
 
@@ -1787,17 +1785,17 @@ public class QueryTestIT {
       throws TestFailure, ExecutionException, TimeoutException, InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    Map<String, Object> toSet = ImmutableMap.<String, Object>builder().put("a", "a")
+    Map<String, Object> toSet = new MapBuilder().put("a", "a")
         .put("b", "b").put("c", "c").put("d", "d").put("e", "e").put("f", "f")
         .put("g", "g").put("h", "h").build();
 
     new WriteFuture(ref, toSet).timedGet();
 
     DataSnapshot snap = TestHelpers.getSnap(ref.endAt(null, "f").limitToLast(5));
-    Map<String, Object> expected = ImmutableMap.<String, Object>builder().put("b", "b")
+    Map<String, Object> expected = new MapBuilder().put("b", "b")
         .put("c", "c").put("d", "d").put("e", "e").put("f", "f").build();
 
-    TestUtils.assertDeepEquals(expected, snap.getValue());
+    TestHelpers.assertDeepEquals(expected, snap.getValue());
   }
 
   @Test
@@ -1807,7 +1805,8 @@ public class QueryTestIT {
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
 
-    Map<String, Integer> toSet = ImmutableMap.of("a", 1, "b", 2, "c", 3, "d", 4, "e", 5);
+    Map<String, Object> toSet = new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4)
+        .put("e", 5).build();
 
     new WriteFuture(writer, toSet).timedGet();
     final Semaphore semaphore = new Semaphore(0);
@@ -1828,14 +1827,15 @@ public class QueryTestIT {
     writer.updateChildren(update);
     List<EventRecord> events = future.timedGet();
 
-    Map<String, Object> expected = ImmutableMap.<String, Object>of(
-        "a", 1L, "b", 2L, "c", 3L, "d", 4L);
+    Map<String, Object> expected = new MapBuilder().put("a", 1L).put("b", 2L).put("c", 3L)
+        .put("d", 4L).build();
     Object result = events.get(0).getSnapshot().getValue();
-    TestUtils.assertDeepEquals(expected, result);
+    TestHelpers.assertDeepEquals(expected, result);
 
-    expected = ImmutableMap.<String, Object>of("a", 1L, "c", "a", "cc", "new", "cd", "new2");
+    expected = new MapBuilder().put("a", 1L).put("c", "a").put("cc", "new")
+        .put("cd", "new2").build();
     result = events.get(1).getSnapshot().getValue();
-    TestUtils.assertDeepEquals(expected, result);
+    TestHelpers.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -1845,7 +1845,7 @@ public class QueryTestIT {
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
 
-    Map<String, Object> toSet = ImmutableMap.<String, Object>of("bar", "a", "baz", "b", "bam", "c");
+    Map<String, Object> toSet = MapBuilder.of("bar", "a", "baz", "b", "bam", "c");
 
     new WriteFuture(writer, toSet).timedGet();
     final Semaphore semaphore = new Semaphore(0);
@@ -1866,14 +1866,14 @@ public class QueryTestIT {
     writer.updateChildren(update);
     List<EventRecord> events = future.timedGet();
 
-    Map<String, Object> expected = ImmutableMap.<String, Object>of("bar", "a", "baz", "b", "bam",
+    Map<String, Object> expected = MapBuilder.of("bar", "a", "baz", "b", "bam",
         "c");
     Object result = events.get(0).getSnapshot().getValue();
-    TestUtils.assertDeepEquals(expected, result);
+    TestHelpers.assertDeepEquals(expected, result);
 
-    expected = ImmutableMap.<String, Object>of("bar", "d", "baz", "b", "bat", "e");
+    expected = MapBuilder.of("bar", "d", "baz", "b", "bat", "e");
     result = events.get(1).getSnapshot().getValue();
-    TestUtils.assertDeepEquals(expected, result);
+    TestHelpers.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -1884,9 +1884,9 @@ public class QueryTestIT {
     DatabaseReference reader = refs.get(1);
     writer.child("a").setValue(1);
     writer.child("b").setValue("b");
-    final Map<String, Object> deepObject = ImmutableMap.<String, Object>of(
+    final Map<String, Object> deepObject = MapBuilder.of(
         "deep", "path",
-        "of", ImmutableMap.of("stuff", true));
+        "of", MapBuilder.of("stuff", true));
     new WriteFuture(writer.child("c"), deepObject).timedGet();
 
     final Semaphore semaphore = new Semaphore(0);
@@ -1903,7 +1903,7 @@ public class QueryTestIT {
           assertEquals("b", snapshot.getValue());
         } else if (count == 2) {
           assertEquals("c", snapshot.getKey());
-          TestUtils.assertDeepEquals(deepObject, snapshot.getValue());
+          TestHelpers.assertDeepEquals(deepObject, snapshot.getValue());
         } else {
           fail("Too many events");
         }
@@ -1940,11 +1940,11 @@ public class QueryTestIT {
     List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
-    new WriteFuture(writer, ImmutableMap.of("a", "something", "b", "we'll", "c", "overwrite"))
+    new WriteFuture(writer, MapBuilder.of("a", "something", "b", "we'll", "c", "overwrite"))
             .timedGet();
-    final Map<String, Object> deepObject = ImmutableMap.<String, Object>of(
+    final Map<String, Object> deepObject = MapBuilder.of(
         "deep", "path",
-        "of", ImmutableMap.of("stuff", true));
+        "of", MapBuilder.of("stuff", true));
 
     final Semaphore semaphore = new Semaphore(0);
     final AtomicBoolean loaded = new AtomicBoolean(false);
@@ -1982,7 +1982,7 @@ public class QueryTestIT {
           assertEquals("b", snapshot.getValue());
         } else if (count == 2) {
           assertEquals("c", snapshot.getKey());
-          TestUtils.assertDeepEquals(deepObject, snapshot.getValue());
+          TestHelpers.assertDeepEquals(deepObject, snapshot.getValue());
         } else {
           fail("Too many events");
         }
@@ -2020,9 +2020,9 @@ public class QueryTestIT {
     DatabaseReference reader = refs.get(1);
     writer.child("a").setValue(1);
     writer.child("b").setValue("b");
-    final Map<String, Object> deepObject = ImmutableMap.<String, Object>of(
+    final Map<String, Object> deepObject = MapBuilder.of(
         "deep", "path",
-        "of", ImmutableMap.of("stuff", true));
+        "of", MapBuilder.of("stuff", true));
     new WriteFuture(writer.child("c"), deepObject).timedGet();
 
     final Semaphore semaphore = new Semaphore(0);
@@ -2096,9 +2096,9 @@ public class QueryTestIT {
     DatabaseReference reader = refs.get(1);
     writer.child("a").setValue(1);
     writer.child("b").setValue("b");
-    final Map<String, Object> deepObject = ImmutableMap.<String, Object>of(
+    final Map<String, Object> deepObject = MapBuilder.of(
         "deep", "path",
-        "of", ImmutableMap.of("stuff", true));
+        "of", MapBuilder.of("stuff", true));
     new WriteFuture(writer.child("c"), deepObject).timedGet();
 
     final Semaphore semaphore = new Semaphore(0);
@@ -2170,9 +2170,9 @@ public class QueryTestIT {
     DatabaseReference reader = refs.get(1);
     writer.child("a").setValue(1);
     writer.child("b").setValue("b");
-    final Map<String, Object> deepObject = ImmutableMap.<String, Object>of(
+    final Map<String, Object> deepObject = MapBuilder.of(
         "deep", "path",
-        "of", ImmutableMap.of("stuff", true));
+        "of", MapBuilder.of("stuff", true));
     new WriteFuture(writer.child("c"), deepObject).timedGet();
 
     final Semaphore semaphore = new Semaphore(0);
@@ -2243,7 +2243,8 @@ public class QueryTestIT {
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
 
-    Map<String, Integer> toSet = ImmutableMap.of("a", 1, "b", 2, "c", 3, "d", 4);
+    Map<String, Object> toSet = new MapBuilder().put("a", 1).put("b", 2).put("c", 3)
+        .put("d", 4).build();
     new WriteFuture(writer, toSet).timedGet();
 
     TestHelpers.getSnap(reader);
@@ -2398,8 +2399,8 @@ public class QueryTestIT {
     final DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
 
-    final Map<String, Object> toSet = ImmutableMap.<String, Object>of(
-        "a", ImmutableMap.of("b", 1L, "c", 2L),
+    final Map<String, Object> toSet = MapBuilder.of(
+        "a", MapBuilder.of("b", 1L, "c", 2L),
         "e", 3L);
 
     new WriteFuture(writer, toSet).timedGet();
@@ -2421,7 +2422,7 @@ public class QueryTestIT {
       @Override
       public boolean isComplete(List<EventRecord> events) {
         if (events.size() == 1) {
-          TestUtils.assertDeepEquals(toSet, events.get(0).getSnapshot().getValue());
+          TestHelpers.assertDeepEquals(toSet, events.get(0).getSnapshot().getValue());
           try {
             writer.child("d").setValue(4);
           } catch (DatabaseException e) { // ignore
@@ -2429,8 +2430,8 @@ public class QueryTestIT {
           }
           return false;
         } else {
-          Map<String, Long> expected = ImmutableMap.of("d", 4L, "e", 3L);
-          TestUtils.assertDeepEquals(expected, events.get(1).getSnapshot().getValue());
+          Map<String, Object> expected = MapBuilder.of("d", 4L, "e", 3L);
+          TestHelpers.assertDeepEquals(expected, events.get(1).getSnapshot().getValue());
           return true;
         }
       }
@@ -2480,7 +2481,7 @@ public class QueryTestIT {
     final DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
     final Semaphore done = new Semaphore(0);
     ref.setValue(
-        ImmutableMap.builder().put("1", true).put("50", true).put("550", true).put("6", true)
+        new MapBuilder().put("1", true).put("50", true).put("550", true).put("6", true)
             .put("600", true).put("70", true).put("8", true).put("80", true).build(),
         new DatabaseReference.CompletionListener() {
           @Override
@@ -2488,9 +2489,9 @@ public class QueryTestIT {
             ref.startAt(null, "80").addListenerForSingleValueEvent(new ValueEventListener() {
               @Override
               public void onDataChange(DataSnapshot snapshot) {
-                Map<String, Object> expected = ImmutableMap.<String, Object>of(
+                Map<String, Object> expected = MapBuilder.of(
                     "80", true, "550", true, "600", true);
-                TestUtils.assertDeepEquals(expected, snapshot.getValue());
+                TestHelpers.assertDeepEquals(expected, snapshot.getValue());
                 done.release();
               }
 
@@ -2510,7 +2511,7 @@ public class QueryTestIT {
     final DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
     final Semaphore done = new Semaphore(0);
     ref.setValue(
-        ImmutableMap.builder().put("1", true).put("50", true).put("550", true).put("6", true)
+        new MapBuilder().put("1", true).put("50", true).put("550", true).put("6", true)
             .put("600", true).put("70", true).put("8", true).put("80", true).build(),
         new DatabaseReference.CompletionListener() {
           @Override
@@ -2518,9 +2519,9 @@ public class QueryTestIT {
             ref.endAt(null, "50").addListenerForSingleValueEvent(new ValueEventListener() {
               @Override
               public void onDataChange(DataSnapshot snapshot) {
-                Map<String, Object> expected = ImmutableMap.<String, Object>of(
-                    "1", true, "6", true, "8", true, "50", true);
-                TestUtils.assertDeepEquals(expected, snapshot.getValue());
+                Map<String, Object> expected = new MapBuilder().put("1", true)
+                    .put("6", true).put("8", true).put("50", true).build();
+                TestHelpers.assertDeepEquals(expected, snapshot.getValue());
                 done.release();
               }
 
@@ -2540,7 +2541,7 @@ public class QueryTestIT {
     final DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
     final Semaphore done = new Semaphore(0);
     ref.setValue(
-        ImmutableMap.builder().put("1", true).put("50", true).put("550", true).put("6", true)
+        new MapBuilder().put("1", true).put("50", true).put("550", true).put("6", true)
             .put("600", true).put("70", true).put("8", true).put("80", true).build(),
         new DatabaseReference.CompletionListener() {
           @Override
@@ -2549,9 +2550,9 @@ public class QueryTestIT {
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                   @Override
                   public void onDataChange(DataSnapshot snapshot) {
-                    Map<String, Object> expected = ImmutableMap.<String, Object>of(
+                    Map<String, Object> expected = MapBuilder.of(
                         "50", true, "70", true, "80", true);
-                    TestUtils.assertDeepEquals(expected, snapshot.getValue());
+                    TestHelpers.assertDeepEquals(expected, snapshot.getValue());
                     done.release();
                   }
 
@@ -2569,10 +2570,10 @@ public class QueryTestIT {
   public void testMoveOutsideOfWindowIntoWindow()
       throws InterruptedException, ExecutionException, TimeoutException, TestFailure {
     final DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
-    Map<String, Object> initialValue = ImmutableMap.<String, Object>of(
-        "a", ImmutableMap.of(".priority", 1L, ".value", "a"),
-        "b", ImmutableMap.of(".priority", 2L, ".value", "b"),
-        "c", ImmutableMap.of(".priority", 3L, ".value", "c"));
+    Map<String, Object> initialValue = MapBuilder.of(
+        "a", MapBuilder.of(".priority", 1L, ".value", "a"),
+        "b", MapBuilder.of(".priority", 2L, ".value", "b"),
+        "c", MapBuilder.of(".priority", 3L, ".value", "c"));
     new WriteFuture(ref, initialValue).timedGet();
     final Query query = ref.limitToLast(2);
     final Semaphore ready = new Semaphore(0);
@@ -2657,11 +2658,11 @@ public class QueryTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
     ValueExpectationHelper expectations = new ValueExpectationHelper();
-    expectations.add(ref.equalTo(1), ImmutableMap.of("a", "vala"));
-    expectations.add(ref.equalTo(2), ImmutableMap.of("b", "valb"));
-    expectations.add(ref.equalTo("abc"), ImmutableMap.of("z", "valz"));
+    expectations.add(ref.equalTo(1), MapBuilder.of("a", "vala"));
+    expectations.add(ref.equalTo(2), MapBuilder.of("b", "valb"));
+    expectations.add(ref.equalTo("abc"), MapBuilder.of("z", "valz"));
     expectations.add(ref.equalTo(2, "no_key"), null);
-    expectations.add(ref.equalTo(2, "b"), ImmutableMap.of("b", "valb"));
+    expectations.add(ref.equalTo(2, "b"), MapBuilder.of("b", "valb"));
 
     ref.child("a").setValue("vala", 1);
     ref.child("b").setValue("valb", 2);
@@ -2694,14 +2695,14 @@ public class QueryTestIT {
     });
 
     TestHelpers.waitFor(semaphore);
-    Map<String, Object> expected = ImmutableMap.<String, Object>of("a", "foo");
-    TestUtils.assertDeepEquals(expected, snapshotHolder[0].getValue());
+    Map<String, Object> expected = MapBuilder.of("a", "foo");
+    TestHelpers.assertDeepEquals(expected, snapshotHolder[0].getValue());
 
     ref.removeEventListener(listener);
 
     new WriteFuture(ref.child("a"), "bar", 100).timedGet();
     // the listener is removed the value should have not changed
-    TestUtils.assertDeepEquals(expected, snapshotHolder[0].getValue());
+    TestHelpers.assertDeepEquals(expected, snapshotHolder[0].getValue());
   }
 
   @Test
@@ -2709,10 +2710,10 @@ public class QueryTestIT {
     final DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
     final Semaphore done = new Semaphore(0);
 
-    Map<String, Object> initial = ImmutableMap.<String, Object>of(
-        "a", ImmutableMap.of("foo", 3),
-        "b", ImmutableMap.of("foo", 1),
-        "c", ImmutableMap.of("foo", 2));
+    Map<String, Object> initial = MapBuilder.of(
+        "a", MapBuilder.of("foo", 3),
+        "b", MapBuilder.of("foo", 1),
+        "c", MapBuilder.of("foo", 2));
 
     ref.setValue(initial, new DatabaseReference.CompletionListener() {
       @Override
@@ -2751,7 +2752,7 @@ public class QueryTestIT {
     });
 
     TestHelpers.waitFor(done);
-    TestUtils.assertDeepEquals(ImmutableList.of("b", "c", "a"), children);
+    TestHelpers.assertDeepEquals(ImmutableList.of("b", "c", "a"), children);
   }
 
   @Test
@@ -2762,19 +2763,19 @@ public class QueryTestIT {
     DatabaseReference reader = refs.get(1);
     final Semaphore semaphore = new Semaphore(0);
 
-    final Map<String, Object> list = ImmutableMap.<String, Object>of(
-        "a", ImmutableMap.of(
-            "thisvaluefirst", ImmutableMap.of(".value", true, ".priority", 1),
-            "name", ImmutableMap.of(".value", "Michael", ".priority", 2),
-            "thisvaluelast", ImmutableMap.of(".value", true, ".priority", 3)),
-        "b", ImmutableMap.of(
+    final Map<String, Object> list = MapBuilder.of(
+        "a", MapBuilder.of(
+            "thisvaluefirst", MapBuilder.of(".value", true, ".priority", 1),
+            "name", MapBuilder.of(".value", "Michael", ".priority", 2),
+            "thisvaluelast", MapBuilder.of(".value", true, ".priority", 3)),
+        "b", MapBuilder.of(
             "thisvaluefirst", new MapBuilder().put(".value", true).put(".priority", null).build(),
-            "name", ImmutableMap.of(".value", "Rob", ".priority", 2),
-            "thisvaluelast", ImmutableMap.of(".value", true, ".priority", 3)),
-        "c", ImmutableMap.of(
-            "thisvaluefirst", ImmutableMap.of(".value", true, ".priority", 1),
-            "name", ImmutableMap.of(".value", "Jonny", ".priority", 2),
-            "thisvaluelast", ImmutableMap.of(".value", true, ".priority", "somestring")));
+            "name", MapBuilder.of(".value", "Rob", ".priority", 2),
+            "thisvaluelast", MapBuilder.of(".value", true, ".priority", 3)),
+        "c", MapBuilder.of(
+            "thisvaluefirst", MapBuilder.of(".value", true, ".priority", 1),
+            "name", MapBuilder.of(".value", "Jonny", ".priority", 2),
+            "thisvaluelast", MapBuilder.of(".value", true, ".priority", "somestring")));
 
     new WriteFuture(writer, list).timedGet();
 

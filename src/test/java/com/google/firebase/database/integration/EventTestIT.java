@@ -5,7 +5,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.ChildEventListener;
@@ -13,6 +12,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.EventRecord;
+import com.google.firebase.database.MapBuilder;
 import com.google.firebase.database.TestFailure;
 import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.ValueEventListener;
@@ -365,11 +365,11 @@ public class EventTestIT {
 
     ZombieVerifier.verifyRepoZombies(refs);
 
-    writer.setValue(ImmutableMap.of("a", 10, "b", 20));
+    writer.setValue(MapBuilder.of("a", 10, "b", 20));
     TestHelpers.waitFor(writerReady, 2);
     TestHelpers.waitFor(readerReady, 2);
 
-    writer.setValue(ImmutableMap.of("a", 10, "b", 30));
+    writer.setValue(MapBuilder.of("a", 10, "b", 30));
     TestHelpers.waitFor(writerReady);
     TestHelpers.waitFor(readerReady);
   }
@@ -394,7 +394,7 @@ public class EventTestIT {
     ZombieVerifier.verifyRepoZombies(ref);
 
     ref.setValue(42);
-    ref.setValue(ImmutableMap.of("a", 2));
+    ref.setValue(MapBuilder.of("a", 2));
     ref.setValue(84);
     ref.setValue(null);
 
@@ -745,35 +745,35 @@ public class EventTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
     final Map<String, Object> firstValue =
-        ImmutableMap.<String, Object>builder()
-            .put("a", ImmutableMap.of(".value", "x", ".priority", 0))
-            .put("b", ImmutableMap.of(".value", "x", ".priority", 1))
-            .put("c", ImmutableMap.of(".value", "x", ".priority", 2))
-            .put("d", ImmutableMap.of(".value", "x", ".priority", 3))
-            .put("e", ImmutableMap.of(".value", "x", ".priority", 4))
-            .put("f", ImmutableMap.of(".value", "x", ".priority", 5))
-            .put("g", ImmutableMap.of(".value", "x", ".priority", 6))
-            .put("h", ImmutableMap.of(".value", "x", ".priority", 7))
+        new MapBuilder()
+            .put("a", MapBuilder.of(".value", "x", ".priority", 0))
+            .put("b", MapBuilder.of(".value", "x", ".priority", 1))
+            .put("c", MapBuilder.of(".value", "x", ".priority", 2))
+            .put("d", MapBuilder.of(".value", "x", ".priority", 3))
+            .put("e", MapBuilder.of(".value", "x", ".priority", 4))
+            .put("f", MapBuilder.of(".value", "x", ".priority", 5))
+            .put("g", MapBuilder.of(".value", "x", ".priority", 6))
+            .put("h", MapBuilder.of(".value", "x", ".priority", 7))
             .build();
 
     final Map<String, Object> secondValue =
-        ImmutableMap.<String, Object>builder()
+        new MapBuilder()
             // added
-            .put("aa", ImmutableMap.of(".value", "x", ".priority", 0))
-            .put("b", ImmutableMap.of(".value", "x", ".priority", 1))
+            .put("aa", MapBuilder.of(".value", "x", ".priority", 0))
+            .put("b", MapBuilder.of(".value", "x", ".priority", 1))
             // added
-            .put("bb", ImmutableMap.of(".value", "x", ".priority", 2))
+            .put("bb", MapBuilder.of(".value", "x", ".priority", 2))
             // removed c
             // changed
-            .put("d", ImmutableMap.of(".value", "y", ".priority", 3))
-            .put("e", ImmutableMap.of(".value", "x", ".priority", 4))
+            .put("d", MapBuilder.of(".value", "y", ".priority", 3))
+            .put("e", MapBuilder.of(".value", "x", ".priority", 4))
             // moved
-            .put("a", ImmutableMap.of(".value", "x", ".priority", 6))
+            .put("a", MapBuilder.of(".value", "x", ".priority", 6))
             // moved
-            .put("f", ImmutableMap.of(".value", "x", ".priority", 7))
+            .put("f", MapBuilder.of(".value", "x", ".priority", 7))
             // removed g
             // changed
-            .put("h", ImmutableMap.of(".value", "y", ".priority", 7))
+            .put("h", MapBuilder.of(".value", "y", ".priority", 7))
             .build();
 
     final List<String> events = new ArrayList<>();
@@ -831,35 +831,35 @@ public class EventTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
     final Map<String, Object> firstValue =
-        ImmutableMap.<String, Object>builder()
-            .put("a", ImmutableMap.of(".value", "x", ".priority", 0))
-            .put("b", ImmutableMap.of(".value", "x", ".priority", 1))
-            .put("c", ImmutableMap.of(".value", "x", ".priority", 2))
-            .put("d", ImmutableMap.of(".value", "x", ".priority", 3))
-            .put("e", ImmutableMap.of(".value", "x", ".priority", 4))
-            .put("f", ImmutableMap.of(".value", "x", ".priority", 5))
-            .put("g", ImmutableMap.of(".value", "x", ".priority", 6))
-            .put("h", ImmutableMap.of(".value", "x", ".priority", 7))
+        new MapBuilder()
+            .put("a", MapBuilder.of(".value", "x", ".priority", 0))
+            .put("b", MapBuilder.of(".value", "x", ".priority", 1))
+            .put("c", MapBuilder.of(".value", "x", ".priority", 2))
+            .put("d", MapBuilder.of(".value", "x", ".priority", 3))
+            .put("e", MapBuilder.of(".value", "x", ".priority", 4))
+            .put("f", MapBuilder.of(".value", "x", ".priority", 5))
+            .put("g", MapBuilder.of(".value", "x", ".priority", 6))
+            .put("h", MapBuilder.of(".value", "x", ".priority", 7))
             .build();
 
     final Map<String, Object> secondValue =
-        ImmutableMap.<String, Object>builder()
+        new MapBuilder()
             // added
-            .put("aa", ImmutableMap.of(".value", "x", ".priority", 0))
-            .put("b", ImmutableMap.of(".value", "x", ".priority", 1))
+            .put("aa", MapBuilder.of(".value", "x", ".priority", 0))
+            .put("b", MapBuilder.of(".value", "x", ".priority", 1))
             // added
-            .put("bb", ImmutableMap.of(".value", "x", ".priority", 2))
+            .put("bb", MapBuilder.of(".value", "x", ".priority", 2))
             // removed c
             // changed
-            .put("d", ImmutableMap.of(".value", "y", ".priority", 3))
-            .put("e", ImmutableMap.of(".value", "x", ".priority", 4))
+            .put("d", MapBuilder.of(".value", "y", ".priority", 3))
+            .put("e", MapBuilder.of(".value", "x", ".priority", 4))
             // moved
-            .put("a", ImmutableMap.of(".value", "x", ".priority", 6))
+            .put("a", MapBuilder.of(".value", "x", ".priority", 6))
             // moved
-            .put("f", ImmutableMap.of(".value", "x", ".priority", 7))
+            .put("f", MapBuilder.of(".value", "x", ".priority", 7))
             // removed g
             // changed
-            .put("h", ImmutableMap.of(".value", "y", ".priority", 7))
+            .put("h", MapBuilder.of(".value", "y", ".priority", 7))
             .build();
 
     final List<String> events = new ArrayList<>();
@@ -960,9 +960,9 @@ public class EventTestIT {
 
     ZombieVerifier.verifyRepoZombies(ref);
     ref.setValue(
-        ImmutableMap.of(
-            "bar", ImmutableMap.of(".value", 42, ".priority", 10),
-            "foo", ImmutableMap.of(".value", 42, ".priority", 20)));
+        MapBuilder.of(
+            "bar", MapBuilder.of(".value", 42, ".priority", 10),
+            "foo", MapBuilder.of(".value", 42, ".priority", 20)));
     assertTrue(helper.waitForEvents());
     helper
         .addValueExpectation(ref.child("bar"))
@@ -973,9 +973,9 @@ public class EventTestIT {
 
     ZombieVerifier.verifyRepoZombies(ref);
     ref.setValue(
-        ImmutableMap.of(
-            "foo", ImmutableMap.of(".value", 42, ".priority", 20),
-            "bar", ImmutableMap.of(".value", 42, ".priority", 30)));
+        MapBuilder.of(
+            "foo", MapBuilder.of(".value", 42, ".priority", 20),
+            "bar", MapBuilder.of(".value", 42, ".priority", 30)));
     assertTrue(helper.waitForEvents());
     helper.cleanup();
     ZombieVerifier.verifyRepoZombies(ref);

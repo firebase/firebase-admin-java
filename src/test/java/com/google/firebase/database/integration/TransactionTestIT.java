@@ -33,7 +33,6 @@ import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.testing.IntegrationTestUtils;
-import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -903,7 +902,7 @@ public class TransactionTestIT {
         ArrayList<String> expected = new ArrayList<>(3);
         expected.addAll(Arrays.asList("cat", "horse", "dog"));
         Object result = currentData.getValue();
-        TestUtils.assertDeepEquals(expected, result);
+        TestHelpers.assertDeepEquals(expected, result);
         semaphore.release(1);
       }
     });
@@ -926,7 +925,7 @@ public class TransactionTestIT {
         Object val = currentData.getValue();
         if (val != null) {
           Map<String, Object> expected = new MapBuilder().put("a", 0L).build();
-          TestUtils.assertDeepEquals(expected, val);
+          TestHelpers.assertDeepEquals(expected, val);
         }
         currentData.setValue(new MapBuilder().put("a", 1L).build());
         return Transaction.success(currentData);
@@ -942,7 +941,7 @@ public class TransactionTestIT {
         // it was
         // successful.
         Map<String, Object> expected = new MapBuilder().put("a", 1L).build();
-        TestUtils.assertDeepEquals(expected, val);
+        TestHelpers.assertDeepEquals(expected, val);
         semaphore.release(1);
       }
     });

@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.ChildEventListener;
@@ -22,7 +21,6 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.testing.IntegrationTestUtils;
-import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -150,9 +148,9 @@ public class OrderByTestIT {
     TestHelpers.waitFor(semaphore);
 
     Assert.assertEquals(1, snapshots.size());
-    Map<String, Object> expected = ImmutableMap.<String, Object>of(
-        "d", ImmutableMap.of("order", 3L, "foo", "hello"),
-        "a", ImmutableMap.of("order", 2L, "foo", 1L));
+    Map<String, Object> expected = MapBuilder.of(
+        "d", MapBuilder.of("order", 3L, "foo", "hello"),
+        "a", MapBuilder.of("order", 2L, "foo", 1L));
     Assert.assertEquals(expected, snapshots.get(0).getValue());
 
     uploadRules(masterApp, formatRules(reader, "{ \".indexOn\": \"order\" }"));
@@ -175,9 +173,9 @@ public class OrderByTestIT {
                 "f",
                 new MapBuilder()
                     .put("order", 4L)
-                    .put("foo", ImmutableMap.of("bar", "baz"))
+                    .put("foo", MapBuilder.of("bar", "baz"))
                     .build())
-            .put("d", ImmutableMap.of("order", 3L, "foo", "hello"))
+            .put("d", MapBuilder.of("order", 3L, "foo", "hello"))
             .build();
     Assert.assertEquals(expected2, snapshots.get(1).getValue());
 
@@ -409,7 +407,7 @@ public class OrderByTestIT {
 
     Assert.assertEquals("greg", snapshot[0].getKey());
     Assert.assertEquals("rob", prevName[0]);
-    Map<String, Long> expectedValue = ImmutableMap.of("nuggets", 57L);
+    Map<String, Object> expectedValue = MapBuilder.of("nuggets", 57L);
     Assert.assertEquals(expectedValue, snapshot[0].getValue());
 
     TestHelpers.waitForRoundtrip(ref);
@@ -482,28 +480,28 @@ public class OrderByTestIT {
     TestHelpers.waitFor(semaphore, 2);
 
     Map<String, Object> fooExpected = new HashMap<>();
-    fooExpected.put("b", ImmutableMap.of("order", 0L));
-    fooExpected.put("c", ImmutableMap.of("order", 1L, "foo", false));
+    fooExpected.put("b", MapBuilder.of("order", 0L));
+    fooExpected.put("c", MapBuilder.of("order", 1L, "foo", false));
 
     Map<String, Object> orderExpected = new HashMap<>();
-    orderExpected.put("d", ImmutableMap.of("order", 3L, "foo", "hello"));
-    orderExpected.put("a", ImmutableMap.of("order", 2L, "foo", 2L));
+    orderExpected.put("d", MapBuilder.of("order", 3L, "foo", "hello"));
+    orderExpected.put("a", MapBuilder.of("order", 2L, "foo", 2L));
 
     Assert.assertEquals(1, fooSnaps.size());
     Assert.assertEquals(fooExpected, fooSnaps.get(0).getValue());
     Assert.assertEquals(1, orderSnaps.size());
     Assert.assertEquals(orderExpected, orderSnaps.get(0).getValue());
 
-    new WriteFuture(writer.child("a"), ImmutableMap.of("order", -1L, "foo", 1L)).timedGet();
+    new WriteFuture(writer.child("a"), MapBuilder.of("order", -1L, "foo", 1L)).timedGet();
 
     fooExpected = new HashMap<>();
-    fooExpected.put("a", ImmutableMap.of("order", -1L, "foo", 1L));
-    fooExpected.put("b", ImmutableMap.of("order", 0L));
-    fooExpected.put("c", ImmutableMap.of("order", 1L, "foo", false));
+    fooExpected.put("a", MapBuilder.of("order", -1L, "foo", 1L));
+    fooExpected.put("b", MapBuilder.of("order", 0L));
+    fooExpected.put("c", MapBuilder.of("order", 1L, "foo", false));
 
     orderExpected = new HashMap<>();
-    orderExpected.put("d", ImmutableMap.of("order", 3L, "foo", "hello"));
-    orderExpected.put("c", ImmutableMap.of("order", 1L, "foo", false));
+    orderExpected.put("d", MapBuilder.of("order", 3L, "foo", "hello"));
+    orderExpected.put("c", MapBuilder.of("order", 1L, "foo", false));
 
     TestHelpers.waitFor(semaphore, 2);
 
@@ -629,8 +627,8 @@ public class OrderByTestIT {
 
     Map<String, Object> initial =
         new MapBuilder()
-            .put("a", ImmutableMap.of("value", 5L))
-            .put("c", ImmutableMap.of("value", 3L))
+            .put("a", MapBuilder.of("value", 5L))
+            .put("c", MapBuilder.of("value", 3L))
             .build();
 
     final List<String> snapshotNames = new ArrayList<>();
@@ -654,8 +652,8 @@ public class OrderByTestIT {
     Assert.assertEquals(Arrays.asList(null, "c"), prevNames);
 
     Map<String, Object> updates = new HashMap<>();
-    updates.put("b", ImmutableMap.of("value", 4));
-    updates.put("d", ImmutableMap.of("value", 2));
+    updates.put("b", MapBuilder.of("value", 4));
+    updates.put("d", MapBuilder.of("value", 2));
     ref.updateChildren(updates);
 
     TestHelpers.waitFor(semaphore, 2);
@@ -763,7 +761,7 @@ public class OrderByTestIT {
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
 
-    Map<String, Object> initial = ImmutableMap.<String, Object>of("a", 1, "b", 2, "c", 3);
+    Map<String, Object> initial = MapBuilder.of("a", 1, "b", 2, "c", 3);
     // If the server doesn't respect the index, it will send down limited data, but with no
     // offset, so the expected and actual data don't match.
     Query query = reader.orderByKey().startAt("b").limitToFirst(2);
@@ -808,7 +806,7 @@ public class OrderByTestIT {
 
     uploadRules(masterApp, rules);
 
-    Map<String, Integer> initial = ImmutableMap.of("a", 1, "c", 2, "b", 3);
+    Map<String, Object> initial = MapBuilder.of("a", 1, "c", 2, "b", 3);
     // If the server doesn't respect the index, it will send down limited data, but with no
     // offset, so the expected and actual data don't match.
     Query query = reader.orderByValue().startAt(2).limitToFirst(2);
@@ -856,19 +854,19 @@ public class OrderByTestIT {
 
     Map<String, Object> initial =
         new MapBuilder()
-            .put("a", ImmutableMap.of("data", "foo", "idx", true))
-            .put("b", ImmutableMap.of("data", "bar", "idx", true))
-            .put("c", ImmutableMap.of("data", "baz", "idx", false))
+            .put("a", MapBuilder.of("data", "foo", "idx", true))
+            .put("b", MapBuilder.of("data", "bar", "idx", true))
+            .put("c", MapBuilder.of("data", "baz", "idx", false))
             .build();
     new WriteFuture(writer, initial).timedGet();
 
     Query query = reader.orderByChild("idx").equalTo(true);
 
     DataSnapshot snap = TestHelpers.getSnap(query);
-    TestUtils.assertDeepEquals(
+    TestHelpers.assertDeepEquals(
         new MapBuilder()
-            .put("a", ImmutableMap.of("data", "foo", "idx", true))
-            .put("b", ImmutableMap.of("data", "bar", "idx", true))
+            .put("a", MapBuilder.of("data", "foo", "idx", true))
+            .put("b", MapBuilder.of("data", "bar", "idx", true))
             .build(),
         snap.getValue());
 
@@ -887,10 +885,10 @@ public class OrderByTestIT {
     TestHelpers.waitFor(semaphore);
 
     snap = TestHelpers.getSnap(query);
-    TestUtils.assertDeepEquals(
+    TestHelpers.assertDeepEquals(
         new MapBuilder()
-            .put("b", ImmutableMap.of("data", "blah", "idx", true))
-            .put("c", ImmutableMap.of("data", "baz", "idx", true))
+            .put("b", MapBuilder.of("data", "blah", "idx", true))
+            .put("c", MapBuilder.of("data", "baz", "idx", true))
             .build(),
         snap.getValue());
   }
@@ -960,7 +958,7 @@ public class OrderByTestIT {
       throws InterruptedException, ExecutionException, TimeoutException, TestFailure, IOException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
-    Object initialData = ImmutableMap.of("key", "value");
+    Object initialData = MapBuilder.of("key", "value");
     new WriteFuture(ref, initialData).timedGet();
 
     ValueEventListener listener =

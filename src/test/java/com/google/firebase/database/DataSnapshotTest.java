@@ -4,7 +4,6 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
@@ -39,7 +38,7 @@ public class DataSnapshotTest {
     assertFalse(snap2.hasChildren());
     assertFalse(snap2.getChildren().iterator().hasNext());
 
-    DataSnapshot snap3 = snapFor(ImmutableMap.of("a", 1L, "b", 2L));
+    DataSnapshot snap3 = snapFor(MapBuilder.of("a", 1L, "b", 2L));
     assertTrue(snap3.hasChildren());
     Iterator<DataSnapshot> iter = snap3.getChildren().iterator();
     assertTrue(iter.hasNext());
@@ -60,7 +59,7 @@ public class DataSnapshotTest {
     snap = snapFor(new HashMap<>());
     assertFalse(snap.exists());
 
-    snap = snapFor(ImmutableMap.of(".priority", 1));
+    snap = snapFor(MapBuilder.of(".priority", 1));
     assertFalse(snap.exists());
 
     snap = snapFor(null);
@@ -72,7 +71,7 @@ public class DataSnapshotTest {
     snap = snapFor(5);
     assertTrue(snap.exists());
 
-    snap = snapFor(ImmutableMap.of("x", 5));
+    snap = snapFor(MapBuilder.of("x", 5));
     assertTrue(snap.exists());
   }
 }

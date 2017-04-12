@@ -52,6 +52,7 @@ public class FirebaseOptionsTest {
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   public void createOptionsWithServiceAccountSet() throws IOException, InterruptedException {
     final Semaphore semaphore = new Semaphore(0);
     FirebaseOptions firebaseOptions =
@@ -115,6 +116,7 @@ public class FirebaseOptionsTest {
   }
 
   @Test(expected = IllegalStateException.class)
+  @SuppressWarnings("deprecation")
   public void createOptionsWithServiceAccountAndCredential() {
     new FirebaseOptions.Builder()
         .setServiceAccount(ServiceAccount.EDITOR.asStream())
