@@ -10,6 +10,7 @@ import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.snapshot.EmptyNode;
 import com.google.firebase.database.snapshot.NamedNode;
 import com.google.firebase.database.snapshot.Node;
+import com.google.firebase.database.util.JsonMapper;
 import com.google.firebase.database.utilities.Utilities;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,7 +21,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.codehaus.jackson.map.ObjectMapper;
 
 public class MockPersistenceStorageEngine implements PersistenceStorageEngine {
 
@@ -112,9 +112,8 @@ public class MockPersistenceStorageEngine implements PersistenceStorageEngine {
 
   @Override
   public long serverCacheEstimatedSizeInBytes() {
-    final ObjectMapper mapper = new ObjectMapper();
     try {
-      return mapper.writeValueAsString(serverCache.getValue(true)).length();
+      return JsonMapper.serializeJson(serverCache.getValue(true)).length();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

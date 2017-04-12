@@ -4,11 +4,11 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.EventRecord;
 import com.google.firebase.database.Query;
-import com.google.firebase.database.TestConstants;
 import com.google.firebase.database.TestFailure;
-import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.core.view.Event;
+import com.google.firebase.testing.TestUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -17,7 +17,6 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-/** User: greg Date: 5/24/13 Time: 11:52 AM */
 public class ReadFuture implements Future<List<EventRecord>> {
 
   private final ValueEventListener valueEventListener;
@@ -167,7 +166,7 @@ public class ReadFuture implements Future<List<EventRecord>> {
   }
 
   public List<EventRecord> timedGet() throws InterruptedException, TimeoutException, TestFailure {
-    return timedGet(TestConstants.TEST_TIMEOUT, TimeUnit.MILLISECONDS);
+    return timedGet(TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   public List<EventRecord> timedGet(long timeout, TimeUnit timeoutUnit)
@@ -177,13 +176,12 @@ public class ReadFuture implements Future<List<EventRecord>> {
   }
 
   public void timedWait() throws InterruptedException, TimeoutException, TestFailure {
-    timedWait(TestConstants.TEST_TIMEOUT, TimeUnit.MILLISECONDS);
+    timedWait(TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   public void timedWait(long timeout, TimeUnit timeoutUnit)
       throws InterruptedException, TimeoutException, TestFailure {
     if (!semaphore.tryAcquire(1, timeout, timeoutUnit)) {
-      TestHelpers.failOnFirstUncaughtException();
       throw new TimeoutException();
     }
     if (exception != null) {
@@ -197,7 +195,6 @@ public class ReadFuture implements Future<List<EventRecord>> {
   }
 
   public interface CompletionCondition {
-
     boolean isComplete(List<EventRecord> events);
   }
 }

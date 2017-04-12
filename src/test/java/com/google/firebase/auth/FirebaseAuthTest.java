@@ -16,6 +16,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.FirebaseCustomAuthToken;
+import com.google.firebase.database.MapBuilder;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
@@ -201,7 +202,7 @@ public class FirebaseAuthTest {
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
 
     String token =
-        Tasks.await(auth.createCustomToken("user1", ImmutableMap.of("claim", (Object) "value")));
+        Tasks.await(auth.createCustomToken("user1", MapBuilder.of("claim", "value")));
 
     FirebaseCustomAuthToken parsedToken = FirebaseCustomAuthToken.parse(new GsonFactory(), token);
     assertEquals(parsedToken.getPayload().getUid(), "user1");

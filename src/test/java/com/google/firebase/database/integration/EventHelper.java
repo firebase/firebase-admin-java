@@ -1,6 +1,15 @@
-package com.google.firebase.database;
+package com.google.firebase.database.integration;
 
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseException;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.EventRecord;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.core.view.Event;
+import com.google.firebase.testing.TestUtils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,7 +22,6 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-/** User: greg Date: 5/28/13 Time: 9:06 AM */
 class EventHelper {
 
   private List<Expectation> lookingFor;
@@ -92,7 +100,7 @@ class EventHelper {
     toListen.clear();
     if (waitForInitialization) {
       initializationSemaphore.tryAcquire(
-          locationList.size(), TestConstants.TEST_TIMEOUT, TimeUnit.MILLISECONDS);
+          locationList.size(), TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
       // Cut out the initialization events
       synchronized (this) {
         waitingForInitialization = false;
@@ -209,7 +217,7 @@ class EventHelper {
 
   public boolean waitForEvents() throws InterruptedException {
     // Try waiting on the semaphore
-    if (!semaphore.tryAcquire(1, TestConstants.TEST_TIMEOUT, TimeUnit.MILLISECONDS)) {
+    if (!semaphore.tryAcquire(1, TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
       return false;
     } else {
       semaphore.release(1);

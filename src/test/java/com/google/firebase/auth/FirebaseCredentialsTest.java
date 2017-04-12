@@ -71,7 +71,7 @@ public class FirebaseCredentialsTest {
     Assert.assertEquals(ACCESS_TOKEN, token);
 
     // We should still be able to fetch the token since the certificate is cached
-    credentialsFile.delete();
+    Assert.assertTrue(credentialsFile.delete());
     token =
         Tasks.await(
             FirebaseCredentials.applicationDefault(transport, Utils.getDefaultJsonFactory())

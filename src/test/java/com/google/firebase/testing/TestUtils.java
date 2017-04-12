@@ -15,15 +15,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Test Utils for use by all tests. */
+/** Test Utils for use by all tests (both unit and integration tests). */
 public class TestUtils {
 
-  // These constants are also used for the ServiceAccounts.
-  public static final String PROJECT_ID = "mock-project-id";
-  public static final String PROJECT_NUMBER = "1234567890";
-
-  // Time to wait for async tests to finish.
-  public static final long ASYNC_WAIT_TIME_MS = 2000;
+  public static final long TEST_TIMEOUT_MILLIS = 7 * 1000;
 
   public static boolean verifySignature(JsonWebSignature token, List<PublicKey> keys)
       throws Exception {
@@ -57,7 +52,7 @@ public class TestUtils {
     }
   }
 
-  public static String loadResource(String path) {
+  static String loadResource(String path) {
     InputStream stream = TestUtils.class.getClassLoader().getResourceAsStream(path);
     checkNotNull(stream, "Failed to load resource: " + path);
     try (InputStreamReader reader = new InputStreamReader(stream)) {
