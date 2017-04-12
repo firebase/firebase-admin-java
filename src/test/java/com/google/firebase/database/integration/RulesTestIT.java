@@ -24,6 +24,7 @@ import com.google.firebase.database.core.DatabaseConfig;
 import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
+import com.google.firebase.database.util.JsonMapper;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.IntegrationTestUtils;
 import com.google.firebase.testing.TestUtils;
@@ -39,7 +40,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -50,7 +50,6 @@ public class RulesTestIT {
       "{\n    \"rules\": {\n        \".read\": true,\n        \".write\": true\n    }\n}";
 
   private static final Map<String, Object> testRules;
-  private static final ObjectMapper mapper = new ObjectMapper();
   
   static {
     testRules = new MapBuilder()
@@ -99,8 +98,8 @@ public class RulesTestIT {
     List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 2);
     reader = refs.get(0);
     writer = refs.get(1);
-    String rules = mapper
-        .writeValueAsString(MapBuilder.of("rules", MapBuilder.of(writer.getKey(), testRules)));
+    String rules = JsonMapper.serializeJson(
+        MapBuilder.of("rules", MapBuilder.of(writer.getKey(), testRules)));
     uploadRules(rules);
     TestHelpers.waitForRoundtrip(writer.getRoot());
   }

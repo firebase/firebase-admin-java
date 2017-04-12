@@ -1,8 +1,6 @@
 package com.google.firebase.testing;
 
-import static com.cedarsoftware.util.DeepEquals.deepEquals;
 import static com.google.firebase.internal.Preconditions.checkNotNull;
-import static org.junit.Assert.fail;
 
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.common.io.CharStreams;

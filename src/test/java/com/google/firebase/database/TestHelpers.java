@@ -14,6 +14,7 @@ import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.view.QuerySpec;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.database.snapshot.ChildKey;
+import com.google.firebase.database.util.JsonMapper;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
@@ -36,9 +37,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
 
 public class TestHelpers {
 
@@ -123,8 +121,7 @@ public class TestHelpers {
 
   public static Map<String, Object> fromJsonString(String json) {
     try {
-      ObjectMapper mapper = new ObjectMapper();
-      return mapper.readValue(json, new TypeReference<Map<String, Object>>() {});
+      return JsonMapper.parseJson(json);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

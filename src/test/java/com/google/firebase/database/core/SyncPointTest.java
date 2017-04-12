@@ -1,5 +1,6 @@
 package com.google.firebase.database.core;
 
+import com.google.common.io.CharStreams;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -17,8 +18,10 @@ import com.google.firebase.database.core.view.QuerySpec;
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
+import com.google.firebase.database.util.JsonMapper;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,7 +29,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.codehaus.jackson.map.ObjectMapper;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -367,16 +370,13 @@ public class SyncPointTest {
 
   @SuppressWarnings("unchecked")
   private List<Map<String, Object>> loadSpecs() {
-    ObjectMapper mapper = new ObjectMapper();
-
     String pathToResource = "syncPointSpec.json";
-
     InputStream stream = getClass().getClassLoader().getResourceAsStream(pathToResource);
     if (stream == null) {
       throw new RuntimeException("Failed to find syncPointSpec.json resource.");
     }
-    try {
-      return mapper.readValue(stream, List.class);
+    try (InputStreamReader reader = new InputStreamReader(stream)) {
+      return (List) JsonMapper.parseJsonValue(CharStreams.toString(reader));
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
