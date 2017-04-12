@@ -4,3 +4,5 @@ target/
 *.iml
 .classpath
 .project
+.checkstyle
+release.properties
