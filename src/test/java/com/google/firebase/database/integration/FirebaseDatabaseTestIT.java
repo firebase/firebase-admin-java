@@ -119,7 +119,7 @@ public class FirebaseDatabaseTestIT {
   @Test(expected = DatabaseException.class)
   public void testGetReferenceThrowsWithBadUrl() {
     FirebaseDatabase db = FirebaseDatabase.getInstance();
-    db.getReferenceFromUrl("http://tests2.fblocal.com:9000");
+    db.getReferenceFromUrl("http://tests2.fake-firebaseio.com:9000");
   }
   
   private static FirebaseApp appWithDbUrl(String dbUrl, String name) {

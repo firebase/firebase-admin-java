@@ -15,10 +15,14 @@ import com.google.firebase.database.core.view.Change;
 import com.google.firebase.database.core.view.DataEvent;
 import com.google.firebase.database.core.view.Event;
 import com.google.firebase.database.core.view.QuerySpec;
+import com.google.firebase.database.logging.DefaultLogger;
+import com.google.firebase.database.logging.LogWrapper;
+import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
 import com.google.firebase.database.util.JsonMapper;
+import com.google.firebase.internal.Preconditions;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -35,7 +39,7 @@ import org.junit.Test;
 
 public class SyncPointTest {
 
-  private static SyncTree.ListenProvider getNewListenProvider() {
+  private static SyncTree.ListenProvider getNewListenProvider(final LogWrapper logger) {
     return new SyncTree.ListenProvider() {
       private final HashSet<QuerySpec> listens = new HashSet<>();
 
@@ -45,15 +49,16 @@ public class SyncPointTest {
           Tag tag,
           ListenHashProvider hash,
           SyncTree.CompletionListener onListenComplete) {
-        Path path = query.getPath();
-        assert !listens.contains(query) : "Duplicate listen";
+        Preconditions.checkState(!listens.contains(query), "Duplicate listen");
         this.listens.add(query);
       }
 
       @Override
       public void stopListening(QuerySpec query, Tag tag) {
         Path path = query.getPath();
-        assert this.listens.contains(query) : "Stopped listening for query already";
+        logger.debug("Listening at " + path + " for Tag " + tag);
+        Preconditions.checkState(this.listens.contains(query),
+            "Stopped listening for query already");
         this.listens.remove(query);
       }
     };
@@ -65,9 +70,9 @@ public class SyncPointTest {
 
   private static void assertEventExactMatch(List<TestEvent> expected, List<TestEvent> actual) {
     if (expected.size() < actual.size()) {
-      Assert.assertTrue("Got extra events: " + actual, false);
+      Assert.fail("Got extra events: " + actual);
     } else if (expected.size() > actual.size()) {
-      Assert.assertTrue("Missing events: " + expected, false);
+      Assert.fail("Missing events: " + expected);
     } else {
       Iterator<TestEvent> expectedIterator = expected.iterator();
       Iterator<TestEvent> actualIterator = actual.iterator();
@@ -270,7 +275,10 @@ public class SyncPointTest {
   @SuppressWarnings("unchecked")
   private static void runTest(Map<String, Object> testSpec, String basePath) {
     DatabaseConfig config = TestHelpers.newTestConfig();
-    SyncTree.ListenProvider listenProvider = getNewListenProvider();
+    TestHelpers.setLogger(config, new DefaultLogger(Logger.Level.WARN, null));
+    LogWrapper logger = config.getLogger("SyncPointTest");
+    logger.info("Running \"" + testSpec.get("name") + '"');
+    SyncTree.ListenProvider listenProvider = getNewListenProvider(logger);
     SyncTree syncTree = new SyncTree(config, new NoopPersistenceManager(), listenProvider);
 
     int currentWriteId = 0;
