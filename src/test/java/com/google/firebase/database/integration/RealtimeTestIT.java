@@ -55,17 +55,17 @@ public class RealtimeTestIT {
 
   @Test
   public void testUrlParsing() {
-    ParsedUrl parsed = Utilities.parseUrl("http://gsoltis.fblocal.com:9000");
-    assertEquals(parsed.path.toString(), "/");
-    assertEquals(parsed.repoInfo.host, "gsoltis.fblocal.com:9000");
-    assertEquals(parsed.repoInfo.internalHost, "gsoltis.fblocal.com:9000");
-    assertEquals(parsed.repoInfo.secure, false);
+    ParsedUrl parsed = Utilities.parseUrl("https://admin-java-sdk.firebaseio.com");
+    assertEquals("/", parsed.path.toString());
+    assertEquals("admin-java-sdk.firebaseio.com", parsed.repoInfo.host);
+    assertEquals("admin-java-sdk.firebaseio.com", parsed.repoInfo.internalHost);
+    assertEquals(true, parsed.repoInfo.secure);
 
-    parsed = Utilities.parseUrl("http://gsoltis.firebaseio.com/foo/bar");
-    assertEquals(parsed.path.toString(), "/foo/bar");
-    assertEquals(parsed.repoInfo.host, "gsoltis.firebaseio.com");
-    assertEquals(parsed.repoInfo.internalHost, "gsoltis.firebaseio.com");
-    assertEquals(parsed.repoInfo.secure, true);
+    parsed = Utilities.parseUrl("https://admin-java-sdk.firebaseio.com/foo/bar");
+    assertEquals("/foo/bar", parsed.path.toString());
+    assertEquals("admin-java-sdk.firebaseio.com", parsed.repoInfo.host);
+    assertEquals("admin-java-sdk.firebaseio.com", parsed.repoInfo.internalHost);
+    assertEquals(true, parsed.repoInfo.secure);
   }
 
   @Test
