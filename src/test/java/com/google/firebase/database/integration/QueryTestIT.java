@@ -36,6 +36,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -2406,11 +2407,12 @@ public class QueryTestIT {
     new WriteFuture(writer, toSet).timedGet();
 
     final AtomicBoolean childCalled = new AtomicBoolean(false);
+    final AtomicLong childValue = new AtomicLong(0);
     reader.child("a/b").addValueEventListener(new ValueEventListener() {
       @Override
       public void onDataChange(DataSnapshot snapshot) {
-        assertTrue(childCalled.compareAndSet(false, true));
-        assertEquals(1L, snapshot.getValue());
+        childCalled.compareAndSet(false, true);
+        childValue.compareAndSet(0L, snapshot.getValue(Long.class));
       }
 
       @Override
@@ -2437,6 +2439,7 @@ public class QueryTestIT {
       }
     }).timedGet();
     assertTrue(childCalled.get());
+    assertEquals(1L, childValue.longValue());
   }
 
   @Test
