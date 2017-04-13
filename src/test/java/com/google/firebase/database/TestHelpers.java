@@ -54,7 +54,7 @@ public class TestHelpers {
       FirebaseApp.initializeApp(
           new FirebaseOptions.Builder()
               .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
-              .setDatabaseUrl("http://tests.fblocal.com:9000")
+              .setDatabaseUrl("http://admin-java-sdk.firebaseio.com")
               .build());
     }
     return newTestConfig(FirebaseApp.getInstance());
@@ -78,6 +78,11 @@ public class TestHelpers {
   public static ScheduledExecutorService getExecutorService(DatabaseConfig config) {
     DefaultRunLoop runLoop = (DefaultRunLoop) config.getRunLoop();
     return runLoop.getExecutorService();
+  }
+
+  public static void setLogger(
+      DatabaseConfig ctx, com.google.firebase.database.logging.Logger logger) {
+    ctx.setLogger(logger);
   }
 
   public static void waitFor(Semaphore semaphore) throws InterruptedException {
