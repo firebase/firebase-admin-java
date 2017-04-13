@@ -86,6 +86,7 @@ public class EventTestIT {
     ref.child("foo").setValue(42);
     assertTrue(helper.waitForEvents());
     ZombieVerifier.verifyRepoZombies(ref);
+    helper.cleanup();
   }
 
   @Test
@@ -129,6 +130,9 @@ public class EventTestIT {
     assertTrue(writeHelper.waitForEvents());
     assertTrue(readHelper.waitForEvents());
     ZombieVerifier.verifyRepoZombies(refs);
+
+    readHelper.cleanup();
+    writeHelper.cleanup();
   }
 
   @Test
@@ -154,6 +158,11 @@ public class EventTestIT {
     assertTrue(readHelper.waitForEvents());
     assertTrue(readHelper2.waitForEvents());
     ZombieVerifier.verifyRepoZombies(refs);
+
+    writeHelper.cleanup();
+    writeHelper2.cleanup();
+    readHelper.cleanup();
+    readHelper2.cleanup();
   }
 
   @Test
@@ -651,10 +660,9 @@ public class EventTestIT {
               }
               ref.removeEventListener(this);
               try {
-                // this doesn't block immediately because we are already on the repo
-                // thread.
-                // we kick off the verify and let the unit test block on the
-                // endingsemaphore
+                // This doesn't block immediately because we are already on the repo
+                // thread. We kick off the verify and let the unit test block on the
+                // ending semaphore.
                 ZombieVerifier.verifyRepoZombies(ref, endingSemaphore);
               } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -691,12 +699,12 @@ public class EventTestIT {
           InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
-    final AtomicBoolean called = new AtomicBoolean(false);
+    final AtomicInteger called = new AtomicInteger(0);
     ref.addListenerForSingleValueEvent(
         new ValueEventListener() {
           @Override
           public void onDataChange(DataSnapshot snapshot) {
-            assertTrue(called.compareAndSet(false, true));
+            called.incrementAndGet();
           }
 
           @Override
@@ -710,6 +718,7 @@ public class EventTestIT {
     ref.setValue(42);
     ref.setValue(84);
     new WriteFuture(ref, null).timedGet();
+    assertEquals(1, called.get());
     ZombieVerifier.verifyRepoZombies(ref);
   }
 

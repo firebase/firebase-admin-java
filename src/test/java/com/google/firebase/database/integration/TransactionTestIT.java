@@ -120,6 +120,7 @@ public class TransactionTestIT {
     });
 
     assertTrue(helper.waitForEvents());
+    helper.cleanup();
   }
 
   @Test
@@ -326,6 +327,7 @@ public class TransactionTestIT {
 
     assertTrue(helper.waitForEvents());
     TestHelpers.waitFor(semaphore);
+    helper.cleanup();
   }
 
   @Test
