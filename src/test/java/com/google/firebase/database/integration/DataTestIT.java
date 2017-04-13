@@ -1557,6 +1557,7 @@ public class DataTestIT {
     ref.updateChildren(new MapBuilder().put("a", 11).put("d", 44).build());
     ref.updateChildren(new MapBuilder().put("c", 33).put("d", 45).build());
     helper.waitForEvents();
+    helper.cleanup();
   }
 
   @Test
@@ -1988,7 +1989,7 @@ public class DataTestIT {
           @Override
           public void onDataChange(DataSnapshot snapshot) {
             assertNull(snapshot.getValue());
-            assertTrue(queryCalled.compareAndSet(false, true));
+            queryCalled.compareAndSet(false, true);
           }
 
           @Override
@@ -2002,7 +2003,7 @@ public class DataTestIT {
           @Override
           public void onDataChange(DataSnapshot snapshot) {
             assertNull(snapshot.getValue());
-            assertTrue(deepChildCalled.compareAndSet(false, true));
+            deepChildCalled.compareAndSet(false, true);
           }
 
           @Override

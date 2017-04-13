@@ -225,6 +225,7 @@ public class OrderTestIT {
     ref.child("a").setPriority(15);
 
     assertTrue(helper.waitForEvents());
+    helper.cleanup();
   }
 
   @Test
