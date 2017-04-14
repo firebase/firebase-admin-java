@@ -64,6 +64,16 @@ public class FirebaseAppTest {
     method.invoke(instance, parameters.toArray());
   }
 
+  @Test(expected = NullPointerException.class)
+  public void testNullAppName() {
+    FirebaseApp.initializeApp(OPTIONS, null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testEmptyAppName() {
+    FirebaseApp.initializeApp(OPTIONS, "");
+  }
+
   @Test(expected = IllegalStateException.class)
   public void testGetInstancePersistedNotInitialized() {
     String name = "myApp";
@@ -104,6 +114,29 @@ public class FirebaseAppTest {
     assertEquals(2, apps.size());
     assertTrue(apps.contains(app1));
     assertTrue(apps.contains(app2));
+  }
+
+  @Test
+  public void testGetNullApp() {
+    FirebaseApp app1 = FirebaseApp.initializeApp(OPTIONS, "app");
+    try {
+      FirebaseApp.getInstance(null);
+      fail("Not thrown");
+    } catch (NullPointerException expected) {
+      // ignore
+    }
+  }
+
+  @Test
+  public void testToString() {
+    FirebaseOptions options =
+        new FirebaseOptions.Builder()
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options, "app");
+    String pattern = "FirebaseApp\\{name=app, options=FirebaseOptions\\{"
+        + "databaseUrl=null, credential=[^\\s]+, databaseAuthVariableOverride=\\{}}}";
+    assertTrue(app.toString().matches(pattern));
   }
 
   @Test
@@ -266,6 +299,17 @@ public class FirebaseAppTest {
     tokenRefresher.simulateDelay(35);
     verify(listener, times(3)).onAuthStateChanged(Mockito.any(GetTokenResult.class));
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testFirebaseExceptionNullDetail() {
+    new FirebaseException(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testFirebaseExceptionEmptyDetail() {
+    new FirebaseException("");
+  }
+
 
   private static class MockFirebaseCredential implements FirebaseCredential {
 

@@ -2,11 +2,12 @@ package com.google.firebase;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
-import com.google.firebase.internal.Objects;
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -72,7 +73,7 @@ public final class FirebaseOptions {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("databaseUrl", databaseUrl)
         .add("credential", firebaseCredential)
         .add("databaseAuthVariableOverride", databaseAuthVariableOverride)

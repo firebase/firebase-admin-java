@@ -43,6 +43,16 @@ public class FirebaseCredentialsTest {
   private static final String REFRESH_TOKEN = "mockrefreshtoken";
   @Rule public final ExpectedException thrown = ExpectedException.none();
 
+  @Test(expected = NullPointerException.class)
+  public void testNullCertificate() {
+    FirebaseCredentials.fromCertificate(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testNullRefreshToken() {
+    FirebaseCredentials.fromRefreshToken(null);
+  }
+
   @Test
   public void defaultCredentialIsCached() {
     Assert.assertEquals(

@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -17,7 +18,6 @@ import com.google.firebase.internal.GuardedBy;
 import com.google.firebase.internal.Joiner;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
-import com.google.firebase.internal.Objects;
 import com.google.firebase.tasks.Continuation;
 import com.google.firebase.tasks.Task;
 
@@ -241,7 +241,7 @@ public class FirebaseApp {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this).add("name", name).add("options", options).toString();
+    return MoreObjects.toStringHelper(this).add("name", name).add("options", options).toString();
   }
 
   /**

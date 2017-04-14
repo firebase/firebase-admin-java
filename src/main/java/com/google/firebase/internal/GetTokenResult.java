@@ -1,5 +1,7 @@
 package com.google.firebase.internal;
 
+import com.google.common.base.Objects;
+
 /** This class mirrors the GetAccessTokenResult in GITKit. */
 public class GetTokenResult {
 
