@@ -28,7 +28,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeoutException;
 
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -47,6 +49,16 @@ public class OrderTestIT {
   @AfterClass
   public static void tearDownClass() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+  }
+
+  @Before
+  public void prepareApp() {
+    TestHelpers.wrapForErrorHandling(masterApp);
+  }
+
+  @After
+  public void checkAndCleanupApp() {
+    TestHelpers.assertAndUnwrapErrorHandlers(masterApp);
   }
 
   @Test

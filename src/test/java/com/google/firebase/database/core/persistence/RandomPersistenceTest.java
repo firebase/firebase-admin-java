@@ -3,6 +3,10 @@ package com.google.firebase.database.core.persistence;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.annotations.NotNull;
@@ -26,12 +30,15 @@ import com.google.firebase.database.core.view.Event;
 import com.google.firebase.database.core.view.QueryParams;
 import com.google.firebase.database.core.view.QuerySpec;
 import com.google.firebase.database.snapshot.Node;
+import com.google.firebase.testing.ServiceAccount;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class RandomPersistenceTest {
@@ -43,6 +50,22 @@ public class RandomPersistenceTest {
   private static final int MAX_LISTEN_DEPTH = 3;
   private long currentWriteId = 0;
   private long currentUnackedWriteId = 0;
+
+  private static FirebaseApp testApp;
+
+  @BeforeClass
+  public static void setUpClass() {
+    testApp = FirebaseApp.initializeApp(
+        new FirebaseOptions.Builder()
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .setDatabaseUrl("http://admin-java-sdk.firebaseio.com")
+            .build());
+  }
+
+  @AfterClass
+  public static void tearDownClass() {
+    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+  }
 
   private static Map<Path, Node> fromCompoundWrite(CompoundWrite write) {
     Map<Path, Node> map = new HashMap<>();
@@ -138,7 +161,7 @@ public class RandomPersistenceTest {
       currentWriteId = 0;
       currentUnackedWriteId = 0;
 
-      DatabaseConfig cfg = TestHelpers.newFrozenTestConfig();
+      DatabaseConfig cfg = TestHelpers.newFrozenTestConfig(testApp);
       MockPersistenceStorageEngine storageEngine = new MockPersistenceStorageEngine();
       DefaultPersistenceManager manager =
           new DefaultPersistenceManager(cfg, storageEngine, CachePolicy.NONE);

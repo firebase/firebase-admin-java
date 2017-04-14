@@ -3,6 +3,10 @@ package com.google.firebase.database.core;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.io.CharStreams;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -24,6 +28,7 @@ import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
 import com.google.firebase.database.util.JsonMapper;
+import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -35,10 +40,28 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class SyncPointTest {
+
+  private static FirebaseApp testApp;
+
+  @BeforeClass
+  public static void setUpClass() {
+    testApp = FirebaseApp.initializeApp(
+        new FirebaseOptions.Builder()
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .setDatabaseUrl("http://admin-java-sdk.firebaseio.com")
+            .build());
+  }
+
+  @AfterClass
+  public static void tearDownClass() {
+    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+  }
 
   private static SyncTree.ListenProvider getNewListenProvider(final LogWrapper logger) {
     return new SyncTree.ListenProvider() {
@@ -275,7 +298,7 @@ public class SyncPointTest {
 
   @SuppressWarnings("unchecked")
   private static void runTest(Map<String, Object> testSpec, String basePath) {
-    DatabaseConfig config = TestHelpers.newTestConfig();
+    DatabaseConfig config = TestHelpers.newTestConfig(testApp);
     TestHelpers.setLogger(config, new DefaultLogger(Logger.Level.WARN, null));
     LogWrapper logger = config.getLogger("SyncPointTest");
     logger.info("Running \"" + testSpec.get("name") + '"');

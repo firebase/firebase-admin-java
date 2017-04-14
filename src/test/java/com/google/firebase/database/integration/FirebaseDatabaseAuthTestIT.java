@@ -12,6 +12,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.tasks.OnCompleteListener;
 import com.google.firebase.tasks.Task;
@@ -26,7 +27,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -63,6 +66,16 @@ public class FirebaseDatabaseAuthTestIT {
     FirebaseDatabase db = FirebaseDatabase.getInstance(app);
     // TODO: Ideally, we would find a way to verify the correct log output.
     assertWriteTimeout(db.getReference());
+  }
+
+  @Before
+  public void prepareApp() {
+    TestHelpers.wrapForErrorHandling(masterApp);
+  }
+
+  @After
+  public void checkAndCleanupApp() {
+    TestHelpers.assertAndUnwrapErrorHandlers(masterApp);
   }
   
   @Test

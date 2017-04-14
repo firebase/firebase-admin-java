@@ -1,6 +1,5 @@
 package com.google.firebase.database.core.persistence;
 
-import static com.google.firebase.database.TestHelpers.asSet;
 import static com.google.firebase.database.TestHelpers.ck;
 import static com.google.firebase.database.TestHelpers.defaultQueryAt;
 import static com.google.firebase.database.TestHelpers.path;
@@ -11,6 +10,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.utilities.TestClock;
 import com.google.firebase.database.core.view.QueryParams;
@@ -274,9 +274,11 @@ public class TrackedQueryManagerTest {
 
     manager.setQueryActive(SAMPLE_FOO_QUERY);
     TrackedQuery trackedQuery = manager.findTrackedQuery(SAMPLE_FOO_QUERY);
-    engine.saveTrackedQueryKeys(trackedQuery.id, asSet(ck("d"), ck("e")));
+    engine.saveTrackedQueryKeys(trackedQuery.id,
+        ImmutableSet.of(ck("d"), ck("e")));
 
-    assertEquals(asSet(ck("a"), ck("d"), ck("e")), manager.getKnownCompleteChildren(path("foo")));
+    assertEquals(ImmutableSet.of(ck("a"), ck("d"), ck("e")),
+        manager.getKnownCompleteChildren(path("foo")));
     assertEquals(Collections.<ChildKey>emptySet(), manager.getKnownCompleteChildren(path("")));
     assertEquals(
         Collections.<ChildKey>emptySet(), manager.getKnownCompleteChildren(path("foo/baz")));

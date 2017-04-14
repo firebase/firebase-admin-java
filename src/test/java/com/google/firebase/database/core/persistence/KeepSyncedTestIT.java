@@ -9,13 +9,16 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.EventRecord;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -32,6 +35,16 @@ public class KeepSyncedTestIT {
   @AfterClass
   public static void tearDownClass() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+  }
+
+  @Before
+  public void prepareApp() {
+    TestHelpers.wrapForErrorHandling(masterApp);
+  }
+
+  @After
+  public void checkAndCleanupApp() {
+    TestHelpers.assertAndUnwrapErrorHandlers(masterApp);
   }
 
   @Test

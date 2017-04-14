@@ -51,7 +51,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -68,6 +70,16 @@ public class DataTestIT {
   @AfterClass
   public static void tearDownClass() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+  }
+
+  @Before
+  public void prepareApp() {
+    TestHelpers.wrapForErrorHandling(masterApp);
+  }
+
+  @After
+  public void checkAndCleanupApp() {
+    TestHelpers.assertAndUnwrapErrorHandlers(masterApp);
   }
 
   @Test
