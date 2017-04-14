@@ -19,7 +19,7 @@
     <scm>
         <connection>scm:git:https://github.com/firebase/firebase-admin-java.git</connection>
         <developerConnection>scm:git:ssh//github.com/firebase/firebase-admin-java.git</developerConnection>
-        <url>http://github.com/simpligility/ossrh-demo/tree/master</url>
+        <url>http://github.com/firebase/firebase-admin-java</url>
     </scm>
 
     <distributionManagement>
