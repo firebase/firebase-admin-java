@@ -91,6 +91,8 @@ mvn validate
 If you are using Eclipse for development, you can install the
 [Eclipse Checkstyle plugin](http://eclipse-cs.sourceforge.net/#!/), and import the `checkstyle.xml`
 file into the IDE. This enables you to have the linter constantly checking your code as you develop.
+A similar [plugin](https://plugins.jetbrains.com/plugin/1065-checkstyle-idea) is available for
+IntelliJ IDEA as well.
 
 ### Unit Testing
 
@@ -110,17 +112,20 @@ subdirectory. Integration tests follow the naming convention `*IT.java` (e.g. `D
 which enables the Maven Surefire and Failsafe plugins to differentiate between the two types of
 tests. Integration tests are executed against a real life Firebase project, and therefore
 requires an Internet connection. Create a new project in the
-[Firebase console](https://console.firebase.google.com/) if you do not already have one. Download
-the service account private key from the "Settings" page of the project. Now run the following
-command to invoke the integration test suite:
+[Firebase console](https://console.firebase.google.com/) if you do not already have one. Use a 
+separate, dedicated project for integration tests since the test suite makes a large number of
+writes to the Firebase realtime database. Download the service account private key from the 
+"Settings" page of the project. Now run the following command to invoke the integration test suite:
 
 ```
 mvn verify -Dfirebase.it.certificate=path/to/your/serviceAccount.json
 ```
 
 Make sure to specify the correct path to your downloaded service account key file as the
-`firebase.it.certificate` system property. This command will invoke both unit and integration test
-suites. To execute only the integration tests, run the command as follows:
+`firebase.it.certificate` system property. 
+
+The above command invokes both unit and integration test suites. To execute only the integration
+tests, run the command as follows:
 
 ```
 mvn verify -Dfirebase.it.certificate=path/to/your/serviceAccount.json -Dskip.surefire.tests=true
