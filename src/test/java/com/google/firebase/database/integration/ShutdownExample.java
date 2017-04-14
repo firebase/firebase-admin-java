@@ -18,7 +18,7 @@ public class ShutdownExample {
     FirebaseApp app =
         FirebaseApp.initializeApp(
             new FirebaseOptions.Builder()
-                .setDatabaseUrl("http://gsoltis.fblocal.com:9000")
+                .setDatabaseUrl("https://admin-java-sdk.firebaseio.com")
                 .build());
 
     FirebaseDatabase db = FirebaseDatabase.getInstance(app);

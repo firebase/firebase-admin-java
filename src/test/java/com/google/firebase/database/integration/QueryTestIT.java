@@ -1674,14 +1674,15 @@ public class QueryTestIT {
     new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4)
         .put("e", 5).put("f", 6).build()).timedGet();
 
-    final AtomicBoolean limit2Called = new AtomicBoolean(false);
+    final AtomicInteger limit2Called = new AtomicInteger(0);
     final Semaphore semaphore = new Semaphore(0);
     ref.limitToLast(2).addValueEventListener(new ValueEventListener() {
       @Override
       public void onDataChange(DataSnapshot snapshot) {
         // Should only be called once
-        assertTrue(limit2Called.compareAndSet(false, true));
-        semaphore.release(1);
+        if (limit2Called.incrementAndGet() == 1) {
+          semaphore.release(1);
+        }
       }
 
       @Override
@@ -1692,27 +1693,29 @@ public class QueryTestIT {
     // Skipping nested calls, no re-entrant APIs in Java
 
     TestHelpers.waitFor(semaphore);
+    assertEquals(1, limit2Called.get());
 
     DataSnapshot snap = TestHelpers.getSnap(ref.limitToLast(1));
     TestHelpers.assertDeepEquals(MapBuilder.of("f", 6L), snap.getValue());
   }
 
   @Test
-  public void testANodeWithDefaultListener()
+  public void testNodeWithDefaultListener()
       throws TestFailure, ExecutionException, TimeoutException, InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
     new WriteFuture(ref, new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4)
         .put("e", 5).put("f", 6).build()).timedGet();
 
-    final AtomicBoolean onCalled = new AtomicBoolean(false);
+    final AtomicInteger onCalled = new AtomicInteger(0);
     final Semaphore semaphore = new Semaphore(0);
     ref.addValueEventListener(new ValueEventListener() {
       @Override
       public void onDataChange(DataSnapshot snapshot) {
         // Should only be called once
-        assertTrue(onCalled.compareAndSet(false, true));
-        semaphore.release(1);
+        if (onCalled.incrementAndGet() == 1) {
+          semaphore.release(1);
+        }
       }
 
       @Override
@@ -1721,6 +1724,7 @@ public class QueryTestIT {
     });
 
     TestHelpers.waitFor(semaphore);
+    assertEquals(1, onCalled.get());
 
     DataSnapshot snap = TestHelpers.getSnap(ref.limitToLast(1));
     TestHelpers.assertDeepEquals(MapBuilder.of("f", 6L), snap.getValue());
@@ -1733,20 +1737,24 @@ public class QueryTestIT {
 
     new WriteFuture(ref, MapBuilder.of("a", 1, "b", 2, "c", 3)).timedGet();
 
-    final AtomicBoolean onCalled = new AtomicBoolean(false);
+    final AtomicInteger onCalled = new AtomicInteger(0);
     final Semaphore semaphore = new Semaphore(0);
     ref.addValueEventListener(new ValueEventListener() {
       @Override
       public void onDataChange(DataSnapshot snapshot) {
         // Should only be called once
-        assertTrue(onCalled.compareAndSet(false, true));
-        semaphore.release(1);
+        if (onCalled.incrementAndGet() == 1) {
+          semaphore.release(1);
+        }
       }
 
       @Override
       public void onCancelled(DatabaseError error) {
       }
     });
+
+    TestHelpers.waitFor(semaphore);
+    assertEquals(1, onCalled.get());
 
     DataSnapshot snap = TestHelpers.getSnap(ref.limitToLast(5));
     TestHelpers.assertDeepEquals(MapBuilder.of("a", 1L, "b", 2L, "c", 3L), snap.getValue());
@@ -2411,8 +2419,10 @@ public class QueryTestIT {
     reader.child("a/b").addValueEventListener(new ValueEventListener() {
       @Override
       public void onDataChange(DataSnapshot snapshot) {
-        childCalled.compareAndSet(false, true);
-        childValue.compareAndSet(0L, snapshot.getValue(Long.class));
+        if (snapshot.getValue() != null) {
+          childCalled.compareAndSet(false, true);
+          childValue.compareAndSet(0L, snapshot.getValue(Long.class));
+        }
       }
 
       @Override

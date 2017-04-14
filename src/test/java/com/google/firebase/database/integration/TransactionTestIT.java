@@ -120,6 +120,7 @@ public class TransactionTestIT {
     });
 
     assertTrue(helper.waitForEvents());
+    helper.cleanup();
   }
 
   @Test
@@ -326,6 +327,7 @@ public class TransactionTestIT {
 
     assertTrue(helper.waitForEvents());
     TestHelpers.waitFor(semaphore);
+    helper.cleanup();
   }
 
   @Test
@@ -1502,12 +1504,12 @@ public class TransactionTestIT {
 
     assertEquals(2, readSnaps.size());
     assertEquals(2, writeSnaps.size());
-    assertTrue(Math.abs(System.currentTimeMillis() - (Long) writeSnaps.get(0).getValue()) < 3000);
+    assertTrue(Math.abs(System.currentTimeMillis() - (Long) writeSnaps.get(0).getValue()) < 6000);
     assertTrue(
-        Math.abs(System.currentTimeMillis() - (Double) writeSnaps.get(0).getPriority()) < 3000);
-    assertTrue(Math.abs(System.currentTimeMillis() - (Long) writeSnaps.get(1).getValue()) < 3000);
+        Math.abs(System.currentTimeMillis() - (Double) writeSnaps.get(0).getPriority()) < 6000);
+    assertTrue(Math.abs(System.currentTimeMillis() - (Long) writeSnaps.get(1).getValue()) < 6000);
     assertTrue(
-        Math.abs(System.currentTimeMillis() - (Double) writeSnaps.get(1).getPriority()) < 3000);
+        Math.abs(System.currentTimeMillis() - (Double) writeSnaps.get(1).getPriority()) < 6000);
     assertFalse(writeSnaps.get(0).getValue().equals(writeSnaps.get(1).getValue()));
     assertFalse(writeSnaps.get(0).getPriority().equals(writeSnaps.get(1).getPriority()));
     assertEquals(writeSnaps.get(1).getValue(), readSnaps.get(1).getValue());

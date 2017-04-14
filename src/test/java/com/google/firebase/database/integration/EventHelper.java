@@ -47,7 +47,7 @@ class EventHelper {
     initializationSemaphore = new Semaphore(0);
   }
 
-  public EventHelper addValueExpectation(DatabaseReference ref) {
+  EventHelper addValueExpectation(DatabaseReference ref) {
     if (!locations.contains(ref)) {
       toListen.add(ref);
     }
@@ -55,7 +55,7 @@ class EventHelper {
     return this;
   }
 
-  public EventHelper addChildExpectation(
+  EventHelper addChildExpectation(
       DatabaseReference ref, Event.EventType eventType, String childName) throws DatabaseException {
     if (!locations.contains(ref)) {
       toListen.add(ref);
@@ -64,11 +64,11 @@ class EventHelper {
     return this;
   }
 
-  public EventHelper startListening() throws InterruptedException {
+  EventHelper startListening() throws InterruptedException {
     return startListening(false);
   }
 
-  public EventHelper startListening(boolean waitForInitialization) throws InterruptedException {
+  EventHelper startListening(boolean waitForInitialization) throws InterruptedException {
     waitingForInitialization = waitForInitialization;
     semaphore.acquire(1);
     locations.addAll(toListen);
@@ -91,11 +91,11 @@ class EventHelper {
           }
         });
 
-    for (int i = 0; i < locationList.size(); ++i) {
+    for (DatabaseReference location : locationList) {
       if (waitForInitialization) {
-        uninitializedRefs.add(locationList.get(i));
+        uninitializedRefs.add(location);
       }
-      listen(locationList.get(i));
+      listen(location);
     }
     toListen.clear();
     if (waitForInitialization) {
@@ -183,7 +183,7 @@ class EventHelper {
     }
   }
 
-  public void cleanup() {
+  void cleanup() {
     for (Map.Entry<DatabaseReference, ValueEventListener> entry : valueListeners.entrySet()) {
       entry.getKey().removeEventListener(entry.getValue());
     }
@@ -215,7 +215,7 @@ class EventHelper {
     }
   }
 
-  public boolean waitForEvents() throws InterruptedException {
+  boolean waitForEvents() throws InterruptedException {
     // Try waiting on the semaphore
     if (!semaphore.tryAcquire(1, TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
       return false;
