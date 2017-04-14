@@ -26,7 +26,11 @@ public class JvmPlatformTest {
   public void sdkVersionIsWellFormed() {
     // Version number gets filled in during the release process.
     // Having a test case makes sure there are no mishaps.
+    final String snapshot = "-SNAPSHOT";
     String sdkVersion = FirebaseDatabase.getSdkVersion();
+    if (sdkVersion.endsWith(snapshot)) {
+      sdkVersion = sdkVersion.substring(0, sdkVersion.length() - snapshot.length());
+    }
     String[] segments = sdkVersion.split("\\.");
     Assert.assertEquals(3, segments.length);
     for (String segment : segments) {

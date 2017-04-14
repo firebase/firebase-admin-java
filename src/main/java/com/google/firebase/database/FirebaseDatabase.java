@@ -1,6 +1,5 @@
 package com.google.firebase.database;
 
-import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -336,13 +335,7 @@ public class FirebaseDatabase {
       Preconditions.checkNotNull(in, "Failed to load: " + ADMIN_SDK_PROPERTIES);
       Properties properties = new Properties();
       properties.load(in);
-      String version = properties.getProperty("sdk.version");
-
-      final String suffix = "-SNAPSHOT";
-      if (version.endsWith(suffix)) {
-        version = version.substring(0, version.length() - suffix.length());
-      }
-      return version;
+      return properties.getProperty("sdk.version");
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
