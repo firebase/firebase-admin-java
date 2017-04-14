@@ -1,8 +1,9 @@
 package com.google.firebase.tasks;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.firebase.internal.GuardedBy;
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.internal.Preconditions;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,8 +50,8 @@ public final class Tasks {
    * @param executor the Executor to use to call the Callable
    */
   public static <T> Task<T> call(@NonNull Executor executor, @NonNull final Callable<T> callable) {
-    Preconditions.checkNotNull(executor, "Executor must not be null");
-    Preconditions.checkNotNull(callable, "Callback must not be null");
+    checkNotNull(executor, "Executor must not be null");
+    checkNotNull(callable, "Callback must not be null");
 
     final TaskImpl<T> task = new TaskImpl<>();
     executor.execute(
@@ -75,7 +76,7 @@ public final class Tasks {
    * @throws InterruptedException if an interrupt occurs while waiting for the Task to complete
    */
   public static <T> T await(@NonNull Task<T> task) throws ExecutionException, InterruptedException {
-    Preconditions.checkNotNull(task, "Task must not be null");
+    checkNotNull(task, "Task must not be null");
 
     if (task.isComplete()) {
       return getResultOrThrowExecutionException(task);
@@ -98,8 +99,8 @@ public final class Tasks {
    */
   public static <T> T await(@NonNull Task<T> task, long timeout, @NonNull TimeUnit unit)
       throws ExecutionException, InterruptedException, TimeoutException {
-    Preconditions.checkNotNull(task, "Task must not be null");
-    Preconditions.checkNotNull(unit, "TimeUnit must not be null");
+    checkNotNull(task, "Task must not be null");
+    checkNotNull(unit, "TimeUnit must not be null");
 
     if (task.isComplete()) {
       return getResultOrThrowExecutionException(task);

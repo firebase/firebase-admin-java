@@ -1,5 +1,7 @@
 package com.google.firebase.database.core;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.common.io.CharStreams;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -22,7 +24,6 @@ import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
 import com.google.firebase.database.util.JsonMapper;
-import com.google.firebase.internal.Preconditions;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -49,7 +50,7 @@ public class SyncPointTest {
           Tag tag,
           ListenHashProvider hash,
           SyncTree.CompletionListener onListenComplete) {
-        Preconditions.checkState(!listens.contains(query), "Duplicate listen");
+        checkState(!listens.contains(query), "Duplicate listen");
         this.listens.add(query);
       }
 
@@ -57,7 +58,7 @@ public class SyncPointTest {
       public void stopListening(QuerySpec query, Tag tag) {
         Path path = query.getPath();
         logger.debug("Listening at " + path + " for Tag " + tag);
-        Preconditions.checkState(this.listens.contains(query),
+        checkState(this.listens.contains(query),
             "Stopped listening for query already");
         this.listens.remove(query);
       }

@@ -1,5 +1,7 @@
 package com.google.firebase.internal;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -91,7 +93,7 @@ public final class Objects {
      * Use {@link Objects#toStringHelper(Object)} to create an instance.
      */
     private ToStringHelper(Object instance) {
-      this.instance = Preconditions.checkNotNull(instance);
+      this.instance = checkNotNull(instance);
       fieldStrings = new ArrayList<>();
     }
 
@@ -100,7 +102,7 @@ public final class Objects {
      * is {@code null}, the string {@code "null"} is used.
      */
     public ToStringHelper add(String name, Object value) {
-      fieldStrings.add(Preconditions.checkNotNull(name) + "=" + String.valueOf(value));
+      fieldStrings.add(checkNotNull(name) + "=" + String.valueOf(value));
       return this;
     }
 

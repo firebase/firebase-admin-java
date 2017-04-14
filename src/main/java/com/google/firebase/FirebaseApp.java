@@ -1,10 +1,14 @@
 package com.google.firebase;
 
-import static com.google.firebase.internal.Base64Utils.encodeUrlSafeNoPadding;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.BaseEncoding;
 import com.google.firebase.internal.AuthStateListener;
 import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseExecutors;
@@ -14,7 +18,6 @@ import com.google.firebase.internal.Joiner;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.Objects;
-import com.google.firebase.internal.Preconditions;
 import com.google.firebase.tasks.Continuation;
 import com.google.firebase.tasks.Task;
 
@@ -69,9 +72,10 @@ public class FirebaseApp {
 
   /** Default constructor. */
   private FirebaseApp(String name, FirebaseOptions options, TokenRefresher.Factory factory) {
-    this.name = Preconditions.checkNotEmpty(name);
-    this.options = Preconditions.checkNotNull(options);
-    tokenRefresher = Preconditions.checkNotNull(factory).create(this);
+    checkArgument(!Strings.isNullOrEmpty(name));
+    this.name = name;
+    this.options = checkNotNull(options);
+    tokenRefresher = checkNotNull(factory).create(this);
   }
 
   /** Returns a mutable list of all FirebaseApps. */
@@ -177,7 +181,7 @@ public class FirebaseApp {
    * the app has been deleted.
    */
   static String getPersistenceKey(String name, FirebaseOptions options) {
-    return encodeUrlSafeNoPadding(name.getBytes(UTF_8));
+    return BaseEncoding.base64Url().omitPadding().encode(name.getBytes(UTF_8));
   }
 
   /** Use this key to store data per FirebaseApp. */
@@ -203,7 +207,7 @@ public class FirebaseApp {
 
   /** Normalizes the app name. */
   private static String normalize(@NonNull String name) {
-    return name.trim();
+    return checkNotNull(name).trim();
   }
 
   /** Returns the unique name of this app. */
@@ -321,19 +325,17 @@ public class FirebaseApp {
   // initialized using reflection when an app is deleted (for v5).
   void addLifecycleEventListener(@NonNull FirebaseAppLifecycleListener listener) {
     checkNotDeleted();
-    Preconditions.checkNotNull(listener);
-    lifecycleListeners.add(listener);
+    lifecycleListeners.add(checkNotNull(listener));
   }
 
   void removeLifecycleEventListener(@NonNull FirebaseAppLifecycleListener listener) {
     checkNotDeleted();
-    Preconditions.checkNotNull(listener);
-    lifecycleListeners.remove(listener);
+    lifecycleListeners.remove(checkNotNull(listener));
   }
 
   void addAuthStateListener(@NonNull final AuthStateListener listener) {
     checkNotDeleted();
-    Preconditions.checkNotNull(listener);
+    checkNotNull(listener);
 
     GetTokenResult currentToken;
     synchronized (authStateListeners) {
@@ -350,7 +352,7 @@ public class FirebaseApp {
 
   void removeAuthStateListener(@NonNull AuthStateListener listener) {
     checkNotDeleted();
-    Preconditions.checkNotNull(listener);
+    checkNotNull(listener);
     synchronized (authStateListeners) {
       authStateListeners.remove(listener);
     }
@@ -371,7 +373,7 @@ public class FirebaseApp {
     private ScheduledFuture<Task<GetTokenResult>> future;
 
     TokenRefresher(FirebaseApp app) {
-      this.firebaseApp = Preconditions.checkNotNull(app);
+      this.firebaseApp = checkNotNull(app);
     }
 
     /**

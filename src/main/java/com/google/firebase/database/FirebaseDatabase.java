@@ -1,5 +1,7 @@
 package com.google.firebase.database;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -12,7 +14,6 @@ import com.google.firebase.database.utilities.ParsedUrl;
 import com.google.firebase.database.utilities.Utilities;
 import com.google.firebase.database.utilities.Validation;
 
-import com.google.firebase.internal.Preconditions;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -332,9 +333,8 @@ public class FirebaseDatabase {
   private static String loadSdkVersion() {
     try (InputStream in = FirebaseDatabase.class.getClassLoader()
         .getResourceAsStream(ADMIN_SDK_PROPERTIES)) {
-      Preconditions.checkNotNull(in, "Failed to load: " + ADMIN_SDK_PROPERTIES);
       Properties properties = new Properties();
-      properties.load(in);
+      properties.load(checkNotNull(in, "Failed to load: " + ADMIN_SDK_PROPERTIES));
       return properties.getProperty("sdk.version");
     } catch (IOException e) {
       throw new RuntimeException(e);

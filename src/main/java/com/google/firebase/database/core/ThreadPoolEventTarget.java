@@ -1,6 +1,6 @@
 package com.google.firebase.database.core;
 
-import com.google.firebase.internal.Preconditions;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -34,8 +34,7 @@ class ThreadPoolEventTarget implements EventTarget {
   }
 
   public ThreadPoolEventTarget(final ThreadPoolExecutor executor) {
-    Preconditions.checkNotNull(executor);
-    this.executor = executor;
+    this.executor = checkNotNull(executor);
   }
 
   @Override

@@ -1,6 +1,6 @@
 package com.google.firebase.auth;
 
-import static com.google.firebase.internal.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.util.Utils;
@@ -87,9 +87,8 @@ public class FirebaseCredentials {
    */
   @NonNull
   public static FirebaseCredential fromCertificate(InputStream serviceAccount) {
-    checkNotNull(serviceAccount);
-    return fromCertificate(
-        serviceAccount, Utils.getDefaultTransport(), Utils.getDefaultJsonFactory());
+    return fromCertificate(serviceAccount,
+        Utils.getDefaultTransport(), Utils.getDefaultJsonFactory());
   }
 
   @VisibleForTesting
@@ -112,7 +111,6 @@ public class FirebaseCredentials {
    */
   @NonNull
   public static FirebaseCredential fromRefreshToken(InputStream refreshToken) {
-    checkNotNull(refreshToken);
     return fromRefreshToken(
         refreshToken, Utils.getDefaultTransport(), Utils.getDefaultJsonFactory());
   }
@@ -232,7 +230,7 @@ public class FirebaseCredentials {
     CertCredential(InputStream inputStream, HttpTransport transport, JsonFactory jsonFactory) {
       super(transport, jsonFactory);
       try {
-        jsonData = streamToString(inputStream);
+        jsonData = streamToString(checkNotNull(inputStream));
         JSONObject jsonObject = new JSONObject(jsonData);
         projectId = jsonObject.getString("project_id");
       } catch (IOException e) {
@@ -309,7 +307,7 @@ public class FirebaseCredentials {
         InputStream inputStream, HttpTransport transport, JsonFactory jsonFactory) {
       super(transport, jsonFactory);
       try {
-        jsonData = streamToString(inputStream);
+        jsonData = streamToString(checkNotNull(inputStream));
       } catch (IOException e) {
         streamException = new IOException("Failed to read refresh token", e);
       }
@@ -366,12 +364,12 @@ public class FirebaseCredentials {
 
     FirebaseAccessToken(GoogleCredential credential, Clock clock) {
       checkNotNull(credential, "Google credential is required");
-      checkNotNull(clock, "Clock is required");
+
       token =
           checkNotNull(
               credential.getAccessToken(), "Access token should not be null after refresh.");
       expirationTime = credential.getExpirationTimeMilliseconds();
-      this.clock = clock;
+      this.clock = checkNotNull(clock, "Clock is required");
     }
 
     String getToken() {

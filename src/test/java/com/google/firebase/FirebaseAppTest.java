@@ -1,6 +1,5 @@
 package com.google.firebase;
 
-import static com.google.firebase.internal.Base64Utils.decodeUrlSafeNoPadding;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -13,6 +12,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.google.common.base.Defaults;
+import com.google.common.io.BaseEncoding;
 import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.FirebaseOptions.Builder;
 import com.google.firebase.auth.FirebaseCredential;
@@ -155,7 +155,8 @@ public class FirebaseAppTest {
     String name = "myApp";
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS, name);
     String persistenceKey = firebaseApp.getPersistenceKey();
-    assertEquals(name, new String(decodeUrlSafeNoPadding(persistenceKey), UTF_8));
+    assertEquals(name, new String(BaseEncoding.base64Url().omitPadding().decode(persistenceKey),
+        UTF_8));
   }
 
   // Order of test cases matters.

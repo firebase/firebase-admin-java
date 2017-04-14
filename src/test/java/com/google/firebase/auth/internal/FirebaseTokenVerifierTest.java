@@ -14,9 +14,9 @@ import com.google.api.client.json.webtoken.JsonWebToken.Payload;
 import com.google.api.client.testing.http.FixedClock;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
+import com.google.common.io.BaseEncoding;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.TestOnlyImplFirebaseAuthTrampolines;
-import com.google.firebase.internal.Base64;
 import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -56,7 +56,7 @@ public class FirebaseTokenVerifierTest {
 
   private void initCrypto(String privateKey, String certificate)
       throws NoSuchAlgorithmException, InvalidKeySpecException {
-    byte[] privateBytes = Base64.decode(privateKey, Base64.DEFAULT);
+    byte[] privateBytes = BaseEncoding.base64().decode(privateKey);
     KeySpec spec = new PKCS8EncodedKeySpec(privateBytes);
     String serviceAccountCertificates =
         String.format("{\"%s\" : \"%s\"}", PRIVATE_KEY_ID, certificate);

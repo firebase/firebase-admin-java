@@ -1,9 +1,11 @@
 package com.google.firebase.tasks;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.common.base.Preconditions;
 import com.google.firebase.internal.GuardedBy;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
-import com.google.firebase.internal.Preconditions;
 
 import java.util.concurrent.Executor;
 
@@ -87,7 +89,7 @@ final class TaskImpl<T> extends Task<T> {
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   public void setException(@NonNull Exception e) {
-    Preconditions.checkNotNull(e, "Exception must not be null");
+    checkNotNull(e, "Exception must not be null");
     synchronized (lock) {
       checkNotCompleteLocked();
       complete = true;
@@ -191,7 +193,7 @@ final class TaskImpl<T> extends Task<T> {
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   public boolean trySetException(@NonNull Exception e) {
-    Preconditions.checkNotNull(e, "Exception must not be null");
+    checkNotNull(e, "Exception must not be null");
     synchronized (lock) {
       if (complete) {
         return false;

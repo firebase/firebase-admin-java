@@ -1,6 +1,7 @@
 package com.google.firebase.tasks.testing;
 
-import com.google.firebase.internal.Preconditions;
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.firebase.tasks.OnSuccessListener;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -34,7 +35,7 @@ public class TestOnSuccessListener<T> implements OnSuccessListener<T> {
    * Returns the result passed to {@link #onSuccess}.
    */
   public T getResult() {
-    Preconditions.checkState(latch.getCount() == 0, "onSuccess has not been called");
+    checkState(latch.getCount() == 0, "onSuccess has not been called");
     return result;
   }
 
@@ -42,7 +43,7 @@ public class TestOnSuccessListener<T> implements OnSuccessListener<T> {
    * Returns the Thread that {@link #onSuccess} was called on.
    */
   public Thread getThread() {
-    Preconditions.checkState(latch.getCount() == 0, "onSuccess has not been called");
+    checkState(latch.getCount() == 0, "onSuccess has not been called");
     return thread;
   }
 }
