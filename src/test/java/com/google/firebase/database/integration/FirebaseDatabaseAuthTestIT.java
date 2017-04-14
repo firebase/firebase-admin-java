@@ -19,11 +19,13 @@ import com.google.firebase.testing.IntegrationTestUtils;
 import com.google.firebase.testing.IntegrationTestUtils.AppHttpClient;
 import com.google.firebase.testing.IntegrationTestUtils.ResponseInfo;
 import com.google.firebase.testing.ServiceAccount;
+import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -142,13 +144,15 @@ public class FirebaseDatabaseAuthTestIT {
                 lock.countDown();                
               }
             });
-    boolean finished = lock.await(IntegrationTestUtils.ASYNC_WAIT_TIME_MS, TimeUnit.MILLISECONDS);
+    boolean finished = lock.await(TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     if (shouldTimeout) {
-      assertTrue("Write finished.", !finished);
+      assertTrue("Write finished (expected to timeout).", !finished);
     } else if (shouldSucceed) {
-      assertTrue("Write failed.", finished && success.get());
+      assertTrue("Write timed out (expected to succeed)", finished);
+      assertTrue("Write failed (expected to succeed).", success.get());
     } else {
-      assertTrue("Write successful.", finished && !success.get());
+      assertTrue("Write timed out (expected to fail).", finished);
+      assertTrue("Write successful (expected to fail).", !success.get());
     }
   }
   
@@ -171,13 +175,15 @@ public class FirebaseDatabaseAuthTestIT {
           }
         });
 
-    boolean finished = lock.await(IntegrationTestUtils.ASYNC_WAIT_TIME_MS, TimeUnit.MILLISECONDS);
+    boolean finished = lock.await(TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     if (shouldTimeout) {
-      assertTrue("Read finished.", !finished);
+      assertTrue("Read finished (expected to timeout).", !finished);
     } else if (shouldSucceed) {
-      assertTrue("Read failed.", finished && success.get());
+      assertTrue("Read timed out (expected to succeed).", finished);
+      assertTrue("Read failed (expected to succeed).", success.get());
     } else {
-      assertTrue("Read successful.", finished && !success.get());
+      assertTrue("Read timed out (expected to fail).", finished);
+      assertTrue("Read successful (expected to fail).", !success.get());
     }
   }
   

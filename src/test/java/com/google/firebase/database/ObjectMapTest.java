@@ -5,11 +5,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.firebase.database.snapshot.EmptyNode;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
 import org.junit.Test;
 
 public class ObjectMapTest {
@@ -83,7 +85,7 @@ public class ObjectMapTest {
             .put("author", new MapBuilder().put("name", "Greg").put("id", 3L).build())
             .build();
 
-    DeepEquals.assertEquals(expected, result);
+    TestHelpers.assertDeepEquals(expected, result);
   }
 
   @Test
@@ -97,7 +99,7 @@ public class ObjectMapTest {
     Map<String, Object> result = (Map<String, Object>) data.getValue();
     Map<String, Object> expected = new MapBuilder().put("text", "hello world").build();
 
-    DeepEquals.assertEquals(expected, result);
+    TestHelpers.assertDeepEquals(expected, result);
 
     Message resultMessage = data.getValue(Message.class);
     assertEquals(m, resultMessage);
@@ -126,7 +128,7 @@ public class ObjectMapTest {
 
     GenericTypeIndicator<List<Author>> t = new GenericTypeIndicator<List<Author>>() {};
     List<Author> result = data.getValue(t);
-    DeepEquals.assertEquals(authors, result);
+    TestHelpers.assertDeepEquals(authors, result);
   }
 
   @Test
@@ -143,7 +145,7 @@ public class ObjectMapTest {
     AuthorMessages result = data.getValue(AuthorMessages.class);
 
     assertEquals(am.getAuthor(), result.getAuthor());
-    DeepEquals.assertEquals(am.getMessages(), result.getMessages());
+    TestHelpers.assertDeepEquals(am.getMessages(), result.getMessages());
   }
 
   @Test

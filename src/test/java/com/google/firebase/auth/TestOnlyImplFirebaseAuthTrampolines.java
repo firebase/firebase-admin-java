@@ -15,8 +15,6 @@ import java.io.IOException;
  * Provides trampolines into package-private Auth APIs used by components of Firebase
  *
  * <p>This class will not be compiled into the shipping library and can only be used in tests.
- *
- * @hide
  */
 public final class TestOnlyImplFirebaseAuthTrampolines {
 

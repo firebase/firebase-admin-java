@@ -2,7 +2,6 @@ package com.google.firebase.database.core;
 
 import static org.junit.Assert.assertEquals;
 
-import com.google.firebase.database.TestConstants;
 import java.net.URI;
 import org.junit.Test;
 
@@ -10,14 +9,19 @@ public class RepoInfoTest {
 
   @Test
   public void getConnectionURLTestOverloadWorks() {
+    final String repo = "tests";
+    final String server = "admin-java-sdk.firebaseio.com";
+
     RepoInfo info = new RepoInfo();
-    info.host = TestConstants.TEST_REPO + "." + TestConstants.TEST_SERVER;
+    info.host = repo + "." + server;
     info.internalHost = info.host;
     info.secure = false;
-    info.namespace = TestConstants.TEST_REPO;
+    info.namespace = repo;
     URI url = info.getConnectionURL(null);
-    assertEquals("ws://tests.fblocal.com:9000/.ws?ns=tests&v=5", url.toString());
+    assertEquals("ws://tests.admin-java-sdk.firebaseio.com/.ws?ns=tests&v=5",
+        url.toString());
     url = info.getConnectionURL("test");
-    assertEquals("ws://tests.fblocal.com:9000/.ws?ns=tests&v=5&ls=test", url.toString());
+    assertEquals("ws://tests.admin-java-sdk.firebaseio.com/.ws?ns=tests&v=5&ls=test",
+        url.toString());
   }
 }

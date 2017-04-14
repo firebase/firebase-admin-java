@@ -1,5 +1,6 @@
 package com.google.firebase.database.core;
 
+import com.google.common.io.CharStreams;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -20,8 +21,11 @@ import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
+import com.google.firebase.database.util.JsonMapper;
+import com.google.firebase.internal.Preconditions;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -29,8 +33,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.junit.After;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -46,17 +49,16 @@ public class SyncPointTest {
           Tag tag,
           ListenHashProvider hash,
           SyncTree.CompletionListener onListenComplete) {
-        Path path = query.getPath();
-        logger.debug("Listening at " + path + " for Tag " + tag + ")");
-        assert !listens.contains(query) : "Duplicate listen";
+        Preconditions.checkState(!listens.contains(query), "Duplicate listen");
         this.listens.add(query);
       }
 
       @Override
       public void stopListening(QuerySpec query, Tag tag) {
         Path path = query.getPath();
-        logger.debug("Stop listening at " + path + " for Tag " + tag + ")");
-        assert this.listens.contains(query) : "Stopped listening for query already";
+        logger.debug("Listening at " + path + " for Tag " + tag);
+        Preconditions.checkState(this.listens.contains(query),
+            "Stopped listening for query already");
         this.listens.remove(query);
       }
     };
@@ -68,9 +70,9 @@ public class SyncPointTest {
 
   private static void assertEventExactMatch(List<TestEvent> expected, List<TestEvent> actual) {
     if (expected.size() < actual.size()) {
-      Assert.assertTrue("Got extra events: " + actual, false);
+      Assert.fail("Got extra events: " + actual);
     } else if (expected.size() > actual.size()) {
-      Assert.assertTrue("Missing events: " + expected, false);
+      Assert.fail("Missing events: " + expected);
     } else {
       Iterator<TestEvent> expectedIterator = expected.iterator();
       Iterator<TestEvent> actualIterator = actual.iterator();
@@ -275,7 +277,6 @@ public class SyncPointTest {
     DatabaseConfig config = TestHelpers.newTestConfig();
     TestHelpers.setLogger(config, new DefaultLogger(Logger.Level.WARN, null));
     LogWrapper logger = config.getLogger("SyncPointTest");
-
     logger.info("Running \"" + testSpec.get("name") + '"');
     SyncTree.ListenProvider listenProvider = getNewListenProvider(logger);
     SyncTree syncTree = new SyncTree(config, new NoopPersistenceManager(), listenProvider);
@@ -285,9 +286,6 @@ public class SyncPointTest {
     List<Map<String, Object>> steps = (List<Map<String, Object>>) testSpec.get("steps");
     Map<Integer, EventRegistration> registrations = new HashMap<>();
     for (Map<String, Object> spec : steps) {
-      if (spec.containsKey(".comment")) {
-        logger.info(" > " + spec.get(".comment"));
-      }
       String pathStr = (String) spec.get("path");
       Path path =
           pathStr != null
@@ -378,23 +376,15 @@ public class SyncPointTest {
     }
   }
 
-  @After
-  public void tearDown() {
-    TestHelpers.failOnFirstUncaughtException();
-  }
-
   @SuppressWarnings("unchecked")
   private List<Map<String, Object>> loadSpecs() {
-    ObjectMapper mapper = new ObjectMapper();
-
     String pathToResource = "syncPointSpec.json";
-
     InputStream stream = getClass().getClassLoader().getResourceAsStream(pathToResource);
     if (stream == null) {
       throw new RuntimeException("Failed to find syncPointSpec.json resource.");
     }
-    try {
-      return mapper.readValue(stream, List.class);
+    try (InputStreamReader reader = new InputStreamReader(stream)) {
+      return (List) JsonMapper.parseJsonValue(CharStreams.toString(reader));
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

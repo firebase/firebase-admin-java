@@ -1,6 +1,15 @@
-package com.google.firebase.database;
+package com.google.firebase.database.integration;
 
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseException;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.EventRecord;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.core.view.Event;
+import com.google.firebase.testing.TestUtils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,7 +22,6 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-/** User: greg Date: 5/28/13 Time: 9:06 AM */
 class EventHelper {
 
   private List<Expectation> lookingFor;
@@ -39,7 +47,7 @@ class EventHelper {
     initializationSemaphore = new Semaphore(0);
   }
 
-  public EventHelper addValueExpectation(DatabaseReference ref) {
+  EventHelper addValueExpectation(DatabaseReference ref) {
     if (!locations.contains(ref)) {
       toListen.add(ref);
     }
@@ -47,7 +55,7 @@ class EventHelper {
     return this;
   }
 
-  public EventHelper addChildExpectation(
+  EventHelper addChildExpectation(
       DatabaseReference ref, Event.EventType eventType, String childName) throws DatabaseException {
     if (!locations.contains(ref)) {
       toListen.add(ref);
@@ -56,11 +64,11 @@ class EventHelper {
     return this;
   }
 
-  public EventHelper startListening() throws InterruptedException {
+  EventHelper startListening() throws InterruptedException {
     return startListening(false);
   }
 
-  public EventHelper startListening(boolean waitForInitialization) throws InterruptedException {
+  EventHelper startListening(boolean waitForInitialization) throws InterruptedException {
     waitingForInitialization = waitForInitialization;
     semaphore.acquire(1);
     locations.addAll(toListen);
@@ -83,16 +91,16 @@ class EventHelper {
           }
         });
 
-    for (int i = 0; i < locationList.size(); ++i) {
+    for (DatabaseReference location : locationList) {
       if (waitForInitialization) {
-        uninitializedRefs.add(locationList.get(i));
+        uninitializedRefs.add(location);
       }
-      listen(locationList.get(i));
+      listen(location);
     }
     toListen.clear();
     if (waitForInitialization) {
       initializationSemaphore.tryAcquire(
-          locationList.size(), TestConstants.TEST_TIMEOUT, TimeUnit.MILLISECONDS);
+          locationList.size(), TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
       // Cut out the initialization events
       synchronized (this) {
         waitingForInitialization = false;
@@ -175,7 +183,7 @@ class EventHelper {
     }
   }
 
-  public void cleanup() {
+  void cleanup() {
     for (Map.Entry<DatabaseReference, ValueEventListener> entry : valueListeners.entrySet()) {
       entry.getKey().removeEventListener(entry.getValue());
     }
@@ -207,9 +215,9 @@ class EventHelper {
     }
   }
 
-  public boolean waitForEvents() throws InterruptedException {
+  boolean waitForEvents() throws InterruptedException {
     // Try waiting on the semaphore
-    if (!semaphore.tryAcquire(1, TestConstants.TEST_TIMEOUT, TimeUnit.MILLISECONDS)) {
+    if (!semaphore.tryAcquire(1, TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS)) {
       return false;
     } else {
       semaphore.release(1);

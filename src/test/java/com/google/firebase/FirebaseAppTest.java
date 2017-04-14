@@ -3,6 +3,7 @@ package com.google.firebase;
 import static com.google.firebase.internal.Base64Utils.decodeUrlSafeNoPadding;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
@@ -35,7 +36,6 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -55,47 +55,6 @@ public class FirebaseAppTest {
 
   @Rule public FirebaseAppRule firebaseAppRule = new FirebaseAppRule();
 
-  @SuppressWarnings("unused")
-  private static void assertAuthInitialized(FirebaseApp firebaseApp) {
-    // TODO(depoll): Re-enable once Auth is available.
-    // assertThat(FirebaseAuth.getInstancesForTest()).containsKey(firebaseApp
-    // .getPersistenceKey());
-    // FirebaseAuth firebaseAuth = FirebaseAuth.getInstance(firebaseApp);
-    // assertThat(firebaseAuth.getFirebaseApp()).isEqualTo(firebaseApp);
-  }
-
-  private static void assertCrashInitialized() {
-    // TODO(depoll): Re-enable if Crash becomes available.
-    // assertThat(FirebaseCrash.isSingletonInitialized()).isTrue();
-  }
-
-  private static void assertScionInitialized() {
-    // TODO(depoll): Re-enable once Scion becomes available.
-    // assertThat(Scion.getInstanceForTest()).isNotNull();
-  }
-
-  @SuppressWarnings("unused")
-  private static void assertIidInitialized(FirebaseApp firebaseApp) {
-    // TODO(depoll): Re-enable once IID becomes available.
-    // FirebaseInstanceId firebaseInstanceID =
-    //         FirebaseInstanceId.getInstancesForTest()
-    //                 .get(firebaseApp.getOptions().getApplicationId());
-    // assertThat(firebaseInstanceID).isNotNull();
-  }
-
-  // TODO(arondeak): reenable persistence. See b/28158809.
-  //    @Test
-  //    public void testGetApps_persistenceEnabled() {
-  //        FirebaseApp app1 = FirebaseApp.initializeApp(mTargetContext, OPTIONS, "app1");
-  //        FirebaseApp app2 = FirebaseApp.initializeApp(mTargetContext, OPTIONS, "app2");
-  //        FirebaseApp.clearInstancesForTest();
-  //        // Sanity check that instances have been cleared.
-  //        assertThat(FirebaseApp.instances).isEmpty();
-  //        FirebaseApp app3 = FirebaseApp.initializeApp(mTargetContext, OPTIONS, "app3");
-  //        // We rely on FirebaseApp's equals override, app1 and app2 are different instances.
-  //        assertThat(FirebaseApp.getApps(mTargetContext)).containsExactly(app1, app2, app3);
-  //    }
-
   private static void invokePublicInstanceMethodWithDefaultValues(Object instance, Method method)
       throws InvocationTargetException, IllegalAccessException {
     List<Object> parameters = new ArrayList<>(method.getParameterTypes().length);
@@ -103,12 +62,6 @@ public class FirebaseAppTest {
       parameters.add(Defaults.defaultValue(parameterType));
     }
     method.invoke(instance, parameters.toArray());
-  }
-
-  @Before
-  public void setUp() {
-    // Used by Scion internally.
-    // Scion.testOnlySetDefaultFactory(new ScionFactory(mTargetContext));
   }
 
   @Test(expected = IllegalStateException.class)
@@ -212,24 +165,16 @@ public class FirebaseAppTest {
   }
 
   @Test
-  public void testAuthInitializedForNonDefaultApp() {
+  public void testApiInitForNonDefaultApp() {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS, "myApp");
-    assertAuthInitialized(firebaseApp);
-    // Measurement is only initialized for the default app.
-    // TODO(depoll): Re-enable once Scion becomes available.
-    // assertThat(Scion.getInstanceForTest()).isNull();
+    assertFalse(ImplFirebaseTrampolines.isDefaultApp(firebaseApp));
   }
 
   @Test
   public void testApiInitForDefaultApp() {
     // Explicit initialization of FirebaseApp instance.
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS);
-
     assertTrue(ImplFirebaseTrampolines.isDefaultApp(firebaseApp));
-    assertAuthInitialized(firebaseApp);
-    assertCrashInitialized();
-    assertIidInitialized(firebaseApp);
-    assertScionInitialized();
   }
 
   @Test
