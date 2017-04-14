@@ -1,4 +1,4 @@
-# Contributing | Firebase Admin Python SDK
+# Contributing | Firebase Admin Java SDK
 
 Thank you for contributing to the Firebase community!
 
@@ -15,7 +15,7 @@ We get lots of those and we love helping you, but GitHub is not the best place f
 which just ask about usage will be closed. Here are some resources to get help:
 
 - Go through the [guides](https://firebase.google.com/docs/admin/setup/)
-- Read the full [API reference](https://firebase.google.com/docs/reference/admin/python/)
+- Read the full [API reference](https://firebase.google.com/docs/reference/admin/java/)
 
 If the official documentation doesn't help, try asking a question on the
 [Firebase Google Group](https://groups.google.com/forum/#!forum/firebase-talk/) or one of our
@@ -28,11 +28,11 @@ other [official support channels](https://firebase.google.com/support/).
 
 Yeah, we're definitely not perfect!
 
-Search through [old issues](https://github.com/firebase/firebase-admin-python/issues) before
+Search through [old issues](https://github.com/firebase/firebase-admin-java/issues) before
 submitting a new issue as your question may have already been answered.
 
 If your issue appears to be a bug, and hasn't been reported,
-[open a new issue](https://github.com/firebase/firebase-admin-python/issues/new). Please use the
+[open a new issue](https://github.com/firebase/firebase-admin-java/issues/new). Please use the
 provided bug report template and include a minimal repro.
 
 If you are up to the challenge, [submit a pull request](#submit) with a fix!
@@ -47,7 +47,7 @@ Great, we love hearing how we can improve our products! Share you idea through o
 ## <a name="submit"></a>Want to submit a pull request?
 
 Sweet, we'd love to accept your contribution!
-[Open a new pull request](https://github.com/firebase/firebase-admin-python/pull/new/master) and fill
+[Open a new pull request](https://github.com/firebase/firebase-admin-java/pull/new/master) and fill
 out the provided template.
 
 **If you want to implement a new feature, please open an issue with a proposal first so that we can
