@@ -3,6 +3,7 @@ package com.google.firebase.auth;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -17,6 +18,7 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.FirebaseCustomAuthToken;
 import com.google.firebase.database.MapBuilder;
+import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
@@ -32,6 +34,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
@@ -157,6 +162,57 @@ public class FirebaseAuthTest {
     assertSame(auth, FirebaseAuth.getInstance(app));
     String token = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(app, false)).getToken();
     Assert.assertTrue(!token.isEmpty());
+  }
+
+  @Test
+  public void testAppDelete() throws ExecutionException, InterruptedException {
+    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testAppDelete");
+    FirebaseAuth auth = FirebaseAuth.getInstance(app);
+    assertNotNull(auth);
+    app.delete();
+    try {
+      FirebaseAuth.getInstance(app);
+      fail("No error thrown when getting auth instance after deleting app");
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+  }
+
+  @Test
+  public void testInvokeAfterAppDelete() throws ExecutionException, InterruptedException {
+    if (!isCertCredential) {
+      return;
+    }
+    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testInvokeAfterAppDelete");
+    FirebaseAuth auth = FirebaseAuth.getInstance(app);
+    assertNotNull(auth);
+    app.delete();
+    try {
+      auth.createCustomToken("foo");
+      fail("No error thrown when invoking auth after deleting app");
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+  }
+
+  @Test
+  public void testInitAfterAppDelete() throws ExecutionException, InterruptedException,
+      TimeoutException {
+    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testInitAfterAppDelete");
+    FirebaseAuth auth1 = FirebaseAuth.getInstance(app);
+    assertNotNull(auth1);
+    app.delete();
+
+    app = FirebaseApp.initializeApp(firebaseOptions, "testInitAfterAppDelete");
+    FirebaseAuth auth2 = FirebaseAuth.getInstance(app);
+    assertNotNull(auth2);
+    assertNotSame(auth1, auth2);
+
+    if (isCertCredential) {
+      Task<String> task = auth2.createCustomToken("foo");
+      assertNotNull(task);
+      assertNotNull(Tasks.await(task, TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
+    }
   }
 
   @Test

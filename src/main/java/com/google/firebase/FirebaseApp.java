@@ -248,7 +248,7 @@ public class FirebaseApp {
    *
    * <p>A no-op if delete was called before.
    */
-  void delete() {
+  public void delete() {
     List<FirebaseService> servicesCopy;
     synchronized (this) {
       boolean valueChanged = deleted.compareAndSet(false /* expected */, true);

@@ -737,8 +737,7 @@ public class RealtimeTestIT {
     assertEquals(snap.getPriority().getClass(), Double.class);
     assertEquals(snap.getPriority(), snap.child("b").getPriority());
     assertEquals(snap.child("a").getValue(), snap.child("b").getValue());
-    assert (Math.abs(
-        System.currentTimeMillis() - Long.parseLong(snap.child("a").getValue().toString())) < 2000);
+    TestHelpers.assertTimeDelta(Long.parseLong(snap.child("a").getValue().toString()));
   }
 
   // TODO: Find better way to test shutdown behavior. This test is not worth a

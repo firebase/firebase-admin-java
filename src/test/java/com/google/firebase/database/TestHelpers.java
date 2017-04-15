@@ -259,6 +259,10 @@ public class TestHelpers {
     }
   }
 
+  public static void assertTimeDelta(long timestamp) {
+    assertTrue(Math.abs(System.currentTimeMillis() - timestamp) < TestUtils.TEST_TIMEOUT_MILLIS);
+  }
+
   private static class TestExceptionHandler implements UncaughtExceptionHandler {
 
     private final AtomicReference<Throwable> throwable = new AtomicReference<>();

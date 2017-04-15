@@ -10,21 +10,44 @@ import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.TestFailure;
+import com.google.firebase.database.TestHelpers;
+import com.google.firebase.database.future.ReadFuture;
+import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.IntegrationTestUtils;
+import com.google.firebase.testing.TestUtils;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class FirebaseDatabaseTestIT {
-  
+
+  private static FirebaseApp masterApp;
+
   @BeforeClass
   public static void setUpClass() {
-    IntegrationTestUtils.initDefaultApp();
+    masterApp = IntegrationTestUtils.initDefaultApp();
   }
   
   @AfterClass
   public static void tearDownClass() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+  }
+
+  @Before
+  public void prepareApp() {
+    TestHelpers.wrapForErrorHandling(masterApp);
+  }
+
+  @After
+  public void checkAndCleanupApp() {
+    TestHelpers.assertAndUnwrapErrorHandlers(masterApp);
   }
 
   @Test
@@ -35,10 +58,9 @@ public class FirebaseDatabaseTestIT {
   }
   
   @Test
-  public void testGetInstanceForApp() {
-    FirebaseApp app = appWithDbUrl(IntegrationTestUtils.getDatabaseUrl(), "testGetInstanceForApp");
-    FirebaseDatabase db = FirebaseDatabase.getInstance(app);
-    assertEquals(app.getOptions().getDatabaseUrl(), db.getReference().toString());
+  public void testGetInstanceForApp() throws InterruptedException, TestFailure, TimeoutException {
+    FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
+    assertEquals(masterApp.getOptions().getDatabaseUrl(), db.getReference().toString());
   }
 
   @Test
@@ -95,7 +117,7 @@ public class FirebaseDatabaseTestIT {
   
   @Test
   public void testGetReference() {
-    FirebaseDatabase db = FirebaseDatabase.getInstance();
+    FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
     assertEquals(IntegrationTestUtils.getDatabaseUrl() + "/foo", 
         db.getReference("foo").toString());
   }
@@ -103,7 +125,7 @@ public class FirebaseDatabaseTestIT {
   @Test
   public void testGetReferenceFromURLWithoutPath() {
     String dbUrl = IntegrationTestUtils.getDatabaseUrl();
-    FirebaseDatabase db = FirebaseDatabase.getInstance();
+    FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
     DatabaseReference ref = db.getReferenceFromUrl(dbUrl);
     assertEquals(dbUrl, ref.toString());
   }
@@ -111,15 +133,26 @@ public class FirebaseDatabaseTestIT {
   @Test
   public void testGetReferenceFromURLWithPath() {
     String dbUrl = IntegrationTestUtils.getDatabaseUrl();
-    FirebaseDatabase db = FirebaseDatabase.getInstance();
+    FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
     DatabaseReference ref = db.getReferenceFromUrl(dbUrl + "/foo/bar");
     assertEquals(dbUrl + "/foo/bar", ref.toString());
   }
 
   @Test(expected = DatabaseException.class)
   public void testGetReferenceThrowsWithBadUrl() {
-    FirebaseDatabase db = FirebaseDatabase.getInstance();
+    FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
     db.getReferenceFromUrl("http://tests2.fake-firebaseio.com:9000");
+  }
+
+  @Test
+  public void testSetValue() throws InterruptedException, ExecutionException, TimeoutException,
+      TestFailure {
+    FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
+    DatabaseReference ref = db.getReference("testSetValue");
+    Tasks.await(ref.setValue("foo"), TestUtils.TEST_TIMEOUT_MILLIS,
+        TimeUnit.MILLISECONDS);
+    ReadFuture readFuture = ReadFuture.untilEquals(ref, "foo");
+    readFuture.timedWait();
   }
   
   private static FirebaseApp appWithDbUrl(String dbUrl, String name) {

@@ -47,7 +47,17 @@ public class FirebaseDatabaseAuthTestIT {
   public static void tearDownClass() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
-  
+
+  @Before
+  public void prepareApp() {
+    TestHelpers.wrapForErrorHandling(masterApp);
+  }
+
+  @After
+  public void checkAndCleanupApp() {
+    TestHelpers.assertAndUnwrapErrorHandlers(masterApp);
+  }
+
   @Test
   public void testAuthWithValidCertificateCredential() throws InterruptedException {
     FirebaseDatabase db = FirebaseDatabase.getInstance();
@@ -66,16 +76,6 @@ public class FirebaseDatabaseAuthTestIT {
     FirebaseDatabase db = FirebaseDatabase.getInstance(app);
     // TODO: Ideally, we would find a way to verify the correct log output.
     assertWriteTimeout(db.getReference());
-  }
-
-  @Before
-  public void prepareApp() {
-    TestHelpers.wrapForErrorHandling(masterApp);
-  }
-
-  @After
-  public void checkAndCleanupApp() {
-    TestHelpers.assertAndUnwrapErrorHandlers(masterApp);
   }
   
   @Test
