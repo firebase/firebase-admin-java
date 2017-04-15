@@ -2,17 +2,18 @@ package com.google.firebase;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import com.google.firebase.internal.AuthStateListener;
 import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseExecutors;
+import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.GetTokenResult;
 import com.google.firebase.internal.GuardedBy;
 import com.google.firebase.internal.Joiner;
@@ -29,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -62,13 +62,9 @@ public class FirebaseApp {
   private final TokenRefresher tokenRefresher;
 
   private final AtomicBoolean deleted = new AtomicBoolean();
-
-  private final List<FirebaseAppLifecycleListener> lifecycleListeners =
-      new CopyOnWriteArrayList<>();
-
   private final List<AuthStateListener> authStateListeners = new ArrayList<>();
-
   private final AtomicReference<GetTokenResult> currentToken = new AtomicReference<>();
+  private final Map<String, FirebaseService> services = new HashMap<>();
 
   /** Default constructor. */
   private FirebaseApp(String name, FirebaseOptions options, TokenRefresher.Factory factory) {
@@ -155,7 +151,7 @@ public class FirebaseApp {
     String normalizedName = normalize(name);
     final FirebaseApp firebaseApp;
     synchronized (sLock) {
-      Preconditions.checkState(
+      checkState(
           !instances.containsKey(normalizedName),
           "FirebaseApp name " + normalizedName + " already exists!");
 
@@ -170,8 +166,10 @@ public class FirebaseApp {
 
   @VisibleForTesting
   static void clearInstancesForTest() {
-    // TODO(arondeak): also delete, once functionality is implemented.
     synchronized (sLock) {
+      for (FirebaseApp app : ImmutableList.copyOf(instances.values())) {
+        app.delete();
+      }
       instances.clear();
     }
   }
@@ -251,11 +249,22 @@ public class FirebaseApp {
    * <p>A no-op if delete was called before.
    */
   void delete() {
-    boolean valueChanged = deleted.compareAndSet(false /* expected */, true);
-    if (!valueChanged) {
-      return;
+    List<FirebaseService> servicesCopy;
+    synchronized (this) {
+      boolean valueChanged = deleted.compareAndSet(false /* expected */, true);
+      if (!valueChanged) {
+        return;
+      }
+
+      servicesCopy = ImmutableList.copyOf(services.values());
+      services.clear();
+      authStateListeners.clear();
+      tokenRefresher.cleanup();
     }
-    tokenRefresher.cleanup();
+
+    for (FirebaseService service : servicesCopy) {
+      service.destroy();
+    }
 
     synchronized (sLock) {
       instances.remove(this.name);
@@ -265,12 +274,10 @@ public class FirebaseApp {
     if (appStore != null) {
       appStore.removeApp(name);
     }
-
-    notifyOnAppDeleted();
   }
 
   private void checkNotDeleted() {
-    Preconditions.checkState(!deleted.get(), "FirebaseApp was deleted");
+    checkState(!deleted.get(), "FirebaseApp was deleted %s", this);
   }
 
   /**
@@ -293,10 +300,13 @@ public class FirebaseApp {
                 GetTokenResult oldToken = currentToken.get();
                 List<AuthStateListener> listenersCopy = null;
                 if (!newToken.equals(oldToken)) {
-                  synchronized (authStateListeners) {
+                  synchronized (FirebaseApp.this) {
+                    if (deleted.get()) {
+                      return newToken;
+                    }
+
                     // Grab the lock before compareAndSet to avoid a potential race
-                    // condition
-                    // with addAuthStateListener
+                    // condition with addAuthStateListener
                     if (currentToken.compareAndSet(oldToken, newToken)) {
                       listenersCopy = ImmutableList.copyOf(authStateListeners);
                       tokenRefresher.scheduleRefresh(TOKEN_REFRESH_INTERVAL_MILLIS);
@@ -318,53 +328,35 @@ public class FirebaseApp {
     return DEFAULT_APP_NAME.equals(getName());
   }
 
-  /**
-   * If an API has locally stored data it must register lifecycle listeners at initialization time.
-   */
-  // TODO(arondeak): make sure that all APIs that are interested in these events are
-  // initialized using reflection when an app is deleted (for v5).
-  void addLifecycleEventListener(@NonNull FirebaseAppLifecycleListener listener) {
-    checkNotDeleted();
-    lifecycleListeners.add(checkNotNull(listener));
-  }
-
-  void removeLifecycleEventListener(@NonNull FirebaseAppLifecycleListener listener) {
-    checkNotDeleted();
-    lifecycleListeners.remove(checkNotNull(listener));
-  }
-
   void addAuthStateListener(@NonNull final AuthStateListener listener) {
-    checkNotDeleted();
-    checkNotNull(listener);
-
     GetTokenResult currentToken;
-    synchronized (authStateListeners) {
-      authStateListeners.add(listener);
+    synchronized (this) {
+      checkNotDeleted();
+      authStateListeners.add(checkNotNull(listener));
       currentToken = this.currentToken.get();
     }
 
     if (currentToken != null) {
-      // Task has copied the mAuthStateListeners before the listener was added.
+      // Task has copied the authStateListeners before the listener was added.
       // Notify this listener explicitly.
       listener.onAuthStateChanged(currentToken);
     }
   }
 
-  void removeAuthStateListener(@NonNull AuthStateListener listener) {
+  synchronized void removeAuthStateListener(@NonNull AuthStateListener listener) {
     checkNotDeleted();
-    checkNotNull(listener);
-    synchronized (authStateListeners) {
-      authStateListeners.remove(listener);
-    }
+    authStateListeners.remove(checkNotNull(listener));
   }
 
-  /**
-   * Notifies all listeners with the name and options of the deleted {@link FirebaseApp} instance.
-   */
-  private void notifyOnAppDeleted() {
-    for (FirebaseAppLifecycleListener listener : lifecycleListeners) {
-      listener.onDeleted(name, options);
-    }
+  synchronized void addService(FirebaseService service) {
+    checkNotDeleted();
+    checkArgument(!services.containsKey(checkNotNull(service).getId()));
+    services.put(service.getId(), service);
+  }
+
+  synchronized FirebaseService getService(String id) {
+    checkArgument(!Strings.isNullOrEmpty(id));
+    return services.get(id);
   }
 
   static class TokenRefresher {
@@ -382,7 +374,7 @@ public class FirebaseApp {
      * @param delayMillis Duration in milliseconds, after which the token should be forcibly
      *     refreshed.
      */
-    final synchronized void scheduleRefresh(long delayMillis) {
+    final void scheduleRefresh(long delayMillis) {
       cancelPrevious();
       scheduleNext(
           new Callable<Task<GetTokenResult>>() {
@@ -410,14 +402,13 @@ public class FirebaseApp {
       }
     }
 
-    protected synchronized void cleanup() {
+    protected void cleanup() {
       if (future != null) {
         future.cancel(true);
       }
     }
 
     static class Factory {
-
       TokenRefresher create(FirebaseApp app) {
         return new TokenRefresher(app);
       }

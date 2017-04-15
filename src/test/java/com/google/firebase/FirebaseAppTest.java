@@ -92,18 +92,34 @@ public class FirebaseAppTest {
   }
 
   @Test
-  public void testDeleteCallback() {
-    String appName = "myApp";
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS, appName);
-    FirebaseAppLifecycleListener listener = mock(FirebaseAppLifecycleListener.class);
-    firebaseApp.addLifecycleEventListener(listener);
+  public void testDeleteDefaultApp() {
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS);
+    assertEquals(firebaseApp, FirebaseApp.getInstance());
     firebaseApp.delete();
+    try {
+      FirebaseApp.getInstance();
+      fail();
+    } catch (IllegalStateException expected) {
+      // ignore
+    } finally {
+      TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    }
+  }
 
-    verify(listener).onDeleted(appName, OPTIONS);
-    // Any further calls to delete are no-ops.
-    reset(listener);
+  @Test
+  public void testDeleteApp() {
+    final String name = "myApp";
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS, name);
+    assertEquals(firebaseApp, FirebaseApp.getInstance(name));
     firebaseApp.delete();
-    verify(listener, never()).onDeleted(appName, OPTIONS);
+    try {
+      FirebaseApp.getInstance(name);
+      fail();
+    } catch (IllegalStateException expected) {
+      // ignore
+    } finally {
+      TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    }
   }
 
   @Test

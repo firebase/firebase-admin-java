@@ -13,9 +13,11 @@ import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.utilities.ParsedUrl;
 import com.google.firebase.database.utilities.Utilities;
 import com.google.firebase.database.utilities.Validation;
+import com.google.firebase.internal.FirebaseService;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -29,17 +31,6 @@ public class FirebaseDatabase {
 
   private static final String ADMIN_SDK_PROPERTIES = "admin_sdk.properties";
   private static final String SDK_VERSION = loadSdkVersion();
-
-  /**
-   * A static map of FirebaseApp and RepoInfo to FirebaseDatabase instance. To ensure thread-
-   * safety, it should only be accessed in getInstance(), which is a synchronized method.
-   *
-   * <p>TODO(mikelehen): This serves a duplicate purpose as RepoManager. We should clean up.
-   * TODO(mikelehen): We should maybe be conscious of leaks and make this a weak map or similar but
-   * we have a lot of work to do to allow FirebaseDatabase/Repo etc. to be GC'd.
-   */
-  private static final Map<String /* App name */, Map<RepoInfo, FirebaseDatabase>>
-      databaseInstances = new HashMap<>();
 
   private final FirebaseApp app;
   private final RepoInfo repoInfo;
@@ -97,17 +88,17 @@ public class FirebaseDatabase {
    * @return A FirebaseDatabase instance.
    */
   public static synchronized FirebaseDatabase getInstance(FirebaseApp app, String url) {
+    FirebaseDatabaseService service = ImplFirebaseTrampolines.getService(app, SERVICE_ID,
+        FirebaseDatabaseService.class);
+    if (service == null) {
+      service = ImplFirebaseTrampolines.addService(app, new FirebaseDatabaseService());
+    }
+
+    DatabaseInstances dbInstances = service.getInstance();
     if (url == null || url.isEmpty()) {
       throw new DatabaseException(
           "Failed to get FirebaseDatabase instance: Specify DatabaseURL within "
               + "FirebaseApp or from your getInstance() call.");
-    }
-
-    Map<RepoInfo, FirebaseDatabase> instances = databaseInstances.get(app.getName());
-
-    if (instances == null) {
-      instances = new HashMap<>();
-      databaseInstances.put(app.getName(), instances);
     }
 
     ParsedUrl parsedUrl = Utilities.parseUrl(url);
@@ -120,8 +111,7 @@ public class FirebaseDatabase {
               + parsedUrl.path.toString());
     }
 
-    FirebaseDatabase database = instances.get(parsedUrl.repoInfo);
-
+    FirebaseDatabase database = dbInstances.get(parsedUrl.repoInfo);
     if (database == null) {
       DatabaseConfig config = new DatabaseConfig();
       // If this is the default app, don't set the session persistence key so that we use our
@@ -133,7 +123,7 @@ public class FirebaseDatabase {
       config.setFirebaseApp(app);
 
       database = new FirebaseDatabase(app, parsedUrl.repoInfo, config);
-      instances.put(parsedUrl.repoInfo, database);
+      dbInstances.put(parsedUrl.repoInfo, database);
     }
 
     return database;
@@ -338,6 +328,40 @@ public class FirebaseDatabase {
       return properties.getProperty("sdk.version");
     } catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private static final String SERVICE_ID = FirebaseDatabase.class.getName();
+
+  private static class DatabaseInstances {
+    private final Map<RepoInfo, FirebaseDatabase> databases =
+        Collections.synchronizedMap(new HashMap<RepoInfo, FirebaseDatabase>());
+
+    void put(RepoInfo repo, FirebaseDatabase database) {
+      databases.put(repo, database);
+    }
+
+    FirebaseDatabase get(RepoInfo repo) {
+      return databases.get(repo);
+    }
+
+    void cleanup() {
+      for (FirebaseDatabase database : databases.values()) {
+        database.goOffline();
+        RepoManager.interrupt(database.getConfig());
+      }
+      databases.clear();
+    }
+  }
+
+  private static class FirebaseDatabaseService extends FirebaseService<DatabaseInstances> {
+    FirebaseDatabaseService() {
+      super(SERVICE_ID, new DatabaseInstances());
+    }
+
+    @Override
+    public void destroy() {
+      instance.cleanup();
     }
   }
 }

@@ -2,6 +2,7 @@ package com.google.firebase;
 
 import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.internal.AuthStateListener;
+import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.GetTokenResult;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.tasks.Task;
@@ -31,16 +32,6 @@ public final class ImplFirebaseTrampolines {
     return FirebaseApp.getPersistenceKey(name, options);
   }
 
-  public static void addLifecycleEventListener(
-      @NonNull FirebaseApp app, @NonNull FirebaseAppLifecycleListener listener) {
-    app.addLifecycleEventListener(listener);
-  }
-
-  public static void removeLifecycleEventListener(
-      @NonNull FirebaseApp app, @NonNull FirebaseAppLifecycleListener listener) {
-    app.removeLifecycleEventListener(listener);
-  }
-
   public static void addAuthStateChangeListener(
       @NonNull FirebaseApp app, @NonNull AuthStateListener listener) {
     app.addAuthStateListener(listener);
@@ -53,5 +44,16 @@ public final class ImplFirebaseTrampolines {
 
   public static Task<GetTokenResult> getToken(@NonNull FirebaseApp app, boolean forceRefresh) {
     return app.getToken(forceRefresh);
+  }
+
+  public static <T extends FirebaseService> T getService(
+      @NonNull FirebaseApp app, @NonNull String id, @NonNull Class<T> type) {
+    return type.cast(app.getService(id));
+  }
+
+  public static <T extends FirebaseService> T addService(
+      @NonNull FirebaseApp app, @NonNull T service) {
+    app.addService(service);
+    return service;
   }
 }

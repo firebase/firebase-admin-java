@@ -8,6 +8,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseCredentials;
+import com.google.firebase.database.core.DatabaseConfig;
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
@@ -21,25 +22,27 @@ import org.junit.Test;
 public class DataSnapshotTest {
 
   private static FirebaseApp testApp;
+  private static DatabaseConfig config;
 
   @BeforeClass
   public static void setUpClass() {
     testApp = FirebaseApp.initializeApp(
         new FirebaseOptions.Builder()
             .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
-            .setDatabaseUrl("http://admin-java-sdk.firebaseio.com")
+            .setDatabaseUrl("http://admin-java-sdk-snapshot-test.firebaseio.com")
             .build());
+    config = TestHelpers.newTestConfig(testApp);
   }
 
   @AfterClass
-  public static void tearDownClass() {
+  public static void tearDownClass() throws InterruptedException {
+    TestHelpers.interruptConfig(config);
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
   private DataSnapshot snapFor(Object data) {
     Node node = NodeUtilities.NodeFromJSON(data);
-    DatabaseReference ref = new DatabaseReference("https://test.firebaseio.com", TestHelpers
-        .newTestConfig(testApp));
+    DatabaseReference ref = new DatabaseReference("https://test.firebaseio.com", config);
     return new DataSnapshot(ref, IndexedNode.from(node));
   }
 
