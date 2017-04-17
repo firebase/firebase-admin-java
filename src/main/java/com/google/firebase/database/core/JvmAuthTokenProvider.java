@@ -1,6 +1,6 @@
 package com.google.firebase.database.core;
 
-import static com.google.firebase.internal.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;

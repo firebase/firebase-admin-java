@@ -1,5 +1,7 @@
 package com.google.firebase.database.core;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.connection.ConnectionContext;
@@ -13,7 +15,6 @@ import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.tubesock.WebSocket;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 import com.google.firebase.internal.GaeThreadFactory;
-import com.google.firebase.internal.Preconditions;
 import com.google.firebase.internal.RevivingScheduledExecutor;
 
 import java.util.List;
@@ -47,8 +48,7 @@ class GaePlatform implements Platform {
 
   private ThreadFactory getGaeThreadFactory() {
     GaeThreadFactory threadFactory = GaeThreadFactory.getInstance();
-    Preconditions.checkState(
-        threadFactory.isUsingBackgroundThreads(),
+    checkState(threadFactory.isUsingBackgroundThreads(),
         "Failed to initialize a GAE background thread factory");
     return threadFactory;
   }

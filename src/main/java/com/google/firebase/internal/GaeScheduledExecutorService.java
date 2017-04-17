@@ -1,5 +1,8 @@
 package com.google.firebase.internal;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import com.google.common.base.Strings;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -29,7 +32,8 @@ public class GaeScheduledExecutorService implements ScheduledExecutorService {
   private final String threadName;
 
   GaeScheduledExecutorService(String threadName) {
-    this.threadName = Preconditions.checkNotEmpty(threadName);
+    checkArgument(!Strings.isNullOrEmpty(threadName));
+    this.threadName = threadName;
   }
 
   private ExecutorWrapper ensureExecutorWrapper() {

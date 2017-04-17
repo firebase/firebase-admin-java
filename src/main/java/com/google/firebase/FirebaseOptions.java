@@ -1,11 +1,13 @@
 package com.google.firebase;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
-import com.google.firebase.internal.Objects;
-import com.google.firebase.internal.Preconditions;
 
 import java.io.InputStream;
 import java.util.HashMap;
@@ -24,10 +26,9 @@ public final class FirebaseOptions {
       @Nullable String databaseUrl,
       @NonNull FirebaseCredential firebaseCredential,
       @Nullable Map<String, Object> databaseAuthVariableOverride) {
-    Preconditions.checkArgument(firebaseCredential != null, "Service Account must be provided.");
 
     this.databaseUrl = databaseUrl;
-    this.firebaseCredential = firebaseCredential;
+    this.firebaseCredential = checkNotNull(firebaseCredential, "Service Account must be provided.");
     this.databaseAuthVariableOverride = databaseAuthVariableOverride;
   }
 
@@ -72,7 +73,7 @@ public final class FirebaseOptions {
 
   @Override
   public String toString() {
-    return Objects.toStringHelper(this)
+    return MoreObjects.toStringHelper(this)
         .add("databaseUrl", databaseUrl)
         .add("credential", firebaseCredential)
         .add("databaseAuthVariableOverride", databaseAuthVariableOverride)
@@ -148,8 +149,7 @@ public final class FirebaseOptions {
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setCredential(@NonNull FirebaseCredential credential) {
-      Preconditions.checkArgument(credential != null);
-      firebaseCredential = credential;
+      firebaseCredential = checkNotNull(credential);
       return this;
     }
 

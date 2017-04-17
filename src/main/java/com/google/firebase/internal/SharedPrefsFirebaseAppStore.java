@@ -1,9 +1,11 @@
 package com.google.firebase.internal;
 
-import static com.google.firebase.internal.Preconditions.checkState;
+import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 
+import com.google.common.base.Strings;
+import com.google.common.io.BaseEncoding;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -50,15 +52,16 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
     if (value == null) {
       value = "";
     }
-    return Base64Utils.encodeUrlSafeNoPadding(value.getBytes(UTF_8));
+    return BaseEncoding.base64Url().omitPadding().encode(value.getBytes(UTF_8));
   }
 
   /** 
    * @throws IllegalArgumentException if value is not valid websafe, no padding base64.
    */
   private static String decodeValue(String encodedValue) {
-    String decodedValue = new String(Base64Utils.decodeUrlSafeNoPadding(encodedValue), UTF_8);
-    if (decodedValue == null || decodedValue.equals("")) {
+    String decodedValue = new String(BaseEncoding.base64Url().omitPadding().decode(encodedValue),
+        UTF_8);
+    if (Strings.isNullOrEmpty(decodedValue)) {
       // FirebaseOptions values are null by default. Restoring values to empty string would
       // break equality check between original and restored instance.
       return null;
@@ -157,12 +160,9 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
     // TODO(arondeak): can we be less restrictive here?
     checkState(
         options.equals(app.getOptions()),
-        "FirebaseApp "
-            + app.getName()
-            + " incompatible with persisted version! Persisted options "
-            + options
-            + " Newly initialized app options "
-            + app.getOptions());
+        "FirebaseApp %s incompatible with persisted version! Persisted options: %s, "
+            + "Newly initialized app options: %s",
+        app.getName(), options, app.getOptions());
   }
 
   private Preferences ensurePrefsInitialized() {

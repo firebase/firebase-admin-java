@@ -1,26 +1,24 @@
 package com.google.firebase.database;
 
 import static com.cedarsoftware.util.DeepEquals.deepEquals;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
-import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.core.CoreTestHelpers;
 import com.google.firebase.database.core.DatabaseConfig;
-import com.google.firebase.database.core.EventTarget;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.view.QuerySpec;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.util.JsonMapper;
 import com.google.firebase.database.utilities.DefaultRunLoop;
-import com.google.firebase.testing.ServiceAccount;
+import com.google.firebase.internal.NonNull;
 import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -28,46 +26,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class TestHelpers {
 
-  private static boolean appInitialized = false;
-
-  public static DatabaseConfig newFrozenTestConfig() {
-    DatabaseConfig cfg = newTestConfig();
+  public static DatabaseConfig newFrozenTestConfig(FirebaseApp app) {
+    DatabaseConfig cfg = newTestConfig(app);
     CoreTestHelpers.freezeContext(cfg);
     return cfg;
   }
 
-  public static DatabaseConfig newTestConfig() {
-    if (!appInitialized) {
-      appInitialized = true;
-      FirebaseApp.initializeApp(
-          new FirebaseOptions.Builder()
-              .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
-              .setDatabaseUrl("http://admin-java-sdk.firebaseio.com")
-              .build());
-    }
-    return newTestConfig(FirebaseApp.getInstance());
-  }
-
-  private static DatabaseConfig newTestConfig(FirebaseApp app) {
-    TestRunLoop runLoop = new TestRunLoop();
+  public static DatabaseConfig newTestConfig(FirebaseApp app) {
     DatabaseConfig config = new DatabaseConfig();
     config.setLogLevel(Logger.Level.WARN);
-    config.setEventTarget(new TestEventTarget());
-    config.setRunLoop(runLoop);
     config.setFirebaseApp(app);
-    config.setAuthTokenProvider(new TestTokenProvider(runLoop.getExecutorService()));
     return config;
   }
 
@@ -214,14 +190,6 @@ public class TestHelpers {
     return QuerySpec.defaultQueryAtPath(new Path(path));
   }
 
-  public static <T> Set<T> asSet(List<T> list) {
-    return new HashSet<>(list);
-  }
-
-  public static <T> Set<T> asSet(T... objects) {
-    return new HashSet<>(Arrays.asList(objects));
-  }
-
   public static Set<ChildKey> childKeySet(String... stringKeys) {
     Set<ChildKey> childKeys = new HashSet<>();
     for (String k : stringKeys) {
@@ -249,55 +217,112 @@ public class TestHelpers {
     }
   }
 
-  private static class TestEventTarget implements EventTarget {
+  /**
+   * Instruments the given FirebaseApp instance to catch exceptions that are thrown by background
+   * threads. More specifically, it registers error handlers with the RunLoop and EventTarget
+   * of the FirebaseDatabase. These components run asynchronously, and therefore any exceptions
+   * (including assertion failures) encountered by them do not typically cause the test runner
+   * to fail. The error handlers added by this method help to catch those exceptions, and
+   * propagate them to the test runner's main thread, thus causing tests to fail on async errors.
+   * Integration tests, particularly the ones that interact with FirebaseDatabase, should
+   * call this method in a Before test fixture.
+   *
+   * @param app A FirebaseApp instance to be instrumented
+   */
+  public static void wrapForErrorHandling(@NonNull FirebaseApp app) {
+    DatabaseConfig context = getDatabaseConfig(app);
+    CoreTestHelpers.freezeContext(context);
+    DefaultRunLoop runLoop = (DefaultRunLoop) context.getRunLoop();
+    context.setRunLoop(new ErrorHandlingRunLoop(runLoop));
+    CoreTestHelpers.setEventTargetExceptionHandler(context, new TestExceptionHandler());
+  }
 
-    AtomicReference<Throwable> caughtException = new AtomicReference<>(null);
+  /**
+   * Checks to see if any asynchronous error handlers added to the given FirebaseApp instance
+   * have been activated. If so, this method will re-throw the root cause exception as a new
+   * RuntimeException. Finally, this method also removes any error handlers added previously by
+   * the wrapForErrorHandling method. Invoke this method in integration tests from an After
+   * test fixture.
+   *
+   * @param app AFireabseApp instance already instrumented by wrapForErrorHandling
+   */
+  public static void assertAndUnwrapErrorHandlers(FirebaseApp app) {
+    DatabaseConfig context = getDatabaseConfig(app);
+    ErrorHandlingRunLoop runLoop = (ErrorHandlingRunLoop) context.getRunLoop();
+    try {
+      Throwable error = runLoop.throwable.get();
+      if (error != null) {
+        throw new RuntimeException(error);
+      }
 
-    int poolSize = 1;
-    BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
-    ThreadPoolExecutor executor =
-        new ThreadPoolExecutor(poolSize, poolSize, 0, TimeUnit.NANOSECONDS, queue,
-          new ThreadFactory() {
-            ThreadFactory wrappedFactory = Executors.defaultThreadFactory();
+      TestExceptionHandler handler = (TestExceptionHandler) CoreTestHelpers
+          .getEventTargetExceptionHandler(context);
+      error = handler.throwable.get();
+      if (error != null) {
+        throw new RuntimeException(error);
+      }
+    } finally {
+      context.setRunLoop(runLoop.wrapped);
+      CoreTestHelpers.setEventTargetExceptionHandler(context, null);
+    }
+  }
 
-            @Override
-            public Thread newThread(Runnable r) {
-              Thread thread = wrappedFactory.newThread(r);
-              thread.setName("FirebaseDatabaseTestsEventTarget");
-              // TODO: should we set an uncaught exception handler here? Probably want to let
-              // exceptions happen...
-              thread.setUncaughtExceptionHandler(
-                  new Thread.UncaughtExceptionHandler() {
-                    @Override
-                    public void uncaughtException(Thread t, Throwable e) {
-                      e.printStackTrace();
-                      caughtException.set(e);
-                    }
-                  });
-              return thread;
-            }
-          });
+  private static class TestExceptionHandler implements UncaughtExceptionHandler {
+
+    private final AtomicReference<Throwable> throwable = new AtomicReference<>();
 
     @Override
-    public void postEvent(Runnable r) {
-      executor.execute(r);
+    public void uncaughtException(Thread t, Throwable e) {
+      throwable.compareAndSet(null, e);
+    }
+  }
+
+  /**
+   * A RunLoop decorator that delegates all method invocations to another (concrete) RunLoop
+   * implementation. The error handling methods have some extra logic to keep track of
+   * the first exception encountered.
+   */
+  private static class ErrorHandlingRunLoop extends DefaultRunLoop {
+
+    private final DefaultRunLoop wrapped;
+    private final AtomicReference<Throwable> throwable = new AtomicReference<>();
+
+    ErrorHandlingRunLoop(DefaultRunLoop wrapped) {
+      this.wrapped = checkNotNull(wrapped);
     }
 
     @Override
-    public void shutdown() {}
-
-    @Override
-    public void restart() {}
-  }
-
-  private static class TestRunLoop extends DefaultRunLoop {
-
-    AtomicReference<Throwable> caughtException = new AtomicReference<>(null);
-
-    @Override
     public void handleException(Throwable e) {
-      e.printStackTrace();
-      caughtException.set(e);
+      try {
+        throwable.compareAndSet(null, e);
+      } finally {
+        wrapped.handleException(e);
+      }
+    }
+
+    @Override
+    public ScheduledExecutorService getExecutorService() {
+      return wrapped.getExecutorService();
+    }
+
+    @Override
+    public void scheduleNow(Runnable runnable) {
+      wrapped.scheduleNow(runnable);
+    }
+
+    @Override
+    public ScheduledFuture schedule(Runnable runnable, long milliseconds) {
+      return wrapped.schedule(runnable, milliseconds);
+    }
+
+    @Override
+    public void shutdown() {
+      wrapped.shutdown();
+    }
+
+    @Override
+    public void restart() {
+      super.restart();
     }
   }
 }

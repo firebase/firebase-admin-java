@@ -1,11 +1,11 @@
 package com.google.firebase.database.utilities;
 
+import com.google.common.io.BaseEncoding;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.RepoInfo;
-import com.google.firebase.internal.Base64;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.TaskCompletionSource;
 
@@ -95,7 +95,7 @@ public class Utilities {
       MessageDigest md = MessageDigest.getInstance("SHA-1");
       md.update(input.getBytes("UTF-8"));
       byte[] bytes = md.digest();
-      return Base64.encodeToString(bytes, Base64.NO_WRAP);
+      return BaseEncoding.base64().encode(bytes);
     } catch (NoSuchAlgorithmException e) {
       throw new RuntimeException("Missing SHA-1 MessageDigest provider.", e);
     } catch (UnsupportedEncodingException e) {

@@ -253,4 +253,14 @@ public class FirebaseAuthTest {
           expected.getMessage());
     }
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testAuthExceptionNullErrorCode() {
+    new FirebaseAuthException(null, "test");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testAuthExceptionEmptyErrorCode() {
+    new FirebaseAuthException("", "test");
+  }
 }

@@ -1,6 +1,5 @@
 package com.google.firebase;
 
-import static com.google.firebase.internal.Base64Utils.decodeUrlSafeNoPadding;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -13,6 +12,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.google.common.base.Defaults;
+import com.google.common.io.BaseEncoding;
 import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.FirebaseOptions.Builder;
 import com.google.firebase.auth.FirebaseCredential;
@@ -64,6 +64,16 @@ public class FirebaseAppTest {
     method.invoke(instance, parameters.toArray());
   }
 
+  @Test(expected = NullPointerException.class)
+  public void testNullAppName() {
+    FirebaseApp.initializeApp(OPTIONS, null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testEmptyAppName() {
+    FirebaseApp.initializeApp(OPTIONS, "");
+  }
+
   @Test(expected = IllegalStateException.class)
   public void testGetInstancePersistedNotInitialized() {
     String name = "myApp";
@@ -104,6 +114,29 @@ public class FirebaseAppTest {
     assertEquals(2, apps.size());
     assertTrue(apps.contains(app1));
     assertTrue(apps.contains(app2));
+  }
+
+  @Test
+  public void testGetNullApp() {
+    FirebaseApp app1 = FirebaseApp.initializeApp(OPTIONS, "app");
+    try {
+      FirebaseApp.getInstance(null);
+      fail("Not thrown");
+    } catch (NullPointerException expected) {
+      // ignore
+    }
+  }
+
+  @Test
+  public void testToString() {
+    FirebaseOptions options =
+        new FirebaseOptions.Builder()
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options, "app");
+    String pattern = "FirebaseApp\\{name=app, options=FirebaseOptions\\{"
+        + "databaseUrl=null, credential=[^\\s]+, databaseAuthVariableOverride=\\{}}}";
+    assertTrue(app.toString().matches(pattern));
   }
 
   @Test
@@ -155,7 +188,8 @@ public class FirebaseAppTest {
     String name = "myApp";
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS, name);
     String persistenceKey = firebaseApp.getPersistenceKey();
-    assertEquals(name, new String(decodeUrlSafeNoPadding(persistenceKey), UTF_8));
+    assertEquals(name, new String(BaseEncoding.base64Url().omitPadding().decode(persistenceKey),
+        UTF_8));
   }
 
   // Order of test cases matters.
@@ -265,6 +299,17 @@ public class FirebaseAppTest {
     tokenRefresher.simulateDelay(35);
     verify(listener, times(3)).onAuthStateChanged(Mockito.any(GetTokenResult.class));
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testFirebaseExceptionNullDetail() {
+    new FirebaseException(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testFirebaseExceptionEmptyDetail() {
+    new FirebaseException("");
+  }
+
 
   private static class MockFirebaseCredential implements FirebaseCredential {
 

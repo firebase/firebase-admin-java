@@ -10,6 +10,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.core.CompoundWrite;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.view.CacheNode;
@@ -19,6 +23,9 @@ import com.google.firebase.database.snapshot.EmptyNode;
 import com.google.firebase.database.snapshot.Index;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.PathIndex;
+import com.google.firebase.testing.ServiceAccount;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class DefaultPersistenceManagerTest {
@@ -27,10 +34,26 @@ public class DefaultPersistenceManagerTest {
   private final QuerySpec limit3FooQuery =
       new QuerySpec(new Path("foo"), QueryParams.DEFAULT_PARAMS.limitToLast(3));
 
+  private static FirebaseApp testApp;
+
+  @BeforeClass
+  public static void setUpClass() {
+    testApp = FirebaseApp.initializeApp(
+        new FirebaseOptions.Builder()
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .setDatabaseUrl("https://admin-java-sdk.firebaseio.com")
+            .build());
+  }
+
+  @AfterClass
+  public static void tearDownClass() {
+    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+  }
+
   private PersistenceManager newTestPersistenceManager() {
     MockPersistenceStorageEngine engine = new MockPersistenceStorageEngine();
     engine.disableTransactionCheck = true;
-    return new DefaultPersistenceManager(newFrozenTestConfig(), engine, CachePolicy.NONE);
+    return new DefaultPersistenceManager(newFrozenTestConfig(testApp), engine, CachePolicy.NONE);
   }
 
   @Test
@@ -91,7 +114,7 @@ public class DefaultPersistenceManagerTest {
     engine.overwriteServerCache(path(""), initialData);
 
     DefaultPersistenceManager manager =
-        new DefaultPersistenceManager(newFrozenTestConfig(), engine, CachePolicy.NONE);
+        new DefaultPersistenceManager(newFrozenTestConfig(testApp), engine, CachePolicy.NONE);
 
     CompoundWrite write =
         CompoundWrite.fromValue(fromSingleQuotedString("{'baz': 'new-baz', 'qux': 'qux'}"));

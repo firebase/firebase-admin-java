@@ -1,6 +1,6 @@
 package com.google.firebase.testing;
 
-import static com.google.firebase.internal.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.common.io.CharStreams;
@@ -54,7 +54,7 @@ public class TestUtils {
 
   static String loadResource(String path) {
     InputStream stream = TestUtils.class.getClassLoader().getResourceAsStream(path);
-    checkNotNull(stream, "Failed to load resource: " + path);
+    checkNotNull(stream, "Failed to load resource: %s", path);
     try (InputStreamReader reader = new InputStreamReader(stream)) {
       return CharStreams.toString(reader);
     } catch (IOException e) {

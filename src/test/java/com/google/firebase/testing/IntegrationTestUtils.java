@@ -1,5 +1,9 @@
 package com.google.firebase.testing;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.firebase.FirebaseApp;
@@ -9,7 +13,6 @@ import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.internal.GetTokenResult;
-import com.google.firebase.internal.Preconditions;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
 import java.io.ByteArrayInputStream;
@@ -35,8 +38,7 @@ public class IntegrationTestUtils {
   private static synchronized JSONObject ensureServiceAccount() {
     if (IT_SERVICE_ACCOUNT == null) {
       String certificatePath = System.getProperty("firebase.it.certificate");
-      Preconditions.checkNotEmpty(
-          certificatePath,
+      checkArgument(!Strings.isNullOrEmpty(certificatePath),
           "Service account certificate path not set. Set the "
               + "file.it.certificate system property and try again.");
       try (InputStreamReader reader = new InputStreamReader(new FileInputStream(certificatePath))) {
@@ -107,7 +109,7 @@ public class IntegrationTestUtils {
     }
     
     public AppHttpClient(FirebaseApp app) {
-      this.app = Preconditions.checkNotNull(app);
+      this.app = checkNotNull(app);
     }
     
     public ResponseInfo put(String path, String data) throws IOException {

@@ -2,8 +2,7 @@ package com.google.firebase.database.tubesock;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import com.google.firebase.internal.Base64;
-
+import com.google.common.io.BaseEncoding;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -69,7 +68,7 @@ class WebSocketHandshake {
   }
 
   private String generateHeader(LinkedHashMap<String, String> headers) {
-    String header = new String();
+    String header = "";
     for (String fieldName : headers.keySet()) {
       header += fieldName + ": " + headers.get(fieldName) + "\r\n";
     }
@@ -81,7 +80,7 @@ class WebSocketHandshake {
     for (int i = 0; i < 16; i++) {
       nonce[i] = (byte) rand(0, 255);
     }
-    return Base64.encodeToString(nonce, Base64.NO_WRAP);
+    return BaseEncoding.base64().encode(nonce);
   }
 
   public void verifyServerStatusLine(String statusLine) {

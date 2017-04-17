@@ -1,7 +1,8 @@
 package com.google.firebase.tasks.testing;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.internal.Preconditions;
 import com.google.firebase.tasks.OnFailureListener;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -35,7 +36,7 @@ public class TestOnFailureListener implements OnFailureListener {
    * Returns the exception passed to {@link #onFailure}.
    */
   public Exception getException() {
-    Preconditions.checkState(latch.getCount() == 0, "onFailure has not been called");
+    checkState(latch.getCount() == 0, "onFailure has not been called");
     return exception;
   }
 
@@ -43,7 +44,7 @@ public class TestOnFailureListener implements OnFailureListener {
    * Returns the Thread that {@link #onFailure} was called on.
    */
   public Thread getThread() {
-    Preconditions.checkState(latch.getCount() == 0, "onFailure has not been called");
+    checkState(latch.getCount() == 0, "onFailure has not been called");
     return thread;
   }
 }

@@ -1,7 +1,8 @@
 package com.google.firebase.tasks.testing;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.internal.Preconditions;
 import com.google.firebase.tasks.OnCompleteListener;
 import com.google.firebase.tasks.Task;
 import java.util.concurrent.CountDownLatch;
@@ -36,7 +37,7 @@ public class TestOnCompleteListener<T> implements OnCompleteListener<T> {
    * Returns the Task passed to {@link #onComplete}.
    */
   public Task<T> getTask() {
-    Preconditions.checkState(latch.getCount() == 0, "onComplete has not been called");
+    checkState(latch.getCount() == 0, "onComplete has not been called");
     return task;
   }
 
@@ -44,7 +45,7 @@ public class TestOnCompleteListener<T> implements OnCompleteListener<T> {
    * Returns the Thread that {@link #onComplete} was called on.
    */
   public Thread getThread() {
-    Preconditions.checkState(latch.getCount() == 0, "onFailure has not been called");
+    checkState(latch.getCount() == 0, "onFailure has not been called");
     return thread;
   }
 }

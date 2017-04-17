@@ -1,5 +1,7 @@
 package com.google.firebase.internal;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
@@ -133,7 +135,7 @@ public class GaeThreadFactory implements ThreadFactory {
     private final boolean usingBackgroundThreads;
 
     private ThreadFactoryWrapper(ThreadFactory threadFactory, boolean usingBackgroundThreads) {
-      this.threadFactory = Preconditions.checkNotNull(threadFactory);
+      this.threadFactory = checkNotNull(threadFactory);
       this.usingBackgroundThreads = usingBackgroundThreads;
     }
 

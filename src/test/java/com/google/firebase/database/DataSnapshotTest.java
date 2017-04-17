@@ -4,16 +4,32 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
+import com.google.firebase.testing.ServiceAccount;
 import java.util.HashMap;
 import java.util.Iterator;
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class DataSnapshotTest {
+
+  private static FirebaseApp testApp;
+
+  @BeforeClass
+  public static void setUpClass() {
+    testApp = FirebaseApp.initializeApp(
+        new FirebaseOptions.Builder()
+            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .setDatabaseUrl("https://admin-java-sdk.firebaseio.com")
+            .build());
+  }
 
   @AfterClass
   public static void tearDownClass() {
@@ -23,7 +39,7 @@ public class DataSnapshotTest {
   private DataSnapshot snapFor(Object data) {
     Node node = NodeUtilities.NodeFromJSON(data);
     DatabaseReference ref = new DatabaseReference("https://test.firebaseio.com", TestHelpers
-        .newTestConfig());
+        .newTestConfig(testApp));
     return new DataSnapshot(ref, IndexedNode.from(node));
   }
 

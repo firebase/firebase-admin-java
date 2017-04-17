@@ -1,7 +1,9 @@
 package com.google.firebase;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import com.google.common.base.Strings;
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.internal.Preconditions;
 
 /** Base class for all Firebase exceptions. */
 public class FirebaseException extends Exception {
@@ -11,10 +13,12 @@ public class FirebaseException extends Exception {
   protected FirebaseException() {}
 
   public FirebaseException(@NonNull String detailMessage) {
-    super(Preconditions.checkNotEmpty(detailMessage, "Detail message must not be empty"));
+    super(detailMessage);
+    checkArgument(!Strings.isNullOrEmpty(detailMessage), "Detail message must not be empty");
   }
 
   public FirebaseException(@NonNull String detailMessage, Throwable cause) {
-    super(Preconditions.checkNotEmpty(detailMessage, "Detail message must not be empty"), cause);
+    super(detailMessage, cause);
+    checkArgument(!Strings.isNullOrEmpty(detailMessage), "Detail message must not be empty");
   }
 }

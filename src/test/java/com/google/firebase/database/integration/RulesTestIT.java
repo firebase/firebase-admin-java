@@ -40,7 +40,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -109,6 +111,16 @@ public class RulesTestIT {
     uploadRules(DEFAULT_RULES_STRING);
     TestHelpers.waitForRoundtrip(writer.getRoot());
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+  }
+
+  @Before
+  public void prepareApp() {
+    TestHelpers.wrapForErrorHandling(masterApp);
+  }
+
+  @After
+  public void checkAndCleanupApp() {
+    TestHelpers.assertAndUnwrapErrorHandlers(masterApp);
   }
 
   private static void uploadRules(String rules) throws IOException {
