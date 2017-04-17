@@ -17,6 +17,7 @@ import com.google.firebase.internal.FirebaseService;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -346,12 +347,15 @@ public class FirebaseDatabase {
     }
 
     void cleanup() {
-      for (FirebaseDatabase database : databases.values()) {
-        synchronized (database) {
-          if (database.repo != null) {
-            database.goOffline();
+      Collection<FirebaseDatabase> values = databases.values();
+      synchronized (databases) {
+        for (FirebaseDatabase database : values) {
+          synchronized (database) {
+            if (database.repo != null) {
+              database.goOffline();
+            }
+            RepoManager.interrupt(database.getConfig());
           }
-          RepoManager.interrupt(database.getConfig());
         }
       }
       databases.clear();

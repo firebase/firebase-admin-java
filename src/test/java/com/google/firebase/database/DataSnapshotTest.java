@@ -29,7 +29,7 @@ public class DataSnapshotTest {
     testApp = FirebaseApp.initializeApp(
         new FirebaseOptions.Builder()
             .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
-            .setDatabaseUrl("http://admin-java-sdk-snapshot-test.firebaseio.com")
+            .setDatabaseUrl("https://admin-java-sdk.firebaseio.com")
             .build());
     config = TestHelpers.newTestConfig(testApp);
   }

@@ -11,7 +11,6 @@ import static org.junit.Assert.fail;
 import com.cedarsoftware.util.DeepEquals;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -52,7 +51,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -1305,7 +1303,7 @@ public class DataTestIT {
     String child = "" + new Random().nextInt(100000000);
     DatabaseReference ref1 = FirebaseDatabase.getInstance(masterApp).getReference(child);
 
-    String url = "http://" + IntegrationTestUtils.getProjectId().toUpperCase() + ".firebaseio.com/"
+    String url = "https://" + IntegrationTestUtils.getProjectId().toUpperCase() + ".firebaseio.com/"
         + child;
     DatabaseReference ref2 = FirebaseDatabase.getInstance(masterApp).getReferenceFromUrl(url);
 
@@ -1317,7 +1315,7 @@ public class DataTestIT {
   @Test
   public void testNamespacesToStringCaseInsensitiveIn() throws DatabaseException {
     DatabaseReference ref1 = FirebaseDatabase.getInstance(masterApp).getReference();
-    String url = "http://" + IntegrationTestUtils.getProjectId().toUpperCase() + ".firebaseio.com";
+    String url = "https://" + IntegrationTestUtils.getProjectId().toUpperCase() + ".firebaseio.com";
     DatabaseReference ref2 = FirebaseDatabase.getInstance(masterApp).getReferenceFromUrl(url);
 
     assertEquals(ref1.toString(), ref2.toString());

@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -26,7 +25,6 @@ import com.google.firebase.database.utilities.ParsedUrl;
 import com.google.firebase.database.utilities.Utilities;
 import com.google.firebase.testing.IntegrationTestUtils;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -35,7 +33,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;

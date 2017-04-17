@@ -5,7 +5,6 @@ import static org.junit.Assert.fail;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
@@ -22,7 +21,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -136,8 +134,8 @@ public class FirebaseDatabaseTestIT {
 
   @Test(expected = DatabaseException.class)
   public void testGetReferenceThrowsWithBadUrl() {
-    FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
-    db.getReferenceFromUrl("http://tests2.fake-firebaseio.com:9000");
+    FirebaseDatabase db = FirebaseDatabase.getInstance();
+    db.getReferenceFromUrl("https://tests2.fake-firebaseio.com:9000");
   }
 
   @Test

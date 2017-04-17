@@ -10,7 +10,6 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.Iterables;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -49,7 +48,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;

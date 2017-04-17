@@ -161,7 +161,7 @@ public class FirebaseOptionsTest {
     FirebaseOptions options2 =
         new FirebaseOptions.Builder()
             .setCredential(credential)
-            .setDatabaseUrl("http://test.firebaseio.com")
+            .setDatabaseUrl("https://test.firebaseio.com")
             .build();
     assertFalse(options1.equals(options2));
   }
@@ -173,17 +173,17 @@ public class FirebaseOptionsTest {
     FirebaseOptions options1 =
         new FirebaseOptions.Builder()
             .setCredential(credential)
-            .setDatabaseUrl("http://test.firebaseio.com")
+            .setDatabaseUrl("https://test.firebaseio.com")
             .build();
     FirebaseOptions options2 =
         new FirebaseOptions.Builder()
             .setCredential(credential)
-            .setDatabaseUrl("http://test.firebaseio.com")
+            .setDatabaseUrl("https://test.firebaseio.com")
             .build();
     FirebaseOptions options3 =
         new FirebaseOptions.Builder()
             .setCredential(credential)
-            .setDatabaseUrl("http://test2.firebaseio.com")
+            .setDatabaseUrl("https://test2.firebaseio.com")
             .build();
     assertEquals(options1.hashCode(), options2.hashCode());
     assertNotEquals(options1.hashCode(), options3.hashCode());
