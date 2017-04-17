@@ -14,6 +14,7 @@ import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.util.JsonMapper;
 import com.google.firebase.database.utilities.DefaultRunLoop;
+import com.google.firebase.internal.NonNull;
 import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
 import java.lang.Thread.UncaughtExceptionHandler;
@@ -216,7 +217,19 @@ public class TestHelpers {
     }
   }
 
-  public static void wrapForErrorHandling(FirebaseApp app) {
+  /**
+   * Instruments the given FirebaseApp instance to catch exceptions that are thrown by background
+   * threads. More specifically, it registers error handlers with the RunLoop and EventTarget
+   * of the FirebaseDatabase. These components run asynchronously, and therefore any exceptions
+   * (including assertion failures) encountered by them do not typically cause the test runner
+   * to fail. The error handlers added by this method help to catch those exceptions, and
+   * propagate them to the test runner's main thread, thus causing tests to fail on async errors.
+   * Integration tests, particularly the ones that interact with FirebaseDatabase, should
+   * call this method in a Before test fixture.
+   *
+   * @param app A FirebaseApp instance to be instrumented
+   */
+  public static void wrapForErrorHandling(@NonNull FirebaseApp app) {
     DatabaseConfig context = getDatabaseConfig(app);
     CoreTestHelpers.freezeContext(context);
     DefaultRunLoop runLoop = (DefaultRunLoop) context.getRunLoop();
@@ -224,6 +237,15 @@ public class TestHelpers {
     CoreTestHelpers.setEventTargetExceptionHandler(context, new TestExceptionHandler());
   }
 
+  /**
+   * Checks to see if any asynchronous error handlers added to the given FirebaseApp instance
+   * have been activated. If so, this method will re-throw the root cause exception as a new
+   * RuntimeException. Finally, this method also removes any error handlers added previously by
+   * the wrapForErrorHandling method. Invoke this method in integration tests from an After
+   * test fixture.
+   *
+   * @param app AFireabseApp instance already instrumented by wrapForErrorHandling
+   */
   public static void assertAndUnwrapErrorHandlers(FirebaseApp app) {
     DatabaseConfig context = getDatabaseConfig(app);
     ErrorHandlingRunLoop runLoop = (ErrorHandlingRunLoop) context.getRunLoop();
@@ -255,6 +277,11 @@ public class TestHelpers {
     }
   }
 
+  /**
+   * A RunLoop decorator that delegates all method invocations to another (concrete) RunLoop
+   * implementation. The error handling methods have some extra logic to keep track of
+   * the first exception encountered.
+   */
   private static class ErrorHandlingRunLoop extends DefaultRunLoop {
 
     private final DefaultRunLoop wrapped;

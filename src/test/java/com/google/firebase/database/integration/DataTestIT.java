@@ -1310,7 +1310,7 @@ public class DataTestIT {
     String child = "" + new Random().nextInt(100000000);
     DatabaseReference ref1 = FirebaseDatabase.getInstance(masterApp).getReference(child);
 
-    String url = "http://" + IntegrationTestUtils.getProjectId().toUpperCase() + ".firebaseio.com/"
+    String url = "https://" + IntegrationTestUtils.getProjectId().toUpperCase() + ".firebaseio.com/"
         + child;
     DatabaseReference ref2 = FirebaseDatabase.getInstance(masterApp).getReferenceFromUrl(url);
 
@@ -1322,7 +1322,7 @@ public class DataTestIT {
   @Test
   public void testNamespacesToStringCaseInsensitiveIn() throws DatabaseException {
     DatabaseReference ref1 = FirebaseDatabase.getInstance(masterApp).getReference();
-    String url = "http://" + IntegrationTestUtils.getProjectId().toUpperCase() + ".firebaseio.com";
+    String url = "https://" + IntegrationTestUtils.getProjectId().toUpperCase() + ".firebaseio.com";
     DatabaseReference ref2 = FirebaseDatabase.getInstance(masterApp).getReferenceFromUrl(url);
 
     assertEquals(ref1.toString(), ref2.toString());
