@@ -32,12 +32,6 @@ public class IntegrationTestUtils {
 
   private static JSONObject IT_SERVICE_ACCOUNT;
 
-  public static String getDatabaseUrl() {
-    String url = System.getProperty("firebase.it.url");
-    return Preconditions.checkNotEmpty(
-        url, "Database URL not set. Set the firebase.it.url " + "system property and try again.");
-  }
-
   private static synchronized JSONObject ensureServiceAccount() {
     if (IT_SERVICE_ACCOUNT == null) {
       String certificatePath = System.getProperty("firebase.it.certificate");
@@ -60,6 +54,10 @@ public class IntegrationTestUtils {
 
   public static String getProjectId() {
     return ensureServiceAccount().get("project_id").toString();
+  }
+
+  public static String getDatabaseUrl() {
+    return "https://" + getProjectId() + ".firebaseio.com";
   }
 
   public static FirebaseApp initDefaultApp() {

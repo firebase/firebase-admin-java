@@ -12,8 +12,12 @@ import com.google.firebase.database.utilities.ParsedUrl;
 import com.google.firebase.database.utilities.Utilities;
 import com.google.firebase.database.utilities.Validation;
 
+import com.google.firebase.internal.Preconditions;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * The entry point for accessing a Firebase Database. You can get an instance by calling {@link
@@ -22,8 +26,8 @@ import java.util.Map;
  */
 public class FirebaseDatabase {
 
-  // This constant gets updated during the release process (see release-to-gh.sh script)
-  private static final String SDK_VERSION = "4.1.6";
+  private static final String ADMIN_SDK_PROPERTIES = "admin_sdk.properties";
+  private static final String SDK_VERSION = loadSdkVersion();
 
   /**
    * A static map of FirebaseApp and RepoInfo to FirebaseDatabase instance. To ensure thread-
@@ -323,5 +327,17 @@ public class FirebaseDatabase {
   // for testing
   DatabaseConfig getConfig() {
     return this.config;
+  }
+
+  private static String loadSdkVersion() {
+    try (InputStream in = FirebaseDatabase.class.getClassLoader()
+        .getResourceAsStream(ADMIN_SDK_PROPERTIES)) {
+      Preconditions.checkNotNull(in, "Failed to load: " + ADMIN_SDK_PROPERTIES);
+      Properties properties = new Properties();
+      properties.load(in);
+      return properties.getProperty("sdk.version");
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }
