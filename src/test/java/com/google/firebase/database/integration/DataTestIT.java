@@ -64,12 +64,7 @@ public class DataTestIT {
 
   @BeforeClass
   public static void setUpClass() {
-    masterApp = IntegrationTestUtils.initDefaultApp();
-  }
-
-  @AfterClass
-  public static void tearDownClass() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    masterApp = IntegrationTestUtils.ensureDefaultApp();
   }
 
   @Before

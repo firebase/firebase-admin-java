@@ -47,12 +47,7 @@ public class RealtimeTestIT {
 
   @BeforeClass
   public static void setUpClass() {
-    masterApp = IntegrationTestUtils.initDefaultApp();
-  }
-
-  @AfterClass
-  public static void tearDownClass() throws IOException {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    masterApp = IntegrationTestUtils.ensureDefaultApp();
   }
 
   @Before

@@ -45,13 +45,12 @@ public class OrderByTestIT {
 
   @BeforeClass
   public static void setUpClass() {
-    masterApp = IntegrationTestUtils.initDefaultApp();
+    masterApp = IntegrationTestUtils.ensureDefaultApp();
   }
 
   @AfterClass
   public static void tearDownClass() throws IOException {
     uploadRules(masterApp, "{\"rules\": {\".read\": true, \".write\": true}}");
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
   @Before

@@ -40,15 +40,10 @@ public class OrderTestIT {
 
   @BeforeClass
   public static void setUpClass() throws TestFailure, TimeoutException, InterruptedException {
-    masterApp = IntegrationTestUtils.initDefaultApp();
+    masterApp = IntegrationTestUtils.ensureDefaultApp();
     // Make sure we're connected before any of these tests run
     DatabaseReference ref = FirebaseDatabase.getInstance(masterApp).getReference();
     ReadFuture.untilEquals(ref.child(".info/connected"), true).timedGet();
-  }
-
-  @AfterClass
-  public static void tearDownClass() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
   @Before

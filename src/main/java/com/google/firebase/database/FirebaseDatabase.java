@@ -347,8 +347,12 @@ public class FirebaseDatabase {
 
     void cleanup() {
       for (FirebaseDatabase database : databases.values()) {
-        database.goOffline();
-        RepoManager.interrupt(database.getConfig());
+        synchronized (database) {
+          if (database.repo != null) {
+            database.goOffline();
+          }
+          RepoManager.interrupt(database.getConfig());
+        }
       }
       databases.clear();
     }

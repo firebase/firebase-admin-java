@@ -17,6 +17,7 @@ import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.IntegrationTestUtils;
 import com.google.firebase.testing.TestUtils;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -32,12 +33,7 @@ public class FirebaseDatabaseTestIT {
 
   @BeforeClass
   public static void setUpClass() {
-    masterApp = IntegrationTestUtils.initDefaultApp();
-  }
-  
-  @AfterClass
-  public static void tearDownClass() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    masterApp = IntegrationTestUtils.ensureDefaultApp();
   }
 
   @Before
@@ -153,6 +149,34 @@ public class FirebaseDatabaseTestIT {
         TimeUnit.MILLISECONDS);
     ReadFuture readFuture = ReadFuture.untilEquals(ref, "foo");
     readFuture.timedWait();
+  }
+
+  @Test
+  public void testDeleteApp() throws InterruptedException, TestFailure, TimeoutException,
+      ExecutionException {
+    FirebaseApp app = IntegrationTestUtils.initApp("testDeleteApp");
+    List<DatabaseReference> ref = IntegrationTestUtils.getRandomNode(app, 2);
+    DatabaseReference writer = ref.get(0);
+    DatabaseReference reader = ref.get(1);
+    writer.setValue("test");
+    TestHelpers.waitForRoundtrip(writer.getRoot());
+    ReadFuture.untilEquals(reader, "test").timedWait();
+
+    app.delete();
+    try {
+      IntegrationTestUtils.getRandomNode(app);
+      fail("No error thrown for deleted app");
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+
+    app = IntegrationTestUtils.initApp("testDeleteApp");
+    ref = IntegrationTestUtils.getRandomNode(app, 2);
+    writer = ref.get(0);
+    reader = ref.get(1);
+    writer.setValue("test2");
+    TestHelpers.waitForRoundtrip(writer.getRoot());
+    ReadFuture.untilEquals(reader, "test2").timedWait();
   }
   
   private static FirebaseApp appWithDbUrl(String dbUrl, String name) {

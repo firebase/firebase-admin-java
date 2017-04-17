@@ -39,13 +39,8 @@ public class FirebaseDatabaseAuthTestIT {
   
   @BeforeClass
   public static void setUpClass() throws IOException {    
-    masterApp = IntegrationTestUtils.initDefaultApp();
+    masterApp = IntegrationTestUtils.ensureDefaultApp();
     setDatabaseRules();
-  }
-  
-  @AfterClass
-  public static void tearDownClass() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
   @Before
