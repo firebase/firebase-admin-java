@@ -3,6 +3,8 @@ package com.google.firebase;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
@@ -110,13 +112,19 @@ public class FirebaseAppTest {
   public void testDeleteApp() {
     final String name = "myApp";
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS, name);
-    assertEquals(firebaseApp, FirebaseApp.getInstance(name));
+    assertSame(firebaseApp, FirebaseApp.getInstance(name));
     firebaseApp.delete();
     try {
-      FirebaseApp.getInstance(name);
-      fail();
-    } catch (IllegalStateException expected) {
-      // ignore
+      try {
+        FirebaseApp.getInstance(name);
+        fail();
+      } catch (IllegalStateException expected) {
+        // ignore
+      }
+
+      FirebaseApp firebaseApp2 = FirebaseApp.initializeApp(OPTIONS, name);
+      assertSame(firebaseApp2, FirebaseApp.getInstance(name));
+      assertNotSame(firebaseApp, firebaseApp2);
     } finally {
       TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
     }
