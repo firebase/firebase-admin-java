@@ -67,7 +67,7 @@ public class Repo implements PersistentConnection.Delegate {
   private long nextWriteId = 1;
   private SyncTree infoSyncTree;
   private SyncTree serverSyncTree;
-  private FirebaseDatabase database;
+  private final FirebaseDatabase database;
   private boolean loggedTransactionPersistenceWarning = false;
   private long transactionOrder = 0;
 
@@ -268,11 +268,13 @@ public class Repo implements PersistentConnection.Delegate {
   }
 
   public void scheduleNow(Runnable r) {
+    InternalHelpers.checkNotDestroyed(this);
     ctx.requireStarted();
     ctx.getRunLoop().scheduleNow(r);
   }
 
   public void postEvent(Runnable r) {
+    InternalHelpers.checkNotDestroyed(this);
     ctx.requireStarted();
     ctx.getEventTarget().postEvent(r);
   }
