@@ -1,6 +1,7 @@
 package com.google.firebase.database;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -17,11 +18,11 @@ import com.google.firebase.internal.FirebaseService;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The entry point for accessing a Firebase Database. You can get an instance by calling {@link
@@ -37,6 +38,9 @@ public class FirebaseDatabase {
   private final RepoInfo repoInfo;
   private final DatabaseConfig config;
   private Repo repo; // Usage must be guarded by a call to ensureRepo().
+
+  private final AtomicBoolean destroyed = new AtomicBoolean(false);
+  private final Object lock = new Object();
 
   private FirebaseDatabase(FirebaseApp app, RepoInfo repoInfo, DatabaseConfig config) {
     this.app = app;
@@ -160,8 +164,10 @@ public class FirebaseDatabase {
    * @return A DatabaseReference pointing to the root node.
    */
   public DatabaseReference getReference() {
-    ensureRepo();
-    return new DatabaseReference(this.repo, Path.getEmptyPath());
+    synchronized (lock) {
+      ensureRepo();
+      return new DatabaseReference(repo, Path.getEmptyPath());
+    }
   }
 
   /**
@@ -171,16 +177,14 @@ public class FirebaseDatabase {
    * @return A DatabaseReference pointing to the specified path.
    */
   public DatabaseReference getReference(String path) {
-    ensureRepo();
-
-    if (path == null) {
-      throw new NullPointerException(
-          "Can't pass null for argument 'pathString' in " + "FirebaseDatabase.getReference()");
-    }
+    checkNotNull(path,
+        "Can't pass null for argument 'pathString' in FirebaseDatabase.getReference()");
     Validation.validateRootPathString(path);
-
     Path childPath = new Path(path);
-    return new DatabaseReference(this.repo, childPath);
+    synchronized (lock) {
+      ensureRepo();
+      return new DatabaseReference(this.repo, childPath);
+    }
   }
 
   /**
@@ -193,24 +197,22 @@ public class FirebaseDatabase {
    * @return A DatabaseReference for the provided URL.
    */
   public DatabaseReference getReferenceFromUrl(String url) {
-    ensureRepo();
-
-    if (url == null) {
-      throw new NullPointerException(
-          "Can't pass null for argument 'url' in " + "FirebaseDatabase.getReferenceFromUrl()");
-    }
-
+    checkNotNull(url,
+        "Can't pass null for argument 'url' in FirebaseDatabase.getReferenceFromUrl()");
     ParsedUrl parsedUrl = Utilities.parseUrl(url);
-    if (!parsedUrl.repoInfo.host.equals(this.repo.getRepoInfo().host)) {
-      throw new DatabaseException(
-          "Invalid URL ("
-              + url
-              + ") passed to getReference().  "
-              + "URL was expected to match configured Database URL: "
-              + getReference().toString());
-    }
 
-    return new DatabaseReference(this.repo, parsedUrl.path);
+    synchronized (lock) {
+      ensureRepo();
+      if (!parsedUrl.repoInfo.host.equals(repo.getRepoInfo().host)) {
+        throw new DatabaseException(
+            "Invalid URL ("
+                + url
+                + ") passed to getReference().  "
+                + "URL was expected to match configured Database URL: "
+                + getReference().toString());
+      }
+      return new DatabaseReference(repo, parsedUrl.path);
+    }
   }
 
   /**
@@ -224,14 +226,16 @@ public class FirebaseDatabase {
    * listeners, and the client will not (re-)send them to the Firebase backend.
    */
   public void purgeOutstandingWrites() {
-    ensureRepo();
-    this.repo.scheduleNow(
-        new Runnable() {
-          @Override
-          public void run() {
-            repo.purgeOutstandingWrites();
-          }
-        });
+    synchronized (lock) {
+      ensureRepo();
+      repo.scheduleNow(
+          new Runnable() {
+            @Override
+            public void run() {
+              repo.purgeOutstandingWrites();
+            }
+          });
+    }
   }
 
   /**
@@ -239,16 +243,20 @@ public class FirebaseDatabase {
    * call.
    */
   public void goOnline() {
-    ensureRepo();
-    RepoManager.resume(this.repo);
+    synchronized (lock) {
+      ensureRepo();
+      RepoManager.resume(repo);
+    }
   }
 
   /**
    * Shuts down our connection to the Firebase Database backend until {@link #goOnline()} is called.
    */
   public void goOffline() {
-    ensureRepo();
-    RepoManager.interrupt(this.repo);
+    synchronized (lock) {
+      ensureRepo();
+      RepoManager.interrupt(repo);
+    }
   }
 
   /**
@@ -260,8 +268,10 @@ public class FirebaseDatabase {
    * @param logLevel The desired minimum log level
    */
   public synchronized void setLogLevel(Logger.Level logLevel) {
-    assertUnfrozen("setLogLevel");
-    this.config.setLogLevel(logLevel);
+    synchronized (lock) {
+      assertUnfrozen("setLogLevel");
+      this.config.setLogLevel(logLevel);
+    }
   }
 
   /**
@@ -278,8 +288,10 @@ public class FirebaseDatabase {
    * @param isEnabled Set to true to enable disk persistence, set to false to disable it.
    */
   public synchronized void setPersistenceEnabled(boolean isEnabled) {
-    assertUnfrozen("setPersistenceEnabled");
-    this.config.setPersistenceEnabled(isEnabled);
+    synchronized (lock) {
+      assertUnfrozen("setPersistenceEnabled");
+      this.config.setPersistenceEnabled(isEnabled);
+    }
   }
 
   /**
@@ -295,12 +307,15 @@ public class FirebaseDatabase {
    *
    * @param cacheSizeInBytes The new size of the cache in bytes.
    */
-  public synchronized void setPersistenceCacheSizeBytes(long cacheSizeInBytes) {
-    assertUnfrozen("setPersistenceCacheSizeBytes");
-    this.config.setPersistenceCacheSizeBytes(cacheSizeInBytes);
+  public void setPersistenceCacheSizeBytes(long cacheSizeInBytes) {
+    synchronized (lock) {
+      assertUnfrozen("setPersistenceCacheSizeBytes");
+      this.config.setPersistenceCacheSizeBytes(cacheSizeInBytes);
+    }
   }
 
   private void assertUnfrozen(String methodCalled) {
+    checkNotDestroyed();
     if (this.repo != null) {
       throw new DatabaseException(
           "Calls to "
@@ -310,15 +325,38 @@ public class FirebaseDatabase {
     }
   }
 
-  private synchronized void ensureRepo() {
-    if (this.repo == null) {
-      repo = RepoManager.createRepo(this.config, this.repoInfo, this);
+  private void ensureRepo() {
+    synchronized (lock) {
+      checkNotDestroyed();
+      if (repo == null) {
+        repo = RepoManager.createRepo(this.config, this.repoInfo, this);
+      }
     }
+  }
+
+  private void checkNotDestroyed() {
+    checkState(!destroyed.get(),
+        "FirebaseDatabase instance is no longer alive. This happens when "
+            + "the parent FirebaseApp instance has been deleted.");
   }
 
   // for testing
   DatabaseConfig getConfig() {
     return this.config;
+  }
+
+  void destroy() {
+    synchronized (lock) {
+      boolean valueChanged = this.destroyed.compareAndSet(false, true);
+      if (!valueChanged) {
+        return;
+      }
+      if (repo != null) {
+        RepoManager.interrupt(repo);
+        repo = null;
+      }
+      RepoManager.interrupt(getConfig());
+    }
   }
 
   private static String loadSdkVersion() {
@@ -346,19 +384,13 @@ public class FirebaseDatabase {
       return databases.get(repo);
     }
 
-    void cleanup() {
-      Collection<FirebaseDatabase> values = databases.values();
+    void destroy() {
       synchronized (databases) {
-        for (FirebaseDatabase database : values) {
-          synchronized (database) {
-            if (database.repo != null) {
-              database.goOffline();
-            }
-            RepoManager.interrupt(database.getConfig());
-          }
+        for (FirebaseDatabase database : databases.values()) {
+          database.destroy();
         }
+        databases.clear();
       }
-      databases.clear();
     }
   }
 
@@ -369,7 +401,7 @@ public class FirebaseDatabase {
 
     @Override
     public void destroy() {
-      instance.cleanup();
+      instance.destroy();
     }
   }
 }

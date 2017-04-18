@@ -57,6 +57,14 @@ public class FirebaseDatabaseTest {
     FirebaseDatabase db = FirebaseDatabase.getInstance(app);
     assertNotNull(db);
     app.delete();
+
+    try {
+      db.getReference();
+      fail("No error thrown when calling method on database after delete");
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+
     try {
       FirebaseDatabase.getInstance(app);
       fail("No error thrown when getting db instance after deleting app");
