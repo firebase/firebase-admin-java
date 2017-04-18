@@ -114,14 +114,16 @@ public class FirebaseAppTest {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS, name);
     assertSame(firebaseApp, FirebaseApp.getInstance(name));
     firebaseApp.delete();
-    try {
-      try {
-        FirebaseApp.getInstance(name);
-        fail();
-      } catch (IllegalStateException expected) {
-        // ignore
-      }
 
+    try {
+      FirebaseApp.getInstance(name);
+      fail();
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+
+    try {
+      // Verify we can reuse the same app name.
       FirebaseApp firebaseApp2 = FirebaseApp.initializeApp(OPTIONS, name);
       assertSame(firebaseApp2, FirebaseApp.getInstance(name));
       assertNotSame(firebaseApp, firebaseApp2);

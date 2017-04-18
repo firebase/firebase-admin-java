@@ -31,11 +31,14 @@ public class DataSnapshotTest {
             .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
             .setDatabaseUrl("https://admin-java-sdk.firebaseio.com")
             .build());
+    // Obtain a new DatabaseConfig instance for testing. Since we are not connecting to an
+    // actual Firebase database, it is necessary to use a stand-in DatabaseConfig here.
     config = TestHelpers.newTestConfig(testApp);
   }
 
   @AfterClass
   public static void tearDownClass() throws InterruptedException {
+    // Tear down and clean up the test DatabaseConfig.
     TestHelpers.interruptConfig(config);
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }

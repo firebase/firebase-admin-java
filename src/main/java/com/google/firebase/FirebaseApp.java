@@ -15,7 +15,6 @@ import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseExecutors;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.GetTokenResult;
-import com.google.firebase.internal.GuardedBy;
 import com.google.firebase.internal.Joiner;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
@@ -37,10 +36,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The entry point of Firebase SDKs. It holds common configuration and state for Firebase APIs. Most
- * applications don't need to directly interact with FirebaseApp. *
+ * applications don't need to directly interact with FirebaseApp.
  *
  * <p>Firebase APIs use the default FirebaseApp by default, unless a different one is explicitly
- * passed to the API via FirebaseFoo.getInstance(firebaseApp). *
+ * passed to the API via FirebaseFoo.getInstance(firebaseApp).
  *
  * <p>{@link FirebaseApp#initializeApp(FirebaseOptions)} initializes the default app instance. This
  * method should be invoked at startup.
@@ -48,14 +47,18 @@ import java.util.concurrent.atomic.AtomicReference;
 public class FirebaseApp {
 
   /** A map of (name, FirebaseApp) instances. */
-  @GuardedBy("sLock")
   private static final Map<String, FirebaseApp> instances = new HashMap<>();
 
   public static final String DEFAULT_APP_NAME = "[DEFAULT]";
   private static final long TOKEN_REFRESH_INTERVAL_MILLIS = TimeUnit.MINUTES.toMillis(55);
   private static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
       new TokenRefresher.Factory();
-  private static final Object sLock = new Object();
+
+  /**
+   * Global lock for synchronizing all SDK-wide application state changes. Specifically, any
+   * accesses to instances map should be protected by this lock.
+   */
+  private static final Object appsLock = new Object();
 
   private final String name;
   private final FirebaseOptions options;
@@ -65,6 +68,11 @@ public class FirebaseApp {
   private final List<AuthStateListener> authStateListeners = new ArrayList<>();
   private final AtomicReference<GetTokenResult> currentToken = new AtomicReference<>();
   private final Map<String, FirebaseService> services = new HashMap<>();
+
+  /**
+   * Per application lock for synchronizing all internal FirebaseApp state changes.
+   */
+  private final Object lock = new Object();
 
   /** Default constructor. */
   private FirebaseApp(String name, FirebaseOptions options, TokenRefresher.Factory factory) {
@@ -77,7 +85,9 @@ public class FirebaseApp {
   /** Returns a mutable list of all FirebaseApps. */
   public static List<FirebaseApp> getApps() {
     // TODO(arondeak): reenable persistence. See b/28158809.
-    return new ArrayList<>(instances.values());
+    synchronized (appsLock) {
+      return ImmutableList.copyOf(instances.values());
+    }
   }
 
   /**
@@ -99,7 +109,7 @@ public class FirebaseApp {
    *     #initializeApp(FirebaseOptions, String)} or {@link #getApps()}.
    */
   public static FirebaseApp getInstance(@NonNull String name) {
-    synchronized (sLock) {
+    synchronized (appsLock) {
       FirebaseApp firebaseApp = instances.get(normalize(name));
       if (firebaseApp != null) {
         return firebaseApp;
@@ -150,7 +160,7 @@ public class FirebaseApp {
     FirebaseAppStore appStore = FirebaseAppStore.initialize();
     String normalizedName = normalize(name);
     final FirebaseApp firebaseApp;
-    synchronized (sLock) {
+    synchronized (appsLock) {
       checkState(
           !instances.containsKey(normalizedName),
           "FirebaseApp name " + normalizedName + " already exists!");
@@ -166,7 +176,9 @@ public class FirebaseApp {
 
   @VisibleForTesting
   static void clearInstancesForTest() {
-    synchronized (sLock) {
+    synchronized (appsLock) {
+      // Copy the instances list before iterating, as delete() would attempt to remove from the
+      // original list.
       for (FirebaseApp app : ImmutableList.copyOf(instances.values())) {
         app.delete();
       }
@@ -189,7 +201,7 @@ public class FirebaseApp {
 
   private static List<String> getAllAppNames() {
     Set<String> allAppNames = new HashSet<>();
-    synchronized (sLock) {
+    synchronized (appsLock) {
       for (FirebaseApp app : instances.values()) {
         allAppNames.add(app.getName());
       }
@@ -249,30 +261,27 @@ public class FirebaseApp {
    * <p>A no-op if delete was called before.
    */
   public void delete() {
-    List<FirebaseService> servicesCopy;
-    synchronized (this) {
+    synchronized (lock) {
       boolean valueChanged = deleted.compareAndSet(false /* expected */, true);
       if (!valueChanged) {
         return;
       }
 
-      servicesCopy = ImmutableList.copyOf(services.values());
+      for (FirebaseService service : services.values()) {
+        service.destroy();
+      }
       services.clear();
       authStateListeners.clear();
       tokenRefresher.cleanup();
-    }
 
-    for (FirebaseService service : servicesCopy) {
-      service.destroy();
-    }
+      synchronized (appsLock) {
+        instances.remove(this.name);
+      }
 
-    synchronized (sLock) {
-      instances.remove(this.name);
-    }
-
-    FirebaseAppStore appStore = FirebaseAppStore.getInstance();
-    if (appStore != null) {
-      appStore.removeApp(name);
+      FirebaseAppStore appStore = FirebaseAppStore.getInstance();
+      if (appStore != null) {
+        appStore.removeApp(name);
+      }
     }
   }
 
@@ -300,13 +309,14 @@ public class FirebaseApp {
                 GetTokenResult oldToken = currentToken.get();
                 List<AuthStateListener> listenersCopy = null;
                 if (!newToken.equals(oldToken)) {
-                  synchronized (FirebaseApp.this) {
+                  synchronized (lock) {
                     if (deleted.get()) {
                       return newToken;
                     }
 
                     // Grab the lock before compareAndSet to avoid a potential race
-                    // condition with addAuthStateListener
+                    // condition with addAuthStateListener. The same lock also ensures serial
+                    // access to the token refresher.
                     if (currentToken.compareAndSet(oldToken, newToken)) {
                       listenersCopy = ImmutableList.copyOf(authStateListeners);
                       tokenRefresher.scheduleRefresh(TOKEN_REFRESH_INTERVAL_MILLIS);
@@ -330,7 +340,7 @@ public class FirebaseApp {
 
   void addAuthStateListener(@NonNull final AuthStateListener listener) {
     GetTokenResult currentToken;
-    synchronized (this) {
+    synchronized (lock) {
       checkNotDeleted();
       authStateListeners.add(checkNotNull(listener));
       currentToken = this.currentToken.get();
@@ -343,22 +353,33 @@ public class FirebaseApp {
     }
   }
 
-  synchronized void removeAuthStateListener(@NonNull AuthStateListener listener) {
-    checkNotDeleted();
-    authStateListeners.remove(checkNotNull(listener));
+  void removeAuthStateListener(@NonNull AuthStateListener listener) {
+    synchronized (lock) {
+      checkNotDeleted();
+      authStateListeners.remove(checkNotNull(listener));
+    }
   }
 
-  synchronized void addService(FirebaseService service) {
-    checkNotDeleted();
-    checkArgument(!services.containsKey(checkNotNull(service).getId()));
-    services.put(service.getId(), service);
+  void addService(FirebaseService service) {
+    synchronized (lock) {
+      checkNotDeleted();
+      checkArgument(!services.containsKey(checkNotNull(service).getId()));
+      services.put(service.getId(), service);
+    }
   }
 
-  synchronized FirebaseService getService(String id) {
-    checkArgument(!Strings.isNullOrEmpty(id));
-    return services.get(id);
+  FirebaseService getService(String id) {
+    synchronized (lock) {
+      checkArgument(!Strings.isNullOrEmpty(id));
+      return services.get(id);
+    }
   }
 
+  /**
+   * Utility class for scheduling proactive token refresh events.  Each FirebaseApp should have
+   * its own instance of this class. This class is not thread safe. The caller (FirebaseApp) must
+   * ensure that methods are called serially.
+   */
   static class TokenRefresher {
 
     private final FirebaseApp firebaseApp;

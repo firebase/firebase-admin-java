@@ -18,6 +18,7 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.FirebaseCustomAuthToken;
 import com.google.firebase.database.MapBuilder;
+import com.google.firebase.internal.Log;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.ServiceAccount;
@@ -54,6 +55,7 @@ public class FirebaseAuthTest {
   private static final String CLIENT_SECRET = "mockclientsecret";
   private static final String CLIENT_ID = "mockclientid";
   private static final String REFRESH_TOKEN = "mockrefreshtoken";
+  private static final String TAG = "FirebaseAuthTest";
   private final FirebaseOptions firebaseOptions;
   private final boolean isCertCredential;
 
@@ -181,6 +183,7 @@ public class FirebaseAuthTest {
   @Test
   public void testInvokeAfterAppDelete() throws ExecutionException, InterruptedException {
     if (!isCertCredential) {
+      Log.i(TAG, "Skipping testInvokeAfterAppDelete for non-cert credential");
       return;
     }
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testInvokeAfterAppDelete");
@@ -231,6 +234,7 @@ public class FirebaseAuthTest {
   @Test
   public void testCreateCustomToken() throws Exception {
     if (!isCertCredential) {
+      Log.i(TAG, "Skipping testCreateCustomToken for non-cert credential");
       return;
     }
 
@@ -250,6 +254,7 @@ public class FirebaseAuthTest {
   @Test
   public void testCreateCustomTokenWithDeveloperClaims() throws Exception {
     if (!isCertCredential) {
+      Log.i(TAG, "Skipping testCreateCustomTokenWithDeveloperClaims for non-cert credential");
       return;
     }
 
@@ -283,6 +288,7 @@ public class FirebaseAuthTest {
   @Test
   public void testCredentialCertificateRequired() throws Exception {
     if (isCertCredential) {
+      Log.i(TAG, "Skipping testCredentialCertificateRequired for cert credential");
       return;
     }
 

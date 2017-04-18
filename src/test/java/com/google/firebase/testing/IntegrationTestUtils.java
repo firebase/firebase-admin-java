@@ -63,6 +63,14 @@ public class IntegrationTestUtils {
     return "https://" + getProjectId() + ".firebaseio.com";
   }
 
+  /**
+   * Initializes the default FirebaseApp for integration testing (if not already initialized), and
+   * returns it. Integration tests that interact with the default FirebaseApp should call this
+   * method to obtain the app instance. This method ensures that all integration tests get the
+   * same FirebaseApp instance, instead of initializing an app per test.
+   *
+   * @return the default FirebaseApp instance
+   */
   public static synchronized FirebaseApp ensureDefaultApp() {
     if (masterApp == null) {
       FirebaseOptions options =

@@ -189,6 +189,9 @@ public class FirebaseAuth {
 
     @Override
     public void destroy() {
+      // NOTE: We don't explicitly tear down anything here, but public methods of FirebaseAuth
+      // will now fail because calls to getCredential() will hit FirebaseApp.getOptions() which
+      // will throw once the app is deleted.
     }
   }
 }
