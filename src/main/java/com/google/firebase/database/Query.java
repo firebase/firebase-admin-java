@@ -41,18 +41,18 @@ public class Query {
   private final boolean orderByCalled;
 
   Query(Repo repo, Path path, QueryParams params, boolean orderByCalled) throws DatabaseException {
+    if (repo != null) {
+      InternalHelpers.checkNotDestroyed(repo);
+    }
+    hardAssert(params.isValid(), "Validation of queries failed.");
     this.repo = repo;
     this.path = path;
     this.params = params;
     this.orderByCalled = orderByCalled;
-    hardAssert(params.isValid(), "Validation of queries failed.");
   }
 
   Query(Repo repo, Path path) {
-    this.repo = repo;
-    this.path = path;
-    this.params = QueryParams.DEFAULT_PARAMS;
-    this.orderByCalled = false;
+    this(repo, path, QueryParams.DEFAULT_PARAMS, false);
   }
 
   /**
@@ -204,6 +204,7 @@ public class Query {
   }
 
   private void addEventRegistration(final EventRegistration listener) {
+    InternalHelpers.checkNotDestroyed(repo);
     ZombieEventManager.getInstance().recordEventRegistration(listener);
     repo.scheduleNow(
         new Runnable() {

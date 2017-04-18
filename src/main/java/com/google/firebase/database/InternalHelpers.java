@@ -35,4 +35,11 @@ public class InternalHelpers {
   public static MutableData createMutableData(Node node) {
     return new MutableData(node);
   }
+
+  /**
+   * For Repo to check if the database has been destroyed.
+   */
+  public static void checkNotDestroyed(Repo repo) {
+    repo.getDatabase().checkNotDestroyed();
+  }
 }

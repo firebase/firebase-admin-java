@@ -325,16 +325,18 @@ public class FirebaseDatabase {
     }
   }
 
+  /**
+   * Initializes the Repo if not already initialized. Not thread safe. Caller must ensure
+   * thread safety by synchronizing on 'lock'.
+   */
   private void ensureRepo() {
-    synchronized (lock) {
-      checkNotDestroyed();
-      if (repo == null) {
-        repo = RepoManager.createRepo(this.config, this.repoInfo, this);
-      }
+    checkNotDestroyed();
+    if (repo == null) {
+      repo = RepoManager.createRepo(this.config, this.repoInfo, this);
     }
   }
 
-  private void checkNotDestroyed() {
+  void checkNotDestroyed() {
     checkState(!destroyed.get(),
         "FirebaseDatabase instance is no longer alive. This happens when "
             + "the parent FirebaseApp instance has been deleted.");
@@ -347,15 +349,16 @@ public class FirebaseDatabase {
 
   void destroy() {
     synchronized (lock) {
-      boolean valueChanged = this.destroyed.compareAndSet(false, true);
-      if (!valueChanged) {
+      if (destroyed.get()) {
         return;
       }
+
       if (repo != null) {
         RepoManager.interrupt(repo);
         repo = null;
       }
       RepoManager.interrupt(getConfig());
+      destroyed.compareAndSet(false, true);
     }
   }
 

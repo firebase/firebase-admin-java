@@ -6,11 +6,16 @@ import static org.junit.Assert.fail;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseCredentials;
+import com.google.firebase.database.ChildEventListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MapBuilder;
 import com.google.firebase.database.TestFailure;
 import com.google.firebase.database.TestHelpers;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.IntegrationTestUtils;
@@ -163,6 +168,62 @@ public class FirebaseDatabaseTestIT {
     app.delete();
     try {
       IntegrationTestUtils.getRandomNode(app);
+      fail("No error thrown for deleted app");
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+
+    try {
+      writer.setValue("foo");
+      fail("No error thrown for deleted app");
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+
+    try {
+      writer.updateChildren(MapBuilder.of("a", 1));
+      fail("No error thrown for deleted app");
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+
+    try {
+      writer.addValueEventListener(new ValueEventListener() {
+        @Override
+        public void onDataChange(DataSnapshot snapshot) {
+        }
+
+        @Override
+        public void onCancelled(DatabaseError error) {
+        }
+      });
+      fail("No error thrown for deleted app");
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+
+    try {
+      writer.addChildEventListener(new ChildEventListener() {
+        @Override
+        public void onChildAdded(DataSnapshot snapshot, String previousChildName) {
+        }
+
+        @Override
+        public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
+        }
+
+        @Override
+        public void onChildRemoved(DataSnapshot snapshot) {
+        }
+
+        @Override
+        public void onChildMoved(DataSnapshot snapshot, String previousChildName) {
+        }
+
+        @Override
+        public void onCancelled(DatabaseError error) {
+        }
+      });
       fail("No error thrown for deleted app");
     } catch (IllegalStateException expected) {
       // ignore
