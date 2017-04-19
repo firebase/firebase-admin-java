@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.EventRecord;
 import com.google.firebase.database.FirebaseDatabase;
@@ -17,7 +16,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -29,12 +27,7 @@ public class KeepSyncedTestIT {
 
   @BeforeClass
   public static void setUpClass() throws IOException {
-    masterApp = IntegrationTestUtils.initDefaultApp();
-  }
-
-  @AfterClass
-  public static void tearDownClass() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    masterApp = IntegrationTestUtils.ensureDefaultApp();
   }
 
   @Before

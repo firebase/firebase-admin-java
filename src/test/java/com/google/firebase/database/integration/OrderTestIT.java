@@ -7,7 +7,6 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -29,7 +28,6 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -40,15 +38,10 @@ public class OrderTestIT {
 
   @BeforeClass
   public static void setUpClass() throws TestFailure, TimeoutException, InterruptedException {
-    masterApp = IntegrationTestUtils.initDefaultApp();
+    masterApp = IntegrationTestUtils.ensureDefaultApp();
     // Make sure we're connected before any of these tests run
     DatabaseReference ref = FirebaseDatabase.getInstance(masterApp).getReference();
     ReadFuture.untilEquals(ref.child(".info/connected"), true).timedGet();
-  }
-
-  @AfterClass
-  public static void tearDownClass() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
   @Before

@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -28,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -39,15 +37,20 @@ public class FirebaseDatabaseAuthTestIT {
   
   @BeforeClass
   public static void setUpClass() throws IOException {    
-    masterApp = IntegrationTestUtils.initDefaultApp();
+    masterApp = IntegrationTestUtils.ensureDefaultApp();
     setDatabaseRules();
   }
-  
-  @AfterClass
-  public static void tearDownClass() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+
+  @Before
+  public void prepareApp() {
+    TestHelpers.wrapForErrorHandling(masterApp);
   }
-  
+
+  @After
+  public void checkAndCleanupApp() {
+    TestHelpers.assertAndUnwrapErrorHandlers(masterApp);
+  }
+
   @Test
   public void testAuthWithValidCertificateCredential() throws InterruptedException {
     FirebaseDatabase db = FirebaseDatabase.getInstance();
@@ -66,16 +69,6 @@ public class FirebaseDatabaseAuthTestIT {
     FirebaseDatabase db = FirebaseDatabase.getInstance(app);
     // TODO: Ideally, we would find a way to verify the correct log output.
     assertWriteTimeout(db.getReference());
-  }
-
-  @Before
-  public void prepareApp() {
-    TestHelpers.wrapForErrorHandling(masterApp);
-  }
-
-  @After
-  public void checkAndCleanupApp() {
-    TestHelpers.assertAndUnwrapErrorHandlers(masterApp);
   }
   
   @Test

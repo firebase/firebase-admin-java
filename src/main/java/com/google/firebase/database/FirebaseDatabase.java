@@ -1,6 +1,7 @@
 package com.google.firebase.database;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -13,12 +14,15 @@ import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.utilities.ParsedUrl;
 import com.google.firebase.database.utilities.Utilities;
 import com.google.firebase.database.utilities.Validation;
+import com.google.firebase.internal.FirebaseService;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The entry point for accessing a Firebase Database. You can get an instance by calling {@link
@@ -30,21 +34,16 @@ public class FirebaseDatabase {
   private static final String ADMIN_SDK_PROPERTIES = "admin_sdk.properties";
   private static final String SDK_VERSION = loadSdkVersion();
 
-  /**
-   * A static map of FirebaseApp and RepoInfo to FirebaseDatabase instance. To ensure thread-
-   * safety, it should only be accessed in getInstance(), which is a synchronized method.
-   *
-   * <p>TODO(mikelehen): This serves a duplicate purpose as RepoManager. We should clean up.
-   * TODO(mikelehen): We should maybe be conscious of leaks and make this a weak map or similar but
-   * we have a lot of work to do to allow FirebaseDatabase/Repo etc. to be GC'd.
-   */
-  private static final Map<String /* App name */, Map<RepoInfo, FirebaseDatabase>>
-      databaseInstances = new HashMap<>();
-
   private final FirebaseApp app;
   private final RepoInfo repoInfo;
   private final DatabaseConfig config;
   private Repo repo; // Usage must be guarded by a call to ensureRepo().
+
+  private final AtomicBoolean destroyed = new AtomicBoolean(false);
+
+  // Lock for synchronizing internal state changes. Protects accesses to repo and destroyed
+  // members.
+  private final Object lock = new Object();
 
   private FirebaseDatabase(FirebaseApp app, RepoInfo repoInfo, DatabaseConfig config) {
     this.app = app;
@@ -97,17 +96,17 @@ public class FirebaseDatabase {
    * @return A FirebaseDatabase instance.
    */
   public static synchronized FirebaseDatabase getInstance(FirebaseApp app, String url) {
+    FirebaseDatabaseService service = ImplFirebaseTrampolines.getService(app, SERVICE_ID,
+        FirebaseDatabaseService.class);
+    if (service == null) {
+      service = ImplFirebaseTrampolines.addService(app, new FirebaseDatabaseService());
+    }
+
+    DatabaseInstances dbInstances = service.getInstance();
     if (url == null || url.isEmpty()) {
       throw new DatabaseException(
           "Failed to get FirebaseDatabase instance: Specify DatabaseURL within "
               + "FirebaseApp or from your getInstance() call.");
-    }
-
-    Map<RepoInfo, FirebaseDatabase> instances = databaseInstances.get(app.getName());
-
-    if (instances == null) {
-      instances = new HashMap<>();
-      databaseInstances.put(app.getName(), instances);
     }
 
     ParsedUrl parsedUrl = Utilities.parseUrl(url);
@@ -120,8 +119,7 @@ public class FirebaseDatabase {
               + parsedUrl.path.toString());
     }
 
-    FirebaseDatabase database = instances.get(parsedUrl.repoInfo);
-
+    FirebaseDatabase database = dbInstances.get(parsedUrl.repoInfo);
     if (database == null) {
       DatabaseConfig config = new DatabaseConfig();
       // If this is the default app, don't set the session persistence key so that we use our
@@ -133,7 +131,7 @@ public class FirebaseDatabase {
       config.setFirebaseApp(app);
 
       database = new FirebaseDatabase(app, parsedUrl.repoInfo, config);
-      instances.put(parsedUrl.repoInfo, database);
+      dbInstances.put(parsedUrl.repoInfo, database);
     }
 
     return database;
@@ -169,8 +167,7 @@ public class FirebaseDatabase {
    * @return A DatabaseReference pointing to the root node.
    */
   public DatabaseReference getReference() {
-    ensureRepo();
-    return new DatabaseReference(this.repo, Path.getEmptyPath());
+    return new DatabaseReference(ensureRepo(), Path.getEmptyPath());
   }
 
   /**
@@ -180,16 +177,11 @@ public class FirebaseDatabase {
    * @return A DatabaseReference pointing to the specified path.
    */
   public DatabaseReference getReference(String path) {
-    ensureRepo();
-
-    if (path == null) {
-      throw new NullPointerException(
-          "Can't pass null for argument 'pathString' in " + "FirebaseDatabase.getReference()");
-    }
+    checkNotNull(path,
+        "Can't pass null for argument 'pathString' in FirebaseDatabase.getReference()");
     Validation.validateRootPathString(path);
-
     Path childPath = new Path(path);
-    return new DatabaseReference(this.repo, childPath);
+    return new DatabaseReference(ensureRepo(), childPath);
   }
 
   /**
@@ -202,15 +194,11 @@ public class FirebaseDatabase {
    * @return A DatabaseReference for the provided URL.
    */
   public DatabaseReference getReferenceFromUrl(String url) {
-    ensureRepo();
-
-    if (url == null) {
-      throw new NullPointerException(
-          "Can't pass null for argument 'url' in " + "FirebaseDatabase.getReferenceFromUrl()");
-    }
-
+    checkNotNull(url,
+        "Can't pass null for argument 'url' in FirebaseDatabase.getReferenceFromUrl()");
     ParsedUrl parsedUrl = Utilities.parseUrl(url);
-    if (!parsedUrl.repoInfo.host.equals(this.repo.getRepoInfo().host)) {
+    Repo repo = ensureRepo();
+    if (!parsedUrl.repoInfo.host.equals(repo.getRepoInfo().host)) {
       throw new DatabaseException(
           "Invalid URL ("
               + url
@@ -218,8 +206,7 @@ public class FirebaseDatabase {
               + "URL was expected to match configured Database URL: "
               + getReference().toString());
     }
-
-    return new DatabaseReference(this.repo, parsedUrl.path);
+    return new DatabaseReference(repo, parsedUrl.path);
   }
 
   /**
@@ -233,8 +220,8 @@ public class FirebaseDatabase {
    * listeners, and the client will not (re-)send them to the Firebase backend.
    */
   public void purgeOutstandingWrites() {
-    ensureRepo();
-    this.repo.scheduleNow(
+    final Repo repo = ensureRepo();
+    repo.scheduleNow(
         new Runnable() {
           @Override
           public void run() {
@@ -248,16 +235,14 @@ public class FirebaseDatabase {
    * call.
    */
   public void goOnline() {
-    ensureRepo();
-    RepoManager.resume(this.repo);
+    RepoManager.resume(ensureRepo());
   }
 
   /**
    * Shuts down our connection to the Firebase Database backend until {@link #goOnline()} is called.
    */
   public void goOffline() {
-    ensureRepo();
-    RepoManager.interrupt(this.repo);
+    RepoManager.interrupt(ensureRepo());
   }
 
   /**
@@ -269,8 +254,10 @@ public class FirebaseDatabase {
    * @param logLevel The desired minimum log level
    */
   public synchronized void setLogLevel(Logger.Level logLevel) {
-    assertUnfrozen("setLogLevel");
-    this.config.setLogLevel(logLevel);
+    synchronized (lock) {
+      assertUnfrozen("setLogLevel");
+      this.config.setLogLevel(logLevel);
+    }
   }
 
   /**
@@ -287,8 +274,10 @@ public class FirebaseDatabase {
    * @param isEnabled Set to true to enable disk persistence, set to false to disable it.
    */
   public synchronized void setPersistenceEnabled(boolean isEnabled) {
-    assertUnfrozen("setPersistenceEnabled");
-    this.config.setPersistenceEnabled(isEnabled);
+    synchronized (lock) {
+      assertUnfrozen("setPersistenceEnabled");
+      this.config.setPersistenceEnabled(isEnabled);
+    }
   }
 
   /**
@@ -304,30 +293,65 @@ public class FirebaseDatabase {
    *
    * @param cacheSizeInBytes The new size of the cache in bytes.
    */
-  public synchronized void setPersistenceCacheSizeBytes(long cacheSizeInBytes) {
-    assertUnfrozen("setPersistenceCacheSizeBytes");
-    this.config.setPersistenceCacheSizeBytes(cacheSizeInBytes);
-  }
-
-  private void assertUnfrozen(String methodCalled) {
-    if (this.repo != null) {
-      throw new DatabaseException(
-          "Calls to "
-              + methodCalled
-              + "() must be made before any "
-              + "other usage of FirebaseDatabase instance.");
+  public void setPersistenceCacheSizeBytes(long cacheSizeInBytes) {
+    synchronized (lock) {
+      assertUnfrozen("setPersistenceCacheSizeBytes");
+      this.config.setPersistenceCacheSizeBytes(cacheSizeInBytes);
     }
   }
 
-  private synchronized void ensureRepo() {
-    if (this.repo == null) {
-      repo = RepoManager.createRepo(this.config, this.repoInfo, this);
+  private void assertUnfrozen(String methodCalled) {
+    synchronized (lock) {
+      checkNotDestroyed();
+      if (this.repo != null) {
+        throw new DatabaseException(
+            "Calls to "
+                + methodCalled
+                + "() must be made before any "
+                + "other usage of FirebaseDatabase instance.");
+      }
+    }
+  }
+
+  /**
+   * Initializes the Repo if not already initialized.
+   */
+  private Repo ensureRepo() {
+    synchronized (lock) {
+      checkNotDestroyed();
+      if (repo == null) {
+        repo = RepoManager.createRepo(this.config, this.repoInfo, this);
+      }
+      return repo;
+    }
+  }
+
+  void checkNotDestroyed() {
+    synchronized (lock) {
+      checkState(!destroyed.get(),
+          "FirebaseDatabase instance is no longer alive. This happens when "
+              + "the parent FirebaseApp instance has been deleted.");
     }
   }
 
   // for testing
   DatabaseConfig getConfig() {
     return this.config;
+  }
+
+  void destroy() {
+    synchronized (lock) {
+      if (destroyed.get()) {
+        return;
+      }
+
+      if (repo != null) {
+        RepoManager.interrupt(repo);
+        repo = null;
+      }
+      RepoManager.interrupt(getConfig());
+      destroyed.compareAndSet(false, true);
+    }
   }
 
   private static String loadSdkVersion() {
@@ -338,6 +362,41 @@ public class FirebaseDatabase {
       return properties.getProperty("sdk.version");
     } catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private static final String SERVICE_ID = FirebaseDatabase.class.getName();
+
+  private static class DatabaseInstances {
+    private final Map<RepoInfo, FirebaseDatabase> databases =
+        Collections.synchronizedMap(new HashMap<RepoInfo, FirebaseDatabase>());
+
+    void put(RepoInfo repo, FirebaseDatabase database) {
+      databases.put(repo, database);
+    }
+
+    FirebaseDatabase get(RepoInfo repo) {
+      return databases.get(repo);
+    }
+
+    void destroy() {
+      synchronized (databases) {
+        for (FirebaseDatabase database : databases.values()) {
+          database.destroy();
+        }
+        databases.clear();
+      }
+    }
+  }
+
+  private static class FirebaseDatabaseService extends FirebaseService<DatabaseInstances> {
+    FirebaseDatabaseService() {
+      super(SERVICE_ID, new DatabaseInstances());
+    }
+
+    @Override
+    public void destroy() {
+      instance.destroy();
     }
   }
 }

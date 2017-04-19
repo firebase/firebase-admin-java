@@ -34,6 +34,7 @@ import org.json.JSONObject;
 public class IntegrationTestUtils {
 
   private static JSONObject IT_SERVICE_ACCOUNT;
+  private static FirebaseApp masterApp;
 
   private static synchronized JSONObject ensureServiceAccount() {
     if (IT_SERVICE_ACCOUNT == null) {
@@ -62,13 +63,24 @@ public class IntegrationTestUtils {
     return "https://" + getProjectId() + ".firebaseio.com";
   }
 
-  public static FirebaseApp initDefaultApp() {
-    FirebaseOptions options =
-        new FirebaseOptions.Builder()
-            .setDatabaseUrl(getDatabaseUrl())
-            .setCredential(FirebaseCredentials.fromCertificate(getServiceAccountCertificate()))
-            .build();
-    return FirebaseApp.initializeApp(options);
+  /**
+   * Initializes the default FirebaseApp for integration testing (if not already initialized), and
+   * returns it. Integration tests that interact with the default FirebaseApp should call this
+   * method to obtain the app instance. This method ensures that all integration tests get the
+   * same FirebaseApp instance, instead of initializing an app per test.
+   *
+   * @return the default FirebaseApp instance
+   */
+  public static synchronized FirebaseApp ensureDefaultApp() {
+    if (masterApp == null) {
+      FirebaseOptions options =
+          new FirebaseOptions.Builder()
+              .setDatabaseUrl(getDatabaseUrl())
+              .setCredential(FirebaseCredentials.fromCertificate(getServiceAccountCertificate()))
+              .build();
+      masterApp = FirebaseApp.initializeApp(options);
+    }
+    return masterApp;
   }
 
   public static FirebaseApp initApp(String name) {

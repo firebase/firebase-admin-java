@@ -5,7 +5,6 @@ import static org.junit.Assert.assertNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -45,13 +44,12 @@ public class OrderByTestIT {
 
   @BeforeClass
   public static void setUpClass() {
-    masterApp = IntegrationTestUtils.initDefaultApp();
+    masterApp = IntegrationTestUtils.ensureDefaultApp();
   }
 
   @AfterClass
   public static void tearDownClass() throws IOException {
     uploadRules(masterApp, "{\"rules\": {\".read\": true, \".write\": true}}");
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
   @Before

@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
@@ -23,7 +22,6 @@ import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -31,12 +29,7 @@ public class InfoTestIT {
 
   @BeforeClass
   public static void setUpClass() throws IOException {
-    IntegrationTestUtils.initDefaultApp();
-  }
-
-  @AfterClass
-  public static void tearDownClass() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    IntegrationTestUtils.ensureDefaultApp();
   }
 
   @Test

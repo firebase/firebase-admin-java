@@ -9,6 +9,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.core.CoreTestHelpers;
 import com.google.firebase.database.core.DatabaseConfig;
 import com.google.firebase.database.core.Path;
+import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.core.view.QuerySpec;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.database.snapshot.ChildKey;
@@ -45,6 +46,19 @@ public class TestHelpers {
     config.setLogLevel(Logger.Level.WARN);
     config.setFirebaseApp(app);
     return config;
+  }
+
+  public static void interruptConfig(final DatabaseConfig config) throws InterruptedException {
+    RepoManager.interrupt(config);
+    long now = System.currentTimeMillis();
+    synchronized (config) {
+      while (System.currentTimeMillis() - now < TestUtils.TEST_TIMEOUT_MILLIS) {
+        if (config.isStopped()) {
+          break;
+        }
+        config.wait(10);
+      }
+    }
   }
 
   public static DatabaseConfig getDatabaseConfig(FirebaseApp app) {
@@ -265,6 +279,10 @@ public class TestHelpers {
       context.setRunLoop(runLoop.wrapped);
       CoreTestHelpers.setEventTargetExceptionHandler(context, null);
     }
+  }
+
+  public static void assertTimeDelta(long timestamp) {
+    assertTrue(Math.abs(System.currentTimeMillis() - timestamp) < TestUtils.TEST_TIMEOUT_MILLIS);
   }
 
   private static class TestExceptionHandler implements UncaughtExceptionHandler {

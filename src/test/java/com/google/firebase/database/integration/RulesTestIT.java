@@ -48,8 +48,8 @@ import org.junit.Test;
 
 public class RulesTestIT {
 
-  private static final String DEFAULT_RULES_STRING = 
-      "{\n    \"rules\": {\n        \".read\": true,\n        \".write\": true\n    }\n}";
+  private static final Map<String, Object> DEFAULT_RULES_STRING =
+      MapBuilder.of("rules", MapBuilder.of(".read", "auth != null", ".write", "auth != null"));
 
   private static final Map<String, Object> testRules;
   
@@ -108,9 +108,8 @@ public class RulesTestIT {
 
   @AfterClass
   public static void tearDownClass() throws IOException {
-    uploadRules(DEFAULT_RULES_STRING);
+    uploadRules(JsonMapper.serializeJson(DEFAULT_RULES_STRING));
     TestHelpers.waitForRoundtrip(writer.getRoot());
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
   @Before

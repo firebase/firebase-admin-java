@@ -11,7 +11,6 @@ import static org.junit.Assert.fail;
 import com.cedarsoftware.util.DeepEquals;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -52,7 +51,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -64,12 +62,7 @@ public class DataTestIT {
 
   @BeforeClass
   public static void setUpClass() {
-    masterApp = IntegrationTestUtils.initDefaultApp();
-  }
-
-  @AfterClass
-  public static void tearDownClass() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    masterApp = IntegrationTestUtils.ensureDefaultApp();
   }
 
   @Before
@@ -2083,8 +2076,7 @@ public class DataTestIT {
     assertEquals(snap.getPriority().getClass(), Double.class);
     assertEquals(snap.getPriority(), snap.child("b").getPriority());
     assertEquals(snap.child("a").getValue(), snap.child("b").getValue());
-    assert (Math.abs(
-        System.currentTimeMillis() - Long.parseLong(snap.child("a").getValue().toString())) < 2000);
+    TestHelpers.assertTimeDelta(Long.parseLong(snap.child("a").getValue().toString()));
   }
 
   @Test
@@ -2145,8 +2137,7 @@ public class DataTestIT {
     TestHelpers.waitFor(opSemaphore);
 
     TestHelpers.waitFor(valSemaphore);
-
-    assert (Math.abs(System.currentTimeMillis() - priority.get()) < 2000);
+    TestHelpers.assertTimeDelta(priority.get());
   }
 
   @Test
@@ -2198,8 +2189,7 @@ public class DataTestIT {
     DataSnapshot snap = readerEventRecord.getSnapshot();
     assertEquals(snap.child("a/b/c").getValue().getClass(), Long.class);
     assertEquals(snap.child("a/b/d").getValue().getClass(), Long.class);
-    assert (Math.abs(System.currentTimeMillis()
-        - Long.parseLong(snap.child("a/b/c").getValue().toString())) < 2000);
+    TestHelpers.assertTimeDelta(Long.parseLong(snap.child("a/b/c").getValue().toString()));
   }
 
   @Test
@@ -2243,8 +2233,7 @@ public class DataTestIT {
     assertEquals(snap.getPriority().getClass(), Double.class);
     assertEquals(snap.getPriority(), snap.child("b").getPriority());
     assertEquals(snap.child("a").getValue(), snap.child("b").getValue());
-    assert (Math.abs(
-        System.currentTimeMillis() - Long.parseLong(snap.child("a").getValue().toString())) < 2000);
+    TestHelpers.assertTimeDelta(Long.parseLong(snap.child("a").getValue().toString()));
   }
 
   @Test
@@ -2303,8 +2292,7 @@ public class DataTestIT {
     TestHelpers.waitFor(opSemaphore);
 
     TestHelpers.waitFor(valSemaphore);
-
-    assert (Math.abs(System.currentTimeMillis() - priority.get()) < 2000);
+    TestHelpers.assertTimeDelta(priority.get());
   }
 
   @Test
@@ -2352,8 +2340,7 @@ public class DataTestIT {
     DataSnapshot snap = readerEventRecord.getSnapshot();
     assertEquals(snap.child("a/b/c").getValue().getClass(), Long.class);
     assertEquals(snap.child("a/b/d").getValue().getClass(), Long.class);
-    assert (Math.abs(System.currentTimeMillis()
-        - Long.parseLong(snap.child("a/b/c").getValue().toString())) < 2000);
+    TestHelpers.assertTimeDelta(Long.parseLong(snap.child("a/b/c").getValue().toString()));
   }
 
   @Test
@@ -2408,14 +2395,12 @@ public class DataTestIT {
     EventRecord writerEventRecord = writerFuture.timedGet().get(1);
     DataSnapshot snap1 = writerEventRecord.getSnapshot();
     assertEquals(snap1.getValue().getClass(), Long.class);
-    assert (Math
-        .abs(System.currentTimeMillis() - Long.parseLong(snap1.getValue().toString())) < 2000);
+    TestHelpers.assertTimeDelta(Long.parseLong(snap1.getValue().toString()));
 
     EventRecord readerEventRecord = readerFuture.timedGet().get(1);
     DataSnapshot snap2 = readerEventRecord.getSnapshot();
     assertEquals(snap2.getValue().getClass(), Long.class);
-    assert (Math
-        .abs(System.currentTimeMillis() - Long.parseLong(snap2.getValue().toString())) < 2000);
+    TestHelpers.assertTimeDelta(Long.parseLong(snap2.getValue().toString()));
   }
 
   @Test

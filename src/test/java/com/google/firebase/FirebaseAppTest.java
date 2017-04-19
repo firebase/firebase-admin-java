@@ -3,6 +3,8 @@ package com.google.firebase;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
@@ -92,18 +94,42 @@ public class FirebaseAppTest {
   }
 
   @Test
-  public void testDeleteCallback() {
-    String appName = "myApp";
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS, appName);
-    FirebaseAppLifecycleListener listener = mock(FirebaseAppLifecycleListener.class);
-    firebaseApp.addLifecycleEventListener(listener);
+  public void testDeleteDefaultApp() {
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS);
+    assertEquals(firebaseApp, FirebaseApp.getInstance());
+    firebaseApp.delete();
+    try {
+      FirebaseApp.getInstance();
+      fail();
+    } catch (IllegalStateException expected) {
+      // ignore
+    } finally {
+      TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    }
+  }
+
+  @Test
+  public void testDeleteApp() {
+    final String name = "myApp";
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS, name);
+    assertSame(firebaseApp, FirebaseApp.getInstance(name));
     firebaseApp.delete();
 
-    verify(listener).onDeleted(appName, OPTIONS);
-    // Any further calls to delete are no-ops.
-    reset(listener);
-    firebaseApp.delete();
-    verify(listener, never()).onDeleted(appName, OPTIONS);
+    try {
+      FirebaseApp.getInstance(name);
+      fail();
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+
+    try {
+      // Verify we can reuse the same app name.
+      FirebaseApp firebaseApp2 = FirebaseApp.initializeApp(OPTIONS, name);
+      assertSame(firebaseApp2, FirebaseApp.getInstance(name));
+      assertNotSame(firebaseApp, firebaseApp2);
+    } finally {
+      TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    }
   }
 
   @Test

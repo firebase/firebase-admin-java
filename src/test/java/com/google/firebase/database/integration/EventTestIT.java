@@ -43,12 +43,7 @@ public class EventTestIT {
 
   @BeforeClass
   public static void setUpClass() throws TestFailure, TimeoutException, InterruptedException {
-    masterApp = IntegrationTestUtils.initDefaultApp();
-  }
-
-  @AfterClass
-  public static void tearDownClass() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    masterApp = IntegrationTestUtils.ensureDefaultApp();
   }
 
   @Before

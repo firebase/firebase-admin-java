@@ -11,12 +11,12 @@ import com.google.firebase.FirebaseException;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
+import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.tasks.Continuation;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -31,11 +31,6 @@ public class FirebaseAuth {
 
   /** A global, thread-safe Json Factory built using Gson. */
   private static final JsonFactory jsonFactory = new GsonFactory();
-  /**
-   * A static map of FirebaseApp name to FirebaseAuth instance. To ensure thread- safety, it should
-   * only be accessed in getInstance(), which is a synchronized method.
-   */
-  private static Map<String, FirebaseAuth> authInstances = new HashMap<>();
 
   private final FirebaseApp firebaseApp;
   private final GooglePublicKeysManager googlePublicKeysManager;
@@ -73,11 +68,12 @@ public class FirebaseAuth {
    * @return A FirebaseAuth instance.
    */
   public static synchronized FirebaseAuth getInstance(FirebaseApp app) {
-    if (!authInstances.containsKey(app.getName())) {
-      authInstances.put(app.getName(), new FirebaseAuth(app));
+    FirebaseAuthService service = ImplFirebaseTrampolines.getService(app, SERVICE_ID,
+        FirebaseAuthService.class);
+    if (service == null) {
+      service = ImplFirebaseTrampolines.addService(app, new FirebaseAuthService(app));
     }
-
-    return authInstances.get(app.getName());
+    return service.getInstance();
   }
 
   /**
@@ -181,5 +177,21 @@ public class FirebaseAuth {
                 return firebaseToken;
               }
             });
+  }
+
+  private static final String SERVICE_ID = FirebaseAuth.class.getName();
+
+  private static class FirebaseAuthService extends FirebaseService<FirebaseAuth> {
+
+    FirebaseAuthService(FirebaseApp app) {
+      super(SERVICE_ID, new FirebaseAuth(app));
+    }
+
+    @Override
+    public void destroy() {
+      // NOTE: We don't explicitly tear down anything here, but public methods of FirebaseAuth
+      // will now fail because calls to getCredential() will hit FirebaseApp.getOptions() which
+      // will throw once the app is deleted.
+    }
   }
 }
