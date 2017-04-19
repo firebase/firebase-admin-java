@@ -10,8 +10,6 @@ import com.google.firebase.database.snapshot.Node;
 
 /**
  * Internal helpers in com.google.firebase.database package (for use by core, tests, etc.)
- *
- * @hide
  */
 public class InternalHelpers {
 

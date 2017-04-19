@@ -9,7 +9,6 @@ public class GetTokenResult {
 
   /**
    * @param token represents the {@link String} access token.
-   * @hide
    */
   public GetTokenResult(String token) {
     this.token = token;
