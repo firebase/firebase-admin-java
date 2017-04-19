@@ -14,7 +14,6 @@ import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.util.JsonMapper;
 import com.google.firebase.database.utilities.DefaultRunLoop;
-import com.google.firebase.database.utilities.DefaultRunLoopHelper;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
@@ -245,7 +244,8 @@ public class TestHelpers {
   public static void wrapForErrorHandling(@NonNull FirebaseApp app) {
     DatabaseConfig context = getDatabaseConfig(app);
     CoreTestHelpers.freezeContext(context);
-    DefaultRunLoopHelper.setRunLoopExceptionHandler(context, new TestExceptionHandler());
+    DefaultRunLoop runLoop = (DefaultRunLoop) context.getRunLoop();
+    runLoop.setExceptionHandler(new TestExceptionHandler());
     CoreTestHelpers.setEventTargetExceptionHandler(context, new TestExceptionHandler());
   }
 
@@ -260,9 +260,9 @@ public class TestHelpers {
    */
   public static void assertAndUnwrapErrorHandlers(FirebaseApp app) {
     DatabaseConfig context = getDatabaseConfig(app);
+    DefaultRunLoop runLoop = (DefaultRunLoop) context.getRunLoop();
     try {
-      TestExceptionHandler handler = (TestExceptionHandler) DefaultRunLoopHelper
-          .getRunLoopExceptionHandler(context);
+      TestExceptionHandler handler = (TestExceptionHandler) runLoop.getExceptionHandler();
       Throwable error = handler.throwable.get();
       if (error != null) {
         throw new RuntimeException(error);
@@ -275,7 +275,7 @@ public class TestHelpers {
       }
     } finally {
       CoreTestHelpers.setEventTargetExceptionHandler(context, null);
-      DefaultRunLoopHelper.setRunLoopExceptionHandler(context, null);
+      runLoop.setExceptionHandler(null);
     }
   }
 

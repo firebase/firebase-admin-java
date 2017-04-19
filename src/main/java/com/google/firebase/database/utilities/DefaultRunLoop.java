@@ -119,7 +119,11 @@ public abstract class DefaultRunLoop implements RunLoop {
     executor.setCorePoolSize(1);
   }
 
-  synchronized UncaughtExceptionHandler getExceptionHandler() {
+  /**
+   * Returns the exception handler currently set on this run loop. This is to be
+   * used during integration testing.
+   */
+  public synchronized UncaughtExceptionHandler getExceptionHandler() {
     return exceptionHandler;
   }
 
@@ -128,7 +132,7 @@ public abstract class DefaultRunLoop implements RunLoop {
    * used during integration testing for handling errors that may occur in the run loop's
    * worker thread.
    */
-  synchronized void setExceptionHandler(UncaughtExceptionHandler exceptionHandler) {
+  public synchronized void setExceptionHandler(UncaughtExceptionHandler exceptionHandler) {
     this.exceptionHandler = exceptionHandler;
   }
 }
