@@ -8,6 +8,7 @@ import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.core.RunLoop;
 import com.google.firebase.internal.RevivingScheduledExecutor;
 
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -18,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class DefaultRunLoop implements RunLoop {
 
   private ScheduledThreadPoolExecutor executor;
+  private UncaughtExceptionHandler exceptionHandler;
 
   /** Creates a DefaultRunLoop that does not periodically restart its threads. */
   public DefaultRunLoop() {
@@ -36,7 +38,7 @@ public abstract class DefaultRunLoop implements RunLoop {
         new RevivingScheduledExecutor(threadFactory, "FirebaseDatabaseWorker", periodicRestart) {
           @Override
           protected void handleException(Throwable throwable) {
-            DefaultRunLoop.this.handleException(throwable);
+            DefaultRunLoop.this.handleExceptionInternal(throwable);
           }
 
           @Override
@@ -78,6 +80,20 @@ public abstract class DefaultRunLoop implements RunLoop {
     }
   }
 
+  private void handleExceptionInternal(Throwable e) {
+    UncaughtExceptionHandler exceptionHandler;
+    synchronized (this) {
+      exceptionHandler = this.exceptionHandler;
+    }
+    try {
+      if (exceptionHandler != null) {
+        exceptionHandler.uncaughtException(Thread.currentThread(), e);
+      }
+    } finally {
+      handleException(e);
+    }
+  }
+
   public abstract void handleException(Throwable e);
 
   public ScheduledExecutorService getExecutorService() {
@@ -103,5 +119,13 @@ public abstract class DefaultRunLoop implements RunLoop {
   @Override
   public void restart() {
     executor.setCorePoolSize(1);
+  }
+
+  synchronized UncaughtExceptionHandler getExceptionHandler() {
+    return exceptionHandler;
+  }
+
+  synchronized void setExceptionHandler(UncaughtExceptionHandler exceptionHandler) {
+    this.exceptionHandler = exceptionHandler;
   }
 }

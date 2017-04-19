@@ -1,7 +1,6 @@
 package com.google.firebase.database;
 
 import static com.cedarsoftware.util.DeepEquals.deepEquals;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -15,6 +14,7 @@ import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.util.JsonMapper;
 import com.google.firebase.database.utilities.DefaultRunLoop;
+import com.google.firebase.database.utilities.DefaultRunLoopHelper;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
@@ -28,7 +28,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -246,8 +245,7 @@ public class TestHelpers {
   public static void wrapForErrorHandling(@NonNull FirebaseApp app) {
     DatabaseConfig context = getDatabaseConfig(app);
     CoreTestHelpers.freezeContext(context);
-    DefaultRunLoop runLoop = (DefaultRunLoop) context.getRunLoop();
-    context.setRunLoop(new ErrorHandlingRunLoop(runLoop));
+    DefaultRunLoopHelper.setRunLoopExceptionHandler(context, new TestExceptionHandler());
     CoreTestHelpers.setEventTargetExceptionHandler(context, new TestExceptionHandler());
   }
 
@@ -262,22 +260,22 @@ public class TestHelpers {
    */
   public static void assertAndUnwrapErrorHandlers(FirebaseApp app) {
     DatabaseConfig context = getDatabaseConfig(app);
-    ErrorHandlingRunLoop runLoop = (ErrorHandlingRunLoop) context.getRunLoop();
     try {
-      Throwable error = runLoop.throwable.get();
+      TestExceptionHandler handler = (TestExceptionHandler) DefaultRunLoopHelper
+          .getRunLoopExceptionHandler(context);
+      Throwable error = handler.throwable.get();
       if (error != null) {
         throw new RuntimeException(error);
       }
 
-      TestExceptionHandler handler = (TestExceptionHandler) CoreTestHelpers
-          .getEventTargetExceptionHandler(context);
+      handler = (TestExceptionHandler) CoreTestHelpers.getEventTargetExceptionHandler(context);
       error = handler.throwable.get();
       if (error != null) {
         throw new RuntimeException(error);
       }
     } finally {
-      context.setRunLoop(runLoop.wrapped);
       CoreTestHelpers.setEventTargetExceptionHandler(context, null);
+      DefaultRunLoopHelper.setRunLoopExceptionHandler(context, null);
     }
   }
 
@@ -292,55 +290,6 @@ public class TestHelpers {
     @Override
     public void uncaughtException(Thread t, Throwable e) {
       throwable.compareAndSet(null, e);
-    }
-  }
-
-  /**
-   * A RunLoop decorator that delegates all method invocations to another (concrete) RunLoop
-   * implementation. The error handling methods have some extra logic to keep track of
-   * the first exception encountered.
-   */
-  private static class ErrorHandlingRunLoop extends DefaultRunLoop {
-
-    private final DefaultRunLoop wrapped;
-    private final AtomicReference<Throwable> throwable = new AtomicReference<>();
-
-    ErrorHandlingRunLoop(DefaultRunLoop wrapped) {
-      this.wrapped = checkNotNull(wrapped);
-    }
-
-    @Override
-    public void handleException(Throwable e) {
-      try {
-        throwable.compareAndSet(null, e);
-      } finally {
-        wrapped.handleException(e);
-      }
-    }
-
-    @Override
-    public ScheduledExecutorService getExecutorService() {
-      return wrapped.getExecutorService();
-    }
-
-    @Override
-    public void scheduleNow(Runnable runnable) {
-      wrapped.scheduleNow(runnable);
-    }
-
-    @Override
-    public ScheduledFuture schedule(Runnable runnable, long milliseconds) {
-      return wrapped.schedule(runnable, milliseconds);
-    }
-
-    @Override
-    public void shutdown() {
-      wrapped.shutdown();
-    }
-
-    @Override
-    public void restart() {
-      super.restart();
     }
   }
 }
