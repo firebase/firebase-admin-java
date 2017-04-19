@@ -10,7 +10,6 @@ public class DatabaseException extends RuntimeException {
    * <strong>For internal use</strong>
    *
    * @param message A human readable description of the error
-   * @hide
    */
   public DatabaseException(String message) {
     super(message);
@@ -21,7 +20,6 @@ public class DatabaseException extends RuntimeException {
    *
    * @param message A human readable description of the error
    * @param cause The underlying cause for this error
-   * @hide
    */
   public DatabaseException(String message, Throwable cause) {
     super(message, cause);

@@ -18,8 +18,9 @@ public interface ValueEventListener {
   /**
    * This method will be triggered in the event that this listener either failed at the server, or
    * is removed as a result of the security and Firebase Database rules. For more information on
-   * securing your data, see: <a href="https://firebase.google
-   * .com/docs/database/security/quickstart" target="_blank"> Security Quickstart</a>
+   * securing your data, see:
+   * <a href="https://firebase.google.com/docs/database/security/quickstart" target="_blank">
+   * Security Quickstart</a>
    *
    * @param error A description of the error that occurred
    */

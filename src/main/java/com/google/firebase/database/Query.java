@@ -622,7 +622,6 @@ public class Query {
    * <strong>For internal use</strong>
    *
    * @return The path to this location
-   * @hide
    */
   public Path getPath() {
     return path;
@@ -632,7 +631,6 @@ public class Query {
    * <strong>For internal use</strong>
    *
    * @return The repo
-   * @hide
    */
   public Repo getRepo() {
     return repo;
@@ -642,7 +640,6 @@ public class Query {
    * <strong>For internal use</strong>
    *
    * @return The constraints
-   * @hide
    */
   public QuerySpec getSpec() {
     return new QuerySpec(path, params);

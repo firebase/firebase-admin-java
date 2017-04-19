@@ -146,8 +146,7 @@ public class SyncPoint {
    * @param query Query to remove the registration from.
    * @param eventRegistration If null, remove all callbacks.
    * @param cancelError If a cancelError is provided, appropriate cancel events will be returned.
-   * @return {{removed:!Array.<!fb.api.Query>, events:!Array.<!fb.core.view.Event>}} removed queries
-   *     and any cancel events
+   * @return a Pair of lists consisting of removed queries and any cancel events.
    */
   public Pair<List<QuerySpec>, List<Event>> removeEventRegistration(
       @NotNull QuerySpec query,
