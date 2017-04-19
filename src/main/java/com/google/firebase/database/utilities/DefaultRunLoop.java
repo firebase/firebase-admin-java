@@ -123,6 +123,11 @@ public abstract class DefaultRunLoop implements RunLoop {
     return exceptionHandler;
   }
 
+  /**
+   * Sets the specified exception handler for intercepting run loop errors. This is to be
+   * used during integration testing for handling errors that may occur in the run loop's
+   * worker thread.
+   */
   synchronized void setExceptionHandler(UncaughtExceptionHandler exceptionHandler) {
     this.exceptionHandler = exceptionHandler;
   }
