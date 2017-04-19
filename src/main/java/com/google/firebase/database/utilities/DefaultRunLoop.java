@@ -82,9 +82,7 @@ public abstract class DefaultRunLoop implements RunLoop {
 
   private void handleExceptionInternal(Throwable e) {
     UncaughtExceptionHandler exceptionHandler;
-    synchronized (this) {
-      exceptionHandler = this.exceptionHandler;
-    }
+    exceptionHandler = getExceptionHandler();
     try {
       if (exceptionHandler != null) {
         exceptionHandler.uncaughtException(Thread.currentThread(), e);
