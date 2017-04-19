@@ -280,7 +280,6 @@ public class Repo implements PersistentConnection.Delegate {
   }
 
   private void postEvents(final List<? extends Event> events) {
-    InternalHelpers.checkNotDestroyed(this);
     if (!events.isEmpty()) {
       this.eventRaiser.raiseEvents(events);
     }

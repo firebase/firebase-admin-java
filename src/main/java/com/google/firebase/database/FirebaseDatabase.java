@@ -40,6 +40,9 @@ public class FirebaseDatabase {
   private Repo repo; // Usage must be guarded by a call to ensureRepo().
 
   private final AtomicBoolean destroyed = new AtomicBoolean(false);
+
+  // Lock for synchronizing internal state changes. Protects accesses to repo and destroyed
+  // members.
   private final Object lock = new Object();
 
   private FirebaseDatabase(FirebaseApp app, RepoInfo repoInfo, DatabaseConfig config) {
@@ -164,10 +167,7 @@ public class FirebaseDatabase {
    * @return A DatabaseReference pointing to the root node.
    */
   public DatabaseReference getReference() {
-    synchronized (lock) {
-      ensureRepo();
-      return new DatabaseReference(repo, Path.getEmptyPath());
-    }
+    return new DatabaseReference(ensureRepo(), Path.getEmptyPath());
   }
 
   /**
@@ -181,10 +181,7 @@ public class FirebaseDatabase {
         "Can't pass null for argument 'pathString' in FirebaseDatabase.getReference()");
     Validation.validateRootPathString(path);
     Path childPath = new Path(path);
-    synchronized (lock) {
-      ensureRepo();
-      return new DatabaseReference(this.repo, childPath);
-    }
+    return new DatabaseReference(ensureRepo(), childPath);
   }
 
   /**
@@ -200,19 +197,16 @@ public class FirebaseDatabase {
     checkNotNull(url,
         "Can't pass null for argument 'url' in FirebaseDatabase.getReferenceFromUrl()");
     ParsedUrl parsedUrl = Utilities.parseUrl(url);
-
-    synchronized (lock) {
-      ensureRepo();
-      if (!parsedUrl.repoInfo.host.equals(repo.getRepoInfo().host)) {
-        throw new DatabaseException(
-            "Invalid URL ("
-                + url
-                + ") passed to getReference().  "
-                + "URL was expected to match configured Database URL: "
-                + getReference().toString());
-      }
-      return new DatabaseReference(repo, parsedUrl.path);
+    Repo repo = ensureRepo();
+    if (!parsedUrl.repoInfo.host.equals(repo.getRepoInfo().host)) {
+      throw new DatabaseException(
+          "Invalid URL ("
+              + url
+              + ") passed to getReference().  "
+              + "URL was expected to match configured Database URL: "
+              + getReference().toString());
     }
+    return new DatabaseReference(repo, parsedUrl.path);
   }
 
   /**
@@ -226,16 +220,14 @@ public class FirebaseDatabase {
    * listeners, and the client will not (re-)send them to the Firebase backend.
    */
   public void purgeOutstandingWrites() {
-    synchronized (lock) {
-      ensureRepo();
-      repo.scheduleNow(
-          new Runnable() {
-            @Override
-            public void run() {
-              repo.purgeOutstandingWrites();
-            }
-          });
-    }
+    final Repo repo = ensureRepo();
+    repo.scheduleNow(
+        new Runnable() {
+          @Override
+          public void run() {
+            repo.purgeOutstandingWrites();
+          }
+        });
   }
 
   /**
@@ -243,20 +235,14 @@ public class FirebaseDatabase {
    * call.
    */
   public void goOnline() {
-    synchronized (lock) {
-      ensureRepo();
-      RepoManager.resume(repo);
-    }
+    RepoManager.resume(ensureRepo());
   }
 
   /**
    * Shuts down our connection to the Firebase Database backend until {@link #goOnline()} is called.
    */
   public void goOffline() {
-    synchronized (lock) {
-      ensureRepo();
-      RepoManager.interrupt(repo);
-    }
+    RepoManager.interrupt(ensureRepo());
   }
 
   /**
@@ -315,31 +301,37 @@ public class FirebaseDatabase {
   }
 
   private void assertUnfrozen(String methodCalled) {
-    checkNotDestroyed();
-    if (this.repo != null) {
-      throw new DatabaseException(
-          "Calls to "
-              + methodCalled
-              + "() must be made before any "
-              + "other usage of FirebaseDatabase instance.");
+    synchronized (lock) {
+      checkNotDestroyed();
+      if (this.repo != null) {
+        throw new DatabaseException(
+            "Calls to "
+                + methodCalled
+                + "() must be made before any "
+                + "other usage of FirebaseDatabase instance.");
+      }
     }
   }
 
   /**
-   * Initializes the Repo if not already initialized. Not thread safe. Caller must ensure
-   * thread safety by synchronizing on 'lock'.
+   * Initializes the Repo if not already initialized.
    */
-  private void ensureRepo() {
-    checkNotDestroyed();
-    if (repo == null) {
-      repo = RepoManager.createRepo(this.config, this.repoInfo, this);
+  private Repo ensureRepo() {
+    synchronized (lock) {
+      checkNotDestroyed();
+      if (repo == null) {
+        repo = RepoManager.createRepo(this.config, this.repoInfo, this);
+      }
+      return repo;
     }
   }
 
   void checkNotDestroyed() {
-    checkState(!destroyed.get(),
-        "FirebaseDatabase instance is no longer alive. This happens when "
-            + "the parent FirebaseApp instance has been deleted.");
+    synchronized (lock) {
+      checkState(!destroyed.get(),
+          "FirebaseDatabase instance is no longer alive. This happens when "
+              + "the parent FirebaseApp instance has been deleted.");
+    }
   }
 
   // for testing
