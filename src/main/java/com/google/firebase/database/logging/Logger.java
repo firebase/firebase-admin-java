@@ -2,7 +2,7 @@ package com.google.firebase.database.logging;
 
 /**
  * Private (internal) logging interface used by Firebase Database. See {@link
- * com.google.firebase.database.Config Config} for more information.
+ * com.google.firebase.database.core.DatabaseConfig DatabaseConfig} for more information.
  */
 public interface Logger {
 

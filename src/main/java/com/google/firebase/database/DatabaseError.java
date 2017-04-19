@@ -114,7 +114,6 @@ public class DatabaseError {
    *
    * @param status The status string
    * @return An error corresponding the to the status
-   * @hide
    */
   public static DatabaseError fromStatus(String status) {
     return fromStatus(status, null);
@@ -126,7 +125,6 @@ public class DatabaseError {
    * @param status The status string
    * @param reason The reason for the error
    * @return An error corresponding the to the status
-   * @hide
    */
   public static DatabaseError fromStatus(String status, String reason) {
     return fromStatus(status, reason, null);
@@ -139,7 +137,6 @@ public class DatabaseError {
    * @param reason The reason for the error
    * @param details Additional details or null
    * @return An error corresponding the to the status
-   * @hide
    */
   public static DatabaseError fromStatus(String status, String reason, String details) {
     Integer code = errorCodes.get(status.toLowerCase());
@@ -156,7 +153,6 @@ public class DatabaseError {
    *
    * @param code The error code
    * @return An error corresponding the to the code
-   * @hide
    */
   public static DatabaseError fromCode(int code) {
     if (!errorReasons.containsKey(code)) {

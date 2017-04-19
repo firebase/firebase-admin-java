@@ -21,7 +21,6 @@ public class DatabaseConfig extends Context {
    * com.google.firebase.database.Logger Logger} interface.
    *
    * @param logger The custom logger that will be called with all log messages
-   * @hide
    */
   public synchronized void setLogger(com.google.firebase.database.logging.Logger logger) {
     assertUnfrozen();
