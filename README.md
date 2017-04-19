@@ -21,7 +21,7 @@ For more information, visit the
 ## Documentation
 
 * [Setup Guide](https://firebase.google.com/docs/admin/setup/)
-* [API Reference](https://firebase.google.com/docs/reference/admin/java/)
+* [API Reference](https://firebase.google.com/docs/reference/admin/java/reference/packages)
 
 ## License and Terms
 
