@@ -273,15 +273,15 @@ public class FirebaseApp {
       services.clear();
       authStateListeners.clear();
       tokenRefresher.cleanup();
+    }
 
-      synchronized (appsLock) {
-        instances.remove(this.name);
-      }
+    synchronized (appsLock) {
+      instances.remove(name);
+    }
 
-      FirebaseAppStore appStore = FirebaseAppStore.getInstance();
-      if (appStore != null) {
-        appStore.removeApp(name);
-      }
+    FirebaseAppStore appStore = FirebaseAppStore.getInstance();
+    if (appStore != null) {
+      appStore.removeApp(name);
     }
   }
 
