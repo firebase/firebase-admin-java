@@ -116,17 +116,31 @@
             <build>
                 <plugins>
                     <plugin>
+                        <!-- Generate API docs using Doclava for the developer site -->
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>2.2.1</version>
+                        <artifactId>maven-javadoc-plugin</artifactId>
                         <executions>
                             <execution>
-                                <id>attach-sources</id>
+                                <phase>package</phase>
                                 <goals>
-                                    <goal>jar-no-fork</goal>
+                                    <goal>jar</goal>
                                 </goals>
                             </execution>
                         </executions>
+                        <configuration>
+                            <docletArtifact>
+                                <groupId>com.google.doclava</groupId>
+                                <artifactId>doclava</artifactId>
+                                <version>1.0.6</version>
+                            </docletArtifact>
+                            <doclet>com.google.doclava.Doclava</doclet>
+                            <bootclasspath>${sun.boot.class.path}</bootclasspath>
+                            <additionalparam>
+                                -warning 101
+                            </additionalparam>
+                            <useStandardDocletOptions>false</useStandardDocletOptions>
+                            <additionalJOption>-J-Xmx1024m</additionalJOption>
+                        </configuration>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
