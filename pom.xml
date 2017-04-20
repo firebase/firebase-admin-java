@@ -18,7 +18,7 @@
 
     <scm>
         <connection>scm:git:https://github.com/firebase/firebase-admin-java.git</connection>
-        <developerConnection>scm:git:ssh//github.com/firebase/firebase-admin-java.git</developerConnection>
+        <developerConnection>scm:git:ssh://git@github.com:firebase/firebase-admin-java.git</developerConnection>
         <url>http://github.com/firebase/firebase-admin-java</url>
     </scm>
 
