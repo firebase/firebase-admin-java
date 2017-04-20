@@ -9,7 +9,37 @@
     <packaging>jar</packaging>
 
     <name>firebase-admin</name>
-    <url>http://maven.apache.org</url>
+    <url>https://firebase.google.com/</url>
+    <description>
+        This is the official Firebase Admin Java SDK. Build extraordinary native JVM apps in
+        minutes with Firebase. The Firebase platform can power your app’s backend, user
+        authentication, static hosting, and more.
+    </description>
+
+    <organization>
+        <name>Firebase</name>
+        <url>https://firebase.google.com/</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>Commercial</name>
+            <url>https://firebase.google.com/terms/</url>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>firebase</id>
+            <name>Firebase</name>
+            <url>https://firebase.google.com/</url>
+            <organization>Firebase</organization>
+            <organizationUrl>https://firebase.google.com/</organizationUrl>
+            <roles>
+                <role>architect</role>
+                <role>developer</role>
+            </roles>
+            <timezone>-8</timezone>
+        </developer>
+    </developers>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -141,6 +171,24 @@
                             <useStandardDocletOptions>false</useStandardDocletOptions>
                             <additionalJOption>-J-Xmx1024m</additionalJOption>
                         </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.2.1</version>
+                        <configuration>
+                            <excludes>
+                                <exclude>com/**</exclude>
+                            </excludes>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
