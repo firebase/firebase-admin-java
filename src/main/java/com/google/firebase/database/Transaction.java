@@ -97,6 +97,7 @@ public class Transaction {
     /**
      * <strong>For internal use</strong>
      *
+     * @hide
      * @return The data
      */
     public Node getNode() {

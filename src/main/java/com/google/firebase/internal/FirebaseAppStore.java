@@ -26,6 +26,9 @@ public class FirebaseAppStore {
     return sInstance.get();
   }
 
+  /**
+   * @hide
+   */
   public static void setInstanceForTest(FirebaseAppStore firebaseAppStore) {
     sInstance.set(firebaseAppStore);
   }

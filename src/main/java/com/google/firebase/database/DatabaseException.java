@@ -9,6 +9,7 @@ public class DatabaseException extends RuntimeException {
   /**
    * <strong>For internal use</strong>
    *
+   * @hide
    * @param message A human readable description of the error
    */
   public DatabaseException(String message) {
@@ -18,6 +19,7 @@ public class DatabaseException extends RuntimeException {
   /**
    * <strong>For internal use</strong>
    *
+   * @hide
    * @param message A human readable description of the error
    * @param cause The underlying cause for this error
    */

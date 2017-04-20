@@ -112,6 +112,7 @@ public class DatabaseError {
   /**
    * <strong>For internal use.</strong>
    *
+   * @hide
    * @param status The status string
    * @return An error corresponding the to the status
    */
@@ -122,6 +123,7 @@ public class DatabaseError {
   /**
    * <strong>For internal use.</strong>
    *
+   * @hide
    * @param status The status string
    * @param reason The reason for the error
    * @return An error corresponding the to the status
@@ -133,6 +135,7 @@ public class DatabaseError {
   /**
    * <strong>For internal use</strong>
    *
+   * @hide
    * @param status The status string
    * @param reason The reason for the error
    * @param details Additional details or null
@@ -151,6 +154,7 @@ public class DatabaseError {
   /**
    * <strong>For internal use.</strong>
    *
+   * @hide
    * @param code The error code
    * @return An error corresponding the to the code
    */
