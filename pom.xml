@@ -116,6 +116,33 @@
             <build>
                 <plugins>
                     <plugin>
+                        <!-- Generate API docs using Doclava for the developer site -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <docletArtifact>
+                                <groupId>com.google.doclava</groupId>
+                                <artifactId>doclava</artifactId>
+                                <version>1.0.6</version>
+                            </docletArtifact>
+                            <doclet>com.google.doclava.Doclava</doclet>
+                            <bootclasspath>${sun.boot.class.path}</bootclasspath>
+                            <additionalparam>
+                                -warning 101
+                            </additionalparam>
+                            <useStandardDocletOptions>false</useStandardDocletOptions>
+                            <additionalJOption>-J-Xmx1024m</additionalJOption>
+                        </configuration>
+                    </plugin>
+                    <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
                         <version>1.5</version>
