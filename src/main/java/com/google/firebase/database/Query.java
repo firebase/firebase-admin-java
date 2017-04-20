@@ -640,6 +640,7 @@ public class Query {
   /**
    * <strong>For internal use</strong>
    *
+   * @hide
    * @return The repo
    */
   public Repo getRepo() {
@@ -649,6 +650,7 @@ public class Query {
   /**
    * <strong>For internal use</strong>
    *
+   * @hide
    * @return The constraints
    */
   public QuerySpec getSpec() {
