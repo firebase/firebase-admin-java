@@ -1,4 +1,4 @@
 /**
  * @hide
  */
-package com.google.firebase.internal;
+package com.google.firebase.database.utilities.tuple;
