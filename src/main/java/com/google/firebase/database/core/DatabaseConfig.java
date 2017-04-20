@@ -20,6 +20,7 @@ public class DatabaseConfig extends Context {
    * If you would like to provide a custom log target, pass an object that implements the {@link
    * com.google.firebase.database.Logger Logger} interface.
    *
+   * @hide
    * @param logger The custom logger that will be called with all log messages
    */
   public synchronized void setLogger(com.google.firebase.database.logging.Logger logger) {

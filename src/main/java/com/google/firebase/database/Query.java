@@ -32,8 +32,17 @@ import com.google.firebase.database.utilities.Validation;
  */
 public class Query {
 
+  /**
+   * @hide
+   */
   protected final Repo repo;
+  /**
+   * @hide
+   */
   protected final Path path;
+  /**
+   * @hide
+   */
   protected final QueryParams params;
   // we can't use params index, because the default query params have priority index set as
   // default,
@@ -621,6 +630,7 @@ public class Query {
   /**
    * <strong>For internal use</strong>
    *
+   * @hide
    * @return The path to this location
    */
   public Path getPath() {
