@@ -47,13 +47,12 @@
                     <name>devsite.template</name>
                 </property>
             </activation>
-            <reporting>
+            <build>
                 <plugins>
-                    <!-- Generate API docs using Doclava for the developer site -->
                     <plugin>
+                        <!-- Generate API docs using Doclava for the developer site -->
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.10.4</version>
                         <configuration>
                             <docletArtifact>
                                 <groupId>com.google.doclava</groupId>
@@ -76,12 +75,8 @@
                             <additionalJOption>-J-Xmx1024m</additionalJOption>
                         </configuration>
                     </plugin>
-                </plugins>
-            </reporting>
-            <build>
-                <plugins>
-                    <!-- Update relative paths in generated API docs -->
                     <plugin>
+                        <!-- Update relative paths in generated API docs -->
                         <artifactId>maven-antrun-plugin</artifactId>
                         <version>1.7</version>
                         <executions>
@@ -208,6 +203,11 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.4</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
                 <version>2.5.3</version>
                 <configuration>
@@ -230,24 +230,6 @@
             </plugin>
         </plugins>
     </build>
-
-    <reporting>
-        <plugins>
-            <!-- Default javadoc plugin for generating offline API docs -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.4</version>
-                <reportSets>
-                    <reportSet>
-                        <reports>
-                            <report>javadoc</report>
-                        </reports>
-                    </reportSet>
-                </reportSets>
-            </plugin>
-        </plugins>
-    </reporting>
 
     <dependencies>
         <dependency>
