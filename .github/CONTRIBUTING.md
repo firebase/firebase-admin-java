@@ -152,7 +152,5 @@ a parameter. You can trigger this Maven profile by running the following command
 mvn site -Ddevsite.template=path/to/templates/directory/
 ```
 
-The `devsite.template` property should point to a directory consisting of Clearsilver templates
-for formatting the API docs. This command will place the generated API docs in the `target/apidocs` 
-directory.
+This command will place the generated API docs in the `target/apidocs` directory.
 
