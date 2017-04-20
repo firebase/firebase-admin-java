@@ -131,5 +131,26 @@ tests, run the command as follows:
 mvn verify -Dfirebase.it.certificate=path/to/your/serviceAccount.json -Dskip.surefire.tests=true
 ```
 
+### Generating API Docs
 
+Invoke the [Maven Javadoc plugin](https://maven.apache.org/plugins/maven-javadoc-plugin/) as 
+follows to generate API docs for all packages in the codebase:
+
+```
+mvn javadoc:javadoc
+```
+
+This will generate the API docs, and place them in the `target/site/apidocs` directory. 
+
+To generate API docs for only the public APIs (i.e. ones that are not marked with `@hide` tags),
+you need to trigger the `devsite-apidocs` Maven profile. This profile uses Maven Javadoc plugin
+with [Doclava](https://code.google.com/archive/p/doclava/), which honors the `@hide` tags in
+source code. Dovlava also accepts a set of [Clearsilver](http://www.clearsilver.net/) templates as
+a parameter. You can trigger this Maven profile by running the following command:
+
+```
+mvn site -Ddevsite.template=path/to/templates/directory/
+```
+
+This command will place the generated API docs in the `target/apidocs` directory.
 

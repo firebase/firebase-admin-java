@@ -31,6 +31,87 @@
 
     <profiles>
         <profile>
+            <!-- Disable Doclint on Java 8 and higher -->
+            <id>disable-java8-doclint</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+            <properties>
+                <additionalparam>-Xdoclint:none</additionalparam>
+            </properties>
+        </profile>
+        <profile>
+            <id>devsite-apidocs</id>
+            <activation>
+                <property>
+                    <name>devsite.template</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <!-- Generate API docs using Doclava for the developer site -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>site</phase>
+                                <goals>
+                                    <goal>aggregate</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <docletArtifact>
+                                <groupId>com.google.doclava</groupId>
+                                <artifactId>doclava</artifactId>
+                                <version>1.0.6</version>
+                            </docletArtifact>
+                            <doclet>com.google.doclava.Doclava</doclet>
+                            <bootclasspath>${sun.boot.class.path}</bootclasspath>
+                            <additionalparam>
+                                -hdf book.path /_book.yaml
+                                -hdf project.path /_project.yaml
+                                -hdf devsite.path /docs/reference/admin/java/reference/
+                                -d ${project.build.directory}/apidocs
+                                -templatedir ${devsite.template}
+                                -toroot /docs/reference/admin/java/reference/
+                                -yaml _toc.yaml
+                                -warning 101
+                            </additionalparam>
+                            <useStandardDocletOptions>false</useStandardDocletOptions>
+                            <additionalJOption>-J-Xmx1024m</additionalJOption>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <!-- Update relative paths in generated API docs -->
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.7</version>
+                        <executions>
+                            <execution>
+                                <phase>site</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <echo message="Updating relative links in API docs"/>
+                                        <replace
+                                            dir="${project.build.directory}/apidocs"
+                                            token="href=&quot;com"
+                                            value="href=&quot;/docs/reference/admin/java/reference/com"/>
+                                        <copy
+                                            file="${project.build.directory}/apidocs/assets/_toc.yaml"
+                                            todir="${project.build.directory}/apidocs/reference"/>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
             <id>release</id>
             <build>
                 <plugins>
@@ -43,19 +124,6 @@
                                 <id>attach-sources</id>
                                 <goals>
                                     <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.9.1</version>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
                                 </goals>
                             </execution>
                         </executions>
@@ -132,14 +200,17 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>integration-test</id>
-                        <phase>integration-test</phase>
                         <goals>
                             <goal>integration-test</goal>
                             <goal>verify</goal>
                         </goals>
                     </execution>                    
                 </executions>                
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.10.4</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
