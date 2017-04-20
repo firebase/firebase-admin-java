@@ -42,14 +42,15 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <skipUTs>${skipTests}</skipUTs>
     </properties>
 
     <scm>
         <connection>scm:git:https://github.com/firebase/firebase-admin-java.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/firebase/firebase-admin-java.git</developerConnection>
         <url>http://github.com/firebase/firebase-admin-java</url>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <distributionManagement>
         <snapshotRepository>
@@ -80,7 +81,6 @@
                 <plugins>
                     <plugin>
                         <!-- Generate API docs using Doclava for the developer site -->
-                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <executions>
                             <execution>
@@ -137,11 +137,13 @@
         </profile>
         <profile>
             <id>release</id>
+            <properties>
+                <!-- Prevent executing integration tests twice during a release -->
+                <skipITs>true</skipITs>
+            </properties>
             <build>
                 <plugins>
                     <plugin>
-                        <!-- Generate API docs using Doclava for the developer site -->
-                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <executions>
                             <execution>
@@ -167,11 +169,11 @@
                         </configuration>
                     </plugin>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
                         <version>2.2.1</version>
                         <configuration>
                             <excludes>
+                                <!-- Exclude all files until we go open source -->
                                 <exclude>com/**</exclude>
                             </excludes>
                         </configuration>
@@ -185,7 +187,6 @@
                         </executions>
                     </plugin>
                     <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
                         <version>1.5</version>
                         <executions>
@@ -243,17 +244,12 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19.1</version>
                 <configuration>
-                  <skipTests>${skip.surefire.tests}</skipTests>
+                    <skipTests>${skipUTs}</skipTests>
                 </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>2.19.1</version>
-                <configuration>
-                    <includes>
-                        <include>**/*IT.java</include>
-                    </includes>
-                </configuration>
                 <executions>
                     <execution>
                         <goals>
@@ -264,12 +260,10 @@
                 </executions>                
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>2.10.4</version>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
                 <version>2.5.3</version>
                 <configuration>

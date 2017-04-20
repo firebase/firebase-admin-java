@@ -128,7 +128,7 @@ The above command invokes both unit and integration test suites. To execute only
 tests, run the command as follows:
 
 ```
-mvn verify -Dfirebase.it.certificate=path/to/your/serviceAccount.json -Dskip.surefire.tests=true
+mvn verify -Dfirebase.it.certificate=path/to/your/serviceAccount.json -DskipUTs
 ```
 
 ### Generating API Docs
