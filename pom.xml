@@ -1,9 +1,11 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.google.firebase</groupId>
     <artifactId>firebase-admin</artifactId>
-    <version>4.1.8-SNAPSHOT</version>
+    <version>4.1.7-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>firebase-admin</name>
@@ -18,8 +20,7 @@
         <connection>scm:git:https://github.com/firebase/firebase-admin-java.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/firebase/firebase-admin-java.git</developerConnection>
         <url>http://github.com/firebase/firebase-admin-java</url>
-      <tag>HEAD</tag>
-  </scm>
+    </scm>
 
     <distributionManagement>
         <snapshotRepository>
@@ -94,9 +95,14 @@
                                 </goals>
                                 <configuration>
                                     <target>
-                                        <echo message="Updating relative links in API docs" />
-                                        <replace dir="${project.build.directory}/apidocs" token="href=&quot;com" value="href=&quot;/docs/reference/admin/java/reference/com" />
-                                        <copy file="${project.build.directory}/apidocs/assets/_toc.yaml" todir="${project.build.directory}/apidocs/reference" />
+                                        <echo message="Updating relative links in API docs"/>
+                                        <replace
+                                            dir="${project.build.directory}/apidocs"
+                                            token="href=&quot;com"
+                                            value="href=&quot;/docs/reference/admin/java/reference/com"/>
+                                        <copy
+                                            file="${project.build.directory}/apidocs/assets/_toc.yaml"
+                                            todir="${project.build.directory}/apidocs/reference"/>
                                     </target>
                                 </configuration>
                             </execution>
