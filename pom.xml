@@ -53,6 +53,14 @@
                         <!-- Generate API docs using Doclava for the developer site -->
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>site</phase>
+                                <goals>
+                                    <goal>aggregate</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                         <configuration>
                             <docletArtifact>
                                 <groupId>com.google.doclava</groupId>
@@ -192,8 +200,6 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>integration-test</id>
-                        <phase>integration-test</phase>
                         <goals>
                             <goal>integration-test</goal>
                             <goal>verify</goal>
