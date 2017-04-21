@@ -6,6 +6,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -15,7 +16,6 @@ import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseExecutors;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.GetTokenResult;
-import com.google.firebase.internal.Joiner;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.tasks.Continuation;
