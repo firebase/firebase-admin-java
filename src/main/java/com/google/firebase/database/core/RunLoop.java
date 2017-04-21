@@ -5,7 +5,7 @@ import java.util.concurrent.ScheduledFuture;
 /**
  * This interface defines the required functionality for the Firebase Database library's run loop.
  * Most users will not need this interface. However, if you are customizing how the Firebase
- * Database
+ * Database schedules its internal operations this is the interface that should be implemented.
  */
 @SuppressWarnings("rawtypes")
 public interface RunLoop {
