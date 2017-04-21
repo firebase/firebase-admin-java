@@ -7,6 +7,8 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.CharStreams;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.tasks.Continuation;
 import com.google.firebase.tasks.Task;
@@ -16,9 +18,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -32,21 +32,16 @@ import org.json.JSONObject;
 public class FirebaseCredentials {
 
   private static final List<String> FIREBASE_SCOPES =
-      Arrays.asList(
+      ImmutableList.of(
           "https://www.googleapis.com/auth/firebase.database",
           "https://www.googleapis.com/auth/userinfo.email");
 
-  private static String streamToString(InputStream inputStream) throws IOException {
-    StringBuilder stringBuilder = new StringBuilder();
-    Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-    char[] buffer = new char[256];
-    int length;
+  private FirebaseCredentials() {
+  }
 
-    while ((length = reader.read(buffer)) != -1) {
-      stringBuilder.append(buffer, 0, length);
-    }
-    inputStream.close();
-    return stringBuilder.toString();
+  private static String streamToString(InputStream inputStream) throws IOException {
+    InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+    return CharStreams.toString(reader);
   }
 
   /**
@@ -84,16 +79,17 @@ public class FirebaseCredentials {
    *     service account certificate.
    * @return A {@link FirebaseCredential} generated from the provided service account certificate
    *     which can be used to authenticate the SDK.
+   * @throws IOException If an error occurs while parsing the service account certificate.
    */
   @NonNull
-  public static FirebaseCredential fromCertificate(InputStream serviceAccount) {
-    return fromCertificate(serviceAccount,
-        Utils.getDefaultTransport(), Utils.getDefaultJsonFactory());
+  public static FirebaseCredential fromCertificate(InputStream serviceAccount) throws IOException {
+    return fromCertificate(serviceAccount, Utils.getDefaultTransport(),
+        Utils.getDefaultJsonFactory());
   }
 
   @VisibleForTesting
-  static FirebaseCredential fromCertificate(
-      InputStream serviceAccount, HttpTransport transport, JsonFactory jsonFactory) {
+  static FirebaseCredential fromCertificate(InputStream serviceAccount, HttpTransport transport,
+      JsonFactory jsonFactory) throws IOException {
     return new CertCredential(serviceAccount, transport, jsonFactory);
   }
 
@@ -108,16 +104,17 @@ public class FirebaseCredentials {
    *     token.
    * @return A {@link FirebaseCredential} generated from the provided service account credential
    *     which can be used to authenticate the SDK.
+   * @throws IOException If an error occurs while parsing the refresh token.
    */
   @NonNull
-  public static FirebaseCredential fromRefreshToken(InputStream refreshToken) {
+  public static FirebaseCredential fromRefreshToken(InputStream refreshToken) throws IOException {
     return fromRefreshToken(
         refreshToken, Utils.getDefaultTransport(), Utils.getDefaultJsonFactory());
   }
 
   @VisibleForTesting
-  static FirebaseCredential fromRefreshToken(
-      final InputStream refreshToken, HttpTransport transport, JsonFactory jsonFactory) {
+  static FirebaseCredential fromRefreshToken(final InputStream refreshToken,
+      HttpTransport transport, JsonFactory jsonFactory) throws IOException {
     return new RefreshTokenCredential(refreshToken, transport, jsonFactory);
   }
 
@@ -145,10 +142,10 @@ public class FirebaseCredentials {
     }
 
     /** Retrieves a GoogleCredential. Should not use caching. */
-    abstract GoogleCredential fetchCredential() throws Exception;
+    abstract GoogleCredential fetchCredential() throws IOException;
 
     /** Retrieves an access token from a GoogleCredential. Should not use caching. */
-    abstract FirebaseAccessToken fetchToken(GoogleCredential credential) throws Exception;
+    abstract FirebaseAccessToken fetchToken(GoogleCredential credential) throws IOException;
 
     /**
      * Returns the associated GoogleCredential for this class. This implementation is cached by
@@ -223,30 +220,23 @@ public class FirebaseCredentials {
 
   static class CertCredential extends BaseCredential {
 
-    private String jsonData;
-    private String projectId;
-    private Exception streamException;
+    private final String jsonData;
+    private final String projectId;
 
-    CertCredential(InputStream inputStream, HttpTransport transport, JsonFactory jsonFactory) {
+    CertCredential(InputStream inputStream, HttpTransport transport,
+        JsonFactory jsonFactory) throws IOException {
       super(transport, jsonFactory);
+      jsonData = streamToString(checkNotNull(inputStream));
+      JSONObject jsonObject = new JSONObject(jsonData);
       try {
-        jsonData = streamToString(checkNotNull(inputStream));
-        JSONObject jsonObject = new JSONObject(jsonData);
         projectId = jsonObject.getString("project_id");
-      } catch (IOException e) {
-        streamException = new IOException("Failed to read service account", e);
       } catch (JSONException e) {
-        streamException =
-            new JSONException("Failed to parse service account: 'project_id' must be set");
+        throw new IOException("Failed to parse service account: 'project_id' must be set", e);
       }
     }
 
     @Override
-    GoogleCredential fetchCredential() throws Exception {
-      if (streamException != null) {
-        throw streamException;
-      }
-
+    GoogleCredential fetchCredential() throws IOException {
       GoogleCredential firebaseCredential =
           GoogleCredential.fromStream(
               new ByteArrayInputStream(jsonData.getBytes("UTF-8")), transport, jsonFactory);
@@ -261,20 +251,12 @@ public class FirebaseCredentials {
     }
 
     @Override
-    FirebaseAccessToken fetchToken(GoogleCredential credential) throws Exception {
-      if (streamException != null) {
-        throw streamException;
-      }
-
+    FirebaseAccessToken fetchToken(GoogleCredential credential) throws IOException {
       credential.refreshToken();
       return new FirebaseAccessToken(credential, clock);
     }
 
-    Task<String> getProjectId(boolean forceRefresh) {
-      if (streamException != null) {
-        return Tasks.forException(streamException);
-      }
-
+    Task<String> getProjectId() {
       return Tasks.forResult(projectId);
     }
   }
@@ -286,13 +268,13 @@ public class FirebaseCredentials {
     }
 
     @Override
-    GoogleCredential fetchCredential() throws Exception {
+    GoogleCredential fetchCredential() throws IOException {
       return GoogleCredential.getApplicationDefault(transport, jsonFactory)
           .createScoped(FIREBASE_SCOPES);
     }
 
     @Override
-    FirebaseAccessToken fetchToken(GoogleCredential credential) throws Exception {
+    FirebaseAccessToken fetchToken(GoogleCredential credential) throws IOException {
       credential.refreshToken();
       return new FirebaseAccessToken(credential, clock);
     }
@@ -300,25 +282,16 @@ public class FirebaseCredentials {
 
   static class RefreshTokenCredential extends BaseCredential {
 
-    private String jsonData;
-    private Exception streamException;
+    private final String jsonData;
 
-    RefreshTokenCredential(
-        InputStream inputStream, HttpTransport transport, JsonFactory jsonFactory) {
+    RefreshTokenCredential(InputStream inputStream, HttpTransport transport,
+        JsonFactory jsonFactory) throws IOException {
       super(transport, jsonFactory);
-      try {
-        jsonData = streamToString(checkNotNull(inputStream));
-      } catch (IOException e) {
-        streamException = new IOException("Failed to read refresh token", e);
-      }
+      jsonData = streamToString(checkNotNull(inputStream));
     }
 
     @Override
-    GoogleCredential fetchCredential() throws Exception {
-      if (streamException != null) {
-        throw streamException;
-      }
-
+    GoogleCredential fetchCredential() throws IOException {
       GoogleCredential credential =
           GoogleCredential.fromStream(
               new ByteArrayInputStream(jsonData.getBytes("UTF-8")), transport, jsonFactory);
@@ -333,11 +306,7 @@ public class FirebaseCredentials {
     }
 
     @Override
-    FirebaseAccessToken fetchToken(GoogleCredential credential) throws Exception {
-      if (streamException != null) {
-        throw streamException;
-      }
-
+    FirebaseAccessToken fetchToken(GoogleCredential credential) throws IOException {
       credential.refreshToken();
       return new FirebaseAccessToken(credential, clock);
     }

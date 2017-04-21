@@ -27,6 +27,8 @@ import com.google.firebase.tasks.TaskCompletionSource;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.FirebaseAppRule;
 import com.google.firebase.testing.ServiceAccount;
+import com.google.firebase.testing.TestUtils;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -50,7 +52,7 @@ public class FirebaseAppTest {
 
   private static final FirebaseOptions OPTIONS =
       new FirebaseOptions.Builder()
-          .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+          .setCredential(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .build();
   private static final FirebaseOptions MOCK_CREDENTIAL_OPTIONS =
       new Builder().setCredential(new MockFirebaseCredential()).build();
@@ -154,7 +156,7 @@ public class FirebaseAppTest {
   }
 
   @Test
-  public void testToString() {
+  public void testToString() throws IOException {
     FirebaseOptions options =
         new FirebaseOptions.Builder()
             .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))

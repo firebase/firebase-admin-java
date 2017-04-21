@@ -9,7 +9,6 @@ import com.google.common.io.CharStreams;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
-import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.internal.GetTokenResult;
@@ -76,7 +75,7 @@ public class IntegrationTestUtils {
       FirebaseOptions options =
           new FirebaseOptions.Builder()
               .setDatabaseUrl(getDatabaseUrl())
-              .setCredential(FirebaseCredentials.fromCertificate(getServiceAccountCertificate()))
+              .setCredential(TestUtils.getCertCredential(getServiceAccountCertificate()))
               .build();
       masterApp = FirebaseApp.initializeApp(options);
     }
@@ -87,7 +86,7 @@ public class IntegrationTestUtils {
     FirebaseOptions options =
         new FirebaseOptions.Builder()
             .setDatabaseUrl(getDatabaseUrl())
-            .setCredential(FirebaseCredentials.fromCertificate(getServiceAccountCertificate()))
+            .setCredential(TestUtils.getCertCredential(getServiceAccountCertificate()))
             .build();
     return FirebaseApp.initializeApp(options, name);
   }

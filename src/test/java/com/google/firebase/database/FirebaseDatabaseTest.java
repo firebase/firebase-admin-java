@@ -12,6 +12,7 @@ import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.testing.ServiceAccount;
 
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -32,7 +33,11 @@ public class FirebaseDatabaseTest {
   }
 
   private static FirebaseCredential createCertificateCredential() {
-    return FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream());
+    try {
+      return FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Test

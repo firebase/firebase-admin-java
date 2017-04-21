@@ -21,6 +21,7 @@ import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.IntegrationTestUtils;
 import com.google.firebase.testing.TestUtils;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -239,19 +240,27 @@ public class FirebaseDatabaseTestIT {
   }
   
   private static FirebaseApp appWithDbUrl(String dbUrl, String name) {
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setDatabaseUrl(dbUrl)
-        .setCredential(FirebaseCredentials.fromCertificate(
-            IntegrationTestUtils.getServiceAccountCertificate()))
-        .build();
-    return FirebaseApp.initializeApp(options, name);
+    try {
+      FirebaseOptions options = new FirebaseOptions.Builder()
+          .setDatabaseUrl(dbUrl)
+          .setCredential(FirebaseCredentials.fromCertificate(
+              IntegrationTestUtils.getServiceAccountCertificate()))
+          .build();
+      return FirebaseApp.initializeApp(options, name);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
   
   private static FirebaseApp appWithoutDbUrl(String name) {
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredential(FirebaseCredentials.fromCertificate(
-            IntegrationTestUtils.getServiceAccountCertificate()))
-        .build();
-    return FirebaseApp.initializeApp(options, name);
+    try {
+      FirebaseOptions options = new FirebaseOptions.Builder()
+          .setCredential(FirebaseCredentials.fromCertificate(
+              IntegrationTestUtils.getServiceAccountCertificate()))
+          .build();
+      return FirebaseApp.initializeApp(options, name);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

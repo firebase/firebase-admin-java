@@ -158,7 +158,7 @@ public class FirebaseAuth {
                   + "verifyIdToken()"));
     }
     return ((FirebaseCredentials.CertCredential) credential)
-        .getProjectId(false)
+        .getProjectId()
         .continueWith(
             new Continuation<String, FirebaseToken>() {
               @Override

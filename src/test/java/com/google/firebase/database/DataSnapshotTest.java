@@ -13,6 +13,7 @@ import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
 import com.google.firebase.testing.ServiceAccount;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import org.junit.AfterClass;
@@ -25,7 +26,7 @@ public class DataSnapshotTest {
   private static DatabaseConfig config;
 
   @BeforeClass
-  public static void setUpClass() {
+  public static void setUpClass() throws IOException {
     testApp = FirebaseApp.initializeApp(
         new FirebaseOptions.Builder()
             .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))

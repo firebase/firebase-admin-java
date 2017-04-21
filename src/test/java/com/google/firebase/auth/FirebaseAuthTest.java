@@ -108,7 +108,7 @@ public class FirebaseAuthTest {
   }
 
   private static FirebaseCredential createRefreshTokenCredential()
-      throws JSONException, UnsupportedEncodingException {
+      throws JSONException, IOException {
 
     MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addClient(CLIENT_ID, CLIENT_SECRET);
@@ -126,7 +126,7 @@ public class FirebaseAuthTest {
         refreshTokenStream, transport, Utils.getDefaultJsonFactory());
   }
 
-  private static FirebaseCredential createCertificateCredential() {
+  private static FirebaseCredential createCertificateCredential() throws IOException {
     MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
 

@@ -16,6 +16,7 @@ import com.google.firebase.tasks.OnSuccessListener;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.ServiceAccount;
+import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
 import org.junit.Test;
@@ -25,12 +26,12 @@ import org.junit.Test;
  */
 public class FirebaseOptionsTest {
 
-  private static final String FIREBASE_DB_URL = "https://ghconfigtest-644f2.firebaseio.com";
+  private static final String FIREBASE_DB_URL = "https://mock-project.firebaseio.com";
 
   private static final FirebaseOptions ALL_VALUES_OPTIONS =
       new FirebaseOptions.Builder()
           .setDatabaseUrl(FIREBASE_DB_URL)
-          .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+          .setCredential(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .build();
 
   @Test
@@ -42,28 +43,6 @@ public class FirebaseOptionsTest {
             .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
             .build();
     assertEquals(FIREBASE_DB_URL, firebaseOptions.getDatabaseUrl());
-    TestOnlyImplFirebaseAuthTrampolines.getCertificate(firebaseOptions.getCredential())
-        .addOnSuccessListener(
-            new OnSuccessListener<GoogleCredential>() {
-              @Override
-              public void onSuccess(GoogleCredential googleCredential) {
-                assertEquals(
-                    ServiceAccount.EDITOR.getEmail(), googleCredential.getServiceAccountId());
-                semaphore.release();
-              }
-            });
-    TestHelpers.waitFor(semaphore);
-  }
-
-  @Test
-  @SuppressWarnings("deprecation")
-  public void createOptionsWithServiceAccountSet() throws IOException, InterruptedException {
-    final Semaphore semaphore = new Semaphore(0);
-    FirebaseOptions firebaseOptions =
-        new FirebaseOptions.Builder()
-            .setDatabaseUrl(FIREBASE_DB_URL)
-            .setServiceAccount(ServiceAccount.EDITOR.asStream())
-            .build();
     TestOnlyImplFirebaseAuthTrampolines.getCertificate(firebaseOptions.getCredential())
         .addOnSuccessListener(
             new OnSuccessListener<GoogleCredential>() {
@@ -114,18 +93,9 @@ public class FirebaseOptionsTest {
     assertEquals("mock-project-id", Tasks.await(projectId));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void createOptionsWithCredentialMissing() {
     new FirebaseOptions.Builder().build();
-  }
-
-  @Test(expected = IllegalStateException.class)
-  @SuppressWarnings("deprecation")
-  public void createOptionsWithServiceAccountAndCredential() {
-    new FirebaseOptions.Builder()
-        .setServiceAccount(ServiceAccount.EDITOR.asStream())
-        .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
-        .build();
   }
 
   @Test
@@ -136,7 +106,7 @@ public class FirebaseOptionsTest {
   }
 
   @Test
-  public void testEquals() {
+  public void testEquals() throws IOException {
     FirebaseCredential credential = FirebaseCredentials
         .fromCertificate(ServiceAccount.EDITOR.asStream());
     FirebaseOptions options1 =
@@ -151,7 +121,7 @@ public class FirebaseOptionsTest {
   }
 
   @Test
-  public void testNotEquals() {
+  public void testNotEquals() throws IOException {
     FirebaseCredential credential = FirebaseCredentials
         .fromCertificate(ServiceAccount.EDITOR.asStream());
     FirebaseOptions options1 =
@@ -167,7 +137,7 @@ public class FirebaseOptionsTest {
   }
 
   @Test
-  public void testHashCode() {
+  public void testHashCode() throws IOException {
     FirebaseCredential credential = FirebaseCredentials
         .fromCertificate(ServiceAccount.EDITOR.asStream());
     FirebaseOptions options1 =
