@@ -4,6 +4,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.common.io.CharStreams;
+import com.google.firebase.auth.FirebaseCredential;
+import com.google.firebase.auth.FirebaseCredentials;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -57,6 +59,14 @@ public class TestUtils {
     checkNotNull(stream, "Failed to load resource: %s", path);
     try (InputStreamReader reader = new InputStreamReader(stream)) {
       return CharStreams.toString(reader);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static FirebaseCredential getCertCredential(InputStream stream) {
+    try {
+      return FirebaseCredentials.fromCertificate(stream);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

@@ -44,12 +44,12 @@ public class FirebaseCredentialsTest {
   @Rule public final ExpectedException thrown = ExpectedException.none();
 
   @Test(expected = NullPointerException.class)
-  public void testNullCertificate() {
+  public void testNullCertificate() throws IOException {
     FirebaseCredentials.fromCertificate(null);
   }
 
   @Test(expected = NullPointerException.class)
-  public void testNullRefreshToken() {
+  public void testNullRefreshToken() throws IOException {
     FirebaseCredentials.fromRefreshToken(null);
   }
 
@@ -91,7 +91,8 @@ public class FirebaseCredentialsTest {
   }
 
   @Test
-  public void canResolveTokenMoreThanOnce() throws ExecutionException, InterruptedException {
+  public void canResolveTokenMoreThanOnce()
+      throws ExecutionException, InterruptedException, IOException {
     MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
 
@@ -125,7 +126,7 @@ public class FirebaseCredentialsTest {
 
   @Test
   public void certificateReadChecksForProjectId()
-      throws ExecutionException, InterruptedException, IOException {
+      throws ExecutionException, InterruptedException {
     MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
 
@@ -133,15 +134,13 @@ public class FirebaseCredentialsTest {
         ServiceAccount.EDITOR.asString().replace("project_id", "missing");
     ByteArrayInputStream inputStream =
         new ByteArrayInputStream(accountWithoutProjectId.getBytes(Charset.defaultCharset()));
-    FirebaseCredential credential =
-        FirebaseCredentials.fromCertificate(inputStream, transport, Utils.getDefaultJsonFactory());
 
     try {
-      Tasks.await(credential.getAccessToken(false));
+      FirebaseCredentials.fromCertificate(inputStream, transport, Utils.getDefaultJsonFactory());
       Assert.fail();
-    } catch (Exception e) {
+    } catch (IOException e) {
       Assert.assertEquals(
-          "org.json.JSONException: Failed to parse service account: 'project_id' must be set",
+          "Failed to parse service account: 'project_id' must be set",
           e.getMessage());
       Assert.assertTrue(e.getCause() instanceof JSONException);
     }
@@ -149,7 +148,7 @@ public class FirebaseCredentialsTest {
 
   @Test
   public void certificateReadThrowsRuntimeException()
-      throws ExecutionException, InterruptedException, IOException {
+      throws ExecutionException, InterruptedException {
     MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
 
@@ -161,15 +160,12 @@ public class FirebaseCredentialsTest {
           }
         };
 
-    FirebaseCredential credential =
-        FirebaseCredentials.fromCertificate(inputStream, transport, Utils.getDefaultJsonFactory());
 
     try {
-      Tasks.await(credential.getAccessToken(false));
+      FirebaseCredentials.fromCertificate(inputStream, transport, Utils.getDefaultJsonFactory());
       Assert.fail();
-    } catch (Exception e) {
-      Assert.assertEquals("java.io.IOException: Failed to read service account", e.getMessage());
-      Assert.assertEquals("Expected", e.getCause().getCause().getMessage());
+    } catch (IOException e) {
+      Assert.assertEquals("Expected", e.getMessage());
     }
   }
 
@@ -217,7 +213,7 @@ public class FirebaseCredentialsTest {
 
   @Test
   public void refreshTokenReadThrowsRuntimeException()
-      throws ExecutionException, InterruptedException, IOException {
+      throws ExecutionException, InterruptedException {
     MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
 
@@ -229,20 +225,17 @@ public class FirebaseCredentialsTest {
           }
         };
 
-    FirebaseCredential credential =
-        FirebaseCredentials.fromRefreshToken(inputStream, transport, Utils.getDefaultJsonFactory());
 
     try {
-      Tasks.await(credential.getAccessToken(false));
+      FirebaseCredentials.fromRefreshToken(inputStream, transport, Utils.getDefaultJsonFactory());
       Assert.fail();
-    } catch (Exception e) {
-      Assert.assertEquals("java.io.IOException: Failed to read refresh token", e.getMessage());
-      Assert.assertEquals("Expected", e.getCause().getCause().getMessage());
+    } catch (IOException e) {
+      Assert.assertEquals("Expected", e.getMessage());
     }
   }
 
   @Test
-  public void forceRefreshWorks() throws ExecutionException, InterruptedException {
+  public void forceRefreshWorks() throws ExecutionException, InterruptedException, IOException {
     MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
 
@@ -299,12 +292,12 @@ public class FirebaseCredentialsTest {
     }
 
     @Override
-    GoogleCredential fetchCredential() throws Exception {
+    GoogleCredential fetchCredential() throws IOException {
       return googleCredential;
     }
 
     @Override
-    FirebaseAccessToken fetchToken(GoogleCredential credential) throws Exception {
+    FirebaseAccessToken fetchToken(GoogleCredential credential) throws IOException {
       try {
         return new FirebaseAccessToken(credential, clock);
       } finally {

@@ -59,7 +59,7 @@ public class FirebaseDatabaseAuthTestIT {
   }
   
   @Test
-  public void testAuthWithInvalidCertificateCredential() throws InterruptedException {
+  public void testAuthWithInvalidCertificateCredential() throws InterruptedException, IOException {
     FirebaseOptions options =
         new FirebaseOptions.Builder()
             .setDatabaseUrl(IntegrationTestUtils.getDatabaseUrl())

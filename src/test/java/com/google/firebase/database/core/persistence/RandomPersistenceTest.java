@@ -31,6 +31,7 @@ import com.google.firebase.database.core.view.QueryParams;
 import com.google.firebase.database.core.view.QuerySpec;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.testing.ServiceAccount;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -54,7 +55,7 @@ public class RandomPersistenceTest {
   private static FirebaseApp testApp;
 
   @BeforeClass
-  public static void setUpClass() {
+  public static void setUpClass() throws IOException {
     testApp = FirebaseApp.initializeApp(
         new FirebaseOptions.Builder()
             .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))

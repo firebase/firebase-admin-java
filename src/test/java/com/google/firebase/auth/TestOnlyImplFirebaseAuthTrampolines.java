@@ -42,7 +42,7 @@ public final class TestOnlyImplFirebaseAuthTrampolines {
 
   /* FirebaseCredentials */
   public static Task<String> getProjectId(FirebaseCredential credential) {
-    return ((FirebaseCredentials.CertCredential) credential).getProjectId(false);
+    return ((FirebaseCredentials.CertCredential) credential).getProjectId();
   }
 
   /* FirebaseAuth */

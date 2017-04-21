@@ -1,5 +1,6 @@
 package com.google.firebase;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.MoreObjects;
@@ -9,7 +10,6 @@ import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -87,7 +87,6 @@ public final class FirebaseOptions {
 
     private String databaseUrl;
     private FirebaseCredential firebaseCredential;
-    private FirebaseCredential serviceAccountCredential;
     private Map<String, Object> databaseAuthVariableOverride = new HashMap<>();
 
     /** Constructs an empty builder. */
@@ -120,26 +119,7 @@ public final class FirebaseOptions {
     }
 
     /**
-     * Sets the service account to use to authenticate the SDK.
-     *
-     * <p>This method is deprecated in favor of the {@link #setCredential} method. Only one of the
-     * <code>setCredential()</code> and <code>setServiceAccount()</code> methods can be used.
-     *
-     * @param stream A stream containing the service account contents as JSON.
-     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
-     * @deprecated Use {@link #setCredential} instead and obtain credentials via {@link
-     *     FirebaseCredentials}.
-     */
-    @Deprecated
-    public Builder setServiceAccount(@NonNull InputStream stream) {
-      serviceAccountCredential = FirebaseCredentials.fromCertificate(stream);
-      return this;
-    }
-
-    /**
      * Sets the <code>FirebaseCredential</code> to use to authenticate the SDK.
-     *
-     * <p>This method replaces the deprecated {@link #setServiceAccount} method.
      *
      * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a> for code samples
      * and detailed documentation.
@@ -183,18 +163,8 @@ public final class FirebaseOptions {
      * @return A {@link FirebaseOptions} instance created from the previously set options.
      */
     public FirebaseOptions build() {
-      if (serviceAccountCredential == null && firebaseCredential == null) {
-        throw new IllegalStateException(
-            "FirebaseOptions must be initialized with setCredential().");
-      } else if (serviceAccountCredential != null && firebaseCredential != null) {
-        throw new IllegalStateException(
-            "FirebaseOptions cannot be initialized with both "
-                + "setCredential() and setServiceAccount().");
-      }
-
-      FirebaseCredential firebaseCredential =
-          this.firebaseCredential != null ? this.firebaseCredential : serviceAccountCredential;
-
+      checkArgument(firebaseCredential != null,
+          "FirebaseOptions must be initialized with setCredential().");
       return new FirebaseOptions(databaseUrl, firebaseCredential, databaseAuthVariableOverride);
     }
   }

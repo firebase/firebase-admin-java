@@ -50,7 +50,7 @@ public class SyncPointTest {
   private static FirebaseApp testApp;
 
   @BeforeClass
-  public static void setUpClass() {
+  public static void setUpClass() throws IOException {
     testApp = FirebaseApp.initializeApp(
         new FirebaseOptions.Builder()
             .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
