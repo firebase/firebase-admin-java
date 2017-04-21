@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.firebase.FirebaseApp;
