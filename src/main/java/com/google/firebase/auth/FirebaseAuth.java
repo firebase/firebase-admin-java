@@ -129,7 +129,7 @@ public class FirebaseAuth {
     }
 
     return ((FirebaseCredentials.CertCredential) credential)
-        .getCertificate(false)
+        .getCertificate()
         .continueWith(
             new Continuation<GoogleCredential, String>() {
               @Override

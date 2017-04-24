@@ -50,7 +50,7 @@ public final class TestOnlyImplFirebaseAuthTrampolines {
   /* FirebaseCredentials */
   public static Task<GoogleCredential> getCertificate(FirebaseCredential credential) {
     if (credential instanceof FirebaseCredentials.CertCredential) {
-      return ((FirebaseCredentials.CertCredential) credential).getCertificate(false);
+      return ((FirebaseCredentials.CertCredential) credential).getCertificate();
     } else {
       return Tasks.forException(new FirebaseException("Cannot convert to CertCredential"));
     }
