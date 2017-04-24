@@ -27,8 +27,8 @@ public interface FirebaseCredential {
 
   /**
    * Returns a Google OAuth2 access token which can be used to authenticate with Firebase services.
-   * This method does not cache tokens, and therefore each invocation may trigger a token
-   * refresh. The caller is expected to implement caching by referencing the token expiry details
+   * This method does not cache tokens, and therefore each invocation will fetch a fresh token.
+   * The caller is expected to implement caching by referencing the token expiry details
    * available in the returned GoogleOAuthAccessToken instance.
    *
    * @return A {@link Task} providing a Google OAuth access token.

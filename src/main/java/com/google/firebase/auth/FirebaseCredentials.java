@@ -178,7 +178,7 @@ public class FirebaseCredentials {
           });
     }
 
-    abstract GoogleOAuthAccessToken fetchToken(GoogleCredential credential) throws IOException ;
+    abstract GoogleOAuthAccessToken fetchToken(GoogleCredential credential) throws IOException;
 
     /**
      * Returns an access token for this credential. Does not cache tokens.

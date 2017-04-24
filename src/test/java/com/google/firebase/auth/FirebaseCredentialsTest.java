@@ -135,7 +135,6 @@ public class FirebaseCredentialsTest {
     inputStream.close();
 
     Tasks.await(credential.getAccessToken());
-    Tasks.await(credential.getAccessToken());
   }
 
   @Test
@@ -221,7 +220,6 @@ public class FirebaseCredentialsTest {
     Assert.assertEquals(0, inputStream.available());
     inputStream.close();
 
-    Tasks.await(credential.getAccessToken());
     Tasks.await(credential.getAccessToken());
   }
 
