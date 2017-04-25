@@ -142,39 +142,24 @@ public class FirebaseCredentials {
 
     final HttpTransport transport;
     final JsonFactory jsonFactory;
-    final Clock clock;
-    private final Object accessTokenTaskLock = new Object();
     private GoogleCredential googleCredential;
-    private Task<FirebaseAccessToken> accessTokenTask;
 
     BaseCredential(HttpTransport transport, JsonFactory jsonFactory) {
-      this(transport, jsonFactory, new Clock());
-    }
-
-    BaseCredential(HttpTransport transport, JsonFactory jsonFactory, Clock clock) {
       this.transport = checkNotNull(transport, "HttpTransport must not be null");
       this.jsonFactory = checkNotNull(jsonFactory, "JsonFactory must not be null");
-      this.clock = checkNotNull(clock, "Clock must not be null");
     }
 
     /** Retrieves a GoogleCredential. Should not use caching. */
     abstract GoogleCredential fetchCredential() throws IOException;
 
-    /** Retrieves an access token from a GoogleCredential. Should not use caching. */
-    abstract FirebaseAccessToken fetchToken(GoogleCredential credential) throws IOException;
-
     /**
      * Returns the associated GoogleCredential for this class. This implementation is cached by
      * default.
-     *
-     * @param forceRefresh Whether to fetch from cache
      */
-    final Task<GoogleCredential> getCertificate(boolean forceRefresh) {
-      if (!forceRefresh) {
-        synchronized (this) {
-          if (googleCredential != null) {
-            return Tasks.forResult(googleCredential);
-          }
+    final Task<GoogleCredential> getCertificate() {
+      synchronized (this) {
+        if (googleCredential != null) {
+          return Tasks.forResult(googleCredential);
         }
       }
 
@@ -193,44 +178,21 @@ public class FirebaseCredentials {
           });
     }
 
-    private boolean refreshRequired(
-        @NonNull Task<FirebaseAccessToken> previousTask, boolean forceRefresh) {
-      return previousTask == null
-          || (previousTask.isComplete()
-              && (forceRefresh
-                  || !previousTask.isSuccessful()
-                  || previousTask.getResult().isExpired()));
-    }
+    abstract GoogleOAuthAccessToken fetchToken(GoogleCredential credential) throws IOException;
 
     /**
-     * Returns an access token for this credential. This implementation is cached by default.
-     *
-     * @param forceRefresh Whether or not to force an access token refresh
+     * Returns an access token for this credential. Does not cache tokens.
      */
     @Override
-    public final Task<String> getAccessToken(boolean forceRefresh) {
-      synchronized (accessTokenTaskLock) {
-        if (refreshRequired(accessTokenTask, forceRefresh)) {
-          accessTokenTask =
-              getCertificate(forceRefresh)
-                  .continueWith(
-                      new Continuation<GoogleCredential, FirebaseAccessToken>() {
-                        @Override
-                        public FirebaseAccessToken then(@NonNull Task<GoogleCredential> task)
-                            throws Exception {
-                          return fetchToken(task.getResult());
-                        }
-                      });
-        }
-
-        return accessTokenTask.continueWith(
-            new Continuation<FirebaseAccessToken, String>() {
-              @Override
-              public String then(@NonNull Task<FirebaseAccessToken> task) throws Exception {
-                return task.getResult().getToken();
-              }
-            });
-      }
+    public final Task<GoogleOAuthAccessToken> getAccessToken() {
+      return getCertificate()
+          .continueWith(new Continuation<GoogleCredential, GoogleOAuthAccessToken>() {
+            @Override
+            public GoogleOAuthAccessToken then(@NonNull Task<GoogleCredential> task)
+                throws Exception {
+              return fetchToken(task.getResult());
+            }
+          });
     }
   }
 
@@ -267,9 +229,9 @@ public class FirebaseCredentials {
     }
 
     @Override
-    FirebaseAccessToken fetchToken(GoogleCredential credential) throws IOException {
+    GoogleOAuthAccessToken fetchToken(GoogleCredential credential) throws IOException {
       credential.refreshToken();
-      return new FirebaseAccessToken(credential, clock);
+      return newAccessToken(credential);
     }
 
     Task<String> getProjectId() {
@@ -290,9 +252,9 @@ public class FirebaseCredentials {
     }
 
     @Override
-    FirebaseAccessToken fetchToken(GoogleCredential credential) throws IOException {
+    GoogleOAuthAccessToken fetchToken(GoogleCredential credential) throws IOException {
       credential.refreshToken();
-      return new FirebaseAccessToken(credential, clock);
+      return newAccessToken(credential);
     }
   }
 
@@ -322,9 +284,9 @@ public class FirebaseCredentials {
     }
 
     @Override
-    FirebaseAccessToken fetchToken(GoogleCredential credential) throws IOException {
+    GoogleOAuthAccessToken fetchToken(GoogleCredential credential) throws IOException {
       credential.refreshToken();
-      return new FirebaseAccessToken(credential, clock);
+      return newAccessToken(credential);
     }
   }
 
@@ -334,35 +296,9 @@ public class FirebaseCredentials {
         applicationDefault(Utils.getDefaultTransport(), Utils.getDefaultJsonFactory());
   }
 
-  static class Clock {
-
-    protected long now() {
-      return System.currentTimeMillis();
-    }
-  }
-
-  static class FirebaseAccessToken {
-
-    private final String token;
-    private final long expirationTime;
-    private final Clock clock;
-
-    FirebaseAccessToken(GoogleCredential credential, Clock clock) {
-      checkNotNull(credential, "Google credential is required");
-
-      token =
-          checkNotNull(
-              credential.getAccessToken(), "Access token should not be null after refresh.");
-      expirationTime = credential.getExpirationTimeMilliseconds();
-      this.clock = checkNotNull(clock, "Clock is required");
-    }
-
-    String getToken() {
-      return token;
-    }
-
-    boolean isExpired() {
-      return expirationTime < clock.now();
-    }
+  static GoogleOAuthAccessToken newAccessToken(GoogleCredential credential) {
+    checkNotNull(credential);
+    return new GoogleOAuthAccessToken(credential.getAccessToken(),
+        credential.getExpirationTimeMilliseconds());
   }
 }

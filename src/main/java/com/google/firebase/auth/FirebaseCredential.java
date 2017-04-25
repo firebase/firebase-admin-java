@@ -26,10 +26,12 @@ import com.google.firebase.tasks.Task;
 public interface FirebaseCredential {
 
   /**
-   * Returns a Google OAuth2 access token used to authenticate with Firebase services.
+   * Returns a Google OAuth2 access token which can be used to authenticate with Firebase services.
+   * This method does not cache tokens, and therefore each invocation will fetch a fresh token.
+   * The caller is expected to implement caching by referencing the token expiry details
+   * available in the returned GoogleOAuthAccessToken instance.
    *
-   * @param forceRefresh Whether to fetch a new token or use a cached one if available.
-   * @return A {@link Task} providing an access token.
+   * @return A {@link Task} providing a Google OAuth access token.
    */
-  Task<String> getAccessToken(boolean forceRefresh);
+  Task<GoogleOAuthAccessToken> getAccessToken();
 }

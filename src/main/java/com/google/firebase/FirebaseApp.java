@@ -27,6 +27,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
+import com.google.firebase.auth.GoogleOAuthAccessToken;
 import com.google.firebase.internal.AuthStateListener;
 import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseExecutors;
@@ -67,8 +68,10 @@ public class FirebaseApp {
 
   public static final String DEFAULT_APP_NAME = "[DEFAULT]";
   private static final long TOKEN_REFRESH_INTERVAL_MILLIS = TimeUnit.MINUTES.toMillis(55);
-  private static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
+
+  static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
       new TokenRefresher.Factory();
+  static final Clock DEFAULT_CLOCK = new Clock();
 
   /**
    * Global lock for synchronizing all SDK-wide application state changes. Specifically, any
@@ -79,11 +82,14 @@ public class FirebaseApp {
   private final String name;
   private final FirebaseOptions options;
   private final TokenRefresher tokenRefresher;
+  private final Clock clock;
 
   private final AtomicBoolean deleted = new AtomicBoolean();
   private final List<AuthStateListener> authStateListeners = new ArrayList<>();
   private final AtomicReference<GetTokenResult> currentToken = new AtomicReference<>();
   private final Map<String, FirebaseService> services = new HashMap<>();
+
+  private Task<GoogleOAuthAccessToken> previousTokenTask;
 
   /**
    * Per application lock for synchronizing all internal FirebaseApp state changes.
@@ -91,11 +97,13 @@ public class FirebaseApp {
   private final Object lock = new Object();
 
   /** Default constructor. */
-  private FirebaseApp(String name, FirebaseOptions options, TokenRefresher.Factory factory) {
+  private FirebaseApp(String name, FirebaseOptions options,
+      TokenRefresher.Factory factory, Clock clock) {
     checkArgument(!Strings.isNullOrEmpty(name));
     this.name = name;
     this.options = checkNotNull(options);
-    tokenRefresher = checkNotNull(factory).create(this);
+    this.tokenRefresher = checkNotNull(factory).create(this);
+    this.clock = checkNotNull(clock);
   }
 
   /** Returns a list of all FirebaseApps. */
@@ -168,11 +176,11 @@ public class FirebaseApp {
    * @throws IllegalStateException if an app with the same name has already been initialized.
    */
   public static FirebaseApp initializeApp(FirebaseOptions options, String name) {
-    return initializeApp(options, name, DEFAULT_TOKEN_REFRESHER_FACTORY);
+    return initializeApp(options, name, DEFAULT_TOKEN_REFRESHER_FACTORY, DEFAULT_CLOCK);
   }
 
-  static FirebaseApp initializeApp(
-      FirebaseOptions options, String name, TokenRefresher.Factory tokenRefresherFactory) {
+  static FirebaseApp initializeApp(FirebaseOptions options, String name,
+      TokenRefresher.Factory tokenRefresherFactory, Clock clock) {
     FirebaseAppStore appStore = FirebaseAppStore.initialize();
     String normalizedName = normalize(name);
     final FirebaseApp firebaseApp;
@@ -181,7 +189,7 @@ public class FirebaseApp {
           !instances.containsKey(normalizedName),
           "FirebaseApp name " + normalizedName + " already exists!");
 
-      firebaseApp = new FirebaseApp(normalizedName, options, tokenRefresherFactory);
+      firebaseApp = new FirebaseApp(normalizedName, options, tokenRefresherFactory, clock);
       instances.put(normalizedName, firebaseApp);
     }
 
@@ -305,6 +313,13 @@ public class FirebaseApp {
     checkState(!deleted.get(), "FirebaseApp was deleted %s", this);
   }
 
+  private boolean refreshRequired(
+      @NonNull Task<GoogleOAuthAccessToken> previousTask, boolean forceRefresh) {
+    return (previousTask.isComplete()
+        && (forceRefresh || !previousTask.isSuccessful()
+        || previousTask.getResult().getExpiryTime() <= clock.now()));
+  }
+
   /**
    * Internal-only method to fetch a valid Service Account OAuth2 Token.
    *
@@ -313,41 +328,45 @@ public class FirebaseApp {
    * @return a {@link Task}
    */
   Task<GetTokenResult> getToken(boolean forceRefresh) {
-    checkNotDeleted();
-    return options
-        .getCredential()
-        .getAccessToken(forceRefresh)
-        .continueWith(
-            new Continuation<String, GetTokenResult>() {
-              @Override
-              public GetTokenResult then(@NonNull Task<String> task) throws Exception {
-                GetTokenResult newToken = new GetTokenResult(task.getResult());
-                GetTokenResult oldToken = currentToken.get();
-                List<AuthStateListener> listenersCopy = null;
-                if (!newToken.equals(oldToken)) {
-                  synchronized (lock) {
-                    if (deleted.get()) {
-                      return newToken;
-                    }
+    synchronized (lock) {
+      checkNotDeleted();
+      if (previousTokenTask == null || refreshRequired(previousTokenTask, forceRefresh)) {
+        previousTokenTask = options.getCredential().getAccessToken();
+      }
 
-                    // Grab the lock before compareAndSet to avoid a potential race
-                    // condition with addAuthStateListener. The same lock also ensures serial
-                    // access to the token refresher.
-                    if (currentToken.compareAndSet(oldToken, newToken)) {
-                      listenersCopy = ImmutableList.copyOf(authStateListeners);
-                      tokenRefresher.scheduleRefresh(TOKEN_REFRESH_INTERVAL_MILLIS);
-                    }
+      return previousTokenTask.continueWith(
+          new Continuation<GoogleOAuthAccessToken, GetTokenResult>() {
+            @Override
+            public GetTokenResult then(@NonNull Task<GoogleOAuthAccessToken> task)
+                throws Exception {
+              GetTokenResult newToken = new GetTokenResult(task.getResult().getAccessToken());
+              GetTokenResult oldToken = currentToken.get();
+              List<AuthStateListener> listenersCopy = null;
+              if (!newToken.equals(oldToken)) {
+                synchronized (lock) {
+                  if (deleted.get()) {
+                    return newToken;
+                  }
+
+                  // Grab the lock before compareAndSet to avoid a potential race
+                  // condition with addAuthStateListener. The same lock also ensures serial
+                  // access to the token refresher.
+                  if (currentToken.compareAndSet(oldToken, newToken)) {
+                    listenersCopy = ImmutableList.copyOf(authStateListeners);
+                    tokenRefresher.scheduleRefresh(TOKEN_REFRESH_INTERVAL_MILLIS);
                   }
                 }
-
-                if (listenersCopy != null) {
-                  for (AuthStateListener listener : listenersCopy) {
-                    listener.onAuthStateChanged(newToken);
-                  }
-                }
-                return newToken;
               }
-            });
+
+              if (listenersCopy != null) {
+                for (AuthStateListener listener : listenersCopy) {
+                  listener.onAuthStateChanged(newToken);
+                }
+              }
+              return newToken;
+            }
+          });
+    }
   }
 
   boolean isDefaultApp() {
@@ -449,6 +468,12 @@ public class FirebaseApp {
       TokenRefresher create(FirebaseApp app) {
         return new TokenRefresher(app);
       }
+    }
+  }
+
+  static class Clock {
+    long now() {
+      return System.currentTimeMillis();
     }
   }
 }
