@@ -288,7 +288,7 @@ public class WebSocket {
 
         // Ensure proper hostname verification, per
         // https://tersesystems.com/2014/03/23/fixing-hostname-verification/
-        // TODO(mikelehen): This code is different than Android.  We should refactor it
+        // TODO: This code is different than Android.  We should refactor it
         // into JvmPlatform.
         SSLParameters sslParams = new SSLParameters();
         sslParams.setEndpointIdentificationAlgorithm("HTTPS");

@@ -43,7 +43,7 @@ class TaskCompletionListenerQueue<T> {
   @GuardedBy("lock")
   private boolean flushing;
 
-  // TODO(jstembridge): Define behaviour for duplicate listeners.
+  // TODO: Define behaviour for duplicate listeners.
   public void add(@NonNull TaskCompletionListener<T> listener) {
     synchronized (lock) {
       if (queue == null) {

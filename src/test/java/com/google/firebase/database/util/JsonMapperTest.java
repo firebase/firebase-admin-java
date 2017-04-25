@@ -50,7 +50,7 @@ public class JsonMapperTest {
 
   @Test
   @Ignore
-  // TODO(depoll): Stop ignoring this test once JSON parsing has been fixed.
+  // TODO: Stop ignoring this test once JSON parsing has been fixed.
   public void canNest33LevelsDeep() throws IOException {
     Map<String, Object> root = new HashMap<>();
     Map<String, Object> currentMap = root;

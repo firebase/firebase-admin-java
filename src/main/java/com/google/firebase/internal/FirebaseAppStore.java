@@ -36,7 +36,7 @@ public class FirebaseAppStore {
     return sInstance.get();
   }
 
-  // TODO(arondeak): reenable persistence. See b/28158809.
+  // TODO: reenable persistence. See b/28158809.
   public static FirebaseAppStore initialize() {
     sInstance.compareAndSet(null /* expected */, new FirebaseAppStore());
     return sInstance.get();

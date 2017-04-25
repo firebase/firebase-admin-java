@@ -108,7 +108,7 @@ public class FirebaseApp {
 
   /** Returns a list of all FirebaseApps. */
   public static List<FirebaseApp> getApps() {
-    // TODO(arondeak): reenable persistence. See b/28158809.
+    // TODO: reenable persistence. See b/28158809.
     synchronized (appsLock) {
       return ImmutableList.copyOf(instances.values());
     }

@@ -71,7 +71,7 @@ public final class FirebaseCustomAuthToken extends IdToken {
     /**
      * Any additional claims the developer wishes stored and signed by Firebase.
      *
-     * <p>TODO(jeffcraig@google.com): Come up with a solution to allow this to be parsed as the
+     * <p>TODO: Come up with a solution to allow this to be parsed as the
      * correct type.
      */
     @Key("claims")

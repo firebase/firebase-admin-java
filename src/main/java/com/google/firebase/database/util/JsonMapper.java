@@ -31,7 +31,7 @@ import org.json.JSONStringer;
 import org.json.JSONTokener;
 
 /**
- * Helper class to convert from/to JSON strings. TODO(dimond): This class should ideally not live in
+ * Helper class to convert from/to JSON strings. TODO: This class should ideally not live in
  * firebase-database-connection, but it's required by both firebase-database and
  * firebase-database-connection, so leave it here for now.
  */

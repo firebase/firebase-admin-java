@@ -183,7 +183,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     if (logger.logsDebug()) {
       logger.debug("Listening on " + query);
     }
-    // TODO(dimond): Fix this somehow?
+    // TODO: Fix this somehow?
     //hardAssert(query.isDefault() || !query.loadsAllData(), "listen() called for non-default but "
     //          + "complete query");
     hardAssert(!listens.containsKey(query), "listen() called twice for same QuerySpec.");
@@ -322,7 +322,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
       logger.debug("unlistening on " + query);
     }
 
-    // TODO(dimond): fix this by understanding query params?
+    // TODO: fix this by understanding query params?
     //Utilities.hardAssert(query.isDefault() || !query.loadsAllData(),
     //    "unlisten() called for non-default but complete query");
     OutstandingListen listen = removeListen(query);
@@ -1054,7 +1054,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
         stats.put("persistence.android.enabled", 1);
       }
       stats.put("sdk.android." + context.getClientSdkVersion().replace('.', '-'), 1);
-      // TODO(dimond): Also send stats for connection version
+      // TODO: Also send stats for connection version
     } else {
       assert !this.context.isPersistenceEnabled()
           : "Stats for persistence on JVM missing (persistence not yet supported)";

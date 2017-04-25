@@ -32,7 +32,7 @@ import java.util.Map;
 /** Configurable Firebase options. */
 public final class FirebaseOptions {
 
-  // TODO(arondeak): deprecate and remove it once we can fetch these from Remote Config.
+  // TODO: deprecate and remove it once we can fetch these from Remote Config.
 
   private final String databaseUrl;
   private final FirebaseCredential firebaseCredential;

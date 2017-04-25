@@ -35,15 +35,15 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 /** Responsible for the persistence of FirebaseApps. */
-// TODO(arondeak): reenable persistence. See b/28158809.
-// TODO(depoll): Make this an independent implementation using Preferences
+// TODO: reenable persistence. See b/28158809.
+// TODO: Make this an independent implementation using Preferences
 //   once the Shared Preferences version is stable and re-enabled.
 public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
 
   // Increment this number if you make a backwards incompatible change to the storage format.
   // As currently implemented an increase of the data format version results in an ISE getting
   // thrown.
-  // TODO(arondeak): Change this behavior when this value is changed.
+  // TODO: Change this behavior when this value is changed.
   private static final int DATA_FORMAT_VERSION = 1;
   private static final String KEY_DATA_FORMAT_VERSION_VERSION = "version";
   private static final String KEY_FIREBASE_APP_NAMES = "firebase-app-names";
@@ -126,7 +126,7 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
       }
       FirebaseOptions options = app.getOptions();
       prefs.put(KEY_FIREBASE_APP_NAMES, encodedAppNamesValue + VALUE_SEPARATOR + encodedAppName);
-      // TODO(depoll): Make sure this has all of the options -- not just the DB URL.
+      // TODO: Make sure this has all of the options -- not just the DB URL.
       writeValue(prefs, KEY_PREFIX_DATABASE_URL + encodedAppName, options.getDatabaseUrl());
     }
   }
@@ -165,7 +165,7 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
       return new FirebaseOptions.Builder()
           .setDatabaseUrl(readValue(prefs, KEY_PREFIX_DATABASE_URL + encodedName))
           .build();
-      // TODO(depoll): Ensure all of the options are included, not just DB URL.
+      // TODO: Ensure all of the options are included, not just DB URL.
     }
   }
 
@@ -174,7 +174,7 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
     FirebaseOptions options = restoreAppOptions(name);
     // This check is probably too restrictive. However it is easier to move from a more
     // restrictive check to a more lenient one than doing the reverse.
-    // TODO(arondeak): can we be less restrictive here?
+    // TODO: can we be less restrictive here?
     checkState(
         options.equals(app.getOptions()),
         "FirebaseApp %s incompatible with persisted version! Persisted options: %s, "
@@ -191,7 +191,7 @@ public class SharedPrefsFirebaseAppStore extends FirebaseAppStore {
           resetStore();
         } else if (readDataVersion != DATA_FORMAT_VERSION) {
           // Data in Preferences is an older format.
-          // TODO(arondeak): come up with something better before an SDK with an
+          // TODO: come up with something better before an SDK with an
           // incremented version is released.
           throw new IllegalStateException(
               String.format(

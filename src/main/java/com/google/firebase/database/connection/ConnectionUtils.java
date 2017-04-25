@@ -60,7 +60,7 @@ public class ConnectionUtils {
     }
   }
 
-  // TODO(dimond): Merge these with Utils from firebase-database
+  // TODO: Merge these with Utils from firebase-database
   public static void hardAssert(boolean condition) {
     hardAssert(condition, "");
   }
