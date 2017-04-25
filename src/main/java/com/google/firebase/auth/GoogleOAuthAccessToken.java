@@ -17,7 +17,6 @@
 package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
 
@@ -27,11 +26,9 @@ import com.google.common.base.Strings;
  */
 public class GoogleOAuthAccessToken {
 
-  private static final Clock DEFAULT_CLOCK = new Clock();
 
   private final String accessToken;
   private final long expiryTime;
-  private final Clock clock;
 
   /**
    * Create a new GoogleOAuthAccessToken instance
@@ -41,14 +38,9 @@ public class GoogleOAuthAccessToken {
    * @throws IllegalArgumentException If the token is null or empty
    */
   public GoogleOAuthAccessToken(String accessToken, long expiryTime) {
-    this(accessToken, expiryTime, DEFAULT_CLOCK);
-  }
-
-  GoogleOAuthAccessToken(String accessToken, long expiryTime, Clock clock) {
     checkArgument(!Strings.isNullOrEmpty(accessToken), "Access token must not be null");
     this.accessToken = accessToken;
     this.expiryTime = expiryTime;
-    this.clock = checkNotNull(clock, "Clock must not be null");
   }
 
   /**
@@ -63,19 +55,6 @@ public class GoogleOAuthAccessToken {
    */
   public long getExpiryTime() {
     return expiryTime;
-  }
-
-  /**
-   * Returns true if the token is already expired, and false otherwise.
-   */
-  public boolean isExpired() {
-    return expiryTime <= clock.now();
-  }
-
-  static class Clock {
-    public long now() {
-      return System.currentTimeMillis();
-    }
   }
 
 }

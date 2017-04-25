@@ -68,8 +68,10 @@ public class FirebaseApp {
 
   public static final String DEFAULT_APP_NAME = "[DEFAULT]";
   private static final long TOKEN_REFRESH_INTERVAL_MILLIS = TimeUnit.MINUTES.toMillis(55);
-  private static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
+
+  static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
       new TokenRefresher.Factory();
+  static final Clock DEFAULT_CLOCK = new Clock();
 
   /**
    * Global lock for synchronizing all SDK-wide application state changes. Specifically, any
@@ -80,6 +82,7 @@ public class FirebaseApp {
   private final String name;
   private final FirebaseOptions options;
   private final TokenRefresher tokenRefresher;
+  private final Clock clock;
 
   private final AtomicBoolean deleted = new AtomicBoolean();
   private final List<AuthStateListener> authStateListeners = new ArrayList<>();
@@ -94,11 +97,13 @@ public class FirebaseApp {
   private final Object lock = new Object();
 
   /** Default constructor. */
-  private FirebaseApp(String name, FirebaseOptions options, TokenRefresher.Factory factory) {
+  private FirebaseApp(String name, FirebaseOptions options,
+      TokenRefresher.Factory factory, Clock clock) {
     checkArgument(!Strings.isNullOrEmpty(name));
     this.name = name;
     this.options = checkNotNull(options);
-    tokenRefresher = checkNotNull(factory).create(this);
+    this.tokenRefresher = checkNotNull(factory).create(this);
+    this.clock = checkNotNull(clock);
   }
 
   /** Returns a list of all FirebaseApps. */
@@ -171,11 +176,11 @@ public class FirebaseApp {
    * @throws IllegalStateException if an app with the same name has already been initialized.
    */
   public static FirebaseApp initializeApp(FirebaseOptions options, String name) {
-    return initializeApp(options, name, DEFAULT_TOKEN_REFRESHER_FACTORY);
+    return initializeApp(options, name, DEFAULT_TOKEN_REFRESHER_FACTORY, DEFAULT_CLOCK);
   }
 
-  static FirebaseApp initializeApp(
-      FirebaseOptions options, String name, TokenRefresher.Factory tokenRefresherFactory) {
+  static FirebaseApp initializeApp(FirebaseOptions options, String name,
+      TokenRefresher.Factory tokenRefresherFactory, Clock clock) {
     FirebaseAppStore appStore = FirebaseAppStore.initialize();
     String normalizedName = normalize(name);
     final FirebaseApp firebaseApp;
@@ -184,7 +189,7 @@ public class FirebaseApp {
           !instances.containsKey(normalizedName),
           "FirebaseApp name " + normalizedName + " already exists!");
 
-      firebaseApp = new FirebaseApp(normalizedName, options, tokenRefresherFactory);
+      firebaseApp = new FirebaseApp(normalizedName, options, tokenRefresherFactory, clock);
       instances.put(normalizedName, firebaseApp);
     }
 
@@ -311,10 +316,9 @@ public class FirebaseApp {
   private boolean refreshRequired(
       @NonNull Task<GoogleOAuthAccessToken> previousTask, boolean forceRefresh) {
     return (previousTask.isComplete()
-        && (forceRefresh || !previousTask.isSuccessful() || previousTask.getResult().isExpired()));
+        && (forceRefresh || !previousTask.isSuccessful()
+        || previousTask.getResult().getExpiryTime() <= clock.now()));
   }
-
-
 
   /**
    * Internal-only method to fetch a valid Service Account OAuth2 Token.
@@ -464,6 +468,12 @@ public class FirebaseApp {
       TokenRefresher create(FirebaseApp app) {
         return new TokenRefresher(app);
       }
+    }
+  }
+
+  static class Clock {
+    long now() {
+      return System.currentTimeMillis();
     }
   }
 }

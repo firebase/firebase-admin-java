@@ -25,7 +25,6 @@ import com.google.api.client.googleapis.testing.auth.oauth2.MockTokenServerTrans
 import com.google.api.client.googleapis.util.Utils;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.FirebaseCredentials.BaseCredential;
-import com.google.firebase.auth.GoogleOAuthAccessToken.Clock;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
@@ -263,8 +262,7 @@ public class FirebaseCredentialsTest {
   public void testTokenExpiration() throws Exception {
     final GoogleCredential googleCredential = new MockGoogleCredential(new Builder());
     googleCredential.setAccessToken(ACCESS_TOKEN);
-    TestClock clock = new TestClock();
-    TestCredential credential = new TestCredential(googleCredential, clock);
+    TestCredential credential = new TestCredential(googleCredential);
 
     for (long i = 0; i < 10; i++) {
       long expiryTime = (i + 1) * 10L;
@@ -272,14 +270,6 @@ public class FirebaseCredentialsTest {
       GoogleOAuthAccessToken googleToken = Tasks.await(credential.getAccessToken());
       Assert.assertEquals(ACCESS_TOKEN, googleToken.getAccessToken());
       Assert.assertEquals(expiryTime, googleToken.getExpiryTime());
-
-      clock.timestamp = 0L;
-      while (clock.timestamp < expiryTime) {
-        Assert.assertFalse(googleToken.isExpired());
-        clock.advanceClock(1L);
-      }
-
-      Assert.assertTrue(googleToken.isExpired());
     }
   }
 
@@ -287,16 +277,10 @@ public class FirebaseCredentialsTest {
 
     private final AtomicInteger fetchCount = new AtomicInteger(0);
     private final GoogleCredential googleCredential;
-    private final Clock clock;
-
-    TestCredential(GoogleCredential googleCredential, Clock clock) {
-      super(new MockTokenServerTransport(), Utils.getDefaultJsonFactory());
-      this.googleCredential = googleCredential;
-      this.clock = clock;
-    }
 
     TestCredential(GoogleCredential googleCredential) {
-      this(googleCredential, null);
+      super(new MockTokenServerTransport(), Utils.getDefaultJsonFactory());
+      this.googleCredential = googleCredential;
     }
 
     @Override
@@ -307,12 +291,7 @@ public class FirebaseCredentialsTest {
     @Override
     GoogleOAuthAccessToken fetchToken(GoogleCredential credential) throws IOException {
       try {
-        if (clock == null) {
-          return FirebaseCredentials.newAccessToken(credential);
-        } else {
-          return newAccessToken(credential.getAccessToken(),
-              credential.getExpirationTimeMilliseconds(), clock);
-        }
+        return FirebaseCredentials.newAccessToken(credential);
       } finally {
         fetchCount.incrementAndGet();
       }
@@ -321,22 +300,5 @@ public class FirebaseCredentialsTest {
     int getFetchCount() {
       return fetchCount.get();
     }
-  }
-
-  public static class TestClock extends GoogleOAuthAccessToken.Clock {
-    long timestamp = 0;
-
-    @Override
-    public long now() {
-      return this.timestamp;
-    }
-
-    public void advanceClock(long millis) {
-      this.timestamp += millis;
-    }
-  }
-
-  public static GoogleOAuthAccessToken newAccessToken(String token, long expiryTime, Clock clock) {
-    return new GoogleOAuthAccessToken(token, expiryTime, clock);
   }
 }

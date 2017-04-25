@@ -29,19 +29,15 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import com.google.api.client.googleapis.testing.auth.oauth2.MockTokenServerTransport;
-import com.google.api.client.googleapis.util.Utils;
 import com.google.common.base.Defaults;
 import com.google.common.io.BaseEncoding;
+import com.google.firebase.FirebaseApp.Clock;
 import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.FirebaseOptions.Builder;
 import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.FirebaseCredentials;
-import com.google.firebase.auth.FirebaseCredentialsTest;
-import com.google.firebase.auth.FirebaseCredentialsTest.TestClock;
 import com.google.firebase.auth.GoogleOAuthAccessToken;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.utilities.Clock;
 import com.google.firebase.internal.AuthStateListener;
 import com.google.firebase.internal.GetTokenResult;
 import com.google.firebase.tasks.Task;
@@ -290,7 +286,8 @@ public class FirebaseAppTest {
   public void testTokenExpiration() throws ExecutionException, InterruptedException, IOException {
     TestClock clock = new TestClock();
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(new Builder()
-        .setCredential(new ClockedMockFirebaseCredential(clock)).build(), "myApp");
+        .setCredential(new ClockedMockFirebaseCredential(clock)).build(), "myApp",
+        FirebaseApp.DEFAULT_TOKEN_REFRESHER_FACTORY, clock);
     GetTokenResult token1 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
         firebaseApp, false));
     GetTokenResult token2 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
@@ -299,7 +296,7 @@ public class FirebaseAppTest {
     Assert.assertNotNull(token2);
     Assert.assertEquals(token1, token2);
 
-    clock.advanceClock(TimeUnit.HOURS.toMillis(1));
+    clock.timestamp += TimeUnit.HOURS.toMillis(1);
     GetTokenResult token3 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
         firebaseApp, false));
     Assert.assertNotNull(token3);
@@ -375,7 +372,8 @@ public class FirebaseAppTest {
   @Test
   public void testProactiveTokenRefresh() throws Exception {
     MockTokenRefresherFactory factory = new MockTokenRefresherFactory();
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp", factory);
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp",
+        factory, FirebaseApp.DEFAULT_CLOCK);
     MockTokenRefresher tokenRefresher = factory.instance;
     Assert.assertNotNull(tokenRefresher);
 
@@ -424,8 +422,8 @@ public class FirebaseAppTest {
 
     @Override
     public Task<GoogleOAuthAccessToken> getAccessToken() {
-      return Tasks.forResult(FirebaseCredentialsTest.newAccessToken(UUID.randomUUID().toString(),
-          clock.now() + TimeUnit.HOURS.toMillis(1), clock));
+      return Tasks.forResult(new GoogleOAuthAccessToken(UUID.randomUUID().toString(),
+          clock.now() + TimeUnit.HOURS.toMillis(1)));
     }
   }
 
@@ -479,6 +477,16 @@ public class FirebaseAppTest {
     TokenRefresher create(FirebaseApp app) {
       instance = new MockTokenRefresher(app);
       return instance;
+    }
+  }
+
+  private static class TestClock extends FirebaseApp.Clock {
+
+    private long timestamp;
+
+    @Override
+    long now() {
+      return timestamp;
     }
   }
 }
