@@ -234,7 +234,7 @@ public class Context {
   private ScheduledExecutorService getExecutorService() {
     RunLoop loop = this.getRunLoop();
     if (!(loop instanceof DefaultRunLoop)) {
-      // TODO(dimond): We really need to remove this option from the public DatabaseConfig
+      // TODO: We really need to remove this option from the public DatabaseConfig
       // object
       throw new RuntimeException("Custom run loops are not supported!");
     }

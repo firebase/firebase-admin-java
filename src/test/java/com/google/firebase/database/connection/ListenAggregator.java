@@ -46,7 +46,7 @@ public class ListenAggregator {
     conns.get(0);
     List<List<String>> pathList = new ArrayList<>();
     List<Map<String, Object>> queryParamList = new ArrayList<>();
-    // TODO(dimond): Find a way to actually get listens, or not test against internal state?
+    // TODO: Find a way to actually get listens, or not test against internal state?
     //conn.getListens(pathList, queryParamList);
 
     Map<String, List<String>> pathToQueryParamStrings = new HashMap<>();

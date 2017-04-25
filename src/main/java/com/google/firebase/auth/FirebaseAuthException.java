@@ -16,10 +16,10 @@
 
 package com.google.firebase.auth;
 
-// TODO(rahulrav/isachen): Move it out from firebase-common. Temporary host it their for
+// TODO: Move it out from firebase-common. Temporary host it their for
 // database's integration.http://b/27624510.
 
-// TODO(rahulrav/isachen): Decide if changing this not enforcing an error code. Need to align
+// TODO: Decide if changing this not enforcing an error code. Need to align
 // with the decision in http://b/27677218. Also, need to turn this into abstract later.
 
 import static com.google.common.base.Preconditions.checkArgument;

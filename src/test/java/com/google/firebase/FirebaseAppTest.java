@@ -66,7 +66,7 @@ import org.mockito.Mockito;
 /** 
  * Unit tests for {@link com.google.firebase.FirebaseApp}.
  */
-// TODO(arondeak): uncomment lines when Firebase API targets are in integ.
+// TODO: uncomment lines when Firebase API targets are in integ.
 public class FirebaseAppTest {
 
   private static final FirebaseOptions OPTIONS =

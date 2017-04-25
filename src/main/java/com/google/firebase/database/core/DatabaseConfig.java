@@ -23,13 +23,13 @@ import com.google.firebase.database.Logger;
 import java.util.List;
 
 /**
- * TODO(mikelehen): Since this is no longer public, we should merge it with Context and clean all
+ * TODO: Since this is no longer public, we should merge it with Context and clean all
  * this crap up. Some methods may need to be re-added to FirebaseDatabase if we want to still expose
  * them.
  */
 public class DatabaseConfig extends Context {
 
-  // TODO(dimond): Remove this from the public API since we currently can't pass logging
+  // TODO: Remove this from the public API since we currently can't pass logging
   // across AIDL interface.
 
   /**

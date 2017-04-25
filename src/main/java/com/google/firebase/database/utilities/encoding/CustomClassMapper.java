@@ -322,7 +322,7 @@ public class CustomClassMapper {
   @SuppressWarnings("unchecked")
   private static Map<String, Object> expectMap(Object object) {
     if (object instanceof Map) {
-      // TODO(dimond): runtime validation of keys?
+      // TODO: runtime validation of keys?
       return (Map<String, Object>) object;
     } else {
       throw new DatabaseException(
@@ -740,7 +740,7 @@ public class CustomClassMapper {
           if (this.throwOnUnknownProperties) {
             throw new DatabaseException(message);
           } else if (this.warnOnUnknownProperties) {
-            // TODO(dimond): replace Android logging with "our" logging
+            // TODO: replace Android logging with "our" logging
             Log.w(LOG_TAG, message);
           }
         }

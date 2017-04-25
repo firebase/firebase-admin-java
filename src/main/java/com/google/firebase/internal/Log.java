@@ -20,7 +20,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /** Provides a logging interface for Firebase implementations. */
-// TODO(depoll): Remove this or replace logging internally.
+// TODO: Remove this or replace logging internally.
 public final class Log {
 
   private static final String PARENT_LOGGER_NAME = "com.google.firebase";

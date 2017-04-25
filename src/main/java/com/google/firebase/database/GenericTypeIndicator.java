@@ -60,6 +60,6 @@ package com.google.firebase.database;
  * @param <T> The type of generic collection that this instance servers as an indicator for
  */
 public abstract class GenericTypeIndicator<T> {
-  // TODO(dimond): This is a legacy class that inherited from TypeIndicator from Jackson to be
+  // TODO: This is a legacy class that inherited from TypeIndicator from Jackson to be
   // able to resolve generic types. We need a new solution going forward.
 }

@@ -167,7 +167,7 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
    * Verifies the cryptographic signature on the FirebaseToken. Can block on a web request to fetch
    * the keys if they have expired.
    *
-   * <p>TODO(jeffcraig): Wrap these blocking steps in a Task.
+   * <p>TODO: Wrap these blocking steps in a Task.
    */
   private boolean verifySignature(IdToken token) throws GeneralSecurityException, IOException {
     for (PublicKey key : publicKeysManager.getPublicKeys()) {
