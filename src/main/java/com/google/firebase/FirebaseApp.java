@@ -33,6 +33,7 @@ import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseExecutors;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.GetTokenResult;
+import com.google.firebase.internal.Log;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.tasks.Continuation;
@@ -343,8 +344,6 @@ public class FirebaseApp {
               GetTokenResult oldToken = currentToken.get();
               List<AuthStateListener> listenersCopy = null;
               if (!newToken.equals(oldToken)) {
-                long refreshDelay  = googleOAuthToken.getExpiryTime() - clock.now()
-                    - TimeUnit.MINUTES.toMillis(5);
                 synchronized (lock) {
                   if (deleted.get()) {
                     return newToken;
@@ -355,8 +354,13 @@ public class FirebaseApp {
                   // access to the token refresher.
                   if (currentToken.compareAndSet(oldToken, newToken)) {
                     listenersCopy = ImmutableList.copyOf(authStateListeners);
+                    long refreshDelay  = googleOAuthToken.getExpiryTime() - clock.now()
+                        - TimeUnit.MINUTES.toMillis(5);
                     if (refreshDelay > 0) {
                       tokenRefresher.scheduleRefresh(refreshDelay);
+                    } else {
+                      Log.w("FirebaseApp", "Token validity period is less than 5 "
+                          + "minutes. Not scheduling a proactive refresh event.");
                     }
                   }
                 }
