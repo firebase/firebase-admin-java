@@ -67,7 +67,6 @@ public class FirebaseApp {
   private static final Map<String, FirebaseApp> instances = new HashMap<>();
 
   public static final String DEFAULT_APP_NAME = "[DEFAULT]";
-  private static final long TOKEN_REFRESH_INTERVAL_MILLIS = TimeUnit.MINUTES.toMillis(55);
 
   static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
       new TokenRefresher.Factory();
@@ -339,10 +338,13 @@ public class FirebaseApp {
             @Override
             public GetTokenResult then(@NonNull Task<GoogleOAuthAccessToken> task)
                 throws Exception {
-              GetTokenResult newToken = new GetTokenResult(task.getResult().getAccessToken());
+              GoogleOAuthAccessToken googleOAuthToken = task.getResult();
+              GetTokenResult newToken = new GetTokenResult(googleOAuthToken.getAccessToken());
               GetTokenResult oldToken = currentToken.get();
               List<AuthStateListener> listenersCopy = null;
               if (!newToken.equals(oldToken)) {
+                long refreshDelay  = googleOAuthToken.getExpiryTime() - clock.now()
+                    - TimeUnit.MINUTES.toMillis(5);
                 synchronized (lock) {
                   if (deleted.get()) {
                     return newToken;
@@ -353,7 +355,9 @@ public class FirebaseApp {
                   // access to the token refresher.
                   if (currentToken.compareAndSet(oldToken, newToken)) {
                     listenersCopy = ImmutableList.copyOf(authStateListeners);
-                    tokenRefresher.scheduleRefresh(TOKEN_REFRESH_INTERVAL_MILLIS);
+                    if (refreshDelay > 0) {
+                      tokenRefresher.scheduleRefresh(refreshDelay);
+                    }
                   }
                 }
               }
