@@ -359,8 +359,9 @@ public class FirebaseApp {
                     if (refreshDelay > 0) {
                       tokenRefresher.scheduleRefresh(refreshDelay);
                     } else {
-                      Log.w("FirebaseApp", "Token validity period is less than 5 "
-                          + "minutes. Not scheduling a proactive refresh event.");
+                      Log.w("FirebaseApp", "Token expiry ("
+                          + googleOAuthToken.getExpiryTime() + ") is less than 5 minutes in the "
+                          + "future. Not scheduling a proactive refresh.");
                     }
                   }
                 }
