@@ -1,0 +1,8 @@
+target/
+.idea/
+.settings/
+*.iml
+.classpath
+.project
+.checkstyle
+release.properties
