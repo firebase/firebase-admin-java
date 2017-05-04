@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.firebase.database.connection;
 
 import static com.google.firebase.database.connection.ConnectionUtils.hardAssert;
@@ -167,7 +183,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     if (logger.logsDebug()) {
       logger.debug("Listening on " + query);
     }
-    // TODO(dimond): Fix this somehow?
+    // TODO: Fix this somehow?
     //hardAssert(query.isDefault() || !query.loadsAllData(), "listen() called for non-default but "
     //          + "complete query");
     hardAssert(!listens.containsKey(query), "listen() called twice for same QuerySpec.");
@@ -306,7 +322,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
       logger.debug("unlistening on " + query);
     }
 
-    // TODO(dimond): fix this by understanding query params?
+    // TODO: fix this by understanding query params?
     //Utilities.hardAssert(query.isDefault() || !query.loadsAllData(),
     //    "unlisten() called for non-default but complete query");
     OutstandingListen listen = removeListen(query);
@@ -1038,7 +1054,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
         stats.put("persistence.android.enabled", 1);
       }
       stats.put("sdk.android." + context.getClientSdkVersion().replace('.', '-'), 1);
-      // TODO(dimond): Also send stats for connection version
+      // TODO: Also send stats for connection version
     } else {
       assert !this.context.isPersistenceEnabled()
           : "Stats for persistence on JVM missing (persistence not yet supported)";

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.firebase;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -15,10 +31,12 @@ import static org.mockito.Mockito.verify;
 
 import com.google.common.base.Defaults;
 import com.google.common.io.BaseEncoding;
+import com.google.firebase.FirebaseApp.Clock;
 import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.FirebaseOptions.Builder;
 import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.FirebaseCredentials;
+import com.google.firebase.auth.GoogleOAuthAccessToken;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.internal.AuthStateListener;
 import com.google.firebase.internal.GetTokenResult;
@@ -27,6 +45,8 @@ import com.google.firebase.tasks.TaskCompletionSource;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.FirebaseAppRule;
 import com.google.firebase.testing.ServiceAccount;
+import com.google.firebase.testing.TestUtils;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -36,6 +56,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -45,12 +66,12 @@ import org.mockito.Mockito;
 /** 
  * Unit tests for {@link com.google.firebase.FirebaseApp}.
  */
-// TODO(arondeak): uncomment lines when Firebase API targets are in integ.
+// TODO: uncomment lines when Firebase API targets are in integ.
 public class FirebaseAppTest {
 
   private static final FirebaseOptions OPTIONS =
       new FirebaseOptions.Builder()
-          .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+          .setCredential(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .build();
   private static final FirebaseOptions MOCK_CREDENTIAL_OPTIONS =
       new Builder().setCredential(new MockFirebaseCredential()).build();
@@ -154,7 +175,7 @@ public class FirebaseAppTest {
   }
 
   @Test
-  public void testToString() {
+  public void testToString() throws IOException {
     FirebaseOptions options =
         new FirebaseOptions.Builder()
             .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
@@ -238,6 +259,51 @@ public class FirebaseAppTest {
   }
 
   @Test
+  public void testTokenCaching() throws ExecutionException, InterruptedException, IOException {
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp");
+    GetTokenResult token1 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
+        firebaseApp, false));
+    GetTokenResult token2 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
+        firebaseApp, false));
+    Assert.assertNotNull(token1);
+    Assert.assertNotNull(token2);
+    Assert.assertEquals(token1, token2);
+  }
+
+  @Test
+  public void testTokenForceRefresh() throws ExecutionException, InterruptedException, IOException {
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp");
+    GetTokenResult token1 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
+        firebaseApp, false));
+    GetTokenResult token2 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
+        firebaseApp, true));
+    Assert.assertNotNull(token1);
+    Assert.assertNotNull(token2);
+    Assert.assertNotEquals(token1, token2);
+  }
+
+  @Test
+  public void testTokenExpiration() throws ExecutionException, InterruptedException, IOException {
+    TestClock clock = new TestClock();
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(new Builder()
+        .setCredential(new ClockedMockFirebaseCredential(clock)).build(), "myApp",
+        FirebaseApp.DEFAULT_TOKEN_REFRESHER_FACTORY, clock);
+    GetTokenResult token1 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
+        firebaseApp, false));
+    GetTokenResult token2 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
+        firebaseApp, false));
+    Assert.assertNotNull(token1);
+    Assert.assertNotNull(token2);
+    Assert.assertEquals(token1, token2);
+
+    clock.timestamp += TimeUnit.HOURS.toMillis(1);
+    GetTokenResult token3 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
+        firebaseApp, false));
+    Assert.assertNotNull(token3);
+    Assert.assertNotEquals(token1, token3);
+  }
+
+  @Test
   public void testAddAuthStateListenerWithoutInitialToken() {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp");
     AuthStateListener listener = mock(AuthStateListener.class);
@@ -306,7 +372,8 @@ public class FirebaseAppTest {
   @Test
   public void testProactiveTokenRefresh() throws Exception {
     MockTokenRefresherFactory factory = new MockTokenRefresherFactory();
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp", factory);
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp",
+        factory, FirebaseApp.DEFAULT_CLOCK);
     MockTokenRefresher tokenRefresher = factory.instance;
     Assert.assertNotNull(tokenRefresher);
 
@@ -338,15 +405,25 @@ public class FirebaseAppTest {
 
 
   private static class MockFirebaseCredential implements FirebaseCredential {
+    @Override
+    public Task<GoogleOAuthAccessToken> getAccessToken() {
+      return Tasks.forResult(new GoogleOAuthAccessToken(UUID.randomUUID().toString(),
+          System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)));
+    }
+  }
 
-    private String cached;
+  private static class ClockedMockFirebaseCredential implements FirebaseCredential {
+
+    private final TestClock clock;
+
+    ClockedMockFirebaseCredential(TestClock clock) {
+      this.clock = clock;
+    }
 
     @Override
-    public Task<String> getAccessToken(boolean forceRefresh) {
-      if (cached == null || forceRefresh) {
-        cached = UUID.randomUUID().toString();
-      }
-      return Tasks.forResult(cached);
+    public Task<GoogleOAuthAccessToken> getAccessToken() {
+      return Tasks.forResult(new GoogleOAuthAccessToken(UUID.randomUUID().toString(),
+          clock.now() + TimeUnit.HOURS.toMillis(1)));
     }
   }
 
@@ -400,6 +477,16 @@ public class FirebaseAppTest {
     TokenRefresher create(FirebaseApp app) {
       instance = new MockTokenRefresher(app);
       return instance;
+    }
+  }
+
+  private static class TestClock extends FirebaseApp.Clock {
+
+    private long timestamp;
+
+    @Override
+    long now() {
+      return timestamp;
     }
   }
 }
