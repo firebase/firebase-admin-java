@@ -139,7 +139,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
             .withMinDelayAfterFailure(1000)
             .withRetryExponent(1.3)
             .withMaxDelay(30 * 1000)
-            .withJitterFactor(0.7)
+            .withJitterFactor(0.25)
             .build();
 
     long connId = connectionIds++;

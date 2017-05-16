@@ -47,6 +47,9 @@ class WebSocketReceiver {
     this.eventHandler = websocket.getEventHandler();
     while (!stop) {
       try {
+        if (Thread.interrupted()) {
+          throw new InterruptedException();
+        }
         int offset = 0;
         offset += read(inputHeader, offset, 1);
         boolean fin = (inputHeader[0] & 0x80) != 0;
@@ -94,6 +97,8 @@ class WebSocketReceiver {
         continue;
       } catch (IOException ioe) {
         handleError(new WebSocketException("IO Error", ioe));
+      } catch (InterruptedException e) {
+        handleError(new WebSocketException("Receiver interrupted", e));
       } catch (WebSocketException e) {
         handleError(e);
       }

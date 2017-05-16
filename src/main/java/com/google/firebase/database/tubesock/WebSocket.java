@@ -16,6 +16,8 @@
 
 package com.google.firebase.database.tubesock;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -64,7 +66,7 @@ public class WebSocket {
   private final WebSocketWriter writer;
   private final WebSocketHandshake handshake;
   private final int clientId = clientCount.incrementAndGet();
-  private final Thread innerThread;
+  private Thread innerThread;
   private volatile State state = State.NONE;
   private volatile Socket socket = null;
   private WebSocketEventHandler eventHandler = null;
@@ -99,15 +101,6 @@ public class WebSocket {
    *     if not extra headers are requested
    */
   public WebSocket(URI url, String protocol, Map<String, String> extraHeaders) {
-    innerThread =
-        getThreadFactory()
-            .newThread(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    runReader();
-                  }
-                });
     this.url = url;
     handshake = new WebSocketHandshake(url, protocol, extraHeaders);
     receiver = new WebSocketReceiver(this);
@@ -150,9 +143,8 @@ public class WebSocket {
       close();
       return;
     }
-    getIntializer().setName(getInnerThread(), THREAD_BASE_NAME + "Reader-" + clientId);
     state = State.CONNECTING;
-    getInnerThread().start();
+    start();
   }
 
   /**
@@ -312,13 +304,15 @@ public class WebSocket {
    * convenience method to make sure everything shuts down, if desired.
    */
   public void blockClose() throws InterruptedException {
-    // If the thread is new, it will never run, since we closed the connection before we
-    // actually
-    // connected
-    if (writer.getInnerThread().getState() != Thread.State.NEW) {
-      writer.getInnerThread().join();
+    writer.waitFor();
+    Thread thread;
+    synchronized (this) {
+      if (innerThread == null) {
+        return;
+      }
+      thread = innerThread;
     }
-    getInnerThread().join();
+    thread.join();
   }
 
   private void runReader() {
@@ -389,7 +383,7 @@ public class WebSocket {
       writer.setOutput(output);
       receiver.setInput(input);
       state = WebSocket.State.CONNECTED;
-      writer.getInnerThread().start();
+      writer.start();
       eventHandler.onOpen();
       receiver.run();
     } catch (WebSocketException wse) {
@@ -402,8 +396,19 @@ public class WebSocket {
     }
   }
 
-  Thread getInnerThread() {
-    return innerThread;
+  private synchronized void start() {
+    checkState(innerThread == null, "Inner thread already started");
+    innerThread =
+        getThreadFactory()
+            .newThread(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    runReader();
+                  }
+                });
+    getIntializer().setName(innerThread, THREAD_BASE_NAME + "Reader-" + clientId);
+    innerThread.start();
   }
 
   private enum State {
