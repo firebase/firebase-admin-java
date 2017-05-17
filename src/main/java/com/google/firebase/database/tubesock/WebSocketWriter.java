@@ -34,8 +34,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 class WebSocketWriter {
 
   private final Random random = new Random();
-  private final String threadBaseName;
-  private final int clientId;
+  private final String threadName;
 
   private Thread innerThread;
   private BlockingQueue<ByteBuffer> pendingBuffers;
@@ -46,8 +45,7 @@ class WebSocketWriter {
 
   WebSocketWriter(WebSocket websocket, String threadBaseName, int clientId) {
     this.websocket = websocket;
-    this.threadBaseName = threadBaseName;
-    this.clientId = clientId;
+    this.threadName = threadBaseName + "Writer-" + clientId;
     pendingBuffers = new LinkedBlockingQueue<>();
   }
 
@@ -173,11 +171,11 @@ class WebSocketWriter {
                     runWriter();
                   }
                 });
-    WebSocket.getIntializer().setName(innerThread, threadBaseName + "Writer-" + clientId);
+    WebSocket.getIntializer().setName(innerThread, threadName);
     innerThread.start();
   }
 
-  void waitFor() throws InterruptedException {
+  void waitForTermination() throws InterruptedException {
     // If the thread is null, it will never be instantiated, since we closed the connection
     // before we actually connected.
     Thread thread;

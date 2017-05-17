@@ -147,6 +147,21 @@ public class WebSocket {
     start();
   }
 
+  private synchronized void start() {
+    checkState(innerThread == null, "Inner thread already started");
+    innerThread =
+        getThreadFactory()
+            .newThread(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    runReader();
+                  }
+                });
+    getIntializer().setName(innerThread, THREAD_BASE_NAME + "Reader-" + clientId);
+    innerThread.start();
+  }
+
   /**
    * Send a TEXT message over the socket
    *
@@ -304,7 +319,7 @@ public class WebSocket {
    * convenience method to make sure everything shuts down, if desired.
    */
   public void blockClose() throws InterruptedException {
-    writer.waitFor();
+    writer.waitForTermination();
     Thread thread;
     synchronized (this) {
       if (innerThread == null) {
@@ -394,21 +409,6 @@ public class WebSocket {
     } finally {
       close();
     }
-  }
-
-  private synchronized void start() {
-    checkState(innerThread == null, "Inner thread already started");
-    innerThread =
-        getThreadFactory()
-            .newThread(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    runReader();
-                  }
-                });
-    getIntializer().setName(innerThread, THREAD_BASE_NAME + "Reader-" + clientId);
-    innerThread.start();
   }
 
   private enum State {
