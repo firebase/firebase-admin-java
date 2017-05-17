@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/firebase/firebase-admin-java.svg?branch=master)](https://travis-ci.org/firebase/firebase-admin-java)
+
 # Firebase Admin Java SDK
 
 ## Table of Contents
