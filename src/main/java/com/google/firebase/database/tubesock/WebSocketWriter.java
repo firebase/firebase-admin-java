@@ -16,6 +16,8 @@
 
 package com.google.firebase.database.tubesock;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -32,7 +34,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 class WebSocketWriter {
 
   private final Random random = new Random();
-  private final Thread innerThread;
+  private final String threadName;
+
+  private Thread innerThread;
   private BlockingQueue<ByteBuffer> pendingBuffers;
   private volatile boolean stop = false;
   private boolean closeSent = false;
@@ -40,18 +44,8 @@ class WebSocketWriter {
   private WritableByteChannel channel;
 
   WebSocketWriter(WebSocket websocket, String threadBaseName, int clientId) {
-    innerThread =
-        WebSocket.getThreadFactory()
-            .newThread(
-                new Runnable() {
-                  @Override
-                  public void run() {
-                    runWriter();
-                  }
-                });
-
-    WebSocket.getIntializer().setName(getInnerThread(), threadBaseName + "Writer-" + clientId);
     this.websocket = websocket;
+    this.threadName = threadBaseName + "Writer-" + clientId;
     pendingBuffers = new LinkedBlockingQueue<>();
   }
 
@@ -166,7 +160,31 @@ class WebSocketWriter {
     }
   }
 
-  Thread getInnerThread() {
-    return innerThread;
+  synchronized void start() {
+    checkState(innerThread == null, "Inner thread already started");
+    innerThread =
+        WebSocket.getThreadFactory()
+            .newThread(
+                new Runnable() {
+                  @Override
+                  public void run() {
+                    runWriter();
+                  }
+                });
+    WebSocket.getIntializer().setName(innerThread, threadName);
+    innerThread.start();
+  }
+
+  void waitForTermination() throws InterruptedException {
+    // If the thread is null, it will never be instantiated, since we closed the connection
+    // before we actually connected.
+    Thread thread;
+    synchronized (this) {
+      if (innerThread == null) {
+        return;
+      }
+      thread = innerThread;
+    }
+    thread.join();
   }
 }
