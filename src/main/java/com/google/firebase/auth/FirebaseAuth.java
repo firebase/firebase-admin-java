@@ -16,18 +16,20 @@
 
 package com.google.firebase.auth;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.googleapis.util.Utils;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.Clock;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.auth.FirebaseUserManager.TokenSource;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.internal.FirebaseService;
@@ -55,6 +57,7 @@ public class FirebaseAuth {
   private final FirebaseApp firebaseApp;
   private final GooglePublicKeysManager googlePublicKeysManager;
   private final Clock clock;
+  private final FirebaseUserManager userManager;
 
   private FirebaseAuth(FirebaseApp firebaseApp) {
     this(firebaseApp, FirebaseTokenVerifier.DEFAULT_KEY_MANAGER, Clock.SYSTEM);
@@ -66,10 +69,11 @@ public class FirebaseAuth {
    */
   @VisibleForTesting
   FirebaseAuth(
-      FirebaseApp firebaseApp, GooglePublicKeysManager googlePublicKeysManager, Clock clock) {
+      final FirebaseApp firebaseApp, GooglePublicKeysManager googlePublicKeysManager, Clock clock) {
     this.firebaseApp = firebaseApp;
     this.googlePublicKeysManager = googlePublicKeysManager;
     this.clock = clock;
+    this.userManager = new FirebaseUserManager(jsonFactory, Utils.getDefaultTransport());
   }
 
   /**
@@ -199,17 +203,50 @@ public class FirebaseAuth {
             });
   }
 
-  public FirebaseUserManager getUserManager() {
-    return getUserManager(Utils.getDefaultTransport());
+  public Task<User> getUser(final String uid) {
+    checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
+    return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
+        new Continuation<GetTokenResult, User>() {
+          @Override
+          public User then(Task<GetTokenResult> task) throws Exception {
+            return userManager.getUserById(uid, task.getResult().getToken());
+          }
+        });
   }
 
-  public FirebaseUserManager getUserManager(HttpTransport transport) {
-    return new FirebaseUserManager(new TokenSource() {
-      @Override
-      public Task<GetTokenResult> getToken() {
-        return ImplFirebaseTrampolines.getToken(firebaseApp, false);
-      }
-    }, jsonFactory, transport);
+  public Task<User> getUserByEmail(final String email) {
+    checkArgument(!Strings.isNullOrEmpty(email), "email must not be null or empty");
+    return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
+        new Continuation<GetTokenResult, User>() {
+          @Override
+          public User then(Task<GetTokenResult> task) throws Exception {
+            return userManager.getUserByEmail(email, task.getResult().getToken());
+          }
+        });
+  }
+
+  public Task<User> createUser(final User.Builder builder) {
+    checkNotNull(builder, "builder must not be null");
+    return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
+        new Continuation<GetTokenResult, User>() {
+          @Override
+          public User then(Task<GetTokenResult> task) throws Exception {
+            String uid = userManager.createUser(builder, task.getResult().getToken());
+            return userManager.getUserById(uid, task.getResult().getToken());
+          }
+        });
+  }
+
+  public Task<User> updateUser(final User.Updater updater) {
+    checkNotNull(updater, "updater must not be null");
+    return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
+        new Continuation<GetTokenResult, User>() {
+          @Override
+          public User then(Task<GetTokenResult> task) throws Exception {
+            userManager.updateUser(updater, task.getResult().getToken());
+            return userManager.getUserById(updater.getUid(), task.getResult().getToken());
+          }
+        });
   }
 
   private static final String SERVICE_ID = FirebaseAuth.class.getName();

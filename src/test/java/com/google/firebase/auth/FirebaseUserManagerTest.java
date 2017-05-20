@@ -25,11 +25,9 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.auth.FirebaseUserManager.TokenSource;
-import com.google.firebase.internal.GetTokenResult;
-import com.google.firebase.tasks.Task;
-import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.TestUtils;
+
+import java.io.IOException;
 import java.util.Map;
 import org.junit.Test;
 
@@ -44,27 +42,56 @@ public class FirebaseUserManagerTest {
     MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(response)
         .build();
-    FirebaseUserManager userManager = new FirebaseUserManager(
-        new TestTokenSource(), gson, transport);
-    User user = Tasks.await(userManager.getUser("testuser"));
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
+    User user = userManager.getUserById("testuser", "token");
     checkUser(user);
   }
 
   @Test
-  public void testInvalidGetUser() {
-    FirebaseUserManager userManager = new FirebaseUserManager(
-        new TestTokenSource(), gson, new MockHttpTransport());
+  public void testGetUserError() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setContent(TestUtils.loadResource("getUserError.json"));
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
     try {
-      userManager.getUser(null);
-      fail("No error thrown for null uid");
+      userManager.getUserById("testuser", "token");
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException ignore) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testGetUserErrorInvalidJson() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setContent("foobar");
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
+    try {
+      userManager.getUserById("testuser", "token");
+      fail("No error thrown for invalid response");
     } catch (Exception ignore) {
       // expected
     }
+  }
 
+  @Test
+  public void testGetUserErrorInvalidHttpCode() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setStatusCode(500);
+    response.setContent("error message");
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
     try {
-      userManager.getUser("");
-      fail("No error thrown for empty uid");
-    } catch (Exception ignore) {
+      userManager.getUserById("testuser", "token");
+      fail("No error thrown for invalid response");
+    } catch (IOException ignore) {
       // expected
     }
   }
@@ -76,41 +103,44 @@ public class FirebaseUserManagerTest {
     MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(response)
         .build();
-    FirebaseUserManager userManager = new FirebaseUserManager(
-        new TestTokenSource(), gson, transport);
-    User user = Tasks.await(userManager.getUserByEmail("testuser@example.com"));
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
+    User user = userManager.getUserByEmail("testuser@example.com", "token");
     checkUser(user);
   }
 
   @Test
-  public void testInvalidGetUserByEmail() {
-    FirebaseUserManager userManager = new FirebaseUserManager(
-        new TestTokenSource(), gson, new MockHttpTransport());
-    try {
-      userManager.getUserByEmail(null);
-      fail("No error thrown for null email");
-    } catch (Exception ignore) {
-      // expected
-    }
-
-    try {
-      userManager.getUserByEmail("");
-      fail("No error thrown for empty email");
-    } catch (Exception ignore) {
-      // expected
-    }
+  public void testCreateUser() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setContent(TestUtils.loadResource("createUser.json"));
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
+    String uid = userManager.createUser(User.builder(), "token");
+    assertEquals("testuser", uid);
   }
 
   @Test
-  public void testUserBuilder() throws Exception {
-    Map<String, Object> map = User.newBuilder()
+  public void testUpdateUser() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setContent(TestUtils.loadResource("createUser.json"));
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
+    userManager.updateUser(User.updater("testuser"), "token");
+  }
+
+  @Test
+  public void testUserBuilder() {
+    Map<String, Object> map = User.builder()
         .build();
     assertTrue(map.isEmpty());
   }
 
   @Test
-  public void testUserBuilderWithParams() throws Exception {
-    Map<String, Object> map = User.newBuilder()
+  public void testUserBuilderWithParams() {
+    Map<String, Object> map = User.builder()
         .setUid("TestUid")
         .setDisplayName("Display Name")
         .setPhotoUrl("http://test.com/example.png")
@@ -129,7 +159,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUid() {
-    User.Builder builder = User.newBuilder();
+    User.Builder builder = User.builder();
     try {
       builder.setUid(null);
       fail("No error thrown for null uid");
@@ -154,7 +184,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidDisplayName() {
-    User.Builder builder = User.newBuilder();
+    User.Builder builder = User.builder();
     try {
       builder.setDisplayName(null);
       fail("No error thrown for null display name");
@@ -165,7 +195,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidPhotoUrl() {
-    User.Builder builder = User.newBuilder();
+    User.Builder builder = User.builder();
     try {
       builder.setPhotoUrl(null);
       fail("No error thrown for null photo url");
@@ -190,7 +220,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidEmail() {
-    User.Builder builder = User.newBuilder();
+    User.Builder builder = User.builder();
     try {
       builder.setEmail(null);
       fail("No error thrown for null email");
@@ -215,7 +245,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidPassword() {
-    User.Builder builder = User.newBuilder();
+    User.Builder builder = User.builder();
     try {
       builder.setPassword(null);
       fail("No error thrown for null password");
@@ -233,13 +263,16 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUserUpdater() {
-    Map<String, Object> map = new User("test").updater()
+    User.Updater updater = User.updater("test");
+    Map<String, Object> map = updater
         .setDisplayName("Display Name")
         .setPhotoUrl("http://test.com/example.png")
         .setEmail("test@example.com")
         .setEmailVerified(true)
         .setPassword("secret")
         .update();
+    assertEquals(6, map.size());
+    assertEquals(updater.getUid(), map.get("localId"));
     assertEquals("Display Name", map.get("displayName"));
     assertEquals("http://test.com/example.png", map.get("photoUrl"));
     assertEquals("test@example.com", map.get("email"));
@@ -249,7 +282,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeleteDisplayName() {
-    Map<String, Object> map = new User("test").updater()
+    Map<String, Object> map = User.updater("test")
         .setDisplayName(null)
         .update();
     assertEquals(ImmutableList.of("DISPLAY_NAME"), map.get("deleteAttribute"));
@@ -257,7 +290,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeletePhotoUrl() {
-    Map<String, Object> map = new User("test").updater()
+    Map<String, Object> map = User.updater("test")
         .setPhotoUrl(null)
         .update();
     assertEquals(ImmutableList.of("PHOTO_URL"), map.get("deleteAttribute"));
@@ -276,7 +309,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUpdatePhotoUrl() {
-    User.Updater updater = new User("test").updater();
+    User.Updater updater = User.updater("test");
     try {
       updater.setPhotoUrl("");
       fail("No error thrown for invalid photo url");
@@ -294,7 +327,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUpdateEmail() {
-    User.Updater updater = new User("test").updater();
+    User.Updater updater = User.updater("test");
     try {
       updater.setEmail(null);
       fail("No error thrown for null email");
@@ -319,7 +352,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUpdatePassword() {
-    User.Updater updater = new User("test").updater();
+    User.Updater updater = User.updater("test");
     try {
       updater.setPassword(null);
       fail("No error thrown for null password");
@@ -334,7 +367,6 @@ public class FirebaseUserManagerTest {
       // expected
     }
   }
-
 
   private void checkUser(User user) {
     assertEquals("testuser", user.getUid());
@@ -353,13 +385,6 @@ public class FirebaseUserManagerTest {
     assertEquals("Test User", provider.getDisplayName());
     assertEquals("http://www.example.com/testuser/photo.png", provider.getPhotoUrl());
     assertEquals("password", provider.getProviderId());
-  }
-
-  private static class TestTokenSource implements TokenSource {
-    @Override
-    public Task<GetTokenResult> getToken() {
-      return Tasks.forResult(new GetTokenResult("mock-token"));
-    }
   }
 
 }

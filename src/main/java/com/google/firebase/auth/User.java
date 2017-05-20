@@ -19,14 +19,11 @@ package com.google.firebase.auth;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.util.Key;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -67,6 +64,9 @@ public class User {
   @Key("lastLoginAt")
   private long lastLoginAt;
 
+  public User() {
+  }
+
   public String getUid() {
     return uid;
   }
@@ -104,27 +104,14 @@ public class User {
   }
 
   public Updater updater() {
-    return new Updater(this);
+    return new Updater(uid);
   }
 
-  public User() {
+  public static Updater updater(String uid) {
+    return new Updater(uid);
   }
 
-  @VisibleForTesting
-  User(String uid) {
-    this.uid = uid;
-  }
-
-  @Override
-  public String toString() {
-    try {
-      return Utils.getDefaultJsonFactory().toPrettyString(this);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  public static Builder newBuilder() {
+  public static Builder builder() {
     return new Builder();
   }
 
@@ -200,10 +187,9 @@ public class User {
 
     private final Map<String,Object> properties = new HashMap<>();
 
-    private Updater(User user) {
-      checkNotNull(user, "user must not be null");
-      checkArgument(!Strings.isNullOrEmpty(user.uid), "uid must not be null or empty");
-      properties.put("localId", user.uid);
+    private Updater(String uid) {
+      checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
+      properties.put("localId", uid);
     }
 
     String getUid() {

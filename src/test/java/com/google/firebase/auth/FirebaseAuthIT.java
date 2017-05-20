@@ -32,20 +32,18 @@ import org.junit.Test;
 
 public class FirebaseAuthIT {
 
-  private static FirebaseApp masterApp;
-  private static FirebaseUserManager userManager;
+  private static FirebaseAuth auth;
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-    masterApp = IntegrationTestUtils.ensureDefaultApp();
-    userManager = FirebaseAuth.getInstance(masterApp).getUserManager();
+    FirebaseApp masterApp = IntegrationTestUtils.ensureDefaultApp();
+    auth = FirebaseAuth.getInstance(masterApp);
   }
 
   @Test
   public void testGetNonExistingUser() throws Exception {
-    FirebaseUserManager um = FirebaseAuth.getInstance(masterApp).getUserManager();
     try {
-      Tasks.await(um.getUser("non.existing"));
+      Tasks.await(auth.getUser("non.existing"));
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -54,9 +52,8 @@ public class FirebaseAuthIT {
 
   @Test
   public void testGetNonExistingUserByEmail() throws Exception {
-    FirebaseUserManager um = FirebaseAuth.getInstance(masterApp).getUserManager();
     try {
-      Tasks.await(um.getUserByEmail("non.existing@definitely.non.existing"));
+      Tasks.await(auth.getUserByEmail("non.existing@definitely.non.existing"));
       fail("No error thrown for non existing email");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -68,18 +65,15 @@ public class FirebaseAuthIT {
     String randomId = UUID.randomUUID().toString().replaceAll("-", "");
     String userEmail = ("test" + randomId.substring(0, 12) + "@example." + randomId.substring(12)
         + ".com").toLowerCase();
-    User.Builder builder = User.newBuilder()
+    User.Builder builder = User.builder()
         .setUid(randomId)
         .setEmail(userEmail)
         .setDisplayName("Random User")
         .setPhotoUrl("https://example.com/photo.png")
         .setEmailVerified(true)
         .setPassword("password");
-    String uid = Tasks.await(userManager.createUser(builder));
-    assertEquals(randomId, uid);
-
-    User user = Tasks.await(userManager.getUser(uid));
-    assertEquals(uid, user.getUid());
+    User user = Tasks.await(auth.createUser(builder));
+    assertEquals(randomId, user.getUid());
     assertEquals("Random User", user.getDisplayName());
     assertEquals(userEmail, user.getEmail());
     assertEquals("https://example.com/photo.png", user.getPhotoUrl());
@@ -90,10 +84,11 @@ public class FirebaseAuthIT {
   @Test
   public void testUserLifecycle() throws Exception {
     // Create user
-    String uid = Tasks.await(userManager.createUser(User.newBuilder()));
+    User user = Tasks.await(auth.createUser(User.builder()));
+    String uid = user.getUid();
 
     // Get user
-    User user = Tasks.await(userManager.getUser(uid));
+    user = Tasks.await(auth.getUser(user.getUid()));
     assertEquals(uid, user.getUid());
     assertNull(user.getDisplayName());
     assertNull(user.getEmail());
@@ -111,7 +106,7 @@ public class FirebaseAuthIT {
         .setPhotoUrl("https://example.com/photo.png")
         .setEmailVerified(true)
         .setPassword("secret");
-    user = Tasks.await(userManager.updateUser(updater));
+    user = Tasks.await(auth.updateUser(updater));
     assertEquals(uid, user.getUid());
     assertEquals("Updated Name", user.getDisplayName());
     assertEquals(userEmail, user.getEmail());
@@ -124,7 +119,7 @@ public class FirebaseAuthIT {
         .setPhotoUrl(null)
         .setDisplayName(null)
         .setDisabled(true);
-    user = Tasks.await(userManager.updateUser(updater));
+    user = Tasks.await(auth.updateUser(updater));
     assertEquals(uid, user.getUid());
     assertNull(user.getDisplayName());
     assertEquals(userEmail, user.getEmail());
