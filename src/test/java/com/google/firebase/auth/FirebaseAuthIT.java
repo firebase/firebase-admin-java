@@ -22,7 +22,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.auth.User.NewAccount;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.util.UUID;
@@ -42,7 +41,7 @@ public class FirebaseAuthIT {
   @Test
   public void testCreateUser() throws Exception {
     FirebaseUserManager um = FirebaseAuth.getInstance(masterApp).getUserManager();
-    NewAccount account = new NewAccount();
+    NewAccount account = new NewAccount.Builder().build();
     String uid = Tasks.await(um.createUser(account));
 
     User user = Tasks.await(um.getUser(uid));
@@ -57,13 +56,14 @@ public class FirebaseAuthIT {
     String expected = UUID.randomUUID().toString().replaceAll("-", "");
     String email =
         "test" + expected.substring(0, 12) + "@example." + expected.substring(12) + ".com";
-    NewAccount account = new NewAccount()
+    NewAccount account = new NewAccount.Builder()
         .setUid(expected)
         .setDisplayName("Test User")
         .setEmail(email)
         .setPhotoUrl("https://example.com/photo.png")
         .setPassword("secret")
-        .setEmailVerified(true);
+        .setEmailVerified(true)
+        .build();
     String uid = Tasks.await(um.createUser(account));
     assertEquals(expected, uid);
 

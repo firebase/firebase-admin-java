@@ -20,7 +20,6 @@ import static com.google.api.client.repackaged.com.google.common.base.Preconditi
 
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.firebase.auth.User.NewAccount;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 import com.google.firebase.auth.internal.GetUserByEmail;
 import com.google.firebase.auth.internal.GetUserByUid;
@@ -85,14 +84,13 @@ public class FirebaseUserManager {
     });
   }
 
-  public Task<String> createUser(NewAccount account) {
+  public Task<String> createUser(final NewAccount account) {
     checkNotNull(account, "NewAccount argument must not be null");
-    final User user = account.build();
     return tokenSource.getToken().continueWith(new Continuation<GetTokenResult, String>() {
       @Override
       public String then(Task<GetTokenResult> task) throws Exception {
         SignupNewUserResponse response = idToolKitClient.post("signupNewUser",
-            task.getResult().getToken(), user, SignupNewUserResponse.class);
+            task.getResult().getToken(), account, SignupNewUserResponse.class);
         String uid = response.getUid();
         if (uid == null || uid.isEmpty()) {
           throw new FirebaseAuthException(ERROR_USER_SIGNUP_FAILED, "Failed to create new user");
