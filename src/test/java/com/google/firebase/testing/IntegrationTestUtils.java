@@ -56,7 +56,7 @@ public class IntegrationTestUtils {
       String certificatePath = System.getProperty("firebase.it.certificate");
       checkArgument(!Strings.isNullOrEmpty(certificatePath),
           "Service account certificate path not set. Set the "
-              + "file.it.certificate system property and try again.");
+              + "firebase.it.certificate system property and try again.");
       try (InputStreamReader reader = new InputStreamReader(new FileInputStream(certificatePath))) {
         IT_SERVICE_ACCOUNT = new JSONObject(CharStreams.toString(reader));
       } catch (IOException e) {

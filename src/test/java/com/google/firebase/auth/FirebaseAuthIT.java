@@ -64,6 +64,30 @@ public class FirebaseAuthIT {
   }
 
   @Test
+  public void testCreateUserWithParams() throws Exception {
+    String randomId = UUID.randomUUID().toString().replaceAll("-", "");
+    String userEmail = ("test" + randomId.substring(0, 12) + "@example." + randomId.substring(12)
+        + ".com").toLowerCase();
+    User.Builder builder = User.newBuilder()
+        .setUid(randomId)
+        .setEmail(userEmail)
+        .setDisplayName("Random User")
+        .setPhotoUrl("https://example.com/photo.png")
+        .setEmailVerified(true)
+        .setPassword("password");
+    String uid = Tasks.await(userManager.createUser(builder));
+    assertEquals(randomId, uid);
+
+    User user = Tasks.await(userManager.getUser(uid));
+    assertEquals(uid, user.getUid());
+    assertEquals("Random User", user.getDisplayName());
+    assertEquals(userEmail, user.getEmail());
+    assertEquals("https://example.com/photo.png", user.getPhotoUrl());
+    assertTrue(user.isEmailVerified());
+    assertFalse(user.isDisabled());
+  }
+
+  @Test
   public void testUserLifecycle() throws Exception {
     // Create user
     String uid = Tasks.await(userManager.createUser(User.newBuilder()));

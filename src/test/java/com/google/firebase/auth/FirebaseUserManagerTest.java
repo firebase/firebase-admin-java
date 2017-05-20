@@ -51,6 +51,25 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testInvalidGetUser() {
+    FirebaseUserManager userManager = new FirebaseUserManager(
+        new TestTokenSource(), gson, new MockHttpTransport());
+    try {
+      userManager.getUser(null);
+      fail("No error thrown for null uid");
+    } catch (Exception ignore) {
+      // expected
+    }
+
+    try {
+      userManager.getUser("");
+      fail("No error thrown for empty uid");
+    } catch (Exception ignore) {
+      // expected
+    }
+  }
+
+  @Test
   public void testGetUserByEmail() throws Exception {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     response.setContent(TestUtils.loadResource("getUser.json"));
@@ -64,14 +83,33 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testCreateUser() throws Exception {
+  public void testInvalidGetUserByEmail() {
+    FirebaseUserManager userManager = new FirebaseUserManager(
+        new TestTokenSource(), gson, new MockHttpTransport());
+    try {
+      userManager.getUserByEmail(null);
+      fail("No error thrown for null email");
+    } catch (Exception ignore) {
+      // expected
+    }
+
+    try {
+      userManager.getUserByEmail("");
+      fail("No error thrown for empty email");
+    } catch (Exception ignore) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testUserBuilder() throws Exception {
     Map<String, Object> map = User.newBuilder()
         .build();
     assertTrue(map.isEmpty());
   }
 
   @Test
-  public void testCreateUserWithParams() throws Exception {
+  public void testUserBuilderWithParams() throws Exception {
     Map<String, Object> map = User.newBuilder()
         .setUid("TestUid")
         .setDisplayName("Display Name")
@@ -194,7 +232,7 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testUpdateUser() {
+  public void testUserUpdater() {
     Map<String, Object> map = new User("test").updater()
         .setDisplayName("Display Name")
         .setPhotoUrl("http://test.com/example.png")
