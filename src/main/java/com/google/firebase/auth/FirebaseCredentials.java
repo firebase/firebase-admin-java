@@ -50,7 +50,8 @@ public class FirebaseCredentials {
   private static final List<String> FIREBASE_SCOPES =
       ImmutableList.of(
           "https://www.googleapis.com/auth/firebase.database",
-          "https://www.googleapis.com/auth/userinfo.email");
+          "https://www.googleapis.com/auth/userinfo.email",
+          "https://www.googleapis.com/auth/identitytoolkit");
 
   private FirebaseCredentials() {
   }

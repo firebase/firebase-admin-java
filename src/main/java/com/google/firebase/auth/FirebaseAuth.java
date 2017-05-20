@@ -18,6 +18,8 @@ package com.google.firebase.auth;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
+import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.Clock;
@@ -25,9 +27,11 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.auth.FirebaseUserManager.TokenSource;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.internal.FirebaseService;
+import com.google.firebase.internal.GetTokenResult;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.tasks.Continuation;
 import com.google.firebase.tasks.Task;
@@ -193,6 +197,19 @@ public class FirebaseAuth {
                 return firebaseToken;
               }
             });
+  }
+
+  public FirebaseUserManager getUserManager() {
+    return getUserManager(Utils.getDefaultTransport());
+  }
+
+  public FirebaseUserManager getUserManager(HttpTransport transport) {
+    return new FirebaseUserManager(new TokenSource() {
+      @Override
+      public Task<GetTokenResult> getToken() {
+        return ImplFirebaseTrampolines.getToken(firebaseApp, false);
+      }
+    }, jsonFactory, transport);
   }
 
   private static final String SERVICE_ID = FirebaseAuth.class.getName();
