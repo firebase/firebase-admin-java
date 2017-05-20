@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
+import com.google.api.client.http.HttpExecuteInterceptor;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpRequestInitializer;
@@ -37,6 +38,7 @@ public class JsonHttpClient {
 
   private final String urlPrefix;
   private final HttpTransport transport;
+  private final HttpExecuteInterceptor interceptor;
   private final JsonFactory jsonFactory;
 
   private JsonHttpClient(Builder builder) {
@@ -49,6 +51,7 @@ public class JsonHttpClient {
         builder.port, builder.path);
     this.transport = checkNotNull(builder.transport, "HttpTransport must not be null");
     this.jsonFactory = checkNotNull(builder.jsonFactory, "JsonFactory must not be null");
+    this.interceptor = builder.interceptor;
   }
 
   public <T> T post(String path, final String token, Object payload,
@@ -71,6 +74,9 @@ public class JsonHttpClient {
     request.setParser(new JsonObjectParser(jsonFactory));
     if (!Strings.isNullOrEmpty(token)) {
       request.getHeaders().setAuthorization("Bearer " + token);
+    }
+    if (interceptor != null) {
+      request.setInterceptor(interceptor);
     }
   }
 
@@ -95,6 +101,7 @@ public class JsonHttpClient {
     private boolean secure;
     private HttpTransport transport = Utils.getDefaultTransport();
     private JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    private HttpExecuteInterceptor interceptor;
 
     public Builder setHost(String host) {
       this.host = host;
@@ -123,6 +130,11 @@ public class JsonHttpClient {
 
     public Builder setJsonFactory(JsonFactory jsonFactory) {
       this.jsonFactory = jsonFactory;
+      return this;
+    }
+
+    public Builder setInterceptor(HttpExecuteInterceptor interceptor) {
+      this.interceptor = interceptor;
       return this;
     }
 

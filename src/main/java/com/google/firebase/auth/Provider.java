@@ -16,24 +16,23 @@
 
 package com.google.firebase.auth;
 
-import com.google.api.client.util.Key;
+import com.google.firebase.auth.internal.GetAccountInfoResponse;
 
 public class Provider {
 
-  @Key("rawId")
-  private String uid;
+  private final String uid;
+  private final String displayName;
+  private final String email;
+  private final String photoUrl;
+  private final String providerId;
 
-  @Key("displayName")
-  private String displayName;
-
-  @Key("email")
-  private String email;
-
-  @Key("photoUrl")
-  private String photoUrl;
-
-  @Key("providerId")
-  private String providerId;
+  Provider(GetAccountInfoResponse.Provider response) {
+    this.uid = response.getUid();
+    this.displayName = response.getDisplayName();
+    this.email = response.getEmail();
+    this.photoUrl = response.getPhotoUrl();
+    this.providerId = response.getProviderId();
+  }
 
   public String getUid() {
     return uid;

@@ -17,10 +17,9 @@
 package com.google.firebase.auth.internal;
 
 import com.google.api.client.util.Key;
-import com.google.firebase.auth.User;
 import java.util.List;
 
-public class GetAccountInfoResponse {
+public final class GetAccountInfoResponse {
 
   @Key("kind")
   private String kind;
@@ -34,5 +33,115 @@ public class GetAccountInfoResponse {
 
   public List<User> getUsers() {
     return users;
+  }
+
+  /**
+   * JSON data binding for user records.
+   */
+  public static final class User {
+
+    @Key("localId")
+    private String uid;
+
+    @Key("email")
+    private String email;
+
+    @Key("emailVerified")
+    private boolean emailVerified;
+
+    @Key("displayName")
+    private String displayName;
+
+    @Key("photoUrl")
+    private String photoUrl;
+
+    @Key("disabled")
+    private boolean disabled;
+
+    @Key("providerUserInfo")
+    private Provider[] providers;
+
+    @Key("createdAt")
+    private long createdAt;
+
+    @Key("lastLoginAt")
+    private long lastLoginAt;
+
+    public String getUid() {
+      return uid;
+    }
+
+    public String getEmail() {
+      return email;
+    }
+
+    public boolean isEmailVerified() {
+      return emailVerified;
+    }
+
+    public String getDisplayName() {
+      return displayName;
+    }
+
+    public String getPhotoUrl() {
+      return photoUrl;
+    }
+
+    public boolean isDisabled() {
+      return disabled;
+    }
+
+    public Provider[] getProviders() {
+      return providers;
+    }
+
+    public long getCreatedAt() {
+      return createdAt;
+    }
+
+    public long getLastLoginAt() {
+      return lastLoginAt;
+    }
+  }
+
+  /**
+   * JSON data binding for provider data.
+   */
+  public static final class Provider {
+
+    @Key("rawId")
+    private String uid;
+
+    @Key("displayName")
+    private String displayName;
+
+    @Key("email")
+    private String email;
+
+    @Key("photoUrl")
+    private String photoUrl;
+
+    @Key("providerId")
+    private String providerId;
+
+    public String getUid() {
+      return uid;
+    }
+
+    public String getDisplayName() {
+      return displayName;
+    }
+
+    public String getEmail() {
+      return email;
+    }
+
+    public String getPhotoUrl() {
+      return photoUrl;
+    }
+
+    public String getProviderId() {
+      return providerId;
+    }
   }
 }

@@ -27,7 +27,6 @@ import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.testing.TestUtils;
 
-import java.io.IOException;
 import java.util.Map;
 import org.junit.Test;
 
@@ -64,39 +63,6 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testGetUserErrorInvalidJson() throws Exception {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    response.setContent("foobar");
-    MockHttpTransport transport = new MockHttpTransport.Builder()
-        .setLowLevelHttpResponse(response)
-        .build();
-    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
-    try {
-      userManager.getUserById("testuser", "token");
-      fail("No error thrown for invalid response");
-    } catch (Exception ignore) {
-      // expected
-    }
-  }
-
-  @Test
-  public void testGetUserErrorInvalidHttpCode() throws Exception {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    response.setStatusCode(500);
-    response.setContent("error message");
-    MockHttpTransport transport = new MockHttpTransport.Builder()
-        .setLowLevelHttpResponse(response)
-        .build();
-    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
-    try {
-      userManager.getUserById("testuser", "token");
-      fail("No error thrown for invalid response");
-    } catch (IOException ignore) {
-      // expected
-    }
-  }
-
-  @Test
   public void testGetUserByEmail() throws Exception {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     response.setContent(TestUtils.loadResource("getUser.json"));
@@ -128,6 +94,7 @@ public class FirebaseUserManagerTest {
         .setLowLevelHttpResponse(response)
         .build();
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
+    // should not throw
     userManager.updateUser(User.updater("testuser"), "token");
   }
 
@@ -294,17 +261,6 @@ public class FirebaseUserManagerTest {
         .setPhotoUrl(null)
         .update();
     assertEquals(ImmutableList.of("PHOTO_URL"), map.get("deleteAttribute"));
-  }
-
-  @Test
-  public void testInvalidUpdateUser() {
-    User user = new User();
-    try {
-      user.updater();
-      fail("No error thrown for invalid user update");
-    } catch (Exception ignore) {
-      // expected
-    }
   }
 
   @Test

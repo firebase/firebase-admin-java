@@ -19,10 +19,10 @@ package com.google.firebase.auth;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.auth.internal.GetAccountInfoResponse;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -37,34 +37,35 @@ public class User {
       "displayName", "DISPLAY_NAME",
       "photoUrl", "PHOTO_URL");
 
-  @Key("localId")
-  private String uid;
+  private final String uid;
+  private final String email;
+  private final boolean emailVerified;
+  private final String displayName;
+  private final String photoUrl;
+  private final boolean disabled;
+  private final Provider[] providers;
+  private final long createdAt;
+  private final long lastLoginAt;
 
-  @Key("email")
-  private String email;
-
-  @Key("emailVerified")
-  private boolean emailVerified;
-
-  @Key("displayName")
-  private String displayName;
-
-  @Key("photoUrl")
-  private String photoUrl;
-
-  @Key("disabled")
-  private boolean disabled;
-
-  @Key("providerUserInfo")
-  private Provider[] providers;
-
-  @Key("createdAt")
-  private long createdAt;
-
-  @Key("lastLoginAt")
-  private long lastLoginAt;
-
-  public User() {
+  User(GetAccountInfoResponse.User response) {
+    checkNotNull(response, "Response must not be null");
+    checkArgument(!Strings.isNullOrEmpty(response.getUid()), "uid must not be null or empty");
+    this.uid = response.getUid();
+    this.email = response.getEmail();
+    this.emailVerified = response.isEmailVerified();
+    this.displayName = response.getDisplayName();
+    this.photoUrl = response.getPhotoUrl();
+    this.disabled = response.isDisabled();
+    if (response.getProviders() == null || response.getProviders().length == 0) {
+      this.providers = new Provider[0];
+    } else {
+      this.providers = new Provider[response.getProviders().length];
+      for (int i = 0; i < this.providers.length; i++) {
+        this.providers[i] = new Provider(response.getProviders()[i]);
+      }
+    }
+    this.createdAt = response.getCreatedAt();
+    this.lastLoginAt = response.getLastLoginAt();
   }
 
   public String getUid() {

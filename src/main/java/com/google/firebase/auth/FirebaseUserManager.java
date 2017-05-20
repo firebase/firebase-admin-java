@@ -59,7 +59,7 @@ class FirebaseUserManager {
       throw new FirebaseAuthException(ERROR_USER_NOT_FOUND,
           "No user record found for the provided user ID: " + uid);
     }
-    return response.getUsers().get(0);
+    return new User(response.getUsers().get(0));
   }
 
   User getUserByEmail(String email, String token) throws IOException, FirebaseAuthException {
@@ -71,7 +71,7 @@ class FirebaseUserManager {
       throw new FirebaseAuthException(ERROR_USER_NOT_FOUND,
           "No user record found for the provided email: " + email);
     }
-    return response.getUsers().get(0);
+    return new User(response.getUsers().get(0));
   }
 
   String createUser(User.Builder builder, String token) throws IOException, FirebaseAuthException {
