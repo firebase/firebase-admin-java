@@ -18,6 +18,7 @@ package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -32,54 +33,12 @@ import org.junit.Test;
 public class FirebaseAuthIT {
 
   private static FirebaseApp masterApp;
+  private static FirebaseUserManager userManager;
 
   @BeforeClass
-  public static void setUpClass() {
+  public static void setUpClass() throws Exception {
     masterApp = IntegrationTestUtils.ensureDefaultApp();
-  }
-
-  @Test
-  public void testCreateUser() throws Exception {
-    FirebaseUserManager um = FirebaseAuth.getInstance(masterApp).getUserManager();
-    NewAccount account = new NewAccount.Builder().build();
-    String uid = Tasks.await(um.createUser(account));
-
-    User user = Tasks.await(um.getUser(uid));
-    assertEquals(uid, user.getUid());
-    assertFalse(user.isEmailVerified());
-  }
-
-  @Test
-  public void testCreateUserWithMetadata() throws Exception {
-
-    FirebaseUserManager um = FirebaseAuth.getInstance(masterApp).getUserManager();
-    String expected = UUID.randomUUID().toString().replaceAll("-", "");
-    String email =
-        "test" + expected.substring(0, 12) + "@example." + expected.substring(12) + ".com";
-    NewAccount account = new NewAccount.Builder()
-        .setUid(expected)
-        .setDisplayName("Test User")
-        .setEmail(email)
-        .setPhotoUrl("https://example.com/photo.png")
-        .setPassword("secret")
-        .setEmailVerified(true)
-        .build();
-    String uid = Tasks.await(um.createUser(account));
-    assertEquals(expected, uid);
-
-    User user = Tasks.await(um.getUser(expected));
-    assertEquals("Test User", user.getDisplayName());
-    assertEquals(email, user.getEmail());
-    assertEquals("https://example.com/photo.png", user.getPhotoUrl());
-    assertTrue(user.isEmailVerified());
-  }
-
-  @Test
-  public void testGetUser() throws Exception {
-    FirebaseUserManager um = FirebaseAuth.getInstance(masterApp).getUserManager();
-    String uid = "3kmgpFRHUdQEBFdwrSYx";
-    User user = Tasks.await(um.getUser(uid));
-    assertEquals(uid, user.getUid());
+    userManager = FirebaseAuth.getInstance(masterApp).getUserManager();
   }
 
   @Test
@@ -94,14 +53,6 @@ public class FirebaseAuthIT {
   }
 
   @Test
-  public void testGetUserByEmail() throws Exception {
-    FirebaseUserManager um = FirebaseAuth.getInstance(masterApp).getUserManager();
-    String email = "3kmgpFRHUdQEBFdwrSYx@example.com".toLowerCase();
-    User user = Tasks.await(um.getUserByEmail(email));
-    assertEquals(email, user.getEmail());
-  }
-
-  @Test
   public void testGetNonExistingUserByEmail() throws Exception {
     FirebaseUserManager um = FirebaseAuth.getInstance(masterApp).getUserManager();
     try {
@@ -110,6 +61,52 @@ public class FirebaseAuthIT {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
     }
+  }
+
+  @Test
+  public void testUserLifecycle() throws Exception {
+    // Create user
+    String uid = Tasks.await(userManager.createUser(User.newBuilder()));
+
+    // Get user
+    User user = Tasks.await(userManager.getUser(uid));
+    assertEquals(uid, user.getUid());
+    assertNull(user.getDisplayName());
+    assertNull(user.getEmail());
+    assertNull(user.getPhotoUrl());
+    assertFalse(user.isEmailVerified());
+    assertFalse(user.isDisabled());
+
+    // Update user
+    String randomId = UUID.randomUUID().toString().replaceAll("-", "");
+    String userEmail = ("test" + randomId.substring(0, 12) + "@example." + randomId.substring(12)
+        + ".com").toLowerCase();
+    User.Updater updater = user.updater()
+        .setDisplayName("Updated Name")
+        .setEmail(userEmail)
+        .setPhotoUrl("https://example.com/photo.png")
+        .setEmailVerified(true)
+        .setPassword("secret");
+    user = Tasks.await(userManager.updateUser(updater));
+    assertEquals(uid, user.getUid());
+    assertEquals("Updated Name", user.getDisplayName());
+    assertEquals(userEmail, user.getEmail());
+    assertEquals("https://example.com/photo.png", user.getPhotoUrl());
+    assertTrue(user.isEmailVerified());
+    assertFalse(user.isDisabled());
+
+    // Disable user and remove properties
+    updater = user.updater()
+        .setPhotoUrl(null)
+        .setDisplayName(null)
+        .setDisabled(true);
+    user = Tasks.await(userManager.updateUser(updater));
+    assertEquals(uid, user.getUid());
+    assertNull(user.getDisplayName());
+    assertEquals(userEmail, user.getEmail());
+    assertNull(user.getPhotoUrl());
+    assertTrue(user.isEmailVerified());
+    assertTrue(user.isDisabled());
   }
 
 }

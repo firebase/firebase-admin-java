@@ -51,7 +51,8 @@ public class JsonHttpClient {
     this.jsonFactory = checkNotNull(builder.jsonFactory, "JsonFactory must not be null");
   }
 
-  public <T> T post(String path, final String token, Object payload, Class<T> output) throws IOException {
+  public <T> T post(String path, final String token, Object payload,
+                    Class<T> output) throws IOException {
     // Path can be empty, but not null
     checkNotNull(path, "Path must not be null");
     HttpRequestFactory requestFactory =
