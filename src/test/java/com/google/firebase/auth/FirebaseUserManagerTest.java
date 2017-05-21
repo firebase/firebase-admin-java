@@ -48,7 +48,7 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testGetUserError() throws Exception {
+  public void testGetUserWithNotFoundError() throws Exception {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     response.setContent(TestUtils.loadResource("getUserError.json"));
     MockHttpTransport transport = new MockHttpTransport.Builder()
@@ -58,8 +58,8 @@ public class FirebaseUserManagerTest {
     try {
       userManager.getUserById("testuser", "token");
       fail("No error thrown for invalid response");
-    } catch (FirebaseAuthException ignore) {
-      // expected
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, e.getErrorCode());
     }
   }
 
@@ -103,7 +103,7 @@ public class FirebaseUserManagerTest {
   public void testGetUserHttpError() throws Exception {
     for (int code : ImmutableList.of(302, 400, 401, 404, 500)) {
       MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-      response.setContent("error message");
+      response.setContent("{}");
       response.setStatusCode(code);
       MockHttpTransport transport = new MockHttpTransport.Builder()
           .setLowLevelHttpResponse(response)
@@ -114,6 +114,7 @@ public class FirebaseUserManagerTest {
         fail("No error thrown for HTTP error");
       }  catch (FirebaseAuthException e) {
         assertTrue(e.getCause() instanceof IOException);
+        assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
       }
     }
   }

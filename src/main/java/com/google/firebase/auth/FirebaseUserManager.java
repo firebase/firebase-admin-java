@@ -38,11 +38,11 @@ import java.util.Map;
 
 class FirebaseUserManager {
 
-  static final String USER_NOT_FOUND_ERROR = "user-not-found";
-  static final String USER_SIGNUP_ERROR = "user-signup-failed";
-  static final String USER_UPDATE_ERROR = "user-update-failed";
-  static final String USER_DELETE_ERROR = "user-delete-failed";
-  static final String INTERNAL_ERROR = "internal-error";
+  static final String USER_NOT_FOUND_ERROR = "USER_NOT_FOUND_ERROR";
+  static final String USER_CREATE_ERROR = "USER_CREATE_ERROR";
+  static final String USER_UPDATE_ERROR = "USER_UPDATE_ERROR";
+  static final String USER_DELETE_ERROR = "USER_DELETE_ERROR";
+  static final String INTERNAL_ERROR = "INTERNAL_ERROR";
 
   private static final String ID_TOOLKIT_URL =
       "https://www.googleapis.com/identitytoolkit/v3/relyingparty/";
@@ -97,13 +97,13 @@ class FirebaseUserManager {
     try {
       response = post("signupNewUser", token, builder.build(), GenericJson.class);
     } catch (IOException e) {
-      throw new FirebaseAuthException(USER_SIGNUP_ERROR,
+      throw new FirebaseAuthException(USER_CREATE_ERROR,
           "IO error while creating user account", e);
     }
 
     String uid = (String) response.get("localId");
     if (Strings.isNullOrEmpty(uid)) {
-      throw new FirebaseAuthException(USER_SIGNUP_ERROR, "Failed to create new user");
+      throw new FirebaseAuthException(USER_CREATE_ERROR, "Failed to create new user");
     }
     return uid;
   }

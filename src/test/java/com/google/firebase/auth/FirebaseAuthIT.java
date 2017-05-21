@@ -65,6 +65,31 @@ public class FirebaseAuthIT {
   }
 
   @Test
+  public void testUpdateNonExistingUser() throws Exception {
+    try {
+      Tasks.await(auth.updateUser(User.updater("non.existing")));
+      fail("No error thrown for non existing uid");
+    } catch (ExecutionException e) {
+      e.printStackTrace();
+      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertEquals(FirebaseUserManager.USER_UPDATE_ERROR,
+          ((FirebaseAuthException) e.getCause()).getErrorCode());
+    }
+  }
+
+  @Test
+  public void testDeleteNonExistingUser() throws Exception {
+    try {
+      Tasks.await(auth.deleteUser("non.existing"));
+      fail("No error thrown for non existing uid");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertEquals(FirebaseUserManager.USER_DELETE_ERROR,
+          ((FirebaseAuthException) e.getCause()).getErrorCode());
+    }
+  }
+
+  @Test
   public void testCreateUserWithParams() throws Exception {
     String randomId = UUID.randomUUID().toString().replaceAll("-", "");
     String userEmail = ("test" + randomId.substring(0, 12) + "@example." + randomId.substring(12)
@@ -98,7 +123,7 @@ public class FirebaseAuthIT {
       fail("No error thrown for creating user with existing ID");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.USER_SIGNUP_ERROR,
+      assertEquals(FirebaseUserManager.USER_CREATE_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
