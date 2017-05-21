@@ -27,6 +27,7 @@ import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.testing.TestUtils;
 
+import java.io.IOException;
 import java.util.Map;
 import org.junit.Test;
 
@@ -96,6 +97,41 @@ public class FirebaseUserManagerTest {
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
     // should not throw
     userManager.updateUser(User.updater("testuser"), "token");
+  }
+
+  @Test
+  public void testGetUserHttpError() throws Exception {
+    for (int code : ImmutableList.of(302, 400, 401, 404, 500)) {
+      MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+      response.setContent("error message");
+      response.setStatusCode(code);
+      MockHttpTransport transport = new MockHttpTransport.Builder()
+          .setLowLevelHttpResponse(response)
+          .build();
+      FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
+      try {
+        userManager.getUserById("testuser", "token");
+        fail("No error thrown for HTTP error");
+      }  catch (IOException ignore) {
+        // expected
+      }
+    }
+  }
+
+  @Test
+  public void testGetUserJsonError() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setContent("{\"not\" json}");
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
+    try {
+      userManager.getUserById("testuser", "token");
+      fail("No error thrown for HTTP error");
+    }  catch (IOException ignore) {
+      // expected
+    }
   }
 
   @Test

@@ -51,6 +51,11 @@ import java.util.Map;
  */
 public class FirebaseAuth {
 
+  public static final String ERROR_USER_NOT_FOUND = "user-not-found";
+  public static final String ERROR_USER_SIGNUP_FAILED = "user-signup-failed";
+  public static final String ERROR_USER_UPDATE_FAILED = "user-update-failed";
+  public static final String ERROR_USER_DELETE_FAILED = "user-delete-failed";
+
   /** A global, thread-safe Json Factory built using Gson. */
   private static final JsonFactory jsonFactory = new GsonFactory();
 
@@ -245,6 +250,18 @@ public class FirebaseAuth {
           public User then(Task<GetTokenResult> task) throws Exception {
             userManager.updateUser(updater, task.getResult().getToken());
             return userManager.getUserById(updater.getUid(), task.getResult().getToken());
+          }
+        });
+  }
+
+  public Task<Void> deleteUser(final String uid) {
+    checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
+    return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
+        new Continuation<GetTokenResult, Void>() {
+          @Override
+          public Void then(Task<GetTokenResult> task) throws Exception {
+            userManager.deleteUser(uid, task.getResult().getToken());
+            return null;
           }
         });
   }

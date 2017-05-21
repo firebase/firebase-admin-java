@@ -47,6 +47,8 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertEquals(FirebaseAuth.ERROR_USER_NOT_FOUND,
+          ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
 
@@ -57,6 +59,8 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing email");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertEquals(FirebaseAuth.ERROR_USER_NOT_FOUND,
+          ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
 
@@ -72,13 +76,29 @@ public class FirebaseAuthIT {
         .setPhotoUrl("https://example.com/photo.png")
         .setEmailVerified(true)
         .setPassword("password");
+
     User user = Tasks.await(auth.createUser(builder));
-    assertEquals(randomId, user.getUid());
-    assertEquals("Random User", user.getDisplayName());
-    assertEquals(userEmail, user.getEmail());
-    assertEquals("https://example.com/photo.png", user.getPhotoUrl());
-    assertTrue(user.isEmailVerified());
-    assertFalse(user.isDisabled());
+    try {
+      assertEquals(randomId, user.getUid());
+      assertEquals("Random User", user.getDisplayName());
+      assertEquals(userEmail, user.getEmail());
+      assertEquals("https://example.com/photo.png", user.getPhotoUrl());
+      assertTrue(user.isEmailVerified());
+      assertFalse(user.isDisabled());
+
+      checkRecreate(randomId);
+    } finally {
+      Tasks.await(auth.deleteUser(user.getUid()));
+    }
+  }
+
+  private void checkRecreate(String uid) throws Exception {
+    try {
+      Tasks.await(auth.createUser(User.builder().setUid(uid)));
+      fail("No error thrown for creating user with existing ID");
+    } catch (ExecutionException e) {
+      // assertTrue(e.getCause() instanceof FirebaseAuthException);
+    }
   }
 
   @Test
@@ -126,6 +146,17 @@ public class FirebaseAuthIT {
     assertNull(user.getPhotoUrl());
     assertTrue(user.isEmailVerified());
     assertTrue(user.isDisabled());
+
+    // Delete user
+    Tasks.await(auth.deleteUser(user.getUid()));
+    try {
+      Tasks.await(auth.getUser(user.getUid()));
+      fail("No error thrown for deleted user");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertEquals(FirebaseAuth.ERROR_USER_NOT_FOUND,
+          ((FirebaseAuthException) e.getCause()).getErrorCode());
+    }
   }
 
 }
