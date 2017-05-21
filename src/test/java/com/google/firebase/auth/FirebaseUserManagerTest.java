@@ -112,8 +112,8 @@ public class FirebaseUserManagerTest {
       try {
         userManager.getUserById("testuser", "token");
         fail("No error thrown for HTTP error");
-      }  catch (IOException ignore) {
-        // expected
+      }  catch (FirebaseAuthException e) {
+        assertTrue(e.getCause() instanceof IOException);
       }
     }
   }
@@ -128,9 +128,9 @@ public class FirebaseUserManagerTest {
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
     try {
       userManager.getUserById("testuser", "token");
-      fail("No error thrown for HTTP error");
-    }  catch (IOException ignore) {
-      // expected
+      fail("No error thrown for JSON error");
+    }  catch (FirebaseAuthException e) {
+      assertTrue(e.getCause() instanceof IOException);
     }
   }
 

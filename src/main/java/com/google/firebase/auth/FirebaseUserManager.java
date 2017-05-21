@@ -38,6 +38,12 @@ import java.util.Map;
 
 class FirebaseUserManager {
 
+  static final String USER_NOT_FOUND_ERROR = "user-not-found";
+  static final String USER_SIGNUP_ERROR = "user-signup-failed";
+  static final String USER_UPDATE_ERROR = "user-update-failed";
+  static final String USER_DELETE_ERROR = "user-delete-failed";
+  static final String INTERNAL_ERROR = "internal-error";
+
   private static final String ID_TOOLKIT_URL =
       "https://www.googleapis.com/identitytoolkit/v3/relyingparty/";
 
@@ -49,55 +55,85 @@ class FirebaseUserManager {
     this.requestFactory = transport.createRequestFactory();
   }
 
-  User getUserById(String uid, String token) throws IOException, FirebaseAuthException {
+  User getUserById(String uid, String token) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "localId", ImmutableList.of(uid));
-    GetAccountInfoResponse response = post("getAccountInfo", token, payload,
-        GetAccountInfoResponse.class);
+    GetAccountInfoResponse response;
+    try {
+      response = post("getAccountInfo", token, payload,
+          GetAccountInfoResponse.class);
+    } catch (IOException e) {
+      throw new FirebaseAuthException(INTERNAL_ERROR,
+          "IO error while retrieving user with ID: " + uid, e);
+    }
+
     if (response.getUsers() == null || response.getUsers().isEmpty()) {
-      throw new FirebaseAuthException(FirebaseAuth.ERROR_USER_NOT_FOUND,
+      throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
           "No user record found for the provided user ID: " + uid);
     }
     return new User(response.getUsers().get(0));
   }
 
-  User getUserByEmail(String email, String token) throws IOException, FirebaseAuthException {
+  User getUserByEmail(String email, String token) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "email", ImmutableList.of(email));
-    GetAccountInfoResponse response = post("getAccountInfo", token, payload,
-        GetAccountInfoResponse.class);
+    GetAccountInfoResponse response;
+    try {
+      response = post("getAccountInfo", token, payload, GetAccountInfoResponse.class);
+    } catch (IOException e) {
+      throw new FirebaseAuthException(INTERNAL_ERROR,
+          "IO error while retrieving user with email: " + email, e);
+    }
+
     if (response.getUsers() == null || response.getUsers().isEmpty()) {
-      throw new FirebaseAuthException(FirebaseAuth.ERROR_USER_NOT_FOUND,
+      throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
           "No user record found for the provided email: " + email);
     }
     return new User(response.getUsers().get(0));
   }
 
-  String createUser(User.Builder builder, String token) throws IOException, FirebaseAuthException {
-    GenericJson response = post("signupNewUser", token, builder.build(), GenericJson.class);
-    if (response != null) {
-      String uid = (String) response.get("localId");
-      if (!Strings.isNullOrEmpty(uid)) {
-        return uid;
-      }
+  String createUser(User.Builder builder, String token) throws FirebaseAuthException {
+    GenericJson response;
+    try {
+      response = post("signupNewUser", token, builder.build(), GenericJson.class);
+    } catch (IOException e) {
+      throw new FirebaseAuthException(USER_SIGNUP_ERROR,
+          "IO error while creating user account", e);
     }
-    throw new FirebaseAuthException(FirebaseAuth.ERROR_USER_SIGNUP_FAILED,
-        "Failed to create new user");
+
+    String uid = (String) response.get("localId");
+    if (Strings.isNullOrEmpty(uid)) {
+      throw new FirebaseAuthException(USER_SIGNUP_ERROR, "Failed to create new user");
+    }
+    return uid;
   }
 
-  void updateUser(User.Updater updater, String token) throws IOException, FirebaseAuthException {
-    GenericJson response = post("setAccountInfo", token, updater.update(), GenericJson.class);
-    if (response == null || !updater.getUid().equals(response.get("localId"))) {
-      throw new FirebaseAuthException(FirebaseAuth.ERROR_USER_UPDATE_FAILED,
+  void updateUser(User.Updater updater, String token) throws FirebaseAuthException {
+    GenericJson response;
+    try {
+      response = post("setAccountInfo", token, updater.update(), GenericJson.class);
+    } catch (IOException e) {
+      throw new FirebaseAuthException(USER_UPDATE_ERROR,
+          "IO error while updating user: " + updater.getUid(), e);
+    }
+
+    if (!updater.getUid().equals(response.get("localId"))) {
+      throw new FirebaseAuthException(USER_UPDATE_ERROR,
           "Failed to update user: " + updater.getUid());
     }
   }
 
-  void deleteUser(String uid, String token) throws IOException, FirebaseAuthException {
+  void deleteUser(String uid, String token) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of("localId", uid);
-    GenericJson response = post("deleteAccount", token, payload, GenericJson.class);
+    GenericJson response;
+    try {
+      response = post("deleteAccount", token, payload, GenericJson.class);
+    } catch (IOException e) {
+      throw new FirebaseAuthException(USER_DELETE_ERROR,
+          "IO error while deleting user: " + uid, e);
+    }
     if (response == null || !response.containsKey("kind")) {
-      throw new FirebaseAuthException(FirebaseAuth.ERROR_USER_DELETE_FAILED,
+      throw new FirebaseAuthException(USER_DELETE_ERROR,
           "Failed to delete user: " + uid);
     }
   }

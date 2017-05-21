@@ -51,11 +51,6 @@ import java.util.Map;
  */
 public class FirebaseAuth {
 
-  public static final String ERROR_USER_NOT_FOUND = "user-not-found";
-  public static final String ERROR_USER_SIGNUP_FAILED = "user-signup-failed";
-  public static final String ERROR_USER_UPDATE_FAILED = "user-update-failed";
-  public static final String ERROR_USER_DELETE_FAILED = "user-delete-failed";
-
   /** A global, thread-safe Json Factory built using Gson. */
   private static final JsonFactory jsonFactory = new GsonFactory();
 

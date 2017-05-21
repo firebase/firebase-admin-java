@@ -47,7 +47,7 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseAuth.ERROR_USER_NOT_FOUND,
+      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
@@ -59,7 +59,7 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing email");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseAuth.ERROR_USER_NOT_FOUND,
+      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
@@ -97,7 +97,9 @@ public class FirebaseAuthIT {
       Tasks.await(auth.createUser(User.builder().setUid(uid)));
       fail("No error thrown for creating user with existing ID");
     } catch (ExecutionException e) {
-      // assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertEquals(FirebaseUserManager.USER_SIGNUP_ERROR,
+          ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
 
@@ -154,7 +156,7 @@ public class FirebaseAuthIT {
       fail("No error thrown for deleted user");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseAuth.ERROR_USER_NOT_FOUND,
+      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }

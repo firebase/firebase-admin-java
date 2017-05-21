@@ -41,8 +41,8 @@ public class FirebaseAuthException extends FirebaseException {
   }
 
   public FirebaseAuthException(@NonNull String errorCode, @NonNull String detailMessage,
-                               Throwable t) {
-    super(detailMessage, t);
+                               Throwable throwable) {
+    super(detailMessage, throwable);
     checkArgument(!Strings.isNullOrEmpty(errorCode));
     this.errorCode = errorCode;
   }
