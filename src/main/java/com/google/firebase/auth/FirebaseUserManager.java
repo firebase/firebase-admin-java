@@ -36,6 +36,13 @@ import com.google.firebase.auth.internal.GetAccountInfoResponse;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * FirebaseUserManager provides methods for interacting with the Google Identity Toolkit via its
+ * REST API. This class does not hold any mutable state, and is thread safe.
+ *
+ * @see <a href="https://developers.google.com/identity/toolkit/web/reference/relyingparty">
+ *   Google Identity Toolkit</a>
+ */
 class FirebaseUserManager {
 
   static final String USER_NOT_FOUND_ERROR = "USER_NOT_FOUND_ERROR";
@@ -50,6 +57,12 @@ class FirebaseUserManager {
   private final JsonFactory jsonFactory;
   private final HttpRequestFactory requestFactory;
 
+  /**
+   * Creates a new FirebaseUserManager instance.
+   *
+   * @param jsonFactory JsonFactory instance used to transform Java objects into JSON and back.
+   * @param transport HttpTransport used to make REST API calls.
+   */
   FirebaseUserManager(JsonFactory jsonFactory, HttpTransport transport) {
     this.jsonFactory = checkNotNull(jsonFactory, "jsonFactory must not be null");
     this.requestFactory = transport.createRequestFactory();
@@ -67,7 +80,7 @@ class FirebaseUserManager {
           "IO error while retrieving user with ID: " + uid, e);
     }
 
-    if (response.getUsers() == null || response.getUsers().isEmpty()) {
+    if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
       throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
           "No user record found for the provided user ID: " + uid);
     }
@@ -85,7 +98,7 @@ class FirebaseUserManager {
           "IO error while retrieving user with email: " + email, e);
     }
 
-    if (response.getUsers() == null || response.getUsers().isEmpty()) {
+    if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
       throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
           "No user record found for the provided email: " + email);
     }
@@ -101,11 +114,13 @@ class FirebaseUserManager {
           "IO error while creating user account", e);
     }
 
-    String uid = (String) response.get("localId");
-    if (Strings.isNullOrEmpty(uid)) {
-      throw new FirebaseAuthException(USER_CREATE_ERROR, "Failed to create new user");
+    if (response != null) {
+      String uid = (String) response.get("localId");
+      if (!Strings.isNullOrEmpty(uid)) {
+        return uid;
+      }
     }
-    return uid;
+    throw new FirebaseAuthException(USER_CREATE_ERROR, "Failed to create new user");
   }
 
   void updateUser(User.Updater updater, String token) throws FirebaseAuthException {
@@ -117,7 +132,7 @@ class FirebaseUserManager {
           "IO error while updating user: " + updater.getUid(), e);
     }
 
-    if (!updater.getUid().equals(response.get("localId"))) {
+    if (response == null || !updater.getUid().equals(response.get("localId"))) {
       throw new FirebaseAuthException(USER_UPDATE_ERROR,
           "Failed to update user: " + updater.getUid());
     }

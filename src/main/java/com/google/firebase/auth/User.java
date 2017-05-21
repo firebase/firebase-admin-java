@@ -31,6 +31,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Contains metadata associated with a Firebase user account. Instances of this class are immutable
+ * and thread safe.
+ */
 public class User {
 
   private static final Map<String, String> REMOVABLE_FIELDS = ImmutableMap.of(
@@ -68,14 +72,29 @@ public class User {
     this.lastLoginAt = response.getLastLoginAt();
   }
 
+  /**
+   * Returns the user ID of this user.
+   *
+   * @return a non-null, non-empty user ID string.
+   */
   public String getUid() {
     return uid;
   }
 
+  /**
+   * Returns the email address associated with this user.
+   *
+   * @return an email address string or null.
+   */
   public String getEmail() {
     return email;
   }
 
+  /**
+   * Returns whether the email address of this user has been verified.
+   *
+   * @return true if the email has been verified, and false otherwise.
+   */
   public boolean isEmailVerified() {
     return emailVerified;
   }
