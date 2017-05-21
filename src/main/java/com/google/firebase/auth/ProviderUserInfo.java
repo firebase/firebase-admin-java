@@ -18,7 +18,11 @@ package com.google.firebase.auth;
 
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 
-public class Provider {
+/**
+ * Contains metadata regarding how a user is known by a particular identity provider (IdP).
+ * Instances of this class are immutable and thread safe.
+ */
+public class ProviderUserInfo {
 
   private final String uid;
   private final String displayName;
@@ -26,7 +30,7 @@ public class Provider {
   private final String photoUrl;
   private final String providerId;
 
-  Provider(GetAccountInfoResponse.Provider response) {
+  ProviderUserInfo(GetAccountInfoResponse.Provider response) {
     this.uid = response.getUid();
     this.displayName = response.getDisplayName();
     this.email = response.getEmail();
@@ -34,22 +38,48 @@ public class Provider {
     this.providerId = response.getProviderId();
   }
 
+  /**
+   * Returns the user's unique ID at the IdP.
+   *
+   * @return a user ID string or null.
+   */
   public String getUid() {
     return uid;
   }
 
+  /**
+   * Returns the user's display name at the IdP
+   *
+   * @return a display name string or null.
+   */
   public String getDisplayName() {
     return displayName;
   }
 
+  /**
+   * Returns the user's email address at the IdP.
+   *
+   * @return an email address string or null.
+   */
   public String getEmail() {
     return email;
   }
 
+  /**
+   * Returns the user's photo URL at the IdP.
+   *
+   * @return a URL string or null.
+   */
   public String getPhotoUrl() {
     return photoUrl;
   }
 
+  /**
+   * Returns the ID of the identity provider. This can be a short domain name (e.g. google.com) or
+   * the OP identifier of an OpenID IdP.
+   *
+   * @return an ID string that uniquely identifies the IdP.
+   */
   public String getProviderId() {
     return providerId;
   }

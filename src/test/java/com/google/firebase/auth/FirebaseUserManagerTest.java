@@ -367,12 +367,12 @@ public class FirebaseUserManagerTest {
     assertEquals("Test User", user.getDisplayName());
     assertEquals("http://www.example.com/testuser/photo.png", user.getPhotoUrl());
     assertEquals(1234567890, user.getCreatedAt());
-    assertEquals(1, user.getProviders().length);
+    assertEquals(1, user.getProviderUserInfo().length);
     assertFalse(user.isDisabled());
     assertEquals(0, user.getLastLoginAt());
     assertTrue(user.isEmailVerified());
 
-    Provider provider = user.getProviders()[0];
+    ProviderUserInfo provider = user.getProviderUserInfo()[0];
     assertEquals("testuser@example.com", provider.getUid());
     assertEquals("testuser@example.com", provider.getEmail());
     assertEquals("Test User", provider.getDisplayName());
