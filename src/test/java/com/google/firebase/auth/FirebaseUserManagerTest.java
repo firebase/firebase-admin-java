@@ -18,6 +18,7 @@ package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -28,6 +29,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Map;
 import org.junit.Test;
 
@@ -366,10 +368,10 @@ public class FirebaseUserManagerTest {
     assertEquals("testuser@example.com", user.getEmail());
     assertEquals("Test User", user.getDisplayName());
     assertEquals("http://www.example.com/testuser/photo.png", user.getPhotoUrl());
-    assertEquals(1234567890, user.getCreatedAt());
+    assertEquals(new Date(1234567890), user.getCreatedAt());
     assertEquals(1, user.getProviderUserInfo().length);
     assertFalse(user.isDisabled());
-    assertEquals(0, user.getLastLoginAt());
+    assertNull(user.getLastLoginAt());
     assertTrue(user.isEmailVerified());
 
     ProviderUserInfo provider = user.getProviderUserInfo()[0];

@@ -27,6 +27,7 @@ import com.google.firebase.auth.internal.GetAccountInfoResponse;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,8 +49,8 @@ public class User {
   private final String photoUrl;
   private final boolean disabled;
   private final ProviderUserInfo[] providers;
-  private final long createdAt;
-  private final long lastLoginAt;
+  private final Date createdAt;
+  private final Date lastLoginAt;
 
   User(GetAccountInfoResponse.User response) {
     checkNotNull(response, "Response must not be null");
@@ -68,8 +69,12 @@ public class User {
         this.providers[i] = new ProviderUserInfo(response.getProviders()[i]);
       }
     }
-    this.createdAt = response.getCreatedAt();
-    this.lastLoginAt = response.getLastLoginAt();
+    this.createdAt = new Date(response.getCreatedAt());
+    if (response.getLastLoginAt() > 0) {
+      this.lastLoginAt = new Date(response.getLastLoginAt());
+    } else {
+      this.lastLoginAt = null;
+    }
   }
 
   /**
@@ -138,18 +143,18 @@ public class User {
   /**
    * Returns the timestamp at which the user account was created.
    *
-   * @return a Unix timestamp.
+   * @return a Date.
    */
-  public long getCreatedAt() {
+  public Date getCreatedAt() {
     return createdAt;
   }
 
   /**
    * Returns the timestamp at which the user last signed in.
    *
-   * @return a Unix timestamp, or 0 if the user has never signed in.
+   * @return a Date, or null if the user has never signed in.
    */
-  public long getLastLoginAt() {
+  public Date getLastLoginAt() {
     return lastLoginAt;
   }
 
