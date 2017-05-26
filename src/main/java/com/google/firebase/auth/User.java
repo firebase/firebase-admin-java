@@ -27,7 +27,6 @@ import com.google.firebase.auth.internal.GetAccountInfoResponse;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -49,8 +48,7 @@ public class User {
   private final String photoUrl;
   private final boolean disabled;
   private final ProviderUserInfo[] providers;
-  private final Date createdAt;
-  private final Date lastLoginAt;
+  private final UserMetadata userMetadata;
 
   User(GetAccountInfoResponse.User response) {
     checkNotNull(response, "Response must not be null");
@@ -69,12 +67,7 @@ public class User {
         this.providers[i] = new ProviderUserInfo(response.getProviders()[i]);
       }
     }
-    this.createdAt = new Date(response.getCreatedAt());
-    if (response.getLastLoginAt() > 0) {
-      this.lastLoginAt = new Date(response.getLastLoginAt());
-    } else {
-      this.lastLoginAt = null;
-    }
+    this.userMetadata = new UserMetadata(response.getCreatedAt(), response.getLastLoginAt());
   }
 
   /**
@@ -136,26 +129,17 @@ public class User {
    *
    * @return an array of {@link ProviderUserInfo} instances, which may be empty.
    */
-  public ProviderUserInfo[] getProviderUserInfo() {
+  public ProviderUserInfo[] getProviderData() {
     return providers;
   }
 
   /**
-   * Returns the timestamp at which the user account was created.
+   * Returns additional metadata associated with this user.
    *
-   * @return a Date.
+   * @return a non-null UserMetadata instance.
    */
-  public Date getCreatedAt() {
-    return createdAt;
-  }
-
-  /**
-   * Returns the timestamp at which the user last signed in.
-   *
-   * @return a Date, or null if the user has never signed in.
-   */
-  public Date getLastLoginAt() {
-    return lastLoginAt;
+  public UserMetadata getUserMetadata() {
+    return this.userMetadata;
   }
 
   /**

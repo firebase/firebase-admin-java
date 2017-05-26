@@ -18,7 +18,6 @@ package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -71,7 +70,6 @@ public class FirebaseAuthIT {
       Tasks.await(auth.updateUser(User.updater("non.existing")));
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
-      e.printStackTrace();
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       assertEquals(FirebaseUserManager.USER_UPDATE_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
@@ -143,8 +141,8 @@ public class FirebaseAuthIT {
     assertNull(user.getPhotoUrl());
     assertFalse(user.isEmailVerified());
     assertFalse(user.isDisabled());
-    assertNotNull(user.getCreatedAt());
-    assertNull(user.getLastLoginAt());
+    assertTrue(user.getUserMetadata().getCreationTimestamp() > 0);
+    assertEquals(0, user.getUserMetadata().getLastSignInTimestamp());
 
     // Update user
     String randomId = UUID.randomUUID().toString().replaceAll("-", "");
