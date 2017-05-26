@@ -19,6 +19,9 @@ package com.google.firebase.auth.internal;
 import com.google.api.client.util.Key;
 import java.util.List;
 
+/**
+ * JSON data binding for getAccountInfoResponse messages sent by Google identity toolkit service.
+ */
 public final class GetAccountInfoResponse {
 
   @Key("kind")
