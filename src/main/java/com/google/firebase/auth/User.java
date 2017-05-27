@@ -23,6 +23,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
+import com.google.firebase.internal.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -84,6 +85,7 @@ public class User {
    *
    * @return an email address string or null.
    */
+  @Nullable
   public String getEmail() {
     return email;
   }
@@ -102,6 +104,7 @@ public class User {
    *
    * @return a display name string or null.
    */
+  @Nullable
   public String getDisplayName() {
     return displayName;
   }
@@ -111,6 +114,7 @@ public class User {
    *
    * @return a URL string or null.
    */
+  @Nullable
   public String getPhotoUrl() {
     return photoUrl;
   }
@@ -287,7 +291,7 @@ public class User {
 
   /**
    * A class for updating the attributes of an existing user. An instance of this class can be
-   * obtained via a {@link User} object, or from an user ID string. Specify the changes to be
+   * obtained via a {@link User} object, or from a user ID string. Specify the changes to be
    * made in the user account by calling the various setter methods available in this class.
    */
   public static class Updater {
@@ -336,7 +340,7 @@ public class User {
     }
 
     /**
-     * Updates the Photo URL of this user. Calling this method with null a null argument removes
+     * Updates the Photo URL of this user. Calling this method with a null argument removes
      * the photo URL attribute from the user account.
      *
      * @param photoUrl a valid URL string or null

@@ -69,7 +69,7 @@ public class FirebaseAuth {
    */
   @VisibleForTesting
   FirebaseAuth(
-      final FirebaseApp firebaseApp, GooglePublicKeysManager googlePublicKeysManager, Clock clock) {
+      FirebaseApp firebaseApp, GooglePublicKeysManager googlePublicKeysManager, Clock clock) {
     this.firebaseApp = firebaseApp;
     this.googlePublicKeysManager = googlePublicKeysManager;
     this.clock = clock;
@@ -209,7 +209,7 @@ public class FirebaseAuth {
    * @param uid A user ID string.
    * @return A {@link Task} which will complete successfully with a {@link User} instance.
    *     If an error occurs while retrieving user data or if the specified user ID does not exist,
-   *     the task fails by throwing a FirebaseAuthException.
+   *     the task fails with a FirebaseAuthException.
    * @throws IllegalArgumentException If the user ID string is null or empty.
    */
   public Task<User> getUser(final String uid) {
@@ -229,7 +229,7 @@ public class FirebaseAuth {
    * @param email A user email address string.
    * @return A {@link Task} which will complete successfully with a {@link User} instance.
    *     If an error occurs while retrieving user data or if the email address does not correspond
-   *     to a user, the task fails by throwing a FirebaseAuthException.
+   *     to a user, the task fails with a FirebaseAuthException.
    * @throws IllegalArgumentException If the email is null or empty.
    */
   public Task<User> getUserByEmail(final String email) {
@@ -249,7 +249,7 @@ public class FirebaseAuth {
    * @param builder A non-null {@link User.Builder} instance.
    * @return A {@link Task} which will complete successfully with a {@link User} instance
    *     corresponding to the newly created account. If an error occurs while creating the user
-   *     account, the task fails by throwing a FirebaseAuthException.
+   *     account, the task fails with a FirebaseAuthException.
    * @throws NullPointerException if the provided builder is null.
    */
   public Task<User> createUser(final User.Builder builder) {
@@ -271,7 +271,7 @@ public class FirebaseAuth {
    * @param updater A non-null {@link User.Updater} instance.
    * @return A {@link Task} which will complete successfully with a {@link User} instance
    *     corresponding to the updated user account. If an error occurs while updating the user
-   *     account, the task fails by throwing a FirebaseAuthException.
+   *     account, the task fails with a FirebaseAuthException.
    * @throws NullPointerException if the provided updater is null.
    */
   public Task<User> updateUser(final User.Updater updater) {
@@ -291,8 +291,8 @@ public class FirebaseAuth {
    *
    * @param uid A user ID string.
    * @return A {@link Task} which will complete successfully when the specified user account has
-   *     been deleted. If an error occurs while deleting the user account, the task fails by
-   *     throwing a FirebaseAuthException.
+   *     been deleted. If an error occurs while deleting the user account, the task fails with a
+   *     FirebaseAuthException.
    * @throws IllegalArgumentException If the user ID string is null or empty.
    */
   public Task<Void> deleteUser(final String uid) {
