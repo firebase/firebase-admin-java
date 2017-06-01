@@ -16,18 +16,24 @@
 
 package com.google.firebase.auth;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
+import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.Clock;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.internal.FirebaseService;
+import com.google.firebase.internal.GetTokenResult;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.tasks.Continuation;
 import com.google.firebase.tasks.Task;
@@ -51,6 +57,7 @@ public class FirebaseAuth {
   private final FirebaseApp firebaseApp;
   private final GooglePublicKeysManager googlePublicKeysManager;
   private final Clock clock;
+  private final FirebaseUserManager userManager;
 
   private FirebaseAuth(FirebaseApp firebaseApp) {
     this(firebaseApp, FirebaseTokenVerifier.DEFAULT_KEY_MANAGER, Clock.SYSTEM);
@@ -66,6 +73,7 @@ public class FirebaseAuth {
     this.firebaseApp = firebaseApp;
     this.googlePublicKeysManager = googlePublicKeysManager;
     this.clock = clock;
+    this.userManager = new FirebaseUserManager(jsonFactory, Utils.getDefaultTransport());
   }
 
   /**
@@ -195,6 +203,110 @@ public class FirebaseAuth {
             });
   }
 
+  /**
+   * Gets the user data corresponding to the specified user ID.
+   *
+   * @param uid A user ID string.
+   * @return A {@link Task} which will complete successfully with a {@link User} instance.
+   *     If an error occurs while retrieving user data or if the specified user ID does not exist,
+   *     the task fails with a FirebaseAuthException.
+   * @throws IllegalArgumentException If the user ID string is null or empty.
+   */
+  public Task<User> getUser(final String uid) {
+    checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
+    return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
+        new Continuation<GetTokenResult, User>() {
+          @Override
+          public User then(Task<GetTokenResult> task) throws Exception {
+            return userManager.getUserById(uid, task.getResult().getToken());
+          }
+        });
+  }
+
+  /**
+   * Gets the user data corresponding to the specified user email.
+   *
+   * @param email A user email address string.
+   * @return A {@link Task} which will complete successfully with a {@link User} instance.
+   *     If an error occurs while retrieving user data or if the email address does not correspond
+   *     to a user, the task fails with a FirebaseAuthException.
+   * @throws IllegalArgumentException If the email is null or empty.
+   */
+  public Task<User> getUserByEmail(final String email) {
+    checkArgument(!Strings.isNullOrEmpty(email), "email must not be null or empty");
+    return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
+        new Continuation<GetTokenResult, User>() {
+          @Override
+          public User then(Task<GetTokenResult> task) throws Exception {
+            return userManager.getUserByEmail(email, task.getResult().getToken());
+          }
+        });
+  }
+
+  /**
+   * Creates a new user account with the attributes contained in the specified {@link User.Builder}.
+   *
+   * @param builder A non-null {@link User.Builder} instance.
+   * @return A {@link Task} which will complete successfully with a {@link User} instance
+   *     corresponding to the newly created account. If an error occurs while creating the user
+   *     account, the task fails with a FirebaseAuthException.
+   * @throws NullPointerException if the provided builder is null.
+   */
+  public Task<User> createUser(final User.Builder builder) {
+    checkNotNull(builder, "builder must not be null");
+    return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
+        new Continuation<GetTokenResult, User>() {
+          @Override
+          public User then(Task<GetTokenResult> task) throws Exception {
+            String uid = userManager.createUser(builder, task.getResult().getToken());
+            return userManager.getUserById(uid, task.getResult().getToken());
+          }
+        });
+  }
+
+  /**
+   * Updates an existing user account with the attributes contained in the specified
+   * {@link User.Updater}.
+   *
+   * @param updater A non-null {@link User.Updater} instance.
+   * @return A {@link Task} which will complete successfully with a {@link User} instance
+   *     corresponding to the updated user account. If an error occurs while updating the user
+   *     account, the task fails with a FirebaseAuthException.
+   * @throws NullPointerException if the provided updater is null.
+   */
+  public Task<User> updateUser(final User.Updater updater) {
+    checkNotNull(updater, "updater must not be null");
+    return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
+        new Continuation<GetTokenResult, User>() {
+          @Override
+          public User then(Task<GetTokenResult> task) throws Exception {
+            userManager.updateUser(updater, task.getResult().getToken());
+            return userManager.getUserById(updater.getUid(), task.getResult().getToken());
+          }
+        });
+  }
+
+  /**
+   * Deletes the user identified by the specified user ID.
+   *
+   * @param uid A user ID string.
+   * @return A {@link Task} which will complete successfully when the specified user account has
+   *     been deleted. If an error occurs while deleting the user account, the task fails with a
+   *     FirebaseAuthException.
+   * @throws IllegalArgumentException If the user ID string is null or empty.
+   */
+  public Task<Void> deleteUser(final String uid) {
+    checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
+    return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
+        new Continuation<GetTokenResult, Void>() {
+          @Override
+          public Void then(Task<GetTokenResult> task) throws Exception {
+            userManager.deleteUser(uid, task.getResult().getToken());
+            return null;
+          }
+        });
+  }
+
   private static final String SERVICE_ID = FirebaseAuth.class.getName();
 
   private static class FirebaseAuthService extends FirebaseService<FirebaseAuth> {
@@ -206,8 +318,8 @@ public class FirebaseAuth {
     @Override
     public void destroy() {
       // NOTE: We don't explicitly tear down anything here, but public methods of FirebaseAuth
-      // will now fail because calls to getCredential() will hit FirebaseApp.getOptions() which
-      // will throw once the app is deleted.
+      // will now fail because calls to getCredential() and getToken() will hit FirebaseApp,
+      // which will throw once the app is deleted.
     }
   }
 }

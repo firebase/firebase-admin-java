@@ -70,7 +70,7 @@ public class TestUtils {
     }
   }
 
-  static String loadResource(String path) {
+  public static String loadResource(String path) {
     InputStream stream = TestUtils.class.getClassLoader().getResourceAsStream(path);
     checkNotNull(stream, "Failed to load resource: %s", path);
     try (InputStreamReader reader = new InputStreamReader(stream)) {
