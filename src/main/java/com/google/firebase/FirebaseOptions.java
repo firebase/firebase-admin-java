@@ -19,6 +19,9 @@ package com.google.firebase;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.firebase.auth.FirebaseCredential;
@@ -37,15 +40,18 @@ public final class FirebaseOptions {
   private final String databaseUrl;
   private final FirebaseCredential firebaseCredential;
   private final Map<String, Object> databaseAuthVariableOverride;
+  private final HttpTransport httpTransport;
+  private final JsonFactory jsonFactory;
 
-  private FirebaseOptions(
-      @Nullable String databaseUrl,
-      @NonNull FirebaseCredential firebaseCredential,
-      @Nullable Map<String, Object> databaseAuthVariableOverride) {
-
-    this.databaseUrl = databaseUrl;
-    this.firebaseCredential = checkNotNull(firebaseCredential, "Service Account must be provided.");
-    this.databaseAuthVariableOverride = databaseAuthVariableOverride;
+  private FirebaseOptions(@NonNull FirebaseOptions.Builder builder) {
+    this.firebaseCredential = checkNotNull(builder.firebaseCredential,
+        "FirebaseOptions must be initialized with setCredential().");
+    this.databaseUrl = builder.databaseUrl;
+    this.databaseAuthVariableOverride = builder.databaseAuthVariableOverride;
+    this.httpTransport = checkNotNull(builder.httpTransport,
+        "FirebaseOptions must be initialized with a non-null HttpTransport.");
+    this.jsonFactory = checkNotNull(builder.jsonFactory,
+        "FirebaseOptions must be initialized with a non-null JsonFactory.");
   }
 
   /**
@@ -69,6 +75,26 @@ public final class FirebaseOptions {
    */
   public Map<String, Object> getDatabaseAuthVariableOverride() {
     return databaseAuthVariableOverride;
+  }
+
+  /**
+   * Returns the HttpTransport used to call remote HTTP endpoints.
+   *
+   * @return A Google API client HttpTransport instance.
+   */
+  @NonNull
+  public HttpTransport getHttpTransport() {
+    return httpTransport;
+  }
+
+  /**
+   * Returns the JsonFactory used to parse JSON when calling remote HTTP endpoints.
+   *
+   * @return A Google API client JsonFactory instance.
+   */
+  @NonNull
+  public JsonFactory getJsonFactory() {
+    return jsonFactory;
   }
 
   @Override
@@ -104,6 +130,8 @@ public final class FirebaseOptions {
     private String databaseUrl;
     private FirebaseCredential firebaseCredential;
     private Map<String, Object> databaseAuthVariableOverride = new HashMap<>();
+    private HttpTransport httpTransport = Utils.getDefaultTransport();
+    private JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
 
     /** Constructs an empty builder. */
     public Builder() {}
@@ -174,14 +202,36 @@ public final class FirebaseOptions {
     }
 
     /**
+     * Sets the HttpTransport used to make remote HTTP calls. A reasonable default
+     * will be used if not explicitly set.
+     *
+     * @param httpTransport An HttpTransport instance
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setHttpTransport(HttpTransport httpTransport) {
+      this.httpTransport = httpTransport;
+      return this;
+    }
+
+    /**
+     * Sets the JsonFactory used to parse JSON when making remote HTTP calls. A reasonable default
+     * will be used if not explicitly set.
+     *
+     * @param jsonFactory A JsonFactory instance.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setJsonFactory(JsonFactory jsonFactory) {
+      this.jsonFactory = jsonFactory;
+      return this;
+    }
+
+    /**
      * Builds the {@link FirebaseOptions} instance from the previously set options.
      *
      * @return A {@link FirebaseOptions} instance created from the previously set options.
      */
     public FirebaseOptions build() {
-      checkArgument(firebaseCredential != null,
-          "FirebaseOptions must be initialized with setCredential().");
-      return new FirebaseOptions(databaseUrl, firebaseCredential, databaseAuthVariableOverride);
+      return new FirebaseOptions(this);
     }
   }
 }

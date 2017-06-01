@@ -21,9 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.Clock;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -51,12 +49,10 @@ import java.util.Map;
  */
 public class FirebaseAuth {
 
-  /** A global, thread-safe Json Factory built using Gson. */
-  private static final JsonFactory jsonFactory = new GsonFactory();
-
   private final FirebaseApp firebaseApp;
   private final GooglePublicKeysManager googlePublicKeysManager;
   private final Clock clock;
+  private final JsonFactory jsonFactory;
   private final FirebaseUserManager userManager;
 
   private FirebaseAuth(FirebaseApp firebaseApp) {
@@ -73,7 +69,9 @@ public class FirebaseAuth {
     this.firebaseApp = firebaseApp;
     this.googlePublicKeysManager = googlePublicKeysManager;
     this.clock = clock;
-    this.userManager = new FirebaseUserManager(jsonFactory, Utils.getDefaultTransport());
+    this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
+    this.userManager = new FirebaseUserManager(jsonFactory,
+        firebaseApp.getOptions().getHttpTransport());
   }
 
   /**
