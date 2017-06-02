@@ -16,7 +16,6 @@
 
 package com.google.firebase;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.googleapis.util.Utils;
@@ -146,6 +145,8 @@ public final class FirebaseOptions {
       databaseUrl = options.databaseUrl;
       firebaseCredential = options.firebaseCredential;
       databaseAuthVariableOverride = options.databaseAuthVariableOverride;
+      httpTransport = options.httpTransport;
+      jsonFactory = options.jsonFactory;
     }
 
     /**
