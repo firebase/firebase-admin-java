@@ -36,7 +36,7 @@ import java.util.Map;
  * Contains metadata associated with a Firebase user account. Instances of this class are immutable
  * and thread safe.
  */
-public class User implements UserInfo {
+public class UserRecord implements UserInfo {
 
   private static final String PROVIDER_ID = "firebase";
   private static final Map<String, String> REMOVABLE_FIELDS = ImmutableMap.of(
@@ -52,7 +52,7 @@ public class User implements UserInfo {
   private final ProviderUserInfo[] providers;
   private final UserMetadata userMetadata;
 
-  User(GetAccountInfoResponse.User response) {
+  UserRecord(GetAccountInfoResponse.User response) {
     checkNotNull(response, "Response must not be null");
     checkArgument(!Strings.isNullOrEmpty(response.getUid()), "uid must not be null or empty");
     this.uid = response.getUid();
@@ -163,22 +163,22 @@ public class User implements UserInfo {
   }
 
   /**
-   * Returns a new {@link User.Updater} instance, which can be used to update the attributes
+   * Returns a new {@link UserRecord.Updater} instance, which can be used to update the attributes
    * of this user.
    *
-   * @return a non-null User.Updater instance.
+   * @return a non-null UserRecord.Updater instance.
    */
   public Updater updater() {
     return new Updater(uid);
   }
 
   /**
-   * Returns a new {@link User.Updater} instance, which can be used to update the attributes
+   * Returns a new {@link UserRecord.Updater} instance, which can be used to update the attributes
    * of the user identified by the specified user ID. This method allows updating attributes of
    * a user account, without first having to call {@link FirebaseAuth#getUser(String)}.
    *
    * @param uid a non-null, non-empty user ID string.
-   * @return a non-null User.Updater instance.
+   * @return a non-null UserRecord.Updater instance.
    * @throws IllegalArgumentException If the user ID is null or empty.
    */
   public static Updater updater(String uid) {
@@ -186,11 +186,11 @@ public class User implements UserInfo {
   }
 
   /**
-   * Returns a new {@link User.Builder} instance, which can be used to create a new user. The
+   * Returns a new {@link UserRecord.Builder} instance, which can be used to create a new user. The
    * returned builder should be passed to {@link FirebaseAuth#createUser(Builder)} to register
    * the user information persistently.
    *
-   * @return a non-null User.Builder instance.
+   * @return a non-null UserRecord.Builder instance.
    */
   public static Builder builder() {
     return new Builder();
@@ -307,7 +307,7 @@ public class User implements UserInfo {
 
   /**
    * A class for updating the attributes of an existing user. An instance of this class can be
-   * obtained via a {@link User} object, or from a user ID string. Specify the changes to be
+   * obtained via a {@link UserRecord} object, or from a user ID string. Specify the changes to be
    * made in the user account by calling the various setter methods available in this class.
    */
   public static class Updater {

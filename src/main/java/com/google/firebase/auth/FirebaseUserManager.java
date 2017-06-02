@@ -68,7 +68,7 @@ class FirebaseUserManager {
     this.requestFactory = transport.createRequestFactory();
   }
 
-  User getUserById(String uid, String token) throws FirebaseAuthException {
+  UserRecord getUserById(String uid, String token) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "localId", ImmutableList.of(uid));
     GetAccountInfoResponse response;
@@ -84,10 +84,10 @@ class FirebaseUserManager {
       throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
           "No user record found for the provided user ID: " + uid);
     }
-    return new User(response.getUsers().get(0));
+    return new UserRecord(response.getUsers().get(0));
   }
 
-  User getUserByEmail(String email, String token) throws FirebaseAuthException {
+  UserRecord getUserByEmail(String email, String token) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "email", ImmutableList.of(email));
     GetAccountInfoResponse response;
@@ -102,10 +102,10 @@ class FirebaseUserManager {
       throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
           "No user record found for the provided email: " + email);
     }
-    return new User(response.getUsers().get(0));
+    return new UserRecord(response.getUsers().get(0));
   }
 
-  String createUser(User.Builder builder, String token) throws FirebaseAuthException {
+  String createUser(UserRecord.Builder builder, String token) throws FirebaseAuthException {
     GenericJson response;
     try {
       response = post("signupNewUser", token, builder.build(), GenericJson.class);
@@ -123,7 +123,7 @@ class FirebaseUserManager {
     throw new FirebaseAuthException(USER_CREATE_ERROR, "Failed to create new user");
   }
 
-  void updateUser(User.Updater updater, String token) throws FirebaseAuthException {
+  void updateUser(UserRecord.Updater updater, String token) throws FirebaseAuthException {
     GenericJson response;
     try {
       response = post("setAccountInfo", token, updater.update(), GenericJson.class);

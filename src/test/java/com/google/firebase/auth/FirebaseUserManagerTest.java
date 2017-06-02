@@ -43,8 +43,8 @@ public class FirebaseUserManagerTest {
         .setLowLevelHttpResponse(response)
         .build();
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
-    User user = userManager.getUserById("testuser", "token");
-    checkUser(user);
+    UserRecord userRecord = userManager.getUserById("testuser", "token");
+    checkUserRecord(userRecord);
   }
 
   @Test
@@ -71,8 +71,8 @@ public class FirebaseUserManagerTest {
         .setLowLevelHttpResponse(response)
         .build();
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
-    User user = userManager.getUserByEmail("testuser@example.com", "token");
-    checkUser(user);
+    UserRecord userRecord = userManager.getUserByEmail("testuser@example.com", "token");
+    checkUserRecord(userRecord);
   }
 
   @Test
@@ -83,7 +83,7 @@ public class FirebaseUserManagerTest {
         .setLowLevelHttpResponse(response)
         .build();
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
-    String uid = userManager.createUser(User.builder(), "token");
+    String uid = userManager.createUser(UserRecord.builder(), "token");
     assertEquals("testuser", uid);
   }
 
@@ -96,7 +96,7 @@ public class FirebaseUserManagerTest {
         .build();
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
     // should not throw
-    userManager.updateUser(User.updater("testuser"), "token");
+    userManager.updateUser(UserRecord.updater("testuser"), "token");
   }
 
   @Test
@@ -137,14 +137,14 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUserBuilder() {
-    Map<String, Object> map = User.builder()
+    Map<String, Object> map = UserRecord.builder()
         .build();
     assertTrue(map.isEmpty());
   }
 
   @Test
   public void testUserBuilderWithParams() {
-    Map<String, Object> map = User.builder()
+    Map<String, Object> map = UserRecord.builder()
         .setUid("TestUid")
         .setDisplayName("Display Name")
         .setPhotoUrl("http://test.com/example.png")
@@ -163,7 +163,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUid() {
-    User.Builder builder = User.builder();
+    UserRecord.Builder builder = UserRecord.builder();
     try {
       builder.setUid(null);
       fail("No error thrown for null uid");
@@ -188,7 +188,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidDisplayName() {
-    User.Builder builder = User.builder();
+    UserRecord.Builder builder = UserRecord.builder();
     try {
       builder.setDisplayName(null);
       fail("No error thrown for null display name");
@@ -199,7 +199,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidPhotoUrl() {
-    User.Builder builder = User.builder();
+    UserRecord.Builder builder = UserRecord.builder();
     try {
       builder.setPhotoUrl(null);
       fail("No error thrown for null photo url");
@@ -224,7 +224,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidEmail() {
-    User.Builder builder = User.builder();
+    UserRecord.Builder builder = UserRecord.builder();
     try {
       builder.setEmail(null);
       fail("No error thrown for null email");
@@ -249,7 +249,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidPassword() {
-    User.Builder builder = User.builder();
+    UserRecord.Builder builder = UserRecord.builder();
     try {
       builder.setPassword(null);
       fail("No error thrown for null password");
@@ -267,7 +267,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUserUpdater() {
-    User.Updater updater = User.updater("test");
+    UserRecord.Updater updater = UserRecord.updater("test");
     Map<String, Object> map = updater
         .setDisplayName("Display Name")
         .setPhotoUrl("http://test.com/example.png")
@@ -286,7 +286,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeleteDisplayName() {
-    Map<String, Object> map = User.updater("test")
+    Map<String, Object> map = UserRecord.updater("test")
         .setDisplayName(null)
         .update();
     assertEquals(ImmutableList.of("DISPLAY_NAME"), map.get("deleteAttribute"));
@@ -294,7 +294,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeletePhotoUrl() {
-    Map<String, Object> map = User.updater("test")
+    Map<String, Object> map = UserRecord.updater("test")
         .setPhotoUrl(null)
         .update();
     assertEquals(ImmutableList.of("PHOTO_URL"), map.get("deleteAttribute"));
@@ -302,7 +302,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUpdatePhotoUrl() {
-    User.Updater updater = User.updater("test");
+    UserRecord.Updater updater = UserRecord.updater("test");
     try {
       updater.setPhotoUrl("");
       fail("No error thrown for invalid photo url");
@@ -320,7 +320,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUpdateEmail() {
-    User.Updater updater = User.updater("test");
+    UserRecord.Updater updater = UserRecord.updater("test");
     try {
       updater.setEmail(null);
       fail("No error thrown for null email");
@@ -345,7 +345,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUpdatePassword() {
-    User.Updater updater = User.updater("test");
+    UserRecord.Updater updater = UserRecord.updater("test");
     try {
       updater.setPassword(null);
       fail("No error thrown for null password");
@@ -361,18 +361,18 @@ public class FirebaseUserManagerTest {
     }
   }
 
-  private void checkUser(User user) {
-    assertEquals("testuser", user.getUid());
-    assertEquals("testuser@example.com", user.getEmail());
-    assertEquals("Test User", user.getDisplayName());
-    assertEquals("http://www.example.com/testuser/photo.png", user.getPhotoUrl());
-    assertEquals(1234567890, user.getUserMetadata().getCreationTimestamp());
-    assertEquals(0, user.getUserMetadata().getLastSignInTimestamp());
-    assertEquals(1, user.getProviderData().length);
-    assertFalse(user.isDisabled());
-    assertTrue(user.isEmailVerified());
+  private void checkUserRecord(UserRecord userRecord) {
+    assertEquals("testuser", userRecord.getUid());
+    assertEquals("testuser@example.com", userRecord.getEmail());
+    assertEquals("Test User", userRecord.getDisplayName());
+    assertEquals("http://www.example.com/testuser/photo.png", userRecord.getPhotoUrl());
+    assertEquals(1234567890, userRecord.getUserMetadata().getCreationTimestamp());
+    assertEquals(0, userRecord.getUserMetadata().getLastSignInTimestamp());
+    assertEquals(1, userRecord.getProviderData().length);
+    assertFalse(userRecord.isDisabled());
+    assertTrue(userRecord.isEmailVerified());
 
-    UserInfo provider = user.getProviderData()[0];
+    UserInfo provider = userRecord.getProviderData()[0];
     assertEquals("testuser@example.com", provider.getUid());
     assertEquals("testuser@example.com", provider.getEmail());
     assertEquals("Test User", provider.getDisplayName());
