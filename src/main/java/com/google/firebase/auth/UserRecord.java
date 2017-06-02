@@ -296,7 +296,7 @@ public class UserRecord implements UserInfo {
     private final Map<String,Object> properties = new HashMap<>();
 
     /**
-     * Creates a new {@link Update} instance, which can be used to getProperties the attributes
+     * Creates a new {@link Update} instance, which can be used to update the attributes
      * of the user identified by the specified user ID. This method allows updating attributes of
      * a user account, without first having to call {@link FirebaseAuth#getUser(String)}.
      *

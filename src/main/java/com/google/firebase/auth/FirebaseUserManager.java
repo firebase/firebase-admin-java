@@ -135,7 +135,7 @@ class FirebaseUserManager {
 
     if (response == null || !update.getUid().equals(response.get("localId"))) {
       throw new FirebaseAuthException(USER_UPDATE_ERROR,
-          "Failed to getProperties user: " + update.getUid());
+          "Failed to update user: " + update.getUid());
     }
   }
 

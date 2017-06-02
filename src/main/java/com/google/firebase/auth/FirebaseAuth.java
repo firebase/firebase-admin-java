@@ -252,10 +252,10 @@ public class FirebaseAuth {
    * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance
    *     corresponding to the newly created account. If an error occurs while creating the user
    *     account, the task fails with a FirebaseAuthException.
-   * @throws NullPointerException if the provided builder is null.
+   * @throws NullPointerException if the provided user is null.
    */
   public Task<UserRecord> createUser(final UserRecord.NewUser user) {
-    checkNotNull(user, "builder must not be null");
+    checkNotNull(user, "user must not be null");
     return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
         new Continuation<GetTokenResult, UserRecord>() {
           @Override
@@ -274,10 +274,10 @@ public class FirebaseAuth {
    * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance
    *     corresponding to the updated user account. If an error occurs while updating the user
    *     account, the task fails with a FirebaseAuthException.
-   * @throws NullPointerException if the provided getProperties is null.
+   * @throws NullPointerException if the provided update is null.
    */
   public Task<UserRecord> updateUser(final Update update) {
-    checkNotNull(update, "getProperties must not be null");
+    checkNotNull(update, "update must not be null");
     return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
         new Continuation<GetTokenResult, UserRecord>() {
           @Override
