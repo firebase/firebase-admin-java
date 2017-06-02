@@ -30,7 +30,8 @@ import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.auth.UserRecord.Update;
+import com.google.firebase.auth.UserRecord.CreateRequest;
+import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.internal.FirebaseService;
@@ -246,15 +247,15 @@ public class FirebaseAuth {
 
   /**
    * Creates a new user account with the attributes contained in the specified
-   * {@link UserRecord.NewUser}.
+   * {@link CreateRequest}.
    *
-   * @param user A non-null {@link UserRecord.NewUser} instance.
+   * @param user A non-null {@link CreateRequest} instance.
    * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance
    *     corresponding to the newly created account. If an error occurs while creating the user
    *     account, the task fails with a FirebaseAuthException.
    * @throws NullPointerException if the provided user is null.
    */
-  public Task<UserRecord> createUser(final UserRecord.NewUser user) {
+  public Task<UserRecord> createUser(final CreateRequest user) {
     checkNotNull(user, "user must not be null");
     return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
         new Continuation<GetTokenResult, UserRecord>() {
@@ -268,22 +269,22 @@ public class FirebaseAuth {
 
   /**
    * Updates an existing user account with the attributes contained in the specified
-   * {@link Update}.
+   * {@link UpdateRequest}.
    *
-   * @param update A non-null {@link Update} instance.
+   * @param request A non-null {@link UpdateRequest} instance.
    * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance
    *     corresponding to the updated user account. If an error occurs while updating the user
    *     account, the task fails with a FirebaseAuthException.
    * @throws NullPointerException if the provided update is null.
    */
-  public Task<UserRecord> updateUser(final Update update) {
-    checkNotNull(update, "update must not be null");
+  public Task<UserRecord> updateUser(final UpdateRequest request) {
+    checkNotNull(request, "update must not be null");
     return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
         new Continuation<GetTokenResult, UserRecord>() {
           @Override
           public UserRecord then(Task<GetTokenResult> task) throws Exception {
-            userManager.updateUser(update, task.getResult().getToken());
-            return userManager.getUserById(update.getUid(), task.getResult().getToken());
+            userManager.updateUser(request, task.getResult().getToken());
+            return userManager.getUserById(request.getUid(), task.getResult().getToken());
           }
         });
   }

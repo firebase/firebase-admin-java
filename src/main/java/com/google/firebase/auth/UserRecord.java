@@ -163,13 +163,13 @@ public class UserRecord implements UserInfo {
   }
 
   /**
-   * Returns a new {@link Update} instance, which can be used to getProperties the attributes
+   * Returns a new {@link UpdateRequest}, which can be used to getProperties the attributes
    * of this user.
    *
-   * @return a non-null UserRecord.Update instance.
+   * @return a non-null UserRecord.UpdateRequest instance.
    */
-  public Update newUpdate() {
-    return new Update(uid);
+  public UpdateRequest updateRequest() {
+    return new UpdateRequest(uid);
   }
 
   private static void checkEmail(String email) {
@@ -187,16 +187,16 @@ public class UserRecord implements UserInfo {
    * user account by calling various setter methods available in this class. None of the attributes
    * are required.
    */
-  public static class NewUser {
+  public static class CreateRequest {
 
     private final Map<String,Object> properties = new HashMap<>();
 
     /**
-     * Creates a new {@link NewUser} instance, which can be used to create a new user. The
-     * returned object should be passed to {@link FirebaseAuth#createUser(NewUser)} to register
+     * Creates a new {@link CreateRequest}, which can be used to create a new user. The returned
+     * object should be passed to {@link FirebaseAuth#createUser(CreateRequest)} to register
      * the user information persistently.
      */
-    public NewUser() {
+    public CreateRequest() {
     }
 
     /**
@@ -205,7 +205,7 @@ public class UserRecord implements UserInfo {
      * @param uid a non-null, non-empty user ID that uniquely identifies the new user. The user ID
      *     must not be longer than 128 characters.
      */
-    public NewUser setUid(String uid) {
+    public CreateRequest setUid(String uid) {
       checkArgument(!Strings.isNullOrEmpty(uid), "uid cannot be null or empty");
       checkArgument(uid.length() <= 128, "UID cannot be longer than 128 characters");
       properties.put("localId", uid);
@@ -217,7 +217,7 @@ public class UserRecord implements UserInfo {
      *
      * @param email a non-null, non-empty email address string.
      */
-    public NewUser setEmail(String email) {
+    public CreateRequest setEmail(String email) {
       checkEmail(email);
       properties.put("email", email);
       return this;
@@ -228,7 +228,7 @@ public class UserRecord implements UserInfo {
      *
      * @param emailVerified a boolean indicating the email verification status.
      */
-    public NewUser setEmailVerified(boolean emailVerified) {
+    public CreateRequest setEmailVerified(boolean emailVerified) {
       properties.put("emailVerified", emailVerified);
       return this;
     }
@@ -238,7 +238,7 @@ public class UserRecord implements UserInfo {
      *
      * @param displayName a non-null, non-empty display name string.
      */
-    public NewUser setDisplayName(String displayName) {
+    public CreateRequest setDisplayName(String displayName) {
       checkNotNull(displayName, "displayName cannot be null or empty");
       properties.put("displayName", displayName);
       return this;
@@ -249,7 +249,7 @@ public class UserRecord implements UserInfo {
      *
      * @param photoUrl a non-null, non-empty URL string.
      */
-    public NewUser setPhotoUrl(String photoUrl) {
+    public CreateRequest setPhotoUrl(String photoUrl) {
       checkArgument(!Strings.isNullOrEmpty(photoUrl), "photoUrl cannot be null or empty");
       try {
         new URL(photoUrl);
@@ -265,7 +265,7 @@ public class UserRecord implements UserInfo {
      *
      * @param disabled a boolean indicating whether the new account should be disabled.
      */
-    public NewUser setDisabled(boolean disabled) {
+    public CreateRequest setDisabled(boolean disabled) {
       properties.put("disabled", disabled);
       return this;
     }
@@ -275,7 +275,7 @@ public class UserRecord implements UserInfo {
      *
      * @param password a password string that is at least 6 characters long.
      */
-    public NewUser setPassword(String password) {
+    public CreateRequest setPassword(String password) {
       checkPassword(password);
       properties.put("password", password);
       return this;
@@ -291,19 +291,19 @@ public class UserRecord implements UserInfo {
    * obtained via a {@link UserRecord} object, or from a user ID string. Specify the changes to be
    * made in the user account by calling the various setter methods available in this class.
    */
-  public static class Update {
+  public static class UpdateRequest {
 
     private final Map<String,Object> properties = new HashMap<>();
 
     /**
-     * Creates a new {@link Update} instance, which can be used to update the attributes
+     * Creates a new {@link UpdateRequest}, which can be used to update the attributes
      * of the user identified by the specified user ID. This method allows updating attributes of
      * a user account, without first having to call {@link FirebaseAuth#getUser(String)}.
      *
      * @param uid a non-null, non-empty user ID string.
      * @throws IllegalArgumentException If the user ID is null or empty.
      */
-    public Update(String uid) {
+    public UpdateRequest(String uid) {
       checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
       properties.put("localId", uid);
     }
@@ -317,7 +317,7 @@ public class UserRecord implements UserInfo {
      *
      * @param email a non-null, non-empty email address to be associated with the user.
      */
-    public Update setEmail(String email) {
+    public UpdateRequest setEmail(String email) {
       checkEmail(email);
       properties.put("email", email);
       return this;
@@ -328,7 +328,7 @@ public class UserRecord implements UserInfo {
      *
      * @param emailVerified a boolean indicating whether the email address has been verified.
      */
-    public Update setEmailVerified(boolean emailVerified) {
+    public UpdateRequest setEmailVerified(boolean emailVerified) {
       properties.put("emailVerified", emailVerified);
       return this;
     }
@@ -339,7 +339,7 @@ public class UserRecord implements UserInfo {
      *
      * @param displayName a display name string or null
      */
-    public Update setDisplayName(String displayName) {
+    public UpdateRequest setDisplayName(String displayName) {
       properties.put("displayName", displayName);
       return this;
     }
@@ -350,7 +350,7 @@ public class UserRecord implements UserInfo {
      *
      * @param photoUrl a valid URL string or null
      */
-    public Update setPhotoUrl(String photoUrl) {
+    public UpdateRequest setPhotoUrl(String photoUrl) {
       if (photoUrl != null) {
         try {
           new URL(photoUrl);
@@ -367,7 +367,7 @@ public class UserRecord implements UserInfo {
      *
      * @param disabled a boolean indicating whether this account should be disabled.
      */
-    public Update setDisabled(boolean disabled) {
+    public UpdateRequest setDisabled(boolean disabled) {
       properties.put("disableUser", disabled);
       return this;
     }
@@ -377,7 +377,7 @@ public class UserRecord implements UserInfo {
      *
      * @param password a new password string that is at least 6 characters long.
      */
-    public Update setPassword(String password) {
+    public UpdateRequest setPassword(String password) {
       checkPassword(password);
       properties.put("password", password);
       return this;

@@ -23,7 +23,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.auth.UserRecord.Update;
+import com.google.firebase.auth.UserRecord.CreateRequest;
+import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.util.UUID;
@@ -68,7 +69,7 @@ public class FirebaseAuthIT {
   @Test
   public void testUpdateNonExistingUser() throws Exception {
     try {
-      Tasks.await(auth.updateUser(new UserRecord.Update("non.existing")));
+      Tasks.await(auth.updateUser(new UpdateRequest("non.existing")));
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -94,7 +95,7 @@ public class FirebaseAuthIT {
     String randomId = UUID.randomUUID().toString().replaceAll("-", "");
     String userEmail = ("test" + randomId.substring(0, 12) + "@example." + randomId.substring(12)
         + ".com").toLowerCase();
-    UserRecord.NewUser user = new UserRecord.NewUser()
+    CreateRequest user = new CreateRequest()
         .setUid(randomId)
         .setEmail(userEmail)
         .setDisplayName("Random User")
@@ -119,7 +120,7 @@ public class FirebaseAuthIT {
 
   private void checkRecreate(String uid) throws Exception {
     try {
-      Tasks.await(auth.createUser(new UserRecord.NewUser().setUid(uid)));
+      Tasks.await(auth.createUser(new CreateRequest().setUid(uid)));
       fail("No error thrown for creating user with existing ID");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -131,7 +132,7 @@ public class FirebaseAuthIT {
   @Test
   public void testUserLifecycle() throws Exception {
     // Create user
-    UserRecord userRecord = Tasks.await(auth.createUser(new UserRecord.NewUser()));
+    UserRecord userRecord = Tasks.await(auth.createUser(new CreateRequest()));
     String uid = userRecord.getUid();
 
     // Get user
@@ -149,13 +150,13 @@ public class FirebaseAuthIT {
     String randomId = UUID.randomUUID().toString().replaceAll("-", "");
     String userEmail = ("test" + randomId.substring(0, 12) + "@example." + randomId.substring(12)
         + ".com").toLowerCase();
-    Update update = userRecord.newUpdate()
+    UpdateRequest request = userRecord.updateRequest()
         .setDisplayName("Updated Name")
         .setEmail(userEmail)
         .setPhotoUrl("https://example.com/photo.png")
         .setEmailVerified(true)
         .setPassword("secret");
-    userRecord = Tasks.await(auth.updateUser(update));
+    userRecord = Tasks.await(auth.updateUser(request));
     assertEquals(uid, userRecord.getUid());
     assertEquals("Updated Name", userRecord.getDisplayName());
     assertEquals(userEmail, userRecord.getEmail());
@@ -168,11 +169,11 @@ public class FirebaseAuthIT {
     assertEquals(uid, userRecord.getUid());
 
     // Disable user and remove properties
-    update = userRecord.newUpdate()
+    request = userRecord.updateRequest()
         .setPhotoUrl(null)
         .setDisplayName(null)
         .setDisabled(true);
-    userRecord = Tasks.await(auth.updateUser(update));
+    userRecord = Tasks.await(auth.updateUser(request));
     assertEquals(uid, userRecord.getUid());
     assertNull(userRecord.getDisplayName());
     assertEquals(userEmail, userRecord.getEmail());

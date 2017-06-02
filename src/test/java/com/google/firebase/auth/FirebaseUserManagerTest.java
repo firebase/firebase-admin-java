@@ -25,7 +25,8 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.auth.UserRecord.Update;
+import com.google.firebase.auth.UserRecord.CreateRequest;
+import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
@@ -84,7 +85,7 @@ public class FirebaseUserManagerTest {
         .setLowLevelHttpResponse(response)
         .build();
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
-    String uid = userManager.createUser(new UserRecord.NewUser(), "token");
+    String uid = userManager.createUser(new CreateRequest(), "token");
     assertEquals("testuser", uid);
   }
 
@@ -97,7 +98,7 @@ public class FirebaseUserManagerTest {
         .build();
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
     // should not throw
-    userManager.updateUser(new UserRecord.Update("testuser"), "token");
+    userManager.updateUser(new UpdateRequest("testuser"), "token");
   }
 
   @Test
@@ -138,14 +139,13 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUserBuilder() {
-    Map<String, Object> map = new UserRecord.NewUser()
-        .getProperties();
+    Map<String, Object> map = new CreateRequest().getProperties();
     assertTrue(map.isEmpty());
   }
 
   @Test
   public void testUserBuilderWithParams() {
-    Map<String, Object> map = new UserRecord.NewUser()
+    Map<String, Object> map = new CreateRequest()
         .setUid("TestUid")
         .setDisplayName("Display Name")
         .setPhotoUrl("http://test.com/example.png")
@@ -164,7 +164,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUid() {
-    UserRecord.NewUser user = new UserRecord.NewUser();
+    CreateRequest user = new CreateRequest();
     try {
       user.setUid(null);
       fail("No error thrown for null uid");
@@ -189,7 +189,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidDisplayName() {
-    UserRecord.NewUser user = new UserRecord.NewUser();
+    CreateRequest user = new CreateRequest();
     try {
       user.setDisplayName(null);
       fail("No error thrown for null display name");
@@ -200,7 +200,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidPhotoUrl() {
-    UserRecord.NewUser user = new UserRecord.NewUser();
+    CreateRequest user = new CreateRequest();
     try {
       user.setPhotoUrl(null);
       fail("No error thrown for null photo url");
@@ -225,7 +225,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidEmail() {
-    UserRecord.NewUser user = new UserRecord.NewUser();
+    CreateRequest user = new CreateRequest();
     try {
       user.setEmail(null);
       fail("No error thrown for null email");
@@ -250,7 +250,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidPassword() {
-    UserRecord.NewUser user = new UserRecord.NewUser();
+    CreateRequest user = new CreateRequest();
     try {
       user.setPassword(null);
       fail("No error thrown for null password");
@@ -268,7 +268,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUserUpdater() {
-    Update update = new UserRecord.Update("test");
+    UpdateRequest update = new UpdateRequest("test");
     Map<String, Object> map = update
         .setDisplayName("Display Name")
         .setPhotoUrl("http://test.com/example.png")
@@ -287,7 +287,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeleteDisplayName() {
-    Map<String, Object> map = new UserRecord.Update("test")
+    Map<String, Object> map = new UpdateRequest("test")
         .setDisplayName(null)
         .getProperties();
     assertEquals(ImmutableList.of("DISPLAY_NAME"), map.get("deleteAttribute"));
@@ -295,7 +295,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeletePhotoUrl() {
-    Map<String, Object> map = new UserRecord.Update("test")
+    Map<String, Object> map = new UpdateRequest("test")
         .setPhotoUrl(null)
         .getProperties();
     assertEquals(ImmutableList.of("PHOTO_URL"), map.get("deleteAttribute"));
@@ -303,7 +303,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUpdatePhotoUrl() {
-    Update update = new UserRecord.Update("test");
+    UpdateRequest update = new UpdateRequest("test");
     try {
       update.setPhotoUrl("");
       fail("No error thrown for invalid photo url");
@@ -321,7 +321,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUpdateEmail() {
-    Update update = new UserRecord.Update("test");
+    UpdateRequest update = new UpdateRequest("test");
     try {
       update.setEmail(null);
       fail("No error thrown for null email");
@@ -346,7 +346,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUpdatePassword() {
-    Update update = new UserRecord.Update("test");
+    UpdateRequest update = new UpdateRequest("test");
     try {
       update.setPassword(null);
       fail("No error thrown for null password");
