@@ -25,6 +25,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.auth.UserRecord.Update;
 import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
@@ -83,7 +84,7 @@ public class FirebaseUserManagerTest {
         .setLowLevelHttpResponse(response)
         .build();
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
-    String uid = userManager.createUser(UserRecord.builder(), "token");
+    String uid = userManager.createUser(new UserRecord.NewUser(), "token");
     assertEquals("testuser", uid);
   }
 
@@ -96,7 +97,7 @@ public class FirebaseUserManagerTest {
         .build();
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
     // should not throw
-    userManager.updateUser(UserRecord.updater("testuser"), "token");
+    userManager.updateUser(new UserRecord.Update("testuser"), "token");
   }
 
   @Test
@@ -137,21 +138,21 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUserBuilder() {
-    Map<String, Object> map = UserRecord.builder()
-        .build();
+    Map<String, Object> map = new UserRecord.NewUser()
+        .getProperties();
     assertTrue(map.isEmpty());
   }
 
   @Test
   public void testUserBuilderWithParams() {
-    Map<String, Object> map = UserRecord.builder()
+    Map<String, Object> map = new UserRecord.NewUser()
         .setUid("TestUid")
         .setDisplayName("Display Name")
         .setPhotoUrl("http://test.com/example.png")
         .setEmail("test@example.com")
         .setEmailVerified(true)
         .setPassword("secret")
-        .build();
+        .getProperties();
     assertEquals(6, map.size());
     assertEquals("TestUid", map.get("localId"));
     assertEquals("Display Name", map.get("displayName"));
@@ -163,23 +164,23 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUid() {
-    UserRecord.Builder builder = UserRecord.builder();
+    UserRecord.NewUser user = new UserRecord.NewUser();
     try {
-      builder.setUid(null);
+      user.setUid(null);
       fail("No error thrown for null uid");
     } catch (Exception ignore) {
       // expected
     }
 
     try {
-      builder.setUid("");
+      user.setUid("");
       fail("No error thrown for empty uid");
     } catch (Exception ignore) {
       // expected
     }
 
     try {
-      builder.setUid(String.format("%0129d", 0));
+      user.setUid(String.format("%0129d", 0));
       fail("No error thrown for long uid");
     } catch (Exception ignore) {
       // expected
@@ -188,9 +189,9 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidDisplayName() {
-    UserRecord.Builder builder = UserRecord.builder();
+    UserRecord.NewUser user = new UserRecord.NewUser();
     try {
-      builder.setDisplayName(null);
+      user.setDisplayName(null);
       fail("No error thrown for null display name");
     } catch (Exception ignore) {
       // expected
@@ -199,23 +200,23 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidPhotoUrl() {
-    UserRecord.Builder builder = UserRecord.builder();
+    UserRecord.NewUser user = new UserRecord.NewUser();
     try {
-      builder.setPhotoUrl(null);
+      user.setPhotoUrl(null);
       fail("No error thrown for null photo url");
     } catch (Exception ignore) {
       // expected
     }
 
     try {
-      builder.setPhotoUrl("");
+      user.setPhotoUrl("");
       fail("No error thrown for invalid photo url");
     } catch (Exception ignore) {
       // expected
     }
 
     try {
-      builder.setPhotoUrl("not-a-url");
+      user.setPhotoUrl("not-a-url");
       fail("No error thrown for invalid photo url");
     } catch (Exception ignore) {
       // expected
@@ -224,23 +225,23 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidEmail() {
-    UserRecord.Builder builder = UserRecord.builder();
+    UserRecord.NewUser user = new UserRecord.NewUser();
     try {
-      builder.setEmail(null);
+      user.setEmail(null);
       fail("No error thrown for null email");
     } catch (Exception ignore) {
       // expected
     }
 
     try {
-      builder.setEmail("");
+      user.setEmail("");
       fail("No error thrown for invalid email");
     } catch (Exception ignore) {
       // expected
     }
 
     try {
-      builder.setEmail("not-an-email");
+      user.setEmail("not-an-email");
       fail("No error thrown for invalid email");
     } catch (Exception ignore) {
       // expected
@@ -249,16 +250,16 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidPassword() {
-    UserRecord.Builder builder = UserRecord.builder();
+    UserRecord.NewUser user = new UserRecord.NewUser();
     try {
-      builder.setPassword(null);
+      user.setPassword(null);
       fail("No error thrown for null password");
     } catch (Exception ignore) {
       // expected
     }
 
     try {
-      builder.setPassword("aaaaa");
+      user.setPassword("aaaaa");
       fail("No error thrown for short password");
     } catch (Exception ignore) {
       // expected
@@ -267,16 +268,16 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUserUpdater() {
-    UserRecord.Updater updater = UserRecord.updater("test");
-    Map<String, Object> map = updater
+    Update update = new UserRecord.Update("test");
+    Map<String, Object> map = update
         .setDisplayName("Display Name")
         .setPhotoUrl("http://test.com/example.png")
         .setEmail("test@example.com")
         .setEmailVerified(true)
         .setPassword("secret")
-        .update();
+        .getProperties();
     assertEquals(6, map.size());
-    assertEquals(updater.getUid(), map.get("localId"));
+    assertEquals(update.getUid(), map.get("localId"));
     assertEquals("Display Name", map.get("displayName"));
     assertEquals("http://test.com/example.png", map.get("photoUrl"));
     assertEquals("test@example.com", map.get("email"));
@@ -286,32 +287,32 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeleteDisplayName() {
-    Map<String, Object> map = UserRecord.updater("test")
+    Map<String, Object> map = new UserRecord.Update("test")
         .setDisplayName(null)
-        .update();
+        .getProperties();
     assertEquals(ImmutableList.of("DISPLAY_NAME"), map.get("deleteAttribute"));
   }
 
   @Test
   public void testDeletePhotoUrl() {
-    Map<String, Object> map = UserRecord.updater("test")
+    Map<String, Object> map = new UserRecord.Update("test")
         .setPhotoUrl(null)
-        .update();
+        .getProperties();
     assertEquals(ImmutableList.of("PHOTO_URL"), map.get("deleteAttribute"));
   }
 
   @Test
   public void testInvalidUpdatePhotoUrl() {
-    UserRecord.Updater updater = UserRecord.updater("test");
+    Update update = new UserRecord.Update("test");
     try {
-      updater.setPhotoUrl("");
+      update.setPhotoUrl("");
       fail("No error thrown for invalid photo url");
     } catch (Exception ignore) {
       // expected
     }
 
     try {
-      updater.setPhotoUrl("not-a-url");
+      update.setPhotoUrl("not-a-url");
       fail("No error thrown for invalid photo url");
     } catch (Exception ignore) {
       // expected
@@ -320,23 +321,23 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUpdateEmail() {
-    UserRecord.Updater updater = UserRecord.updater("test");
+    Update update = new UserRecord.Update("test");
     try {
-      updater.setEmail(null);
+      update.setEmail(null);
       fail("No error thrown for null email");
     } catch (Exception ignore) {
       // expected
     }
 
     try {
-      updater.setEmail("");
+      update.setEmail("");
       fail("No error thrown for invalid email");
     } catch (Exception ignore) {
       // expected
     }
 
     try {
-      updater.setEmail("not-an-email");
+      update.setEmail("not-an-email");
       fail("No error thrown for invalid email");
     } catch (Exception ignore) {
       // expected
@@ -345,16 +346,16 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUpdatePassword() {
-    UserRecord.Updater updater = UserRecord.updater("test");
+    Update update = new UserRecord.Update("test");
     try {
-      updater.setPassword(null);
+      update.setPassword(null);
       fail("No error thrown for null password");
     } catch (Exception ignore) {
       // expected
     }
 
     try {
-      updater.setPassword("aaaaa");
+      update.setPassword("aaaaa");
       fail("No error thrown for short password");
     } catch (Exception ignore) {
       // expected

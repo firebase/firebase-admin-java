@@ -31,6 +31,7 @@ import com.google.api.client.json.JsonObjectParser;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.auth.UserRecord.Update;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 
 import java.io.IOException;
@@ -105,10 +106,10 @@ class FirebaseUserManager {
     return new UserRecord(response.getUsers().get(0));
   }
 
-  String createUser(UserRecord.Builder builder, String token) throws FirebaseAuthException {
+  String createUser(UserRecord.NewUser user, String token) throws FirebaseAuthException {
     GenericJson response;
     try {
-      response = post("signupNewUser", token, builder.build(), GenericJson.class);
+      response = post("signupNewUser", token, user.getProperties(), GenericJson.class);
     } catch (IOException e) {
       throw new FirebaseAuthException(USER_CREATE_ERROR,
           "IO error while creating user account", e);
@@ -123,18 +124,18 @@ class FirebaseUserManager {
     throw new FirebaseAuthException(USER_CREATE_ERROR, "Failed to create new user");
   }
 
-  void updateUser(UserRecord.Updater updater, String token) throws FirebaseAuthException {
+  void updateUser(Update update, String token) throws FirebaseAuthException {
     GenericJson response;
     try {
-      response = post("setAccountInfo", token, updater.update(), GenericJson.class);
+      response = post("setAccountInfo", token, update.getProperties(), GenericJson.class);
     } catch (IOException e) {
       throw new FirebaseAuthException(USER_UPDATE_ERROR,
-          "IO error while updating user: " + updater.getUid(), e);
+          "IO error while updating user: " + update.getUid(), e);
     }
 
-    if (response == null || !updater.getUid().equals(response.get("localId"))) {
+    if (response == null || !update.getUid().equals(response.get("localId"))) {
       throw new FirebaseAuthException(USER_UPDATE_ERROR,
-          "Failed to update user: " + updater.getUid());
+          "Failed to getProperties user: " + update.getUid());
     }
   }
 
