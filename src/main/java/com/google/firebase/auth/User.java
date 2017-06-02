@@ -36,8 +36,9 @@ import java.util.Map;
  * Contains metadata associated with a Firebase user account. Instances of this class are immutable
  * and thread safe.
  */
-public class User {
+public class User implements UserInfo {
 
+  private static final String PROVIDER_ID = "firebase";
   private static final Map<String, String> REMOVABLE_FIELDS = ImmutableMap.of(
       "displayName", "DISPLAY_NAME",
       "photoUrl", "PHOTO_URL");
@@ -76,8 +77,19 @@ public class User {
    *
    * @return a non-null, non-empty user ID string.
    */
+  @Override
   public String getUid() {
     return uid;
+  }
+
+  /**
+   * Returns the provider ID of this user.
+   *
+   * @return a constant provider ID value.
+   */
+  @Override
+  public String getProviderId() {
+    return PROVIDER_ID;
   }
 
   /**
@@ -86,6 +98,7 @@ public class User {
    * @return an email address string or null.
    */
   @Nullable
+  @Override
   public String getEmail() {
     return email;
   }
@@ -105,6 +118,7 @@ public class User {
    * @return a display name string or null.
    */
   @Nullable
+  @Override
   public String getDisplayName() {
     return displayName;
   }
@@ -115,6 +129,7 @@ public class User {
    * @return a URL string or null.
    */
   @Nullable
+  @Override
   public String getPhotoUrl() {
     return photoUrl;
   }
@@ -129,11 +144,12 @@ public class User {
   }
 
   /**
-   * Returns the identity providers associated with this user.
+   * Returns an array of UserInfo objects that represents the identities from different identity
+   * providers that are linked to this user.
    *
-   * @return an array of {@link ProviderUserInfo} instances, which may be empty.
+   * @return an array of {@link UserInfo} instances, which may be empty.
    */
-  public ProviderUserInfo[] getProviderData() {
+  public UserInfo[] getProviderData() {
     return providers;
   }
 
