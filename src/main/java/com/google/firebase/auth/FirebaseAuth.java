@@ -249,19 +249,19 @@ public class FirebaseAuth {
    * Creates a new user account with the attributes contained in the specified
    * {@link CreateRequest}.
    *
-   * @param user A non-null {@link CreateRequest} instance.
+   * @param request A non-null {@link CreateRequest} instance.
    * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance
    *     corresponding to the newly created account. If an error occurs while creating the user
    *     account, the task fails with a FirebaseAuthException.
    * @throws NullPointerException if the provided user is null.
    */
-  public Task<UserRecord> createUser(final CreateRequest user) {
-    checkNotNull(user, "user must not be null");
+  public Task<UserRecord> createUser(final CreateRequest request) {
+    checkNotNull(request, "create request must not be null");
     return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
         new Continuation<GetTokenResult, UserRecord>() {
           @Override
           public UserRecord then(Task<GetTokenResult> task) throws Exception {
-            String uid = userManager.createUser(user, task.getResult().getToken());
+            String uid = userManager.createUser(request, task.getResult().getToken());
             return userManager.getUserById(uid, task.getResult().getToken());
           }
         });
@@ -278,7 +278,7 @@ public class FirebaseAuth {
    * @throws NullPointerException if the provided update is null.
    */
   public Task<UserRecord> updateUser(final UpdateRequest request) {
-    checkNotNull(request, "update must not be null");
+    checkNotNull(request, "update request must not be null");
     return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
         new Continuation<GetTokenResult, UserRecord>() {
           @Override
