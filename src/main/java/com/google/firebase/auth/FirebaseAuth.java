@@ -30,6 +30,8 @@ import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.auth.UserRecord.CreateRequest;
+import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.internal.FirebaseService;
@@ -207,17 +209,17 @@ public class FirebaseAuth {
    * Gets the user data corresponding to the specified user ID.
    *
    * @param uid A user ID string.
-   * @return A {@link Task} which will complete successfully with a {@link User} instance.
+   * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance.
    *     If an error occurs while retrieving user data or if the specified user ID does not exist,
    *     the task fails with a FirebaseAuthException.
    * @throws IllegalArgumentException If the user ID string is null or empty.
    */
-  public Task<User> getUser(final String uid) {
+  public Task<UserRecord> getUser(final String uid) {
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
     return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
-        new Continuation<GetTokenResult, User>() {
+        new Continuation<GetTokenResult, UserRecord>() {
           @Override
-          public User then(Task<GetTokenResult> task) throws Exception {
+          public UserRecord then(Task<GetTokenResult> task) throws Exception {
             return userManager.getUserById(uid, task.getResult().getToken());
           }
         });
@@ -227,38 +229,39 @@ public class FirebaseAuth {
    * Gets the user data corresponding to the specified user email.
    *
    * @param email A user email address string.
-   * @return A {@link Task} which will complete successfully with a {@link User} instance.
+   * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance.
    *     If an error occurs while retrieving user data or if the email address does not correspond
    *     to a user, the task fails with a FirebaseAuthException.
    * @throws IllegalArgumentException If the email is null or empty.
    */
-  public Task<User> getUserByEmail(final String email) {
+  public Task<UserRecord> getUserByEmail(final String email) {
     checkArgument(!Strings.isNullOrEmpty(email), "email must not be null or empty");
     return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
-        new Continuation<GetTokenResult, User>() {
+        new Continuation<GetTokenResult, UserRecord>() {
           @Override
-          public User then(Task<GetTokenResult> task) throws Exception {
+          public UserRecord then(Task<GetTokenResult> task) throws Exception {
             return userManager.getUserByEmail(email, task.getResult().getToken());
           }
         });
   }
 
   /**
-   * Creates a new user account with the attributes contained in the specified {@link User.Builder}.
+   * Creates a new user account with the attributes contained in the specified
+   * {@link CreateRequest}.
    *
-   * @param builder A non-null {@link User.Builder} instance.
-   * @return A {@link Task} which will complete successfully with a {@link User} instance
+   * @param request A non-null {@link CreateRequest} instance.
+   * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance
    *     corresponding to the newly created account. If an error occurs while creating the user
    *     account, the task fails with a FirebaseAuthException.
-   * @throws NullPointerException if the provided builder is null.
+   * @throws NullPointerException if the provided request is null.
    */
-  public Task<User> createUser(final User.Builder builder) {
-    checkNotNull(builder, "builder must not be null");
+  public Task<UserRecord> createUser(final CreateRequest request) {
+    checkNotNull(request, "create request must not be null");
     return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
-        new Continuation<GetTokenResult, User>() {
+        new Continuation<GetTokenResult, UserRecord>() {
           @Override
-          public User then(Task<GetTokenResult> task) throws Exception {
-            String uid = userManager.createUser(builder, task.getResult().getToken());
+          public UserRecord then(Task<GetTokenResult> task) throws Exception {
+            String uid = userManager.createUser(request, task.getResult().getToken());
             return userManager.getUserById(uid, task.getResult().getToken());
           }
         });
@@ -266,22 +269,22 @@ public class FirebaseAuth {
 
   /**
    * Updates an existing user account with the attributes contained in the specified
-   * {@link User.Updater}.
+   * {@link UpdateRequest}.
    *
-   * @param updater A non-null {@link User.Updater} instance.
-   * @return A {@link Task} which will complete successfully with a {@link User} instance
+   * @param request A non-null {@link UpdateRequest} instance.
+   * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance
    *     corresponding to the updated user account. If an error occurs while updating the user
    *     account, the task fails with a FirebaseAuthException.
-   * @throws NullPointerException if the provided updater is null.
+   * @throws NullPointerException if the provided update request is null.
    */
-  public Task<User> updateUser(final User.Updater updater) {
-    checkNotNull(updater, "updater must not be null");
+  public Task<UserRecord> updateUser(final UpdateRequest request) {
+    checkNotNull(request, "update request must not be null");
     return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
-        new Continuation<GetTokenResult, User>() {
+        new Continuation<GetTokenResult, UserRecord>() {
           @Override
-          public User then(Task<GetTokenResult> task) throws Exception {
-            userManager.updateUser(updater, task.getResult().getToken());
-            return userManager.getUserById(updater.getUid(), task.getResult().getToken());
+          public UserRecord then(Task<GetTokenResult> task) throws Exception {
+            userManager.updateUser(request, task.getResult().getToken());
+            return userManager.getUserById(request.getUid(), task.getResult().getToken());
           }
         });
   }
