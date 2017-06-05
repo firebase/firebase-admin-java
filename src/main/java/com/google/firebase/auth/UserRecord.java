@@ -163,7 +163,7 @@ public class UserRecord implements UserInfo {
   }
 
   /**
-   * Returns a new {@link UpdateRequest}, which can be used to getProperties the attributes
+   * Returns a new {@link UpdateRequest}, which can be used to update the attributes
    * of this user.
    *
    * @return a non-null UserRecord.UpdateRequest instance.

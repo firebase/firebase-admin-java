@@ -17,6 +17,7 @@
 package com.google.firebase.auth;
 
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
+import com.google.firebase.internal.Nullable;
 
 /**
  * Contains metadata regarding how a user is known by a particular identity provider (IdP).
@@ -38,22 +39,30 @@ class ProviderUserInfo implements UserInfo {
     this.providerId = response.getProviderId();
   }
 
+  @Override
   public String getUid() {
     return uid;
   }
 
+  @Nullable
+  @Override
   public String getDisplayName() {
     return displayName;
   }
 
+  @Nullable
+  @Override
   public String getEmail() {
     return email;
   }
 
+  @Nullable
+  @Override
   public String getPhotoUrl() {
     return photoUrl;
   }
 
+  @Override
   public String getProviderId() {
     return providerId;
   }
