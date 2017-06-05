@@ -31,6 +31,8 @@ import com.google.api.client.json.JsonObjectParser;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.auth.UserRecord.CreateRequest;
+import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 
 import java.io.IOException;
@@ -68,7 +70,7 @@ class FirebaseUserManager {
     this.requestFactory = transport.createRequestFactory();
   }
 
-  User getUserById(String uid, String token) throws FirebaseAuthException {
+  UserRecord getUserById(String uid, String token) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "localId", ImmutableList.of(uid));
     GetAccountInfoResponse response;
@@ -84,10 +86,10 @@ class FirebaseUserManager {
       throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
           "No user record found for the provided user ID: " + uid);
     }
-    return new User(response.getUsers().get(0));
+    return new UserRecord(response.getUsers().get(0));
   }
 
-  User getUserByEmail(String email, String token) throws FirebaseAuthException {
+  UserRecord getUserByEmail(String email, String token) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "email", ImmutableList.of(email));
     GetAccountInfoResponse response;
@@ -102,13 +104,13 @@ class FirebaseUserManager {
       throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
           "No user record found for the provided email: " + email);
     }
-    return new User(response.getUsers().get(0));
+    return new UserRecord(response.getUsers().get(0));
   }
 
-  String createUser(User.Builder builder, String token) throws FirebaseAuthException {
+  String createUser(CreateRequest request, String token) throws FirebaseAuthException {
     GenericJson response;
     try {
-      response = post("signupNewUser", token, builder.build(), GenericJson.class);
+      response = post("signupNewUser", token, request.getProperties(), GenericJson.class);
     } catch (IOException e) {
       throw new FirebaseAuthException(USER_CREATE_ERROR,
           "IO error while creating user account", e);
@@ -123,18 +125,18 @@ class FirebaseUserManager {
     throw new FirebaseAuthException(USER_CREATE_ERROR, "Failed to create new user");
   }
 
-  void updateUser(User.Updater updater, String token) throws FirebaseAuthException {
+  void updateUser(UpdateRequest request, String token) throws FirebaseAuthException {
     GenericJson response;
     try {
-      response = post("setAccountInfo", token, updater.update(), GenericJson.class);
+      response = post("setAccountInfo", token, request.getProperties(), GenericJson.class);
     } catch (IOException e) {
       throw new FirebaseAuthException(USER_UPDATE_ERROR,
-          "IO error while updating user: " + updater.getUid(), e);
+          "IO error while updating user: " + request.getUid(), e);
     }
 
-    if (response == null || !updater.getUid().equals(response.get("localId"))) {
+    if (response == null || !request.getUid().equals(response.get("localId"))) {
       throw new FirebaseAuthException(USER_UPDATE_ERROR,
-          "Failed to update user: " + updater.getUid());
+          "Failed to update user: " + request.getUid());
     }
   }
 

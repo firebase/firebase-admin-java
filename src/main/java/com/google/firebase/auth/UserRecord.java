@@ -36,8 +36,9 @@ import java.util.Map;
  * Contains metadata associated with a Firebase user account. Instances of this class are immutable
  * and thread safe.
  */
-public class User {
+public class UserRecord implements UserInfo {
 
+  private static final String PROVIDER_ID = "firebase";
   private static final Map<String, String> REMOVABLE_FIELDS = ImmutableMap.of(
       "displayName", "DISPLAY_NAME",
       "photoUrl", "PHOTO_URL");
@@ -51,7 +52,7 @@ public class User {
   private final ProviderUserInfo[] providers;
   private final UserMetadata userMetadata;
 
-  User(GetAccountInfoResponse.User response) {
+  UserRecord(GetAccountInfoResponse.User response) {
     checkNotNull(response, "Response must not be null");
     checkArgument(!Strings.isNullOrEmpty(response.getUid()), "uid must not be null or empty");
     this.uid = response.getUid();
@@ -76,8 +77,19 @@ public class User {
    *
    * @return a non-null, non-empty user ID string.
    */
+  @Override
   public String getUid() {
     return uid;
+  }
+
+  /**
+   * Returns the provider ID of this user.
+   *
+   * @return a constant provider ID value.
+   */
+  @Override
+  public String getProviderId() {
+    return PROVIDER_ID;
   }
 
   /**
@@ -86,6 +98,7 @@ public class User {
    * @return an email address string or null.
    */
   @Nullable
+  @Override
   public String getEmail() {
     return email;
   }
@@ -105,6 +118,7 @@ public class User {
    * @return a display name string or null.
    */
   @Nullable
+  @Override
   public String getDisplayName() {
     return displayName;
   }
@@ -115,6 +129,7 @@ public class User {
    * @return a URL string or null.
    */
   @Nullable
+  @Override
   public String getPhotoUrl() {
     return photoUrl;
   }
@@ -129,11 +144,12 @@ public class User {
   }
 
   /**
-   * Returns the identity providers associated with this user.
+   * Returns an array of UserInfo objects that represents the identities from different identity
+   * providers that are linked to this user.
    *
-   * @return an array of {@link ProviderUserInfo} instances, which may be empty.
+   * @return an array of {@link UserInfo} instances, which may be empty.
    */
-  public ProviderUserInfo[] getProviderData() {
+  public UserInfo[] getProviderData() {
     return providers;
   }
 
@@ -147,37 +163,13 @@ public class User {
   }
 
   /**
-   * Returns a new {@link User.Updater} instance, which can be used to update the attributes
+   * Returns a new {@link UpdateRequest}, which can be used to update the attributes
    * of this user.
    *
-   * @return a non-null User.Updater instance.
+   * @return a non-null UserRecord.UpdateRequest instance.
    */
-  public Updater updater() {
-    return new Updater(uid);
-  }
-
-  /**
-   * Returns a new {@link User.Updater} instance, which can be used to update the attributes
-   * of the user identified by the specified user ID. This method allows updating attributes of
-   * a user account, without first having to call {@link FirebaseAuth#getUser(String)}.
-   *
-   * @param uid a non-null, non-empty user ID string.
-   * @return a non-null User.Updater instance.
-   * @throws IllegalArgumentException If the user ID is null or empty.
-   */
-  public static Updater updater(String uid) {
-    return new Updater(uid);
-  }
-
-  /**
-   * Returns a new {@link User.Builder} instance, which can be used to create a new user. The
-   * returned builder should be passed to {@link FirebaseAuth#createUser(Builder)} to register
-   * the user information persistently.
-   *
-   * @return a non-null User.Builder instance.
-   */
-  public static Builder builder() {
-    return new Builder();
+  public UpdateRequest updateRequest() {
+    return new UpdateRequest(uid);
   }
 
   private static void checkEmail(String email) {
@@ -191,15 +183,20 @@ public class User {
   }
 
   /**
-   * A builder class for creating new user accounts. Set the initial attributes of the new user
-   * account by calling various setter methods available in this class. None of the attributes
+   * A specification class for creating new user accounts. Set the initial attributes of the new
+   * user account by calling various setter methods available in this class. None of the attributes
    * are required.
    */
-  public static class Builder {
+  public static class CreateRequest {
 
     private final Map<String,Object> properties = new HashMap<>();
 
-    private Builder() {
+    /**
+     * Creates a new {@link CreateRequest}, which can be used to create a new user. The returned
+     * object should be passed to {@link FirebaseAuth#createUser(CreateRequest)} to register
+     * the user information persistently.
+     */
+    public CreateRequest() {
     }
 
     /**
@@ -208,7 +205,7 @@ public class User {
      * @param uid a non-null, non-empty user ID that uniquely identifies the new user. The user ID
      *     must not be longer than 128 characters.
      */
-    public Builder setUid(String uid) {
+    public CreateRequest setUid(String uid) {
       checkArgument(!Strings.isNullOrEmpty(uid), "uid cannot be null or empty");
       checkArgument(uid.length() <= 128, "UID cannot be longer than 128 characters");
       properties.put("localId", uid);
@@ -220,7 +217,7 @@ public class User {
      *
      * @param email a non-null, non-empty email address string.
      */
-    public Builder setEmail(String email) {
+    public CreateRequest setEmail(String email) {
       checkEmail(email);
       properties.put("email", email);
       return this;
@@ -231,7 +228,7 @@ public class User {
      *
      * @param emailVerified a boolean indicating the email verification status.
      */
-    public Builder setEmailVerified(boolean emailVerified) {
+    public CreateRequest setEmailVerified(boolean emailVerified) {
       properties.put("emailVerified", emailVerified);
       return this;
     }
@@ -241,7 +238,7 @@ public class User {
      *
      * @param displayName a non-null, non-empty display name string.
      */
-    public Builder setDisplayName(String displayName) {
+    public CreateRequest setDisplayName(String displayName) {
       checkNotNull(displayName, "displayName cannot be null or empty");
       properties.put("displayName", displayName);
       return this;
@@ -252,7 +249,7 @@ public class User {
      *
      * @param photoUrl a non-null, non-empty URL string.
      */
-    public Builder setPhotoUrl(String photoUrl) {
+    public CreateRequest setPhotoUrl(String photoUrl) {
       checkArgument(!Strings.isNullOrEmpty(photoUrl), "photoUrl cannot be null or empty");
       try {
         new URL(photoUrl);
@@ -268,7 +265,7 @@ public class User {
      *
      * @param disabled a boolean indicating whether the new account should be disabled.
      */
-    public Builder setDisabled(boolean disabled) {
+    public CreateRequest setDisabled(boolean disabled) {
       properties.put("disabled", disabled);
       return this;
     }
@@ -278,27 +275,35 @@ public class User {
      *
      * @param password a password string that is at least 6 characters long.
      */
-    public Builder setPassword(String password) {
+    public CreateRequest setPassword(String password) {
       checkPassword(password);
       properties.put("password", password);
       return this;
     }
 
-    Map<String, Object> build() {
+    Map<String, Object> getProperties() {
       return ImmutableMap.copyOf(properties);
     }
   }
 
   /**
    * A class for updating the attributes of an existing user. An instance of this class can be
-   * obtained via a {@link User} object, or from a user ID string. Specify the changes to be
+   * obtained via a {@link UserRecord} object, or from a user ID string. Specify the changes to be
    * made in the user account by calling the various setter methods available in this class.
    */
-  public static class Updater {
+  public static class UpdateRequest {
 
     private final Map<String,Object> properties = new HashMap<>();
 
-    private Updater(String uid) {
+    /**
+     * Creates a new {@link UpdateRequest}, which can be used to update the attributes
+     * of the user identified by the specified user ID. This method allows updating attributes of
+     * a user account, without first having to call {@link FirebaseAuth#getUser(String)}.
+     *
+     * @param uid a non-null, non-empty user ID string.
+     * @throws IllegalArgumentException If the user ID is null or empty.
+     */
+    public UpdateRequest(String uid) {
       checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
       properties.put("localId", uid);
     }
@@ -312,7 +317,7 @@ public class User {
      *
      * @param email a non-null, non-empty email address to be associated with the user.
      */
-    public Updater setEmail(String email) {
+    public UpdateRequest setEmail(String email) {
       checkEmail(email);
       properties.put("email", email);
       return this;
@@ -323,7 +328,7 @@ public class User {
      *
      * @param emailVerified a boolean indicating whether the email address has been verified.
      */
-    public Updater setEmailVerified(boolean emailVerified) {
+    public UpdateRequest setEmailVerified(boolean emailVerified) {
       properties.put("emailVerified", emailVerified);
       return this;
     }
@@ -334,7 +339,7 @@ public class User {
      *
      * @param displayName a display name string or null
      */
-    public Updater setDisplayName(String displayName) {
+    public UpdateRequest setDisplayName(String displayName) {
       properties.put("displayName", displayName);
       return this;
     }
@@ -345,7 +350,7 @@ public class User {
      *
      * @param photoUrl a valid URL string or null
      */
-    public Updater setPhotoUrl(String photoUrl) {
+    public UpdateRequest setPhotoUrl(String photoUrl) {
       if (photoUrl != null) {
         try {
           new URL(photoUrl);
@@ -362,7 +367,7 @@ public class User {
      *
      * @param disabled a boolean indicating whether this account should be disabled.
      */
-    public Updater setDisabled(boolean disabled) {
+    public UpdateRequest setDisabled(boolean disabled) {
       properties.put("disableUser", disabled);
       return this;
     }
@@ -372,13 +377,13 @@ public class User {
      *
      * @param password a new password string that is at least 6 characters long.
      */
-    public Updater setPassword(String password) {
+    public UpdateRequest setPassword(String password) {
       checkPassword(password);
       properties.put("password", password);
       return this;
     }
 
-    Map<String, Object> update() {
+    Map<String, Object> getProperties() {
       Map<String, Object> copy = new HashMap<>(properties);
       List<String> remove = new ArrayList<>();
       for (Map.Entry<String, String> entry : REMOVABLE_FIELDS.entrySet()) {
