@@ -93,6 +93,7 @@ public class FirebaseCredentials {
    *
    * @param transport HttpTransport used to communicate with the remote authentication server.
    * @param jsonFactory JsonFactory used to parse JSON responses from the remote authentication
+   *     server.
    * @return A {@link FirebaseCredential} based on Google Application Default Credentials which can
    *     be used to authenticate the SDK.
    */
