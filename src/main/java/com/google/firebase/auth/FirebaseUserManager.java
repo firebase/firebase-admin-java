@@ -23,11 +23,13 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -35,6 +37,7 @@ import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 
+import com.google.firebase.internal.SdkUtils;
 import java.io.IOException;
 import java.util.Map;
 
@@ -55,9 +58,13 @@ class FirebaseUserManager {
 
   private static final String ID_TOOLKIT_URL =
       "https://www.googleapis.com/identitytoolkit/v3/relyingparty/";
+  private static final String CLIENT_VERSION_HEADER = "X-Client-Version";
 
   private final JsonFactory jsonFactory;
   private final HttpRequestFactory requestFactory;
+  private final String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
+
+  private HttpResponseInterceptor interceptor;
 
   /**
    * Creates a new FirebaseUserManager instance.
@@ -68,6 +75,11 @@ class FirebaseUserManager {
   FirebaseUserManager(JsonFactory jsonFactory, HttpTransport transport) {
     this.jsonFactory = checkNotNull(jsonFactory, "jsonFactory must not be null");
     this.requestFactory = transport.createRequestFactory();
+  }
+
+  @VisibleForTesting
+  void setInterceptor(HttpResponseInterceptor interceptor) {
+    this.interceptor = interceptor;
   }
 
   UserRecord getUserById(String uid, String token) throws FirebaseAuthException {
@@ -165,7 +177,9 @@ class FirebaseUserManager {
     HttpRequest request = requestFactory.buildPostRequest(url,
         new JsonHttpContent(jsonFactory, content));
     request.setParser(new JsonObjectParser(jsonFactory));
-    request.getHeaders().setAuthorization("Bearer " + token);
+    request.getHeaders().setAuthorization("Bearer " + token)
+        .set(CLIENT_VERSION_HEADER, clientVersion);
+    request.setResponseInterceptor(interceptor);
     HttpResponse response = request.execute();
     try {
       return response.parseAs(clazz);

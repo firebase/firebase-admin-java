@@ -32,12 +32,10 @@ import com.google.firebase.database.utilities.Utilities;
 import com.google.firebase.database.utilities.Validation;
 import com.google.firebase.internal.FirebaseService;
 
-import java.io.IOException;
-import java.io.InputStream;
+import com.google.firebase.internal.SdkUtils;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -46,9 +44,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * {@link FirebaseDatabase#getReference()}.
  */
 public class FirebaseDatabase {
-
-  private static final String ADMIN_SDK_PROPERTIES = "admin_sdk.properties";
-  private static final String SDK_VERSION = loadSdkVersion();
 
   private final FirebaseApp app;
   private final RepoInfo repoInfo;
@@ -165,7 +160,7 @@ public class FirebaseDatabase {
    * @return The version for this build of the Firebase Database client
    */
   public static String getSdkVersion() {
-    return SDK_VERSION;
+    return SdkUtils.getVersion();
   }
 
   /**
@@ -367,17 +362,6 @@ public class FirebaseDatabase {
       }
       RepoManager.interrupt(getConfig());
       destroyed.compareAndSet(false, true);
-    }
-  }
-
-  private static String loadSdkVersion() {
-    try (InputStream in = FirebaseDatabase.class.getClassLoader()
-        .getResourceAsStream(ADMIN_SDK_PROPERTIES)) {
-      Properties properties = new Properties();
-      properties.load(checkNotNull(in, "Failed to load: " + ADMIN_SDK_PROPERTIES));
-      return properties.getProperty("sdk.version");
-    } catch (IOException e) {
-      throw new RuntimeException(e);
     }
   }
 
