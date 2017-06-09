@@ -187,12 +187,6 @@
                     <plugin>
                         <artifactId>maven-source-plugin</artifactId>
                         <version>2.2.1</version>
-                        <configuration>
-                            <excludes>
-                                <!-- Exclude all files until we go open source -->
-                                <exclude>com/**</exclude>
-                            </excludes>
-                        </configuration>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
