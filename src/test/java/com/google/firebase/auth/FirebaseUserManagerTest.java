@@ -21,12 +21,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
+import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
@@ -35,6 +39,7 @@ import org.junit.Test;
 
 public class FirebaseUserManagerTest {
 
+  private static final String TEST_TOKEN = "token";
   private static final GsonFactory gson = new GsonFactory();
 
   @Test
@@ -45,8 +50,11 @@ public class FirebaseUserManagerTest {
         .setLowLevelHttpResponse(response)
         .build();
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
-    UserRecord userRecord = userManager.getUserById("testuser", "token");
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    userManager.setInterceptor(interceptor);
+    UserRecord userRecord = userManager.getUserById("testuser", TEST_TOKEN);
     checkUserRecord(userRecord);
+    checkRequestHeaders(interceptor);
   }
 
   @Test
@@ -58,7 +66,7 @@ public class FirebaseUserManagerTest {
         .build();
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
     try {
-      userManager.getUserById("testuser", "token");
+      userManager.getUserById("testuser", TEST_TOKEN);
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
       assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, e.getErrorCode());
@@ -73,8 +81,11 @@ public class FirebaseUserManagerTest {
         .setLowLevelHttpResponse(response)
         .build();
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
-    UserRecord userRecord = userManager.getUserByEmail("testuser@example.com", "token");
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    userManager.setInterceptor(interceptor);
+    UserRecord userRecord = userManager.getUserByEmail("testuser@example.com", TEST_TOKEN);
     checkUserRecord(userRecord);
+    checkRequestHeaders(interceptor);
   }
 
   @Test
@@ -85,8 +96,11 @@ public class FirebaseUserManagerTest {
         .setLowLevelHttpResponse(response)
         .build();
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
-    String uid = userManager.createUser(new CreateRequest(), "token");
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    userManager.setInterceptor(interceptor);
+    String uid = userManager.createUser(new CreateRequest(), TEST_TOKEN);
     assertEquals("testuser", uid);
+    checkRequestHeaders(interceptor);
   }
 
   @Test
@@ -97,8 +111,26 @@ public class FirebaseUserManagerTest {
         .setLowLevelHttpResponse(response)
         .build();
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    userManager.setInterceptor(interceptor);
     // should not throw
-    userManager.updateUser(new UpdateRequest("testuser"), "token");
+    userManager.updateUser(new UpdateRequest("testuser"), TEST_TOKEN);
+    checkRequestHeaders(interceptor);
+  }
+
+  @Test
+  public void testDeleteUser() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setContent(TestUtils.loadResource("deleteUser.json"));
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    userManager.setInterceptor(interceptor);
+    // should not throw
+    userManager.deleteUser("testuser", TEST_TOKEN);
+    checkRequestHeaders(interceptor);
   }
 
   @Test
@@ -379,6 +411,25 @@ public class FirebaseUserManagerTest {
     assertEquals("Test User", provider.getDisplayName());
     assertEquals("http://www.example.com/testuser/photo.png", provider.getPhotoUrl());
     assertEquals("password", provider.getProviderId());
+  }
+
+  private void checkRequestHeaders(TestResponseInterceptor interceptor) {
+    HttpHeaders headers = interceptor.response.getRequest().getHeaders();
+    String auth = "Bearer " + TEST_TOKEN;
+    assertEquals(auth, headers.getFirstHeaderStringValue("Authorization"));
+
+    String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
+    assertEquals(clientVersion, headers.getFirstHeaderStringValue("X-Client-Version"));
+  }
+
+  private static class TestResponseInterceptor implements HttpResponseInterceptor {
+
+    private HttpResponse response;
+
+    @Override
+    public void interceptResponse(HttpResponse response) throws IOException {
+      this.response = response;
+    }
   }
 
 }
