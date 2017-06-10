@@ -342,12 +342,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-library</artifactId>
-            <version>1.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>com.cedarsoftware</groupId>
             <artifactId>java-util</artifactId>
             <version>1.26.0</version>

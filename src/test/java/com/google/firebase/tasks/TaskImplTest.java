@@ -16,29 +16,25 @@
 
 package com.google.firebase.tasks;
 
-import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.tasks.testing.TestOnCompleteListener;
 import com.google.firebase.tasks.testing.TestOnFailureListener;
 import com.google.firebase.tasks.testing.TestOnSuccessListener;
 import java.rmi.RemoteException;
-import org.hamcrest.Matchers;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class TaskImplTest {
 
   private static final Exception EXCEPTION = new RemoteException();
   private static final Void NULL_RESULT = null;
   private static final String NON_NULL_RESULT = "Success";
-  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void testIsComplete_notComplete() {
@@ -133,10 +129,12 @@ public class TaskImplTest {
     TaskImpl<Void> task = new TaskImpl<>();
     task.setException(EXCEPTION);
 
-    expectedException.expect(RuntimeExecutionException.class);
-    expectedException.expectCause(Matchers.is(EXCEPTION));
-
-    task.getResult();
+    try {
+      task.getResult();
+      fail("No exception thrown");
+    } catch (RuntimeExecutionException e) {
+      assertSame(EXCEPTION, e.getCause());
+    }
   }
 
   @Test
@@ -144,9 +142,12 @@ public class TaskImplTest {
     TaskImpl<Void> task = new TaskImpl<>();
     task.setException(EXCEPTION);
 
-    expectedException.expect(Matchers.is(EXCEPTION));
-
-    task.getResult(RemoteException.class);
+    try {
+      task.getResult(RemoteException.class);
+      fail("No exception thrown");
+    } catch (RemoteException e) {
+      assertSame(EXCEPTION, e);
+    }
   }
 
   @Test
@@ -155,10 +156,12 @@ public class TaskImplTest {
     Exception exception = new RuntimeException();
     task.setException(exception);
 
-    expectedException.expect(RuntimeExecutionException.class);
-    expectedException.expectCause(Matchers.is(exception));
-
-    task.getResult(RemoteException.class);
+    try {
+      task.getResult(RemoteException.class);
+      fail("No exception thrown");
+    } catch (RuntimeExecutionException e) {
+      assertSame(exception, e.getCause());
+    }
   }
 
   @Test
@@ -407,7 +410,7 @@ public class TaskImplTest {
               }
             });
     task.setResult(null);
-    assertThat(task2.getException(), instanceOf(RuntimeExecutionException.class));
+    assertTrue(task2.getException() instanceof RuntimeExecutionException);
   }
 
   @Test
@@ -507,7 +510,7 @@ public class TaskImplTest {
               }
             });
     task.setResult(null);
-    assertThat(task2.getException(), instanceOf(RuntimeExecutionException.class));
+    assertTrue(task2.getException() instanceof RuntimeExecutionException);
   }
 
   @Test
@@ -560,7 +563,7 @@ public class TaskImplTest {
               }
             });
     task.setResult(NON_NULL_RESULT);
-    assertThat(task2.getException(), instanceOf(NullPointerException.class));
+    assertTrue(task2.getException() instanceof NullPointerException);
   }
 
   @Test(expected = IllegalStateException.class)

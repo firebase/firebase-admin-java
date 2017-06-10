@@ -18,6 +18,9 @@ package com.google.firebase.tasks;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.rmi.RemoteException;
 import java.util.concurrent.Callable;
@@ -27,10 +30,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.hamcrest.Matchers;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class TasksTest {
 
@@ -39,7 +39,6 @@ public class TasksTest {
   private static final int SCHEDULE_DELAY_MS = 50;
   private static final int TIMEOUT_MS = 200;
   private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-  @Rule public ExpectedException expectedException = ExpectedException.none();
 
   @Test
   public void testForResult() throws Exception {
@@ -141,42 +140,52 @@ public class TasksTest {
 
   @Test
   public void testAwait_exception() throws Exception {
-    expectedException.expect(ExecutionException.class);
-    expectedException.expectCause(Matchers.is(EXCEPTION));
-
     TaskCompletionSource<Void> completionSource = new TaskCompletionSource<>();
     scheduleException(completionSource);
 
-    Tasks.await(completionSource.getTask(), TIMEOUT_MS, TimeUnit.MILLISECONDS);
+    try {
+      Tasks.await(completionSource.getTask(), TIMEOUT_MS, TimeUnit.MILLISECONDS);
+      fail("No exception thrown");
+    } catch (ExecutionException e) {
+      assertSame(EXCEPTION, e.getCause());
+    }
   }
 
   @Test
   public void testAwait_noTimeoutException() throws Exception {
-    expectedException.expect(ExecutionException.class);
-    expectedException.expectCause(Matchers.is(EXCEPTION));
-
     TaskCompletionSource<Void> completionSource = new TaskCompletionSource<>();
     scheduleException(completionSource);
 
-    Tasks.await(completionSource.getTask());
+    try {
+      Tasks.await(completionSource.getTask());
+      fail("No exception thrown");
+    } catch (ExecutionException e) {
+      assertSame(EXCEPTION, e.getCause());
+    }
   }
 
   @Test
   public void testAwait_alreadyFailed() throws Exception {
-    expectedException.expect(ExecutionException.class);
-    expectedException.expectCause(Matchers.is(EXCEPTION));
-
     Task<Object> task = Tasks.forException(EXCEPTION);
-    Tasks.await(task, TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+    try {
+      Tasks.await(task, TIMEOUT_MS, TimeUnit.MILLISECONDS);
+      fail("No exception thrown");
+    } catch (ExecutionException e) {
+      assertSame(EXCEPTION, e.getCause());
+    }
   }
 
   @Test
   public void testAwait_noTimeoutAlreadyFailed() throws Exception {
-    expectedException.expect(ExecutionException.class);
-    expectedException.expectCause(Matchers.is(EXCEPTION));
-
     Task<Object> task = Tasks.forException(EXCEPTION);
-    Tasks.await(task);
+
+    try {
+      Tasks.await(task);
+      fail("No exception thrown");
+    } catch (ExecutionException e) {
+      assertSame(EXCEPTION, e.getCause());
+    }
   }
 
   @Test
@@ -229,13 +238,16 @@ public class TasksTest {
 
   @Test
   public void testWhenAll_completedFailure() throws Exception {
-    expectedException.expect(ExecutionException.class);
-    expectedException.expectCause(Matchers.any(ExecutionException.class));
-
     Task<Object> task1 = Tasks.forResult(RESULT);
     Task<Object> task2 = Tasks.forException(EXCEPTION);
     Task<Void> task = Tasks.whenAll(task1, task2);
-    Tasks.await(task);
+
+    try {
+      Tasks.await(task);
+      fail("No exception thrown");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof ExecutionException);
+    }
   }
 
   @Test
