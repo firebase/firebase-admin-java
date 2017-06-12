@@ -22,7 +22,6 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.firebase.internal.NonNull;
@@ -80,8 +79,27 @@ public class FirebaseCredentials {
     return DefaultCredentialsHolder.INSTANCE;
   }
 
-  @VisibleForTesting
-  static FirebaseCredential applicationDefault(HttpTransport transport, JsonFactory jsonFactory) {
+  /**
+   * Returns a {@link FirebaseCredential} based on Google Application Default Credentials which can
+   * be used to authenticate the SDK. Allows specifying the HttpTransport and the
+   * JsonFactory to be used when communicating with the remote authentication server.
+   *
+   * <p>See <a
+   * href="https://developers.google.com/identity/protocols/application-default-credentials">Google
+   * Application Default Credentials</a> for details on Google Application Deafult Credentials.
+   *
+   * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a> for code samples
+   * and detailed documentation.
+   *
+   * @param transport HttpTransport used to communicate with the remote authentication server.
+   * @param jsonFactory JsonFactory used to parse JSON responses from the remote authentication
+   *     server.
+   * @return A {@link FirebaseCredential} based on Google Application Default Credentials which can
+   *     be used to authenticate the SDK.
+   */
+  @NonNull
+  public static FirebaseCredential applicationDefault(
+      HttpTransport transport, JsonFactory jsonFactory) {
     return new ApplicationDefaultCredential(transport, jsonFactory);
   }
 
@@ -104,9 +122,26 @@ public class FirebaseCredentials {
         Utils.getDefaultJsonFactory());
   }
 
-  @VisibleForTesting
-  static FirebaseCredential fromCertificate(InputStream serviceAccount, HttpTransport transport,
-      JsonFactory jsonFactory) throws IOException {
+  /**
+   * Returns a {@link FirebaseCredential} generated from the provided service account certificate
+   * which can be used to authenticate the SDK. Allows specifying the HttpTransport and the
+   * JsonFactory to be used when communicating with the remote authentication server.
+   *
+   * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a> for code samples
+   * and detailed documentation.
+   *
+   * @param serviceAccount An <code>InputStream</code> containing the JSON representation of a
+   *     service account certificate.
+   * @param transport HttpTransport used to communicate with the remote authentication server.
+   * @param jsonFactory JsonFactory used to parse JSON responses from the remote authentication
+   *     server.
+   * @return A {@link FirebaseCredential} generated from the provided service account certificate
+   *     which can be used to authenticate the SDK.
+   * @throws IOException If an error occurs while parsing the service account certificate.
+   */
+  @NonNull
+  public static FirebaseCredential fromCertificate(InputStream serviceAccount,
+      HttpTransport transport, JsonFactory jsonFactory) throws IOException {
     return new CertCredential(serviceAccount, transport, jsonFactory);
   }
 
@@ -129,8 +164,25 @@ public class FirebaseCredentials {
         refreshToken, Utils.getDefaultTransport(), Utils.getDefaultJsonFactory());
   }
 
-  @VisibleForTesting
-  static FirebaseCredential fromRefreshToken(final InputStream refreshToken,
+  /**
+   * Returns a {@link FirebaseCredential} generated from the provided refresh token which can be
+   * used to authenticate the SDK. Allows specifying the HttpTransport and the
+   * JsonFactory to be used when communicating with the remote authentication server.
+   *
+   * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a> for code samples
+   * and detailed documentation.
+   *
+   * @param refreshToken An <code>InputStream</code> containing the JSON representation of a refresh
+   *     token.
+   * @param transport HttpTransport used to communicate with the remote authentication server.
+   * @param jsonFactory JsonFactory used to parse JSON responses from the remote authentication
+   *     server.
+   * @return A {@link FirebaseCredential} generated from the provided service account credential
+   *     which can be used to authenticate the SDK.
+   * @throws IOException If an error occurs while parsing the refresh token.
+   */
+  @NonNull
+  public static FirebaseCredential fromRefreshToken(final InputStream refreshToken,
       HttpTransport transport, JsonFactory jsonFactory) throws IOException {
     return new RefreshTokenCredential(refreshToken, transport, jsonFactory);
   }

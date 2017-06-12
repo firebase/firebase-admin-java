@@ -19,11 +19,15 @@ package com.google.firebase;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.auth.TestOnlyImplFirebaseAuthTrampolines;
@@ -53,12 +57,18 @@ public class FirebaseOptionsTest {
   @Test
   public void createOptionsWithAllValuesSet() throws IOException, InterruptedException {
     final Semaphore semaphore = new Semaphore(0);
+    GsonFactory jsonFactory = new GsonFactory();
+    NetHttpTransport httpTransport = new NetHttpTransport();
     FirebaseOptions firebaseOptions =
         new FirebaseOptions.Builder()
             .setDatabaseUrl(FIREBASE_DB_URL)
             .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .setJsonFactory(jsonFactory)
+            .setHttpTransport(httpTransport)
             .build();
     assertEquals(FIREBASE_DB_URL, firebaseOptions.getDatabaseUrl());
+    assertSame(jsonFactory, firebaseOptions.getJsonFactory());
+    assertSame(httpTransport, firebaseOptions.getHttpTransport());
     TestOnlyImplFirebaseAuthTrampolines.getCertificate(firebaseOptions.getCredential())
         .addOnSuccessListener(
             new OnSuccessListener<GoogleCredential>() {
@@ -79,6 +89,8 @@ public class FirebaseOptionsTest {
         new FirebaseOptions.Builder()
             .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
             .build();
+    assertNotNull(firebaseOptions.getJsonFactory());
+    assertNotNull(firebaseOptions.getHttpTransport());
     TestOnlyImplFirebaseAuthTrampolines.getCertificate(firebaseOptions.getCredential())
         .addOnSuccessListener(
             new OnSuccessListener<GoogleCredential>() {
@@ -109,7 +121,7 @@ public class FirebaseOptionsTest {
     assertEquals("mock-project-id", Tasks.await(projectId));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void createOptionsWithCredentialMissing() {
     new FirebaseOptions.Builder().build();
   }
