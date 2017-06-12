@@ -17,7 +17,7 @@
 package com.google.firebase.auth.internal;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
@@ -42,7 +42,6 @@ import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
-import org.hamcrest.collection.IsIterableContainingInOrder;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -130,7 +129,7 @@ public class FirebaseTokenVerifierTest {
             FACTORY, createToken(createHeader(), createPayload()));
 
     IdToken.Payload payload = (IdToken.Payload) token.getClaims();
-    assertThat(payload.getAudienceAsList(), IsIterableContainingInOrder.contains(PROJECT_ID));
+    assertTrue(payload.getAudienceAsList().contains(PROJECT_ID));
     assertEquals(ISSUER, payload.getIssuer());
 
     verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
