@@ -139,7 +139,7 @@ from the "Settings > General" page. Now run the following command to invoke the 
 test suite:
 
 ```
-mvn verify -Dfirebase.it.certificate=path/to/serviceAccount.json -Dfirebase.it.apikey=**API-Key**
+mvn verify -Dfirebase.it.certificate=path/to/serviceAccount.json -Dfirebase.it.apikey=API-Key
 ```
 
 Make sure to specify the correct path to your downloaded service account key file as the
