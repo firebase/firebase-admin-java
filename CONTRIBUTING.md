@@ -134,21 +134,19 @@ requires an Internet connection. Create a new project in the
 [Firebase console](https://console.firebase.google.com/) if you do not already have one. Use a 
 separate, dedicated project for integration tests since the test suite makes a large number of
 writes to the Firebase realtime database. Download the service account private key from the 
-"Settings" page of the project. Now run the following command to invoke the integration test suite:
+"Settings > Service Accounts" page of the project. Also obtain the web API key of the project
+from the "Settings > General" page. Now run the following command to invoke the integration
+test suite:
 
 ```
-mvn verify -Dfirebase.it.certificate=path/to/your/serviceAccount.json
+mvn verify -Dfirebase.it.certificate=path/to/serviceAccount.json -Dfirebase.it.apikey=**API-Key**
 ```
 
 Make sure to specify the correct path to your downloaded service account key file as the
 `firebase.it.certificate` system property. 
 
 The above command invokes both unit and integration test suites. To execute only the integration
-tests, run the command as follows:
-
-```
-mvn verify -Dfirebase.it.certificate=path/to/your/serviceAccount.json -DskipUTs
-```
+tests, specify the `-DskipUTs` flag.
 
 ### Generating API Docs
 

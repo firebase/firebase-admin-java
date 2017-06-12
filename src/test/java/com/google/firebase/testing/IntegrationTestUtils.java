@@ -78,6 +78,13 @@ public class IntegrationTestUtils {
     return "https://" + getProjectId() + ".firebaseio.com";
   }
 
+  public static String getApiKey() {
+    String apiKey = System.getProperty("firebase.it.apikey");
+    checkArgument(!Strings.isNullOrEmpty(apiKey), "API key not specified. Set the "
+        + "firebase.it.apikey system property and try again.");
+    return apiKey;
+  }
+
   /**
    * Initializes the default FirebaseApp for integration testing (if not already initialized), and
    * returns it. Integration tests that interact with the default FirebaseApp should call this

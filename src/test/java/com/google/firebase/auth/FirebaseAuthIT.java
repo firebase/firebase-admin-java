@@ -22,17 +22,34 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.json.JsonHttpContent;
+import com.google.api.client.json.GenericJson;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.JsonObjectParser;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.IntegrationTestUtils;
+import java.io.IOException;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class FirebaseAuthIT {
+
+  private static final String ID_TOOLKIT_URL =
+      "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyCustomToken";
+  private static final JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+  private static final HttpTransport transport = Utils.getDefaultTransport();
 
   private static FirebaseAuth auth;
 
@@ -190,6 +207,43 @@ public class FirebaseAuthIT {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
+    }
+  }
+
+  @Test
+  public void testCustomToken() throws Exception {
+    String customToken = Tasks.await(auth.createCustomToken("user1"));
+    String idToken = signInWithCustomToken(customToken);
+    FirebaseToken decoded = Tasks.await(auth.verifyIdToken(idToken));
+    assertEquals("user1", decoded.getUid());
+  }
+
+  @Test
+  public void testCustomTokenWithClaims() throws Exception {
+    Map<String, Object> devClaims = ImmutableMap.<String, Object>of(
+        "premium", true, "subscription", "silver");
+    String customToken = Tasks.await(auth.createCustomToken("user2", devClaims));
+    String idToken = signInWithCustomToken(customToken);
+    FirebaseToken decoded = Tasks.await(auth.verifyIdToken(idToken));
+    assertEquals("user2", decoded.getUid());
+    assertTrue((Boolean) decoded.getClaims().get("premium"));
+    assertEquals("silver", decoded.getClaims().get("subscription"));
+  }
+
+  private String signInWithCustomToken(String customToken) throws IOException {
+    GenericUrl url = new GenericUrl(ID_TOOLKIT_URL + "?key="
+        + IntegrationTestUtils.getApiKey());
+    Map<String, Object> content = ImmutableMap.<String, Object>of(
+        "token", customToken, "returnSecureToken", true);
+    HttpRequest request = transport.createRequestFactory().buildPostRequest(url,
+        new JsonHttpContent(jsonFactory, content));
+    request.setParser(new JsonObjectParser(jsonFactory));
+    HttpResponse response = request.execute();
+    try {
+      GenericJson json = response.parseAs(GenericJson.class);
+      return json.get("idToken").toString();
+    } finally {
+      response.disconnect();
     }
   }
 
