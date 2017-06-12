@@ -18,11 +18,9 @@ package com.google.firebase;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
@@ -130,22 +128,10 @@ public class FirebaseOptionsTest {
   public void checkToBuilderCreatesNewEquivalentInstance() {
     FirebaseOptions allValuesOptionsCopy = new FirebaseOptions.Builder(ALL_VALUES_OPTIONS).build();
     assertNotSame(ALL_VALUES_OPTIONS, allValuesOptionsCopy);
-    assertEquals(ALL_VALUES_OPTIONS, allValuesOptionsCopy);
-  }
-
-  @Test
-  public void testEquals() throws IOException {
-    FirebaseCredential credential = FirebaseCredentials
-        .fromCertificate(ServiceAccount.EDITOR.asStream());
-    FirebaseOptions options1 =
-        new FirebaseOptions.Builder()
-            .setCredential(credential)
-            .build();
-    FirebaseOptions options2 =
-        new FirebaseOptions.Builder()
-            .setCredential(credential)
-            .build();
-    assertTrue(options1.equals(options2));
+    assertEquals(ALL_VALUES_OPTIONS.getCredential(), allValuesOptionsCopy.getCredential());
+    assertEquals(ALL_VALUES_OPTIONS.getDatabaseUrl(), allValuesOptionsCopy.getDatabaseUrl());
+    assertEquals(ALL_VALUES_OPTIONS.getJsonFactory(), allValuesOptionsCopy.getJsonFactory());
+    assertEquals(ALL_VALUES_OPTIONS.getHttpTransport(), allValuesOptionsCopy.getHttpTransport());
   }
 
   @Test
@@ -162,28 +148,5 @@ public class FirebaseOptionsTest {
             .setDatabaseUrl("https://test.firebaseio.com")
             .build();
     assertFalse(options1.equals(options2));
-  }
-
-  @Test
-  public void testHashCode() throws IOException {
-    FirebaseCredential credential = FirebaseCredentials
-        .fromCertificate(ServiceAccount.EDITOR.asStream());
-    FirebaseOptions options1 =
-        new FirebaseOptions.Builder()
-            .setCredential(credential)
-            .setDatabaseUrl("https://test.firebaseio.com")
-            .build();
-    FirebaseOptions options2 =
-        new FirebaseOptions.Builder()
-            .setCredential(credential)
-            .setDatabaseUrl("https://test.firebaseio.com")
-            .build();
-    FirebaseOptions options3 =
-        new FirebaseOptions.Builder()
-            .setCredential(credential)
-            .setDatabaseUrl("https://test2.firebaseio.com")
-            .build();
-    assertEquals(options1.hashCode(), options2.hashCode());
-    assertNotEquals(options1.hashCode(), options3.hashCode());
   }
 }

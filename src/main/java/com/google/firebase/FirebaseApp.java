@@ -276,7 +276,7 @@ public class FirebaseApp {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this).add("name", name).add("options", options).toString();
+    return MoreObjects.toStringHelper(this).add("name", name).toString();
   }
 
   /**

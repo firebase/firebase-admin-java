@@ -181,8 +181,7 @@ public class FirebaseAppTest {
             .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
             .build();
     FirebaseApp app = FirebaseApp.initializeApp(options, "app");
-    String pattern = "FirebaseApp\\{name=app, options=FirebaseOptions\\{"
-        + "databaseUrl=null, credential=[^\\s]+, databaseAuthVariableOverride=\\{}}}";
+    String pattern = "FirebaseApp\\{name=app}";
     assertTrue(app.toString().matches(pattern));
   }
 
