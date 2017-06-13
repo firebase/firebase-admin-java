@@ -22,7 +22,6 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
 import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.internal.NonNull;
@@ -77,7 +76,8 @@ public final class FirebaseOptions {
   }
 
   /**
-   * Returns the HttpTransport used to call remote HTTP endpoints.
+   * Returns the HttpTransport used to call remote HTTP endpoints. This transport is used by all
+   * services of the SDK, except for FirebaseDatabase.
    *
    * @return A Google API client HttpTransport instance.
    */
@@ -94,31 +94,6 @@ public final class FirebaseOptions {
   @NonNull
   public JsonFactory getJsonFactory() {
     return jsonFactory;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (!(obj instanceof FirebaseOptions)) {
-      return false;
-    }
-    FirebaseOptions other = (FirebaseOptions) obj;
-    return Objects.equal(databaseUrl, other.databaseUrl)
-        && Objects.equal(firebaseCredential, other.firebaseCredential)
-        && Objects.equal(databaseAuthVariableOverride, other.databaseAuthVariableOverride);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(databaseUrl, firebaseCredential, databaseAuthVariableOverride);
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("databaseUrl", databaseUrl)
-        .add("credential", firebaseCredential)
-        .add("databaseAuthVariableOverride", databaseAuthVariableOverride)
-        .toString();
   }
 
   /** 
@@ -204,7 +179,8 @@ public final class FirebaseOptions {
 
     /**
      * Sets the HttpTransport used to make remote HTTP calls. A reasonable default
-     * will be used if not explicitly set.
+     * will be used if not explicitly set. The transport specified by calling this method will be
+     * used by all services of the SDK, except for FirebaseDatabase.
      *
      * @param httpTransport An HttpTransport instance
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
