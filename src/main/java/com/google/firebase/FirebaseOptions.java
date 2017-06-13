@@ -76,10 +76,10 @@ public final class FirebaseOptions {
   }
 
   /**
-   * Returns the HttpTransport used to call remote HTTP endpoints. This transport is used by all
-   * services of the SDK, except for FirebaseDatabase.
+   * Returns the <code>HttpTransport</code> used to call remote HTTP endpoints. This transport is
+   * used by all services of the SDK, except for FirebaseDatabase.
    *
-   * @return A Google API client HttpTransport instance.
+   * @return A Google API client <code>HttpTransport</code> instance.
    */
   @NonNull
   public HttpTransport getHttpTransport() {
@@ -87,9 +87,9 @@ public final class FirebaseOptions {
   }
 
   /**
-   * Returns the JsonFactory used to parse JSON when calling remote HTTP endpoints.
+   * Returns the <code>JsonFactory</code> used to parse JSON when calling remote HTTP endpoints.
    *
-   * @return A Google API client JsonFactory instance.
+   * @return A Google API client <code>JsonFactory</code> instance.
    */
   @NonNull
   public JsonFactory getJsonFactory() {
@@ -178,11 +178,11 @@ public final class FirebaseOptions {
     }
 
     /**
-     * Sets the HttpTransport used to make remote HTTP calls. A reasonable default
-     * will be used if not explicitly set. The transport specified by calling this method will be
-     * used by all services of the SDK, except for FirebaseDatabase.
+     * Sets the <code>HttpTransport</code> used to make remote HTTP calls. A reasonable default
+     * is used if not explicitly set. The transport specified by calling this method is
+     * used by all services of the SDK, except for <code>FirebaseDatabase</code>.
      *
-     * @param httpTransport An HttpTransport instance
+     * @param httpTransport An <code>HttpTransport</code> instance
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setHttpTransport(HttpTransport httpTransport) {
@@ -191,10 +191,10 @@ public final class FirebaseOptions {
     }
 
     /**
-     * Sets the JsonFactory used to parse JSON when making remote HTTP calls. A reasonable default
-     * will be used if not explicitly set.
+     * Sets the <code>JsonFactory</code> used to parse JSON when making remote HTTP calls. A
+     * reasonable default is used if not explicitly set.
      *
-     * @param jsonFactory A JsonFactory instance.
+     * @param jsonFactory A <code>JsonFactory</code> instance.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setJsonFactory(JsonFactory jsonFactory) {
