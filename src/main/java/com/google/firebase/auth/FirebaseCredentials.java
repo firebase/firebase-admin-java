@@ -50,7 +50,8 @@ public class FirebaseCredentials {
       ImmutableList.of(
           "https://www.googleapis.com/auth/firebase.database",
           "https://www.googleapis.com/auth/userinfo.email",
-          "https://www.googleapis.com/auth/identitytoolkit");
+          "https://www.googleapis.com/auth/identitytoolkit",
+          "https://www.googleapis.com/auth/devstorage.full_control");
 
   private FirebaseCredentials() {
   }

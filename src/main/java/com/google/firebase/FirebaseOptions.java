@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
-import com.google.common.base.MoreObjects;
 import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.internal.NonNull;
@@ -36,6 +35,7 @@ public final class FirebaseOptions {
   // TODO: deprecate and remove it once we can fetch these from Remote Config.
 
   private final String databaseUrl;
+  private final String storageBucket;
   private final FirebaseCredential firebaseCredential;
   private final Map<String, Object> databaseAuthVariableOverride;
   private final HttpTransport httpTransport;
@@ -46,6 +46,7 @@ public final class FirebaseOptions {
         "FirebaseOptions must be initialized with setCredential().");
     this.databaseUrl = builder.databaseUrl;
     this.databaseAuthVariableOverride = builder.databaseAuthVariableOverride;
+    this.storageBucket = builder.storageBucket;
     this.httpTransport = checkNotNull(builder.httpTransport,
         "FirebaseOptions must be initialized with a non-null HttpTransport.");
     this.jsonFactory = checkNotNull(builder.jsonFactory,
@@ -59,6 +60,15 @@ public final class FirebaseOptions {
    */
   public String getDatabaseUrl() {
     return databaseUrl;
+  }
+
+  /**
+   * Returns the name of the Google Cloud Storage bucket used for storing application data.
+   *
+   * @return The cloud storage bucket name set via {@link Builder#setStorageBucket}
+   */
+  public String getStorageBucket() {
+    return storageBucket;
   }
 
   FirebaseCredential getCredential() {
@@ -102,6 +112,7 @@ public final class FirebaseOptions {
   public static final class Builder {
 
     private String databaseUrl;
+    private String storageBucket;
     private FirebaseCredential firebaseCredential;
     private Map<String, Object> databaseAuthVariableOverride = new HashMap<>();
     private HttpTransport httpTransport = Utils.getDefaultTransport();
@@ -118,6 +129,7 @@ public final class FirebaseOptions {
      */
     public Builder(FirebaseOptions options) {
       databaseUrl = options.databaseUrl;
+      storageBucket = options.storageBucket;
       firebaseCredential = options.firebaseCredential;
       databaseAuthVariableOverride = options.databaseAuthVariableOverride;
       httpTransport = options.httpTransport;
@@ -135,6 +147,22 @@ public final class FirebaseOptions {
      */
     public Builder setDatabaseUrl(@Nullable String databaseUrl) {
       this.databaseUrl = databaseUrl;
+      return this;
+    }
+
+    /**
+     * Sets the name of the Google Cloud Storage bucket for reading and writing application data.
+     * The same credential used to initialize the SDK (see {@link Builder#setCredential}) will be
+     * used to access the bucket.
+     *
+     * <p>See <a href="/docs/admin/setup#initialize_the_sdk">Initialize the SDK</a> for code samples
+     * and detailed documentation.
+     *
+     * @param storageBucket The name of an existing Google Cloud Storage bucket.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setStorageBucket(String storageBucket) {
+      this.storageBucket = storageBucket;
       return this;
     }
 
