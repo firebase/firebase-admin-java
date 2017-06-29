@@ -100,8 +100,8 @@ public class StorageWrapper {
 
     @Override
     public void destroy() {
-      // NOTE: We don't explicitly tear down anything here, but public methods of FirebaseAuth
-      // will now fail because calls to getCredential() and getToken() will hit FirebaseApp,
+      // NOTE: We don't explicitly tear down anything here, but public methods of StorageWrapper
+      // will now fail because calls to getOptions() will hit FirebaseApp,
       // which will throw once the app is deleted.
     }
   }
