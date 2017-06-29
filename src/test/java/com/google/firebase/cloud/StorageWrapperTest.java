@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.storage;
+package com.google.firebase.cloud;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -28,7 +28,7 @@ import java.io.IOException;
 import org.junit.After;
 import org.junit.Test;
 
-public class FirebaseStorageTest {
+public class StorageWrapperTest {
 
   @After
   public void tearDown() {
@@ -41,7 +41,7 @@ public class FirebaseStorageTest {
         .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
         .build());
     try {
-      FirebaseStorage.getInstance(app).getBucket();
+      StorageWrapper.getInstance(app).getBucket();
       fail("No error thrown for invalid configuration");
     } catch (IllegalArgumentException expected) {
       // ignore
@@ -55,14 +55,14 @@ public class FirebaseStorageTest {
         .setStorageBucket("mock-bucket-name")
         .build());
     try {
-      FirebaseStorage.getInstance(app).getBucket(null);
+      StorageWrapper.getInstance(app).getBucket(null);
       fail("No error thrown for invalid configuration");
     } catch (IllegalArgumentException expected) {
       // ignore
     }
 
     try {
-      FirebaseStorage.getInstance(app).getBucket("");
+      StorageWrapper.getInstance(app).getBucket("");
       fail("No error thrown for invalid configuration");
     } catch (IllegalArgumentException expected) {
       // ignore
@@ -76,10 +76,10 @@ public class FirebaseStorageTest {
         .setStorageBucket("mock-bucket-name")
         .build());
 
-    assertNotNull(FirebaseStorage.getInstance(app));
+    assertNotNull(StorageWrapper.getInstance(app));
     app.delete();
     try {
-      FirebaseStorage.getInstance(app);
+      StorageWrapper.getInstance(app);
       fail("No error thrown for deleted app");
     } catch (IllegalStateException expected) {
       // ignore

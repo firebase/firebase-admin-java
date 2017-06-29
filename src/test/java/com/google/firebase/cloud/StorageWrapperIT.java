@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.storage;
+package com.google.firebase.cloud;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -25,18 +25,24 @@ import com.google.cloud.storage.Bucket;
 import com.google.firebase.testing.IntegrationTestUtils;
 import org.junit.Test;
 
-public class FirebaseStorageIT {
+public class StorageWrapperIT {
 
   @Test
   public void testCloudStorageDefaultBucket() {
-    FirebaseStorage storage = FirebaseStorage.getInstance(IntegrationTestUtils.ensureDefaultApp());
+    StorageWrapper storage = StorageWrapper.getInstance(IntegrationTestUtils.ensureDefaultApp());
     testBucket(storage.getBucket());
   }
 
   @Test
   public void testCloudStorageCustomBucket() {
-    FirebaseStorage storage = FirebaseStorage.getInstance(IntegrationTestUtils.ensureDefaultApp());
+    StorageWrapper storage = StorageWrapper.getInstance(IntegrationTestUtils.ensureDefaultApp());
     testBucket(storage.getBucket(IntegrationTestUtils.getStorageBucket()));
+  }
+
+  @Test
+  public void testCloudStorageNonExistingBucket() {
+    StorageWrapper storage = StorageWrapper.getInstance(IntegrationTestUtils.ensureDefaultApp());
+    assertNull(storage.getBucket("non-existing"));
   }
 
   private void testBucket(Bucket bucket) {

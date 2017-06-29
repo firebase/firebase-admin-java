@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.storage;
+package com.google.firebase.cloud;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -29,21 +29,20 @@ import com.google.firebase.internal.FirebaseOAuthCredentials;
 import com.google.firebase.internal.FirebaseService;
 
 /**
- * FirebaseStorage is a service that supports uploading and downloading large objects to Google
- * Cloud Storage. You can specify a cloud storage bucket via
- * {@link com.google.firebase.FirebaseOptions}, and then get a reference to it by calling
- * {@link FirebaseStorage#getBucket()}. Or if you have the bucket name at runtime you can
- * directly call {@link FirebaseStorage#getBucket(String)}, with the bucket name as an argument.
+ * StorageWrapper provides access to Google Cloud Storage APIs. You can specify a cloud storage
+ * bucket via {@link com.google.firebase.FirebaseOptions}, and then get a reference to it by calling
+ * {@link StorageWrapper#getBucket()}. Or if you know the bucket name at runtime you can
+ * directly call {@link StorageWrapper#getBucket(String)}.
  *
- * <p>This service requires Google Cloud Storage libraries for Java. Make sure the artifact
+ * <p>This class requires Google Cloud Storage libraries for Java. Make sure the artifact
  * google-cloud-storage is in classpath along with its transitive dependencies.
  */
-public class FirebaseStorage {
+public class StorageWrapper {
 
   private final FirebaseApp app;
   private final Storage storage;
 
-  private FirebaseStorage(FirebaseApp app) {
+  private StorageWrapper(FirebaseApp app) {
     this.app = checkNotNull(app, "FirebaseApp must not be null");
     this.storage = StorageOptions.newBuilder()
         .setCredentials(new FirebaseOAuthCredentials(app))
@@ -51,15 +50,15 @@ public class FirebaseStorage {
         .getService();
   }
 
-  public static FirebaseStorage getInstance() {
+  public static StorageWrapper getInstance() {
     return getInstance(FirebaseApp.getInstance());
   }
 
-  public static FirebaseStorage getInstance(FirebaseApp app) {
-    FirebaseStorageService service = ImplFirebaseTrampolines.getService(app, SERVICE_ID,
-        FirebaseStorageService.class);
+  public static StorageWrapper getInstance(FirebaseApp app) {
+    StorageWrapperService service = ImplFirebaseTrampolines.getService(app, SERVICE_ID,
+        StorageWrapperService.class);
     if (service == null) {
-      service = ImplFirebaseTrampolines.addService(app, new FirebaseStorageService(app));
+      service = ImplFirebaseTrampolines.addService(app, new StorageWrapperService(app));
     }
     return service.getInstance();
   }
@@ -80,22 +79,23 @@ public class FirebaseStorage {
    * Returns a cloud storage Bucket instance for the specified bucket name.
    *
    * @param name a non-null, non-empty bucket name.
-   * @return a cloud storage Bucket instance, or null of the specified bucket does not exist.
+   * @return a cloud storage Bucket instance, or null if the specified bucket does not exist.
    * @throws IllegalArgumentException If the bucket name is null or empty.
    */
   public Bucket getBucket(String name) {
     checkArgument(!Strings.isNullOrEmpty(name),
-        "Bucket name must not be null or empty. If you're trying to access the default "
-            + "storage bucket, set the bucket name via FirebaseOptions.");
+        "Bucket name not specified. Specify the bucket name via the storageBucket "
+            + "option when initializing the app, or specify the bucket name explicitly when"
+            + "calling the getBucket() method.");
     return storage.get(name);
   }
 
-  private static final String SERVICE_ID = FirebaseStorage.class.getName();
+  private static final String SERVICE_ID = StorageWrapper.class.getName();
 
-  private static class FirebaseStorageService extends FirebaseService<FirebaseStorage> {
+  private static class StorageWrapperService extends FirebaseService<StorageWrapper> {
 
-    FirebaseStorageService(FirebaseApp app) {
-      super(SERVICE_ID, new FirebaseStorage(app));
+    StorageWrapperService(FirebaseApp app) {
+      super(SERVICE_ID, new StorageWrapper(app));
     }
 
     @Override

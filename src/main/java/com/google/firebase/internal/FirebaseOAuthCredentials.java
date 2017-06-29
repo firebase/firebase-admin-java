@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.tasks.Continuation;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
 import java.io.IOException;
@@ -51,9 +52,15 @@ public final class FirebaseOAuthCredentials extends Credentials {
 
   @Override
   public Map<String, List<String>> getRequestMetadata(URI uri) throws IOException {
-    Task<GetTokenResult> tokenTask = ImplFirebaseTrampolines.getToken(app, false);
+    Task<String> task = ImplFirebaseTrampolines.getToken(app, false).continueWith(
+        new Continuation<GetTokenResult, String>() {
+          @Override
+          public String then(Task<GetTokenResult> task) throws Exception {
+            return task.getResult().getToken();
+          }
+        });
     try {
-      String authHeader = "Bearer " + Tasks.await(tokenTask).getToken();
+      String authHeader = "Bearer " + Tasks.await(task);
       return ImmutableMap.<String, List<String>>of(
           "Authorization", ImmutableList.of(authHeader));
     } catch (ExecutionException | InterruptedException e) {
