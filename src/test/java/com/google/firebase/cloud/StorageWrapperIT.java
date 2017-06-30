@@ -19,6 +19,7 @@ package com.google.firebase.cloud;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
@@ -42,7 +43,12 @@ public class StorageWrapperIT {
   @Test
   public void testCloudStorageNonExistingBucket() {
     StorageWrapper storage = StorageWrapper.getInstance(IntegrationTestUtils.ensureDefaultApp());
-    assertNull(storage.getBucket("non-existing"));
+    try {
+      storage.getBucket("non-existing");
+      fail("No error thrown for non-existing bucket");
+    } catch (IllegalArgumentException expected) {
+      // ignore
+    }
   }
 
   private void testBucket(Bucket bucket) {

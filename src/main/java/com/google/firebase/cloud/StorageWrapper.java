@@ -69,7 +69,8 @@ public class StorageWrapper {
    * no bucket was configured via options, this method throws an exception.
    *
    * @return a cloud storage Bucket instance, or null if the configured bucket does not exist.
-   * @throws IllegalArgumentException If no bucket is configured via <code>FirebaseOptions</code>.
+   * @throws IllegalArgumentException If no bucket is configured via <code>FirebaseOptions</code>,
+   *     or if the bucket does not exist.
    */
   public Bucket getBucket() {
     return getBucket(app.getOptions().getStorageBucket());
@@ -80,14 +81,17 @@ public class StorageWrapper {
    *
    * @param name a non-null, non-empty bucket name.
    * @return a cloud storage Bucket instance, or null if the specified bucket does not exist.
-   * @throws IllegalArgumentException If the bucket name is null or empty.
+   * @throws IllegalArgumentException If the bucket name is null, empty, or if the specified
+   *     bucket does not exist.
    */
   public Bucket getBucket(String name) {
     checkArgument(!Strings.isNullOrEmpty(name),
         "Bucket name not specified. Specify the bucket name via the storageBucket "
-            + "option when initializing the app, or specify the bucket name explicitly when"
+            + "option when initializing the app, or specify the bucket name explicitly when "
             + "calling the getBucket() method.");
-    return storage.get(name);
+    Bucket bucket = storage.get(name);
+    checkArgument(bucket != null, "Bucket " + name + " does not exist.");
+    return bucket;
   }
 
   private static final String SERVICE_ID = StorageWrapper.class.getName();
