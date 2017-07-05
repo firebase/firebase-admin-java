@@ -34,7 +34,6 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.FirebaseCustomAuthToken;
 import com.google.firebase.database.MapBuilder;
-import com.google.firebase.internal.Log;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.ServiceAccount;
@@ -57,6 +56,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -70,7 +70,6 @@ public class FirebaseAuthTest {
   private static final String CLIENT_SECRET = "mockclientsecret";
   private static final String CLIENT_ID = "mockclientid";
   private static final String REFRESH_TOKEN = "mockrefreshtoken";
-  private static final String TAG = "FirebaseAuthTest";
   private final FirebaseOptions firebaseOptions;
   private final boolean isCertCredential;
 
@@ -197,10 +196,8 @@ public class FirebaseAuthTest {
 
   @Test
   public void testInvokeAfterAppDelete() throws ExecutionException, InterruptedException {
-    if (!isCertCredential) {
-      Log.i(TAG, "Skipping testInvokeAfterAppDelete for non-cert credential");
-      return;
-    }
+    Assume.assumeTrue("Skipping testInvokeAfterAppDelete for non-cert credential",
+        isCertCredential);
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testInvokeAfterAppDelete");
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
     assertNotNull(auth);
@@ -248,10 +245,8 @@ public class FirebaseAuthTest {
 
   @Test
   public void testCreateCustomToken() throws Exception {
-    if (!isCertCredential) {
-      Log.i(TAG, "Skipping testCreateCustomToken for non-cert credential");
-      return;
-    }
+    Assume.assumeTrue("Skipping testCreateCustomToken for non-cert credential",
+        isCertCredential);
 
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testCreateCustomToken");
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
@@ -268,10 +263,8 @@ public class FirebaseAuthTest {
 
   @Test
   public void testCreateCustomTokenWithDeveloperClaims() throws Exception {
-    if (!isCertCredential) {
-      Log.i(TAG, "Skipping testCreateCustomTokenWithDeveloperClaims for non-cert credential");
-      return;
-    }
+    Assume.assumeTrue("Skipping testCreateCustomTokenWithDeveloperClaims for non-cert credential",
+        isCertCredential);
 
     FirebaseApp app =
         FirebaseApp.initializeApp(firebaseOptions, "testCreateCustomTokenWithDeveloperClaims");
@@ -302,10 +295,9 @@ public class FirebaseAuthTest {
 
   @Test
   public void testCredentialCertificateRequired() throws Exception {
-    if (isCertCredential) {
-      Log.i(TAG, "Skipping testCredentialCertificateRequired for cert credential");
-      return;
-    }
+    Assume.assumeFalse("Skipping testCredentialCertificateRequired for cert credential",
+        isCertCredential);
+
 
     FirebaseApp app =
         FirebaseApp.initializeApp(firebaseOptions, "testCredentialCertificateRequired");
