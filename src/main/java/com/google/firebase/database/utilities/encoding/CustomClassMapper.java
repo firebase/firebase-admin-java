@@ -24,7 +24,6 @@ import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.IgnoreExtraProperties;
 import com.google.firebase.database.PropertyName;
 import com.google.firebase.database.ThrowOnExtraProperties;
-import com.google.firebase.internal.Log;
 
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
@@ -45,11 +44,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Helper class to convert to/from custom POJO classes and plain Java types. */
 public class CustomClassMapper {
 
-  private static final String LOG_TAG = "ClassMapper";
+  private static final Logger logger = LoggerFactory.getLogger(CustomClassMapper.class);
 
   private static final ConcurrentMap<Class<?>, BeanMapper<?>> mappers = new ConcurrentHashMap<>();
 
@@ -740,8 +741,7 @@ public class CustomClassMapper {
           if (this.throwOnUnknownProperties) {
             throw new DatabaseException(message);
           } else if (this.warnOnUnknownProperties) {
-            // TODO: replace Android logging with "our" logging
-            Log.w(LOG_TAG, message);
+            logger.warn(message);
           }
         }
       }
