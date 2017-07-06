@@ -62,7 +62,7 @@ public class LogWrapper {
 
   public void error(String message, Throwable e) {
     if (slf4jLogger.isErrorEnabled()) {
-      slf4jLogger.error(message, e);
+      slf4jLogger.error(toLog(message), e);
     } else {
       String logMsg = toLog(message) + "\n" + exceptionStacktrace(e);
       logger.onLogMessage(Logger.Level.ERROR, component, logMsg, now());
@@ -75,7 +75,7 @@ public class LogWrapper {
 
   public void warn(String message, Throwable e) {
     if (slf4jLogger.isWarnEnabled()) {
-      slf4jLogger.warn(message, e);
+      slf4jLogger.warn(toLog(message), e);
     } else {
       String logMsg = toLog(message);
       if (e != null) {
@@ -87,10 +87,9 @@ public class LogWrapper {
 
   public void info(String message) {
     if (slf4jLogger.isInfoEnabled()) {
-      slf4jLogger.info(message);
+      slf4jLogger.info(toLog(message));
     } else {
-      String logMsg = toLog(message);
-      logger.onLogMessage(Logger.Level.INFO, component, logMsg, now());
+      logger.onLogMessage(Logger.Level.INFO, component, toLog(message), now());
     }
   }
 
@@ -101,12 +100,7 @@ public class LogWrapper {
   /** Log a non-fatal exception. Typically something like an IO error on a failed connection */
   public void debug(String message, Throwable e, Object... args) {
     if (slf4jLogger.isDebugEnabled()) {
-      String logMsg = toLog(message, args);
-      if (e != null) {
-        slf4jLogger.debug(logMsg, e);
-      } else {
-        slf4jLogger.debug(logMsg);
-      }
+      slf4jLogger.debug(toLog(message, args), e);
     } else {
       String logMsg = toLog(message, args);
       if (e != null) {
