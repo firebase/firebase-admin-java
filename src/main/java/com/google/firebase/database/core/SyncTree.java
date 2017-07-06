@@ -105,7 +105,7 @@ public class SyncTree {
     this.keepSyncedQueries = new HashSet<>();
     this.listenProvider = listenProvider;
     this.persistenceManager = persistenceManager;
-    this.logger = context.getLogger("SyncTree");
+    this.logger = context.getLogger(SyncTree.class);
   }
 
   public boolean isEmpty() {

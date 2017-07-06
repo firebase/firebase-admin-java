@@ -51,7 +51,7 @@ public class DefaultPersistenceManager implements PersistenceManager {
   public DefaultPersistenceManager(
       Context ctx, PersistenceStorageEngine engine, CachePolicy cachePolicy, Clock clock) {
     this.storageLayer = engine;
-    this.logger = ctx.getLogger("Persistence");
+    this.logger = ctx.getLogger(PersistenceManager.class);
     this.trackedQueryManager = new TrackedQueryManager(storageLayer, logger, clock);
     this.cachePolicy = cachePolicy;
   }

@@ -89,7 +89,7 @@ class GaePlatform implements Platform {
 
   @Override
   public RunLoop newRunLoop(final Context context) {
-    final LogWrapper logger = context.getLogger("RunLoop");
+    final LogWrapper logger = context.getLogger(RunLoop.class);
     return new DefaultRunLoop(getGaeThreadFactory(), /* periodicRestart= */ true, context) {
       @Override
       public void handleException(Throwable e) {

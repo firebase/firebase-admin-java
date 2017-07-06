@@ -135,7 +135,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     this.outstandingPuts = new HashMap<>();
     this.onDisconnectRequestQueue = new ArrayList<>();
     this.retryHelper =
-        new RetryHelper.Builder(this.executorService, context.getLogger(), "ConnectionRetryHelper")
+        new RetryHelper.Builder(this.executorService, context.getLogger(), RetryHelper.class)
             .withMinDelayAfterFailure(1000)
             .withRetryExponent(1.3)
             .withMaxDelay(30 * 1000)
@@ -143,7 +143,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
             .build();
 
     long connId = connectionIds++;
-    this.logger = new LogWrapper(context.getLogger(), "PersistentConnection", "pc_" + connId);
+    this.logger = new LogWrapper(context.getLogger(), PersistentConnection.class, "pc_" + connId);
     this.lastSessionId = null;
     doIdleCheck();
   }

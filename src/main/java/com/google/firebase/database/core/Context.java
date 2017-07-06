@@ -141,29 +141,21 @@ public class Context {
     }
   }
 
-  public List<String> getOptDebugLogComponents() {
-    return this.loggedComponents;
-  }
-
-  public Logger.Level getLogLevel() {
-    return this.logLevel;
-  }
-
-  public Logger getLogger() {
-    return this.logger;
-  }
-
   public LogWrapper getLogger(String component) {
+    return new LogWrapper(logger, component, null);
+  }
+
+  public LogWrapper getLogger(Class component) {
     return new LogWrapper(logger, component);
   }
 
-  public LogWrapper getLogger(String component, String prefix) {
+  public LogWrapper getLogger(Class component, String prefix) {
     return new LogWrapper(logger, component, prefix);
   }
 
   public ConnectionContext getConnectionContext() {
     return new ConnectionContext(
-        this.getLogger(),
+        this.logger,
         wrapAuthTokenProvider(this.getAuthTokenProvider()),
         this.getExecutorService(),
         this.isPersistenceEnabled(),
