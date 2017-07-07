@@ -38,7 +38,7 @@ public class EventRaiser {
 
   public EventRaiser(Context ctx) {
     eventTarget = ctx.getEventTarget();
-    logger = ctx.getLogger("EventRaiser");
+    logger = ctx.getLogger(EventRaiser.class);
   }
 
   public void raiseEvents(final List<? extends Event> events) {

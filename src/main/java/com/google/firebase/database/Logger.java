@@ -16,10 +16,18 @@
 
 package com.google.firebase.database;
 
-/** This interface is used to setup logging for Firebase Database. */
+/**
+ * This interface is used to setup logging for Firebase Database.
+ *
+ * @deprecated Use SLF4J-based logging
+ */
 public interface Logger {
 
-  /** The log levels used by the Firebase Database library */
+  /**
+   * The log levels used by the Firebase Database library
+   *
+   * @deprecated Use SLF4J-based logging
+   */
   enum Level {
     DEBUG,
     INFO,

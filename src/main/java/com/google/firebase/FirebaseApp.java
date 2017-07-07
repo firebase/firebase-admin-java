@@ -33,7 +33,6 @@ import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseExecutors;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.GetTokenResult;
-import com.google.firebase.internal.Log;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.tasks.Continuation;
@@ -51,6 +50,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The entry point of Firebase SDKs. It holds common configuration and state for Firebase APIs. Most
@@ -63,6 +64,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * method should be invoked at startup.
  */
 public class FirebaseApp {
+
+  private static final Logger logger = LoggerFactory.getLogger(FirebaseApp.class);
 
   /** A map of (name, FirebaseApp) instances. */
   private static final Map<String, FirebaseApp> instances = new HashMap<>();
@@ -360,9 +363,8 @@ public class FirebaseApp {
                     if (refreshDelay > 0) {
                       tokenRefresher.scheduleRefresh(refreshDelay);
                     } else {
-                      Log.w("FirebaseApp", "Token expiry ("
-                          + googleOAuthToken.getExpiryTime() + ") is less than 5 minutes in the "
-                          + "future. Not scheduling a proactive refresh.");
+                      logger.warn("Token expiry ({}) is less than 5 minutes in the future. Not "
+                          + "scheduling a proactive refresh.", googleOAuthToken.getAccessToken());
                     }
                   }
                 }
