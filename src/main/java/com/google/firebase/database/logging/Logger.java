@@ -19,6 +19,8 @@ package com.google.firebase.database.logging;
 /**
  * Private (internal) logging interface used by Firebase Database. See {@link
  * com.google.firebase.database.core.DatabaseConfig DatabaseConfig} for more information.
+ *
+ * @deprecated Use SLF4J-based logging
  */
 public interface Logger {
 

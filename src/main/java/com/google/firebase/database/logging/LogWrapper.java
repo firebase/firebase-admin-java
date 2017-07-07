@@ -22,11 +22,12 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Legacy logging interface for database implementation. This class attempts to reconcile SLF4J
- * with the old logging implementation of Admin SDK. When SLF4J is available, logs using that
- * API. Otherwise falls back to the old logging implementation. This class will removed in a
- * future release, and SLF4J will be used universally throughout the codebase.
+ * with the old logging implementation of the Admin SDK. When SLF4J is available, logs using that
+ * API. Otherwise falls back to the old logging implementation. This prevents individual log
+ * statements from being written to both log APIs.
  *
- * @deprecated Use SLF4J-based logging
+ * @deprecated This class will be removed in a future release, and SLF4J will be used universally
+ *     throughout the codebase.
  */
 public class LogWrapper {
 
