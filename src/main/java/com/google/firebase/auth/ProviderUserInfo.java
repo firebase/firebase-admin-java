@@ -28,6 +28,7 @@ class ProviderUserInfo implements UserInfo {
   private final String uid;
   private final String displayName;
   private final String email;
+  private final String phoneNumber;
   private final String photoUrl;
   private final String providerId;
 
@@ -35,6 +36,7 @@ class ProviderUserInfo implements UserInfo {
     this.uid = response.getUid();
     this.displayName = response.getDisplayName();
     this.email = response.getEmail();
+    this.phoneNumber = response.getPhoneNumber();
     this.photoUrl = response.getPhotoUrl();
     this.providerId = response.getProviderId();
   }
@@ -54,6 +56,12 @@ class ProviderUserInfo implements UserInfo {
   @Override
   public String getEmail() {
     return email;
+  }
+
+  @Nullable
+  @Override
+  public String getPhoneNumber() {
+    return phoneNumber;
   }
 
   @Nullable
