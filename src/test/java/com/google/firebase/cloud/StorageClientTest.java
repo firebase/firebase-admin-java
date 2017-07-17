@@ -28,7 +28,7 @@ import java.io.IOException;
 import org.junit.After;
 import org.junit.Test;
 
-public class StorageWrapperTest {
+public class StorageClientTest {
 
   @After
   public void tearDown() {
@@ -41,7 +41,7 @@ public class StorageWrapperTest {
         .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
         .build());
     try {
-      StorageWrapper.getInstance(app).getBucket();
+      StorageClient.getInstance(app).getBucket();
       fail("No error thrown for invalid configuration");
     } catch (IllegalArgumentException expected) {
       // ignore
@@ -55,14 +55,14 @@ public class StorageWrapperTest {
         .setStorageBucket("mock-bucket-name")
         .build());
     try {
-      StorageWrapper.getInstance(app).getBucket(null);
+      StorageClient.getInstance(app).getBucket(null);
       fail("No error thrown for invalid configuration");
     } catch (IllegalArgumentException expected) {
       // ignore
     }
 
     try {
-      StorageWrapper.getInstance(app).getBucket("");
+      StorageClient.getInstance(app).getBucket("");
       fail("No error thrown for invalid configuration");
     } catch (IllegalArgumentException expected) {
       // ignore
@@ -76,10 +76,10 @@ public class StorageWrapperTest {
         .setStorageBucket("mock-bucket-name")
         .build());
 
-    assertNotNull(StorageWrapper.getInstance(app));
+    assertNotNull(StorageClient.getInstance(app));
     app.delete();
     try {
-      StorageWrapper.getInstance(app);
+      StorageClient.getInstance(app);
       fail("No error thrown for deleted app");
     } catch (IllegalStateException expected) {
       // ignore

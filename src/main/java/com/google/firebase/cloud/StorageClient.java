@@ -29,20 +29,20 @@ import com.google.firebase.internal.FirebaseOAuthCredentials;
 import com.google.firebase.internal.FirebaseService;
 
 /**
- * StorageWrapper provides access to Google Cloud Storage APIs. You can specify a cloud storage
+ * StorageClient provides access to Google Cloud Storage APIs. You can specify a cloud storage
  * bucket via {@link com.google.firebase.FirebaseOptions}, and then get a reference to it by calling
- * {@link StorageWrapper#getBucket()}. Or if you know the bucket name at runtime you can
- * directly call {@link StorageWrapper#getBucket(String)}.
+ * {@link StorageClient#getBucket()}. Or if you know the bucket name at runtime you can
+ * directly call {@link StorageClient#getBucket(String)}.
  *
  * <p>This class requires Google Cloud Storage libraries for Java. Make sure the artifact
  * google-cloud-storage is in classpath along with its transitive dependencies.
  */
-public class StorageWrapper {
+public class StorageClient {
 
   private final FirebaseApp app;
   private final Storage storage;
 
-  private StorageWrapper(FirebaseApp app) {
+  private StorageClient(FirebaseApp app) {
     this.app = checkNotNull(app, "FirebaseApp must not be null");
     this.storage = StorageOptions.newBuilder()
         .setCredentials(new FirebaseOAuthCredentials(app))
@@ -50,15 +50,15 @@ public class StorageWrapper {
         .getService();
   }
 
-  public static StorageWrapper getInstance() {
+  public static StorageClient getInstance() {
     return getInstance(FirebaseApp.getInstance());
   }
 
-  public static StorageWrapper getInstance(FirebaseApp app) {
-    StorageWrapperService service = ImplFirebaseTrampolines.getService(app, SERVICE_ID,
-        StorageWrapperService.class);
+  public static StorageClient getInstance(FirebaseApp app) {
+    StorageClientService service = ImplFirebaseTrampolines.getService(app, SERVICE_ID,
+        StorageClientService.class);
     if (service == null) {
-      service = ImplFirebaseTrampolines.addService(app, new StorageWrapperService(app));
+      service = ImplFirebaseTrampolines.addService(app, new StorageClientService(app));
     }
     return service.getInstance();
   }
@@ -94,18 +94,18 @@ public class StorageWrapper {
     return bucket;
   }
 
-  private static final String SERVICE_ID = StorageWrapper.class.getName();
+  private static final String SERVICE_ID = StorageClient.class.getName();
 
-  private static class StorageWrapperService extends FirebaseService<StorageWrapper> {
+  private static class StorageClientService extends FirebaseService<StorageClient> {
 
-    StorageWrapperService(FirebaseApp app) {
-      super(SERVICE_ID, new StorageWrapper(app));
+    StorageClientService(FirebaseApp app) {
+      super(SERVICE_ID, new StorageClient(app));
     }
 
     @Override
     public void destroy() {
-      // NOTE: We don't explicitly tear down anything here, but public methods of StorageWrapper
-      // will now fail because calls to getOptions() will hit FirebaseApp,
+      // NOTE: We don't explicitly tear down anything here, but public methods of StorageClient
+      // will now fail because calls to getOptions() and getToken() will hit FirebaseApp,
       // which will throw once the app is deleted.
     }
   }

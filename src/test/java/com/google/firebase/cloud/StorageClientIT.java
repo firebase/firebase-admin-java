@@ -26,23 +26,23 @@ import com.google.cloud.storage.Bucket;
 import com.google.firebase.testing.IntegrationTestUtils;
 import org.junit.Test;
 
-public class StorageWrapperIT {
+public class StorageClientIT {
 
   @Test
   public void testCloudStorageDefaultBucket() {
-    StorageWrapper storage = StorageWrapper.getInstance(IntegrationTestUtils.ensureDefaultApp());
+    StorageClient storage = StorageClient.getInstance(IntegrationTestUtils.ensureDefaultApp());
     testBucket(storage.getBucket());
   }
 
   @Test
   public void testCloudStorageCustomBucket() {
-    StorageWrapper storage = StorageWrapper.getInstance(IntegrationTestUtils.ensureDefaultApp());
+    StorageClient storage = StorageClient.getInstance(IntegrationTestUtils.ensureDefaultApp());
     testBucket(storage.getBucket(IntegrationTestUtils.getStorageBucket()));
   }
 
   @Test
   public void testCloudStorageNonExistingBucket() {
-    StorageWrapper storage = StorageWrapper.getInstance(IntegrationTestUtils.ensureDefaultApp());
+    StorageClient storage = StorageClient.getInstance(IntegrationTestUtils.ensureDefaultApp());
     try {
       storage.getBucket("non-existing");
       fail("No error thrown for non-existing bucket");
