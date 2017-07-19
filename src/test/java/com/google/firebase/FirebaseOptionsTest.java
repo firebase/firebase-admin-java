@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
@@ -45,6 +46,7 @@ import org.junit.Test;
 public class FirebaseOptionsTest {
 
   private static final String FIREBASE_DB_URL = "https://mock-project.firebaseio.com";
+  private static final String FIREBASE_STORAGE_BUCKET = "mock-storage-bucket";
 
   private static final FirebaseOptions ALL_VALUES_OPTIONS =
       new FirebaseOptions.Builder()
@@ -60,11 +62,13 @@ public class FirebaseOptionsTest {
     FirebaseOptions firebaseOptions =
         new FirebaseOptions.Builder()
             .setDatabaseUrl(FIREBASE_DB_URL)
+            .setStorageBucket(FIREBASE_STORAGE_BUCKET)
             .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
             .setJsonFactory(jsonFactory)
             .setHttpTransport(httpTransport)
             .build();
     assertEquals(FIREBASE_DB_URL, firebaseOptions.getDatabaseUrl());
+    assertEquals(FIREBASE_STORAGE_BUCKET, firebaseOptions.getStorageBucket());
     assertSame(jsonFactory, firebaseOptions.getJsonFactory());
     assertSame(httpTransport, firebaseOptions.getHttpTransport());
     TestOnlyImplFirebaseAuthTrampolines.getCertificate(firebaseOptions.getCredential())
@@ -89,6 +93,8 @@ public class FirebaseOptionsTest {
             .build();
     assertNotNull(firebaseOptions.getJsonFactory());
     assertNotNull(firebaseOptions.getHttpTransport());
+    assertNull(firebaseOptions.getDatabaseUrl());
+    assertNull(firebaseOptions.getStorageBucket());
     TestOnlyImplFirebaseAuthTrampolines.getCertificate(firebaseOptions.getCredential())
         .addOnSuccessListener(
             new OnSuccessListener<GoogleCredential>() {
