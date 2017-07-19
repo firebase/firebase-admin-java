@@ -62,7 +62,8 @@ class WebsocketConnection {
     this.executorService = connectionContext.getExecutorService();
     this.delegate = delegate;
     long connId = connectionId++;
-    logger = new LogWrapper(connectionContext.getLogger(), "WebSocket", "ws_" + connId);
+    logger = new LogWrapper(connectionContext.getLogger(), WebsocketConnection.class,
+        "ws_" + connId);
     conn = createConnection(hostInfo, optCachedHost, optLastSessionId);
   }
 

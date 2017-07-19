@@ -135,7 +135,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     this.outstandingPuts = new HashMap<>();
     this.onDisconnectRequestQueue = new ArrayList<>();
     this.retryHelper =
-        new RetryHelper.Builder(this.executorService, context.getLogger(), "ConnectionRetryHelper")
+        new RetryHelper.Builder(this.executorService, context.getLogger(), RetryHelper.class)
             .withMinDelayAfterFailure(1000)
             .withRetryExponent(1.3)
             .withMaxDelay(30 * 1000)
@@ -143,7 +143,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
             .build();
 
     long connId = connectionIds++;
-    this.logger = new LogWrapper(context.getLogger(), "PersistentConnection", "pc_" + connId);
+    this.logger = new LogWrapper(context.getLogger(), PersistentConnection.class, "pc_" + connId);
     this.lastSessionId = null;
     doIdleCheck();
   }
@@ -757,7 +757,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
               logger.debug("Authentication failed: " + status + " (" + reason + ")");
               realtime.close();
 
-              if (status.equals("invalid_token")) {
+              if (status.equals("invalid_token") || status.equals("permission_denied")) {
                 // We'll wait a couple times before logging the warning / increasing the
                 // retry period since oauth tokens will report as "invalid" if they're
                 // just expired. Plus there may be transient issues that resolve themselves.

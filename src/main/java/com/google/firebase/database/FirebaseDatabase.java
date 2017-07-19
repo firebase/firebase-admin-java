@@ -263,6 +263,9 @@ public class FirebaseDatabase {
    * diagnostic logging, and {@link Logger.Level#NONE NONE} to disable all logging.
    *
    * @param logLevel The desired minimum log level
+   * @deprecated This method will be removed in a future release. Use SLF4J-based logging instead.
+   *     For example, add the slf4j-simple.jar to the classpath to log to STDERR. See
+   *     <a href="https://www.slf4j.org/manual.html">SLF4J user manual</a> for more details.
    */
   public synchronized void setLogLevel(Logger.Level logLevel) {
     synchronized (lock) {

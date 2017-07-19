@@ -29,6 +29,8 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * RevivingScheduledExecutor is an implementation of ScheduledThreadPoolExecutor that uses one
@@ -37,7 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
 
-  private static final String TAG = "RevivingScheduledExecutor";
+  private static final Logger logger = LoggerFactory.getLogger(RevivingScheduledExecutor.class);
 
   /** Exception to throw to shut down the core threads. */
   private static final RuntimeException REVIVE_THREAD_EXCEPTION =
@@ -92,7 +94,7 @@ public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
         new ThreadFactory() {
           @Override
           public Thread newThread(Runnable r) {
-            Log.d(TAG, "Creating new thread for: " + threadName);
+            logger.debug("Creating new thread for: {}", threadName);
             Thread thread = threadFactory.newThread(r);
             try {
               thread.setName(threadName);

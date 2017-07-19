@@ -92,9 +92,9 @@ public class Repo implements PersistentConnection.Delegate {
     this.ctx = ctx;
     this.database = database;
 
-    operationLogger = this.ctx.getLogger("RepoOperation");
-    transactionLogger = this.ctx.getLogger("Transaction");
-    dataLogger = this.ctx.getLogger("DataOperation");
+    operationLogger = this.ctx.getLogger(Repo.class);
+    transactionLogger = this.ctx.getLogger(Repo.class.getName() + ".Transaction");
+    dataLogger = this.ctx.getLogger(Repo.class.getName() + ".DataOperation");
 
     this.eventRaiser = new EventRaiser(this.ctx);
 

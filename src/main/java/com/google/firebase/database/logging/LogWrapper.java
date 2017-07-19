@@ -18,19 +18,37 @@ package com.google.firebase.database.logging;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import org.slf4j.LoggerFactory;
 
-/** User: greg Date: 6/12/13 Time: 2:23 PM */
+/**
+ * Legacy logging interface for database implementation. This class attempts to reconcile SLF4J
+ * with the old logging implementation of the Admin SDK. When SLF4J is available, logs using that
+ * API. Otherwise falls back to the old logging implementation. This prevents individual log
+ * statements from being written to both log APIs.
+ *
+ * @deprecated This class will be removed in a future release, and SLF4J will be used universally
+ *     throughout the codebase.
+ */
 public class LogWrapper {
 
+  private final org.slf4j.Logger slf4jLogger;
   private final Logger logger;
   private final String component;
   private final String prefix;
 
-  public LogWrapper(Logger logger, String component) {
+  public LogWrapper(Logger logger, Class component) {
     this(logger, component, null);
   }
 
+  public LogWrapper(Logger logger, Class component, String prefix) {
+    this.slf4jLogger = LoggerFactory.getLogger(component);
+    this.logger = logger;
+    this.component = component.getName();
+    this.prefix = prefix;
+  }
+
   public LogWrapper(Logger logger, String component, String prefix) {
+    this.slf4jLogger = LoggerFactory.getLogger(component);
     this.logger = logger;
     this.component = component;
     this.prefix = prefix;
@@ -44,8 +62,12 @@ public class LogWrapper {
   }
 
   public void error(String message, Throwable e) {
-    String logMsg = toLog(message) + "\n" + exceptionStacktrace(e);
-    logger.onLogMessage(Logger.Level.ERROR, component, logMsg, now());
+    if (slf4jLogger.isErrorEnabled()) {
+      slf4jLogger.error(toLog(message), e);
+    } else {
+      String logMsg = toLog(message) + "\n" + exceptionStacktrace(e);
+      logger.onLogMessage(Logger.Level.ERROR, component, logMsg, now());
+    }
   }
 
   public void warn(String message) {
@@ -53,15 +75,23 @@ public class LogWrapper {
   }
 
   public void warn(String message, Throwable e) {
-    String logMsg = toLog(message);
-    if (e != null) {
-      logMsg = logMsg + "\n" + exceptionStacktrace(e);
+    if (slf4jLogger.isWarnEnabled()) {
+      slf4jLogger.warn(toLog(message), e);
+    } else {
+      String logMsg = toLog(message);
+      if (e != null) {
+        logMsg = logMsg + "\n" + exceptionStacktrace(e);
+      }
+      logger.onLogMessage(Logger.Level.WARN, component, logMsg, now());
     }
-    logger.onLogMessage(Logger.Level.WARN, component, logMsg, now());
   }
 
   public void info(String message) {
-    logger.onLogMessage(Logger.Level.INFO, component, toLog(message), now());
+    if (slf4jLogger.isInfoEnabled()) {
+      slf4jLogger.info(toLog(message));
+    } else {
+      logger.onLogMessage(Logger.Level.INFO, component, toLog(message), now());
+    }
   }
 
   public void debug(String message, Object... args) {
@@ -70,7 +100,9 @@ public class LogWrapper {
 
   /** Log a non-fatal exception. Typically something like an IO error on a failed connection */
   public void debug(String message, Throwable e, Object... args) {
-    if (this.logsDebug()) {
+    if (slf4jLogger.isDebugEnabled()) {
+      slf4jLogger.debug(toLog(message, args), e);
+    } else {
       String logMsg = toLog(message, args);
       if (e != null) {
         logMsg = logMsg + "\n" + exceptionStacktrace(e);
@@ -80,7 +112,8 @@ public class LogWrapper {
   }
 
   public boolean logsDebug() {
-    return this.logger.getLogLevel().ordinal() <= Logger.Level.DEBUG.ordinal();
+    return this.logger.getLogLevel().ordinal() <= Logger.Level.DEBUG.ordinal()
+        || slf4jLogger.isDebugEnabled();
   }
 
   private long now() {

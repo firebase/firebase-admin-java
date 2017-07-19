@@ -125,7 +125,7 @@ public class RetryHelper {
     private long retryMaxDelay = 30 * 1000;
     private double retryExponent = 1.3;
 
-    public Builder(ScheduledExecutorService service, Logger logger, String tag) {
+    public Builder(ScheduledExecutorService service, Logger logger, Class tag) {
       this.service = service;
       this.logger = new LogWrapper(logger, tag);
     }
