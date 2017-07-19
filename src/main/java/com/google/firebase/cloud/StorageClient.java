@@ -19,6 +19,7 @@ package com.google.firebase.cloud;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
@@ -27,6 +28,9 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.FirebaseOAuthCredentials;
 import com.google.firebase.internal.FirebaseService;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * StorageClient provides access to Google Cloud Storage APIs. You can specify a cloud storage
@@ -38,6 +42,8 @@ import com.google.firebase.internal.FirebaseService;
  * google-cloud-storage is in classpath along with its transitive dependencies.
  */
 public class StorageClient {
+
+  private static final String DOWNLOAD_TOKENS = "firebaseStorageDownloadTokens";
 
   private final FirebaseApp app;
   private final Storage storage;
@@ -92,6 +98,31 @@ public class StorageClient {
     Bucket bucket = storage.get(name);
     checkArgument(bucket != null, "Bucket " + name + " does not exist.");
     return bucket;
+  }
+
+  /**
+   * Returns a long-lived download URL with a revokable token. This can be used to share a file
+   * with others, but can be revoked by a developer in the Firebase console if desired.
+   *
+   * @param blob The blob to generate a download URL for.
+   * @return a URL string.
+   */
+  public String getDownloadUrl(Blob blob) {
+    checkNotNull(blob, "Blob must not be null");
+    Map<String, String> metadata = blob.getMetadata();
+    if (metadata == null) {
+      metadata = new HashMap<>();
+    }
+    String downloadTokens = metadata.get(DOWNLOAD_TOKENS);
+    if (Strings.isNullOrEmpty(downloadTokens)) {
+      downloadTokens = UUID.randomUUID().toString();
+      metadata.put(DOWNLOAD_TOKENS, downloadTokens);
+      blob.toBuilder().setMetadata(metadata).build().update();
+    }
+
+    String token = downloadTokens.split(",")[0];
+    return String.format("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media&token=%s",
+        blob.getBucket(), blob.getName(), token);
   }
 
   private static final String SERVICE_ID = StorageClient.class.getName();
