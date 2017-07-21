@@ -196,7 +196,7 @@ public class UserRecord implements UserInfo {
     // normalize accordingly.
     checkArgument(!Strings.isNullOrEmpty(phoneNumber), "phone number cannot be null or empty");
     checkState(phoneNumber.matches("^\\+.*[a-zA-Z0-9].*$"),
-        "phone number must begin with a '+' sign and contain at least one alphanumeric character");
+        "phone number must be a valid, E.164 compliant identifier string");
   }
 
   private static void checkPassword(String password) {
