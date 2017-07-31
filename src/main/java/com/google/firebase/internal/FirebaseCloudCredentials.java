@@ -37,11 +37,11 @@ import java.util.concurrent.ExecutionException;
  * <code>FirebaseApp</code> to authenticate cloud API calls. This essentially acts as a bridge
  * between Firebase Admin SDK APIs and the Google cloud <code>Credentials</code> API.
  */
-public final class FirebaseOAuthCredentials extends Credentials {
+public final class FirebaseCloudCredentials extends Credentials {
 
   private final FirebaseApp app;
 
-  public FirebaseOAuthCredentials(FirebaseApp app) {
+  public FirebaseCloudCredentials(FirebaseApp app) {
     this.app = checkNotNull(app);
   }
 

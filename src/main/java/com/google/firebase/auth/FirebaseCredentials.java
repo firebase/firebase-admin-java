@@ -48,9 +48,16 @@ public class FirebaseCredentials {
 
   private static final List<String> FIREBASE_SCOPES =
       ImmutableList.of(
+          // Enables access to Firebase Realtime Database.
           "https://www.googleapis.com/auth/firebase.database",
+
+          // Enables access to the email address associated with a project.
           "https://www.googleapis.com/auth/userinfo.email",
+
+          // Enables access to Google Identity Toolkit (for user management APIs).
           "https://www.googleapis.com/auth/identitytoolkit",
+
+          // Enables access to Google Cloud Storage.
           "https://www.googleapis.com/auth/devstorage.full_control");
 
   private FirebaseCredentials() {

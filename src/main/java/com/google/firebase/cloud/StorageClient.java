@@ -24,26 +24,31 @@ import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Strings;
+import com.google.common.net.UrlEscapers;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.internal.FirebaseOAuthCredentials;
+import com.google.firebase.internal.FirebaseCloudCredentials;
 import com.google.firebase.internal.FirebaseService;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * StorageClient provides access to Google Cloud Storage APIs. You can specify a cloud storage
- * bucket via {@link com.google.firebase.FirebaseOptions}, and then get a reference to it by calling
- * {@link StorageClient#getBucket()}. Or if you know the bucket name at runtime you can
- * directly call {@link StorageClient#getBucket(String)}.
+ * StorageClient provides access to Google Cloud Storage APIs. You can specify a default cloud
+ * storage bucket via {@link com.google.firebase.FirebaseOptions}, and then get a reference to this
+ * default bucket by calling {@link StorageClient#getBucket()}. Or you can get a reference to a
+ * specific bucket at any time by calling {@link StorageClient#getBucket(String)}.
  *
  * <p>This class requires Google Cloud Storage libraries for Java. Make sure the artifact
- * google-cloud-storage is in classpath along with its transitive dependencies.
+ * google-cloud-storage is in the classpath along with its transitive dependencies.
  */
 public class StorageClient {
 
-  private static final String DOWNLOAD_TOKENS = "firebaseStorageDownloadTokens";
+  // Key used tp store previously-created download tokens in a Blob's metadata.
+  // The same key is used by the client SDKs and the Firebase console to store and manage
+  // download tokens for GCS objects.
+  private static final String DOWNLOAD_TOKENS_METADATA_KEY = "firebaseStorageDownloadTokens";
 
   private final FirebaseApp app;
   private final Storage storage;
@@ -51,7 +56,7 @@ public class StorageClient {
   private StorageClient(FirebaseApp app) {
     this.app = checkNotNull(app, "FirebaseApp must not be null");
     this.storage = StorageOptions.newBuilder()
-        .setCredentials(new FirebaseOAuthCredentials(app))
+        .setCredentials(new FirebaseCloudCredentials(app))
         .build()
         .getService();
   }
@@ -113,16 +118,16 @@ public class StorageClient {
     if (metadata == null) {
       metadata = new HashMap<>();
     }
-    String downloadTokens = metadata.get(DOWNLOAD_TOKENS);
+    String downloadTokens = metadata.get(DOWNLOAD_TOKENS_METADATA_KEY);
     if (Strings.isNullOrEmpty(downloadTokens)) {
       downloadTokens = UUID.randomUUID().toString();
-      metadata.put(DOWNLOAD_TOKENS, downloadTokens);
+      metadata.put(DOWNLOAD_TOKENS_METADATA_KEY, downloadTokens);
       blob.toBuilder().setMetadata(metadata).build().update();
     }
 
     String token = downloadTokens.split(",")[0];
     return String.format("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media&token=%s",
-        blob.getBucket(), blob.getName(), token);
+        blob.getBucket(), blob.getName(), UrlEscapers.urlFormParameterEscaper().escape(token));
   }
 
   private static final String SERVICE_ID = StorageClient.class.getName();
