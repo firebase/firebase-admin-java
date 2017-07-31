@@ -757,7 +757,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
               logger.debug("Authentication failed: " + status + " (" + reason + ")");
               realtime.close();
 
-              if (status.equals("invalid_token")) {
+              if (status.equals("invalid_token") || status.equals("permission_denied")) {
                 // We'll wait a couple times before logging the warning / increasing the
                 // retry period since oauth tokens will report as "invalid" if they're
                 // just expired. Plus there may be transient issues that resolve themselves.
