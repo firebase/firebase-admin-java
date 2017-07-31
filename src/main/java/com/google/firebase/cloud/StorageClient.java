@@ -29,7 +29,6 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.FirebaseCloudCredentials;
 import com.google.firebase.internal.FirebaseService;
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -45,7 +44,7 @@ import java.util.UUID;
  */
 public class StorageClient {
 
-  // Key used tp store previously-created download tokens in a Blob's metadata.
+  // Key used to store previously-created download tokens in a Blob's metadata.
   // The same key is used by the client SDKs and the Firebase console to store and manage
   // download tokens for GCS objects.
   private static final String DOWNLOAD_TOKENS_METADATA_KEY = "firebaseStorageDownloadTokens";
@@ -127,7 +126,9 @@ public class StorageClient {
 
     String token = downloadTokens.split(",")[0];
     return String.format("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media&token=%s",
-        blob.getBucket(), blob.getName(), UrlEscapers.urlFormParameterEscaper().escape(token));
+        blob.getBucket(),
+        UrlEscapers.urlPathSegmentEscaper().escape(blob.getName()),
+        UrlEscapers.urlFormParameterEscaper().escape(token));
   }
 
   private static final String SERVICE_ID = StorageClient.class.getName();
