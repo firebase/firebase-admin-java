@@ -359,7 +359,7 @@ public class UserRecord implements UserInfo {
     /**
      * Updates the phone number associated with this user.
      *
-     * @param phone a non-null, non-empty phone number string to be associated with the user.
+     * @param phone a valid phone number string or null.
      */
     public UpdateRequest setPhoneNumber(String phone) {
       if (phone != null) {
