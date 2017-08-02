@@ -36,8 +36,8 @@ import java.util.UUID;
 /**
  * StorageClient provides access to Google Cloud Storage APIs. You can specify a default cloud
  * storage bucket via {@link com.google.firebase.FirebaseOptions}, and then get a reference to this
- * default bucket by calling {@link StorageClient#getBucket()}. Or you can get a reference to a
- * specific bucket at any time by calling {@link StorageClient#getBucket(String)}.
+ * default bucket by calling {@link StorageClient#bucket()}. Or you can get a reference to a
+ * specific bucket at any time by calling {@link StorageClient#bucket(String)}.
  *
  * <p>This class requires Google Cloud Storage libraries for Java. Make sure the artifact
  * google-cloud-storage is in the classpath along with its transitive dependencies.
@@ -82,8 +82,8 @@ public class StorageClient {
    * @throws IllegalArgumentException If no bucket is configured via <code>FirebaseOptions</code>,
    *     or if the bucket does not exist.
    */
-  public Bucket getBucket() {
-    return getBucket(app.getOptions().getStorageBucket());
+  public Bucket bucket() {
+    return bucket(app.getOptions().getStorageBucket());
   }
 
   /**
@@ -94,7 +94,7 @@ public class StorageClient {
    * @throws IllegalArgumentException If the bucket name is null, empty, or if the specified
    *     bucket does not exist.
    */
-  public Bucket getBucket(String name) {
+  public Bucket bucket(String name) {
     checkArgument(!Strings.isNullOrEmpty(name),
         "Bucket name not specified. Specify the bucket name via the storageBucket "
             + "option when initializing the app, or specify the bucket name explicitly when "

@@ -41,7 +41,7 @@ public class StorageClientTest {
         .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
         .build());
     try {
-      StorageClient.getInstance(app).getBucket();
+      StorageClient.getInstance(app).bucket();
       fail("No error thrown for invalid configuration");
     } catch (IllegalArgumentException expected) {
       // ignore
@@ -55,14 +55,14 @@ public class StorageClientTest {
         .setStorageBucket("mock-bucket-name")
         .build());
     try {
-      StorageClient.getInstance(app).getBucket(null);
+      StorageClient.getInstance(app).bucket(null);
       fail("No error thrown for invalid configuration");
     } catch (IllegalArgumentException expected) {
       // ignore
     }
 
     try {
-      StorageClient.getInstance(app).getBucket("");
+      StorageClient.getInstance(app).bucket("");
       fail("No error thrown for invalid configuration");
     } catch (IllegalArgumentException expected) {
       // ignore

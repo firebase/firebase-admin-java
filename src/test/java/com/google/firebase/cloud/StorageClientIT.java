@@ -23,7 +23,6 @@ import static org.junit.Assert.fail;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
@@ -37,20 +36,20 @@ public class StorageClientIT {
   @Test
   public void testCloudStorageDefaultBucket() {
     StorageClient storage = StorageClient.getInstance(IntegrationTestUtils.ensureDefaultApp());
-    testBucket(storage.getBucket());
+    testBucket(storage.bucket());
   }
 
   @Test
   public void testCloudStorageCustomBucket() {
     StorageClient storage = StorageClient.getInstance(IntegrationTestUtils.ensureDefaultApp());
-    testBucket(storage.getBucket(IntegrationTestUtils.getStorageBucket()));
+    testBucket(storage.bucket(IntegrationTestUtils.getStorageBucket()));
   }
 
   @Test
   public void testCloudStorageNonExistingBucket() {
     StorageClient storage = StorageClient.getInstance(IntegrationTestUtils.ensureDefaultApp());
     try {
-      storage.getBucket("non-existing");
+      storage.bucket("non-existing");
       fail("No error thrown for non-existing bucket");
     } catch (IllegalArgumentException expected) {
       // ignore
@@ -60,7 +59,7 @@ public class StorageClientIT {
   @Test
   public void testDownloadUrl() throws IOException {
     StorageClient storage = StorageClient.getInstance(IntegrationTestUtils.ensureDefaultApp());
-    Bucket bucket = storage.getBucket();
+    Bucket bucket = storage.bucket();
     String fileName = "data_" + System.currentTimeMillis() + ".txt";
     Blob blob = bucket.create(fileName, "testDownloadUrl".getBytes(), "text/plain");
     URL url = new URL(storage.getDownloadUrl(blob));
