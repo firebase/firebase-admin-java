@@ -23,12 +23,7 @@ import static org.junit.Assert.fail;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
-import com.google.common.io.CharStreams;
 import com.google.firebase.testing.IntegrationTestUtils;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
 import org.junit.Test;
 
 public class StorageClientIT {
@@ -53,21 +48,6 @@ public class StorageClientIT {
       fail("No error thrown for non-existing bucket");
     } catch (IllegalArgumentException expected) {
       // ignore
-    }
-  }
-
-  @Test
-  public void testDownloadUrl() throws IOException {
-    StorageClient storage = StorageClient.getInstance(IntegrationTestUtils.ensureDefaultApp());
-    Bucket bucket = storage.bucket();
-    String fileName = "data_" + System.currentTimeMillis() + ".txt";
-    Blob blob = bucket.create(fileName, "testDownloadUrl".getBytes(), "text/plain");
-    URL url = new URL(storage.getDownloadUrl(blob));
-    try (InputStream in = url.openStream()) {
-      String result = CharStreams.toString(new InputStreamReader(in));
-      assertEquals("testDownloadUrl", result);
-    } finally {
-      blob.delete();
     }
   }
 
