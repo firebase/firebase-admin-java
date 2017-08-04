@@ -195,8 +195,8 @@ public class UserRecord implements UserInfo {
     // Phone number verification is very lax here. Backend will enforce E.164 spec compliance, and
     // normalize accordingly.
     checkArgument(!Strings.isNullOrEmpty(phoneNumber), "phone number cannot be null or empty");
-    checkState(phoneNumber.matches("^\\+.*[a-zA-Z0-9].*$"),
-        "phone number must be a valid, E.164 compliant identifier string");
+    checkState(phoneNumber.startsWith("+"),
+        "phone number must be a valid, E.164 compliant identifier starting with a '+' sign");
   }
 
   private static void checkPassword(String password) {
@@ -357,11 +357,12 @@ public class UserRecord implements UserInfo {
     }
 
     /**
-     * Updates the phone number associated with this user.
+     * Updates the phone number associated with this user. Calling this method with a null argument
+     * removes the phone number from the user account.
      *
      * @param phone a valid phone number string or null.
      */
-    public UpdateRequest setPhoneNumber(String phone) {
+    public UpdateRequest setPhoneNumber(@Nullable String phone) {
       if (phone != null) {
         checkPhoneNumber(phone);
       }
@@ -385,7 +386,7 @@ public class UserRecord implements UserInfo {
      *
      * @param displayName a display name string or null
      */
-    public UpdateRequest setDisplayName(String displayName) {
+    public UpdateRequest setDisplayName(@Nullable String displayName) {
       properties.put("displayName", displayName);
       return this;
     }
@@ -396,7 +397,7 @@ public class UserRecord implements UserInfo {
      *
      * @param photoUrl a valid URL string or null
      */
-    public UpdateRequest setPhotoUrl(String photoUrl) {
+    public UpdateRequest setPhotoUrl(@Nullable String photoUrl) {
       if (photoUrl != null) {
         try {
           new URL(photoUrl);
