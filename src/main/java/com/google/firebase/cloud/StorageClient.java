@@ -54,7 +54,7 @@ public class StorageClient {
     return getInstance(FirebaseApp.getInstance());
   }
 
-  public static StorageClient getInstance(FirebaseApp app) {
+  public static synchronized StorageClient getInstance(FirebaseApp app) {
     StorageClientService service = ImplFirebaseTrampolines.getService(app, SERVICE_ID,
         StorageClientService.class);
     if (service == null) {
