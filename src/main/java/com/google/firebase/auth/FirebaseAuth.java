@@ -244,6 +244,26 @@ public class FirebaseAuth {
   }
 
   /**
+   * Gets the user data corresponding to the specified user phone number.
+   *
+   * @param phoneNumber A user phone number string.
+   * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance.
+   *     If an error occurs while retrieving user data or if the phone number does not
+   *     correspond to a user, the task fails with a FirebaseAuthException.
+   * @throws IllegalArgumentException If the phone number is null or empty.
+   */
+  public Task<UserRecord> getUserByPhoneNumber(final String phoneNumber) {
+    checkArgument(!Strings.isNullOrEmpty(phoneNumber), "phone number must not be null or empty");
+    return ImplFirebaseTrampolines.getToken(firebaseApp, false).continueWith(
+        new Continuation<GetTokenResult, UserRecord>() {
+          @Override
+          public UserRecord then(Task<GetTokenResult> task) throws Exception {
+            return userManager.getUserByPhoneNumber(phoneNumber, task.getResult().getToken());
+          }
+        });
+  }
+
+  /**
    * Creates a new user account with the attributes contained in the specified
    * {@link CreateRequest}.
    *

@@ -48,6 +48,14 @@ public interface UserInfo {
   String getEmail();
 
   /**
+   * Returns the user's phone number, if available.
+   *
+   * @return a phone number string or null.
+   */
+  @Nullable
+  String getPhoneNumber();
+
+  /**
    * Returns the user's photo URL, if available.
    *
    * @return a URL string or null.

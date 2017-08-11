@@ -49,6 +49,9 @@ public final class GetAccountInfoResponse {
     @Key("email")
     private String email;
 
+    @Key("phoneNumber")
+    private String phoneNumber;
+
     @Key("emailVerified")
     private boolean emailVerified;
 
@@ -76,6 +79,10 @@ public final class GetAccountInfoResponse {
 
     public String getEmail() {
       return email;
+    }
+
+    public String getPhoneNumber() {
+      return phoneNumber;
     }
 
     public boolean isEmailVerified() {
@@ -121,6 +128,9 @@ public final class GetAccountInfoResponse {
     @Key("email")
     private String email;
 
+    @Key("phoneNumber")
+    private String phoneNumber;
+
     @Key("photoUrl")
     private String photoUrl;
 
@@ -137,6 +147,10 @@ public final class GetAccountInfoResponse {
 
     public String getEmail() {
       return email;
+    }
+
+    public String getPhoneNumber() {
+      return phoneNumber;
     }
 
     public String getPhotoUrl() {

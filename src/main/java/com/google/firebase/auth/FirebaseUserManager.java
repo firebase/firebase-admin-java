@@ -119,6 +119,24 @@ class FirebaseUserManager {
     return new UserRecord(response.getUsers().get(0));
   }
 
+  UserRecord getUserByPhoneNumber(String phoneNumber, String token) throws FirebaseAuthException {
+    final Map<String, Object> payload = ImmutableMap.<String, Object>of(
+        "phoneNumber", ImmutableList.of(phoneNumber));
+    GetAccountInfoResponse response;
+    try {
+      response = post("getAccountInfo", token, payload, GetAccountInfoResponse.class);
+    } catch (IOException e) {
+      throw new FirebaseAuthException(INTERNAL_ERROR,
+          "IO error while retrieving user with phone number: " + phoneNumber, e);
+    }
+
+    if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
+      throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
+          "No user record found for the provided phone number: " + phoneNumber);
+    }
+    return new UserRecord(response.getUsers().get(0));
+  }
+
   String createUser(CreateRequest request, String token) throws FirebaseAuthException {
     GenericJson response;
     try {

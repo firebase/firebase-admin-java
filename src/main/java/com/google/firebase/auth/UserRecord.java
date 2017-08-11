@@ -18,6 +18,7 @@ package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -45,6 +46,7 @@ public class UserRecord implements UserInfo {
 
   private final String uid;
   private final String email;
+  private final String phoneNumber;
   private final boolean emailVerified;
   private final String displayName;
   private final String photoUrl;
@@ -57,6 +59,7 @@ public class UserRecord implements UserInfo {
     checkArgument(!Strings.isNullOrEmpty(response.getUid()), "uid must not be null or empty");
     this.uid = response.getUid();
     this.email = response.getEmail();
+    this.phoneNumber = response.getPhoneNumber();
     this.emailVerified = response.isEmailVerified();
     this.displayName = response.getDisplayName();
     this.photoUrl = response.getPhotoUrl();
@@ -101,6 +104,17 @@ public class UserRecord implements UserInfo {
   @Override
   public String getEmail() {
     return email;
+  }
+
+  /**
+   * Returns the phone number associated with this user.
+   *
+   * @return a phone number string or null.
+   */
+  @Nullable
+  @Override
+  public String getPhoneNumber() {
+    return phoneNumber;
   }
 
   /**
@@ -177,6 +191,14 @@ public class UserRecord implements UserInfo {
     checkArgument(email.matches("^[^@]+@[^@]+$"));
   }
 
+  private static void checkPhoneNumber(String phoneNumber) {
+    // Phone number verification is very lax here. Backend will enforce E.164 spec compliance, and
+    // normalize accordingly.
+    checkArgument(!Strings.isNullOrEmpty(phoneNumber), "phone number cannot be null or empty");
+    checkState(phoneNumber.startsWith("+"),
+        "phone number must be a valid, E.164 compliant identifier starting with a '+' sign");
+  }
+
   private static void checkPassword(String password) {
     checkArgument(!Strings.isNullOrEmpty(password), "password cannot be null or empty");
     checkArgument(password.length() >= 6, "password must be at least 6 characters long");
@@ -220,6 +242,17 @@ public class UserRecord implements UserInfo {
     public CreateRequest setEmail(String email) {
       checkEmail(email);
       properties.put("email", email);
+      return this;
+    }
+
+    /**
+     * Sets a phone number for the new user.
+     *
+     * @param phone a non-null, non-empty phone number string.
+     */
+    public CreateRequest setPhoneNumber(String phone) {
+      checkPhoneNumber(phone);
+      properties.put("phoneNumber", phone);
       return this;
     }
 
@@ -324,6 +357,20 @@ public class UserRecord implements UserInfo {
     }
 
     /**
+     * Updates the phone number associated with this user. Calling this method with a null argument
+     * removes the phone number from the user account.
+     *
+     * @param phone a valid phone number string or null.
+     */
+    public UpdateRequest setPhoneNumber(@Nullable String phone) {
+      if (phone != null) {
+        checkPhoneNumber(phone);
+      }
+      properties.put("phoneNumber", phone);
+      return this;
+    }
+
+    /**
      * Updates the email verification status of this account.
      *
      * @param emailVerified a boolean indicating whether the email address has been verified.
@@ -339,7 +386,7 @@ public class UserRecord implements UserInfo {
      *
      * @param displayName a display name string or null
      */
-    public UpdateRequest setDisplayName(String displayName) {
+    public UpdateRequest setDisplayName(@Nullable String displayName) {
       properties.put("displayName", displayName);
       return this;
     }
@@ -350,7 +397,7 @@ public class UserRecord implements UserInfo {
      *
      * @param photoUrl a valid URL string or null
      */
-    public UpdateRequest setPhotoUrl(String photoUrl) {
+    public UpdateRequest setPhotoUrl(@Nullable String photoUrl) {
       if (photoUrl != null) {
         try {
           new URL(photoUrl);
@@ -395,6 +442,11 @@ public class UserRecord implements UserInfo {
 
       if (!remove.isEmpty()) {
         copy.put("deleteAttribute", ImmutableList.copyOf(remove));
+      }
+
+      if (copy.containsKey("phoneNumber") && copy.get("phoneNumber") == null) {
+        copy.put("deleteProvider", ImmutableList.of("phone"));
+        copy.remove("phoneNumber");
       }
       return ImmutableMap.copyOf(copy);
     }

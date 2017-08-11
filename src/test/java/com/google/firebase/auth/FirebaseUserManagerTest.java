@@ -18,6 +18,7 @@ package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -84,6 +85,21 @@ public class FirebaseUserManagerTest {
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     userManager.setInterceptor(interceptor);
     UserRecord userRecord = userManager.getUserByEmail("testuser@example.com", TEST_TOKEN);
+    checkUserRecord(userRecord);
+    checkRequestHeaders(interceptor);
+  }
+
+  @Test
+  public void testGetUserByPhoneNumber() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setContent(TestUtils.loadResource("getUser.json"));
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport);
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    userManager.setInterceptor(interceptor);
+    UserRecord userRecord = userManager.getUserByPhoneNumber("+1234567890", TEST_TOKEN);
     checkUserRecord(userRecord);
     checkRequestHeaders(interceptor);
   }
@@ -182,14 +198,16 @@ public class FirebaseUserManagerTest {
         .setDisplayName("Display Name")
         .setPhotoUrl("http://test.com/example.png")
         .setEmail("test@example.com")
+        .setPhoneNumber("+1234567890")
         .setEmailVerified(true)
         .setPassword("secret")
         .getProperties();
-    assertEquals(6, map.size());
+    assertEquals(7, map.size());
     assertEquals("TestUid", map.get("localId"));
     assertEquals("Display Name", map.get("displayName"));
     assertEquals("http://test.com/example.png", map.get("photoUrl"));
     assertEquals("test@example.com", map.get("email"));
+    assertEquals("+1234567890", map.get("phoneNumber"));
     assertTrue((Boolean) map.get("emailVerified"));
     assertEquals("secret", map.get("password"));
   }
@@ -281,6 +299,31 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testInvalidPhoneNumber() {
+    CreateRequest user = new CreateRequest();
+    try {
+      user.setPhoneNumber(null);
+      fail("No error thrown for null phone number");
+    } catch (Exception ignore) {
+      // expected
+    }
+
+    try {
+      user.setPhoneNumber("");
+      fail("No error thrown for invalid phone number");
+    } catch (Exception ignore) {
+      // expected
+    }
+
+    try {
+      user.setPhoneNumber("not-a-phone");
+      fail("No error thrown for invalid phone number");
+    } catch (Exception ignore) {
+      // expected
+    }
+  }
+
+  @Test
   public void testInvalidPassword() {
     CreateRequest user = new CreateRequest();
     try {
@@ -305,14 +348,16 @@ public class FirebaseUserManagerTest {
         .setDisplayName("Display Name")
         .setPhotoUrl("http://test.com/example.png")
         .setEmail("test@example.com")
+        .setPhoneNumber("+1234567890")
         .setEmailVerified(true)
         .setPassword("secret")
         .getProperties();
-    assertEquals(6, map.size());
+    assertEquals(7, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals("Display Name", map.get("displayName"));
     assertEquals("http://test.com/example.png", map.get("photoUrl"));
     assertEquals("test@example.com", map.get("email"));
+    assertEquals("+1234567890", map.get("phoneNumber"));
     assertTrue((Boolean) map.get("emailVerified"));
     assertEquals("secret", map.get("password"));
   }
@@ -331,6 +376,14 @@ public class FirebaseUserManagerTest {
         .setPhotoUrl(null)
         .getProperties();
     assertEquals(ImmutableList.of("PHOTO_URL"), map.get("deleteAttribute"));
+  }
+
+  @Test
+  public void testDeletePhoneNumber() {
+    Map<String, Object> map = new UpdateRequest("test")
+        .setPhoneNumber(null)
+        .getProperties();
+    assertEquals(ImmutableList.of("phone"), map.get("deleteProvider"));
   }
 
   @Test
@@ -377,6 +430,25 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testInvalidUpdatePhoneNumber() {
+    UpdateRequest update = new UpdateRequest("test");
+
+    try {
+      update.setPhoneNumber("");
+      fail("No error thrown for invalid phone number");
+    } catch (Exception ignore) {
+      // expected
+    }
+
+    try {
+      update.setPhoneNumber("not-a-phone");
+      fail("No error thrown for invalid phone number");
+    } catch (Exception ignore) {
+      // expected
+    }
+  }
+
+  @Test
   public void testInvalidUpdatePassword() {
     UpdateRequest update = new UpdateRequest("test");
     try {
@@ -397,20 +469,28 @@ public class FirebaseUserManagerTest {
   private void checkUserRecord(UserRecord userRecord) {
     assertEquals("testuser", userRecord.getUid());
     assertEquals("testuser@example.com", userRecord.getEmail());
+    assertEquals("+1234567890", userRecord.getPhoneNumber());
     assertEquals("Test User", userRecord.getDisplayName());
     assertEquals("http://www.example.com/testuser/photo.png", userRecord.getPhotoUrl());
     assertEquals(1234567890, userRecord.getUserMetadata().getCreationTimestamp());
     assertEquals(0, userRecord.getUserMetadata().getLastSignInTimestamp());
-    assertEquals(1, userRecord.getProviderData().length);
+    assertEquals(2, userRecord.getProviderData().length);
     assertFalse(userRecord.isDisabled());
     assertTrue(userRecord.isEmailVerified());
 
     UserInfo provider = userRecord.getProviderData()[0];
     assertEquals("testuser@example.com", provider.getUid());
     assertEquals("testuser@example.com", provider.getEmail());
+    assertNull(provider.getPhoneNumber());
     assertEquals("Test User", provider.getDisplayName());
     assertEquals("http://www.example.com/testuser/photo.png", provider.getPhotoUrl());
     assertEquals("password", provider.getProviderId());
+
+    provider = userRecord.getProviderData()[1];
+    assertEquals("+1234567890", provider.getUid());
+    assertNull(provider.getEmail());
+    assertEquals("+1234567890", provider.getPhoneNumber());
+    assertEquals("phone", provider.getProviderId());
   }
 
   private void checkRequestHeaders(TestResponseInterceptor interceptor) {

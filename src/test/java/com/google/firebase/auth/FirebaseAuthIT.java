@@ -38,7 +38,10 @@ import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import org.junit.BeforeClass;
@@ -107,14 +110,25 @@ public class FirebaseAuthIT {
     }
   }
 
+  private String randomPhoneNumber() {
+    Random random = new Random();
+    StringBuilder builder = new StringBuilder("+1");
+    for (int i = 0; i < 10; i++) {
+      builder.append(random.nextInt(10));
+    }
+    return builder.toString();
+  }
+
   @Test
   public void testCreateUserWithParams() throws Exception {
     String randomId = UUID.randomUUID().toString().replaceAll("-", "");
     String userEmail = ("test" + randomId.substring(0, 12) + "@example." + randomId.substring(12)
         + ".com").toLowerCase();
+    String phone = randomPhoneNumber();
     CreateRequest user = new CreateRequest()
         .setUid(randomId)
         .setEmail(userEmail)
+        .setPhoneNumber(phone)
         .setDisplayName("Random User")
         .setPhotoUrl("https://example.com/photo.png")
         .setEmailVerified(true)
@@ -125,9 +139,18 @@ public class FirebaseAuthIT {
       assertEquals(randomId, userRecord.getUid());
       assertEquals("Random User", userRecord.getDisplayName());
       assertEquals(userEmail, userRecord.getEmail());
+      assertEquals(phone, userRecord.getPhoneNumber());
       assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
       assertTrue(userRecord.isEmailVerified());
       assertFalse(userRecord.isDisabled());
+
+      assertEquals(2, userRecord.getProviderData().length);
+      List<String> providers = new ArrayList<>();
+      for (UserInfo provider : userRecord.getProviderData()) {
+        providers.add(provider.getProviderId());
+      }
+      assertTrue(providers.contains("password"));
+      assertTrue(providers.contains("phone"));
 
       checkRecreate(randomId);
     } finally {
@@ -157,19 +180,23 @@ public class FirebaseAuthIT {
     assertEquals(uid, userRecord.getUid());
     assertNull(userRecord.getDisplayName());
     assertNull(userRecord.getEmail());
+    assertNull(userRecord.getPhoneNumber());
     assertNull(userRecord.getPhotoUrl());
     assertFalse(userRecord.isEmailVerified());
     assertFalse(userRecord.isDisabled());
     assertTrue(userRecord.getUserMetadata().getCreationTimestamp() > 0);
     assertEquals(0, userRecord.getUserMetadata().getLastSignInTimestamp());
+    assertEquals(0, userRecord.getProviderData().length);
 
     // Update user
     String randomId = UUID.randomUUID().toString().replaceAll("-", "");
     String userEmail = ("test" + randomId.substring(0, 12) + "@example." + randomId.substring(12)
         + ".com").toLowerCase();
+    String phone = randomPhoneNumber();
     UpdateRequest request = userRecord.updateRequest()
         .setDisplayName("Updated Name")
         .setEmail(userEmail)
+        .setPhoneNumber(phone)
         .setPhotoUrl("https://example.com/photo.png")
         .setEmailVerified(true)
         .setPassword("secret");
@@ -177,9 +204,11 @@ public class FirebaseAuthIT {
     assertEquals(uid, userRecord.getUid());
     assertEquals("Updated Name", userRecord.getDisplayName());
     assertEquals(userEmail, userRecord.getEmail());
+    assertEquals(phone, userRecord.getPhoneNumber());
     assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
     assertTrue(userRecord.isEmailVerified());
     assertFalse(userRecord.isDisabled());
+    assertEquals(2, userRecord.getProviderData().length);
 
     // Get user by email
     userRecord = Tasks.await(auth.getUserByEmail(userRecord.getEmail()));
@@ -189,14 +218,17 @@ public class FirebaseAuthIT {
     request = userRecord.updateRequest()
         .setPhotoUrl(null)
         .setDisplayName(null)
+        .setPhoneNumber(null)
         .setDisabled(true);
     userRecord = Tasks.await(auth.updateUser(request));
     assertEquals(uid, userRecord.getUid());
     assertNull(userRecord.getDisplayName());
     assertEquals(userEmail, userRecord.getEmail());
+    assertNull(userRecord.getPhoneNumber());
     assertNull(userRecord.getPhotoUrl());
     assertTrue(userRecord.isEmailVerified());
     assertTrue(userRecord.isDisabled());
+    assertEquals(1, userRecord.getProviderData().length);
 
     // Delete user
     Tasks.await(auth.deleteUser(userRecord.getUid()));
