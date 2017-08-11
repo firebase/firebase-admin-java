@@ -114,6 +114,13 @@
                             </docletArtifact>
                             <doclet>com.google.doclava.Doclava</doclet>
                             <bootclasspath>${sun.boot.class.path}</bootclasspath>
+                            <additionalDependencies>
+                                <additionalDependency>
+                                    <groupId>com.google.errorprone</groupId>
+                                    <artifactId>error_prone_annotations</artifactId>
+                                    <version>2.0.15</version>
+                                </additionalDependency>
+                            </additionalDependencies>
                             <additionalparam>
                                 -hdf book.path /_book.yaml
                                 -hdf project.path /_project.yaml
