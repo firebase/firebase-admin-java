@@ -83,20 +83,19 @@ public class FirebaseCredentialsTest {
             .build();
     TestUtils.setEnvironmentVariables(environmentVariables);
 
-    GoogleOAuthAccessToken token =
-        Tasks.await(
-            FirebaseCredentials.applicationDefault(transport, Utils.getDefaultJsonFactory())
-                .getAccessToken());
+    FirebaseCredential credential = FirebaseCredentials.applicationDefault(
+        transport, Utils.getDefaultJsonFactory());
+    GoogleOAuthAccessToken token = Tasks.await(credential.getAccessToken());
     Assert.assertEquals(ACCESS_TOKEN, token.getAccessToken());
+    Assert.assertNotNull(((BaseCredential) credential).getGoogleCredentials());
 
     // We should still be able to fetch the token since the certificate is cached
     Assert.assertTrue(credentialsFile.delete());
-    token =
-        Tasks.await(
-            FirebaseCredentials.applicationDefault(transport, Utils.getDefaultJsonFactory())
-                .getAccessToken());
+    credential = FirebaseCredentials.applicationDefault(transport, Utils.getDefaultJsonFactory());
+    token = Tasks.await(credential.getAccessToken());
     Assert.assertNotNull(token);
     Assert.assertEquals(ACCESS_TOKEN, token.getAccessToken());
+    Assert.assertNotNull(((BaseCredential) credential).getGoogleCredentials());
   }
 
   @Test
@@ -129,7 +128,8 @@ public class FirebaseCredentialsTest {
     Assert.assertEquals(0, inputStream.available());
     inputStream.close();
 
-    Tasks.await(credential.getAccessToken());
+    Assert.assertNotNull(((BaseCredential) credential).getGoogleCredentials());
+    Assert.assertEquals(ACCESS_TOKEN, Tasks.await(credential.getAccessToken()).getAccessToken());
   }
 
   @Test
@@ -215,7 +215,8 @@ public class FirebaseCredentialsTest {
     Assert.assertEquals(0, inputStream.available());
     inputStream.close();
 
-    Tasks.await(credential.getAccessToken());
+    Assert.assertNotNull(((BaseCredential) credential).getGoogleCredentials());
+    Assert.assertEquals(ACCESS_TOKEN, Tasks.await(credential.getAccessToken()).getAccessToken());
   }
 
   @Test
@@ -231,7 +232,6 @@ public class FirebaseCredentialsTest {
             throw new IOException("Expected");
           }
         };
-
 
     try {
       FirebaseCredentials.fromRefreshToken(inputStream, transport, Utils.getDefaultJsonFactory());

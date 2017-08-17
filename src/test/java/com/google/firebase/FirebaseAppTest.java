@@ -35,6 +35,7 @@ import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.auth.oauth2.OAuth2Credentials.CredentialsChangedListener;
 import com.google.common.base.Defaults;
 import com.google.common.io.BaseEncoding;
+import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.FirebaseOptions.Builder;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.tasks.TaskCompletionSource;
@@ -52,6 +53,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
@@ -329,6 +331,30 @@ public class FirebaseAppTest {
     verify(listener, never()).onChanged(Mockito.any(OAuth2Credentials.class));
   }
 
+  @Test
+  public void testProactiveTokenRefresh() throws Exception {
+    MockTokenRefresherFactory factory = new MockTokenRefresherFactory();
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp",
+        factory);
+    MockTokenRefresher tokenRefresher = factory.instance;
+    Assert.assertNotNull(tokenRefresher);
+
+    CredentialsChangedListener listener = mock(CredentialsChangedListener.class);
+    firebaseApp.addCredentialsChangedListener(listener);
+
+    TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true);
+    verify(listener, times(1)).onChanged(Mockito.any(OAuth2Credentials.class));
+
+    tokenRefresher.simulateDelay(55);
+    verify(listener, times(2)).onChanged(Mockito.any(OAuth2Credentials.class));
+
+    tokenRefresher.simulateDelay(20);
+    verify(listener, times(2)).onChanged(Mockito.any(OAuth2Credentials.class));
+
+    tokenRefresher.simulateDelay(35);
+    verify(listener, times(3)).onChanged(Mockito.any(OAuth2Credentials.class));
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void testFirebaseExceptionNullDetail() {
     new FirebaseException(null);
@@ -338,6 +364,55 @@ public class FirebaseAppTest {
   public void testFirebaseExceptionEmptyDetail() {
     new FirebaseException("");
   }
+
+  private static class MockTokenRefresher extends TokenRefresher {
+
+    private Callable<Void> task;
+    private long executeAt;
+    private long time;
+
+    MockTokenRefresher(FirebaseApp app) {
+      super(app);
+    }
+
+    @Override
+    protected void cancelPrevious() {
+      task = null;
+    }
+
+    @Override
+    protected void scheduleNext(Callable<Void> task, long delayMillis) {
+      this.task = task;
+      executeAt = time + delayMillis;
+    }
+
+    /**
+     * Simulates passage of time. Advances the clock, and runs the scheduled task if exists. Also
+     * waits for the execution of any initiated tasks.
+     *
+     * @param delayMinutes Duration in minutes to advance the clock by
+     */
+    void simulateDelay(int delayMinutes) throws Exception {
+      synchronized (this) {
+        time += TimeUnit.MINUTES.toMillis(delayMinutes);
+        if (task != null && time >= executeAt) {
+          task.call();
+        }
+      }
+    }
+  }
+
+  private static class MockTokenRefresherFactory extends TokenRefresher.Factory {
+
+    MockTokenRefresher instance;
+
+    @Override
+    TokenRefresher create(FirebaseApp app) {
+      instance = new MockTokenRefresher(app);
+      return instance;
+    }
+  }
+
 
   private static class MockGoogleCredentials extends GoogleCredentials {
 
