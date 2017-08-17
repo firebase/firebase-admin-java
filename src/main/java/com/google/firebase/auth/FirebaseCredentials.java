@@ -18,7 +18,6 @@ package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
@@ -233,12 +232,6 @@ public class FirebaseCredentials {
 
     static final FirebaseCredential INSTANCE =
         applicationDefault(Utils.getDefaultTransport(), Utils.getDefaultJsonFactory());
-  }
-
-  static GoogleOAuthAccessToken newAccessToken(GoogleCredential credential) {
-    checkNotNull(credential);
-    return new GoogleOAuthAccessToken(credential.getAccessToken(),
-        credential.getExpirationTimeMilliseconds());
   }
 
   private static HttpTransportFactory wrap(final HttpTransport transport) {
