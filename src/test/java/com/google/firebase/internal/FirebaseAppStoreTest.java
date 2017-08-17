@@ -18,10 +18,10 @@ package com.google.firebase.internal;
 
 import static org.junit.Assert.assertTrue;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
-import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.testing.FirebaseAppRule;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
@@ -36,7 +36,7 @@ public class FirebaseAppStoreTest {
   private static final FirebaseOptions ALL_VALUES_OPTIONS =
       new FirebaseOptions.Builder()
           .setDatabaseUrl(FIREBASE_DB_URL)
-          .setCredential(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
+          .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .build();
 
   @Rule public FirebaseAppRule firebaseAppRule = new FirebaseAppRule();
@@ -56,7 +56,7 @@ public class FirebaseAppStoreTest {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
     FirebaseOptions options =
         new FirebaseOptions.Builder()
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
             .build();
     FirebaseApp.initializeApp(options, name);
   }
@@ -67,7 +67,7 @@ public class FirebaseAppStoreTest {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
     FirebaseOptions options =
         new FirebaseOptions.Builder()
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
             .build();
     FirebaseApp.initializeApp(options);
   }

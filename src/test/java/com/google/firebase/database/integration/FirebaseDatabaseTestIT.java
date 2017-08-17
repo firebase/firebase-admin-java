@@ -19,9 +19,9 @@ package com.google.firebase.database.integration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -259,7 +259,7 @@ public class FirebaseDatabaseTestIT {
     try {
       FirebaseOptions options = new FirebaseOptions.Builder()
           .setDatabaseUrl(dbUrl)
-          .setCredential(FirebaseCredentials.fromCertificate(
+          .setCredentials(GoogleCredentials.fromStream(
               IntegrationTestUtils.getServiceAccountCertificate()))
           .build();
       return FirebaseApp.initializeApp(options, name);
@@ -271,7 +271,7 @@ public class FirebaseDatabaseTestIT {
   private static FirebaseApp appWithoutDbUrl(String name) {
     try {
       FirebaseOptions options = new FirebaseOptions.Builder()
-          .setCredential(FirebaseCredentials.fromCertificate(
+          .setCredentials(GoogleCredentials.fromStream(
               IntegrationTestUtils.getServiceAccountCertificate()))
           .build();
       return FirebaseApp.initializeApp(options, name);

@@ -23,6 +23,8 @@ import com.google.common.base.Strings;
 /**
  * Represents an OAuth access token, which can be used to access Firebase and other qualified
  * Google APIs. Encapsulates both the token string, and its expiration time.
+ *
+ * @deprecated Use GoogleCredentials and associated classes.
  */
 public class GoogleOAuthAccessToken {
 

@@ -27,7 +27,12 @@ import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.testing.auth.oauth2.MockTokenServerTransport;
 import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.auth.http.HttpTransportFactory;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.auth.oauth2.UserCredentials;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -84,24 +89,34 @@ public class FirebaseAuthTest {
     return Arrays.asList(
         new Object[][] {
           {
-            new FirebaseOptions.Builder().setCredential(createCertificateCredential()).build(),
+            new FirebaseOptions.Builder().setCredentials(createCertificateCredential()).build(),
             /* isCertCredential */ true
           },
           {
-            new FirebaseOptions.Builder().setCredential(createRefreshTokenCredential()).build(),
+            new FirebaseOptions.Builder().setCredentials(createRefreshTokenCredential()).build(),
             /* isCertCredential */ false
           },
           {
             new FirebaseOptions.Builder()
-                .setCredential(createApplicationDefaultCredential())
+                .setCredentials(createApplicationDefaultCredential())
                 .build(),
+            /* isCertCredential */ false
+          },
+          {
+            new FirebaseOptions.Builder().setCredential(
+                createFirebaseCertificateCredential()).build(),
+            /* isCertCredential */ true
+          },
+          {
+            new FirebaseOptions.Builder().setCredential(
+                createFirebaseRefreshTokenCredential()).build(),
             /* isCertCredential */ false
           },
         });
   }
 
-  private static FirebaseCredential createApplicationDefaultCredential() throws IOException {
-    MockTokenServerTransport transport = new MockTokenServerTransport();
+  private static GoogleCredentials createApplicationDefaultCredential() throws IOException {
+    final MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
 
     // Set the GOOGLE_APPLICATION_CREDENTIALS environment variable for application-default
@@ -118,13 +133,18 @@ public class FirebaseAuthTest {
     TestUtils.setEnvironmentVariables(environmentVariables);
     credentialsFile.deleteOnExit();
 
-    return FirebaseCredentials.applicationDefault(transport, Utils.getDefaultJsonFactory());
+    return GoogleCredentials.getApplicationDefault(new HttpTransportFactory() {
+      @Override
+      public HttpTransport create() {
+        return transport;
+      }
+    });
   }
 
-  private static FirebaseCredential createRefreshTokenCredential()
+  private static GoogleCredentials createRefreshTokenCredential()
       throws JSONException, IOException {
 
-    MockTokenServerTransport transport = new MockTokenServerTransport();
+    final MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addClient(CLIENT_ID, CLIENT_SECRET);
     transport.addRefreshToken(REFRESH_TOKEN, ACCESS_TOKEN);
 
@@ -136,16 +156,50 @@ public class FirebaseAuthTest {
     InputStream refreshTokenStream =
         new ByteArrayInputStream(secretJson.toString(0).getBytes("UTF-8"));
 
-    return FirebaseCredentials.fromRefreshToken(
-        refreshTokenStream, transport, Utils.getDefaultJsonFactory());
+    return UserCredentials.fromStream(refreshTokenStream, new HttpTransportFactory() {
+      @Override
+      public HttpTransport create() {
+        return transport;
+      }
+    });
   }
 
-  private static FirebaseCredential createCertificateCredential() throws IOException {
-    MockTokenServerTransport transport = new MockTokenServerTransport();
-    transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
+  private static FirebaseCredential createFirebaseRefreshTokenCredential()
+      throws JSONException, IOException {
 
-    return FirebaseCredentials.fromCertificate(
-        ServiceAccount.EDITOR.asStream(), transport, Utils.getDefaultJsonFactory());
+    final MockTokenServerTransport transport = new MockTokenServerTransport();
+    transport.addClient(CLIENT_ID, CLIENT_SECRET);
+    transport.addRefreshToken(REFRESH_TOKEN, ACCESS_TOKEN);
+
+    JSONObject secretJson = new JSONObject();
+    secretJson.put("client_id", CLIENT_ID);
+    secretJson.put("client_secret", CLIENT_SECRET);
+    secretJson.put("refresh_token", REFRESH_TOKEN);
+    secretJson.put("type", "authorized_user");
+    InputStream refreshTokenStream =
+        new ByteArrayInputStream(secretJson.toString(0).getBytes("UTF-8"));
+
+    return FirebaseCredentials.fromRefreshToken(refreshTokenStream, transport,
+        Utils.getDefaultJsonFactory());
+  }
+
+  private static GoogleCredentials createCertificateCredential() throws IOException {
+    final MockTokenServerTransport transport = new MockTokenServerTransport();
+    transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
+    return ServiceAccountCredentials.fromStream(ServiceAccount.EDITOR.asStream(),
+        new HttpTransportFactory() {
+          @Override
+          public HttpTransport create() {
+            return transport;
+          }
+        });
+  }
+
+  private static FirebaseCredential createFirebaseCertificateCredential() throws IOException {
+    final MockTokenServerTransport transport = new MockTokenServerTransport();
+    transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
+    return FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream(),
+        transport, Utils.getDefaultJsonFactory());
   }
 
   @Before
@@ -165,8 +219,7 @@ public class FirebaseAuthTest {
     assertNotNull(defaultAuth);
     assertSame(defaultAuth, FirebaseAuth.getInstance());
     String token =
-        Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(FirebaseApp.getInstance(), false))
-            .getToken();
+        Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(FirebaseApp.getInstance(), false));
     Assert.assertTrue(!token.isEmpty());
   }
 
@@ -176,7 +229,7 @@ public class FirebaseAuthTest {
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
     assertNotNull(auth);
     assertSame(auth, FirebaseAuth.getInstance(app));
-    String token = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(app, false)).getToken();
+    String token = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(app, false));
     Assert.assertTrue(!token.isEmpty());
   }
 
@@ -239,14 +292,15 @@ public class FirebaseAuthTest {
             .build();
     FirebaseApp app = FirebaseApp.initializeApp(options, "testGetAppWithUid");
     assertEquals("uid1", app.getOptions().getDatabaseAuthVariableOverride().get("uid"));
-    String token = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(app, false)).getToken();
+    String token = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(app, false));
     Assert.assertTrue(!token.isEmpty());
   }
 
   @Test
   public void testCreateCustomToken() throws Exception {
-    Assume.assumeTrue("Skipping testCreateCustomToken for non-cert credential",
-        isCertCredential);
+    GoogleCredentials credentials = TestOnlyImplFirebaseTrampolines.getCredentials(firebaseOptions);
+    Assume.assumeTrue("Skipping testCredentialCertificateRequired for cert credential",
+        credentials instanceof ServiceAccountCredentials);
 
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testCreateCustomToken");
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
@@ -263,8 +317,9 @@ public class FirebaseAuthTest {
 
   @Test
   public void testCreateCustomTokenWithDeveloperClaims() throws Exception {
-    Assume.assumeTrue("Skipping testCreateCustomTokenWithDeveloperClaims for non-cert credential",
-        isCertCredential);
+    GoogleCredentials credentials = TestOnlyImplFirebaseTrampolines.getCredentials(firebaseOptions);
+    Assume.assumeTrue("Skipping testCredentialCertificateRequired for cert credential",
+        credentials instanceof ServiceAccountCredentials);
 
     FirebaseApp app =
         FirebaseApp.initializeApp(firebaseOptions, "testCreateCustomTokenWithDeveloperClaims");
@@ -282,21 +337,11 @@ public class FirebaseAuthTest {
     assertTrue(ServiceAccount.EDITOR.verifySignature(parsedToken));
   }
 
-  @Test(expected = Exception.class)
-  public void testServiceAccountUsedAsRefreshToken() throws Exception {
-    FirebaseOptions options =
-        new FirebaseOptions.Builder()
-            .setCredential(FirebaseCredentials.fromRefreshToken(ServiceAccount.EDITOR.asStream()))
-            .build();
-    FirebaseApp app = FirebaseApp.initializeApp(options, "testCreateCustomToken");
-    Assert.assertNotNull(
-        Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(app, false)).getToken());
-  }
-
   @Test
   public void testCredentialCertificateRequired() throws Exception {
+    GoogleCredentials credentials = TestOnlyImplFirebaseTrampolines.getCredentials(firebaseOptions);
     Assume.assumeFalse("Skipping testCredentialCertificateRequired for cert credential",
-        isCertCredential);
+        credentials instanceof ServiceAccountCredentials);
 
 
     FirebaseApp app =
@@ -307,8 +352,8 @@ public class FirebaseAuthTest {
       fail("Expected exception.");
     } catch (Exception expected) {
       Assert.assertEquals(
-          "com.google.firebase.FirebaseException: Must initialize FirebaseApp with a certificate "
-              + "credential to call verifyIdToken()",
+          "com.google.firebase.FirebaseException: Must initialize FirebaseApp with a project ID "
+              + "to call verifyIdToken()",
           expected.getMessage());
     }
 
@@ -317,8 +362,8 @@ public class FirebaseAuthTest {
       fail("Expected exception.");
     } catch (Exception expected) {
       Assert.assertEquals(
-          "com.google.firebase.FirebaseException: Must initialize FirebaseApp with a certificate "
-              + "credential to call createCustomToken()",
+          "com.google.firebase.FirebaseException: Must initialize FirebaseApp with a service "
+              + "account credential to call createCustomToken()",
           expected.getMessage());
     }
   }

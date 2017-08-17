@@ -1938,10 +1938,6 @@ public class TransactionTestIT {
       @Override
       public void addTokenChangeListener(TokenChangeListener listener) {
       }
-
-      @Override
-      public void removeTokenChangeListener(TokenChangeListener listener) {
-      }
     });
 
     // Queue a transaction offline.

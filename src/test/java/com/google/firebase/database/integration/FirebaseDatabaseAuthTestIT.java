@@ -19,10 +19,10 @@ package com.google.firebase.database.integration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -79,7 +79,7 @@ public class FirebaseDatabaseAuthTestIT {
     FirebaseOptions options =
         new FirebaseOptions.Builder()
             .setDatabaseUrl(IntegrationTestUtils.getDatabaseUrl())
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.NONE.asStream()))
+            .setCredentials(GoogleCredentials.fromStream(ServiceAccount.NONE.asStream()))
             .build();
     FirebaseApp app = FirebaseApp.initializeApp(options, "DatabaseServerAuthTestNoRole");
     FirebaseDatabase db = FirebaseDatabase.getInstance(app);

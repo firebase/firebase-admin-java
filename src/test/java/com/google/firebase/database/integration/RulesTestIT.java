@@ -22,10 +22,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
-import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -106,8 +106,8 @@ public class RulesTestIT {
     // Init app with non-admin privileges
     Map<String, Object> auth = MapBuilder.of("uid", "my-service-worker");
     FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredential(FirebaseCredentials
-            .fromCertificate(IntegrationTestUtils.getServiceAccountCertificate()))
+        .setCredentials(GoogleCredentials.fromStream(
+            IntegrationTestUtils.getServiceAccountCertificate()))
         .setDatabaseUrl(IntegrationTestUtils.getDatabaseUrl())
         .setDatabaseAuthVariableOverride(auth)
         .build();
@@ -424,7 +424,7 @@ public class RulesTestIT {
     DatabaseReference ref = root.child(writer.getPath().toString());
 
     String token = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(masterApp, true),
-        TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).getToken();
+        TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     provider.setToken(token);
 
     DatabaseError err = new WriteFuture(ref.child("any_auth"), true).timedGet();

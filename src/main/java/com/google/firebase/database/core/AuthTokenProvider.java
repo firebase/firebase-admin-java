@@ -34,13 +34,6 @@ public interface AuthTokenProvider {
    */
   void addTokenChangeListener(TokenChangeListener listener);
 
-  /**
-   * Removes a previously-registered TokenChangeListener.
-   *
-   * @param listener Listener to be removed.
-   */
-  void removeTokenChangeListener(TokenChangeListener listener);
-
   interface GetTokenCompletionListener {
 
     /**

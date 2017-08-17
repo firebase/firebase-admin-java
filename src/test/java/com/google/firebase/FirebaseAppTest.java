@@ -29,18 +29,14 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import com.google.auth.oauth2.AccessToken;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.OAuth2Credentials;
+import com.google.auth.oauth2.OAuth2Credentials.CredentialsChangedListener;
 import com.google.common.base.Defaults;
 import com.google.common.io.BaseEncoding;
-import com.google.firebase.FirebaseApp.Clock;
-import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.FirebaseOptions.Builder;
-import com.google.firebase.auth.FirebaseCredential;
-import com.google.firebase.auth.FirebaseCredentials;
-import com.google.firebase.auth.GoogleOAuthAccessToken;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.internal.AuthStateListener;
-import com.google.firebase.internal.GetTokenResult;
-import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.TaskCompletionSource;
 import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.FirebaseAppRule;
@@ -53,9 +49,9 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
@@ -71,12 +67,14 @@ public class FirebaseAppTest {
 
   private static final FirebaseOptions OPTIONS =
       new FirebaseOptions.Builder()
-          .setCredential(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
+          .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .build();
-  private static final FirebaseOptions MOCK_CREDENTIAL_OPTIONS =
-      new Builder().setCredential(new MockFirebaseCredential()).build();
 
   @Rule public FirebaseAppRule firebaseAppRule = new FirebaseAppRule();
+
+  private static FirebaseOptions getMockCredentialOptions() {
+    return new Builder().setCredentials(new MockGoogleCredentials()).build();
+  }
 
   private static void invokePublicInstanceMethodWithDefaultValues(Object instance, Method method)
       throws InvocationTargetException, IllegalAccessException {
@@ -165,7 +163,7 @@ public class FirebaseAppTest {
 
   @Test
   public void testGetNullApp() {
-    FirebaseApp app1 = FirebaseApp.initializeApp(OPTIONS, "app");
+    FirebaseApp.initializeApp(OPTIONS, "app");
     try {
       FirebaseApp.getInstance(null);
       fail("Not thrown");
@@ -178,7 +176,7 @@ public class FirebaseAppTest {
   public void testToString() throws IOException {
     FirebaseOptions options =
         new FirebaseOptions.Builder()
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
             .build();
     FirebaseApp app = FirebaseApp.initializeApp(options, "app");
     String pattern = "FirebaseApp\\{name=app}";
@@ -259,10 +257,10 @@ public class FirebaseAppTest {
 
   @Test
   public void testTokenCaching() throws ExecutionException, InterruptedException, IOException {
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp");
-    GetTokenResult token1 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
+    String token1 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
         firebaseApp, false));
-    GetTokenResult token2 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
+    String token2 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
         firebaseApp, false));
     Assert.assertNotNull(token1);
     Assert.assertNotNull(token2);
@@ -271,10 +269,10 @@ public class FirebaseAppTest {
 
   @Test
   public void testTokenForceRefresh() throws ExecutionException, InterruptedException, IOException {
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp");
-    GetTokenResult token1 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
+    String token1 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
         firebaseApp, false));
-    GetTokenResult token2 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
+    String token2 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
         firebaseApp, true));
     Assert.assertNotNull(token1);
     Assert.assertNotNull(token2);
@@ -282,114 +280,53 @@ public class FirebaseAppTest {
   }
 
   @Test
-  public void testTokenExpiration() throws ExecutionException, InterruptedException, IOException {
-    TestClock clock = new TestClock();
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(new Builder()
-        .setCredential(new ClockedMockFirebaseCredential(clock)).build(), "myApp",
-        FirebaseApp.DEFAULT_TOKEN_REFRESHER_FACTORY, clock);
-    GetTokenResult token1 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
-        firebaseApp, false));
-    GetTokenResult token2 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
-        firebaseApp, false));
-    Assert.assertNotNull(token1);
-    Assert.assertNotNull(token2);
-    Assert.assertEquals(token1, token2);
-
-    clock.timestamp += TimeUnit.HOURS.toMillis(1);
-    GetTokenResult token3 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
-        firebaseApp, false));
-    Assert.assertNotNull(token3);
-    Assert.assertNotEquals(token1, token3);
-  }
-
-  @Test
-  public void testAddAuthStateListenerWithoutInitialToken() {
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp");
-    AuthStateListener listener = mock(AuthStateListener.class);
-    firebaseApp.addAuthStateListener(listener);
-    verify(listener, never()).onAuthStateChanged(Mockito.any(GetTokenResult.class));
+  public void testAddAuthStateListenerWithoutInitialToken() throws IOException {
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
+    CredentialsChangedListener listener = mock(CredentialsChangedListener.class);
+    firebaseApp.addCredentialsChangedListener(listener);
+    verify(listener, never()).onChanged(Mockito.any(OAuth2Credentials.class));
   }
 
   @Test
   public void testAuthStateListenerAddWithInitialToken() throws Exception {
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp");
-    Tasks.await(firebaseApp.getToken(true));
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
+    Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true));
     final TaskCompletionSource<Boolean> completionSource = new TaskCompletionSource<>();
-    AuthStateListener listener =
-        new AuthStateListener() {
-          @Override
-          public void onAuthStateChanged(GetTokenResult tokenResult) {
-            completionSource.setResult(true);
-          }
-        };
-    firebaseApp.addAuthStateListener(listener);
+    CredentialsChangedListener listener = new CredentialsChangedListener() {
+      @Override
+      public void onChanged(OAuth2Credentials credentials) throws IOException {
+        completionSource.setResult(true);
+      }
+    };
+    firebaseApp.addCredentialsChangedListener(listener);
     Tasks.await(completionSource.getTask());
     assertTrue(completionSource.getTask().isSuccessful());
   }
 
   @Test
   public void testAuthStateListenerOnTokenChange() throws Exception {
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp");
-    AuthStateListener listener = mock(AuthStateListener.class);
-    firebaseApp.addAuthStateListener(listener);
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
+    CredentialsChangedListener listener = mock(CredentialsChangedListener.class);
+    firebaseApp.addCredentialsChangedListener(listener);
 
     for (int i = 0; i < 5; i++) {
-      Tasks.await(firebaseApp.getToken(true));
-      verify(listener, times(i + 1)).onAuthStateChanged(Mockito.any(GetTokenResult.class));
+      Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true));
+      verify(listener, times(i + 1)).onChanged(Mockito.any(OAuth2Credentials.class));
     }
   }
 
   @Test
   public void testAuthStateListenerWithNoRefresh() throws Exception {
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp");
-    AuthStateListener listener = mock(AuthStateListener.class);
-    firebaseApp.addAuthStateListener(listener);
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
+    CredentialsChangedListener listener = mock(CredentialsChangedListener.class);
+    firebaseApp.addCredentialsChangedListener(listener);
 
-    Tasks.await(firebaseApp.getToken(true));
-    verify(listener, times(1)).onAuthStateChanged(Mockito.any(GetTokenResult.class));
-
-    reset(listener);
-    Tasks.await(firebaseApp.getToken(false));
-    verify(listener, never()).onAuthStateChanged(Mockito.any(GetTokenResult.class));
-  }
-
-  @Test
-  public void testAuthStateListenerRemoval() throws Exception {
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp");
-    AuthStateListener listener = mock(AuthStateListener.class);
-    firebaseApp.addAuthStateListener(listener);
-
-    Tasks.await(firebaseApp.getToken(true));
-    verify(listener, times(1)).onAuthStateChanged(Mockito.any(GetTokenResult.class));
+    Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true));
+    verify(listener, times(1)).onChanged(Mockito.any(OAuth2Credentials.class));
 
     reset(listener);
-    firebaseApp.removeAuthStateListener(listener);
-    Tasks.await(firebaseApp.getToken(false));
-    verify(listener, never()).onAuthStateChanged(Mockito.any(GetTokenResult.class));
-  }
-
-  @Test
-  public void testProactiveTokenRefresh() throws Exception {
-    MockTokenRefresherFactory factory = new MockTokenRefresherFactory();
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(MOCK_CREDENTIAL_OPTIONS, "myApp",
-        factory, FirebaseApp.DEFAULT_CLOCK);
-    MockTokenRefresher tokenRefresher = factory.instance;
-    Assert.assertNotNull(tokenRefresher);
-
-    AuthStateListener listener = mock(AuthStateListener.class);
-    firebaseApp.addAuthStateListener(listener);
-
-    Tasks.await(firebaseApp.getToken(true));
-    verify(listener, times(1)).onAuthStateChanged(Mockito.any(GetTokenResult.class));
-
-    tokenRefresher.simulateDelay(55);
-    verify(listener, times(2)).onAuthStateChanged(Mockito.any(GetTokenResult.class));
-
-    tokenRefresher.simulateDelay(20);
-    verify(listener, times(2)).onAuthStateChanged(Mockito.any(GetTokenResult.class));
-
-    tokenRefresher.simulateDelay(35);
-    verify(listener, times(3)).onAuthStateChanged(Mockito.any(GetTokenResult.class));
+    Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, false));
+    verify(listener, never()).onChanged(Mockito.any(OAuth2Credentials.class));
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -402,90 +339,12 @@ public class FirebaseAppTest {
     new FirebaseException("");
   }
 
-
-  private static class MockFirebaseCredential implements FirebaseCredential {
-    @Override
-    public Task<GoogleOAuthAccessToken> getAccessToken() {
-      return Tasks.forResult(new GoogleOAuthAccessToken(UUID.randomUUID().toString(),
-          System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)));
-    }
-  }
-
-  private static class ClockedMockFirebaseCredential implements FirebaseCredential {
-
-    private final TestClock clock;
-
-    ClockedMockFirebaseCredential(TestClock clock) {
-      this.clock = clock;
-    }
+  private static class MockGoogleCredentials extends GoogleCredentials {
 
     @Override
-    public Task<GoogleOAuthAccessToken> getAccessToken() {
-      return Tasks.forResult(new GoogleOAuthAccessToken(UUID.randomUUID().toString(),
-          clock.now() + TimeUnit.HOURS.toMillis(1)));
-    }
-  }
-
-  private static class MockTokenRefresher extends TokenRefresher {
-
-    private Callable<Task<GetTokenResult>> task;
-    private long executeAt;
-    private long time;
-
-    MockTokenRefresher(FirebaseApp app) {
-      super(app);
-    }
-
-    @Override
-    protected void cancelPrevious() {
-      task = null;
-    }
-
-    @Override
-    protected void scheduleNext(Callable<Task<GetTokenResult>> task, long delayMillis) {
-      this.task = task;
-      executeAt = time + delayMillis;
-    }
-
-    /**
-     * Simulates passage of time. Advances the clock, and runs the scheduled task if exists. Also
-     * waits for the execution of any initiated tasks.
-     *
-     * @param delayMinutes Duration in minutes to advance the clock by
-     */
-    void simulateDelay(int delayMinutes) throws Exception {
-      Task<GetTokenResult> refreshTask = null;
-      synchronized (this) {
-        time += TimeUnit.MINUTES.toMillis(delayMinutes);
-        if (task != null && time >= executeAt) {
-          refreshTask = task.call();
-        }
-      }
-
-      if (refreshTask != null) {
-        Tasks.await(refreshTask);
-      }
-    }
-  }
-
-  private static class MockTokenRefresherFactory extends TokenRefresher.Factory {
-
-    MockTokenRefresher instance;
-
-    @Override
-    TokenRefresher create(FirebaseApp app) {
-      instance = new MockTokenRefresher(app);
-      return instance;
-    }
-  }
-
-  private static class TestClock extends FirebaseApp.Clock {
-
-    private long timestamp;
-
-    @Override
-    long now() {
-      return timestamp;
+    public AccessToken refreshAccessToken() throws IOException {
+      Date expiry = new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1));
+      return new AccessToken(UUID.randomUUID().toString(), expiry);
     }
   }
 }

@@ -27,7 +27,6 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.internal.GetTokenResult;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
 import java.io.ByteArrayInputStream;
@@ -103,7 +102,7 @@ public class IntegrationTestUtils {
           new FirebaseOptions.Builder()
               .setDatabaseUrl(getDatabaseUrl())
               .setStorageBucket(getStorageBucket())
-              .setCredential(TestUtils.getCertCredential(getServiceAccountCertificate()))
+              .setCredentials(TestUtils.getCertCredential(getServiceAccountCertificate()))
               .build();
       masterApp = FirebaseApp.initializeApp(options);
     }
@@ -114,7 +113,7 @@ public class IntegrationTestUtils {
     FirebaseOptions options =
         new FirebaseOptions.Builder()
             .setDatabaseUrl(getDatabaseUrl())
-            .setCredential(TestUtils.getCertCredential(getServiceAccountCertificate()))
+            .setCredentials(TestUtils.getCertCredential(getServiceAccountCertificate()))
             .build();
     return FirebaseApp.initializeApp(options, name);
   }
@@ -165,9 +164,9 @@ public class IntegrationTestUtils {
     private String getToken() {
       // TODO: We should consider exposing getToken (or similar) publicly for the
       // purpose of servers doing authenticated REST requests like this.
-      Task<GetTokenResult> task = TestOnlyImplFirebaseTrampolines.getToken(app, false);
+      Task<String> task = TestOnlyImplFirebaseTrampolines.getToken(app, false);
       try {
-        return Tasks.await(task).getToken();
+        return Tasks.await(task);
       } catch (ExecutionException | InterruptedException e) {
         throw new RuntimeException(e);
       }

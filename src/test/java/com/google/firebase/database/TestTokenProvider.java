@@ -76,9 +76,4 @@ public class TestTokenProvider implements AuthTokenProvider {
   public void addTokenChangeListener(TokenChangeListener listener) {
     this.listeners.add(listener);
   }
-
-  @Override
-  public void removeTokenChangeListener(TokenChangeListener listener) {
-    this.listeners.remove(listener);
-  }
 }

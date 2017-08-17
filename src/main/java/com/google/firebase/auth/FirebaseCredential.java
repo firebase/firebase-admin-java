@@ -22,6 +22,8 @@ import com.google.firebase.tasks.Task;
  * Provides Google OAuth2 access tokens used to authenticate with Firebase services. In most cases,
  * you will not need to implement this yourself and can instead use the default implementations
  * provided by {@link FirebaseCredentials}.
+ *
+ * @deprecated Use GoogleCredentials
  */
 public interface FirebaseCredential {
 

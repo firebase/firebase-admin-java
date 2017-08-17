@@ -19,9 +19,8 @@ package com.google.firebase.testing;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.json.webtoken.JsonWebSignature;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.io.CharStreams;
-import com.google.firebase.auth.FirebaseCredential;
-import com.google.firebase.auth.FirebaseCredentials;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -80,9 +79,9 @@ public class TestUtils {
     }
   }
 
-  public static FirebaseCredential getCertCredential(InputStream stream) {
+  public static GoogleCredentials getCertCredential(InputStream stream) {
     try {
-      return FirebaseCredentials.fromCertificate(stream);
+      return GoogleCredentials.fromStream(stream);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

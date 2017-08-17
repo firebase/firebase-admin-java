@@ -16,8 +16,12 @@
 
 package com.google.firebase;
 
+import com.google.auth.oauth2.AccessToken;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.internal.GetTokenResult;
 import com.google.firebase.tasks.Task;
+import com.google.firebase.tasks.Tasks;
+import java.io.IOException;
 
 /**
  * Provides trampolines into package-private APIs used by components of Firebase
@@ -36,7 +40,23 @@ public final class TestOnlyImplFirebaseTrampolines {
     FirebaseApp.clearInstancesForTest();
   }
 
-  public static Task<GetTokenResult> getToken(FirebaseApp app, boolean forceRefresh) {
-    return app.getToken(forceRefresh);
+  public static Task<String> getToken(FirebaseApp app, boolean forceRefresh) {
+    GoogleCredentials credentials = app.getOptions().getCredentials();
+    try {
+      if (forceRefresh) {
+        credentials.refresh();
+      } else {
+        credentials.getRequestMetadata();
+      }
+
+      AccessToken token = credentials.getAccessToken();
+      return Tasks.forResult(token.getTokenValue());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public static GoogleCredentials getCredentials(FirebaseOptions options) {
+    return options.getCredentials();
   }
 }
