@@ -35,7 +35,7 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
   private final ScheduledExecutorService executorService;
   private final FirebaseApp firebaseApp;
 
-  public JvmAuthTokenProvider(FirebaseApp firebaseApp, ScheduledExecutorService executorService) {
+  JvmAuthTokenProvider(FirebaseApp firebaseApp, ScheduledExecutorService executorService) {
     this.executorService = executorService;
     this.firebaseApp = firebaseApp;
   }
@@ -55,7 +55,11 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
   public void getToken(boolean forceRefresh, final GetTokenCompletionListener listener) {
     GoogleCredentials credentials = ImplFirebaseTrampolines.getCredentials(firebaseApp);
     try {
-      credentials.getRequestMetadata();
+      if (forceRefresh) {
+        credentials.refresh();
+      } else {
+        credentials.getRequestMetadata();
+      }
       listener.onSuccess(wrapOAuthToken(firebaseApp, credentials.getAccessToken()));
     } catch (IOException e) {
       listener.onError(e.toString());

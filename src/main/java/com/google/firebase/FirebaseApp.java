@@ -358,9 +358,15 @@ public class FirebaseApp {
 
     @Override
     public final void onChanged(OAuth2Credentials credentials) throws IOException {
-      long refreshDelay = credentials.getAccessToken().getExpirationTime().getTime()
-          - System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
-      scheduleRefresh(refreshDelay);
+      AccessToken accessToken = credentials.getAccessToken();
+      // Due to a race condition in the underlying google-auth library, this can return null.
+      // Ignore null values for now. When the credential is fully refreshed, this event
+      // will fire again.
+      if (accessToken != null) {
+        long refreshDelay = credentials.getAccessToken().getExpirationTime().getTime()
+            - System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
+        scheduleRefresh(refreshDelay);
+      }
     }
 
     /**
@@ -375,6 +381,7 @@ public class FirebaseApp {
           new Callable<Void>() {
             @Override
             public Void call() throws Exception {
+              logger.debug("Refreshing OAuth2 credential");
               GoogleCredentials credentials = firebaseApp.getOptions().getCredentials();
               credentials.refresh();
               return null;
