@@ -260,10 +260,8 @@ public class FirebaseAppTest {
   @Test
   public void testTokenCaching() throws ExecutionException, InterruptedException, IOException {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
-    String token1 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
-        firebaseApp, false));
-    String token2 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
-        firebaseApp, false));
+    String token1 = TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, false);
+    String token2 = TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, false);
     Assert.assertNotNull(token1);
     Assert.assertNotNull(token2);
     Assert.assertEquals(token1, token2);
@@ -272,10 +270,8 @@ public class FirebaseAppTest {
   @Test
   public void testTokenForceRefresh() throws ExecutionException, InterruptedException, IOException {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
-    String token1 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
-        firebaseApp, false));
-    String token2 = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(
-        firebaseApp, true));
+    String token1 = TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, false);
+    String token2 = TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true);
     Assert.assertNotNull(token1);
     Assert.assertNotNull(token2);
     Assert.assertNotEquals(token1, token2);
@@ -292,7 +288,7 @@ public class FirebaseAppTest {
   @Test
   public void testAuthStateListenerAddWithInitialToken() throws Exception {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
-    Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true));
+    TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true);
     final TaskCompletionSource<Boolean> completionSource = new TaskCompletionSource<>();
     CredentialsChangedListener listener = new CredentialsChangedListener() {
       @Override
@@ -312,7 +308,7 @@ public class FirebaseAppTest {
     firebaseApp.addCredentialsChangedListener(listener);
 
     for (int i = 0; i < 5; i++) {
-      Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true));
+      TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true);
       verify(listener, times(i + 1)).onChanged(Mockito.any(OAuth2Credentials.class));
     }
   }
@@ -323,11 +319,11 @@ public class FirebaseAppTest {
     CredentialsChangedListener listener = mock(CredentialsChangedListener.class);
     firebaseApp.addCredentialsChangedListener(listener);
 
-    Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true));
+    TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true);
     verify(listener, times(1)).onChanged(Mockito.any(OAuth2Credentials.class));
 
     reset(listener);
-    Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, false));
+    TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, false);
     verify(listener, never()).onChanged(Mockito.any(OAuth2Credentials.class));
   }
 

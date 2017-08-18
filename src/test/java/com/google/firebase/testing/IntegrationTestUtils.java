@@ -27,15 +27,12 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.tasks.Task;
-import com.google.firebase.tasks.Tasks;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -164,12 +161,7 @@ public class IntegrationTestUtils {
     private String getToken() {
       // TODO: We should consider exposing getToken (or similar) publicly for the
       // purpose of servers doing authenticated REST requests like this.
-      Task<String> task = TestOnlyImplFirebaseTrampolines.getToken(app, false);
-      try {
-        return Tasks.await(task);
-      } catch (ExecutionException | InterruptedException e) {
-        throw new RuntimeException(e);
-      }
+      return TestOnlyImplFirebaseTrampolines.getToken(app, false);
     }
   }
   
