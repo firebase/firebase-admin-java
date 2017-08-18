@@ -218,8 +218,7 @@ public class FirebaseAuthTest {
     FirebaseAuth defaultAuth = FirebaseAuth.getInstance();
     assertNotNull(defaultAuth);
     assertSame(defaultAuth, FirebaseAuth.getInstance());
-    String token =
-        TestOnlyImplFirebaseTrampolines.getToken(FirebaseApp.getInstance(), false);
+    String token = TestOnlyImplFirebaseTrampolines.getToken(FirebaseApp.getInstance(), false);
     Assert.assertTrue(!token.isEmpty());
   }
 

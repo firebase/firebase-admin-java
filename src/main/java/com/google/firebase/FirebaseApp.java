@@ -365,7 +365,13 @@ public class FirebaseApp {
       if (accessToken != null) {
         long refreshDelay = credentials.getAccessToken().getExpirationTime().getTime()
             - System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
-        scheduleRefresh(refreshDelay);
+        if (refreshDelay > 0) {
+          logger.debug("Scheduling next token refresh in {} milliseconds", refreshDelay);
+          scheduleRefresh(refreshDelay);
+        } else {
+          logger.warn("Token expiry ({}) is less than 5 minutes in the future. Not "
+              + "scheduling a proactive refresh.", accessToken.getExpirationTime());
+        }
       }
     }
 
