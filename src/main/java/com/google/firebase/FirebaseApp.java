@@ -314,16 +314,7 @@ public class FirebaseApp {
   void addCredentialsChangedListener(@NonNull final CredentialsChangedListener listener) {
     synchronized (lock) {
       checkNotDeleted();
-      GoogleCredentials credentials = options.getCredentials();
-      AccessToken currentToken = credentials.getAccessToken();
-      if (currentToken != null) {
-        try {
-          listener.onChanged(credentials);
-        } catch (IOException e) {
-          logger.warn("Failed to notify CredentialsChangedListener", e);
-        }
-      }
-      credentials.addChangeListener(listener);
+      options.getCredentials().addChangeListener(listener);
     }
   }
 
@@ -363,10 +354,9 @@ public class FirebaseApp {
       // Ignore null values for now. When the credential is fully refreshed, this event
       // will fire again.
       if (accessToken != null) {
-        long refreshDelay = credentials.getAccessToken().getExpirationTime().getTime()
+        long refreshDelay = accessToken.getExpirationTime().getTime()
             - System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
         if (refreshDelay > 0) {
-          logger.debug("Scheduling next token refresh in {} milliseconds", refreshDelay);
           scheduleRefresh(refreshDelay);
         } else {
           logger.warn("Token expiry ({}) is less than 5 minutes in the future. Not "
@@ -403,6 +393,7 @@ public class FirebaseApp {
     }
 
     protected void scheduleNext(Callable<Void> task, long delayMillis) {
+      logger.debug("Scheduling next token refresh in {} milliseconds", delayMillis);
       try {
         future =
             FirebaseExecutors.DEFAULT_SCHEDULED_EXECUTOR.schedule(

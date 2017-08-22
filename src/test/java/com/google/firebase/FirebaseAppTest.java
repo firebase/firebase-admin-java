@@ -38,8 +38,6 @@ import com.google.common.io.BaseEncoding;
 import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.FirebaseOptions.Builder;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.tasks.TaskCompletionSource;
-import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.FirebaseAppRule;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
@@ -283,22 +281,6 @@ public class FirebaseAppTest {
     CredentialsChangedListener listener = mock(CredentialsChangedListener.class);
     firebaseApp.addCredentialsChangedListener(listener);
     verify(listener, never()).onChanged(Mockito.any(OAuth2Credentials.class));
-  }
-
-  @Test
-  public void testAuthStateListenerAddWithInitialToken() throws Exception {
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
-    TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true);
-    final TaskCompletionSource<Boolean> completionSource = new TaskCompletionSource<>();
-    CredentialsChangedListener listener = new CredentialsChangedListener() {
-      @Override
-      public void onChanged(OAuth2Credentials credentials) throws IOException {
-        completionSource.setResult(true);
-      }
-    };
-    firebaseApp.addCredentialsChangedListener(listener);
-    Tasks.await(completionSource.getTask());
-    assertTrue(completionSource.getTask().isSuccessful());
   }
 
   @Test
