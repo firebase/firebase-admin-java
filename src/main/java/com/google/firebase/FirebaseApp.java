@@ -342,13 +342,18 @@ public class FirebaseApp {
 
     private final FirebaseApp firebaseApp;
     private ScheduledFuture<Void> future;
+    private boolean closed;
 
     TokenRefresher(FirebaseApp app) {
       this.firebaseApp = checkNotNull(app);
     }
 
     @Override
-    public final void onChanged(OAuth2Credentials credentials) throws IOException {
+    public final synchronized void onChanged(OAuth2Credentials credentials) throws IOException {
+      if (closed) {
+        return;
+      }
+
       AccessToken accessToken = credentials.getAccessToken();
       // Due to a race condition in the underlying google-auth library, this can return null.
       // Ignore null values for now. When the credential is fully refreshed, this event
@@ -371,7 +376,7 @@ public class FirebaseApp {
      * @param delayMillis Duration in milliseconds, after which the token should be forcibly
      *     refreshed.
      */
-    final void scheduleRefresh(final long delayMillis) {
+    private void scheduleRefresh(final long delayMillis) {
       cancelPrevious();
       scheduleNext(
           new Callable<Void>() {
@@ -403,8 +408,9 @@ public class FirebaseApp {
       }
     }
 
-    protected void cleanup() {
+    protected synchronized void cleanup() {
       cancelPrevious();
+      closed = true;
     }
 
     static class Factory {
