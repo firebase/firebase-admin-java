@@ -19,6 +19,7 @@ package com.google.firebase;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.OAuth2Credentials.CredentialsChangedListener;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.common.base.Strings;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 
@@ -42,17 +43,21 @@ public final class ImplFirebaseTrampolines {
   }
 
   public static String getProjectId(@NonNull FirebaseOptions options) {
+    // Try to get project ID from user-specified options.
     String projectId = options.getProjectId();
-    if (projectId == null) {
+
+    // Try to get project ID from the credentials.
+    if (Strings.isNullOrEmpty(projectId)) {
       GoogleCredentials credentials = options.getCredentials();
       if (credentials instanceof ServiceAccountCredentials) {
         // TODO: Get project ID from credential when
         // TODO: https://github.com/google/google-auth-library-java/pull/118 is resolved.
       }
+    }
 
-      if (projectId == null) {
-        projectId = System.getenv("GCLOUD_PROJECT");
-      }
+    // Try to get project ID from the environment.
+    if (Strings.isNullOrEmpty(projectId)) {
+      projectId = System.getenv("GCLOUD_PROJECT");
     }
     return projectId;
   }

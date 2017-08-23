@@ -367,6 +367,31 @@ public class FirebaseAuthTest {
     }
   }
 
+  @Test
+  public void testVerifyIdTokenWithExplicitProjectId() throws Exception {
+    GoogleCredentials credentials = TestOnlyImplFirebaseTrampolines.getCredentials(firebaseOptions);
+    Assume.assumeFalse("Skipping testCredentialCertificateRequired for cert credential",
+        credentials instanceof ServiceAccountCredentials);
+
+    FirebaseOptions options =
+        new FirebaseOptions.Builder(firebaseOptions)
+            .setProjectId("mock-project-id")
+            .build();
+    FirebaseApp app =
+        FirebaseApp.initializeApp(options, "testCredentialCertificateRequired");
+
+    try {
+      Tasks.await(FirebaseAuth.getInstance(app).verifyIdToken("foo"));
+      fail("Expected exception.");
+    } catch (Exception expected) {
+      Assert.assertNotEquals(
+          "com.google.firebase.FirebaseException: Must initialize FirebaseApp with a service "
+              + "account credential to call createCustomToken()",
+          expected.getMessage());
+      assertTrue(expected.getCause() instanceof IllegalArgumentException);
+    }
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void testAuthExceptionNullErrorCode() {
     new FirebaseAuthException(null, "test");

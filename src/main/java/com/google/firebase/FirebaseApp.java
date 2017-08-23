@@ -162,7 +162,7 @@ public class FirebaseApp {
   }
 
   /**
-   * A factory method to intialize a {@link FirebaseApp}.
+   * A factory method to initialize a {@link FirebaseApp}.
    *
    * @param options represents the global {@link FirebaseOptions}
    * @param name unique name for the app. It is an error to initialize an app with an already
