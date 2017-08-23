@@ -233,6 +233,7 @@ public final class FirebaseOptions {
     }
 
     public Builder setProjectId(String projectId) {
+      checkArgument(!Strings.isNullOrEmpty(projectId), "Project ID must not be null or empty");
       this.projectId = projectId;
       return this;
     }
