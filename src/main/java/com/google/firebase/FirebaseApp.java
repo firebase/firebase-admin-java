@@ -355,18 +355,13 @@ public class FirebaseApp {
       }
 
       AccessToken accessToken = credentials.getAccessToken();
-      // Due to a race condition in the underlying google-auth library, this can return null.
-      // Ignore null values for now. When the credential is fully refreshed, this event
-      // will fire again.
-      if (accessToken != null) {
-        long refreshDelay = accessToken.getExpirationTime().getTime()
-            - System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
-        if (refreshDelay > 0) {
-          scheduleRefresh(refreshDelay);
-        } else {
-          logger.warn("Token expiry ({}) is less than 5 minutes in the future. Not "
-              + "scheduling a proactive refresh.", accessToken.getExpirationTime());
-        }
+      long refreshDelay = accessToken.getExpirationTime().getTime()
+          - System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
+      if (refreshDelay > 0) {
+        scheduleRefresh(refreshDelay);
+      } else {
+        logger.warn("Token expiry ({}) is less than 5 minutes in the future. Not "
+            + "scheduling a proactive refresh.", accessToken.getExpirationTime());
       }
     }
 
