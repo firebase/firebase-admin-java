@@ -16,8 +16,6 @@
 
 package com.google.firebase;
 
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.base.Strings;
 import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.ImplFirebaseAuthTrampolines;
