@@ -16,7 +16,11 @@
 
 package com.google.firebase;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.common.base.Strings;
 import com.google.firebase.auth.FirebaseCredential;
+import com.google.firebase.auth.ImplFirebaseAuthTrampolines;
 import com.google.firebase.internal.AuthStateListener;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.GetTokenResult;
@@ -36,6 +40,27 @@ public final class ImplFirebaseTrampolines {
 
   public static FirebaseCredential getCredential(@NonNull FirebaseApp app) {
     return app.getOptions().getCredential();
+  }
+
+  public static String getProjectId(@NonNull FirebaseApp app) {
+    return getProjectId(app.getOptions());
+  }
+
+  public static String getProjectId(@NonNull FirebaseOptions options) {
+    // Try to get project ID from user-specified options.
+    String projectId = options.getProjectId();
+
+    // Try to get project ID from the credentials.
+    if (Strings.isNullOrEmpty(projectId)) {
+      FirebaseCredential credential = options.getCredential();
+      projectId = ImplFirebaseAuthTrampolines.getProjectId(credential);
+    }
+
+    // Try to get project ID from the environment.
+    if (Strings.isNullOrEmpty(projectId)) {
+      projectId = System.getenv("GCLOUD_PROJECT");
+    }
+    return projectId;
   }
 
   public static boolean isDefaultApp(@NonNull FirebaseApp app) {

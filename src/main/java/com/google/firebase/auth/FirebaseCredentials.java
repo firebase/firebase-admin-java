@@ -58,7 +58,11 @@ public class FirebaseCredentials {
           "https://www.googleapis.com/auth/identitytoolkit",
 
           // Enables access to Google Cloud Storage.
-          "https://www.googleapis.com/auth/devstorage.full_control");
+          "https://www.googleapis.com/auth/devstorage.full_control",
+
+          // Enabled access Google Cloud Firestore
+          "https://www.googleapis.com/auth/cloud-platform",
+          "https://www.googleapis.com/auth/datastore");
 
   private FirebaseCredentials() {
   }

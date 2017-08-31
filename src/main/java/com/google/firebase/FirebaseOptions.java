@@ -40,6 +40,7 @@ public final class FirebaseOptions {
   private final String storageBucket;
   private final FirebaseCredential firebaseCredential;
   private final Map<String, Object> databaseAuthVariableOverride;
+  private String projectId;
   private final HttpTransport httpTransport;
   private final JsonFactory jsonFactory;
 
@@ -49,6 +50,7 @@ public final class FirebaseOptions {
     this.databaseUrl = builder.databaseUrl;
     this.databaseAuthVariableOverride = builder.databaseAuthVariableOverride;
     this.storageBucket = builder.storageBucket;
+    this.projectId = builder.projectId;
     this.httpTransport = checkNotNull(builder.httpTransport,
         "FirebaseOptions must be initialized with a non-null HttpTransport.");
     this.jsonFactory = checkNotNull(builder.jsonFactory,
@@ -88,6 +90,15 @@ public final class FirebaseOptions {
   }
 
   /**
+   * Returns the Google Cloud project ID.
+   *
+   * @return The project ID set via {@link Builder#setProjectId(String)}
+   */
+  public String getProjectId() {
+    return projectId;
+  }
+
+  /**
    * Returns the <code>HttpTransport</code> used to call remote HTTP endpoints. This transport is
    * used by all services of the SDK, except for FirebaseDatabase.
    *
@@ -117,6 +128,7 @@ public final class FirebaseOptions {
     private String storageBucket;
     private FirebaseCredential firebaseCredential;
     private Map<String, Object> databaseAuthVariableOverride = new HashMap<>();
+    private String projectId;
     private HttpTransport httpTransport = Utils.getDefaultTransport();
     private JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
 
@@ -134,6 +146,7 @@ public final class FirebaseOptions {
       storageBucket = options.storageBucket;
       firebaseCredential = options.firebaseCredential;
       databaseAuthVariableOverride = options.databaseAuthVariableOverride;
+      projectId = options.projectId;
       httpTransport = options.httpTransport;
       jsonFactory = options.jsonFactory;
     }
@@ -206,6 +219,18 @@ public final class FirebaseOptions {
     public Builder setDatabaseAuthVariableOverride(
         @Nullable Map<String, Object> databaseAuthVariableOverride) {
       this.databaseAuthVariableOverride = databaseAuthVariableOverride;
+      return this;
+    }
+
+    /**
+     * Sets the Google Cloud project ID that should be associated with an app.
+     *
+     * @param projectId A non-null, non-empty project ID string.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setProjectId(@NonNull String projectId) {
+      checkArgument(!Strings.isNullOrEmpty(projectId), "Project ID must not be null or empty");
+      this.projectId = projectId;
       return this;
     }
 
