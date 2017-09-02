@@ -26,11 +26,10 @@ import com.google.firebase.internal.NonNull;
  */
 public class FirestoreClient {
 
-  private final FirebaseApp app;
   private final Firestore firestore;
 
   private FirestoreClient(FirebaseApp app) {
-    this.app = checkNotNull(app, "FirebaseApp must not be null");
+    checkNotNull(app, "FirebaseApp must not be null");
     // The following will be further simplified once we migrate to GoogleCredentials.
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkArgument(!Strings.isNullOrEmpty(projectId),
