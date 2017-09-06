@@ -274,10 +274,6 @@ public class FirebaseTokenVerifierTest {
         TestOnlyImplFirebaseAuthTrampolines.parseToken(
             FACTORY, createToken(createHeader(), createPayload()));
 
-    IdToken.Payload payload = (IdToken.Payload) token.getClaims();
-    assertTrue(payload.getAudienceAsList().contains(PROJECT_ID));
-    assertEquals(ISSUER, payload.getIssuer());
-
     MockHttpTransport mockTransport = new MockHttpTransport() {
       @Override
       public LowLevelHttpRequest buildRequest(String method, String url) throws IOException {
