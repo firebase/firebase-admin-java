@@ -58,7 +58,8 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
   private static final String ISSUER_PREFIX = "https://securetoken.google.com/";
   private static final String FIREBASE_AUDIENCE =
       "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit";
-  private static final String ERROR_CODE = "ERROR_INVALID_CREDENTIAL";
+  private static final String ERROR_INVALID_CREDENTIAL = "ERROR_INVALID_CREDENTIAL";
+  private static final String ERROR_RUNTIME_EXCEPTION = "ERROR_RUNTIME_EXCEPTION";
   private static final String PROJECT_ID_MATCH_MESSAGE =
       " Make sure the ID token comes from the same Firebase project as the service account used to "
           + "authenticate this SDK.";
@@ -138,18 +139,18 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
 
     if (errorMessage != null) {
       errorMessage += VERIFY_ID_TOKEN_DOCS_MESSAGE;
-      throw new FirebaseAuthException(ERROR_CODE, errorMessage);
+      throw new FirebaseAuthException(ERROR_INVALID_CREDENTIAL, errorMessage);
     }
 
     try {
       if (!verifySignature(token)) {
         throw new FirebaseAuthException(
-            ERROR_CODE,
+            ERROR_INVALID_CREDENTIAL,
             "Firebase ID token isn't signed by a valid public key." + VERIFY_ID_TOKEN_DOCS_MESSAGE);
       }
     } catch (IOException | GeneralSecurityException e) {
       throw new FirebaseAuthException(
-          ERROR_CODE, "Firebase ID token has invalid signature." + VERIFY_ID_TOKEN_DOCS_MESSAGE);
+          ERROR_RUNTIME_EXCEPTION, "Error while verifying token signature.", e);
     }
 
     return true;
