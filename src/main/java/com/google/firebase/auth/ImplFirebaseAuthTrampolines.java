@@ -7,10 +7,10 @@ import java.util.concurrent.ExecutionException;
 public class ImplFirebaseAuthTrampolines {
 
   /**
-   * Extracts the project ID from the given FirebaseCredential. This is a temporary workaround
-   * until we properly migrate to the GoogleCredentials API provided by cloud. That work is now
-   * underway at https://github.com/firebase/firebase-admin-java/tree/hkj-credential-refactor.
+   * Extracts the project ID from the given FirebaseCredential.
    */
+  // TODO: This is a temporary workaround until we migrate to the GoogleCredentials API provided
+  // by cloud (https://github.com/firebase/firebase-admin-java/tree/hkj-credential-refactor).
   public static String getProjectId(FirebaseCredential credential) {
     if (credential instanceof CertCredential) {
       try {

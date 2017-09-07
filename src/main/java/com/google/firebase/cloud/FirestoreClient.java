@@ -23,9 +23,6 @@ import com.google.firebase.internal.NonNull;
  * the app. Finally it attempts to get the project ID by looking up the GCLOUD_PROJECT environment
  * variable. If a project ID cannot be determined by any of these methods, this API will throw
  * a runtime exception.
- *
- * <p>This class requires Google Cloud Firestore libraries for Java. Make sure the artifact
- * google-cloud-firestore is in the classpath along with its transitive dependencies.
  */
 public class FirestoreClient {
 
@@ -38,7 +35,7 @@ public class FirestoreClient {
     checkArgument(!Strings.isNullOrEmpty(projectId),
         "Project ID is required for accessing Firestore. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
-            + "set the project ID via GCLOUD_PROJECT environment variable.");
+            + "set the project ID via the GCLOUD_PROJECT environment variable.");
     this.firestore = FirestoreOptions.newBuilder()
         .setCredentials(new FirebaseCloudCredentials(app))
         .setProjectId(projectId)

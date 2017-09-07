@@ -40,7 +40,7 @@ public final class FirebaseOptions {
   private final String storageBucket;
   private final FirebaseCredential firebaseCredential;
   private final Map<String, Object> databaseAuthVariableOverride;
-  private String projectId;
+  private final String projectId;
   private final HttpTransport httpTransport;
   private final JsonFactory jsonFactory;
 
