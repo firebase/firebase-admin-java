@@ -29,11 +29,10 @@ import com.google.firebase.internal.NonNull;
  */
 public class FirestoreClient {
 
-  private final FirebaseApp app;
   private final Firestore firestore;
 
   private FirestoreClient(FirebaseApp app) {
-    this.app = checkNotNull(app, "FirebaseApp must not be null");
+    checkNotNull(app, "FirebaseApp must not be null");
     // The following will be further simplified once we migrate to GoogleCredentials.
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkArgument(!Strings.isNullOrEmpty(projectId),
@@ -47,25 +46,34 @@ public class FirestoreClient {
         .getService();
   }
 
-  public static FirestoreClient getInstance() {
-    return getInstance(FirebaseApp.getInstance());
+  /**
+   * Returns the Firestore instance associated with the default Firebase app.
+   *
+   * @return A non-null <code>com.google.cloud.firestore.Firestore</code> instance.
+   */
+  @NonNull
+  public static Firestore getFirestore() {
+    return getFirestore(FirebaseApp.getInstance());
   }
 
-  public static synchronized FirestoreClient getInstance(FirebaseApp app) {
+  /**
+   * Returns the Firestore instance associated with the specified Firebase app.
+   *
+   * @param app A non-null {@link FirebaseApp}.
+   * @return A non-null <code>com.google.cloud.firestore.Firestore</code> instance.
+   */
+  @NonNull
+  public static Firestore getFirestore(FirebaseApp app) {
+    return getInstance(app).firestore;
+  }
+
+  private static synchronized FirestoreClient getInstance(FirebaseApp app) {
     FirestoreClientService service = ImplFirebaseTrampolines.getService(app,
         SERVICE_ID, FirestoreClientService.class);
     if (service == null) {
       service = ImplFirebaseTrampolines.addService(app, new FirestoreClientService(app));
     }
     return service.getInstance();
-  }
-
-  /**
-   * Returns a <code>com.google.cloud.firestore.Firestore</code> instance.
-   */
-  @NonNull
-  public Firestore firestore() {
-    return firestore;
   }
 
   private static final String SERVICE_ID = FirestoreClient.class.getName();

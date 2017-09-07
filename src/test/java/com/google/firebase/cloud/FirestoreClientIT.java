@@ -16,12 +16,10 @@ public class FirestoreClientIT {
 
   @Test
   public void testFirestoreAccess() throws Exception {
-    Firestore firestore = FirestoreClient.getInstance(IntegrationTestUtils.ensureDefaultApp())
-        .firestore();
+    Firestore firestore = FirestoreClient.getFirestore(IntegrationTestUtils.ensureDefaultApp());
     DocumentReference reference = firestore.collection("cities").document("Mountain View");
     ImmutableMap<String, Object> expected = ImmutableMap.<String, Object>of(
         "name", "Mountain View",
-        "state", "CA",
         "country", "USA",
         "population", 77846L,
         "capital", false

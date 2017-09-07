@@ -27,7 +27,10 @@ public class FirestoreClientTest {
         .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
         .setProjectId("explicit-project-id")
         .build());
-    Firestore firestore = FirestoreClient.getInstance(app).firestore();
+    Firestore firestore = FirestoreClient.getFirestore(app);
+    assertEquals("explicit-project-id", firestore.getOptions().getProjectId());
+
+    firestore = FirestoreClient.getFirestore();
     assertEquals("explicit-project-id", firestore.getOptions().getProjectId());
   }
 
@@ -36,7 +39,10 @@ public class FirestoreClientTest {
     FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
         .build());
-    Firestore firestore = FirestoreClient.getInstance(app).firestore();
+    Firestore firestore = FirestoreClient.getFirestore(app);
+    assertEquals("mock-project-id", firestore.getOptions().getProjectId());
+
+    firestore = FirestoreClient.getFirestore();
     assertEquals("mock-project-id", firestore.getOptions().getProjectId());
   }
 
@@ -47,10 +53,17 @@ public class FirestoreClientTest {
         .setProjectId("mock-project-id")
         .build());
 
-    assertNotNull(FirestoreClient.getInstance(app));
+    assertNotNull(FirestoreClient.getFirestore(app));
     app.delete();
     try {
-      FirestoreClient.getInstance(app);
+      FirestoreClient.getFirestore(app);
+      fail("No error thrown for deleted app");
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+
+    try {
+      FirestoreClient.getFirestore();
       fail("No error thrown for deleted app");
     } catch (IllegalStateException expected) {
       // ignore
