@@ -41,7 +41,6 @@ import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.database.util.JsonMapper;
-import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.IntegrationTestUtils;
 import com.google.firebase.testing.TestUtils;
 
@@ -423,7 +422,7 @@ public class RulesTestIT {
     DatabaseReference root = FirebaseDatabase.getInstance(masterApp).getReference();
     DatabaseReference ref = root.child(writer.getPath().toString());
 
-    String token = Tasks.await(TestOnlyImplFirebaseTrampolines.getToken(masterApp, true),
+    String token = TestOnlyImplFirebaseTrampolines.getToken(masterApp, true).get(
         TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).getToken();
     provider.setToken(token);
 

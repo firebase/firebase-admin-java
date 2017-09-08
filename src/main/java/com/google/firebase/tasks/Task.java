@@ -25,6 +25,7 @@ import java.util.concurrent.Executor;
  * Represents an asynchronous operation.
  *
  * @param <T> the type of the result of the operation
+ * @deprecated Use ApiFuture interface instead
  */
 public abstract class Task<T> {
 

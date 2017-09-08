@@ -23,6 +23,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Clock;
+import com.google.api.core.ApiFuture;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
@@ -35,6 +36,7 @@ import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.GetTokenResult;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.TaskToApiFuture;
 import com.google.firebase.tasks.Continuation;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
@@ -154,6 +156,37 @@ public class FirebaseAuth {
   }
 
   /**
+   * Creates a Firebase Custom Token associated with the given UID. This token can then be provided
+   * back to a client application for use with the signInWithCustomToken authentication API.
+   *
+   * @param uid The UID to store in the token. This identifies the user to other Firebase services
+   *     (Firebase Database, Firebase Auth, etc.)
+   * @return An ApiFuture which will complete successfully with the created Firebase Custom Token,
+   *     or unsuccessfully with the failure Exception.
+   */
+  public ApiFuture<String> createCustomTokenAsync(String uid) {
+    return new TaskToApiFuture<>(createCustomToken(uid));
+  }
+
+  /**
+   * Creates a Firebase Custom Token associated with the given UID and additionally containing the
+   * specified developerClaims. This token can then be provided back to a client application for use
+   * with the signInWithCustomToken authentication API.
+   *
+   * @param uid The UID to store in the token. This identifies the user to other Firebase services
+   *     (Realtime Database, Storage, etc.). Should be less than 128 characters.
+   * @param developerClaims Additional claims to be stored in the token (and made available to
+   *     security rules in Database, Storage, etc.). These must be able to be serialized to JSON
+   *     (e.g. contain only Maps, Arrays, Strings, Booleans, Numbers, etc.)
+   * @return An ApiFuture which will complete successfully with the created Firebase Custom Token,
+   *     or unsuccessfully with the failure Exception.
+   */
+  public ApiFuture<String> createCustomTokenAsync(
+      final String uid, final Map<String, Object> developerClaims) {
+    return new TaskToApiFuture<>(createCustomToken(uid, developerClaims));
+  }
+
+  /**
    * Parses and verifies a Firebase ID Token.
    *
    * <p>A Firebase application can identify itself to a trusted backend server by sending its
@@ -204,6 +237,30 @@ public class FirebaseAuth {
   }
 
   /**
+   * Parses and verifies a Firebase ID Token.
+   *
+   * <p>A Firebase application can identify itself to a trusted backend server by sending its
+   * Firebase ID Token (accessible via the getToken API in the Firebase Authentication client) with
+   * its request.
+   *
+   * <p>The backend server can then use the verifyIdToken() method to verify the token is valid,
+   * meaning: the token is properly signed, has not expired, and it was issued for the project
+   * associated with this FirebaseAuth instance (which by default is extracted from your service
+   * account)
+   *
+   * <p>If the token is valid, the returned Future will complete successfully and provide a
+   * parsed version of the token from which the UID and other claims in the token can be inspected.
+   * If the token is invalid, the future throws an exception indicating the failure.
+   *
+   * @param token A Firebase ID Token to verify and parse.
+   * @return An ApiFuture which will complete successfully with the parsed token, or
+   *     unsuccessfully with the failure Exception.
+   */
+  public ApiFuture<FirebaseToken> verifyIdTokenAsync(final String token) {
+    return new TaskToApiFuture<>(verifyIdToken(token));
+  }
+
+  /**
    * Gets the user data corresponding to the specified user ID.
    *
    * @param uid A user ID string.
@@ -221,6 +278,19 @@ public class FirebaseAuth {
             return userManager.getUserById(uid, task.getResult().getToken());
           }
         });
+  }
+
+  /**
+   * Gets the user data corresponding to the specified user ID.
+   *
+   * @param uid A user ID string.
+   * @return An ApiFuture which will complete successfully with a {@link UserRecord} instance.
+   *     If an error occurs while retrieving user data or if the specified user ID does not exist,
+   *     the future throws a FirebaseAuthException.
+   * @throws IllegalArgumentException If the user ID string is null or empty.
+   */
+  public ApiFuture<UserRecord> getUserAsync(final String uid) {
+    return new TaskToApiFuture<>(getUser(uid));
   }
 
   /**
@@ -244,6 +314,19 @@ public class FirebaseAuth {
   }
 
   /**
+   * Gets the user data corresponding to the specified user email.
+   *
+   * @param email A user email address string.
+   * @return An ApiFuture which will complete successfully with a {@link UserRecord} instance.
+   *     If an error occurs while retrieving user data or if the email address does not correspond
+   *     to a user, the future throws a FirebaseAuthException.
+   * @throws IllegalArgumentException If the email is null or empty.
+   */
+  public ApiFuture<UserRecord> getUserByEmailAsync(final String email) {
+    return new TaskToApiFuture<>(getUserByEmail(email));
+  }
+
+  /**
    * Gets the user data corresponding to the specified user phone number.
    *
    * @param phoneNumber A user phone number string.
@@ -261,6 +344,19 @@ public class FirebaseAuth {
             return userManager.getUserByPhoneNumber(phoneNumber, task.getResult().getToken());
           }
         });
+  }
+
+  /**
+   * Gets the user data corresponding to the specified user phone number.
+   *
+   * @param phoneNumber A user phone number string.
+   * @return An ApiFuture which will complete successfully with a {@link UserRecord} instance.
+   *     If an error occurs while retrieving user data or if the phone number does not
+   *     correspond to a user, the future throws a FirebaseAuthException.
+   * @throws IllegalArgumentException If the phone number is null or empty.
+   */
+  public ApiFuture<UserRecord> getUserByPhoneNumberAsync(final String phoneNumber) {
+    return new TaskToApiFuture<>(getUserByPhoneNumber(phoneNumber));
   }
 
   /**
@@ -286,6 +382,20 @@ public class FirebaseAuth {
   }
 
   /**
+   * Creates a new user account with the attributes contained in the specified
+   * {@link CreateRequest}.
+   *
+   * @param request A non-null {@link CreateRequest} instance.
+   * @return An ApiFuture which will complete successfully with a {@link UserRecord} instance
+   *     corresponding to the newly created account. If an error occurs while creating the user
+   *     account, the future throws a FirebaseAuthException.
+   * @throws NullPointerException if the provided request is null.
+   */
+  public ApiFuture<UserRecord> createUserAsync(final CreateRequest request) {
+    return new TaskToApiFuture<>(createUser(request));
+  }
+
+  /**
    * Updates an existing user account with the attributes contained in the specified
    * {@link UpdateRequest}.
    *
@@ -308,6 +418,20 @@ public class FirebaseAuth {
   }
 
   /**
+   * Updates an existing user account with the attributes contained in the specified
+   * {@link UpdateRequest}.
+   *
+   * @param request A non-null {@link UpdateRequest} instance.
+   * @return An ApiFuture which will complete successfully with a {@link UserRecord} instance
+   *     corresponding to the updated user account. If an error occurs while updating the user
+   *     account, the future throws a FirebaseAuthException.
+   * @throws NullPointerException if the provided update request is null.
+   */
+  public ApiFuture<UserRecord> updateUserAsync(final UpdateRequest request) {
+    return new TaskToApiFuture<>(updateUser(request));
+  }
+
+  /**
    * Deletes the user identified by the specified user ID.
    *
    * @param uid A user ID string.
@@ -326,6 +450,19 @@ public class FirebaseAuth {
             return null;
           }
         });
+  }
+
+  /**
+   * Deletes the user identified by the specified user ID.
+   *
+   * @param uid A user ID string.
+   * @return An ApiFuture which will complete successfully when the specified user account has
+   *     been deleted. If an error occurs while deleting the user account, the future throws a
+   *     FirebaseAuthException.
+   * @throws IllegalArgumentException If the user ID string is null or empty.
+   */
+  public ApiFuture<Void> deleteUserAsync(final String uid) {
+    return new TaskToApiFuture<>(deleteUser(uid));
   }
 
   private static final String SERVICE_ID = FirebaseAuth.class.getName();
