@@ -19,6 +19,7 @@ package com.google.firebase.testing;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.core.ApiFuture;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
@@ -28,8 +29,6 @@ import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.internal.GetTokenResult;
-import com.google.firebase.tasks.Task;
-import com.google.firebase.tasks.Tasks;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -165,9 +164,9 @@ public class IntegrationTestUtils {
     private String getToken() {
       // TODO: We should consider exposing getToken (or similar) publicly for the
       // purpose of servers doing authenticated REST requests like this.
-      Task<GetTokenResult> task = TestOnlyImplFirebaseTrampolines.getToken(app, false);
+      ApiFuture<GetTokenResult> future = TestOnlyImplFirebaseTrampolines.getToken(app, false);
       try {
-        return Tasks.await(task).getToken();
+        return future.get().getToken();
       } catch (ExecutionException | InterruptedException e) {
         throw new RuntimeException(e);
       }

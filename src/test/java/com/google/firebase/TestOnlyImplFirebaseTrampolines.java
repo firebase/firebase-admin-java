@@ -16,7 +16,9 @@
 
 package com.google.firebase;
 
+import com.google.api.core.ApiFuture;
 import com.google.firebase.internal.GetTokenResult;
+import com.google.firebase.internal.TaskToApiFuture;
 import com.google.firebase.tasks.Task;
 
 /**
@@ -36,7 +38,7 @@ public final class TestOnlyImplFirebaseTrampolines {
     FirebaseApp.clearInstancesForTest();
   }
 
-  public static Task<GetTokenResult> getToken(FirebaseApp app, boolean forceRefresh) {
-    return app.getToken(forceRefresh);
+  public static ApiFuture<GetTokenResult> getToken(FirebaseApp app, boolean forceRefresh) {
+    return new TaskToApiFuture<>(app.getToken(forceRefresh));
   }
 }
