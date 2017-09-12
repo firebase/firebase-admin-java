@@ -16,6 +16,7 @@
 
 package com.google.firebase.auth;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.googleapis.util.Utils;
@@ -25,18 +26,12 @@ import com.google.auth.http.HttpTransportFactory;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auth.oauth2.UserCredentials;
-import com.google.common.io.CharStreams;
+import com.google.common.base.Strings;
 import com.google.firebase.auth.internal.BaseCredential;
 import com.google.firebase.internal.NonNull;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * Standard {@link FirebaseCredential} implementations for use with {@link
@@ -47,11 +42,6 @@ import org.json.JSONObject;
 public class FirebaseCredentials {
 
   private FirebaseCredentials() {
-  }
-
-  private static String streamToString(InputStream inputStream) throws IOException {
-    InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-    return CharStreams.toString(reader);
   }
 
   /**
@@ -144,17 +134,11 @@ public class FirebaseCredentials {
   @NonNull
   public static FirebaseCredential fromCertificate(InputStream serviceAccount,
       HttpTransport transport, JsonFactory jsonFactory) throws IOException {
-    String jsonData = streamToString(serviceAccount);
     ServiceAccountCredentials credentials = ServiceAccountCredentials.fromStream(
-        new ByteArrayInputStream(jsonData.getBytes("UTF-8")), wrap(transport));
-    JSONObject json = new JSONObject(jsonData);
-    String projectId;
-    try {
-      projectId = json.getString("project_id");
-    } catch (JSONException e) {
-      throw new IOException("Failed to parse service account: 'project_id' must be set", e);
-    }
-    return new CertCredential(credentials, projectId);
+        serviceAccount, wrap(transport));
+    checkArgument(!Strings.isNullOrEmpty(credentials.getProjectId()),
+        "Failed to parse service account: 'project_id' must be set");
+    return new CertCredential(credentials);
   }
 
   /**
@@ -202,15 +186,8 @@ public class FirebaseCredentials {
 
   static class CertCredential extends BaseCredential {
 
-    private final String projectId;
-
-    CertCredential(ServiceAccountCredentials credentials, String projectId) throws IOException {
+    CertCredential(ServiceAccountCredentials credentials) throws IOException {
       super(credentials);
-      this.projectId = projectId;
-    }
-
-    String getProjectId() {
-      return projectId;
     }
   }
 

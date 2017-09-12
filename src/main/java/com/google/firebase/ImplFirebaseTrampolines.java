@@ -50,8 +50,7 @@ public final class ImplFirebaseTrampolines {
     if (Strings.isNullOrEmpty(projectId)) {
       GoogleCredentials credentials = options.getCredentials();
       if (credentials instanceof ServiceAccountCredentials) {
-        // TODO: Get project ID from credential when
-        // TODO: https://github.com/google/google-auth-library-java/pull/118 is resolved.
+        projectId = ((ServiceAccountCredentials) credentials).getProjectId();
       }
     }
 

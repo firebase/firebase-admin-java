@@ -33,9 +33,11 @@ import com.google.auth.http.HttpTransportFactory;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auth.oauth2.UserCredentials;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.FirebaseCustomAuthToken;
 import com.google.firebase.database.MapBuilder;
@@ -337,25 +339,13 @@ public class FirebaseAuthTest {
   }
 
   @Test
-  public void testCredentialCertificateRequired() throws Exception {
+  public void testServiceAccountRequired() throws Exception {
     GoogleCredentials credentials = TestOnlyImplFirebaseTrampolines.getCredentials(firebaseOptions);
-    Assume.assumeFalse("Skipping testCredentialCertificateRequired for cert credential",
+    Assume.assumeFalse("Skipping testServiceAccountRequired for service account credentials",
         credentials instanceof ServiceAccountCredentials);
 
 
-    FirebaseApp app =
-        FirebaseApp.initializeApp(firebaseOptions, "testCredentialCertificateRequired");
-
-    try {
-      Tasks.await(FirebaseAuth.getInstance(app).verifyIdToken("foo"));
-      fail("Expected exception.");
-    } catch (Exception expected) {
-      Assert.assertEquals(
-          "com.google.firebase.FirebaseException: Must initialize FirebaseApp with a project ID "
-              + "to call verifyIdToken()",
-          expected.getMessage());
-    }
-
+    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testServiceAccountRequired");
     try {
       Tasks.await(FirebaseAuth.getInstance(app).createCustomToken("foo"));
       fail("Expected exception.");
@@ -368,25 +358,43 @@ public class FirebaseAuthTest {
   }
 
   @Test
+  public void testProjectIdRequired() throws Exception {
+    String projectId = ImplFirebaseTrampolines.getProjectId(firebaseOptions);
+    Assume.assumeTrue("Skipping testProjectIdRequired for settings with project ID",
+        Strings.isNullOrEmpty(projectId));
+
+
+    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testProjectIdRequired");
+    try {
+      Tasks.await(FirebaseAuth.getInstance(app).verifyIdToken("foo"));
+      fail("Expected exception.");
+    } catch (Exception expected) {
+      Assert.assertEquals(
+          "com.google.firebase.FirebaseException: Must initialize FirebaseApp with a project ID "
+              + "to call verifyIdToken()",
+          expected.getMessage());
+    }
+  }
+
+  @Test
   public void testVerifyIdTokenWithExplicitProjectId() throws Exception {
     GoogleCredentials credentials = TestOnlyImplFirebaseTrampolines.getCredentials(firebaseOptions);
-    Assume.assumeFalse("Skipping testCredentialCertificateRequired for cert credential",
+    Assume.assumeFalse(
+        "Skipping testVerifyIdTokenWithExplicitProjectId for service account credentials",
         credentials instanceof ServiceAccountCredentials);
 
     FirebaseOptions options =
         new FirebaseOptions.Builder(firebaseOptions)
             .setProjectId("mock-project-id")
             .build();
-    FirebaseApp app =
-        FirebaseApp.initializeApp(options, "testCredentialCertificateRequired");
-
+    FirebaseApp app = FirebaseApp.initializeApp(options, "testVerifyIdTokenWithExplicitProjectId");
     try {
       Tasks.await(FirebaseAuth.getInstance(app).verifyIdToken("foo"));
       fail("Expected exception.");
-    } catch (Exception expected) {
+    } catch (ExecutionException expected) {
       Assert.assertNotEquals(
-          "com.google.firebase.FirebaseException: Must initialize FirebaseApp with a service "
-              + "account credential to call createCustomToken()",
+          "com.google.firebase.FirebaseException: Must initialize FirebaseApp with a project ID "
+              + "to call verifyIdToken()",
           expected.getMessage());
       assertTrue(expected.getCause() instanceof IllegalArgumentException);
     }

@@ -134,7 +134,7 @@ public class FirebaseCredentialsTest {
 
   @Test
   public void certificateReadChecksForProjectId()
-      throws ExecutionException, InterruptedException {
+      throws ExecutionException, InterruptedException, IOException {
     MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
 
@@ -146,11 +146,9 @@ public class FirebaseCredentialsTest {
     try {
       FirebaseCredentials.fromCertificate(inputStream, transport, Utils.getDefaultJsonFactory());
       Assert.fail();
-    } catch (IOException e) {
+    } catch (IllegalArgumentException e) {
       Assert.assertEquals(
-          "Failed to parse service account: 'project_id' must be set",
-          e.getMessage());
-      Assert.assertTrue(e.getCause() instanceof JSONException);
+          "Failed to parse service account: 'project_id' must be set", e.getMessage());
     }
   }
 

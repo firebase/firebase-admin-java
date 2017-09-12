@@ -188,18 +188,12 @@ public class FirebaseAppTest {
     // delete and hidden methods shouldn't throw even after delete.
     Collection<String> allowedToCallAfterDelete =
         Arrays.asList(
-            "addAuthStateChangeListener",
-            "addBackgroundStateChangeListener",
             "delete",
             "equals",
             "getListeners",
             "getPersistenceKey",
             "hashCode",
             "isDefaultApp",
-            "notifyAuthStateListeners",
-            "removeAuthStateChangeListener",
-            "removeBackgroundStateChangeListener",
-            "setTokenProvider",
             "toString");
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS, "myApp");
     firebaseApp.delete();
@@ -276,7 +270,7 @@ public class FirebaseAppTest {
   }
 
   @Test
-  public void testAddAuthStateListenerWithoutInitialToken() throws IOException {
+  public void testAddCredentialsChangedListenerWithoutInitialToken() throws IOException {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
     CredentialsChangedListener listener = mock(CredentialsChangedListener.class);
     firebaseApp.addCredentialsChangedListener(listener);
@@ -284,7 +278,7 @@ public class FirebaseAppTest {
   }
 
   @Test
-  public void testAuthStateListenerOnTokenChange() throws Exception {
+  public void testCredentialsChangedListenerOnTokenChange() throws Exception {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
     CredentialsChangedListener listener = mock(CredentialsChangedListener.class);
     firebaseApp.addCredentialsChangedListener(listener);
@@ -296,7 +290,7 @@ public class FirebaseAppTest {
   }
 
   @Test
-  public void testAuthStateListenerWithNoRefresh() throws Exception {
+  public void testCredentialsChangedListenerWithNoRefresh() throws Exception {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
     CredentialsChangedListener listener = mock(CredentialsChangedListener.class);
     firebaseApp.addCredentialsChangedListener(listener);
