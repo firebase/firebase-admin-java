@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
+import com.google.api.client.http.LowLevelHttpRequest;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.json.webtoken.JsonWebSignature;
@@ -31,6 +32,7 @@ import com.google.api.client.testing.http.FixedClock;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.io.BaseEncoding;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.TestOnlyImplFirebaseAuthTrampolines;
 import com.google.firebase.testing.ServiceAccount;
@@ -42,6 +44,7 @@ import java.security.PrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -263,6 +266,36 @@ public class FirebaseTokenVerifierTest {
             FACTORY, createToken(createHeader(), createPayload()));
     thrown.expectMessage("Firebase ID token isn't signed by a valid public key.");
     verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+  }
+
+  @Test
+  public void verifyTokenCertificateError() throws Exception {
+    FirebaseToken token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(
+            FACTORY, createToken(createHeader(), createPayload()));
+
+    MockHttpTransport mockTransport = new MockHttpTransport() {
+      @Override
+      public LowLevelHttpRequest buildRequest(String method, String url) throws IOException {
+        throw new IOException("Expected error");
+      }
+    };
+    FirebaseTokenVerifier verifier = new FirebaseTokenVerifier.Builder()
+        .setClock(CLOCK)
+        .setPublicKeysManager(
+            new GooglePublicKeysManager.Builder(mockTransport, FACTORY)
+                .setClock(CLOCK)
+                .setPublicCertsEncodedUrl(FirebaseTokenVerifier.CLIENT_CERT_URL)
+                .build())
+        .setProjectId(PROJECT_ID)
+        .build();
+    try {
+      verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+      Assert.fail("No exception thrown");
+    } catch (FirebaseAuthException expected) {
+      assertTrue(expected.getCause() instanceof IOException);
+      assertEquals("Expected error", expected.getCause().getMessage());
+    }
   }
 
   @Test
