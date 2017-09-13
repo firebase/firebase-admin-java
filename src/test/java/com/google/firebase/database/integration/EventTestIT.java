@@ -22,7 +22,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -48,7 +47,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -87,7 +85,7 @@ public class EventTestIT {
 
     ZombieVerifier.verifyRepoZombies(refs);
 
-    writer.setValue(42);
+    writer.setValueAsync(42);
     assertTrue(writerHelper.waitForEvents());
     assertTrue(readerHelper.waitForEvents());
     writerHelper.cleanup();
@@ -106,7 +104,7 @@ public class EventTestIT {
 
     ZombieVerifier.verifyRepoZombies(ref);
 
-    ref.child("foo").setValue(42);
+    ref.child("foo").setValueAsync(42);
     assertTrue(helper.waitForEvents());
     ZombieVerifier.verifyRepoZombies(ref);
     helper.cleanup();
@@ -146,10 +144,10 @@ public class EventTestIT {
 
     ZombieVerifier.verifyRepoZombies(refs);
 
-    writer.child("foo").setValue(42);
-    writer.child("bar").setValue(24);
+    writer.child("foo").setValueAsync(42);
+    writer.child("bar").setValueAsync(24);
 
-    writer.child("foo").setValue(31415);
+    writer.child("foo").setValueAsync(31415);
     assertTrue(writeHelper.waitForEvents());
     assertTrue(readHelper.waitForEvents());
     ZombieVerifier.verifyRepoZombies(refs);
@@ -175,7 +173,7 @@ public class EventTestIT {
 
     ZombieVerifier.verifyRepoZombies(refs);
 
-    writer.setValue(42);
+    writer.setValueAsync(42);
     assertTrue(writeHelper.waitForEvents());
     assertTrue(writeHelper2.waitForEvents());
     assertTrue(readHelper.waitForEvents());
@@ -197,7 +195,7 @@ public class EventTestIT {
     ZombieVerifier.verifyRepoZombies(ref);
 
     for (int i = 0; i < 3; ++i) {
-      ref.setValue(i);
+      ref.setValueAsync(i);
     }
 
     List<EventRecord> events = readFuture.timedGet();
@@ -234,7 +232,7 @@ public class EventTestIT {
     ZombieVerifier.verifyRepoZombies(ref);
 
     for (int i = 0; i < 3; ++i) {
-      ref.setValue(i);
+      ref.setValueAsync(i);
     }
 
     TestHelpers.waitForRoundtrip(ref);
@@ -242,11 +240,11 @@ public class EventTestIT {
     ZombieVerifier.verifyRepoZombies(ref);
 
     for (int i = 10; i < 13; ++i) {
-      ref.setValue(i);
+      ref.setValueAsync(i);
     }
 
     for (int i = 20; i < 22; ++i) {
-      ref.setValue(i);
+      ref.setValueAsync(i);
     }
     new WriteFuture(ref, 22).timedGet();
     assertEquals(3, callbackCount.get());
@@ -397,11 +395,11 @@ public class EventTestIT {
 
     ZombieVerifier.verifyRepoZombies(refs);
 
-    writer.setValue(MapBuilder.of("a", 10, "b", 20));
+    writer.setValueAsync(MapBuilder.of("a", 10, "b", 20));
     TestHelpers.waitFor(writerReady, 2);
     TestHelpers.waitFor(readerReady, 2);
 
-    writer.setValue(MapBuilder.of("a", 10, "b", 30));
+    writer.setValueAsync(MapBuilder.of("a", 10, "b", 30));
     TestHelpers.waitFor(writerReady);
     TestHelpers.waitFor(readerReady);
   }
@@ -425,10 +423,10 @@ public class EventTestIT {
 
     ZombieVerifier.verifyRepoZombies(ref);
 
-    ref.setValue(42);
-    ref.setValue(MapBuilder.of("a", 2));
-    ref.setValue(84);
-    ref.setValue(null);
+    ref.setValueAsync(42);
+    ref.setValueAsync(MapBuilder.of("a", 2));
+    ref.setValueAsync(84);
+    ref.setValueAsync(null);
 
     List<EventRecord> events = readFuture.timedGet();
     ZombieVerifier.verifyRepoZombies(ref);
@@ -549,9 +547,9 @@ public class EventTestIT {
         });
     ZombieVerifier.verifyRepoZombies(ref);
 
-    ref.setValue(42);
+    ref.setValueAsync(42);
     TestHelpers.waitForQueue(ref);
-    ref.setValue(84);
+    ref.setValueAsync(84);
     blockSem.release();
     new WriteFuture(ref, null).timedGet();
     TestHelpers.waitFor(endingSemaphore);
@@ -601,9 +599,9 @@ public class EventTestIT {
 
     TestHelpers.waitFor(gotInitialEvent);
 
-    ref.child("a").setValue(42);
+    ref.child("a").setValueAsync(42);
     TestHelpers.waitForQueue(ref);
-    ref.child("b").setValue(84);
+    ref.child("b").setValueAsync(84);
     blockSem.release();
     new WriteFuture(ref, null).timedGet();
     TestHelpers.waitFor(endingSemaphore);
@@ -654,9 +652,9 @@ public class EventTestIT {
     ZombieVerifier.verifyRepoZombies(ref);
 
     TestHelpers.waitFor(gotInitialEvent, 2);
-    ref.child("a").setValue(42);
+    ref.child("a").setValueAsync(42);
     TestHelpers.waitForQueue(ref);
-    ref.child("b").setValue(84);
+    ref.child("b").setValueAsync(84);
     blockSem.release();
     new WriteFuture(ref, null).timedGet();
     TestHelpers.waitFor(endingSemaphore);
@@ -708,9 +706,9 @@ public class EventTestIT {
 
     ZombieVerifier.verifyRepoZombies(ref);
 
-    ref.child("a").setValue(42);
+    ref.child("a").setValueAsync(42);
     TestHelpers.waitForQueue(ref);
-    ref.child("b").setValue(84);
+    ref.child("b").setValueAsync(84);
     blockSem.release();
     new WriteFuture(ref, null).timedGet();
     TestHelpers.waitFor(endingSemaphore);
@@ -738,8 +736,8 @@ public class EventTestIT {
 
     ZombieVerifier.verifyRepoZombies(ref);
 
-    ref.setValue(42);
-    ref.setValue(84);
+    ref.setValueAsync(42);
+    ref.setValueAsync(84);
     new WriteFuture(ref, null).timedGet();
     assertEquals(1, called.get());
     ZombieVerifier.verifyRepoZombies(ref);
@@ -958,9 +956,9 @@ public class EventTestIT {
             .addValueExpectation(ref)
             .startListening(true);
 
-    ref.child("bar").setValue(42, 10);
+    ref.child("bar").setValueAsync(42, 10);
     TestHelpers.waitForRoundtrip(ref);
-    ref.child("foo").setValue(42, 20);
+    ref.child("foo").setValueAsync(42, 20);
 
     assertTrue(helper.waitForEvents());
     helper
@@ -970,7 +968,7 @@ public class EventTestIT {
         .addValueExpectation(ref)
         .startListening();
 
-    ref.child("bar").setPriority(30);
+    ref.child("bar").setPriorityAsync(30);
     assertTrue(helper.waitForEvents());
     helper.cleanup();
     ZombieVerifier.verifyRepoZombies(ref);
@@ -991,7 +989,7 @@ public class EventTestIT {
             .startListening(true);
 
     ZombieVerifier.verifyRepoZombies(ref);
-    ref.setValue(
+    ref.setValueAsync(
         MapBuilder.of(
             "bar", MapBuilder.of(".value", 42, ".priority", 10),
             "foo", MapBuilder.of(".value", 42, ".priority", 20)));
@@ -1004,7 +1002,7 @@ public class EventTestIT {
         .startListening();
 
     ZombieVerifier.verifyRepoZombies(ref);
-    ref.setValue(
+    ref.setValueAsync(
         MapBuilder.of(
             "foo", MapBuilder.of(".value", 42, ".priority", 20),
             "bar", MapBuilder.of(".value", 42, ".priority", 30)));

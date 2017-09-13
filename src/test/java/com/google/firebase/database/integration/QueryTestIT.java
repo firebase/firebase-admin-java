@@ -330,7 +330,7 @@ public class QueryTestIT {
           }
         });
 
-    ref.setValue(MapBuilder.of("a", 5, "b", 6));
+    ref.setValueAsync(MapBuilder.of("a", 5, "b", 6));
     TestHelpers.waitFor(semaphore, 1);
     ref.limitToLast(5).removeEventListener(listener);
     new WriteFuture(ref, MapBuilder.of("a", 6, "b", 5)).timedGet();
@@ -344,7 +344,7 @@ public class QueryTestIT {
       throws TestFailure, TimeoutException, InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.setValue(new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4)
+    ref.setValueAsync(new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4)
         .put("e", 5).put("f", 6).build());
 
     DataSnapshot snap = new ReadFuture(ref.limitToLast(5)).timedGet().get(0).getSnapshot();
@@ -361,7 +361,7 @@ public class QueryTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
     for (int i = 0; i < 9; ++i) {
-      ref.push().setValue(i);
+      ref.push().setValueAsync(i);
     }
     new WriteFuture(ref.push(), 9).timedGet();
 
@@ -389,7 +389,7 @@ public class QueryTestIT {
     expectations.add(ref.limitToLast(4),
         MapBuilder.of("a", 1L, "b", 2L, "c", 3L));
 
-    ref.setValue(MapBuilder.of("a", 1L, "b", 2L, "c", 3L));
+    ref.setValueAsync(MapBuilder.of("a", 1L, "b", 2L, "c", 3L));
 
     expectations.waitForEvents();
   }
@@ -410,7 +410,7 @@ public class QueryTestIT {
     expectations.add(ref.startAt(null, "b").limitToFirst(3),
         MapBuilder.of("b", 2L, "c", 3L));
 
-    ref.setValue(MapBuilder.of("a", 1, "b", 2, "c", 3));
+    ref.setValueAsync(MapBuilder.of("a", 1, "b", 2, "c", 3));
     expectations.waitForEvents();
   }
 
@@ -921,7 +921,7 @@ public class QueryTestIT {
     helper.add(ref.startAt("w").endAt("w"), MapBuilder.of("d", 4L));
     helper.add(ref.startAt("a").endAt("c"), null);
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder()
             .put("a", MapBuilder.of(".value", 1, ".priority", "z"))
             .put("b", MapBuilder.of(".value", 2, ".priority", "y"))
@@ -935,7 +935,7 @@ public class QueryTestIT {
   public void testStartAtEndAtWithPriorityUsingServerData() throws InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder()
             .put("a", MapBuilder.of(".value", 1, ".priority", "z"))
             .put("b", MapBuilder.of(".value", 2, ".priority", "y"))
@@ -963,7 +963,7 @@ public class QueryTestIT {
     helper.add(ref.startAt(1, "c").endAt(2),
         MapBuilder.of("c", 3L, "d", 4L));
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder()
             .put("a", MapBuilder.of(".value", 1, ".priority", 1))
             .put("b", MapBuilder.of(".value", 2, ".priority", 1))
@@ -985,7 +985,7 @@ public class QueryTestIT {
     helper.add(ref.startAt(1, "e").endAt(2),
         MapBuilder.of("a", 1L, "b", 2L));
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder()
             .put("c", MapBuilder.of(".value", 3, ".priority", 1))
             .put("d", MapBuilder.of(".value", 4, ".priority", 1))
@@ -999,7 +999,7 @@ public class QueryTestIT {
   public void testStartAtEndAtWithPriorityAndNameUsingServerData() throws InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder()
             .put("a", MapBuilder.of(".value", 1, ".priority", 1))
             .put("b", MapBuilder.of(".value", 2, ".priority", 1))
@@ -1022,7 +1022,7 @@ public class QueryTestIT {
       InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder()
             .put("c", MapBuilder.of(".value", 3, ".priority", 1))
             .put("d", MapBuilder.of(".value", 4, ".priority", 1))
@@ -1072,9 +1072,9 @@ public class QueryTestIT {
       }
     });
 
-    ref.child("a").setValue(1);
-    ref.child("c").setValue(3);
-    ref.child("b").setValue(2);
+    ref.child("a").setValueAsync(1);
+    ref.child("c").setValueAsync(3);
+    ref.child("b").setValueAsync(2);
     new WriteFuture(ref.child("d"), 4).timedGet();
 
     TestHelpers.assertDeepEquals(ImmutableList.of("a null", "c a", "b null", "d c"), names);
@@ -1115,14 +1115,14 @@ public class QueryTestIT {
       }
     });
 
-    ref.child("a").setValue("a", 10);
-    ref.child("b").setValue("b", 20);
-    ref.child("c").setValue("c", 30);
-    ref.child("d").setValue("d", 40);
+    ref.child("a").setValueAsync("a", 10);
+    ref.child("b").setValueAsync("b", 20);
+    ref.child("c").setValueAsync("c", 30);
+    ref.child("d").setValueAsync("d", 40);
 
     // Start moving things
-    ref.child("c").setPriority(50);
-    ref.child("c").setPriority(35);
+    ref.child("c").setPriorityAsync(50);
+    ref.child("c").setPriorityAsync(35);
     new WriteFuture(ref.child("b"), "b", 33).timedGet();
 
     TestHelpers.assertDeepEquals(ImmutableList.of("c d", "c null"), names);
@@ -1179,7 +1179,7 @@ public class QueryTestIT {
     future.timedGet();
 
     for (int i = 0; i < 4; ++i) {
-      writer.push().setValue(i);
+      writer.push().setValueAsync(i);
     }
     new WriteFuture(writer.push(), 4).timedGet();
     List<String> expected = ImmutableList.<String>builder().add(
@@ -1223,7 +1223,7 @@ public class QueryTestIT {
   public void testFilteringOnlyNullPriorities() throws InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder().put("a", new MapBuilder().put(".priority", null).put(".value", 0).build())
             .put("b", new MapBuilder().put(".priority", null).put(".value", 1).build())
             .put("c", new MapBuilder().put(".priority", "2").put(".value", 2).build())
@@ -1240,7 +1240,7 @@ public class QueryTestIT {
   public void testNullPrioritiesIncludedInEndAt() throws InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder()
             .put("a", MapBuilder.of(".priority", null, ".value", 0))
             .put("b", MapBuilder.of(".priority", null, ".value", 1))
@@ -1258,7 +1258,7 @@ public class QueryTestIT {
   public void testNullPrioritiesIncludedInStartAt() throws InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder()
             .put("a", new MapBuilder().put(".priority", null).put(".value", 0).build())
             .put("b", new MapBuilder().put(".priority", null).put(".value", 1).build())
@@ -1289,7 +1289,7 @@ public class QueryTestIT {
         .put("Sally",
             new MapBuilder().put(".priority", -7.0).put("score", -7L).put("name", "Sally").build())
         .put("Fred", new MapBuilder().put("score", 0.0).put("name", "Fred").build()).build();
-    ref.setValue(toSet);
+    ref.setValueAsync(toSet);
     final Semaphore semaphore = new Semaphore(0);
     final List<String> names = new ArrayList<>();
     ref.limitToLast(5).addChildEventListener(new ChildEventListener() {
@@ -1399,7 +1399,7 @@ public class QueryTestIT {
             fail("Should not be cancelled");
           }
         });
-    ref.setValue(toSet);
+    ref.setValueAsync(toSet);
     TestHelpers.waitFor(semaphore, 5);
     TestHelpers.assertDeepEquals(ImmutableList.of("Sally", "James", "Andrew", "Mike", "Vikrum"),
         names);
@@ -1418,13 +1418,13 @@ public class QueryTestIT {
     // wait for null event
     TestHelpers.waitForRoundtrip(ref);
 
-    ref.setValue(
+    ref.setValueAsync(
         MapBuilder.of(
             "a", MapBuilder.of(".value", 1, ".priority", 1),
             "b", MapBuilder.of(".value", 2, ".priority", 2),
             "c", MapBuilder.of(".value", 3, ".priority", 3)));
 
-    ref.updateChildren(new MapBuilder().put("b", null).put("c", null).build());
+    ref.updateChildrenAsync(new MapBuilder().put("b", null).put("c", null).build());
     List<EventRecord> events = readFuture.timedGet();
     DataSnapshot snap = events.get(1).getSnapshot();
 
@@ -1460,7 +1460,7 @@ public class QueryTestIT {
 
     new WriteFuture(ref, MapBuilder.of("a", 1, "b", 2)).timedGet();
     assertEquals(1L, childSnaps.get(0).getValue());
-    ref.updateChildren(MapBuilder.of("c", 3));
+    ref.updateChildrenAsync(MapBuilder.of("c", 3));
     List<EventRecord> events = parentFuture.timedGet();
     DataSnapshot snap = events.get(0).getSnapshot();
     Object result = snap.getValue();
@@ -1607,8 +1607,8 @@ public class QueryTestIT {
       }
     });
 
-    ref.setValue(MapBuilder.of("a", 1, "b", 2));
-    ref.child("b").removeValue();
+    ref.setValueAsync(MapBuilder.of("a", 1, "b", 2));
+    ref.child("b").removeValueAsync();
     TestHelpers.waitFor(semaphore);
     TestHelpers.assertDeepEquals(ImmutableList.of(2L, 1L), values);
   }
@@ -1617,7 +1617,7 @@ public class QueryTestIT {
   public void testStartAtLimit() throws InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.setValue(MapBuilder.of("a", 1, "b", 2));
+    ref.setValueAsync(MapBuilder.of("a", 1, "b", 2));
     DataSnapshot snap = TestHelpers.getSnap(ref.limitToFirst(1));
 
     assertEquals(1L, snap.child("a").getValue());
@@ -1627,7 +1627,7 @@ public class QueryTestIT {
   public void testStartAtLimitWhenChildIsRemoved() throws InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.setValue(MapBuilder.of("a", 1, "b", 2));
+    ref.setValueAsync(MapBuilder.of("a", 1, "b", 2));
     final List<Long> values = new ArrayList<>();
     final Semaphore semaphore = new Semaphore(0);
     ref.limitToFirst(1).addChildEventListener(new ChildEventListener() {
@@ -1661,7 +1661,7 @@ public class QueryTestIT {
     // Wait for first value
     TestHelpers.waitFor(semaphore);
     assertEquals((Long) 1L, values.get(0));
-    ref.child("a").removeValue();
+    ref.child("a").removeValueAsync();
     TestHelpers.waitFor(semaphore);
     assertEquals((Long) 2L, values.get(1));
   }
@@ -1798,7 +1798,7 @@ public class QueryTestIT {
           @Override
           public boolean isComplete(List<EventRecord> events) {
             if (events.size() == 1) {
-              writer.child("c").removeValue();
+              writer.child("c").removeValueAsync();
             }
             return events.size() == 2;
           }
@@ -1854,7 +1854,7 @@ public class QueryTestIT {
     TestHelpers.waitFor(semaphore);
     Map<String, Object> update = new MapBuilder().put("b", null).put("c", "a").put("cc", "new")
         .put("cd", "new2").put("d", "gone").build();
-    writer.updateChildren(update);
+    writer.updateChildrenAsync(update);
     List<EventRecord> events = future.timedGet();
 
     Map<String, Object> expected = new MapBuilder().put("a", 1L).put("b", 2L).put("c", 3L)
@@ -1893,7 +1893,7 @@ public class QueryTestIT {
     TestHelpers.waitFor(semaphore);
     Map<String, Object> update = new MapBuilder().put("bar", "d").put("bam", null).put("bat", "e")
         .build();
-    writer.updateChildren(update);
+    writer.updateChildrenAsync(update);
     List<EventRecord> events = future.timedGet();
 
     Map<String, Object> expected = MapBuilder.of("bar", "a", "baz", "b", "bam",
@@ -1912,8 +1912,8 @@ public class QueryTestIT {
     List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
-    writer.child("a").setValue(1);
-    writer.child("b").setValue("b");
+    writer.child("a").setValueAsync(1);
+    writer.child("b").setValueAsync("b");
     final Map<String, Object> deepObject = MapBuilder.of(
         "deep", "path",
         "of", MapBuilder.of("stuff", true));
@@ -2035,9 +2035,9 @@ public class QueryTestIT {
       }
     });
 
-    writer.child("a").setValue(1);
-    writer.child("b").setValue("b");
-    writer.child("c").setValue(deepObject);
+    writer.child("a").setValueAsync(1);
+    writer.child("b").setValueAsync("b");
+    writer.child("c").setValueAsync(deepObject);
 
     TestHelpers.waitFor(semaphore, 3);
   }
@@ -2048,8 +2048,8 @@ public class QueryTestIT {
     List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
-    writer.child("a").setValue(1);
-    writer.child("b").setValue("b");
+    writer.child("a").setValueAsync(1);
+    writer.child("b").setValueAsync("b");
     final Map<String, Object> deepObject = MapBuilder.of(
         "deep", "path",
         "of", MapBuilder.of("stuff", true));
@@ -2111,9 +2111,9 @@ public class QueryTestIT {
       }
     });
 
-    writer.child("a").removeValue();
-    writer.child("b").removeValue();
-    writer.child("c").removeValue();
+    writer.child("a").removeValueAsync();
+    writer.child("b").removeValueAsync();
+    writer.child("c").removeValueAsync();
 
     TestHelpers.waitFor(semaphore, 3);
   }
@@ -2124,8 +2124,8 @@ public class QueryTestIT {
     List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
-    writer.child("a").setValue(1);
-    writer.child("b").setValue("b");
+    writer.child("a").setValueAsync(1);
+    writer.child("b").setValueAsync("b");
     final Map<String, Object> deepObject = MapBuilder.of(
         "deep", "path",
         "of", MapBuilder.of("stuff", true));
@@ -2187,7 +2187,7 @@ public class QueryTestIT {
       }
     });
 
-    writer.removeValue();
+    writer.removeValueAsync();
 
     TestHelpers.waitFor(semaphore, 3);
   }
@@ -2198,8 +2198,8 @@ public class QueryTestIT {
     List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 2);
     DatabaseReference writer = refs.get(0);
     DatabaseReference reader = refs.get(1);
-    writer.child("a").setValue(1);
-    writer.child("b").setValue("b");
+    writer.child("a").setValueAsync(1);
+    writer.child("b").setValueAsync("b");
     final Map<String, Object> deepObject = MapBuilder.of(
         "deep", "path",
         "of", MapBuilder.of("stuff", true));
@@ -2261,7 +2261,7 @@ public class QueryTestIT {
       }
     });
 
-    writer.setValue("scalar");
+    writer.setValueAsync("scalar");
 
     TestHelpers.waitFor(semaphore, 3);
   }
@@ -2403,9 +2403,9 @@ public class QueryTestIT {
       }
     });
 
-    ref.child("a").setValue("a", 5);
-    ref.child("a").setValue("a", 15);
-    ref.child("a").setValue("a", 10);
+    ref.child("a").setValueAsync("a", 5);
+    ref.child("a").setValueAsync("a", 15);
+    ref.child("a").setValueAsync("a", 10);
     new WriteFuture(ref.child("a"), "a", 5).timedGet();
 
     assertEquals(2, addedFirst.size());
@@ -2457,7 +2457,7 @@ public class QueryTestIT {
         if (events.size() == 1) {
           TestHelpers.assertDeepEquals(toSet, events.get(0).getSnapshot().getValue());
           try {
-            writer.child("d").setValue(4);
+            writer.child("d").setValueAsync(4);
           } catch (DatabaseException e) { // ignore
             fail("Should not fail");
           }
@@ -2502,10 +2502,10 @@ public class QueryTestIT {
 
     TestHelpers.waitFor(ready);
     for (int i = 0; i < 4; ++i) {
-      writer.child("k" + i).setValue(i);
+      writer.child("k" + i).setValueAsync(i);
     }
 
-    writer.removeValue();
+    writer.removeValueAsync();
     future.timedGet();
   }
 
@@ -2698,10 +2698,10 @@ public class QueryTestIT {
     expectations.add(ref.equalTo(2, "no_key"), null);
     expectations.add(ref.equalTo(2, "b"), MapBuilder.of("b", "valb"));
 
-    ref.child("a").setValue("vala", 1);
-    ref.child("b").setValue("valb", 2);
-    ref.child("c").setValue("valc", 3);
-    ref.child("z").setValue("valz", "abc");
+    ref.child("a").setValueAsync("vala", 1);
+    ref.child("b").setValueAsync("valb", 2);
+    ref.child("c").setValueAsync("valc", 3);
+    ref.child("z").setValueAsync("valz", "abc");
 
     expectations.waitForEvents();
   }
@@ -2881,7 +2881,7 @@ public class QueryTestIT {
       }
     };
 
-    ref.child("child").setValue(TestHelpers.fromJsonString("{\"name\": \"John\"}"));
+    ref.child("child").setValueAsync(TestHelpers.fromJsonString("{\"name\": \"John\"}"));
 
     ref.orderByChild("name").equalTo("John").addValueEventListener(dummyListen);
     ref.child("child").addValueEventListener(dummyListen);
