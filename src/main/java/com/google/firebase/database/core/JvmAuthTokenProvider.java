@@ -58,6 +58,10 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
       if (forceRefresh) {
         credentials.refresh();
       } else {
+        // getRequestMetadata() will refresh only if the credentials instance does not already
+        // have a valid (unexpired) OAuth2 token. GoogleCredentials does not provide a clearly
+        // labeled method for conditionally refreshing the underlying token. getRequestMetadata()
+        // is the closest thing to what we need.
         credentials.getRequestMetadata();
       }
       listener.onSuccess(wrapOAuthToken(firebaseApp, credentials.getAccessToken()));
@@ -68,7 +72,7 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
 
   @Override
   public void addTokenChangeListener(TokenChangeListener listener) {
-    ImplFirebaseTrampolines.addCredentialsChangedListener(firebaseApp, wrap(listener));
+    ImplFirebaseTrampolines.getCredentials(firebaseApp).addChangeListener(wrap(listener));
   }
 
   private CredentialsChangedListener wrap(TokenChangeListener listener) {
@@ -97,9 +101,12 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
 
     @Override
     public void onChanged(OAuth2Credentials credentials) throws IOException {
+      // When this event fires, it is guaranteed that credentials.getAccessToken() will return a
+      // valid OAuth2 token.
+      final AccessToken accessToken = credentials.getAccessToken();
+
       // Notify the TokenChangeListener on database's thread pool to make sure that
       // all database work happens on database worker threads.
-      final AccessToken accessToken = credentials.getAccessToken();
       executorService.execute(
           new Runnable() {
             @Override

@@ -359,12 +359,12 @@ public class FirebaseAuthTest {
 
   @Test
   public void testProjectIdRequired() throws Exception {
-    String projectId = ImplFirebaseTrampolines.getProjectId(firebaseOptions);
+    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testProjectIdRequired");
+    String projectId = ImplFirebaseTrampolines.getProjectId(app);
     Assume.assumeTrue("Skipping testProjectIdRequired for settings with project ID",
         Strings.isNullOrEmpty(projectId));
 
 
-    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testProjectIdRequired");
     try {
       Tasks.await(FirebaseAuth.getInstance(app).verifyIdToken("foo"));
       fail("Expected exception.");

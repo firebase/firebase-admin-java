@@ -25,6 +25,7 @@ import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.auth.oauth2.OAuth2Credentials.CredentialsChangedListener;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
@@ -98,7 +99,7 @@ public class FirebaseApp {
     this.name = name;
     this.options = checkNotNull(options);
     this.tokenRefresher = checkNotNull(factory).create(this);
-    addCredentialsChangedListener(this.tokenRefresher);
+    this.options.getCredentials().addChangeListener(this.tokenRefresher);
   }
 
   /** Returns a list of all FirebaseApps. */
@@ -255,6 +256,31 @@ public class FirebaseApp {
     return options;
   }
 
+  /**
+   * Returns the Google Cloud project ID associated with this app.
+   *
+   * @return A string project ID or null.
+   */
+  @Nullable
+  String getProjectId() {
+    // Try to get project ID from user-specified options.
+    String projectId = options.getProjectId();
+
+    // Try to get project ID from the credentials.
+    if (Strings.isNullOrEmpty(projectId)) {
+      GoogleCredentials credentials = options.getCredentials();
+      if (credentials instanceof ServiceAccountCredentials) {
+        projectId = ((ServiceAccountCredentials) credentials).getProjectId();
+      }
+    }
+
+    // Try to get project ID from the environment.
+    if (Strings.isNullOrEmpty(projectId)) {
+      projectId = System.getenv("GCLOUD_PROJECT");
+    }
+    return projectId;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof FirebaseApp)) {
@@ -311,13 +337,6 @@ public class FirebaseApp {
     return DEFAULT_APP_NAME.equals(getName());
   }
 
-  void addCredentialsChangedListener(@NonNull final CredentialsChangedListener listener) {
-    synchronized (lock) {
-      checkNotDeleted();
-      options.getCredentials().addChangeListener(listener);
-    }
-  }
-
   void addService(FirebaseService service) {
     synchronized (lock) {
       checkNotDeleted();
@@ -334,9 +353,13 @@ public class FirebaseApp {
   }
 
   /**
-   * Utility class for scheduling proactive token refresh events.  Each FirebaseApp should have
-   * its own instance of this class. This class is not thread safe. The caller (FirebaseApp) must
-   * ensure that methods are called serially.
+   * Utility class for scheduling proactive token refresh events. Each FirebaseApp should have
+   * its own instance of this class. This class gets directly notified by GoogleCredentials
+   * whenever the underlying OAuth2 token changes. TokenRefresher schedules subsequent token
+   * refresh events when this happens.
+   *
+   * <p>This class is thread safe. It will handle only one token change event at a time. It also
+   * cancels any pending token refresh events, before scheduling a new one.
    */
   static class TokenRefresher implements CredentialsChangedListener {
 

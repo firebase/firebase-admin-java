@@ -62,7 +62,6 @@ import org.mockito.Mockito;
 /** 
  * Unit tests for {@link com.google.firebase.FirebaseApp}.
  */
-// TODO: uncomment lines when Firebase API targets are in integ.
 public class FirebaseAppTest {
 
   private static final FirebaseOptions OPTIONS =
@@ -101,6 +100,23 @@ public class FirebaseAppTest {
     FirebaseApp.initializeApp(OPTIONS, name);
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
     FirebaseApp.getInstance(name);
+  }
+
+  @Test
+  public void testGetProjectIdFromOptions() throws Exception {
+    FirebaseOptions options = new FirebaseOptions.Builder(OPTIONS)
+        .setProjectId("explicit-project-id")
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options, "myApp");
+    String projectId = ImplFirebaseTrampolines.getProjectId(app);
+    assertEquals("explicit-project-id", projectId);
+  }
+
+  @Test
+  public void testGetProjectIdFromCredential() throws Exception {
+    FirebaseApp app = FirebaseApp.initializeApp(OPTIONS, "myApp");
+    String projectId = ImplFirebaseTrampolines.getProjectId(app);
+    assertEquals("mock-project-id", projectId);
   }
 
   @Test(expected = IllegalStateException.class)
@@ -273,7 +289,7 @@ public class FirebaseAppTest {
   public void testAddCredentialsChangedListenerWithoutInitialToken() throws IOException {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
     CredentialsChangedListener listener = mock(CredentialsChangedListener.class);
-    firebaseApp.addCredentialsChangedListener(listener);
+    ImplFirebaseTrampolines.getCredentials(firebaseApp).addChangeListener(listener);
     verify(listener, never()).onChanged(Mockito.any(OAuth2Credentials.class));
   }
 
@@ -281,7 +297,7 @@ public class FirebaseAppTest {
   public void testCredentialsChangedListenerOnTokenChange() throws Exception {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
     CredentialsChangedListener listener = mock(CredentialsChangedListener.class);
-    firebaseApp.addCredentialsChangedListener(listener);
+    ImplFirebaseTrampolines.getCredentials(firebaseApp).addChangeListener(listener);
 
     for (int i = 0; i < 5; i++) {
       TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true);
@@ -293,7 +309,7 @@ public class FirebaseAppTest {
   public void testCredentialsChangedListenerWithNoRefresh() throws Exception {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
     CredentialsChangedListener listener = mock(CredentialsChangedListener.class);
-    firebaseApp.addCredentialsChangedListener(listener);
+    ImplFirebaseTrampolines.getCredentials(firebaseApp).addChangeListener(listener);
 
     TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true);
     verify(listener, times(1)).onChanged(Mockito.any(OAuth2Credentials.class));
@@ -312,7 +328,7 @@ public class FirebaseAppTest {
     Assert.assertNotNull(tokenRefresher);
 
     CredentialsChangedListener listener = mock(CredentialsChangedListener.class);
-    firebaseApp.addCredentialsChangedListener(listener);
+    ImplFirebaseTrampolines.getCredentials(firebaseApp).addChangeListener(listener);
 
     TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true);
     verify(listener, times(1)).onChanged(Mockito.any(OAuth2Credentials.class));

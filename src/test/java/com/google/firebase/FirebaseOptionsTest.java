@@ -142,16 +142,6 @@ public class FirebaseOptionsTest {
     assertNotNull(credentials);
   }
 
-  // TODO: Re-enable once https://github.com/google/google-auth-library-java/issues/117 is fixed.
-  public void createOptionsWithServiceAccountSetsProjectId() throws Exception {
-    FirebaseOptions firebaseOptions =
-        new FirebaseOptions.Builder()
-            .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
-            .build();
-    String projectId = ImplFirebaseTrampolines.getProjectId(firebaseOptions);
-    assertEquals("mock-project-id", projectId);
-  }
-
   @Test(expected = NullPointerException.class)
   public void createOptionsWithCredentialMissing() {
     new FirebaseOptions.Builder().build();
