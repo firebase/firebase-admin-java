@@ -16,6 +16,7 @@
 
 package com.google.firebase.database;
 
+import com.google.api.core.ApiFuture;
 import com.google.firebase.database.core.CompoundWrite;
 import com.google.firebase.database.core.DatabaseConfig;
 import com.google.firebase.database.core.Path;
@@ -32,6 +33,7 @@ import com.google.firebase.database.utilities.PushIdGenerator;
 import com.google.firebase.database.utilities.Utilities;
 import com.google.firebase.database.utilities.Validation;
 import com.google.firebase.database.utilities.encoding.CustomClassMapper;
+import com.google.firebase.internal.TaskToApiFuture;
 import com.google.firebase.tasks.Task;
 
 import java.io.UnsupportedEncodingException;
@@ -172,13 +174,11 @@ public class DatabaseReference extends Query {
    * <code>Map&lt;String, MyPOJO&gt;</code>, as well as null values.
    *
    * @param value The value to set at this location
-   * @return The {@link Task} for this operation.
+   * @return The ApiFuture for this operation.
    */
-  public Task<Void> setValue(Object value) {
-    return setValueInternal(value, PriorityUtilities.parsePriority(null), null);
+  public ApiFuture<Void> setValueAsync(Object value) {
+    return new TaskToApiFuture<>(setValue(value));
   }
-
-  // Set priority
 
   /**
    * Set the data and priority to the given values. Passing null to setValue() will delete the data
@@ -212,7 +212,30 @@ public class DatabaseReference extends Query {
    *
    * @param value The value to set at this location
    * @param priority The priority to set at this location
+   * @return The ApiFuture for this operation.
+   */
+  public ApiFuture<Void> setValueAsync(Object value, Object priority) {
+    return new TaskToApiFuture<>(setValue(value, priority));
+  }
+
+  /**
+   * Similar to {@link #setValueAsync(Object)} but returns a Task.
+   *
+   * @param value The value to set at this location
    * @return The {@link Task} for this operation.
+   * @deprecated Use {@link #setValueAsync(Object)}
+   */
+  public Task<Void> setValue(Object value) {
+    return setValueInternal(value, PriorityUtilities.parsePriority(null), null);
+  }
+
+  /**
+   * Similar to {@link #setValueAsync(Object, Object)} but returns a Task.
+   *
+   * @param value The value to set at this location
+   * @param priority The priority to set at this location
+   * @return The {@link Task} for this operation.
+   * @deprecated Use {@link #setValueAsync(Object, Object)}
    */
   public Task<Void> setValue(Object value, Object priority) {
     return setValueInternal(value, PriorityUtilities.parsePriority(priority), null);
@@ -292,8 +315,6 @@ public class DatabaseReference extends Query {
     setValueInternal(value, PriorityUtilities.parsePriority(priority), listener);
   }
 
-  // Update
-
   private Task<Void> setValueInternal(Object value, Node priority, CompletionListener optListener) {
     Validation.validateWritablePath(getPath());
     ValidationPath.validateWithObject(getPath(), value);
@@ -310,6 +331,8 @@ public class DatabaseReference extends Query {
         });
     return wrapped.getFirst();
   }
+
+  // Set priority
 
   /**
    * Set a priority for the data at this Database location. Priorities can be used to provide a
@@ -338,7 +361,18 @@ public class DatabaseReference extends Query {
    * they can be parsed as a 32-bit integer.
    *
    * @param priority The priority to set at the specified location.
+   * @return The ApiFuture for this operation.
+   */
+  public ApiFuture<Void> setPriorityAsync(Object priority) {
+    return new TaskToApiFuture<>(setPriority(priority));
+  }
+
+  /**
+   * Similar to {@link #setPriorityAsync(Object)} but returns a Task.
+   *
+   * @param priority The priority to set at the specified location.
    * @return The {@link Task} for this operation.
+   * @deprecated Use {@link #setPriorityAsync(Object)}
    */
   public Task<Void> setPriority(Object priority) {
     return setPriorityInternal(PriorityUtilities.parsePriority(priority), null);
@@ -394,12 +428,25 @@ public class DatabaseReference extends Query {
     return wrapped.getFirst();
   }
 
+  // Update
+
   /**
    * Update the specific child keys to the specified values. Passing null in a map to
    * updateChildren() will remove the value at the specified location.
    *
    * @param update The paths to update and their new values
+   * @return The ApiFuture for this operation.
+   */
+  public ApiFuture<Void> updateChildrenAsync(Map<String, Object> update) {
+    return new TaskToApiFuture<>(updateChildren(update));
+  }
+
+  /**
+   * Similar to {@link #updateChildrenAsync(Map)} but returns a Task.
+   *
+   * @param update The paths to update and their new values
    * @return The {@link Task} for this operation.
+   * @deprecated Use {@link #updateChildrenAsync(Map)}
    */
   public Task<Void> updateChildren(Map<String, Object> update) {
     return updateChildrenInternal(update, null);
@@ -444,7 +491,17 @@ public class DatabaseReference extends Query {
   /**
    * Set the value at this location to 'null'
    *
-   * @return The {@link Task} for this operation.
+   * @return The ApiFuture for this operation.
+   */
+  public ApiFuture<Void> removeValueAsync() {
+    return new TaskToApiFuture<>(removeValue());
+  }
+
+  /**
+   * Similar to {@link #removeValueAsync()} but returns a Task.
+   *
+   * @return The Task for this operation.
+   * @deprecated Use {@link #removeValueAsync()}
    */
   public Task<Void> removeValue() {
     return setValue(null);

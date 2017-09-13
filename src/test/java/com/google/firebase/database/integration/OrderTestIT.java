@@ -76,7 +76,7 @@ public class OrderTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
     for (int i = 0; i < 10; ++i) {
-      ref.push().setValue(i);
+      ref.push().setValueAsync(i);
     }
 
     DataSnapshot snap = new ReadFuture(ref).timedGet().get(0).getSnapshot();
@@ -102,7 +102,7 @@ public class OrderTestIT {
     }
 
     for (int i = 0; i < paths.size(); ++i) {
-      paths.get(i).setValue(i);
+      paths.get(i).setValueAsync(i);
     }
 
     DataSnapshot snap = new ReadFuture(ref).timedGet().get(0).getSnapshot();
@@ -125,7 +125,7 @@ public class OrderTestIT {
     final DatabaseReference reader = refs.get(1);
 
     for (int i = 0; i < 9; ++i) {
-      writer.push().setValue(i);
+      writer.push().setValueAsync(i);
     }
     new WriteFuture(writer.push(), 9).timedGet();
 
@@ -155,7 +155,7 @@ public class OrderTestIT {
     final DatabaseReference reader = refs.get(1);
 
     for (int i = 0; i < 9; ++i) {
-      writer.push().setValue(i, 10 - i);
+      writer.push().setValueAsync(i, 10 - i);
     }
     new WriteFuture(writer.push(), 9, 1).timedGet();
 
@@ -185,7 +185,7 @@ public class OrderTestIT {
     final DatabaseReference reader = refs.get(1);
 
     for (int i = 0; i < 9; ++i) {
-      writer.push().setValue(i, 111111111111111111111111111111.0 / Math.pow(10, i));
+      writer.push().setValueAsync(i, 111111111111111111111111111111.0 / Math.pow(10, i));
     }
     new WriteFuture(writer.push(), 9, 111111111111111111111111111111.0 / Math.pow(10, 9))
         .timedGet();
@@ -212,7 +212,7 @@ public class OrderTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
     ref.child("foo");
-    ref.child("bar").setValue("test");
+    ref.child("bar").setValueAsync("test");
 
     DataSnapshot snap = TestHelpers.getSnap(ref);
     int i = 0;
@@ -240,10 +240,10 @@ public class OrderTestIT {
             .addValueExpectation(ref)
             .startListening(true);
 
-    ref.child("a").setValue("first", 1);
-    ref.child("b").setValue("second", 5);
-    ref.child("c").setValue("third", 10);
-    ref.child("a").setPriority(15);
+    ref.child("a").setValueAsync("first", 1);
+    ref.child("b").setValueAsync("second", 5);
+    ref.child("c").setValueAsync("third", 10);
+    ref.child("a").setPriorityAsync(15);
 
     assertTrue(helper.waitForEvents());
     helper.cleanup();
@@ -253,8 +253,8 @@ public class OrderTestIT {
   public void testResetPriorityToNull() throws InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.child("a").setValue("a", 1);
-    ref.child("b").setValue("b", 2);
+    ref.child("a").setValueAsync("a", 1);
+    ref.child("b").setValueAsync("b", 2);
 
     TestHelpers.waitForRoundtrip(ref);
     EventHelper helper =
@@ -272,7 +272,7 @@ public class OrderTestIT {
         .addValueExpectation(ref)
         .startListening();
 
-    ref.child("b").setPriority(null);
+    ref.child("b").setPriorityAsync(null);
     assertTrue(helper.waitForEvents());
 
     DataSnapshot snap = TestHelpers.getSnap(ref);
@@ -287,8 +287,8 @@ public class OrderTestIT {
 
     ReadFuture readFuture = ReadFuture.untilCountAfterNull(ref, 2);
 
-    ref.setValue("a", 10);
-    ref.child("deeper").setValue("deeper");
+    ref.setValueAsync("a", 10);
+    ref.child("deeper").setValueAsync("deeper");
 
     DataSnapshot snap = readFuture.timedGet().get(1).getSnapshot();
     assertEquals(10.0, snap.getPriority());
@@ -301,24 +301,24 @@ public class OrderTestIT {
     final DatabaseReference writer = refs.get(0);
     final DatabaseReference reader = refs.get(1);
 
-    writer.child("alpha42").setValue(1, "zed");
-    writer.child("noPriorityC").setValue(1, (String) null);
-    writer.child("num41").setValue(1, 500);
-    writer.child("noPriorityB").setValue(1, (String) null);
-    writer.child("num80").setValue(1, 4000.1);
-    writer.child("num50").setValue(1, 4000);
-    writer.child("num10").setValue(1, 24);
-    writer.child("alpha41").setValue(1, "zed");
-    writer.child("alpha20").setValue(1, "horse");
-    writer.child("num20").setValue(1, 123);
-    writer.child("num70").setValue(1, 4000.01);
-    writer.child("noPriorityA").setValue(1, (String) null);
-    writer.child("alpha30").setValue(1, "tree");
-    writer.child("num30").setValue(1, 300);
-    writer.child("num60").setValue(1, 4000.001);
-    writer.child("alpha10").setValue(1, "0horse");
-    writer.child("num42").setValue(1, 500);
-    writer.child("alpha40").setValue(1, "zed");
+    writer.child("alpha42").setValueAsync(1, "zed");
+    writer.child("noPriorityC").setValueAsync(1, null);
+    writer.child("num41").setValueAsync(1, 500);
+    writer.child("noPriorityB").setValueAsync(1, null);
+    writer.child("num80").setValueAsync(1, 4000.1);
+    writer.child("num50").setValueAsync(1, 4000);
+    writer.child("num10").setValueAsync(1, 24);
+    writer.child("alpha41").setValueAsync(1, "zed");
+    writer.child("alpha20").setValueAsync(1, "horse");
+    writer.child("num20").setValueAsync(1, 123);
+    writer.child("num70").setValueAsync(1, 4000.01);
+    writer.child("noPriorityA").setValueAsync(1, null);
+    writer.child("alpha30").setValueAsync(1, "tree");
+    writer.child("num30").setValueAsync(1, 300);
+    writer.child("num60").setValueAsync(1, 4000.001);
+    writer.child("alpha10").setValueAsync(1, "0horse");
+    writer.child("num42").setValueAsync(1, 500);
+    writer.child("alpha40").setValueAsync(1, "zed");
     new WriteFuture(writer.child("num40"), 1, 500).timedGet();
 
     List<String> expected = ImmutableList.<String>builder().add(
@@ -363,15 +363,15 @@ public class OrderTestIT {
     List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 2);
     DatabaseReference writer = refs.get(0);
 
-    writer.child("foo").setValue(0);
-    writer.child("bar").setValue(0);
-    writer.child("03").setValue(0);
-    writer.child("0").setValue(0);
-    writer.child("100").setValue(0);
-    writer.child("20").setValue(0);
-    writer.child("5").setValue(0);
-    writer.child("3").setValue(0);
-    writer.child("003").setValue(0);
+    writer.child("foo").setValueAsync(0);
+    writer.child("bar").setValueAsync(0);
+    writer.child("03").setValueAsync(0);
+    writer.child("0").setValueAsync(0);
+    writer.child("100").setValueAsync(0);
+    writer.child("20").setValueAsync(0);
+    writer.child("5").setValueAsync(0);
+    writer.child("3").setValueAsync(0);
+    writer.child("003").setValueAsync(0);
     new WriteFuture(writer.child("9"), 0).timedGet();
 
     List<String> expected = ImmutableList.of(
@@ -390,7 +390,7 @@ public class OrderTestIT {
     List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 2);
     DatabaseReference writer = refs.get(0);
 
-    writer.child("2000000000").setValue(0);
+    writer.child("2000000000").setValueAsync(0);
     new WriteFuture(writer.child("-2000000000"), 0).timedGet();
 
     List<String> expected = ImmutableList.of("-2000000000", "2000000000");
@@ -437,7 +437,7 @@ public class OrderTestIT {
               public void onCancelled(DatabaseError error) {}
             });
 
-    ref.setValue(new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build());
+    ref.setValueAsync(new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build());
 
     TestHelpers.waitFor(semaphore, 3);
     List<String> expected = Arrays.asList("a", null, "b", "a", "c", "b");
@@ -480,10 +480,10 @@ public class OrderTestIT {
               public void onCancelled(DatabaseError error) {}
             });
 
-    ref.setValue(MapBuilder.of("b", 2, "c", 3, "d", 4));
+    ref.setValueAsync(MapBuilder.of("b", 2, "c", 3, "d", 4));
 
-    ref.child("a").setValue(1);
-    ref.child("e").setValue(5);
+    ref.child("a").setValueAsync(1);
+    ref.child("e").setValueAsync(5);
 
     TestHelpers.waitFor(semaphore, 5);
     List<String> expected = Arrays.asList("b", null, "c", "b", "d", "c", "a", null, "e", "d");
@@ -526,9 +526,9 @@ public class OrderTestIT {
               public void onCancelled(DatabaseError error) {}
             });
 
-    ref.setValue(MapBuilder.of("b", 2, "c", 3, "d", 4));
-    ref.setValue(new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4).build());
-    ref.setValue(new MapBuilder().put("a", 1).put("b", 2).put("c", 3)
+    ref.setValueAsync(MapBuilder.of("b", 2, "c", 3, "d", 4));
+    ref.setValueAsync(new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4).build());
+    ref.setValueAsync(new MapBuilder().put("a", 1).put("b", 2).put("c", 3)
         .put("d", 4).put("e", 5).build());
 
     TestHelpers.waitFor(semaphore, 5);
@@ -572,16 +572,16 @@ public class OrderTestIT {
               public void onCancelled(DatabaseError error) {}
             });
 
-    ref.child("a").setValue("a", 1);
-    ref.child("b").setValue("b", 2);
-    ref.child("c").setValue("c", 3);
-    ref.child("d").setValue("d", 4);
+    ref.child("a").setValueAsync("a", 1);
+    ref.child("b").setValueAsync("b", 2);
+    ref.child("c").setValueAsync("c", 3);
+    ref.child("d").setValueAsync("d", 4);
 
-    ref.child("d").setPriority(0);
+    ref.child("d").setPriorityAsync(0);
 
-    ref.child("a").setPriority(4);
+    ref.child("a").setPriorityAsync(4);
 
-    ref.child("c").setPriority(0.5);
+    ref.child("c").setPriorityAsync(0.5);
 
     TestHelpers.waitFor(semaphore, 6);
 
@@ -626,7 +626,7 @@ public class OrderTestIT {
               public void onCancelled(DatabaseError error) {}
             });
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder()
             .put("a", new MapBuilder().put(".value", "a").put(".priority", 1).build())
             .put("b", new MapBuilder().put(".value", "b").put(".priority", 2).build())
@@ -634,7 +634,7 @@ public class OrderTestIT {
             .put("d", new MapBuilder().put(".value", "d").put(".priority", 4).build())
             .build());
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder()
             .put("d", new MapBuilder().put(".value", "d").put(".priority", 0).build())
             .put("a", new MapBuilder().put(".value", "a").put(".priority", 1).build())
@@ -642,7 +642,7 @@ public class OrderTestIT {
             .put("c", new MapBuilder().put(".value", "c").put(".priority", 3).build())
             .build());
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder()
             .put("d", new MapBuilder().put(".value", "d").put(".priority", 0).build())
             .put("b", new MapBuilder().put(".value", "b").put(".priority", 2).build())
@@ -650,7 +650,7 @@ public class OrderTestIT {
             .put("a", new MapBuilder().put(".value", "a").put(".priority", 4).build())
             .build());
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder()
             .put("d", new MapBuilder().put(".value", "d").put(".priority", 0).build())
             .put("c", new MapBuilder().put(".value", "c").put(".priority", 0.5).build())
@@ -698,9 +698,9 @@ public class OrderTestIT {
               public void onCancelled(DatabaseError error) {}
             });
 
-    ref.child("test/foo").setValue(42, "5");
-    ref.child("test/f002").setValue(42, "10");
-    ref.child("test/foo").removeValue();
+    ref.child("test/foo").setValueAsync(42, "5");
+    ref.child("test/f002").setValueAsync(42, "10");
+    ref.child("test/foo").removeValueAsync();
     new WriteFuture(ref.child("test/foo2"), null).timedGet();
     // If child_moved has been raised, the test will have failed by now
     ref.removeEventListener(listener);
@@ -712,7 +712,7 @@ public class OrderTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
     ReadFuture readFuture = new ReadFuture(ref);
-    ref.setValue("test", 0);
+    ref.setValueAsync("test", 0);
 
     DataSnapshot snap = readFuture.timedGet().get(0).getSnapshot();
 
@@ -725,7 +725,7 @@ public class OrderTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
     ReadFuture readFuture = new ReadFuture(ref);
-    ref.setValue(new MapBuilder().put("x", "test").put("y", 7).build(), 0);
+    ref.setValueAsync(new MapBuilder().put("x", "test").put("y", 7).build(), 0);
 
     DataSnapshot snap = readFuture.timedGet().get(0).getSnapshot();
 
@@ -767,7 +767,7 @@ public class OrderTestIT {
               public void onCancelled(DatabaseError error) {}
             });
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder()
             .put("a", new MapBuilder().put(".value", "a").put(".priority", 0).build())
             .put("b", new MapBuilder().put(".value", "b").put(".priority", 1).build())
@@ -775,7 +775,7 @@ public class OrderTestIT {
             .put("d", new MapBuilder().put(".value", "d").put(".priority", 3).build())
             .build());
 
-    ref.child("b").setPriority(1.5);
+    ref.child("b").setPriorityAsync(1.5);
     TestHelpers.waitFor(semaphore, 2);
 
     assertEquals(2, results.size());
@@ -820,7 +820,7 @@ public class OrderTestIT {
               }
             });
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder()
             .put("a", new MapBuilder().put(".value", "a").put(".priority", 0).build())
             .put("b", new MapBuilder().put(".value", "b").put(".priority", 1).build())
@@ -828,7 +828,7 @@ public class OrderTestIT {
             .put("d", new MapBuilder().put(".value", "d").put(".priority", 3).build())
             .build());
 
-    ref.setValue(
+    ref.setValueAsync(
         new MapBuilder()
             .put("a", new MapBuilder().put(".value", "a").put(".priority", 0).build())
             .put("b", new MapBuilder().put(".value", "b").put(".priority", 1.5).build())

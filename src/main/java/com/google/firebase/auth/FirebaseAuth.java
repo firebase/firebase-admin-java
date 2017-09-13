@@ -110,6 +110,7 @@ public class FirebaseAuth {
    *     (Firebase Database, Firebase Auth, etc.)
    * @return A {@link Task} which will complete successfully with the created Firebase Custom Token,
    *     or unsuccessfully with the failure Exception.
+   * @deprecated Use {@link #createCustomTokenAsync(String)}
    */
   public Task<String> createCustomToken(String uid) {
     return createCustomToken(uid, null);
@@ -127,6 +128,7 @@ public class FirebaseAuth {
    *     (e.g. contain only Maps, Arrays, Strings, Booleans, Numbers, etc.)
    * @return A {@link Task} which will complete successfully with the created Firebase Custom Token,
    *     or unsuccessfully with the failure Exception.
+   * @deprecated Use {@link #createCustomTokenAsync(String, Map)}
    */
   public Task<String> createCustomToken(
       final String uid, final Map<String, Object> developerClaims) {
@@ -205,6 +207,7 @@ public class FirebaseAuth {
    * @param token A Firebase ID Token to verify and parse.
    * @return A {@link Task} which will complete successfully with the parsed token, or
    *     unsuccessfully with the failure Exception.
+   * @deprecated Use {@link #verifyIdTokenAsync(String)}
    */
   public Task<FirebaseToken> verifyIdToken(final String token) {
     FirebaseCredential credential = ImplFirebaseTrampolines.getCredential(firebaseApp);
@@ -268,6 +271,7 @@ public class FirebaseAuth {
    *     If an error occurs while retrieving user data or if the specified user ID does not exist,
    *     the task fails with a FirebaseAuthException.
    * @throws IllegalArgumentException If the user ID string is null or empty.
+   * @deprecated Use {@link #getUserAsync(String)}
    */
   public Task<UserRecord> getUser(final String uid) {
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
@@ -301,6 +305,7 @@ public class FirebaseAuth {
    *     If an error occurs while retrieving user data or if the email address does not correspond
    *     to a user, the task fails with a FirebaseAuthException.
    * @throws IllegalArgumentException If the email is null or empty.
+   * @deprecated Use {@link #getUserByEmailAsync(String)}
    */
   public Task<UserRecord> getUserByEmail(final String email) {
     checkArgument(!Strings.isNullOrEmpty(email), "email must not be null or empty");
@@ -334,6 +339,7 @@ public class FirebaseAuth {
    *     If an error occurs while retrieving user data or if the phone number does not
    *     correspond to a user, the task fails with a FirebaseAuthException.
    * @throws IllegalArgumentException If the phone number is null or empty.
+   * @deprecated Use {@link #getUserByPhoneNumberAsync(String)}
    */
   public Task<UserRecord> getUserByPhoneNumber(final String phoneNumber) {
     checkArgument(!Strings.isNullOrEmpty(phoneNumber), "phone number must not be null or empty");
@@ -368,6 +374,7 @@ public class FirebaseAuth {
    *     corresponding to the newly created account. If an error occurs while creating the user
    *     account, the task fails with a FirebaseAuthException.
    * @throws NullPointerException if the provided request is null.
+   * @deprecated Use {@link #createUserAsync(CreateRequest)}
    */
   public Task<UserRecord> createUser(final CreateRequest request) {
     checkNotNull(request, "create request must not be null");
@@ -404,6 +411,7 @@ public class FirebaseAuth {
    *     corresponding to the updated user account. If an error occurs while updating the user
    *     account, the task fails with a FirebaseAuthException.
    * @throws NullPointerException if the provided update request is null.
+   * @deprecated Use {@link #updateUserAsync(UpdateRequest)}
    */
   public Task<UserRecord> updateUser(final UpdateRequest request) {
     checkNotNull(request, "update request must not be null");
@@ -439,6 +447,7 @@ public class FirebaseAuth {
    *     been deleted. If an error occurs while deleting the user account, the task fails with a
    *     FirebaseAuthException.
    * @throws IllegalArgumentException If the user ID string is null or empty.
+   * @deprecated Use {@link #deleteUserAsync(String)}
    */
   public Task<Void> deleteUser(final String uid) {
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
