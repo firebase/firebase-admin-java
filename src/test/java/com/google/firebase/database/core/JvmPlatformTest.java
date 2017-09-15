@@ -18,7 +18,12 @@ package com.google.firebase.database.core;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.testing.ServiceAccount;
+import com.google.firebase.testing.TestUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -26,16 +31,26 @@ public class JvmPlatformTest {
 
   @Test
   public void userAgentHasCorrectParts() {
-    Context cfg = new DatabaseConfig();
-    cfg.freeze();
-    String userAgent = cfg.getUserAgent();
-    String[] parts = userAgent.split("/");
-    assertEquals(5, parts.length);
-    assertEquals("Firebase", parts[0]); // Firebase
-    assertEquals(Constants.WIRE_PROTOCOL_VERSION, parts[1]); // Wire protocol version
-    assertEquals(FirebaseDatabase.getSdkVersion(), parts[2]); // SDK version
-    assertEquals(System.getProperty("java.version", "Unknown"), parts[3]); // Java "OS" version
-    assertEquals(Platform.DEVICE, parts[4]); // AdminJava
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options, "userAgentApp");
+
+    try {
+      Context cfg = new DatabaseConfig();
+      cfg.firebaseApp = app;
+      cfg.freeze();
+      String userAgent = cfg.getUserAgent();
+      String[] parts = userAgent.split("/");
+      assertEquals(5, parts.length);
+      assertEquals("Firebase", parts[0]); // Firebase
+      assertEquals(Constants.WIRE_PROTOCOL_VERSION, parts[1]); // Wire protocol version
+      assertEquals(FirebaseDatabase.getSdkVersion(), parts[2]); // SDK version
+      assertEquals(System.getProperty("java.version", "Unknown"), parts[3]); // Java "OS" version
+      assertEquals(Platform.DEVICE, parts[4]); // AdminJava
+    } finally {
+      TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    }
   }
 
   @Test

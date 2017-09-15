@@ -32,39 +32,31 @@ import java.util.concurrent.ScheduledExecutorService;
 
 public class JvmAuthTokenProvider implements AuthTokenProvider {
 
+  private final GoogleCredentials credentials;
+  private final Map<String, Object> authVariable;
   private final ScheduledExecutorService executorService;
-  private final FirebaseApp firebaseApp;
 
   JvmAuthTokenProvider(FirebaseApp firebaseApp, ScheduledExecutorService executorService) {
+    this.credentials = ImplFirebaseTrampolines.getCredentials(firebaseApp);
+    this.authVariable = firebaseApp.getOptions().getDatabaseAuthVariableOverride();
     this.executorService = executorService;
-    this.firebaseApp = firebaseApp;
-  }
-
-  private static String wrapOAuthToken(FirebaseApp firebaseApp, AccessToken result) {
-    if (result == null) {
-      // This shouldn't happen in the actual production SDK, but can happen in tests.
-      return null;
-    }
-
-    Map<String, Object> authVariable = firebaseApp.getOptions().getDatabaseAuthVariableOverride();
-    GAuthToken googleAuthToken = new GAuthToken(result.getTokenValue(), authVariable);
-    return googleAuthToken.serializeToString();
   }
 
   @Override
   public void getToken(boolean forceRefresh, final GetTokenCompletionListener listener) {
-    GoogleCredentials credentials = ImplFirebaseTrampolines.getCredentials(firebaseApp);
     try {
       if (forceRefresh) {
         credentials.refresh();
-      } else {
-        // getRequestMetadata() will refresh only if the credentials instance does not already
-        // have a valid (unexpired) OAuth2 token. GoogleCredentials does not provide a clearly
-        // labeled method for conditionally refreshing the underlying token. getRequestMetadata()
-        // is the closest thing to what we need.
-        credentials.getRequestMetadata();
       }
-      listener.onSuccess(wrapOAuthToken(firebaseApp, credentials.getAccessToken()));
+
+      // The typical way to use a GoogleCredentials instance is to call its getRequestMetadata(),
+      // and include the metadata in your request. Since we are accessing the token directly via
+      // getAccessToken(), we must first call getRequestMetadata() to ensure the token is available
+      // (refreshed if necessary).
+      credentials.getRequestMetadata();
+
+      AccessToken accessToken = credentials.getAccessToken();
+      listener.onSuccess(wrapOAuthToken(accessToken, authVariable));
     } catch (IOException e) {
       listener.onError(e.toString());
     }
@@ -72,11 +64,19 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
 
   @Override
   public void addTokenChangeListener(TokenChangeListener listener) {
-    ImplFirebaseTrampolines.getCredentials(firebaseApp).addChangeListener(wrap(listener));
+    CredentialsChangedListener listenerWrapper = new TokenChangeListenerWrapper(
+        listener, executorService, authVariable);
+    credentials.addChangeListener(listenerWrapper);
   }
 
-  private CredentialsChangedListener wrap(TokenChangeListener listener) {
-    return new TokenChangeListenerWrapper(listener, firebaseApp, executorService);
+  private static String wrapOAuthToken(AccessToken result, Map<String, Object> authVariable) {
+    if (result == null) {
+      // This shouldn't happen in the actual production SDK, but can happen in tests.
+      return null;
+    }
+
+    GAuthToken googleAuthToken = new GAuthToken(result.getTokenValue(), authVariable);
+    return googleAuthToken.serializeToString();
   }
 
   /**
@@ -87,16 +87,16 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
   private static class TokenChangeListenerWrapper implements CredentialsChangedListener {
 
     private final TokenChangeListener listener;
-    private final FirebaseApp firebaseApp;
     private final ScheduledExecutorService executorService;
+    private final Map<String, Object> authVariable;
 
     TokenChangeListenerWrapper(
         TokenChangeListener listener,
-        FirebaseApp firebaseApp,
-        ScheduledExecutorService executorService) {
+        ScheduledExecutorService executorService,
+        Map<String, Object> authVariable) {
       this.listener = checkNotNull(listener, "Listener must not be null");
-      this.firebaseApp = checkNotNull(firebaseApp, "FirebaseApp must not be null");
       this.executorService = checkNotNull(executorService, "ExecutorService must not be null");
+      this.authVariable = authVariable;
     }
 
     @Override
@@ -111,7 +111,7 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
           new Runnable() {
             @Override
             public void run() {
-              listener.onTokenChange(wrapOAuthToken(firebaseApp, accessToken));
+              listener.onTokenChange(wrapOAuthToken(accessToken, authVariable));
             }
           });
     }

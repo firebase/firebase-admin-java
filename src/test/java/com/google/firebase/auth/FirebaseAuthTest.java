@@ -262,6 +262,13 @@ public class FirebaseAuthTest {
     } catch (IllegalStateException expected) {
       // ignore
     }
+
+    try {
+      auth.getUser("foo");
+      fail("No error thrown when invoking auth after deleting app");
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
   }
 
   @Test
@@ -349,10 +356,10 @@ public class FirebaseAuthTest {
     try {
       Tasks.await(FirebaseAuth.getInstance(app).createCustomToken("foo"));
       fail("Expected exception.");
-    } catch (Exception expected) {
+    } catch (IllegalStateException expected) {
       Assert.assertEquals(
-          "com.google.firebase.FirebaseException: Must initialize FirebaseApp with a service "
-              + "account credential to call createCustomToken()",
+          "Must initialize FirebaseApp with a service account credential to call "
+              + "createCustomToken()",
           expected.getMessage());
     }
   }
@@ -368,10 +375,9 @@ public class FirebaseAuthTest {
     try {
       Tasks.await(FirebaseAuth.getInstance(app).verifyIdToken("foo"));
       fail("Expected exception.");
-    } catch (Exception expected) {
+    } catch (IllegalStateException expected) {
       Assert.assertEquals(
-          "com.google.firebase.FirebaseException: Must initialize FirebaseApp with a project ID "
-              + "to call verifyIdToken()",
+          "Must initialize FirebaseApp with a project ID to call verifyIdToken()",
           expected.getMessage());
     }
   }

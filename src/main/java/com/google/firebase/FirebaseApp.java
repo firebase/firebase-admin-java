@@ -99,7 +99,6 @@ public class FirebaseApp {
     this.name = name;
     this.options = checkNotNull(options);
     this.tokenRefresher = checkNotNull(factory).create(this);
-    this.options.getCredentials().addChangeListener(this.tokenRefresher);
   }
 
   /** Returns a list of all FirebaseApps. */
@@ -363,12 +362,13 @@ public class FirebaseApp {
    */
   static class TokenRefresher implements CredentialsChangedListener {
 
-    private final FirebaseApp firebaseApp;
+    private final GoogleCredentials credentials;
     private ScheduledFuture<Void> future;
     private boolean closed;
 
     TokenRefresher(FirebaseApp app) {
-      this.firebaseApp = checkNotNull(app);
+      this.credentials = app.getOptions().getCredentials();
+      this.credentials.addChangeListener(this);
     }
 
     @Override
@@ -401,7 +401,6 @@ public class FirebaseApp {
             @Override
             public Void call() throws Exception {
               logger.debug("Refreshing OAuth2 credential");
-              GoogleCredentials credentials = firebaseApp.getOptions().getCredentials();
               credentials.refresh();
               return null;
             }
