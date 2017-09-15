@@ -34,14 +34,14 @@ public class TestTokenProvider implements AuthTokenProvider {
     this.executorService = executorService;
   }
 
-  public void setToken(String token) {
+  public void setToken(final String token) {
     this.token = token;
     for (final TokenChangeListener listener : this.listeners) {
       this.executorService.execute(
           new Runnable() {
             @Override
             public void run() {
-              listener.onTokenChange();
+              listener.onTokenChange(token);
             }
           });
     }

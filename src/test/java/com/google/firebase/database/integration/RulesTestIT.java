@@ -36,6 +36,7 @@ import com.google.firebase.database.TestFailure;
 import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.TestTokenProvider;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.core.AuthTokenProvider;
 import com.google.firebase.database.core.DatabaseConfig;
 import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.future.ReadFuture;
@@ -414,16 +415,21 @@ public class RulesTestIT {
   @Test
   public void testAuthenticatedImmediatelyAfterTokenChange() throws Exception {
     DatabaseConfig config = TestHelpers.getDatabaseConfig(masterApp);
-    TestTokenProvider provider = new TestTokenProvider(TestHelpers.getExecutorService(config));
-    config.setAuthTokenProvider(provider);
+    AuthTokenProvider originalProvider = config.getAuthTokenProvider();
+    try {
+      TestTokenProvider provider = new TestTokenProvider(TestHelpers.getExecutorService(config));
+      config.setAuthTokenProvider(provider);
 
-    DatabaseReference root = FirebaseDatabase.getInstance(masterApp).getReference();
-    DatabaseReference ref = root.child(writer.getPath().toString());
+      DatabaseReference root = FirebaseDatabase.getInstance(masterApp).getReference();
+      DatabaseReference ref = root.child(writer.getPath().toString());
 
-    String token = TestOnlyImplFirebaseTrampolines.getToken(masterApp, true);
-    provider.setToken(token);
+      String token = TestOnlyImplFirebaseTrampolines.getToken(masterApp, true);
+      provider.setToken(token);
 
-    DatabaseError err = new WriteFuture(ref.child("any_auth"), true).timedGet();
-    assertNull(err);
+      DatabaseError err = new WriteFuture(ref.child("any_auth"), true).timedGet();
+      assertNull(err);
+    } finally {
+      config.setAuthTokenProvider(originalProvider);
+    }
   }
 }

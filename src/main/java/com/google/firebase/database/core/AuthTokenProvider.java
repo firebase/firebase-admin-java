@@ -59,9 +59,5 @@ public interface AuthTokenProvider {
      */
     void onTokenChange(String token);
 
-    // TODO: Remove this once AndroidAuthTokenProvider is updated to call
-    // the other method.
-
-    void onTokenChange();
   }
 }

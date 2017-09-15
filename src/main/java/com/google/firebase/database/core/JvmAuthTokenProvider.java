@@ -80,9 +80,9 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
   }
 
   /**
-   * Wraps a TokenChangeListener instance inside a FirebaseApp.AuthStateListener. Equality
+   * Wraps a TokenChangeListener instance inside a CredentialsChangedListener. Equality
    * comparisons are delegated to the TokenChangeListener so that listener addition and removal will
-   * work as expected in FirebaseApp.
+   * work as expected.
    */
   private static class TokenChangeListenerWrapper implements CredentialsChangedListener {
 
