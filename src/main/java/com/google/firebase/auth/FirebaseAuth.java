@@ -59,7 +59,8 @@ public class FirebaseAuth {
   private final Clock clock;
   private final JsonFactory jsonFactory;
   private final FirebaseUserManager userManager;
-  private final AtomicBoolean deleted;
+  private final AtomicBoolean destroyed;
+  private final Object lock;
 
   private FirebaseAuth(FirebaseApp firebaseApp) {
     this(firebaseApp, FirebaseTokenVerifier.DEFAULT_KEY_MANAGER, Clock.SYSTEM);
@@ -79,7 +80,8 @@ public class FirebaseAuth {
     this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
     this.userManager = new FirebaseUserManager(jsonFactory,
         firebaseApp.getOptions().getHttpTransport(), this.credentials);
-    this.deleted = new AtomicBoolean(false);
+    this.destroyed = new AtomicBoolean(false);
+    this.lock = new Object();
   }
 
   /**
@@ -134,7 +136,7 @@ public class FirebaseAuth {
    */
   public Task<String> createCustomToken(
       final String uid, final Map<String, Object> developerClaims) {
-    checkNotDeleted();
+    checkNotDestroyed();
     checkState(credentials instanceof ServiceAccountCredentials,
         "Must initialize FirebaseApp with a service account credential to call "
             + "createCustomToken()");
@@ -174,7 +176,7 @@ public class FirebaseAuth {
    *     unsuccessfully with the failure Exception.
    */
   public Task<FirebaseToken> verifyIdToken(final String token) {
-    checkNotDeleted();
+    checkNotDestroyed();
     checkState(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifyIdToken()");
     return Tasks.forResult(projectId)
@@ -208,7 +210,7 @@ public class FirebaseAuth {
    * @throws IllegalArgumentException If the user ID string is null or empty.
    */
   public Task<UserRecord> getUser(final String uid) {
-    checkNotDeleted();
+    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
     return Tasks.call(new Callable<UserRecord>() {
       @Override
@@ -228,7 +230,7 @@ public class FirebaseAuth {
    * @throws IllegalArgumentException If the email is null or empty.
    */
   public Task<UserRecord> getUserByEmail(final String email) {
-    checkNotDeleted();
+    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(email), "email must not be null or empty");
     return Tasks.call(new Callable<UserRecord>() {
       @Override
@@ -248,7 +250,7 @@ public class FirebaseAuth {
    * @throws IllegalArgumentException If the phone number is null or empty.
    */
   public Task<UserRecord> getUserByPhoneNumber(final String phoneNumber) {
-    checkNotDeleted();
+    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(phoneNumber), "phone number must not be null or empty");
     return Tasks.call(new Callable<UserRecord>() {
       @Override
@@ -269,7 +271,7 @@ public class FirebaseAuth {
    * @throws NullPointerException if the provided request is null.
    */
   public Task<UserRecord> createUser(final CreateRequest request) {
-    checkNotDeleted();
+    checkNotDestroyed();
     checkNotNull(request, "create request must not be null");
     return Tasks.call(new Callable<UserRecord>() {
       @Override
@@ -291,7 +293,7 @@ public class FirebaseAuth {
    * @throws NullPointerException if the provided update request is null.
    */
   public Task<UserRecord> updateUser(final UpdateRequest request) {
-    checkNotDeleted();
+    checkNotDestroyed();
     checkNotNull(request, "update request must not be null");
     return Tasks.call(new Callable<UserRecord>() {
       @Override
@@ -312,7 +314,7 @@ public class FirebaseAuth {
    * @throws IllegalArgumentException If the user ID string is null or empty.
    */
   public Task<Void> deleteUser(final String uid) {
-    checkNotDeleted();
+    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
     return Tasks.call(new Callable<Void>() {
       @Override
@@ -323,12 +325,17 @@ public class FirebaseAuth {
     });
   }
 
-  private void checkNotDeleted() {
-    checkState(!deleted.get(), "Parent Firebase app has been deleted");
+  private void checkNotDestroyed() {
+    synchronized (lock) {
+      checkState(!destroyed.get(), "FirebaseAuth instance is no longer alive. This happens when "
+          + "the parent FirebaseApp instance has been deleted.");
+    }
   }
 
-  private void delete() {
-    deleted.compareAndSet(false, true);
+  private void destroy() {
+    synchronized (lock) {
+      destroyed.set(true);
+    }
   }
 
   private static final String SERVICE_ID = FirebaseAuth.class.getName();
@@ -341,8 +348,7 @@ public class FirebaseAuth {
 
     @Override
     public void destroy() {
-      FirebaseAuth auth = this.getInstance();
-      auth.delete();
+      instance.destroy();
     }
   }
 }

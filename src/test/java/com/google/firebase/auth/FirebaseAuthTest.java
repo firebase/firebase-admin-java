@@ -33,6 +33,7 @@ import com.google.auth.http.HttpTransportFactory;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auth.oauth2.UserCredentials;
+import com.google.common.base.Defaults;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
@@ -50,10 +51,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -249,25 +255,32 @@ public class FirebaseAuthTest {
   }
 
   @Test
-  public void testInvokeAfterAppDelete() throws ExecutionException, InterruptedException {
-    Assume.assumeTrue("Skipping testInvokeAfterAppDelete for non-cert credential",
-        isCertCredential);
+  public void testInvokeAfterAppDelete() throws Exception {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testInvokeAfterAppDelete");
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
     assertNotNull(auth);
     app.delete();
-    try {
-      auth.createCustomToken("foo");
-      fail("No error thrown when invoking auth after deleting app");
-    } catch (IllegalStateException expected) {
-      // ignore
-    }
 
-    try {
-      auth.getUser("foo");
-      fail("No error thrown when invoking auth after deleting app");
-    } catch (IllegalStateException expected) {
-      // ignore
+    for (Method method : auth.getClass().getDeclaredMethods()) {
+      int modifiers = method.getModifiers();
+      if (!Modifier.isPublic(modifiers) || Modifier.isStatic(modifiers)) {
+        continue;
+      }
+
+      List<Object> parameters = new ArrayList<>(method.getParameterTypes().length);
+      for (Class<?> parameterType : method.getParameterTypes()) {
+        parameters.add(Defaults.defaultValue(parameterType));
+      }
+      try {
+        method.invoke(auth, parameters.toArray());
+        fail("No error thrown when invoking auth after deleting app");
+      } catch (InvocationTargetException expected) {
+        String message = "FirebaseAuth instance is no longer alive. This happens when "
+            + "the parent FirebaseApp instance has been deleted.";
+        Throwable cause = expected.getCause();
+        assertTrue(cause instanceof IllegalStateException);
+        assertEquals(message, cause.getMessage());
+      }
     }
   }
 
