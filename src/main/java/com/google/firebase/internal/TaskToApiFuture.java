@@ -36,6 +36,7 @@ import java.util.concurrent.TimeoutException;
 public class TaskToApiFuture<T> implements ApiFuture<T> {
 
   private final Task<T> task;
+  private boolean cancelled;
 
   public TaskToApiFuture(Task<T> task) {
     this.task = checkNotNull(task, "task must not be null");
@@ -54,6 +55,7 @@ public class TaskToApiFuture<T> implements ApiFuture<T> {
   @Override
   public boolean cancel(boolean mayInterruptIfRunning) {
     // Cannot be supported with Tasks
+    cancelled = true;
     return false;
   }
 
@@ -64,7 +66,7 @@ public class TaskToApiFuture<T> implements ApiFuture<T> {
 
   @Override
   public boolean isDone() {
-    return task.isComplete();
+    return cancelled || task.isComplete();
   }
 
   @Override

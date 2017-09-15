@@ -103,8 +103,7 @@ public class FirebaseAuth {
   }
 
   /**
-   * Creates a Firebase Custom Token associated with the given UID. This token can then be provided
-   * back to a client application for use with the signInWithCustomToken authentication API.
+   * Similar to {@link #createCustomTokenAsync(String)}, but returns a Task.
    *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
    *     (Firebase Database, Firebase Auth, etc.)
@@ -117,9 +116,7 @@ public class FirebaseAuth {
   }
 
   /**
-   * Creates a Firebase Custom Token associated with the given UID and additionally containing the
-   * specified developerClaims. This token can then be provided back to a client application for use
-   * with the signInWithCustomToken authentication API.
+   * Similar to {@link #createCustomTokenAsync(String, Map)}, but returns a Task.
    *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
    *     (Realtime Database, Storage, etc.). Should be less than 128 characters.
@@ -189,20 +186,7 @@ public class FirebaseAuth {
   }
 
   /**
-   * Parses and verifies a Firebase ID Token.
-   *
-   * <p>A Firebase application can identify itself to a trusted backend server by sending its
-   * Firebase ID Token (accessible via the getToken API in the Firebase Authentication client) with
-   * its request.
-   *
-   * <p>The backend server can then use the verifyIdToken() method to verify the token is valid,
-   * meaning: the token is properly signed, has not expired, and it was issued for the project
-   * associated with this FirebaseAuth instance (which by default is extracted from your service
-   * account)
-   *
-   * <p>If the token is valid, the returned {@link Task} will complete successfully and provide a
-   * parsed version of the token from which the UID and other claims in the token can be inspected.
-   * If the token is invalid, the Task will fail with an exception indicating the failure.
+   * Similar to {@link #verifyIdTokenAsync(String)}, but returns a Task.
    *
    * @param token A Firebase ID Token to verify and parse.
    * @return A {@link Task} which will complete successfully with the parsed token, or
@@ -264,7 +248,7 @@ public class FirebaseAuth {
   }
 
   /**
-   * Gets the user data corresponding to the specified user ID.
+   * Similar to {@link #getUserAsync(String)}, but returns a Task.
    *
    * @param uid A user ID string.
    * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance.
@@ -298,7 +282,7 @@ public class FirebaseAuth {
   }
 
   /**
-   * Gets the user data corresponding to the specified user email.
+   * Similar to {@link #getUserByEmailAsync(String)}, but returns a Task.
    *
    * @param email A user email address string.
    * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance.
@@ -332,7 +316,7 @@ public class FirebaseAuth {
   }
 
   /**
-   * Gets the user data corresponding to the specified user phone number.
+   * Similar to {@link #getUserByPhoneNumberAsync(String)}, but returns a Task.
    *
    * @param phoneNumber A user phone number string.
    * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance.
@@ -366,8 +350,7 @@ public class FirebaseAuth {
   }
 
   /**
-   * Creates a new user account with the attributes contained in the specified
-   * {@link CreateRequest}.
+   * Similar to {@link #createUserAsync(CreateRequest)}, but returns a Task.
    *
    * @param request A non-null {@link CreateRequest} instance.
    * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance
@@ -403,8 +386,7 @@ public class FirebaseAuth {
   }
 
   /**
-   * Updates an existing user account with the attributes contained in the specified
-   * {@link UpdateRequest}.
+   * Similar to {@link #updateUserAsync(UpdateRequest)}, but returns a Task.
    *
    * @param request A non-null {@link UpdateRequest} instance.
    * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance
@@ -440,7 +422,7 @@ public class FirebaseAuth {
   }
 
   /**
-   * Deletes the user identified by the specified user ID.
+   * Similar to {@link #deleteUserAsync(String)}, but returns a Task.
    *
    * @param uid A user ID string.
    * @return A {@link Task} which will complete successfully when the specified user account has
