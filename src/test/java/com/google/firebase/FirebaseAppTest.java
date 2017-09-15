@@ -268,8 +268,10 @@ public class FirebaseAppTest {
   @Test
   public void testTokenCaching() throws ExecutionException, InterruptedException, IOException {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
-    String token1 = TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, false);
-    String token2 = TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, false);
+    String token1 = TestOnlyImplFirebaseTrampolines.getToken(
+        firebaseApp, false);
+    String token2 = TestOnlyImplFirebaseTrampolines.getToken(
+        firebaseApp, false);
     Assert.assertNotNull(token1);
     Assert.assertNotNull(token2);
     Assert.assertEquals(token1, token2);

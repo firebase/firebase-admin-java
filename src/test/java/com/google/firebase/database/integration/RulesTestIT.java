@@ -210,9 +210,9 @@ public class RulesTestIT {
           }
         });
 
-    writer.child("read_and_write").setValue(42);
+    writer.child("read_and_write").setValueAsync(42);
     TestHelpers.waitFor(semaphore);
-    writer.child("read_and_write").setValue(84);
+    writer.child("read_and_write").setValueAsync(84);
     TestHelpers.waitFor(semaphore);
     reader.child("read_and_write").removeEventListener(listener);
   }
@@ -250,7 +250,7 @@ public class RulesTestIT {
           }
         });
 
-    writer.child("read_and_write").setValue(42);
+    writer.child("read_and_write").setValueAsync(42);
     TestHelpers.waitFor(semaphore);
     reader.addValueEventListener(new ValueEventListener() {
       @Override
@@ -266,7 +266,7 @@ public class RulesTestIT {
 
     TestHelpers.waitFor(semaphore);
 
-    writer.child("read_and_write").setValue(84);
+    writer.child("read_and_write").setValueAsync(84);
     TestHelpers.waitFor(semaphore);
     reader.child("read_and_write").removeEventListener(listener);
   }
@@ -298,12 +298,12 @@ public class RulesTestIT {
     assertTrue(valueHit.get());
     assertEquals(1, value.get());
 
-    writer.child("revocable/public").setValue(false);
-    writer.child("revocable/data").setValue(2);
+    writer.child("revocable/public").setValueAsync(false);
+    writer.child("revocable/data").setValueAsync(2);
     TestHelpers.waitFor(semaphore);
     assertTrue(valueHit.get());
 
-    writer.child("revocable/public").setValue(true);
+    writer.child("revocable/public").setValueAsync(true);
     new WriteFuture(writer.child("revocable/data"), 3).timedGet();
 
     // Ok, the listen was cancelled, create a new one now.

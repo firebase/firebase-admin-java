@@ -156,7 +156,7 @@ public class KeepSyncedTestIT {
     }
 
     // Should trigger our listener.
-    ref.setValue("done");
+    ref.setValueAsync("done");
     readFuture.timedGet();
   }
 
@@ -270,7 +270,7 @@ public class KeepSyncedTestIT {
 
       // By now, if we had it synced we should have gotten an event with the wrong value
       // Write a new value so the value event listener will be triggered
-      ref.setValue(nextValue);
+      ref.setValueAsync(nextValue);
       readFuture.timedGet();
     } finally {
       // All good, go back online

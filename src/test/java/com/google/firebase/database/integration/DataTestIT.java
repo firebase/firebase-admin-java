@@ -101,7 +101,7 @@ public class DataTestIT {
   public void testWriteData() {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
     // just make sure it doesn't throw
-    ref.setValue(42);
+    ref.setValueAsync(42);
     assertTrue(true);
   }
 
@@ -110,7 +110,7 @@ public class DataTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
     ReadFuture future = ReadFuture.untilNonNull(ref);
 
-    ref.setValue(42);
+    ref.setValueAsync(42);
     List<EventRecord> events = future.timedGet();
     assertEquals(42L, events.get(events.size() - 1).getSnapshot().getValue());
   }
@@ -127,7 +127,7 @@ public class DataTestIT {
 
     ReadFuture future = ReadFuture.untilNonNull(ref);
 
-    ref.setValue(expected);
+    ref.setValueAsync(expected);
     List<EventRecord> events = future.timedGet();
     EventRecord eventRecord = events.get(events.size() - 1);
     Object result = eventRecord.getSnapshot().getValue();
@@ -138,7 +138,7 @@ public class DataTestIT {
   public void testWriteAndWaitForServerConfirmation()
       throws TimeoutException, InterruptedException, TestFailure {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
-    ref.setValue(42);
+    ref.setValueAsync(42);
 
     ReadFuture future = new ReadFuture(ref);
 
@@ -171,9 +171,9 @@ public class DataTestIT {
     final DatabaseReference writer = refs.get(0);
     final DatabaseReference reader = refs.get(1);
 
-    writer.child("a").child("b").child("c").setValue(1);
-    writer.child("a").child("d").child("e").setValue(2);
-    writer.child("a").child("d").child("f").setValue(3);
+    writer.child("a").child("b").child("c").setValueAsync(1);
+    writer.child("a").child("d").child("e").setValueAsync(2);
+    writer.child("a").child("d").child("f").setValueAsync(3);
     WriteFuture writeFuture = new WriteFuture(writer.child("g"), 4);
     writeFuture.timedGet();
 
@@ -200,8 +200,8 @@ public class DataTestIT {
         .addChildExpectation(ref.child("a"), Event.EventType.CHILD_CHANGED, "aa")
         .addValueExpectation(ref.child("a")).startListening(true);
 
-    ref.child("a/aa").setValue(1);
-    ref.child("a").setValue(new MapBuilder().put("aa", 2).build());
+    ref.child("a/aa").setValueAsync(1);
+    ref.child("a").setValueAsync(new MapBuilder().put("aa", 2).build());
 
     assertTrue(helper.waitForEvents());
     helper.cleanup();
@@ -234,10 +234,10 @@ public class DataTestIT {
         .addChildExpectation(ref.child("a"), Event.EventType.CHILD_CHANGED, "aa")
         .addValueExpectation(ref.child("a")).startListening(true);
 
-    ref.child("a/aa").setValue(1);
-    ref.child("a").setValue(MapBuilder.of("aa", 2));
-    ref.child("a").setValue(MapBuilder.of("aa", 3));
-    ref.child("a").setValue(MapBuilder.of("aa", 3));
+    ref.child("a/aa").setValueAsync(1);
+    ref.child("a").setValueAsync(MapBuilder.of("aa", 2));
+    ref.child("a").setValueAsync(MapBuilder.of("aa", 3));
+    ref.child("a").setValueAsync(MapBuilder.of("aa", 3));
 
     assertTrue(helper.waitForEvents());
     helper.cleanup();
@@ -255,8 +255,8 @@ public class DataTestIT {
         .addChildExpectation(ref.child("a"), Event.EventType.CHILD_CHANGED, "aa")
         .addValueExpectation(ref.child("a")).startListening(true);
 
-    ref.child("a").setValue(new MapBuilder().put("aa", 2).build());
-    ref.child("a/aa").setValue(1);
+    ref.child("a").setValueAsync(new MapBuilder().put("aa", 2).build());
+    ref.child("a/aa").setValueAsync(1);
 
     assertTrue(helper.waitForEvents());
     helper.cleanup();
@@ -300,7 +300,7 @@ public class DataTestIT {
         .addChildExpectation(reader, Event.EventType.CHILD_REMOVED, "a").addValueExpectation(reader)
         .startListening();
 
-    writer.child("a").removeValue();
+    writer.child("a").removeValueAsync();
     assertTrue(writeHelper.waitForEvents());
     assertTrue(readHelper.waitForEvents());
     writeHelper.cleanup();
@@ -314,7 +314,7 @@ public class DataTestIT {
 
     ReadFuture writeFuture = ReadFuture.untilNonNull(writer);
 
-    writer.child("a/aa").setValue(3.1415);
+    writer.child("a/aa").setValueAsync(3.1415);
 
     List<EventRecord> readerEvents = readFuture.timedGet();
     List<EventRecord> writerEvents = writeFuture.timedGet();
@@ -366,7 +366,7 @@ public class DataTestIT {
         .addChildExpectation(reader, Event.EventType.CHILD_REMOVED, "a").addValueExpectation(reader)
         .startListening();
 
-    writer.child("a/aa").removeValue();
+    writer.child("a/aa").removeValueAsync();
     assertTrue(writeHelper.waitForEvents());
     assertTrue(readHelper.waitForEvents());
     writeHelper.cleanup();
@@ -387,7 +387,7 @@ public class DataTestIT {
     ReadFuture readFuture = ReadFuture.untilNonNull(reader);
     ReadFuture writeFuture = ReadFuture.untilNonNull(writer);
 
-    writer.child("a/aa").setValue(3.1415);
+    writer.child("a/aa").setValueAsync(3.1415);
 
     final List<EventRecord> readerEvents = readFuture.timedGet();
     final List<EventRecord> writerEvents = writeFuture.timedGet();
@@ -426,8 +426,8 @@ public class DataTestIT {
         .addChildExpectation(reader, Event.EventType.CHILD_CHANGED, "a").addValueExpectation(reader)
         .startListening(true);
 
-    writer.child("a/aa").setValue(42);
-    writer.child("a/bb").setValue(24);
+    writer.child("a/aa").setValueAsync(42);
+    writer.child("a/bb").setValueAsync(24);
 
     assertTrue(writeHelper.waitForEvents());
     assertTrue(readHelper.waitForEvents());
@@ -444,7 +444,7 @@ public class DataTestIT {
         .addChildExpectation(writer, Event.EventType.CHILD_CHANGED, "a").addValueExpectation(writer)
         .startListening();
 
-    writer.child("a/aa").removeValue();
+    writer.child("a/aa").removeValueAsync();
     assertTrue(writeHelper.waitForEvents());
     assertTrue(readHelper.waitForEvents());
 
@@ -484,11 +484,11 @@ public class DataTestIT {
   @Test
   public void testNumericKeysGetTurnedIntoArrays() throws InterruptedException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
-    ref.child("0").setValue("alpha");
-    ref.child("1").setValue("bravo");
-    ref.child("2").setValue("charlie");
-    ref.child("3").setValue("delta");
-    ref.child("4").setValue("echo");
+    ref.child("0").setValueAsync("alpha");
+    ref.child("1").setValueAsync("bravo");
+    ref.child("2").setValueAsync("charlie");
+    ref.child("3").setValueAsync("delta");
+    ref.child("4").setValueAsync("echo");
 
     DataSnapshot snap = TestHelpers.getSnap(ref);
     List<Object> expected = ImmutableList.of((Object) "alpha", "bravo", "charlie",
@@ -512,7 +512,7 @@ public class DataTestIT {
 
     ReadFuture readFuture = ReadFuture.untilNonNull(ref);
 
-    ref.setValue(expected);
+    ref.setValueAsync(expected);
     List<EventRecord> events = readFuture.timedGet();
     Object result = events.get(events.size() - 1).getSnapshot().getValue();
     TestHelpers.assertDeepEquals(expected, result);
@@ -581,7 +581,7 @@ public class DataTestIT {
   public void testUsingNumbersAsKeys()
       throws TimeoutException, InterruptedException, TestFailure {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
-    ref.child("3024").setValue(5);
+    ref.child("3024").setValueAsync(5);
     ReadFuture future = new ReadFuture(ref);
 
     List<EventRecord> events = future.timedGet();
@@ -650,7 +650,9 @@ public class DataTestIT {
       throws TimeoutException, InterruptedException, TestFailure {
     final DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.setValue(new MapBuilder().put("one", 42).put("two", new MapBuilder().put("a", 5).build())
+    ref.setValueAsync(new MapBuilder()
+        .put("one", 42)
+        .put("two", new MapBuilder().put("a", 5).build())
         .put("three", new MapBuilder().put("a", 5).put("b", 6).build()).build());
     final AtomicBoolean removedTwo = new AtomicBoolean(false);
     ReadFuture readFuture = new ReadFuture(ref, new ReadFuture.CompletionCondition() {
@@ -659,7 +661,7 @@ public class DataTestIT {
         if (removedTwo.compareAndSet(false, true)) {
           // removedTwo did equal false, now equals true
           try {
-            ref.child("two").removeValue();
+            ref.child("two").removeValueAsync();
           } catch (DatabaseException e) {
             fail("Should not fail");
           }
@@ -701,7 +703,7 @@ public class DataTestIT {
       public boolean isComplete(List<EventRecord> events) {
         if (sawJson.compareAndSet(false, true)) {
           try {
-            writer.setValue(primitive);
+            writer.setValueAsync(primitive);
           } catch (DatabaseException e) {
             fail("Shouldn't happen: " + e.toString());
           }
@@ -709,7 +711,7 @@ public class DataTestIT {
           // Saw the json already
           if (sawPrimitive.compareAndSet(false, true)) {
             try {
-              writer.setValue(json);
+              writer.setValueAsync(json);
             } catch (DatabaseException e) {
               fail("Shouldn't happen: " + e.toString());
             }
@@ -740,8 +742,8 @@ public class DataTestIT {
     final DatabaseReference reader = refs.get(0);
     final DatabaseReference writer = refs.get(1);
 
-    writer.setValue(5);
-    writer.removeValue();
+    writer.setValueAsync(5);
+    writer.removeValueAsync();
     new WriteFuture(writer.child("abc"), 5).timedGet();
 
     DataSnapshot snap = new ReadFuture(reader).timedGet().get(0).getSnapshot();
@@ -762,7 +764,7 @@ public class DataTestIT {
 
     // Slight race condition. We're banking on this local set being processed
     // before the network catches up with the writer's broadcast.
-    reader.child("a").setValue(10);
+    reader.child("a").setValueAsync(10);
 
     EventRecord event = readFuture.timedGet().get(0);
     assertEquals(10L, event.getSnapshot().child("a").getValue());
@@ -789,7 +791,7 @@ public class DataTestIT {
   public void testSetPriority() throws InterruptedException {
     final DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.setValue("hello!");
+    ref.setValueAsync("hello!");
     final Semaphore semaphore = new Semaphore(0);
     ref.setPriority(10, new DatabaseReference.CompletionListener() {
       @Override
@@ -835,9 +837,9 @@ public class DataTestIT {
     final DatabaseReference ref1 = refs.get(0);
     final DatabaseReference ref2 = refs.get(1);
 
-    ref1.setValue(new MapBuilder().put("a", 5).build());
-    ref1.setPriority(10);
-    ref1.child("a").setPriority(18);
+    ref1.setValueAsync(new MapBuilder().put("a", 5).build());
+    ref1.setPriorityAsync(10);
+    ref1.child("a").setPriorityAsync(18);
     new WriteFuture(ref1, new MapBuilder().put("a", 7).build()).timedGet();
 
     DataSnapshot snap = new ReadFuture(ref2).timedGet().get(0).getSnapshot();
@@ -884,13 +886,13 @@ public class DataTestIT {
 
     ReadFuture readFuture = ReadFuture.untilCountAfterNull(ref, 7);
 
-    ref.setValue("a");
-    ref.setValue("b", 5);
-    ref.setValue("c", "6");
-    ref.setValue("d", 7);
-    ref.setValue(new MapBuilder().put(".value", "e").put(".priority", 8).build());
-    ref.setValue(new MapBuilder().put(".value", "f").put(".priority", "8").build());
-    ref.setValue(new MapBuilder().put(".value", "g").put(".priority", null).build());
+    ref.setValueAsync("a");
+    ref.setValueAsync("b", 5);
+    ref.setValueAsync("c", "6");
+    ref.setValueAsync("d", 7);
+    ref.setValueAsync(new MapBuilder().put(".value", "e").put(".priority", 8).build());
+    ref.setValueAsync(new MapBuilder().put(".value", "f").put(".priority", "8").build());
+    ref.setValueAsync(new MapBuilder().put(".value", "g").put(".priority", null).build());
 
     List<EventRecord> events = readFuture.timedGet();
     assertNull(events.get(0).getSnapshot().getPriority());
@@ -913,7 +915,7 @@ public class DataTestIT {
             .put(".priority", "hi").build())
         .build();
     ReadFuture readFuture = ReadFuture.untilNonNull(ref);
-    ref.setValue(expected);
+    ref.setValueAsync(expected);
     DataSnapshot snap = readFuture.timedGet().get(0).getSnapshot();
     Object result = snap.getValue(true);
     TestHelpers.assertDeepEquals(expected, result);
@@ -928,7 +930,7 @@ public class DataTestIT {
 
     ReadFuture readFuture = ReadFuture.untilCountAfterNull(ref1, 2);
 
-    ref1.setValue("hi", 100);
+    ref1.setValueAsync("hi", 100);
 
     new ReadFuture(ref2, new ReadFuture.CompletionCondition() {
       @Override
@@ -937,7 +939,7 @@ public class DataTestIT {
         Object priority = snap.getPriority();
         if (priority != null && priority.equals(100.0)) {
           try {
-            ref2.setValue("whatever");
+            ref2.setValueAsync("whatever");
           } catch (DatabaseException e) {
             fail("Shouldn't happen: " + e.toString());
           }
@@ -1110,14 +1112,14 @@ public class DataTestIT {
 
     for (Object badObject : badObjects) {
       try {
-        ref.setValue(badObject);
+        ref.setValueAsync(badObject);
         fail("Should not be a valid object: " + badObject);
       } catch (DatabaseException e) {
         // No-op, expected
       }
 
       try {
-        ref.onDisconnect().setValue(badObject);
+        ref.onDisconnect().setValueAsync(badObject);
         fail("Should not be a valid object: " + badObject);
       } catch (DatabaseException e) {
         // No-op, expected
@@ -1142,14 +1144,14 @@ public class DataTestIT {
         new MapBuilder().put("/a/b/.priority", MapBuilder.of("x", "y")).build());
     for (Map<String, Object> badUpdate : badUpdates) {
       try {
-        ref.updateChildren(badUpdate);
+        ref.updateChildrenAsync(badUpdate);
         fail("Should not be a valid update: " + badUpdate);
       } catch (DatabaseException e) {
         // No-op, expected
       }
 
       try {
-        ref.onDisconnect().updateChildren(badUpdate);
+        ref.onDisconnect().updateChildrenAsync(badUpdate);
         fail("Should not be a valid object: " + badUpdate);
       } catch (DatabaseException e) {
         // No-op, expected
@@ -1165,7 +1167,7 @@ public class DataTestIT {
       String ch = new String(Character.toChars(i < 32 ? i : 127));
       Map<String, Object> obj = TestHelpers.buildObjFromPath(new Path(ch), "test_value");
       try {
-        node.setValue(obj);
+        node.setValueAsync(obj);
         fail("Ascii control character should not be allowed in path.");
       } catch (DatabaseException e) {
         // expected
@@ -1215,15 +1217,15 @@ public class DataTestIT {
     for (String key : goodKeys) {
       Path path = new Path(key);
       Map<String, Object> obj = TestHelpers.buildObjFromPath(path, "test_value");
-      node.setValue(obj);
+      node.setValueAsync(obj);
       ReadFuture future = ReadFuture.untilNonNull(node);
       assertEquals("test_value", TestHelpers.applyPath(future.waitForLastValue(), path));
 
-      node.child(key).setValue("another_value");
+      node.child(key).setValueAsync("another_value");
       future = ReadFuture.untilNonNull(node.child(key));
       assertEquals("another_value", future.waitForLastValue());
 
-      node.updateChildren(obj);
+      node.updateChildrenAsync(obj);
       future = ReadFuture.untilNonNull(node);
       assertEquals("test_value", TestHelpers.applyPath(future.waitForLastValue(), path));
     }
@@ -1234,26 +1236,26 @@ public class DataTestIT {
     for (String key : goodKeys) {
       Map<String, Object> obj = TestHelpers.buildObjFromPath(new Path(key), "test_value");
       try {
-        nodeChild.setValue(obj);
+        nodeChild.setValueAsync(obj);
         fail("Too-long path for setValue should throw exception.");
       } catch (DatabaseException e) {
         // expected
       }
       try {
-        nodeChild.child(key).setValue("another_value");
+        nodeChild.child(key).setValueAsync("another_value");
         fail("Too-long path before setValue should throw exception.");
       } catch (DatabaseException e) {
         // expected
       }
       try {
-        nodeChild.updateChildren(obj);
+        nodeChild.updateChildrenAsync(obj);
         fail("Too-long path for updateChildren should throw exception.");
       } catch (DatabaseException e) {
         // expected
       }
       try {
         Map<String, Object> deepUpdate = MapBuilder.of(key, "test_value");
-        nodeChild.updateChildren(deepUpdate);
+        nodeChild.updateChildrenAsync(deepUpdate);
         fail("Too-long path in deep update for updateChildren should throw exception.");
       } catch (DatabaseException e) {
         // expected
@@ -1264,46 +1266,46 @@ public class DataTestIT {
       for (String key : badGroup.keys) {
         Map<String, Object> obj = TestHelpers.buildObjFromPath(new Path(key), "test_value");
         try {
-          node.setValue(obj);
-          fail("Expected setValue(bad key) to throw exception: " + key);
+          node.setValueAsync(obj);
+          fail("Expected setValueAsync(bad key) to throw exception: " + key);
         } catch (DatabaseException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
-          node.child(key).setValue("another_value");
-          fail("Expected child(\"" + key + "\").setValue() to throw exception: " + key);
+          node.child(key).setValueAsync("another_value");
+          fail("Expected child(\"" + key + "\").setValueAsync() to throw exception: " + key);
         } catch (DatabaseException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
-          node.updateChildren(obj);
-          fail("Expected updateChildrean(bad key) to throw exception: " + key);
+          node.updateChildrenAsync(obj);
+          fail("Expected updateChildrenAsync(bad key) to throw exception: " + key);
         } catch (DatabaseException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
           Map<String, Object> deepUpdate = MapBuilder.of(key, "test_value");
-          node.updateChildren(deepUpdate);
+          node.updateChildrenAsync(deepUpdate);
           fail("Expected updateChildrean(bad deep update key) to throw exception: " + key);
         } catch (DatabaseException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
-          node.onDisconnect().setValue(obj);
-          fail("Expected onDisconnect.setValue(bad key) to throw exception: " + key);
+          node.onDisconnect().setValueAsync(obj);
+          fail("Expected onDisconnect.setValueAsync(bad key) to throw exception: " + key);
         } catch (DatabaseException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
-          node.onDisconnect().updateChildren(obj);
-          fail("Expected onDisconnect.updateChildren(bad key) to throw exception: " + key);
+          node.onDisconnect().updateChildrenAsync(obj);
+          fail("Expected onDisconnect.updateChildrenAsync(bad key) to throw exception: " + key);
         } catch (DatabaseException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
           Map<String, Object> deepUpdate = MapBuilder.of(key, "test_value");
-          node.onDisconnect().updateChildren(deepUpdate);
-          fail("Expected onDisconnect.updateChildren(bad deep update key) to throw " + "exception: "
+          node.onDisconnect().updateChildrenAsync(deepUpdate);
+          fail("Expected onDisconnect.updateChildrenAsync(bad deep update key) to throw exception: "
               + key);
         } catch (DatabaseException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
@@ -1369,7 +1371,7 @@ public class DataTestIT {
     EventHelper helper = new EventHelper().addValueExpectation(ref.child("a/aa/aaa"))
         .addValueExpectation(ref.child("a/aa")).addValueExpectation(ref.child("a"))
         .startListening();
-    ref.setValue(MapBuilder.of("b", 5));
+    ref.setValueAsync(MapBuilder.of("b", 5));
 
     assertTrue(helper.waitForEvents());
     helper.cleanup();
@@ -1518,7 +1520,7 @@ public class DataTestIT {
 
     final ReadFuture readFuture = ReadFuture.untilCountAfterNull(ref, 2);
 
-    ref.setValue(new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4).build());
+    ref.setValueAsync(new MapBuilder().put("a", 1).put("b", 2).put("c", 3).put("d", 4).build());
 
     EventHelper helper = new EventHelper().addValueExpectation(ref.child("a"))
         .addValueExpectation(ref.child("d"))
@@ -1526,7 +1528,7 @@ public class DataTestIT {
         .addChildExpectation(ref, Event.EventType.CHILD_CHANGED, "d").addValueExpectation(ref)
         .startListening(true);
 
-    ref.updateChildren(new MapBuilder().put("a", 4).put("d", 1).build());
+    ref.updateChildrenAsync(new MapBuilder().put("a", 4).put("d", 1).build());
     helper.waitForEvents();
     List<EventRecord> events = readFuture.timedGet();
     helper.cleanup();
@@ -1553,7 +1555,7 @@ public class DataTestIT {
         .addChildExpectation(reader, Event.EventType.CHILD_CHANGED, "d").addValueExpectation(reader)
         .startListening(true);
 
-    writer.updateChildren(new MapBuilder().put("a", 4).put("d", 1).build());
+    writer.updateChildrenAsync(new MapBuilder().put("a", 4).put("d", 1).build());
     helper.waitForEvents();
     helper.cleanup();
 
@@ -1575,8 +1577,8 @@ public class DataTestIT {
         .addChildExpectation(ref, Event.EventType.CHILD_ADDED, "c")
         .addChildExpectation(ref, Event.EventType.CHILD_CHANGED, "d").startListening();
 
-    ref.updateChildren(new MapBuilder().put("a", 11).put("d", 44).build());
-    ref.updateChildren(new MapBuilder().put("c", 33).put("d", 45).build());
+    ref.updateChildrenAsync(new MapBuilder().put("a", 11).put("d", 44).build());
+    ref.updateChildrenAsync(new MapBuilder().put("c", 33).put("d", 45).build());
     helper.waitForEvents();
     helper.cleanup();
   }
@@ -1599,8 +1601,8 @@ public class DataTestIT {
       public void onCancelled(DatabaseError error) {
       }
     });
-    ref.setValue(42);
-    ref.updateChildren(expected);
+    ref.setValueAsync(42);
+    ref.updateChildrenAsync(expected);
 
     TestHelpers.waitFor(semaphore);
   }
@@ -1641,8 +1643,8 @@ public class DataTestIT {
 
     ReadFuture readFuture = ReadFuture.untilCountAfterNull(ref, 2);
 
-    ref.setValue(new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build(), "testpri");
-    ref.updateChildren(MapBuilder.of("a", 4));
+    ref.setValueAsync(new MapBuilder().put("a", 1).put("b", 2).put("c", 3).build(), "testpri");
+    ref.updateChildrenAsync(MapBuilder.of("a", 4));
 
     List<EventRecord> events = readFuture.timedGet();
     DataSnapshot snap = events.get(0).getSnapshot();
@@ -1690,7 +1692,7 @@ public class DataTestIT {
 
     final ReadFuture readFuture = ReadFuture.untilCountAfterNull(writer, 2);
 
-    writer.setValue(
+    writer.setValueAsync(
         new MapBuilder().put("a", new MapBuilder().put("aa", 1).put("ab", 2).build()).build());
     final Semaphore semaphore = new Semaphore(0);
     Map<String, Object> expected = MapBuilder.of("a", MapBuilder.of("aa", 1L));
@@ -1719,7 +1721,7 @@ public class DataTestIT {
 
     final ReadFuture readFuture = ReadFuture.untilCount(writer, 2);
 
-    writer.setValue(
+    writer.setValueAsync(
         new MapBuilder().put("a", new MapBuilder().put("aa", 1).put("ab", 2).build()).build());
     Map<String, Object> expected = new MapBuilder()
         .put("a", new MapBuilder().put("aa", 10L).put("ab", 20L).build()).build();
@@ -1793,7 +1795,7 @@ public class DataTestIT {
 
     TestHelpers.waitFor(semaphore);
 
-    writer.updateChildren(MapBuilder.of("a", null));
+    writer.updateChildrenAsync(MapBuilder.of("a", null));
     DataSnapshot snap = writerFuture.timedGet().get(1).getSnapshot();
 
     Map<String, Object> expected = MapBuilder.of("b", 6L);
@@ -1835,7 +1837,7 @@ public class DataTestIT {
     TestHelpers.waitFor(readerInitializedSemaphore);
     TestHelpers.waitFor(writerInitializedSemaphore);
 
-    writer.updateChildren(MapBuilder.of("a", 42));
+    writer.updateChildrenAsync(MapBuilder.of("a", 42));
     DataSnapshot snap = writerFuture.timedGet().get(1).getSnapshot();
 
     Map<String, Object> expected = MapBuilder.of("a", 42L);
@@ -1868,7 +1870,7 @@ public class DataTestIT {
 
     TestHelpers.waitFor(semaphore);
 
-    writer.updateChildren(MapBuilder.of("a", null));
+    writer.updateChildrenAsync(MapBuilder.of("a", null));
     DataSnapshot snap = writerFuture.timedGet().get(1).getSnapshot();
 
     assertNull(snap.getValue());
@@ -1900,7 +1902,7 @@ public class DataTestIT {
 
     TestHelpers.waitFor(semaphore);
 
-    writer.updateChildren(MapBuilder.of("a", 11));
+    writer.updateChildrenAsync(MapBuilder.of("a", 11));
     DataSnapshot snap = writerFuture.timedGet().get(1).getSnapshot();
 
     Map<String, Object> expected = MapBuilder.of("a", 11L);
@@ -1923,7 +1925,7 @@ public class DataTestIT {
         .put("b", new MapBuilder().put(".priority", "pri3").put("c", 10).build()).build();
 
     final Semaphore semaphore = new Semaphore(0);
-    writer.setValue(writeValue);
+    writer.setValueAsync(writeValue);
     writer.updateChildren(updateValue, new DatabaseReference.CompletionListener() {
       @Override
       public void onComplete(DatabaseError error, DatabaseReference ref) {
@@ -1978,7 +1980,7 @@ public class DataTestIT {
           public void onCancelled(DatabaseError error) {
           }
         });
-    writer.child(childName).setValue("foo");
+    writer.child(childName).setValueAsync("foo");
     // Make sure we get the data in the listener before we delete it
     TestHelpers.waitFor(semaphore);
 
@@ -2033,7 +2035,7 @@ public class DataTestIT {
           }
         });
 
-    writer.child(childName).setValue("foo");
+    writer.child(childName).setValueAsync("foo");
     final Semaphore semaphore = new Semaphore(0);
     deleter.removeValue(new DatabaseReference.CompletionListener() {
       @Override
@@ -2443,10 +2445,10 @@ public class DataTestIT {
           }
         });
 
-        ref.child("b").setValue("b");
+        ref.child("b").setValueAsync("b");
 
         Map<String, Object> update = MapBuilder.of("c", "c");
-        ref.updateChildren(update);
+        ref.updateChildrenAsync(update);
       }
     });
 
@@ -2725,7 +2727,7 @@ public class DataTestIT {
       }
     });
 
-    writer.setValue(ServerValue.TIMESTAMP, ServerValue.TIMESTAMP);
+    writer.setValueAsync(ServerValue.TIMESTAMP, ServerValue.TIMESTAMP);
 
     TestHelpers.waitFor(completionSemaphore, 3);
 

@@ -803,7 +803,7 @@ public class RealtimeTestIT {
 
     DatabaseReference.goOffline();
     for (int i = 0; i < 100; i++) {
-      ref.setValue(i);
+      ref.setValueAsync(i);
     }
     // This should be the last write and the actual value
     WriteFuture future = new WriteFuture(ref, 100);

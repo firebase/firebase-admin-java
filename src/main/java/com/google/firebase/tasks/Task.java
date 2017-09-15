@@ -25,6 +25,9 @@ import java.util.concurrent.Executor;
  * Represents an asynchronous operation.
  *
  * @param <T> the type of the result of the operation
+ * @deprecated Task has been deprecated in favor of ApiFuture. For every method xyz() that returns
+ *     a {@code Task<T>}, you should be able to find a corresponding xyzAsync() method that returns
+ *     an {@code ApiFuture<T>}.
  */
 public abstract class Task<T> {
 
