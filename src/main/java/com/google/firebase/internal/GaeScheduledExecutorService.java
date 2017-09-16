@@ -45,7 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * regardless of the background threads support. This implementation is also lazy loaded to prevent
  * unnecessary RPC calls to the GAE backend.
  */
-public class GaeScheduledExecutorService implements ScheduledExecutorService {
+class GaeScheduledExecutorService implements ScheduledExecutorService {
 
   private final AtomicReference<ExecutorWrapper> executor = new AtomicReference<>();
   private final String threadName;
@@ -206,9 +206,12 @@ public class GaeScheduledExecutorService implements ScheduledExecutorService {
     ExecutorWrapper(String threadName) {
       GaeThreadFactory threadFactory = GaeThreadFactory.getInstance();
       if (threadFactory.isUsingBackgroundThreads()) {
+        // Create a thread pool with long-lived threads if background thread support is available.
         scheduledExecutorService = new RevivingScheduledExecutor(threadFactory, threadName, true);
         executorService = scheduledExecutorService;
       } else {
+        // Create an executor that creates a new thread for each submitted task, when background
+        // thread support is not available.
         scheduledExecutorService = null;
         executorService =
             new ThreadPoolExecutor(

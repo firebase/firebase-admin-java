@@ -18,6 +18,7 @@ package com.google.firebase.internal;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ThreadManager;
 
@@ -27,8 +28,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
-/** Default executors used for internal Firebase threads. */
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/** Default ThreadManager implementations used by the Admin SDK. */
 public class FirebaseExecutors {
+
+  private static final Logger logger = LoggerFactory.getLogger(FirebaseExecutors.class);
 
   public static final ThreadManager DEFAULT_THREAD_MANAGER;
 
@@ -43,7 +49,7 @@ public class FirebaseExecutors {
   /**
    * An abstract ThreadManager implementation that uses the same executor service
    * across all active apps. The executor service is initialized when the first app is initialized,
-   * and terminated when the last app is deleted.
+   * and terminated when the last app is deleted. This class is thread safe.
    */
   private abstract static class GlobalThreadManager extends ThreadManager {
 
@@ -84,11 +90,18 @@ public class FirebaseExecutors {
     @Override
     protected ScheduledExecutorService doInit() {
       int cores = Runtime.getRuntime().availableProcessors();
-      return Executors.newScheduledThreadPool(cores, getThreadFactory());
+      ThreadFactory threadFactory = new ThreadFactoryBuilder()
+          .setNameFormat("firebase-default-%d")
+          .setDaemon(true)
+          .setThreadFactory(getThreadFactory())
+          .build();
+      logger.debug("Initializing default executor with {} max threads", cores);
+      return Executors.newScheduledThreadPool(cores, threadFactory);
     }
 
     @Override
     protected void doCleanup(ScheduledExecutorService executorService) {
+      logger.debug("Shutting down default executor");
       executorService.shutdownNow();
     }
 
@@ -102,7 +115,7 @@ public class FirebaseExecutors {
 
     @Override
     protected ScheduledExecutorService doInit() {
-      return new GaeScheduledExecutorService("FirebaseDefault");
+      return new GaeScheduledExecutorService("gae-firebase-default");
     }
 
     @Override

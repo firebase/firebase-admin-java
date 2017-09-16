@@ -204,7 +204,7 @@ public class FirebaseAuth {
     checkState(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifyIdToken()");
     return Tasks.forResult(projectId)
-        .continueWith(
+        .continueWith(executor,
             new Continuation<String, FirebaseToken>() {
               @Override
               public FirebaseToken then(@NonNull Task<String> task) throws Exception {
