@@ -19,10 +19,10 @@ package com.google.firebase.cloud;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
-import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
 import org.junit.After;
@@ -38,7 +38,7 @@ public class StorageClientTest {
   @Test
   public void testInvalidConfiguration() throws IOException {
     FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
-        .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+        .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .build());
     try {
       StorageClient.getInstance(app).bucket();
@@ -51,7 +51,7 @@ public class StorageClientTest {
   @Test
   public void testInvalidBucketName() throws IOException {
     FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
-        .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+        .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setStorageBucket("mock-bucket-name")
         .build());
     try {
@@ -72,7 +72,7 @@ public class StorageClientTest {
   @Test
   public void testAppDelete() throws IOException {
     FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
-        .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+        .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setStorageBucket("mock-bucket-name")
         .build());
 

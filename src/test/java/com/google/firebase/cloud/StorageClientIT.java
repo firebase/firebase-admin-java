@@ -23,7 +23,13 @@ import static org.junit.Assert.fail;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
+import com.google.common.io.CharStreams;
 import com.google.firebase.testing.IntegrationTestUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 public class StorageClientIT {
@@ -51,11 +57,23 @@ public class StorageClientIT {
     }
   }
 
+  @Test
+  public void testCloudStorageSignUrl() throws IOException {
+    StorageClient storage = StorageClient.getInstance(IntegrationTestUtils.ensureDefaultApp());
+    Bucket bucket = storage.bucket();
+    Blob blob = createTextBlob(bucket, "Signed URL Test");
+    URL url = blob.signUrl(3600, TimeUnit.SECONDS);
+    try (InputStream in = url.openStream()) {
+      String result = CharStreams.toString(new InputStreamReader(in));
+      assertEquals("Signed URL Test", result);
+    } finally {
+      blob.delete();
+    }
+  }
+
   private void testBucket(Bucket bucket) {
     assertEquals(IntegrationTestUtils.getStorageBucket(), bucket.getName());
-
-    String fileName = "data_" + System.currentTimeMillis() + ".txt";
-    bucket.create(fileName, "Hello World".getBytes(), "text/plain");
+    String fileName = createTextBlob(bucket, "Hello World").getName();
 
     Blob blob = bucket.get(fileName);
     byte[] content = blob.getContent();
@@ -63,6 +81,11 @@ public class StorageClientIT {
 
     assertTrue(blob.delete());
     assertNull(bucket.get(fileName));
+  }
+
+  private Blob createTextBlob(Bucket bucket, String contents) {
+    String fileName = "data_" + System.currentTimeMillis() + ".txt";
+    return bucket.create(fileName, contents.getBytes(), "text/plain");
   }
 
 }

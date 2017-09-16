@@ -19,10 +19,10 @@ package com.google.firebase.database.core.persistence;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
-import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.annotations.NotNull;
@@ -74,7 +74,7 @@ public class RandomPersistenceTest {
   public static void setUpClass() throws IOException {
     testApp = FirebaseApp.initializeApp(
         new FirebaseOptions.Builder()
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
             .setDatabaseUrl("https://admin-java-sdk.firebaseio.com")
             .build());
   }

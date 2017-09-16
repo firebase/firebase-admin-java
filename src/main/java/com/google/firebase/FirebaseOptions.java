@@ -22,9 +22,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.FirebaseCredentials;
+import com.google.firebase.auth.internal.BaseCredential;
+import com.google.firebase.auth.internal.FirebaseCredentialsAdapter;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
@@ -38,16 +41,19 @@ public final class FirebaseOptions {
 
   private final String databaseUrl;
   private final String storageBucket;
-  private final FirebaseCredential firebaseCredential;
+  private final GoogleCredentials credentials;
   private final Map<String, Object> databaseAuthVariableOverride;
+  private final String projectId;
   private final HttpTransport httpTransport;
   private final JsonFactory jsonFactory;
 
   private FirebaseOptions(@NonNull FirebaseOptions.Builder builder) {
-    this.firebaseCredential = checkNotNull(builder.firebaseCredential,
-        "FirebaseOptions must be initialized with setCredential().");
+    this.credentials = checkNotNull(builder.credentials,
+        "FirebaseOptions must be initialized with setCredentials().")
+        .createScoped(BaseCredential.FIREBASE_SCOPES);
     this.databaseUrl = builder.databaseUrl;
     this.databaseAuthVariableOverride = builder.databaseAuthVariableOverride;
+    this.projectId = builder.projectId;
     this.storageBucket = builder.storageBucket;
     this.httpTransport = checkNotNull(builder.httpTransport,
         "FirebaseOptions must be initialized with a non-null HttpTransport.");
@@ -73,8 +79,8 @@ public final class FirebaseOptions {
     return storageBucket;
   }
 
-  FirebaseCredential getCredential() {
-    return firebaseCredential;
+  GoogleCredentials getCredentials() {
+    return credentials;
   }
 
   /**
@@ -85,6 +91,10 @@ public final class FirebaseOptions {
    */
   public Map<String, Object> getDatabaseAuthVariableOverride() {
     return databaseAuthVariableOverride;
+  }
+
+  public String getProjectId() {
+    return projectId;
   }
 
   /**
@@ -115,8 +125,9 @@ public final class FirebaseOptions {
 
     private String databaseUrl;
     private String storageBucket;
-    private FirebaseCredential firebaseCredential;
+    private GoogleCredentials credentials;
     private Map<String, Object> databaseAuthVariableOverride = new HashMap<>();
+    private String projectId;
     private HttpTransport httpTransport = Utils.getDefaultTransport();
     private JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
 
@@ -132,8 +143,9 @@ public final class FirebaseOptions {
     public Builder(FirebaseOptions options) {
       databaseUrl = options.databaseUrl;
       storageBucket = options.storageBucket;
-      firebaseCredential = options.firebaseCredential;
+      credentials = options.credentials;
       databaseAuthVariableOverride = options.databaseAuthVariableOverride;
+      projectId = options.projectId;
       httpTransport = options.httpTransport;
       jsonFactory = options.jsonFactory;
     }
@@ -170,6 +182,11 @@ public final class FirebaseOptions {
       return this;
     }
 
+    public Builder setCredentials(GoogleCredentials credentials) {
+      this.credentials = checkNotNull(credentials);
+      return this;
+    }
+
     /**
      * Sets the <code>FirebaseCredential</code> to use to authenticate the SDK.
      *
@@ -179,9 +196,15 @@ public final class FirebaseOptions {
      * @param credential A <code>FirebaseCredential</code> used to authenticate the SDK. See {@link
      *     FirebaseCredentials} for default implementations.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     * @deprecated Use {@link FirebaseOptions.Builder#setCredentials(GoogleCredentials)}.
      */
     public Builder setCredential(@NonNull FirebaseCredential credential) {
-      firebaseCredential = checkNotNull(credential);
+      checkNotNull(credential);
+      if (credential instanceof BaseCredential) {
+        this.credentials = ((BaseCredential) credential).getGoogleCredentials();
+      } else {
+        this.credentials = new FirebaseCredentialsAdapter(credential);
+      }
       return this;
     }
 
@@ -206,6 +229,12 @@ public final class FirebaseOptions {
     public Builder setDatabaseAuthVariableOverride(
         @Nullable Map<String, Object> databaseAuthVariableOverride) {
       this.databaseAuthVariableOverride = databaseAuthVariableOverride;
+      return this;
+    }
+
+    public Builder setProjectId(String projectId) {
+      checkArgument(!Strings.isNullOrEmpty(projectId), "Project ID must not be null or empty");
+      this.projectId = projectId;
       return this;
     }
 

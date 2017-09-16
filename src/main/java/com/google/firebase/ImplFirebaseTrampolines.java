@@ -16,12 +16,9 @@
 
 package com.google.firebase;
 
-import com.google.firebase.auth.FirebaseCredential;
-import com.google.firebase.internal.AuthStateListener;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.internal.FirebaseService;
-import com.google.firebase.internal.GetTokenResult;
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.tasks.Task;
 
 /**
  * Provides trampolines into package-private APIs used by components of Firebase. Intentionally
@@ -34,8 +31,12 @@ public final class ImplFirebaseTrampolines {
 
   private ImplFirebaseTrampolines() {}
 
-  public static FirebaseCredential getCredential(@NonNull FirebaseApp app) {
-    return app.getOptions().getCredential();
+  public static GoogleCredentials getCredentials(@NonNull FirebaseApp app) {
+    return app.getOptions().getCredentials();
+  }
+
+  public static String getProjectId(@NonNull FirebaseApp app) {
+    return app.getProjectId();
   }
 
   public static boolean isDefaultApp(@NonNull FirebaseApp app) {
@@ -48,20 +49,6 @@ public final class ImplFirebaseTrampolines {
   
   public static String getPersistenceKey(String name, FirebaseOptions options) {
     return FirebaseApp.getPersistenceKey(name, options);
-  }
-
-  public static void addAuthStateChangeListener(
-      @NonNull FirebaseApp app, @NonNull AuthStateListener listener) {
-    app.addAuthStateListener(listener);
-  }
-
-  public static void removeAuthStateChangeListener(
-      @NonNull FirebaseApp app, @NonNull AuthStateListener listener) {
-    app.removeAuthStateListener(listener);
-  }
-
-  public static Task<GetTokenResult> getToken(@NonNull FirebaseApp app, boolean forceRefresh) {
-    return app.getToken(forceRefresh);
   }
 
   public static <T extends FirebaseService> T getService(

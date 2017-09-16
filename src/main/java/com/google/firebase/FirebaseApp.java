@@ -21,23 +21,24 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.auth.oauth2.AccessToken;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.OAuth2Credentials;
+import com.google.auth.oauth2.OAuth2Credentials.CredentialsChangedListener;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
-import com.google.firebase.auth.GoogleOAuthAccessToken;
-import com.google.firebase.internal.AuthStateListener;
 import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseExecutors;
 import com.google.firebase.internal.FirebaseService;
-import com.google.firebase.internal.GetTokenResult;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
-import com.google.firebase.tasks.Continuation;
-import com.google.firebase.tasks.Task;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,7 +50,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,11 +71,9 @@ public class FirebaseApp {
   private static final Map<String, FirebaseApp> instances = new HashMap<>();
 
   public static final String DEFAULT_APP_NAME = "[DEFAULT]";
-  private static final long TOKEN_REFRESH_INTERVAL_MILLIS = TimeUnit.MINUTES.toMillis(55);
 
-  static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
+  private static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
       new TokenRefresher.Factory();
-  static final Clock DEFAULT_CLOCK = new Clock();
 
   /**
    * Global lock for synchronizing all SDK-wide application state changes. Specifically, any
@@ -86,14 +84,9 @@ public class FirebaseApp {
   private final String name;
   private final FirebaseOptions options;
   private final TokenRefresher tokenRefresher;
-  private final Clock clock;
 
   private final AtomicBoolean deleted = new AtomicBoolean();
-  private final List<AuthStateListener> authStateListeners = new ArrayList<>();
-  private final AtomicReference<GetTokenResult> currentToken = new AtomicReference<>();
   private final Map<String, FirebaseService> services = new HashMap<>();
-
-  private Task<GoogleOAuthAccessToken> previousTokenTask;
 
   /**
    * Per application lock for synchronizing all internal FirebaseApp state changes.
@@ -101,13 +94,11 @@ public class FirebaseApp {
   private final Object lock = new Object();
 
   /** Default constructor. */
-  private FirebaseApp(String name, FirebaseOptions options,
-      TokenRefresher.Factory factory, Clock clock) {
+  private FirebaseApp(String name, FirebaseOptions options, TokenRefresher.Factory factory) {
     checkArgument(!Strings.isNullOrEmpty(name));
     this.name = name;
     this.options = checkNotNull(options);
     this.tokenRefresher = checkNotNull(factory).create(this);
-    this.clock = checkNotNull(clock);
   }
 
   /** Returns a list of all FirebaseApps. */
@@ -171,7 +162,7 @@ public class FirebaseApp {
   }
 
   /**
-   * A factory method to intialize a {@link FirebaseApp}.
+   * A factory method to initialize a {@link FirebaseApp}.
    *
    * @param options represents the global {@link FirebaseOptions}
    * @param name unique name for the app. It is an error to initialize an app with an already
@@ -180,11 +171,11 @@ public class FirebaseApp {
    * @throws IllegalStateException if an app with the same name has already been initialized.
    */
   public static FirebaseApp initializeApp(FirebaseOptions options, String name) {
-    return initializeApp(options, name, DEFAULT_TOKEN_REFRESHER_FACTORY, DEFAULT_CLOCK);
+    return initializeApp(options, name, DEFAULT_TOKEN_REFRESHER_FACTORY);
   }
 
   static FirebaseApp initializeApp(FirebaseOptions options, String name,
-      TokenRefresher.Factory tokenRefresherFactory, Clock clock) {
+      TokenRefresher.Factory tokenRefresherFactory) {
     FirebaseAppStore appStore = FirebaseAppStore.initialize();
     String normalizedName = normalize(name);
     final FirebaseApp firebaseApp;
@@ -193,7 +184,7 @@ public class FirebaseApp {
           !instances.containsKey(normalizedName),
           "FirebaseApp name " + normalizedName + " already exists!");
 
-      firebaseApp = new FirebaseApp(normalizedName, options, tokenRefresherFactory, clock);
+      firebaseApp = new FirebaseApp(normalizedName, options, tokenRefresherFactory);
       instances.put(normalizedName, firebaseApp);
     }
 
@@ -264,6 +255,31 @@ public class FirebaseApp {
     return options;
   }
 
+  /**
+   * Returns the Google Cloud project ID associated with this app.
+   *
+   * @return A string project ID or null.
+   */
+  @Nullable
+  String getProjectId() {
+    // Try to get project ID from user-specified options.
+    String projectId = options.getProjectId();
+
+    // Try to get project ID from the credentials.
+    if (Strings.isNullOrEmpty(projectId)) {
+      GoogleCredentials credentials = options.getCredentials();
+      if (credentials instanceof ServiceAccountCredentials) {
+        projectId = ((ServiceAccountCredentials) credentials).getProjectId();
+      }
+    }
+
+    // Try to get project ID from the environment.
+    if (Strings.isNullOrEmpty(projectId)) {
+      projectId = System.getenv("GCLOUD_PROJECT");
+    }
+    return projectId;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (!(o instanceof FirebaseApp)) {
@@ -299,7 +315,6 @@ public class FirebaseApp {
         service.destroy();
       }
       services.clear();
-      authStateListeners.clear();
       tokenRefresher.cleanup();
     }
 
@@ -317,94 +332,8 @@ public class FirebaseApp {
     checkState(!deleted.get(), "FirebaseApp was deleted %s", this);
   }
 
-  private boolean refreshRequired(
-      @NonNull Task<GoogleOAuthAccessToken> previousTask, boolean forceRefresh) {
-    return (previousTask.isComplete()
-        && (forceRefresh || !previousTask.isSuccessful()
-        || previousTask.getResult().getExpiryTime() <= clock.now()));
-  }
-
-  /**
-   * Internal-only method to fetch a valid Service Account OAuth2 Token.
-   *
-   * @param forceRefresh force refreshes the token. Should only be set to <code>true</code> if the
-   *     token is invalidated out of band.
-   * @return a {@link Task}
-   */
-  Task<GetTokenResult> getToken(boolean forceRefresh) {
-    synchronized (lock) {
-      checkNotDeleted();
-      if (previousTokenTask == null || refreshRequired(previousTokenTask, forceRefresh)) {
-        previousTokenTask = options.getCredential().getAccessToken();
-      }
-
-      return previousTokenTask.continueWith(
-          new Continuation<GoogleOAuthAccessToken, GetTokenResult>() {
-            @Override
-            public GetTokenResult then(@NonNull Task<GoogleOAuthAccessToken> task)
-                throws Exception {
-              GoogleOAuthAccessToken googleOAuthToken = task.getResult();
-              GetTokenResult newToken = new GetTokenResult(googleOAuthToken.getAccessToken());
-              GetTokenResult oldToken = currentToken.get();
-              List<AuthStateListener> listenersCopy = null;
-              if (!newToken.equals(oldToken)) {
-                synchronized (lock) {
-                  if (deleted.get()) {
-                    return newToken;
-                  }
-
-                  // Grab the lock before compareAndSet to avoid a potential race
-                  // condition with addAuthStateListener. The same lock also ensures serial
-                  // access to the token refresher.
-                  if (currentToken.compareAndSet(oldToken, newToken)) {
-                    listenersCopy = ImmutableList.copyOf(authStateListeners);
-                    long refreshDelay  = googleOAuthToken.getExpiryTime() - clock.now()
-                        - TimeUnit.MINUTES.toMillis(5);
-                    if (refreshDelay > 0) {
-                      tokenRefresher.scheduleRefresh(refreshDelay);
-                    } else {
-                      logger.warn("Token expiry ({}) is less than 5 minutes in the future. Not "
-                          + "scheduling a proactive refresh.", googleOAuthToken.getAccessToken());
-                    }
-                  }
-                }
-              }
-
-              if (listenersCopy != null) {
-                for (AuthStateListener listener : listenersCopy) {
-                  listener.onAuthStateChanged(newToken);
-                }
-              }
-              return newToken;
-            }
-          });
-    }
-  }
-
   boolean isDefaultApp() {
     return DEFAULT_APP_NAME.equals(getName());
-  }
-
-  void addAuthStateListener(@NonNull final AuthStateListener listener) {
-    GetTokenResult currentToken;
-    synchronized (lock) {
-      checkNotDeleted();
-      authStateListeners.add(checkNotNull(listener));
-      currentToken = this.currentToken.get();
-    }
-
-    if (currentToken != null) {
-      // Task has copied the authStateListeners before the listener was added.
-      // Notify this listener explicitly.
-      listener.onAuthStateChanged(currentToken);
-    }
-  }
-
-  void removeAuthStateListener(@NonNull AuthStateListener listener) {
-    synchronized (lock) {
-      checkNotDeleted();
-      authStateListeners.remove(checkNotNull(listener));
-    }
   }
 
   void addService(FirebaseService service) {
@@ -423,17 +352,40 @@ public class FirebaseApp {
   }
 
   /**
-   * Utility class for scheduling proactive token refresh events.  Each FirebaseApp should have
-   * its own instance of this class. This class is not thread safe. The caller (FirebaseApp) must
-   * ensure that methods are called serially.
+   * Utility class for scheduling proactive token refresh events. Each FirebaseApp should have
+   * its own instance of this class. This class gets directly notified by GoogleCredentials
+   * whenever the underlying OAuth2 token changes. TokenRefresher schedules subsequent token
+   * refresh events when this happens.
+   *
+   * <p>This class is thread safe. It will handle only one token change event at a time. It also
+   * cancels any pending token refresh events, before scheduling a new one.
    */
-  static class TokenRefresher {
+  static class TokenRefresher implements CredentialsChangedListener {
 
-    private final FirebaseApp firebaseApp;
-    private ScheduledFuture<Task<GetTokenResult>> future;
+    private final GoogleCredentials credentials;
+    private ScheduledFuture<Void> future;
+    private boolean closed;
 
     TokenRefresher(FirebaseApp app) {
-      this.firebaseApp = checkNotNull(app);
+      this.credentials = app.getOptions().getCredentials();
+      this.credentials.addChangeListener(this);
+    }
+
+    @Override
+    public final synchronized void onChanged(OAuth2Credentials credentials) throws IOException {
+      if (closed) {
+        return;
+      }
+
+      AccessToken accessToken = credentials.getAccessToken();
+      long refreshDelay = accessToken.getExpirationTime().getTime()
+          - System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
+      if (refreshDelay > 0) {
+        scheduleRefresh(refreshDelay);
+      } else {
+        logger.warn("Token expiry ({}) is less than 5 minutes in the future. Not "
+            + "scheduling a proactive refresh.", accessToken.getExpirationTime());
+      }
     }
 
     /**
@@ -442,13 +394,15 @@ public class FirebaseApp {
      * @param delayMillis Duration in milliseconds, after which the token should be forcibly
      *     refreshed.
      */
-    final void scheduleRefresh(long delayMillis) {
+    private void scheduleRefresh(final long delayMillis) {
       cancelPrevious();
       scheduleNext(
-          new Callable<Task<GetTokenResult>>() {
+          new Callable<Void>() {
             @Override
-            public Task<GetTokenResult> call() throws Exception {
-              return firebaseApp.getToken(true);
+            public Void call() throws Exception {
+              logger.debug("Refreshing OAuth2 credential");
+              credentials.refresh();
+              return null;
             }
           },
           delayMillis);
@@ -460,7 +414,8 @@ public class FirebaseApp {
       }
     }
 
-    protected void scheduleNext(Callable<Task<GetTokenResult>> task, long delayMillis) {
+    protected void scheduleNext(Callable<Void> task, long delayMillis) {
+      logger.debug("Scheduling next token refresh in {} milliseconds", delayMillis);
       try {
         future =
             FirebaseExecutors.DEFAULT_SCHEDULED_EXECUTOR.schedule(
@@ -470,22 +425,15 @@ public class FirebaseApp {
       }
     }
 
-    protected void cleanup() {
-      if (future != null) {
-        future.cancel(true);
-      }
+    protected synchronized void cleanup() {
+      cancelPrevious();
+      closed = true;
     }
 
     static class Factory {
       TokenRefresher create(FirebaseApp app) {
         return new TokenRefresher(app);
       }
-    }
-  }
-
-  static class Clock {
-    long now() {
-      return System.currentTimeMillis();
     }
   }
 }

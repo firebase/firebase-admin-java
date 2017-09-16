@@ -22,10 +22,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
-import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -36,20 +36,19 @@ import com.google.firebase.database.TestFailure;
 import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.TestTokenProvider;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.database.core.AuthTokenProvider;
 import com.google.firebase.database.core.DatabaseConfig;
 import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.future.ReadFuture;
 import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.database.util.JsonMapper;
 import com.google.firebase.testing.IntegrationTestUtils;
-import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -105,8 +104,8 @@ public class RulesTestIT {
     // Init app with non-admin privileges
     Map<String, Object> auth = MapBuilder.of("uid", "my-service-worker");
     FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredential(FirebaseCredentials
-            .fromCertificate(IntegrationTestUtils.getServiceAccountCertificate()))
+        .setCredentials(GoogleCredentials.fromStream(
+            IntegrationTestUtils.getServiceAccountCertificate()))
         .setDatabaseUrl(IntegrationTestUtils.getDatabaseUrl())
         .setDatabaseAuthVariableOverride(auth)
         .build();
@@ -211,9 +210,9 @@ public class RulesTestIT {
           }
         });
 
-    writer.child("read_and_write").setValue(42);
+    writer.child("read_and_write").setValueAsync(42);
     TestHelpers.waitFor(semaphore);
-    writer.child("read_and_write").setValue(84);
+    writer.child("read_and_write").setValueAsync(84);
     TestHelpers.waitFor(semaphore);
     reader.child("read_and_write").removeEventListener(listener);
   }
@@ -251,7 +250,7 @@ public class RulesTestIT {
           }
         });
 
-    writer.child("read_and_write").setValue(42);
+    writer.child("read_and_write").setValueAsync(42);
     TestHelpers.waitFor(semaphore);
     reader.addValueEventListener(new ValueEventListener() {
       @Override
@@ -267,7 +266,7 @@ public class RulesTestIT {
 
     TestHelpers.waitFor(semaphore);
 
-    writer.child("read_and_write").setValue(84);
+    writer.child("read_and_write").setValueAsync(84);
     TestHelpers.waitFor(semaphore);
     reader.child("read_and_write").removeEventListener(listener);
   }
@@ -299,12 +298,12 @@ public class RulesTestIT {
     assertTrue(valueHit.get());
     assertEquals(1, value.get());
 
-    writer.child("revocable/public").setValue(false);
-    writer.child("revocable/data").setValue(2);
+    writer.child("revocable/public").setValueAsync(false);
+    writer.child("revocable/data").setValueAsync(2);
     TestHelpers.waitFor(semaphore);
     assertTrue(valueHit.get());
 
-    writer.child("revocable/public").setValue(true);
+    writer.child("revocable/public").setValueAsync(true);
     new WriteFuture(writer.child("revocable/data"), 3).timedGet();
 
     // Ok, the listen was cancelled, create a new one now.
@@ -416,17 +415,21 @@ public class RulesTestIT {
   @Test
   public void testAuthenticatedImmediatelyAfterTokenChange() throws Exception {
     DatabaseConfig config = TestHelpers.getDatabaseConfig(masterApp);
-    TestTokenProvider provider = new TestTokenProvider(TestHelpers.getExecutorService(config));
-    config.setAuthTokenProvider(provider);
+    AuthTokenProvider originalProvider = config.getAuthTokenProvider();
+    try {
+      TestTokenProvider provider = new TestTokenProvider(TestHelpers.getExecutorService(config));
+      config.setAuthTokenProvider(provider);
 
-    DatabaseReference root = FirebaseDatabase.getInstance(masterApp).getReference();
-    DatabaseReference ref = root.child(writer.getPath().toString());
+      DatabaseReference root = FirebaseDatabase.getInstance(masterApp).getReference();
+      DatabaseReference ref = root.child(writer.getPath().toString());
 
-    String token = TestOnlyImplFirebaseTrampolines.getToken(masterApp, true).get(
-        TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).getToken();
-    provider.setToken(token);
+      String token = TestOnlyImplFirebaseTrampolines.getToken(masterApp, true);
+      provider.setToken(token);
 
-    DatabaseError err = new WriteFuture(ref.child("any_auth"), true).timedGet();
-    assertNull(err);
+      DatabaseError err = new WriteFuture(ref.child("any_auth"), true).timedGet();
+      assertNull(err);
+    } finally {
+      config.setAuthTokenProvider(originalProvider);
+    }
   }
 }

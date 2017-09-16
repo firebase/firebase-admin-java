@@ -24,11 +24,9 @@ import static org.junit.Assert.fail;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
-import com.google.firebase.auth.FirebaseCredential;
-import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.testing.ServiceAccount;
 
-import java.io.IOException;
+import com.google.firebase.testing.TestUtils;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -39,21 +37,13 @@ public class FirebaseDatabaseTest {
   
   private static FirebaseOptions firebaseOptions =
       new FirebaseOptions.Builder()
-          .setCredential(createCertificateCredential())
+          .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .setDatabaseUrl("https://firebase-db-test.firebaseio.com")
           .build();
 
   @AfterClass
   public static void tearDownClass() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
-  }
-
-  private static FirebaseCredential createCertificateCredential() {
-    try {
-      return FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream());
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Test

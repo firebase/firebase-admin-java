@@ -133,14 +133,6 @@ public class Repo implements PersistentConnection.Delegate {
     this.ctx.getAuthTokenProvider()
         .addTokenChangeListener(
           new AuthTokenProvider.TokenChangeListener() {
-            // TODO: Remove this once AndroidAuthTokenProvider is updated to call the
-            // other overload.
-            @Override
-            public void onTokenChange() {
-              operationLogger.debug("Auth token changed, triggering auth token refresh");
-              connection.refreshAuthToken();
-            }
-  
             @Override
             public void onTokenChange(String token) {
               operationLogger.debug("Auth token changed, triggering auth token refresh");
