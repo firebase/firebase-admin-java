@@ -25,8 +25,9 @@ import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.GoogleOAuthAccessToken;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
+
+import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.Callable;
 
 /**
  * Internal base class for built-in FirebaseCredential implementations.
@@ -59,14 +60,14 @@ public abstract class BaseCredential implements FirebaseCredential {
 
   @Override
   public Task<GoogleOAuthAccessToken> getAccessToken() {
-    return Tasks.call(new Callable<GoogleOAuthAccessToken>() {
-      @Override
-      public GoogleOAuthAccessToken call() throws Exception {
-        AccessToken accessToken = googleCredentials.refreshAccessToken();
-        return new GoogleOAuthAccessToken(accessToken.getTokenValue(),
-            accessToken.getExpirationTime().getTime());
-      }
-    });
+    try {
+      AccessToken accessToken = googleCredentials.refreshAccessToken();
+      GoogleOAuthAccessToken googleToken = new GoogleOAuthAccessToken(accessToken.getTokenValue(),
+          accessToken.getExpirationTime().getTime());
+      return Tasks.forResult(googleToken);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 }

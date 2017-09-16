@@ -16,6 +16,7 @@
 
 package com.google.firebase.tasks;
 
+import com.google.firebase.internal.GaeScheduledExecutorService;
 import com.google.firebase.internal.GaeThreadFactory;
 import com.google.firebase.internal.NonNull;
 
@@ -24,6 +25,8 @@ import java.util.concurrent.Executors;
 
 /** 
  * Standard {@link Executor} instances for use with {@link Task}.
+ *
+ * @deprecated Use the ThreadManager interface to get required Executors.
  */
 public class TaskExecutors {
 

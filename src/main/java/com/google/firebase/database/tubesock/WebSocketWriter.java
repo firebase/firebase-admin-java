@@ -33,6 +33,8 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 class WebSocketWriter {
 
+  private final WebSocket websocket;
+  private final ThreadConfig threadConfig;
   private final Random random = new Random();
   private final String threadName;
 
@@ -40,11 +42,12 @@ class WebSocketWriter {
   private BlockingQueue<ByteBuffer> pendingBuffers;
   private volatile boolean stop = false;
   private boolean closeSent = false;
-  private WebSocket websocket;
   private WritableByteChannel channel;
 
-  WebSocketWriter(WebSocket websocket, String threadBaseName, int clientId) {
+  WebSocketWriter(WebSocket websocket, ThreadConfig threadConfig, String threadBaseName,
+                  int clientId) {
     this.websocket = websocket;
+    this.threadConfig = threadConfig;
     this.threadName = threadBaseName + "Writer-" + clientId;
     pendingBuffers = new LinkedBlockingQueue<>();
   }
@@ -163,7 +166,7 @@ class WebSocketWriter {
   synchronized void start() {
     checkState(innerThread == null, "Inner thread already started");
     innerThread =
-        WebSocket.getThreadFactory()
+        threadConfig.getThreadFactory()
             .newThread(
                 new Runnable() {
                   @Override
@@ -171,7 +174,7 @@ class WebSocketWriter {
                     runWriter();
                   }
                 });
-    WebSocket.getIntializer().setName(innerThread, threadName);
+    threadConfig.getInitializer().setName(innerThread, threadName);
     innerThread.start();
   }
 

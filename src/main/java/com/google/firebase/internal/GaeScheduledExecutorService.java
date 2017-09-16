@@ -17,8 +17,11 @@
 package com.google.firebase.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -46,6 +49,7 @@ public class GaeScheduledExecutorService implements ScheduledExecutorService {
 
   private final AtomicReference<ExecutorWrapper> executor = new AtomicReference<>();
   private final String threadName;
+  private boolean shutdown;
 
   GaeScheduledExecutorService(String threadName) {
     checkArgument(!Strings.isNullOrEmpty(threadName));
@@ -56,6 +60,7 @@ public class GaeScheduledExecutorService implements ScheduledExecutorService {
     ExecutorWrapper wrapper = executor.get();
     if (wrapper == null) {
       synchronized (executor) {
+        checkState(!shutdown);
         wrapper = executor.get();
         if (wrapper == null) {
           wrapper = new ExecutorWrapper(threadName);
@@ -148,12 +153,29 @@ public class GaeScheduledExecutorService implements ScheduledExecutorService {
 
   @Override
   public void shutdown() {
+    synchronized (executor) {
+      ExecutorWrapper wrapper = executor.get();
+      if (wrapper != null && !shutdown) {
+        wrapper.getExecutorService().shutdown();
+      }
+      shutdown = true;
+    }
     ensureExecutorService().shutdown();
   }
 
   @Override
   public List<Runnable> shutdownNow() {
-    return ensureExecutorService().shutdownNow();
+    synchronized (executor) {
+      ExecutorWrapper wrapper = executor.get();
+      List<Runnable> result;
+      if (wrapper != null && !shutdown) {
+        result = wrapper.getExecutorService().shutdownNow();
+      } else {
+        result = ImmutableList.of();
+      }
+      shutdown = true;
+      return result;
+    }
   }
 
   @Override

@@ -32,6 +32,8 @@ import java.util.concurrent.TimeoutException;
 
 /** 
  * {@link Task} utility methods.
+ *
+ * @deprecated Use ApiFutures and ThreadManager interface instead.
  */
 public final class Tasks {
 

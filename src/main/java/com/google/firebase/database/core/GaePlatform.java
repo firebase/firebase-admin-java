@@ -16,9 +16,8 @@
 
 package com.google.firebase.database.core;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.connection.ConnectionContext;
 import com.google.firebase.database.connection.HostInfo;
@@ -28,7 +27,6 @@ import com.google.firebase.database.core.persistence.PersistenceManager;
 import com.google.firebase.database.logging.DefaultLogger;
 import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.logging.Logger;
-import com.google.firebase.database.tubesock.WebSocket;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 import com.google.firebase.internal.GaeThreadFactory;
 import com.google.firebase.internal.RevivingScheduledExecutor;
@@ -44,10 +42,8 @@ import java.util.concurrent.ThreadFactory;
  */
 class GaePlatform implements Platform {
 
-  private static final String TAG = "GaePlatform";
   private static final String PROCESS_PLATFORM = "AppEngine";
   private final FirebaseApp firebaseApp;
-  ThreadFactory threadFactoryInstance;
 
   public GaePlatform(FirebaseApp firebaseApp) {
     this.firebaseApp = firebaseApp;
@@ -63,21 +59,7 @@ class GaePlatform implements Platform {
   }
 
   private ThreadFactory getGaeThreadFactory() {
-    GaeThreadFactory threadFactory = GaeThreadFactory.getInstance();
-    checkState(threadFactory.isUsingBackgroundThreads(),
-        "Failed to initialize a GAE background thread factory");
-    return threadFactory;
-  }
-
-  public void initialize() {
-    WebSocket.setThreadFactory(
-        getGaeThreadFactory(),
-        new com.google.firebase.database.tubesock.ThreadInitializer() {
-          @Override
-          public void setName(Thread thread, String s) {
-            // Unsupported by GAE
-          }
-        });
+    return ImplFirebaseTrampolines.getThreadFactory(firebaseApp);
   }
 
   @Override
@@ -125,5 +107,25 @@ class GaePlatform implements Platform {
   @Override
   public PersistenceManager createPersistenceManager(Context ctx, String namespace) {
     return null;
+  }
+
+  @Override
+  public ThreadInitializer getThreadInitializer() {
+    return new ThreadInitializer() {
+      @Override
+      public void setName(Thread t, String name) {
+        // Unsupported by GAE
+      }
+
+      @Override
+      public void setDaemon(Thread t, boolean isDaemon) {
+        // Unsupported by GAE
+      }
+
+      @Override
+      public void setUncaughtExceptionHandler(Thread t, Thread.UncaughtExceptionHandler handler) {
+        // Unsupported by GAE
+      }
+    };
   }
 }

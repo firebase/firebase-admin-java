@@ -17,6 +17,7 @@
 package com.google.firebase.database.core;
 
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.connection.ConnectionContext;
 import com.google.firebase.database.connection.HostInfo;
@@ -29,8 +30,8 @@ import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 
 class JvmPlatform implements Platform {
 
@@ -49,14 +50,15 @@ class JvmPlatform implements Platform {
 
   @Override
   public EventTarget newEventTarget(Context ctx) {
-    return new ThreadPoolEventTarget(
-        Executors.defaultThreadFactory(), ThreadInitializer.defaultInstance);
+    ThreadFactory threadFactory = ImplFirebaseTrampolines.getThreadFactory(firebaseApp);
+    return new ThreadPoolEventTarget(threadFactory, ThreadInitializer.defaultInstance);
   }
 
   @Override
   public RunLoop newRunLoop(final Context context) {
     final LogWrapper logger = context.getLogger(RunLoop.class);
-    return new DefaultRunLoop() {
+    ThreadFactory threadFactory = ImplFirebaseTrampolines.getThreadFactory(firebaseApp);
+    return new DefaultRunLoop(threadFactory) {
       @Override
       public void handleException(Throwable e) {
         logger.error(DefaultRunLoop.messageForException(e), e);
@@ -91,5 +93,10 @@ class JvmPlatform implements Platform {
   @Override
   public PersistenceManager createPersistenceManager(Context ctx, String namespace) {
     return null;
+  }
+
+  @Override
+  public ThreadInitializer getThreadInitializer() {
+    return ThreadInitializer.defaultInstance;
   }
 }

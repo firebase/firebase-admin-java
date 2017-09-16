@@ -206,7 +206,7 @@ public class FirebaseAppTest {
         Arrays.asList(
             "delete",
             "equals",
-            "getListeners",
+            "getName",
             "getPersistenceKey",
             "hashCode",
             "isDefaultApp",

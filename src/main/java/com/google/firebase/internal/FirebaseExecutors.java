@@ -16,20 +16,108 @@
 
 package com.google.firebase.internal;
 
+import static com.google.common.base.Preconditions.checkState;
+
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.ThreadManager;
+
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 
 /** Default executors used for internal Firebase threads. */
 public class FirebaseExecutors {
 
-  public static final ScheduledExecutorService DEFAULT_SCHEDULED_EXECUTOR;
+  public static final ThreadManager DEFAULT_THREAD_MANAGER;
 
   static {
     if (GaeThreadFactory.isAvailable()) {
-      DEFAULT_SCHEDULED_EXECUTOR = GaeThreadFactory.DEFAULT_EXECUTOR;
+      DEFAULT_THREAD_MANAGER = new GaeThreadManager();
     } else {
-      DEFAULT_SCHEDULED_EXECUTOR =
-          Executors.newSingleThreadScheduledExecutor(Executors.defaultThreadFactory());
+      DEFAULT_THREAD_MANAGER = new DefaultThreadManager();
+    }
+  }
+
+  /**
+   * An abstract ThreadManager implementation that uses the same executor service
+   * across all active apps. The executor service is initialized when the first app is initialized,
+   * and terminated when the last app is deleted.
+   */
+  private abstract static class GlobalThreadManager extends ThreadManager {
+
+    private final Set<String> apps = new HashSet<>();
+    private ScheduledExecutorService executorService;
+
+    @Override
+    protected synchronized ScheduledExecutorService getExecutor(FirebaseApp app) {
+      if (executorService == null) {
+        executorService = doInit();
+        apps.add(app.getName());
+      }
+      return executorService;
+    }
+
+    @Override
+    protected synchronized void releaseExecutor(
+        FirebaseApp app, ScheduledExecutorService executor) {
+      if (apps.remove(app.getName()) && apps.isEmpty()) {
+        doCleanup(executorService);
+        executorService = null;
+      }
+    }
+
+    /**
+     * Initializes the executor service. Called when the first application is initialized.
+     */
+    protected abstract ScheduledExecutorService doInit();
+
+    /**
+     * Cleans up the executor service. Called when the last application is deleted.
+     */
+    protected abstract void doCleanup(ScheduledExecutorService executorService);
+  }
+
+  private static class DefaultThreadManager extends GlobalThreadManager {
+
+    @Override
+    protected ScheduledExecutorService doInit() {
+      int cores = Runtime.getRuntime().availableProcessors();
+      return Executors.newScheduledThreadPool(cores, getThreadFactory());
+    }
+
+    @Override
+    protected void doCleanup(ScheduledExecutorService executorService) {
+      executorService.shutdownNow();
+    }
+
+    @Override
+    protected ThreadFactory getThreadFactory() {
+      return Executors.defaultThreadFactory();
+    }
+  }
+
+  private static class GaeThreadManager extends GlobalThreadManager {
+
+    @Override
+    protected ScheduledExecutorService doInit() {
+      return new GaeScheduledExecutorService("FirebaseDefault");
+    }
+
+    @Override
+    protected void doCleanup(ScheduledExecutorService executorService) {
+      executorService.shutdownNow();
+    }
+
+    @Override
+
+    protected ThreadFactory getThreadFactory() {
+      GaeThreadFactory threadFactory = GaeThreadFactory.getInstance();
+      checkState(threadFactory.isUsingBackgroundThreads(),
+          "Failed to initialize a GAE background thread factory. Background thread support "
+              + "is required to access the Realtime database from App Engine environment.");
+      return threadFactory;
     }
   }
 }

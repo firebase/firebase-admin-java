@@ -20,6 +20,9 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
+
 /**
  * Provides trampolines into package-private APIs used by components of Firebase. Intentionally
  * scarily-named to dissuade people from actually trying to use the class and to make it less likely
@@ -60,5 +63,13 @@ public final class ImplFirebaseTrampolines {
       @NonNull FirebaseApp app, @NonNull T service) {
     app.addService(service);
     return service;
+  }
+
+  public static ExecutorService getExecutorService(@NonNull FirebaseApp app) {
+    return app.getExecutorService();
+  }
+
+  public static ThreadFactory getThreadFactory(@NonNull FirebaseApp app) {
+    return app.getThreadFactory();
   }
 }

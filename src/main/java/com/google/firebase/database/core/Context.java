@@ -17,6 +17,7 @@
 package com.google.firebase.database.core;
 
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.connection.ConnectionAuthTokenProvider;
@@ -27,6 +28,7 @@ import com.google.firebase.database.core.persistence.NoopPersistenceManager;
 import com.google.firebase.database.core.persistence.PersistenceManager;
 import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.logging.Logger;
+import com.google.firebase.database.tubesock.ThreadConfig;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 
 import java.util.List;
@@ -78,9 +80,7 @@ public class Context {
   private Platform getPlatform() {
     if (platform == null) {
       if (GaePlatform.isActive()) {
-        GaePlatform gaePlatform = new GaePlatform(firebaseApp);
-        gaePlatform.initialize();
-        platform = gaePlatform;
+        platform = new GaePlatform(firebaseApp);
       } else {
         platform = new JvmPlatform(firebaseApp);
       }
@@ -153,6 +153,11 @@ public class Context {
     return new LogWrapper(logger, component, prefix);
   }
 
+  private ThreadConfig getThreadConfig() {
+    return new ThreadConfig(getPlatform().getThreadInitializer(),
+        ImplFirebaseTrampolines.getThreadFactory(firebaseApp));
+  }
+
   public ConnectionContext getConnectionContext() {
     return new ConnectionContext(
         this.logger,
@@ -160,7 +165,8 @@ public class Context {
         this.getExecutorService(),
         this.isPersistenceEnabled(),
         FirebaseDatabase.getSdkVersion(),
-        this.getUserAgent());
+        this.getUserAgent(),
+        this.getThreadConfig());
   }
 
   PersistenceManager getPersistenceManager(String firebaseId) {

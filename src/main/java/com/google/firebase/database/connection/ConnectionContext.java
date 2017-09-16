@@ -17,6 +17,7 @@
 package com.google.firebase.database.connection;
 
 import com.google.firebase.database.logging.Logger;
+import com.google.firebase.database.tubesock.ThreadConfig;
 
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -28,6 +29,7 @@ public class ConnectionContext {
   private final boolean persistenceEnabled;
   private final String clientSdkVersion;
   private final String userAgent;
+  private final ThreadConfig threadConfig;
 
   public ConnectionContext(
       Logger logger,
@@ -35,13 +37,15 @@ public class ConnectionContext {
       ScheduledExecutorService executorService,
       boolean persistenceEnabled,
       String clientSdkVersion,
-      String userAgent) {
+      String userAgent,
+      ThreadConfig threadConfig) {
     this.logger = logger;
     this.authTokenProvider = authTokenProvider;
     this.executorService = executorService;
     this.persistenceEnabled = persistenceEnabled;
     this.clientSdkVersion = clientSdkVersion;
     this.userAgent = userAgent;
+    this.threadConfig = threadConfig;
   }
 
   public Logger getLogger() {
@@ -66,5 +70,9 @@ public class ConnectionContext {
 
   public String getUserAgent() {
     return this.userAgent;
+  }
+
+  public ThreadConfig getThreadConfig() {
+    return threadConfig;
   }
 }
