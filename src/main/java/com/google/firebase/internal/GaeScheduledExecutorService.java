@@ -160,7 +160,6 @@ class GaeScheduledExecutorService implements ScheduledExecutorService {
       }
       shutdown = true;
     }
-    ensureExecutorService().shutdown();
   }
 
   @Override

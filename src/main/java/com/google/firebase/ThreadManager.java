@@ -24,10 +24,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
 /**
- * An interface that controls the thread pools and factories used by the Admin SDK. Each
+ * An interface that controls the thread pools and thread factories used by the Admin SDK. Each
  * instance of {@link FirebaseApp} uses an implementation of this interface to create and manage
  * threads. Multiple app instances may use the same <code>ThreadManager</code> instance.
- * Methods in this interface, may get invoked multiple times by the same
+ * Methods in this interface may get invoked multiple times by the same
  * app, during its lifetime. Apps may also invoke methods of this interface concurrently, and
  * therefore implementations should provide any synchronization necessary.
  */
@@ -39,9 +39,9 @@ public abstract class ThreadManager {
   }
 
   /**
-   * Returns the thread pool for an app. Implementations may return the same instance of
+   * Returns the main thread pool for an app. Implementations may return the same instance of
    * <code>ScheduledExecutorService</code> for multiple apps. The returned thread pool is used by
-   * all components of an app except for the realtime database. Database has far stricter and
+   * all components of an app except for the Realtime Database. Database has far stricter and
    * complicated threading requirements, and thus initializes its own threads using the
    * factory returned by {@link ThreadManager#getThreadFactory()}.
    *

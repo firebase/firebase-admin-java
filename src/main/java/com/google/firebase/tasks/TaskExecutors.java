@@ -31,7 +31,13 @@ import java.util.concurrent.ThreadFactory;
  */
 public class TaskExecutors {
 
-  /** An Executor that uses a shared cached thread pool. */
+  /**
+   * An Executor that uses a shared cached thread pool.
+   *
+   * <p>This is no longer used in the SDK code. All the methods that submit to this thread pool
+   * have been deprecated, and their invocations have been routed elsewhere. This is left here
+   * for now for backward compatibility, since technically it is part of the public API.
+   */
   public static final Executor DEFAULT_THREAD_POOL;
   /** An Executor that uses the calling thread. */
   static final Executor DIRECT =

@@ -90,6 +90,7 @@ public class FirebaseExecutors {
     @Override
     protected ScheduledExecutorService doInit() {
       int cores = Runtime.getRuntime().availableProcessors();
+      // Create threads as daemons to ensure JVM exit when all foreground jobs are complete.
       ThreadFactory threadFactory = new ThreadFactoryBuilder()
           .setNameFormat("firebase-default-%d")
           .setDaemon(true)
