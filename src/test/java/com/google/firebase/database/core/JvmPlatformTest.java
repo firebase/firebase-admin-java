@@ -21,13 +21,61 @@ import static org.junit.Assert.assertEquals;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.ThreadManager;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.internal.NonNull;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class JvmPlatformTest {
+
+  @Test
+  public void usesThreadManager() {
+    final AtomicInteger count = new AtomicInteger(0);
+    ThreadManager threadManager = new ThreadManager() {
+      @Override
+      protected ScheduledExecutorService getExecutor(@NonNull FirebaseApp app) {
+        throw new UnsupportedOperationException("Should not be called by Database code");
+      }
+
+      @Override
+      protected void releaseExecutor(@NonNull FirebaseApp app,
+          @NonNull ScheduledExecutorService executor) {
+      }
+
+      @Override
+      protected ThreadFactory getThreadFactory() {
+        count.incrementAndGet();
+        return Executors.defaultThreadFactory();
+      }
+    };
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
+        .setThreadManager(threadManager)
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options, "threadManagerApp");
+
+    try {
+      assertEquals(0, count.get());
+      Context cfg = new DatabaseConfig();
+      cfg.firebaseApp = app;
+      cfg.freeze();
+      // EventTarget and RunLoop
+      assertEquals(2, count.get());
+
+      cfg.getConnectionContext();
+      // ConnectionContext which gets passed to all low-level socket management code.
+      assertEquals(3, count.get());
+    } finally {
+      TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    }
+  }
 
   @Test
   public void userAgentHasCorrectParts() {
