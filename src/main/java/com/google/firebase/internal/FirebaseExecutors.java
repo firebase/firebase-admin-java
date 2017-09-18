@@ -51,7 +51,7 @@ public class FirebaseExecutors {
    * across all active apps. The executor service is initialized when the first app is initialized,
    * and terminated when the last app is deleted. This class is thread safe.
    */
-  private abstract static class GlobalThreadManager extends ThreadManager {
+  abstract static class GlobalThreadManager extends ThreadManager {
 
     private final Set<String> apps = new HashSet<>();
     private ScheduledExecutorService executorService;
@@ -60,8 +60,8 @@ public class FirebaseExecutors {
     protected synchronized ScheduledExecutorService getExecutor(FirebaseApp app) {
       if (executorService == null) {
         executorService = doInit();
-        apps.add(app.getName());
       }
+      apps.add(app.getName());
       return executorService;
     }
 

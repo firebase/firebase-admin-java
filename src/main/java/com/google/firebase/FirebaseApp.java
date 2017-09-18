@@ -49,6 +49,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -365,7 +366,12 @@ public class FirebaseApp {
     return threadManager.getThreadFactory();
   }
 
-  <T> Future<T> schedule(Callable<T> command, long delayMillis) {
+  <T> Future<T> submit(Callable<T> command) {
+    checkNotNull(command);
+    return getExecutorService().submit(command);
+  }
+
+  <T> ScheduledFuture<T> schedule(Callable<T> command, long delayMillis) {
     checkNotNull(command);
     return getExecutorService().schedule(command, delayMillis, TimeUnit.MILLISECONDS);
   }

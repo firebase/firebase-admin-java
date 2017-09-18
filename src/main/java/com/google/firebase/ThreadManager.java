@@ -16,6 +16,8 @@
 
 package com.google.firebase;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.internal.NonNull;
@@ -35,7 +37,9 @@ public abstract class ThreadManager {
 
   @NonNull
   final ListeningScheduledExecutorService getListeningExecutor(@NonNull FirebaseApp app) {
-    return MoreExecutors.listeningDecorator(getExecutor(app));
+    ScheduledExecutorService executor = getExecutor(app);
+    checkNotNull(executor, "ScheduledExecutorService must not be null");
+    return MoreExecutors.listeningDecorator(executor);
   }
 
   /**

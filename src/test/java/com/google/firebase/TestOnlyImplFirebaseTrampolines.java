@@ -19,6 +19,7 @@ package com.google.firebase;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Provides trampolines into package-private APIs used by components of Firebase
@@ -55,5 +56,9 @@ public final class TestOnlyImplFirebaseTrampolines {
 
   public static GoogleCredentials getCredentials(FirebaseOptions options) {
     return options.getCredentials();
+  }
+
+  public static ScheduledExecutorService getExecutorService(FirebaseApp app) {
+    return app.getExecutorService();
   }
 }

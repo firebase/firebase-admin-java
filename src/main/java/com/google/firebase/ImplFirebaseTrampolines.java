@@ -20,7 +20,9 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 
-import java.util.concurrent.ExecutorService;
+import com.google.firebase.tasks.Task;
+import com.google.firebase.tasks.Tasks;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -65,11 +67,11 @@ public final class ImplFirebaseTrampolines {
     return service;
   }
 
-  public static ExecutorService getExecutorService(@NonNull FirebaseApp app) {
-    return app.getExecutorService();
-  }
-
   public static ThreadFactory getThreadFactory(@NonNull FirebaseApp app) {
     return app.getThreadFactory();
+  }
+
+  public static <T> Task<T> submit(@NonNull FirebaseApp app, @NonNull Callable<T> command) {
+    return Tasks.call(app.getExecutorService(), command);
   }
 }

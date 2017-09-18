@@ -35,15 +35,11 @@ import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.internal.FirebaseService;
-import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.TaskToApiFuture;
-import com.google.firebase.tasks.Continuation;
 import com.google.firebase.tasks.Task;
-import com.google.firebase.tasks.Tasks;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -59,9 +55,9 @@ public class FirebaseAuth {
   private final GooglePublicKeysManager googlePublicKeysManager;
   private final Clock clock;
 
+  private final FirebaseApp firebaseApp;
   private final GoogleCredentials credentials;
   private final String projectId;
-  private final Executor executor;
   private final JsonFactory jsonFactory;
   private final FirebaseUserManager userManager;
   private final AtomicBoolean destroyed;
@@ -78,11 +74,11 @@ public class FirebaseAuth {
   @VisibleForTesting
   FirebaseAuth(
       FirebaseApp firebaseApp, GooglePublicKeysManager googlePublicKeysManager, Clock clock) {
-    this.googlePublicKeysManager = googlePublicKeysManager;
-    this.clock = clock;
+    this.firebaseApp = checkNotNull(firebaseApp);
+    this.googlePublicKeysManager = checkNotNull(googlePublicKeysManager);
+    this.clock = checkNotNull(clock);
     this.credentials = ImplFirebaseTrampolines.getCredentials(firebaseApp);
     this.projectId = ImplFirebaseTrampolines.getProjectId(firebaseApp);
-    this.executor = ImplFirebaseTrampolines.getExecutorService(firebaseApp);
     this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
     this.userManager = new FirebaseUserManager(jsonFactory,
         firebaseApp.getOptions().getHttpTransport(), this.credentials);
@@ -147,7 +143,7 @@ public class FirebaseAuth {
             + "createCustomToken()");
 
     final ServiceAccountCredentials serviceAccount = (ServiceAccountCredentials) credentials;
-    return Tasks.call(executor, new Callable<String>() {
+    return ImplFirebaseTrampolines.submit(firebaseApp, new Callable<String>() {
       @Override
       public String call() throws Exception {
         FirebaseTokenFactory tokenFactory = FirebaseTokenFactory.getInstance();
@@ -203,25 +199,23 @@ public class FirebaseAuth {
     checkNotDestroyed();
     checkState(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifyIdToken()");
-    return Tasks.forResult(projectId)
-        .continueWith(executor,
-            new Continuation<String, FirebaseToken>() {
-              @Override
-              public FirebaseToken then(@NonNull Task<String> task) throws Exception {
-                FirebaseTokenVerifier firebaseTokenVerifier =
-                    new FirebaseTokenVerifier.Builder()
-                        .setProjectId(task.getResult())
-                        .setPublicKeysManager(googlePublicKeysManager)
-                        .setClock(clock)
-                        .build();
-                FirebaseToken firebaseToken = FirebaseToken.parse(jsonFactory, token);
+    return ImplFirebaseTrampolines.submit(firebaseApp, new Callable<FirebaseToken>() {
+      @Override
+      public FirebaseToken call() throws Exception {
+        FirebaseTokenVerifier firebaseTokenVerifier =
+            new FirebaseTokenVerifier.Builder()
+                .setProjectId(projectId)
+                .setPublicKeysManager(googlePublicKeysManager)
+                .setClock(clock)
+                .build();
+        FirebaseToken firebaseToken = FirebaseToken.parse(jsonFactory, token);
 
-                // This will throw a FirebaseAuthException with details on how the token is invalid.
-                firebaseTokenVerifier.verifyTokenAndSignature(firebaseToken.getToken());
+        // This will throw a FirebaseAuthException with details on how the token is invalid.
+        firebaseTokenVerifier.verifyTokenAndSignature(firebaseToken.getToken());
 
-                return firebaseToken;
-              }
-            });
+        return firebaseToken;
+      }
+    });
   }
 
   /**
@@ -261,7 +255,7 @@ public class FirebaseAuth {
   public Task<UserRecord> getUser(final String uid) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
-    return Tasks.call(executor, new Callable<UserRecord>() {
+    return ImplFirebaseTrampolines.submit(firebaseApp, new Callable<UserRecord>() {
       @Override
       public UserRecord call() throws Exception {
         return userManager.getUserById(uid);
@@ -295,7 +289,7 @@ public class FirebaseAuth {
   public Task<UserRecord> getUserByEmail(final String email) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(email), "email must not be null or empty");
-    return Tasks.call(executor, new Callable<UserRecord>() {
+    return ImplFirebaseTrampolines.submit(firebaseApp, new Callable<UserRecord>() {
       @Override
       public UserRecord call() throws Exception {
         return userManager.getUserByEmail(email);
@@ -329,7 +323,7 @@ public class FirebaseAuth {
   public Task<UserRecord> getUserByPhoneNumber(final String phoneNumber) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(phoneNumber), "phone number must not be null or empty");
-    return Tasks.call(executor, new Callable<UserRecord>() {
+    return ImplFirebaseTrampolines.submit(firebaseApp, new Callable<UserRecord>() {
       @Override
       public UserRecord call() throws Exception {
         return userManager.getUserByPhoneNumber(phoneNumber);
@@ -363,7 +357,7 @@ public class FirebaseAuth {
   public Task<UserRecord> createUser(final CreateRequest request) {
     checkNotDestroyed();
     checkNotNull(request, "create request must not be null");
-    return Tasks.call(executor, new Callable<UserRecord>() {
+    return ImplFirebaseTrampolines.submit(firebaseApp, new Callable<UserRecord>() {
       @Override
       public UserRecord call() throws Exception {
         String uid = userManager.createUser(request);
@@ -399,7 +393,7 @@ public class FirebaseAuth {
   public Task<UserRecord> updateUser(final UpdateRequest request) {
     checkNotDestroyed();
     checkNotNull(request, "update request must not be null");
-    return Tasks.call(executor, new Callable<UserRecord>() {
+    return ImplFirebaseTrampolines.submit(firebaseApp, new Callable<UserRecord>() {
       @Override
       public UserRecord call() throws Exception {
         userManager.updateUser(request);
@@ -435,7 +429,7 @@ public class FirebaseAuth {
   public Task<Void> deleteUser(final String uid) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
-    return Tasks.call(executor, new Callable<Void>() {
+    return ImplFirebaseTrampolines.submit(firebaseApp, new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         userManager.deleteUser(uid);
