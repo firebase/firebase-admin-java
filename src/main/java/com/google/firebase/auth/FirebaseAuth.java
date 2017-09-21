@@ -466,7 +466,7 @@ public class FirebaseAuth {
   }
 
   private <T> Task<T> call(Callable<T> command) {
-    return Tasks.call(ImplFirebaseTrampolines.getExecutorService(firebaseApp), command);
+    return ImplFirebaseTrampolines.submit(firebaseApp, command);
   }
 
   private static final String SERVICE_ID = FirebaseAuth.class.getName();

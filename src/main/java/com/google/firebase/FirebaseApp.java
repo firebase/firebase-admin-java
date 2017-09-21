@@ -38,6 +38,8 @@ import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
+import com.google.firebase.tasks.Task;
+import com.google.firebase.tasks.Tasks;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -347,7 +349,7 @@ public class FirebaseApp {
     checkState(!deleted.get(), "FirebaseApp was deleted %s", this);
   }
 
-  ListeningScheduledExecutorService getExecutorService() {
+  private ListeningScheduledExecutorService getExecutorService() {
     ListeningScheduledExecutorService executor = executorReference.get();
     if (executor == null) {
       synchronized (lock) {
@@ -366,9 +368,10 @@ public class FirebaseApp {
     return threadManager.getThreadFactory();
   }
 
-  <T> Future<T> submit(Callable<T> command) {
+  // TODO: Return an ApiFuture once Task API is fully removed.
+  <T> Task<T> submit(Callable<T> command) {
     checkNotNull(command);
-    return getExecutorService().submit(command);
+    return Tasks.call(getExecutorService(), command);
   }
 
   <T> ScheduledFuture<T> schedule(Callable<T> command, long delayMillis) {

@@ -23,6 +23,7 @@ import com.google.firebase.internal.NonNull;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
@@ -72,9 +73,7 @@ public final class ImplFirebaseTrampolines {
     return app.getThreadFactory();
   }
 
-  public static ScheduledExecutorService getExecutorService(@NonNull FirebaseApp app) {
-    // TODO: This method exists for the benefit of the classes that still use Tasks. Remove
-    // once the Task API is fully removed.
-    return app.getExecutorService();
+  public static <T> Task<T> submit(@NonNull FirebaseApp app, @NonNull Callable<T> command) {
+    return app.submit(command);
   }
 }

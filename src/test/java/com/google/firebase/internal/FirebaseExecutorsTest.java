@@ -18,14 +18,18 @@ package com.google.firebase.internal;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.FirebaseExecutors.GlobalThreadManager;
+import com.google.firebase.tasks.Tasks;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -52,14 +56,18 @@ public class FirebaseExecutorsTest {
     FirebaseApp defaultApp = FirebaseApp.initializeApp(options);
     assertEquals(0, threadManager.initCount);
 
-    ScheduledExecutorService exec1 = TestOnlyImplFirebaseTrampolines.getExecutorService(defaultApp);
+    ScheduledExecutorService exec1 = threadManager.getExecutor(defaultApp);
     assertEquals(1, threadManager.initCount);
+    assertFalse(exec1.isShutdown());
 
-    ScheduledExecutorService exec2 = TestOnlyImplFirebaseTrampolines.getExecutorService(defaultApp);
+    ScheduledExecutorService exec2 = threadManager.getExecutor(defaultApp);
     assertEquals(1, threadManager.initCount);
+    assertFalse(exec2.isShutdown());
+
+    // Should return the same executor for both invocations.
     assertSame(exec1, exec2);
 
-    defaultApp.delete();
+    threadManager.releaseExecutor(defaultApp, exec1);
     assertTrue(exec1.isShutdown());
   }
 
@@ -68,30 +76,28 @@ public class FirebaseExecutorsTest {
     MockThreadManager threadManager = new MockThreadManager();
     FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials())
-        .setThreadManager(threadManager)
         .build();
     FirebaseApp defaultApp = FirebaseApp.initializeApp(options);
     FirebaseApp customApp = FirebaseApp.initializeApp(options, "customApp");
     assertEquals(0, threadManager.initCount);
 
-    TestOnlyImplFirebaseTrampolines.getExecutorService(defaultApp);
-    TestOnlyImplFirebaseTrampolines.getExecutorService(customApp);
-    assertEquals(1, threadManager.initCount);
-
     ScheduledExecutorService exec1 = threadManager.getExecutor(defaultApp);
     ScheduledExecutorService exec2 = threadManager.getExecutor(customApp);
     assertEquals(1, threadManager.initCount);
-    assertSame(exec1, exec2);
-
-    defaultApp.delete();
     assertFalse(exec1.isShutdown());
 
-    customApp.delete();
+    // Should return the same executor for both invocations.
+    assertSame(exec1, exec2);
+
+    threadManager.releaseExecutor(defaultApp, exec1);
+    assertFalse(exec1.isShutdown());
+
+    threadManager.releaseExecutor(customApp, exec2);
     assertTrue(exec1.isShutdown());
   }
 
   @Test
-  public void testGlobalThreadManagerReInitApp() {
+  public void testGlobalThreadManagerReInit() {
     MockThreadManager threadManager = new MockThreadManager();
     FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials())
@@ -100,23 +106,21 @@ public class FirebaseExecutorsTest {
     FirebaseApp defaultApp = FirebaseApp.initializeApp(options);
     assertEquals(0, threadManager.initCount);
 
-    ScheduledExecutorService exec1 = TestOnlyImplFirebaseTrampolines.getExecutorService(defaultApp);
+    ScheduledExecutorService exec1 = threadManager.getExecutor(defaultApp);
     assertEquals(1, threadManager.initCount);
+    assertFalse(exec1.isShutdown());
 
-    ScheduledExecutorService exec2 = TestOnlyImplFirebaseTrampolines.getExecutorService(defaultApp);
-    assertEquals(1, threadManager.initCount);
-    assertSame(exec1, exec2);
-
-    defaultApp.delete();
+    // Simulate app.delete()
+    threadManager.releaseExecutor(defaultApp, exec1);
     assertTrue(exec1.isShutdown());
 
-    defaultApp = FirebaseApp.initializeApp(options);
-    assertEquals(1, threadManager.initCount);
-    ScheduledExecutorService exec3 = TestOnlyImplFirebaseTrampolines.getExecutorService(defaultApp);
+    // Simulate app re-init
+    ScheduledExecutorService exec2 = threadManager.getExecutor(defaultApp);
     assertEquals(2, threadManager.initCount);
+    assertNotSame(exec1, exec2);
 
-    defaultApp.delete();
-    assertTrue(exec3.isShutdown());
+    threadManager.releaseExecutor(defaultApp, exec2);
+    assertTrue(exec2.isShutdown());
   }
 
   @Test
@@ -125,9 +129,8 @@ public class FirebaseExecutorsTest {
         .setCredentials(new MockGoogleCredentials())
         .build();
     FirebaseApp defaultApp = FirebaseApp.initializeApp(options);
-    ScheduledExecutorService exec = TestOnlyImplFirebaseTrampolines.getExecutorService(defaultApp);
     final Map<String, Object> threadInfo = new HashMap<>();
-    exec.submit(new Callable<Void>() {
+    Callable<Void> command = new Callable<Void>() {
       @Override
       public Void call() throws Exception {
         Thread thread = Thread.currentThread();
@@ -135,13 +138,20 @@ public class FirebaseExecutorsTest {
         threadInfo.put("daemon", thread.isDaemon());
         return null;
       }
-    }).get();
+    };
+    Tasks.await(ImplFirebaseTrampolines.submit(defaultApp, command));
 
+    // Check for default JVM thread properties.
     assertTrue(threadInfo.get("name").toString().startsWith("firebase-default-"));
     assertTrue((Boolean) threadInfo.get("daemon"));
 
     defaultApp.delete();
-    assertTrue(exec.isShutdown());
+    try {
+      ImplFirebaseTrampolines.submit(defaultApp, command);
+      fail("No error thrown when submitting to deleted app");
+    } catch (IllegalStateException expected) {
+      // expected
+    }
   }
 
   private static class MockThreadManager extends GlobalThreadManager {

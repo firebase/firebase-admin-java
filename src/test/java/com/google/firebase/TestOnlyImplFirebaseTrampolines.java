@@ -19,6 +19,7 @@ package com.google.firebase;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
@@ -58,7 +59,12 @@ public final class TestOnlyImplFirebaseTrampolines {
     return options.getCredentials();
   }
 
-  public static ScheduledExecutorService getExecutorService(FirebaseApp app) {
-    return app.getExecutorService();
+  public static void forceThreadManagerInit(FirebaseApp app) {
+    ImplFirebaseTrampolines.submit(app, new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        return null;
+      }
+    });
   }
 }

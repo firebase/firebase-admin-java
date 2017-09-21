@@ -58,14 +58,14 @@ public class ThreadManagerTest {
     FirebaseApp app = FirebaseApp.initializeApp(buildOptions(threadManager));
     assertEquals(0, threadManager.events.size());
 
-    TestOnlyImplFirebaseTrampolines.getExecutorService(app);
+    TestOnlyImplFirebaseTrampolines.forceThreadManagerInit(app);
     assertEquals(1, threadManager.events.size());
     Event event = threadManager.events.get(0);
     assertEquals(Event.TYPE_GET_EXECUTOR, event.type);
     assertEquals(app, event.arguments[0]);
 
     // Should not re-initialize
-    TestOnlyImplFirebaseTrampolines.getExecutorService(app);
+    TestOnlyImplFirebaseTrampolines.forceThreadManagerInit(app);
     assertEquals(1, threadManager.events.size());
 
     // Deleting app should tear down threading resources.
@@ -93,7 +93,7 @@ public class ThreadManagerTest {
     assertEquals(app, event.arguments[0]);
 
     // Should not re-initialize
-    TestOnlyImplFirebaseTrampolines.getExecutorService(app);
+    TestOnlyImplFirebaseTrampolines.forceThreadManagerInit(app);
     assertEquals(1, threadManager.events.size());
 
     // Deleting app should tear down threading resources.
@@ -168,7 +168,7 @@ public class ThreadManagerTest {
     assertEquals(1, threadManager.events.size());
 
     // Should not re-initialize threading resources.
-    TestOnlyImplFirebaseTrampolines.getExecutorService(app);
+    TestOnlyImplFirebaseTrampolines.forceThreadManagerInit(app);
     assertEquals(1, threadManager.events.size());
 
     // Deleting app should tear down threading resources.
