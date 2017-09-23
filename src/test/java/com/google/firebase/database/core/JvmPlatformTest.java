@@ -26,8 +26,9 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
+
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
@@ -40,13 +41,13 @@ public class JvmPlatformTest {
     final AtomicInteger count = new AtomicInteger(0);
     ThreadManager threadManager = new ThreadManager() {
       @Override
-      protected ScheduledExecutorService getExecutor(@NonNull FirebaseApp app) {
+      protected ExecutorService getExecutor(@NonNull FirebaseApp app) {
         throw new UnsupportedOperationException("Should not be called by Database code");
       }
 
       @Override
       protected void releaseExecutor(@NonNull FirebaseApp app,
-          @NonNull ScheduledExecutorService executor) {
+          @NonNull ExecutorService executor) {
       }
 
       @Override

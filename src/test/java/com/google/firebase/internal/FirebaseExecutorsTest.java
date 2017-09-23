@@ -33,8 +33,8 @@ import com.google.firebase.tasks.Tasks;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import org.junit.After;
 import org.junit.Test;
@@ -56,11 +56,11 @@ public class FirebaseExecutorsTest {
     FirebaseApp defaultApp = FirebaseApp.initializeApp(options);
     assertEquals(0, threadManager.initCount);
 
-    ScheduledExecutorService exec1 = threadManager.getExecutor(defaultApp);
+    ExecutorService exec1 = threadManager.getExecutor(defaultApp);
     assertEquals(1, threadManager.initCount);
     assertFalse(exec1.isShutdown());
 
-    ScheduledExecutorService exec2 = threadManager.getExecutor(defaultApp);
+    ExecutorService exec2 = threadManager.getExecutor(defaultApp);
     assertEquals(1, threadManager.initCount);
     assertFalse(exec2.isShutdown());
 
@@ -81,8 +81,8 @@ public class FirebaseExecutorsTest {
     FirebaseApp customApp = FirebaseApp.initializeApp(options, "customApp");
     assertEquals(0, threadManager.initCount);
 
-    ScheduledExecutorService exec1 = threadManager.getExecutor(defaultApp);
-    ScheduledExecutorService exec2 = threadManager.getExecutor(customApp);
+    ExecutorService exec1 = threadManager.getExecutor(defaultApp);
+    ExecutorService exec2 = threadManager.getExecutor(customApp);
     assertEquals(1, threadManager.initCount);
     assertFalse(exec1.isShutdown());
 
@@ -106,7 +106,7 @@ public class FirebaseExecutorsTest {
     FirebaseApp defaultApp = FirebaseApp.initializeApp(options);
     assertEquals(0, threadManager.initCount);
 
-    ScheduledExecutorService exec1 = threadManager.getExecutor(defaultApp);
+    ExecutorService exec1 = threadManager.getExecutor(defaultApp);
     assertEquals(1, threadManager.initCount);
     assertFalse(exec1.isShutdown());
 
@@ -115,7 +115,7 @@ public class FirebaseExecutorsTest {
     assertTrue(exec1.isShutdown());
 
     // Simulate app re-init
-    ScheduledExecutorService exec2 = threadManager.getExecutor(defaultApp);
+    ExecutorService exec2 = threadManager.getExecutor(defaultApp);
     assertEquals(2, threadManager.initCount);
     assertNotSame(exec1, exec2);
 
@@ -159,13 +159,13 @@ public class FirebaseExecutorsTest {
     private int initCount = 0;
 
     @Override
-    protected ScheduledExecutorService doInit() {
+    protected ExecutorService doInit() {
       initCount++;
-      return Executors.newSingleThreadScheduledExecutor();
+      return Executors.newSingleThreadExecutor();
     }
 
     @Override
-    protected void doCleanup(ScheduledExecutorService executorService) {
+    protected void doCleanup(ExecutorService executorService) {
       executorService.shutdownNow();
     }
 

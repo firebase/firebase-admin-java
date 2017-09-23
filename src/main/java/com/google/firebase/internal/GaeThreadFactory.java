@@ -19,7 +19,7 @@ package com.google.firebase.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
@@ -35,8 +35,8 @@ public class GaeThreadFactory implements ThreadFactory {
 
   private static final Logger logger = LoggerFactory.getLogger(GaeThreadFactory.class);
 
-  public static final ScheduledExecutorService DEFAULT_EXECUTOR =
-      new GaeScheduledExecutorService("LegacyFirebaseDefault");
+  public static final ExecutorService DEFAULT_EXECUTOR =
+      new GaeExecutorService("LegacyFirebaseDefault");
   private static final String GAE_THREAD_MANAGER_CLASS = "com.google.appengine.api.ThreadManager";
   private static final GaeThreadFactory instance = new GaeThreadFactory();
   private final AtomicReference<ThreadFactoryWrapper> threadFactory = new AtomicReference<>(null);
@@ -111,7 +111,7 @@ public class GaeThreadFactory implements ThreadFactory {
     // thread factories here and discard one once we detect that we are running in an
     // automatically scaled instance.
     //
-    // Note: It's fine if multiple thread access this block at the same time.
+    // Note: It's fine if multiple threads access this block at the same time.
     try {
       try {
         threadFactory = createBackgroundFactory();

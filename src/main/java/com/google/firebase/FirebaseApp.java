@@ -32,12 +32,14 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
-import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseService;
+import com.google.firebase.internal.GaeThreadFactory;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
+import com.google.firebase.internal.RevivingScheduledExecutor;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
 import java.io.IOException;
@@ -55,7 +57,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,8 +96,9 @@ public class FirebaseApp {
 
   private final AtomicBoolean deleted = new AtomicBoolean();
   private final Map<String, FirebaseService> services = new HashMap<>();
-  private final AtomicReference<ListeningScheduledExecutorService> executorReference =
-      new AtomicReference<>();
+
+  private volatile ThreadManager.FirebaseExecutor executor;
+  private volatile ScheduledExecutorService scheduledExecutor;
 
   /**
    * Per application lock for synchronizing all internal FirebaseApp state changes.
@@ -328,10 +330,13 @@ public class FirebaseApp {
       tokenRefresher.cleanup();
 
       // Clean up and terminate the thread pool
-      ScheduledExecutorService executor = executorReference.get();
       if (executor != null) {
-        threadManager.releaseExecutor(this, executor);
-        executorReference.set(null);
+        threadManager.releaseFirebaseExecutor(this, executor);
+        executor = null;
+      }
+      if (scheduledExecutor != null) {
+        scheduledExecutor.shutdownNow();
+        scheduledExecutor = null;
       }
     }
 
@@ -349,19 +354,29 @@ public class FirebaseApp {
     checkState(!deleted.get(), "FirebaseApp was deleted %s", this);
   }
 
-  private ListeningScheduledExecutorService getExecutorService() {
-    ListeningScheduledExecutorService executor = executorReference.get();
+  private ListeningExecutorService ensureExecutorService() {
     if (executor == null) {
       synchronized (lock) {
         checkNotDeleted();
-        executor = executorReference.get();
         if (executor == null) {
-          executor = threadManager.getListeningExecutor(this);
-          executorReference.set(executor);
+          executor = threadManager.getFirebaseExecutor(this);
         }
       }
     }
-    return executor;
+    return executor.getListeningExecutor();
+  }
+
+  private ScheduledExecutorService ensureScheduledExecutorService() {
+    if (scheduledExecutor == null) {
+      synchronized (lock) {
+        checkNotDeleted();
+        if (scheduledExecutor == null) {
+          scheduledExecutor = new RevivingScheduledExecutor(threadManager.getThreadFactory(),
+              "firebase-scheduled-worker", GaeThreadFactory.isAvailable());
+        }
+      }
+    }
+    return scheduledExecutor;
   }
 
   ThreadFactory getThreadFactory() {
@@ -371,12 +386,16 @@ public class FirebaseApp {
   // TODO: Return an ApiFuture once Task API is fully removed.
   <T> Task<T> submit(Callable<T> command) {
     checkNotNull(command);
-    return Tasks.call(getExecutorService(), command);
+    return Tasks.call(ensureExecutorService(), command);
   }
 
   <T> ScheduledFuture<T> schedule(Callable<T> command, long delayMillis) {
     checkNotNull(command);
-    return getExecutorService().schedule(command, delayMillis, TimeUnit.MILLISECONDS);
+    try {
+      return ensureScheduledExecutorService().schedule(command, delayMillis, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      throw new UnsupportedOperationException("Scheduled tasks not supported", e);
+    }
   }
 
   boolean isDefaultApp() {

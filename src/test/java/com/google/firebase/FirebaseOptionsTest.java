@@ -36,7 +36,7 @@ import com.google.firebase.tasks.Task;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 
 import org.junit.Test;
@@ -60,12 +60,12 @@ public class FirebaseOptionsTest {
 
   private static final ThreadManager MOCK_THREAD_MANAGER = new ThreadManager() {
     @Override
-    protected ScheduledExecutorService getExecutor(FirebaseApp app) {
+    protected ExecutorService getExecutor(FirebaseApp app) {
       return null;
     }
 
     @Override
-    protected void releaseExecutor(FirebaseApp app, ScheduledExecutorService executor) {
+    protected void releaseExecutor(FirebaseApp app, ExecutorService executor) {
     }
 
     @Override

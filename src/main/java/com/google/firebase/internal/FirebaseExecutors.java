@@ -24,8 +24,8 @@ import com.google.firebase.ThreadManager;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
 import org.slf4j.Logger;
@@ -54,10 +54,10 @@ public class FirebaseExecutors {
   abstract static class GlobalThreadManager extends ThreadManager {
 
     private final Set<String> apps = new HashSet<>();
-    private ScheduledExecutorService executorService;
+    private ExecutorService executorService;
 
     @Override
-    protected synchronized ScheduledExecutorService getExecutor(FirebaseApp app) {
+    protected synchronized ExecutorService getExecutor(FirebaseApp app) {
       if (executorService == null) {
         executorService = doInit();
       }
@@ -67,7 +67,7 @@ public class FirebaseExecutors {
 
     @Override
     protected synchronized void releaseExecutor(
-        FirebaseApp app, ScheduledExecutorService executor) {
+        FirebaseApp app, ExecutorService executor) {
       if (apps.remove(app.getName()) && apps.isEmpty()) {
         doCleanup(executorService);
         executorService = null;
@@ -77,18 +77,18 @@ public class FirebaseExecutors {
     /**
      * Initializes the executor service. Called when the first application is initialized.
      */
-    protected abstract ScheduledExecutorService doInit();
+    protected abstract ExecutorService doInit();
 
     /**
      * Cleans up the executor service. Called when the last application is deleted.
      */
-    protected abstract void doCleanup(ScheduledExecutorService executorService);
+    protected abstract void doCleanup(ExecutorService executorService);
   }
 
   private static class DefaultThreadManager extends GlobalThreadManager {
 
     @Override
-    protected ScheduledExecutorService doInit() {
+    protected ExecutorService doInit() {
       int cores = Runtime.getRuntime().availableProcessors();
       // Create threads as daemons to ensure JVM exit when all foreground jobs are complete.
       ThreadFactory threadFactory = new ThreadFactoryBuilder()
@@ -101,7 +101,7 @@ public class FirebaseExecutors {
     }
 
     @Override
-    protected void doCleanup(ScheduledExecutorService executorService) {
+    protected void doCleanup(ExecutorService executorService) {
       logger.debug("Shutting down default executor");
       executorService.shutdownNow();
     }
@@ -115,12 +115,12 @@ public class FirebaseExecutors {
   private static class GaeThreadManager extends GlobalThreadManager {
 
     @Override
-    protected ScheduledExecutorService doInit() {
-      return new GaeScheduledExecutorService("gae-firebase-default");
+    protected ExecutorService doInit() {
+      return new GaeExecutorService("gae-firebase-default");
     }
 
     @Override
-    protected void doCleanup(ScheduledExecutorService executorService) {
+    protected void doCleanup(ExecutorService executorService) {
       executorService.shutdownNow();
     }
 
@@ -130,7 +130,7 @@ public class FirebaseExecutors {
       GaeThreadFactory threadFactory = GaeThreadFactory.getInstance();
       checkState(threadFactory.isUsingBackgroundThreads(),
           "Failed to initialize a GAE background thread factory. Background thread support "
-              + "is required to access the Realtime database from App Engine environment.");
+              + "is required to create long-lived threads.");
       return threadFactory;
     }
   }
