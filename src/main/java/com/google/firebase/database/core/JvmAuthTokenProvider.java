@@ -28,18 +28,25 @@ import com.google.firebase.database.util.GAuthToken;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Executor;
 
 public class JvmAuthTokenProvider implements AuthTokenProvider {
 
   private final GoogleCredentials credentials;
   private final Map<String, Object> authVariable;
-  private final ScheduledExecutorService executorService;
+  private final Executor executor;
 
-  JvmAuthTokenProvider(FirebaseApp firebaseApp, ScheduledExecutorService executorService) {
+  JvmAuthTokenProvider(FirebaseApp firebaseApp, Executor executor) {
+    this(firebaseApp, executor, true);
+  }
+
+  JvmAuthTokenProvider(FirebaseApp firebaseApp, Executor executor, boolean autoRefresh) {
     this.credentials = ImplFirebaseTrampolines.getCredentials(firebaseApp);
     this.authVariable = firebaseApp.getOptions().getDatabaseAuthVariableOverride();
-    this.executorService = executorService;
+    this.executor = executor;
+    if (autoRefresh) {
+      ImplFirebaseTrampolines.startTokenRefresher(firebaseApp);
+    }
   }
 
   @Override
@@ -57,7 +64,7 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
 
       AccessToken accessToken = credentials.getAccessToken();
       listener.onSuccess(wrapOAuthToken(accessToken, authVariable));
-    } catch (IOException e) {
+    } catch (Exception e) {
       listener.onError(e.toString());
     }
   }
@@ -65,7 +72,7 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
   @Override
   public void addTokenChangeListener(TokenChangeListener listener) {
     CredentialsChangedListener listenerWrapper = new TokenChangeListenerWrapper(
-        listener, executorService, authVariable);
+        listener, executor, authVariable);
     credentials.addChangeListener(listenerWrapper);
   }
 
@@ -87,15 +94,15 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
   private static class TokenChangeListenerWrapper implements CredentialsChangedListener {
 
     private final TokenChangeListener listener;
-    private final ScheduledExecutorService executorService;
+    private final Executor executor;
     private final Map<String, Object> authVariable;
 
     TokenChangeListenerWrapper(
         TokenChangeListener listener,
-        ScheduledExecutorService executorService,
+        Executor executor,
         Map<String, Object> authVariable) {
       this.listener = checkNotNull(listener, "Listener must not be null");
-      this.executorService = checkNotNull(executorService, "ExecutorService must not be null");
+      this.executor = checkNotNull(executor, "Executor must not be null");
       this.authVariable = authVariable;
     }
 
@@ -107,7 +114,7 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
 
       // Notify the TokenChangeListener on database's thread pool to make sure that
       // all database work happens on database worker threads.
-      executorService.execute(
+      executor.execute(
           new Runnable() {
             @Override
             public void run() {

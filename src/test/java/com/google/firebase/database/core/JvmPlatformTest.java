@@ -67,12 +67,12 @@ public class JvmPlatformTest {
       Context cfg = new DatabaseConfig();
       cfg.firebaseApp = app;
       cfg.freeze();
-      // EventTarget and RunLoop
-      assertEquals(2, count.get());
+      // EventTarget, RunLoop and AuthTokenProvider (token refresher)
+      assertEquals(3, count.get());
 
       cfg.getConnectionContext();
       // ConnectionContext which gets passed to all low-level socket management code.
-      assertEquals(3, count.get());
+      assertEquals(4, count.get());
     } finally {
       TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
     }

@@ -57,6 +57,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -327,7 +328,7 @@ public class FirebaseApp {
         service.destroy();
       }
       services.clear();
-      tokenRefresher.cleanup();
+      tokenRefresher.stop();
 
       // Clean up and terminate the thread pool
       if (executor != null) {
@@ -394,7 +395,16 @@ public class FirebaseApp {
     try {
       return ensureScheduledExecutorService().schedule(command, delayMillis, TimeUnit.MILLISECONDS);
     } catch (Exception e) {
+      // This may fail if the underlying ThreadFactory does not support long-lived threads.
       throw new UnsupportedOperationException("Scheduled tasks not supported", e);
+    }
+  }
+
+  void startTokenRefresher() {
+    synchronized (lock) {
+      checkNotDeleted();
+      // TODO: Provide an option to disable this altogether.
+      tokenRefresher.start();
     }
   }
 
@@ -428,52 +438,36 @@ public class FirebaseApp {
    */
   static class TokenRefresher implements CredentialsChangedListener {
 
+    private static final int STATE_READY = 0;
+    private static final int STATE_STARTED = 1;
+    private static final int STATE_STOPPED = 2;
+
     private final FirebaseApp firebaseApp;
     private final GoogleCredentials credentials;
+    private final AtomicInteger state;
+
     private Future<Void> future;
-    private boolean closed;
 
     TokenRefresher(FirebaseApp firebaseApp) {
       this.firebaseApp = checkNotNull(firebaseApp);
       this.credentials = firebaseApp.getOptions().getCredentials();
-      this.credentials.addChangeListener(this);
+      this.state = new AtomicInteger(STATE_READY);
     }
 
     @Override
     public final synchronized void onChanged(OAuth2Credentials credentials) throws IOException {
-      if (closed) {
+      if (state.get() != STATE_STARTED) {
         return;
       }
 
       AccessToken accessToken = credentials.getAccessToken();
-      long refreshDelay = accessToken.getExpirationTime().getTime()
-          - System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
+      long refreshDelay = getRefreshDelay(accessToken);
       if (refreshDelay > 0) {
         scheduleRefresh(refreshDelay);
       } else {
         logger.warn("Token expiry ({}) is less than 5 minutes in the future. Not "
             + "scheduling a proactive refresh.", accessToken.getExpirationTime());
       }
-    }
-
-    /**
-     * Schedule a forced token refresh to be executed after a specified duration.
-     *
-     * @param delayMillis Duration in milliseconds, after which the token should be forcibly
-     *     refreshed.
-     */
-    private void scheduleRefresh(final long delayMillis) {
-      cancelPrevious();
-      scheduleNext(
-          new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-              logger.debug("Refreshing OAuth2 credential");
-              credentials.refresh();
-              return null;
-            }
-          },
-          delayMillis);
     }
 
     protected void cancelPrevious() {
@@ -486,14 +480,64 @@ public class FirebaseApp {
       logger.debug("Scheduling next token refresh in {} milliseconds", delayMillis);
       try {
         future = firebaseApp.schedule(task, delayMillis);
-      } catch (UnsupportedOperationException ignored) {
+      } catch (UnsupportedOperationException e) {
         // Cannot support task scheduling in the current runtime.
+        logger.debug("Failed to schedule token refresh event", e);
       }
     }
 
-    protected synchronized void cleanup() {
+    /**
+     * Starts the TokenRefresher if not already started. Starts listening to credentials changed
+     * events, and schedules refresh events every time the OAuth2 token changes. If no active
+     * token is present, or if the available token is set to expire soon, this will also schedule
+     * a refresh event to be executed immediately.
+     *
+     * <p>This operation is idempotent. Calling it multiple times, or calling it after the
+     * refresher has been stopped has no effect.
+     */
+    final synchronized void start() {
+      if (!state.compareAndSet(STATE_READY, STATE_STARTED)) {
+        return;
+      }
+
+      credentials.addChangeListener(this);
+      AccessToken accessToken = credentials.getAccessToken();
+      long refreshDelay = 0L;
+      if (accessToken != null) {
+        refreshDelay = Math.max(getRefreshDelay(accessToken), refreshDelay);
+      }
+      // If the access token is null, or is about to expire (i.e. expires in less than 5 minutes),
+      // schedule a refresh event with 0 delay. Otherwise schedule a refresh event at the token
+      // expiry time, minus 5 minutes.
+      scheduleRefresh(refreshDelay);
+    }
+
+    final synchronized void stop() {
+      state.set(STATE_STOPPED);
       cancelPrevious();
-      closed = true;
+    }
+
+    /**
+     * Schedule a forced token refresh to be executed after a specified duration.
+     *
+     * @param delayMillis Duration in milliseconds, after which the token should be forcibly
+     *     refreshed.
+     */
+    private void scheduleRefresh(final long delayMillis) {
+      cancelPrevious();
+      scheduleNext(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          logger.debug("Refreshing OAuth2 credential");
+          credentials.refresh();
+          return null;
+        }
+      }, delayMillis);
+    }
+
+    private long getRefreshDelay(AccessToken accessToken) {
+      return accessToken.getExpirationTime().getTime() - System.currentTimeMillis()
+          - TimeUnit.MINUTES.toMillis(5);
     }
 
     static class Factory {

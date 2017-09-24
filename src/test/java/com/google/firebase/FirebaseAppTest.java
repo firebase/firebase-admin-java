@@ -332,7 +332,11 @@ public class FirebaseAppTest {
     CredentialsChangedListener listener = mock(CredentialsChangedListener.class);
     ImplFirebaseTrampolines.getCredentials(firebaseApp).addChangeListener(listener);
 
-    TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true);
+    firebaseApp.startTokenRefresher();
+
+    // Since there was no token to begin with, the refresher should refresh the credential
+    // immediately.
+    tokenRefresher.simulateDelay(0);
     verify(listener, times(1)).onChanged(Mockito.any(OAuth2Credentials.class));
 
     tokenRefresher.simulateDelay(55);
@@ -343,6 +347,37 @@ public class FirebaseAppTest {
 
     tokenRefresher.simulateDelay(35);
     verify(listener, times(3)).onChanged(Mockito.any(OAuth2Credentials.class));
+  }
+
+  @Test
+  public void testProactiveTokenRefreshWithInitialToken() throws Exception {
+    MockTokenRefresherFactory factory = new MockTokenRefresherFactory();
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp",
+        factory);
+    MockTokenRefresher tokenRefresher = factory.instance;
+    Assert.assertNotNull(tokenRefresher);
+
+    // Get the initial token
+    TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true);
+
+    CredentialsChangedListener listener = mock(CredentialsChangedListener.class);
+    ImplFirebaseTrampolines.getCredentials(firebaseApp).addChangeListener(listener);
+
+    firebaseApp.startTokenRefresher();
+
+    // Since there is already a valid token, which won't expire for another hour, the refresher
+    // should not refresh the credential at this point in time.
+    tokenRefresher.simulateDelay(0);
+    verify(listener, never()).onChanged(Mockito.any(OAuth2Credentials.class));
+
+    tokenRefresher.simulateDelay(55);
+    verify(listener, times(1)).onChanged(Mockito.any(OAuth2Credentials.class));
+
+    tokenRefresher.simulateDelay(20);
+    verify(listener, times(1)).onChanged(Mockito.any(OAuth2Credentials.class));
+
+    tokenRefresher.simulateDelay(35);
+    verify(listener, times(2)).onChanged(Mockito.any(OAuth2Credentials.class));
   }
 
   @Test(expected = IllegalArgumentException.class)

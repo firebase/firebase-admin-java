@@ -95,9 +95,8 @@ public class ThreadManagerTest {
     FirebaseApp app = FirebaseApp.initializeApp(buildOptions(threadManager));
     assertEquals(0, threadManager.events.size());
 
-    // Refreshing the token this way kicks off the proactive token refresh task, which initializes
-    // an executor to schedule the next refresh task.
-    TestOnlyImplFirebaseTrampolines.getToken(app, true);
+    // Starting the token refresher should start a long-lived thread using the ThreadFactory.
+    app.startTokenRefresher();
     assertEquals(1, threadManager.events.size());
     Event event = threadManager.events.get(0);
     assertEquals(Event.TYPE_GET_THREAD_FACTORY, event.type);
