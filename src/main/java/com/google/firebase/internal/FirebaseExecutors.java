@@ -66,8 +66,7 @@ public class FirebaseExecutors {
     }
 
     @Override
-    protected synchronized void releaseExecutor(
-        FirebaseApp app, ExecutorService executor) {
+    protected synchronized void releaseExecutor(FirebaseApp app, ExecutorService executor) {
       if (apps.remove(app.getName()) && apps.isEmpty()) {
         doCleanup(executorService);
         executorService = null;
@@ -118,7 +117,7 @@ public class FirebaseExecutors {
    *
    * <p>Auto-scaling: Creates an ExecutorService backed by the request-scoped ThreadFactory. This
    * can be used for any short-lived task, such as the ones submitted by components like
-   * FirebaseAuth. {@link #getThreadFactory()} thrown an exception, since long-lived threads
+   * FirebaseAuth. {@link #getThreadFactory()} throws an exception, since long-lived threads
    * cannot be supported. Therefore task scheduling and RTDB will not work.
    *
    * <p>Manual-scaling: Creates a single-threaded ExecutorService backed by the background
