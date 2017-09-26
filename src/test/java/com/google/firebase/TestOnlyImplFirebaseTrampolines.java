@@ -20,7 +20,6 @@ import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Provides trampolines into package-private APIs used by components of Firebase

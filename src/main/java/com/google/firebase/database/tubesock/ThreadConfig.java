@@ -20,8 +20,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.firebase.database.core.ThreadInitializer;
 
+import com.google.firebase.internal.NonNull;
 import java.util.concurrent.ThreadFactory;
 
+/**
+ * Configuration that governs how the websocket connections spawn and initialize threads
+ * for reading and writing data.
+ */
 public final class ThreadConfig {
 
   private final ThreadInitializer threadInitializer;
@@ -32,10 +37,25 @@ public final class ThreadConfig {
     this.threadFactory = checkNotNull(threadFactory);
   }
 
+  /**
+   * The {@link ThreadInitializer} implementation to be used for further configuring already
+   * created threads. In particular, this instance is used to rename the created threads, and turn
+   * them into daemons when necessary.
+   *
+   * @return a non-null {@link ThreadInitializer} instance.
+   */
+  @NonNull
   ThreadInitializer getInitializer() {
     return threadInitializer;
   }
 
+  /**
+   * The <code>ThreadFactory</code> implementation to be used for creating (spawning) new
+   * threads.
+   *
+   * @return a non-null <code>ThreadFactory</code> instance.
+   */
+  @NonNull
   ThreadFactory getThreadFactory() {
     return threadFactory;
   }

@@ -42,7 +42,7 @@ public class JvmPlatformTest {
     ThreadManager threadManager = new ThreadManager() {
       @Override
       protected ExecutorService getExecutor(@NonNull FirebaseApp app) {
-        throw new UnsupportedOperationException("Should not be called by Database code");
+        return Executors.newSingleThreadExecutor();
       }
 
       @Override

@@ -47,9 +47,11 @@ public abstract class ThreadManager {
   /**
    * Returns the main thread pool for an app. Implementations may return the same instance of
    * <code>ExecutorService</code> for multiple apps. The returned thread pool is used for
-   * short-lived tasks by all components of an app. For long-lived tasks (such as the ones
-   * started by the Realtime Database client), the SDK creates dedicated executors using the
-   * <code>ThreadFactory</code> returned by {@link #getThreadFactory()}.
+   * short-lived tasks by all components of an app.
+   *
+   * <p>For long-lived tasks (such as the ones started by the Realtime Database client), the SDK
+   * creates dedicated executors using the <code>ThreadFactory</code> returned by the
+   * {@link #getThreadFactory()} method.
    *
    * @param app A {@link FirebaseApp} instance.
    * @return A non-null {@link ExecutorService} instance.
@@ -58,9 +60,9 @@ public abstract class ThreadManager {
   protected abstract ExecutorService getExecutor(@NonNull FirebaseApp app);
 
   /**
-   * Cleans up the thread pool associated with an app. This method is invoked when an
-   * app is deleted. This is guaranteed to be called with the ExecutorService returned by
-   * {@link #getExecutor(FirebaseApp)} for the corresponding app.
+   * Cleans up the thread pool associated with an app. This method is invoked when an app
+   * is deleted. This is guaranteed to be called with the <code>ExecutorService</code> previously
+   * returned by {@link #getExecutor(FirebaseApp)} for the corresponding app.
    *
    * @param app A {@link FirebaseApp} instance.
    */
@@ -69,10 +71,13 @@ public abstract class ThreadManager {
 
   /**
    * Returns the <code>ThreadFactory</code> to be used for creating long-lived threads. This is
-   * used for the tasks started by the Realtime Database client (RunLoop, EventTarget etc.), as
-   * well as the scheduled task executor initialized by {@link FirebaseApp}. The SDK guarantees
+   * used mainly to create the long-lived worker threads for the Realtime Database client, and
+   * other scheduled (periodic) tasks started by the SDK. The SDK guarantees
    * clean termination of all the threads started via this <code>ThreadFactory</code>, upon
    * calling {@link FirebaseApp#delete()}.
+   *
+   * <p>If long-lived threads cannot be supported in the current runtime, this method may
+   * throw a RuntimeException.
    *
    * @return A non-null <code>ThreadFactory</code>.
    */

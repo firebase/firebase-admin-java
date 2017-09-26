@@ -32,7 +32,6 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.GaeThreadFactory;
@@ -94,11 +93,11 @@ public class FirebaseApp {
   private final FirebaseOptions options;
   private final TokenRefresher tokenRefresher;
   private final ThreadManager threadManager;
+  private final ThreadManager.FirebaseExecutor executor;
 
   private final AtomicBoolean deleted = new AtomicBoolean();
   private final Map<String, FirebaseService> services = new HashMap<>();
 
-  private volatile ThreadManager.FirebaseExecutor executor;
   private volatile ScheduledExecutorService scheduledExecutor;
 
   /**
@@ -113,6 +112,7 @@ public class FirebaseApp {
     this.options = checkNotNull(options);
     this.tokenRefresher = checkNotNull(factory).create(this);
     this.threadManager = options.getThreadManager();
+    this.executor = this.threadManager.getFirebaseExecutor(this);
   }
 
   /** Returns a list of all FirebaseApps. */
@@ -330,11 +330,8 @@ public class FirebaseApp {
       services.clear();
       tokenRefresher.stop();
 
-      // Clean up and terminate the thread pool
-      if (executor != null) {
-        threadManager.releaseFirebaseExecutor(this, executor);
-        executor = null;
-      }
+      // Clean up and terminate the thread pools
+      threadManager.releaseFirebaseExecutor(this, executor);
       if (scheduledExecutor != null) {
         scheduledExecutor.shutdownNow();
         scheduledExecutor = null;
@@ -353,18 +350,6 @@ public class FirebaseApp {
 
   private void checkNotDeleted() {
     checkState(!deleted.get(), "FirebaseApp was deleted %s", this);
-  }
-
-  private ListeningExecutorService ensureExecutorService() {
-    if (executor == null) {
-      synchronized (lock) {
-        checkNotDeleted();
-        if (executor == null) {
-          executor = threadManager.getFirebaseExecutor(this);
-        }
-      }
-    }
-    return executor.getListeningExecutor();
   }
 
   private ScheduledExecutorService ensureScheduledExecutorService() {
@@ -387,7 +372,7 @@ public class FirebaseApp {
   // TODO: Return an ApiFuture once Task API is fully removed.
   <T> Task<T> submit(Callable<T> command) {
     checkNotNull(command);
-    return Tasks.call(ensureExecutorService(), command);
+    return Tasks.call(executor.getListeningExecutor(), command);
   }
 
   <T> ScheduledFuture<T> schedule(Callable<T> command, long delayMillis) {
