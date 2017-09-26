@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import org.junit.After;
@@ -54,7 +55,7 @@ public class FirebaseExecutorsTest {
         .setThreadManager(threadManager)
         .build();
     FirebaseApp defaultApp = FirebaseApp.initializeApp(options);
-    assertEquals(0, threadManager.initCount);
+    assertEquals(1, threadManager.initCount);
 
     ScheduledExecutorService exec1 = threadManager.getExecutor(defaultApp);
     assertEquals(1, threadManager.initCount);
@@ -104,7 +105,7 @@ public class FirebaseExecutorsTest {
         .setThreadManager(threadManager)
         .build();
     FirebaseApp defaultApp = FirebaseApp.initializeApp(options);
-    assertEquals(0, threadManager.initCount);
+    assertEquals(1, threadManager.initCount);
 
     ScheduledExecutorService exec1 = threadManager.getExecutor(defaultApp);
     assertEquals(1, threadManager.initCount);
@@ -149,7 +150,7 @@ public class FirebaseExecutorsTest {
     try {
       ImplFirebaseTrampolines.submit(defaultApp, command);
       fail("No error thrown when submitting to deleted app");
-    } catch (IllegalStateException expected) {
+    } catch (RejectedExecutionException expected) {
       // expected
     }
   }

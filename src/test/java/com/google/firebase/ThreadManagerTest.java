@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -41,28 +42,62 @@ public class ThreadManagerTest {
   public void testBareBonesAppLifecycle() {
     MockThreadManager threadManager = new MockThreadManager();
 
-    // Initializing an app doesn't initialize any threading resources.
+    // Initializing an app should initialize the executor.
     FirebaseApp app = FirebaseApp.initializeApp(buildOptions(threadManager));
-    assertEquals(0, threadManager.events.size());
+    assertEquals(1, threadManager.events.size());
+    Event event = threadManager.events.get(0);
+    assertEquals(Event.TYPE_GET_EXECUTOR, event.type);
+    assertEquals(app, event.app);
 
-    // Since no threading resources were initialized, nothing to clean up.
+    // Deleting the app should clean up the executor.
     app.delete();
-    assertEquals(0, threadManager.events.size());
+    assertEquals(2, threadManager.events.size());
+    event = threadManager.events.get(1);
+    assertEquals(Event.TYPE_RELEASE_EXECUTOR, event.type);
+    assertEquals(app, event.app);
+  }
+
+  @Test
+  public void testBareBonesAppLifecycleWithMultipleApps() {
+    MockThreadManager threadManager = new MockThreadManager();
+
+    // Initializing an app should initialize the executor.
+    final FirebaseApp app1 = FirebaseApp.initializeApp(buildOptions(threadManager));
+    assertEquals(1, threadManager.events.size());
+    Event event = threadManager.events.get(0);
+    assertEquals(Event.TYPE_GET_EXECUTOR, event.type);
+    assertEquals(app1, event.app);
+
+    final FirebaseApp app2 = FirebaseApp.initializeApp(buildOptions(threadManager), "otherApp");
+    assertEquals(2, threadManager.events.size());
+    event = threadManager.events.get(1);
+    assertEquals(Event.TYPE_GET_EXECUTOR, event.type);
+    assertEquals(app2, event.app);
+
+    // Deleting the app should clean up the executor.
+    app1.delete();
+    assertEquals(3, threadManager.events.size());
+    event = threadManager.events.get(2);
+    assertEquals(Event.TYPE_RELEASE_EXECUTOR, event.type);
+    assertEquals(app1, event.app);
+
+    app2.delete();
+    assertEquals(4, threadManager.events.size());
+    event = threadManager.events.get(3);
+    assertEquals(Event.TYPE_RELEASE_EXECUTOR, event.type);
+    assertEquals(app2, event.app);
   }
 
   @Test
   public void testAppLifecycleWithExecutor() {
     MockThreadManager threadManager = new MockThreadManager();
 
-    // Initializing an app doesn't initialize any threading resources.
+    // Initializing an app should initialize the executor.
     FirebaseApp app = FirebaseApp.initializeApp(buildOptions(threadManager));
-    assertEquals(0, threadManager.events.size());
-
-    TestOnlyImplFirebaseTrampolines.forceThreadManagerInit(app);
     assertEquals(1, threadManager.events.size());
     Event event = threadManager.events.get(0);
     assertEquals(Event.TYPE_GET_EXECUTOR, event.type);
-    assertEquals(app, event.arguments[0]);
+    assertEquals(app, event.app);
 
     // Should not re-initialize
     TestOnlyImplFirebaseTrampolines.forceThreadManagerInit(app);
@@ -73,24 +108,24 @@ public class ThreadManagerTest {
     assertEquals(2, threadManager.events.size());
     event = threadManager.events.get(1);
     assertEquals(Event.TYPE_RELEASE_EXECUTOR, event.type);
-    assertEquals(app, event.arguments[0]);
+    assertEquals(app, event.app);
   }
 
   @Test
   public void testAppLifecycleWithTokenRefresh() {
     MockThreadManager threadManager = new MockThreadManager();
 
-    // Initializing an app doesn't initialize any threading resources.
+    // Initializing an app should initialize the executor.
     FirebaseApp app = FirebaseApp.initializeApp(buildOptions(threadManager));
-    assertEquals(0, threadManager.events.size());
+    assertEquals(1, threadManager.events.size());
+    Event event = threadManager.events.get(0);
+    assertEquals(Event.TYPE_GET_EXECUTOR, event.type);
+    assertEquals(app, event.app);
 
     // Refreshing the token this way kicks off the proactive token refresh task, which initializes
     // the executor to schedule the next refresh task.
     TestOnlyImplFirebaseTrampolines.getToken(app, true);
     assertEquals(1, threadManager.events.size());
-    Event event = threadManager.events.get(0);
-    assertEquals(Event.TYPE_GET_EXECUTOR, event.type);
-    assertEquals(app, event.arguments[0]);
 
     // Should not re-initialize
     TestOnlyImplFirebaseTrampolines.forceThreadManagerInit(app);
@@ -101,63 +136,66 @@ public class ThreadManagerTest {
     assertEquals(2, threadManager.events.size());
     event = threadManager.events.get(1);
     assertEquals(Event.TYPE_RELEASE_EXECUTOR, event.type);
-    assertEquals(app, event.arguments[0]);
+    assertEquals(app, event.app);
   }
 
   @Test
   public void testAppLifecycleWithServiceCall() {
     MockThreadManager threadManager = new MockThreadManager();
 
-    // Initializing an app doesn't initialize any threading resources.
+    // Initializing an app should initialize the executor.
     FirebaseApp app = FirebaseApp.initializeApp(buildOptions(threadManager));
-    assertEquals(0, threadManager.events.size());
+    assertEquals(1, threadManager.events.size());
+    Event event = threadManager.events.get(0);
+    assertEquals(Event.TYPE_GET_EXECUTOR, event.type);
+    assertEquals(app, event.app);
 
-    // Initializing auth should not initialize threading resources.
+    // Initializing auth should not initialize any more threading resources.
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
-    assertEquals(0, threadManager.events.size());
+    assertEquals(1, threadManager.events.size());
 
-    // Calling an async method on auth should initialize threading resources.
+    // Calling an async method on auth should not re-initialize threading resources.
     try {
       auth.verifyIdTokenAsync("foo").get();
     } catch (InterruptedException | ExecutionException ignored) {
       // ignored
     }
     assertEquals(1, threadManager.events.size());
-    Event event = threadManager.events.get(0);
-    assertEquals(Event.TYPE_GET_EXECUTOR, event.type);
-    assertEquals(app, event.arguments[0]);
 
     // Deleting app should tear down threading resources.
     app.delete();
     assertEquals(2, threadManager.events.size());
     event = threadManager.events.get(1);
     assertEquals(Event.TYPE_RELEASE_EXECUTOR, event.type);
-    assertEquals(app, event.arguments[0]);
+    assertEquals(app, event.app);
   }
 
   @Test
   public void testAppLifecycleWithMultipleServiceCalls()
       throws ExecutionException, InterruptedException {
     MockThreadManager threadManager = new MockThreadManager();
+
+    // Initializing an app should initialize the executor.
     FirebaseApp app = FirebaseApp.initializeApp(buildOptions(threadManager));
+    assertEquals(1, threadManager.events.size());
+    Event event = threadManager.events.get(0);
+    assertEquals(Event.TYPE_GET_EXECUTOR, event.type);
+    assertEquals(app, event.app);
 
-    // Initializing an app doesn't initialize any threading resources.
-    assertEquals(0, threadManager.events.size());
-
-    // Initializing auth should not initialize threading resources.
+    // Initializing auth should not re-initialize threading resources.
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
-    assertEquals(0, threadManager.events.size());
+    assertEquals(1, threadManager.events.size());
 
-    // Calling an async method on auth should initialize threading resources.
+    // Calling an async method on auth should not re-initialize threading resources.
     try {
       auth.verifyIdTokenAsync("foo").get();
     } catch (InterruptedException | ExecutionException ignored) {
       // ignored
     }
     assertEquals(1, threadManager.events.size());
-    Event event = threadManager.events.get(0);
+    event = threadManager.events.get(0);
     assertEquals(Event.TYPE_GET_EXECUTOR, event.type);
-    assertEquals(app, event.arguments[0]);
+    assertEquals(app, event.app);
 
     // Calling a method again should not re-initialize threading resources.
     try {
@@ -176,7 +214,7 @@ public class ThreadManagerTest {
     assertEquals(2, threadManager.events.size());
     event = threadManager.events.get(1);
     assertEquals(Event.TYPE_RELEASE_EXECUTOR, event.type);
-    assertEquals(app, event.arguments[0]);
+    assertEquals(app, event.app);
   }
 
   private FirebaseOptions buildOptions(ThreadManager threadManager) {
@@ -193,7 +231,7 @@ public class ThreadManagerTest {
 
     @Override
     protected ScheduledExecutorService getExecutor(@NonNull FirebaseApp app) {
-      events.add(new Event(Event.TYPE_GET_EXECUTOR, app));
+      events.add(new Event(Event.TYPE_GET_EXECUTOR, app, null));
       return Executors.newSingleThreadScheduledExecutor();
     }
 
@@ -206,7 +244,7 @@ public class ThreadManagerTest {
 
     @Override
     protected ThreadFactory getThreadFactory() {
-      events.add(new Event(Event.TYPE_GET_THREAD_FACTORY));
+      events.add(new Event(Event.TYPE_GET_THREAD_FACTORY, null, null));
       return Executors.defaultThreadFactory();
     }
   }
@@ -217,11 +255,13 @@ public class ThreadManagerTest {
     private static final int TYPE_GET_THREAD_FACTORY = 102;
 
     private final int type;
-    private final Object[] arguments;
+    private final FirebaseApp app;
+    private ScheduledExecutorService executor;
 
-    public Event(int type, Object... arguments) {
+    public Event(int type, @Nullable FirebaseApp app, @Nullable ScheduledExecutorService executor) {
       this.type = type;
-      this.arguments = arguments;
+      this.app = app;
+      this.executor = executor;
     }
   }
 }

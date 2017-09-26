@@ -66,8 +66,8 @@ public abstract class ThreadManager {
 
   /**
    * Returns the <code>ThreadFactory</code> to be used for creating any additional threads
-   * required by the SDK. This is used mainly to create the run loop, event target and web socket
-   * reader/writer threads of the Realtime Database client.
+   * required by the SDK. This is used mainly to create the long-lived worker threads for
+   * Realtime Database client.
    *
    * @return A non-null <code>ThreadFactory</code>.
    */

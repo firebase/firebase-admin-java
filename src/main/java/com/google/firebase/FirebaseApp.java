@@ -50,12 +50,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,8 +93,7 @@ public class FirebaseApp {
 
   private final AtomicBoolean deleted = new AtomicBoolean();
   private final Map<String, FirebaseService> services = new HashMap<>();
-  private final AtomicReference<ListeningScheduledExecutorService> executorReference =
-      new AtomicReference<>();
+  private final ListeningScheduledExecutorService executor;
 
   /**
    * Per application lock for synchronizing all internal FirebaseApp state changes.
@@ -110,6 +107,7 @@ public class FirebaseApp {
     this.options = checkNotNull(options);
     this.tokenRefresher = checkNotNull(factory).create(this);
     this.threadManager = options.getThreadManager();
+    this.executor = this.threadManager.getListeningExecutor(this);
   }
 
   /** Returns a list of all FirebaseApps. */
@@ -328,11 +326,7 @@ public class FirebaseApp {
       tokenRefresher.cleanup();
 
       // Clean up and terminate the thread pool
-      ScheduledExecutorService executor = executorReference.get();
-      if (executor != null) {
-        threadManager.releaseExecutor(this, executor);
-        executorReference.set(null);
-      }
+      threadManager.releaseExecutor(this, executor);
     }
 
     synchronized (appsLock) {
@@ -349,21 +343,6 @@ public class FirebaseApp {
     checkState(!deleted.get(), "FirebaseApp was deleted %s", this);
   }
 
-  private ListeningScheduledExecutorService getExecutorService() {
-    ListeningScheduledExecutorService executor = executorReference.get();
-    if (executor == null) {
-      synchronized (lock) {
-        checkNotDeleted();
-        executor = executorReference.get();
-        if (executor == null) {
-          executor = threadManager.getListeningExecutor(this);
-          executorReference.set(executor);
-        }
-      }
-    }
-    return executor;
-  }
-
   ThreadFactory getThreadFactory() {
     return threadManager.getThreadFactory();
   }
@@ -371,12 +350,12 @@ public class FirebaseApp {
   // TODO: Return an ApiFuture once Task API is fully removed.
   <T> Task<T> submit(Callable<T> command) {
     checkNotNull(command);
-    return Tasks.call(getExecutorService(), command);
+    return Tasks.call(executor, command);
   }
 
   <T> ScheduledFuture<T> schedule(Callable<T> command, long delayMillis) {
     checkNotNull(command);
-    return getExecutorService().schedule(command, delayMillis, TimeUnit.MILLISECONDS);
+    return executor.schedule(command, delayMillis, TimeUnit.MILLISECONDS);
   }
 
   boolean isDefaultApp() {
