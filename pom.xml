@@ -61,42 +61,172 @@
         <skipUTs>${skipTests}</skipUTs>
     </properties>
 
-    <distributionManagement>
-        <repository>
-            <id>cloudbees-private-release-repository</id>
-            <url>https://repository-faceit.forge.cloudbees.com/release</url>
-        </repository>
-        <snapshotRepository>
-            <id>cloudbees-private-snapshot-repository</id>
-            <url>https://repository-faceit.forge.cloudbees.com/snapshot</url>
-        </snapshotRepository>
-    </distributionManagement>
     <scm>
-        <url>scm:git:https://github.com/faceit/${project.artifactId}.git</url>
+        <connection>scm:git:https://github.com/firebase/firebase-admin-java.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/firebase/firebase-admin-java.git</developerConnection>
+        <url>http://github.com/firebase/firebase-admin-java</url>
+        <tag>HEAD</tag>
     </scm>
 
-    <pluginRepositories>
-        <pluginRepository>
-            <id>bees-plugins-snapshots</id>
-            <url>http://repository-cloudbees.forge.cloudbees.com/public-snapshot</url>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </pluginRepository>
-        <pluginRepository>
-            <id>cloudbees-public-release</id>
-            <url>http://repository-cloudbees.forge.cloudbees.com/public-release</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </pluginRepository>
-    </pluginRepositories>
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <profiles>
+        <profile>
+            <!-- Disable Doclint on Java 8 and higher -->
+            <id>disable-java8-doclint</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+            <properties>
+                <additionalparam>-Xdoclint:none</additionalparam>
+            </properties>
+        </profile>
+        <profile>
+            <id>devsite-apidocs</id>
+            <activation>
+                <property>
+                    <name>devsite.template</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <!-- Generate API docs using Doclava for the developer site -->
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>site</phase>
+                                <goals>
+                                    <goal>aggregate</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <docletArtifact>
+                                <groupId>com.google.doclava</groupId>
+                                <artifactId>doclava</artifactId>
+                                <version>1.0.6</version>
+                            </docletArtifact>
+                            <doclet>com.google.doclava.Doclava</doclet>
+                            <bootclasspath>${sun.boot.class.path}</bootclasspath>
+                            <additionalDependencies>
+                                <additionalDependency>
+                                    <groupId>com.google.errorprone</groupId>
+                                    <artifactId>error_prone_annotations</artifactId>
+                                    <version>2.0.15</version>
+                                </additionalDependency>
+                            </additionalDependencies>
+                            <additionalparam>
+                                -hdf book.path /_book.yaml
+                                -hdf project.path /_project.yaml
+                                -hdf devsite.path /docs/reference/admin/java/reference/
+                                -d ${project.build.directory}/apidocs
+                                -templatedir ${devsite.template}
+                                -toroot /docs/reference/admin/java/reference/
+                                -yaml _toc.yaml
+                                -warning 101
+                            </additionalparam>
+                            <useStandardDocletOptions>false</useStandardDocletOptions>
+                            <additionalJOption>-J-Xmx1024m</additionalJOption>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <!-- Update relative paths in generated API docs -->
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.7</version>
+                        <executions>
+                            <execution>
+                                <phase>site</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <echo message="Updating relative links in API docs" />
+                                        <replace dir="${project.build.directory}/apidocs" token="href=&quot;com" value="href=&quot;/docs/reference/admin/java/reference/com" />
+                                        <copy file="${project.build.directory}/apidocs/assets/_toc.yaml" todir="${project.build.directory}/apidocs/reference" />
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>release</id>
+            <properties>
+                <!-- Prevent executing integration tests twice during a release -->
+                <skipITs>true</skipITs>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <docletArtifact>
+                                <groupId>com.google.doclava</groupId>
+                                <artifactId>doclava</artifactId>
+                                <version>1.0.6</version>
+                            </docletArtifact>
+                            <doclet>com.google.doclava.Doclava</doclet>
+                            <bootclasspath>${sun.boot.class.path}</bootclasspath>
+                            <additionalDependencies>
+                                <additionalDependency>
+                                    <groupId>com.google.errorprone</groupId>
+                                    <artifactId>error_prone_annotations</artifactId>
+                                    <version>2.0.15</version>
+                                </additionalDependency>
+                            </additionalDependencies>
+                            <additionalparam>
+                                -warning 101
+                            </additionalparam>
+                            <useStandardDocletOptions>false</useStandardDocletOptions>
+                            <additionalJOption>-J-Xmx1024m</additionalJOption>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.2.1</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.5</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <build>
         <resources>
