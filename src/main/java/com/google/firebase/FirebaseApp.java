@@ -485,6 +485,7 @@ public class FirebaseApp {
         return;
       }
 
+      logger.debug("Starting the proactive token refresher");
       credentials.addChangeListener(this);
       AccessToken accessToken = credentials.getAccessToken();
       long refreshDelay = 0L;
@@ -498,8 +499,10 @@ public class FirebaseApp {
     }
 
     final synchronized void stop() {
-      state.set(STATE_STOPPED);
-      cancelPrevious();
+      if (state.compareAndSet(STATE_STARTED, STATE_STOPPED)) {
+        cancelPrevious();
+        logger.debug("Stopped the proactive token refresher");
+      }
     }
 
     /**
