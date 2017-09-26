@@ -481,6 +481,7 @@ public class FirebaseApp {
      * refresher has been stopped has no effect.
      */
     final synchronized void start() {
+      // Allow starting only from the ready state.
       if (!state.compareAndSet(STATE_READY, STATE_STARTED)) {
         return;
       }
@@ -499,7 +500,9 @@ public class FirebaseApp {
     }
 
     final synchronized void stop() {
-      if (state.compareAndSet(STATE_STARTED, STATE_STOPPED)) {
+      // Allow stopping from any state.
+      int previous = state.getAndSet(STATE_STOPPED);
+      if (previous == STATE_STARTED) {
         cancelPrevious();
         logger.debug("Stopped the proactive token refresher");
       }
