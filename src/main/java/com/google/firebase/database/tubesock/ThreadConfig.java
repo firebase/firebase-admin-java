@@ -29,24 +29,12 @@ import java.util.concurrent.ThreadFactory;
  */
 public final class ThreadConfig {
 
-  private final ThreadInitializer threadInitializer;
   private final ThreadFactory threadFactory;
+  private final ThreadInitializer threadInitializer;
 
-  public ThreadConfig(ThreadInitializer threadInitializer, ThreadFactory threadFactory) {
-    this.threadInitializer = checkNotNull(threadInitializer);
+  public ThreadConfig(ThreadFactory threadFactory, ThreadInitializer threadInitializer) {
     this.threadFactory = checkNotNull(threadFactory);
-  }
-
-  /**
-   * The {@link ThreadInitializer} implementation to be used for further configuring already
-   * created threads. In particular, this instance is used to rename the created threads, and turn
-   * them into daemons when necessary.
-   *
-   * @return a non-null {@link ThreadInitializer} instance.
-   */
-  @NonNull
-  ThreadInitializer getInitializer() {
-    return threadInitializer;
+    this.threadInitializer = checkNotNull(threadInitializer);
   }
 
   /**
@@ -58,5 +46,17 @@ public final class ThreadConfig {
   @NonNull
   ThreadFactory getThreadFactory() {
     return threadFactory;
+  }
+
+  /**
+   * The {@link ThreadInitializer} implementation to be used for further configuring the threads
+   * created by the <code>ThreadFactory</code>. In particular, this instance is used to rename
+   * the created threads, and turn them into daemons if necessary.
+   *
+   * @return a non-null {@link ThreadInitializer} instance.
+   */
+  @NonNull
+  ThreadInitializer getInitializer() {
+    return threadInitializer;
   }
 }

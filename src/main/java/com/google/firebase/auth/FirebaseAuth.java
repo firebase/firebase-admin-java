@@ -38,7 +38,6 @@ import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.TaskToApiFuture;
 import com.google.firebase.tasks.Task;
 
-import com.google.firebase.tasks.Tasks;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -466,7 +465,7 @@ public class FirebaseAuth {
   }
 
   private <T> Task<T> call(Callable<T> command) {
-    return ImplFirebaseTrampolines.submit(firebaseApp, command);
+    return ImplFirebaseTrampolines.submitCallable(firebaseApp, command);
   }
 
   private static final String SERVICE_ID = FirebaseAuth.class.getName();

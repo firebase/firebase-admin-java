@@ -65,7 +65,7 @@ public abstract class BaseCredential implements FirebaseCredential {
       GoogleOAuthAccessToken googleToken = new GoogleOAuthAccessToken(accessToken.getTokenValue(),
           accessToken.getExpirationTime().getTime());
       return Tasks.forResult(googleToken);
-    } catch (IOException e) {
+    } catch (Exception e) {
       return Tasks.forException(e);
     }
   }

@@ -73,7 +73,7 @@ public final class ImplFirebaseTrampolines {
     return app.getThreadFactory();
   }
 
-  public static <T> Task<T> submit(@NonNull FirebaseApp app, @NonNull Callable<T> command) {
+  public static <T> Task<T> submitCallable(@NonNull FirebaseApp app, @NonNull Callable<T> command) {
     return app.submit(command);
   }
 }

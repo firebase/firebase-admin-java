@@ -59,7 +59,7 @@ public final class TestOnlyImplFirebaseTrampolines {
   }
 
   public static void forceThreadManagerInit(FirebaseApp app) {
-    ImplFirebaseTrampolines.submit(app, new Callable<Object>() {
+    ImplFirebaseTrampolines.submitCallable(app, new Callable<Object>() {
       @Override
       public Object call() throws Exception {
         return null;
