@@ -143,7 +143,7 @@ public class FirebaseExecutorsTest {
         return null;
       }
     };
-    Tasks.await(ImplFirebaseTrampolines.submit(defaultApp, command));
+    Tasks.await(ImplFirebaseTrampolines.submitCallable(defaultApp, command));
 
     // Check for default JVM thread properties.
     assertTrue(threadInfo.get("name").toString().startsWith("firebase-default-"));
@@ -151,7 +151,7 @@ public class FirebaseExecutorsTest {
 
     defaultApp.delete();
     try {
-      ImplFirebaseTrampolines.submit(defaultApp, command);
+      ImplFirebaseTrampolines.submitCallable(defaultApp, command);
       fail("No error thrown when submitting to deleted app");
     } catch (RejectedExecutionException expected) {
       // expected

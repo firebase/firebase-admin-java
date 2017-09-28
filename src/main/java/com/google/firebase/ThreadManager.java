@@ -73,7 +73,7 @@ public abstract class ThreadManager {
    * Returns the <code>ThreadFactory</code> to be used for creating long-lived threads. This is
    * used mainly to create the long-lived worker threads for the Realtime Database client, and
    * other scheduled (periodic) tasks started by the SDK. The SDK guarantees
-   * clean termination of all the threads started via this <code>ThreadFactory</code>, upon
+   * clean termination of all threads started via this <code>ThreadFactory</code>, upon
    * calling {@link FirebaseApp#delete()}.
    *
    * <p>If long-lived threads cannot be supported in the current runtime, this method may

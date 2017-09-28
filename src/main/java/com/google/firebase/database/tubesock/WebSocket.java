@@ -47,7 +47,7 @@ import javax.net.ssl.SSLSocketFactory;
 public class WebSocket {
 
   private static final ThreadConfig DEFAULT_THREAD_CONFIG = new ThreadConfig(
-      ThreadInitializer.defaultInstance, Executors.defaultThreadFactory());
+      Executors.defaultThreadFactory(), ThreadInitializer.defaultInstance);
 
   static final byte OPCODE_NONE = 0x0;
   static final byte OPCODE_TEXT = 0x1;

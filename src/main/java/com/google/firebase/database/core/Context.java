@@ -154,8 +154,8 @@ public class Context {
   }
 
   private ThreadConfig getThreadConfig() {
-    return new ThreadConfig(getPlatform().getThreadInitializer(),
-        ImplFirebaseTrampolines.getThreadFactory(firebaseApp));
+    return new ThreadConfig(ImplFirebaseTrampolines.getThreadFactory(firebaseApp),
+        getPlatform().getThreadInitializer());
   }
 
   public ConnectionContext getConnectionContext() {

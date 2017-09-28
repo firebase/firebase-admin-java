@@ -53,23 +53,28 @@ public class FirebaseExecutors {
    */
   abstract static class GlobalThreadManager extends ThreadManager {
 
+    private final Object lock = new Object();
     private final Set<String> apps = new HashSet<>();
     private ExecutorService executorService;
 
     @Override
     protected synchronized ExecutorService getExecutor(FirebaseApp app) {
-      if (executorService == null) {
-        executorService = doInit();
+      synchronized (lock) {
+        if (executorService == null) {
+          executorService = doInit();
+        }
+        apps.add(app.getName());
+        return executorService;
       }
-      apps.add(app.getName());
-      return executorService;
     }
 
     @Override
     protected synchronized void releaseExecutor(FirebaseApp app, ExecutorService executor) {
-      if (apps.remove(app.getName()) && apps.isEmpty()) {
-        doCleanup(executorService);
-        executorService = null;
+      synchronized (lock) {
+        if (apps.remove(app.getName()) && apps.isEmpty()) {
+          doCleanup(executorService);
+          executorService = null;
+        }
       }
     }
 
