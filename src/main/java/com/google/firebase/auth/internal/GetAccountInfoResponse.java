@@ -73,6 +73,9 @@ public final class GetAccountInfoResponse {
     @Key("lastLoginAt")
     private long lastLoginAt;
 
+    @Key("customAttributes")
+    private String customClaims;
+
     public String getUid() {
       return uid;
     }
@@ -111,6 +114,10 @@ public final class GetAccountInfoResponse {
 
     public long getLastLoginAt() {
       return lastLoginAt;
+    }
+
+    public String getCustomClaims() {
+      return customClaims;
     }
   }
 

@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseInterceptor;
@@ -30,6 +31,7 @@ import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.internal.SdkUtils;
@@ -37,6 +39,7 @@ import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
 import java.util.Map;
+
 import org.junit.Test;
 
 public class FirebaseUserManagerTest {
@@ -344,8 +347,9 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testUserUpdater() {
+  public void testUserUpdater() throws IOException {
     UpdateRequest update = new UpdateRequest("test");
+    Map<String, Object> claims = ImmutableMap.<String, Object>of("admin", true, "package", "gold");
     Map<String, Object> map = update
         .setDisplayName("Display Name")
         .setPhotoUrl("http://test.com/example.png")
@@ -353,8 +357,9 @@ public class FirebaseUserManagerTest {
         .setPhoneNumber("+1234567890")
         .setEmailVerified(true)
         .setPassword("secret")
+        .setCustomClaims(claims, Utils.getDefaultJsonFactory())
         .getProperties();
-    assertEquals(7, map.size());
+    assertEquals(8, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals("Display Name", map.get("displayName"));
     assertEquals("http://test.com/example.png", map.get("photoUrl"));
@@ -362,6 +367,41 @@ public class FirebaseUserManagerTest {
     assertEquals("+1234567890", map.get("phoneNumber"));
     assertTrue((Boolean) map.get("emailVerified"));
     assertEquals("secret", map.get("password"));
+    assertEquals(Utils.getDefaultJsonFactory().toString(claims), map.get("customAttributes"));
+  }
+
+  @Test
+  public void testNullJsonFactory() {
+    UpdateRequest update = new UpdateRequest("test");
+    Map<String, Object> claims = ImmutableMap.<String, Object>of("admin", true, "package", "gold");
+    try {
+      update.setCustomClaims(claims, null);
+      fail("No error thrown for null JsonFactory");
+    } catch (Exception ignore) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testNullCustomClaims() {
+    UpdateRequest update = new UpdateRequest("test");
+    Map<String, Object> map = update
+        .setCustomClaims(null, null)
+        .getProperties();
+    assertEquals(2, map.size());
+    assertEquals(update.getUid(), map.get("localId"));
+    assertEquals("{}", map.get("customAttributes"));
+  }
+
+  @Test
+  public void testEmptyCustomClaims() {
+    UpdateRequest update = new UpdateRequest("test");
+    Map<String, Object> map = update
+        .setCustomClaims(ImmutableMap.<String, Object>of(), null)
+        .getProperties();
+    assertEquals(2, map.size());
+    assertEquals(update.getUid(), map.get("localId"));
+    assertEquals("{}", map.get("customAttributes"));
   }
 
   @Test
@@ -468,6 +508,32 @@ public class FirebaseUserManagerTest {
     }
   }
 
+  @Test
+  public void testInvalidCustomClaims() {
+    UpdateRequest update = new UpdateRequest("test");
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < 1001; i++) {
+      builder.append("a");
+    }
+    try {
+      update.setCustomClaims(ImmutableMap.<String, Object>of("key", builder.toString()),
+          Utils.getDefaultJsonFactory());
+      fail("No error thrown for large claims payload");
+    } catch (Exception ignore) {
+      // expected
+    }
+
+    for (String claim : UserRecord.RESERVED_CLAIMS) {
+      try {
+        update.setCustomClaims(ImmutableMap.<String, Object>of(claim, "value"),
+            Utils.getDefaultJsonFactory());
+        fail("No error thrown for reserved claim");
+      } catch (Exception ignore) {
+        // expected
+      }
+    }
+  }
+
   private void checkUserRecord(UserRecord userRecord) {
     assertEquals("testuser", userRecord.getUid());
     assertEquals("testuser@example.com", userRecord.getEmail());
@@ -493,6 +559,11 @@ public class FirebaseUserManagerTest {
     assertNull(provider.getEmail());
     assertEquals("+1234567890", provider.getPhoneNumber());
     assertEquals("phone", provider.getProviderId());
+
+    Map<String, Object> claims = userRecord.getCustomClaims();
+    assertEquals(2, claims.size());
+    assertTrue((boolean) claims.get("admin"));
+    assertEquals("gold", claims.get("package"));
   }
 
   private void checkRequestHeaders(TestResponseInterceptor interceptor) {

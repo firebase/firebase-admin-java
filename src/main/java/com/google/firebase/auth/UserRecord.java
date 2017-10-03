@@ -20,18 +20,21 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.api.client.json.JsonFactory;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 import com.google.firebase.internal.Nullable;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.json.JSONObject;
 
 /**
  * Contains metadata associated with a Firebase user account. Instances of this class are immutable
@@ -43,6 +46,11 @@ public class UserRecord implements UserInfo {
   private static final Map<String, String> REMOVABLE_FIELDS = ImmutableMap.of(
       "displayName", "DISPLAY_NAME",
       "photoUrl", "PHOTO_URL");
+  private static final int MAX_CLAIMS_PAYLOAD_SIZE = 1000;
+
+  static final List<String> RESERVED_CLAIMS = ImmutableList.of(
+      "amr", "at_hash", "aud", "auth_time", "azp", "cnf", "c_hash", "exp", "iat",
+      "iss", "jti", "nbf", "nonce", "sub", "firebase");
 
   private final String uid;
   private final String email;
@@ -53,6 +61,7 @@ public class UserRecord implements UserInfo {
   private final boolean disabled;
   private final ProviderUserInfo[] providers;
   private final UserMetadata userMetadata;
+  private final Map<String, Object> customClaims;
 
   UserRecord(GetAccountInfoResponse.User response) {
     checkNotNull(response, "Response must not be null");
@@ -73,6 +82,17 @@ public class UserRecord implements UserInfo {
       }
     }
     this.userMetadata = new UserMetadata(response.getCreatedAt(), response.getLastLoginAt());
+    String customClaims = response.getCustomClaims();
+    if (!Strings.isNullOrEmpty(customClaims)) {
+      Map<String, Object> parsed = new JSONObject(customClaims).toMap();
+      if (parsed.isEmpty()) {
+        this.customClaims = null;
+      } else {
+        this.customClaims = ImmutableMap.copyOf(parsed);
+      }
+    } else {
+      this.customClaims = null;
+    }
   }
 
   /**
@@ -177,6 +197,16 @@ public class UserRecord implements UserInfo {
   }
 
   /**
+   * Returns additional custom claims set on this user.
+   *
+   * @return a non-empty Map of custom claims or null.
+   */
+  @Nullable
+  public Map<String,Object> getCustomClaims() {
+    return customClaims;
+  }
+
+  /**
    * Returns a new {@link UpdateRequest}, which can be used to update the attributes
    * of this user.
    *
@@ -202,6 +232,28 @@ public class UserRecord implements UserInfo {
   private static void checkPassword(String password) {
     checkArgument(!Strings.isNullOrEmpty(password), "password cannot be null or empty");
     checkArgument(password.length() >= 6, "password must be at least 6 characters long");
+  }
+
+  private static String checkCustomClaims(
+      Map<String,Object> customClaims, JsonFactory jsonFactory) {
+    if (customClaims == null || customClaims.isEmpty()) {
+      return "{}";
+    }
+
+    checkNotNull(jsonFactory, "JsonFactory must not be null when claims are provided");
+    for (String key : customClaims.keySet()) {
+      checkArgument(!RESERVED_CLAIMS.contains(key),
+          "Claim '" + key + "' is reserved and cannot be set");
+    }
+
+    try {
+      String claimsPayload = jsonFactory.toString(customClaims);
+      checkArgument(claimsPayload.length() <= MAX_CLAIMS_PAYLOAD_SIZE,
+          "customClaims payload cannot be larger than " + MAX_CLAIMS_PAYLOAD_SIZE + " characters");
+      return claimsPayload;
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Failed to serialize custom claims into JSON", e);
+    }
   }
 
   /**
@@ -427,6 +479,18 @@ public class UserRecord implements UserInfo {
     public UpdateRequest setPassword(String password) {
       checkPassword(password);
       properties.put("password", password);
+      return this;
+    }
+
+    /**
+     * Updates the custom claims associated with this user. Calling this method with a null
+     * argument removes any custom claims from the user account.
+     *
+     * @param customClaims a Map of custom claims or null
+     * @param jsonFactory JsonFactory used to serialize claims into JSON
+     */
+    public UpdateRequest setCustomClaims(Map<String,Object> customClaims, JsonFactory jsonFactory) {
+      properties.put("customAttributes", checkCustomClaims(customClaims, jsonFactory));
       return this;
     }
 

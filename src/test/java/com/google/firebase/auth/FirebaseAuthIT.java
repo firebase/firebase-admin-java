@@ -157,17 +157,6 @@ public class FirebaseAuthIT {
     }
   }
 
-  private void checkRecreate(String uid) throws Exception {
-    try {
-      auth.createUserAsync(new CreateRequest().setUid(uid)).get();
-      fail("No error thrown for creating user with existing ID");
-    } catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.USER_CREATE_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
-    }
-  }
-
   @Test
   public void testUserLifecycle() throws Exception {
     // Create user
@@ -186,6 +175,7 @@ public class FirebaseAuthIT {
     assertTrue(userRecord.getUserMetadata().getCreationTimestamp() > 0);
     assertEquals(0, userRecord.getUserMetadata().getLastSignInTimestamp());
     assertEquals(0, userRecord.getProviderData().length);
+    assertNull(userRecord.getCustomClaims());
 
     // Update user
     String randomId = UUID.randomUUID().toString().replaceAll("-", "");
@@ -208,6 +198,7 @@ public class FirebaseAuthIT {
     assertTrue(userRecord.isEmailVerified());
     assertFalse(userRecord.isDisabled());
     assertEquals(2, userRecord.getProviderData().length);
+    assertNull(userRecord.getCustomClaims());
 
     // Get user by email
     userRecord = auth.getUserByEmailAsync(userRecord.getEmail()).get();
@@ -228,6 +219,7 @@ public class FirebaseAuthIT {
     assertTrue(userRecord.isEmailVerified());
     assertTrue(userRecord.isDisabled());
     assertEquals(1, userRecord.getProviderData().length);
+    assertNull(userRecord.getCustomClaims());
 
     // Delete user
     auth.deleteUserAsync(userRecord.getUid()).get();
@@ -238,6 +230,44 @@ public class FirebaseAuthIT {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
+    }
+  }
+
+  @Test
+  public void testCustomClaims() throws Exception {
+    UserRecord userRecord = auth.createUserAsync(new CreateRequest()).get();
+    String uid = userRecord.getUid();
+
+    try {
+      // New user should not have any claims
+      assertNull(userRecord.getCustomClaims());
+
+      Map<String, Object> expected = ImmutableMap.<String, Object>of(
+          "admin", true, "package", "gold");
+      auth.setCustomClaimsAsync(uid, expected).get();
+
+      // Should have 2 claims
+      UserRecord updatedUser = auth.getUserAsync(uid).get();
+      assertEquals(2, updatedUser.getCustomClaims().size());
+      for (Map.Entry<String, Object> entry : expected.entrySet()) {
+        assertEquals(entry.getValue(), updatedUser.getCustomClaims().get(entry.getKey()));
+      }
+
+      // User's ID token should have the custom claims
+      String customToken = auth.createCustomTokenAsync(uid).get();
+      String idToken = signInWithCustomToken(customToken);
+      FirebaseToken decoded = auth.verifyIdTokenAsync(idToken).get();
+      Map<String, Object> result = decoded.getClaims();
+      for (Map.Entry<String, Object> entry : expected.entrySet()) {
+        assertEquals(entry.getValue(), result.get(entry.getKey()));
+      }
+
+      // Should be able to remove custom claims
+      auth.setCustomClaimsAsync(uid, null).get();
+      updatedUser = auth.getUserAsync(uid).get();
+      assertNull(updatedUser.getCustomClaims());
+    } finally {
+      auth.deleteUserAsync(uid).get();
     }
   }
 
@@ -275,6 +305,17 @@ public class FirebaseAuthIT {
       return json.get("idToken").toString();
     } finally {
       response.disconnect();
+    }
+  }
+
+  private void checkRecreate(String uid) throws Exception {
+    try {
+      auth.createUserAsync(new CreateRequest().setUid(uid)).get();
+      fail("No error thrown for creating user with existing ID");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertEquals(FirebaseUserManager.USER_CREATE_ERROR,
+          ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
 

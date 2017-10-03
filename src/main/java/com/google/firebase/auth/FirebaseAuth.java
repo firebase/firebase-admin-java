@@ -417,6 +417,47 @@ public class FirebaseAuth {
   }
 
   /**
+   * Similar to {@link #setCustomClaimsAsync(String, Map)}, but returns a Task.
+   *
+   * @param uid A user ID string.
+   * @param claims A map of custom claims or null.
+   * @return A {@link Task} which will complete successfully when the user account has been updated.
+   *     If an error occurs while deleting the user account, the task fails with a
+   *     FirebaseAuthException.
+   * @throws IllegalArgumentException If the user ID string is null or empty, or the claims
+   *     payload is invalid or too large.
+   * @deprecated Use {@link #setCustomClaimsAsync(String, Map)}
+   */
+  public Task<Void> setCustomClaims(String uid, Map<String, Object> claims) {
+    checkNotDestroyed();
+    final UpdateRequest request = new UpdateRequest(uid).setCustomClaims(claims, jsonFactory);
+    return call(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        userManager.updateUser(request);
+        return null;
+      }
+    });
+  }
+
+  /**
+   * Sets the specified custom claims on an existing user account. A null claims value removes
+   * any claims currently set on the user account. The claims should serialize into a valid JSON
+   * string. The serialized claims must not be larger than 1000 characters.
+   *
+   * @param uid A user ID string.
+   * @param claims A map of custom claims or null.
+   * @return An ApiFuture which will complete successfully when the user account has been updated.
+   *     If an error occurs while deleting the user account, the future throws a
+   *     FirebaseAuthException.
+   * @throws IllegalArgumentException If the user ID string is null or empty, or the claims
+   *     payload is invalid or too large.
+   */
+  public ApiFuture<Void> setCustomClaimsAsync(String uid, Map<String, Object> claims) {
+    return new TaskToApiFuture<>(setCustomClaims(uid, claims));
+  }
+
+  /**
    * Similar to {@link #deleteUserAsync(String)}, but returns a Task.
    *
    * @param uid A user ID string.
@@ -438,19 +479,6 @@ public class FirebaseAuth {
     });
   }
 
-  private void checkNotDestroyed() {
-    synchronized (lock) {
-      checkState(!destroyed.get(), "FirebaseAuth instance is no longer alive. This happens when "
-          + "the parent FirebaseApp instance has been deleted.");
-    }
-  }
-
-  private void destroy() {
-    synchronized (lock) {
-      destroyed.set(true);
-    }
-  }
-
   /**
    * Deletes the user identified by the specified user ID.
    *
@@ -466,6 +494,19 @@ public class FirebaseAuth {
 
   private <T> Task<T> call(Callable<T> command) {
     return ImplFirebaseTrampolines.submitCallable(firebaseApp, command);
+  }
+
+  private void checkNotDestroyed() {
+    synchronized (lock) {
+      checkState(!destroyed.get(), "FirebaseAuth instance is no longer alive. This happens when "
+          + "the parent FirebaseApp instance has been deleted.");
+    }
+  }
+
+  private void destroy() {
+    synchronized (lock) {
+      destroyed.set(true);
+    }
   }
 
   private static final String SERVICE_ID = FirebaseAuth.class.getName();
