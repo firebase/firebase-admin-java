@@ -838,11 +838,12 @@ public class MapperTest {
     assertJson("{'values': ['foo']}", serialize(bean));
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test
   public void collectionsCantBeSerializedWhenSet() {
     CollectionBean bean = new CollectionBean();
     bean.values = Collections.singleton("foo");
     serialize(bean);
+    assertJson("{'values': ['foo']}", serialize(bean));
   }
 
   @Test(expected = DatabaseException.class)

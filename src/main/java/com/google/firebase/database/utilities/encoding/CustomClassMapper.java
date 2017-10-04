@@ -144,17 +144,12 @@ public class CustomClassMapper {
       }
       return result;
     } else if (obj instanceof Collection) {
-      if (obj instanceof List) {
-        List<Object> list = (List<Object>) obj;
-        List<Object> result = new ArrayList<>(list.size());
-        for (Object object : list) {
-          result.add(serialize(object));
-        }
-        return result;
-      } else {
-        throw new DatabaseException(
-            "Serializing Collections is not supported, " + "please use Lists instead");
+      Collection<Object> list = (Collection<Object>) obj;
+      List<Object> result = new ArrayList<>(list.size());
+      for (Object object : list) {
+        result.add(serialize(object));
       }
+      return result;
     } else if (obj.getClass().isArray()) {
       throw new DatabaseException(
           "Serializing Arrays is not supported, please use Lists " + "instead");
