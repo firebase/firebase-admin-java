@@ -344,6 +344,16 @@ public class FirebaseAuth {
     return new TaskToApiFuture<>(getUserByPhoneNumber(phoneNumber));
   }
 
+  public Iterable<ExportedUserRecord> listUsers() {
+    checkNotDestroyed();
+    return new UserIterable(this.userManager.newDownloader());
+  }
+
+  public Iterable<ExportedUserRecord> listUsers(int maxResults) {
+    checkNotDestroyed();
+    return new UserIterable(this.userManager.newDownloader(), maxResults);
+  }
+
   /**
    * Similar to {@link #createUserAsync(CreateRequest)}, but returns a Task.
    *

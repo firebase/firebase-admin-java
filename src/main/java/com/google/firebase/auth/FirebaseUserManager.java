@@ -37,10 +37,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
+import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 
 import com.google.firebase.internal.SdkUtils;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -56,7 +58,12 @@ class FirebaseUserManager {
   static final String USER_CREATE_ERROR = "USER_CREATE_ERROR";
   static final String USER_UPDATE_ERROR = "USER_UPDATE_ERROR";
   static final String USER_DELETE_ERROR = "USER_DELETE_ERROR";
+  static final String LIST_USERS_ERROR = "LIST_USERS_ERROR";
   static final String INTERNAL_ERROR = "INTERNAL_ERROR";
+
+  static final List<String> RESERVED_CLAIMS = ImmutableList.of(
+      "amr", "at_hash", "aud", "auth_time", "azp", "cnf", "c_hash", "exp", "iat",
+      "iss", "jti", "nbf", "nonce", "sub", "firebase");
 
   private static final String ID_TOOLKIT_URL =
       "https://www.googleapis.com/identitytoolkit/v3/relyingparty/";
@@ -187,6 +194,10 @@ class FirebaseUserManager {
     }
   }
 
+  UserAccountDownloader newDownloader() {
+    return new RestUserAccountDownloader(this);
+  }
+
   private <T> T post(String path, Object content, Class<T> clazz) throws IOException {
     checkArgument(!Strings.isNullOrEmpty(path), "path must not be null or empty");
     checkNotNull(content, "content must not be null");
@@ -203,6 +214,56 @@ class FirebaseUserManager {
       return response.parseAs(clazz);
     } finally {
       response.disconnect();
+    }
+  }
+
+  static class PageToken {
+    private final String tokenString;
+
+    PageToken(String tokenString) {
+      if (tokenString != null) {
+        checkArgument(!"".equals(tokenString), "Page token must not be empty");
+      }
+      this.tokenString = tokenString;
+    }
+
+    boolean isEndOfList() {
+      return this.tokenString == null;
+    }
+  }
+
+  interface UserAccountDownloader {
+    DownloadAccountResponse download(int maxResults, PageToken pageToken) throws Exception;
+  }
+
+  static class RestUserAccountDownloader implements UserAccountDownloader {
+    private final FirebaseUserManager userManager;
+
+    private RestUserAccountDownloader(FirebaseUserManager userManager) {
+      this.userManager = userManager;
+    }
+
+    public DownloadAccountResponse download(
+        int maxResults, PageToken pageToken) throws FirebaseAuthException {
+      ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
+          .put("maxResults", maxResults);
+      if (pageToken != null) {
+        builder.put("nextPageToken", pageToken.tokenString);
+      }
+
+      final Map<String, Object> payload = builder.build();
+      DownloadAccountResponse response;
+      try {
+        response = userManager.post("downloadAccount", payload, DownloadAccountResponse.class);
+      } catch (IOException e) {
+        throw new FirebaseAuthException(LIST_USERS_ERROR,
+            "IO error while downloading user accounts.", e);
+      }
+      if (response == null) {
+        throw new FirebaseAuthException(LIST_USERS_ERROR,
+            "Unexpected response from download user account API.");
+      }
+      return response;
     }
   }
 }

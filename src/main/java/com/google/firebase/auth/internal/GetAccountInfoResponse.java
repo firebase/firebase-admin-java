@@ -41,7 +41,7 @@ public final class GetAccountInfoResponse {
   /**
    * JSON data binding for user records.
    */
-  public static final class User {
+  public static class User {
 
     @Key("localId")
     private String uid;

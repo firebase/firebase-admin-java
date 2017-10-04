@@ -48,10 +48,6 @@ public class UserRecord implements UserInfo {
       "photoUrl", "PHOTO_URL");
   private static final int MAX_CLAIMS_PAYLOAD_SIZE = 1000;
 
-  static final List<String> RESERVED_CLAIMS = ImmutableList.of(
-      "amr", "at_hash", "aud", "auth_time", "azp", "cnf", "c_hash", "exp", "iat",
-      "iss", "jti", "nbf", "nonce", "sub", "firebase");
-
   private final String uid;
   private final String email;
   private final String phoneNumber;
@@ -242,7 +238,7 @@ public class UserRecord implements UserInfo {
 
     checkNotNull(jsonFactory, "JsonFactory must not be null when claims are provided");
     for (String key : customClaims.keySet()) {
-      checkArgument(!RESERVED_CLAIMS.contains(key),
+      checkArgument(!FirebaseUserManager.RESERVED_CLAIMS.contains(key),
           "Claim '" + key + "' is reserved and cannot be set");
     }
 
