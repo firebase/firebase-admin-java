@@ -58,7 +58,7 @@ public class FirebaseExecutors {
     private ExecutorService executorService;
 
     @Override
-    protected synchronized ExecutorService getExecutor(FirebaseApp app) {
+    protected ExecutorService getExecutor(FirebaseApp app) {
       synchronized (lock) {
         if (executorService == null) {
           executorService = doInit();
@@ -69,7 +69,7 @@ public class FirebaseExecutors {
     }
 
     @Override
-    protected synchronized void releaseExecutor(FirebaseApp app, ExecutorService executor) {
+    protected void releaseExecutor(FirebaseApp app, ExecutorService executor) {
       synchronized (lock) {
         if (apps.remove(app.getName()) && apps.isEmpty()) {
           doCleanup(executorService);
@@ -93,15 +93,13 @@ public class FirebaseExecutors {
 
     @Override
     protected ExecutorService doInit() {
-      int cores = Runtime.getRuntime().availableProcessors();
       // Create threads as daemons to ensure JVM exit when all foreground jobs are complete.
       ThreadFactory threadFactory = new ThreadFactoryBuilder()
           .setNameFormat("firebase-default-%d")
           .setDaemon(true)
           .setThreadFactory(getThreadFactory())
           .build();
-      logger.debug("Initializing default executor with {} max threads", cores);
-      return Executors.newScheduledThreadPool(cores, threadFactory);
+      return Executors.newCachedThreadPool(threadFactory);
     }
 
     @Override
