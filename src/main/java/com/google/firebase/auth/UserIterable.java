@@ -20,10 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.auth.FirebaseUserManager.PageToken;
-import com.google.firebase.auth.FirebaseUserManager.UserAccountDownloader;
-import com.google.firebase.auth.internal.DownloadAccountResponse;
-import com.google.firebase.auth.internal.DownloadAccountResponse.ExportedUser;
 import com.google.firebase.internal.NonNull;
 import java.util.Iterator;
 import java.util.List;
@@ -35,11 +31,11 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
 
   private final Iterator<ExportedUserRecord> iterator;
 
-  UserIterable(@NonNull UserAccountDownloader downloader) {
+  UserIterable(@NonNull UserFetcher downloader) {
     this.iterator = new UserIterator(downloader, MAX_LIST_USERS_RESULTS);
   }
 
-  UserIterable(@NonNull UserAccountDownloader downloader, int maxResults) {
+  UserIterable(@NonNull UserFetcher downloader, int maxResults) {
     this.iterator = new UserIterator(downloader, maxResults);
   }
 
@@ -50,12 +46,12 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
 
   private static class UserBatchIterator implements Iterator<List<ExportedUserRecord>> {
 
-    private final UserAccountDownloader downloader;
+    private final UserFetcher fetcher;
     private final int maxResults;
-    private PageToken pageToken;
+    private UserFetcher.FetchResult fetchResult;
 
-    UserBatchIterator(UserAccountDownloader downloader, int maxResults) {
-      this.downloader = checkNotNull(downloader, "user downloader must not be null");
+    private UserBatchIterator(UserFetcher fetcher, int maxResults) {
+      this.fetcher = checkNotNull(fetcher, "user fetcher must not be null");
       checkArgument(maxResults > 0 && maxResults <= MAX_LIST_USERS_RESULTS,
           "max results must be a non-zero positive value which must not exceed "
               + MAX_LIST_USERS_RESULTS);
@@ -64,7 +60,7 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
 
     @Override
     public boolean hasNext() {
-      return pageToken == null || !pageToken.isEndOfList();
+      return fetchResult == null || !fetchResult.isEndOfList();
     }
 
     @Override
@@ -72,14 +68,10 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
+      String pageToken = fetchResult != null ? fetchResult.getNextPageToken() : null;
       try {
-        DownloadAccountResponse response = downloader.download(maxResults, pageToken);
-        this.pageToken = new PageToken(response.getPageToken());
-        ImmutableList.Builder<ExportedUserRecord> builder = ImmutableList.builder();
-        for (ExportedUser user : response.getUsers()) {
-          builder.add(new ExportedUserRecord(user));
-        }
-        return builder.build();
+        fetchResult = fetcher.fetch(maxResults, pageToken);
+        return fetchResult.getUsers();
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -97,7 +89,7 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
     private List<ExportedUserRecord> currentBatch = ImmutableList.of();
     private int index = 0;
 
-    UserIterator(UserAccountDownloader downloader, int maxResults) {
+    private UserIterator(UserFetcher downloader, int maxResults) {
       this.batchIterator = new UserBatchIterator(downloader, maxResults);
     }
 

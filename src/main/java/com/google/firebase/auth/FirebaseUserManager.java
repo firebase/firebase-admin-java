@@ -194,8 +194,8 @@ class FirebaseUserManager {
     }
   }
 
-  UserAccountDownloader newDownloader() {
-    return new RestUserAccountDownloader(this);
+  UserFetcher newFetcher() {
+    return new IdToolKitUserFetcher(this);
   }
 
   private <T> T post(String path, Object content, Class<T> clazz) throws IOException {
@@ -217,38 +217,20 @@ class FirebaseUserManager {
     }
   }
 
-  static class PageToken {
-    private final String tokenString;
+  static class IdToolKitUserFetcher implements UserFetcher {
 
-    PageToken(String tokenString) {
-      if (tokenString != null) {
-        checkArgument(!"".equals(tokenString), "Page token must not be empty");
-      }
-      this.tokenString = tokenString;
-    }
-
-    boolean isEndOfList() {
-      return this.tokenString == null;
-    }
-  }
-
-  interface UserAccountDownloader {
-    DownloadAccountResponse download(int maxResults, PageToken pageToken) throws Exception;
-  }
-
-  static class RestUserAccountDownloader implements UserAccountDownloader {
     private final FirebaseUserManager userManager;
 
-    private RestUserAccountDownloader(FirebaseUserManager userManager) {
-      this.userManager = userManager;
+    private IdToolKitUserFetcher(FirebaseUserManager userManager) {
+      this.userManager = checkNotNull(userManager);
     }
 
-    public DownloadAccountResponse download(
-        int maxResults, PageToken pageToken) throws FirebaseAuthException {
+    @Override
+    public FetchResult fetch(int maxResults, String pageToken) throws Exception {
       ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
           .put("maxResults", maxResults);
       if (pageToken != null) {
-        builder.put("nextPageToken", pageToken.tokenString);
+        builder.put("nextPageToken", pageToken);
       }
 
       final Map<String, Object> payload = builder.build();
@@ -263,7 +245,12 @@ class FirebaseUserManager {
         throw new FirebaseAuthException(LIST_USERS_ERROR,
             "Unexpected response from download user account API.");
       }
-      return response;
+
+      ImmutableList.Builder<ExportedUserRecord> users = ImmutableList.builder();
+      for (DownloadAccountResponse.ExportedUser user : response.getUsers()) {
+        users.add(new ExportedUserRecord(user));
+      }
+      return new FetchResult(users.build(), response.getPageToken());
     }
   }
 }

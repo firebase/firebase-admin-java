@@ -23,16 +23,9 @@ import static org.junit.Assert.fail;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.firebase.auth.FirebaseUserManager.PageToken;
-import com.google.firebase.auth.FirebaseUserManager.UserAccountDownloader;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import org.junit.Test;
 
@@ -40,13 +33,10 @@ public class UserIterableTest {
 
   @Test
   public void testListUsers() throws IOException {
-    DownloadAccountResponse response = parse(
-        ImmutableList.<Object>of(
-            ImmutableMap.of("localId", "user1"),
-            ImmutableMap.of("localId", "user2"),
-            ImmutableMap.of("localId", "user3")),
+    UserFetcher.FetchResult result = new UserFetcher.FetchResult(
+        ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
         null);
-    TestUserDownloader downloader = new TestUserDownloader(response);
+    TestUserFetcher downloader = new TestUserFetcher(result);
 
     int iterations = 0;
     UserIterable iterable = new UserIterable(downloader);
@@ -64,27 +54,21 @@ public class UserIterableTest {
   }
 
   @Test
-  public void testListUsersIteratorPagedResponse() throws IOException {
-    DownloadAccountResponse response = parse(
-        ImmutableList.<Object>of(
-            ImmutableMap.of("localId", "user1"),
-            ImmutableMap.of("localId", "user2"),
-            ImmutableMap.of("localId", "user3")),
+  public void testListUsersPagedIterator() throws IOException {
+    UserFetcher.FetchResult result = new UserFetcher.FetchResult(
+        ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
         "token");
-    TestUserDownloader downloader = new TestUserDownloader(response);
+    TestUserFetcher downloader = new TestUserFetcher(result);
     Iterator<ExportedUserRecord> users = new UserIterable(downloader).iterator();
     for (int i = 1; i <= 3; i++) {
       assertEquals("user" + i, users.next().getUid());
     }
     assertEquals(1, downloader.calls);
 
-    response = parse(
-        ImmutableList.<Object>of(
-            ImmutableMap.of("localId", "user4"),
-            ImmutableMap.of("localId", "user5"),
-            ImmutableMap.of("localId", "user6")),
+    result = new UserFetcher.FetchResult(
+        ImmutableList.of(newUser("user4"), newUser("user5"), newUser("user6")),
         null);
-    downloader.response = response;
+    downloader.result = result;
     for (int i = 4; i <= 6; i++) {
       assertEquals("user" + i, users.next().getUid());
     }
@@ -99,14 +83,11 @@ public class UserIterableTest {
   }
 
   @Test
-  public void testListUsersIterablePagedResponse() throws IOException {
-    DownloadAccountResponse response = parse(
-        ImmutableList.<Object>of(
-            ImmutableMap.of("localId", "user1"),
-            ImmutableMap.of("localId", "user2"),
-            ImmutableMap.of("localId", "user3")),
+  public void testListUsersPagedIterable() throws IOException {
+    UserFetcher.FetchResult result = new UserFetcher.FetchResult(
+        ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
         "token");
-    TestUserDownloader downloader = new TestUserDownloader(response);
+    TestUserFetcher downloader = new TestUserFetcher(result);
     Iterable<ExportedUserRecord> users = new UserIterable(downloader);
     int iterations = 0;
     for (ExportedUserRecord user : users) {
@@ -118,13 +99,10 @@ public class UserIterableTest {
     }
     assertEquals(1, downloader.calls);
 
-    response = parse(
-        ImmutableList.<Object>of(
-            ImmutableMap.of("localId", "user4"),
-            ImmutableMap.of("localId", "user5"),
-            ImmutableMap.of("localId", "user6")),
+    result = new UserFetcher.FetchResult(
+        ImmutableList.of(newUser("user4"), newUser("user5"), newUser("user6")),
         null);
-    downloader.response = response;
+    downloader.result = result;
     for (ExportedUserRecord user : users) {
       iterations++;
       assertEquals("user" + iterations, user.getUid());
@@ -133,31 +111,27 @@ public class UserIterableTest {
     assertEquals(6, iterations);
   }
 
-  private DownloadAccountResponse parse(List<Object> users, String pageToken) throws IOException {
-    Map<String, Object> data = new HashMap<>();
-    data.put("users", users);
-    if (pageToken != null) {
-      data.put("nextPageToken", pageToken);
-    }
+  private static ExportedUserRecord newUser(String uid) throws IOException {
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    String json = jsonFactory.toString(data);
-    return jsonFactory.fromInputStream(new ByteArrayInputStream(json.getBytes()),
-        DownloadAccountResponse.class);
+    DownloadAccountResponse.ExportedUser parsed = jsonFactory.fromString(
+        String.format("{\"localId\":\"%s\"}", uid),
+        DownloadAccountResponse.ExportedUser.class);
+    return new ExportedUserRecord(parsed);
   }
 
-  private static class TestUserDownloader implements UserAccountDownloader {
+  private static class TestUserFetcher implements UserFetcher {
 
-    private DownloadAccountResponse response;
+    private FetchResult result;
     private int calls = 0;
 
-    TestUserDownloader(DownloadAccountResponse response) {
-      this.response = response;
+    TestUserFetcher(FetchResult result) {
+      this.result = result;
     }
 
     @Override
-    public DownloadAccountResponse download(int maxResults, PageToken pageToken) throws Exception {
-      this.calls++;
-      return response;
+    public FetchResult fetch(int maxResults, String pageToken) throws Exception {
+      calls++;
+      return result;
     }
   }
 }

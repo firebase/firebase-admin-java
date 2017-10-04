@@ -34,11 +34,8 @@ import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.firebase.auth.FirebaseUserManager.PageToken;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
-import com.google.firebase.auth.internal.DownloadAccountResponse;
-import com.google.firebase.auth.internal.DownloadAccountResponse.ExportedUser;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.TestUtils;
 
@@ -126,15 +123,14 @@ public class FirebaseUserManagerTest {
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     userManager.setInterceptor(interceptor);
-    DownloadAccountResponse download = userManager.newDownloader().download(999, null);
+    UserFetcher.FetchResult download = userManager.newFetcher().fetch(999, null);
     assertEquals(2, download.getUsers().size());
-    for (ExportedUser user : download.getUsers()) {
-      ExportedUserRecord userRecord = new ExportedUserRecord(user);
+    for (ExportedUserRecord userRecord : download.getUsers()) {
       checkUserRecord(userRecord);
       assertEquals("passwordHash", userRecord.getPasswordHash());
       assertEquals("passwordSalt", userRecord.getPasswordSalt());
     }
-    assertNull(download.getPageToken());
+    assertNull(download.getNextPageToken());
     checkRequestHeaders(interceptor);
 
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
@@ -155,16 +151,14 @@ public class FirebaseUserManagerTest {
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     userManager.setInterceptor(interceptor);
-    DownloadAccountResponse download = userManager.newDownloader().download(
-        999, new PageToken("token"));
+    UserFetcher.FetchResult download = userManager.newFetcher().fetch(999, "token");
     assertEquals(2, download.getUsers().size());
-    for (ExportedUser user : download.getUsers()) {
-      ExportedUserRecord userRecord = new ExportedUserRecord(user);
+    for (ExportedUserRecord userRecord : download.getUsers()) {
       checkUserRecord(userRecord);
       assertEquals("passwordHash", userRecord.getPasswordHash());
       assertEquals("passwordSalt", userRecord.getPasswordSalt());
     }
-    assertNull(download.getPageToken());
+    assertNull(download.getNextPageToken());
     checkRequestHeaders(interceptor);
 
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();

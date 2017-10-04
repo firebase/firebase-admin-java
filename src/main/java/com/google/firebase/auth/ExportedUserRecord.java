@@ -23,7 +23,7 @@ public class ExportedUserRecord extends UserRecord {
   private final String passwordHash;
   private final String passwordSalt;
 
-  public ExportedUserRecord(ExportedUser response) {
+  ExportedUserRecord(ExportedUser response) {
     super(response);
     this.passwordHash = response.getPasswordHash();
     this.passwordSalt = response.getPasswordSalt();

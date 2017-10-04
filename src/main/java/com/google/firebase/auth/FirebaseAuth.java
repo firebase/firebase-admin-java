@@ -346,12 +346,12 @@ public class FirebaseAuth {
 
   public Iterable<ExportedUserRecord> listUsers() {
     checkNotDestroyed();
-    return new UserIterable(this.userManager.newDownloader());
+    return new UserIterable(this.userManager.newFetcher());
   }
 
   public Iterable<ExportedUserRecord> listUsers(int maxResults) {
     checkNotDestroyed();
-    return new UserIterable(this.userManager.newDownloader(), maxResults);
+    return new UserIterable(this.userManager.newFetcher(), maxResults);
   }
 
   /**
