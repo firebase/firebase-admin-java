@@ -20,22 +20,18 @@ import com.google.api.client.util.Key;
 import com.google.firebase.auth.internal.GetAccountInfoResponse.User;
 import java.util.List;
 
+/**
+ * JSON data binding for downloadAccountResponse messages sent by Google identity toolkit service.
+ */
 public class DownloadAccountResponse {
 
-  @Key("kind")
-  private String kind;
-
   @Key("users")
-  private List<ExportedUser> users;
+  private List<User> users;
 
   @Key("nextPageToken")
   private String pageToken;
 
-  public String getKind() {
-    return kind;
-  }
-
-  public List<ExportedUser> getUsers() {
+  public List<User> getUsers() {
     return users;
   }
 
@@ -43,7 +39,10 @@ public class DownloadAccountResponse {
     return pageToken;
   }
 
-  public static final class ExportedUser extends User {
+  /**
+   * JSON data binding for exported user records.
+   */
+  public static final class User extends GetAccountInfoResponse.User {
 
     @Key("passwordHash")
     private String passwordHash;
@@ -58,6 +57,5 @@ public class DownloadAccountResponse {
     public String getPasswordSalt() {
       return passwordSalt;
     }
-
   }
 }

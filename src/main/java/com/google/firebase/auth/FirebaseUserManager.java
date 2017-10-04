@@ -217,6 +217,9 @@ class FirebaseUserManager {
     }
   }
 
+  /**
+   * A {@link UserSource} that fetches user account information from the ID Toolkit REST API.
+   */
   static class IdToolKitUserSource implements UserSource {
 
     private final FirebaseUserManager userManager;
@@ -247,8 +250,10 @@ class FirebaseUserManager {
       }
 
       ImmutableList.Builder<ExportedUserRecord> users = ImmutableList.builder();
-      for (DownloadAccountResponse.ExportedUser user : response.getUsers()) {
-        users.add(new ExportedUserRecord(user));
+      if (response.getUsers() != null) {
+        for (DownloadAccountResponse.User user : response.getUsers()) {
+          users.add(new ExportedUserRecord(user));
+        }
       }
       return new FetchResult(users.build(), response.getPageToken());
     }

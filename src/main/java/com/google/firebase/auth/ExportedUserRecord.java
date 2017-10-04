@@ -16,23 +16,30 @@
 
 package com.google.firebase.auth;
 
-import com.google.firebase.auth.internal.DownloadAccountResponse.ExportedUser;
+import com.google.firebase.auth.internal.DownloadAccountResponse.User;
+import com.google.firebase.internal.Nullable;
 
+/**
+ * Contains metadata associated with a Firebase user account, along with password hash and salt.
+ * Instances of this class are immutable and thread safe.
+ */
 public class ExportedUserRecord extends UserRecord {
 
   private final String passwordHash;
   private final String passwordSalt;
 
-  ExportedUserRecord(ExportedUser response) {
+  ExportedUserRecord(User response) {
     super(response);
     this.passwordHash = response.getPasswordHash();
     this.passwordSalt = response.getPasswordSalt();
   }
 
+  @Nullable
   public String getPasswordHash() {
     return passwordHash;
   }
 
+  @Nullable
   public String getPasswordSalt() {
     return passwordSalt;
   }

@@ -24,7 +24,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.firebase.auth.internal.GetAccountInfoResponse;
+import com.google.firebase.auth.internal.GetAccountInfoResponse.User;
 import com.google.firebase.internal.Nullable;
 
 import java.io.IOException;
@@ -60,7 +60,7 @@ public class UserRecord implements UserInfo {
   private final UserMetadata userMetadata;
   private final Map<String, Object> customClaims;
 
-  UserRecord(GetAccountInfoResponse.User response) {
+  UserRecord(User response) {
     checkNotNull(response, "Response must not be null");
     checkArgument(!Strings.isNullOrEmpty(response.getUid()), "uid must not be null or empty");
     this.uid = response.getUid();

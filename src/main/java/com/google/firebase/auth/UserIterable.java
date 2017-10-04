@@ -25,6 +25,23 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+/**
+ * An {@code Iterable} that enables iterating over the user accounts of a Firebase project. It can
+ * be used to obtain an {@code Iterator} over the user accounts. Or it can be used directly as
+ * the target of a foreach loop.
+ *
+ * <p>The {@code maxResults} parameter governs the maximum number of user accounts an iterator is
+ * allowed to keep in memory during iteration. It also controls the number of user accounts to
+ * be retrieved in a single RPC call. The returned iterators transparently page through batches
+ * of user accounts. No RPC calls are made until an iterator is used (i.e. {@code hasNext()}
+ * method is called).
+ *
+ * <p>This {@code Iterable} is stateless. That is, its {@link #iterator()} method always returns
+ * a new {@code Iterator} instance, which can be used to cycle through user accounts from the
+ * start. The iterators themselves are stateful. This means, if the client code uses an iterator
+ * for a while, but breaks out of the iteration before cycling through all user accounts, the
+ * same iterator instance can be used to resume iterating from where it left off.
+ */
 public class UserIterable implements Iterable<ExportedUserRecord> {
 
   static final int MAX_LIST_USERS_RESULTS = 1000;
@@ -63,6 +80,9 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
     }
   }
 
+  /**
+   * An {@code Iterator} that cycles through batches of user accounts.
+   */
   private static class UserBatchIterator implements Iterator<List<ExportedUserRecord>> {
 
     private final UserSource source;
@@ -99,6 +119,12 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
     }
   }
 
+  /**
+   * An {@code Iterator} that cycles through user accounts, one at a time. This uses
+   * {@link UserBatchIterator} under the hood to cycle through batches of users. It buffers the
+   * last retrieved batch of user accounts in memory. The {@code maxResults} parameter is an
+   * upper bound on the batch size.
+   */
   private static class UserIterator implements Iterator<ExportedUserRecord> {
 
     private final Iterator<List<ExportedUserRecord>> batchIterator;

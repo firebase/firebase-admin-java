@@ -327,9 +327,8 @@ public class UserIterableTest {
 
   private static ExportedUserRecord newUser(String uid) throws IOException {
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    DownloadAccountResponse.ExportedUser parsed = jsonFactory.fromString(
-        String.format("{\"localId\":\"%s\"}", uid),
-        DownloadAccountResponse.ExportedUser.class);
+    DownloadAccountResponse.User parsed = jsonFactory.fromString(
+        String.format("{\"localId\":\"%s\"}", uid), DownloadAccountResponse.User.class);
     return new ExportedUserRecord(parsed);
   }
 

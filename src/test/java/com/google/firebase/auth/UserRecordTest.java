@@ -9,6 +9,7 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 
 import java.io.ByteArrayInputStream;
@@ -30,7 +31,7 @@ public class UserRecordTest {
   public void testNoUid() throws IOException {
     String json = JSON_FACTORY.toString(ImmutableMap.of());
     try {
-      parse(json);
+      parseUser(json);
       fail("No error thrown for response with no UID");
     } catch (IllegalArgumentException ignore) {
       // expected
@@ -40,7 +41,7 @@ public class UserRecordTest {
   @Test
   public void testUserIdOnly() throws IOException {
     String json = JSON_FACTORY.toString(ImmutableMap.of("localId", "user"));
-    UserRecord userRecord = parse(json);
+    UserRecord userRecord = parseUser(json);
     assertEquals("user", userRecord.getUid());
     assertNull(userRecord.getEmail());
     assertNull(userRecord.getPhoneNumber());
@@ -64,7 +65,7 @@ public class UserRecordTest {
         )
     );
     String json = JSON_FACTORY.toString(resp);
-    UserRecord userRecord = parse(json);
+    UserRecord userRecord = parseUser(json);
     assertEquals("user", userRecord.getUid());
     assertEquals(2, userRecord.getProviderData().length);
     for (UserInfo provider : userRecord.getProviderData()) {
@@ -93,7 +94,7 @@ public class UserRecordTest {
             )
     );
     String json = JSON_FACTORY.toString(resp);
-    UserRecord userRecord = parse(json);
+    UserRecord userRecord = parseUser(json);
     assertEquals("user", userRecord.getUid());
     assertEquals(1, userRecord.getProviderData().length);
     for (UserInfo provider : userRecord.getProviderData()) {
@@ -114,7 +115,7 @@ public class UserRecordTest {
         "lastLoginAt", "20"
     );
     String json = JSON_FACTORY.toString(resp);
-    UserRecord userRecord = parse(json);
+    UserRecord userRecord = parseUser(json);
     assertEquals("user", userRecord.getUid());
     assertEquals(10L, userRecord.getUserMetadata().getCreationTimestamp());
     assertEquals(20L, userRecord.getUserMetadata().getLastSignInTimestamp());
@@ -127,7 +128,7 @@ public class UserRecordTest {
         "customAttributes", "{\"foo\": \"bar\"}"
     );
     String json = JSON_FACTORY.toString(resp);
-    UserRecord userRecord = parse(json);
+    UserRecord userRecord = parseUser(json);
     assertEquals("user", userRecord.getUid());
     assertEquals(1, userRecord.getCustomClaims().size());
     assertEquals("bar", userRecord.getCustomClaims().get("foo"));
@@ -140,15 +141,57 @@ public class UserRecordTest {
         "customAttributes", "{}"
     );
     String json = JSON_FACTORY.toString(resp);
-    UserRecord userRecord = parse(json);
+    UserRecord userRecord = parseUser(json);
     assertEquals("user", userRecord.getUid());
     assertNull(userRecord.getCustomClaims());
   }
 
-  private UserRecord parse(String json) throws IOException {
+  @Test
+  public void testExportedUserUidOnly() throws IOException {
+    ImmutableMap<String, Object> resp = ImmutableMap.<String, Object>of("localId", "user");
+    String json = JSON_FACTORY.toString(resp);
+    ExportedUserRecord userRecord = parseExportedUser(json);
+    assertEquals("user", userRecord.getUid());
+    assertNull(userRecord.getEmail());
+    assertNull(userRecord.getPhoneNumber());
+    assertNull(userRecord.getPhotoUrl());
+    assertNull(userRecord.getDisplayName());
+    assertEquals(0L, userRecord.getUserMetadata().getCreationTimestamp());
+    assertEquals(0L, userRecord.getUserMetadata().getLastSignInTimestamp());
+    assertNull(userRecord.getCustomClaims());
+    assertFalse(userRecord.isDisabled());
+    assertFalse(userRecord.isEmailVerified());
+    assertEquals(0, userRecord.getProviderData().length);
+    assertNull(userRecord.getPasswordHash());
+    assertNull(userRecord.getPasswordSalt());
+  }
+
+  @Test
+  public void testPasswordInfo() throws IOException {
+    ImmutableMap<String, Object> resp = ImmutableMap.<String, Object>of(
+        "localId", "user",
+        "passwordHash", "secret",
+        "salt", "pepper"
+    );
+    String json = JSON_FACTORY.toString(resp);
+    ExportedUserRecord userRecord = parseExportedUser(json);
+    assertEquals("user", userRecord.getUid());
+    assertEquals("secret", userRecord.getPasswordHash());
+    assertEquals("pepper", userRecord.getPasswordSalt());
+  }
+
+  private UserRecord parseUser(String json) throws IOException {
     InputStream stream = new ByteArrayInputStream(json.getBytes(Charset.defaultCharset()));
     GetAccountInfoResponse.User user = JSON_FACTORY.createJsonObjectParser()
         .parseAndClose(stream, Charset.defaultCharset(), GetAccountInfoResponse.User.class);
     return new UserRecord(user);
+  }
+
+  private ExportedUserRecord parseExportedUser(String json) throws IOException {
+    InputStream stream = new ByteArrayInputStream(json.getBytes(Charset.defaultCharset()));
+    DownloadAccountResponse.User user = JSON_FACTORY.createJsonObjectParser()
+        .parseAndClose(stream, Charset.defaultCharset(),
+            DownloadAccountResponse.User.class);
+    return new ExportedUserRecord(user);
   }
 }

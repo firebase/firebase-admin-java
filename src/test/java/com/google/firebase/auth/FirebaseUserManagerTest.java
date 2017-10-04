@@ -114,7 +114,7 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testDownloadUsers() throws Exception {
+  public void testListUsers() throws Exception {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     response.setContent(TestUtils.loadResource("listUsers.json"));
     MockHttpTransport transport = new MockHttpTransport.Builder()
@@ -167,6 +167,22 @@ public class FirebaseUserManagerTest {
     GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
     assertEquals(new BigDecimal(999), parsed.get("maxResults"));
     assertEquals("token", parsed.get("nextPageToken"));
+  }
+
+  @Test
+  public void testListZeroUsers() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setContent("{}");
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    userManager.setInterceptor(interceptor);
+    UserSource.FetchResult download = userManager.newUserSource().fetch(999, null);
+    assertEquals(0, download.getUsers().size());
+    assertNull(download.getNextPageToken());
+    checkRequestHeaders(interceptor);
   }
 
   @Test
