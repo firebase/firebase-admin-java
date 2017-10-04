@@ -406,7 +406,7 @@ public class FirebaseAuth {
     return call(new Callable<UserRecord>() {
       @Override
       public UserRecord call() throws Exception {
-        userManager.updateUser(request);
+        userManager.updateUser(request, jsonFactory);
         return userManager.getUserById(request.getUid());
       }
     });
@@ -440,11 +440,11 @@ public class FirebaseAuth {
    */
   public Task<Void> setCustomClaims(String uid, Map<String, Object> claims) {
     checkNotDestroyed();
-    final UpdateRequest request = new UpdateRequest(uid).setCustomClaims(claims, jsonFactory);
+    final UpdateRequest request = new UpdateRequest(uid).setCustomClaims(claims);
     return call(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        userManager.updateUser(request);
+        userManager.updateUser(request, jsonFactory);
         return null;
       }
     });

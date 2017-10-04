@@ -164,10 +164,10 @@ class FirebaseUserManager {
     throw new FirebaseAuthException(USER_CREATE_ERROR, "Failed to create new user");
   }
 
-  void updateUser(UpdateRequest request) throws FirebaseAuthException {
+  void updateUser(UpdateRequest request, JsonFactory jsonFactory) throws FirebaseAuthException {
     GenericJson response;
     try {
-      response = post("setAccountInfo", request.getProperties(), GenericJson.class);
+      response = post("setAccountInfo", request.getProperties(jsonFactory), GenericJson.class);
     } catch (IOException e) {
       throw new FirebaseAuthException(USER_UPDATE_ERROR,
           "IO error while updating user: " + request.getUid(), e);

@@ -46,6 +46,7 @@ public class UserRecord implements UserInfo {
   private static final Map<String, String> REMOVABLE_FIELDS = ImmutableMap.of(
       "displayName", "DISPLAY_NAME",
       "photoUrl", "PHOTO_URL");
+  private static final String CUSTOM_ATTRIBUTES = "customAttributes";
   private static final int MAX_CLAIMS_PAYLOAD_SIZE = 1000;
 
   private final String uid;
@@ -230,16 +231,20 @@ public class UserRecord implements UserInfo {
     checkArgument(password.length() >= 6, "password must be at least 6 characters long");
   }
 
-  private static String checkCustomClaims(
-      Map<String,Object> customClaims, JsonFactory jsonFactory) {
-    if (customClaims == null || customClaims.isEmpty()) {
-      return "{}";
+  private static void checkCustomClaims(Map<String,Object> customClaims) {
+    if (customClaims == null) {
+      return;
     }
-
-    checkNotNull(jsonFactory, "JsonFactory must not be null when claims are provided");
     for (String key : customClaims.keySet()) {
       checkArgument(!FirebaseUserManager.RESERVED_CLAIMS.contains(key),
           "Claim '" + key + "' is reserved and cannot be set");
+    }
+  }
+
+  private static String serializeCustomClaims(Map customClaims, JsonFactory jsonFactory) {
+    checkNotNull(jsonFactory, "JsonFactory must not be null");
+    if (customClaims == null || customClaims.isEmpty()) {
+      return "{}";
     }
 
     try {
@@ -483,14 +488,14 @@ public class UserRecord implements UserInfo {
      * argument removes any custom claims from the user account.
      *
      * @param customClaims a Map of custom claims or null
-     * @param jsonFactory JsonFactory used to serialize claims into JSON
      */
-    public UpdateRequest setCustomClaims(Map<String,Object> customClaims, JsonFactory jsonFactory) {
-      properties.put("customAttributes", checkCustomClaims(customClaims, jsonFactory));
+    public UpdateRequest setCustomClaims(Map<String,Object> customClaims) {
+      checkCustomClaims(customClaims);
+      properties.put(CUSTOM_ATTRIBUTES, customClaims);
       return this;
     }
 
-    Map<String, Object> getProperties() {
+    Map<String, Object> getProperties(JsonFactory jsonFactory) {
       Map<String, Object> copy = new HashMap<>(properties);
       List<String> remove = new ArrayList<>();
       for (Map.Entry<String, String> entry : REMOVABLE_FIELDS.entrySet()) {
@@ -507,6 +512,11 @@ public class UserRecord implements UserInfo {
       if (copy.containsKey("phoneNumber") && copy.get("phoneNumber") == null) {
         copy.put("deleteProvider", ImmutableList.of("phone"));
         copy.remove("phoneNumber");
+      }
+
+      if (copy.containsKey(CUSTOM_ATTRIBUTES)) {
+        Map customClaims = (Map) copy.remove(CUSTOM_ATTRIBUTES);
+        copy.put(CUSTOM_ATTRIBUTES, serializeCustomClaims(customClaims, jsonFactory));
       }
       return ImmutableMap.copyOf(copy);
     }

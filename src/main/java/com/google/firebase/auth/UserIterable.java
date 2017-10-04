@@ -69,6 +69,9 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
 
     @Override
     public List<ExportedUserRecord> next() {
+      if (!hasNext()) {
+        throw new NoSuchElementException();
+      }
       try {
         DownloadAccountResponse response = downloader.download(maxResults, pageToken);
         this.pageToken = new PageToken(response.getPageToken());

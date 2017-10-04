@@ -201,7 +201,7 @@ public class FirebaseUserManagerTest {
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     userManager.setInterceptor(interceptor);
     // should not throw
-    userManager.updateUser(new UpdateRequest("testuser"));
+    userManager.updateUser(new UpdateRequest("testuser"), Utils.getDefaultJsonFactory());
     checkRequestHeaders(interceptor);
   }
 
@@ -220,7 +220,7 @@ public class FirebaseUserManagerTest {
         "admin", true, "package", "gold");
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     userManager.updateUser(new UpdateRequest("testuser")
-        .setCustomClaims(claims, jsonFactory));
+        .setCustomClaims(claims), jsonFactory);
     checkRequestHeaders(interceptor);
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -448,8 +448,8 @@ public class FirebaseUserManagerTest {
         .setPhoneNumber("+1234567890")
         .setEmailVerified(true)
         .setPassword("secret")
-        .setCustomClaims(claims, Utils.getDefaultJsonFactory())
-        .getProperties();
+        .setCustomClaims(claims)
+        .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(8, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals("Display Name", map.get("displayName"));
@@ -465,8 +465,9 @@ public class FirebaseUserManagerTest {
   public void testNullJsonFactory() {
     UpdateRequest update = new UpdateRequest("test");
     Map<String, Object> claims = ImmutableMap.<String, Object>of("admin", true, "package", "gold");
+    update.setCustomClaims(claims);
     try {
-      update.setCustomClaims(claims, null);
+      update.getProperties(null);
       fail("No error thrown for null JsonFactory");
     } catch (Exception ignore) {
       // expected
@@ -477,8 +478,8 @@ public class FirebaseUserManagerTest {
   public void testNullCustomClaims() {
     UpdateRequest update = new UpdateRequest("test");
     Map<String, Object> map = update
-        .setCustomClaims(null, null)
-        .getProperties();
+        .setCustomClaims(null)
+        .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(2, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals("{}", map.get("customAttributes"));
@@ -488,8 +489,8 @@ public class FirebaseUserManagerTest {
   public void testEmptyCustomClaims() {
     UpdateRequest update = new UpdateRequest("test");
     Map<String, Object> map = update
-        .setCustomClaims(ImmutableMap.<String, Object>of(), null)
-        .getProperties();
+        .setCustomClaims(ImmutableMap.<String, Object>of())
+        .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(2, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals("{}", map.get("customAttributes"));
@@ -499,7 +500,7 @@ public class FirebaseUserManagerTest {
   public void testDeleteDisplayName() {
     Map<String, Object> map = new UpdateRequest("test")
         .setDisplayName(null)
-        .getProperties();
+        .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(ImmutableList.of("DISPLAY_NAME"), map.get("deleteAttribute"));
   }
 
@@ -507,7 +508,7 @@ public class FirebaseUserManagerTest {
   public void testDeletePhotoUrl() {
     Map<String, Object> map = new UpdateRequest("test")
         .setPhotoUrl(null)
-        .getProperties();
+        .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(ImmutableList.of("PHOTO_URL"), map.get("deleteAttribute"));
   }
 
@@ -515,7 +516,7 @@ public class FirebaseUserManagerTest {
   public void testDeletePhoneNumber() {
     Map<String, Object> map = new UpdateRequest("test")
         .setPhoneNumber(null)
-        .getProperties();
+        .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(ImmutableList.of("phone"), map.get("deleteProvider"));
   }
 
@@ -602,26 +603,29 @@ public class FirebaseUserManagerTest {
   @Test
   public void testInvalidCustomClaims() {
     UpdateRequest update = new UpdateRequest("test");
-    StringBuilder builder = new StringBuilder();
-    for (int i = 0; i < 1001; i++) {
-      builder.append("a");
-    }
-    try {
-      update.setCustomClaims(ImmutableMap.<String, Object>of("key", builder.toString()),
-          Utils.getDefaultJsonFactory());
-      fail("No error thrown for large claims payload");
-    } catch (Exception ignore) {
-      // expected
-    }
-
     for (String claim : FirebaseUserManager.RESERVED_CLAIMS) {
       try {
-        update.setCustomClaims(ImmutableMap.<String, Object>of(claim, "value"),
-            Utils.getDefaultJsonFactory());
+        update.setCustomClaims(ImmutableMap.<String, Object>of(claim, "value"));
         fail("No error thrown for reserved claim");
       } catch (Exception ignore) {
         // expected
       }
+    }
+  }
+
+  @Test
+  public void testLargeCustomClaims() {
+    final StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < 1001; i++) {
+      builder.append("a");
+    }
+    UpdateRequest update = new UpdateRequest("test");
+    update.setCustomClaims(ImmutableMap.<String, Object>of("key", builder.toString()));
+    try {
+      update.getProperties(Utils.getDefaultJsonFactory());
+      fail("No error thrown for large claims payload");
+    } catch (Exception ignore) {
+      // expected
     }
   }
 
