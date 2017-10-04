@@ -7,6 +7,7 @@ import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 
@@ -54,6 +55,58 @@ public class UserRecordTest {
   }
 
   @Test
+  public void testProviderInfo() throws IOException {
+    ImmutableMap<String, Object> resp = ImmutableMap.<String, Object>of(
+        "localId", "user",
+        "providerUserInfo", ImmutableList.of(
+            ImmutableMap.of("rawId", "provider"),
+            ImmutableMap.of("rawId", "provider")
+        )
+    );
+    String json = JSON_FACTORY.toString(resp);
+    UserRecord userRecord = parse(json);
+    assertEquals("user", userRecord.getUid());
+    assertEquals(2, userRecord.getProviderData().length);
+    for (UserInfo provider : userRecord.getProviderData()) {
+      assertEquals("provider", provider.getUid());
+      assertNull(provider.getDisplayName());
+      assertNull(provider.getEmail());
+      assertNull(provider.getPhoneNumber());
+      assertNull(provider.getPhotoUrl());
+      assertNull(provider.getProviderId());
+    }
+  }
+
+  @Test
+  public void testAllProviderInfo() throws IOException {
+    ImmutableMap<String, Object> resp = ImmutableMap.<String, Object>of(
+        "localId", "user",
+        "providerUserInfo", ImmutableList.of(
+            ImmutableMap.builder()
+                .put("rawId", "provider")
+                .put("displayName", "Display Name")
+                .put("email", "email@provider.net")
+                .put("phoneNumber", "1234567890")
+                .put("photoUrl", "http://photo.url")
+                .put("providerId", "providerId")
+                .build()
+            )
+    );
+    String json = JSON_FACTORY.toString(resp);
+    UserRecord userRecord = parse(json);
+    assertEquals("user", userRecord.getUid());
+    assertEquals(1, userRecord.getProviderData().length);
+    for (UserInfo provider : userRecord.getProviderData()) {
+      assertEquals("provider", provider.getUid());
+      assertEquals("Display Name", provider.getDisplayName());
+      assertEquals("email@provider.net", provider.getEmail());
+      assertEquals("1234567890", provider.getPhoneNumber());
+      assertEquals("http://photo.url", provider.getPhotoUrl());
+      assertEquals("providerId", provider.getProviderId());
+    }
+  }
+
+  @Test
   public void testUserMetadata() throws IOException {
     ImmutableMap<String, Object> resp = ImmutableMap.<String, Object>of(
         "localId", "user",
@@ -63,16 +116,8 @@ public class UserRecordTest {
     String json = JSON_FACTORY.toString(resp);
     UserRecord userRecord = parse(json);
     assertEquals("user", userRecord.getUid());
-    assertNull(userRecord.getEmail());
-    assertNull(userRecord.getPhoneNumber());
-    assertNull(userRecord.getPhotoUrl());
-    assertNull(userRecord.getDisplayName());
     assertEquals(10L, userRecord.getUserMetadata().getCreationTimestamp());
     assertEquals(20L, userRecord.getUserMetadata().getLastSignInTimestamp());
-    assertNull(userRecord.getCustomClaims());
-    assertFalse(userRecord.isDisabled());
-    assertFalse(userRecord.isEmailVerified());
-    assertEquals(0, userRecord.getProviderData().length);
   }
 
   @Test
@@ -84,17 +129,20 @@ public class UserRecordTest {
     String json = JSON_FACTORY.toString(resp);
     UserRecord userRecord = parse(json);
     assertEquals("user", userRecord.getUid());
-    assertNull(userRecord.getEmail());
-    assertNull(userRecord.getPhoneNumber());
-    assertNull(userRecord.getPhotoUrl());
-    assertNull(userRecord.getDisplayName());
-    assertEquals(0L, userRecord.getUserMetadata().getCreationTimestamp());
-    assertEquals(0L, userRecord.getUserMetadata().getLastSignInTimestamp());
     assertEquals(1, userRecord.getCustomClaims().size());
     assertEquals("bar", userRecord.getCustomClaims().get("foo"));
-    assertFalse(userRecord.isDisabled());
-    assertFalse(userRecord.isEmailVerified());
-    assertEquals(0, userRecord.getProviderData().length);
+  }
+
+  @Test
+  public void testEmptyCustomClaims() throws IOException {
+    ImmutableMap<String, Object> resp = ImmutableMap.<String, Object>of(
+        "localId", "user",
+        "customAttributes", "{}"
+    );
+    String json = JSON_FACTORY.toString(resp);
+    UserRecord userRecord = parse(json);
+    assertEquals("user", userRecord.getUid());
+    assertNull(userRecord.getCustomClaims());
   }
 
   private UserRecord parse(String json) throws IOException {

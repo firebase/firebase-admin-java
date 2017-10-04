@@ -26,6 +26,8 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseInterceptor;
+import com.google.api.client.json.GenericJson;
+import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
@@ -37,6 +39,7 @@ import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.TestUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Map;
 
@@ -137,6 +140,31 @@ public class FirebaseUserManagerTest {
     // should not throw
     userManager.updateUser(new UpdateRequest("testuser"));
     checkRequestHeaders(interceptor);
+  }
+
+  @Test
+  public void testSetCustomAttributes() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setContent(TestUtils.loadResource("createUser.json"));
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    userManager.setInterceptor(interceptor);
+    // should not throw
+    ImmutableMap<String, Object> claims = ImmutableMap.<String, Object>of(
+        "admin", true, "package", "gold");
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    userManager.updateUser(new UpdateRequest("testuser")
+        .setCustomClaims(claims, jsonFactory));
+    checkRequestHeaders(interceptor);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.response.getRequest().getContent().writeTo(out);
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals("testuser", parsed.get("localId"));
+    assertEquals(jsonFactory.toString(claims), parsed.get("customAttributes"));
   }
 
   @Test
