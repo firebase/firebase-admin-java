@@ -19,6 +19,7 @@ package com.google.firebase;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
 /**
  * Provides trampolines into package-private APIs used by components of Firebase
@@ -55,5 +56,14 @@ public final class TestOnlyImplFirebaseTrampolines {
 
   public static GoogleCredentials getCredentials(FirebaseOptions options) {
     return options.getCredentials();
+  }
+
+  public static void forceThreadManagerInit(FirebaseApp app) {
+    ImplFirebaseTrampolines.submitCallable(app, new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        return null;
+      }
+    });
   }
 }

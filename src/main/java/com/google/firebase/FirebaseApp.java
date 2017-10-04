@@ -32,12 +32,14 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
+import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.firebase.internal.FirebaseAppStore;
-import com.google.firebase.internal.FirebaseExecutors;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
+import com.google.firebase.tasks.Task;
+import com.google.firebase.tasks.Tasks;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,9 +49,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,9 +89,11 @@ public class FirebaseApp {
   private final String name;
   private final FirebaseOptions options;
   private final TokenRefresher tokenRefresher;
+  private final ThreadManager threadManager;
 
   private final AtomicBoolean deleted = new AtomicBoolean();
   private final Map<String, FirebaseService> services = new HashMap<>();
+  private final ListeningScheduledExecutorService executor;
 
   /**
    * Per application lock for synchronizing all internal FirebaseApp state changes.
@@ -99,6 +106,8 @@ public class FirebaseApp {
     this.name = name;
     this.options = checkNotNull(options);
     this.tokenRefresher = checkNotNull(factory).create(this);
+    this.threadManager = options.getThreadManager();
+    this.executor = this.threadManager.getListeningExecutor(this);
   }
 
   /** Returns a list of all FirebaseApps. */
@@ -242,7 +251,6 @@ public class FirebaseApp {
   /** Returns the unique name of this app. */
   @NonNull
   public String getName() {
-    checkNotDeleted();
     return name;
   }
 
@@ -316,6 +324,9 @@ public class FirebaseApp {
       }
       services.clear();
       tokenRefresher.cleanup();
+
+      // Clean up and terminate the thread pool
+      threadManager.releaseExecutor(this, executor);
     }
 
     synchronized (appsLock) {
@@ -330,6 +341,21 @@ public class FirebaseApp {
 
   private void checkNotDeleted() {
     checkState(!deleted.get(), "FirebaseApp was deleted %s", this);
+  }
+
+  ThreadFactory getThreadFactory() {
+    return threadManager.getThreadFactory();
+  }
+
+  // TODO: Return an ApiFuture once Task API is fully removed.
+  <T> Task<T> submit(Callable<T> command) {
+    checkNotNull(command);
+    return Tasks.call(executor, command);
+  }
+
+  <T> ScheduledFuture<T> schedule(Callable<T> command, long delayMillis) {
+    checkNotNull(command);
+    return executor.schedule(command, delayMillis, TimeUnit.MILLISECONDS);
   }
 
   boolean isDefaultApp() {
@@ -362,12 +388,14 @@ public class FirebaseApp {
    */
   static class TokenRefresher implements CredentialsChangedListener {
 
+    private final FirebaseApp firebaseApp;
     private final GoogleCredentials credentials;
-    private ScheduledFuture<Void> future;
+    private Future<Void> future;
     private boolean closed;
 
-    TokenRefresher(FirebaseApp app) {
-      this.credentials = app.getOptions().getCredentials();
+    TokenRefresher(FirebaseApp firebaseApp) {
+      this.firebaseApp = checkNotNull(firebaseApp);
+      this.credentials = firebaseApp.getOptions().getCredentials();
       this.credentials.addChangeListener(this);
     }
 
@@ -417,9 +445,7 @@ public class FirebaseApp {
     protected void scheduleNext(Callable<Void> task, long delayMillis) {
       logger.debug("Scheduling next token refresh in {} milliseconds", delayMillis);
       try {
-        future =
-            FirebaseExecutors.DEFAULT_SCHEDULED_EXECUTOR.schedule(
-                task, delayMillis, TimeUnit.MILLISECONDS);
+        future = firebaseApp.schedule(task, delayMillis);
       } catch (UnsupportedOperationException ignored) {
         // Cannot support task scheduling in the current runtime.
       }

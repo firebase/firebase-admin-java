@@ -36,7 +36,7 @@ public class GaeThreadFactory implements ThreadFactory {
   private static final Logger logger = LoggerFactory.getLogger(GaeThreadFactory.class);
 
   public static final ScheduledExecutorService DEFAULT_EXECUTOR =
-      new GaeScheduledExecutorService("FirebaseDefault");
+      new GaeScheduledExecutorService("LegacyFirebaseDefault");
   private static final String GAE_THREAD_MANAGER_CLASS = "com.google.appengine.api.ThreadManager";
   private static final GaeThreadFactory instance = new GaeThreadFactory();
   private final AtomicReference<ThreadFactoryWrapper> threadFactory = new AtomicReference<>(null);

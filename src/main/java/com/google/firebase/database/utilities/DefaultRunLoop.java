@@ -38,8 +38,8 @@ public abstract class DefaultRunLoop implements RunLoop {
   private UncaughtExceptionHandler exceptionHandler;
 
   /** Creates a DefaultRunLoop that does not periodically restart its threads. */
-  public DefaultRunLoop() {
-    this(Executors.defaultThreadFactory(), false, null);
+  public DefaultRunLoop(ThreadFactory threadFactory) {
+    this(threadFactory, false, null);
   }
 
   /**

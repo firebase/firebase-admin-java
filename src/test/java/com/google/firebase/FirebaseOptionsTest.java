@@ -36,6 +36,9 @@ import com.google.firebase.tasks.Task;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+
 import org.junit.Test;
 
 /** 
@@ -55,6 +58,22 @@ public class FirebaseOptionsTest {
           .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .build();
 
+  private static final ThreadManager MOCK_THREAD_MANAGER = new ThreadManager() {
+    @Override
+    protected ScheduledExecutorService getExecutor(FirebaseApp app) {
+      return null;
+    }
+
+    @Override
+    protected void releaseExecutor(FirebaseApp app, ScheduledExecutorService executor) {
+    }
+
+    @Override
+    protected ThreadFactory getThreadFactory() {
+      return null;
+    }
+  };
+
   @Test
   public void createOptionsWithAllValuesSet() throws IOException, InterruptedException {
     GsonFactory jsonFactory = new GsonFactory();
@@ -67,12 +86,14 @@ public class FirebaseOptionsTest {
             .setProjectId(FIREBASE_PROJECT_ID)
             .setJsonFactory(jsonFactory)
             .setHttpTransport(httpTransport)
+            .setThreadManager(MOCK_THREAD_MANAGER)
             .build();
     assertEquals(FIREBASE_DB_URL, firebaseOptions.getDatabaseUrl());
     assertEquals(FIREBASE_STORAGE_BUCKET, firebaseOptions.getStorageBucket());
     assertEquals(FIREBASE_PROJECT_ID, firebaseOptions.getProjectId());
     assertSame(jsonFactory, firebaseOptions.getJsonFactory());
     assertSame(httpTransport, firebaseOptions.getHttpTransport());
+    assertSame(MOCK_THREAD_MANAGER, firebaseOptions.getThreadManager());
 
     GoogleCredentials credentials = firebaseOptions.getCredentials();
     assertNotNull(credentials);
@@ -90,6 +111,7 @@ public class FirebaseOptionsTest {
             .build();
     assertNotNull(firebaseOptions.getJsonFactory());
     assertNotNull(firebaseOptions.getHttpTransport());
+    assertNotNull(firebaseOptions.getThreadManager());
     assertNull(firebaseOptions.getDatabaseUrl());
     assertNull(firebaseOptions.getStorageBucket());
 
@@ -147,6 +169,19 @@ public class FirebaseOptionsTest {
     new FirebaseOptions.Builder().build();
   }
 
+  @Test(expected = NullPointerException.class)
+  public void createOptionsWithNullCredentials() {
+    new FirebaseOptions.Builder().setCredentials(null).build();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void createOptionsWithNullThreadManager() {
+    new FirebaseOptions.Builder()
+        .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
+        .setThreadManager(null)
+        .build();
+  }
+
   @Test
   public void checkToBuilderCreatesNewEquivalentInstance() {
     FirebaseOptions allValuesOptionsCopy = new FirebaseOptions.Builder(ALL_VALUES_OPTIONS).build();
@@ -156,6 +191,7 @@ public class FirebaseOptionsTest {
     assertEquals(ALL_VALUES_OPTIONS.getProjectId(), allValuesOptionsCopy.getProjectId());
     assertEquals(ALL_VALUES_OPTIONS.getJsonFactory(), allValuesOptionsCopy.getJsonFactory());
     assertEquals(ALL_VALUES_OPTIONS.getHttpTransport(), allValuesOptionsCopy.getHttpTransport());
+    assertEquals(ALL_VALUES_OPTIONS.getThreadManager(), allValuesOptionsCopy.getThreadManager());
   }
 
   @Test

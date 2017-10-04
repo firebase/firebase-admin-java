@@ -73,6 +73,8 @@ public abstract class Task<T> {
    * added, they will be called in the order in which they were added.
    *
    * @return this Task
+   *
+   * @deprecated Use {@link #addOnSuccessListener(Executor, OnSuccessListener)}
    */
   @NonNull
   public abstract Task<T> addOnSuccessListener(@NonNull OnSuccessListener<? super T> listener);
@@ -99,6 +101,8 @@ public abstract class Task<T> {
    * called in the order in which they were added.
    *
    * @return this Task
+   *
+   * @deprecated Use {@link #addOnFailureListener(Executor, OnFailureListener)}
    */
   @NonNull
   public abstract Task<T> addOnFailureListener(@NonNull OnFailureListener listener);
@@ -124,6 +128,8 @@ public abstract class Task<T> {
    * called in the order in which they were added.
    *
    * @return this Task
+   *
+   * @deprecated Use {@link #addOnCompleteListener(Executor, OnCompleteListener)}
    */
   @NonNull
   public Task<T> addOnCompleteListener(@NonNull OnCompleteListener<T> listener) {
@@ -152,6 +158,8 @@ public abstract class Task<T> {
    * <p>If the Continuation throws an exception, the returned Task will fail with that exception.
    *
    * <p>The Continuation will be called on a shared thread pool.
+   *
+   * @deprecated Use {@link #continueWith(Executor, Continuation)}.
    */
   @NonNull
   public <R> Task<R> continueWith(@NonNull Continuation<T, R> continuation) {
@@ -180,6 +188,8 @@ public abstract class Task<T> {
    * <p>If the Continuation throws an exception, the returned Task will fail with that exception.
    *
    * <p>The Continuation will be called on a shared thread pool.
+   *
+   * @deprecated Use {@link #continueWithTask(Executor, Continuation)}
    */
   @NonNull
   public <R> Task<R> continueWithTask(@NonNull Continuation<T, Task<R>> continuation) {
