@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
 
-interface UserFetcher {
+interface UserSource {
 
   FetchResult fetch(int maxResults, String pageToken) throws Exception;
 

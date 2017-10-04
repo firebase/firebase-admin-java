@@ -27,34 +27,50 @@ import java.util.NoSuchElementException;
 
 public class UserIterable implements Iterable<ExportedUserRecord> {
 
-  private static final int MAX_LIST_USERS_RESULTS = 1000;
+  static final int MAX_LIST_USERS_RESULTS = 1000;
 
-  private final Iterator<ExportedUserRecord> iterator;
+  private final UserSource source;
+  private final int maxResults;
 
-  UserIterable(@NonNull UserFetcher downloader) {
-    this.iterator = new UserIterator(downloader, MAX_LIST_USERS_RESULTS);
+  UserIterable(@NonNull UserSource source) {
+    this(source, MAX_LIST_USERS_RESULTS);
   }
 
-  UserIterable(@NonNull UserFetcher downloader, int maxResults) {
-    this.iterator = new UserIterator(downloader, maxResults);
+  UserIterable(@NonNull UserSource source, int maxResults) {
+    this.source = checkNotNull(source, "user source must not be null");
+    checkArgument(maxResults > 0 && maxResults <= MAX_LIST_USERS_RESULTS,
+        "max results must be a non-zero positive value which must not exceed "
+            + MAX_LIST_USERS_RESULTS);
+    this.maxResults = maxResults;
   }
 
   @Override
+  @NonNull
   public Iterator<ExportedUserRecord> iterator() {
-    return this.iterator;
+    return new UserIterator(source, maxResults);
+  }
+
+  void iterateWithCallback(@NonNull ListUsersCallback callback) {
+    try {
+      for (ExportedUserRecord user : this) {
+        if (!callback.onResult(user)) {
+          break;
+        }
+      }
+      callback.onComplete();
+    } catch (Exception e) {
+      callback.onError(e);
+    }
   }
 
   private static class UserBatchIterator implements Iterator<List<ExportedUserRecord>> {
 
-    private final UserFetcher fetcher;
+    private final UserSource source;
     private final int maxResults;
-    private UserFetcher.FetchResult fetchResult;
+    private UserSource.FetchResult fetchResult;
 
-    private UserBatchIterator(UserFetcher fetcher, int maxResults) {
-      this.fetcher = checkNotNull(fetcher, "user fetcher must not be null");
-      checkArgument(maxResults > 0 && maxResults <= MAX_LIST_USERS_RESULTS,
-          "max results must be a non-zero positive value which must not exceed "
-              + MAX_LIST_USERS_RESULTS);
+    private UserBatchIterator(UserSource source, int maxResults) {
+      this.source = source;
       this.maxResults = maxResults;
     }
 
@@ -70,7 +86,7 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
       }
       String pageToken = fetchResult != null ? fetchResult.getNextPageToken() : null;
       try {
-        fetchResult = fetcher.fetch(maxResults, pageToken);
+        fetchResult = source.fetch(maxResults, pageToken);
         return fetchResult.getUsers();
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -89,8 +105,8 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
     private List<ExportedUserRecord> currentBatch = ImmutableList.of();
     private int index = 0;
 
-    private UserIterator(UserFetcher downloader, int maxResults) {
-      this.batchIterator = new UserBatchIterator(downloader, maxResults);
+    private UserIterator(UserSource source, int maxResults) {
+      this.batchIterator = new UserBatchIterator(source, maxResults);
     }
 
     @Override
@@ -120,5 +136,4 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
       throw new UnsupportedOperationException("remove operation not supported");
     }
   }
-
 }

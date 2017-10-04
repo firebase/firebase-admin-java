@@ -194,8 +194,8 @@ class FirebaseUserManager {
     }
   }
 
-  UserFetcher newFetcher() {
-    return new IdToolKitUserFetcher(this);
+  UserSource newUserSource() {
+    return new IdToolKitUserSource(this);
   }
 
   private <T> T post(String path, Object content, Class<T> clazz) throws IOException {
@@ -217,11 +217,11 @@ class FirebaseUserManager {
     }
   }
 
-  static class IdToolKitUserFetcher implements UserFetcher {
+  static class IdToolKitUserSource implements UserSource {
 
     private final FirebaseUserManager userManager;
 
-    private IdToolKitUserFetcher(FirebaseUserManager userManager) {
+    private IdToolKitUserSource(FirebaseUserManager userManager) {
       this.userManager = checkNotNull(userManager);
     }
 
@@ -233,10 +233,10 @@ class FirebaseUserManager {
         builder.put("nextPageToken", pageToken);
       }
 
-      final Map<String, Object> payload = builder.build();
       DownloadAccountResponse response;
       try {
-        response = userManager.post("downloadAccount", payload, DownloadAccountResponse.class);
+        response = userManager.post(
+            "downloadAccount", builder.build(), DownloadAccountResponse.class);
       } catch (IOException e) {
         throw new FirebaseAuthException(LIST_USERS_ERROR,
             "IO error while downloading user accounts.", e);

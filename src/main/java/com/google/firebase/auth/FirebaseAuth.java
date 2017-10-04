@@ -345,13 +345,29 @@ public class FirebaseAuth {
   }
 
   public Iterable<ExportedUserRecord> listUsers() {
-    checkNotDestroyed();
-    return new UserIterable(this.userManager.newFetcher());
+    return listUsers(UserIterable.MAX_LIST_USERS_RESULTS);
   }
 
   public Iterable<ExportedUserRecord> listUsers(int maxResults) {
     checkNotDestroyed();
-    return new UserIterable(this.userManager.newFetcher(), maxResults);
+    return new UserIterable(this.userManager.newUserSource(), maxResults);
+  }
+
+  public void listUsersAsync(final ListUsersCallback callback) {
+    listUsersAsync(callback, UserIterable.MAX_LIST_USERS_RESULTS);
+  }
+
+  public void listUsersAsync(final ListUsersCallback callback, int maxResults) {
+    checkNotDestroyed();
+    checkNotNull(callback, "callback must not be null");
+    final UserIterable users = new UserIterable(this.userManager.newUserSource(), maxResults);
+    call(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        users.iterateWithCallback(callback);
+        return null;
+      }
+    });
   }
 
   /**
