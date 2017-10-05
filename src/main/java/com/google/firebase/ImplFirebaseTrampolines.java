@@ -21,10 +21,7 @@ import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 
 import com.google.firebase.tasks.Task;
-import com.google.firebase.tasks.Tasks;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -75,5 +72,9 @@ public final class ImplFirebaseTrampolines {
 
   public static <T> Task<T> submitCallable(@NonNull FirebaseApp app, @NonNull Callable<T> command) {
     return app.submit(command);
+  }
+
+  public static void startTokenRefresher(@NonNull FirebaseApp app) {
+    app.startTokenRefresher();
   }
 }

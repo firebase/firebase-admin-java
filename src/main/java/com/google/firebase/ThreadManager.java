@@ -18,11 +18,11 @@ package com.google.firebase;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.util.concurrent.ListeningScheduledExecutorService;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.internal.NonNull;
 
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -36,42 +36,72 @@ import java.util.concurrent.ThreadFactory;
 public abstract class ThreadManager {
 
   @NonNull
-  final ListeningScheduledExecutorService getListeningExecutor(@NonNull FirebaseApp app) {
-    ScheduledExecutorService executor = getExecutor(app);
-    checkNotNull(executor, "ScheduledExecutorService must not be null");
-    return MoreExecutors.listeningDecorator(executor);
+  final FirebaseExecutors getFirebaseExecutors(@NonNull FirebaseApp app) {
+    return new FirebaseExecutors(getExecutor(app));
+  }
+
+  final void releaseFirebaseExecutors(
+      @NonNull FirebaseApp app, @NonNull FirebaseExecutors executor) {
+    releaseExecutor(app, executor.userExecutor);
   }
 
   /**
    * Returns the main thread pool for an app. Implementations may return the same instance of
-   * <code>ScheduledExecutorService</code> for multiple apps. The returned thread pool is used by
-   * all components of an app except for the Realtime Database. Database has far stricter and
-   * complicated threading requirements, and thus initializes its own threads using the
-   * factory returned by {@link ThreadManager#getThreadFactory()}.
+   * <code>ExecutorService</code> for multiple apps. The returned thread pool is used for
+   * short-lived tasks by all components of an app.
+   *
+   * <p>For long-lived tasks (such as the ones started by the Realtime Database client), the SDK
+   * creates dedicated executors using the <code>ThreadFactory</code> returned by the
+   * {@link #getThreadFactory()} method.
    *
    * @param app A {@link FirebaseApp} instance.
-   * @return A non-null {@link ScheduledExecutorService} instance.
+   * @return A non-null {@link ExecutorService} instance.
    */
   @NonNull
-  protected abstract ScheduledExecutorService getExecutor(@NonNull FirebaseApp app);
+  protected abstract ExecutorService getExecutor(@NonNull FirebaseApp app);
 
   /**
-   * Cleans up the thread pool associated with an app. This method is invoked when an
-   * app is deleted.
+   * Cleans up the thread pool associated with an app. This method is invoked when an app
+   * is deleted. This is guaranteed to be called with the <code>ExecutorService</code> previously
+   * returned by {@link #getExecutor(FirebaseApp)} for the corresponding app.
    *
    * @param app A {@link FirebaseApp} instance.
    */
   protected abstract void releaseExecutor(
-      @NonNull FirebaseApp app, @NonNull ScheduledExecutorService executor);
+      @NonNull FirebaseApp app, @NonNull ExecutorService executor);
 
   /**
-   * Returns the <code>ThreadFactory</code> to be used for creating any additional threads
-   * required by the SDK. This is used mainly to create the long-lived worker threads for
-   * the Realtime Database client.
+   * Returns the <code>ThreadFactory</code> to be used for creating long-lived threads. This is
+   * used mainly to create the long-lived worker threads for the Realtime Database client, and
+   * other scheduled (periodic) tasks started by the SDK. The SDK guarantees
+   * clean termination of all threads started via this <code>ThreadFactory</code>, upon
+   * calling {@link FirebaseApp#delete()}.
+   *
+   * <p>If long-lived threads cannot be supported in the current runtime, this method may
+   * throw a RuntimeException.
    *
    * @return A non-null <code>ThreadFactory</code>.
    */
   @NonNull
   protected abstract ThreadFactory getThreadFactory();
+
+  /**
+   * Wraps an ExecutorService in a ListeningExecutorService while keeping a reference to the
+   * original ExecutorService. This reference is used when it's time to release/cleanup the
+   * original ExecutorService.
+   */
+  static final class FirebaseExecutors {
+    private final ExecutorService userExecutor;
+    private final ListeningExecutorService listeningExecutor;
+
+    private FirebaseExecutors(ExecutorService userExecutor) {
+      this.userExecutor = checkNotNull(userExecutor, "ExecutorService must not be null");
+      this.listeningExecutor = MoreExecutors.listeningDecorator(userExecutor);
+    }
+
+    ListeningExecutorService getListeningExecutor() {
+      return listeningExecutor;
+    }
+  }
 
 }

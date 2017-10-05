@@ -17,6 +17,7 @@
 package com.google.firebase;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.MockGoogleCredentials;
@@ -25,22 +26,31 @@ import com.google.firebase.internal.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 public class ThreadManagerTest {
 
+  private ExecutorService executor;
+
+  @Before
+  public void setUp() {
+    executor = Executors.newSingleThreadExecutor();
+  }
+
   @After
   public void tearDown() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    executor.shutdownNow();
   }
 
   @Test
   public void testBareBonesAppLifecycle() {
-    MockThreadManager threadManager = new MockThreadManager();
+    MockThreadManager threadManager = new MockThreadManager(executor);
 
     // Initializing an app should initialize the executor.
     FirebaseApp app = FirebaseApp.initializeApp(buildOptions(threadManager));
@@ -59,7 +69,7 @@ public class ThreadManagerTest {
 
   @Test
   public void testBareBonesAppLifecycleWithMultipleApps() {
-    MockThreadManager threadManager = new MockThreadManager();
+    MockThreadManager threadManager = new MockThreadManager(executor);
 
     // Initializing an app should initialize the executor.
     final FirebaseApp app1 = FirebaseApp.initializeApp(buildOptions(threadManager));
@@ -90,14 +100,14 @@ public class ThreadManagerTest {
 
   @Test
   public void testAppLifecycleWithExecutor() {
-    MockThreadManager threadManager = new MockThreadManager();
+    MockThreadManager threadManager = new MockThreadManager(executor);
 
     // Initializing an app should initialize the executor.
     FirebaseApp app = FirebaseApp.initializeApp(buildOptions(threadManager));
     assertEquals(1, threadManager.events.size());
     Event event = threadManager.events.get(0);
     assertEquals(Event.TYPE_GET_EXECUTOR, event.type);
-    assertEquals(app, event.app);
+    assertSame(app, event.app);
 
     // Should not re-initialize
     TestOnlyImplFirebaseTrampolines.forceThreadManagerInit(app);
@@ -108,12 +118,13 @@ public class ThreadManagerTest {
     assertEquals(2, threadManager.events.size());
     event = threadManager.events.get(1);
     assertEquals(Event.TYPE_RELEASE_EXECUTOR, event.type);
-    assertEquals(app, event.app);
+    assertSame(app, event.app);
+    assertSame(executor, event.executor);
   }
 
   @Test
   public void testAppLifecycleWithTokenRefresh() {
-    MockThreadManager threadManager = new MockThreadManager();
+    MockThreadManager threadManager = new MockThreadManager(executor);
 
     // Initializing an app should initialize the executor.
     FirebaseApp app = FirebaseApp.initializeApp(buildOptions(threadManager));
@@ -122,26 +133,27 @@ public class ThreadManagerTest {
     assertEquals(Event.TYPE_GET_EXECUTOR, event.type);
     assertEquals(app, event.app);
 
-    // Refreshing the token this way kicks off the proactive token refresh task, which initializes
-    // the executor to schedule the next refresh task.
-    TestOnlyImplFirebaseTrampolines.getToken(app, true);
-    assertEquals(1, threadManager.events.size());
+    // Starting the token refresher should start a long-lived thread using the ThreadFactory.
+    app.startTokenRefresher();
+    assertEquals(2, threadManager.events.size());
+    event = threadManager.events.get(1);
+    assertEquals(Event.TYPE_GET_THREAD_FACTORY, event.type);
 
-    // Should not re-initialize
     TestOnlyImplFirebaseTrampolines.forceThreadManagerInit(app);
-    assertEquals(1, threadManager.events.size());
+    assertEquals(2, threadManager.events.size());
 
     // Deleting app should tear down threading resources.
     app.delete();
-    assertEquals(2, threadManager.events.size());
-    event = threadManager.events.get(1);
+    assertEquals(3, threadManager.events.size());
+    event = threadManager.events.get(2);
     assertEquals(Event.TYPE_RELEASE_EXECUTOR, event.type);
-    assertEquals(app, event.app);
+    assertSame(app, event.app);
+    assertSame(executor, event.executor);
   }
 
   @Test
   public void testAppLifecycleWithServiceCall() {
-    MockThreadManager threadManager = new MockThreadManager();
+    MockThreadManager threadManager = new MockThreadManager(executor);
 
     // Initializing an app should initialize the executor.
     FirebaseApp app = FirebaseApp.initializeApp(buildOptions(threadManager));
@@ -161,19 +173,23 @@ public class ThreadManagerTest {
       // ignored
     }
     assertEquals(1, threadManager.events.size());
+    event = threadManager.events.get(0);
+    assertEquals(Event.TYPE_GET_EXECUTOR, event.type);
+    assertSame(app, event.app);
 
     // Deleting app should tear down threading resources.
     app.delete();
     assertEquals(2, threadManager.events.size());
     event = threadManager.events.get(1);
     assertEquals(Event.TYPE_RELEASE_EXECUTOR, event.type);
-    assertEquals(app, event.app);
+    assertSame(app, event.app);
+    assertSame(executor, event.executor);
   }
 
   @Test
   public void testAppLifecycleWithMultipleServiceCalls()
       throws ExecutionException, InterruptedException {
-    MockThreadManager threadManager = new MockThreadManager();
+    MockThreadManager threadManager = new MockThreadManager(executor);
 
     // Initializing an app should initialize the executor.
     FirebaseApp app = FirebaseApp.initializeApp(buildOptions(threadManager));
@@ -195,7 +211,7 @@ public class ThreadManagerTest {
     assertEquals(1, threadManager.events.size());
     event = threadManager.events.get(0);
     assertEquals(Event.TYPE_GET_EXECUTOR, event.type);
-    assertEquals(app, event.app);
+    assertSame(app, event.app);
 
     // Calling a method again should not re-initialize threading resources.
     try {
@@ -214,7 +230,8 @@ public class ThreadManagerTest {
     assertEquals(2, threadManager.events.size());
     event = threadManager.events.get(1);
     assertEquals(Event.TYPE_RELEASE_EXECUTOR, event.type);
-    assertEquals(app, event.app);
+    assertSame(app, event.app);
+    assertSame(executor, event.executor);
   }
 
   private FirebaseOptions buildOptions(ThreadManager threadManager) {
@@ -225,21 +242,24 @@ public class ThreadManagerTest {
         .build();
   }
 
-  public static class MockThreadManager extends ThreadManager {
+  private static class MockThreadManager extends ThreadManager {
 
     private final List<Event> events = new ArrayList<>();
+    private final ExecutorService executor;
 
-    @Override
-    protected ScheduledExecutorService getExecutor(@NonNull FirebaseApp app) {
-      events.add(new Event(Event.TYPE_GET_EXECUTOR, app, null));
-      return Executors.newSingleThreadScheduledExecutor();
+    MockThreadManager(ExecutorService executor) {
+      this.executor = executor;
     }
 
     @Override
-    protected void releaseExecutor(@NonNull FirebaseApp app,
-        @NonNull ScheduledExecutorService executor) {
+    protected ExecutorService getExecutor(@NonNull FirebaseApp app) {
+      events.add(new Event(Event.TYPE_GET_EXECUTOR, app, null));
+      return executor;
+    }
+
+    @Override
+    protected void releaseExecutor(@NonNull FirebaseApp app, @NonNull ExecutorService executor) {
       events.add(new Event(Event.TYPE_RELEASE_EXECUTOR, app, executor));
-      executor.shutdownNow();
     }
 
     @Override
@@ -256,9 +276,9 @@ public class ThreadManagerTest {
 
     private final int type;
     private final FirebaseApp app;
-    private ScheduledExecutorService executor;
+    private ExecutorService executor;
 
-    public Event(int type, @Nullable FirebaseApp app, @Nullable ScheduledExecutorService executor) {
+    public Event(int type, @Nullable FirebaseApp app, @Nullable ExecutorService executor) {
       this.type = type;
       this.app = app;
       this.executor = executor;

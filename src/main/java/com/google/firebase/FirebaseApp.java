@@ -32,12 +32,13 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
-import com.google.common.util.concurrent.ListeningScheduledExecutorService;
 import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseService;
+import com.google.firebase.internal.GaeThreadFactory;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
+import com.google.firebase.internal.RevivingScheduledExecutor;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
 import java.io.IOException;
@@ -50,11 +51,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,10 +93,12 @@ public class FirebaseApp {
   private final FirebaseOptions options;
   private final TokenRefresher tokenRefresher;
   private final ThreadManager threadManager;
+  private final ThreadManager.FirebaseExecutors executors;
 
   private final AtomicBoolean deleted = new AtomicBoolean();
   private final Map<String, FirebaseService> services = new HashMap<>();
-  private final ListeningScheduledExecutorService executor;
+
+  private volatile ScheduledExecutorService scheduledExecutor;
 
   /**
    * Per application lock for synchronizing all internal FirebaseApp state changes.
@@ -107,7 +112,7 @@ public class FirebaseApp {
     this.options = checkNotNull(options);
     this.tokenRefresher = checkNotNull(factory).create(this);
     this.threadManager = options.getThreadManager();
-    this.executor = this.threadManager.getListeningExecutor(this);
+    this.executors = this.threadManager.getFirebaseExecutors(this);
   }
 
   /** Returns a list of all FirebaseApps. */
@@ -323,10 +328,14 @@ public class FirebaseApp {
         service.destroy();
       }
       services.clear();
-      tokenRefresher.cleanup();
+      tokenRefresher.stop();
 
-      // Clean up and terminate the thread pool
-      threadManager.releaseExecutor(this, executor);
+      // Clean up and terminate the thread pools
+      threadManager.releaseFirebaseExecutors(this, executors);
+      if (scheduledExecutor != null) {
+        scheduledExecutor.shutdownNow();
+        scheduledExecutor = null;
+      }
     }
 
     synchronized (appsLock) {
@@ -343,6 +352,19 @@ public class FirebaseApp {
     checkState(!deleted.get(), "FirebaseApp was deleted %s", this);
   }
 
+  private ScheduledExecutorService ensureScheduledExecutorService() {
+    if (scheduledExecutor == null) {
+      synchronized (lock) {
+        checkNotDeleted();
+        if (scheduledExecutor == null) {
+          scheduledExecutor = new RevivingScheduledExecutor(threadManager.getThreadFactory(),
+              "firebase-scheduled-worker", GaeThreadFactory.isAvailable());
+        }
+      }
+    }
+    return scheduledExecutor;
+  }
+
   ThreadFactory getThreadFactory() {
     return threadManager.getThreadFactory();
   }
@@ -350,12 +372,25 @@ public class FirebaseApp {
   // TODO: Return an ApiFuture once Task API is fully removed.
   <T> Task<T> submit(Callable<T> command) {
     checkNotNull(command);
-    return Tasks.call(executor, command);
+    return Tasks.call(executors.getListeningExecutor(), command);
   }
 
   <T> ScheduledFuture<T> schedule(Callable<T> command, long delayMillis) {
     checkNotNull(command);
-    return executor.schedule(command, delayMillis, TimeUnit.MILLISECONDS);
+    try {
+      return ensureScheduledExecutorService().schedule(command, delayMillis, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      // This may fail if the underlying ThreadFactory does not support long-lived threads.
+      throw new UnsupportedOperationException("Scheduled tasks not supported", e);
+    }
+  }
+
+  void startTokenRefresher() {
+    synchronized (lock) {
+      checkNotDeleted();
+      // TODO: Provide an option to disable this altogether.
+      tokenRefresher.start();
+    }
   }
 
   boolean isDefaultApp() {
@@ -390,50 +425,30 @@ public class FirebaseApp {
 
     private final FirebaseApp firebaseApp;
     private final GoogleCredentials credentials;
+    private final AtomicReference<State> state;
+
     private Future<Void> future;
-    private boolean closed;
 
     TokenRefresher(FirebaseApp firebaseApp) {
       this.firebaseApp = checkNotNull(firebaseApp);
       this.credentials = firebaseApp.getOptions().getCredentials();
-      this.credentials.addChangeListener(this);
+      this.state = new AtomicReference<>(State.READY);
     }
 
     @Override
     public final synchronized void onChanged(OAuth2Credentials credentials) throws IOException {
-      if (closed) {
+      if (state.get() != State.STARTED) {
         return;
       }
 
       AccessToken accessToken = credentials.getAccessToken();
-      long refreshDelay = accessToken.getExpirationTime().getTime()
-          - System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(5);
+      long refreshDelay = getRefreshDelay(accessToken);
       if (refreshDelay > 0) {
         scheduleRefresh(refreshDelay);
       } else {
         logger.warn("Token expiry ({}) is less than 5 minutes in the future. Not "
             + "scheduling a proactive refresh.", accessToken.getExpirationTime());
       }
-    }
-
-    /**
-     * Schedule a forced token refresh to be executed after a specified duration.
-     *
-     * @param delayMillis Duration in milliseconds, after which the token should be forcibly
-     *     refreshed.
-     */
-    private void scheduleRefresh(final long delayMillis) {
-      cancelPrevious();
-      scheduleNext(
-          new Callable<Void>() {
-            @Override
-            public Void call() throws Exception {
-              logger.debug("Refreshing OAuth2 credential");
-              credentials.refresh();
-              return null;
-            }
-          },
-          delayMillis);
     }
 
     protected void cancelPrevious() {
@@ -446,20 +461,85 @@ public class FirebaseApp {
       logger.debug("Scheduling next token refresh in {} milliseconds", delayMillis);
       try {
         future = firebaseApp.schedule(task, delayMillis);
-      } catch (UnsupportedOperationException ignored) {
+      } catch (UnsupportedOperationException e) {
         // Cannot support task scheduling in the current runtime.
+        logger.debug("Failed to schedule token refresh event", e);
       }
     }
 
-    protected synchronized void cleanup() {
+    /**
+     * Starts the TokenRefresher if not already started. Starts listening to credentials changed
+     * events, and schedules refresh events every time the OAuth2 token changes. If no active
+     * token is present, or if the available token is set to expire soon, this will also schedule
+     * a refresh event to be executed immediately.
+     *
+     * <p>This operation is idempotent. Calling it multiple times, or calling it after the
+     * refresher has been stopped has no effect.
+     */
+    final synchronized void start() {
+      // Allow starting only from the ready state.
+      if (!state.compareAndSet(State.READY, State.STARTED)) {
+        return;
+      }
+
+      logger.debug("Starting the proactive token refresher");
+      credentials.addChangeListener(this);
+      AccessToken accessToken = credentials.getAccessToken();
+      long refreshDelay;
+      if (accessToken != null) {
+        // If the token is about to expire (i.e. expires in less than 5 minutes), schedule a
+        // refresh event with 0 delay. Otherwise schedule a refresh event at the regular token
+        // expiry time, minus 5 minutes.
+        refreshDelay = Math.max(getRefreshDelay(accessToken), 0L);
+      } else {
+        // If there is no token fetched so far, fetch one immediately.
+        refreshDelay = 0L;
+      }
+      scheduleRefresh(refreshDelay);
+    }
+
+    final synchronized void stop() {
+      // Allow stopping from any state.
+      State previous = state.getAndSet(State.STOPPED);
+      if (previous == State.STARTED) {
+        cancelPrevious();
+        logger.debug("Stopped the proactive token refresher");
+      }
+    }
+
+    /**
+     * Schedule a forced token refresh to be executed after a specified duration.
+     *
+     * @param delayMillis Duration in milliseconds, after which the token should be forcibly
+     *     refreshed.
+     */
+    private void scheduleRefresh(final long delayMillis) {
       cancelPrevious();
-      closed = true;
+      scheduleNext(new Callable<Void>() {
+        @Override
+        public Void call() throws Exception {
+          logger.debug("Refreshing OAuth2 credential");
+          credentials.refresh();
+          return null;
+        }
+      }, delayMillis);
+    }
+
+    private long getRefreshDelay(AccessToken accessToken) {
+      return accessToken.getExpirationTime().getTime() - System.currentTimeMillis()
+          - TimeUnit.MINUTES.toMillis(5);
     }
 
     static class Factory {
       TokenRefresher create(FirebaseApp app) {
         return new TokenRefresher(app);
       }
+    }
+
+    enum State {
+      READY,
+      STARTED,
+      STOPPED
     }
   }
 }
