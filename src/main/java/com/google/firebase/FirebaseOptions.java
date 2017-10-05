@@ -28,7 +28,7 @@ import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.auth.internal.BaseCredential;
 import com.google.firebase.auth.internal.FirebaseCredentialsAdapter;
-import com.google.firebase.internal.FirebaseExecutors;
+import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
@@ -139,7 +139,7 @@ public final class FirebaseOptions {
     private String projectId;
     private HttpTransport httpTransport = Utils.getDefaultTransport();
     private JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    private ThreadManager threadManager = FirebaseExecutors.DEFAULT_THREAD_MANAGER;
+    private ThreadManager threadManager = FirebaseThreadManagers.DEFAULT_THREAD_MANAGER;
 
     /** Constructs an empty builder. */
     public Builder() {}

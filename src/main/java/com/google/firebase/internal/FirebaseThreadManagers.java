@@ -32,9 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Default ThreadManager implementations used by the Admin SDK. */
-public class FirebaseExecutors {
+public class FirebaseThreadManagers {
 
-  private static final Logger logger = LoggerFactory.getLogger(FirebaseExecutors.class);
+  private static final Logger logger = LoggerFactory.getLogger(FirebaseThreadManagers.class);
 
   public static final ThreadManager DEFAULT_THREAD_MANAGER;
 

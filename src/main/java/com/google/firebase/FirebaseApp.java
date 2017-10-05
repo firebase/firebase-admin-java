@@ -93,7 +93,7 @@ public class FirebaseApp {
   private final FirebaseOptions options;
   private final TokenRefresher tokenRefresher;
   private final ThreadManager threadManager;
-  private final ThreadManager.FirebaseExecutor executor;
+  private final ThreadManager.FirebaseExecutors executors;
 
   private final AtomicBoolean deleted = new AtomicBoolean();
   private final Map<String, FirebaseService> services = new HashMap<>();
@@ -112,7 +112,7 @@ public class FirebaseApp {
     this.options = checkNotNull(options);
     this.tokenRefresher = checkNotNull(factory).create(this);
     this.threadManager = options.getThreadManager();
-    this.executor = this.threadManager.getFirebaseExecutor(this);
+    this.executors = this.threadManager.getFirebaseExecutors(this);
   }
 
   /** Returns a list of all FirebaseApps. */
@@ -331,7 +331,7 @@ public class FirebaseApp {
       tokenRefresher.stop();
 
       // Clean up and terminate the thread pools
-      threadManager.releaseFirebaseExecutor(this, executor);
+      threadManager.releaseFirebaseExecutors(this, executors);
       if (scheduledExecutor != null) {
         scheduledExecutor.shutdownNow();
         scheduledExecutor = null;
@@ -372,7 +372,7 @@ public class FirebaseApp {
   // TODO: Return an ApiFuture once Task API is fully removed.
   <T> Task<T> submit(Callable<T> command) {
     checkNotNull(command);
-    return Tasks.call(executor.getListeningExecutor(), command);
+    return Tasks.call(executors.getListeningExecutor(), command);
   }
 
   <T> ScheduledFuture<T> schedule(Callable<T> command, long delayMillis) {

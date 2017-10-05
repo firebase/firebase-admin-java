@@ -36,12 +36,13 @@ import java.util.concurrent.ThreadFactory;
 public abstract class ThreadManager {
 
   @NonNull
-  final FirebaseExecutor getFirebaseExecutor(@NonNull FirebaseApp app) {
-    return new FirebaseExecutor(getExecutor(app));
+  final FirebaseExecutors getFirebaseExecutors(@NonNull FirebaseApp app) {
+    return new FirebaseExecutors(getExecutor(app));
   }
 
-  final void releaseFirebaseExecutor(@NonNull FirebaseApp app, @NonNull FirebaseExecutor executor) {
-    releaseExecutor(app, executor.delegate);
+  final void releaseFirebaseExecutors(
+      @NonNull FirebaseApp app, @NonNull FirebaseExecutors executor) {
+    releaseExecutor(app, executor.userExecutor);
   }
 
   /**
@@ -89,13 +90,13 @@ public abstract class ThreadManager {
    * original ExecutorService. This reference is used when it's time to release/cleanup the
    * original ExecutorService.
    */
-  static final class FirebaseExecutor {
-    private final ExecutorService delegate;
+  static final class FirebaseExecutors {
+    private final ExecutorService userExecutor;
     private final ListeningExecutorService listeningExecutor;
 
-    private FirebaseExecutor(ExecutorService delegate) {
-      this.delegate = checkNotNull(delegate, "ExecutorService must not be null");
-      this.listeningExecutor = MoreExecutors.listeningDecorator(delegate);
+    private FirebaseExecutors(ExecutorService userExecutor) {
+      this.userExecutor = checkNotNull(userExecutor, "ExecutorService must not be null");
+      this.listeningExecutor = MoreExecutors.listeningDecorator(userExecutor);
     }
 
     ListeningExecutorService getListeningExecutor() {

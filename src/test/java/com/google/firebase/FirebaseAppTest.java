@@ -54,7 +54,6 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -384,63 +383,40 @@ public class FirebaseAppTest {
   @Test
   public void testTokenRefresherStateMachine() {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
-    final AtomicInteger scheduleCalls = new AtomicInteger(0);
-    final AtomicInteger cancelCalls = new AtomicInteger(0);
-    TokenRefresher refresher = new TokenRefresher(firebaseApp) {
-      @Override
-      protected void cancelPrevious() {
-        cancelCalls.incrementAndGet();
-      }
-
-      @Override
-      protected void scheduleNext(Callable<Void> task, long delayMillis) {
-        scheduleCalls.incrementAndGet();
-      }
-    };
-    assertEquals(0, scheduleCalls.get());
+    CountingTokenRefresher refresher = new CountingTokenRefresher(firebaseApp);
+    assertEquals(0, refresher.scheduleCalls);
 
     // Both schedule and cancel should be called.
     // (we call cancel before each new scheduling attempt)
     refresher.start();
-    assertEquals(1, scheduleCalls.get());
-    assertEquals(1, cancelCalls.get());
+    assertEquals(1, refresher.scheduleCalls);
+    assertEquals(1, refresher.cancelCalls);
 
     // Shouldn't change state
     refresher.start();
-    assertEquals(1, scheduleCalls.get());
-    assertEquals(1, cancelCalls.get());
+    assertEquals(1, refresher.scheduleCalls);
+    assertEquals(1, refresher.cancelCalls);
 
     refresher.stop();
-    assertEquals(1, scheduleCalls.get());
-    assertEquals(2, cancelCalls.get());
+    assertEquals(1, refresher.scheduleCalls);
+    assertEquals(2, refresher.cancelCalls);
 
     // Shouldn't change state
+    refresher.start();
+    assertEquals(1, refresher.scheduleCalls);
+    assertEquals(2, refresher.cancelCalls);
+
     refresher.stop();
-    assertEquals(1, scheduleCalls.get());
-    assertEquals(2, cancelCalls.get());
-  }
+    assertEquals(1, refresher.scheduleCalls);
+    assertEquals(2, refresher.cancelCalls);
 
-  @Test
-  public void testTokenRefresherStateMachineEarlyTermination() {
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
-    final AtomicInteger scheduleCalls = new AtomicInteger(0);
-    final AtomicInteger cancelCalls = new AtomicInteger(0);
-    TokenRefresher refresher = new TokenRefresher(firebaseApp) {
-      @Override
-      protected void cancelPrevious() {
-        cancelCalls.incrementAndGet();
-      }
-
-      @Override
-      protected void scheduleNext(Callable<Void> task, long delayMillis) {
-        scheduleCalls.incrementAndGet();
-      }
-    };
+    // Test for the case where the refresher is stopped without ever starting.
+    refresher = new CountingTokenRefresher(firebaseApp);
     // stop() is allowed here, but since we didn't start(), no measurable state change
     // should take place.
     refresher.stop();
-    assertEquals(0, scheduleCalls.get());
-    assertEquals(0, cancelCalls.get());
+    assertEquals(0, refresher.scheduleCalls);
+    assertEquals(0, refresher.cancelCalls);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -487,6 +463,26 @@ public class FirebaseAppTest {
           task.call();
         }
       }
+    }
+  }
+
+  private static class CountingTokenRefresher extends TokenRefresher {
+
+    private int cancelCalls = 0;
+    private int scheduleCalls = 0;
+
+    CountingTokenRefresher(FirebaseApp firebaseApp) {
+      super(firebaseApp);
+    }
+
+    @Override
+    protected void cancelPrevious() {
+      cancelCalls++;
+    }
+
+    @Override
+    protected void scheduleNext(Callable<Void> task, long delayMillis) {
+      scheduleCalls++;
     }
   }
 
