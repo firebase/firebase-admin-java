@@ -27,13 +27,13 @@ import java.util.NoSuchElementException;
 
 /**
  * An {@code Iterable} that enables iterating over the user accounts of a Firebase project. It can
- * be used to obtain an {@code Iterator} over the user accounts. Or it can be used directly as
+ * be used to obtain an {@code Iterator} over the user accounts, or it can be used directly as
  * the target of a foreach loop.
  *
  * <p>The {@code maxResults} parameter governs the maximum number of user accounts an iterator is
  * allowed to keep in memory during iteration. It also controls the number of user accounts to
- * be retrieved in a single RPC call. The returned iterators transparently page through batches
- * of user accounts. No RPC calls are made until an iterator is used (i.e. {@code hasNext()}
+ * be retrieved in a single RPC call. The returned iterators transparently page through user
+ * accounts. No RPC calls are made until an iterator is used (i.e. until the {@code hasNext()}
  * method is called).
  *
  * <p>This {@code Iterable} is stateless. That is, its {@link #iterator()} method always returns
