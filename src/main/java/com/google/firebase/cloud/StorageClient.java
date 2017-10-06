@@ -25,7 +25,6 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.internal.FirebaseCloudCredentials;
 import com.google.firebase.internal.FirebaseService;
 
 /**
@@ -45,7 +44,7 @@ public class StorageClient {
   private StorageClient(FirebaseApp app) {
     this.app = checkNotNull(app, "FirebaseApp must not be null");
     this.storage = StorageOptions.newBuilder()
-        .setCredentials(new FirebaseCloudCredentials(app))
+        .setCredentials(ImplFirebaseTrampolines.getCredentials(app))
         .build()
         .getService();
   }

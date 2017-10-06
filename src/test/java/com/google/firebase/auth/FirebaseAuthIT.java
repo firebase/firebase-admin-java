@@ -35,7 +35,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
-import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -65,7 +64,7 @@ public class FirebaseAuthIT {
   @Test
   public void testGetNonExistingUser() throws Exception {
     try {
-      Tasks.await(auth.getUser("non.existing"));
+      auth.getUserAsync("non.existing").get();
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -77,7 +76,7 @@ public class FirebaseAuthIT {
   @Test
   public void testGetNonExistingUserByEmail() throws Exception {
     try {
-      Tasks.await(auth.getUserByEmail("non.existing@definitely.non.existing"));
+      auth.getUserByEmailAsync("non.existing@definitely.non.existing").get();
       fail("No error thrown for non existing email");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -89,7 +88,7 @@ public class FirebaseAuthIT {
   @Test
   public void testUpdateNonExistingUser() throws Exception {
     try {
-      Tasks.await(auth.updateUser(new UpdateRequest("non.existing")));
+      auth.updateUserAsync(new UpdateRequest("non.existing")).get();
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -101,7 +100,7 @@ public class FirebaseAuthIT {
   @Test
   public void testDeleteNonExistingUser() throws Exception {
     try {
-      Tasks.await(auth.deleteUser("non.existing"));
+      auth.deleteUserAsync("non.existing").get();
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -134,7 +133,7 @@ public class FirebaseAuthIT {
         .setEmailVerified(true)
         .setPassword("password");
 
-    UserRecord userRecord = Tasks.await(auth.createUser(user));
+    UserRecord userRecord = auth.createUserAsync(user).get();
     try {
       assertEquals(randomId, userRecord.getUid());
       assertEquals("Random User", userRecord.getDisplayName());
@@ -154,13 +153,13 @@ public class FirebaseAuthIT {
 
       checkRecreate(randomId);
     } finally {
-      Tasks.await(auth.deleteUser(userRecord.getUid()));
+      auth.deleteUserAsync(userRecord.getUid()).get();
     }
   }
 
   private void checkRecreate(String uid) throws Exception {
     try {
-      Tasks.await(auth.createUser(new CreateRequest().setUid(uid)));
+      auth.createUserAsync(new CreateRequest().setUid(uid)).get();
       fail("No error thrown for creating user with existing ID");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -172,11 +171,11 @@ public class FirebaseAuthIT {
   @Test
   public void testUserLifecycle() throws Exception {
     // Create user
-    UserRecord userRecord = Tasks.await(auth.createUser(new CreateRequest()));
+    UserRecord userRecord = auth.createUserAsync(new CreateRequest()).get();
     String uid = userRecord.getUid();
 
     // Get user
-    userRecord = Tasks.await(auth.getUser(userRecord.getUid()));
+    userRecord = auth.getUserAsync(userRecord.getUid()).get();
     assertEquals(uid, userRecord.getUid());
     assertNull(userRecord.getDisplayName());
     assertNull(userRecord.getEmail());
@@ -200,7 +199,7 @@ public class FirebaseAuthIT {
         .setPhotoUrl("https://example.com/photo.png")
         .setEmailVerified(true)
         .setPassword("secret");
-    userRecord = Tasks.await(auth.updateUser(request));
+    userRecord = auth.updateUserAsync(request).get();
     assertEquals(uid, userRecord.getUid());
     assertEquals("Updated Name", userRecord.getDisplayName());
     assertEquals(userEmail, userRecord.getEmail());
@@ -211,7 +210,7 @@ public class FirebaseAuthIT {
     assertEquals(2, userRecord.getProviderData().length);
 
     // Get user by email
-    userRecord = Tasks.await(auth.getUserByEmail(userRecord.getEmail()));
+    userRecord = auth.getUserByEmailAsync(userRecord.getEmail()).get();
     assertEquals(uid, userRecord.getUid());
 
     // Disable user and remove properties
@@ -220,7 +219,7 @@ public class FirebaseAuthIT {
         .setDisplayName(null)
         .setPhoneNumber(null)
         .setDisabled(true);
-    userRecord = Tasks.await(auth.updateUser(request));
+    userRecord = auth.updateUserAsync(request).get();
     assertEquals(uid, userRecord.getUid());
     assertNull(userRecord.getDisplayName());
     assertEquals(userEmail, userRecord.getEmail());
@@ -231,9 +230,9 @@ public class FirebaseAuthIT {
     assertEquals(1, userRecord.getProviderData().length);
 
     // Delete user
-    Tasks.await(auth.deleteUser(userRecord.getUid()));
+    auth.deleteUserAsync(userRecord.getUid()).get();
     try {
-      Tasks.await(auth.getUser(userRecord.getUid()));
+      auth.getUserAsync(userRecord.getUid()).get();
       fail("No error thrown for deleted user");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -244,9 +243,9 @@ public class FirebaseAuthIT {
 
   @Test
   public void testCustomToken() throws Exception {
-    String customToken = Tasks.await(auth.createCustomToken("user1"));
+    String customToken = auth.createCustomTokenAsync("user1").get();
     String idToken = signInWithCustomToken(customToken);
-    FirebaseToken decoded = Tasks.await(auth.verifyIdToken(idToken));
+    FirebaseToken decoded = auth.verifyIdTokenAsync(idToken).get();
     assertEquals("user1", decoded.getUid());
   }
 
@@ -254,9 +253,9 @@ public class FirebaseAuthIT {
   public void testCustomTokenWithClaims() throws Exception {
     Map<String, Object> devClaims = ImmutableMap.<String, Object>of(
         "premium", true, "subscription", "silver");
-    String customToken = Tasks.await(auth.createCustomToken("user2", devClaims));
+    String customToken = auth.createCustomTokenAsync("user2", devClaims).get();
     String idToken = signInWithCustomToken(customToken);
-    FirebaseToken decoded = Tasks.await(auth.verifyIdToken(idToken));
+    FirebaseToken decoded = auth.verifyIdTokenAsync(idToken).get();
     assertEquals("user2", decoded.getUid());
     assertTrue((Boolean) decoded.getClaims().get("premium"));
     assertEquals("silver", decoded.getClaims().get("subscription"));

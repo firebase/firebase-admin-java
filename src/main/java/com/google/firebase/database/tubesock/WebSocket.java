@@ -16,7 +16,10 @@
 
 package com.google.firebase.database.tubesock;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+
+import com.google.firebase.database.core.ThreadInitializer;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -29,7 +32,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.net.SocketFactory;
@@ -44,6 +46,9 @@ import javax.net.ssl.SSLSocketFactory;
  */
 public class WebSocket {
 
+  private static final ThreadConfig DEFAULT_THREAD_CONFIG = new ThreadConfig(
+      Executors.defaultThreadFactory(), ThreadInitializer.defaultInstance);
+
   static final byte OPCODE_NONE = 0x0;
   static final byte OPCODE_TEXT = 0x1;
   static final byte OPCODE_BINARY = 0x2;
@@ -53,15 +58,9 @@ public class WebSocket {
   private static final String THREAD_BASE_NAME = "TubeSock";
   private static final AtomicInteger clientCount = new AtomicInteger(0);
   private static final Charset UTF8 = Charset.forName("UTF-8");
-  private static ThreadFactory threadFactory = Executors.defaultThreadFactory();
-  private static ThreadInitializer intializer =
-      new ThreadInitializer() {
-        @Override
-        public void setName(Thread t, String name) {
-          t.setName(name);
-        }
-      };
+
   private final URI url;
+  private final ThreadConfig threadConfig;
   private final WebSocketReceiver receiver;
   private final WebSocketWriter writer;
   private final WebSocketHandshake handshake;
@@ -76,18 +75,8 @@ public class WebSocket {
    *
    * @param url The URL of a websocket server
    */
-  public WebSocket(URI url) {
-    this(url, null);
-  }
-
-  /**
-   * Create a websocket to connect to a given server. Include protocol in websocket handshake
-   *
-   * @param url The URL of a websocket server
-   * @param protocol The protocol to include in the handshake. If null, it will be omitted
-   */
-  public WebSocket(URI url, String protocol) {
-    this(url, protocol, null);
+  WebSocket(URI url) {
+    this(url, null, null, DEFAULT_THREAD_CONFIG);
   }
 
   /**
@@ -99,26 +88,17 @@ public class WebSocket {
    * @param protocol The protocol to include in the handshake. If null, it will be omitted
    * @param extraHeaders Any extra HTTP headers to be included with the initial request. Pass null
    *     if not extra headers are requested
+   * @param threadConfig A non-null ThreadConfig for websocket connections.
    */
-  public WebSocket(URI url, String protocol, Map<String, String> extraHeaders) {
+  public WebSocket(URI url, String protocol, Map<String, String> extraHeaders,
+                   ThreadConfig threadConfig) {
     this.url = url;
     handshake = new WebSocketHandshake(url, protocol, extraHeaders);
     receiver = new WebSocketReceiver(this);
-    writer = new WebSocketWriter(this, THREAD_BASE_NAME, clientId);
+    writer = new WebSocketWriter(this, threadConfig, THREAD_BASE_NAME, clientId);
+    this.threadConfig = checkNotNull(threadConfig);
   }
 
-  static ThreadFactory getThreadFactory() {
-    return threadFactory;
-  }
-
-  static ThreadInitializer getIntializer() {
-    return intializer;
-  }
-
-  public static void setThreadFactory(ThreadFactory threadFactory, ThreadInitializer intializer) {
-    WebSocket.threadFactory = threadFactory;
-    WebSocket.intializer = intializer;
-  }
 
   WebSocketEventHandler getEventHandler() {
     return this.eventHandler;
@@ -150,7 +130,7 @@ public class WebSocket {
   private synchronized void start() {
     checkState(innerThread == null, "Inner thread already started");
     innerThread =
-        getThreadFactory()
+        threadConfig.getThreadFactory()
             .newThread(
                 new Runnable() {
                   @Override
@@ -158,7 +138,7 @@ public class WebSocket {
                     runReader();
                   }
                 });
-    getIntializer().setName(innerThread, THREAD_BASE_NAME + "Reader-" + clientId);
+    threadConfig.getInitializer().setName(innerThread, THREAD_BASE_NAME + "Reader-" + clientId);
     innerThread.start();
   }
 

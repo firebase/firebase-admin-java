@@ -60,7 +60,7 @@ public class InfoTestIT {
   public void testInfoNodeSetValue() {
     DatabaseReference ref = FirebaseDatabase.getInstance().getReference(".info");
     try {
-      ref.setValue("hi");
+      ref.setValueAsync("hi");
       fail("Should not be allowed");
     } catch (DatabaseException expected) {
       // No-op, expected
@@ -71,7 +71,7 @@ public class InfoTestIT {
   public void testInfoNodeSetValueWithPriority() {
     DatabaseReference ref = FirebaseDatabase.getInstance().getReference(".info");
     try {
-      ref.setValue("hi", 5);
+      ref.setValueAsync("hi", 5);
       fail("Should not be allowed");
     } catch (DatabaseException expected) {
       // No-op, expected
@@ -82,7 +82,7 @@ public class InfoTestIT {
   public void testInfoNodeSetPriority() {
     DatabaseReference ref = FirebaseDatabase.getInstance().getReference(".info");
     try {
-      ref.setPriority("hi");
+      ref.setPriorityAsync("hi");
       fail("Should not be allowed");
     } catch (DatabaseException expected) {
       // No-op, expected
@@ -117,7 +117,7 @@ public class InfoTestIT {
   public void testInfoNodeRemoveValue() {
     DatabaseReference ref = FirebaseDatabase.getInstance().getReference(".info");
     try {
-      ref.removeValue();
+      ref.removeValueAsync();
       fail("Should not be allowed");
     } catch (DatabaseException expected) {
       // No-op, expected
@@ -128,7 +128,7 @@ public class InfoTestIT {
   public void testInfoNodeChildSetValue() {
     DatabaseReference ref = FirebaseDatabase.getInstance().getReference(".info");
     try {
-      ref.child("test").setValue("hi");
+      ref.child("test").setValueAsync("hi");
       fail("Should not be allowed");
     } catch (DatabaseException expected) {
       // No-op, expected

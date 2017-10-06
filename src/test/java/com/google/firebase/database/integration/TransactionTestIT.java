@@ -315,7 +315,7 @@ public class TransactionTestIT {
     EventHelper helper = new EventHelper().addValueExpectation(reader.child("a"))
         .addValueExpectation(reader.child("b")).startListening(true);
 
-    writer.child("a").setValue(42);
+    writer.child("a").setValueAsync(42);
     new WriteFuture(writer.child("b"), 42).timedGet();
 
     assertTrue(helper.waitForEvents());
@@ -561,7 +561,7 @@ public class TransactionTestIT {
     // However, a new value event won't be triggered until the listener is
     // complete,
     // so we're left with the last value event
-    ref.child("foo").setValue(0);
+    ref.child("foo").setValueAsync(0);
 
     TestHelpers.waitFor(semaphore);
 
@@ -594,8 +594,8 @@ public class TransactionTestIT {
       }
     });
 
-    ref.setValue("foo");
-    ref.setValue("bar");
+    ref.setValueAsync("foo");
+    ref.setValueAsync("bar");
     TestHelpers.waitFor(semaphore);
   }
 
@@ -617,7 +617,7 @@ public class TransactionTestIT {
       }
     });
 
-    ref.setValue("test", 5);
+    ref.setValueAsync("test", 5);
     ref.runTransaction(new Transaction.Handler() {
       @Override
       public Transaction.Result doTransaction(MutableData currentData) {
@@ -772,7 +772,7 @@ public class TransactionTestIT {
       }
     });
 
-    ref.setValue(32);
+    ref.setValueAsync(32);
     TestHelpers.waitFor(semaphore);
   }
 
@@ -1820,7 +1820,7 @@ public class TransactionTestIT {
     // runs.
     DatabaseConfig ctx = TestHelpers.getDatabaseConfig(masterApp);
     RepoManager.interrupt(ctx);
-    ref.updateChildren(new MapBuilder().put("foo", "bar").build());
+    ref.updateChildrenAsync(new MapBuilder().put("foo", "bar").build());
     ref.child("foo").runTransaction(new Transaction.Handler() {
 
       @Override
@@ -1846,7 +1846,7 @@ public class TransactionTestIT {
       throws InterruptedException, ExecutionException, TestFailure, TimeoutException {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
-    ref.setValue(new MapBuilder().put("foo", "bar").build());
+    ref.setValueAsync(new MapBuilder().put("foo", "bar").build());
     ref.runTransaction(new Transaction.Handler() {
       @Override
       public Transaction.Result doTransaction(MutableData currentData) {
@@ -1937,10 +1937,6 @@ public class TransactionTestIT {
 
       @Override
       public void addTokenChangeListener(TokenChangeListener listener) {
-      }
-
-      @Override
-      public void removeTokenChangeListener(TokenChangeListener listener) {
       }
     });
 

@@ -19,9 +19,9 @@ package com.google.firebase.database.integration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -33,7 +33,6 @@ import com.google.firebase.database.TestFailure;
 import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.future.ReadFuture;
-import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.IntegrationTestUtils;
 import com.google.firebase.testing.TestUtils;
 
@@ -165,8 +164,7 @@ public class FirebaseDatabaseTestIT {
       TestFailure {
     FirebaseDatabase db = FirebaseDatabase.getInstance(masterApp);
     DatabaseReference ref = db.getReference("testSetValue");
-    Tasks.await(ref.setValue("foo"), TestUtils.TEST_TIMEOUT_MILLIS,
-        TimeUnit.MILLISECONDS);
+    ref.setValueAsync("foo").get(TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     ReadFuture readFuture = ReadFuture.untilEquals(ref, "foo");
     readFuture.timedWait();
   }
@@ -178,7 +176,7 @@ public class FirebaseDatabaseTestIT {
     List<DatabaseReference> ref = IntegrationTestUtils.getRandomNode(app, 2);
     DatabaseReference writer = ref.get(0);
     DatabaseReference reader = ref.get(1);
-    writer.setValue("test");
+    writer.setValueAsync("test");
     TestHelpers.waitForRoundtrip(writer.getRoot());
     ReadFuture.untilEquals(reader, "test").timedWait();
 
@@ -191,14 +189,14 @@ public class FirebaseDatabaseTestIT {
     }
 
     try {
-      writer.setValue("foo");
+      writer.setValueAsync("foo");
       fail("No error thrown for deleted app");
     } catch (IllegalStateException expected) {
       // ignore
     }
 
     try {
-      writer.updateChildren(MapBuilder.of("a", 1));
+      writer.updateChildrenAsync(MapBuilder.of("a", 1));
       fail("No error thrown for deleted app");
     } catch (IllegalStateException expected) {
       // ignore
@@ -250,7 +248,7 @@ public class FirebaseDatabaseTestIT {
     ref = IntegrationTestUtils.getRandomNode(app, 2);
     writer = ref.get(0);
     reader = ref.get(1);
-    writer.setValue("test2");
+    writer.setValueAsync("test2");
     TestHelpers.waitForRoundtrip(writer.getRoot());
     ReadFuture.untilEquals(reader, "test2").timedWait();
   }
@@ -259,7 +257,7 @@ public class FirebaseDatabaseTestIT {
     try {
       FirebaseOptions options = new FirebaseOptions.Builder()
           .setDatabaseUrl(dbUrl)
-          .setCredential(FirebaseCredentials.fromCertificate(
+          .setCredentials(GoogleCredentials.fromStream(
               IntegrationTestUtils.getServiceAccountCertificate()))
           .build();
       return FirebaseApp.initializeApp(options, name);
@@ -271,7 +269,7 @@ public class FirebaseDatabaseTestIT {
   private static FirebaseApp appWithoutDbUrl(String name) {
     try {
       FirebaseOptions options = new FirebaseOptions.Builder()
-          .setCredential(FirebaseCredentials.fromCertificate(
+          .setCredentials(GoogleCredentials.fromStream(
               IntegrationTestUtils.getServiceAccountCertificate()))
           .build();
       return FirebaseApp.initializeApp(options, name);

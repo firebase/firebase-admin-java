@@ -426,8 +426,8 @@ public class OrderByTestIT {
               public void onChildChanged(DataSnapshot snap, String previousChildName) {}
             });
 
-    ref.setValue(initial);
-    ref.child("greg/nuggets").setValue(57);
+    ref.setValueAsync(initial);
+    ref.child("greg/nuggets").setValueAsync(57);
 
     TestHelpers.waitFor(semaphore);
 
@@ -614,33 +614,33 @@ public class OrderByTestIT {
     TestHelpers.waitFor(semaphore, 4);
     Assert.assertEquals(4, reads[0]);
 
-    ref.setValue(1);
+    ref.setValueAsync(1);
 
     TestHelpers.waitFor(semaphore, 4);
     Assert.assertEquals(8, reads[0]);
 
     ref.removeEventListener(fooListener);
-    ref.setValue(2);
+    ref.setValueAsync(2);
 
     TestHelpers.waitFor(semaphore, 3);
     Assert.assertEquals(11, reads[0]);
 
     // Should be a no-op resulting in 3 more reads
     ref.orderByChild("foo").removeEventListener(bazListener);
-    ref.setValue(3);
+    ref.setValueAsync(3);
 
     TestHelpers.waitFor(semaphore, 3);
     Assert.assertEquals(14, reads[0]);
 
     ref.orderByChild("bar").removeEventListener(barListener);
-    ref.setValue(4);
+    ref.setValueAsync(4);
     TestHelpers.waitFor(semaphore, 2);
     Assert.assertEquals(16, reads[0]);
 
     // Now, remove everything
     ref.removeEventListener(bazListener);
     ref.removeEventListener(defaultListener);
-    ref.setValue(5);
+    ref.setValueAsync(5);
 
     // No more reads
     TestHelpers.waitForRoundtrip(ref);
@@ -672,7 +672,7 @@ public class OrderByTestIT {
                   }
                 });
 
-    ref.setValue(initial);
+    ref.setValueAsync(initial);
     TestHelpers.waitFor(semaphore, 2);
     Assert.assertEquals(Arrays.asList("c", "a"), snapshotNames);
     Assert.assertEquals(Arrays.asList(null, "c"), prevNames);
@@ -680,7 +680,7 @@ public class OrderByTestIT {
     Map<String, Object> updates = new HashMap<>();
     updates.put("b", MapBuilder.of("value", 4));
     updates.put("d", MapBuilder.of("value", 2));
-    ref.updateChildren(updates);
+    ref.updateChildrenAsync(updates);
 
     TestHelpers.waitFor(semaphore, 2);
     Assert.assertEquals(Arrays.asList("c", "a", "d", "b"), snapshotNames);
@@ -732,7 +732,7 @@ public class OrderByTestIT {
     Assert.assertEquals(expected1, snapshots.get(0).getValue());
 
     // update child which should trigger value event
-    writer.child("one/index").setValue(4);
+    writer.child("one/index").setValueAsync(4);
     TestHelpers.waitFor(semaphore);
 
     Assert.assertEquals(2, snapshots.size());

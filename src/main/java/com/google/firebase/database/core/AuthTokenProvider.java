@@ -34,13 +34,6 @@ public interface AuthTokenProvider {
    */
   void addTokenChangeListener(TokenChangeListener listener);
 
-  /**
-   * Removes a previously-registered TokenChangeListener.
-   *
-   * @param listener Listener to be removed.
-   */
-  void removeTokenChangeListener(TokenChangeListener listener);
-
   interface GetTokenCompletionListener {
 
     /**
@@ -66,9 +59,5 @@ public interface AuthTokenProvider {
      */
     void onTokenChange(String token);
 
-    // TODO: Remove this once AndroidAuthTokenProvider is updated to call
-    // the other method.
-
-    void onTokenChange();
   }
 }

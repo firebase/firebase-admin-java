@@ -32,6 +32,8 @@ import java.util.concurrent.TimeoutException;
 
 /** 
  * {@link Task} utility methods.
+ *
+ * @deprecated Use ApiFutures and ThreadManager interface instead.
  */
 public final class Tasks {
 
@@ -55,6 +57,8 @@ public final class Tasks {
    * Returns a Task that will be completed with the result of the specified Callable.
    *
    * <p>The Callable will be called on a shared thread pool.
+   *
+   * @deprecated Use {@link #call(Executor, Callable)}
    */
   public static <T> Task<T> call(@NonNull Callable<T> callable) {
     return call(TaskExecutors.DEFAULT_THREAD_POOL, callable);

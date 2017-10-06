@@ -133,14 +133,6 @@ public class Repo implements PersistentConnection.Delegate {
     this.ctx.getAuthTokenProvider()
         .addTokenChangeListener(
           new AuthTokenProvider.TokenChangeListener() {
-            // TODO: Remove this once AndroidAuthTokenProvider is updated to call the
-            // other overload.
-            @Override
-            public void onTokenChange() {
-              operationLogger.debug("Auth token changed, triggering auth token refresh");
-              connection.refreshAuthToken();
-            }
-  
             @Override
             public void onTokenChange(String token) {
               operationLogger.debug("Auth token changed, triggering auth token refresh");
@@ -783,7 +775,7 @@ public class Repo implements PersistentConnection.Delegate {
           new Runnable() {
             @Override
             public void run() {
-              handler.onComplete(innerClassError, false, snap);
+              runTransactionOnComplete(handler, innerClassError, false, snap);
             }
           });
     } else {
@@ -929,7 +921,7 @@ public class Repo implements PersistentConnection.Delegate {
                     new Runnable() {
                       @Override
                       public void run() {
-                        txn.handler.onComplete(null, true, snap);
+                        runTransactionOnComplete(txn.handler, null, true, snap);
                       }
                     });
                 // Remove the outstanding value listener that we added
@@ -1141,7 +1133,7 @@ public class Repo implements PersistentConnection.Delegate {
             new Runnable() {
               @Override
               public void run() {
-                transaction.handler.onComplete(callbackError, false, snapshot);
+                runTransactionOnComplete(transaction.handler, callbackError, false, snapshot);
               }
             });
       }
@@ -1274,7 +1266,7 @@ public class Repo implements PersistentConnection.Delegate {
               new Runnable() {
                 @Override
                 public void run() {
-                  transaction.handler.onComplete(abortError, false, null);
+                  runTransactionOnComplete(transaction.handler, abortError, false, null);
                 }
               });
         }
@@ -1293,6 +1285,15 @@ public class Repo implements PersistentConnection.Delegate {
       for (Runnable r : callbacks) {
         postEvent(r);
       }
+    }
+  }
+
+  private void runTransactionOnComplete(Transaction.Handler handler, DatabaseError error,
+      boolean committed, DataSnapshot snapshot) {
+    try {
+      handler.onComplete(error, committed, snapshot);
+    } catch (Exception e) {
+      operationLogger.error("Exception in transaction onComplete callback", e);
     }
   }
 

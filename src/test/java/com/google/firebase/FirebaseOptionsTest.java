@@ -22,22 +22,23 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertTrue;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.FirebaseCredentials;
-import com.google.firebase.auth.TestOnlyImplFirebaseAuthTrampolines;
-import com.google.firebase.database.TestHelpers;
-import com.google.firebase.tasks.OnSuccessListener;
+import com.google.firebase.auth.GoogleOAuthAccessToken;
 import com.google.firebase.tasks.Task;
-import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadFactory;
+
 import org.junit.Test;
 
 /** 
@@ -47,82 +48,120 @@ public class FirebaseOptionsTest {
 
   private static final String FIREBASE_DB_URL = "https://mock-project.firebaseio.com";
   private static final String FIREBASE_STORAGE_BUCKET = "mock-storage-bucket";
+  private static final String FIREBASE_PROJECT_ID = "explicit-project-id";
 
   private static final FirebaseOptions ALL_VALUES_OPTIONS =
       new FirebaseOptions.Builder()
           .setDatabaseUrl(FIREBASE_DB_URL)
-          .setCredential(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
+          .setStorageBucket(FIREBASE_STORAGE_BUCKET)
+          .setProjectId(FIREBASE_PROJECT_ID)
+          .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .build();
+
+  private static final ThreadManager MOCK_THREAD_MANAGER = new ThreadManager() {
+    @Override
+    protected ExecutorService getExecutor(FirebaseApp app) {
+      return null;
+    }
+
+    @Override
+    protected void releaseExecutor(FirebaseApp app, ExecutorService executor) {
+    }
+
+    @Override
+    protected ThreadFactory getThreadFactory() {
+      return null;
+    }
+  };
 
   @Test
   public void createOptionsWithAllValuesSet() throws IOException, InterruptedException {
-    final Semaphore semaphore = new Semaphore(0);
     GsonFactory jsonFactory = new GsonFactory();
     NetHttpTransport httpTransport = new NetHttpTransport();
     FirebaseOptions firebaseOptions =
         new FirebaseOptions.Builder()
             .setDatabaseUrl(FIREBASE_DB_URL)
             .setStorageBucket(FIREBASE_STORAGE_BUCKET)
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
+            .setProjectId(FIREBASE_PROJECT_ID)
             .setJsonFactory(jsonFactory)
             .setHttpTransport(httpTransport)
+            .setThreadManager(MOCK_THREAD_MANAGER)
             .build();
     assertEquals(FIREBASE_DB_URL, firebaseOptions.getDatabaseUrl());
     assertEquals(FIREBASE_STORAGE_BUCKET, firebaseOptions.getStorageBucket());
+    assertEquals(FIREBASE_PROJECT_ID, firebaseOptions.getProjectId());
     assertSame(jsonFactory, firebaseOptions.getJsonFactory());
     assertSame(httpTransport, firebaseOptions.getHttpTransport());
-    TestOnlyImplFirebaseAuthTrampolines.getCertificate(firebaseOptions.getCredential())
-        .addOnSuccessListener(
-            new OnSuccessListener<GoogleCredential>() {
-              @Override
-              public void onSuccess(GoogleCredential googleCredential) {
-                assertEquals(
-                    ServiceAccount.EDITOR.getEmail(), googleCredential.getServiceAccountId());
-                semaphore.release();
-              }
-            });
-    TestHelpers.waitFor(semaphore);
+    assertSame(MOCK_THREAD_MANAGER, firebaseOptions.getThreadManager());
+
+    GoogleCredentials credentials = firebaseOptions.getCredentials();
+    assertNotNull(credentials);
+    assertTrue(credentials instanceof ServiceAccountCredentials);
+    assertEquals(
+        GoogleCredential.fromStream(ServiceAccount.EDITOR.asStream()).getServiceAccountId(),
+        ((ServiceAccountCredentials) credentials).getClientEmail());
   }
 
   @Test
   public void createOptionsWithOnlyMandatoryValuesSet() throws IOException, InterruptedException {
-    final Semaphore semaphore = new Semaphore(0);
+    FirebaseOptions firebaseOptions =
+        new FirebaseOptions.Builder()
+            .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
+            .build();
+    assertNotNull(firebaseOptions.getJsonFactory());
+    assertNotNull(firebaseOptions.getHttpTransport());
+    assertNotNull(firebaseOptions.getThreadManager());
+    assertNull(firebaseOptions.getDatabaseUrl());
+    assertNull(firebaseOptions.getStorageBucket());
+
+    GoogleCredentials credentials = firebaseOptions.getCredentials();
+    assertNotNull(credentials);
+    assertTrue(credentials instanceof ServiceAccountCredentials);
+    assertEquals(
+        GoogleCredential.fromStream(ServiceAccount.EDITOR.asStream()).getServiceAccountId(),
+        ((ServiceAccountCredentials) credentials).getClientEmail());
+  }
+
+  @Test
+  public void createOptionsWithFirebaseCredential() throws IOException {
     FirebaseOptions firebaseOptions =
         new FirebaseOptions.Builder()
             .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
             .build();
+
     assertNotNull(firebaseOptions.getJsonFactory());
     assertNotNull(firebaseOptions.getHttpTransport());
     assertNull(firebaseOptions.getDatabaseUrl());
     assertNull(firebaseOptions.getStorageBucket());
-    TestOnlyImplFirebaseAuthTrampolines.getCertificate(firebaseOptions.getCredential())
-        .addOnSuccessListener(
-            new OnSuccessListener<GoogleCredential>() {
-              @Override
-              public void onSuccess(GoogleCredential googleCredential) {
-                try {
-                  assertEquals(
-                      GoogleCredential.fromStream(ServiceAccount.EDITOR.asStream())
-                          .getServiceAccountId(),
-                      googleCredential.getServiceAccountId());
-                  semaphore.release();
-                } catch (IOException e) {
-                  fail();
-                }
-              }
-            });
-    TestHelpers.waitFor(semaphore);
+
+    GoogleCredentials credentials = firebaseOptions.getCredentials();
+    assertNotNull(credentials);
+    assertTrue(credentials instanceof ServiceAccountCredentials);
+    assertEquals(
+        GoogleCredential.fromStream(ServiceAccount.EDITOR.asStream()).getServiceAccountId(),
+        ((ServiceAccountCredentials) credentials).getClientEmail());
   }
 
   @Test
-  public void createOptionsWithServiceAccountSetsProjectId() throws Exception {
+  public void createOptionsWithCustomFirebaseCredential() throws IOException {
     FirebaseOptions firebaseOptions =
         new FirebaseOptions.Builder()
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .setCredential(new FirebaseCredential() {
+              @Override
+              public Task<GoogleOAuthAccessToken> getAccessToken() {
+                return null;
+              }
+            })
             .build();
-    Task<String> projectId =
-        TestOnlyImplFirebaseAuthTrampolines.getProjectId(firebaseOptions.getCredential());
-    assertEquals("mock-project-id", Tasks.await(projectId));
+
+    assertNotNull(firebaseOptions.getJsonFactory());
+    assertNotNull(firebaseOptions.getHttpTransport());
+    assertNull(firebaseOptions.getDatabaseUrl());
+    assertNull(firebaseOptions.getStorageBucket());
+
+    GoogleCredentials credentials = firebaseOptions.getCredentials();
+    assertNotNull(credentials);
   }
 
   @Test(expected = NullPointerException.class)
@@ -130,27 +169,41 @@ public class FirebaseOptionsTest {
     new FirebaseOptions.Builder().build();
   }
 
+  @Test(expected = NullPointerException.class)
+  public void createOptionsWithNullCredentials() {
+    new FirebaseOptions.Builder().setCredentials(null).build();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void createOptionsWithNullThreadManager() {
+    new FirebaseOptions.Builder()
+        .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
+        .setThreadManager(null)
+        .build();
+  }
+
   @Test
   public void checkToBuilderCreatesNewEquivalentInstance() {
     FirebaseOptions allValuesOptionsCopy = new FirebaseOptions.Builder(ALL_VALUES_OPTIONS).build();
     assertNotSame(ALL_VALUES_OPTIONS, allValuesOptionsCopy);
-    assertEquals(ALL_VALUES_OPTIONS.getCredential(), allValuesOptionsCopy.getCredential());
+    assertEquals(ALL_VALUES_OPTIONS.getCredentials(), allValuesOptionsCopy.getCredentials());
     assertEquals(ALL_VALUES_OPTIONS.getDatabaseUrl(), allValuesOptionsCopy.getDatabaseUrl());
+    assertEquals(ALL_VALUES_OPTIONS.getProjectId(), allValuesOptionsCopy.getProjectId());
     assertEquals(ALL_VALUES_OPTIONS.getJsonFactory(), allValuesOptionsCopy.getJsonFactory());
     assertEquals(ALL_VALUES_OPTIONS.getHttpTransport(), allValuesOptionsCopy.getHttpTransport());
+    assertEquals(ALL_VALUES_OPTIONS.getThreadManager(), allValuesOptionsCopy.getThreadManager());
   }
 
   @Test
   public void testNotEquals() throws IOException {
-    FirebaseCredential credential = FirebaseCredentials
-        .fromCertificate(ServiceAccount.EDITOR.asStream());
+    GoogleCredentials credentials = GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream());
     FirebaseOptions options1 =
         new FirebaseOptions.Builder()
-            .setCredential(credential)
+            .setCredentials(credentials)
             .build();
     FirebaseOptions options2 =
         new FirebaseOptions.Builder()
-            .setCredential(credential)
+            .setCredentials(credentials)
             .setDatabaseUrl("https://test.firebaseio.com")
             .build();
     assertFalse(options1.equals(options2));

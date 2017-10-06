@@ -89,9 +89,9 @@ class WebsocketConnection {
             host, hostInfo.isSecure(), hostInfo.getNamespace(), optLastSessionId);
     Map<String, String> extraHeaders = new HashMap<>();
     extraHeaders.put("User-Agent", this.connectionContext.getUserAgent());
-    WebSocket ws = new WebSocket(uri, /*protocol=*/ null, extraHeaders);
-    WSClientTubesock client = new WSClientTubesock(ws);
-    return client;
+    WebSocket ws = new WebSocket(uri, /*protocol=*/ null, extraHeaders,
+        connectionContext.getThreadConfig());
+    return new WSClientTubesock(ws);
   }
 
   public void open() {

@@ -18,24 +18,88 @@ package com.google.firebase.database.core;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.ThreadManager;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.internal.NonNull;
+import com.google.firebase.testing.ServiceAccount;
+import com.google.firebase.testing.TestUtils;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class JvmPlatformTest {
 
   @Test
+  public void usesThreadManager() {
+    final AtomicInteger count = new AtomicInteger(0);
+    ThreadManager threadManager = new ThreadManager() {
+      @Override
+      protected ExecutorService getExecutor(@NonNull FirebaseApp app) {
+        return Executors.newSingleThreadExecutor();
+      }
+
+      @Override
+      protected void releaseExecutor(@NonNull FirebaseApp app,
+          @NonNull ExecutorService executor) {
+      }
+
+      @Override
+      protected ThreadFactory getThreadFactory() {
+        count.incrementAndGet();
+        return Executors.defaultThreadFactory();
+      }
+    };
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
+        .setThreadManager(threadManager)
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options, "threadManagerApp");
+
+    try {
+      assertEquals(0, count.get());
+      Context cfg = new DatabaseConfig();
+      cfg.firebaseApp = app;
+      cfg.freeze();
+      // EventTarget, RunLoop and AuthTokenProvider (token refresher)
+      assertEquals(3, count.get());
+
+      cfg.getConnectionContext();
+      // ConnectionContext which gets passed to all low-level socket management code.
+      assertEquals(4, count.get());
+    } finally {
+      TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    }
+  }
+
+  @Test
   public void userAgentHasCorrectParts() {
-    Context cfg = new DatabaseConfig();
-    cfg.freeze();
-    String userAgent = cfg.getUserAgent();
-    String[] parts = userAgent.split("/");
-    assertEquals(5, parts.length);
-    assertEquals("Firebase", parts[0]); // Firebase
-    assertEquals(Constants.WIRE_PROTOCOL_VERSION, parts[1]); // Wire protocol version
-    assertEquals(FirebaseDatabase.getSdkVersion(), parts[2]); // SDK version
-    assertEquals(System.getProperty("java.version", "Unknown"), parts[3]); // Java "OS" version
-    assertEquals(Platform.DEVICE, parts[4]); // AdminJava
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options, "userAgentApp");
+
+    try {
+      Context cfg = new DatabaseConfig();
+      cfg.firebaseApp = app;
+      cfg.freeze();
+      String userAgent = cfg.getUserAgent();
+      String[] parts = userAgent.split("/");
+      assertEquals(5, parts.length);
+      assertEquals("Firebase", parts[0]); // Firebase
+      assertEquals(Constants.WIRE_PROTOCOL_VERSION, parts[1]); // Wire protocol version
+      assertEquals(FirebaseDatabase.getSdkVersion(), parts[2]); // SDK version
+      assertEquals(System.getProperty("java.version", "Unknown"), parts[3]); // Java "OS" version
+      assertEquals(Platform.DEVICE, parts[4]); // AdminJava
+    } finally {
+      TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    }
   }
 
   @Test

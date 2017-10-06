@@ -16,14 +16,14 @@
 
 package com.google.firebase;
 
-import com.google.common.base.Strings;
-import com.google.firebase.auth.FirebaseCredential;
-import com.google.firebase.auth.ImplFirebaseAuthTrampolines;
-import com.google.firebase.internal.AuthStateListener;
+
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.internal.FirebaseService;
-import com.google.firebase.internal.GetTokenResult;
 import com.google.firebase.internal.NonNull;
+
 import com.google.firebase.tasks.Task;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Provides trampolines into package-private APIs used by components of Firebase. Intentionally
@@ -36,29 +36,12 @@ public final class ImplFirebaseTrampolines {
 
   private ImplFirebaseTrampolines() {}
 
-  public static FirebaseCredential getCredential(@NonNull FirebaseApp app) {
-    return app.getOptions().getCredential();
+  public static GoogleCredentials getCredentials(@NonNull FirebaseApp app) {
+    return app.getOptions().getCredentials();
   }
 
   public static String getProjectId(@NonNull FirebaseApp app) {
-    return getProjectId(app.getOptions());
-  }
-
-  public static String getProjectId(@NonNull FirebaseOptions options) {
-    // Try to get project ID from user-specified options.
-    String projectId = options.getProjectId();
-
-    // Try to get project ID from the credentials.
-    if (Strings.isNullOrEmpty(projectId)) {
-      FirebaseCredential credential = options.getCredential();
-      projectId = ImplFirebaseAuthTrampolines.getProjectId(credential);
-    }
-
-    // Try to get project ID from the environment.
-    if (Strings.isNullOrEmpty(projectId)) {
-      projectId = System.getenv("GCLOUD_PROJECT");
-    }
-    return projectId;
+    return app.getProjectId();
   }
 
   public static boolean isDefaultApp(@NonNull FirebaseApp app) {
@@ -73,20 +56,6 @@ public final class ImplFirebaseTrampolines {
     return FirebaseApp.getPersistenceKey(name, options);
   }
 
-  public static void addAuthStateChangeListener(
-      @NonNull FirebaseApp app, @NonNull AuthStateListener listener) {
-    app.addAuthStateListener(listener);
-  }
-
-  public static void removeAuthStateChangeListener(
-      @NonNull FirebaseApp app, @NonNull AuthStateListener listener) {
-    app.removeAuthStateListener(listener);
-  }
-
-  public static Task<GetTokenResult> getToken(@NonNull FirebaseApp app, boolean forceRefresh) {
-    return app.getToken(forceRefresh);
-  }
-
   public static <T extends FirebaseService> T getService(
       @NonNull FirebaseApp app, @NonNull String id, @NonNull Class<T> type) {
     return type.cast(app.getService(id));
@@ -96,5 +65,17 @@ public final class ImplFirebaseTrampolines {
       @NonNull FirebaseApp app, @NonNull T service) {
     app.addService(service);
     return service;
+  }
+
+  public static ThreadFactory getThreadFactory(@NonNull FirebaseApp app) {
+    return app.getThreadFactory();
+  }
+
+  public static <T> Task<T> submitCallable(@NonNull FirebaseApp app, @NonNull Callable<T> command) {
+    return app.submit(command);
+  }
+
+  public static void startTokenRefresher(@NonNull FirebaseApp app) {
+    app.startTokenRefresher();
   }
 }

@@ -16,18 +16,28 @@
 
 package com.google.firebase.tasks;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.firebase.internal.GaeThreadFactory;
 import com.google.firebase.internal.NonNull;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 /** 
  * Standard {@link Executor} instances for use with {@link Task}.
+ *
+ * @deprecated Use the ThreadManager interface to get required Executors.
  */
 public class TaskExecutors {
 
-  /** An Executor that uses a shared cached thread pool. */
+  /**
+   * An Executor that uses a shared cached thread pool.
+   *
+   * <p>This is no longer used in the SDK code. All the methods that submit to this thread pool
+   * have been deprecated, and their invocations have been routed elsewhere. This is left here
+   * for now for backward compatibility, since technically it is part of the public API.
+   */
   public static final Executor DEFAULT_THREAD_POOL;
   /** An Executor that uses the calling thread. */
   static final Executor DIRECT =
@@ -42,7 +52,11 @@ public class TaskExecutors {
     if (GaeThreadFactory.isAvailable()) {
       DEFAULT_THREAD_POOL = GaeThreadFactory.DEFAULT_EXECUTOR;
     } else {
-      DEFAULT_THREAD_POOL = Executors.newCachedThreadPool(Executors.defaultThreadFactory());
+      ThreadFactory threadFactory = new ThreadFactoryBuilder()
+          .setNameFormat("task-exec-%d")
+          .setDaemon(true)
+          .build();
+      DEFAULT_THREAD_POOL = Executors.newCachedThreadPool(threadFactory);
     }
   }
 

@@ -8,7 +8,6 @@ import com.google.cloud.firestore.FirestoreOptions;
 import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.internal.FirebaseCloudCredentials;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 
@@ -37,7 +36,7 @@ public class FirestoreClient {
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GCLOUD_PROJECT environment variable.");
     this.firestore = FirestoreOptions.newBuilder()
-        .setCredentials(new FirebaseCloudCredentials(app))
+        .setCredentials(ImplFirebaseTrampolines.getCredentials(app))
         .setProjectId(projectId)
         .build()
         .getService();

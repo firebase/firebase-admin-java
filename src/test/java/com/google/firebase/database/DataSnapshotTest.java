@@ -20,10 +20,10 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
-import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.database.core.DatabaseConfig;
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
@@ -45,7 +45,7 @@ public class DataSnapshotTest {
   public static void setUpClass() throws IOException {
     testApp = FirebaseApp.initializeApp(
         new FirebaseOptions.Builder()
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
+            .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
             .setDatabaseUrl("https://admin-java-sdk.firebaseio.com")
             .build());
     // Obtain a new DatabaseConfig instance for testing. Since we are not connecting to an

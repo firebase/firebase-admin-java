@@ -42,8 +42,9 @@ public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
   private static final Logger logger = LoggerFactory.getLogger(RevivingScheduledExecutor.class);
 
   /** Exception to throw to shut down the core threads. */
-  private static final RuntimeException REVIVE_THREAD_EXCEPTION =
-      new RuntimeException("Restarting Firebase Worker Thread");
+  private static final RuntimeException REVIVE_THREAD_EXCEPTION = new RuntimeException(
+      "Restarting Firebase Worker Thread. This exception is expected to occur periodically "
+          + "when deployed in the App Engine environment, and can be ignored.");
 
   /** The lifetime of a thread. Maximum lifetime of a thread on GAE is 24 hours. */
   private static final long PERIODIC_RESTART_INTERVAL_MS = TimeUnit.HOURS.toMillis(12);

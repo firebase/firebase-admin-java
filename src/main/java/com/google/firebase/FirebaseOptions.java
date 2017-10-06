@@ -22,9 +22,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.FirebaseCredentials;
+import com.google.firebase.auth.internal.BaseCredential;
+import com.google.firebase.auth.internal.FirebaseCredentialsAdapter;
+import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
@@ -38,15 +42,17 @@ public final class FirebaseOptions {
 
   private final String databaseUrl;
   private final String storageBucket;
-  private final FirebaseCredential firebaseCredential;
+  private final GoogleCredentials credentials;
   private final Map<String, Object> databaseAuthVariableOverride;
   private final String projectId;
   private final HttpTransport httpTransport;
   private final JsonFactory jsonFactory;
+  private final ThreadManager threadManager;
 
   private FirebaseOptions(@NonNull FirebaseOptions.Builder builder) {
-    this.firebaseCredential = checkNotNull(builder.firebaseCredential,
-        "FirebaseOptions must be initialized with setCredential().");
+    this.credentials = checkNotNull(builder.credentials,
+        "FirebaseOptions must be initialized with setCredentials().")
+        .createScoped(BaseCredential.FIREBASE_SCOPES);
     this.databaseUrl = builder.databaseUrl;
     this.databaseAuthVariableOverride = builder.databaseAuthVariableOverride;
     this.storageBucket = builder.storageBucket;
@@ -55,6 +61,8 @@ public final class FirebaseOptions {
         "FirebaseOptions must be initialized with a non-null HttpTransport.");
     this.jsonFactory = checkNotNull(builder.jsonFactory,
         "FirebaseOptions must be initialized with a non-null JsonFactory.");
+    this.threadManager = checkNotNull(builder.threadManager,
+        "FirebaseOptions must be initialized with a non-null ThreadManager");
   }
 
   /**
@@ -75,8 +83,8 @@ public final class FirebaseOptions {
     return storageBucket;
   }
 
-  FirebaseCredential getCredential() {
-    return firebaseCredential;
+  GoogleCredentials getCredentials() {
+    return credentials;
   }
 
   /**
@@ -119,18 +127,24 @@ public final class FirebaseOptions {
     return jsonFactory;
   }
 
-  /** 
+  @NonNull
+  ThreadManager getThreadManager() {
+    return threadManager;
+  }
+
+  /**
    * Builder for constructing {@link FirebaseOptions}. 
    */
   public static final class Builder {
 
     private String databaseUrl;
     private String storageBucket;
-    private FirebaseCredential firebaseCredential;
+    private GoogleCredentials credentials;
     private Map<String, Object> databaseAuthVariableOverride = new HashMap<>();
     private String projectId;
     private HttpTransport httpTransport = Utils.getDefaultTransport();
     private JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    private ThreadManager threadManager = FirebaseThreadManagers.DEFAULT_THREAD_MANAGER;
 
     /** Constructs an empty builder. */
     public Builder() {}
@@ -144,11 +158,12 @@ public final class FirebaseOptions {
     public Builder(FirebaseOptions options) {
       databaseUrl = options.databaseUrl;
       storageBucket = options.storageBucket;
-      firebaseCredential = options.firebaseCredential;
+      credentials = options.credentials;
       databaseAuthVariableOverride = options.databaseAuthVariableOverride;
       projectId = options.projectId;
       httpTransport = options.httpTransport;
       jsonFactory = options.jsonFactory;
+      threadManager = options.threadManager;
     }
 
     /**
@@ -184,17 +199,36 @@ public final class FirebaseOptions {
     }
 
     /**
-     * Sets the <code>FirebaseCredential</code> to use to authenticate the SDK.
+     * Sets the <code>GoogleCredentials</code> to use to authenticate the SDK.
      *
      * <p>See <a href="https://firebase.google.com/docs/admin/setup#initialize_the_sdk">
      * Initialize the SDK</a> for code samples and detailed documentation.
      *
+     * @param credentials A
+     *     <a href="http://google.github.io/google-auth-library-java/releases/0.7.1/apidocs/com/google/auth/oauth2/GoogleCredentials.html">{@code GoogleCredentials}</a>
+     *     instance used to authenticate the SDK.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setCredentials(GoogleCredentials credentials) {
+      this.credentials = checkNotNull(credentials);
+      return this;
+    }
+
+    /**
+     * Sets the <code>FirebaseCredential</code> to use to authenticate the SDK.
+     *
      * @param credential A <code>FirebaseCredential</code> used to authenticate the SDK. See {@link
      *     FirebaseCredentials} for default implementations.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     * @deprecated Use {@link FirebaseOptions.Builder#setCredentials(GoogleCredentials)}.
      */
     public Builder setCredential(@NonNull FirebaseCredential credential) {
-      firebaseCredential = checkNotNull(credential);
+      checkNotNull(credential);
+      if (credential instanceof BaseCredential) {
+        this.credentials = ((BaseCredential) credential).getGoogleCredentials();
+      } else {
+        this.credentials = new FirebaseCredentialsAdapter(credential);
+      }
       return this;
     }
 
@@ -256,6 +290,18 @@ public final class FirebaseOptions {
      */
     public Builder setJsonFactory(JsonFactory jsonFactory) {
       this.jsonFactory = jsonFactory;
+      return this;
+    }
+
+    /**
+     * Sets the <code>ThreadManager</code> used to initialize thread pools and thread factories
+     * for Firebase apps.
+     *
+     * @param threadManager A <code>ThreadManager</code> instance.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setThreadManager(ThreadManager threadManager) {
+      this.threadManager = threadManager;
       return this;
     }
 
