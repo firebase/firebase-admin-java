@@ -46,7 +46,11 @@ public abstract class BaseCredential implements FirebaseCredential {
           "https://www.googleapis.com/auth/identitytoolkit",
 
           // Enables access to Google Cloud Storage.
-          "https://www.googleapis.com/auth/devstorage.full_control");
+          "https://www.googleapis.com/auth/devstorage.full_control",
+
+          // Enables access to Google Cloud Firestore
+          "https://www.googleapis.com/auth/cloud-platform",
+          "https://www.googleapis.com/auth/datastore");
 
   private final GoogleCredentials googleCredentials;
 
