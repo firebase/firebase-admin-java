@@ -28,7 +28,9 @@ import java.util.concurrent.ThreadFactory;
 /**
  * An interface that controls the thread pools and thread factories used by the Admin SDK. Each
  * instance of {@link FirebaseApp} uses an implementation of this interface to create and manage
- * threads. Multiple app instances may use the same <code>ThreadManager</code> instance.
+ * threads.
+ *
+ * <p>Multiple app instances may use the same <code>ThreadManager</code> instance.
  * Methods in this interface may get invoked multiple times by the same
  * app, during its lifetime. Apps may also invoke methods of this interface concurrently, and
  * therefore implementations should provide any synchronization necessary.
