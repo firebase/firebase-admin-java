@@ -16,7 +16,6 @@
 
 package com.google.firebase;
 
-
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;

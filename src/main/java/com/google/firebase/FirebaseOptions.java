@@ -55,8 +55,8 @@ public final class FirebaseOptions {
         .createScoped(BaseCredential.FIREBASE_SCOPES);
     this.databaseUrl = builder.databaseUrl;
     this.databaseAuthVariableOverride = builder.databaseAuthVariableOverride;
-    this.storageBucket = builder.storageBucket;
     this.projectId = builder.projectId;
+    this.storageBucket = builder.storageBucket;
     this.httpTransport = checkNotNull(builder.httpTransport,
         "FirebaseOptions must be initialized with a non-null HttpTransport.");
     this.jsonFactory = checkNotNull(builder.jsonFactory,
