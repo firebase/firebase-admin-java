@@ -193,6 +193,17 @@ public final class FirebaseOptions {
       return this;
     }
 
+    /**
+     * Sets the <code>GoogleCredentials</code> to use to authenticate the SDK.
+     *
+     * <p>See <a href="https://firebase.google.com/docs/admin/setup#initialize_the_sdk">
+     * Initialize the SDK</a> for code samples and detailed documentation.
+     *
+     * @param credentials A
+     *     <a href="http://google.github.io/google-auth-library-java/releases/0.7.1/apidocs/com/google/auth/oauth2/GoogleCredentials.html">{@code GoogleCredentials}</a>
+     *     instance used to authenticate the SDK.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
     public Builder setCredentials(GoogleCredentials credentials) {
       this.credentials = checkNotNull(credentials);
       return this;
@@ -200,9 +211,6 @@ public final class FirebaseOptions {
 
     /**
      * Sets the <code>FirebaseCredential</code> to use to authenticate the SDK.
-     *
-     * <p>See <a href="https://firebase.google.com/docs/admin/setup#initialize_the_sdk">
-     * Initialize the SDK</a> for code samples and detailed documentation.
      *
      * @param credential A <code>FirebaseCredential</code> used to authenticate the SDK. See {@link
      *     FirebaseCredentials} for default implementations.

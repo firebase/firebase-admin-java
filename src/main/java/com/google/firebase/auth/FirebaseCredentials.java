@@ -37,7 +37,7 @@ import java.io.InputStream;
  * Standard {@link FirebaseCredential} implementations for use with {@link
  * com.google.firebase.FirebaseOptions}.
  *
- * @deprecated Use GoogleCredentials.
+ * @deprecated Use <a href="http://google.github.io/google-auth-library-java/releases/0.7.1/apidocs/com/google/auth/oauth2/GoogleCredentials.html">{@code GoogleCredentials}</a>.
  */
 public class FirebaseCredentials {
 
