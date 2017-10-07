@@ -272,7 +272,7 @@ public class FirebaseAuthTest {
       }
       try {
         method.invoke(auth, parameters.toArray());
-        fail("No error thrown when invoking auth after deleting app");
+        fail("No error thrown when invoking auth after deleting app; method: " + method.getName());
       } catch (InvocationTargetException expected) {
         String message = "FirebaseAuth instance is no longer alive. This happens when "
             + "the parent FirebaseApp instance has been deleted.";

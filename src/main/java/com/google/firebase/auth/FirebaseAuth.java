@@ -344,31 +344,50 @@ public class FirebaseAuth {
     return new TaskToApiFuture<>(getUserByPhoneNumber(phoneNumber));
   }
 
-  public Iterable<ExportedUserRecord> listUsers() {
-    return listUsers(UserIterable.MAX_LIST_USERS_RESULTS);
+  public Task<ListUsersResult> listUsers(PageToken pageToken) {
+    return listUsers(FirebaseUserManager.MAX_LIST_USERS_RESULTS, pageToken);
   }
 
-  public Iterable<ExportedUserRecord> listUsers(int maxResults) {
+  public Task<ListUsersResult> listUsers(final int maxResults, final PageToken pageToken) {
     checkNotDestroyed();
-    return new UserIterable(this.userManager.newUserSource(), maxResults);
+    checkArgument(maxResults > 0 && maxResults <= FirebaseUserManager.MAX_LIST_USERS_RESULTS,
+        "maxResults must be a positive integer that does not exceed "
+            + FirebaseUserManager.MAX_LIST_USERS_RESULTS);
+    return call(new Callable<ListUsersResult>() {
+      @Override
+      public ListUsersResult call() throws Exception {
+        return userManager.listUsers(maxResults, pageToken);
+      }
+    });
   }
 
-  public void listUsersAsync(final ListUsersCallback callback) {
-    listUsersAsync(callback, UserIterable.MAX_LIST_USERS_RESULTS);
+  public ApiFuture<ListUsersResult> listUsersAsync(PageToken pageToken) {
+    return listUsersAsync(FirebaseUserManager.MAX_LIST_USERS_RESULTS, pageToken);
   }
 
-  public void listUsersAsync(final ListUsersCallback callback, int maxResults) {
+  public ApiFuture<ListUsersResult> listUsersAsync(
+      final int maxResults, final PageToken pageToken) {
+    return new TaskToApiFuture<>(listUsers(maxResults, pageToken));
+  }
+
+  public Iterable<ExportedUserRecord> iterateAllUsers() {
+    checkNotDestroyed();
+    return new UserIterable(userManager.newUserSource());
+  }
+
+  public void iterateAllUsersAsync(final ListUsersCallback callback) {
     checkNotDestroyed();
     checkNotNull(callback, "callback must not be null");
-    final UserIterable users = new UserIterable(this.userManager.newUserSource(), maxResults);
+    final UserIterable iterable = new UserIterable(userManager.newUserSource());
     call(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        users.iterateWithCallback(callback);
+        iterable.iterateWithCallback(callback);
         return null;
       }
     });
   }
+
 
   /**
    * Similar to {@link #createUserAsync(CreateRequest)}, but returns a Task.

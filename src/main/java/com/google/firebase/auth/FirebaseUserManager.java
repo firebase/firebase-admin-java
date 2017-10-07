@@ -61,6 +61,8 @@ class FirebaseUserManager {
   static final String LIST_USERS_ERROR = "LIST_USERS_ERROR";
   static final String INTERNAL_ERROR = "INTERNAL_ERROR";
 
+  static final int MAX_LIST_USERS_RESULTS = 1000;
+
   static final List<String> RESERVED_CLAIMS = ImmutableList.of(
       "amr", "at_hash", "aud", "auth_time", "azp", "cnf", "c_hash", "exp", "iat",
       "iss", "jti", "nbf", "nonce", "sub", "firebase");
@@ -198,6 +200,29 @@ class FirebaseUserManager {
     return new IdToolKitUserSource(this);
   }
 
+  ListUsersResult listUsers(int maxResults, PageToken pageToken) throws FirebaseAuthException {
+    ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
+        .put("maxResults", maxResults);
+    if (pageToken != null) {
+      checkArgument(!pageToken.isEndOfList(), "invalid end of list page token");
+      builder.put("nextPageToken", pageToken.toString());
+    }
+
+    DownloadAccountResponse response;
+    try {
+      response = post("downloadAccount", builder.build(), DownloadAccountResponse.class);
+    } catch (IOException e) {
+      throw new FirebaseAuthException(LIST_USERS_ERROR,
+          "IO error while downloading user accounts.", e);
+    }
+    if (response == null) {
+      throw new FirebaseAuthException(LIST_USERS_ERROR,
+          "Unexpected response from download user account API.");
+    }
+
+    return new ListUsersResult(response);
+  }
+
   private <T> T post(String path, Object content, Class<T> clazz) throws IOException {
     checkArgument(!Strings.isNullOrEmpty(path), "path must not be null or empty");
     checkNotNull(content, "content must not be null");
@@ -229,33 +254,8 @@ class FirebaseUserManager {
     }
 
     @Override
-    public FetchResult fetch(int maxResults, String pageToken) throws Exception {
-      ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
-          .put("maxResults", maxResults);
-      if (pageToken != null) {
-        builder.put("nextPageToken", pageToken);
-      }
-
-      DownloadAccountResponse response;
-      try {
-        response = userManager.post(
-            "downloadAccount", builder.build(), DownloadAccountResponse.class);
-      } catch (IOException e) {
-        throw new FirebaseAuthException(LIST_USERS_ERROR,
-            "IO error while downloading user accounts.", e);
-      }
-      if (response == null) {
-        throw new FirebaseAuthException(LIST_USERS_ERROR,
-            "Unexpected response from download user account API.");
-      }
-
-      ImmutableList.Builder<ExportedUserRecord> users = ImmutableList.builder();
-      if (response.getUsers() != null) {
-        for (DownloadAccountResponse.User user : response.getUsers()) {
-          users.add(new ExportedUserRecord(user));
-        }
-      }
-      return new FetchResult(users.build(), response.getPageToken());
+    public ListUsersResult fetch(int maxResults, PageToken pageToken) throws Exception {
+      return userManager.listUsers(maxResults, pageToken);
     }
   }
 }

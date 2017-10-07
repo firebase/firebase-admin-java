@@ -233,6 +233,40 @@ public class FirebaseAuthIT {
     }
   }
 
+  public void testListUsers() throws Exception {
+    PageToken token = null;
+    while (true) {
+      ListUsersResult result = auth.listUsersAsync(token).get();
+      for (ExportedUserRecord user : result.getUsers()) {
+
+      }
+      if (result.isEndOfList()) {
+        break;
+      }
+      token = result.getNextPageToken();
+    }
+
+    for (ExportedUserRecord user : auth.iterateAllUsers()) {
+
+    }
+    auth.iterateAllUsersAsync(new ListUsersCallback() {
+      @Override
+      public boolean onResult(ExportedUserRecord userRecord) {
+        return false;
+      }
+
+      @Override
+      public void onComplete() {
+
+      }
+
+      @Override
+      public void onError(Exception e) {
+
+      }
+    });
+  }
+
   @Test
   public void testCustomClaims() throws Exception {
     UserRecord userRecord = auth.createUserAsync(new CreateRequest()).get();

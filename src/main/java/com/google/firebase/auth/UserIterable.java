@@ -16,7 +16,6 @@
 
 package com.google.firebase.auth;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
@@ -44,27 +43,16 @@ import java.util.NoSuchElementException;
  */
 public class UserIterable implements Iterable<ExportedUserRecord> {
 
-  static final int MAX_LIST_USERS_RESULTS = 1000;
-
   private final UserSource source;
-  private final int maxResults;
 
   UserIterable(@NonNull UserSource source) {
-    this(source, MAX_LIST_USERS_RESULTS);
-  }
-
-  UserIterable(@NonNull UserSource source, int maxResults) {
     this.source = checkNotNull(source, "user source must not be null");
-    checkArgument(maxResults > 0 && maxResults <= MAX_LIST_USERS_RESULTS,
-        "max results must be a non-zero positive value which must not exceed "
-            + MAX_LIST_USERS_RESULTS);
-    this.maxResults = maxResults;
   }
 
   @Override
   @NonNull
   public Iterator<ExportedUserRecord> iterator() {
-    return new UserIterator(source, maxResults);
+    return new UserIterator(source);
   }
 
   void iterateWithCallback(@NonNull ListUsersCallback callback) {
@@ -86,17 +74,15 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
   private static class UserBatchIterator implements Iterator<List<ExportedUserRecord>> {
 
     private final UserSource source;
-    private final int maxResults;
-    private UserSource.FetchResult fetchResult;
+    private ListUsersResult result;
 
-    private UserBatchIterator(UserSource source, int maxResults) {
+    private UserBatchIterator(UserSource source) {
       this.source = source;
-      this.maxResults = maxResults;
     }
 
     @Override
     public boolean hasNext() {
-      return fetchResult == null || !fetchResult.isEndOfList();
+      return result == null || !result.isEndOfList();
     }
 
     @Override
@@ -104,10 +90,10 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
-      String pageToken = fetchResult != null ? fetchResult.getNextPageToken() : null;
+      PageToken pageToken = result != null ? result.getNextPageToken() : null;
       try {
-        fetchResult = source.fetch(maxResults, pageToken);
-        return fetchResult.getUsers();
+        result = source.fetch(FirebaseUserManager.MAX_LIST_USERS_RESULTS, pageToken);
+        return result.getUsers();
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -131,8 +117,8 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
     private List<ExportedUserRecord> currentBatch = ImmutableList.of();
     private int index = 0;
 
-    private UserIterator(UserSource source, int maxResults) {
-      this.batchIterator = new UserBatchIterator(source, maxResults);
+    private UserIterator(UserSource source) {
+      this.batchIterator = new UserBatchIterator(source);
     }
 
     @Override

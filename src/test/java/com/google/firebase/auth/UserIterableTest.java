@@ -39,7 +39,7 @@ public class UserIterableTest {
 
   @Test
   public void testListUsersIterable() throws IOException {
-    UserSource.FetchResult result = new UserSource.FetchResult(
+    ListUsersResult result = new ListUsersResult(
         ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
         null);
     TestUserSource source = new TestUserSource(result);
@@ -69,7 +69,7 @@ public class UserIterableTest {
 
   @Test
   public void testListUsersIterator() throws IOException {
-    UserSource.FetchResult result = new UserSource.FetchResult(
+    ListUsersResult result = new ListUsersResult(
         ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
         null);
     TestUserSource source = new TestUserSource(result);
@@ -99,7 +99,7 @@ public class UserIterableTest {
 
   @Test
   public void testListUsersPagedIterable() throws IOException {
-    UserSource.FetchResult result = new UserSource.FetchResult(
+    ListUsersResult result = new ListUsersResult(
         ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
         "token");
     TestUserSource source = new TestUserSource(result);
@@ -112,7 +112,7 @@ public class UserIterableTest {
         assertEquals(1, source.calls.size());
         assertEquals(1000, source.calls.get(0).maxResults);
         assertNull(source.calls.get(0).pageToken);
-        result = new UserSource.FetchResult(
+        result = new ListUsersResult(
             ImmutableList.of(newUser("user4"), newUser("user5"), newUser("user6")),
             null);
         source.result = result;
@@ -122,12 +122,12 @@ public class UserIterableTest {
     assertEquals(6, iterations);
     assertEquals(2, source.calls.size());
     assertEquals(1000, source.calls.get(1).maxResults);
-    assertEquals("token", source.calls.get(1).pageToken);
+    assertEquals("token", source.calls.get(1).pageToken.toString());
   }
 
   @Test
   public void testListUsersPagedIterator() throws IOException {
-    UserSource.FetchResult result = new UserSource.FetchResult(
+    ListUsersResult result = new ListUsersResult(
         ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
         "token");
     TestUserSource source = new TestUserSource(result);
@@ -137,7 +137,7 @@ public class UserIterableTest {
     }
     assertEquals(1, source.calls.size());
 
-    result = new UserSource.FetchResult(
+    result = new ListUsersResult(
         ImmutableList.of(newUser("user4"), newUser("user5"), newUser("user6")),
         null);
     source.result = result;
@@ -156,7 +156,7 @@ public class UserIterableTest {
 
   @Test
   public void testIterableWithNoUsers() {
-    UserSource.FetchResult result = new UserSource.FetchResult(
+    ListUsersResult result = new ListUsersResult(
         ImmutableList.<ExportedUserRecord>of(),
         null);
     TestUserSource source = new TestUserSource(result);
@@ -168,7 +168,7 @@ public class UserIterableTest {
 
   @Test
   public void testIteratorWithNoUsers() {
-    UserSource.FetchResult result = new UserSource.FetchResult(
+    ListUsersResult result = new ListUsersResult(
         ImmutableList.<ExportedUserRecord>of(),
         null);
     TestUserSource source = new TestUserSource(result);
@@ -182,7 +182,7 @@ public class UserIterableTest {
 
   @Test
   public void testRemove() throws IOException {
-    UserSource.FetchResult result = new UserSource.FetchResult(
+    ListUsersResult result = new ListUsersResult(
         ImmutableList.of(newUser("user1")),
         null);
     TestUserSource source = new TestUserSource(result);
@@ -204,32 +204,8 @@ public class UserIterableTest {
   }
 
   @Test
-  public void testInvalidMaxResults() throws IOException {
-    UserSource.FetchResult result = new UserSource.FetchResult(
-        ImmutableList.of(newUser("user1")),
-        null);
-    try {
-      new UserIterable(new TestUserSource(result), 0);
-    } catch (IllegalArgumentException expected) {
-      // expected
-    }
-
-    try {
-      new UserIterable(new TestUserSource(result), -1);
-    } catch (IllegalArgumentException expected) {
-      // expected
-    }
-
-    try {
-      new UserIterable(new TestUserSource(result), 1001);
-    } catch (IllegalArgumentException expected) {
-      // expected
-    }
-  }
-
-  @Test
   public void testIterateWithCallback() throws IOException {
-    UserSource.FetchResult result = new UserSource.FetchResult(
+    ListUsersResult result = new ListUsersResult(
         ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
         null);
     TestUserSource source = new TestUserSource(result);
@@ -257,7 +233,7 @@ public class UserIterableTest {
 
   @Test
   public void testIterateWithCallbackBreak() throws IOException {
-    UserSource.FetchResult result = new UserSource.FetchResult(
+    ListUsersResult result = new ListUsersResult(
         ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
         null);
     TestUserSource source = new TestUserSource(result);
@@ -293,7 +269,7 @@ public class UserIterableTest {
 
   @Test
   public void testIterateWithCallbackError() throws IOException {
-    UserSource.FetchResult result = new UserSource.FetchResult(
+    ListUsersResult result = new ListUsersResult(
         ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
         null);
     TestUserSource source = new TestUserSource(result);
@@ -334,15 +310,15 @@ public class UserIterableTest {
 
   private static class TestUserSource implements UserSource {
 
-    private FetchResult result;
+    private ListUsersResult result;
     private List<CallParams> calls = new ArrayList<>();
 
-    TestUserSource(FetchResult result) {
+    TestUserSource(ListUsersResult result) {
       this.result = result;
     }
 
     @Override
-    public FetchResult fetch(int maxResults, String pageToken) throws Exception {
+    public ListUsersResult fetch(int maxResults, PageToken pageToken) throws Exception {
       calls.add(new CallParams(maxResults, pageToken));
       return result;
     }
@@ -350,9 +326,9 @@ public class UserIterableTest {
 
   private static class CallParams {
     private final int maxResults;
-    private final String pageToken;
+    private final PageToken pageToken;
 
-    CallParams(int maxResults, String pageToken) {
+    CallParams(int maxResults, PageToken pageToken) {
       this.maxResults = maxResults;
       this.pageToken = pageToken;
     }
