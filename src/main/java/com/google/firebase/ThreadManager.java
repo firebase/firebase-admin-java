@@ -28,7 +28,9 @@ import java.util.concurrent.ThreadFactory;
 /**
  * An interface that controls the thread pools and thread factories used by the Admin SDK. Each
  * instance of {@link FirebaseApp} uses an implementation of this interface to create and manage
- * threads. Multiple app instances may use the same <code>ThreadManager</code> instance.
+ * threads.
+ *
+ * <p>Multiple app instances may use the same <code>ThreadManager</code> instance.
  * Methods in this interface may get invoked multiple times by the same
  * app, during its lifetime. Apps may also invoke methods of this interface concurrently, and
  * therefore implementations should provide any synchronization necessary.
@@ -36,12 +38,13 @@ import java.util.concurrent.ThreadFactory;
 public abstract class ThreadManager {
 
   @NonNull
-  final FirebaseExecutor getFirebaseExecutor(@NonNull FirebaseApp app) {
-    return new FirebaseExecutor(getExecutor(app));
+  final FirebaseExecutors getFirebaseExecutors(@NonNull FirebaseApp app) {
+    return new FirebaseExecutors(getExecutor(app));
   }
 
-  final void releaseFirebaseExecutor(@NonNull FirebaseApp app, @NonNull FirebaseExecutor executor) {
-    releaseExecutor(app, executor.delegate);
+  final void releaseFirebaseExecutors(
+      @NonNull FirebaseApp app, @NonNull FirebaseExecutors executor) {
+    releaseExecutor(app, executor.userExecutor);
   }
 
   /**
@@ -89,13 +92,13 @@ public abstract class ThreadManager {
    * original ExecutorService. This reference is used when it's time to release/cleanup the
    * original ExecutorService.
    */
-  static final class FirebaseExecutor {
-    private final ExecutorService delegate;
+  static final class FirebaseExecutors {
+    private final ExecutorService userExecutor;
     private final ListeningExecutorService listeningExecutor;
 
-    private FirebaseExecutor(ExecutorService delegate) {
-      this.delegate = checkNotNull(delegate, "ExecutorService must not be null");
-      this.listeningExecutor = MoreExecutors.listeningDecorator(delegate);
+    private FirebaseExecutors(ExecutorService userExecutor) {
+      this.userExecutor = checkNotNull(userExecutor, "ExecutorService must not be null");
+      this.listeningExecutor = MoreExecutors.listeningDecorator(userExecutor);
     }
 
     ListeningExecutorService getListeningExecutor() {

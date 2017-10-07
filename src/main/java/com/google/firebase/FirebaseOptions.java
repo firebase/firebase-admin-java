@@ -28,7 +28,7 @@ import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.auth.internal.BaseCredential;
 import com.google.firebase.auth.internal.FirebaseCredentialsAdapter;
-import com.google.firebase.internal.FirebaseExecutors;
+import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
@@ -139,7 +139,7 @@ public final class FirebaseOptions {
     private String projectId;
     private HttpTransport httpTransport = Utils.getDefaultTransport();
     private JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    private ThreadManager threadManager = FirebaseExecutors.DEFAULT_THREAD_MANAGER;
+    private ThreadManager threadManager = FirebaseThreadManagers.DEFAULT_THREAD_MANAGER;
 
     /** Constructs an empty builder. */
     public Builder() {}
@@ -193,6 +193,17 @@ public final class FirebaseOptions {
       return this;
     }
 
+    /**
+     * Sets the <code>GoogleCredentials</code> to use to authenticate the SDK.
+     *
+     * <p>See <a href="https://firebase.google.com/docs/admin/setup#initialize_the_sdk">
+     * Initialize the SDK</a> for code samples and detailed documentation.
+     *
+     * @param credentials A
+     *     <a href="http://google.github.io/google-auth-library-java/releases/0.7.1/apidocs/com/google/auth/oauth2/GoogleCredentials.html">{@code GoogleCredentials}</a>
+     *     instance used to authenticate the SDK.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
     public Builder setCredentials(GoogleCredentials credentials) {
       this.credentials = checkNotNull(credentials);
       return this;
@@ -200,9 +211,6 @@ public final class FirebaseOptions {
 
     /**
      * Sets the <code>FirebaseCredential</code> to use to authenticate the SDK.
-     *
-     * <p>See <a href="https://firebase.google.com/docs/admin/setup#initialize_the_sdk">
-     * Initialize the SDK</a> for code samples and detailed documentation.
      *
      * @param credential A <code>FirebaseCredential</code> used to authenticate the SDK. See {@link
      *     FirebaseCredentials} for default implementations.

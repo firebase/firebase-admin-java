@@ -380,6 +380,45 @@ public class FirebaseAppTest {
     verify(listener, times(2)).onChanged(Mockito.any(OAuth2Credentials.class));
   }
 
+  @Test
+  public void testTokenRefresherStateMachine() {
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
+    CountingTokenRefresher refresher = new CountingTokenRefresher(firebaseApp);
+    assertEquals(0, refresher.scheduleCalls);
+
+    // Both schedule and cancel should be called.
+    // (we call cancel before each new scheduling attempt)
+    refresher.start();
+    assertEquals(1, refresher.scheduleCalls);
+    assertEquals(1, refresher.cancelCalls);
+
+    // Shouldn't change state
+    refresher.start();
+    assertEquals(1, refresher.scheduleCalls);
+    assertEquals(1, refresher.cancelCalls);
+
+    refresher.stop();
+    assertEquals(1, refresher.scheduleCalls);
+    assertEquals(2, refresher.cancelCalls);
+
+    // Shouldn't change state
+    refresher.start();
+    assertEquals(1, refresher.scheduleCalls);
+    assertEquals(2, refresher.cancelCalls);
+
+    refresher.stop();
+    assertEquals(1, refresher.scheduleCalls);
+    assertEquals(2, refresher.cancelCalls);
+
+    // Test for the case where the refresher is stopped without ever starting.
+    refresher = new CountingTokenRefresher(firebaseApp);
+    // stop() is allowed here, but since we didn't start(), no measurable state change
+    // should take place.
+    refresher.stop();
+    assertEquals(0, refresher.scheduleCalls);
+    assertEquals(0, refresher.cancelCalls);
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void testFirebaseExceptionNullDetail() {
     new FirebaseException(null);
@@ -427,6 +466,26 @@ public class FirebaseAppTest {
     }
   }
 
+  private static class CountingTokenRefresher extends TokenRefresher {
+
+    private int cancelCalls = 0;
+    private int scheduleCalls = 0;
+
+    CountingTokenRefresher(FirebaseApp firebaseApp) {
+      super(firebaseApp);
+    }
+
+    @Override
+    protected void cancelPrevious() {
+      cancelCalls++;
+    }
+
+    @Override
+    protected void scheduleNext(Callable<Void> task, long delayMillis) {
+      scheduleCalls++;
+    }
+  }
+
   private static class MockTokenRefresherFactory extends TokenRefresher.Factory {
 
     MockTokenRefresher instance;
@@ -437,7 +496,6 @@ public class FirebaseAppTest {
       return instance;
     }
   }
-
 
   private static class MockGoogleCredentials extends GoogleCredentials {
 

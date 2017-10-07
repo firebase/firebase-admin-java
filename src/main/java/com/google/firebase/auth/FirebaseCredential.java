@@ -23,7 +23,7 @@ import com.google.firebase.tasks.Task;
  * you will not need to implement this yourself and can instead use the default implementations
  * provided by {@link FirebaseCredentials}.
  *
- * @deprecated Use GoogleCredentials
+ * @deprecated Use <a href="http://google.github.io/google-auth-library-java/releases/0.7.1/apidocs/com/google/auth/oauth2/GoogleCredentials.html">{@code GoogleCredentials}</a>.
  */
 public interface FirebaseCredential {
 
