@@ -196,10 +196,6 @@ class FirebaseUserManager {
     }
   }
 
-  UserSource newUserSource() {
-    return new IdToolKitUserSource(this);
-  }
-
   ListUsersResult listUsers(int maxResults, PageToken pageToken) throws FirebaseAuthException {
     ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
         .put("maxResults", maxResults);
@@ -239,23 +235,6 @@ class FirebaseUserManager {
       return response.parseAs(clazz);
     } finally {
       response.disconnect();
-    }
-  }
-
-  /**
-   * A {@link UserSource} that fetches user account information from the ID Toolkit REST API.
-   */
-  static class IdToolKitUserSource implements UserSource {
-
-    private final FirebaseUserManager userManager;
-
-    private IdToolKitUserSource(FirebaseUserManager userManager) {
-      this.userManager = checkNotNull(userManager);
-    }
-
-    @Override
-    public ListUsersResult fetch(int maxResults, PageToken pageToken) throws Exception {
-      return userManager.listUsers(maxResults, pageToken);
     }
   }
 }

@@ -123,7 +123,7 @@ public class FirebaseUserManagerTest {
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     userManager.setInterceptor(interceptor);
-    ListUsersResult download = userManager.newUserSource().fetch(999, null);
+    ListUsersResult download = userManager.listUsers(999, null);
     assertEquals(2, download.getUsers().size());
     for (ExportedUserRecord userRecord : download.getUsers()) {
       checkUserRecord(userRecord);
@@ -152,7 +152,7 @@ public class FirebaseUserManagerTest {
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     userManager.setInterceptor(interceptor);
-    ListUsersResult download = userManager.newUserSource().fetch(999, new PageToken("token"));
+    ListUsersResult download = userManager.listUsers(999, new PageToken("token"));
     assertEquals(2, download.getUsers().size());
     for (ExportedUserRecord userRecord : download.getUsers()) {
       checkUserRecord(userRecord);
@@ -181,7 +181,7 @@ public class FirebaseUserManagerTest {
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     userManager.setInterceptor(interceptor);
-    ListUsersResult download = userManager.newUserSource().fetch(999, null);
+    ListUsersResult download = userManager.listUsers(999, null);
     assertEquals(0, download.getUsers().size());
     assertNull(download.getNextPageToken().toString());
     checkRequestHeaders(interceptor);

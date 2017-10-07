@@ -52,8 +52,7 @@ public class UserIterableTest {
     }
     assertEquals(3, iterations);
     assertEquals(1, source.calls.size());
-    assertEquals(1000, source.calls.get(0).maxResults);
-    assertNull(source.calls.get(0).pageToken);
+    assertNull(source.calls.get(0));
 
     // Should result in a new iterator
     iterations = 0;
@@ -63,8 +62,7 @@ public class UserIterableTest {
     }
     assertEquals(3, iterations);
     assertEquals(2, source.calls.size());
-    assertEquals(1000, source.calls.get(1).maxResults);
-    assertNull(source.calls.get(1).pageToken);
+    assertNull(source.calls.get(1));
   }
 
   @Test
@@ -82,8 +80,7 @@ public class UserIterableTest {
     }
     assertEquals(3, iterations);
     assertEquals(1, source.calls.size());
-    assertEquals(1000, source.calls.get(0).maxResults);
-    assertNull(source.calls.get(0).pageToken);
+    assertNull(source.calls.get(0));
 
     while (iterator.hasNext()) {
       fail("Should not be able to to iterate any more");
@@ -110,8 +107,7 @@ public class UserIterableTest {
       assertEquals("user" + iterations, user.getUid());
       if (iterations == 3) {
         assertEquals(1, source.calls.size());
-        assertEquals(1000, source.calls.get(0).maxResults);
-        assertNull(source.calls.get(0).pageToken);
+        assertNull(source.calls.get(0));
         result = new ListUsersResult(
             ImmutableList.of(newUser("user4"), newUser("user5"), newUser("user6")),
             null);
@@ -121,8 +117,7 @@ public class UserIterableTest {
 
     assertEquals(6, iterations);
     assertEquals(2, source.calls.size());
-    assertEquals(1000, source.calls.get(1).maxResults);
-    assertEquals("token", source.calls.get(1).pageToken.toString());
+    assertEquals("token", source.calls.get(1).toString());
   }
 
   @Test
@@ -132,20 +127,23 @@ public class UserIterableTest {
         "token");
     TestUserSource source = new TestUserSource(result);
     Iterator<ExportedUserRecord> users = new UserIterable(source).iterator();
-    for (int i = 1; i <= 3; i++) {
-      assertEquals("user" + i, users.next().getUid());
+    int iterations = 0;
+    while (users.hasNext()) {
+      iterations++;
+      assertEquals("user" + iterations, users.next().getUid());
+      if (iterations == 3) {
+        assertEquals(1, source.calls.size());
+        assertNull(source.calls.get(0));
+        result = new ListUsersResult(
+            ImmutableList.of(newUser("user4"), newUser("user5"), newUser("user6")),
+            null);
+        source.result = result;
+      }
     }
-    assertEquals(1, source.calls.size());
 
-    result = new ListUsersResult(
-        ImmutableList.of(newUser("user4"), newUser("user5"), newUser("user6")),
-        null);
-    source.result = result;
-    for (int i = 4; i <= 6; i++) {
-      assertEquals("user" + i, users.next().getUid());
-    }
+    assertEquals(6, iterations);
     assertEquals(2, source.calls.size());
-
+    assertEquals("token", source.calls.get(1).toString());
     assertFalse(users.hasNext());
     try {
       users.next();
@@ -199,8 +197,8 @@ public class UserIterableTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void testNullSource() {
-    new UserIterable(null);
+  public void testNullAuth() {
+    new UserIterable((FirebaseAuth) null);
   }
 
   @Test
@@ -265,6 +263,7 @@ public class UserIterableTest {
         fail("Unexpected error: " + e.getMessage());
       }
     });
+    assertEquals(2, counter.get());
   }
 
   @Test
@@ -308,29 +307,19 @@ public class UserIterableTest {
     return new ExportedUserRecord(parsed);
   }
 
-  private static class TestUserSource implements UserSource {
+  private static class TestUserSource implements UserIterable.UserSource {
 
     private ListUsersResult result;
-    private List<CallParams> calls = new ArrayList<>();
+    private List<PageToken> calls = new ArrayList<>();
 
     TestUserSource(ListUsersResult result) {
       this.result = result;
     }
 
     @Override
-    public ListUsersResult fetch(int maxResults, PageToken pageToken) throws Exception {
-      calls.add(new CallParams(maxResults, pageToken));
+    public ListUsersResult fetch(PageToken pageToken) {
+      calls.add(pageToken);
       return result;
-    }
-  }
-
-  private static class CallParams {
-    private final int maxResults;
-    private final PageToken pageToken;
-
-    CallParams(int maxResults, PageToken pageToken) {
-      this.maxResults = maxResults;
-      this.pageToken = pageToken;
     }
   }
 }

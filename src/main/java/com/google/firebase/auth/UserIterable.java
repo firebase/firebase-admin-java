@@ -18,10 +18,8 @@ package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
 import java.util.Iterator;
-import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
@@ -44,6 +42,10 @@ import java.util.NoSuchElementException;
 public class UserIterable implements Iterable<ExportedUserRecord> {
 
   private final UserSource source;
+
+  UserIterable(@NonNull final FirebaseAuth auth) {
+    this(new DefaultUserSource(auth));
+  }
 
   UserIterable(@NonNull UserSource source) {
     this.source = checkNotNull(source, "user source must not be null");
@@ -69,34 +71,44 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
   }
 
   /**
-   * An {@code Iterator} that cycles through batches of user accounts.
+   * An {@code Iterator} that cycles through user accounts, one at a time. It buffers the
+   * last retrieved batch of user accounts in memory. The {@code maxResults} parameter is an
+   * upper bound on the batch size.
    */
-  private static class UserBatchIterator implements Iterator<List<ExportedUserRecord>> {
+  private static class UserIterator implements Iterator<ExportedUserRecord> {
 
     private final UserSource source;
-    private ListUsersResult result;
+    private ListUsersResult currentBatch;
+    private int index = 0;
 
-    private UserBatchIterator(UserSource source) {
+    private UserIterator(UserSource source) {
       this.source = source;
     }
 
     @Override
     public boolean hasNext() {
-      return result == null || !result.isEndOfList();
+      if (currentBatch == null) {
+        // Load the initial batch
+        currentBatch = source.fetch(null);
+      }
+      if (index == currentBatch.getUsers().size()) {
+        if (!currentBatch.isEndOfList()) {
+          currentBatch = source.fetch(currentBatch.getNextPageToken());
+          index = 0;
+        } else {
+          return false;
+        }
+      }
+
+      return index < currentBatch.getUsers().size();
     }
 
     @Override
-    public List<ExportedUserRecord> next() {
+    public ExportedUserRecord next() {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
-      PageToken pageToken = result != null ? result.getNextPageToken() : null;
-      try {
-        result = source.fetch(FirebaseUserManager.MAX_LIST_USERS_RESULTS, pageToken);
-        return result.getUsers();
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+      return currentBatch.getUsers().get(index++);
     }
 
     @Override
@@ -105,47 +117,24 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
     }
   }
 
-  /**
-   * An {@code Iterator} that cycles through user accounts, one at a time. This uses
-   * {@link UserBatchIterator} under the hood to cycle through batches of users. It buffers the
-   * last retrieved batch of user accounts in memory. The {@code maxResults} parameter is an
-   * upper bound on the batch size.
-   */
-  private static class UserIterator implements Iterator<ExportedUserRecord> {
+  interface UserSource {
+    @NonNull ListUsersResult fetch(PageToken pageToken);
+  }
 
-    private final Iterator<List<ExportedUserRecord>> batchIterator;
-    private List<ExportedUserRecord> currentBatch = ImmutableList.of();
-    private int index = 0;
+  static class DefaultUserSource implements UserSource {
+    private final FirebaseAuth auth;
 
-    private UserIterator(UserSource source) {
-      this.batchIterator = new UserBatchIterator(source);
+    DefaultUserSource(FirebaseAuth auth) {
+      this.auth = checkNotNull(auth, "auth must not be null");
     }
 
     @Override
-    public boolean hasNext() {
-      if (index == currentBatch.size()) {
-        if (batchIterator.hasNext()) {
-          currentBatch = batchIterator.next();
-          index = 0;
-        } else {
-          return false;
-        }
+    public ListUsersResult fetch(PageToken pageToken) {
+      try {
+        return auth.listUsersAsync(pageToken).get();
+      } catch (Exception e) {
+        throw new RuntimeException("Error while downloading user accounts", e);
       }
-
-      return index < currentBatch.size();
-    }
-
-    @Override
-    public ExportedUserRecord next() {
-      if (!hasNext()) {
-        throw new NoSuchElementException();
-      }
-      return currentBatch.get(index++);
-    }
-
-    @Override
-    public void remove() {
-      throw new UnsupportedOperationException("remove operation not supported");
     }
   }
 }

@@ -372,13 +372,13 @@ public class FirebaseAuth {
 
   public Iterable<ExportedUserRecord> iterateAllUsers() {
     checkNotDestroyed();
-    return new UserIterable(userManager.newUserSource());
+    return new UserIterable(this);
   }
 
   public void iterateAllUsersAsync(final ListUsersCallback callback) {
     checkNotDestroyed();
     checkNotNull(callback, "callback must not be null");
-    final UserIterable iterable = new UserIterable(userManager.newUserSource());
+    final UserIterable iterable = new UserIterable(this);
     call(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
