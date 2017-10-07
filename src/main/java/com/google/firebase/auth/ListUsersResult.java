@@ -20,9 +20,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.internal.NonNull;
 
+import java.util.Iterator;
 import java.util.List;
 
-public final class ListUsersResult {
+public final class ListUsersResult implements Iterable<ExportedUserRecord> {
 
   private final List<ExportedUserRecord> users;
   private final PageToken nextPageToken;
@@ -53,7 +54,8 @@ public final class ListUsersResult {
     return nextPageToken;
   }
 
-  public boolean isEndOfList() {
-    return nextPageToken != null && nextPageToken.isEndOfList();
+  @Override
+  public Iterator<ExportedUserRecord> iterator() {
+    return users.iterator();
   }
 }

@@ -123,9 +123,15 @@ public class FirebaseUserManagerTest {
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     userManager.setInterceptor(interceptor);
+
     ListUsersResult download = userManager.listUsers(999, null);
     assertEquals(2, download.getUsers().size());
     for (ExportedUserRecord userRecord : download.getUsers()) {
+      checkUserRecord(userRecord);
+      assertEquals("passwordHash", userRecord.getPasswordHash());
+      assertEquals("passwordSalt", userRecord.getPasswordSalt());
+    }
+    for (ExportedUserRecord userRecord : download) {
       checkUserRecord(userRecord);
       assertEquals("passwordHash", userRecord.getPasswordHash());
       assertEquals("passwordSalt", userRecord.getPasswordSalt());
@@ -152,9 +158,15 @@ public class FirebaseUserManagerTest {
     FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     userManager.setInterceptor(interceptor);
+
     ListUsersResult download = userManager.listUsers(999, new PageToken("token"));
     assertEquals(2, download.getUsers().size());
     for (ExportedUserRecord userRecord : download.getUsers()) {
+      checkUserRecord(userRecord);
+      assertEquals("passwordHash", userRecord.getPasswordHash());
+      assertEquals("passwordSalt", userRecord.getPasswordSalt());
+    }
+    for (ExportedUserRecord userRecord : download) {
       checkUserRecord(userRecord);
       assertEquals("passwordHash", userRecord.getPasswordHash());
       assertEquals("passwordSalt", userRecord.getPasswordSalt());

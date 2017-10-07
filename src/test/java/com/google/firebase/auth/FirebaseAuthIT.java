@@ -18,6 +18,7 @@ package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -43,6 +44,10 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -233,38 +238,80 @@ public class FirebaseAuthIT {
     }
   }
 
+  @Test
   public void testListUsers() throws Exception {
-    PageToken token = null;
-    while (true) {
-      ListUsersResult result = auth.listUsersAsync(token).get();
-      for (ExportedUserRecord user : result.getUsers()) {
+    final List<String> uids = new ArrayList<>();
 
+    try {
+      uids.add(auth.createUserAsync(new CreateRequest().setPassword("password")).get().getUid());
+      uids.add(auth.createUserAsync(new CreateRequest().setPassword("password")).get().getUid());
+      uids.add(auth.createUserAsync(new CreateRequest().setPassword("password")).get().getUid());
+
+      // Test list by batches
+      final AtomicInteger collected = new AtomicInteger(0);
+      PageToken token = null;
+      while (true) {
+        ListUsersResult result = auth.listUsersAsync(token).get();
+        for (ExportedUserRecord user : result.getUsers()) {
+          if (uids.contains(user.getUid())) {
+            collected.incrementAndGet();
+            assertNotNull(user.getPasswordHash());
+            assertNotNull(user.getPasswordSalt());
+          }
+        }
+        token = result.getNextPageToken();
+        if (token.isEndOfList()) {
+          break;
+        }
       }
-      if (result.isEndOfList()) {
-        break;
+      assertEquals(uids.size(), collected.get());
+
+      // Test iterate all
+      collected.set(0);
+      for (ExportedUserRecord user : auth.iterateAllUsers()) {
+        if (uids.contains(user.getUid())) {
+          collected.incrementAndGet();
+          assertNotNull(user.getPasswordHash());
+          assertNotNull(user.getPasswordSalt());
+        }
       }
-      token = result.getNextPageToken();
+      assertEquals(uids.size(), collected.get());
+
+      // Test iterate all async
+      collected.set(0);
+      final Semaphore semaphore = new Semaphore(0);
+      final AtomicReference<Exception> error = new AtomicReference<>(null);
+      ListUsersCallback callback = new ListUsersCallback() {
+        @Override
+        public boolean onResult(ExportedUserRecord user) {
+          if (uids.contains(user.getUid())) {
+            collected.incrementAndGet();
+            assertNotNull(user.getPasswordHash());
+            assertNotNull(user.getPasswordSalt());
+          }
+          return true;
+        }
+
+        @Override
+        public void onComplete() {
+          semaphore.release();
+        }
+
+        @Override
+        public void onError(Exception e) {
+          error.set(e);
+          semaphore.release();
+        }
+      };
+      auth.iterateAllUsersAsync(callback);
+      semaphore.acquire();
+      assertEquals(uids.size(), collected.get());
+      assertNull(error.get());
+    } finally {
+      for (String uid : uids) {
+        auth.deleteUserAsync(uid).get();
+      }
     }
-
-    for (ExportedUserRecord user : auth.iterateAllUsers()) {
-
-    }
-    auth.iterateAllUsersAsync(new ListUsersCallback() {
-      @Override
-      public boolean onResult(ExportedUserRecord userRecord) {
-        return false;
-      }
-
-      @Override
-      public void onComplete() {
-
-      }
-
-      @Override
-      public void onError(Exception e) {
-
-      }
-    });
   }
 
   @Test

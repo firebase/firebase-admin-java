@@ -92,8 +92,9 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
         currentBatch = source.fetch(null);
       }
       if (index == currentBatch.getUsers().size()) {
-        if (!currentBatch.isEndOfList()) {
-          currentBatch = source.fetch(currentBatch.getNextPageToken());
+        PageToken next = currentBatch.getNextPageToken();
+        if (!next.isEndOfList()) {
+          currentBatch = source.fetch(next);
           index = 0;
         } else {
           return false;
