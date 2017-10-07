@@ -136,9 +136,9 @@ Create a new project in the [Firebase console](https://console.firebase.google.c
 not already have one. Use a separate, dedicated project for integration tests since the test suite
 makes a large number of writes to the Firebase realtime database. Download the service account
 private key from the "Settings > Service Accounts" page of the project, and save it as
-`integration_cert.json` at the root of the project. Also obtain the web API key of the project
-from the "Settings > General" page, and save it as `integration_apikey.txt` at the project root.
-Now run the following command to invoke the integration test suite:
+`integration_cert.json` at the root of the codebase. Also obtain the web API key of the project
+from the "Settings > General" page, and save it as `integration_apikey.txt` at the root of the
+codebase. Now run the following command to invoke the integration test suite:
 
 ```
 mvn verify
