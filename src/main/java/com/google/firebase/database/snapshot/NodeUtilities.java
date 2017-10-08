@@ -20,6 +20,8 @@ import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.collection.ImmutableSortedMap;
 import com.google.firebase.database.core.ServerValues;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -58,6 +60,10 @@ public class NodeUtilities {
         return new DoubleNode((Double) value, priority);
       } else if (value instanceof Boolean) {
         return new BooleanNode((Boolean) value, priority);
+      } else if (value instanceof BigDecimal) {
+        return new DoubleNode(((BigDecimal) value).doubleValue(), priority);
+      } else if (value instanceof BigInteger) {
+        return new LongNode(((BigInteger)value).longValue(), priority);
       } else if (value instanceof Map || value instanceof List) {
         Map<ChildKey, Node> childData;
         // TODO: refine this and use same code to iterate over array and map by building

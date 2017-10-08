@@ -742,7 +742,8 @@ public class SyncTree {
       if (currentSyncPoint != null) {
         serverCache = currentSyncPoint.getCompleteServerCache(relativePath);
       }
-    } while (!pathToFollow.isEmpty() && serverCache == null);
+    }
+    while (!pathToFollow.isEmpty() && serverCache == null);
     return this.pendingWriteTree.calcCompleteEventCache(path, serverCache, writeIdsToExclude, true);
   }
 

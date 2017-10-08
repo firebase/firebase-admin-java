@@ -36,6 +36,8 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -190,7 +193,7 @@ public class CustomClassMapper {
     if (obj == null) {
       return null;
     } else if (clazz.isPrimitive()
-        || Number.class.isAssignableFrom(clazz)
+        || isPrimitiveNumeric(clazz)
         || Boolean.class.isAssignableFrom(clazz)
         || Character.class.isAssignableFrom(clazz)) {
       return deserializeToPrimitive(obj, clazz);
@@ -212,6 +215,12 @@ public class CustomClassMapper {
     } else {
       return convertBean(obj, clazz);
     }
+  }
+  
+  private static <T> boolean isPrimitiveNumeric(Class<T> clazz) {
+    return Number.class.isAssignableFrom(clazz) 
+          && !BigDecimal.class.isAssignableFrom(clazz) 
+          && !BigInteger.class.isAssignableFrom(clazz);
   }
 
   @SuppressWarnings({"unchecked", "TypeParameterUnusedInFormals"})
@@ -531,7 +540,8 @@ public class CustomClassMapper {
         // Traverse class hierarchy until we reach java.lang.Object which contains a bunch
         // of fields/getters we don't want to serialize
         currentClass = currentClass.getSuperclass();
-      } while (currentClass != null && !currentClass.equals(Object.class));
+      }
+      while (currentClass != null && !currentClass.equals(Object.class));
 
       if (properties.isEmpty()) {
         throw new DatabaseException("No properties to serialize found on class " + clazz.getName());
