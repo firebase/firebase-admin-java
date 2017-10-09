@@ -29,7 +29,6 @@ public class FirestoreClient {
 
   private FirestoreClient(FirebaseApp app) {
     checkNotNull(app, "FirebaseApp must not be null");
-    // The following will be further simplified once we migrate to GoogleCredentials.
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkArgument(!Strings.isNullOrEmpty(projectId),
         "Project ID is required for accessing Firestore. Use a service account credential or "
@@ -82,9 +81,10 @@ public class FirestoreClient {
 
     @Override
     public void destroy() {
-      // NOTE: We don't explicitly tear down anything here, but public methods of StorageClient
-      // will now fail because calls to getOptions() and getToken() will hit FirebaseApp,
-      // which will throw once the app is deleted.
+      // NOTE: We don't explicitly tear down anything here (for now). User won't be able to call
+      // FirestoreClient.getFirestore() any more, but already created Firestore instances will
+      // continue to work. Request Firestore team to provide a cleanup/teardown method on the
+      // Firestore object.
     }
   }
 

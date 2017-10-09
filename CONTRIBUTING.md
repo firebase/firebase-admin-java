@@ -138,7 +138,9 @@ makes a large number of writes to the Firebase realtime database. Download the s
 private key from the "Settings > Service Accounts" page of the project, and save it as
 `integration_cert.json` at the root of the codebase. Also obtain the web API key of the project
 from the "Settings > General" page, and save it as `integration_apikey.txt` at the root of the
-codebase. Now run the following command to invoke the integration test suite:
+codebase. Also make sure Firestore security rules configured in the project allow reads and writes
+from any authenticated client. Finally, run the following command to invoke the integration test
+suite:
 
 ```
 mvn verify
