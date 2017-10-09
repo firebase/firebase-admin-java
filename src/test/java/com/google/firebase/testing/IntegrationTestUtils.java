@@ -16,10 +16,10 @@
 
 package com.google.firebase.testing;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.Strings;
+import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.json.GenericJson;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.firebase.FirebaseApp;
@@ -40,26 +40,28 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.json.JSONObject;
 
 public class IntegrationTestUtils {
 
-  private static JSONObject IT_SERVICE_ACCOUNT;
+  private static final String IT_SERVICE_ACCOUNT_PATH = "integration_cert.json";
+  private static final String IT_API_KEY_PATH = "integration_apikey.txt";
+
+  private static GenericJson serviceAccount;
+  private static String apiKey;
   private static FirebaseApp masterApp;
 
-  private static synchronized JSONObject ensureServiceAccount() {
-    if (IT_SERVICE_ACCOUNT == null) {
-      String certificatePath = System.getProperty("firebase.it.certificate");
-      checkArgument(!Strings.isNullOrEmpty(certificatePath),
-          "Service account certificate path not set. Set the "
-              + "firebase.it.certificate system property and try again.");
-      try (InputStreamReader reader = new InputStreamReader(new FileInputStream(certificatePath))) {
-        IT_SERVICE_ACCOUNT = new JSONObject(CharStreams.toString(reader));
+  private static synchronized GenericJson ensureServiceAccount() {
+    if (serviceAccount == null) {
+      try (InputStream stream = new FileInputStream(IT_SERVICE_ACCOUNT_PATH)) {
+        serviceAccount = Utils.getDefaultJsonFactory().fromInputStream(stream, GenericJson.class);
       } catch (IOException e) {
-        throw new RuntimeException("Failed to read service account certificate", e);
+        String msg = String.format("Failed to read service account certificate from %s. "
+            + "Integration tests require a service account credential obtained from a Firebase "
+            + "project. See CONTRIBUTING.md for more details.", IT_SERVICE_ACCOUNT_PATH);
+        throw new RuntimeException(msg, e);
       }
     }
-    return IT_SERVICE_ACCOUNT;
+    return serviceAccount;
   }
 
   public static InputStream getServiceAccountCertificate() {
@@ -78,10 +80,17 @@ public class IntegrationTestUtils {
     return getProjectId() + ".appspot.com";
   }
 
-  public static String getApiKey() {
-    String apiKey = System.getProperty("firebase.it.apikey");
-    checkArgument(!Strings.isNullOrEmpty(apiKey), "API key not specified. Set the "
-        + "firebase.it.apikey system property and try again.");
+  public static synchronized String getApiKey() {
+    if (apiKey == null) {
+      try (InputStream stream = new FileInputStream(IT_API_KEY_PATH)) {
+        apiKey = CharStreams.toString(new InputStreamReader(stream)).trim();
+      } catch (IOException e) {
+        String msg = String.format("Failed to read API key from %s. "
+            + "Integration tests require an API key obtained from a Firebase "
+            + "project. See CONTRIBUTING.md for more details.", IT_API_KEY_PATH);
+        throw new RuntimeException(msg, e);
+      }
+    }
     return apiKey;
   }
 
