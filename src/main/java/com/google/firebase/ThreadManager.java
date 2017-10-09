@@ -32,8 +32,8 @@ import java.util.concurrent.ThreadFactory;
  *
  * <p>Multiple app instances may use the same <code>ThreadManager</code> instance.
  * Methods in this interface may get invoked multiple times by the same
- * app, during its lifetime. Apps may also invoke methods of this interface concurrently, and
- * therefore implementations should provide any synchronization necessary.
+ * app, during its lifetime. Apps may also invoke methods of this interface concurrently and
+ * so implementations should provide any synchronization necessary.
  */
 public abstract class ThreadManager {
 
@@ -76,11 +76,11 @@ public abstract class ThreadManager {
    * Returns the <code>ThreadFactory</code> to be used for creating long-lived threads. This is
    * used mainly to create the long-lived worker threads for the Realtime Database client, and
    * other scheduled (periodic) tasks started by the SDK. The SDK guarantees
-   * clean termination of all threads started via this <code>ThreadFactory</code>, upon
-   * calling {@link FirebaseApp#delete()}.
+   * clean termination of all threads started via this <code>ThreadFactory</code>, when the user
+   * calls {@link FirebaseApp#delete()}.
    *
    * <p>If long-lived threads cannot be supported in the current runtime, this method may
-   * throw a RuntimeException.
+   * throw a {@code RuntimeException}.
    *
    * @return A non-null <code>ThreadFactory</code>.
    */
