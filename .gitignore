@@ -6,3 +6,5 @@ target/
 .project
 .checkstyle
 release.properties
+integration_cert.json
+integration_apikey.txt
