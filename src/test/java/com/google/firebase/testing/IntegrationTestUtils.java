@@ -55,7 +55,10 @@ public class IntegrationTestUtils {
       try (InputStream stream = new FileInputStream(IT_SERVICE_ACCOUNT_PATH)) {
         serviceAccount = Utils.getDefaultJsonFactory().fromInputStream(stream, GenericJson.class);
       } catch (IOException e) {
-        throw new RuntimeException("Failed to read service account certificate", e);
+        String msg = String.format("Failed to read service account certificate from %s. "
+            + "Integration tests require a service account credential obtained from a Firebase "
+            + "project. See CONTRIBUTING.md for more details.", IT_SERVICE_ACCOUNT_PATH);
+        throw new RuntimeException(msg, e);
       }
     }
     return serviceAccount;
@@ -82,7 +85,10 @@ public class IntegrationTestUtils {
       try (InputStream stream = new FileInputStream(IT_API_KEY_PATH)) {
         apiKey = CharStreams.toString(new InputStreamReader(stream)).trim();
       } catch (IOException e) {
-        throw new RuntimeException("Failed to read api key file", e);
+        String msg = String.format("Failed to read API key from %s. "
+            + "Integration tests require an API key obtained from a Firebase "
+            + "project. See CONTRIBUTING.md for more details.", IT_API_KEY_PATH);
+        throw new RuntimeException(msg, e);
       }
     }
     return apiKey;
