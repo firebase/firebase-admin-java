@@ -61,9 +61,9 @@ public class NodeUtilities {
       } else if (value instanceof Boolean) {
         return new BooleanNode((Boolean) value, priority);
       } else if (value instanceof BigDecimal) {
-        return new DoubleNode(((BigDecimal) value).doubleValue(), priority);
+        return new BigDecimalNode(((BigDecimal) value), priority);
       } else if (value instanceof BigInteger) {
-        return new LongNode(((BigInteger)value).longValue(), priority);
+        return new BigIntegerNode(((BigInteger) value), priority);
       } else if (value instanceof Map || value instanceof List) {
         Map<ChildKey, Node> childData;
         // TODO: refine this and use same code to iterate over array and map by building
@@ -105,8 +105,8 @@ public class NodeUtilities {
         if (childData.isEmpty()) {
           return EmptyNode.Empty();
         } else {
-          ImmutableSortedMap<ChildKey, Node> childSet =
-              ImmutableSortedMap.Builder.fromMap(childData, ChildrenNode.NAME_ONLY_COMPARATOR);
+          ImmutableSortedMap<ChildKey, Node> childSet = ImmutableSortedMap.Builder
+              .fromMap(childData, ChildrenNode.NAME_ONLY_COMPARATOR);
           return new ChildrenNode(childSet, priority);
         }
       } else {
@@ -119,8 +119,8 @@ public class NodeUtilities {
   }
   // CSON: MethodName
 
-  public static int nameAndPriorityCompare(
-      ChildKey key1, Node priority1, ChildKey key2, Node priority2) {
+  public static int nameAndPriorityCompare(ChildKey key1, Node priority1, ChildKey key2,
+      Node priority2) {
 
     int priCmp = priority1.compareTo(priority2);
     if (priCmp != 0) {
