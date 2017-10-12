@@ -22,6 +22,9 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import com.google.firebase.database.utilities.encoding.CustomClassMapper;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,6 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.junit.Test;
 
 public class MapperTest {
@@ -247,6 +251,31 @@ public class MapperTest {
       fail("Should throw");
     } catch (DatabaseException e) { // ignore
     }
+  }
+  
+  @Test
+  public void bigIntegerDeserialize() {
+    BigIntegerBean beanBigInteger = deserialize("{'value':'1'}", BigIntegerBean.class);
+    assertEquals(0,BigInteger.ONE.compareTo(beanBigInteger.getValue()));
+    
+    BigIntegerBean beanBigIntegerBig =
+            deserialize("{'value':'991234569874563214569874563214735'}", 
+                    BigIntegerBean.class);
+    assertEquals(0, new BigInteger("991234569874563214569874563214735")
+            .compareTo(beanBigIntegerBig.getValue()));
+  }
+  
+  @Test
+  public void bigDecimalDeserialize() {
+    BigDecimalBean beanBigDecimal = deserialize("{'value':'1.0'}", 
+            BigDecimalBean.class);
+    assertEquals(0,BigDecimal.ONE.compareTo(beanBigDecimal.getValue()));
+    
+    BigDecimalBean beanBigDecimalBig = 
+            deserialize("{'value':'991234569874563214569874563214735.77874'}", 
+                BigDecimalBean.class);
+    assertEquals(0, new BigDecimal("991234569874563214569874563214735.77874")
+            .compareTo(beanBigDecimalBig.getValue()));
   }
 
   @Test(expected = DatabaseException.class)
@@ -1247,6 +1276,22 @@ public class MapperTest {
 
     public int getValue() {
       return value;
+    }
+  }
+
+  private static class BigIntegerBean {
+    private String value;
+    
+    public BigInteger getValue() {
+      return value == null ? null : new BigInteger(value);
+    }
+  }
+
+  private static class BigDecimalBean {
+    private String value;
+    
+    public BigDecimal getValue() {
+      return value == null ? null : new BigDecimal(value);
     }
   }
 

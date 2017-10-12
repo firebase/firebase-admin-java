@@ -22,7 +22,11 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.firebase.database.MapBuilder;
 import com.google.firebase.database.core.Path;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Map;
+
 import org.junit.Test;
 
 public class NodeTest {
@@ -35,6 +39,8 @@ public class NodeTest {
             .put("doubleNode", 4.5623)
             .put("stringNode", "hey guys")
             .put("boolNode", true)
+            .put("bigDecimalNode", BigDecimal.ONE)
+            .put("bigIntegerNode", BigInteger.TEN)
             .build();
 
     Node node = NodeFromJSON(data);
@@ -55,8 +61,16 @@ public class NodeTest {
     hash = child.getHash();
     assertEquals("E5z61QM0lN/U2WsOnusszCTkR8M=", hash);
 
+    child = node.getImmediateChild(ChildKey.fromString("bigDecimalNode"));
+    hash = child.getHash();
+    assertEquals("CsHcc6ldMmpq3mgSeP+Q3XN48Ls=", hash);
+
+    child = node.getImmediateChild(ChildKey.fromString("bigIntegerNode"));
+    hash = child.getHash();
+    assertEquals("9dCcx7ZrW/Ul5TBwZRrABNgawlQ=", hash);
+
     hash = node.getHash();
-    assertEquals("6Mc4jFmNdrLVIlJJjz2/MakTK9I=", hash);
+    assertEquals("G8QKO+3CPOTwU4BIAU0XiPf8oFg=", hash);
   }
 
   @Test
@@ -179,5 +193,19 @@ public class NodeTest {
     Node empty2 =
         NodeFromJSON(new MapBuilder().put("dummy-node", null).put(".priority", "prio").build());
     assertTrue(empty2.getPriority().isEmpty());
+  }
+
+  @Test
+  public void bigDecimalsAreConvertedProperly() {
+    Node node = NodeFromJSON(BigDecimal.ONE);
+    assertTrue(node instanceof BigDecimalNode);
+    assertEquals(0, BigDecimal.ONE.compareTo((BigDecimal) node.getValue()));
+  }
+
+  @Test
+  public void bigIntegersAreConvertedProperly() {
+    Node node = NodeFromJSON(BigInteger.TEN);
+    assertTrue(node instanceof BigIntegerNode);
+    assertEquals(0, BigInteger.TEN.compareTo((BigInteger) node.getValue()));
   }
 }
