@@ -94,7 +94,7 @@ class WebsocketConnection {
     return new WSClientTubesock(ws);
   }
 
-  public void open() {
+  void open() {
     conn.connect();
     connectTimeout =
         executorService.schedule(
@@ -139,8 +139,8 @@ class WebsocketConnection {
         conn.send("" + segs.length);
       }
 
-      for (int i = 0; i < segs.length; ++i) {
-        conn.send(segs[i]);
+      for (String seg : segs) {
+        conn.send(seg);
       }
     } catch (IOException e) {
       logger.error("Failed to serialize message: " + message.toString(), e);
@@ -156,7 +156,6 @@ class WebsocketConnection {
       try {
         frameReader.freeze();
         Map<String, Object> decoded = JsonMapper.parseJson(frameReader.toString());
-        frameReader = null;
         if (logger.logsDebug()) {
           logger.debug("handleIncomingFrame complete frame: " + decoded);
         }
@@ -169,6 +168,8 @@ class WebsocketConnection {
         logger.error("Error parsing frame (cast error): " + frameReader.toString(), e);
         close();
         shutdown();
+      } finally {
+        frameReader = null;
       }
     }
   }
@@ -333,17 +334,12 @@ class WebsocketConnection {
 
     @Override
     public void onClose() {
-      final String logMessage = "closed";
-      executorService.execute(
-          new Runnable() {
-            @Override
-            public void run() {
-              if (logger.logsDebug()) {
-                logger.debug(logMessage);
-              }
-              onClosed();
-            }
-          });
+      // Handle this event on the same thread (socket reader) to prevent the RunLoop from getting
+      // initialized after a shutdown.
+      if (logger.logsDebug()) {
+        logger.debug("closed");
+      }
+      onClosed();
     }
 
     @Override
