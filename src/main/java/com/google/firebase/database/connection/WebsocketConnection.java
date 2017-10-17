@@ -16,52 +16,20 @@
 
 package com.google.firebase.database.connection;
 
-import static com.google.common.base.Preconditions.checkState;
-
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.common.collect.ImmutableList;
 import com.google.firebase.database.connection.util.StringListReader;
 import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.util.JsonMapper;
 
-import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
-import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
-import io.netty.handler.codec.http.websocketx.WebSocketVersion;
-import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketClientCompressionHandler;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import io.netty.util.CharsetUtil;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import javax.net.ssl.SSLException;
 
 class WebsocketConnection {
 
@@ -103,9 +71,8 @@ class WebsocketConnection {
     URI uri = HostInfo.getConnectionUrl(
         host, hostInfo.isSecure(), hostInfo.getNamespace(), optLastSessionId);
     try {
-      WebSocketClientHandler handler = new WebSocketClientHandler(
-          uri, connectionContext.getUserAgent());
-      return new NettyWebSocketClient(uri, handler);
+      return new NettyWebSocketClient(
+          uri, connectionContext.getUserAgent(), new WSClientHandlerImpl());
     } catch (Exception e) {
       String msg = "Error while initializing websocket client";
       logger.error(msg, e);
@@ -151,14 +118,14 @@ class WebsocketConnection {
     resetKeepAlive();
     try {
       String toSend = JsonMapper.serializeJson(message);
-      String[] segs = splitIntoFrames(toSend, MAX_FRAME_SIZE);
-      if (segs.length > 1) {
-        conn.send("" + segs.length);
+      List<String> frames = splitIntoFrames(toSend, MAX_FRAME_SIZE);
+      if (frames.size() > 1) {
+        conn.send("" + frames.size());
       }
 
-      for (String seg : segs) {
+      for (String seg : frames) {
         if (logger.logsDebug()) {
-          logger.debug("Sending segment: " + seg);
+          logger.debug("Sending frame: " + seg);
         }
         conn.send(seg);
       }
@@ -168,17 +135,17 @@ class WebsocketConnection {
     }
   }
 
-  private static String[] splitIntoFrames(String src, int maxFrameSize) {
+  private List<String> splitIntoFrames(String src, int maxFrameSize) {
     if (src.length() <= maxFrameSize) {
-      return new String[] {src};
+      return ImmutableList.of(src);
     } else {
-      List<String> segs = new ArrayList<>();
+      ImmutableList.Builder<String> frames = ImmutableList.builder();
       for (int i = 0; i < src.length(); i += maxFrameSize) {
         int end = Math.min(i + maxFrameSize, src.length());
         String seg = src.substring(i, end);
-        segs.add(seg);
+        frames.add(seg);
       }
-      return segs.toArray(new String[segs.size()]);
+      return frames.build();
     }
   }
 
@@ -293,8 +260,6 @@ class WebsocketConnection {
     delegate.onDisconnect(everConnected);
   }
 
-  // Close methods
-
   private void closeIfNeverConnected() {
     if (!everConnected && !isClosed) {
       if (logger.logsDebug()) {
@@ -304,158 +269,10 @@ class WebsocketConnection {
     }
   }
 
-  public interface Delegate {
-
-    void onMessage(Map<String, Object> message);
-
-    void onDisconnect(boolean wasEverConnected);
-  }
-
-  private interface WSClient {
-
-    void connect();
-
-    void close();
-
-    void send(String msg);
-  }
-
-  private static class NettyWebSocketClient implements WSClient {
-
-    private final URI uri;
-    private final WebSocketClientHandler eventHandler;
-    private final SslContext sslContext;
-
-    private final EventLoopGroup group;
-    private Channel channel;
-
-    NettyWebSocketClient(URI uri, WebSocketClientHandler eventHandler) throws SSLException {
-      this.uri = uri;
-      this.eventHandler = eventHandler;
-      this.sslContext = SslContextBuilder.forClient()
-          .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
-      ThreadFactory factory = new ThreadFactoryBuilder()
-          .setNameFormat("hkj-websocket-%d")
-          .setDaemon(true)
-          .build();
-      this.group = new NioEventLoopGroup(1, factory);
-    }
-
-    public void connect() {
-      checkState(channel == null, "channel already initialized");
-      Bootstrap b = new Bootstrap();
-      b.group(group)
-          .channel(NioSocketChannel.class)
-          .handler(new ChannelInitializer<SocketChannel>() {
-            @Override
-            protected void initChannel(SocketChannel ch) {
-              ChannelPipeline p = ch.pipeline();
-              p.addLast(sslContext.newHandler(ch.alloc(), uri.getHost(), 443));
-              p.addLast(
-                  new HttpClientCodec(),
-                  new HttpObjectAggregator(MAX_FRAME_SIZE),
-                  WebSocketClientCompressionHandler.INSTANCE,
-                  eventHandler);
-            }
-          });
-      channel = b.connect(uri.getHost(), 443).channel();
-    }
+  private class WSClientHandlerImpl implements WSClientEventHandler {
 
     @Override
-    public void close() {
-      checkState(channel != null, "channel not initialized");
-      try {
-        channel.close();
-      } finally {
-        group.shutdownGracefully();
-        // TODO(hkj): https://github.com/netty/netty/issues/7310
-      }
-    }
-
-    @Override
-    public void send(String msg) {
-      checkState(channel != null && channel.isActive(), "channel not connected for sending");
-      channel.writeAndFlush(new TextWebSocketFrame(msg));
-    }
-  }
-
-  private class WebSocketClientHandler extends SimpleChannelInboundHandler<Object> {
-
-    private final WebSocketClientHandshaker handshaker;
-    private ChannelPromise handshakeFuture;
-
-    WebSocketClientHandler(URI uri, String userAgent) {
-      this.handshaker = WebSocketClientHandshakerFactory.newHandshaker(
-          uri, WebSocketVersion.V13, null, true,
-          new DefaultHttpHeaders().add("User-Agent", userAgent));
-    }
-
-    @Override
-    public void handlerAdded(ChannelHandlerContext context) {
-      handshakeFuture = context.newPromise();
-    }
-
-    @Override
-    public void channelActive(ChannelHandlerContext context) {
-      handshaker.handshake(context.channel());
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext context) {
-      try {
-        onClose();
-      } finally {
-        context.close();
-      }
-    }
-
-    @Override
-    public void channelRead0(ChannelHandlerContext context, Object message) throws Exception {
-      Channel channel = context.channel();
-      if (!handshaker.isHandshakeComplete()) {
-        try {
-          checkState(message instanceof FullHttpResponse);
-          handshaker.finishHandshake(channel, (FullHttpResponse) message);
-          handshakeFuture.setSuccess();
-          onOpen();
-        } catch (WebSocketHandshakeException e) {
-          handshakeFuture.setFailure(e);
-        }
-        return;
-      }
-
-      if (message instanceof FullHttpResponse) {
-        FullHttpResponse response = (FullHttpResponse) message;
-        String error = String.format("Unexpected FullHttpResponse (status: %s; content: %s)",
-            response.status().toString(), response.content().toString(CharsetUtil.UTF_8));
-        throw new IllegalStateException(error);
-      }
-
-      WebSocketFrame frame = (WebSocketFrame) message;
-      if (frame instanceof TextWebSocketFrame) {
-        onMessage(((TextWebSocketFrame) frame).text());
-      } else if (frame instanceof CloseWebSocketFrame) {
-        try {
-          onClose();
-        } finally {
-          channel.close();
-        }
-      }
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext context, final Throwable cause) {
-      try {
-        if (!handshakeFuture.isDone()) {
-          handshakeFuture.setFailure(cause);
-        }
-        onError(cause);
-      } finally {
-        context.close();
-      }
-    }
-
-    private void onOpen() {
+    public void onOpen() {
       if (logger.logsDebug()) {
         logger.debug("websocket opened");
       }
@@ -469,7 +286,8 @@ class WebsocketConnection {
       });
     }
 
-    private void onMessage(final String message) {
+    @Override
+    public void onMessage(final String message) {
       if (logger.logsDebug()) {
         logger.debug("ws message: " + message);
       }
@@ -481,7 +299,8 @@ class WebsocketConnection {
       });
     }
 
-    private void onClose() {
+    @Override
+    public void onClose() {
       if (logger.logsDebug()) {
         logger.debug("closed");
       }
@@ -494,19 +313,47 @@ class WebsocketConnection {
           });
     }
 
-    private void onError(final Throwable e) {
+    @Override
+    public void onError(final Throwable e) {
+      if (e.getCause() != null && e.getCause() instanceof EOFException) {
+        logger.error("WebSocket reached EOF", e);
+      } else {
+        logger.error("WebSocket error", e);
+      }
       executorService.execute(
           new Runnable() {
             @Override
             public void run() {
-              if (e.getCause() != null && e.getCause() instanceof EOFException) {
-                logger.error("WebSocket reached EOF", e);
-              } else {
-                logger.error("WebSocket error", e);
-              }
               onClosed();
             }
           });
     }
+  }
+
+  public interface Delegate {
+
+    void onMessage(Map<String, Object> message);
+
+    void onDisconnect(boolean wasEverConnected);
+  }
+
+  interface WSClient {
+
+    void connect();
+
+    void close();
+
+    void send(String msg);
+  }
+
+  interface WSClientEventHandler {
+
+    void onOpen();
+
+    void onMessage(String message);
+
+    void onClose();
+
+    void onError(Throwable t);
   }
 }
