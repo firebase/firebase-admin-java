@@ -25,7 +25,6 @@ import com.google.firebase.database.core.RunLoop;
 import com.google.firebase.internal.RevivingScheduledExecutor;
 
 import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;

@@ -33,6 +33,8 @@ import com.google.firebase.database.utilities.Validation;
 import com.google.firebase.internal.FirebaseService;
 
 import com.google.firebase.internal.SdkUtils;
+import io.netty.util.concurrent.FastThreadLocal;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -358,12 +360,8 @@ public class FirebaseDatabase {
       if (destroyed.get()) {
         return;
       }
-
-      if (repo != null) {
-        RepoManager.interrupt(repo);
-        repo = null;
-      }
-      RepoManager.interrupt(getConfig());
+      RepoManager.destroy(getConfig());
+      FastThreadLocal.removeAll();
       destroyed.compareAndSet(false, true);
     }
   }

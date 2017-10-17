@@ -98,7 +98,7 @@ class WebsocketConnection {
     // No-op in java
   }
 
-  public void close() {
+  void close() {
     if (logger.logsDebug()) {
       logger.debug("websocket is being closed");
     }
@@ -111,6 +111,7 @@ class WebsocketConnection {
     }
     if (keepAlive != null) {
       keepAlive.cancel(true);
+      keepAlive = null;
     }
   }
 
@@ -304,13 +305,15 @@ class WebsocketConnection {
       if (logger.logsDebug()) {
         logger.debug("closed");
       }
-      executorService.execute(
-          new Runnable() {
-            @Override
-            public void run() {
-              onClosed();
-            }
-          });
+      if (!isClosed) {
+        executorService.execute(
+            new Runnable() {
+              @Override
+              public void run() {
+                onClosed();
+              }
+            });
+      }
     }
 
     @Override
