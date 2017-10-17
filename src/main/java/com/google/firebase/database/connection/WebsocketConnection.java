@@ -126,6 +126,7 @@ class WebsocketConnection {
     }
     if (keepAlive != null) {
       keepAlive.cancel(true);
+      keepAlive = null;
     }
   }
 
@@ -222,10 +223,8 @@ class WebsocketConnection {
         if (logger.logsDebug()) {
           logger.debug("Reset keepAlive. Remaining: " + keepAlive.getDelay(TimeUnit.MILLISECONDS));
         }
-      } else {
-        if (logger.logsDebug()) {
-          logger.debug("Reset keepAlive");
-        }
+      } else if (logger.logsDebug()) {
+        logger.debug("Reset keepAlive");
       }
       keepAlive = executorService.schedule(nop(), KEEP_ALIVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
     }
@@ -257,6 +256,7 @@ class WebsocketConnection {
     conn = null;
     if (keepAlive != null) {
       keepAlive.cancel(false);
+      keepAlive = null;
     }
   }
 
@@ -334,12 +334,17 @@ class WebsocketConnection {
 
     @Override
     public void onClose() {
-      // Handle this event on the same thread (socket reader) to prevent the RunLoop from getting
-      // initialized after a shutdown.
       if (logger.logsDebug()) {
         logger.debug("closed");
       }
-      onClosed();
+      if (!isClosed) {
+        executorService.execute(new Runnable() {
+          @Override
+          public void run() {
+            onClosed();
+          }
+        });
+      }
     }
 
     @Override
