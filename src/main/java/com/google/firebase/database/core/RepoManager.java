@@ -143,12 +143,22 @@ public class RepoManager {
   }
 
   private void destroyInternal(final Context ctx) {
-    synchronized (repos) {
-      if (repos.containsKey(ctx)) {
-        for (Repo repo : repos.get(ctx).values()) {
-          repo.interrupt();
+    // RunLoop gets initialized before any Repo is created. Therefore we can assume that when
+    // the RunLoop is not present, there's nothing to clean up.
+    RunLoop runLoop = ctx.getRunLoop();
+    if (runLoop != null) {
+      runLoop.scheduleNow(new Runnable() {
+        @Override
+        public void run() {
+          synchronized (repos) {
+            if (repos.containsKey(ctx)) {
+              for (Repo repo : repos.get(ctx).values()) {
+                repo.interrupt();
+              }
+            }
+          }
         }
-      }
+      });
     }
   }
 

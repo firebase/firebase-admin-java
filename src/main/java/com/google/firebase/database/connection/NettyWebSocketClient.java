@@ -3,7 +3,8 @@ package com.google.firebase.database.connection;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import com.google.firebase.internal.GaeThreadFactory;
+import com.google.firebase.internal.RevivingScheduledExecutor;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
@@ -32,6 +33,7 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.util.CharsetUtil;
 
 import java.net.URI;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 import javax.net.ssl.SSLException;
 
@@ -40,12 +42,13 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
   private final URI uri;
   private final SslContext sslContext;
   private final ChannelHandler channelHandler;
+  private final ExecutorService executorService;
   private final EventLoopGroup group;
 
   private Channel channel;
 
   NettyWebSocketClient(
-      URI uri, String userAgent,
+      URI uri, String userAgent, ThreadFactory threadFactory,
       WebsocketConnection.WSClientEventHandler eventHandler) throws SSLException {
     this.uri = checkNotNull(uri);
     this.sslContext = SslContextBuilder.forClient()
@@ -56,11 +59,9 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
         new DefaultHttpHeaders().add("User-Agent", userAgent));
     this.channelHandler = new WebSocketClientHandler(eventHandler, handshaker);
 
-    ThreadFactory factory = new ThreadFactoryBuilder()
-        .setNameFormat("hkj-websocket-%d")
-        .setDaemon(true)
-        .build();
-    this.group = new NioEventLoopGroup(1, factory);
+    this.executorService = new RevivingScheduledExecutor(
+        threadFactory, "firebase-websocket-worker", GaeThreadFactory.isAvailable());
+    this.group = new NioEventLoopGroup(1, this.executorService);
   }
 
   @Override
@@ -91,6 +92,7 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
       channel.close();
     } finally {
       group.shutdownGracefully();
+      executorService.shutdown();
       // TODO(hkj): https://github.com/netty/netty/issues/7310
     }
   }

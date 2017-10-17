@@ -72,7 +72,8 @@ class WebsocketConnection {
         host, hostInfo.isSecure(), hostInfo.getNamespace(), optLastSessionId);
     try {
       return new NettyWebSocketClient(
-          uri, connectionContext.getUserAgent(), new WSClientHandlerImpl());
+          uri, connectionContext.getUserAgent(), connectionContext.getThreadFactory(),
+          new WSClientHandlerImpl());
     } catch (Exception e) {
       String msg = "Error while initializing websocket client";
       logger.error(msg, e);
