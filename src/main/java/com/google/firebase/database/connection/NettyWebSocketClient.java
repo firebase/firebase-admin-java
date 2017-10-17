@@ -1,8 +1,10 @@
 package com.google.firebase.database.connection;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.common.base.Strings;
 import com.google.firebase.internal.GaeThreadFactory;
 import com.google.firebase.internal.RevivingScheduledExecutor;
 import io.netty.bootstrap.Bootstrap;
@@ -37,6 +39,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 import javax.net.ssl.SSLException;
 
+/**
+ * A {@link WebsocketConnection.WSClient} implementation based on the Netty framework. Uses
+ * a single-threaded NIO event loop to read and write bytes from a WebSocket connection. Netty
+ * handles all the low-level IO, SSL and WebSocket handshake, and other protocol-specific details.
+ */
 class NettyWebSocketClient implements WebsocketConnection.WSClient {
 
   private final URI uri;
@@ -50,15 +57,10 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
   NettyWebSocketClient(
       URI uri, String userAgent, ThreadFactory threadFactory,
       WebsocketConnection.WSClientEventHandler eventHandler) throws SSLException {
-    this.uri = checkNotNull(uri);
+    this.uri = checkNotNull(uri, "uri must not be null");
     this.sslContext = SslContextBuilder.forClient()
         .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
-
-    WebSocketClientHandshaker handshaker = WebSocketClientHandshakerFactory.newHandshaker(
-        uri, WebSocketVersion.V13, null, true,
-        new DefaultHttpHeaders().add("User-Agent", userAgent));
-    this.channelHandler = new WebSocketClientHandler(eventHandler, handshaker);
-
+    this.channelHandler = new WebSocketClientHandler(uri, userAgent, eventHandler);
     this.executorService = new RevivingScheduledExecutor(
         threadFactory, "firebase-websocket-worker", GaeThreadFactory.isAvailable());
     this.group = new NioEventLoopGroup(1, this.executorService);
@@ -109,10 +111,12 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
     private final WebSocketClientHandshaker handshaker;
 
     WebSocketClientHandler(
-        WebsocketConnection.WSClientEventHandler delegate,
-        WebSocketClientHandshaker handshaker) {
-      this.delegate = checkNotNull(delegate);
-      this.handshaker = checkNotNull(handshaker);
+        URI uri, String userAgent, WebsocketConnection.WSClientEventHandler delegate) {
+      this.delegate = checkNotNull(delegate, "delegate must not be null");
+      checkArgument(!Strings.isNullOrEmpty(userAgent), "user agent must not be null or empty");
+      this.handshaker = WebSocketClientHandshakerFactory.newHandshaker(
+          uri, WebSocketVersion.V13, null, true,
+          new DefaultHttpHeaders().add("User-Agent", userAgent));
     }
 
     @Override

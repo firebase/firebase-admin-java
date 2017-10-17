@@ -126,9 +126,6 @@ class WebsocketConnection {
       }
 
       for (String seg : frames) {
-        if (logger.logsDebug()) {
-          logger.debug("Sending frame: " + seg);
-        }
         conn.send(seg);
       }
     } catch (IOException e) {
@@ -271,6 +268,11 @@ class WebsocketConnection {
     }
   }
 
+  /**
+   * A client handler implementation that gets notified by the low-level WebSocket client. These
+   * events fire on the same thread as the WebSocket client. We log the events on the same thread,
+   * and hand them off to the RunLoop for further processing.
+   */
   private class WSClientHandlerImpl implements WSClientEventHandler {
 
     @Override

@@ -21,6 +21,7 @@ import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.InternalHelpers;
 
+import io.netty.util.concurrent.FastThreadLocal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,6 +55,8 @@ public class RepoManager {
       instance.destroyInternal(ctx);
     } finally {
       ctx.stop();
+      // TODO(hkj): https://github.com/netty/netty/issues/7310
+      FastThreadLocal.removeAll();
     }
   }
 
