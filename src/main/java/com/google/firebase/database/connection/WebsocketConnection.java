@@ -16,19 +16,22 @@
 
 package com.google.firebase.database.connection;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.database.connection.util.StringListReader;
 import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.util.JsonMapper;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -50,8 +53,7 @@ class WebsocketConnection {
   private final LogWrapper logger;
   private final WSClient conn;
   private final Delegate delegate;
-  private final AtomicLong totalFrames = new AtomicLong(0);
-  private StringListReader frameReader;
+  private final StringList buffer;
 
   private boolean everConnected = false;
   private boolean isClosed = false;
@@ -70,6 +72,7 @@ class WebsocketConnection {
     this.logger = new LogWrapper(connectionContext.getLogger(), WebsocketConnection.class,
         "ws_" + CONN_ID.getAndIncrement());
     this.conn = createConnection(hostInfo, optCachedHost, optLastSessionId);
+    this.buffer = new StringList();
   }
 
   private WSClient createConnection(
@@ -152,33 +155,30 @@ class WebsocketConnection {
   }
 
   private void handleNewFrameCount(int numFrames) {
-    totalFrames.set(numFrames);
-    frameReader = new StringListReader();
     if (logger.logsDebug()) {
-      logger.debug("HandleNewFrameCount: " + totalFrames);
+      logger.debug("HandleNewFrameCount: " + numFrames);
     }
+    buffer.initialize(numFrames);
   }
 
   private void appendFrame(String message) {
-    frameReader.addString(message);
-    if (totalFrames.decrementAndGet() == 0) {
-      // Decode JSON
-      try {
-        frameReader.freeze();
-        Map<String, Object> decoded = JsonMapper.parseJson(frameReader.toString());
-        if (logger.logsDebug()) {
-          logger.debug("handleIncomingFrame complete frame: " + decoded);
-        }
-        delegate.onMessage(decoded);
-      } catch (IOException e) {
-        logger.error("Error parsing frame: " + frameReader.toString(), e);
-        closeAndNotify();
-      } catch (ClassCastException e) {
-        logger.error("Error parsing frame (cast error): " + frameReader.toString(), e);
-        closeAndNotify();
-      } finally {
-        frameReader = null;
+    if (buffer.append(message) > 0) {
+      return;
+    }
+    // Decode JSON
+    String combined = buffer.combine();
+    try {
+      Map<String, Object> decoded = JsonMapper.parseJson(combined);
+      if (logger.logsDebug()) {
+        logger.debug("handleIncomingFrame complete frame: " + decoded);
       }
+      delegate.onMessage(decoded);
+    } catch (IOException e) {
+      logger.error("Error parsing frame: " + combined, e);
+      closeAndNotify();
+    } catch (ClassCastException e) {
+      logger.error("Error parsing frame (cast error): " + combined, e);
+      closeAndNotify();
     }
   }
 
@@ -202,33 +202,35 @@ class WebsocketConnection {
   }
 
   private void handleIncomingFrame(String message) {
-    if (!isClosed) {
-      resetKeepAlive();
-      if (frameReader != null) {
-        appendFrame(message);
-      } else {
-        String remaining = extractFrameCount(message);
-        if (remaining != null) {
-          appendFrame(remaining);
-        }
+    if (isClosed) {
+      return;
+    }
+    resetKeepAlive();
+    if (buffer.hasRemaining()) {
+      appendFrame(message);
+    } else {
+      String remaining = extractFrameCount(message);
+      if (remaining != null) {
+        appendFrame(remaining);
       }
     }
   }
 
   private void resetKeepAlive() {
-    if (!isClosed) {
-      if (keepAlive != null) {
-        keepAlive.cancel(false);
-        if (logger.logsDebug()) {
-          logger.debug("Reset keepAlive. Remaining: " + keepAlive.getDelay(TimeUnit.MILLISECONDS));
-        }
-      } else {
-        if (logger.logsDebug()) {
-          logger.debug("Reset keepAlive");
-        }
-      }
-      keepAlive = executorService.schedule(nop(), KEEP_ALIVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+    if (isClosed) {
+      return;
     }
+    if (keepAlive != null) {
+      keepAlive.cancel(false);
+      if (logger.logsDebug()) {
+        logger.debug("Reset keepAlive. Remaining: " + keepAlive.getDelay(TimeUnit.MILLISECONDS));
+      }
+    } else {
+      if (logger.logsDebug()) {
+        logger.debug("Reset keepAlive");
+      }
+    }
+    keepAlive = executorService.schedule(nop(), KEEP_ALIVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
   }
 
   private Runnable nop() {
@@ -336,6 +338,40 @@ class WebsocketConnection {
               onClosed();
             }
           });
+    }
+  }
+
+  private static class StringList {
+
+    private final AtomicInteger remaining = new AtomicInteger(0);
+    private List<String> buffer;
+
+    void initialize(int capacity) {
+      remaining.set(capacity);
+      buffer = new ArrayList<>(capacity);
+    }
+
+    int append(String frame) {
+      checkState(hasRemaining());
+      buffer.add(frame);
+      return remaining.decrementAndGet();
+    }
+
+    boolean hasRemaining() {
+      return remaining.get() > 0;
+    }
+
+    String combine() {
+      checkState(!hasRemaining());
+      try {
+        StringBuilder sb = new StringBuilder();
+        for (String frame : buffer) {
+          sb.append(frame);
+        }
+        return sb.toString();
+      } finally {
+        buffer.clear();
+      }
     }
   }
 
