@@ -9,6 +9,8 @@ import com.google.firebase.internal.GaeThreadFactory;
 import com.google.firebase.internal.RevivingScheduledExecutor;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
@@ -27,6 +29,7 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketClientCompressionHandler;
 import io.netty.handler.ssl.SslContext;
@@ -46,8 +49,10 @@ import javax.net.ssl.SSLException;
  */
 class NettyWebSocketClient implements WebsocketConnection.WSClient {
 
+  private static final int DEFAULT_WSS_PORT = 443;
+
   private final URI uri;
-  private final SslContext sslContext;
+  private final WebsocketConnection.WSClientEventHandler eventHandler;
   private final ChannelHandler channelHandler;
   private final ExecutorService executorService;
   private final EventLoopGroup group;
@@ -56,10 +61,9 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
 
   NettyWebSocketClient(
       URI uri, String userAgent, ThreadFactory threadFactory,
-      WebsocketConnection.WSClientEventHandler eventHandler) throws SSLException {
+      WebsocketConnection.WSClientEventHandler eventHandler) {
     this.uri = checkNotNull(uri, "uri must not be null");
-    this.sslContext = SslContextBuilder.forClient()
-        .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+    this.eventHandler = checkNotNull(eventHandler, "event handler must not be null");
     this.channelHandler = new WebSocketClientHandler(uri, userAgent, eventHandler);
     this.executorService = new RevivingScheduledExecutor(
         threadFactory, "firebase-websocket-worker", GaeThreadFactory.isAvailable());
@@ -69,22 +73,40 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
   @Override
   public void connect() {
     checkState(channel == null, "channel already initialized");
-    Bootstrap b = new Bootstrap();
-    b.group(group)
-        .channel(NioSocketChannel.class)
-        .handler(new ChannelInitializer<SocketChannel>() {
-          @Override
-          protected void initChannel(SocketChannel ch) {
-            ChannelPipeline p = ch.pipeline();
-            p.addLast(sslContext.newHandler(ch.alloc(), uri.getHost(), 443));
-            p.addLast(
-                new HttpClientCodec(),
-                new HttpObjectAggregator(8192),
-                WebSocketClientCompressionHandler.INSTANCE,
-                channelHandler);
+    try {
+      final SslContext sslContext = SslContextBuilder.forClient()
+          .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+      Bootstrap bootstrap = new Bootstrap();
+      bootstrap.group(group)
+          .channel(NioSocketChannel.class)
+          .handler(new ChannelInitializer<SocketChannel>() {
+            @Override
+            protected void initChannel(SocketChannel ch) {
+              ChannelPipeline p = ch.pipeline();
+              p.addLast(sslContext.newHandler(ch.alloc(), uri.getHost(), DEFAULT_WSS_PORT));
+              p.addLast(
+                  new HttpClientCodec(),
+                  new HttpObjectAggregator(8192),
+                  WebSocketClientCompressionHandler.INSTANCE,
+                  channelHandler);
+            }
+          });
+
+      ChannelFuture channelFuture = bootstrap.connect(uri.getHost(), DEFAULT_WSS_PORT);
+      this.channel = channelFuture.channel();
+      channelFuture.addListener(
+          new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture future) throws Exception {
+              if (!future.isSuccess()) {
+                eventHandler.onError(future.cause());
+              }
+            }
           }
-        });
-    channel = b.connect(uri.getHost(), 443).channel();
+      );
+    } catch (SSLException e) {
+      eventHandler.onError(e);
+    }
   }
 
   @Override
@@ -143,8 +165,12 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
       Channel channel = context.channel();
       if (!handshaker.isHandshakeComplete()) {
         checkState(message instanceof FullHttpResponse);
-        handshaker.finishHandshake(channel, (FullHttpResponse) message);
-        delegate.onOpen();
+        try {
+          handshaker.finishHandshake(channel, (FullHttpResponse) message);
+          delegate.onOpen();
+        } catch (WebSocketHandshakeException e) {
+          delegate.onError(e);
+        }
         return;
       }
 

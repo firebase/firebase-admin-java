@@ -70,15 +70,9 @@ class WebsocketConnection {
     String host = (optCachedHost != null) ? optCachedHost : hostInfo.getHost();
     URI uri = HostInfo.getConnectionUrl(
         host, hostInfo.isSecure(), hostInfo.getNamespace(), optLastSessionId);
-    try {
-      return new NettyWebSocketClient(
-          uri, connectionContext.getUserAgent(), connectionContext.getThreadFactory(),
-          new WSClientHandlerImpl());
-    } catch (Exception e) {
-      String msg = "Error while initializing websocket client";
-      logger.error(msg, e);
-      throw new RuntimeException(msg, e);
-    }
+    return new NettyWebSocketClient(
+        uri, connectionContext.getUserAgent(), connectionContext.getThreadFactory(),
+        new WSClientHandlerImpl());
   }
 
   void open() {
@@ -247,6 +241,7 @@ class WebsocketConnection {
       if (logger.logsDebug()) {
         logger.debug("closing itself");
       }
+      close();
       shutdown();
     }
     if (keepAlive != null) {
