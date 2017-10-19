@@ -16,9 +16,9 @@
 
 package com.google.firebase.database.connection;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.database.logging.LogWrapper;
 
-import java.util.HashMap;
 import java.util.Map;
 
 class Connection implements WebsocketConnection.Delegate {
@@ -39,10 +39,11 @@ class Connection implements WebsocketConnection.Delegate {
   private static final String SERVER_HELLO_HOST = "h";
   private static final String SERVER_HELLO_SESSION_ID = "s";
   private static long connectionIds = 0;
+
   private final LogWrapper logger;
-  private HostInfo hostInfo;
+  private final HostInfo hostInfo;
+  private final Delegate delegate;
   private WebsocketConnection conn;
-  private Delegate delegate;
   private State state;
 
   public Connection(
@@ -59,14 +60,18 @@ class Connection implements WebsocketConnection.Delegate {
     this.conn = new WebsocketConnection(context, hostInfo, cachedHost, this, optLastSessionId);
   }
 
-  public void open() {
+  void open() {
     if (logger.logsDebug()) {
       logger.debug("Opening a connection");
     }
     conn.open();
   }
 
-  public void close(DisconnectReason reason) {
+  void close() {
+    close(DisconnectReason.OTHER);
+  }
+
+  private void close(DisconnectReason reason) {
     if (state != State.REALTIME_DISCONNECTED) {
       if (logger.logsDebug()) {
         logger.debug("closing realtime connection");
@@ -82,17 +87,11 @@ class Connection implements WebsocketConnection.Delegate {
     }
   }
 
-  public void close() {
-    close(DisconnectReason.OTHER);
-  }
-
-  public void sendRequest(Map<String, Object> message, boolean isSensitive) {
+  void sendRequest(Map<String, Object> message, boolean isSensitive) {
     // This came from the persistent connection. Wrap it in an envelope and send it
-
-    Map<String, Object> request = new HashMap<>();
-    request.put(REQUEST_TYPE, REQUEST_TYPE_DATA);
-    request.put(REQUEST_PAYLOAD, message);
-
+    Map<String, Object> request = ImmutableMap.of(
+        REQUEST_TYPE, REQUEST_TYPE_DATA,
+        REQUEST_PAYLOAD, message);
     sendData(request, isSensitive);
   }
 
@@ -101,18 +100,24 @@ class Connection implements WebsocketConnection.Delegate {
     try {
       String messageType = (String) message.get(SERVER_ENVELOPE_TYPE);
       if (messageType != null) {
-        if (messageType.equals(SERVER_DATA_MESSAGE)) {
-          @SuppressWarnings("unchecked")
-          Map<String, Object> data = (Map<String, Object>) message.get(SERVER_ENVELOPE_DATA);
-          onDataMessage(data);
-        } else if (messageType.equals(SERVER_CONTROL_MESSAGE)) {
-          @SuppressWarnings("unchecked")
-          Map<String, Object> data = (Map<String, Object>) message.get(SERVER_ENVELOPE_DATA);
-          onControlMessage(data);
-        } else {
-          if (logger.logsDebug()) {
-            logger.debug("Ignoring unknown server message type: " + messageType);
+        switch (messageType) {
+          case SERVER_DATA_MESSAGE: {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> data = (Map<String, Object>) message.get(SERVER_ENVELOPE_DATA);
+            onDataMessage(data);
+            break;
           }
+          case SERVER_CONTROL_MESSAGE: {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> data = (Map<String, Object>) message.get(SERVER_ENVELOPE_DATA);
+            onControlMessage(data);
+            break;
+          }
+          default:
+            if (logger.logsDebug()) {
+              logger.debug("Ignoring unknown server message type: " + messageType);
+            }
+            break;
         }
       } else {
         if (logger.logsDebug()) {
@@ -160,21 +165,26 @@ class Connection implements WebsocketConnection.Delegate {
     try {
       String messageType = (String) data.get(SERVER_CONTROL_MESSAGE_TYPE);
       if (messageType != null) {
-        if (messageType.equals(SERVER_CONTROL_MESSAGE_SHUTDOWN)) {
-          String reason = (String) data.get(SERVER_CONTROL_MESSAGE_DATA);
-          onConnectionShutdown(reason);
-        } else if (messageType.equals(SERVER_CONTROL_MESSAGE_RESET)) {
-          String host = (String) data.get(SERVER_CONTROL_MESSAGE_DATA);
-          onReset(host);
-        } else if (messageType.equals(SERVER_CONTROL_MESSAGE_HELLO)) {
-          @SuppressWarnings("unchecked")
-          Map<String, Object> handshakeData =
-              (Map<String, Object>) data.get(SERVER_CONTROL_MESSAGE_DATA);
-          onHandshake(handshakeData);
-        } else {
-          if (logger.logsDebug()) {
-            logger.debug("Ignoring unknown control message: " + messageType);
-          }
+        switch (messageType) {
+          case SERVER_CONTROL_MESSAGE_SHUTDOWN:
+            String reason = (String) data.get(SERVER_CONTROL_MESSAGE_DATA);
+            onConnectionShutdown(reason);
+            break;
+          case SERVER_CONTROL_MESSAGE_RESET:
+            String host = (String) data.get(SERVER_CONTROL_MESSAGE_DATA);
+            onReset(host);
+            break;
+          case SERVER_CONTROL_MESSAGE_HELLO:
+            @SuppressWarnings("unchecked")
+            Map<String, Object> handshakeData =
+                (Map<String, Object>) data.get(SERVER_CONTROL_MESSAGE_DATA);
+            onHandshake(handshakeData);
+            break;
+          default:
+            if (logger.logsDebug()) {
+              logger.debug("Ignoring unknown control message: " + messageType);
+            }
+            break;
         }
       } else {
         if (logger.logsDebug()) {
@@ -247,8 +257,8 @@ class Connection implements WebsocketConnection.Delegate {
   }
 
   // For testing
-  public void injectConnectionFailure() {
-    this.close();
+  void injectConnectionFailure() {
+    close();
   }
 
   public enum DisconnectReason {

@@ -153,11 +153,7 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
 
     @Override
     public void channelInactive(ChannelHandlerContext context) {
-      try {
-        delegate.onClose();
-      } finally {
-        context.close();
-      }
+      delegate.onClose();
     }
 
     @Override
@@ -185,11 +181,7 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
       if (frame instanceof TextWebSocketFrame) {
         delegate.onMessage(((TextWebSocketFrame) frame).text());
       } else if (frame instanceof CloseWebSocketFrame) {
-        try {
-          delegate.onClose();
-        } finally {
-          channel.close();
-        }
+        delegate.onClose();
       }
     }
 
