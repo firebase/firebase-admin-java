@@ -31,6 +31,13 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+/**
+ * Represents a WebSocket connection to the Firebase Realtime Database. This abstraction acts as
+ * the mediator between low-level IO ({@link WSClient}), and high-level connection management
+ * ({@link Connection}). It handles frame buffering, most of the low-level errors, and notifies the
+ * higher layer when necessary. Higher layer signals this implementation when it needs to send a
+ * message out, or when a graceful connection tear down should be initiated.
+ */
 class WebsocketConnection {
 
   private static final long KEEP_ALIVE_TIMEOUT_MS = 45 * 1000; // 45 seconds
@@ -98,9 +105,10 @@ class WebsocketConnection {
       logger.debug("websocket is being closed");
     }
     isClosed = true;
+    conn.close();
+
     // Although true is passed for both of these, they each run on the same event loop, so
     // they will never be running.
-    conn.close();
     if (connectTimeout != null) {
       connectTimeout.cancel(true);
       connectTimeout = null;
@@ -334,7 +342,7 @@ class WebsocketConnection {
   /**
    * Higher-level event handler ({@link Connection})
    */
-  public interface Delegate {
+  interface Delegate {
 
     void onMessage(Map<String, Object> message);
 

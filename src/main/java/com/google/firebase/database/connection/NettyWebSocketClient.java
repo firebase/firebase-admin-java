@@ -46,6 +46,10 @@ import javax.net.ssl.SSLException;
  * A {@link WebsocketConnection.WSClient} implementation based on the Netty framework. Uses
  * a single-threaded NIO event loop to read and write bytes from a WebSocket connection. Netty
  * handles all the low-level IO, SSL and WebSocket handshake, and other protocol-specific details.
+ *
+ * <p>This implementation does not initiate connection close on its own. In case of errors or loss
+ * of connectivity, it notifies the higher layer ({@link WebsocketConnection}), which then decides
+ * whether to initiate a connection tear down.
  */
 class NettyWebSocketClient implements WebsocketConnection.WSClient {
 
@@ -127,6 +131,11 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
     channel.writeAndFlush(new TextWebSocketFrame(msg));
   }
 
+  /**
+   * Handles low-level IO events. These events fire on the firebase-websocket-worker thread. We
+   * notify the {@link WebsocketConnection} on all events, which then hands them off to the
+   * RunLoop for further processing.
+   */
   private static class WebSocketClientHandler extends SimpleChannelInboundHandler<Object> {
 
     private final WebsocketConnection.WSClientEventHandler delegate;
@@ -187,11 +196,7 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext context, final Throwable cause) {
-      try {
-        delegate.onError(cause);
-      } finally {
-        context.close();
-      }
+      delegate.onError(cause);
     }
   }
 }
