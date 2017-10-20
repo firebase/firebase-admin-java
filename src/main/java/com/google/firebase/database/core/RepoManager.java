@@ -107,8 +107,7 @@ public class RepoManager {
     String repoHash = "https://" + info.host + "/" + info.namespace;
     synchronized (repos) {
       if (!repos.containsKey(ctx)) {
-        Map<String, Repo> innerMap = new HashMap<>();
-        repos.put(ctx, innerMap);
+        repos.put(ctx, new HashMap<String, Repo>());
       }
       Map<String, Repo> innerMap = repos.get(ctx);
       if (!innerMap.containsKey(repoHash)) {
@@ -146,10 +145,10 @@ public class RepoManager {
   }
 
   private void destroyInternal(final Context ctx) {
-    // RunLoop gets initialized before any Repo is created. Therefore we can assume that when
-    // the RunLoop is not present, there's nothing to clean up.
     RunLoop runLoop = ctx.getRunLoop();
     if (runLoop != null) {
+      // RunLoop gets initialized before any Repo is created. Therefore we can assume that when
+      // the RunLoop is not present, there's nothing to clean up.
       runLoop.scheduleNow(new Runnable() {
         @Override
         public void run() {
