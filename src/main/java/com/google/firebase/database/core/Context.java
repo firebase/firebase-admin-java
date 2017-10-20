@@ -130,8 +130,12 @@ public class Context {
 
   void stop() {
     stopped = true;
-    eventTarget.shutdown();
-    runLoop.shutdown();
+    if (eventTarget != null) {
+      eventTarget.shutdown();
+    }
+    if (runLoop != null) {
+      runLoop.shutdown();
+    }
   }
 
   protected void assertUnfrozen() {

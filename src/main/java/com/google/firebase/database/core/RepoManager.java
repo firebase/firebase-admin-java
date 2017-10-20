@@ -49,6 +49,14 @@ public class RepoManager {
     return instance.createLocalRepo(ctx, info, database);
   }
 
+  public static void destroy(Context ctx) {
+    try {
+      instance.destroyInternal(ctx);
+    } finally {
+      ctx.stop();
+    }
+  }
+
   public static void interrupt(Context ctx) {
     instance.interruptInternal(ctx);
   }
@@ -131,6 +139,26 @@ public class RepoManager {
               }
             }
           });
+    }
+  }
+
+  private void destroyInternal(final Context ctx) {
+    RunLoop runLoop = ctx.getRunLoop();
+    if (runLoop != null) {
+      // RunLoop gets initialized before any Repo. Therefore, we can assume that when RunLoop
+      // is not present, there's nothing to cleanup.
+      runLoop.scheduleNow(new Runnable() {
+        @Override
+        public void run() {
+          synchronized (repos) {
+            if (repos.containsKey(ctx)) {
+              for (Repo repo : repos.get(ctx).values()) {
+                repo.interrupt();
+              }
+            }
+          }
+        }
+      });
     }
   }
 

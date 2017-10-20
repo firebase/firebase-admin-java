@@ -94,7 +94,7 @@ class WebsocketConnection {
     return new WSClientTubesock(ws);
   }
 
-  public void open() {
+  void open() {
     conn.connect();
     connectTimeout =
         executorService.schedule(
@@ -126,6 +126,7 @@ class WebsocketConnection {
     }
     if (keepAlive != null) {
       keepAlive.cancel(true);
+      keepAlive = null;
     }
   }
 
@@ -139,8 +140,8 @@ class WebsocketConnection {
         conn.send("" + segs.length);
       }
 
-      for (int i = 0; i < segs.length; ++i) {
-        conn.send(segs[i]);
+      for (String seg : segs) {
+        conn.send(seg);
       }
     } catch (IOException e) {
       logger.error("Failed to serialize message: " + message.toString(), e);
@@ -156,7 +157,6 @@ class WebsocketConnection {
       try {
         frameReader.freeze();
         Map<String, Object> decoded = JsonMapper.parseJson(frameReader.toString());
-        frameReader = null;
         if (logger.logsDebug()) {
           logger.debug("handleIncomingFrame complete frame: " + decoded);
         }
@@ -169,6 +169,8 @@ class WebsocketConnection {
         logger.error("Error parsing frame (cast error): " + frameReader.toString(), e);
         close();
         shutdown();
+      } finally {
+        frameReader = null;
       }
     }
   }
@@ -221,10 +223,8 @@ class WebsocketConnection {
         if (logger.logsDebug()) {
           logger.debug("Reset keepAlive. Remaining: " + keepAlive.getDelay(TimeUnit.MILLISECONDS));
         }
-      } else {
-        if (logger.logsDebug()) {
-          logger.debug("Reset keepAlive");
-        }
+      } else if (logger.logsDebug()) {
+        logger.debug("Reset keepAlive");
       }
       keepAlive = executorService.schedule(nop(), KEEP_ALIVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
     }
@@ -256,6 +256,7 @@ class WebsocketConnection {
     conn = null;
     if (keepAlive != null) {
       keepAlive.cancel(false);
+      keepAlive = null;
     }
   }
 
@@ -333,17 +334,17 @@ class WebsocketConnection {
 
     @Override
     public void onClose() {
-      final String logMessage = "closed";
-      executorService.execute(
-          new Runnable() {
-            @Override
-            public void run() {
-              if (logger.logsDebug()) {
-                logger.debug(logMessage);
-              }
-              onClosed();
-            }
-          });
+      if (logger.logsDebug()) {
+        logger.debug("closed");
+      }
+      if (!isClosed) {
+        executorService.execute(new Runnable() {
+          @Override
+          public void run() {
+            onClosed();
+          }
+        });
+      }
     }
 
     @Override
