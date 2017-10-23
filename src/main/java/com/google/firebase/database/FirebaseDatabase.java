@@ -31,7 +31,6 @@ import com.google.firebase.database.utilities.ParsedUrl;
 import com.google.firebase.database.utilities.Utilities;
 import com.google.firebase.database.utilities.Validation;
 import com.google.firebase.internal.FirebaseService;
-
 import com.google.firebase.internal.SdkUtils;
 
 import java.util.Collections;
