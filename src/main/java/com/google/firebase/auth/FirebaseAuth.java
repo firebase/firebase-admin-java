@@ -348,11 +348,7 @@ public class FirebaseAuth {
     return new TaskToApiFuture<>(getUserByPhoneNumber(phoneNumber));
   }
 
-  public Task<ListUsersPage> listUsers(String pageToken) {
-    return listUsers(FirebaseUserManager.MAX_LIST_USERS_RESULTS, pageToken);
-  }
-
-  public Task<ListUsersPage> listUsers(int maxResults, String pageToken) {
+  private Task<ListUsersPage> listUsers(int maxResults, String pageToken) {
     checkNotDestroyed();
     final PageFactory factory = new PageFactory(
         new DefaultUserSource(userManager), maxResults, pageToken);
@@ -364,12 +360,31 @@ public class FirebaseAuth {
     });
   }
 
+  /**
+   * Gets a page of users starting from the specified {@code pageToken}. Page size will be
+   * limited to 1000 users.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of users.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link ListUsersPage}
+   *     instance. If an error occurs while retrieving user data, the future throws an exception.
+   * @throws IllegalArgumentException If the specified page token is empty.
+   */
   public ApiFuture<ListUsersPage> listUsersAsync(String pageToken) {
-    return listUsersAsync(FirebaseUserManager.MAX_LIST_USERS_RESULTS, pageToken);
+    return listUsersAsync(pageToken, FirebaseUserManager.MAX_LIST_USERS_RESULTS);
   }
 
-  public ApiFuture<ListUsersPage> listUsersAsync(
-      final int maxResults, final String pageToken) {
+  /**
+   * Gets a page of users starting from the specified {@code pageToken}.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of users.
+   * @param maxResults Maximum number of users to include in the returned page. This may not
+   *     exceed 1000.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link ListUsersPage}
+   *     instance. If an error occurs while retrieving user data, the future throws an exception.
+   * @throws IllegalArgumentException If the specified page token is empty, or max results value
+   *     is invalid.
+   */
+  public ApiFuture<ListUsersPage> listUsersAsync(String pageToken, int maxResults) {
     return new TaskToApiFuture<>(listUsers(maxResults, pageToken));
   }
 
@@ -445,19 +460,7 @@ public class FirebaseAuth {
     return new TaskToApiFuture<>(updateUser(request));
   }
 
-  /**
-   * Similar to {@link #setCustomClaimsAsync(String, Map)}, but returns a Task.
-   *
-   * @param uid A user ID string.
-   * @param claims A map of custom claims or null.
-   * @return A {@link Task} which will complete successfully when the user account has been updated.
-   *     If an error occurs while deleting the user account, the task fails with a
-   *     FirebaseAuthException.
-   * @throws IllegalArgumentException If the user ID string is null or empty, or the claims
-   *     payload is invalid or too large.
-   * @deprecated Use {@link #setCustomClaimsAsync(String, Map)}
-   */
-  public Task<Void> setCustomClaims(String uid, Map<String, Object> claims) {
+  private Task<Void> setCustomClaims(String uid, Map<String, Object> claims) {
     checkNotDestroyed();
     final UpdateRequest request = new UpdateRequest(uid).setCustomClaims(claims);
     return call(new Callable<Void>() {
@@ -476,9 +479,9 @@ public class FirebaseAuth {
    *
    * @param uid A user ID string.
    * @param claims A map of custom claims or null.
-   * @return An ApiFuture which will complete successfully when the user account has been updated.
-   *     If an error occurs while deleting the user account, the future throws a
-   *     FirebaseAuthException.
+   * @return An {@code ApiFuture} which will complete successfully when the user account has been
+   *     updated. If an error occurs while deleting the user account, the future throws a
+   *     {@link FirebaseAuthException}.
    * @throws IllegalArgumentException If the user ID string is null or empty, or the claims
    *     payload is invalid or too large.
    */

@@ -22,12 +22,17 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.api.gax.paging.Page;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
-import com.google.firebase.database.annotations.Nullable;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.Nullable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+/**
+ * Represents a page of {@link ExportedUserRecord} instances. Provides methods for iterating
+ * over the users in the current page, and calling up subsequent pages of users. Instances of
+ * this class are thread safe and immutable.
+ */
 public class ListUsersPage implements Page<ExportedUserRecord> {
 
   static final String END_OF_LIST = "";
@@ -37,25 +42,40 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
 
   private final ListUsersResult currentBatch;
 
-  private ListUsersPage(@NonNull UserSource source, int maxResults, String pageToken) {
-    this.source = checkNotNull(source, "source must not be null");
-    checkArgument(maxResults > 0 && maxResults <= FirebaseUserManager.MAX_LIST_USERS_RESULTS,
-        "maxResults must be a positive integer that does not exceed "
-            + FirebaseUserManager.MAX_LIST_USERS_RESULTS);
+  private ListUsersPage(@NonNull UserSource source, int maxResults, @Nullable String pageToken) {
+    this.source = source;
     this.maxResults = maxResults;
     this.currentBatch = source.fetch(maxResults, pageToken);
   }
 
+  /**
+   * Checks if there is another page of users available for retrieving.
+   *
+   * @return true if another page is available, or false otherwise.
+   */
   @Override
   public boolean hasNextPage() {
     return !END_OF_LIST.equals(currentBatch.getNextPageToken());
   }
 
+  /**
+   * Returns the string token that identifies the next page. Never returns null. Returns empty
+   * string if there are no more pages available to be retrieved.
+   *
+   * @return A non-null string token (possibly empty, representing no more pages)
+   */
+  @NonNull
   @Override
   public String getNextPageToken() {
     return currentBatch.getNextPageToken();
   }
 
+  /**
+   * Returns the next page of users.
+   *
+   * @return A new {@link ListUsersPage} instance, or null if there are no more pages.
+   */
+  @Nullable
   @Override
   public ListUsersPage getNextPage() {
     if (hasNextPage()) {
@@ -64,11 +84,26 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
     return null;
   }
 
+  /**
+   * Returns an {@code Iterable} that facilitates transparently iterating over all the users in the
+   * current Firebase project, starting from this page. The {@code Iterator} instances produced
+   * by the returned {@code Iterable} never buffers more than one page of users at a time. It is
+   * safe to abandon the iterators (i.e. break the loops) at any time.
+   *
+   * @return a new {@code Iterable<ExportedUserRecord>} instance.
+   */
+  @NonNull
   @Override
   public Iterable<ExportedUserRecord> iterateAll() {
     return new UserIterable(this);
   }
 
+  /**
+   * Returns an {@code Iterable} over the users in this page.
+   *
+   * @return a {@code Iterable<ExportedUserRecord>} instance.
+   */
+  @NonNull
   @Override
   public Iterable<ExportedUserRecord> getValues() {
     return currentBatch.getUsers();
@@ -137,6 +172,9 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
     }
   }
 
+  /**
+   * Represents a source of user data that can be queried to load a batch of users.
+   */
   interface UserSource {
     @NonNull
     ListUsersResult fetch(int maxResults, String pageToken);
@@ -190,6 +228,11 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
     }
   }
 
+  /**
+   * A simple factory class for {@link ListUsersPage} instances. Performs argument validation
+   * before attempting to load any user data (which is expensive, and hence may be performed
+   * asynchronously on a separate thread).
+   */
   static class PageFactory {
 
     private final UserSource source;
