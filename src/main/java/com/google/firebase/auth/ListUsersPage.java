@@ -24,7 +24,9 @@ import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.database.annotations.Nullable;
 import com.google.firebase.internal.NonNull;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class ListUsersPage implements Page<ExportedUserRecord> {
 
@@ -70,6 +72,69 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
   @Override
   public Iterable<ExportedUserRecord> getValues() {
     return currentBatch.getUsers();
+  }
+
+  private static class UserIterable implements Iterable<ExportedUserRecord> {
+
+    private final ListUsersPage startingPage;
+
+    UserIterable(@NonNull ListUsersPage startingPage) {
+      this.startingPage = checkNotNull(startingPage, "starting page must not be null");
+    }
+
+    @Override
+    @NonNull
+    public Iterator<ExportedUserRecord> iterator() {
+      return new UserIterator(startingPage);
+    }
+
+    /**
+     * An {@code Iterator} that cycles through user accounts, one at a time. It buffers the
+     * last retrieved batch of user accounts in memory. The {@code maxResults} parameter is an
+     * upper bound on the batch size.
+     */
+    private static class UserIterator implements Iterator<ExportedUserRecord> {
+
+      private ListUsersPage currentPage;
+      private List<ExportedUserRecord> batch;
+      private int index = 0;
+
+      private UserIterator(ListUsersPage startingPage) {
+        setCurrentPage(startingPage);
+      }
+
+      @Override
+      public boolean hasNext() {
+        if (index == batch.size()) {
+          if (currentPage.hasNextPage()) {
+            setCurrentPage(currentPage.getNextPage());
+          } else {
+            return false;
+          }
+        }
+
+        return index < batch.size();
+      }
+
+      @Override
+      public ExportedUserRecord next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
+        return batch.get(index++);
+      }
+
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException("remove operation not supported");
+      }
+
+      private void setCurrentPage(ListUsersPage page) {
+        this.currentPage = checkNotNull(page);
+        this.batch = ImmutableList.copyOf(page.getValues());
+        this.index = 0;
+      }
+    }
   }
 
   interface UserSource {

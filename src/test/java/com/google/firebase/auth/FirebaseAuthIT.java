@@ -252,9 +252,8 @@ public class FirebaseAuthIT {
 
       // Test list by batches
       final AtomicInteger collected = new AtomicInteger(0);
-      String token = null;
-      while (true) {
-        ListUsersPage page = auth.listUsersAsync(token).get();
+      ListUsersPage page = auth.listUsersAsync(null).get();
+      while (page != null) {
         for (ExportedUserRecord user : page.getValues()) {
           if (uids.contains(user.getUid())) {
             collected.incrementAndGet();
@@ -262,16 +261,13 @@ public class FirebaseAuthIT {
             assertNotNull(user.getPasswordSalt());
           }
         }
-        if (!page.hasNextPage()) {
-          break;
-        }
-        token = page.getNextPageToken();
+        page = page.getNextPage();
       }
       assertEquals(uids.size(), collected.get());
 
       // Test iterate all
       collected.set(0);
-      ListUsersPage page = auth.listUsersAsync(null).get();
+      page = auth.listUsersAsync(null).get();
       for (ExportedUserRecord user : page.iterateAll()) {
         if (uids.contains(user.getUid())) {
           collected.incrementAndGet();
