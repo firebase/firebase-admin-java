@@ -1,16 +1,11 @@
 package com.google.firebase.database.connection;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import com.google.common.base.Strings;
-import com.google.firebase.internal.GaeThreadFactory;
-import com.google.firebase.internal.RevivingScheduledExecutor;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInitializer;
@@ -29,7 +24,6 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketClientCompressionHandler;
 import io.netty.handler.ssl.SslContext;
@@ -38,79 +32,56 @@ import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.util.CharsetUtil;
 
 import java.net.URI;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 import javax.net.ssl.SSLException;
 
-/**
- * A {@link WebsocketConnection.WSClient} implementation based on the Netty framework. Uses
- * a single-threaded NIO event loop to read and write bytes from a WebSocket connection. Netty
- * handles all the low-level IO, SSL and WebSocket handshake, and other protocol-specific details.
- *
- * <p>This implementation does not initiate connection close on its own. In case of errors or loss
- * of connectivity, it notifies the higher layer ({@link WebsocketConnection}), which then decides
- * whether to initiate a connection tear down.
- */
 class NettyWebSocketClient implements WebsocketConnection.WSClient {
 
-  private static final int DEFAULT_WSS_PORT = 443;
-
   private final URI uri;
-  private final WebsocketConnection.WSClientEventHandler eventHandler;
+  private final SslContext sslContext;
   private final ChannelHandler channelHandler;
-  private final ExecutorService executorService;
   private final EventLoopGroup group;
 
   private Channel channel;
 
   NettyWebSocketClient(
-      URI uri, String userAgent, ThreadFactory threadFactory,
-      WebsocketConnection.WSClientEventHandler eventHandler) {
-    this.uri = checkNotNull(uri, "uri must not be null");
-    this.eventHandler = checkNotNull(eventHandler, "event handler must not be null");
-    this.channelHandler = new WebSocketClientHandler(uri, userAgent, eventHandler);
-    this.executorService = new RevivingScheduledExecutor(
-        threadFactory, "firebase-websocket-worker", GaeThreadFactory.isAvailable());
-    this.group = new NioEventLoopGroup(1, this.executorService);
+      URI uri, String userAgent,
+      WebsocketConnection.WSClientEventHandler eventHandler) throws SSLException {
+    this.uri = checkNotNull(uri);
+    this.sslContext = SslContextBuilder.forClient()
+        .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+
+    WebSocketClientHandshaker handshaker = WebSocketClientHandshakerFactory.newHandshaker(
+        uri, WebSocketVersion.V13, null, true,
+        new DefaultHttpHeaders().add("User-Agent", userAgent));
+    this.channelHandler = new WebSocketClientHandler(eventHandler, handshaker);
+
+    ThreadFactory factory = new ThreadFactoryBuilder()
+        .setNameFormat("hkj-websocket-%d")
+        .setDaemon(true)
+        .build();
+    this.group = new NioEventLoopGroup(1, factory);
   }
 
   @Override
   public void connect() {
     checkState(channel == null, "channel already initialized");
-    try {
-      final SslContext sslContext = SslContextBuilder.forClient()
-          .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
-      Bootstrap bootstrap = new Bootstrap();
-      bootstrap.group(group)
-          .channel(NioSocketChannel.class)
-          .handler(new ChannelInitializer<SocketChannel>() {
-            @Override
-            protected void initChannel(SocketChannel ch) {
-              ChannelPipeline p = ch.pipeline();
-              p.addLast(sslContext.newHandler(ch.alloc(), uri.getHost(), DEFAULT_WSS_PORT));
-              p.addLast(
-                  new HttpClientCodec(),
-                  new HttpObjectAggregator(8192),
-                  WebSocketClientCompressionHandler.INSTANCE,
-                  channelHandler);
-            }
-          });
-
-      ChannelFuture channelFuture = bootstrap.connect(uri.getHost(), DEFAULT_WSS_PORT);
-      this.channel = channelFuture.channel();
-      channelFuture.addListener(
-          new ChannelFutureListener() {
-            @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
-              if (!future.isSuccess()) {
-                eventHandler.onError(future.cause());
-              }
-            }
+    Bootstrap b = new Bootstrap();
+    b.group(group)
+        .channel(NioSocketChannel.class)
+        .handler(new ChannelInitializer<SocketChannel>() {
+          @Override
+          protected void initChannel(SocketChannel ch) {
+            ChannelPipeline p = ch.pipeline();
+            p.addLast(sslContext.newHandler(ch.alloc(), uri.getHost(), 443));
+            p.addLast(
+                new HttpClientCodec(),
+                new HttpObjectAggregator(8192),
+                WebSocketClientCompressionHandler.INSTANCE,
+                channelHandler);
           }
-      );
-    } catch (SSLException e) {
-      eventHandler.onError(e);
-    }
+        });
+    channel = b.connect(uri.getHost(), 443).channel();
   }
 
   @Override
@@ -120,7 +91,6 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
       channel.close();
     } finally {
       group.shutdownGracefully();
-      executorService.shutdown();
       // TODO(hkj): https://github.com/netty/netty/issues/7310
     }
   }
@@ -131,23 +101,16 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
     channel.writeAndFlush(new TextWebSocketFrame(msg));
   }
 
-  /**
-   * Handles low-level IO events. These events fire on the firebase-websocket-worker thread. We
-   * notify the {@link WebsocketConnection} on all events, which then hands them off to the
-   * RunLoop for further processing.
-   */
   private static class WebSocketClientHandler extends SimpleChannelInboundHandler<Object> {
 
     private final WebsocketConnection.WSClientEventHandler delegate;
     private final WebSocketClientHandshaker handshaker;
 
     WebSocketClientHandler(
-        URI uri, String userAgent, WebsocketConnection.WSClientEventHandler delegate) {
-      this.delegate = checkNotNull(delegate, "delegate must not be null");
-      checkArgument(!Strings.isNullOrEmpty(userAgent), "user agent must not be null or empty");
-      this.handshaker = WebSocketClientHandshakerFactory.newHandshaker(
-          uri, WebSocketVersion.V13, null, true,
-          new DefaultHttpHeaders().add("User-Agent", userAgent));
+        WebsocketConnection.WSClientEventHandler delegate,
+        WebSocketClientHandshaker handshaker) {
+      this.delegate = checkNotNull(delegate);
+      this.handshaker = checkNotNull(handshaker);
     }
 
     @Override
@@ -162,7 +125,11 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
 
     @Override
     public void channelInactive(ChannelHandlerContext context) {
-      delegate.onClose();
+      try {
+        delegate.onClose();
+      } finally {
+        context.close();
+      }
     }
 
     @Override
@@ -170,12 +137,8 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
       Channel channel = context.channel();
       if (!handshaker.isHandshakeComplete()) {
         checkState(message instanceof FullHttpResponse);
-        try {
-          handshaker.finishHandshake(channel, (FullHttpResponse) message);
-          delegate.onOpen();
-        } catch (WebSocketHandshakeException e) {
-          delegate.onError(e);
-        }
+        handshaker.finishHandshake(channel, (FullHttpResponse) message);
+        delegate.onOpen();
         return;
       }
 
@@ -190,13 +153,21 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
       if (frame instanceof TextWebSocketFrame) {
         delegate.onMessage(((TextWebSocketFrame) frame).text());
       } else if (frame instanceof CloseWebSocketFrame) {
-        delegate.onClose();
+        try {
+          delegate.onClose();
+        } finally {
+          channel.close();
+        }
       }
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext context, final Throwable cause) {
-      delegate.onError(cause);
+      try {
+        delegate.onError(cause);
+      } finally {
+        context.close();
+      }
     }
   }
 }

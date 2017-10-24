@@ -227,18 +227,14 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
 
   @Override
   public void purgeOutstandingWrites() {
-    purgeOutstandingWrites("write_cancelled");
-  }
-
-  private void purgeOutstandingWrites(String reason) {
     for (OutstandingPut put : this.outstandingPuts.values()) {
       if (put.onComplete != null) {
-        put.onComplete.onRequestResult(reason, null);
+        put.onComplete.onRequestResult("write_canceled", null);
       }
     }
     for (OutstandingDisconnect onDisconnect : this.onDisconnectRequestQueue) {
       if (onDisconnect.onComplete != null) {
-        onDisconnect.onComplete.onRequestResult(reason, null);
+        onDisconnect.onComplete.onRequestResult("write_canceled", null);
       }
     }
     this.outstandingPuts.clear();
@@ -315,14 +311,13 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
 
   @Override
   public void onKill(String reason) {
-    // This usually represents a configuration error by the user (e.g. incorrect database URL).
-    // Log the details as a warning, and purge outstanding writes so the error details bubble
-    // up as exceptions.
-    logger.warn(
-        "Firebase Database connection was forcefully killed by the server. Will not attempt "
-        + "reconnect. Reason: " + reason);
+    if (logger.logsDebug()) {
+      logger.debug(
+          "Firebase Database connection was forcefully killed by the server. Will not attempt "
+              + "reconnect. Reason: "
+              + reason);
+    }
     interrupt(SERVER_KILL_INTERRUPT_REASON);
-    purgeOutstandingWrites("disconnected");
   }
 
   @Override

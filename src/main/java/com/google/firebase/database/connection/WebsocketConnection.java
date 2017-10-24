@@ -16,31 +16,21 @@
 
 package com.google.firebase.database.connection;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.database.connection.util.StringListReader;
 import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.util.JsonMapper;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Represents a WebSocket connection to the Firebase Realtime Database. This abstraction acts as
- * the mediator between low-level IO ({@link WSClient}), and high-level connection management
- * ({@link Connection}). It handles frame buffering, most of the low-level errors, and notifies the
- * higher layer when necessary. Higher layer signals this implementation when it needs to send a
- * message out, or when a graceful connection tear down should be initiated.
- */
 class WebsocketConnection {
 
   private static final long KEEP_ALIVE_TIMEOUT_MS = 45 * 1000; // 45 seconds
@@ -53,7 +43,8 @@ class WebsocketConnection {
   private final LogWrapper logger;
   private final WSClient conn;
   private final Delegate delegate;
-  private final StringList buffer;
+  private final AtomicLong totalFrames = new AtomicLong(0);
+  private StringListReader frameReader;
 
   private boolean everConnected = false;
   private boolean isClosed = false;
@@ -72,7 +63,6 @@ class WebsocketConnection {
     this.logger = new LogWrapper(connectionContext.getLogger(), WebsocketConnection.class,
         "ws_" + CONN_ID.getAndIncrement());
     this.conn = createConnection(hostInfo, optCachedHost, optLastSessionId);
-    this.buffer = new StringList();
   }
 
   private WSClient createConnection(
@@ -80,9 +70,14 @@ class WebsocketConnection {
     String host = (optCachedHost != null) ? optCachedHost : hostInfo.getHost();
     URI uri = HostInfo.getConnectionUrl(
         host, hostInfo.isSecure(), hostInfo.getNamespace(), optLastSessionId);
-    return new NettyWebSocketClient(
-        uri, connectionContext.getUserAgent(), connectionContext.getThreadFactory(),
-        new WSClientHandlerImpl());
+    try {
+      return new NettyWebSocketClient(
+          uri, connectionContext.getUserAgent(), new WSClientHandlerImpl());
+    } catch (Exception e) {
+      String msg = "Error while initializing websocket client";
+      logger.error(msg, e);
+      throw new RuntimeException(msg, e);
+    }
   }
 
   void open() {
@@ -99,7 +94,7 @@ class WebsocketConnection {
             TimeUnit.MILLISECONDS);
   }
 
-  void start() {
+  public void start() {
     // No-op in java
   }
 
@@ -108,13 +103,11 @@ class WebsocketConnection {
       logger.debug("websocket is being closed");
     }
     isClosed = true;
-    conn.close();
-
     // Although true is passed for both of these, they each run on the same event loop, so
     // they will never be running.
+    conn.close();
     if (connectTimeout != null) {
       connectTimeout.cancel(true);
-      connectTimeout = null;
     }
     if (keepAlive != null) {
       keepAlive.cancel(true);
@@ -122,7 +115,7 @@ class WebsocketConnection {
     }
   }
 
-  void send(Map<String, Object> message) {
+  public void send(Map<String, Object> message) {
     resetKeepAlive();
     try {
       String toSend = JsonMapper.serializeJson(message);
@@ -132,11 +125,14 @@ class WebsocketConnection {
       }
 
       for (String seg : frames) {
+        if (logger.logsDebug()) {
+          logger.debug("Sending frame: " + seg);
+        }
         conn.send(seg);
       }
     } catch (IOException e) {
       logger.error("Failed to serialize message: " + message.toString(), e);
-      closeAndNotify();
+      shutdown();
     }
   }
 
@@ -155,30 +151,35 @@ class WebsocketConnection {
   }
 
   private void handleNewFrameCount(int numFrames) {
+    totalFrames.set(numFrames);
+    frameReader = new StringListReader();
     if (logger.logsDebug()) {
-      logger.debug("HandleNewFrameCount: " + numFrames);
+      logger.debug("HandleNewFrameCount: " + totalFrames);
     }
-    buffer.initialize(numFrames);
   }
 
   private void appendFrame(String message) {
-    if (buffer.append(message) > 0) {
-      return;
-    }
-    // Decode JSON
-    String combined = buffer.combine();
-    try {
-      Map<String, Object> decoded = JsonMapper.parseJson(combined);
-      if (logger.logsDebug()) {
-        logger.debug("handleIncomingFrame complete frame: " + decoded);
+    frameReader.addString(message);
+    if (totalFrames.decrementAndGet() == 0) {
+      // Decode JSON
+      try {
+        frameReader.freeze();
+        Map<String, Object> decoded = JsonMapper.parseJson(frameReader.toString());
+        if (logger.logsDebug()) {
+          logger.debug("handleIncomingFrame complete frame: " + decoded);
+        }
+        delegate.onMessage(decoded);
+      } catch (IOException e) {
+        logger.error("Error parsing frame: " + frameReader.toString(), e);
+        close();
+        shutdown();
+      } catch (ClassCastException e) {
+        logger.error("Error parsing frame (cast error): " + frameReader.toString(), e);
+        close();
+        shutdown();
+      } finally {
+        frameReader = null;
       }
-      delegate.onMessage(decoded);
-    } catch (IOException e) {
-      logger.error("Error parsing frame: " + combined, e);
-      closeAndNotify();
-    } catch (ClassCastException e) {
-      logger.error("Error parsing frame (cast error): " + combined, e);
-      closeAndNotify();
     }
   }
 
@@ -202,35 +203,33 @@ class WebsocketConnection {
   }
 
   private void handleIncomingFrame(String message) {
-    if (isClosed) {
-      return;
-    }
-    resetKeepAlive();
-    if (buffer.hasRemaining()) {
-      appendFrame(message);
-    } else {
-      String remaining = extractFrameCount(message);
-      if (remaining != null) {
-        appendFrame(remaining);
+    if (!isClosed) {
+      resetKeepAlive();
+      if (frameReader != null) {
+        appendFrame(message);
+      } else {
+        String remaining = extractFrameCount(message);
+        if (remaining != null) {
+          appendFrame(remaining);
+        }
       }
     }
   }
 
   private void resetKeepAlive() {
-    if (isClosed) {
-      return;
-    }
-    if (keepAlive != null) {
-      keepAlive.cancel(false);
-      if (logger.logsDebug()) {
-        logger.debug("Reset keepAlive. Remaining: " + keepAlive.getDelay(TimeUnit.MILLISECONDS));
+    if (!isClosed) {
+      if (keepAlive != null) {
+        keepAlive.cancel(false);
+        if (logger.logsDebug()) {
+          logger.debug("Reset keepAlive. Remaining: " + keepAlive.getDelay(TimeUnit.MILLISECONDS));
+        }
+      } else {
+        if (logger.logsDebug()) {
+          logger.debug("Reset keepAlive");
+        }
       }
-    } else {
-      if (logger.logsDebug()) {
-        logger.debug("Reset keepAlive");
-      }
+      keepAlive = executorService.schedule(nop(), KEEP_ALIVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
     }
-    keepAlive = executorService.schedule(nop(), KEEP_ALIVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
   }
 
   private Runnable nop() {
@@ -245,21 +244,21 @@ class WebsocketConnection {
     };
   }
 
-  /**
-   * Closes the low-level connection, and notifies the higher layer ({@link Connection}.
-   */
-  private void closeAndNotify() {
-    close();
-    delegate.onDisconnect(everConnected);
-  }
-
   private void onClosed() {
     if (!isClosed) {
       if (logger.logsDebug()) {
         logger.debug("closing itself");
       }
-      closeAndNotify();
+      shutdown();
     }
+    if (keepAlive != null) {
+      keepAlive.cancel(false);
+    }
+  }
+
+  private void shutdown() {
+    isClosed = true;
+    delegate.onDisconnect(everConnected);
   }
 
   private void closeIfNeverConnected() {
@@ -267,15 +266,10 @@ class WebsocketConnection {
       if (logger.logsDebug()) {
         logger.debug("timed out on connect");
       }
-      closeAndNotify();
+      conn.close();
     }
   }
 
-  /**
-   * A client handler implementation that gets notified by the low-level WebSocket client. These
-   * events fire on the same thread as the WebSocket client. We log the events on the same thread,
-   * and hand them off to the RunLoop for further processing.
-   */
   private class WSClientHandlerImpl implements WSClientEventHandler {
 
     @Override
@@ -312,8 +306,6 @@ class WebsocketConnection {
         logger.debug("closed");
       }
       if (!isClosed) {
-        // If the connection tear down was initiated by the higher-layer, isClosed will already
-        // be true. Nothing more to do in that case.
         executorService.execute(
             new Runnable() {
               @Override
@@ -341,53 +333,13 @@ class WebsocketConnection {
     }
   }
 
-  private static class StringList {
-
-    private final AtomicInteger remaining = new AtomicInteger(0);
-    private List<String> buffer;
-
-    void initialize(int capacity) {
-      remaining.set(capacity);
-      buffer = new ArrayList<>(capacity);
-    }
-
-    int append(String frame) {
-      checkState(hasRemaining());
-      buffer.add(frame);
-      return remaining.decrementAndGet();
-    }
-
-    boolean hasRemaining() {
-      return remaining.get() > 0;
-    }
-
-    String combine() {
-      checkState(!hasRemaining());
-      try {
-        StringBuilder sb = new StringBuilder();
-        for (String frame : buffer) {
-          sb.append(frame);
-        }
-        return sb.toString();
-      } finally {
-        buffer.clear();
-      }
-    }
-  }
-
-  /**
-   * Higher-level event handler ({@link Connection})
-   */
-  interface Delegate {
+  public interface Delegate {
 
     void onMessage(Map<String, Object> message);
 
     void onDisconnect(boolean wasEverConnected);
   }
 
-  /**
-   * Low-level WebSocket client. Implementations handle low-level network IO.
-   */
   interface WSClient {
 
     void connect();
@@ -397,9 +349,6 @@ class WebsocketConnection {
     void send(String msg);
   }
 
-  /**
-   * Event handler that handles the events generated by a low-level {@link WSClient}.
-   */
   interface WSClientEventHandler {
 
     void onOpen();
