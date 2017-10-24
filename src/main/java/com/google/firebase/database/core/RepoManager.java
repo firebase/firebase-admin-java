@@ -20,6 +20,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.InternalHelpers;
+import io.netty.util.concurrent.FastThreadLocal;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,6 +55,8 @@ public class RepoManager {
       instance.destroyInternal(ctx);
     } finally {
       ctx.stop();
+      // TODO(hkj): https://github.com/netty/netty/issues/7310
+      FastThreadLocal.removeAll();
     }
   }
 
@@ -143,14 +146,25 @@ public class RepoManager {
   }
 
   private void destroyInternal(final Context ctx) {
-    synchronized (repos) {
-      if (repos.containsKey(ctx)) {
-        for (Repo repo : repos.get(ctx).values()) {
-          repo.interrupt();
+    RunLoop runLoop = ctx.getRunLoop();
+    if (runLoop != null) {
+      // RunLoop gets initialized before any Repo is created. Therefore we can assume that when
+      // the RunLoop is not present, there's nothing to clean up.
+      runLoop.scheduleNow(new Runnable() {
+        @Override
+        public void run() {
+          synchronized (repos) {
+            if (repos.containsKey(ctx)) {
+              for (Repo repo : repos.get(ctx).values()) {
+                repo.interrupt();
+              }
+            }
+          }
         }
-      }
+      });
     }
   }
+
 
   private void resumeInternal(final Context ctx) {
     RunLoop runLoop = ctx.getRunLoop();
