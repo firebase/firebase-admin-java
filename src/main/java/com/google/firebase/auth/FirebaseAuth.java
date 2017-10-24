@@ -30,6 +30,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
+import com.google.firebase.auth.ListUsersPage.PageFactory;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
@@ -344,50 +346,30 @@ public class FirebaseAuth {
     return new TaskToApiFuture<>(getUserByPhoneNumber(phoneNumber));
   }
 
-  public Task<ListUsersResult> listUsers(PageToken pageToken) {
+  public Task<ListUsersPage> listUsers(String pageToken) {
     return listUsers(FirebaseUserManager.MAX_LIST_USERS_RESULTS, pageToken);
   }
 
-  public Task<ListUsersResult> listUsers(final int maxResults, final PageToken pageToken) {
+  public Task<ListUsersPage> listUsers(int maxResults, String pageToken) {
     checkNotDestroyed();
-    checkArgument(maxResults > 0 && maxResults <= FirebaseUserManager.MAX_LIST_USERS_RESULTS,
-        "maxResults must be a positive integer that does not exceed "
-            + FirebaseUserManager.MAX_LIST_USERS_RESULTS);
-    return call(new Callable<ListUsersResult>() {
+    final PageFactory factory = new PageFactory(
+        new DefaultUserSource(userManager), maxResults, pageToken);
+    return call(new Callable<ListUsersPage>() {
       @Override
-      public ListUsersResult call() throws Exception {
-        return userManager.listUsers(maxResults, pageToken);
+      public ListUsersPage call() throws Exception {
+        return factory.create();
       }
     });
   }
 
-  public ApiFuture<ListUsersResult> listUsersAsync(PageToken pageToken) {
+  public ApiFuture<ListUsersPage> listUsersAsync(String pageToken) {
     return listUsersAsync(FirebaseUserManager.MAX_LIST_USERS_RESULTS, pageToken);
   }
 
-  public ApiFuture<ListUsersResult> listUsersAsync(
-      final int maxResults, final PageToken pageToken) {
+  public ApiFuture<ListUsersPage> listUsersAsync(
+      final int maxResults, final String pageToken) {
     return new TaskToApiFuture<>(listUsers(maxResults, pageToken));
   }
-
-  public Iterable<ExportedUserRecord> iterateAllUsers() {
-    checkNotDestroyed();
-    return new UserIterable(this);
-  }
-
-  public void iterateAllUsersAsync(final ListUsersCallback callback) {
-    checkNotDestroyed();
-    checkNotNull(callback, "callback must not be null");
-    final UserIterable iterable = new UserIterable(this);
-    call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        iterable.iterateWithCallback(callback);
-        return null;
-      }
-    });
-  }
-
 
   /**
    * Similar to {@link #createUserAsync(CreateRequest)}, but returns a Task.

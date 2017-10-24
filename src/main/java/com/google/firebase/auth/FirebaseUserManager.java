@@ -196,12 +196,12 @@ class FirebaseUserManager {
     }
   }
 
-  ListUsersResult listUsers(int maxResults, PageToken pageToken) throws FirebaseAuthException {
+  DownloadAccountResponse listUsers(int maxResults, String pageToken) throws FirebaseAuthException {
     ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
         .put("maxResults", maxResults);
     if (pageToken != null) {
-      checkArgument(!pageToken.isEndOfList(), "invalid end of list page token");
-      builder.put("nextPageToken", pageToken.toString());
+      checkArgument(!pageToken.isEmpty(), "invalid end of list page token");
+      builder.put("nextPageToken", pageToken);
     }
 
     DownloadAccountResponse response;
@@ -215,8 +215,7 @@ class FirebaseUserManager {
       throw new FirebaseAuthException(LIST_USERS_ERROR,
           "Unexpected response from download user account API.");
     }
-
-    return new ListUsersResult(response);
+    return response;
   }
 
   private <T> T post(String path, Object content, Class<T> clazz) throws IOException {

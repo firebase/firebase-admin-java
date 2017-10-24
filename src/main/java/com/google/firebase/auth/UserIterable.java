@@ -18,8 +18,10 @@ package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
@@ -39,35 +41,18 @@ import java.util.NoSuchElementException;
  * for a while, but breaks out of the iteration before cycling through all user accounts, the
  * same iterator instance can be used to resume iterating from where it left off.
  */
-public class UserIterable implements Iterable<ExportedUserRecord> {
+class UserIterable implements Iterable<ExportedUserRecord> {
 
-  private final UserSource source;
+  private final ListUsersPage startingPage;
 
-  UserIterable(@NonNull final FirebaseAuth auth) {
-    this(new DefaultUserSource(auth));
-  }
-
-  UserIterable(@NonNull UserSource source) {
-    this.source = checkNotNull(source, "user source must not be null");
+  UserIterable(@NonNull ListUsersPage startingPage) {
+    this.startingPage = checkNotNull(startingPage, "starting page must not be null");
   }
 
   @Override
   @NonNull
   public Iterator<ExportedUserRecord> iterator() {
-    return new UserIterator(source);
-  }
-
-  void iterateWithCallback(@NonNull ListUsersCallback callback) {
-    try {
-      for (ExportedUserRecord user : this) {
-        if (!callback.onResult(user)) {
-          break;
-        }
-      }
-      callback.onComplete();
-    } catch (Exception e) {
-      callback.onError(e);
-    }
+    return new UserIterator(startingPage);
   }
 
   /**
@@ -77,31 +62,25 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
    */
   private static class UserIterator implements Iterator<ExportedUserRecord> {
 
-    private final UserSource source;
-    private ListUsersResult currentBatch;
+    private ListUsersPage currentPage;
+    private List<ExportedUserRecord> batch;
     private int index = 0;
 
-    private UserIterator(UserSource source) {
-      this.source = source;
+    private UserIterator(ListUsersPage startingPage) {
+      setCurrentPage(startingPage);
     }
 
     @Override
     public boolean hasNext() {
-      if (currentBatch == null) {
-        // Load the initial batch
-        currentBatch = source.fetch(null);
-      }
-      if (index == currentBatch.getUsers().size()) {
-        PageToken next = currentBatch.getNextPageToken();
-        if (!next.isEndOfList()) {
-          currentBatch = source.fetch(next);
-          index = 0;
+      if (index == batch.size()) {
+        if (currentPage.hasNextPage()) {
+          setCurrentPage(currentPage.getNextPage());
         } else {
           return false;
         }
       }
 
-      return index < currentBatch.getUsers().size();
+      return index < batch.size();
     }
 
     @Override
@@ -109,33 +88,18 @@ public class UserIterable implements Iterable<ExportedUserRecord> {
       if (!hasNext()) {
         throw new NoSuchElementException();
       }
-      return currentBatch.getUsers().get(index++);
+      return batch.get(index++);
     }
 
     @Override
     public void remove() {
       throw new UnsupportedOperationException("remove operation not supported");
     }
-  }
 
-  interface UserSource {
-    @NonNull ListUsersResult fetch(PageToken pageToken);
-  }
-
-  static class DefaultUserSource implements UserSource {
-    private final FirebaseAuth auth;
-
-    DefaultUserSource(FirebaseAuth auth) {
-      this.auth = checkNotNull(auth, "auth must not be null");
-    }
-
-    @Override
-    public ListUsersResult fetch(PageToken pageToken) {
-      try {
-        return auth.listUsersAsync(pageToken).get();
-      } catch (Exception e) {
-        throw new RuntimeException("Error while downloading user accounts", e);
-      }
+    private void setCurrentPage(ListUsersPage page) {
+      this.currentPage = page;
+      this.batch = ImmutableList.copyOf(page.getValues());
+      this.index = 0;
     }
   }
 }

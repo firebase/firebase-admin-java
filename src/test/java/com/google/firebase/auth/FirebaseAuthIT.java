@@ -32,6 +32,9 @@ import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutureCallback;
+import com.google.api.core.ApiFutures;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.UserRecord.CreateRequest;
@@ -249,26 +252,27 @@ public class FirebaseAuthIT {
 
       // Test list by batches
       final AtomicInteger collected = new AtomicInteger(0);
-      PageToken token = null;
+      String token = null;
       while (true) {
-        ListUsersResult result = auth.listUsersAsync(token).get();
-        for (ExportedUserRecord user : result.getUsers()) {
+        ListUsersPage page = auth.listUsersAsync(token).get();
+        for (ExportedUserRecord user : page.getValues()) {
           if (uids.contains(user.getUid())) {
             collected.incrementAndGet();
             assertNotNull(user.getPasswordHash());
             assertNotNull(user.getPasswordSalt());
           }
         }
-        token = result.getNextPageToken();
-        if (token.isEndOfList()) {
+        if (!page.hasNextPage()) {
           break;
         }
+        token = page.getNextPageToken();
       }
       assertEquals(uids.size(), collected.get());
 
       // Test iterate all
       collected.set(0);
-      for (ExportedUserRecord user : auth.iterateAllUsers()) {
+      ListUsersPage page = auth.listUsersAsync(null).get();
+      for (ExportedUserRecord user : page.iterateAll()) {
         if (uids.contains(user.getUid())) {
           collected.incrementAndGet();
           assertNotNull(user.getPasswordHash());
@@ -277,33 +281,30 @@ public class FirebaseAuthIT {
       }
       assertEquals(uids.size(), collected.get());
 
-      // Test iterate all async
+      // Test iterate async
       collected.set(0);
       final Semaphore semaphore = new Semaphore(0);
-      final AtomicReference<Exception> error = new AtomicReference<>(null);
-      ListUsersCallback callback = new ListUsersCallback() {
+      final AtomicReference<Throwable> error = new AtomicReference<>();
+      ApiFuture<ListUsersPage> pageFuture = auth.listUsersAsync(null);
+      ApiFutures.addCallback(pageFuture, new ApiFutureCallback<ListUsersPage>() {
         @Override
-        public boolean onResult(ExportedUserRecord user) {
-          if (uids.contains(user.getUid())) {
-            collected.incrementAndGet();
-            assertNotNull(user.getPasswordHash());
-            assertNotNull(user.getPasswordSalt());
+        public void onFailure(Throwable t) {
+          error.set(t);
+          semaphore.release();
+        }
+
+        @Override
+        public void onSuccess(ListUsersPage result) {
+          for (ExportedUserRecord user : result.iterateAll()) {
+            if (uids.contains(user.getUid())) {
+              collected.incrementAndGet();
+              assertNotNull(user.getPasswordHash());
+              assertNotNull(user.getPasswordSalt());
+            }
           }
-          return true;
-        }
-
-        @Override
-        public void onComplete() {
           semaphore.release();
         }
-
-        @Override
-        public void onError(Exception e) {
-          error.set(e);
-          semaphore.release();
-        }
-      };
-      auth.iterateAllUsersAsync(callback);
+      });
       semaphore.acquire();
       assertEquals(uids.size(), collected.get());
       assertNull(error.get());

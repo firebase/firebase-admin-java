@@ -25,28 +25,30 @@ import static org.junit.Assert.fail;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.auth.ListUsersPage.ListUsersResult;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.Test;
 
-public class UserIterableTest {
+public class ListUsersPageTest {
 
   @Test
   public void testListUsersIterable() throws IOException {
     ListUsersResult result = new ListUsersResult(
         ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
-        null);
+        ListUsersPage.END_OF_LIST);
     TestUserSource source = new TestUserSource(result);
 
-    UserIterable iterable = new UserIterable(source);
+    ListUsersPage page = new ListUsersPage.PageFactory(source).create();
+    Iterable<ExportedUserRecord> users = page.iterateAll();
+
     int iterations = 0;
-    for (ExportedUserRecord user : iterable) {
+    for (ExportedUserRecord user : users) {
       iterations++;
       assertEquals("user" + iterations, user.getUid());
     }
@@ -56,23 +58,25 @@ public class UserIterableTest {
 
     // Should result in a new iterator
     iterations = 0;
-    for (ExportedUserRecord user : iterable) {
+    for (ExportedUserRecord user : users) {
       iterations++;
       assertEquals("user" + iterations, user.getUid());
     }
     assertEquals(3, iterations);
-    assertEquals(2, source.calls.size());
-    assertNull(source.calls.get(1));
+    assertEquals(1, source.calls.size());
+    assertNull(source.calls.get(0));
   }
 
   @Test
   public void testListUsersIterator() throws IOException {
     ListUsersResult result = new ListUsersResult(
         ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
-        null);
+        ListUsersPage.END_OF_LIST);
     TestUserSource source = new TestUserSource(result);
 
-    Iterator<ExportedUserRecord> iterator = new UserIterable(source).iterator();
+    ListUsersPage page = new ListUsersPage.PageFactory(source).create();
+    Iterable<ExportedUserRecord> users = page.iterateAll();
+    Iterator<ExportedUserRecord> iterator = users.iterator();
     int iterations = 0;
     while (iterator.hasNext()) {
       iterations++;
@@ -100,7 +104,8 @@ public class UserIterableTest {
         ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
         "token");
     TestUserSource source = new TestUserSource(result);
-    Iterable<ExportedUserRecord> users = new UserIterable(source);
+    ListUsersPage page = new ListUsersPage.PageFactory(source).create();
+    Iterable<ExportedUserRecord> users = page.iterateAll();
     int iterations = 0;
     for (ExportedUserRecord user : users) {
       iterations++;
@@ -110,14 +115,14 @@ public class UserIterableTest {
         assertNull(source.calls.get(0));
         result = new ListUsersResult(
             ImmutableList.of(newUser("user4"), newUser("user5"), newUser("user6")),
-            null);
+            ListUsersPage.END_OF_LIST);
         source.result = result;
       }
     }
 
     assertEquals(6, iterations);
     assertEquals(2, source.calls.size());
-    assertEquals("token", source.calls.get(1).toString());
+    assertEquals("token", source.calls.get(1));
   }
 
   @Test
@@ -126,7 +131,8 @@ public class UserIterableTest {
         ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
         "token");
     TestUserSource source = new TestUserSource(result);
-    Iterator<ExportedUserRecord> users = new UserIterable(source).iterator();
+    ListUsersPage page = new ListUsersPage.PageFactory(source).create();
+    Iterator<ExportedUserRecord> users = page.iterateAll().iterator();
     int iterations = 0;
     while (users.hasNext()) {
       iterations++;
@@ -136,14 +142,14 @@ public class UserIterableTest {
         assertNull(source.calls.get(0));
         result = new ListUsersResult(
             ImmutableList.of(newUser("user4"), newUser("user5"), newUser("user6")),
-            null);
+            ListUsersPage.END_OF_LIST);
         source.result = result;
       }
     }
 
     assertEquals(6, iterations);
     assertEquals(2, source.calls.size());
-    assertEquals("token", source.calls.get(1).toString());
+    assertEquals("token", source.calls.get(1));
     assertFalse(users.hasNext());
     try {
       users.next();
@@ -156,9 +162,10 @@ public class UserIterableTest {
   public void testIterableWithNoUsers() {
     ListUsersResult result = new ListUsersResult(
         ImmutableList.<ExportedUserRecord>of(),
-        null);
+        ListUsersPage.END_OF_LIST);
     TestUserSource source = new TestUserSource(result);
-    for (ExportedUserRecord user : new UserIterable(source)) {
+    ListUsersPage page = new ListUsersPage.PageFactory(source).create();
+    for (ExportedUserRecord user : page.iterateAll()) {
       fail("Should not be able to iterate, but got: " + user);
     }
     assertEquals(1, source.calls.size());
@@ -168,10 +175,11 @@ public class UserIterableTest {
   public void testIteratorWithNoUsers() {
     ListUsersResult result = new ListUsersResult(
         ImmutableList.<ExportedUserRecord>of(),
-        null);
+        ListUsersPage.END_OF_LIST);
     TestUserSource source = new TestUserSource(result);
 
-    Iterator<ExportedUserRecord> iterator = new UserIterable(source).iterator();
+    ListUsersPage page = new ListUsersPage.PageFactory(source).create();
+    Iterator<ExportedUserRecord> iterator = page.iterateAll().iterator();
     while (iterator.hasNext()) {
       fail("Should not be able to iterate");
     }
@@ -182,10 +190,11 @@ public class UserIterableTest {
   public void testRemove() throws IOException {
     ListUsersResult result = new ListUsersResult(
         ImmutableList.of(newUser("user1")),
-        null);
+        ListUsersPage.END_OF_LIST);
     TestUserSource source = new TestUserSource(result);
 
-    Iterator<ExportedUserRecord> iterator = new UserIterable(source).iterator();
+    ListUsersPage page = new ListUsersPage.PageFactory(source).create();
+    Iterator<ExportedUserRecord> iterator = page.iterateAll().iterator();
     while (iterator.hasNext()) {
       assertNotNull(iterator.next());
       try {
@@ -197,107 +206,8 @@ public class UserIterableTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void testNullAuth() {
-    new UserIterable((FirebaseAuth) null);
-  }
-
-  @Test
-  public void testIterateWithCallback() throws IOException {
-    ListUsersResult result = new ListUsersResult(
-        ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
-        null);
-    TestUserSource source = new TestUserSource(result);
-
-    UserIterable iterable = new UserIterable(source);
-    final AtomicInteger counter = new AtomicInteger(0);
-    iterable.iterateWithCallback(new ListUsersCallback() {
-      @Override
-      public boolean onResult(ExportedUserRecord userRecord) {
-        assertEquals("user" + counter.incrementAndGet(), userRecord.getUid());
-        return true;
-      }
-
-      @Override
-      public void onComplete() {
-        assertEquals(3, counter.get());
-      }
-
-      @Override
-      public void onError(Exception e) {
-        fail("Unexpected error: " + e.getMessage());
-      }
-    });
-  }
-
-  @Test
-  public void testIterateWithCallbackBreak() throws IOException {
-    ListUsersResult result = new ListUsersResult(
-        ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
-        null);
-    TestUserSource source = new TestUserSource(result);
-
-    UserIterable iterable = new UserIterable(source);
-    final AtomicInteger counter = new AtomicInteger(0);
-    iterable.iterateWithCallback(new ListUsersCallback() {
-      @Override
-      public boolean onResult(ExportedUserRecord userRecord) {
-        int index = counter.incrementAndGet();
-        assertEquals("user" + index, userRecord.getUid());
-        if (index == 1) {
-          return true;
-        } else if (index == 2) {
-          return false;
-        } else {
-          fail("Should not iterate up to the 3rd user");
-        }
-        return true;
-      }
-
-      @Override
-      public void onComplete() {
-        assertEquals(2, counter.get());
-      }
-
-      @Override
-      public void onError(Exception e) {
-        fail("Unexpected error: " + e.getMessage());
-      }
-    });
-    assertEquals(2, counter.get());
-  }
-
-  @Test
-  public void testIterateWithCallbackError() throws IOException {
-    ListUsersResult result = new ListUsersResult(
-        ImmutableList.of(newUser("user1"), newUser("user2"), newUser("user3")),
-        null);
-    TestUserSource source = new TestUserSource(result);
-
-    UserIterable iterable = new UserIterable(source);
-    final AtomicInteger counter = new AtomicInteger(0);
-    iterable.iterateWithCallback(new ListUsersCallback() {
-      @Override
-      public boolean onResult(ExportedUserRecord userRecord) {
-        int index = counter.incrementAndGet();
-        assertEquals("user" + index, userRecord.getUid());
-        if (index == 2) {
-          throw new RuntimeException("test error");
-        } else if (index > 2) {
-          fail("Should not iterate past the 2nd user");
-        }
-        return true;
-      }
-
-      @Override
-      public void onComplete() {
-        fail("Should not be called due to the exception");
-      }
-
-      @Override
-      public void onError(Exception e) {
-        assertEquals("test error", e.getMessage());
-      }
-    });
+  public void testNullSource() {
+    new ListUsersPage.PageFactory(null);
   }
 
   private static ExportedUserRecord newUser(String uid) throws IOException {
@@ -307,17 +217,17 @@ public class UserIterableTest {
     return new ExportedUserRecord(parsed);
   }
 
-  private static class TestUserSource implements UserIterable.UserSource {
+  private static class TestUserSource implements ListUsersPage.UserSource {
 
     private ListUsersResult result;
-    private List<PageToken> calls = new ArrayList<>();
+    private List<String> calls = new ArrayList<>();
 
     TestUserSource(ListUsersResult result) {
       this.result = result;
     }
 
     @Override
-    public ListUsersResult fetch(PageToken pageToken) {
+    public ListUsersResult fetch(int maxResults, String pageToken) {
       calls.add(pageToken);
       return result;
     }
