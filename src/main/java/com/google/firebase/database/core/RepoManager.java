@@ -55,7 +55,8 @@ public class RepoManager {
       instance.destroyInternal(ctx);
     } finally {
       ctx.stop();
-      // TODO(hkj): https://github.com/netty/netty/issues/7310
+      // Clean up Netty thread locals, which will also clean up any dangling threadDeathWatcher
+      // daemons. See https://github.com/netty/netty/issues/7310 for more context.
       FastThreadLocal.removeAll();
     }
   }

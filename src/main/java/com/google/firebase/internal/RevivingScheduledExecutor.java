@@ -90,7 +90,7 @@ public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
       final long initialDelayMs,
       final long timeoutMs) {
     super(0);
-    checkNotNull(threadFactory, "thread factory must not be null");
+    checkNotNull(threadFactory, "threadFactory must not be null");
     INSTANCE_COUNTER.incrementAndGet();
     this.initialDelayMs = initialDelayMs;
     this.timeoutMs = timeoutMs;

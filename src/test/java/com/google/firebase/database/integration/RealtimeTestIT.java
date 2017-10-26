@@ -833,6 +833,8 @@ public class RealtimeTestIT {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
     final DatabaseConfig ctx = TestHelpers.getDatabaseConfig(masterApp);
     RepoManager.resume(ctx);
+    // Wait for the initialization to complete
+    TestHelpers.waitForRoundtrip(ref);
 
     final Semaphore semaphore = new Semaphore(0);
 

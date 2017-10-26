@@ -16,6 +16,7 @@
 
 package com.google.firebase.database.connection;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.collect.ImmutableList;
@@ -53,8 +54,8 @@ class WebsocketConnection {
   private final LogWrapper logger;
   private final WSClient conn;
   private final Delegate delegate;
-  private final StringList buffer;
 
+  private StringList buffer;
   private boolean everConnected = false;
   private boolean isClosed = false;
   private ScheduledFuture<?> keepAlive;
@@ -72,7 +73,6 @@ class WebsocketConnection {
     this.logger = new LogWrapper(connectionContext.getLogger(), WebsocketConnection.class,
         "ws_" + CONN_ID.getAndIncrement());
     this.conn = createConnection(hostInfo, optCachedHost, optLastSessionId);
-    this.buffer = new StringList();
   }
 
   private WSClient createConnection(
@@ -158,11 +158,12 @@ class WebsocketConnection {
     if (logger.logsDebug()) {
       logger.debug("HandleNewFrameCount: " + numFrames);
     }
-    buffer.initialize(numFrames);
+    buffer = new StringList(numFrames);
   }
 
   private void appendFrame(String message) {
-    if (buffer.append(message) > 0) {
+    int framesRemaining = buffer.append(message);
+    if (framesRemaining > 0) {
       return;
     }
     // Decode JSON
@@ -206,7 +207,7 @@ class WebsocketConnection {
       return;
     }
     resetKeepAlive();
-    if (buffer.hasRemaining()) {
+    if (buffer != null && buffer.hasRemaining()) {
       appendFrame(message);
     } else {
       String remaining = extractFrameCount(message);
@@ -249,8 +250,10 @@ class WebsocketConnection {
    * Closes the low-level connection, and notifies the higher layer ({@link Connection}.
    */
   private void closeAndNotify() {
-    close();
-    delegate.onDisconnect(everConnected);
+    if (!isClosed) {
+      close();
+      delegate.onDisconnect(everConnected);
+    }
   }
 
   private void onClosed() {
@@ -341,26 +344,36 @@ class WebsocketConnection {
     }
   }
 
+  /**
+   * Handles buffering of WebSocket frames. The database server breaks large messages into smaller
+   * frames. This class accumulates them in memory, and reconstructs the original message
+   * before passing it to the higher layers of the client for processing.
+   */
   private static class StringList {
 
-    private final AtomicInteger remaining = new AtomicInteger(0);
-    private List<String> buffer;
+    private final List<String> buffer;
+    private int remaining;
 
-    void initialize(int capacity) {
-      remaining.set(capacity);
-      buffer = new ArrayList<>(capacity);
+    StringList(int capacity) {
+      checkArgument(capacity > 0);
+      this.buffer = new ArrayList<>(capacity);
+      this.remaining = capacity;
     }
 
     int append(String frame) {
       checkState(hasRemaining());
       buffer.add(frame);
-      return remaining.decrementAndGet();
+      return --remaining;
     }
 
     boolean hasRemaining() {
-      return remaining.get() > 0;
+      return remaining > 0;
     }
 
+    /**
+     * Combines frames (message fragments) received so far into a single text message. It is an
+     * error to call this before receiving all the frames needed to reconstruct the message.
+     */
     String combine() {
       checkState(!hasRemaining());
       try {

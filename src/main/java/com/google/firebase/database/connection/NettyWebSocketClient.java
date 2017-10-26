@@ -28,19 +28,17 @@ import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketClientCompressionHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
-import io.netty.util.CharsetUtil;
 
 import java.net.URI;
+import java.security.KeyStore;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
-import javax.net.ssl.SSLException;
+import javax.net.ssl.TrustManagerFactory;
 
 /**
  * A {@link WebsocketConnection.WSClient} implementation based on the Netty framework. Uses
@@ -78,8 +76,11 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
   public void connect() {
     checkState(channel == null, "channel already initialized");
     try {
+      TrustManagerFactory trustFactory = TrustManagerFactory.getInstance(
+          TrustManagerFactory.getDefaultAlgorithm());
+      trustFactory.init((KeyStore) null);
       final SslContext sslContext = SslContextBuilder.forClient()
-          .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
+          .trustManager(trustFactory).build();
       Bootstrap bootstrap = new Bootstrap();
       bootstrap.group(group)
           .channel(NioSocketChannel.class)
@@ -90,7 +91,9 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
               p.addLast(sslContext.newHandler(ch.alloc(), uri.getHost(), DEFAULT_WSS_PORT));
               p.addLast(
                   new HttpClientCodec(),
-                  new HttpObjectAggregator(8192),
+                  // Set the max size for the HTTP responses. This only applies to the WebSocket
+                  // handshake response from the server.
+                  new HttpObjectAggregator(32 * 1024),
                   WebSocketClientCompressionHandler.INSTANCE,
                   channelHandler);
             }
@@ -108,7 +111,7 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
             }
           }
       );
-    } catch (SSLException e) {
+    } catch (Exception e) {
       eventHandler.onError(e);
     }
   }
@@ -119,9 +122,10 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
     try {
       channel.close();
     } finally {
+      // The following may leave an active threadDeathWatcher daemon behind. That can be cleaned
+      // up at a higher level if necessary. See https://github.com/netty/netty/issues/7310.
       group.shutdownGracefully();
       executorService.shutdown();
-      // TODO(hkj): https://github.com/netty/netty/issues/7310
     }
   }
 
@@ -168,28 +172,18 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
     @Override
     public void channelRead0(ChannelHandlerContext context, Object message) throws Exception {
       Channel channel = context.channel();
-      if (!handshaker.isHandshakeComplete()) {
-        checkState(message instanceof FullHttpResponse);
+      if (message instanceof FullHttpResponse) {
+        checkState(!handshaker.isHandshakeComplete());
         try {
           handshaker.finishHandshake(channel, (FullHttpResponse) message);
           delegate.onOpen();
         } catch (WebSocketHandshakeException e) {
           delegate.onError(e);
         }
-        return;
-      }
-
-      if (message instanceof FullHttpResponse) {
-        FullHttpResponse response = (FullHttpResponse) message;
-        String error = String.format("Unexpected FullHttpResponse (status: %s; content: %s)",
-            response.status().toString(), response.content().toString(CharsetUtil.UTF_8));
-        throw new IllegalStateException(error);
-      }
-
-      WebSocketFrame frame = (WebSocketFrame) message;
-      if (frame instanceof TextWebSocketFrame) {
-        delegate.onMessage(((TextWebSocketFrame) frame).text());
-      } else if (frame instanceof CloseWebSocketFrame) {
+      } else if (message instanceof TextWebSocketFrame) {
+        delegate.onMessage(((TextWebSocketFrame) message).text());
+      } else {
+        checkState(message instanceof CloseWebSocketFrame);
         delegate.onClose();
       }
     }
