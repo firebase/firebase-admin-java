@@ -91,6 +91,7 @@ public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
     INSTANCE_COUNTER.incrementAndGet();
     this.initialDelayMs = initialDelayMs;
     this.timeoutMs = timeoutMs;
+    setRemoveOnCancelPolicy(true);
     setThreadFactory(
         new ThreadFactory() {
           @Override
