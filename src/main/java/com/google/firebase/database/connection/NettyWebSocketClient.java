@@ -82,13 +82,14 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
       final SslContext sslContext = SslContextBuilder.forClient()
           .trustManager(trustFactory).build();
       Bootstrap bootstrap = new Bootstrap();
+      final int port = uri.getPort() != -1 ? uri.getPort() : DEFAULT_WSS_PORT;
       bootstrap.group(group)
           .channel(NioSocketChannel.class)
           .handler(new ChannelInitializer<SocketChannel>() {
             @Override
             protected void initChannel(SocketChannel ch) {
               ChannelPipeline p = ch.pipeline();
-              p.addLast(sslContext.newHandler(ch.alloc(), uri.getHost(), DEFAULT_WSS_PORT));
+              p.addLast(sslContext.newHandler(ch.alloc(), uri.getHost(), port));
               p.addLast(
                   new HttpClientCodec(),
                   // Set the max size for the HTTP responses. This only applies to the WebSocket
@@ -99,7 +100,7 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
             }
           });
 
-      ChannelFuture channelFuture = bootstrap.connect(uri.getHost(), DEFAULT_WSS_PORT);
+      ChannelFuture channelFuture = bootstrap.connect(uri.getHost(), port);
       this.channel = channelFuture.channel();
       channelFuture.addListener(
           new ChannelFutureListener() {
