@@ -37,6 +37,7 @@ import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.internal.FirebaseService;
+import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.TaskToApiFuture;
 import com.google.firebase.tasks.Task;
 
@@ -348,7 +349,7 @@ public class FirebaseAuth {
     return new TaskToApiFuture<>(getUserByPhoneNumber(phoneNumber));
   }
 
-  private Task<ListUsersPage> listUsers(int maxResults, String pageToken) {
+  private Task<ListUsersPage> listUsers(@Nullable String pageToken, int maxResults) {
     checkNotDestroyed();
     final PageFactory factory = new PageFactory(
         new DefaultUserSource(userManager), maxResults, pageToken);
@@ -369,7 +370,7 @@ public class FirebaseAuth {
    *     instance. If an error occurs while retrieving user data, the future throws an exception.
    * @throws IllegalArgumentException If the specified page token is empty.
    */
-  public ApiFuture<ListUsersPage> listUsersAsync(String pageToken) {
+  public ApiFuture<ListUsersPage> listUsersAsync(@Nullable String pageToken) {
     return listUsersAsync(pageToken, FirebaseUserManager.MAX_LIST_USERS_RESULTS);
   }
 
@@ -384,8 +385,8 @@ public class FirebaseAuth {
    * @throws IllegalArgumentException If the specified page token is empty, or max results value
    *     is invalid.
    */
-  public ApiFuture<ListUsersPage> listUsersAsync(String pageToken, int maxResults) {
-    return new TaskToApiFuture<>(listUsers(maxResults, pageToken));
+  public ApiFuture<ListUsersPage> listUsersAsync(@Nullable String pageToken, int maxResults) {
+    return new TaskToApiFuture<>(listUsers(pageToken, maxResults));
   }
 
   /**
