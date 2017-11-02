@@ -97,6 +97,11 @@ public final class FirebaseOptions {
     return databaseAuthVariableOverride;
   }
 
+  /**
+   * Returns the Google Cloud project ID.
+   *
+   * @return The project ID set via {@link Builder#setProjectId(String)}
+   */
   public String getProjectId() {
     return projectId;
   }
@@ -251,7 +256,13 @@ public final class FirebaseOptions {
       return this;
     }
 
-    public Builder setProjectId(String projectId) {
+    /**
+     * Sets the Google Cloud project ID that should be associated with an app.
+     *
+     * @param projectId A non-null, non-empty project ID string.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setProjectId(@NonNull String projectId) {
       checkArgument(!Strings.isNullOrEmpty(projectId), "Project ID must not be null or empty");
       this.projectId = projectId;
       return this;
