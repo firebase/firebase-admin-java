@@ -67,7 +67,8 @@ public class StorageClient {
    * configured via {@link com.google.firebase.FirebaseOptions} when initializing the app. If
    * no bucket was configured via options, this method throws an exception.
    *
-   * @return a cloud storage Bucket instance, or null if the configured bucket does not exist.
+   * @return a cloud storage <a href="https://googlecloudplatform.github.io/google-cloud-java/latest/apidocs/com/google/cloud/storage/Bucket.html">{@code Bucket}</a>
+   *     instance.
    * @throws IllegalArgumentException If no bucket is configured via <code>FirebaseOptions</code>,
    *     or if the bucket does not exist.
    */
@@ -79,7 +80,8 @@ public class StorageClient {
    * Returns a cloud storage Bucket instance for the specified bucket name.
    *
    * @param name a non-null, non-empty bucket name.
-   * @return a cloud storage Bucket instance, or null if the specified bucket does not exist.
+   * @return a cloud storage <a href="https://googlecloudplatform.github.io/google-cloud-java/latest/apidocs/com/google/cloud/storage/Bucket.html">{@code Bucket}</a>
+   *     instance.
    * @throws IllegalArgumentException If the bucket name is null, empty, or if the specified
    *     bucket does not exist.
    */
