@@ -140,5 +140,4 @@ public class CodeCoverageReporter {
           "%-" + titleLength + "s %12s %8.2f%%", this.pkg, ratio, this.getCoverage());
     }
   }
-
 }
