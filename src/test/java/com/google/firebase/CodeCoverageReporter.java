@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * A simple executable for parsing the code coverage reported produced by Jacoco.
+ * A simple executable for parsing the code coverage reports produced by Jacoco.
  */
 public class CodeCoverageReporter {
 
@@ -43,47 +43,47 @@ public class CodeCoverageReporter {
     System.out.println(" Jacoco Coverage Report");
     System.out.println("-------------------------------------------------------------------------");
 
-    boolean firstLine = true;
-    Map<String, CoverageInfo> coverageInfo = new TreeMap<>();
+    Map<String, CoverageInfo> coverageData = new TreeMap<>();
     try (BufferedReader reader = new BufferedReader(new FileReader(args[0]))) {
       String line;
       while ((line = reader.readLine()) != null) {
-        if (firstLine) {
-          firstLine = false;
+        if (line.startsWith("GROUP")) {
+          // Skip the header line
           continue;
         }
-
         CoverageInfo info = new CoverageInfo(line);
         String packageName = info.getPackage();
-        CoverageInfo existing = coverageInfo.get(packageName);
+        CoverageInfo existing = coverageData.get(packageName);
         if (existing != null) {
-          coverageInfo.put(packageName, existing.aggregate(info, packageName));
+          coverageData.put(packageName, existing.aggregate(info, packageName));
         } else {
-          coverageInfo.put(packageName, info);
+          coverageData.put(packageName, info);
         }
       }
-
-      int longestKey = findLongest(coverageInfo.keySet()) + 1;
-      CoverageInfo overall = null;
-      for (Map.Entry<String, CoverageInfo> entry : coverageInfo.entrySet()) {
-        CoverageInfo info = entry.getValue();
-        if (overall == null) {
-          overall = info;
-        } else {
-          overall = overall.aggregate(info, "Overall");
-        }
-        System.out.println(info.getFormattedString(longestKey));
-      }
-
-      if (overall != null) {
-        System.out.println();
-        System.out.println(overall.getFormattedString(longestKey));
-      }
-      System.out.println();
-
+      printStats(coverageData);
     } catch (IOException e) {
       e.printStackTrace();
     }
+  }
+
+  private static void printStats(Map<String, CoverageInfo> coverageData) {
+    int titleLength = findLongest(coverageData.keySet()) + 1;
+    CoverageInfo overall = null;
+    for (Map.Entry<String, CoverageInfo> entry : coverageData.entrySet()) {
+      CoverageInfo info = entry.getValue();
+      if (overall == null) {
+        overall = info;
+      } else {
+        overall = overall.aggregate(info, "Overall");
+      }
+      System.out.println(info.getFormattedString(titleLength));
+    }
+
+    if (overall != null) {
+      System.out.println();
+      System.out.println(overall.getFormattedString(titleLength));
+    }
+    System.out.println();
   }
 
   private static int findLongest(Collection<String> keys) {
@@ -136,8 +136,8 @@ public class CodeCoverageReporter {
 
     String getFormattedString(int titleLength) {
       String ratio = this.instructionsCovered + "/" + this.totalInstructions;
-      return String.format("%1$-" + titleLength + "s %2$12s %3$8.2f%%", this.pkg,
-          ratio, this.getCoverage());
+      return String.format(
+          "%-" + titleLength + "s %12s %8.2f%%", this.pkg, ratio, this.getCoverage());
     }
   }
 
