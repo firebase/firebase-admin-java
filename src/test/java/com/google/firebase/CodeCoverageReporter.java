@@ -51,7 +51,7 @@ public class CodeCoverageReporter {
           // Skip the header line
           continue;
         }
-        CoverageInfo info = new CoverageInfo(line);
+        CoverageInfo info = CoverageInfo.parse(line);
         String packageName = info.getPackage();
         CoverageInfo existing = coverageData.get(packageName);
         if (existing != null) {
@@ -108,12 +108,13 @@ public class CodeCoverageReporter {
       this.totalInstructions = totalInstructions;
     }
 
-    CoverageInfo(String line) {
+    static CoverageInfo parse(String line) {
       checkArgument(!Strings.isNullOrEmpty(line));
       String[] segments = line.split(",");
-      this.pkg = segments[1];
-      this.instructionsCovered = Long.parseLong(segments[4]);
-      this.totalInstructions = Long.parseLong(segments[3]) + this.instructionsCovered;
+      return new CoverageInfo(
+          segments[1],
+          Long.parseLong(segments[4]),
+          Long.parseLong(segments[3]) + Long.parseLong(segments[4]));
     }
 
     String getPackage() {
