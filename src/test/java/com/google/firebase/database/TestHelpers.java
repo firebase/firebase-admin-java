@@ -24,6 +24,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.core.CoreTestHelpers;
 import com.google.firebase.database.core.DatabaseConfig;
 import com.google.firebase.database.core.Path;
+import com.google.firebase.database.core.Repo;
 import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.core.view.QuerySpec;
 import com.google.firebase.database.future.WriteFuture;
@@ -46,6 +47,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class TestHelpers {
 
@@ -297,6 +301,19 @@ public class TestHelpers {
 
   public static void assertTimeDelta(long timestamp) {
     assertTrue(Math.abs(System.currentTimeMillis() - timestamp) < TestUtils.TEST_TIMEOUT_MILLIS);
+  }
+
+  public static Repo mockRepo() {
+    Repo repo = Mockito.mock(Repo.class);
+    Mockito.doAnswer(new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        Runnable runnable = invocation.getArgument(0);
+        runnable.run();
+        return null;
+      }
+    }).when(repo).scheduleNow(Mockito.any(Runnable.class));
+    return repo;
   }
 
   private static class TestExceptionHandler implements UncaughtExceptionHandler {
