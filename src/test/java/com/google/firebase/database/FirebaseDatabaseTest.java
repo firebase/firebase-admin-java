@@ -16,8 +16,10 @@
 
 package com.google.firebase.database;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
@@ -31,6 +33,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class FirebaseDatabaseTest {
@@ -41,6 +44,11 @@ public class FirebaseDatabaseTest {
           .setDatabaseUrl("https://firebase-db-test.firebaseio.com")
           .build();
 
+  @BeforeClass
+  public static void setupClass() {
+    FirebaseApp.initializeApp(firebaseOptions);
+  }
+
   @AfterClass
   public static void tearDownClass() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
@@ -48,10 +56,33 @@ public class FirebaseDatabaseTest {
 
   @Test
   public void testGetInstance() throws ExecutionException, InterruptedException {
-    FirebaseApp.initializeApp(firebaseOptions);
     FirebaseDatabase defaultDatabase = FirebaseDatabase.getInstance();
     assertNotNull(defaultDatabase);
     assertSame(defaultDatabase, FirebaseDatabase.getInstance());
+    assertSame(FirebaseApp.getInstance(), defaultDatabase.getApp());
+  }
+
+  @Test
+  public void testGetInstanceForUrl() throws ExecutionException, InterruptedException {
+    String url = "https://firebase-db-test2.firebaseio.com";
+    FirebaseDatabase otherDatabase = FirebaseDatabase.getInstance(url);
+    assertNotNull(otherDatabase);
+    assertNotSame(otherDatabase, FirebaseDatabase.getInstance());
+  }
+
+  @Test
+  public void testInvalidUrl() throws ExecutionException, InterruptedException {
+    String[] urls = new String[]{
+        null, "", "https://firebase-db-test.firebaseio.com/foo"
+    };
+    for (String url : urls) {
+      try {
+        FirebaseDatabase.getInstance(url);
+        fail("No error thrown for URL: " + url);
+      } catch (DatabaseException expected) {
+        // expected
+      }
+    }
   }
 
   @Test
@@ -60,6 +91,49 @@ public class FirebaseDatabaseTest {
     FirebaseDatabase db = FirebaseDatabase.getInstance(app);
     assertNotNull(db);
     assertSame(db, FirebaseDatabase.getInstance(app));
+  }
+
+  @Test
+  public void testReference() {
+    FirebaseDatabase defaultDatabase = FirebaseDatabase.getInstance();
+    DatabaseReference reference = defaultDatabase.getReference();
+    assertNotNull(reference);
+    assertNull(reference.getKey());
+    assertNull(reference.getParent());
+
+    reference = defaultDatabase.getReference("foo");
+    assertNotNull(reference);
+    assertEquals("foo", reference.getKey());
+    assertNull(reference.getParent().getKey());
+
+    reference = defaultDatabase.getReference("foo/bar");
+    assertNotNull(reference);
+    assertEquals("bar", reference.getKey());
+    assertEquals("foo", reference.getParent().getKey());
+  }
+
+  @Test
+  public void testReferenceFromUrl() {
+    FirebaseDatabase defaultDatabase = FirebaseDatabase.getInstance();
+    DatabaseReference reference = defaultDatabase.getReferenceFromUrl(
+        "https://firebase-db-test.firebaseio.com/foo/bar");
+    assertNotNull(reference);
+    assertEquals("bar", reference.getKey());
+    assertEquals("foo", reference.getParent().getKey());
+
+    try {
+      defaultDatabase.getReferenceFromUrl(null);
+      fail("No error thrown for null URL");
+    } catch (NullPointerException expected) {
+      // expected
+    }
+
+    try {
+      defaultDatabase.getReferenceFromUrl("https://other-db-test.firebaseio.com/foo/bar");
+      fail("No error thrown for invalid URL");
+    } catch (DatabaseException expected) {
+      // expected
+    }
   }
 
   @Test

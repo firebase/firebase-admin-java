@@ -18,6 +18,7 @@ package com.google.firebase.database;
 
 import static com.google.firebase.database.TestHelpers.mockRepo;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -40,7 +41,9 @@ import com.google.firebase.database.core.CompoundWrite;
 import com.google.firebase.database.core.DatabaseConfig;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.Repo;
+import com.google.firebase.database.core.ServerValues;
 import com.google.firebase.database.snapshot.ChildKey;
+import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
 import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
@@ -263,5 +266,23 @@ public class DatabaseReferenceTest {
         .scheduleNow(Mockito.any(Runnable.class));
     Mockito.verify(repo, times(1))
         .setHijackHash(true);
+  }
+
+  @Test
+  public void testServerValue() {
+    assertNotNull(ServerValue.TIMESTAMP);
+    assertTrue(ServerValue.TIMESTAMP.containsKey(ServerValues.NAME_SUBKEY_SERVERVALUE));
+  }
+
+  @Test
+  public void  testTransactionResult() {
+    Result result = Transaction.abort();
+    assertFalse(result.isSuccess());
+    assertNull(result.getNode());
+
+    Node node = NodeUtilities.NodeFromJSON("node");
+    result = Transaction.success(new MutableData(node));
+    assertTrue(result.isSuccess());
+    assertSame(node, result.getNode());
   }
 }

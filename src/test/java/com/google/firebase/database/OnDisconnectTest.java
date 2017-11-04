@@ -28,8 +28,6 @@ import com.google.firebase.database.snapshot.NodeUtilities;
 import java.util.Map;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 public class OnDisconnectTest {
 
