@@ -16,7 +16,6 @@ import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.MutableData;
@@ -437,31 +436,57 @@ public class RepoTest {
   }
 
   @Test
-  public void testOnDisconnectSetValue() {
-    Repo repo = newRepo();
+  public void testOnDisconnectSetValue() throws InterruptedException {
+    final Repo repo = newRepo();
     final AtomicReference<DatabaseError> errorResult = new AtomicReference<>();
     final AtomicReference<DatabaseReference> refResult = new AtomicReference<>();
-    DatabaseReference.CompletionListener listener = new DatabaseReference.CompletionListener() {
+    final Semaphore semaphore = new Semaphore(0);
+    final DatabaseReference.CompletionListener listener = newCompletionListener(
+        errorResult, refResult);
+
+    Answer answer = new Answer() {
       @Override
-      public void onComplete(DatabaseError error, DatabaseReference ref) {
-        errorResult.set(error);
-        refResult.set(ref);
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(2);
+        callback.onRequestResult(null, null);
+        return null;
       }
     };
-
-    Mockito.doAnswer(newSuccessAnswer(2)).when(connection).onDisconnectPut(
-        Mockito.<String>anyList(), Mockito.any(), Mockito.any(RequestResultCallback.class));
-    try {
-      repo.onDisconnectSetValue(new Path("/foo"), NodeUtilities.NodeFromJSON("testData"), listener);
-    } catch (DatabaseException e) {
-      e.printStackTrace();
-    }
+    Mockito.doAnswer(answer).when(connection).onDisconnectPut(
+        Mockito.<String>anyList(),
+        Mockito.any(),
+        Mockito.any(RequestResultCallback.class));
+    repo.scheduleNow(new Runnable() {
+      @Override
+      public void run() {
+        repo.onDisconnectSetValue(new Path("/foo"), NodeUtilities.NodeFromJSON("test"), listener);
+        semaphore.release();
+      }
+    });
+    semaphore.acquire();
     assertNull(errorResult.get());
     assertEquals("foo", refResult.get().getKey());
 
-    Mockito.doAnswer(newFailureAnswer(2)).when(connection).onDisconnectPut(
-        Mockito.<String>anyList(), Mockito.any(), Mockito.any(RequestResultCallback.class));
-    repo.onDisconnectSetValue(new Path("/bar"), NodeUtilities.NodeFromJSON("testData"), listener);
+    answer = new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(2);
+        callback.onRequestResult("datastale", null);
+        return null;
+      }
+    };
+    Mockito.doAnswer(answer).when(connection).onDisconnectPut(
+        Mockito.<String>anyList(),
+        Mockito.any(),
+        Mockito.any(RequestResultCallback.class));
+    repo.scheduleNow(new Runnable() {
+      @Override
+      public void run() {
+        repo.onDisconnectSetValue(new Path("/bar"), NodeUtilities.NodeFromJSON("test"), listener);
+        semaphore.release();
+      }
+    });
+    semaphore.acquire();
     assertNotNull(errorResult.get());
     assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
     assertEquals("bar", refResult.get().getKey());
@@ -471,34 +496,61 @@ public class RepoTest {
   }
 
   @Test
-  public void testOnDisconnectUpdate() {
-    Repo repo = newRepo();
+  public void testOnDisconnectUpdate() throws InterruptedException {
+    final Repo repo = newRepo();
     final AtomicReference<DatabaseError> errorResult = new AtomicReference<>();
     final AtomicReference<DatabaseReference> refResult = new AtomicReference<>();
-    DatabaseReference.CompletionListener listener = new DatabaseReference.CompletionListener() {
+    final Semaphore semaphore = new Semaphore(0);
+    final DatabaseReference.CompletionListener listener = newCompletionListener(
+        errorResult, refResult);
+
+    final Map<Path, Node> update = ImmutableMap.of(
+        new Path("/child"), NodeUtilities.NodeFromJSON("foo"));
+    Answer answer = new Answer() {
       @Override
-      public void onComplete(DatabaseError error, DatabaseReference ref) {
-        errorResult.set(error);
-        refResult.set(ref);
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(2);
+        callback.onRequestResult(null, null);
+        return null;
       }
     };
-
-    Map<Path, Node> update = ImmutableMap.of(new Path("/child"), NodeUtilities.NodeFromJSON("foo"));
-    Mockito.doAnswer(newSuccessAnswer(2)).when(connection).onDisconnectMerge(
+    Mockito.doAnswer(answer).when(connection).onDisconnectMerge(
         Mockito.<String>anyList(),
         Mockito.<String, Object>anyMap(),
         Mockito.any(RequestResultCallback.class));
-    repo.onDisconnectUpdate(new Path("/foo"), update, listener,
-        ImmutableMap.<String, Object>of("child", "foo"));
+    repo.scheduleNow(new Runnable() {
+      @Override
+      public void run() {
+        repo.onDisconnectUpdate(new Path("/foo"), update, listener,
+            ImmutableMap.<String, Object>of("child", "foo"));
+        semaphore.release();
+      }
+    });
+    semaphore.acquire();
     assertNull(errorResult.get());
     assertEquals("foo", refResult.get().getKey());
 
-    Mockito.doAnswer(newFailureAnswer(2)).when(connection).onDisconnectMerge(
+    answer = new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(2);
+        callback.onRequestResult("datastale", null);
+        return null;
+      }
+    };
+    Mockito.doAnswer(answer).when(connection).onDisconnectMerge(
         Mockito.<String>anyList(),
         Mockito.<String, Object>anyMap(),
         Mockito.any(RequestResultCallback.class));
-    repo.onDisconnectUpdate(new Path("/bar"), update, listener,
-        ImmutableMap.<String, Object>of("child", "foo"));
+    repo.scheduleNow(new Runnable() {
+      @Override
+      public void run() {
+        repo.onDisconnectUpdate(new Path("/bar"), update, listener,
+            ImmutableMap.<String, Object>of("child", "foo"));
+        semaphore.release();
+      }
+    });
+    semaphore.acquire();
     assertNotNull(errorResult.get());
     assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
     assertEquals("bar", refResult.get().getKey());
@@ -510,29 +562,55 @@ public class RepoTest {
   }
 
   @Test
-  public void testOnDisconnectCancel() {
-    Repo repo = newRepo();
+  public void testOnDisconnectCancel() throws InterruptedException {
+    final Repo repo = newRepo();
     final AtomicReference<DatabaseError> errorResult = new AtomicReference<>();
     final AtomicReference<DatabaseReference> refResult = new AtomicReference<>();
-    DatabaseReference.CompletionListener listener = new DatabaseReference.CompletionListener() {
+    final Semaphore semaphore = new Semaphore(0);
+    final DatabaseReference.CompletionListener listener = newCompletionListener(
+        errorResult, refResult);
+
+    Answer answer = new Answer() {
       @Override
-      public void onComplete(DatabaseError error, DatabaseReference ref) {
-        errorResult.set(error);
-        refResult.set(ref);
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(1);
+        callback.onRequestResult(null, null);
+        return null;
       }
     };
-
-    Mockito.doAnswer(newSuccessAnswer(1)).when(connection).onDisconnectCancel(
+    Mockito.doAnswer(answer).when(connection).onDisconnectCancel(
         Mockito.<String>anyList(),
         Mockito.any(RequestResultCallback.class));
-    repo.onDisconnectCancel(new Path("/foo"), listener);
+    repo.scheduleNow(new Runnable() {
+      @Override
+      public void run() {
+        repo.onDisconnectCancel(new Path("/foo"), listener);
+        semaphore.release();
+      }
+    });
+    semaphore.acquire();
     assertNull(errorResult.get());
     assertEquals("foo", refResult.get().getKey());
 
-    Mockito.doAnswer(newFailureAnswer(1)).when(connection).onDisconnectCancel(
+    answer = new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(1);
+        callback.onRequestResult("datastale", null);
+        return null;
+      }
+    };
+    Mockito.doAnswer(answer).when(connection).onDisconnectCancel(
         Mockito.<String>anyList(),
         Mockito.any(RequestResultCallback.class));
-    repo.onDisconnectCancel(new Path("/bar"), listener);
+    repo.scheduleNow(new Runnable() {
+      @Override
+      public void run() {
+        repo.onDisconnectCancel(new Path("/bar"), listener);
+        semaphore.release();
+      }
+    });
+    semaphore.acquire();
     assertNotNull(errorResult.get());
     assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
     assertEquals("bar", refResult.get().getKey());
@@ -542,24 +620,14 @@ public class RepoTest {
         Mockito.any(RequestResultCallback.class));
   }
 
-  private Answer newSuccessAnswer(final int arg) {
-    return new Answer() {
+  private DatabaseReference.CompletionListener newCompletionListener(
+      final AtomicReference<DatabaseError> errorResult,
+      final AtomicReference<DatabaseReference> refResult) {
+    return new DatabaseReference.CompletionListener() {
       @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        RequestResultCallback callback = invocation.getArgument(arg);
-        callback.onRequestResult(null, null);
-        return null;
-      }
-    };
-  }
-
-  private Answer newFailureAnswer(final int arg) {
-    return new Answer() {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        RequestResultCallback callback = invocation.getArgument(arg);
-        callback.onRequestResult("datastale", null);
-        return null;
+      public void onComplete(DatabaseError error, DatabaseReference ref) {
+        errorResult.set(error);
+        refResult.set(ref);
       }
     };
   }
