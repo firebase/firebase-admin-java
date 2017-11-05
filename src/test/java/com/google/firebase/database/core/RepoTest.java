@@ -460,6 +460,9 @@ public class RepoTest {
     assertNotNull(errorResult.get());
     assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
     assertEquals("bar", refResult.get().getKey());
+
+    Mockito.doNothing().when(connection).onDisconnectPut(
+        Mockito.<String>anyList(), Mockito.any(), Mockito.any(RequestResultCallback.class));
   }
 
   @Test
@@ -494,6 +497,11 @@ public class RepoTest {
     assertNotNull(errorResult.get());
     assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
     assertEquals("bar", refResult.get().getKey());
+
+    Mockito.doNothing().when(connection).onDisconnectMerge(
+        Mockito.<String>anyList(),
+        Mockito.<String, Object>anyMap(),
+        Mockito.any(RequestResultCallback.class));
   }
 
   @Test
@@ -523,6 +531,10 @@ public class RepoTest {
     assertNotNull(errorResult.get());
     assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
     assertEquals("bar", refResult.get().getKey());
+
+    Mockito.doNothing().when(connection).onDisconnectCancel(
+        Mockito.<String>anyList(),
+        Mockito.any(RequestResultCallback.class));
   }
 
   private Answer newSuccessAnswer(final int arg) {
