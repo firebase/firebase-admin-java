@@ -49,8 +49,10 @@ import org.mockito.stubbing.Answer;
 
 public class RepoTest {
 
+  private static final List<String> SUCCESS = ImmutableList.of("success");
+  private static final List<String> FAILURE = ImmutableList.of("failure");
+
   private static DatabaseConfig config;
-  private static PersistentConnection connection;
 
   @BeforeClass
   public static void setUpClass() throws IOException {
@@ -76,7 +78,7 @@ public class RepoTest {
       }
     });
 
-    connection = Mockito.mock(PersistentConnection.class);
+    PersistentConnection connection = mockConnection();
     Mockito.when(config.newPersistentConnection(
         Mockito.any(HostInfo.class), Mockito.any(PersistentConnection.Delegate.class)))
         .thenReturn(connection);
@@ -444,55 +446,28 @@ public class RepoTest {
     final DatabaseReference.CompletionListener listener = newCompletionListener(
         errorResult, refResult);
 
-    Answer answer = new Answer() {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        RequestResultCallback callback = invocation.getArgument(2);
-        callback.onRequestResult(null, null);
-        return null;
-      }
-    };
-    Mockito.doAnswer(answer).when(connection).onDisconnectPut(
-        Mockito.<String>anyList(),
-        Mockito.any(),
-        Mockito.any(RequestResultCallback.class));
     repo.scheduleNow(new Runnable() {
       @Override
       public void run() {
-        repo.onDisconnectSetValue(new Path("/foo"), NodeUtilities.NodeFromJSON("test"), listener);
+        repo.onDisconnectSetValue(new Path(SUCCESS), NodeUtilities.NodeFromJSON("test"), listener);
         semaphore.release();
       }
     });
     semaphore.acquire();
     assertNull(errorResult.get());
-    assertEquals("foo", refResult.get().getKey());
+    assertEquals("success", refResult.get().getKey());
 
-    answer = new Answer() {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        RequestResultCallback callback = invocation.getArgument(2);
-        callback.onRequestResult("datastale", null);
-        return null;
-      }
-    };
-    Mockito.doAnswer(answer).when(connection).onDisconnectPut(
-        Mockito.<String>anyList(),
-        Mockito.any(),
-        Mockito.any(RequestResultCallback.class));
     repo.scheduleNow(new Runnable() {
       @Override
       public void run() {
-        repo.onDisconnectSetValue(new Path("/bar"), NodeUtilities.NodeFromJSON("test"), listener);
+        repo.onDisconnectSetValue(new Path(FAILURE), NodeUtilities.NodeFromJSON("test"), listener);
         semaphore.release();
       }
     });
     semaphore.acquire();
     assertNotNull(errorResult.get());
     assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
-    assertEquals("bar", refResult.get().getKey());
-
-    Mockito.doNothing().when(connection).onDisconnectPut(
-        Mockito.<String>anyList(), Mockito.any(), Mockito.any(RequestResultCallback.class));
+    assertEquals("failure", refResult.get().getKey());
   }
 
   @Test
@@ -506,46 +481,22 @@ public class RepoTest {
 
     final Map<Path, Node> update = ImmutableMap.of(
         new Path("/child"), NodeUtilities.NodeFromJSON("foo"));
-    Answer answer = new Answer() {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        RequestResultCallback callback = invocation.getArgument(2);
-        callback.onRequestResult(null, null);
-        return null;
-      }
-    };
-    Mockito.doAnswer(answer).when(connection).onDisconnectMerge(
-        Mockito.<String>anyList(),
-        Mockito.<String, Object>anyMap(),
-        Mockito.any(RequestResultCallback.class));
     repo.scheduleNow(new Runnable() {
       @Override
       public void run() {
-        repo.onDisconnectUpdate(new Path("/foo"), update, listener,
+        repo.onDisconnectUpdate(new Path(SUCCESS), update, listener,
             ImmutableMap.<String, Object>of("child", "foo"));
         semaphore.release();
       }
     });
     semaphore.acquire();
     assertNull(errorResult.get());
-    assertEquals("foo", refResult.get().getKey());
+    assertEquals("success", refResult.get().getKey());
 
-    answer = new Answer() {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        RequestResultCallback callback = invocation.getArgument(2);
-        callback.onRequestResult("datastale", null);
-        return null;
-      }
-    };
-    Mockito.doAnswer(answer).when(connection).onDisconnectMerge(
-        Mockito.<String>anyList(),
-        Mockito.<String, Object>anyMap(),
-        Mockito.any(RequestResultCallback.class));
     repo.scheduleNow(new Runnable() {
       @Override
       public void run() {
-        repo.onDisconnectUpdate(new Path("/bar"), update, listener,
+        repo.onDisconnectUpdate(new Path(FAILURE), update, listener,
             ImmutableMap.<String, Object>of("child", "foo"));
         semaphore.release();
       }
@@ -553,12 +504,7 @@ public class RepoTest {
     semaphore.acquire();
     assertNotNull(errorResult.get());
     assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
-    assertEquals("bar", refResult.get().getKey());
-
-    Mockito.doNothing().when(connection).onDisconnectMerge(
-        Mockito.<String>anyList(),
-        Mockito.<String, Object>anyMap(),
-        Mockito.any(RequestResultCallback.class));
+    assertEquals("failure", refResult.get().getKey());
   }
 
   @Test
@@ -570,54 +516,28 @@ public class RepoTest {
     final DatabaseReference.CompletionListener listener = newCompletionListener(
         errorResult, refResult);
 
-    Answer answer = new Answer() {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        RequestResultCallback callback = invocation.getArgument(1);
-        callback.onRequestResult(null, null);
-        return null;
-      }
-    };
-    Mockito.doAnswer(answer).when(connection).onDisconnectCancel(
-        Mockito.<String>anyList(),
-        Mockito.any(RequestResultCallback.class));
     repo.scheduleNow(new Runnable() {
       @Override
       public void run() {
-        repo.onDisconnectCancel(new Path("/foo"), listener);
+        repo.onDisconnectCancel(new Path(SUCCESS), listener);
         semaphore.release();
       }
     });
     semaphore.acquire();
     assertNull(errorResult.get());
-    assertEquals("foo", refResult.get().getKey());
+    assertEquals("success", refResult.get().getKey());
 
-    answer = new Answer() {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        RequestResultCallback callback = invocation.getArgument(1);
-        callback.onRequestResult("datastale", null);
-        return null;
-      }
-    };
-    Mockito.doAnswer(answer).when(connection).onDisconnectCancel(
-        Mockito.<String>anyList(),
-        Mockito.any(RequestResultCallback.class));
     repo.scheduleNow(new Runnable() {
       @Override
       public void run() {
-        repo.onDisconnectCancel(new Path("/bar"), listener);
+        repo.onDisconnectCancel(new Path(FAILURE), listener);
         semaphore.release();
       }
     });
     semaphore.acquire();
     assertNotNull(errorResult.get());
     assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
-    assertEquals("bar", refResult.get().getKey());
-
-    Mockito.doNothing().when(connection).onDisconnectCancel(
-        Mockito.<String>anyList(),
-        Mockito.any(RequestResultCallback.class));
+    assertEquals("failure", refResult.get().getKey());
   }
 
   private DatabaseReference.CompletionListener newCompletionListener(
@@ -657,5 +577,67 @@ public class RepoTest {
         repo.addEventCallback(callback);
       }
     });
+  }
+
+  private static PersistentConnection mockConnection() {
+    PersistentConnection connection = Mockito.mock(PersistentConnection.class);
+    Answer success = new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(2);
+        callback.onRequestResult(null, null);
+        return null;
+      }
+    };
+    Mockito.doAnswer(success).when(connection).onDisconnectPut(
+        Mockito.eq(SUCCESS),
+        Mockito.any(),
+        Mockito.any(RequestResultCallback.class));
+    Mockito.doAnswer(success).when(connection).onDisconnectMerge(
+        Mockito.eq(SUCCESS),
+        Mockito.<String, Object>anyMap(),
+        Mockito.any(RequestResultCallback.class));
+
+    Answer failure = new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(2);
+        callback.onRequestResult("datastale", null);
+        return null;
+      }
+    };
+    Mockito.doAnswer(failure).when(connection).onDisconnectPut(
+        Mockito.eq(FAILURE),
+        Mockito.any(),
+        Mockito.any(RequestResultCallback.class));
+    Mockito.doAnswer(failure).when(connection).onDisconnectMerge(
+        Mockito.eq(FAILURE),
+        Mockito.<String, Object>anyMap(),
+        Mockito.any(RequestResultCallback.class));
+
+    success = new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(1);
+        callback.onRequestResult(null, null);
+        return null;
+      }
+    };
+    Mockito.doAnswer(success).when(connection).onDisconnectCancel(
+        Mockito.eq(SUCCESS),
+        Mockito.any(RequestResultCallback.class));
+
+    failure = new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(1);
+        callback.onRequestResult("datastale", null);
+        return null;
+      }
+    };
+    Mockito.doAnswer(failure).when(connection).onDisconnectCancel(
+        Mockito.eq(FAILURE),
+        Mockito.any(RequestResultCallback.class));
+    return connection;
   }
 }

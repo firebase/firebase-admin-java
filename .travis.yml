@@ -1,3 +1,1 @@
 language: java
-after_failure:
-  - cat target/surefire-reports/com.google.firebase.database.core.RepoTest.txt
