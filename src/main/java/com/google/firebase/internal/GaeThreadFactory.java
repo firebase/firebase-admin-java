@@ -95,15 +95,10 @@ public class GaeThreadFactory implements ThreadFactory {
 
     // Create a no-op thread to force initialize the ThreadFactory implementation.
     // Start the resulting thread, since GAE code seems to expect that.
-    Thread thread = initThreadFactory(new Runnable() {
+    initThreadFactory(new Runnable() {
       @Override
-      public void run() {
-      }
-    });
-
-    if (thread != null) {
-      thread.start();
-    }
+      public void run() {}
+    }).start();
     return threadFactory.get().isUsingBackgroundThreads();
   }
 
