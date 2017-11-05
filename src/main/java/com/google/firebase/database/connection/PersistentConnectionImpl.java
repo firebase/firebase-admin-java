@@ -93,13 +93,16 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   private static final String IDLE_INTERRUPT_REASON = "connection_idle";
   private static final String TOKEN_REFRESH_INTERRUPT_REASON = "token_refresh";
   private static long connectionIds = 0;
+
   private final Delegate delegate;
   private final HostInfo hostInfo;
   private final ConnectionContext context;
+  private final ConnectionFactory connFactory;
   private final ConnectionAuthTokenProvider authTokenProvider;
   private final ScheduledExecutorService executorService;
   private final LogWrapper logger;
   private final RetryHelper retryHelper;
+
   private String cachedHost;
   private HashSet<String> interruptReasons = new HashSet<>();
   private boolean firstConnection = true;
@@ -123,13 +126,19 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   private long lastWriteTimestamp;
   private boolean hasOnDisconnects;
 
-  public PersistentConnectionImpl(
-      ConnectionContext context, HostInfo info, final Delegate delegate) {
-    this.delegate = delegate;
+  public PersistentConnectionImpl(ConnectionContext context, HostInfo info, Delegate delegate) {
+    this(context, info, delegate, new DefaultConnectionFactory());
+  }
+
+  PersistentConnectionImpl(
+      ConnectionContext context, HostInfo info, Delegate delegate, ConnectionFactory connFactory) {
+
     this.context = context;
+    this.hostInfo = info;
+    this.delegate = delegate;
+    this.connFactory = connFactory;
     this.executorService = context.getExecutorService();
     this.authTokenProvider = context.getAuthTokenProvider();
-    this.hostInfo = info;
     this.listens = new HashMap<>();
     this.requestCBHash = new HashMap<>();
     this.outstandingPuts = new HashMap<>();
@@ -421,7 +430,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     return interruptReasons.contains(reason);
   }
 
-  boolean shouldReconnect() {
+  private boolean shouldReconnect() {
     return interruptReasons.size() == 0;
   }
 
@@ -523,7 +532,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     }
   }
 
-  public void openNetworkConnection(String token) {
+  private void openNetworkConnection(String token) {
     hardAssert(
         this.connectionState == ConnectionState.GettingToken,
         "Trying to open network connection while in the wrong state: %s",
@@ -535,9 +544,9 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     }
     this.authToken = token;
     this.connectionState = ConnectionState.Connecting;
-    realtime =
-        new Connection(this.context, this.hostInfo, this.cachedHost, this, this.lastSessionId);
-    realtime.open();
+    this.realtime = connFactory.newConnection(
+        this.context, this.hostInfo, this.cachedHost, this, this.lastSessionId);
+    this.realtime.open();
   }
 
   private void sendOnDisconnect(
@@ -1214,15 +1223,15 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
       this.tag = tag;
     }
 
-    public ListenQuerySpec getQuery() {
+    ListenQuerySpec getQuery() {
       return query;
     }
 
-    public Long getTag() {
+    Long getTag() {
       return this.tag;
     }
 
-    public ListenHashProvider getHashFunction() {
+    ListenHashProvider getHashFunction() {
       return this.hashFunction;
     }
 
@@ -1246,23 +1255,23 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
       this.onComplete = onComplete;
     }
 
-    public String getAction() {
+    String getAction() {
       return action;
     }
 
-    public Map<String, Object> getRequest() {
+    Map<String, Object> getRequest() {
       return request;
     }
 
-    public RequestResultCallback getOnComplete() {
+    RequestResultCallback getOnComplete() {
       return onComplete;
     }
 
-    public void markSent() {
+    void markSent() {
       this.sent = true;
     }
 
-    public boolean wasSent() {
+    boolean wasSent() {
       return this.sent;
     }
   }
@@ -1298,4 +1307,27 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
       return onComplete;
     }
   }
+
+  interface ConnectionFactory {
+    Connection newConnection(
+        ConnectionContext context,
+        HostInfo hostInfo,
+        String cachedHost,
+        Connection.Delegate delegate,
+        String lastSessionId);
+  }
+
+  private static class DefaultConnectionFactory implements ConnectionFactory {
+    @Override
+    public Connection newConnection(
+        ConnectionContext context,
+        HostInfo hostInfo,
+        String cachedHost,
+        Connection.Delegate delegate,
+        String lastSessionId) {
+      return new Connection(context, hostInfo, cachedHost, delegate, lastSessionId);
+    }
+  }
+
+
 }
