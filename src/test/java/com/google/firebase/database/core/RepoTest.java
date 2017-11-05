@@ -25,8 +25,10 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.connection.HostInfo;
 import com.google.firebase.database.connection.PersistentConnection;
 import com.google.firebase.database.connection.RangeMerge;
+import com.google.firebase.database.connection.RequestResultCallback;
 import com.google.firebase.database.core.view.QueryParams;
 import com.google.firebase.database.core.view.QuerySpec;
+import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
 import com.google.firebase.database.snapshot.ValueIndex;
 import com.google.firebase.testing.ServiceAccount;
@@ -42,10 +44,13 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class RepoTest {
 
   private static DatabaseConfig config;
+  private static PersistentConnection connection;
 
   @BeforeClass
   public static void setUpClass() throws IOException {
@@ -71,9 +76,10 @@ public class RepoTest {
       }
     });
 
+    connection = Mockito.mock(PersistentConnection.class);
     Mockito.when(config.newPersistentConnection(
         Mockito.any(HostInfo.class), Mockito.any(PersistentConnection.Delegate.class)))
-        .thenReturn(Mockito.mock(PersistentConnection.class));
+        .thenReturn(connection);
   }
 
   @AfterClass
@@ -427,6 +433,118 @@ public class RepoTest {
     repo.callOnComplete(listener, ex, new Path("/bar"));
     assertEquals(ex, errorResult.get());
     assertEquals("bar", refResult.get().getKey());
+  }
+
+  @Test
+  public void testOnDisconnectSetValue() {
+    Repo repo = newRepo();
+    final AtomicReference<DatabaseError> errorResult = new AtomicReference<>();
+    final AtomicReference<DatabaseReference> refResult = new AtomicReference<>();
+    DatabaseReference.CompletionListener listener = new DatabaseReference.CompletionListener() {
+      @Override
+      public void onComplete(DatabaseError error, DatabaseReference ref) {
+        errorResult.set(error);
+        refResult.set(ref);
+      }
+    };
+
+    Mockito.doAnswer(newSuccessAnswer(2)).when(connection).onDisconnectPut(
+        Mockito.<String>anyList(), Mockito.any(), Mockito.any(RequestResultCallback.class));
+    repo.onDisconnectSetValue(new Path("/foo"), NodeUtilities.NodeFromJSON("testData"), listener);
+    assertNull(errorResult.get());
+    assertEquals("foo", refResult.get().getKey());
+
+    Mockito.doAnswer(newFailureAnswer(2)).when(connection).onDisconnectPut(
+        Mockito.<String>anyList(), Mockito.any(), Mockito.any(RequestResultCallback.class));
+    repo.onDisconnectSetValue(new Path("/bar"), NodeUtilities.NodeFromJSON("testData"), listener);
+    assertNotNull(errorResult.get());
+    assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
+    assertEquals("bar", refResult.get().getKey());
+  }
+
+  @Test
+  public void testOnDisconnectUpdate() {
+    Repo repo = newRepo();
+    final AtomicReference<DatabaseError> errorResult = new AtomicReference<>();
+    final AtomicReference<DatabaseReference> refResult = new AtomicReference<>();
+    DatabaseReference.CompletionListener listener = new DatabaseReference.CompletionListener() {
+      @Override
+      public void onComplete(DatabaseError error, DatabaseReference ref) {
+        errorResult.set(error);
+        refResult.set(ref);
+      }
+    };
+
+    Map<Path, Node> update = ImmutableMap.of(new Path("/child"), NodeUtilities.NodeFromJSON("foo"));
+    Mockito.doAnswer(newSuccessAnswer(2)).when(connection).onDisconnectMerge(
+        Mockito.<String>anyList(),
+        Mockito.<String, Object>anyMap(),
+        Mockito.any(RequestResultCallback.class));
+    repo.onDisconnectUpdate(new Path("/foo"), update, listener,
+        ImmutableMap.<String, Object>of("child", "foo"));
+    assertNull(errorResult.get());
+    assertEquals("foo", refResult.get().getKey());
+
+    Mockito.doAnswer(newFailureAnswer(2)).when(connection).onDisconnectMerge(
+        Mockito.<String>anyList(),
+        Mockito.<String, Object>anyMap(),
+        Mockito.any(RequestResultCallback.class));
+    repo.onDisconnectUpdate(new Path("/bar"), update, listener,
+        ImmutableMap.<String, Object>of("child", "foo"));
+    assertNotNull(errorResult.get());
+    assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
+    assertEquals("bar", refResult.get().getKey());
+  }
+
+  @Test
+  public void testOnDisconnectCancel() {
+    Repo repo = newRepo();
+    final AtomicReference<DatabaseError> errorResult = new AtomicReference<>();
+    final AtomicReference<DatabaseReference> refResult = new AtomicReference<>();
+    DatabaseReference.CompletionListener listener = new DatabaseReference.CompletionListener() {
+      @Override
+      public void onComplete(DatabaseError error, DatabaseReference ref) {
+        errorResult.set(error);
+        refResult.set(ref);
+      }
+    };
+
+    Mockito.doAnswer(newSuccessAnswer(1)).when(connection).onDisconnectCancel(
+        Mockito.<String>anyList(),
+        Mockito.any(RequestResultCallback.class));
+    repo.onDisconnectCancel(new Path("/foo"), listener);
+    assertNull(errorResult.get());
+    assertEquals("foo", refResult.get().getKey());
+
+    Mockito.doAnswer(newFailureAnswer(1)).when(connection).onDisconnectCancel(
+        Mockito.<String>anyList(),
+        Mockito.any(RequestResultCallback.class));
+    repo.onDisconnectCancel(new Path("/bar"), listener);
+    assertNotNull(errorResult.get());
+    assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
+    assertEquals("bar", refResult.get().getKey());
+  }
+
+  private Answer newSuccessAnswer(final int arg) {
+    return new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(arg);
+        callback.onRequestResult(null, null);
+        return null;
+      }
+    };
+  }
+
+  private Answer newFailureAnswer(final int arg) {
+    return new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(arg);
+        callback.onRequestResult("datastale", null);
+        return null;
+      }
+    };
   }
 
   private Repo newRepo() {
