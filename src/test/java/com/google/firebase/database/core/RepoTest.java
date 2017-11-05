@@ -16,6 +16,7 @@ import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.MutableData;
@@ -450,7 +451,11 @@ public class RepoTest {
 
     Mockito.doAnswer(newSuccessAnswer(2)).when(connection).onDisconnectPut(
         Mockito.<String>anyList(), Mockito.any(), Mockito.any(RequestResultCallback.class));
-    repo.onDisconnectSetValue(new Path("/foo"), NodeUtilities.NodeFromJSON("testData"), listener);
+    try {
+      repo.onDisconnectSetValue(new Path("/foo"), NodeUtilities.NodeFromJSON("testData"), listener);
+    } catch (DatabaseException e) {
+      e.printStackTrace();
+    }
     assertNull(errorResult.get());
     assertEquals("foo", refResult.get().getKey());
 
