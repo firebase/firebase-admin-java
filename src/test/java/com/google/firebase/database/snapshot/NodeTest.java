@@ -18,10 +18,19 @@ package com.google.firebase.database.snapshot;
 
 import static com.google.firebase.database.snapshot.NodeUtilities.NodeFromJSON;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.database.MapBuilder;
+import com.google.firebase.database.collection.ImmutableSortedMap;
 import com.google.firebase.database.core.Path;
+import com.google.firebase.database.snapshot.LeafNode.LeafType;
+import com.google.firebase.database.snapshot.Node.HashVersion;
 import java.util.Map;
 import org.junit.Test;
 
@@ -179,5 +188,60 @@ public class NodeTest {
     Node empty2 =
         NodeFromJSON(new MapBuilder().put("dummy-node", null).put(".priority", "prio").build());
     assertTrue(empty2.getPriority().isEmpty());
+  }
+
+  @Test
+  public void testEmptyChildrenNode() {
+    ChildrenNode node = new ChildrenNode();
+    assertTrue(node.isEmpty());
+    assertNull(node.getValue());
+    assertEquals("{ }", node.toString());
+  }
+
+  @Test
+  public void testEmptyChildrenNodeWithPriority() {
+    ImmutableSortedMap<ChildKey, Node> map = ImmutableSortedMap.Builder.fromMap(
+        ImmutableMap.<ChildKey, Node>of(), null);
+    try {
+      new ChildrenNode(map, PriorityUtilities.parsePriority(1));
+      fail("No error thrown for empty children node");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testChildrenNode() {
+    ImmutableMap<ChildKey, Node> source = ImmutableMap.of(
+        ChildKey.fromString("foo"), NodeUtilities.NodeFromJSON("value1"),
+        ChildKey.fromString("bar"), NodeUtilities.NodeFromJSON("value2")
+    );
+    ImmutableSortedMap<ChildKey, Node> map = ImmutableSortedMap.Builder.fromMap(source, null);
+    ChildrenNode node = new ChildrenNode(map, PriorityUtilities.parsePriority(1));
+    assertFalse(node.isEmpty());
+    assertEquals(ImmutableMap.of("foo", "value1", "bar", "value2"), node.getValue());
+    assertEquals(
+        "{\n"
+        + "  bar=value2\n"
+        + "  foo=value1\n"
+        + "  .priority=1.0\n"
+        + "}", node.toString());
+  }
+
+  @Test
+  public void testDeferredValueNode() {
+    Map<Object, Object> map = ImmutableMap.<Object, Object>of("foo", "bar", "int", 5);
+    DeferredValueNode node = new DeferredValueNode(map, PriorityUtilities.parsePriority(1));
+    assertEquals(map, node.getValue());
+    assertEquals(LeafType.DeferredValue, node.getLeafType());
+    assertNotNull(node.getHashRepresentation(HashVersion.V1));
+
+    DeferredValueNode otherNode = new DeferredValueNode(
+        ImmutableMap.<Object, Object>of("other", "value"),
+        PriorityUtilities.parsePriority(2));
+    assertEquals(0, node.compareLeafValues(otherNode));
+
+    assertNotEquals(node, otherNode);
+    assertNotEquals(node.hashCode(), otherNode.hashCode());
   }
 }
