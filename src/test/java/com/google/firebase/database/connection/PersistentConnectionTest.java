@@ -200,6 +200,21 @@ public class PersistentConnectionTest {
     Mockito.verify(connFactory.delegate, Mockito.times(1)).onDisconnect();
   }
 
+  @Test
+  public void testPurgeWrites() throws InterruptedException {
+    MockConnectionFactory connFactory = new MockConnectionFactory();
+    connFactory.persistentConn.onReady(System.currentTimeMillis(), "last-session-id");
+
+    RequestResultCallback callback = Mockito.mock(RequestResultCallback.class);
+    connFactory.persistentConn.put(ImmutableList.of("put"), "testData", callback);
+    connFactory.persistentConn.onDisconnectPut(ImmutableList.of("put"), "testData", callback);
+    assertEquals(2, connFactory.outgoing.size());
+
+    // Write should not be sent until auth is successful
+    connFactory.persistentConn.purgeOutstandingWrites();
+    Mockito.verify(callback, Mockito.times(2)).onRequestResult("write_canceled", null);
+  }
+
   private static class MockConnectionFactory implements PersistentConnectionImpl.ConnectionFactory {
 
     private final Connection conn = Mockito.mock(Connection.class);
