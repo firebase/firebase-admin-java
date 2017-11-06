@@ -63,6 +63,69 @@ public class PersistentConnectionTest {
   }
 
   @Test
+  public void testAuthSuccess() throws InterruptedException {
+    PersistentConnection.Delegate delegate = Mockito.mock(PersistentConnection.Delegate.class);
+    MockConnectionFactory connFactory = new MockConnectionFactory();
+    PersistentConnectionImpl conn = new PersistentConnectionImpl(
+        newConnectionContext(), null, delegate, connFactory);
+    conn.initialize();
+    waitFor(connFactory.connected);
+
+    conn.onReady(System.currentTimeMillis(), "last-session-id");
+    conn.onDataMessage(ImmutableMap.<String, Object>of("r", 1, "b", ImmutableMap.of("s", "ok")));
+    Mockito.verify(delegate, Mockito.times(1)).onAuthStatus(true);
+  }
+
+  @Test
+  public void testAuthFailure() throws InterruptedException {
+    PersistentConnection.Delegate delegate = Mockito.mock(PersistentConnection.Delegate.class);
+    MockConnectionFactory connFactory = new MockConnectionFactory();
+    PersistentConnectionImpl conn = new PersistentConnectionImpl(
+        newConnectionContext(), null, delegate, connFactory);
+    conn.initialize();
+    waitFor(connFactory.connected);
+
+    conn.onReady(System.currentTimeMillis(), "last-session-id");
+    conn.onDataMessage(ImmutableMap.<String, Object>of(
+        "r", 1, "b", ImmutableMap.of("s", "not_ok")));
+    Mockito.verify(delegate, Mockito.times(1)).onAuthStatus(false);
+  }
+
+  @Test
+  public void testUpgradeAuth() throws InterruptedException {
+    PersistentConnection.Delegate delegate = Mockito.mock(PersistentConnection.Delegate.class);
+    MockConnectionFactory connFactory = new MockConnectionFactory();
+    PersistentConnectionImpl conn = new PersistentConnectionImpl(
+        newConnectionContext(), null, delegate, connFactory);
+    conn.initialize();
+    waitFor(connFactory.connected);
+
+    conn.onReady(System.currentTimeMillis(), "last-session-id");
+    conn.refreshAuthToken("new-token");
+    conn.onDataMessage(ImmutableMap.<String, Object>of(
+        "r", 1, "b", ImmutableMap.of("s", "not_ok")));
+    assertEquals(3, connFactory.outgoing.size());
+    assertEquals("auth", connFactory.outgoing.get(2).getAction());
+  }
+
+  @Test
+  public void testUnauth() throws InterruptedException {
+    PersistentConnection.Delegate delegate = Mockito.mock(PersistentConnection.Delegate.class);
+    MockConnectionFactory connFactory = new MockConnectionFactory();
+    PersistentConnectionImpl conn = new PersistentConnectionImpl(
+        newConnectionContext(), null, delegate, connFactory);
+    conn.initialize();
+    waitFor(connFactory.connected);
+
+    conn.onReady(System.currentTimeMillis(), "last-session-id");
+    conn.refreshAuthToken(null);
+    conn.onDataMessage(ImmutableMap.<String, Object>of(
+        "r", 1, "b", ImmutableMap.of("s", "not_ok")));
+    assertEquals(3, connFactory.outgoing.size());
+    assertEquals("unauth", connFactory.outgoing.get(2).getAction());
+  }
+
+  @Test
   public void testOnDataMessage() throws InterruptedException {
     PersistentConnection.Delegate delegate = Mockito.mock(PersistentConnection.Delegate.class);
     MockConnectionFactory connFactory = new MockConnectionFactory();
@@ -108,8 +171,36 @@ public class PersistentConnectionTest {
     assertEquals("q", connFactory.outgoing.get(2).getAction());
 
     conn.onDataMessage(ImmutableMap.<String, Object>of(
+        "r", 2, "b", ImmutableMap.of("s", "ok", "d", ImmutableMap.of())));
+    Mockito.verify(callback, Mockito.times(1)).onRequestResult(null, null);
+
+    conn.onDataMessage(ImmutableMap.<String, Object>of(
         "a", "c", "b", ImmutableMap.of("p", "listen")));
     Mockito.verify(callback, Mockito.times(1)).onRequestResult("permission_denied", null);
+  }
+
+  @Test
+  public void testUnlisten() throws InterruptedException {
+    PersistentConnection.Delegate delegate = Mockito.mock(PersistentConnection.Delegate.class);
+    MockConnectionFactory connFactory = new MockConnectionFactory();
+    PersistentConnectionImpl conn = new PersistentConnectionImpl(
+        newConnectionContext(), null, delegate, connFactory);
+    conn.initialize();
+    waitFor(connFactory.connected);
+
+    conn.onReady(System.currentTimeMillis(), "last-session-id");
+    ListenHashProvider hash = Mockito.mock(ListenHashProvider.class);
+    Mockito.when(hash.getSimpleHash()).thenReturn("simpleHash");
+
+    RequestResultCallback callback = Mockito.mock(RequestResultCallback.class);
+    conn.listen(
+        ImmutableList.of("listen"), ImmutableMap.<String, Object>of(), hash, null, callback);
+    assertEquals(3, connFactory.outgoing.size());
+    assertEquals("q", connFactory.outgoing.get(2).getAction());
+
+    conn.unlisten(ImmutableList.of("listen"), ImmutableMap.<String, Object>of());
+    assertEquals(4, connFactory.outgoing.size());
+    assertEquals("n", connFactory.outgoing.get(3).getAction());
   }
 
   @Test
@@ -124,8 +215,25 @@ public class PersistentConnectionTest {
     conn.onReady(System.currentTimeMillis(), "last-session-id");
     RequestResultCallback callback = Mockito.mock(RequestResultCallback.class);
     conn.put(ImmutableList.of("put"), "testData", callback);
+    assertEquals(2, connFactory.outgoing.size());
+
+    // Write should not be sent until auth us successful
+    conn.onDataMessage(ImmutableMap.<String, Object>of("r", 1, "b", ImmutableMap.of("s", "ok")));
     assertEquals(3, connFactory.outgoing.size());
     assertEquals("p", connFactory.outgoing.get(2).getAction());
+  }
+
+  @Test
+  public void testOnKill() throws InterruptedException {
+    PersistentConnection.Delegate delegate = Mockito.mock(PersistentConnection.Delegate.class);
+    MockConnectionFactory connFactory = new MockConnectionFactory();
+    PersistentConnectionImpl conn = new PersistentConnectionImpl(
+        newConnectionContext(), null, delegate, connFactory);
+    conn.initialize();
+    waitFor(connFactory.connected);
+
+    conn.onKill("some_reason");
+    Mockito.verify(connFactory.conn, Mockito.times(1)).close();
   }
 
   @Test
