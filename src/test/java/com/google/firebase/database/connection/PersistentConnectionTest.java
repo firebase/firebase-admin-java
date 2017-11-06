@@ -219,10 +219,33 @@ public class PersistentConnectionTest {
     conn.put(ImmutableList.of("put"), "testData", callback);
     assertEquals(2, connFactory.outgoing.size());
 
-    // Write should not be sent until auth us successful
+    // Write should not be sent until auth is successful
     conn.onDataMessage(ImmutableMap.<String, Object>of("r", 1, "b", ImmutableMap.of("s", "ok")));
     assertEquals(3, connFactory.outgoing.size());
     assertEquals("p", connFactory.outgoing.get(2).getAction());
+
+    conn.onDataMessage(ImmutableMap.<String, Object>of("r", 2, "b", ImmutableMap.of("s", "ok")));
+    Mockito.verify(callback, Mockito.times(1)).onRequestResult(null, null);
+  }
+
+  @Test
+  public void testOnDisconnectPut() throws InterruptedException {
+    PersistentConnection.Delegate delegate = Mockito.mock(PersistentConnection.Delegate.class);
+    MockConnectionFactory connFactory = new MockConnectionFactory();
+    PersistentConnectionImpl conn = new PersistentConnectionImpl(
+        newConnectionContext(), null, delegate, connFactory);
+    conn.initialize();
+    waitFor(connFactory.connected);
+
+    conn.onReady(System.currentTimeMillis(), "last-session-id");
+    conn.onDataMessage(ImmutableMap.<String, Object>of("r", 1, "b", ImmutableMap.of("s", "ok")));
+
+    RequestResultCallback callback = Mockito.mock(RequestResultCallback.class);
+    conn.onDisconnectPut(ImmutableList.of("put"), "testData", callback);
+
+    // Write should not be sent until auth us successful
+    assertEquals(3, connFactory.outgoing.size());
+    assertEquals("o", connFactory.outgoing.get(2).getAction());
   }
 
   @Test
@@ -249,6 +272,19 @@ public class PersistentConnectionTest {
 
     conn.shutdown();
     Mockito.verify(connFactory.conn, Mockito.times(1)).close();
+  }
+
+  @Test
+  public void testOnDisconnect() throws InterruptedException {
+    PersistentConnection.Delegate delegate = Mockito.mock(PersistentConnection.Delegate.class);
+    MockConnectionFactory connFactory = new MockConnectionFactory();
+    PersistentConnectionImpl conn = new PersistentConnectionImpl(
+        newConnectionContext(), null, delegate, connFactory);
+    conn.initialize();
+    waitFor(connFactory.connected);
+
+    conn.onDisconnect(Connection.DisconnectReason.OTHER);
+    Mockito.verify(delegate, Mockito.times(1)).onDisconnect();
   }
 
   private static class MockConnectionFactory implements PersistentConnectionImpl.ConnectionFactory {
