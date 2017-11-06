@@ -56,6 +56,8 @@ public class PersistentConnectionTest {
     waitFor(connFactory.connected);
 
     conn.onReady(System.currentTimeMillis(), "last-session-id");
+    Mockito.verify(delegate, Mockito.times(1)).onServerInfoUpdate(
+        Mockito.<String, Object>anyMap());
     Mockito.verify(delegate, Mockito.times(1)).onConnect();
     assertEquals(2, connFactory.outgoing.size());
     assertEquals("s", connFactory.outgoing.get(0).getAction());
@@ -265,16 +267,20 @@ public class PersistentConnectionTest {
           return null;
         }
       }).when(conn).sendRequest(Mockito.<String, Object>anyMap(), Mockito.anyBoolean());
+
+      Mockito.doAnswer(new Answer() {
+        @Override
+        public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+          connected.release();
+          return null;
+        }
+      }).when(conn).open();
     }
 
     @Override
     public Connection newConnection(ConnectionContext context, HostInfo hostInfo, String
         cachedHost, Connection.Delegate delegate, String lastSessionId) {
-      try {
-        return conn;
-      } finally {
-        connected.release();
-      }
+      return conn;
     }
   }
 
