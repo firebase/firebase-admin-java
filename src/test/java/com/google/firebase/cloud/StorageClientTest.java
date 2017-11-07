@@ -17,9 +17,12 @@
 package com.google.firebase.cloud;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -27,6 +30,7 @@ import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
 import org.junit.After;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 public class StorageClientTest {
 
@@ -76,6 +80,7 @@ public class StorageClientTest {
         .setStorageBucket("mock-bucket-name")
         .build());
 
+    assertNotNull(StorageClient.getInstance());
     assertNotNull(StorageClient.getInstance(app));
     app.delete();
     try {
@@ -84,5 +89,41 @@ public class StorageClientTest {
     } catch (IllegalStateException expected) {
       // ignore
     }
+  }
+
+  @Test
+  public void testNonExistingBucket() throws IOException {
+    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
+        .setStorageBucket("mock-bucket-name")
+        .build());
+    Storage mockStorage = Mockito.mock(Storage.class);
+    StorageClient client = new StorageClient(app, mockStorage);
+    try {
+      client.bucket();
+      fail("No error thrown for non existing bucket");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+    try {
+      client.bucket("mock-bucket-name");
+      fail("No error thrown for non existing bucket");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testBucket() throws IOException {
+    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
+        .setStorageBucket("mock-bucket-name")
+        .build());
+    Storage mockStorage = Mockito.mock(Storage.class);
+    Bucket mockBucket = Mockito.mock(Bucket.class);
+    Mockito.when(mockStorage.get("mock-bucket-name")).thenReturn(mockBucket);
+    StorageClient client = new StorageClient(app, mockStorage);
+    assertSame(mockBucket, client.bucket());
+    assertSame(mockBucket, client.bucket("mock-bucket-name"));
   }
 }

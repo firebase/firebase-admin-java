@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -41,12 +42,10 @@ public class StorageClient {
   private final FirebaseApp app;
   private final Storage storage;
 
-  private StorageClient(FirebaseApp app) {
+  @VisibleForTesting
+  StorageClient(FirebaseApp app, Storage storage) {
     this.app = checkNotNull(app, "FirebaseApp must not be null");
-    this.storage = StorageOptions.newBuilder()
-        .setCredentials(ImplFirebaseTrampolines.getCredentials(app))
-        .build()
-        .getService();
+    this.storage = checkNotNull(storage, "Storage must not be null");
   }
 
   public static StorageClient getInstance() {
@@ -57,7 +56,12 @@ public class StorageClient {
     StorageClientService service = ImplFirebaseTrampolines.getService(app, SERVICE_ID,
         StorageClientService.class);
     if (service == null) {
-      service = ImplFirebaseTrampolines.addService(app, new StorageClientService(app));
+      Storage storage = StorageOptions.newBuilder()
+          .setCredentials(ImplFirebaseTrampolines.getCredentials(app))
+          .build()
+          .getService();
+      StorageClient client = new StorageClient(app, storage);
+      service = ImplFirebaseTrampolines.addService(app, new StorageClientService(client));
     }
     return service.getInstance();
   }
@@ -99,8 +103,8 @@ public class StorageClient {
 
   private static class StorageClientService extends FirebaseService<StorageClient> {
 
-    StorageClientService(FirebaseApp app) {
-      super(SERVICE_ID, new StorageClient(app));
+    StorageClientService(StorageClient client) {
+      super(SERVICE_ID, client);
     }
 
     @Override
