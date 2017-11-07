@@ -2,6 +2,7 @@ package com.google.firebase.database.connection;
 
 import static com.google.firebase.database.TestHelpers.waitFor;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -42,6 +43,7 @@ public class PersistentConnectionTest {
     assertEquals(2, connFactory.outgoing.size());
     assertEquals("s", connFactory.outgoing.get(0).getAction());
     assertEquals("auth", connFactory.outgoing.get(1).getAction());
+    assertTrue(connFactory.outgoing.get(1).sensitive);
   }
 
   @Test
@@ -262,18 +264,18 @@ public class PersistentConnectionTest {
           callback.onSuccess("test-token");
         }
       };
-      ThreadConfig config = new ThreadConfig(Executors.defaultThreadFactory(), ThreadInitializer
-          .defaultInstance);
+      ThreadConfig config = new ThreadConfig(Executors.defaultThreadFactory(),
+          ThreadInitializer.defaultInstance);
       return new ConnectionContext(logger, tokenProvider, executor, false, "testVersion",
           "testUserAgent", config);
     }
   }
 
   private static class OutgoingMessage {
-    private final Map<String, Object> payload;
+    private final Map payload;
     private final boolean sensitive;
 
-    OutgoingMessage(Map<String, Object> payload, boolean sensitive) {
+    OutgoingMessage(Map payload, boolean sensitive) {
       this.payload = payload;
       this.sensitive = sensitive;
     }
@@ -282,5 +284,4 @@ public class PersistentConnectionTest {
       return (String) this.payload.get("a");
     }
   }
-
 }
