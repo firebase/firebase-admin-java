@@ -35,6 +35,10 @@ public class DownloadAccountResponse {
     return users;
   }
 
+  public boolean hasUsers() {
+    return users != null && !users.isEmpty();
+  }
+
   public String getPageToken() {
     return pageToken;
   }

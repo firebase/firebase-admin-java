@@ -207,15 +207,15 @@ class FirebaseUserManager {
     DownloadAccountResponse response;
     try {
       response = post("downloadAccount", builder.build(), DownloadAccountResponse.class);
+      if (response == null) {
+        throw new FirebaseAuthException(LIST_USERS_ERROR,
+            "Unexpected response from download user account API.");
+      }
+      return response;
     } catch (IOException e) {
       throw new FirebaseAuthException(LIST_USERS_ERROR,
           "IO error while downloading user accounts.", e);
     }
-    if (response == null) {
-      throw new FirebaseAuthException(LIST_USERS_ERROR,
-          "Unexpected response from download user account API.");
-    }
-    return response;
   }
 
   private <T> T post(String path, Object content, Class<T> clazz) throws IOException {

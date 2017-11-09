@@ -49,7 +49,7 @@ public class UserRecordTest {
     assertNull(userRecord.getDisplayName());
     assertEquals(0L, userRecord.getUserMetadata().getCreationTimestamp());
     assertEquals(0L, userRecord.getUserMetadata().getLastSignInTimestamp());
-    assertNull(userRecord.getCustomClaims());
+    assertEquals(0, userRecord.getCustomClaims().size());
     assertFalse(userRecord.isDisabled());
     assertFalse(userRecord.isEmailVerified());
     assertEquals(0, userRecord.getProviderData().length);
@@ -143,7 +143,7 @@ public class UserRecordTest {
     String json = JSON_FACTORY.toString(resp);
     UserRecord userRecord = parseUser(json);
     assertEquals("user", userRecord.getUid());
-    assertNull(userRecord.getCustomClaims());
+    assertEquals(0, userRecord.getCustomClaims().size());
   }
 
   @Test
@@ -158,7 +158,7 @@ public class UserRecordTest {
     assertNull(userRecord.getDisplayName());
     assertEquals(0L, userRecord.getUserMetadata().getCreationTimestamp());
     assertEquals(0L, userRecord.getUserMetadata().getLastSignInTimestamp());
-    assertNull(userRecord.getCustomClaims());
+    assertEquals(0, userRecord.getCustomClaims().size());
     assertFalse(userRecord.isDisabled());
     assertFalse(userRecord.isEmailVerified());
     assertEquals(0, userRecord.getProviderData().length);

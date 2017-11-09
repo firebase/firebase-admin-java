@@ -25,6 +25,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.internal.GetAccountInfoResponse.User;
+import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
 import java.io.IOException;
@@ -82,13 +83,9 @@ public class UserRecord implements UserInfo {
     String customClaims = response.getCustomClaims();
     if (!Strings.isNullOrEmpty(customClaims)) {
       Map<String, Object> parsed = new JSONObject(customClaims).toMap();
-      if (parsed.isEmpty()) {
-        this.customClaims = null;
-      } else {
-        this.customClaims = ImmutableMap.copyOf(parsed);
-      }
+      this.customClaims = ImmutableMap.copyOf(parsed);
     } else {
-      this.customClaims = null;
+      this.customClaims = ImmutableMap.of();
     }
   }
 
@@ -194,11 +191,11 @@ public class UserRecord implements UserInfo {
   }
 
   /**
-   * Returns additional custom claims set on this user.
+   * Returns custom claims set on this user.
    *
-   * @return a non-empty Map of custom claims or null.
+   * @return a non-null, immutable Map of custom claims, possibly empty.
    */
-  @Nullable
+  @NonNull
   public Map<String,Object> getCustomClaims() {
     return customClaims;
   }

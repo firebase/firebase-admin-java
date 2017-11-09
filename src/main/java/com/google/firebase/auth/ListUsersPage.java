@@ -31,7 +31,7 @@ import java.util.NoSuchElementException;
 /**
  * Represents a page of {@link ExportedUserRecord} instances. Provides methods for iterating
  * over the users in the current page, and calling up subsequent pages of users. Instances of
- * this class are thread safe and immutable.
+ * this class are thread-safe and immutable.
  */
 public class ListUsersPage implements Page<ExportedUserRecord> {
 
@@ -193,7 +193,7 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
       try {
         DownloadAccountResponse response = userManager.listUsers(maxResults, pageToken);
         ImmutableList.Builder<ExportedUserRecord> builder = ImmutableList.builder();
-        if (response.getUsers() != null) {
+        if (response.hasUsers()) {
           for (DownloadAccountResponse.User user : response.getUsers()) {
             builder.add(new ExportedUserRecord(user));
           }

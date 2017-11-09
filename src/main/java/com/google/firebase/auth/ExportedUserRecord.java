@@ -21,7 +21,7 @@ import com.google.firebase.internal.Nullable;
 
 /**
  * Contains metadata associated with a Firebase user account, along with password hash and salt.
- * Instances of this class are immutable and thread safe.
+ * Instances of this class are immutable and thread-safe.
  */
 public class ExportedUserRecord extends UserRecord {
 
@@ -34,11 +34,31 @@ public class ExportedUserRecord extends UserRecord {
     this.passwordSalt = response.getPasswordSalt();
   }
 
+  /**
+   * Returns the user's password hash as a base64-encoded string.
+   *
+   * <p>If the Firebase Auth hashing algorithm (SCRYPT) was used to create the user account,
+   * returns the base64-encoded password hash of the user. If a different hashing algorithm was
+   * used to create this user, as is typical when migrating from another Auth system, returns
+   * an empty string. Returns null if no password is set.
+   *
+   * @return A base64-encoded password hash, possibly empty or null.
+   */
   @Nullable
   public String getPasswordHash() {
     return passwordHash;
   }
 
+  /**
+   * Returns the user's password salt as a base64-encoded string.
+   *
+   * <p>If the Firebase Auth hashing algorithm (SCRYPT) was used to create the user account,
+   * returns the base64-encoded password salt of the user. If a different hashing algorithm was
+   * used to create this user, as is typical when migrating from another Auth system, returns
+   * an empty string. Returns null if no password is set.
+   *
+   * @return A base64-encoded password salt, possibly empty or null.
+   */
   @Nullable
   public String getPasswordSalt() {
     return passwordSalt;
