@@ -485,7 +485,7 @@ public class FirebaseUserManagerTest {
     try {
       update.getProperties(null);
       fail("No error thrown for null JsonFactory");
-    } catch (Exception ignore) {
+    } catch (NullPointerException ignore) {
       // expected
     }
   }

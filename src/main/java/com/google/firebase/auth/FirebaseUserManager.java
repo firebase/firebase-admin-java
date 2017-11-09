@@ -200,7 +200,7 @@ class FirebaseUserManager {
     ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
         .put("maxResults", maxResults);
     if (pageToken != null) {
-      checkArgument(!pageToken.isEmpty(), "invalid end of list page token");
+      checkArgument(!pageToken.equals(ListUsersPage.END_OF_LIST), "invalid end of list page token");
       builder.put("nextPageToken", pageToken);
     }
 
