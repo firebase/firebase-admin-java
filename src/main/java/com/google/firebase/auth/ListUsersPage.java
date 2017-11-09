@@ -37,15 +37,15 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
 
   static final String END_OF_LIST = "";
 
+  private final ListUsersResult currentBatch;
   private final UserSource source;
   private final int maxResults;
 
-  private final ListUsersResult currentBatch;
-
-  private ListUsersPage(@NonNull UserSource source, int maxResults, @Nullable String pageToken) {
-    this.source = source;
+  private ListUsersPage(
+      @NonNull ListUsersResult currentBatch, @NonNull UserSource source, int maxResults) {
+    this.currentBatch = checkNotNull(currentBatch);
+    this.source = checkNotNull(source);
     this.maxResults = maxResults;
-    this.currentBatch = source.fetch(maxResults, pageToken);
   }
 
   /**
@@ -79,7 +79,8 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
   @Override
   public ListUsersPage getNextPage() {
     if (hasNextPage()) {
-      return new ListUsersPage(source, maxResults, currentBatch.getNextPageToken());
+      PageFactory factory = new PageFactory(source, maxResults, currentBatch.getNextPageToken());
+      return factory.create();
     }
     return null;
   }
@@ -254,7 +255,8 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
     }
 
     ListUsersPage create() {
-      return new ListUsersPage(source, maxResults, pageToken);
+      ListUsersResult batch = source.fetch(maxResults, pageToken);
+      return new ListUsersPage(batch, source, maxResults);
     }
   }
 }
