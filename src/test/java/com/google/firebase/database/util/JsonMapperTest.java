@@ -17,16 +17,60 @@
 package com.google.firebase.database.util;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.json.JSONException;
 import org.junit.Ignore;
 import org.junit.Test;
 
 public class JsonMapperTest {
+
+  @Test
+  public void testNull() throws IOException {
+    assertEquals("null", JsonMapper.serializeJsonValue(null));
+  }
+
+  @Test
+  public void testString() throws IOException {
+    assertEquals("\"foo\"", JsonMapper.serializeJsonValue("foo"));
+  }
+
+  @Test
+  public void testBoolean() throws IOException {
+    assertEquals("true", JsonMapper.serializeJsonValue(true));
+    assertEquals("false", JsonMapper.serializeJsonValue(false));
+  }
+
+  @Test
+  public void testMap() throws IOException {
+    assertEquals("{\"foo\":\"bar\"}", JsonMapper.serializeJsonValue(ImmutableMap.of("foo", "bar")));
+  }
+
+  @Test
+  public void testList() throws IOException {
+    assertEquals("[\"foo\",\"bar\"]", JsonMapper.serializeJsonValue(
+        ImmutableList.of("foo", "bar")));
+  }
+
+  @Test
+  public void testInvalidObject() {
+    try {
+      JsonMapper.serializeJsonValue(new Object());
+      fail("No error thrown for invalid object");
+    } catch (IOException expected) {
+      // expected
+      assertTrue(expected.getCause() instanceof JSONException);
+    }
+  }
 
   @Test
   public void canConvertLongs() throws IOException {
@@ -62,5 +106,28 @@ public class JsonMapperTest {
     String jsonString = JsonMapper.serializeJsonValue(root);
     Object value = JsonMapper.parseJsonValue(jsonString);
     assertEquals(root, value);
+  }
+
+  @Test
+  public void testParse() throws IOException {
+    Map<String, Object> map = JsonMapper.parseJson("{\"foo\":\"bar\"}");
+    assertEquals(ImmutableMap.of("foo", "bar"), map);
+
+    Object result = JsonMapper.parseJsonValue("{\"foo\":\"bar\"}");
+    assertEquals(ImmutableMap.of("foo", "bar"), result);
+
+    try {
+      JsonMapper.parseJson("{\"foo:bar}");
+      fail("No error thrown for invalid json");
+    } catch (IOException expected) {
+      // expected
+    }
+
+    try {
+      JsonMapper.parseJsonValue("{\"foo:bar}");
+      fail("No error thrown for invalid json");
+    } catch (IOException expected) {
+      // expected
+    }
   }
 }
