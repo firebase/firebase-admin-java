@@ -17,10 +17,15 @@
 package com.google.firebase.database;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -32,6 +37,8 @@ import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -112,5 +119,82 @@ public class DataSnapshotTest {
 
     snap = snapFor(MapBuilder.of("x", 5));
     assertTrue(snap.exists());
+  }
+
+  @Test
+  public void testChild() {
+    DataSnapshot snapshot = snapFor(ImmutableMap.of("foo", "bar"));
+    assertTrue(snapshot.hasChild("foo"));
+    assertFalse(snapshot.hasChild("bar"));
+    assertEquals(1, snapshot.getChildrenCount());
+
+    DataSnapshot child = snapshot.child("foo");
+    assertNotNull(child);
+    assertEquals("foo", child.getKey());
+    assertTrue(child.exists());
+
+    child = snapshot.child("bar");
+    assertNotNull(child);
+    assertEquals("bar", child.getKey());
+    assertFalse(child.exists());
+
+    Iterator<DataSnapshot> iter = snapshot.getChildren().iterator();
+    int count = 0;
+    while (iter.hasNext()) {
+      DataSnapshot next = iter.next();
+      count++;
+      assertNotNull(next);
+      try {
+        iter.remove();
+        fail("No error thrown for remove() operation");
+      } catch (UnsupportedOperationException expected) {
+        // expected
+      }
+    }
+    assertEquals(1, count);
+  }
+
+  @Test
+  public void testGetValue() {
+    DataSnapshot snapshot = snapFor("foo");
+    assertEquals("foo", snapshot.getValue(String.class));
+
+    snapshot = snapFor(9);
+    assertEquals(9, (int) snapshot.getValue(Integer.class));
+
+    snapshot = snapFor(9.9);
+    assertEquals(9.9, snapshot.getValue(Double.class), 0.0001);
+
+    snapshot = snapFor(true);
+    assertTrue(snapshot.getValue(Boolean.class));
+
+    ImmutableMap<String, String> map = ImmutableMap.of("foo", "bar");
+    snapshot = snapFor(map);
+    GenericTypeIndicator<Map<String, String>> generic =
+        new GenericTypeIndicator<Map<String, String>>() {};
+    assertEquals(map, snapshot.getValue(generic));
+  }
+
+  @Test
+  public void testGetPriority() {
+    DataSnapshot snapshot = snapFor(ImmutableMap.of(".value", "foo", ".priority", 10L));
+    assertEquals(10.0, snapshot.getPriority());
+
+    snapshot = snapFor(ImmutableMap.of(".value", "foo", ".priority", "p"));
+    assertEquals("p", snapshot.getPriority());
+
+    snapshot = snapFor("foo");
+    assertNull(snapshot.getPriority());
+  }
+
+  @Test
+  public void testToString() {
+    DataSnapshot snapshot = snapFor(ImmutableMap.of("foo", "bar"));
+    assertEquals("DataSnapshot { key = null, value = {foo=bar} }", snapshot.toString());
+
+    DatabaseReference reference = new DatabaseReference("https://test.firebaseio.com/test", config);
+    Node node = NodeUtilities.NodeFromJSON("foo");
+    snapshot = new DataSnapshot(reference, IndexedNode.from(node));
+    assertEquals("DataSnapshot { key = test, value = foo }", snapshot.toString());
   }
 }
