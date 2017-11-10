@@ -1146,13 +1146,6 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     return isIdle() && now > (this.lastWriteTimestamp + IDLE_TIMEOUT);
   }
 
-  // For testing
-  public void injectConnectionFailure() {
-    if (this.realtime != null) {
-      this.realtime.injectConnectionFailure();
-    }
-  }
-
   private enum ConnectionState {
     Disconnected,
     GettingToken,

@@ -39,10 +39,12 @@ class Connection implements WebsocketConnection.Delegate {
   private static final String SERVER_HELLO_HOST = "h";
   private static final String SERVER_HELLO_SESSION_ID = "s";
   private static long connectionIds = 0;
+
   private final LogWrapper logger;
-  private HostInfo hostInfo;
+  private final HostInfo hostInfo;
+  private final Delegate delegate;
+
   private WebsocketConnection conn;
-  private Delegate delegate;
   private State state;
 
   public Connection(
@@ -51,12 +53,22 @@ class Connection implements WebsocketConnection.Delegate {
       String cachedHost,
       Delegate delegate,
       String optLastSessionId) {
+    this(context, hostInfo, cachedHost, delegate, optLastSessionId, new DefaultConnectionFactory());
+  }
+
+  Connection(
+      ConnectionContext context,
+      HostInfo hostInfo,
+      String cachedHost,
+      Delegate delegate,
+      String optLastSessionId,
+      WebsocketConnectionFactory connFactory) {
     long connId = connectionIds++;
     this.hostInfo = hostInfo;
     this.delegate = delegate;
     this.logger = new LogWrapper(context.getLogger(), Connection.class, "conn_" + connId);
     this.state = State.REALTIME_CONNECTING;
-    this.conn = new WebsocketConnection(context, hostInfo, cachedHost, this, optLastSessionId);
+    this.conn = connFactory.newConnection(context, hostInfo, cachedHost, this, optLastSessionId);
   }
 
   public void open() {
@@ -246,11 +258,6 @@ class Connection implements WebsocketConnection.Delegate {
     }
   }
 
-  // For testing
-  public void injectConnectionFailure() {
-    this.close();
-  }
-
   public enum DisconnectReason {
     SERVER_RESET,
     OTHER
@@ -260,6 +267,28 @@ class Connection implements WebsocketConnection.Delegate {
     REALTIME_CONNECTING,
     REALTIME_CONNECTED,
     REALTIME_DISCONNECTED
+  }
+
+  interface WebsocketConnectionFactory {
+    WebsocketConnection newConnection(
+        ConnectionContext context,
+        HostInfo hostInfo,
+        String cachedHost,
+        WebsocketConnection.Delegate delegate,
+        String optLastSessionId);
+  }
+
+  private static class DefaultConnectionFactory implements WebsocketConnectionFactory {
+
+    @Override
+    public WebsocketConnection newConnection(
+        ConnectionContext context,
+        HostInfo hostInfo,
+        String cachedHost,
+        WebsocketConnection.Delegate delegate,
+        String optLastSessionId) {
+      return new WebsocketConnection(context, hostInfo, cachedHost, delegate, optLastSessionId);
+    }
   }
 
   public interface Delegate {
