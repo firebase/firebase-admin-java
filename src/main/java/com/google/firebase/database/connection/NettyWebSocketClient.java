@@ -95,7 +95,6 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
                   // Set the max size for the HTTP responses. This only applies to the WebSocket
                   // handshake response from the server.
                   new HttpObjectAggregator(32 * 1024),
-                  WebSocketClientCompressionHandler.INSTANCE,
                   channelHandler);
             }
           });
