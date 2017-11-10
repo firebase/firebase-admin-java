@@ -30,13 +30,6 @@ public class DatabaseErrorTest {
     assertEquals(DatabaseError.USER_CODE_EXCEPTION, error.getCode());
     assertTrue(error.getMessage().contains("_test_"));
     assertEquals("", error.getDetails());
-
-    try {
-      DatabaseError.fromCode(19191);
-      fail("No error thrown for unknown error code");
-    } catch (IllegalArgumentException expected) {
-      // expected
-    }
   }
 
 }

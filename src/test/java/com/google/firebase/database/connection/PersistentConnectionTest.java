@@ -6,10 +6,8 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.firebase.database.core.ThreadInitializer;
 import com.google.firebase.database.logging.DefaultLogger;
 import com.google.firebase.database.logging.Logger;
-import com.google.firebase.database.tubesock.ThreadConfig;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -264,10 +262,8 @@ public class PersistentConnectionTest {
           callback.onSuccess("test-token");
         }
       };
-      ThreadConfig config = new ThreadConfig(Executors.defaultThreadFactory(),
-          ThreadInitializer.defaultInstance);
       return new ConnectionContext(logger, tokenProvider, executor, false, "testVersion",
-          "testUserAgent", config);
+          "testUserAgent", Executors.defaultThreadFactory());
     }
   }
 

@@ -1,5 +1,7 @@
 package com.google.firebase.database.core;
 
+import static com.google.firebase.database.TestHelpers.waitFor;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -106,7 +108,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire();
+    waitFor(semaphore);
     assertEquals(1, events.size());
     assertNotNull(events.get(0));
     assertEquals("testData", events.get(0).getValue(String.class));
@@ -119,7 +121,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire();
+    waitFor(semaphore);
     assertEquals(2, events.size());
     assertNotNull(events.get(1));
     assertEquals(update, events.get(1).getValue());
@@ -143,7 +145,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire();
+    waitFor(semaphore);
     assertEquals(1, events.size());
     assertNotNull(events.get(0));
     assertEquals(update, events.get(0).getValue());
@@ -155,7 +157,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire();
+    waitFor(semaphore);
     assertEquals(2, events.size());
     assertNotNull(events.get(1));
     assertEquals(ImmutableMap.of("key1", "value1", "key2", "value2"), events.get(1).getValue());
@@ -179,10 +181,52 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire();
+    waitFor(semaphore);
     assertEquals(1, events.size());
     assertNotNull(events.get(0));
     assertEquals(ImmutableMap.of("p2", "v2", "p3", "v3"), events.get(0).getValue());
+  }
+
+  @Test
+  public void testRemoveCallback() throws InterruptedException {
+    final Repo repo = newRepo();
+    final List<DataSnapshot> events = new ArrayList<>();
+    QuerySpec spec = new QuerySpec(new Path("/foo"), QueryParams.DEFAULT_PARAMS);
+    final ValueEventRegistration callback = new ValueEventRegistration(repo,
+        newValueEventListener(events), spec);
+    addCallback(repo, callback);
+
+    final Semaphore semaphore = new Semaphore(0);
+    repo.scheduleNow(new Runnable() {
+      @Override
+      public void run() {
+        repo.onDataUpdate(ImmutableList.of("foo"), "testData", false, null);
+        semaphore.release();
+      }
+    });
+    waitFor(semaphore);
+    assertEquals(1, events.size());
+    assertNotNull(events.get(0));
+    assertEquals("testData", events.get(0).getValue(String.class));
+
+    repo.scheduleNow(new Runnable() {
+      @Override
+      public void run() {
+        repo.removeEventCallback(callback);
+        semaphore.release();
+      }
+    });
+    waitFor(semaphore);
+
+    repo.scheduleNow(new Runnable() {
+      @Override
+      public void run() {
+        repo.onDataUpdate(ImmutableList.of("foo"), "testData2", false, null);
+        semaphore.release();
+      }
+    });
+    waitFor(semaphore);
+    assertEquals(1, events.size());
   }
 
   @Test
@@ -201,7 +245,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire(1);
+    waitFor(semaphore);
     assertEquals(1, events.size());
     assertNotNull(events.get(0));
     assertEquals("setValue", events.get(0).getValue(String.class));
@@ -250,7 +294,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire();
+    waitFor(semaphore);
     assertEquals(1, events.size());
     assertNotNull(events.get(0));
     assertEquals("key1", events.get(0).getKey());
@@ -264,7 +308,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire();
+    waitFor(semaphore);
     assertEquals(1, events.size());
   }
 
@@ -295,7 +339,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire();
+    waitFor(semaphore);
     assertEquals(1, events.size());
     assertNotNull(events.get(0));
     assertEquals(update, events.get(0).getValue());
@@ -326,7 +370,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire();
+    waitFor(semaphore);
     assertTrue(events.isEmpty());
   }
 
@@ -366,7 +410,7 @@ public class RepoTest {
       }
     }, spec);
     addCallback(repo, callback);
-    semaphore.acquire(2);
+    waitFor(semaphore, 2);
     assertEquals(2, events.size());
 
     repo.scheduleNow(new Runnable() {
@@ -376,7 +420,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire(2);
+    waitFor(semaphore, 2);
     assertEquals("connected", events.get(2).getKey());
     assertTrue(events.get(2).getValue(Boolean.class));
 
@@ -387,7 +431,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire(2);
+    waitFor(semaphore, 2);
     assertEquals("authenticated", events.get(3).getKey());
     assertTrue(events.get(3).getValue(Boolean.class));
 
@@ -398,7 +442,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire(2);
+    waitFor(semaphore, 2);
     assertEquals("connected", events.get(4).getKey());
     assertFalse(events.get(4).getValue(Boolean.class));
 
@@ -410,7 +454,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire(2);
+    waitFor(semaphore, 2);
     assertEquals("k1", events.get(5).getKey());
     assertEquals("v1", events.get(5).getValue(String.class));
   }
@@ -453,7 +497,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire();
+    waitFor(semaphore);
     assertNull(errorResult.get());
     assertEquals("success", refResult.get().getKey());
 
@@ -464,7 +508,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire();
+    waitFor(semaphore);
     assertNotNull(errorResult.get());
     assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
     assertEquals("failure", refResult.get().getKey());
@@ -489,7 +533,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire();
+    waitFor(semaphore);
     assertNull(errorResult.get());
     assertEquals("success", refResult.get().getKey());
 
@@ -501,7 +545,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire();
+    waitFor(semaphore);
     assertNotNull(errorResult.get());
     assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
     assertEquals("failure", refResult.get().getKey());
@@ -523,7 +567,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire();
+    waitFor(semaphore);
     assertNull(errorResult.get());
     assertEquals("success", refResult.get().getKey());
 
@@ -534,7 +578,7 @@ public class RepoTest {
         semaphore.release();
       }
     });
-    semaphore.acquire();
+    waitFor(semaphore);
     assertNotNull(errorResult.get());
     assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
     assertEquals("failure", refResult.get().getKey());
