@@ -20,7 +20,10 @@ import static com.cedarsoftware.util.DeepEquals.deepEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.database.connection.ConnectionAuthTokenProvider;
+import com.google.firebase.database.connection.ConnectionContext;
 import com.google.firebase.database.core.CoreTestHelpers;
 import com.google.firebase.database.core.DatabaseConfig;
 import com.google.firebase.database.core.Path;
@@ -28,6 +31,8 @@ import com.google.firebase.database.core.Repo;
 import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.core.view.QuerySpec;
 import com.google.firebase.database.future.WriteFuture;
+import com.google.firebase.database.logging.DefaultLogger;
+import com.google.firebase.database.logging.Logger.Level;
 import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.util.JsonMapper;
 import com.google.firebase.database.utilities.DefaultRunLoop;
@@ -43,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -314,6 +320,19 @@ public class TestHelpers {
       }
     }).when(repo).scheduleNow(Mockito.any(Runnable.class));
     return repo;
+  }
+
+  public static ConnectionContext newConnectionContext(ScheduledExecutorService executor) {
+    com.google.firebase.database.logging.Logger logger = new DefaultLogger(
+        Level.NONE, ImmutableList.<String>of());
+    ConnectionAuthTokenProvider tokenProvider = new ConnectionAuthTokenProvider() {
+      @Override
+      public void getToken(boolean forceRefresh, GetTokenCallback callback) {
+        callback.onSuccess("test-token");
+      }
+    };
+    return new ConnectionContext(logger, tokenProvider, executor, false, "testVersion",
+        "testUserAgent", Executors.defaultThreadFactory());
   }
 
   private static class TestExceptionHandler implements UncaughtExceptionHandler {

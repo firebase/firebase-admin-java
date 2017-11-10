@@ -48,7 +48,6 @@ class WebsocketConnection {
   private static final int MAX_FRAME_SIZE = 16384;
   private static final AtomicLong CONN_ID = new AtomicLong(0);
 
-  private final ConnectionContext connectionContext;
   private final ScheduledExecutorService executorService;
   private final LogWrapper logger;
   private final WSClient conn;
@@ -66,22 +65,23 @@ class WebsocketConnection {
       String optCachedHost,
       Delegate delegate,
       String optLastSessionId) {
-    this.connectionContext = connectionContext;
+    this(connectionContext, hostInfo, optCachedHost, delegate, optLastSessionId,
+        new DefaultWSClientFactory());
+  }
+
+  WebsocketConnection(
+      ConnectionContext connectionContext,
+      HostInfo hostInfo,
+      String optCachedHost,
+      Delegate delegate,
+      String optLastSessionId,
+      WSClientFactory clientFactory) {
     this.executorService = connectionContext.getExecutorService();
     this.delegate = delegate;
     this.logger = new LogWrapper(connectionContext.getLogger(), WebsocketConnection.class,
         "ws_" + CONN_ID.getAndIncrement());
-    this.conn = createConnection(hostInfo, optCachedHost, optLastSessionId);
-  }
-
-  private WSClient createConnection(
-      HostInfo hostInfo, String optCachedHost, String optLastSessionId) {
-    String host = (optCachedHost != null) ? optCachedHost : hostInfo.getHost();
-    URI uri = HostInfo.getConnectionUrl(
-        host, hostInfo.isSecure(), hostInfo.getNamespace(), optLastSessionId);
-    return new NettyWebSocketClient(
-        uri, connectionContext.getUserAgent(), connectionContext.getThreadFactory(),
-        new WSClientHandlerImpl());
+    this.conn = clientFactory.newClient(
+        connectionContext, hostInfo, optCachedHost, optLastSessionId, new WSClientHandlerImpl());
   }
 
   void open() {
@@ -407,6 +407,32 @@ class WebsocketConnection {
     void close();
 
     void send(String msg);
+  }
+
+  interface WSClientFactory {
+
+    WSClient newClient(
+        ConnectionContext context,
+        HostInfo hostInfo,
+        String optCachedHost,
+        String optLastSessionId,
+        WSClientEventHandler delegate);
+
+  }
+
+  private static class DefaultWSClientFactory implements WSClientFactory {
+    public WSClient newClient(
+        ConnectionContext context,
+        HostInfo hostInfo,
+        String optCachedHost,
+        String optLastSessionId,
+        WSClientEventHandler delegate) {
+      String host = (optCachedHost != null) ? optCachedHost : hostInfo.getHost();
+      URI uri = HostInfo.getConnectionUrl(
+          host, hostInfo.isSecure(), hostInfo.getNamespace(), optLastSessionId);
+      return new NettyWebSocketClient(
+          uri, context.getUserAgent(), context.getThreadFactory(), delegate);
+    }
   }
 
   /**

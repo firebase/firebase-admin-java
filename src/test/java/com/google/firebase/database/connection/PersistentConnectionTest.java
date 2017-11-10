@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.logging.DefaultLogger;
 import com.google.firebase.database.logging.Logger;
 import java.util.ArrayList;
@@ -168,15 +169,50 @@ public class PersistentConnectionTest {
   public void testOnDisconnectPut() throws InterruptedException {
     MockConnectionFactory connFactory = new MockConnectionFactory();
     connFactory.persistentConn.onReady(System.currentTimeMillis(), "last-session-id");
+    RequestResultCallback callback = Mockito.mock(RequestResultCallback.class);
+    connFactory.persistentConn.onDisconnectPut(ImmutableList.of("put"), "testData", callback);
+    assertEquals(2, connFactory.outgoing.size());
+
+    // Write should not be sent until auth is successful
+    connFactory.persistentConn.onDataMessage(
+        ImmutableMap.<String, Object>of("r", 1, "b", ImmutableMap.of("s", "ok")));
+    assertEquals(3, connFactory.outgoing.size());
+    assertEquals("o", connFactory.outgoing.get(2).getAction());
+
+    connFactory.persistentConn.onDataMessage(
+        ImmutableMap.<String, Object>of("r", 2, "b", ImmutableMap.of("s", "ok")));
+    Mockito.verify(callback, Mockito.times(1)).onRequestResult(null, null);
+  }
+
+  @Test
+  public void testOnDisconnectMerge() throws InterruptedException {
+    MockConnectionFactory connFactory = new MockConnectionFactory();
+    connFactory.persistentConn.onReady(System.currentTimeMillis(), "last-session-id");
     connFactory.persistentConn.onDataMessage(
         ImmutableMap.<String, Object>of("r", 1, "b", ImmutableMap.of("s", "ok")));
 
     RequestResultCallback callback = Mockito.mock(RequestResultCallback.class);
-    connFactory.persistentConn.onDisconnectPut(ImmutableList.of("put"), "testData", callback);
+    connFactory.persistentConn.onDisconnectMerge(ImmutableList.of("put"),
+        ImmutableMap.<String, Object>of("key", "value"), callback);
 
     // Write should not be sent until auth us successful
     assertEquals(3, connFactory.outgoing.size());
-    assertEquals("o", connFactory.outgoing.get(2).getAction());
+    assertEquals("om", connFactory.outgoing.get(2).getAction());
+  }
+
+  @Test
+  public void testOnDisconnectCancel() throws InterruptedException {
+    MockConnectionFactory connFactory = new MockConnectionFactory();
+    connFactory.persistentConn.onReady(System.currentTimeMillis(), "last-session-id");
+    connFactory.persistentConn.onDataMessage(
+        ImmutableMap.<String, Object>of("r", 1, "b", ImmutableMap.of("s", "ok")));
+
+    RequestResultCallback callback = Mockito.mock(RequestResultCallback.class);
+    connFactory.persistentConn.onDisconnectCancel(ImmutableList.of("put"), callback);
+
+    // Write should not be sent until auth us successful
+    assertEquals(3, connFactory.outgoing.size());
+    assertEquals("oc", connFactory.outgoing.get(2).getAction());
   }
 
   @Test
@@ -243,7 +279,8 @@ public class PersistentConnectionTest {
         }
       }).when(conn).open();
 
-      persistentConn = new PersistentConnectionImpl(newConnectionContext(), null, delegate, this);
+      persistentConn = new PersistentConnectionImpl(
+          TestHelpers.newConnectionContext(executor), null, delegate, this);
       persistentConn.initialize();
       waitFor(connected);
     }

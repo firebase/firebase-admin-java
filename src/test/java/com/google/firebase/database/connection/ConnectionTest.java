@@ -16,13 +16,11 @@
 
 package com.google.firebase.database.connection;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.connection.Connection.Delegate;
 import com.google.firebase.database.connection.Connection.DisconnectReason;
 import com.google.firebase.database.connection.Connection.WebsocketConnectionFactory;
-import com.google.firebase.database.logging.DefaultLogger;
-import com.google.firebase.database.logging.Logger;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -84,9 +82,10 @@ public class ConnectionTest {
             "ts", System.currentTimeMillis())));
     connFactory.connection.onMessage(handshake);
 
-    connFactory.connection.sendRequest(data, true);
     Map<String, Object> expected = ImmutableMap.<String, Object>of("t", "d", "d", data);
-    Mockito.verify(connFactory.wsConn, Mockito.times(1)).send(expected);
+    connFactory.connection.sendRequest(data, true);
+    connFactory.connection.sendRequest(data, false);
+    Mockito.verify(connFactory.wsConn, Mockito.times(2)).send(expected);
   }
 
   @Test
@@ -188,7 +187,7 @@ public class ConnectionTest {
 
     MockConnectionFactory() {
       this.connection = new Connection(
-          newConnectionContext(),
+          TestHelpers.newConnectionContext(executor),
           Mockito.mock(HostInfo.class),
           "cached-host",
           delegate,
@@ -200,18 +199,6 @@ public class ConnectionTest {
     public WebsocketConnection newConnection(ConnectionContext context, HostInfo hostInfo,
         String cachedHost, WebsocketConnection.Delegate delegate, String optLastSessionId) {
       return wsConn;
-    }
-
-    private ConnectionContext newConnectionContext() {
-      Logger logger = new DefaultLogger(Logger.Level.DEBUG, ImmutableList.<String>of());
-      ConnectionAuthTokenProvider tokenProvider = new ConnectionAuthTokenProvider() {
-        @Override
-        public void getToken(boolean forceRefresh, GetTokenCallback callback) {
-          callback.onSuccess("test-token");
-        }
-      };
-      return new ConnectionContext(logger, tokenProvider, executor, false, "testVersion",
-          "testUserAgent", Executors.defaultThreadFactory());
     }
   }
 
