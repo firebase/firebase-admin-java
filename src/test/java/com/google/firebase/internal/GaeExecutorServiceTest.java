@@ -31,6 +31,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import com.google.firebase.testing.TestUtils;
 import org.junit.Test;
 
 public class GaeExecutorServiceTest {
@@ -52,10 +54,11 @@ public class GaeExecutorServiceTest {
     assertFalse(executorService.isShutdown());
     assertFalse(executorService.isTerminated());
 
-    executorService.shutdown();
+    executorService.shutdownNow();
     assertTrue(executorService.isShutdown());
     assertTrue(executorService.isTerminated());
-    assertTrue(executorService.awaitTermination(1, TimeUnit.SECONDS));
+    assertTrue(executorService.awaitTermination(
+        TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
     assertEquals(0, threadFactory.counter.get());
   }
 
@@ -105,10 +108,11 @@ public class GaeExecutorServiceTest {
 
     assertEquals(4, threadFactory.counter.get());
 
-    executorService.shutdownNow();
+    executorService.shutdown();
+    assertTrue(executorService.awaitTermination(
+        TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
     assertTrue(executorService.isShutdown());
     assertTrue(executorService.isTerminated());
-    assertTrue(executorService.awaitTermination(1, TimeUnit.SECONDS));
   }
 
   private static class CountingThreadFactory implements ThreadFactory {
