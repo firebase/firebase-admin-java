@@ -34,6 +34,7 @@ import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.database.logging.DefaultLogger;
 import com.google.firebase.database.logging.Logger.Level;
 import com.google.firebase.database.snapshot.ChildKey;
+import com.google.firebase.database.util.GAuthToken;
 import com.google.firebase.database.util.JsonMapper;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 import com.google.firebase.internal.NonNull;
@@ -328,7 +329,7 @@ public class TestHelpers {
     ConnectionAuthTokenProvider tokenProvider = new ConnectionAuthTokenProvider() {
       @Override
       public void getToken(boolean forceRefresh, GetTokenCallback callback) {
-        callback.onSuccess("test-token");
+        callback.onSuccess("gauth|{\"token\":\"test-token\"}");
       }
     };
     return new ConnectionContext(logger, tokenProvider, executor, false, "testVersion",

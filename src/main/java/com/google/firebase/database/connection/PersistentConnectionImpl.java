@@ -20,7 +20,6 @@ import static com.google.firebase.database.connection.ConnectionUtils.hardAssert
 
 import com.google.firebase.database.connection.util.RetryHelper;
 import com.google.firebase.database.logging.LogWrapper;
-import com.google.firebase.database.util.AndroidSupport;
 import com.google.firebase.database.util.GAuthToken;
 
 import java.util.ArrayList;
@@ -1063,17 +1062,9 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
 
   private void sendConnectStats() {
     Map<String, Integer> stats = new HashMap<>();
-    if (AndroidSupport.isAndroid()) {
-      if (this.context.isPersistenceEnabled()) {
-        stats.put("persistence.android.enabled", 1);
-      }
-      stats.put("sdk.android." + context.getClientSdkVersion().replace('.', '-'), 1);
-      // TODO: Also send stats for connection version
-    } else {
-      assert !this.context.isPersistenceEnabled()
-          : "Stats for persistence on JVM missing (persistence not yet supported)";
-      stats.put("sdk.admin_java." + context.getClientSdkVersion().replace('.', '-'), 1);
-    }
+    assert !this.context.isPersistenceEnabled()
+        : "Stats for persistence on JVM missing (persistence not yet supported)";
+    stats.put("sdk.admin_java." + context.getClientSdkVersion().replace('.', '-'), 1);
     if (logger.logsDebug()) {
       logger.debug("Sending first connection stats");
     }

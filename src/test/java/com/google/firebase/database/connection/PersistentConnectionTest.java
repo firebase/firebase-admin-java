@@ -41,7 +41,7 @@ public class PersistentConnectionTest {
     Mockito.verify(connFactory.delegate, Mockito.times(1)).onConnect();
     assertEquals(2, connFactory.outgoing.size());
     assertEquals("s", connFactory.outgoing.get(0).getAction());
-    assertEquals("auth", connFactory.outgoing.get(1).getAction());
+    assertEquals("gauth", connFactory.outgoing.get(1).getAction());
     assertTrue(connFactory.outgoing.get(1).sensitive);
   }
 
