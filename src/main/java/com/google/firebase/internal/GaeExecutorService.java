@@ -17,6 +17,7 @@
 package com.google.firebase.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.base.Strings;
@@ -27,8 +28,10 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -45,11 +48,17 @@ class GaeExecutorService implements ExecutorService {
 
   private final AtomicReference<ExecutorWrapper> executor = new AtomicReference<>();
   private final String threadName;
+  private final ThreadFactory threadFactory;
   private boolean shutdown;
 
   GaeExecutorService(String threadName) {
+    this(threadName, GaeThreadFactory.getInstance());
+  }
+
+  GaeExecutorService(String threadName, ThreadFactory threadFactory) {
     checkArgument(!Strings.isNullOrEmpty(threadName));
     this.threadName = threadName;
+    this.threadFactory = threadFactory;
   }
 
   private ExecutorService ensureExecutorService() {
@@ -59,7 +68,8 @@ class GaeExecutorService implements ExecutorService {
         checkState(!shutdown);
         wrapper = executor.get();
         if (wrapper == null) {
-          wrapper = new ExecutorWrapper(threadName);
+          wrapper = new ExecutorWrapper(threadName,
+              threadFactory != null ? threadFactory : GaeThreadFactory.getInstance());
           executor.compareAndSet(null, wrapper);
         }
       }
@@ -135,17 +145,30 @@ class GaeExecutorService implements ExecutorService {
 
   @Override
   public boolean isShutdown() {
-    return ensureExecutorService().isShutdown();
+    synchronized (executor) {
+      return shutdown;
+    }
   }
 
   @Override
   public boolean isTerminated() {
-    return ensureExecutorService().isTerminated();
+    synchronized (executor) {
+      if (!shutdown) {
+        return false;
+      }
+      ExecutorWrapper wrapper = executor.get();
+      return wrapper == null || wrapper.getExecutorService().isTerminated();
+    }
   }
 
   @Override
   public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-    return ensureExecutorService().awaitTermination(timeout, unit);
+    ExecutorWrapper wrapper;
+    synchronized (executor) {
+      wrapper = executor.get();
+    }
+    // call await outside the lock
+    return wrapper == null || wrapper.getExecutorService().awaitTermination(timeout, unit);
   }
 
   @Override
@@ -157,9 +180,10 @@ class GaeExecutorService implements ExecutorService {
 
     private final ExecutorService executorService;
 
-    ExecutorWrapper(String threadName) {
-      GaeThreadFactory threadFactory = GaeThreadFactory.getInstance();
-      if (threadFactory.isUsingBackgroundThreads()) {
+    ExecutorWrapper(String threadName, ThreadFactory threadFactory) {
+      boolean background = threadFactory instanceof GaeThreadFactory
+          && ((GaeThreadFactory) threadFactory).isUsingBackgroundThreads();
+      if (background) {
         // Create a thread pool with long-lived threads if background thread support is available.
         executorService = new RevivingScheduledExecutor(threadFactory, threadName, true);
       } else {

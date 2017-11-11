@@ -196,6 +196,8 @@ public class NodeTest {
     assertTrue(node.isEmpty());
     assertNull(node.getValue());
     assertEquals("{ }", node.toString());
+    assertEquals(0, node.hashCode());
+    assertEquals(0, node.compareTo(new ChildrenNode()));
   }
 
   @Test
@@ -226,6 +228,10 @@ public class NodeTest {
         + "  foo=value1\n"
         + "  .priority=1.0\n"
         + "}", node.toString());
+
+    ChildrenNode other = new ChildrenNode(map, PriorityUtilities.parsePriority(1));
+    assertEquals(node, other);
+    assertEquals(node.hashCode(), other.hashCode());
   }
 
   @Test
