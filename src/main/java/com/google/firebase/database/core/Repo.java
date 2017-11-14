@@ -75,7 +75,6 @@ public class Repo implements PersistentConnection.Delegate {
   private final LogWrapper operationLogger;
   private final LogWrapper transactionLogger;
   private final LogWrapper dataLogger;
-  public long dataUpdateCount = 0; // for testing.
   private SnapshotHolder infoData;
   private SparseSnapshotTree onDisconnect;
   private Tree<List<TransactionData>> transactionQueueTree;
@@ -216,50 +215,7 @@ public class Repo implements PersistentConnection.Delegate {
   }
 
   private void restoreWrites(PersistenceManager persistenceManager) {
-    List<UserWriteRecord> writes = persistenceManager.loadUserWrites();
-
-    Map<String, Object> serverValues = ServerValues.generateServerValues(serverClock);
-    long lastWriteId = Long.MIN_VALUE;
-    for (final UserWriteRecord write : writes) {
-      RequestResultCallback onComplete =
-          new RequestResultCallback() {
-        @Override
-        public void onRequestResult(String optErrorCode, String optErrorMessage) {
-          DatabaseError error = fromErrorCode(optErrorCode, optErrorMessage);
-          warnIfWriteFailed("Persisted write", write.getPath(), error);
-          ackWriteAndRerunTransactions(write.getWriteId(), write.getPath(), error);
-        }
-      };
-      if (lastWriteId >= write.getWriteId()) {
-        throw new IllegalStateException("Write ids were not in order.");
-      }
-      lastWriteId = write.getWriteId();
-      nextWriteId = write.getWriteId() + 1;
-      if (write.isOverwrite()) {
-        if (operationLogger.logsDebug()) {
-          operationLogger.debug("Restoring overwrite with id " + write.getWriteId());
-        }
-        connection.put(write.getPath().asList(), write.getOverwrite().getValue(true), onComplete);
-        Node resolved =
-            ServerValues.resolveDeferredValueSnapshot(write.getOverwrite(), serverValues);
-        serverSyncTree.applyUserOverwrite(
-            write.getPath(),
-            write.getOverwrite(),
-            resolved,
-            write.getWriteId(), /*visible=*/
-            true, /*persist=*/
-            false);
-      } else {
-        if (operationLogger.logsDebug()) {
-          operationLogger.debug("Restoring merge with id " + write.getWriteId());
-        }
-        connection.merge(write.getPath().asList(), write.getMerge().getValue(true), onComplete);
-        CompoundWrite resolved =
-            ServerValues.resolveDeferredValueMerge(write.getMerge(), serverValues);
-        serverSyncTree.applyUserMerge(
-            write.getPath(), write.getMerge(), resolved, write.getWriteId(), /*persist=*/ false);
-      }
-    }
+    // No-op
   }
 
   public FirebaseDatabase getDatabase() {
@@ -281,7 +237,7 @@ public class Repo implements PersistentConnection.Delegate {
     ctx.getRunLoop().scheduleNow(r);
   }
 
-  public void postEvent(Runnable r) {
+  private void postEvent(Runnable r) {
     InternalHelpers.checkNotDestroyed(this);
     ctx.requireStarted();
     ctx.getEventTarget().postEvent(r);
@@ -313,7 +269,6 @@ public class Repo implements PersistentConnection.Delegate {
     if (dataLogger.logsDebug()) {
       operationLogger.debug("onDataUpdate: " + path + " " + message);
     }
-    dataUpdateCount++; // For testing.
 
     List<? extends Event> events;
     try {
@@ -367,7 +322,6 @@ public class Repo implements PersistentConnection.Delegate {
     if (dataLogger.logsDebug()) {
       operationLogger.debug("onRangeMergeUpdate: " + path + " " + merges);
     }
-    dataUpdateCount++; // For testing.
 
     List<RangeMerge> parsedMerges = new ArrayList<>(merges.size());
     for (com.google.firebase.database.connection.RangeMerge merge : merges) {
@@ -610,7 +564,7 @@ public class Repo implements PersistentConnection.Delegate {
     onServerInfoUpdate(Constants.DOT_INFO_AUTHENTICATED, authOk);
   }
 
-  public void onServerInfoUpdate(ChildKey key, Object value) {
+  private void onServerInfoUpdate(ChildKey key, Object value) {
     updateInfo(key, value);
   }
 
@@ -941,8 +895,8 @@ public class Repo implements PersistentConnection.Delegate {
               repo.postEvents(events);
 
               // Finally, run the callbacks
-              for (int i = 0; i < callbacks.size(); ++i) {
-                postEvent(callbacks.get(i));
+              for (Runnable callback : callbacks) {
+                postEvent(callback);
               }
             } else {
               // transactions are no longer sent. Update their status appropriately
@@ -1143,8 +1097,8 @@ public class Repo implements PersistentConnection.Delegate {
     pruneCompletedTransactions(transactionQueueTree);
 
     // Now fire callbacks, now that we're in a good, known state.
-    for (int i = 0; i < callbacks.size(); ++i) {
-      postEvent(callbacks.get(i));
+    for (Runnable callback : callbacks) {
+      postEvent(callback);
     }
 
     // Try to send the transaction result to the server.
@@ -1364,13 +1318,7 @@ public class Repo implements PersistentConnection.Delegate {
 
     @Override
     public int compareTo(TransactionData o) {
-      if (order < o.order) {
-        return -1;
-      } else if (order == o.order) {
-        return 0;
-      } else {
-        return 1;
-      }
+      return Long.compare(order, o.order);
     }
   }
 }
