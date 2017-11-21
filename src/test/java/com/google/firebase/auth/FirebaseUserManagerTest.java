@@ -23,8 +23,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.http.HttpHeaders;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
@@ -33,6 +31,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.internal.SdkUtils;
+import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
@@ -496,22 +495,12 @@ public class FirebaseUserManagerTest {
   }
 
   private void checkRequestHeaders(TestResponseInterceptor interceptor) {
-    HttpHeaders headers = interceptor.response.getRequest().getHeaders();
+    HttpHeaders headers = interceptor.getResponse().getRequest().getHeaders();
     String auth = "Bearer " + TEST_TOKEN;
     assertEquals(auth, headers.getFirstHeaderStringValue("Authorization"));
 
     String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
     assertEquals(clientVersion, headers.getFirstHeaderStringValue("X-Client-Version"));
-  }
-
-  private static class TestResponseInterceptor implements HttpResponseInterceptor {
-
-    private HttpResponse response;
-
-    @Override
-    public void interceptResponse(HttpResponse response) throws IOException {
-      this.response = response;
-    }
   }
 
 }
