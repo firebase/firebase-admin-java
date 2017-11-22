@@ -28,7 +28,6 @@ import com.google.firebase.database.core.persistence.NoopPersistenceManager;
 import com.google.firebase.database.core.persistence.PersistenceManager;
 import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.logging.Logger;
-import com.google.firebase.database.tubesock.ThreadConfig;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 
 import java.util.List;
@@ -157,11 +156,6 @@ public class Context {
     return new LogWrapper(logger, component, prefix);
   }
 
-  private ThreadConfig getThreadConfig() {
-    return new ThreadConfig(ImplFirebaseTrampolines.getThreadFactory(firebaseApp),
-        getPlatform().getThreadInitializer());
-  }
-
   public ConnectionContext getConnectionContext() {
     return new ConnectionContext(
         this.logger,
@@ -170,7 +164,7 @@ public class Context {
         this.isPersistenceEnabled(),
         FirebaseDatabase.getSdkVersion(),
         this.getUserAgent(),
-        this.getThreadConfig());
+        ImplFirebaseTrampolines.getThreadFactory(firebaseApp));
   }
 
   PersistenceManager getPersistenceManager(String firebaseId) {
