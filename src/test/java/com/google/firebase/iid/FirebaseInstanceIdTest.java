@@ -27,11 +27,13 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.testing.TestResponseInterceptor;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.junit.After;
 import org.junit.Test;
@@ -115,36 +117,47 @@ public class FirebaseInstanceIdTest {
 
   @Test
   public void testDeleteInstanceIdError() throws Exception {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
-        .setStatusCode(500)
-        .setContent("{}");
-    MockHttpTransport transport = new MockHttpTransport.Builder()
-        .setLowLevelHttpResponse(response)
-        .build();
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredentials(new MockGoogleCredentials("test-token"))
-        .setProjectId("test-project")
-        .setHttpTransport(transport)
-        .build();
-    FirebaseApp.initializeApp(options);
+    Map<Integer, String> errors = ImmutableMap.of(
+        404, "Failed to find the instance ID: test-iid",
+        429, "Request throttled out by the backend server",
+        500, "Internal server error",
+        501, "Error while invoking instance ID service"
+    );
 
-    FirebaseInstanceId instanceId = FirebaseInstanceId.getInstance();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    instanceId.setInterceptor(interceptor);
-    try {
-      instanceId.deleteInstanceIdAsync("test-iid").get();
-      fail("No error thrown for HTTP error");
-    } catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof FirebaseInstanceIdException);
-      assertTrue(e.getCause().getCause() instanceof HttpResponseException);
-    }
-
-    assertNotNull(interceptor.getResponse());
-    HttpRequest request = interceptor.getResponse().getRequest();
-    assertEquals("DELETE", request.getRequestMethod());
     String url = "https://console.firebase.google.com/v1/project/test-project/instanceId/test-iid";
-    assertEquals(url, request.getUrl().toString());
-    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+    for (Map.Entry<Integer, String> entry : errors.entrySet()) {
+      MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+          .setStatusCode(entry.getKey())
+          .setContent("test error");
+      MockHttpTransport transport = new MockHttpTransport.Builder()
+          .setLowLevelHttpResponse(response)
+          .build();
+      FirebaseOptions options = new FirebaseOptions.Builder()
+          .setCredentials(new MockGoogleCredentials("test-token"))
+          .setProjectId("test-project")
+          .setHttpTransport(transport)
+          .build();
+      final FirebaseApp app = FirebaseApp.initializeApp(options);
+
+      FirebaseInstanceId instanceId = FirebaseInstanceId.getInstance();
+      TestResponseInterceptor interceptor = new TestResponseInterceptor();
+      instanceId.setInterceptor(interceptor);
+      try {
+        instanceId.deleteInstanceIdAsync("test-iid").get();
+        fail("No error thrown for HTTP error");
+      } catch (ExecutionException e) {
+        assertTrue(e.getCause() instanceof FirebaseInstanceIdException);
+        assertEquals(entry.getValue(), e.getCause().getMessage());
+        assertTrue(e.getCause().getCause() instanceof HttpResponseException);
+      }
+
+      assertNotNull(interceptor.getResponse());
+      HttpRequest request = interceptor.getResponse().getRequest();
+      assertEquals("DELETE", request.getRequestMethod());
+      assertEquals(url, request.getUrl().toString());
+      assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+      app.delete();
+    }
   }
 
 

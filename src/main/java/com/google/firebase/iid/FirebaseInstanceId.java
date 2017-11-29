@@ -22,9 +22,9 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.core.ApiFuture;
@@ -32,6 +32,7 @@ import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.io.ByteStreams;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.FirebaseService;
@@ -126,9 +127,9 @@ public class FirebaseInstanceId {
         HttpResponse response = null;
         try {
           response = request.execute();
-          response.parseAs(GenericJson.class);
+          ByteStreams.exhaust(response.getContent());
         } catch (Exception e) {
-          throw new FirebaseInstanceIdException("Error while invoking instance ID service", e);
+          handleError(instanceId, e);
         } finally {
           if (response != null) {
             response.disconnect();
@@ -137,6 +138,30 @@ public class FirebaseInstanceId {
         return null;
       }
     });
+  }
+
+  private void handleError(String instanceId, Exception e) throws FirebaseInstanceIdException {
+    String msg = "Error while invoking instance ID service";
+    if (e instanceof HttpResponseException) {
+      int statusCode = ((HttpResponseException) e).getStatusCode();
+      switch (statusCode) {
+        case 404:
+          msg = "Failed to find the instance ID: " + instanceId;
+          break;
+
+        case 429:
+          msg = "Request throttled out by the backend server";
+          break;
+
+        case 500:
+          msg = "Internal server error";
+          break;
+
+        default:
+          // Do nothing
+      }
+    }
+    throw new FirebaseInstanceIdException(msg, e);
   }
 
   private static final String SERVICE_ID = FirebaseInstanceId.class.getName();
