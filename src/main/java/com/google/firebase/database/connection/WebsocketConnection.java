@@ -65,23 +65,19 @@ class WebsocketConnection {
       String optCachedHost,
       Delegate delegate,
       String optLastSessionId) {
-    this(connectionContext, hostInfo, optCachedHost, delegate, optLastSessionId,
-        new DefaultWSClientFactory());
+    this(connectionContext, delegate,
+        new DefaultWSClientFactory(connectionContext, hostInfo, optCachedHost, optLastSessionId));
   }
 
   WebsocketConnection(
       ConnectionContext connectionContext,
-      HostInfo hostInfo,
-      String optCachedHost,
       Delegate delegate,
-      String optLastSessionId,
       WSClientFactory clientFactory) {
     this.executorService = connectionContext.getExecutorService();
     this.delegate = delegate;
     this.logger = new LogWrapper(connectionContext.getLogger(), WebsocketConnection.class,
         "ws_" + CONN_ID.getAndIncrement());
-    this.conn = clientFactory.newClient(
-        connectionContext, hostInfo, optCachedHost, optLastSessionId, new WSClientHandlerImpl());
+    this.conn = clientFactory.newClient(new WSClientHandlerImpl());
   }
 
   void open() {
@@ -412,21 +408,26 @@ class WebsocketConnection {
   interface WSClientFactory {
 
     WSClient newClient(
-        ConnectionContext context,
-        HostInfo hostInfo,
-        String optCachedHost,
-        String optLastSessionId,
         WSClientEventHandler delegate);
 
   }
 
   private static class DefaultWSClientFactory implements WSClientFactory {
-    public WSClient newClient(
-        ConnectionContext context,
-        HostInfo hostInfo,
-        String optCachedHost,
-        String optLastSessionId,
-        WSClientEventHandler delegate) {
+
+    final ConnectionContext context;
+    final HostInfo hostInfo;
+    final String optCachedHost;
+    final String optLastSessionId;
+
+    DefaultWSClientFactory(ConnectionContext context, HostInfo hostInfo, String
+        optCachedHost, String optLastSessionId) {
+      this.context = context;
+      this.hostInfo = hostInfo;
+      this.optCachedHost = optCachedHost;
+      this.optLastSessionId = optLastSessionId;
+    }
+
+    public WSClient newClient(WSClientEventHandler delegate) {
       String host = (optCachedHost != null) ? optCachedHost : hostInfo.getHost();
       URI uri = HostInfo.getConnectionUrl(
           host, hostInfo.isSecure(), hostInfo.getNamespace(), optLastSessionId);

@@ -189,15 +189,12 @@ public class ConnectionTest {
       this.connection = new Connection(
           TestHelpers.newConnectionContext(executor),
           Mockito.mock(HostInfo.class),
-          "cached-host",
           delegate,
-          "session-id",
           this);
     }
 
     @Override
-    public WebsocketConnection newConnection(ConnectionContext context, HostInfo hostInfo,
-        String cachedHost, WebsocketConnection.Delegate delegate, String optLastSessionId) {
+    public WebsocketConnection newConnection(WebsocketConnection.Delegate delegate) {
       return wsConn;
     }
   }

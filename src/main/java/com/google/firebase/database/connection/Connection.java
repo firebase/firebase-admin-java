@@ -16,6 +16,7 @@
 
 package com.google.firebase.database.connection;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.firebase.database.logging.LogWrapper;
 
 import java.util.HashMap;
@@ -47,28 +48,28 @@ class Connection implements WebsocketConnection.Delegate {
   private WebsocketConnection conn;
   private State state;
 
-  public Connection(
-      ConnectionContext context,
-      HostInfo hostInfo,
-      String cachedHost,
-      Delegate delegate,
-      String optLastSessionId) {
-    this(context, hostInfo, cachedHost, delegate, optLastSessionId, new DefaultConnectionFactory());
-  }
-
   Connection(
       ConnectionContext context,
       HostInfo hostInfo,
       String cachedHost,
       Delegate delegate,
-      String optLastSessionId,
+      String optLastSessionId) {
+    this(context, hostInfo, delegate,
+        new DefaultConnectionFactory(context, hostInfo, cachedHost, optLastSessionId));
+  }
+
+  @VisibleForTesting
+  Connection(
+      ConnectionContext context,
+      HostInfo hostInfo,
+      Delegate delegate,
       WebsocketConnectionFactory connFactory) {
     long connId = connectionIds++;
     this.hostInfo = hostInfo;
     this.delegate = delegate;
     this.logger = new LogWrapper(context.getLogger(), Connection.class, "conn_" + connId);
     this.state = State.REALTIME_CONNECTING;
-    this.conn = connFactory.newConnection(context, hostInfo, cachedHost, this, optLastSessionId);
+    this.conn = connFactory.newConnection(this);
   }
 
   public void open() {
@@ -270,23 +271,29 @@ class Connection implements WebsocketConnection.Delegate {
   }
 
   interface WebsocketConnectionFactory {
-    WebsocketConnection newConnection(
-        ConnectionContext context,
-        HostInfo hostInfo,
-        String cachedHost,
-        WebsocketConnection.Delegate delegate,
-        String optLastSessionId);
+    WebsocketConnection newConnection(WebsocketConnection.Delegate delegate);
   }
 
   private static class DefaultConnectionFactory implements WebsocketConnectionFactory {
 
-    @Override
-    public WebsocketConnection newConnection(
+    final ConnectionContext context;
+    final HostInfo hostInfo;
+    final String cachedHost;
+    final String optLastSessionId;
+
+    DefaultConnectionFactory(
         ConnectionContext context,
         HostInfo hostInfo,
         String cachedHost,
-        WebsocketConnection.Delegate delegate,
         String optLastSessionId) {
+      this.context = context;
+      this.hostInfo = hostInfo;
+      this.cachedHost = cachedHost;
+      this.optLastSessionId = optLastSessionId;
+    }
+
+    @Override
+    public WebsocketConnection newConnection(WebsocketConnection.Delegate delegate) {
       return new WebsocketConnection(context, hostInfo, cachedHost, delegate, optLastSessionId);
     }
   }

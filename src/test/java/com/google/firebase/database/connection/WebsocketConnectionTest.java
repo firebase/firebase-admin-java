@@ -23,7 +23,6 @@ import com.google.firebase.database.connection.WebsocketConnection.WSClient;
 import com.google.firebase.database.connection.WebsocketConnection.WSClientEventHandler;
 import com.google.firebase.database.connection.WebsocketConnection.WSClientFactory;
 import java.io.IOException;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -156,18 +155,11 @@ public class WebsocketConnectionTest {
 
     MockClientFactory() {
       ConnectionContext context = TestHelpers.newConnectionContext(executor);
-      this.conn = new WebsocketConnection(
-          context,
-          Mockito.mock(HostInfo.class),
-          "cached-host",
-          delegate,
-          "session-id",
-          this);
+      this.conn = new WebsocketConnection(context, delegate, this);
     }
 
     @Override
-    public WSClient newClient(ConnectionContext context, HostInfo hostInfo, String optCachedHost,
-        String optLastSessionId, WSClientEventHandler delegate) {
+    public WSClient newClient(WSClientEventHandler delegate) {
       this.eventHandler = delegate;
       return client;
     }

@@ -7,8 +7,6 @@ import static org.junit.Assert.assertTrue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.database.TestHelpers;
-import com.google.firebase.database.logging.DefaultLogger;
-import com.google.firebase.database.logging.Logger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -286,21 +284,8 @@ public class PersistentConnectionTest {
     }
 
     @Override
-    public Connection newConnection(ConnectionContext context, HostInfo hostInfo, String
-        cachedHost, Connection.Delegate delegate, String lastSessionId) {
+    public Connection newConnection(PersistentConnectionImpl delegate) {
       return conn;
-    }
-
-    private ConnectionContext newConnectionContext() {
-      Logger logger = new DefaultLogger(Logger.Level.DEBUG, ImmutableList.<String>of());
-      ConnectionAuthTokenProvider tokenProvider = new ConnectionAuthTokenProvider() {
-        @Override
-        public void getToken(boolean forceRefresh, GetTokenCallback callback) {
-          callback.onSuccess("test-token");
-        }
-      };
-      return new ConnectionContext(logger, tokenProvider, executor, false, "testVersion",
-          "testUserAgent", Executors.defaultThreadFactory());
     }
   }
 

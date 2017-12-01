@@ -534,19 +534,18 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
 
   private void openNetworkConnection(String token) {
     hardAssert(
-        this.connectionState == ConnectionState.GettingToken,
+        connectionState == ConnectionState.GettingToken,
         "Trying to open network connection while in the wrong state: %s",
-        this.connectionState);
+        connectionState);
     // User might have logged out. Positive auth status is handled after authenticating with
     // the server
     if (token == null) {
-      this.delegate.onAuthStatus(false);
+      delegate.onAuthStatus(false);
     }
-    this.authToken = token;
-    this.connectionState = ConnectionState.Connecting;
-    this.realtime = connFactory.newConnection(
-        this.context, this.hostInfo, this.cachedHost, this, this.lastSessionId);
-    this.realtime.open();
+    authToken = token;
+    connectionState = ConnectionState.Connecting;
+    realtime = connFactory.newConnection(this);
+    realtime.open();
   }
 
   private void sendOnDisconnect(
@@ -1294,23 +1293,14 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   }
 
   interface ConnectionFactory {
-    Connection newConnection(
-        ConnectionContext context,
-        HostInfo hostInfo,
-        String cachedHost,
-        Connection.Delegate delegate,
-        String lastSessionId);
+    Connection newConnection(PersistentConnectionImpl delegate);
   }
 
   private static class DefaultConnectionFactory implements ConnectionFactory {
     @Override
-    public Connection newConnection(
-        ConnectionContext context,
-        HostInfo hostInfo,
-        String cachedHost,
-        Connection.Delegate delegate,
-        String lastSessionId) {
-      return new Connection(context, hostInfo, cachedHost, delegate, lastSessionId);
+    public Connection newConnection(PersistentConnectionImpl delegate) {
+      return new Connection(delegate.context, delegate.hostInfo, delegate.cachedHost,
+          delegate, delegate.lastSessionId);
     }
   }
 
