@@ -215,7 +215,7 @@ public class Repo implements PersistentConnection.Delegate {
   }
 
   private void restoreWrites(PersistenceManager persistenceManager) {
-    // No-op
+    // No-op (Admin SDK does not support persistence)
   }
 
   public FirebaseDatabase getDatabase() {
