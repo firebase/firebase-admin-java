@@ -55,7 +55,7 @@ class Connection implements WebsocketConnection.Delegate {
       Delegate delegate,
       String optLastSessionId) {
     this(context, hostInfo, delegate,
-        new DefaultConnectionFactory(context, hostInfo, cachedHost, optLastSessionId));
+        new DefaultWebsocketConnectionFactory(context, hostInfo, cachedHost, optLastSessionId));
   }
 
   @VisibleForTesting
@@ -274,14 +274,14 @@ class Connection implements WebsocketConnection.Delegate {
     WebsocketConnection newConnection(WebsocketConnection.Delegate delegate);
   }
 
-  private static class DefaultConnectionFactory implements WebsocketConnectionFactory {
+  private static class DefaultWebsocketConnectionFactory implements WebsocketConnectionFactory {
 
     final ConnectionContext context;
     final HostInfo hostInfo;
     final String cachedHost;
     final String optLastSessionId;
 
-    DefaultConnectionFactory(
+    DefaultWebsocketConnectionFactory(
         ConnectionContext context,
         HostInfo hostInfo,
         String cachedHost,

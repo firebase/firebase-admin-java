@@ -56,6 +56,7 @@ public class RepoTest {
   private static final List<String> FAILURE = ImmutableList.of("failure");
 
   private static DatabaseConfig config;
+  private static PersistentConnection connection;
 
   @BeforeClass
   public static void setUpClass() throws IOException {
@@ -81,7 +82,7 @@ public class RepoTest {
       }
     });
 
-    PersistentConnection connection = mockConnection();
+    connection = mockConnection();
     Mockito.when(config.newPersistentConnection(
         Mockito.any(HostInfo.class), Mockito.any(PersistentConnection.Delegate.class)))
         .thenReturn(connection);
@@ -95,34 +96,6 @@ public class RepoTest {
     })
         .when(connection).compareAndPut(
         Mockito.eq(ImmutableList.of("txn")),
-        Mockito.any(),
-        Mockito.anyString(),
-        Mockito.any(RequestResultCallback.class));
-
-    Mockito.doAnswer(new Answer() {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        RequestResultCallback callback = invocation.getArgument(3);
-        callback.onRequestResult("test error", "test error message");
-        return null;
-      }
-    })
-        .when(connection).compareAndPut(
-        Mockito.eq(ImmutableList.of("txn_error")),
-        Mockito.any(),
-        Mockito.anyString(),
-        Mockito.any(RequestResultCallback.class));
-
-    Mockito.doAnswer(new Answer() {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        RequestResultCallback callback = invocation.getArgument(3);
-        callback.onRequestResult("datastale", "test error message");
-        return null;
-      }
-    })
-        .when(connection).compareAndPut(
-        Mockito.eq(ImmutableList.of("txn_stale_error")),
         Mockito.any(),
         Mockito.anyString(),
         Mockito.any(RequestResultCallback.class));
@@ -389,6 +362,20 @@ public class RepoTest {
 
   @Test
   public void testTransactionError() throws InterruptedException {
+    Mockito.doAnswer(new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(3);
+        callback.onRequestResult("test error", "test error message");
+        return null;
+      }
+    })
+        .when(connection).compareAndPut(
+        Mockito.eq(ImmutableList.of("txn_error")),
+        Mockito.any(),
+        Mockito.anyString(),
+        Mockito.any(RequestResultCallback.class));
+
     final Repo repo = newRepo();
     final List<DataSnapshot> events = new ArrayList<>();
     final Path path = new Path("/txn_error");
@@ -427,6 +414,20 @@ public class RepoTest {
 
   @Test
   public void testTransactionDataStaleError() throws InterruptedException {
+    Mockito.doAnswer(new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(3);
+        callback.onRequestResult("datastale", "test error message");
+        return null;
+      }
+    })
+        .when(connection).compareAndPut(
+        Mockito.eq(ImmutableList.of("txn_stale_error")),
+        Mockito.any(),
+        Mockito.anyString(),
+        Mockito.any(RequestResultCallback.class));
+
     final Repo repo = newRepo();
     final List<DataSnapshot> events = new ArrayList<>();
     final Path path = new Path("/txn_stale_error");
