@@ -283,6 +283,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     this.connectionState = ConnectionState.Disconnected;
     this.realtime = null;
     this.hasOnDisconnects = false;
+    requestCBHash.clear();
     if (inactivityTimer != null) {
       logger.debug("cancelling idle time checker");
       inactivityTimer.cancel(false);

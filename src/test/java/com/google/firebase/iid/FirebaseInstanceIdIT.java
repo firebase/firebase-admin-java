@@ -16,6 +16,9 @@
 
 package com.google.firebase.iid;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.util.concurrent.ExecutionException;
 import org.junit.BeforeClass;
@@ -35,6 +38,8 @@ public class FirebaseInstanceIdIT {
       instanceId.deleteInstanceIdAsync("non-existing").get();
     } catch (ExecutionException e) {
       // TODO: Check for correct error message
+      assertTrue(e.getCause() instanceof FirebaseInstanceIdException);
+      assertEquals("Failed to find the instance ID: non-existing", e.getCause().getMessage());
     }
   }
 

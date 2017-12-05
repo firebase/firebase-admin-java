@@ -30,11 +30,14 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
+import com.google.firebase.auth.ListUsersPage.PageFactory;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.internal.FirebaseService;
+import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.TaskToApiFuture;
 import com.google.firebase.tasks.Task;
 
@@ -346,6 +349,46 @@ public class FirebaseAuth {
     return new TaskToApiFuture<>(getUserByPhoneNumber(phoneNumber));
   }
 
+  private Task<ListUsersPage> listUsers(@Nullable String pageToken, int maxResults) {
+    checkNotDestroyed();
+    final PageFactory factory = new PageFactory(
+        new DefaultUserSource(userManager), maxResults, pageToken);
+    return call(new Callable<ListUsersPage>() {
+      @Override
+      public ListUsersPage call() throws Exception {
+        return factory.create();
+      }
+    });
+  }
+
+  /**
+   * Gets a page of users starting from the specified {@code pageToken}. Page size will be
+   * limited to 1000 users.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of users.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link ListUsersPage}
+   *     instance. If an error occurs while retrieving user data, the future throws an exception.
+   * @throws IllegalArgumentException If the specified page token is empty.
+   */
+  public ApiFuture<ListUsersPage> listUsersAsync(@Nullable String pageToken) {
+    return listUsersAsync(pageToken, FirebaseUserManager.MAX_LIST_USERS_RESULTS);
+  }
+
+  /**
+   * Gets a page of users starting from the specified {@code pageToken}.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of users.
+   * @param maxResults Maximum number of users to include in the returned page. This may not
+   *     exceed 1000.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link ListUsersPage}
+   *     instance. If an error occurs while retrieving user data, the future throws an exception.
+   * @throws IllegalArgumentException If the specified page token is empty, or max results value
+   *     is invalid.
+   */
+  public ApiFuture<ListUsersPage> listUsersAsync(@Nullable String pageToken, int maxResults) {
+    return new TaskToApiFuture<>(listUsers(pageToken, maxResults));
+  }
+
   /**
    * Similar to {@link #createUserAsync(CreateRequest)}, but returns a {@link Task}.
    *
@@ -398,7 +441,7 @@ public class FirebaseAuth {
     return call(new Callable<UserRecord>() {
       @Override
       public UserRecord call() throws Exception {
-        userManager.updateUser(request);
+        userManager.updateUser(request, jsonFactory);
         return userManager.getUserById(request.getUid());
       }
     });
@@ -416,6 +459,35 @@ public class FirebaseAuth {
    */
   public ApiFuture<UserRecord> updateUserAsync(final UpdateRequest request) {
     return new TaskToApiFuture<>(updateUser(request));
+  }
+
+  private Task<Void> setCustomClaims(String uid, Map<String, Object> claims) {
+    checkNotDestroyed();
+    final UpdateRequest request = new UpdateRequest(uid).setCustomClaims(claims);
+    return call(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        userManager.updateUser(request, jsonFactory);
+        return null;
+      }
+    });
+  }
+
+  /**
+   * Sets the specified custom claims on an existing user account. A null claims value removes
+   * any claims currently set on the user account. The claims should serialize into a valid JSON
+   * string. The serialized claims must not be larger than 1000 characters.
+   *
+   * @param uid A user ID string.
+   * @param claims A map of custom claims or null.
+   * @return An {@code ApiFuture} which will complete successfully when the user account has been
+   *     updated. If an error occurs while deleting the user account, the future throws a
+   *     {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the user ID string is null or empty, or the claims
+   *     payload is invalid or too large.
+   */
+  public ApiFuture<Void> setCustomClaimsAsync(String uid, Map<String, Object> claims) {
+    return new TaskToApiFuture<>(setCustomClaims(uid, claims));
   }
 
   /**
@@ -440,19 +512,6 @@ public class FirebaseAuth {
     });
   }
 
-  private void checkNotDestroyed() {
-    synchronized (lock) {
-      checkState(!destroyed.get(), "FirebaseAuth instance is no longer alive. This happens when "
-          + "the parent FirebaseApp instance has been deleted.");
-    }
-  }
-
-  private void destroy() {
-    synchronized (lock) {
-      destroyed.set(true);
-    }
-  }
-
   /**
    * Deletes the user identified by the specified user ID.
    *
@@ -468,6 +527,19 @@ public class FirebaseAuth {
 
   private <T> Task<T> call(Callable<T> command) {
     return ImplFirebaseTrampolines.submitCallable(firebaseApp, command);
+  }
+
+  private void checkNotDestroyed() {
+    synchronized (lock) {
+      checkState(!destroyed.get(), "FirebaseAuth instance is no longer alive. This happens when "
+          + "the parent FirebaseApp instance has been deleted.");
+    }
+  }
+
+  private void destroy() {
+    synchronized (lock) {
+      destroyed.set(true);
+    }
   }
 
   private static final String SERVICE_ID = FirebaseAuth.class.getName();

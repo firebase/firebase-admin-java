@@ -16,6 +16,8 @@
 
 package com.google.firebase.internal;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.annotations.VisibleForTesting;
 
 import java.security.AccessControlException;
@@ -88,6 +90,7 @@ public class RevivingScheduledExecutor extends ScheduledThreadPoolExecutor {
       final long initialDelayMs,
       final long timeoutMs) {
     super(0);
+    checkNotNull(threadFactory, "threadFactory must not be null");
     INSTANCE_COUNTER.incrementAndGet();
     this.initialDelayMs = initialDelayMs;
     this.timeoutMs = timeoutMs;

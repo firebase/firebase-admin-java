@@ -104,7 +104,7 @@ public class FirebaseInstanceId {
    * Deletes the specified instance ID from Firebase.
    *
    * <p>This can be used to delete an instance ID and associated user data from a Firebase project,
-   * pursuant to the General Data protection Regulation (GDPR).
+   * pursuant to the General Data Protection Regulation (GDPR).
    *
    * @param instanceId A non-null, non-empty instance ID string.
    * @return An {@code ApiFuture} which will complete successfully when the instance ID is deleted,

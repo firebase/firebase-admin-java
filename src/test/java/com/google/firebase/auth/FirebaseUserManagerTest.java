@@ -22,20 +22,29 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.json.GenericJson;
+import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
+import com.google.firebase.auth.internal.DownloadAccountResponse;
+import com.google.firebase.auth.internal.DownloadAccountResponse.User;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.Map;
+
 import org.junit.Test;
 
 public class FirebaseUserManagerTest {
@@ -106,6 +115,82 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testListUsers() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setContent(TestUtils.loadResource("listUsers.json"));
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    userManager.setInterceptor(interceptor);
+
+    DownloadAccountResponse download = userManager.listUsers(999, null);
+    assertEquals(2, download.getUsers().size());
+    for (User user : download.getUsers()) {
+      ExportedUserRecord userRecord = new ExportedUserRecord(user);
+      checkUserRecord(userRecord);
+      assertEquals("passwordHash", userRecord.getPasswordHash());
+      assertEquals("passwordSalt", userRecord.getPasswordSalt());
+    }
+    assertNull(download.getPageToken());
+    checkRequestHeaders(interceptor);
+
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(new BigDecimal(999), parsed.get("maxResults"));
+    assertNull(parsed.get("nextPageToken"));
+  }
+
+  @Test
+  public void testListUsersWithPageToken() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setContent(TestUtils.loadResource("listUsers.json"));
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    userManager.setInterceptor(interceptor);
+
+    DownloadAccountResponse download = userManager.listUsers(999, "token");
+    assertEquals(2, download.getUsers().size());
+    for (User user : download.getUsers()) {
+      ExportedUserRecord userRecord = new ExportedUserRecord(user);
+      checkUserRecord(userRecord);
+      assertEquals("passwordHash", userRecord.getPasswordHash());
+      assertEquals("passwordSalt", userRecord.getPasswordSalt());
+    }
+    assertNull(download.getPageToken());
+    checkRequestHeaders(interceptor);
+
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(new BigDecimal(999), parsed.get("maxResults"));
+    assertEquals("token", parsed.get("nextPageToken"));
+  }
+
+  @Test
+  public void testListZeroUsers() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setContent("{}");
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    userManager.setInterceptor(interceptor);
+    DownloadAccountResponse download = userManager.listUsers(999, null);
+    assertNull(download.getUsers());
+    assertNull(download.getPageToken());
+    checkRequestHeaders(interceptor);
+  }
+
+  @Test
   public void testCreateUser() throws Exception {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     response.setContent(TestUtils.loadResource("createUser.json"));
@@ -131,8 +216,33 @@ public class FirebaseUserManagerTest {
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     userManager.setInterceptor(interceptor);
     // should not throw
-    userManager.updateUser(new UpdateRequest("testuser"));
+    userManager.updateUser(new UpdateRequest("testuser"), Utils.getDefaultJsonFactory());
     checkRequestHeaders(interceptor);
+  }
+
+  @Test
+  public void testSetCustomAttributes() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setContent(TestUtils.loadResource("createUser.json"));
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    userManager.setInterceptor(interceptor);
+    // should not throw
+    ImmutableMap<String, Object> claims = ImmutableMap.<String, Object>of(
+        "admin", true, "package", "gold");
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    userManager.updateUser(new UpdateRequest("testuser")
+        .setCustomClaims(claims), jsonFactory);
+    checkRequestHeaders(interceptor);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals("testuser", parsed.get("localId"));
+    assertEquals(jsonFactory.toString(claims), parsed.get("customAttributes"));
   }
 
   @Test
@@ -343,8 +453,9 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testUserUpdater() {
+  public void testUserUpdater() throws IOException {
     UpdateRequest update = new UpdateRequest("test");
+    Map<String, Object> claims = ImmutableMap.<String, Object>of("admin", true, "package", "gold");
     Map<String, Object> map = update
         .setDisplayName("Display Name")
         .setPhotoUrl("http://test.com/example.png")
@@ -352,8 +463,9 @@ public class FirebaseUserManagerTest {
         .setPhoneNumber("+1234567890")
         .setEmailVerified(true)
         .setPassword("secret")
-        .getProperties();
-    assertEquals(7, map.size());
+        .setCustomClaims(claims)
+        .getProperties(Utils.getDefaultJsonFactory());
+    assertEquals(8, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals("Display Name", map.get("displayName"));
     assertEquals("http://test.com/example.png", map.get("photoUrl"));
@@ -361,13 +473,49 @@ public class FirebaseUserManagerTest {
     assertEquals("+1234567890", map.get("phoneNumber"));
     assertTrue((Boolean) map.get("emailVerified"));
     assertEquals("secret", map.get("password"));
+    assertEquals(Utils.getDefaultJsonFactory().toString(claims), map.get("customAttributes"));
+  }
+
+  @Test
+  public void testNullJsonFactory() {
+    UpdateRequest update = new UpdateRequest("test");
+    Map<String, Object> claims = ImmutableMap.<String, Object>of("admin", true, "package", "gold");
+    update.setCustomClaims(claims);
+    try {
+      update.getProperties(null);
+      fail("No error thrown for null JsonFactory");
+    } catch (NullPointerException ignore) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testNullCustomClaims() {
+    UpdateRequest update = new UpdateRequest("test");
+    Map<String, Object> map = update
+        .setCustomClaims(null)
+        .getProperties(Utils.getDefaultJsonFactory());
+    assertEquals(2, map.size());
+    assertEquals(update.getUid(), map.get("localId"));
+    assertEquals("{}", map.get("customAttributes"));
+  }
+
+  @Test
+  public void testEmptyCustomClaims() {
+    UpdateRequest update = new UpdateRequest("test");
+    Map<String, Object> map = update
+        .setCustomClaims(ImmutableMap.<String, Object>of())
+        .getProperties(Utils.getDefaultJsonFactory());
+    assertEquals(2, map.size());
+    assertEquals(update.getUid(), map.get("localId"));
+    assertEquals("{}", map.get("customAttributes"));
   }
 
   @Test
   public void testDeleteDisplayName() {
     Map<String, Object> map = new UpdateRequest("test")
         .setDisplayName(null)
-        .getProperties();
+        .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(ImmutableList.of("DISPLAY_NAME"), map.get("deleteAttribute"));
   }
 
@@ -375,7 +523,7 @@ public class FirebaseUserManagerTest {
   public void testDeletePhotoUrl() {
     Map<String, Object> map = new UpdateRequest("test")
         .setPhotoUrl(null)
-        .getProperties();
+        .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(ImmutableList.of("PHOTO_URL"), map.get("deleteAttribute"));
   }
 
@@ -383,7 +531,7 @@ public class FirebaseUserManagerTest {
   public void testDeletePhoneNumber() {
     Map<String, Object> map = new UpdateRequest("test")
         .setPhoneNumber(null)
-        .getProperties();
+        .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(ImmutableList.of("phone"), map.get("deleteProvider"));
   }
 
@@ -467,6 +615,35 @@ public class FirebaseUserManagerTest {
     }
   }
 
+  @Test
+  public void testInvalidCustomClaims() {
+    UpdateRequest update = new UpdateRequest("test");
+    for (String claim : FirebaseUserManager.RESERVED_CLAIMS) {
+      try {
+        update.setCustomClaims(ImmutableMap.<String, Object>of(claim, "value"));
+        fail("No error thrown for reserved claim");
+      } catch (Exception ignore) {
+        // expected
+      }
+    }
+  }
+
+  @Test
+  public void testLargeCustomClaims() {
+    final StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < 1001; i++) {
+      builder.append("a");
+    }
+    UpdateRequest update = new UpdateRequest("test");
+    update.setCustomClaims(ImmutableMap.<String, Object>of("key", builder.toString()));
+    try {
+      update.getProperties(Utils.getDefaultJsonFactory());
+      fail("No error thrown for large claims payload");
+    } catch (Exception ignore) {
+      // expected
+    }
+  }
+
   private void checkUserRecord(UserRecord userRecord) {
     assertEquals("testuser", userRecord.getUid());
     assertEquals("testuser@example.com", userRecord.getEmail());
@@ -492,6 +669,11 @@ public class FirebaseUserManagerTest {
     assertNull(provider.getEmail());
     assertEquals("+1234567890", provider.getPhoneNumber());
     assertEquals("phone", provider.getProviderId());
+
+    Map<String, Object> claims = userRecord.getCustomClaims();
+    assertEquals(2, claims.size());
+    assertTrue((boolean) claims.get("admin"));
+    assertEquals("gold", claims.get("package"));
   }
 
   private void checkRequestHeaders(TestResponseInterceptor interceptor) {
