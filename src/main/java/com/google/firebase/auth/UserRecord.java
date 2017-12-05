@@ -20,18 +20,22 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.api.client.json.JsonFactory;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.firebase.auth.internal.GetAccountInfoResponse;
+import com.google.firebase.auth.internal.GetAccountInfoResponse.User;
+import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.json.JSONObject;
 
 /**
  * Contains metadata associated with a Firebase user account. Instances of this class are immutable
@@ -43,6 +47,8 @@ public class UserRecord implements UserInfo {
   private static final Map<String, String> REMOVABLE_FIELDS = ImmutableMap.of(
       "displayName", "DISPLAY_NAME",
       "photoUrl", "PHOTO_URL");
+  private static final String CUSTOM_ATTRIBUTES = "customAttributes";
+  private static final int MAX_CLAIMS_PAYLOAD_SIZE = 1000;
 
   private final String uid;
   private final String email;
@@ -53,8 +59,9 @@ public class UserRecord implements UserInfo {
   private final boolean disabled;
   private final ProviderUserInfo[] providers;
   private final UserMetadata userMetadata;
+  private final Map<String, Object> customClaims;
 
-  UserRecord(GetAccountInfoResponse.User response) {
+  UserRecord(User response) {
     checkNotNull(response, "Response must not be null");
     checkArgument(!Strings.isNullOrEmpty(response.getUid()), "uid must not be null or empty");
     this.uid = response.getUid();
@@ -73,6 +80,13 @@ public class UserRecord implements UserInfo {
       }
     }
     this.userMetadata = new UserMetadata(response.getCreatedAt(), response.getLastLoginAt());
+    String customClaims = response.getCustomClaims();
+    if (!Strings.isNullOrEmpty(customClaims)) {
+      Map<String, Object> parsed = new JSONObject(customClaims).toMap();
+      this.customClaims = ImmutableMap.copyOf(parsed);
+    } else {
+      this.customClaims = ImmutableMap.of();
+    }
   }
 
   /**
@@ -177,6 +191,16 @@ public class UserRecord implements UserInfo {
   }
 
   /**
+   * Returns custom claims set on this user.
+   *
+   * @return a non-null, immutable Map of custom claims, possibly empty.
+   */
+  @NonNull
+  public Map<String,Object> getCustomClaims() {
+    return customClaims;
+  }
+
+  /**
    * Returns a new {@link UpdateRequest}, which can be used to update the attributes
    * of this user.
    *
@@ -202,6 +226,32 @@ public class UserRecord implements UserInfo {
   private static void checkPassword(String password) {
     checkArgument(!Strings.isNullOrEmpty(password), "password cannot be null or empty");
     checkArgument(password.length() >= 6, "password must be at least 6 characters long");
+  }
+
+  private static void checkCustomClaims(Map<String,Object> customClaims) {
+    if (customClaims == null) {
+      return;
+    }
+    for (String key : customClaims.keySet()) {
+      checkArgument(!FirebaseUserManager.RESERVED_CLAIMS.contains(key),
+          "Claim '" + key + "' is reserved and cannot be set");
+    }
+  }
+
+  private static String serializeCustomClaims(Map customClaims, JsonFactory jsonFactory) {
+    checkNotNull(jsonFactory, "JsonFactory must not be null");
+    if (customClaims == null || customClaims.isEmpty()) {
+      return "{}";
+    }
+
+    try {
+      String claimsPayload = jsonFactory.toString(customClaims);
+      checkArgument(claimsPayload.length() <= MAX_CLAIMS_PAYLOAD_SIZE,
+          "customClaims payload cannot be larger than " + MAX_CLAIMS_PAYLOAD_SIZE + " characters");
+      return claimsPayload;
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Failed to serialize custom claims into JSON", e);
+    }
   }
 
   /**
@@ -430,7 +480,19 @@ public class UserRecord implements UserInfo {
       return this;
     }
 
-    Map<String, Object> getProperties() {
+    /**
+     * Updates the custom claims associated with this user. Calling this method with a null
+     * argument removes any custom claims from the user account.
+     *
+     * @param customClaims a Map of custom claims or null
+     */
+    public UpdateRequest setCustomClaims(Map<String,Object> customClaims) {
+      checkCustomClaims(customClaims);
+      properties.put(CUSTOM_ATTRIBUTES, customClaims);
+      return this;
+    }
+
+    Map<String, Object> getProperties(JsonFactory jsonFactory) {
       Map<String, Object> copy = new HashMap<>(properties);
       List<String> remove = new ArrayList<>();
       for (Map.Entry<String, String> entry : REMOVABLE_FIELDS.entrySet()) {
@@ -447,6 +509,11 @@ public class UserRecord implements UserInfo {
       if (copy.containsKey("phoneNumber") && copy.get("phoneNumber") == null) {
         copy.put("deleteProvider", ImmutableList.of("phone"));
         copy.remove("phoneNumber");
+      }
+
+      if (copy.containsKey(CUSTOM_ATTRIBUTES)) {
+        Map customClaims = (Map) copy.remove(CUSTOM_ATTRIBUTES);
+        copy.put(CUSTOM_ATTRIBUTES, serializeCustomClaims(customClaims, jsonFactory));
       }
       return ImmutableMap.copyOf(copy);
     }
