@@ -37,10 +37,8 @@ public class FirebaseInstanceIdIT {
     try {
       instanceId.deleteInstanceIdAsync("non-existing").get();
     } catch (ExecutionException e) {
-      // TODO: Check for correct error message
       assertTrue(e.getCause() instanceof FirebaseInstanceIdException);
       assertEquals("Failed to find the instance ID: non-existing", e.getCause().getMessage());
     }
   }
-
 }
