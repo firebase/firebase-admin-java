@@ -295,74 +295,44 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetUserHttpError() throws Exception {
-    UserManagerOp[] operations = new UserManagerOp[]{
-        new UserManagerOp() {
+    Map<UserManagerOp, String> operations = ImmutableMap.<UserManagerOp, String>builder()
+        .put(new UserManagerOp() {
           @Override
           public void call(FirebaseUserManager userManager) throws Exception {
             userManager.getUserById("testuser");
           }
-
-          @Override
-          public String getCode() {
-            return FirebaseUserManager.INTERNAL_ERROR;
-          }
-        },
-        new UserManagerOp() {
+        }, FirebaseUserManager.INTERNAL_ERROR)
+        .put(new UserManagerOp() {
           @Override
           public void call(FirebaseUserManager userManager) throws Exception {
             userManager.getUserByEmail("testuser@example.com");
           }
-
-          @Override
-          public String getCode() {
-            return FirebaseUserManager.INTERNAL_ERROR;
-          }
-        },
-        new UserManagerOp() {
+        }, FirebaseUserManager.INTERNAL_ERROR)
+        .put(new UserManagerOp() {
           @Override
           public void call(FirebaseUserManager userManager) throws Exception {
             userManager.getUserByPhoneNumber("+1234567890");
           }
-
-          @Override
-          public String getCode() {
-            return FirebaseUserManager.INTERNAL_ERROR;
-          }
-        },
-        new UserManagerOp() {
+        }, FirebaseUserManager.INTERNAL_ERROR)
+        .put(new UserManagerOp() {
           @Override
           public void call(FirebaseUserManager userManager) throws Exception {
             userManager.createUser(new CreateRequest());
           }
-
-          @Override
-          public String getCode() {
-            return FirebaseUserManager.USER_CREATE_ERROR;
-          }
-        },
-        new UserManagerOp() {
+        }, FirebaseUserManager.USER_CREATE_ERROR)
+        .put(new UserManagerOp() {
           @Override
           public void call(FirebaseUserManager userManager) throws Exception {
             userManager.updateUser(new UpdateRequest("test"), Utils.getDefaultJsonFactory());
           }
-
-          @Override
-          public String getCode() {
-            return FirebaseUserManager.USER_UPDATE_ERROR;
-          }
-        },
-        new UserManagerOp() {
+        }, FirebaseUserManager.USER_UPDATE_ERROR)
+        .put(new UserManagerOp() {
           @Override
           public void call(FirebaseUserManager userManager) throws Exception {
             userManager.deleteUser("testuser");
           }
-
-          @Override
-          public String getCode() {
-            return FirebaseUserManager.USER_DELETE_ERROR;
-          }
-        },
-    };
+        }, FirebaseUserManager.USER_DELETE_ERROR)
+        .build();
     for (int code : ImmutableList.of(302, 400, 401, 404, 500)) {
       MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
       response.setContent("{}");
@@ -371,13 +341,13 @@ public class FirebaseUserManagerTest {
           .setLowLevelHttpResponse(response)
           .build();
       FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
-      for (UserManagerOp op :operations) {
+      for (Map.Entry<UserManagerOp, String> entry : operations.entrySet()) {
         try {
-          op.call(userManager);
+          entry.getKey().call(userManager);
           fail("No error thrown for HTTP error");
         }  catch (FirebaseAuthException e) {
           assertTrue(e.getCause() instanceof IOException);
-          assertEquals(op.getCode(), e.getErrorCode());
+          assertEquals(entry.getValue(), e.getErrorCode());
         }
       }
     }
@@ -799,10 +769,7 @@ public class FirebaseUserManagerTest {
   }
 
   private interface UserManagerOp {
-
     void call(FirebaseUserManager userManager) throws Exception;
-
-    String getCode();
   }
 
 }
