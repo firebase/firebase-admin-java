@@ -29,6 +29,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -43,28 +44,34 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 class GaeExecutorService implements ExecutorService {
 
-  private final AtomicReference<ExecutorWrapper> executor = new AtomicReference<>();
+  private final AtomicReference<ExecutorService> executor = new AtomicReference<>();
   private final String threadName;
+  private final ThreadFactory threadFactory;
   private boolean shutdown;
 
   GaeExecutorService(String threadName) {
+    this(threadName, GaeThreadFactory.getInstance());
+  }
+
+  GaeExecutorService(String threadName, ThreadFactory threadFactory) {
     checkArgument(!Strings.isNullOrEmpty(threadName));
     this.threadName = threadName;
+    this.threadFactory = threadFactory;
   }
 
   private ExecutorService ensureExecutorService() {
-    ExecutorWrapper wrapper = executor.get();
-    if (wrapper == null) {
+    ExecutorService executorService = executor.get();
+    if (executorService == null) {
       synchronized (executor) {
         checkState(!shutdown);
-        wrapper = executor.get();
-        if (wrapper == null) {
-          wrapper = new ExecutorWrapper(threadName);
-          executor.compareAndSet(null, wrapper);
+        executorService = executor.get();
+        if (executorService == null) {
+          executorService = newExecutorService(threadFactory, threadName);
+          executor.compareAndSet(null, executorService);
         }
       }
     }
-    return wrapper.getExecutorService();
+    return executorService;
   }
 
   @Override
@@ -110,9 +117,9 @@ class GaeExecutorService implements ExecutorService {
   @Override
   public void shutdown() {
     synchronized (executor) {
-      ExecutorWrapper wrapper = executor.get();
-      if (wrapper != null && !shutdown) {
-        wrapper.getExecutorService().shutdown();
+      ExecutorService executorService = executor.get();
+      if (executorService != null && !shutdown) {
+        executorService.shutdown();
       }
       shutdown = true;
     }
@@ -121,10 +128,10 @@ class GaeExecutorService implements ExecutorService {
   @Override
   public List<Runnable> shutdownNow() {
     synchronized (executor) {
-      ExecutorWrapper wrapper = executor.get();
+      ExecutorService executorService = executor.get();
       List<Runnable> result;
-      if (wrapper != null && !shutdown) {
-        result = wrapper.getExecutorService().shutdownNow();
+      if (executorService != null && !shutdown) {
+        result = executorService.shutdownNow();
       } else {
         result = ImmutableList.of();
       }
@@ -135,17 +142,30 @@ class GaeExecutorService implements ExecutorService {
 
   @Override
   public boolean isShutdown() {
-    return ensureExecutorService().isShutdown();
+    synchronized (executor) {
+      return shutdown;
+    }
   }
 
   @Override
   public boolean isTerminated() {
-    return ensureExecutorService().isTerminated();
+    synchronized (executor) {
+      if (!shutdown) {
+        return false;
+      }
+      ExecutorService executorService = executor.get();
+      return executorService == null || executorService.isTerminated();
+    }
   }
 
   @Override
   public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
-    return ensureExecutorService().awaitTermination(timeout, unit);
+    ExecutorService executorService;
+    synchronized (executor) {
+      executorService = executor.get();
+    }
+    // call await outside the lock
+    return executorService == null || executorService.awaitTermination(timeout, unit);
   }
 
   @Override
@@ -153,31 +173,23 @@ class GaeExecutorService implements ExecutorService {
     ensureExecutorService().execute(command);
   }
 
-  private static class ExecutorWrapper {
-
-    private final ExecutorService executorService;
-
-    ExecutorWrapper(String threadName) {
-      GaeThreadFactory threadFactory = GaeThreadFactory.getInstance();
-      if (threadFactory.isUsingBackgroundThreads()) {
-        // Create a thread pool with long-lived threads if background thread support is available.
-        executorService = new RevivingScheduledExecutor(threadFactory, threadName, true);
-      } else {
-        // Create an executor that creates a new thread for each submitted task, when background
-        // thread support is not available.
-        executorService =
-            new ThreadPoolExecutor(
-                0,
-                Integer.MAX_VALUE,
-                0L,
-                TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>(),
-                threadFactory);
-      }
-    }
-
-    ExecutorService getExecutorService() {
-      return executorService;
+  private static ExecutorService newExecutorService(
+      ThreadFactory threadFactory, String threadName) {
+    boolean background = threadFactory instanceof GaeThreadFactory
+        && ((GaeThreadFactory) threadFactory).isUsingBackgroundThreads();
+    if (background) {
+      // Create a thread pool with long-lived threads if background thread support is available.
+      return new RevivingScheduledExecutor(threadFactory, threadName, true);
+    } else {
+      // Create an executor that creates a new thread for each submitted task, when background
+      // thread support is not available.
+      return new ThreadPoolExecutor(
+          0,
+          Integer.MAX_VALUE,
+          0L,
+          TimeUnit.SECONDS,
+          new SynchronousQueue<Runnable>(),
+          threadFactory);
     }
   }
 }
