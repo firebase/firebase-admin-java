@@ -118,7 +118,7 @@ public class GaeThreadFactory implements ThreadFactory {
         thread = threadFactory.newThread(r);
         usesBackgroundThreads = true;
       } catch (IllegalStateException e) {
-        logger.warn("Falling back to GAE's request-scoped threads. Firebase requires "
+        logger.info("Falling back to GAE's request-scoped threads. Firebase requires "
             + "manually-scaled instances for most operations.");
         threadFactory = createRequestScopedFactory();
         thread = threadFactory.newThread(r);

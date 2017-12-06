@@ -37,10 +37,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
+import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 
 import com.google.firebase.internal.SdkUtils;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -56,7 +58,14 @@ class FirebaseUserManager {
   static final String USER_CREATE_ERROR = "USER_CREATE_ERROR";
   static final String USER_UPDATE_ERROR = "USER_UPDATE_ERROR";
   static final String USER_DELETE_ERROR = "USER_DELETE_ERROR";
+  static final String LIST_USERS_ERROR = "LIST_USERS_ERROR";
   static final String INTERNAL_ERROR = "INTERNAL_ERROR";
+
+  static final int MAX_LIST_USERS_RESULTS = 1000;
+
+  static final List<String> RESERVED_CLAIMS = ImmutableList.of(
+      "amr", "at_hash", "aud", "auth_time", "azp", "cnf", "c_hash", "exp", "iat",
+      "iss", "jti", "nbf", "nonce", "sub", "firebase");
 
   private static final String ID_TOOLKIT_URL =
       "https://www.googleapis.com/identitytoolkit/v3/relyingparty/";
@@ -157,10 +166,10 @@ class FirebaseUserManager {
     throw new FirebaseAuthException(USER_CREATE_ERROR, "Failed to create new user");
   }
 
-  void updateUser(UpdateRequest request) throws FirebaseAuthException {
+  void updateUser(UpdateRequest request, JsonFactory jsonFactory) throws FirebaseAuthException {
     GenericJson response;
     try {
-      response = post("setAccountInfo", request.getProperties(), GenericJson.class);
+      response = post("setAccountInfo", request.getProperties(jsonFactory), GenericJson.class);
     } catch (IOException e) {
       throw new FirebaseAuthException(USER_UPDATE_ERROR,
           "IO error while updating user: " + request.getUid(), e);
@@ -184,6 +193,28 @@ class FirebaseUserManager {
     if (response == null || !response.containsKey("kind")) {
       throw new FirebaseAuthException(USER_DELETE_ERROR,
           "Failed to delete user: " + uid);
+    }
+  }
+
+  DownloadAccountResponse listUsers(int maxResults, String pageToken) throws FirebaseAuthException {
+    ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
+        .put("maxResults", maxResults);
+    if (pageToken != null) {
+      checkArgument(!pageToken.equals(ListUsersPage.END_OF_LIST), "invalid end of list page token");
+      builder.put("nextPageToken", pageToken);
+    }
+
+    DownloadAccountResponse response;
+    try {
+      response = post("downloadAccount", builder.build(), DownloadAccountResponse.class);
+      if (response == null) {
+        throw new FirebaseAuthException(LIST_USERS_ERROR,
+            "Unexpected response from download user account API.");
+      }
+      return response;
+    } catch (IOException e) {
+      throw new FirebaseAuthException(LIST_USERS_ERROR,
+          "IO error while downloading user accounts.", e);
     }
   }
 
