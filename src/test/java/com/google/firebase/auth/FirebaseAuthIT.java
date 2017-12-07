@@ -322,7 +322,7 @@ public class FirebaseAuthIT {
 
       Map<String, Object> expected = ImmutableMap.<String, Object>of(
           "admin", true, "package", "gold");
-      auth.setCustomClaimsAsync(uid, expected).get();
+      auth.setCustomUserClaimsAsync(uid, expected).get();
 
       // Should have 2 claims
       UserRecord updatedUser = auth.getUserAsync(uid).get();
@@ -341,7 +341,7 @@ public class FirebaseAuthIT {
       }
 
       // Should be able to remove custom claims
-      auth.setCustomClaimsAsync(uid, null).get();
+      auth.setCustomUserClaimsAsync(uid, null).get();
       updatedUser = auth.getUserAsync(uid).get();
       assertTrue(updatedUser.getCustomClaims().isEmpty());
     } finally {

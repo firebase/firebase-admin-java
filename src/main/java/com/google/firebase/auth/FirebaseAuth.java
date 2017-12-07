@@ -486,7 +486,7 @@ public class FirebaseAuth {
    * @throws IllegalArgumentException If the user ID string is null or empty, or the claims
    *     payload is invalid or too large.
    */
-  public ApiFuture<Void> setCustomClaimsAsync(String uid, Map<String, Object> claims) {
+  public ApiFuture<Void> setCustomUserClaimsAsync(String uid, Map<String, Object> claims) {
     return new TaskToApiFuture<>(setCustomClaims(uid, claims));
   }
 
