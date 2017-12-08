@@ -1,6 +1,7 @@
 package com.google.firebase.database.core;
 
 import static com.google.firebase.database.TestHelpers.waitFor;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -34,13 +35,12 @@ import com.google.firebase.database.snapshot.NodeUtilities;
 import com.google.firebase.database.snapshot.ValueIndex;
 import com.google.firebase.testing.ServiceAccount;
 
-import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.AfterClass;
@@ -56,6 +56,7 @@ public class RepoTest {
   private static final List<String> FAILURE = ImmutableList.of("failure");
 
   private static DatabaseConfig config;
+  private static PersistentConnection connection;
 
   @BeforeClass
   public static void setUpClass() throws IOException {
@@ -81,10 +82,23 @@ public class RepoTest {
       }
     });
 
-    PersistentConnection connection = mockConnection();
+    connection = mockConnection();
     Mockito.when(config.newPersistentConnection(
         Mockito.any(HostInfo.class), Mockito.any(PersistentConnection.Delegate.class)))
         .thenReturn(connection);
+    Mockito.doAnswer(new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(3);
+        callback.onRequestResult(null, null);
+        return null;
+      }
+    })
+        .when(connection).compareAndPut(
+        Mockito.eq(ImmutableList.of("txn")),
+        Mockito.any(),
+        Mockito.anyString(),
+        Mockito.any(RequestResultCallback.class));
   }
 
   @AfterClass
@@ -341,6 +355,110 @@ public class RepoTest {
       }
     });
     waitFor(semaphore);
+    assertEquals(1, events.size());
+    assertNotNull(events.get(0));
+    assertEquals(update, events.get(0).getValue());
+  }
+
+  @Test
+  public void testTransactionError() throws InterruptedException {
+    Mockito.doAnswer(new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(3);
+        callback.onRequestResult("test error", "test error message");
+        return null;
+      }
+    })
+        .when(connection).compareAndPut(
+        Mockito.eq(ImmutableList.of("txn_error")),
+        Mockito.any(),
+        Mockito.anyString(),
+        Mockito.any(RequestResultCallback.class));
+
+    final Repo repo = newRepo();
+    final List<DataSnapshot> events = new ArrayList<>();
+    final Path path = new Path("/txn_error");
+    QuerySpec spec = new QuerySpec(path, QueryParams.DEFAULT_PARAMS);
+    addCallback(repo, new ValueEventRegistration(repo, newValueEventListener(events), spec));
+
+    final Semaphore semaphore = new Semaphore(0);
+    final Map<String, Object> update = ImmutableMap.<String, Object>of("key", "value");
+    final AtomicInteger count = new AtomicInteger(0);
+    repo.scheduleNow(new Runnable() {
+      @Override
+      public void run() {
+        repo.startTransaction(path, new Transaction.Handler() {
+          @Override
+          public Transaction.Result doTransaction(MutableData currentData) {
+            count.incrementAndGet();
+            currentData.setValue(update);
+            return Transaction.success(currentData);
+          }
+
+          @Override
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+            assertEquals(1, count.get());
+            assertFalse(committed);
+            semaphore.release();
+          }
+        }, true);
+        semaphore.release();
+      }
+    });
+    waitFor(semaphore, 2);
+    assertEquals(1, events.size());
+    assertNotNull(events.get(0));
+    assertEquals(update, events.get(0).getValue());
+  }
+
+  @Test
+  public void testTransactionDataStaleError() throws InterruptedException {
+    Mockito.doAnswer(new Answer() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        RequestResultCallback callback = invocation.getArgument(3);
+        callback.onRequestResult("datastale", "test error message");
+        return null;
+      }
+    })
+        .when(connection).compareAndPut(
+        Mockito.eq(ImmutableList.of("txn_stale_error")),
+        Mockito.any(),
+        Mockito.anyString(),
+        Mockito.any(RequestResultCallback.class));
+
+    final Repo repo = newRepo();
+    final List<DataSnapshot> events = new ArrayList<>();
+    final Path path = new Path("/txn_stale_error");
+    QuerySpec spec = new QuerySpec(path, QueryParams.DEFAULT_PARAMS);
+    addCallback(repo, new ValueEventRegistration(repo, newValueEventListener(events), spec));
+
+    final Semaphore semaphore = new Semaphore(0);
+    final Map<String, Object> update = ImmutableMap.<String, Object>of("key", "value");
+    final AtomicInteger count = new AtomicInteger(0);
+    repo.scheduleNow(new Runnable() {
+      @Override
+      public void run() {
+        repo.startTransaction(path, new Transaction.Handler() {
+          @Override
+          public Transaction.Result doTransaction(MutableData currentData) {
+            count.incrementAndGet();
+            currentData.setValue(update);
+            return Transaction.success(currentData);
+          }
+
+          @Override
+          public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+            assertEquals(25, count.get());
+            assertFalse(committed);
+            semaphore.release();
+          }
+        }, true);
+        semaphore.release();
+      }
+    });
+    waitFor(semaphore, 2);
     assertEquals(1, events.size());
     assertNotNull(events.get(0));
     assertEquals(update, events.get(0).getValue());

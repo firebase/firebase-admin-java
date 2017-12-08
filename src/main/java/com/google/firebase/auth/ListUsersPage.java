@@ -49,7 +49,7 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
   }
 
   /**
-   * Checks if there is another page of users available for retrieving.
+   * Checks if there is another page of users available to retrieve.
    *
    * @return true if another page is available, or false otherwise.
    */

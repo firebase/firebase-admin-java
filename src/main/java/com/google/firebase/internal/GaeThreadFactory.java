@@ -87,7 +87,7 @@ public class GaeThreadFactory implements ThreadFactory {
    *
    * @return true if background thread support is available, and false otherwise.
    */
-  public boolean isUsingBackgroundThreads() {
+  boolean isUsingBackgroundThreads() {
     ThreadFactoryWrapper wrapper = threadFactory.get();
     if (wrapper != null) {
       return wrapper.isUsingBackgroundThreads();

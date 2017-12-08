@@ -83,6 +83,7 @@ public class ArraySortedMapTest {
 
     assertEquals(2, map.size());
     assertEquals(false, map.isEmpty());
+    assertEquals("ArraySortedMap{(a=>1), (b=>null)};", map.toString());
   }
 
   @Test

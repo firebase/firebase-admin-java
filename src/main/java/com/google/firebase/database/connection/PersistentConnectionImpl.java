@@ -20,7 +20,6 @@ import static com.google.firebase.database.connection.ConnectionUtils.hardAssert
 
 import com.google.firebase.database.connection.util.RetryHelper;
 import com.google.firebase.database.logging.LogWrapper;
-import com.google.firebase.database.util.AndroidSupport;
 import com.google.firebase.database.util.GAuthToken;
 
 import java.util.ArrayList;
@@ -93,13 +92,16 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   private static final String IDLE_INTERRUPT_REASON = "connection_idle";
   private static final String TOKEN_REFRESH_INTERRUPT_REASON = "token_refresh";
   private static long connectionIds = 0;
+
   private final Delegate delegate;
   private final HostInfo hostInfo;
   private final ConnectionContext context;
+  private final ConnectionFactory connFactory;
   private final ConnectionAuthTokenProvider authTokenProvider;
   private final ScheduledExecutorService executorService;
   private final LogWrapper logger;
   private final RetryHelper retryHelper;
+
   private String cachedHost;
   private HashSet<String> interruptReasons = new HashSet<>();
   private boolean firstConnection = true;
@@ -123,13 +125,19 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   private long lastWriteTimestamp;
   private boolean hasOnDisconnects;
 
-  public PersistentConnectionImpl(
-      ConnectionContext context, HostInfo info, final Delegate delegate) {
-    this.delegate = delegate;
+  public PersistentConnectionImpl(ConnectionContext context, HostInfo info, Delegate delegate) {
+    this(context, info, delegate, new DefaultConnectionFactory());
+  }
+
+  PersistentConnectionImpl(
+      ConnectionContext context, HostInfo info, Delegate delegate, ConnectionFactory connFactory) {
+
     this.context = context;
+    this.hostInfo = info;
+    this.delegate = delegate;
+    this.connFactory = connFactory;
     this.executorService = context.getExecutorService();
     this.authTokenProvider = context.getAuthTokenProvider();
-    this.hostInfo = info;
     this.listens = new HashMap<>();
     this.requestCBHash = new HashMap<>();
     this.outstandingPuts = new HashMap<>();
@@ -422,7 +430,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     return interruptReasons.contains(reason);
   }
 
-  boolean shouldReconnect() {
+  private boolean shouldReconnect() {
     return interruptReasons.size() == 0;
   }
 
@@ -524,20 +532,19 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     }
   }
 
-  public void openNetworkConnection(String token) {
+  private void openNetworkConnection(String token) {
     hardAssert(
-        this.connectionState == ConnectionState.GettingToken,
+        connectionState == ConnectionState.GettingToken,
         "Trying to open network connection while in the wrong state: %s",
-        this.connectionState);
+        connectionState);
     // User might have logged out. Positive auth status is handled after authenticating with
     // the server
     if (token == null) {
-      this.delegate.onAuthStatus(false);
+      delegate.onAuthStatus(false);
     }
-    this.authToken = token;
-    this.connectionState = ConnectionState.Connecting;
-    realtime =
-        new Connection(this.context, this.hostInfo, this.cachedHost, this, this.lastSessionId);
+    authToken = token;
+    connectionState = ConnectionState.Connecting;
+    realtime = connFactory.newConnection(this);
     realtime.open();
   }
 
@@ -1054,17 +1061,9 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
 
   private void sendConnectStats() {
     Map<String, Integer> stats = new HashMap<>();
-    if (AndroidSupport.isAndroid()) {
-      if (this.context.isPersistenceEnabled()) {
-        stats.put("persistence.android.enabled", 1);
-      }
-      stats.put("sdk.android." + context.getClientSdkVersion().replace('.', '-'), 1);
-      // TODO: Also send stats for connection version
-    } else {
-      assert !this.context.isPersistenceEnabled()
-          : "Stats for persistence on JVM missing (persistence not yet supported)";
-      stats.put("sdk.admin_java." + context.getClientSdkVersion().replace('.', '-'), 1);
-    }
+    assert !this.context.isPersistenceEnabled()
+        : "Stats for persistence on JVM missing (persistence not yet supported)";
+    stats.put("sdk.admin_java." + context.getClientSdkVersion().replace('.', '-'), 1);
     if (logger.logsDebug()) {
       logger.debug("Sending first connection stats");
     }
@@ -1135,13 +1134,6 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   private boolean idleHasTimedOut() {
     long now = System.currentTimeMillis();
     return isIdle() && now > (this.lastWriteTimestamp + IDLE_TIMEOUT);
-  }
-
-  // For testing
-  public void injectConnectionFailure() {
-    if (this.realtime != null) {
-      this.realtime.injectConnectionFailure();
-    }
   }
 
   private enum ConnectionState {
@@ -1215,15 +1207,15 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
       this.tag = tag;
     }
 
-    public ListenQuerySpec getQuery() {
+    ListenQuerySpec getQuery() {
       return query;
     }
 
-    public Long getTag() {
+    Long getTag() {
       return this.tag;
     }
 
-    public ListenHashProvider getHashFunction() {
+    ListenHashProvider getHashFunction() {
       return this.hashFunction;
     }
 
@@ -1247,23 +1239,23 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
       this.onComplete = onComplete;
     }
 
-    public String getAction() {
+    String getAction() {
       return action;
     }
 
-    public Map<String, Object> getRequest() {
+    Map<String, Object> getRequest() {
       return request;
     }
 
-    public RequestResultCallback getOnComplete() {
+    RequestResultCallback getOnComplete() {
       return onComplete;
     }
 
-    public void markSent() {
+    void markSent() {
       this.sent = true;
     }
 
-    public boolean wasSent() {
+    boolean wasSent() {
       return this.sent;
     }
   }
@@ -1299,4 +1291,18 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
       return onComplete;
     }
   }
+
+  interface ConnectionFactory {
+    Connection newConnection(PersistentConnectionImpl delegate);
+  }
+
+  private static class DefaultConnectionFactory implements ConnectionFactory {
+    @Override
+    public Connection newConnection(PersistentConnectionImpl delegate) {
+      return new Connection(delegate.context, delegate.hostInfo, delegate.cachedHost,
+          delegate, delegate.lastSessionId);
+    }
+  }
+
+
 }

@@ -172,8 +172,8 @@ public class UserRecord implements UserInfo {
   }
 
   /**
-   * Returns an array of UserInfo objects that represents the identities from different identity
-   * providers that are linked to this user.
+   * Returns an array of {@code UserInfo} objects that represents the identities from different
+   * identity providers that are linked to this user.
    *
    * @return an array of {@link UserInfo} instances, which may be empty.
    */
