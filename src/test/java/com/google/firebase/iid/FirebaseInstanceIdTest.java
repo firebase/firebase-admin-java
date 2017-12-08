@@ -159,6 +159,4 @@ public class FirebaseInstanceIdTest {
       app.delete();
     }
   }
-
-
 }
