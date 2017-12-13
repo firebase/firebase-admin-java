@@ -19,6 +19,7 @@ package com.google.firebase.auth;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.client.json.JsonFactory;
 import com.google.api.gax.paging.Page;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
@@ -184,9 +185,11 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
   static class DefaultUserSource implements UserSource {
 
     private final FirebaseUserManager userManager;
+    private final JsonFactory jsonFactory;
 
-    DefaultUserSource(FirebaseUserManager userManager) {
+    DefaultUserSource(FirebaseUserManager userManager, JsonFactory jsonFactory) {
       this.userManager = checkNotNull(userManager, "user manager must not be null");
+      this.jsonFactory = checkNotNull(jsonFactory, "json factory must not be null");
     }
 
     @Override
@@ -196,7 +199,7 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
         ImmutableList.Builder<ExportedUserRecord> builder = ImmutableList.builder();
         if (response.hasUsers()) {
           for (DownloadAccountResponse.User user : response.getUsers()) {
-            builder.add(new ExportedUserRecord(user));
+            builder.add(new ExportedUserRecord(user, jsonFactory));
           }
         }
         String nextPageToken = response.getPageToken() != null

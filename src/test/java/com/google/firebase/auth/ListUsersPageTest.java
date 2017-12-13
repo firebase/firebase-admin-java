@@ -323,7 +323,7 @@ public class ListUsersPageTest {
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     DownloadAccountResponse.User parsed = jsonFactory.fromString(
         String.format("{\"localId\":\"%s\"}", uid), DownloadAccountResponse.User.class);
-    return new ExportedUserRecord(parsed);
+    return new ExportedUserRecord(parsed, jsonFactory);
   }
 
   private static class TestUserSource implements ListUsersPage.UserSource {

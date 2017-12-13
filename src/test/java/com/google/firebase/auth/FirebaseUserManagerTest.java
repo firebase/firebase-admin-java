@@ -158,10 +158,11 @@ public class FirebaseUserManagerTest {
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     userManager.setInterceptor(interceptor);
 
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     DownloadAccountResponse download = userManager.listUsers(999, null);
     assertEquals(2, download.getUsers().size());
     for (User user : download.getUsers()) {
-      ExportedUserRecord userRecord = new ExportedUserRecord(user);
+      ExportedUserRecord userRecord = new ExportedUserRecord(user, jsonFactory);
       checkUserRecord(userRecord);
       assertEquals("passwordHash", userRecord.getPasswordHash());
       assertEquals("passwordSalt", userRecord.getPasswordSalt());
@@ -169,7 +170,6 @@ public class FirebaseUserManagerTest {
     assertNull(download.getPageToken());
     checkRequestHeaders(interceptor);
 
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     interceptor.response.getRequest().getContent().writeTo(out);
     GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
@@ -188,10 +188,11 @@ public class FirebaseUserManagerTest {
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     userManager.setInterceptor(interceptor);
 
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     DownloadAccountResponse download = userManager.listUsers(999, "token");
     assertEquals(2, download.getUsers().size());
     for (User user : download.getUsers()) {
-      ExportedUserRecord userRecord = new ExportedUserRecord(user);
+      ExportedUserRecord userRecord = new ExportedUserRecord(user, jsonFactory);
       checkUserRecord(userRecord);
       assertEquals("passwordHash", userRecord.getPasswordHash());
       assertEquals("passwordSalt", userRecord.getPasswordSalt());
@@ -199,7 +200,6 @@ public class FirebaseUserManagerTest {
     assertNull(download.getPageToken());
     checkRequestHeaders(interceptor);
 
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     interceptor.response.getRequest().getContent().writeTo(out);
     GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
