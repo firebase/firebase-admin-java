@@ -32,6 +32,7 @@ import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -40,6 +41,7 @@ import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.TaskToApiFuture;
 import com.google.firebase.tasks.Task;
 
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -50,6 +52,18 @@ import java.util.concurrent.Callable;
 public class FirebaseInstanceId {
 
   private static final String IID_SERVICE_URL = "https://console.firebase.google.com/v1";
+
+  private static final Map<Integer, String> ERROR_CODES = ImmutableMap.<Integer, String>builder()
+      .put(400, "Invalid argument. Instance ID '%s' is malformed.")
+      .put(401, "Request not authorized.")
+      .put(403, "Permission denied. Project does not match instance ID or the client does not"
+          + " have sufficient privileges.")
+      .put(404, "Failed to find the instance ID: '%s'.")
+      .put(409, "Instance ID '%s' is already deleted.")
+      .put(429, "Request throttled out by the backend server.")
+      .put(500, "Internal server error.")
+      .put(503, "Backend servers are over capacity. Try again later.")
+      .build();
 
   private final FirebaseApp app;
   private final HttpRequestFactory requestFactory;
@@ -141,24 +155,11 @@ public class FirebaseInstanceId {
   }
 
   private void handleError(String instanceId, Exception e) throws FirebaseInstanceIdException {
-    String msg = "Error while invoking instance ID service";
+    String msg = "Error while invoking instance ID service.";
     if (e instanceof HttpResponseException) {
       int statusCode = ((HttpResponseException) e).getStatusCode();
-      switch (statusCode) {
-        case 404:
-          msg = "Failed to find the instance ID: " + instanceId;
-          break;
-
-        case 429:
-          msg = "Request throttled out by the backend server";
-          break;
-
-        case 500:
-          msg = "Internal server error";
-          break;
-
-        default:
-          // Do nothing
+      if (ERROR_CODES.containsKey(statusCode)) {
+        msg = String.format(ERROR_CODES.get(statusCode), instanceId);
       }
     }
     throw new FirebaseInstanceIdException(msg, e);

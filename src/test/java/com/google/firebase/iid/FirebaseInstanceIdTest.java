@@ -118,10 +118,10 @@ public class FirebaseInstanceIdTest {
   @Test
   public void testDeleteInstanceIdError() throws Exception {
     Map<Integer, String> errors = ImmutableMap.of(
-        404, "Failed to find the instance ID: test-iid",
-        429, "Request throttled out by the backend server",
-        500, "Internal server error",
-        501, "Error while invoking instance ID service"
+        404, "Failed to find the instance ID: 'test-iid'.",
+        429, "Request throttled out by the backend server.",
+        500, "Internal server error.",
+        501, "Error while invoking instance ID service."
     );
 
     String url = "https://console.firebase.google.com/v1/project/test-project/instanceId/test-iid";
