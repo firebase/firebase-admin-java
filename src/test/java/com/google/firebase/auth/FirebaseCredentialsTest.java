@@ -20,6 +20,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.api.client.googleapis.testing.auth.oauth2.MockTokenServerTransport;
 import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.json.JsonFactory;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableMap;
@@ -37,11 +38,10 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -56,6 +56,8 @@ public class FirebaseCredentialsTest {
   private static final String CLIENT_SECRET = "mockclientsecret";
   private static final String CLIENT_ID = "mockclientid";
   private static final String REFRESH_TOKEN = "mockrefreshtoken";
+  private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
+
   @Rule public final ExpectedException thrown = ExpectedException.none();
 
   @Test(expected = NullPointerException.class)
@@ -195,17 +197,17 @@ public class FirebaseCredentialsTest {
 
   @Test
   public void refreshTokenReadIsDoneSynchronously()
-      throws ExecutionException, InterruptedException, IOException, JSONException {
+      throws ExecutionException, InterruptedException, IOException {
     MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addClient(CLIENT_ID, CLIENT_SECRET);
     transport.addRefreshToken(REFRESH_TOKEN, ACCESS_TOKEN);
 
-    JSONObject secretJson = new JSONObject();
+    Map<String, Object> secretJson = new HashMap<>();
     secretJson.put("client_id", CLIENT_ID);
     secretJson.put("client_secret", CLIENT_SECRET);
     secretJson.put("refresh_token", REFRESH_TOKEN);
     secretJson.put("type", "authorized_user");
-    InputStream inputStream = new ByteArrayInputStream(secretJson.toString(0).getBytes("UTF-8"));
+    InputStream inputStream = new ByteArrayInputStream(JSON_FACTORY.toByteArray(secretJson));
 
     FirebaseCredential credential =
         FirebaseCredentials.fromRefreshToken(inputStream, transport, Utils.getDefaultJsonFactory());

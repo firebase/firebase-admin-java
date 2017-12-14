@@ -24,7 +24,7 @@ public class UserRecordTest {
 
   @Test(expected = NullPointerException.class)
   public void testNullResponse() {
-    new UserRecord(null);
+    new UserRecord(null, JSON_FACTORY);
   }
 
   @Test
@@ -184,14 +184,13 @@ public class UserRecordTest {
     InputStream stream = new ByteArrayInputStream(json.getBytes(Charset.defaultCharset()));
     GetAccountInfoResponse.User user = JSON_FACTORY.createJsonObjectParser()
         .parseAndClose(stream, Charset.defaultCharset(), GetAccountInfoResponse.User.class);
-    return new UserRecord(user);
+    return new UserRecord(user, JSON_FACTORY);
   }
 
   private ExportedUserRecord parseExportedUser(String json) throws IOException {
     InputStream stream = new ByteArrayInputStream(json.getBytes(Charset.defaultCharset()));
     DownloadAccountResponse.User user = JSON_FACTORY.createJsonObjectParser()
-        .parseAndClose(stream, Charset.defaultCharset(),
-            DownloadAccountResponse.User.class);
-    return new ExportedUserRecord(user);
+        .parseAndClose(stream, Charset.defaultCharset(), DownloadAccountResponse.User.class);
+    return new ExportedUserRecord(user, JSON_FACTORY);
   }
 }
