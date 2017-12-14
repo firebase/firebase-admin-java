@@ -54,12 +54,12 @@ public class FirebaseInstanceId {
   private static final String IID_SERVICE_URL = "https://console.firebase.google.com/v1";
 
   private static final Map<Integer, String> ERROR_CODES = ImmutableMap.<Integer, String>builder()
-      .put(400, "Invalid argument. Instance ID '%s' is malformed.")
+      .put(400, "Malformed instance ID argument.")
       .put(401, "Request not authorized.")
-      .put(403, "Permission denied. Project does not match instance ID or the client does not"
+      .put(403, "Project does not match instance ID or the client does not"
           + " have sufficient privileges.")
-      .put(404, "Failed to find the instance ID: '%s'.")
-      .put(409, "Instance ID '%s' is already deleted.")
+      .put(404, "Failed to find the instance ID.")
+      .put(409, "Already deleted.")
       .put(429, "Request throttled out by the backend server.")
       .put(500, "Internal server error.")
       .put(503, "Backend servers are over capacity. Try again later.")
@@ -159,7 +159,7 @@ public class FirebaseInstanceId {
     if (e instanceof HttpResponseException) {
       int statusCode = ((HttpResponseException) e).getStatusCode();
       if (ERROR_CODES.containsKey(statusCode)) {
-        msg = String.format(ERROR_CODES.get(statusCode), instanceId);
+        msg = String.format("Instance ID \"%s\": %s", instanceId, ERROR_CODES.get(statusCode));
       }
     }
     throw new FirebaseInstanceIdException(msg, e);
