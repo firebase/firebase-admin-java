@@ -17,6 +17,7 @@
 package com.google.firebase.auth.internal;
 
 import com.google.api.client.util.Key;
+import com.google.common.base.Strings;
 
 /**
  * JSON data binding for JSON error messages sent by Google identity toolkit service.
@@ -28,7 +29,9 @@ public class HttpErrorResponse {
 
   public String getErrorCode() {
     if (error != null) {
-      return error.getCode();
+      if (!Strings.isNullOrEmpty(error.getCode())) {
+        return error.getCode();
+      }
     }
     return "unknown";
   }
