@@ -71,6 +71,14 @@ class EventHelper {
     return this;
   }
 
+  public <T> EventHelper addValueExpectation(DatabaseReference ref, T expectedValue) {
+    if (!locations.contains(ref)) {
+      toListen.add(ref);
+    }
+    lookingFor.add(new ValueExpectation<T>(Event.EventType.VALUE, ref.toString(), expectedValue));
+    return this;
+  }
+
   EventHelper addChildExpectation(
       DatabaseReference ref, Event.EventType eventType, String childName) throws DatabaseException {
     if (!locations.contains(ref)) {
@@ -259,6 +267,22 @@ class EventHelper {
     @Override
     public String toString() {
       return this.eventType + " => " + this.location;
+    }
+  }
+
+  private static class ValueExpectation<T> extends Expectation {
+
+    private final T expectedValue;
+
+    private ValueExpectation(Event.EventType eventType, String location, T expectedValue) {
+      super(eventType, location);
+      this.expectedValue = expectedValue;
+    }
+
+    @Override
+    boolean matches(EventRecord record) {
+      return super.matches(record)
+          && record.getSnapshot().getValue(expectedValue.getClass()).equals(expectedValue);
     }
   }
 }
