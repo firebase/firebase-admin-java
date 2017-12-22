@@ -17,6 +17,7 @@
 package com.google.firebase.database.snapshot;
 
 import com.google.firebase.database.DatabaseException;
+import com.google.firebase.database.core.Path;
 
 public class PriorityUtilities {
 
@@ -35,6 +36,10 @@ public class PriorityUtilities {
   }
 
   public static Node parsePriority(Object value) {
+    return parsePriority(null, value);
+  }
+
+  public static Node parsePriority(Path nodePath, Object value) {
     Node priority = NodeUtilities.NodeFromJSON(value);
     if (priority instanceof LongNode) {
       priority =
@@ -43,7 +48,8 @@ public class PriorityUtilities {
     }
     if (!isValidPriority(priority)) {
       throw new DatabaseException(
-          "Invalid Firebase Database priority (must be a string, double, ServerValue, or null)");
+          (nodePath != null ? "Path '" + nodePath + "'" : "Node")
+              + " contains invalid priority: Must be a string, double, ServerValue, or null");
     }
     return priority;
   }

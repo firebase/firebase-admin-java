@@ -115,14 +115,20 @@ public class CustomClassMapper {
     if (obj == null) {
       return null;
     } else if (obj instanceof Number) {
-      if (obj instanceof Float) {
-        return ((Float) obj).doubleValue();
+      if (obj instanceof Float || obj instanceof Double) {
+        double doubleValue = ((Number) obj).doubleValue();
+        if (doubleValue <= Long.MAX_VALUE
+            && doubleValue >= Long.MIN_VALUE
+            && Math.floor(doubleValue) == doubleValue) {
+          return ((Number) obj).longValue();
+        }
+        return doubleValue;
       } else if (obj instanceof Short) {
         throw new DatabaseException("Shorts are not supported, please use int or long");
       } else if (obj instanceof Byte) {
         throw new DatabaseException("Bytes are not supported, please use int or long");
       } else {
-        // Long, Integer, Double
+        // Long, Integer
         return obj;
       }
     } else if (obj instanceof String) {
