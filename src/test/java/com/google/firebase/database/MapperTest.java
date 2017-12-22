@@ -434,6 +434,9 @@ public class MapperTest {
     DoubleBean bean = new DoubleBean();
     bean.value = 1234567890123L;
     assertJson("{'value': 1234567890123}", serialize(bean));
+
+    bean.value = 1234567890123.0;
+    assertJson("{'value': 1234567890123}", serialize(bean));
   }
 
   @Test
