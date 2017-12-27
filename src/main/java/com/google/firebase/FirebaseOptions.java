@@ -24,6 +24,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.FirebaseCredential;
 import com.google.firebase.auth.FirebaseCredentials;
 import com.google.firebase.auth.internal.BaseCredential;
@@ -31,7 +32,12 @@ import com.google.firebase.auth.internal.FirebaseCredentialsAdapter;
 import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
-
+import com.google.gson.Gson;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -131,12 +137,11 @@ public final class FirebaseOptions {
   ThreadManager getThreadManager() {
     return threadManager;
   }
-
+  
   /**
    * Builder for constructing {@link FirebaseOptions}. 
    */
   public static final class Builder {
-
     private String databaseUrl;
     private String storageBucket;
     private GoogleCredentials credentials;
@@ -311,7 +316,69 @@ public final class FirebaseOptions {
      * @return A {@link FirebaseOptions} instance created from the previously set options.
      */
     public FirebaseOptions build() {
+      DefaultConfigOptions d = DefaultConfigOptions.getOptionsFromFile();
+      System.out.println("-----=----");
+      if (d != null) {
+        System.err.println(d);
+      }
+
       return new FirebaseOptions(this);
+    }
+
+    public void fillInBlanksFromMap(Map<String, Object> map) {
+      Class<Builder> bldClass = Builder.class;
+      
+      for (Map.Entry<String, Object> entry : map.entrySet()) {
+        System.err.print("-");
+        String key = entry.getKey();
+        switch (key) {
+          case "databaseUrl": 
+            if (databaseUrl == null || databaseUrl == "") {
+              System.err.print("1");
+              setDatabaseUrl((String)map.get("databaseUrl"));
+            }
+            break;
+          case "storageBucket": 
+            if (storageBucket == null || storageBucket == "") {
+              System.err.print("2");
+              setStorageBucket((String)map.get("storageBucket"));
+            }
+            break;
+          case "projectId":
+            if (projectId == null || projectId == "") {
+              System.err.print("3");
+              setProjectId((String)map.get("projectId"));
+            }
+            break;
+          default:
+            System.err.print("d");
+        }
+      }
+    }
+  } 
+
+  private static class DefaultConfigOptions{
+    private String databaseURL;
+    private String storageBucket;
+    private Map<String, Object> databaseAuthVariableOverride;
+    private String projectId;
+
+    private DefaultConfigOptions() {}
+
+    private static DefaultConfigOptions getOptionsFromFile() {
+      String defaultConfig = System.getenv("FIREBASE_CONFIG");
+      if (defaultConfig == null || defaultConfig.isEmpty()) {
+        return null;
+      }
+      FileReader reader;
+      try {
+        reader = new FileReader(defaultConfig);
+      } catch (FileNotFoundException e) {
+        throw new IllegalStateException(e)  ;
+      } 
+      Gson gson = new Gson();
+      DefaultConfigOptions defaultConfigOptions = gson.fromJson(reader ,DefaultConfigOptions.class);
+      return defaultConfigOptions;
     }
   }
 }

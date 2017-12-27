@@ -41,6 +41,11 @@ import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.RevivingScheduledExecutor;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
+import com.google.gson.Gson;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -109,7 +114,7 @@ public class FirebaseApp {
   private FirebaseApp(String name, FirebaseOptions options, TokenRefresher.Factory factory) {
     checkArgument(!Strings.isNullOrEmpty(name));
     this.name = name;
-    this.options = checkNotNull(options);
+    this.options = fillInBlanksFromDefaultConfig(checkNotNull(options));
     this.tokenRefresher = checkNotNull(factory).create(this);
     this.threadManager = options.getThreadManager();
     this.executors = this.threadManager.getFirebaseExecutors(this);
@@ -542,4 +547,25 @@ public class FirebaseApp {
       STOPPED
     }
   }
+
+  private static FirebaseOptions fillInBlanksFromDefaultConfig(FirebaseOptions options) {
+    String defaultConfig = System.getenv("FIREBASE_CONFIG");
+    if (defaultConfig == null || defaultConfig.isEmpty()) {
+      return options;
+    }
+    FileReader reader;
+    try {
+      reader = new FileReader(defaultConfig);
+    } catch (FileNotFoundException e) {
+      throw new IllegalStateException(e)  ;
+    } 
+    Gson gson = new Gson();
+    Map<String, Object> map = new HashMap<String, Object>();
+    map = (Map<String, Object>) gson.fromJson(reader, map.getClass());
+    FirebaseOptions.Builder resultBuilder = new FirebaseOptions.Builder(options);
+    resultBuilder.fillInBlanksFromMap(map);
+    return resultBuilder.build();
+  //    databaseAuthVariableOverride = options.databaseAuthVariableOverride;
+  }
+
 }

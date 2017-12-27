@@ -328,6 +328,9 @@
                 <version>2.19.1</version>
                 <configuration>
                     <skipTests>${skipUTs}</skipTests>
+                    <environmentVariables>
+                        <FIREBASE_CONFIG></FIREBASE_CONFIG>
+                    </environmentVariables>
                 </configuration>
             </plugin>
             <plugin>
