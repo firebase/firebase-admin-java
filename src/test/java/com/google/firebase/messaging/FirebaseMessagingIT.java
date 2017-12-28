@@ -1,10 +1,18 @@
 package com.google.firebase.messaging;
 
+import static org.junit.Assert.assertEquals;
+
+import com.google.common.collect.ImmutableList;
 import com.google.firebase.testing.IntegrationTestUtils;
+import java.util.List;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class FirebaseMessagingIT {
+
+  private static final String TEST_REGISTRATION_TOKEN =
+      "fGw0qy4TGgk:APA91bGtWGjuhp4WRhHXgbabIYp1jxEKI08ofj_v1bKhWAGJQ4e3arRCWzeTfHaLz83mBnDh0a"
+          + "PWB1AykXAVUUGl2h1wT4XI6XazWpvY7RBUSYfoxtqSWGIm2nvWh2BOP1YG501SsRoE";
 
   @BeforeClass
   public static void setUpClass() throws Exception {
@@ -25,5 +33,13 @@ public class FirebaseMessagingIT {
         .build();
     String resp = messaging.sendAsync(message).get();
     System.out.println(resp);
+  }
+
+  @Test
+  public void testSubscribe() throws Exception {
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    List<TopicManagementResult> results = messaging.subscribeToTopicAsync(
+        ImmutableList.of(TEST_REGISTRATION_TOKEN), "/topics/mock-topic").get();
+    assertEquals(1, results.size());
   }
 }

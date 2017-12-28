@@ -1,6 +1,7 @@
 package com.google.firebase.messaging;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -8,6 +9,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.collect.ImmutableList;
@@ -24,8 +26,10 @@ import org.junit.Test;
 
 public class FirebaseMessagingTest {
 
-  private static final String TEST_URL =
+  private static final String TEST_FCM_URL =
       "https://fcm.googleapis.com/v1/projects/test-project/messages:send";
+  private static final String TEST_IID_URL =
+      "https://iid.googleapis.com/iid/v1:batchAdd";
 
   @After
   public void tearDown() {
@@ -71,19 +75,7 @@ public class FirebaseMessagingTest {
   public void testSend() throws Exception {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setContent("{\"name\": \"mock-name\"}");
-    MockHttpTransport transport = new MockHttpTransport.Builder()
-        .setLowLevelHttpResponse(response)
-        .build();
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredentials(new MockGoogleCredentials("test-token"))
-        .setProjectId("test-project")
-        .setHttpTransport(transport)
-        .build();
-    FirebaseApp app = FirebaseApp.initializeApp(options);
-
-    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
-    assertSame(messaging, FirebaseMessaging.getInstance(app));
-
+    FirebaseMessaging messaging = initMessaging(response);
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     messaging.setInterceptor(interceptor);
     String resp = messaging.sendAsync(Message.builder().setTopic("test-topic").build()).get();
@@ -92,7 +84,7 @@ public class FirebaseMessagingTest {
     assertNotNull(interceptor.getResponse());
     HttpRequest request = interceptor.getResponse().getRequest();
     assertEquals("POST", request.getRequestMethod());
-    assertEquals(TEST_URL, request.getUrl().toString());
+    assertEquals(TEST_FCM_URL, request.getUrl().toString());
     assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -108,17 +100,7 @@ public class FirebaseMessagingTest {
       MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
           .setStatusCode(statusCode)
           .setContent("test error");
-      MockHttpTransport transport = new MockHttpTransport.Builder()
-          .setLowLevelHttpResponse(response)
-          .build();
-      FirebaseOptions options = new FirebaseOptions.Builder()
-          .setCredentials(new MockGoogleCredentials("test-token"))
-          .setProjectId("test-project")
-          .setHttpTransport(transport)
-          .build();
-      final FirebaseApp app = FirebaseApp.initializeApp(options);
-
-      FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+      FirebaseMessaging messaging = initMessaging(response);
       TestResponseInterceptor interceptor = new TestResponseInterceptor();
       messaging.setInterceptor(interceptor);
       try {
@@ -126,14 +108,135 @@ public class FirebaseMessagingTest {
         fail("No error thrown for HTTP error");
       } catch (ExecutionException e) {
         assertTrue(e.getCause() instanceof FirebaseMessagingException);
+        assertTrue(e.getCause().getCause() instanceof HttpResponseException);
       }
 
       assertNotNull(interceptor.getResponse());
       HttpRequest request = interceptor.getResponse().getRequest();
       assertEquals("POST", request.getRequestMethod());
-      assertEquals(TEST_URL, request.getUrl().toString());
+      assertEquals(TEST_FCM_URL, request.getUrl().toString());
       assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
-      app.delete();
+      FirebaseApp.getInstance().delete();
+    }
+  }
+
+  @Test
+  public void testInvalidSubscribe() {
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId("test-project")
+        .build();
+    FirebaseApp.initializeApp(options);
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    messaging.setInterceptor(interceptor);
+
+    ImmutableList.Builder<String> tooManyIds = ImmutableList.builder();
+    for (int i = 0; i < 1001; i++) {
+      tooManyIds.add("id" + i);
+    }
+    List<TopicMgtArgs> invalidArgs = ImmutableList.of(
+        new TopicMgtArgs(null, null),
+        new TopicMgtArgs(null, "test-topic"),
+        new TopicMgtArgs(ImmutableList.<String>of(), "test-topic"),
+        new TopicMgtArgs(ImmutableList.of(""), "test-topic"),
+        new TopicMgtArgs(tooManyIds.build(), "test-topic"),
+        new TopicMgtArgs(ImmutableList.of(""), null),
+        new TopicMgtArgs(ImmutableList.of("id"), ""),
+        new TopicMgtArgs(ImmutableList.of("id"), "foo*")
+    );
+    for (TopicMgtArgs args : invalidArgs) {
+      try {
+        messaging.subscribeToTopicAsync(args.registrationTokens, args.topic);
+        fail("No error thrown for invalid args");
+      } catch (IllegalArgumentException expected) {
+        // expected
+      }
+    }
+
+    assertNull(interceptor.getResponse());
+  }
+
+  @Test
+  public void testSubscribe() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent("{\"results\": [{}, {\"error\": \"error_reason\"}]}");
+    FirebaseMessaging messaging = initMessaging(response);
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    messaging.setInterceptor(interceptor);
+
+    List<TopicManagementResult> result = messaging.subscribeToTopicAsync(
+        ImmutableList.of("id1", "id2"), "test-topic").get();
+    assertEquals(2, result.size());
+    assertTrue(result.get(0).isSuccess());
+    assertNull(result.get(0).getReason());
+    assertFalse(result.get(1).isSuccess());
+    assertEquals("error_reason", result.get(1).getReason());
+
+    assertNotNull(interceptor.getResponse());
+    HttpRequest request = interceptor.getResponse().getRequest();
+    assertEquals("POST", request.getRequestMethod());
+    assertEquals(TEST_IID_URL, request.getUrl().toString());
+    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+    assertEquals("true", request.getHeaders().get("access_token_auth"));
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    request.getContent().writeTo(out);
+    assertEquals("{\"to\":\"test-topic\",\"registration_tokens\":[\"id1\",\"id2\"]}",
+        out.toString());
+  }
+
+  @Test
+  public void testSubscribeError() throws Exception {
+    List<Integer> errors = ImmutableList.of(401, 404, 500);
+
+    for (int statusCode : errors) {
+      MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+          .setStatusCode(statusCode)
+          .setContent("test error");
+      FirebaseMessaging messaging = initMessaging(response);
+      TestResponseInterceptor interceptor = new TestResponseInterceptor();
+      messaging.setInterceptor(interceptor);
+      try {
+        messaging.subscribeToTopicAsync(ImmutableList.of("id1", "id2"), "test-topic").get();
+        fail("No error thrown for HTTP error");
+      } catch (ExecutionException e) {
+        assertTrue(e.getCause() instanceof FirebaseMessagingException);
+        assertTrue(e.getCause().getCause() instanceof HttpResponseException);
+      }
+
+      assertNotNull(interceptor.getResponse());
+      HttpRequest request = interceptor.getResponse().getRequest();
+      assertEquals("POST", request.getRequestMethod());
+      assertEquals(TEST_IID_URL, request.getUrl().toString());
+      assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+      FirebaseApp.getInstance().delete();
+    }
+  }
+
+  private static FirebaseMessaging initMessaging(MockLowLevelHttpResponse mockResponse) {
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(mockResponse)
+        .build();
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId("test-project")
+        .setHttpTransport(transport)
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
+
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    assertSame(messaging, FirebaseMessaging.getInstance(app));
+    return messaging;
+  }
+
+  private static class TopicMgtArgs {
+    private final List<String> registrationTokens;
+    private final String topic;
+
+    TopicMgtArgs(List<String> registrationTokens, String topic) {
+      this.registrationTokens = registrationTokens;
+      this.topic = topic;
     }
   }
 }
