@@ -23,6 +23,9 @@ public class Message {
   @Key("webpush")
   private final WebpushConfig webpushConfig;
 
+  @Key("apns")
+  private final ApnsConfig apnsConfig;
+
   @Key("token")
   private final String token;
 
@@ -37,6 +40,7 @@ public class Message {
     this.notification = builder.notification;
     this.androidConfig = builder.androidConfig;
     this.webpushConfig = builder.webpushConfig;
+    this.apnsConfig = builder.apnsConfig;
     int count = Booleans.countTrue(
         !Strings.isNullOrEmpty(builder.token),
         !Strings.isNullOrEmpty(builder.topic),
@@ -58,6 +62,7 @@ public class Message {
     private Notification notification;
     private AndroidConfig androidConfig;
     private WebpushConfig webpushConfig;
+    private ApnsConfig apnsConfig;
     private String token;
     private String topic;
     private String condition;
@@ -78,6 +83,11 @@ public class Message {
 
     public Builder setWebpushConfig(WebpushConfig webpushConfig) {
       this.webpushConfig = webpushConfig;
+      return this;
+    }
+
+    public Builder setApnsConfig(ApnsConfig apnsConfig) {
+      this.apnsConfig = apnsConfig;
       return this;
     }
 

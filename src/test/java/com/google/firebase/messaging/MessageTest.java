@@ -101,6 +101,7 @@ public class MessageTest {
                 .setSound("android-sound")
                 .setColor("#112233")
                 .setTag("android-tag")
+                .setClickAction("android-click")
                 .setTitleLocKey("title-loc")
                 .addTitleLocArg("title-arg1")
                 .addAllTitleLocArgs(ImmutableList.of("title-arg2", "title-arg3"))
@@ -118,10 +119,50 @@ public class MessageTest {
         .put("sound", "android-sound")
         .put("color", "#112233")
         .put("tag", "android-tag")
+        .put("click_action", "android-click")
         .put("title_loc_key", "title-loc")
         .put("title_loc_args", ImmutableList.of("title-arg1", "title-arg2", "title-arg3"))
         .put("body_loc_key", "body-loc")
         .put("body_loc_args", ImmutableList.of("body-arg1", "body-arg2", "body-arg3"))
+        .build();
+    Map<String, Object> data = ImmutableMap.of(
+        "collapse_key", "test-key",
+        "priority", "high",
+        "ttl", "10.001s",
+        "restricted_package_name", "test-pkg-name",
+        "notification", notification
+    );
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "android", data), message);
+  }
+
+  @Test
+  public void testAndroidMessageWithoutLocalization() throws IOException {
+    Message message = Message.builder()
+        .setAndroidConfig(AndroidConfig.builder()
+            .setCollapseKey("test-key")
+            .setPriority(AndroidConfig.Priority.high)
+            .setTtl("10.001s")
+            .setRestrictedPackageName("test-pkg-name")
+            .setNotification(AndroidNotification.builder()
+                .setTitle("android-title")
+                .setBody("android-body")
+                .setIcon("android-icon")
+                .setSound("android-sound")
+                .setColor("#112233")
+                .setTag("android-tag")
+                .setClickAction("android-click")
+                .build())
+            .build())
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> notification = ImmutableMap.<String, Object>builder()
+        .put("title", "android-title")
+        .put("body", "android-body")
+        .put("icon", "android-icon")
+        .put("sound", "android-sound")
+        .put("color", "#112233")
+        .put("tag", "android-tag")
+        .put("click_action", "android-click")
         .build();
     Map<String, Object> data = ImmutableMap.of(
         "collapse_key", "test-key",
@@ -245,6 +286,73 @@ public class MessageTest {
         "notification", notification
     );
     assertJsonEquals(ImmutableMap.of("topic", "test-topic", "webpush", data), message);
+  }
+
+  @Test
+  public void testEmptyApnsMessage() throws IOException {
+    Message message = Message.builder()
+        .setApnsConfig(ApnsConfig.builder().build())
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> data = ImmutableMap.of();
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "apns", data), message);
+  }
+
+  @Test
+  public void testApnsMessageWithoutPayload() throws IOException {
+    Message message = Message.builder()
+        .setApnsConfig(ApnsConfig.builder()
+            .putHeader("k1", "v1")
+            .putAllHeaders(ImmutableMap.of("k2", "v2", "k3", "v3"))
+            .build())
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> data = ImmutableMap.<String, Object>of(
+        "headers", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3")
+    );
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "apns", data), message);
+
+    message = Message.builder()
+        .setApnsConfig(ApnsConfig.builder()
+            .putHeader("k1", "v1")
+            .putAllHeaders(ImmutableMap.of("k2", "v2", "k3", "v3"))
+            .setPayload(null)
+            .build())
+        .setTopic("test-topic")
+        .build();
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "apns", data), message);
+
+    message = Message.builder()
+        .setApnsConfig(ApnsConfig.builder()
+            .putHeader("k1", "v1")
+            .putAllHeaders(ImmutableMap.of("k2", "v2", "k3", "v3"))
+            .setPayload(ImmutableMap.<String, Object>of())
+            .build())
+        .setTopic("test-topic")
+        .build();
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "apns", data), message);
+  }
+
+  @Test
+  public void testApnsMessageWithPayload() throws IOException {
+    Map<String, Object> payload = ImmutableMap.<String, Object>builder()
+        .put("k1", "v1")
+        .put("k2", true)
+        .put("k3", ImmutableMap.of("k4", "v4"))
+        .build();
+    Message message = Message.builder()
+        .setApnsConfig(ApnsConfig.builder()
+            .putHeader("k1", "v1")
+            .putAllHeaders(ImmutableMap.of("k2", "v2", "k3", "v3"))
+            .setPayload(payload)
+            .build())
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> data = ImmutableMap.<String, Object>of(
+        "headers", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"),
+        "payload", payload
+    );
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "apns", data), message);
   }
 
   private static void assertJsonEquals(

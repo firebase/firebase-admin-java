@@ -92,7 +92,7 @@ public class FirebaseMessaging {
           Map map = response.parseAs(Map.class);
           return (String) map.get("name");
         } catch (Exception e) {
-          throw new RuntimeException(e);
+          throw new FirebaseMessagingException("Error while calling FCM service", e);
         } finally {
           if (response != null) {
             response.disconnect();
