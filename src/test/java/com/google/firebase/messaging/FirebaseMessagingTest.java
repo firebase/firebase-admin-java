@@ -1,7 +1,6 @@
 package com.google.firebase.messaging;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -165,13 +164,13 @@ public class FirebaseMessagingTest {
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     messaging.setInterceptor(interceptor);
 
-    List<TopicManagementResult> result = messaging.subscribeToTopicAsync(
+    TopicManagementResponse result = messaging.subscribeToTopicAsync(
         ImmutableList.of("id1", "id2"), "test-topic").get();
-    assertEquals(2, result.size());
-    assertTrue(result.get(0).isSuccess());
-    assertNull(result.get(0).getReason());
-    assertFalse(result.get(1).isSuccess());
-    assertEquals("error_reason", result.get(1).getReason());
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(1, result.getFailureCount());
+    assertEquals(1, result.getErrors().size());
+    assertEquals(1, result.getErrors().get(0).getIndex());
+    assertEquals("error_reason", result.getErrors().get(0).getReason());
 
     assertNotNull(interceptor.getResponse());
     HttpRequest request = interceptor.getResponse().getRequest();

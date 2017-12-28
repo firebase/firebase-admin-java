@@ -17,7 +17,6 @@ import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -95,19 +94,19 @@ public class FirebaseMessaging {
     });
   }
 
-  public ApiFuture<List<TopicManagementResult>> subscribeToTopicAsync(
+  public ApiFuture<TopicManagementResponse> subscribeToTopicAsync(
       List<String> registrationTokens, String topic) {
     return new TaskToApiFuture<>(subscribeToTopic(registrationTokens, topic));
   }
 
-  private Task<List<TopicManagementResult>> subscribeToTopic(
+  private Task<TopicManagementResponse> subscribeToTopic(
       final List<String> registrationTokens, final String topic) {
     checkRegistrationTokens(registrationTokens);
     checkTopic(topic);
 
-    return ImplFirebaseTrampolines.submitCallable(app, new Callable<List<TopicManagementResult>>() {
+    return ImplFirebaseTrampolines.submitCallable(app, new Callable<TopicManagementResponse>() {
       @Override
-      public List<TopicManagementResult> call() throws FirebaseMessagingException {
+      public TopicManagementResponse call() throws FirebaseMessagingException {
         try {
           return makeTopicManagementRequest(registrationTokens, topic, IID_SUBSCRIBE_PATH);
         } catch (IOException e) {
@@ -134,7 +133,7 @@ public class FirebaseMessaging {
     }
   }
 
-  private List<TopicManagementResult> makeTopicManagementRequest(
+  private TopicManagementResponse makeTopicManagementRequest(
       List<String> registrationTokens, String topic, String path) throws IOException {
     Map<String, Object> payload = ImmutableMap.of(
         "to", topic,
@@ -151,12 +150,11 @@ public class FirebaseMessaging {
     try {
       response = request.execute();
       Map parsed = response.parseAs(Map.class);
-      List<Map<String, Object>> results = (List<Map<String, Object>>) parsed.get("results");
-      ImmutableList.Builder<TopicManagementResult> builder = ImmutableList.builder();
-      for (Map<String, Object> map : results) {
-        builder.add(new TopicManagementResult(map));
+      List<Map> results = (List<Map>) parsed.get("results");
+      if (results == null || results.isEmpty()) {
+        throw new IOException("Unexpected topic management response");
       }
-      return builder.build();
+      return new TopicManagementResponse(results);
     } finally {
       if (response != null) {
         response.disconnect();

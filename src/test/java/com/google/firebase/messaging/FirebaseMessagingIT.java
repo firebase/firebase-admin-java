@@ -38,8 +38,8 @@ public class FirebaseMessagingIT {
   @Test
   public void testSubscribe() throws Exception {
     FirebaseMessaging messaging = FirebaseMessaging.getInstance();
-    List<TopicManagementResult> results = messaging.subscribeToTopicAsync(
+    TopicManagementResponse results = messaging.subscribeToTopicAsync(
         ImmutableList.of(TEST_REGISTRATION_TOKEN), "/topics/mock-topic").get();
-    assertEquals(1, results.size());
+    assertEquals(1, results.getSuccessCount() + results.getFailureCount());
   }
 }
