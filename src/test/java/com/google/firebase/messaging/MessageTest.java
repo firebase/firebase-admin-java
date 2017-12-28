@@ -171,6 +171,82 @@ public class MessageTest {
     }
   }
 
+  @Test
+  public void testEmptyWebpushMessage() throws IOException {
+    Message message = Message.builder()
+        .setWebpushConfig(WebpushConfig.builder().build())
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> data = ImmutableMap.of();
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "webpush", data), message);
+  }
+
+  @Test
+  public void testWebpushMessageWithoutNotification() throws IOException {
+    Message message = Message.builder()
+        .setWebpushConfig(WebpushConfig.builder()
+            .putHeader("k1", "v1")
+            .putAllHeaders(ImmutableMap.of("k2", "v2", "k3", "v3"))
+            .putData("k1", "v1")
+            .putAllData(ImmutableMap.of("k2", "v2", "k3", "v3"))
+            .build())
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> data = ImmutableMap.<String, Object>of(
+        "headers", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"),
+        "data", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3")
+    );
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "webpush", data), message);
+  }
+
+  @Test
+  public void testWebpushMessageWithNotification() throws IOException {
+    Message message = Message.builder()
+        .setWebpushConfig(WebpushConfig.builder()
+            .putHeader("k1", "v1")
+            .putAllHeaders(ImmutableMap.of("k2", "v2", "k3", "v3"))
+            .putData("k1", "v1")
+            .putAllData(ImmutableMap.of("k2", "v2", "k3", "v3"))
+            .setNotification(new WebpushNotification(
+                "webpush-title", "webpush-body", "webpush-icon"))
+            .build())
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> notification = ImmutableMap.<String, Object>builder()
+        .put("title", "webpush-title")
+        .put("body", "webpush-body")
+        .put("icon", "webpush-icon")
+        .build();
+    Map<String, Object> data = ImmutableMap.<String, Object>of(
+        "headers", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"),
+        "data", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"),
+        "notification", notification
+    );
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "webpush", data), message);
+
+    // Test notification without icon
+    message = Message.builder()
+        .setWebpushConfig(WebpushConfig.builder()
+            .putHeader("k1", "v1")
+            .putAllHeaders(ImmutableMap.of("k2", "v2", "k3", "v3"))
+            .putData("k1", "v1")
+            .putAllData(ImmutableMap.of("k2", "v2", "k3", "v3"))
+            .setNotification(new WebpushNotification("webpush-title", "webpush-body"))
+            .build())
+        .setTopic("test-topic")
+        .build();
+    notification = ImmutableMap.<String, Object>builder()
+        .put("title", "webpush-title")
+        .put("body", "webpush-body")
+        .build();
+    data = ImmutableMap.<String, Object>of(
+        "headers", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"),
+        "data", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"),
+        "notification", notification
+    );
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "webpush", data), message);
+  }
+
   private static void assertJsonEquals(
       Map expected, Object actual) throws IOException {
     assertEquals(expected, toMap(actual));

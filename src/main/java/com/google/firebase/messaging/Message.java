@@ -12,27 +12,31 @@ import java.util.Map;
 public class Message {
 
   @Key("data")
-  private Map<String, String> data;
+  private final Map<String, String> data;
 
   @Key("notification")
-  private Notification notification;
+  private final Notification notification;
 
   @Key("android")
-  private AndroidConfig androidConfig;
+  private final AndroidConfig androidConfig;
+
+  @Key("webpush")
+  private final WebpushConfig webpushConfig;
 
   @Key("token")
-  private String token;
+  private final String token;
 
   @Key("topic")
-  private String topic;
+  private final String topic;
 
   @Key("condition")
-  private String condition;
+  private final String condition;
 
   private Message(Builder builder) {
     this.data = builder.data.isEmpty() ? null : ImmutableMap.copyOf(builder.data);
     this.notification = builder.notification;
     this.androidConfig = builder.androidConfig;
+    this.webpushConfig = builder.webpushConfig;
     int count = Booleans.countTrue(
         !Strings.isNullOrEmpty(builder.token),
         !Strings.isNullOrEmpty(builder.topic),
@@ -49,9 +53,11 @@ public class Message {
   }
 
   public static class  Builder {
+
     private final Map<String, String> data = new HashMap<>();
     private Notification notification;
     private AndroidConfig androidConfig;
+    private WebpushConfig webpushConfig;
     private String token;
     private String topic;
     private String condition;
@@ -67,6 +73,11 @@ public class Message {
 
     public Builder setAndroidConfig(AndroidConfig androidConfig) {
       this.androidConfig = androidConfig;
+      return this;
+    }
+
+    public Builder setWebpushConfig(WebpushConfig webpushConfig) {
+      this.webpushConfig = webpushConfig;
       return this;
     }
 

@@ -17,6 +17,10 @@ public class FirebaseMessagingIT {
 
     Message message = Message.builder()
         .setNotification(new Notification("Title", "Body"))
+        .setAndroidConfig(AndroidConfig.builder()
+            .setRestrictedPackageName("com.demoapps.hkj")
+            .build())
+        .setWebpushConfig(WebpushConfig.builder().putHeader("X-Custom-Val", "Foo").build())
         .setTopic("foo-bar")
         .build();
     String resp = messaging.sendAsync(message).get();
