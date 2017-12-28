@@ -10,8 +10,10 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
+import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
+import com.google.api.client.util.Key;
 import com.google.api.core.ApiFuture;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -35,6 +37,7 @@ public class FirebaseMessaging {
 
   private static final String IID_HOST = "https://iid.googleapis.com";
   private static final String IID_SUBSCRIBE_PATH = "iid/v1:batchAdd";
+  private static final String IID_UNSUBSCRIBE_PATH = "iid/v1:batchRemove";
 
   private final FirebaseApp app;
   private final HttpRequestFactory requestFactory;
@@ -109,6 +112,28 @@ public class FirebaseMessaging {
       public TopicManagementResponse call() throws FirebaseMessagingException {
         try {
           return makeTopicManagementRequest(registrationTokens, topic, IID_SUBSCRIBE_PATH);
+        } catch (IOException e) {
+          throw new FirebaseMessagingException("Error while calling IID service", e);
+        }
+      }
+    });
+  }
+
+  public ApiFuture<TopicManagementResponse> unsubscribeFromTopicAsync(
+      List<String> registrationTokens, String topic) {
+    return new TaskToApiFuture<>(unsubscribeFromTopic(registrationTokens, topic));
+  }
+
+  private Task<TopicManagementResponse> unsubscribeFromTopic(
+      final List<String> registrationTokens, final String topic) {
+    checkRegistrationTokens(registrationTokens);
+    checkTopic(topic);
+
+    return ImplFirebaseTrampolines.submitCallable(app, new Callable<TopicManagementResponse>() {
+      @Override
+      public TopicManagementResponse call() throws FirebaseMessagingException {
+        try {
+          return makeTopicManagementRequest(registrationTokens, topic, IID_UNSUBSCRIBE_PATH);
         } catch (IOException e) {
           throw new FirebaseMessagingException("Error while calling IID service", e);
         }
@@ -197,5 +222,10 @@ public class FirebaseMessaging {
       // will now fail because calls to getOptions() and getToken() will hit FirebaseApp,
       // which will throw once the app is deleted.
     }
+  }
+
+  public static class TopicMgtOutput {
+    @Key("results")
+    private List<Map<String, Object>> results;
   }
 }

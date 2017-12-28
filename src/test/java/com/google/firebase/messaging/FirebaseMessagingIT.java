@@ -42,4 +42,12 @@ public class FirebaseMessagingIT {
         ImmutableList.of(TEST_REGISTRATION_TOKEN), "/topics/mock-topic").get();
     assertEquals(1, results.getSuccessCount() + results.getFailureCount());
   }
+
+  @Test
+  public void testUnsubscribe() throws Exception {
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    TopicManagementResponse results = messaging.unsubscribeFromTopicAsync(
+        ImmutableList.of(TEST_REGISTRATION_TOKEN), "/topics/mock-topic").get();
+    assertEquals(1, results.getSuccessCount() + results.getFailureCount());
+  }
 }
