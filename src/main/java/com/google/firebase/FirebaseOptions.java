@@ -32,6 +32,7 @@ import com.google.firebase.auth.internal.FirebaseCredentialsAdapter;
 import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
+import com.google.firebase.testing.TestUtils;
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
@@ -317,18 +318,60 @@ public final class FirebaseOptions {
      */
     public FirebaseOptions build() {
       DefaultConfigOptions d = DefaultConfigOptions.getOptionsFromFile();
-      System.out.println("-----=----");
+      System.err.println("-----=----");
       if (d != null) {
+        System.err.println("-----=----...");
         System.err.println(d);
+        System.err.println(d.databaseURL);
+        System.err.println(d.projectId);
+        System.err.println(d.storageBucket);
+        System.err.println(d.databaseAuthVariableOverride);
+        System.err.println(d.toString());
+        System.err.println("...");
+      } else {
+        System.err.println("null<<<");
       }
 
       return new FirebaseOptions(this);
     }
 
-    public void fillInBlanksFromMap(Map<String, Object> map) {
-      Class<Builder> bldClass = Builder.class;
-      
+    public void fillInBlanksFromMap(Map<String, Object> map) {   
       for (Map.Entry<String, Object> entry : map.entrySet()) {
+        System.err.print("-");
+        String key = entry.getKey();
+        switch (key) {
+          case "databaseURL": 
+            if (databaseUrl == null || databaseUrl == "") {
+              System.err.print("1");
+              setDatabaseUrl((String)map.get("databaseUrl"));
+            }
+            break;
+          case "storageBucket": 
+            if (storageBucket == null || storageBucket == "") {
+              System.err.print("2");
+              setStorageBucket((String)map.get("storageBucket"));
+            }
+            break;
+          case "projectId":
+            if (projectId == null || projectId == "") {
+              System.err.print("3");
+              setProjectId((String)map.get("projectId"));
+            }
+            break;
+          case "databaseAuthVariableOverride":
+            break;
+          default:
+            throw new IllegalArgumentException("Illegal options key name: " + key);
+        }
+      }
+    }
+    
+    public void fillInBlanksFromDefaultConfigOptions(DefaultConfigOptions defaultConfigOptions) {
+      Class<Builder> bldClass = Builder.class;
+      if (defaultConfigOptions == null) {
+        return;
+      }
+      /*for (Map.Entry<String, Object> entry : map.entrySet()) {
         System.err.print("-");
         String key = entry.getKey();
         switch (key) {
@@ -353,7 +396,7 @@ public final class FirebaseOptions {
           default:
             System.err.print("d");
         }
-      }
+      }*/
     }
   } 
 
@@ -374,6 +417,8 @@ public final class FirebaseOptions {
       try {
         reader = new FileReader(defaultConfig);
       } catch (FileNotFoundException e) {
+        System.err.println("{{{{{{}}}}}}}");
+        System.err.println(e);
         throw new IllegalStateException(e)  ;
       } 
       Gson gson = new Gson();

@@ -308,6 +308,9 @@
                             <consoleOutput>true</consoleOutput>
                             <failsOnError>true</failsOnError>
                             <includeTestSourceDirectory>true</includeTestSourceDirectory>
+                            <environmentVariables>
+                                <FIREBASE_CONFIG></FIREBASE_CONFIG>
+                            </environmentVariables>
                         </configuration>
                         <goals>
                             <goal>check</goal>
@@ -343,7 +346,13 @@
                             <goal>verify</goal>
                         </goals>
                     </execution>                    
-                </executions>                
+                </executions> 
+                <configuration>
+                    <skipTests>${skipUTs}</skipTests>
+                    <environmentVariables>
+                        <FIREBASE_CONFIG></FIREBASE_CONFIG>
+                    </environmentVariables>
+                </configuration>               
             </plugin>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>

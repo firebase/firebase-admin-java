@@ -34,6 +34,8 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.auth.oauth2.OAuth2Credentials.CredentialsChangedListener;
 import com.google.common.base.Defaults;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
 import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.FirebaseOptions.Builder;
@@ -41,19 +43,25 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.testing.FirebaseAppRule;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
+import com.google.gson.JsonSyntaxException;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -82,6 +90,11 @@ public class FirebaseAppTest {
       parameters.add(Defaults.defaultValue(parameterType));
     }
     method.invoke(instance, parameters.toArray());
+  }
+
+  @After
+  public void cleanUpEnv() {
+    setDefaultConfigFile("");
   }
 
   @Test(expected = NullPointerException.class)
@@ -419,6 +432,38 @@ public class FirebaseAppTest {
     assertEquals(0, refresher.cancelCalls);
   }
 
+  @Test(expected = IllegalStateException.class)
+  public void testDefaultAppEmptyFile() {
+    setDefaultConfigFile("firebase_config_empty.json");
+    FirebaseApp.initializeApp(OPTIONS);
+  }
+
+  @Test(expected = JsonSyntaxException.class)
+  public void testDefaultAppBadFile() {
+    setDefaultConfigFile("firebase_config_bad.json");
+    FirebaseApp.initializeApp(OPTIONS);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testDefaultAppBadKey() {
+    setDefaultConfigFile("firebase_config_bad_key.json");
+    FirebaseApp.initializeApp(OPTIONS);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testDefaultNoSuchFile() {
+    setDefaultConfigFile("no_such.json");
+    FirebaseApp.initializeApp(OPTIONS);
+  }
+
+  @Test
+  public void testDefaultGood() {
+    setDefaultConfigFile("firebase_config.json");
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS);
+    assertEquals("hipster-chat-mock", firebaseApp.getProjectId());
+  }
+  
+
   @Test(expected = IllegalArgumentException.class)
   public void testFirebaseExceptionNullDetail() {
     new FirebaseException(null);
@@ -427,6 +472,29 @@ public class FirebaseAppTest {
   @Test(expected = IllegalArgumentException.class)
   public void testFirebaseExceptionEmptyDetail() {
     new FirebaseException("");
+  }
+  
+
+  private void setDefaultConfigFile(String fileName) {
+    String filePath = "";
+    if (!fileName.isEmpty()) {
+      filePath  = new File("src/test/resources/" + fileName)
+                   .getAbsolutePath();
+    }
+    /*  URL file = TestUtils.class.getClassLoader().getResource(fileName);
+      if (file != null) {
+        System.err.println(">>> file --;"  + file.toString());
+        filePath = file.toString();
+      } else {
+        System.err.println(">> > > NONE: " + fileName);
+        filePath = "file_not_found";
+      }
+    }*/
+    Map<String, String> environmentVariables =
+        ImmutableMap.<String, String>builder()
+          .put("FIREBASE_CONFIG", filePath)              
+          .build();
+    TestUtils.setEnvironmentVariables(environmentVariables);
   }
 
   private static class MockTokenRefresher extends TokenRefresher {

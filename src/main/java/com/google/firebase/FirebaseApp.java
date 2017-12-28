@@ -114,7 +114,10 @@ public class FirebaseApp {
   private FirebaseApp(String name, FirebaseOptions options, TokenRefresher.Factory factory) {
     checkArgument(!Strings.isNullOrEmpty(name));
     this.name = name;
+    System.err.println("2222");
     this.options = fillInBlanksFromDefaultConfig(checkNotNull(options));
+    System.err.println(options);
+    System.err.println("3333");
     this.tokenRefresher = checkNotNull(factory).create(this);
     this.threadManager = options.getThreadManager();
     this.executors = this.threadManager.getFirebaseExecutors(this);
@@ -555,8 +558,11 @@ public class FirebaseApp {
     }
     FileReader reader;
     try {
+      System.err.println(defaultConfig + " llll lll ");
       reader = new FileReader(defaultConfig);
     } catch (FileNotFoundException e) {
+      System.err.println("><><><>");
+      System.err.println(e);
       throw new IllegalStateException(e)  ;
     } 
     Gson gson = new Gson();
