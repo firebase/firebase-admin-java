@@ -2,6 +2,7 @@ package com.google.firebase.messaging;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
@@ -10,7 +11,6 @@ import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
-import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.util.Key;
@@ -22,7 +22,6 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.TaskToApiFuture;
 import com.google.firebase.tasks.Task;
@@ -66,9 +65,9 @@ public class FirebaseMessaging {
   }
 
   /**
-   * Gets the {@link FirebaseInstanceId} instance for the specified {@link FirebaseApp}.
+   * Gets the {@link FirebaseMessaging} instance for the specified {@link FirebaseApp}.
    *
-   * @return The {@link FirebaseInstanceId} instance for the specified {@link FirebaseApp}.
+   * @return The {@link FirebaseMessaging} instance for the specified {@link FirebaseApp}.
    */
   public static synchronized FirebaseMessaging getInstance(FirebaseApp app) {
     FirebaseMessagingService service = ImplFirebaseTrampolines.getService(app, SERVICE_ID,
@@ -112,7 +111,7 @@ public class FirebaseMessaging {
       public TopicManagementResponse call() throws FirebaseMessagingException {
         try {
           return makeTopicManagementRequest(registrationTokens, topic, IID_SUBSCRIBE_PATH);
-        } catch (IOException e) {
+        } catch (Exception e) {
           throw new FirebaseMessagingException("Error while calling IID service", e);
         }
       }
@@ -134,7 +133,7 @@ public class FirebaseMessaging {
       public TopicManagementResponse call() throws FirebaseMessagingException {
         try {
           return makeTopicManagementRequest(registrationTokens, topic, IID_UNSUBSCRIBE_PATH);
-        } catch (IOException e) {
+        } catch (Exception e) {
           throw new FirebaseMessagingException("Error while calling IID service", e);
         }
       }
@@ -149,8 +148,9 @@ public class FirebaseMessaging {
     HttpResponse response = null;
     try {
       response = request.execute();
-      Map map = response.parseAs(Map.class);
-      return (String) map.get("name");
+      MessagingServiceResponse parsed = new MessagingServiceResponse();
+      jsonFactory.createJsonParser(response.getContent()).parseAndClose(parsed);
+      return parsed.name;
     } finally {
       if (response != null) {
         response.disconnect();
@@ -174,12 +174,11 @@ public class FirebaseMessaging {
     HttpResponse response = null;
     try {
       response = request.execute();
-      Map parsed = response.parseAs(Map.class);
-      List<Map> results = (List<Map>) parsed.get("results");
-      if (results == null || results.isEmpty()) {
-        throw new IOException("Unexpected topic management response");
-      }
-      return new TopicManagementResponse(results);
+      InstanceIdServiceResponse parsed = new InstanceIdServiceResponse();
+      jsonFactory.createJsonParser(response.getContent()).parseAndClose(parsed);
+      checkState(parsed.results != null && !parsed.results.isEmpty(),
+          "unexpected response from topic management service");
+      return new TopicManagementResponse(parsed.results);
     } finally {
       if (response != null) {
         response.disconnect();
@@ -224,7 +223,12 @@ public class FirebaseMessaging {
     }
   }
 
-  public static class TopicMgtOutput {
+  private static class MessagingServiceResponse {
+    @Key("name")
+    private String name;
+  }
+
+  private static class InstanceIdServiceResponse {
     @Key("results")
     private List<Map<String, Object>> results;
   }

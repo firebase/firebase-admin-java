@@ -10,7 +10,7 @@ public class TopicManagementResponse {
   private final int failureCount;
   private final List<Error> errors;
 
-  TopicManagementResponse(List<Map> results) {
+  TopicManagementResponse(List<Map<String, Object>> results) {
     int successCount = 0;
     int failureCount = 0;
     ImmutableList.Builder<Error> errors = ImmutableList.builder();
