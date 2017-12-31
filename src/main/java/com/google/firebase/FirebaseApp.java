@@ -119,6 +119,7 @@ public class FirebaseApp {
     System.err.println(options);
     System.err.println("3333");
     this.tokenRefresher = checkNotNull(factory).create(this);
+    System.err.println("22422");
     this.threadManager = options.getThreadManager();
     this.executors = this.threadManager.getFirebaseExecutors(this);
   }
@@ -567,7 +568,9 @@ public class FirebaseApp {
     } 
     Gson gson = new Gson();
     Map<String, Object> map = new HashMap<String, Object>();
+    System.err.println("BBB");
     map = (Map<String, Object>) gson.fromJson(reader, map.getClass());
+    System.err.println("AAA");
     FirebaseOptions.Builder resultBuilder = new FirebaseOptions.Builder(options);
     resultBuilder.fillInBlanksFromMap(map);
     return resultBuilder.build();
