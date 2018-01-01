@@ -57,6 +57,7 @@ public final class FirebaseOptions {
   private final ThreadManager threadManager;
 
   private FirebaseOptions(@NonNull FirebaseOptions.Builder builder) {
+    
     this.credentials = checkNotNull(builder.credentials,
         "FirebaseOptions must be initialized with setCredentials().")
         .createScoped(BaseCredential.FIREBASE_SCOPES);
@@ -317,113 +318,7 @@ public final class FirebaseOptions {
      * @return A {@link FirebaseOptions} instance created from the previously set options.
      */
     public FirebaseOptions build() {
-      DefaultConfigOptions d = DefaultConfigOptions.getOptionsFromFile();
-      System.err.println("-----=----");
-      if (d != null) {
-        System.err.println("-----=----...");
-        System.err.println(d);
-        System.err.println(d.databaseURL);
-        System.err.println(d.projectId);
-        System.err.println(d.storageBucket);
-        System.err.println(d.databaseAuthVariableOverride);
-        System.err.println(d.toString());
-        System.err.println("...");
-      } else {
-        System.err.println("null<<<");
-      }
-
       return new FirebaseOptions(this);
     }
-
-    public void fillInBlanksFromMap(Map<String, Object> map) {   
-      for (Map.Entry<String, Object> entry : map.entrySet()) {
-        System.err.print("-");
-        String key = entry.getKey();
-        switch (key) {
-          case "databaseURL": 
-            if (databaseUrl == null || databaseUrl == "") {
-              System.err.print("1");
-              setDatabaseUrl((String)map.get("databaseUrl"));
-            }
-            break;
-          case "storageBucket": 
-            if (storageBucket == null || storageBucket == "") {
-              System.err.print("2");
-              setStorageBucket((String)map.get("storageBucket"));
-            }
-            break;
-          case "projectId":
-            if (projectId == null || projectId == "") {
-              System.err.print("3");
-              setProjectId((String)map.get("projectId"));
-            }
-            break;
-          case "databaseAuthVariableOverride":
-            break;
-          default:
-            throw new IllegalArgumentException("Illegal options key name: " + key);
-        }
-      }
-    }
-    
-    public void fillInBlanksFromDefaultConfigOptions(DefaultConfigOptions defaultConfigOptions) {
-      Class<Builder> bldClass = Builder.class;
-      if (defaultConfigOptions == null) {
-        return;
-      }
-      /*for (Map.Entry<String, Object> entry : map.entrySet()) {
-        System.err.print("-");
-        String key = entry.getKey();
-        switch (key) {
-          case "databaseUrl": 
-            if (databaseUrl == null || databaseUrl == "") {
-              System.err.print("1");
-              setDatabaseUrl((String)map.get("databaseUrl"));
-            }
-            break;
-          case "storageBucket": 
-            if (storageBucket == null || storageBucket == "") {
-              System.err.print("2");
-              setStorageBucket((String)map.get("storageBucket"));
-            }
-            break;
-          case "projectId":
-            if (projectId == null || projectId == "") {
-              System.err.print("3");
-              setProjectId((String)map.get("projectId"));
-            }
-            break;
-          default:
-            System.err.print("d");
-        }
-      }*/
-    }
   } 
-
-  private static class DefaultConfigOptions{
-    private String databaseURL;
-    private String storageBucket;
-    private Map<String, Object> databaseAuthVariableOverride;
-    private String projectId;
-
-    private DefaultConfigOptions() {}
-
-    private static DefaultConfigOptions getOptionsFromFile() {
-      String defaultConfig = System.getenv("FIREBASE_CONFIG");
-      if (defaultConfig == null || defaultConfig.isEmpty()) {
-        return null;
-      }
-      FileReader reader;
-      try {
-        reader = new FileReader(defaultConfig);
-      } catch (FileNotFoundException e) {
-        System.err.println("{{{{{{}}}}}}}");
-        System.err.println(e);
-        throw new IllegalStateException(e)  ;
-      } 
-      Gson gson = new Gson();
-      DefaultConfigOptions defaultConfigOptions = gson.fromJson(reader ,DefaultConfigOptions.class);
-      return defaultConfigOptions;
-    }
-  }
 }

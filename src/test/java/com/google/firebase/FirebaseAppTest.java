@@ -434,34 +434,38 @@ public class FirebaseAppTest {
 
   @Test(expected = IllegalStateException.class)
   public void testDefaultAppEmptyFile() {
+    System.err.println("EMPTY");
     setDefaultConfigFile("firebase_config_empty.json");
-    FirebaseApp.initializeApp(OPTIONS);
+    FirebaseApp.initializeApp();
   }
 
   @Test(expected = JsonSyntaxException.class)
   public void testDefaultAppBadFile() {
     setDefaultConfigFile("firebase_config_bad.json");
-    FirebaseApp.initializeApp(OPTIONS);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testDefaultAppBadKey() {
-    setDefaultConfigFile("firebase_config_bad_key.json");
-    FirebaseApp.initializeApp(OPTIONS);
+    FirebaseApp.initializeApp();
   }
 
   @Test(expected = IllegalStateException.class)
   public void testDefaultNoSuchFile() {
     setDefaultConfigFile("no_such.json");
-    FirebaseApp.initializeApp(OPTIONS);
+    FirebaseApp.initializeApp();
   }
 
   @Test
   public void testDefaultGood() {
+    System.err.println("DEFAULT GOOD");
     setDefaultConfigFile("firebase_config.json");
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS);
-    assertEquals("hipster-chat-mock", firebaseApp.getProjectId());
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp();
+    assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
+    assertEquals("hipster-chat.appspot.mock", firebaseApp.getOptions().getStorageBucket());
   }
+
+  public void testDefaultAppBadKey() {
+    setDefaultConfigFile("firebase_config_bad_key.json");
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp();
+    assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
+  }
+
   
 
   @Test(expected = IllegalArgumentException.class)

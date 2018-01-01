@@ -44,6 +44,7 @@ import com.google.firebase.tasks.Tasks;
 import com.google.gson.Gson;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
+
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -84,6 +85,7 @@ public class FirebaseApp {
   private static final Map<String, FirebaseApp> instances = new HashMap<>();
 
   public static final String DEFAULT_APP_NAME = "[DEFAULT]";
+  public static final String DEFAULT_CONFIG_OPTIONS_VAR = "FIREBASE_CONFIG";
 
   private static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
       new TokenRefresher.Factory();
@@ -114,12 +116,10 @@ public class FirebaseApp {
   private FirebaseApp(String name, FirebaseOptions options, TokenRefresher.Factory factory) {
     checkArgument(!Strings.isNullOrEmpty(name));
     this.name = name;
-    System.err.println("2222");
-    this.options = fillInBlanksFromDefaultConfig(checkNotNull(options));
+    System.err.println("----=-=-=");
     System.err.println(options);
-    System.err.println("3333");
+    this.options = checkNotNull(options);
     this.tokenRefresher = checkNotNull(factory).create(this);
-    System.err.println("22422");
     this.threadManager = options.getThreadManager();
     this.executors = this.threadManager.getFirebaseExecutors(this);
   }
@@ -170,6 +170,48 @@ public class FirebaseApp {
               "FirebaseApp with name %s doesn't exist. %s", name, availableAppNamesMessage);
       throw new IllegalStateException(errorMessage);
     }
+  }
+
+  /**
+   * Initializes the default {@link FirebaseApp} instance. Same as {@link
+   * #initializeApp(String)}, but it uses {@link #DEFAULT_APP_NAME} as name. *
+   * Also, it uses the {@link FirebaseOptions} values set in the file pointed to by
+   * {@link DEFAULT_CONFIG_OPTIONS_VAR}, if tht file is available.
+   * 
+   * <p>The creation of the default instance is automatically triggered at app startup time, if
+   * Firebase configuration values are available from resources - populated from
+   * google-services.json.
+   */
+  public static FirebaseApp initializeApp() {
+    return initializeApp(DEFAULT_APP_NAME);
+  }
+
+  /**
+   * Initializes the default {@link FirebaseApp} instance. Same as {@link
+   * #initializeApp(FirebaseOptions, String)}, but it uses the FirebaseOptions values set in the 
+   * file pointed to by {@link DEFAULT_CONFIG_OPTIONS_VAR}, if tht file is available.
+   * 
+   * <p>The creation of the default instance is automatically triggered at app startup time, if
+   * Firebase configuration values are available from resources - populated from
+   * google-services.json.
+   */
+  public static FirebaseApp initializeApp(String name) { 
+    DefaultConfigOptions defaultConfigOptions = DefaultConfigOptions.getOptionsFromFile();
+    System.err.println("|||||||0");
+    System.err.println(defaultConfigOptions);
+    System.err.println("|||||||1");   
+    FirebaseOptions.Builder builder;
+    builder = DefaultConfigOptions.getDefaultOptionsBuilder(defaultConfigOptions);
+    try {
+      builder.setCredentials(GoogleCredentials.getApplicationDefault());
+    } catch (IOException e) {
+      throw new IllegalStateException("Unable to get default credentials.");
+    }
+    System.err.println("|||||||2");       
+    System.err.println(builder);
+    FirebaseOptions options = builder.build();
+    System.err.println("|||||||3");
+    return initializeApp(options, name);
   }
 
   /**
@@ -552,29 +594,52 @@ public class FirebaseApp {
     }
   }
 
-  private static FirebaseOptions fillInBlanksFromDefaultConfig(FirebaseOptions options) {
-    String defaultConfig = System.getenv("FIREBASE_CONFIG");
-    if (defaultConfig == null || defaultConfig.isEmpty()) {
-      return options;
-    }
-    FileReader reader;
-    try {
-      System.err.println(defaultConfig + " llll lll ");
-      reader = new FileReader(defaultConfig);
-    } catch (FileNotFoundException e) {
-      System.err.println("><><><>");
-      System.err.println(e);
-      throw new IllegalStateException(e)  ;
-    } 
-    Gson gson = new Gson();
-    Map<String, Object> map = new HashMap<String, Object>();
-    System.err.println("BBB");
-    map = (Map<String, Object>) gson.fromJson(reader, map.getClass());
-    System.err.println("AAA");
-    FirebaseOptions.Builder resultBuilder = new FirebaseOptions.Builder(options);
-    resultBuilder.fillInBlanksFromMap(map);
-    return resultBuilder.build();
-  //    databaseAuthVariableOverride = options.databaseAuthVariableOverride;
-  }
+  private static class DefaultConfigOptions{
+    private String databaseURL;
+    private String storageBucket;
+    private Map<String, Object> databaseAuthVariableOverride;
+    private String projectId;
 
+    private DefaultConfigOptions() {}
+
+    private static DefaultConfigOptions getOptionsFromFile() {
+      String defaultConfig = System.getenv(DEFAULT_CONFIG_OPTIONS_VAR);
+      if (defaultConfig == null || defaultConfig.isEmpty()) {
+        return new DefaultConfigOptions();
+      }
+      FileReader reader;
+      try {
+        reader = new FileReader(defaultConfig);
+      } catch (FileNotFoundException e) {
+        throw new IllegalStateException(e)  ;
+      } 
+      Gson gson = new Gson();
+      System.err.println(reader);
+      DefaultConfigOptions defaultConfigOptions = gson.fromJson(reader ,DefaultConfigOptions.class);
+      if (defaultConfigOptions == null) {
+        throw new IllegalStateException("null JSON");
+      }
+      System.err.println("ooo");
+      System.err.println(defaultConfigOptions);
+      return defaultConfigOptions;
+    }
+
+    private static FirebaseOptions.Builder getDefaultOptionsBuilder(
+        DefaultConfigOptions defaultConfigOptions) {
+      System.err.println(";'';';';';'");
+      System.err.println(defaultConfigOptions);
+      FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
+      if (!Strings.isNullOrEmpty(defaultConfigOptions.databaseURL)) {
+        builder.setDatabaseUrl(defaultConfigOptions.databaseURL);
+      }
+      if (!Strings.isNullOrEmpty(defaultConfigOptions.projectId)) {
+        builder.setProjectId(defaultConfigOptions.projectId);
+      }
+      if (!Strings.isNullOrEmpty(defaultConfigOptions.storageBucket)) {
+        builder.setStorageBucket(defaultConfigOptions.storageBucket);
+      }
+      System.err.println(";'';';';';--");
+      return builder;
+    }
+  }
 }
