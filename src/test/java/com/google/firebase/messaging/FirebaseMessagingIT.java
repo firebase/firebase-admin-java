@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.testing.IntegrationTestUtils;
-import java.util.List;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -31,7 +30,7 @@ public class FirebaseMessagingIT {
         .setWebpushConfig(WebpushConfig.builder().putHeader("X-Custom-Val", "Foo").build())
         .setTopic("foo-bar")
         .build();
-    String resp = messaging.sendAsync(message).get();
+    String resp = messaging.sendAsync(message, true).get();
     System.out.println(resp);
   }
 

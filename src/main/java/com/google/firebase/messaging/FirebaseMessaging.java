@@ -79,16 +79,20 @@ public class FirebaseMessaging {
   }
 
   public ApiFuture<String> sendAsync(Message message) {
-    return new TaskToApiFuture<>(send(message));
+    return sendAsync(message, false);
   }
 
-  private Task<String> send(final Message message) {
+  public ApiFuture<String> sendAsync(Message message, boolean dryRun) {
+    return new TaskToApiFuture<>(send(message, dryRun));
+  }
+
+  private Task<String> send(final Message message, final boolean dryRun) {
     checkNotNull(message, "message must not be null");
     return ImplFirebaseTrampolines.submitCallable(app, new Callable<String>() {
       @Override
       public String call() throws FirebaseMessagingException {
         try {
-          return makeSendRequest(message);
+          return makeSendRequest(message, dryRun);
         } catch (Exception e) {
           throw new FirebaseMessagingException("Error while calling FCM service", e);
         }
@@ -140,9 +144,14 @@ public class FirebaseMessaging {
     });
   }
 
-  private String makeSendRequest(Message message) throws IOException {
+  private String makeSendRequest(Message message, boolean dryRun) throws IOException {
+    ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
+        .put("message", message);
+    if (dryRun) {
+      payload.put("validate_only", true);
+    }
     HttpRequest request = requestFactory.buildPostRequest(
-        new GenericUrl(url), new JsonHttpContent(jsonFactory, ImmutableMap.of("message", message)));
+        new GenericUrl(url), new JsonHttpContent(jsonFactory, payload.build()));
     request.setParser(new JsonObjectParser(jsonFactory));
     request.setResponseInterceptor(interceptor);
     HttpResponse response = null;

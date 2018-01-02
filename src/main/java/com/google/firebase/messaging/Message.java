@@ -47,6 +47,11 @@ public class Message {
         !Strings.isNullOrEmpty(builder.condition)
     );
     checkArgument(count == 1, "Exactly one of token, topic or condition must be specified");
+    if (builder.topic != null) {
+      checkArgument(!builder.topic.startsWith("/topics/"),
+          "Topic name must not contain the /topics/ prefix");
+      checkArgument(builder.topic.matches("[a-zA-Z0-9-_.~%]+"), "Malformed topic name");
+    }
     this.token = builder.token;
     this.topic = builder.topic;
     this.condition = builder.condition;

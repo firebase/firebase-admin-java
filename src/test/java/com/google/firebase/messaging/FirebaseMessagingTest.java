@@ -7,18 +7,24 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.json.JsonParser;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.testing.TestResponseInterceptor;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.junit.After;
 import org.junit.Test;
@@ -97,20 +103,57 @@ public class FirebaseMessagingTest {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setContent("{\"name\": \"mock-name\"}");
     FirebaseMessaging messaging = initMessaging(response);
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    messaging.setInterceptor(interceptor);
-    String resp = messaging.sendAsync(Message.builder().setTopic("test-topic").build()).get();
-    assertEquals("mock-name", resp);
+    Map<Message, Map<String, Object>> testMessages = buildTestMessages();
 
-    assertNotNull(interceptor.getResponse());
-    HttpRequest request = interceptor.getResponse().getRequest();
-    assertEquals("POST", request.getRequestMethod());
-    assertEquals(TEST_FCM_URL, request.getUrl().toString());
-    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+    for (Map.Entry<Message, Map<String, Object>> entry : testMessages.entrySet()) {
+      response.setContent("{\"name\": \"mock-name\"}");
+      TestResponseInterceptor interceptor = new TestResponseInterceptor();
+      messaging.setInterceptor(interceptor);
+      String resp = messaging.sendAsync(entry.getKey()).get();
+      assertEquals("mock-name", resp);
 
+      assertNotNull(interceptor.getResponse());
+      HttpRequest request = interceptor.getResponse().getRequest();
+      assertEquals("POST", request.getRequestMethod());
+      assertEquals(TEST_FCM_URL, request.getUrl().toString());
+      assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+
+      checkRequest(request, ImmutableMap.<String, Object>of("message", entry.getValue()));
+    }
+  }
+
+  @Test
+  public void testSendDryRun() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent("{\"name\": \"mock-name\"}");
+    FirebaseMessaging messaging = initMessaging(response);
+    Map<Message, Map<String, Object>> testMessages = buildTestMessages();
+
+    for (Map.Entry<Message, Map<String, Object>> entry : testMessages.entrySet()) {
+      response.setContent("{\"name\": \"mock-name\"}");
+      TestResponseInterceptor interceptor = new TestResponseInterceptor();
+      messaging.setInterceptor(interceptor);
+      String resp = messaging.sendAsync(entry.getKey(), true).get();
+      assertEquals("mock-name", resp);
+
+      assertNotNull(interceptor.getResponse());
+      HttpRequest request = interceptor.getResponse().getRequest();
+      assertEquals("POST", request.getRequestMethod());
+      assertEquals(TEST_FCM_URL, request.getUrl().toString());
+      assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+
+      checkRequest(request, ImmutableMap.of("message", entry.getValue(), "validate_only", true));
+    }
+  }
+
+  private static void checkRequest(
+      HttpRequest request, Map<String, Object> expected) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     request.getContent().writeTo(out);
-    assertEquals("{\"message\":{\"topic\":\"test-topic\"}}", out.toString());
+    JsonParser parser = Utils.getDefaultJsonFactory().createJsonParser(out.toString());
+    Map<String, Object> parsed = new HashMap<>();
+    parser.parseAndClose(parsed);
+    assertEquals(expected, parsed);
   }
 
   @Test
@@ -319,5 +362,125 @@ public class FirebaseMessagingTest {
       this.registrationTokens = registrationTokens;
       this.topic = topic;
     }
+  }
+
+  private static Map<Message, Map<String, Object>> buildTestMessages() {
+    ImmutableMap.Builder<Message, Map<String, Object>> builder = ImmutableMap.builder();
+
+    // Empty message
+    builder.put(
+        Message.builder().setTopic("test-topic").build(),
+        ImmutableMap.<String, Object>of("topic", "test-topic"));
+
+    // Notification message
+    builder.put(
+        Message.builder()
+            .setNotification(new Notification("test title", "test body"))
+            .setTopic("test-topic")
+            .build(),
+        ImmutableMap.<String, Object>of(
+            "topic", "test-topic",
+            "notification", ImmutableMap.of("title", "test title", "body", "test body")));
+
+    // Data message
+    builder.put(
+        Message.builder()
+            .putData("k1", "v1")
+            .putData("k2", "v2")
+            .putAllData(ImmutableMap.of("k3", "v3", "k4", "v4"))
+            .setTopic("test-topic")
+            .build(),
+        ImmutableMap.<String, Object>of(
+            "topic", "test-topic",
+            "data", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3", "k4", "v4")));
+
+    // Android message
+    builder.put(
+        Message.builder()
+            .setAndroidConfig(AndroidConfig.builder()
+                .setPriority(AndroidConfig.Priority.high)
+                .setTtl("1.23s")
+                .setRestrictedPackageName("test-package")
+                .setCollapseKey("test-key")
+                .setNotification(AndroidNotification.builder()
+                    .setClickAction("test-action")
+                    .setTitle("test-title")
+                    .setBody("test-body")
+                    .setIcon("test-icon")
+                    .setColor("#112233")
+                    .setTag("test-tag")
+                    .setSound("test-sound")
+                    .setTitleLocKey("test-title-key")
+                    .setBodyLocKey("test-body-key")
+                    .addTitleLocArg("t-arg1")
+                    .addAllTitleLocArgs(ImmutableList.of("t-arg2", "t-arg3"))
+                    .addBodyLocArg("b-arg1")
+                    .addAllBodyLocArgs(ImmutableList.of("b-arg2", "b-arg3"))
+                    .build())
+                .build())
+            .setTopic("test-topic")
+            .build(),
+        ImmutableMap.<String, Object>of(
+            "topic", "test-topic",
+            "android", ImmutableMap.of(
+                "priority", "high",
+                "collapse_key", "test-key",
+                "ttl", "1.23s",
+                "restricted_package_name", "test-package",
+                "notification", ImmutableMap.builder()
+                    .put("click_action", "test-action")
+                    .put("title", "test-title")
+                    .put("body", "test-body")
+                    .put("icon", "test-icon")
+                    .put("color", "#112233")
+                    .put("tag", "test-tag")
+                    .put("sound", "test-sound")
+                    .put("title_loc_key", "test-title-key")
+                    .put("title_loc_args", ImmutableList.of("t-arg1", "t-arg2", "t-arg3"))
+                    .put("body_loc_key", "test-body-key")
+                    .put("body_loc_args", ImmutableList.of("b-arg1", "b-arg2", "b-arg3"))
+                    .build()
+            )
+        ));
+
+    // APNS message
+    builder.put(
+        Message.builder()
+            .setApnsConfig(ApnsConfig.builder()
+                .putHeader("h1", "v1")
+                .putAllHeaders(ImmutableMap.of("h2", "v2", "h3", "v3"))
+                .setPayload(ImmutableMap.<String, Object>of("k1", "v1", "k2", true))
+                .build())
+            .setTopic("test-topic")
+            .build(),
+        ImmutableMap.<String, Object>of(
+            "topic", "test-topic",
+            "apns", ImmutableMap.of(
+                "headers", ImmutableMap.of("h1", "v1", "h2", "v2", "h3", "v3"),
+                "payload", ImmutableMap.of("k1", "v1", "k2", true))
+        ));
+
+    // Webpush message
+    builder.put(
+        Message.builder()
+            .setWebpushConfig(WebpushConfig.builder()
+                .putHeader("h1", "v1")
+                .putAllHeaders(ImmutableMap.of("h2", "v2", "h3", "v3"))
+                .putData("k1", "v1")
+                .putAllData(ImmutableMap.of("k2", "v2", "k3", "v3"))
+                .setNotification(new WebpushNotification("test-title", "test-body", "test-icon"))
+                .build())
+            .setTopic("test-topic")
+            .build(),
+        ImmutableMap.<String, Object>of(
+            "topic", "test-topic",
+            "webpush", ImmutableMap.of(
+                "headers", ImmutableMap.of("h1", "v1", "h2", "v2", "h3", "v3"),
+                "data", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"),
+                "notification", ImmutableMap.of(
+                    "title", "test-title", "body", "test-body", "icon", "test-icon"))
+        ));
+
+    return builder.build();
   }
 }
