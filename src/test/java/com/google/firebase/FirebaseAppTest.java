@@ -456,6 +456,8 @@ public class FirebaseAppTest {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp();
     assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
     assertEquals("hipster-chat.appspot.mock", firebaseApp.getOptions().getStorageBucket());
+    assertEquals("https://hipster-chat.firebaseio.mock", firebaseApp.getOptions().getDatabaseUrl());
+    assertEquals("authVal", firebaseApp.getOptions().getDatabaseAuthVariableOverride().get("this#is#an#auth#string"));
   }
 
   public void testDefaultAppBadKey() {

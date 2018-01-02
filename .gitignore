@@ -8,4 +8,3 @@ target/
 release.properties
 integration_cert.json
 integration_apikey.txt
-.vscode/settings.json
