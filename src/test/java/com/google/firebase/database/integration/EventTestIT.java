@@ -78,9 +78,9 @@ public class EventTestIT {
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
 
-    final EventHelper readerHelper = new EventHelper().addValueExpectation(reader)
+    final EventHelper readerHelper = new EventHelper().addValueExpectation(reader, 42)
         .startListening(true);
-    final EventHelper writerHelper = new EventHelper().addValueExpectation(writer)
+    final EventHelper writerHelper = new EventHelper().addValueExpectation(writer, 42)
         .startListening(true);
 
     ZombieVerifier.verifyRepoZombies(refs);
@@ -118,26 +118,26 @@ public class EventTestIT {
 
     final EventHelper readHelper =
         new EventHelper()
-            .addValueExpectation(reader.child("foo"))
+            .addValueExpectation(reader.child("foo"), 42)
             .addChildExpectation(reader, Event.EventType.CHILD_ADDED, "foo")
             .addValueExpectation(reader)
-            .addValueExpectation(reader.child("bar"))
+            .addValueExpectation(reader.child("bar"), 24)
             .addChildExpectation(reader, Event.EventType.CHILD_ADDED, "bar")
             .addValueExpectation(reader)
-            .addValueExpectation(reader.child("foo"))
+            .addValueExpectation(reader.child("foo"), 31415)
             .addChildExpectation(reader, Event.EventType.CHILD_CHANGED, "foo")
             .addValueExpectation(reader)
             .startListening(true);
 
     final EventHelper writeHelper =
         new EventHelper()
-            .addValueExpectation(writer.child("foo"))
+            .addValueExpectation(writer.child("foo"), 42)
             .addChildExpectation(writer, Event.EventType.CHILD_ADDED, "foo")
             .addValueExpectation(writer)
-            .addValueExpectation(writer.child("bar"))
+            .addValueExpectation(writer.child("bar"), 24)
             .addChildExpectation(writer, Event.EventType.CHILD_ADDED, "bar")
             .addValueExpectation(writer)
-            .addValueExpectation(writer.child("foo"))
+            .addValueExpectation(writer.child("foo"), 31415)
             .addChildExpectation(writer, Event.EventType.CHILD_CHANGED, "foo")
             .addValueExpectation(writer)
             .startListening(true);
@@ -157,18 +157,155 @@ public class EventTestIT {
   }
 
   @Test
+  public void testWriteFloatValueThenChangeToInteger() throws InterruptedException {
+    List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 1);
+    DatabaseReference node = refs.get(0);
+
+    final EventHelper readHelper =
+        new EventHelper()
+            .addValueExpectation(node, 1337)
+            .addValueExpectation(node, 1337.1)
+            .startListening(true);
+
+    ZombieVerifier.verifyRepoZombies(refs);
+
+    node.setValueAsync((float) 1337.0);
+    node.setValueAsync(1337); // This does not fire events.
+    node.setValueAsync((float) 1337.0); // This does not fire events.
+    node.setValueAsync(1337.1);
+
+    TestHelpers.waitForRoundtrip(node);
+    assertTrue(readHelper.waitForEvents());
+    ZombieVerifier.verifyRepoZombies(refs);
+    readHelper.cleanup();
+  }
+
+  @Test
+  public void testWriteDoubleValueThenChangeToInteger() throws InterruptedException {
+    List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 1);
+    DatabaseReference node = refs.get(0);
+
+    final EventHelper readHelper =
+        new EventHelper()
+            .addValueExpectation(node, 1337)
+            .addValueExpectation(node, 1337.1)
+            .startListening(true);
+
+    ZombieVerifier.verifyRepoZombies(refs);
+
+    node.setValueAsync(1337.0);
+    node.setValueAsync(1337); // This does not fire events.
+    node.setValueAsync(1337.1);
+
+    TestHelpers.waitForRoundtrip(node);
+    assertTrue(readHelper.waitForEvents());
+    ZombieVerifier.verifyRepoZombies(refs);
+    readHelper.cleanup();
+  }
+
+  @Test
+  public void testWriteDoubleValueThenChangeToIntegerWithDifferentPriority()
+      throws InterruptedException {
+    List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 1);
+    DatabaseReference node = refs.get(0);
+
+    final EventHelper readHelper =
+        new EventHelper()
+            .addValueExpectation(node, 1337)
+            .addValueExpectation(node, 1337)
+            .startListening(true);
+
+    ZombieVerifier.verifyRepoZombies(refs);
+
+    node.setValueAsync(1337.0);
+    node.setValueAsync(1337, 1337);
+
+    TestHelpers.waitForRoundtrip(node);
+    assertTrue(readHelper.waitForEvents());
+    ZombieVerifier.verifyRepoZombies(refs);
+    readHelper.cleanup();
+  }
+
+  @Test
+  public void testWriteIntegerValueThenChangeToDouble() throws InterruptedException {
+    List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 1);
+    DatabaseReference node = refs.get(0);
+
+    final EventHelper readHelper =
+        new EventHelper()
+            .addValueExpectation(node, 1337)
+            .addValueExpectation(node, 1337.1)
+            .startListening(true);
+
+    ZombieVerifier.verifyRepoZombies(refs);
+
+    node.setValueAsync(1337);
+    node.setValueAsync(1337.0); // This does not fire events.
+    node.setValueAsync(1337.1);
+
+    TestHelpers.waitForRoundtrip(node);
+    assertTrue(readHelper.waitForEvents());
+    ZombieVerifier.verifyRepoZombies(refs);
+    readHelper.cleanup();
+  }
+
+  @Test
+  public void testWriteIntegerValueThenChangeToDoubleWithDifferentPriority()
+      throws InterruptedException {
+    List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 1);
+    DatabaseReference node = refs.get(0);
+
+    final EventHelper readHelper =
+        new EventHelper()
+            .addValueExpectation(node, 1337)
+            .addValueExpectation(node, 1337)
+            .startListening(true);
+
+    ZombieVerifier.verifyRepoZombies(refs);
+
+    node.setValueAsync(1337);
+    node.setValueAsync(1337.0, 1337);
+
+    TestHelpers.waitForRoundtrip(node);
+    assertTrue(readHelper.waitForEvents());
+    ZombieVerifier.verifyRepoZombies(refs);
+    readHelper.cleanup();
+  }
+
+  @Test
+  public void testWriteLargeLongValueThenIncrement() throws InterruptedException {
+    List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 1);
+    DatabaseReference node = refs.get(0);
+
+    final EventHelper readHelper =
+        new EventHelper()
+            .addValueExpectation(node, Long.MAX_VALUE)
+            .addValueExpectation(node, Long.MAX_VALUE * 2.0)
+            .startListening(true);
+
+    ZombieVerifier.verifyRepoZombies(refs);
+    node.setValueAsync(Long.MAX_VALUE);
+    node.setValueAsync(Long.MAX_VALUE * 2.0);
+
+    TestHelpers.waitForRoundtrip(node);
+    assertTrue(readHelper.waitForEvents());
+    ZombieVerifier.verifyRepoZombies(refs);
+    readHelper.cleanup();
+  }
+
+  @Test
   public void testSetMultipleEventListenersOnSameNode() throws InterruptedException {
     List<DatabaseReference> refs = IntegrationTestUtils.getRandomNode(masterApp, 2);
     DatabaseReference reader = refs.get(0);
     DatabaseReference writer = refs.get(1);
 
-    final EventHelper writeHelper = new EventHelper().addValueExpectation(writer)
+    final EventHelper writeHelper = new EventHelper().addValueExpectation(writer, 42)
         .startListening(true);
-    final EventHelper writeHelper2 = new EventHelper().addValueExpectation(writer)
+    final EventHelper writeHelper2 = new EventHelper().addValueExpectation(writer, 42)
         .startListening(true);
-    final EventHelper readHelper = new EventHelper().addValueExpectation(reader)
+    final EventHelper readHelper = new EventHelper().addValueExpectation(reader, 42)
         .startListening(true);
-    final EventHelper readHelper2 = new EventHelper().addValueExpectation(reader)
+    final EventHelper readHelper2 = new EventHelper().addValueExpectation(reader, 42)
         .startListening(true);
 
     ZombieVerifier.verifyRepoZombies(refs);
@@ -948,10 +1085,10 @@ public class EventTestIT {
 
     final EventHelper helper =
         new EventHelper()
-            .addValueExpectation(ref.child("bar"))
+            .addValueExpectation(ref.child("bar"), 42)
             .addChildExpectation(ref, Event.EventType.CHILD_ADDED, "bar")
             .addValueExpectation(ref)
-            .addValueExpectation(ref.child("foo"))
+            .addValueExpectation(ref.child("foo"), 42)
             .addChildExpectation(ref, Event.EventType.CHILD_ADDED, "foo")
             .addValueExpectation(ref)
             .startListening(true);
@@ -962,7 +1099,7 @@ public class EventTestIT {
 
     assertTrue(helper.waitForEvents());
     helper
-        .addValueExpectation(ref.child("bar"))
+        .addValueExpectation(ref.child("bar"), 42)
         .addChildExpectation(ref, Event.EventType.CHILD_MOVED, "bar")
         .addChildExpectation(ref, Event.EventType.CHILD_CHANGED, "bar")
         .addValueExpectation(ref)
@@ -981,8 +1118,8 @@ public class EventTestIT {
 
     EventHelper helper =
         new EventHelper()
-            .addValueExpectation(ref.child("bar"))
-            .addValueExpectation(ref.child("foo"))
+            .addValueExpectation(ref.child("bar"), 42)
+            .addValueExpectation(ref.child("foo"), 42)
             .addChildExpectation(ref, Event.EventType.CHILD_ADDED, "bar")
             .addChildExpectation(ref, Event.EventType.CHILD_ADDED, "foo")
             .addValueExpectation(ref)
@@ -995,7 +1132,7 @@ public class EventTestIT {
             "foo", MapBuilder.of(".value", 42, ".priority", 20)));
     assertTrue(helper.waitForEvents());
     helper
-        .addValueExpectation(ref.child("bar"))
+        .addValueExpectation(ref.child("bar"), 42)
         .addChildExpectation(ref, Event.EventType.CHILD_MOVED, "bar")
         .addChildExpectation(ref, Event.EventType.CHILD_CHANGED, "bar")
         .addValueExpectation(ref)

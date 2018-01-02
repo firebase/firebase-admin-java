@@ -83,6 +83,12 @@ public class Validation {
     }
   }
 
+  private static void validateDoubleValue(double d) {
+    if (Double.isInfinite(d) || Double.isNaN(d)) {
+      throw new DatabaseException("Invalid value: Value cannot be NaN, Inf or -Inf.");
+    }
+  }
+
   private static boolean isWritablePath(Path path) {
     // Getting a path with invalid keys will throw earlier in the process, so we should just
     // check the first token
@@ -107,6 +113,8 @@ public class Validation {
       for (Object child : list) {
         validateWritableObject(child);
       }
+    } else if (object instanceof Double || object instanceof Float) {
+      validateDoubleValue((double) object);
     } else {
       // It's a primitive, should be fine
     }
@@ -138,17 +146,14 @@ public class Validation {
         throw new DatabaseException(
             "Path '" + updatePath + "' contains disallowed child name: " + childName);
       }
+      Node parsedValue;
       if (childName.equals(".priority")) {
-        if (!PriorityUtilities.isValidPriority(NodeUtilities.NodeFromJSON(newValue))) {
-          throw new DatabaseException(
-              "Path '"
-                  + updatePath
-                  + "' contains invalid priority "
-                  + "(must be a string, double, ServerValue, or null).");
-        }
+        parsedValue = PriorityUtilities.parsePriority(updatePath, newValue);
+      } else {
+        parsedValue = NodeUtilities.NodeFromJSON(newValue);
       }
       Validation.validateWritableObject(newValue);
-      parsedUpdate.put(updatePath, NodeUtilities.NodeFromJSON(newValue));
+      parsedUpdate.put(updatePath, parsedValue);
     }
     // Check that update keys are not ancestors of each other.
     Path prevPath = null;

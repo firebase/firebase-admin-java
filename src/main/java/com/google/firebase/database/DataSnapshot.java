@@ -16,6 +16,7 @@
 
 package com.google.firebase.database;
 
+import com.google.firebase.database.annotations.Nullable;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.NamedNode;
@@ -116,8 +117,10 @@ public class DataSnapshot {
    * <p>This list is recursive; the possible types for {@link java.lang.Object} in the above list
    * is given by the same list. These types correspond to the types available in JSON.
    *
-   * @return The data contained in this snapshot as native types
+   * @return The data contained in this snapshot as native types or null if there is no data at this
+   *     location.
    */
+  @Nullable
   public Object getValue() {
     return node.getNode().getValue();
   }
@@ -143,8 +146,10 @@ public class DataSnapshot {
    * a map, the map will also include a .value key with the data.
    *
    * @param useExportFormat Whether or not to include priority information
-   * @return The data, along with its priority, in native types
+   * @return The data, along with its priority, in native types or null if there is no data at this
+   *     location.
    */
+  @Nullable
   public Object getValue(boolean useExportFormat) {
     return node.getNode().getValue(useExportFormat);
   }
@@ -190,8 +195,10 @@ public class DataSnapshot {
    *
    * @param valueType The class into which this snapshot should be marshalled
    * @param <T> The type to return. Implicitly defined from the class passed in
-   * @return An instance of the class passed in, populated with the data from this snapshot
+   * @return An instance of the class passed in, populated with the data from this snapshot, or null
+   *     if there is no data at this location.
    */
+  @Nullable
   public <T> T getValue(Class<T> valueType) {
     Object value = node.getNode().getValue();
     return CustomClassMapper.convertToCustomClass(value, valueType);
@@ -216,8 +223,10 @@ public class DataSnapshot {
    *     to be returned.
    * @param <T> The type to return. Implicitly defined from the {@link GenericTypeIndicator} passed
    *     in
-   * @return A properly typed collection, populated with the data from this snapshot
+   * @return A properly typed collection, populated with the data from this snapshot, or null if
+   *     there is no data at this location.
    */
+  @Nullable
   public <T> T getValue(GenericTypeIndicator<T> t) {
     Object value = node.getNode().getValue();
     return CustomClassMapper.convertToCustomClass(value, t);

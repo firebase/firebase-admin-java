@@ -120,7 +120,7 @@ class FirebaseUserManager {
       throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
           "No user record found for the provided user ID: " + uid);
     }
-    return new UserRecord(response.getUsers().get(0));
+    return new UserRecord(response.getUsers().get(0), jsonFactory);
   }
 
   UserRecord getUserByEmail(String email) throws FirebaseAuthException {
@@ -132,7 +132,7 @@ class FirebaseUserManager {
       throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
           "No user record found for the provided email: " + email);
     }
-    return new UserRecord(response.getUsers().get(0));
+    return new UserRecord(response.getUsers().get(0), jsonFactory);
   }
 
   UserRecord getUserByPhoneNumber(String phoneNumber) throws FirebaseAuthException {
@@ -144,7 +144,7 @@ class FirebaseUserManager {
       throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
           "No user record found for the provided phone number: " + phoneNumber);
     }
-    return new UserRecord(response.getUsers().get(0));
+    return new UserRecord(response.getUsers().get(0), jsonFactory);
   }
 
   String createUser(CreateRequest request) throws FirebaseAuthException {

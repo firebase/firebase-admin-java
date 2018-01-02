@@ -905,6 +905,36 @@ public class DataTestIT {
   }
 
   @Test
+  public void testNormalizeDifferentIntegerAndDoubleValues()
+      throws DatabaseException, InterruptedException, TimeoutException, TestFailure {
+    final long intMaxPlusOne = 2147483648L;
+
+    DatabaseReference node = IntegrationTestUtils.getRandomNode(masterApp);
+    Object[] writtenValues = {
+        intMaxPlusOne,
+        (double) intMaxPlusOne,
+        -intMaxPlusOne,
+        (double) -intMaxPlusOne,
+        Integer.MAX_VALUE,
+        0L,
+        0.0,
+        -0.0f,
+        0
+    };
+
+    Object[] readValues = {intMaxPlusOne, -intMaxPlusOne, (long) Integer.MAX_VALUE, 0L};
+    ReadFuture readFuture = ReadFuture.untilCountAfterNull(node, readValues.length);
+    for (Object value : writtenValues) {
+      node.setValueAsync(value);
+    }
+
+    List<EventRecord> events = readFuture.timedGet();
+    for (int i = 0; i < readValues.length; ++i) {
+      assertEquals(readValues[i], events.get(i).getSnapshot().getValue());
+    }
+  }
+
+  @Test
   public void testExportFormatIncludesPriorities()
       throws TimeoutException, InterruptedException, TestFailure {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
@@ -1171,6 +1201,29 @@ public class DataTestIT {
         fail("Ascii control character should not be allowed in path.");
       } catch (DatabaseException e) {
         // expected
+      }
+    }
+  }
+
+  @Test
+  public void invalidDoubleValues()
+      throws DatabaseException, TestFailure, TimeoutException, InterruptedException {
+    DatabaseReference node = IntegrationTestUtils.getRandomNode(masterApp);
+    Object[] invalidValues =
+        new Object[] {
+            Double.NEGATIVE_INFINITY,
+            Double.POSITIVE_INFINITY,
+            Double.NaN,
+            Float.NEGATIVE_INFINITY,
+            Float.POSITIVE_INFINITY,
+            Float.NaN
+        };
+    for (Object invalidValue : invalidValues) {
+      try {
+        node.setValueAsync(invalidValue);
+        fail("NaN or Inf are not allowed as values.");
+      } catch (DatabaseException expected) {
+        assertEquals("Invalid value: Value cannot be NaN, Inf or -Inf.", expected.getMessage());
       }
     }
   }

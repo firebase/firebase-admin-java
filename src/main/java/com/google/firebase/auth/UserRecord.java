@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import org.json.JSONObject;
 
 /**
  * Contains metadata associated with a Firebase user account. Instances of this class are immutable
@@ -61,8 +60,9 @@ public class UserRecord implements UserInfo {
   private final UserMetadata userMetadata;
   private final Map<String, Object> customClaims;
 
-  UserRecord(User response) {
-    checkNotNull(response, "Response must not be null");
+  UserRecord(User response, JsonFactory jsonFactory) {
+    checkNotNull(response, "response must not be null");
+    checkNotNull(jsonFactory, "jsonFactory must not be null");
     checkArgument(!Strings.isNullOrEmpty(response.getUid()), "uid must not be null or empty");
     this.uid = response.getUid();
     this.email = response.getEmail();
@@ -80,12 +80,19 @@ public class UserRecord implements UserInfo {
       }
     }
     this.userMetadata = new UserMetadata(response.getCreatedAt(), response.getLastLoginAt());
-    String customClaims = response.getCustomClaims();
-    if (!Strings.isNullOrEmpty(customClaims)) {
-      Map<String, Object> parsed = new JSONObject(customClaims).toMap();
-      this.customClaims = ImmutableMap.copyOf(parsed);
-    } else {
-      this.customClaims = ImmutableMap.of();
+    this.customClaims = parseCustomClaims(response.getCustomClaims(), jsonFactory);
+  }
+
+  private Map<String, Object> parseCustomClaims(String customClaims, JsonFactory jsonFactory) {
+    if (Strings.isNullOrEmpty(customClaims)) {
+      return ImmutableMap.of();
+    }
+    try {
+      Map<String, Object> parsed = new HashMap<>();
+      jsonFactory.createJsonParser(customClaims).parseAndClose(parsed);
+      return ImmutableMap.copyOf(parsed);
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Failed to parse custom claims json", e);
     }
   }
 

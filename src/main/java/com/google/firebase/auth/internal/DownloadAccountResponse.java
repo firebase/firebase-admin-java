@@ -17,7 +17,6 @@
 package com.google.firebase.auth.internal;
 
 import com.google.api.client.util.Key;
-import com.google.firebase.auth.internal.GetAccountInfoResponse.User;
 import java.util.List;
 
 /**

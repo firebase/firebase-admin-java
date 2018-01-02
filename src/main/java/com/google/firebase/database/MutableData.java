@@ -16,6 +16,7 @@
 
 package com.google.firebase.database;
 
+import com.google.firebase.database.annotations.Nullable;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.SnapshotHolder;
 import com.google.firebase.database.core.ValidationPath;
@@ -179,8 +180,10 @@ public class MutableData {
    * <p>This list is recursive; the possible types for {@link java.lang.Object} in the above list is
    * given by the same list. These types correspond to the types available in JSON.
    *
-   * @return The data contained in this instance as native types
+   * @return The data contained in this instance as native types, or null if there is no data at
+   *     this location.
    */
+  @Nullable
   public Object getValue() {
     return getNode().getValue();
   }
@@ -203,8 +206,10 @@ public class MutableData {
    *     to be returned.
    * @param <T> The type to return. Implicitly defined from the {@link GenericTypeIndicator} passed
    *     in
-   * @return A properly typed collection, populated with the data from this instance
+   * @return A properly typed collection, populated with the data from this instance, or null if
+   *     there is no data at this location.
    */
+  @Nullable
   public <T> T getValue(GenericTypeIndicator<T> t) {
     Object value = getNode().getValue();
     return CustomClassMapper.convertToCustomClass(value, t);
@@ -251,8 +256,10 @@ public class MutableData {
    *
    * @param valueType The class into which this data in this instance should be marshalled
    * @param <T> The type to return. Implicitly defined from the class passed in
-   * @return An instance of the class passed in, populated with the data from this instance
+   * @return An instance of the class passed in, populated with the data from this instance, or null
+   *     if there is no data at this location.
    */
+  @Nullable
   public <T> T getValue(Class<T> valueType) {
     Object value = getNode().getValue();
     return CustomClassMapper.convertToCustomClass(value, valueType);
@@ -320,7 +327,8 @@ public class MutableData {
    * @param priority The desired priority
    */
   public void setPriority(Object priority) {
-    holder.update(prefixPath, getNode().updatePriority(PriorityUtilities.parsePriority(priority)));
+    holder.update(prefixPath, getNode().updatePriority(
+        PriorityUtilities.parsePriority(prefixPath, priority)));
   }
 
   @Override

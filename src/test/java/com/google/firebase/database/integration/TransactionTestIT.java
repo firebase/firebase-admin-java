@@ -756,24 +756,35 @@ public class TransactionTestIT {
 
     new WriteFuture(ref, 5).timedGet();
 
-    ref.runTransaction(new Transaction.Handler() {
-      @Override
-      public Transaction.Result doTransaction(MutableData currentData) {
-        assertNull(currentData.getValue());
-        currentData.setValue(72);
-        return Transaction.success(currentData);
-      }
+    try {
+      ref.getRepo().setHijackHash(true);
+      ref.runTransaction(
+          new Transaction.Handler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData currentData) {
+              assertNull(currentData.getValue());
+              currentData.setValue(72);
+              return Transaction.success(currentData);
+            }
 
-      @Override
-      public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
-        assertEquals(DatabaseError.OVERRIDDEN_BY_SET, error.getCode());
-        assertFalse(committed);
-        semaphore.release(1);
-      }
-    });
-
-    ref.setValueAsync(32);
-    TestHelpers.waitFor(semaphore);
+            @Override
+            public void onComplete(DatabaseError error, boolean committed,
+                DataSnapshot currentData) {
+              assertEquals(DatabaseError.OVERRIDDEN_BY_SET, error.getCode());
+              assertFalse(committed);
+              semaphore.release(1);
+            }
+          });
+      ref.setValue(32, new CompletionListener() {
+        @Override
+        public void onComplete(DatabaseError error, DatabaseReference ref) {
+          ref.getRepo().setHijackHash(false);
+        }
+      });
+      TestHelpers.waitFor(semaphore);
+    } finally {
+      ref.getRepo().setHijackHash(false);
+    }
   }
 
   @Test

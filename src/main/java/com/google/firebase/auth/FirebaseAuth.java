@@ -352,7 +352,7 @@ public class FirebaseAuth {
   private Task<ListUsersPage> listUsers(@Nullable String pageToken, int maxResults) {
     checkNotDestroyed();
     final PageFactory factory = new PageFactory(
-        new DefaultUserSource(userManager), maxResults, pageToken);
+        new DefaultUserSource(userManager, jsonFactory), maxResults, pageToken);
     return call(new Callable<ListUsersPage>() {
       @Override
       public ListUsersPage call() throws Exception {

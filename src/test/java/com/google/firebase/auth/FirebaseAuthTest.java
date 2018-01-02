@@ -28,6 +28,7 @@ import static org.junit.Assert.fail;
 import com.google.api.client.googleapis.testing.auth.oauth2.MockTokenServerTransport;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.core.ApiFuture;
 import com.google.auth.http.HttpTransportFactory;
@@ -58,14 +59,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -82,6 +82,8 @@ public class FirebaseAuthTest {
   private static final String CLIENT_SECRET = "mockclientsecret";
   private static final String CLIENT_ID = "mockclientid";
   private static final String REFRESH_TOKEN = "mockrefreshtoken";
+  private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
+
   private final FirebaseOptions firebaseOptions;
   private final boolean isCertCredential;
 
@@ -148,20 +150,19 @@ public class FirebaseAuthTest {
     });
   }
 
-  private static GoogleCredentials createRefreshTokenCredential()
-      throws JSONException, IOException {
+  private static GoogleCredentials createRefreshTokenCredential() throws IOException {
 
     final MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addClient(CLIENT_ID, CLIENT_SECRET);
     transport.addRefreshToken(REFRESH_TOKEN, ACCESS_TOKEN);
 
-    JSONObject secretJson = new JSONObject();
+    Map<String, Object> secretJson = new HashMap<>();
     secretJson.put("client_id", CLIENT_ID);
     secretJson.put("client_secret", CLIENT_SECRET);
     secretJson.put("refresh_token", REFRESH_TOKEN);
     secretJson.put("type", "authorized_user");
     InputStream refreshTokenStream =
-        new ByteArrayInputStream(secretJson.toString(0).getBytes("UTF-8"));
+        new ByteArrayInputStream(JSON_FACTORY.toByteArray(secretJson));
 
     return UserCredentials.fromStream(refreshTokenStream, new HttpTransportFactory() {
       @Override
@@ -172,22 +173,20 @@ public class FirebaseAuthTest {
   }
 
   private static FirebaseCredential createFirebaseRefreshTokenCredential()
-      throws JSONException, IOException {
+      throws IOException {
 
     final MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addClient(CLIENT_ID, CLIENT_SECRET);
     transport.addRefreshToken(REFRESH_TOKEN, ACCESS_TOKEN);
 
-    JSONObject secretJson = new JSONObject();
+    Map<String, Object> secretJson = new HashMap<>();
     secretJson.put("client_id", CLIENT_ID);
     secretJson.put("client_secret", CLIENT_SECRET);
     secretJson.put("refresh_token", REFRESH_TOKEN);
     secretJson.put("type", "authorized_user");
     InputStream refreshTokenStream =
-        new ByteArrayInputStream(secretJson.toString(0).getBytes("UTF-8"));
-
-    return FirebaseCredentials.fromRefreshToken(refreshTokenStream, transport,
-        Utils.getDefaultJsonFactory());
+        new ByteArrayInputStream(JSON_FACTORY.toByteArray(secretJson));
+    return FirebaseCredentials.fromRefreshToken(refreshTokenStream, transport, JSON_FACTORY);
   }
 
   private static GoogleCredentials createCertificateCredential() throws IOException {
@@ -206,7 +205,7 @@ public class FirebaseAuthTest {
     final MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
     return FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream(),
-        transport, Utils.getDefaultJsonFactory());
+        transport, JSON_FACTORY);
   }
 
   @Before

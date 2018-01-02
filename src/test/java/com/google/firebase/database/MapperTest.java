@@ -430,6 +430,16 @@ public class MapperTest {
   }
 
   @Test
+  public void serializeDoubleBeanAsLong() {
+    DoubleBean bean = new DoubleBean();
+    bean.value = 1234567890123L;
+    assertJson("{'value': 1234567890123}", serialize(bean));
+
+    bean.value = 1234567890123.0;
+    assertJson("{'value': 1234567890123}", serialize(bean));
+  }
+
+  @Test
   public void serializeIntBean() {
     IntBean bean = new IntBean();
     bean.value = 1;

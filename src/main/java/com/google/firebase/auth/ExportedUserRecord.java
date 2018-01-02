@@ -16,6 +16,7 @@
 
 package com.google.firebase.auth;
 
+import com.google.api.client.json.JsonFactory;
 import com.google.firebase.auth.internal.DownloadAccountResponse.User;
 import com.google.firebase.internal.Nullable;
 
@@ -28,8 +29,8 @@ public class ExportedUserRecord extends UserRecord {
   private final String passwordHash;
   private final String passwordSalt;
 
-  ExportedUserRecord(User response) {
-    super(response);
+  ExportedUserRecord(User response, JsonFactory jsonFactory) {
+    super(response, jsonFactory);
     this.passwordHash = response.getPasswordHash();
     this.passwordSalt = response.getPasswordSalt();
   }

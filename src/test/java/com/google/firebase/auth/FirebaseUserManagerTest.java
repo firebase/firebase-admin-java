@@ -24,9 +24,7 @@ import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpHeaders;
-import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
-import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -40,6 +38,7 @@ import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.DownloadAccountResponse.User;
 import com.google.firebase.internal.SdkUtils;
+import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -160,10 +159,11 @@ public class FirebaseUserManagerTest {
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     userManager.setInterceptor(interceptor);
 
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     DownloadAccountResponse download = userManager.listUsers(999, null);
     assertEquals(2, download.getUsers().size());
     for (User user : download.getUsers()) {
-      ExportedUserRecord userRecord = new ExportedUserRecord(user);
+      ExportedUserRecord userRecord = new ExportedUserRecord(user, jsonFactory);
       checkUserRecord(userRecord);
       assertEquals("passwordHash", userRecord.getPasswordHash());
       assertEquals("passwordSalt", userRecord.getPasswordSalt());
@@ -171,9 +171,8 @@ public class FirebaseUserManagerTest {
     assertNull(download.getPageToken());
     checkRequestHeaders(interceptor);
 
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.response.getRequest().getContent().writeTo(out);
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
     GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
     assertEquals(new BigDecimal(999), parsed.get("maxResults"));
     assertNull(parsed.get("nextPageToken"));
@@ -190,10 +189,11 @@ public class FirebaseUserManagerTest {
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     userManager.setInterceptor(interceptor);
 
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     DownloadAccountResponse download = userManager.listUsers(999, "token");
     assertEquals(2, download.getUsers().size());
     for (User user : download.getUsers()) {
-      ExportedUserRecord userRecord = new ExportedUserRecord(user);
+      ExportedUserRecord userRecord = new ExportedUserRecord(user, jsonFactory);
       checkUserRecord(userRecord);
       assertEquals("passwordHash", userRecord.getPasswordHash());
       assertEquals("passwordSalt", userRecord.getPasswordSalt());
@@ -201,9 +201,8 @@ public class FirebaseUserManagerTest {
     assertNull(download.getPageToken());
     checkRequestHeaders(interceptor);
 
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.response.getRequest().getContent().writeTo(out);
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
     GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
     assertEquals(new BigDecimal(999), parsed.get("maxResults"));
     assertEquals("token", parsed.get("nextPageToken"));
@@ -274,7 +273,7 @@ public class FirebaseUserManagerTest {
     checkRequestHeaders(interceptor);
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.response.getRequest().getContent().writeTo(out);
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
     GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
     assertEquals("testuser", parsed.get("localId"));
     assertEquals(jsonFactory.toString(claims), parsed.get("customAttributes"));
@@ -799,7 +798,7 @@ public class FirebaseUserManagerTest {
   }
 
   private void checkRequestHeaders(TestResponseInterceptor interceptor) {
-    HttpHeaders headers = interceptor.response.getRequest().getHeaders();
+    HttpHeaders headers = interceptor.getResponse().getRequest().getHeaders();
     String auth = "Bearer " + TEST_TOKEN;
     assertEquals(auth, headers.getFirstHeaderStringValue("Authorization"));
 
@@ -807,18 +806,8 @@ public class FirebaseUserManagerTest {
     assertEquals(clientVersion, headers.getFirstHeaderStringValue("X-Client-Version"));
   }
 
-  private static class TestResponseInterceptor implements HttpResponseInterceptor {
-
-    private HttpResponse response;
-
-    @Override
-    public void interceptResponse(HttpResponse response) throws IOException {
-      this.response = response;
-    }
-  }
-
   private interface UserManagerOp {
     void call(FirebaseUserManager userManager) throws Exception;
   }
-
+  
 }

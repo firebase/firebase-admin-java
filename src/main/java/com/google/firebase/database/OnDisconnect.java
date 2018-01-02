@@ -72,7 +72,7 @@ public class OnDisconnect {
    * @deprecated Use {@link #setValueAsync(Object, String)}
    */
   public Task<Void> setValue(Object value, String priority) {
-    return onDisconnectSetInternal(value, PriorityUtilities.parsePriority(priority), null);
+    return onDisconnectSetInternal(value, PriorityUtilities.parsePriority(path, priority), null);
   }
 
   /**
@@ -84,7 +84,7 @@ public class OnDisconnect {
    * @deprecated Use {@link #setValueAsync(Object, double)}
    */
   public Task<Void> setValue(Object value, double priority) {
-    return onDisconnectSetInternal(value, PriorityUtilities.parsePriority(priority), null);
+    return onDisconnectSetInternal(value, PriorityUtilities.parsePriority(path, priority), null);
   }
 
   /**
@@ -113,7 +113,7 @@ public class OnDisconnect {
    * @param listener A listener that will be triggered once the server has queued up the operation
    */
   public void setValue(Object value, String priority, CompletionListener listener) {
-    onDisconnectSetInternal(value, PriorityUtilities.parsePriority(priority), listener);
+    onDisconnectSetInternal(value, PriorityUtilities.parsePriority(path, priority), listener);
   }
 
   /**
@@ -128,7 +128,7 @@ public class OnDisconnect {
    * @param listener A listener that will be triggered once the server has queued up the operation
    */
   public void setValue(Object value, double priority, CompletionListener listener) {
-    onDisconnectSetInternal(value, PriorityUtilities.parsePriority(priority), listener);
+    onDisconnectSetInternal(value, PriorityUtilities.parsePriority(path, priority), listener);
   }
 
   /**
@@ -143,7 +143,7 @@ public class OnDisconnect {
    * @param listener A listener that will be triggered once the server has queued up the operation
    */
   public void setValue(Object value, Map priority, CompletionListener listener) {
-    onDisconnectSetInternal(value, PriorityUtilities.parsePriority(priority), listener);
+    onDisconnectSetInternal(value, PriorityUtilities.parsePriority(path, priority), listener);
   }
 
   /**

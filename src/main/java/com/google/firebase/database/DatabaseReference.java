@@ -226,7 +226,7 @@ public class DatabaseReference extends Query {
    * @deprecated Use {@link #setValueAsync(Object)}
    */
   public Task<Void> setValue(Object value) {
-    return setValueInternal(value, PriorityUtilities.parsePriority(null), null);
+    return setValueInternal(value, PriorityUtilities.parsePriority(this.path, null), null);
   }
 
   /**
@@ -238,7 +238,7 @@ public class DatabaseReference extends Query {
    * @deprecated Use {@link #setValueAsync(Object, Object)}
    */
   public Task<Void> setValue(Object value, Object priority) {
-    return setValueInternal(value, PriorityUtilities.parsePriority(priority), null);
+    return setValueInternal(value, PriorityUtilities.parsePriority(this.path, priority), null);
   }
 
   /**
@@ -275,7 +275,7 @@ public class DatabaseReference extends Query {
    * @param listener A listener that will be triggered with the results of the operation
    */
   public void setValue(Object value, CompletionListener listener) {
-    setValueInternal(value, PriorityUtilities.parsePriority(null), listener);
+    setValueInternal(value, PriorityUtilities.parsePriority(this.path, null), listener);
   }
 
   /**
@@ -312,7 +312,7 @@ public class DatabaseReference extends Query {
    * @param listener A listener that will be triggered with the results of the operation
    */
   public void setValue(Object value, Object priority, CompletionListener listener) {
-    setValueInternal(value, PriorityUtilities.parsePriority(priority), listener);
+    setValueInternal(value, PriorityUtilities.parsePriority(this.path, priority), listener);
   }
 
   private Task<Void> setValueInternal(Object value, Node priority, CompletionListener optListener) {
@@ -375,7 +375,7 @@ public class DatabaseReference extends Query {
    * @deprecated Use {@link #setPriorityAsync(Object)}
    */
   public Task<Void> setPriority(Object priority) {
-    return setPriorityInternal(PriorityUtilities.parsePriority(priority), null);
+    return setPriorityInternal(PriorityUtilities.parsePriority(this.path, priority), null);
   }
 
   /**
@@ -408,7 +408,7 @@ public class DatabaseReference extends Query {
    * @param listener A listener that will be triggered with results of the operation
    */
   public void setPriority(Object priority, CompletionListener listener) {
-    setPriorityInternal(PriorityUtilities.parsePriority(priority), listener);
+    setPriorityInternal(PriorityUtilities.parsePriority(this.path, priority), listener);
   }
 
   // Remove

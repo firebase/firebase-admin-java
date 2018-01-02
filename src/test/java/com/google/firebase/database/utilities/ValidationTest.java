@@ -147,6 +147,7 @@ public class ValidationTest {
     Map[] updates = new Map[]{
         ImmutableMap.of("foo", "value"),
         ImmutableMap.of("foo", ""),
+        ImmutableMap.of("foo", 10D),
         ImmutableMap.of(".foo", "foo"),
         ImmutableMap.of("foo", "value", "bar", "value"),
     };
@@ -163,6 +164,9 @@ public class ValidationTest {
         ImmutableMap.of(".value", "foo"),
         ImmutableMap.of(".priority", ImmutableMap.of("a", "b")),
         ImmutableMap.of("foo", "value", "foo/bar", "value"),
+        ImmutableMap.of("foo", Double.POSITIVE_INFINITY),
+        ImmutableMap.of("foo", Double.NEGATIVE_INFINITY),
+        ImmutableMap.of("foo", Double.NaN),
     };
     Path path = new Path("path");
     for (Map map : invalidUpdates) {
