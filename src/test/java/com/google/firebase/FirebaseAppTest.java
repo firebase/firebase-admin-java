@@ -34,7 +34,6 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.auth.oauth2.OAuth2Credentials.CredentialsChangedListener;
 import com.google.common.base.Defaults;
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
 import com.google.firebase.FirebaseApp.TokenRefresher;
@@ -49,7 +48,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -60,8 +58,6 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -90,11 +86,6 @@ public class FirebaseAppTest {
       parameters.add(Defaults.defaultValue(parameterType));
     }
     method.invoke(instance, parameters.toArray());
-  }
-
-  @After
-  public void cleanUpEnv() {
-    setDefaultConfigFile("");
   }
 
   @Test(expected = NullPointerException.class)
@@ -457,7 +448,8 @@ public class FirebaseAppTest {
     assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
     assertEquals("hipster-chat.appspot.mock", firebaseApp.getOptions().getStorageBucket());
     assertEquals("https://hipster-chat.firebaseio.mock", firebaseApp.getOptions().getDatabaseUrl());
-    assertEquals("authVal", firebaseApp.getOptions().getDatabaseAuthVariableOverride().get("this#is#an#auth#string"));
+    assertEquals("authVal", firebaseApp.getOptions().getDatabaseAuthVariableOverride()
+                              .get("this#is#an#auth#string"));
   }
 
   public void testDefaultAppBadKey() {

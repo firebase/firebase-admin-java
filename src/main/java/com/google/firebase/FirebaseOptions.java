@@ -49,7 +49,6 @@ public final class FirebaseOptions {
   private final ThreadManager threadManager;
 
   private FirebaseOptions(@NonNull FirebaseOptions.Builder builder) {
-    
     this.credentials = checkNotNull(builder.credentials,
         "FirebaseOptions must be initialized with setCredentials().")
         .createScoped(BaseCredential.FIREBASE_SCOPES);
@@ -131,7 +130,7 @@ public final class FirebaseOptions {
   ThreadManager getThreadManager() {
     return threadManager;
   }
-  
+
   /**
    * Builder for constructing {@link FirebaseOptions}. 
    */
@@ -312,5 +311,5 @@ public final class FirebaseOptions {
     public FirebaseOptions build() {
       return new FirebaseOptions(this);
     }
-  } 
+  }
 }

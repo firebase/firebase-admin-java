@@ -616,6 +616,11 @@ public class FirebaseApp {
     private static FirebaseOptions.Builder getDefaultOptionsBuilder(
         DefaultConfigOptions defaultConfigOptions) {
       FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
+      if (defaultConfigOptions.databaseAuthVariableOverride != null 
+          && !defaultConfigOptions.databaseAuthVariableOverride.isEmpty()) {
+        builder.setDatabaseAuthVariableOverride(defaultConfigOptions
+                                                .databaseAuthVariableOverride);
+      }
       if (!Strings.isNullOrEmpty(defaultConfigOptions.databaseURL)) {
         builder.setDatabaseUrl(defaultConfigOptions.databaseURL);
       }
