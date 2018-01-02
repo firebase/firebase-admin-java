@@ -434,7 +434,6 @@ public class FirebaseAppTest {
 
   @Test(expected = IllegalStateException.class)
   public void testDefaultAppEmptyFile() {
-    System.err.println("EMPTY");
     setDefaultConfigFile("firebase_config_empty.json");
     FirebaseApp.initializeApp();
   }
@@ -453,7 +452,6 @@ public class FirebaseAppTest {
 
   @Test
   public void testDefaultGood() {
-    System.err.println("DEFAULT GOOD");
     setDefaultConfigFile("firebase_config.json");
     FirebaseApp firebaseApp = FirebaseApp.initializeApp();
     assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
@@ -485,15 +483,6 @@ public class FirebaseAppTest {
       filePath  = new File("src/test/resources/" + fileName)
                    .getAbsolutePath();
     }
-    /*  URL file = TestUtils.class.getClassLoader().getResource(fileName);
-      if (file != null) {
-        System.err.println(">>> file --;"  + file.toString());
-        filePath = file.toString();
-      } else {
-        System.err.println(">> > > NONE: " + fileName);
-        filePath = "file_not_found";
-      }
-    }*/
     Map<String, String> environmentVariables =
         ImmutableMap.<String, String>builder()
           .put("FIREBASE_CONFIG", filePath)              

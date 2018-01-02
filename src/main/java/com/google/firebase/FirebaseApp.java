@@ -116,8 +116,6 @@ public class FirebaseApp {
   private FirebaseApp(String name, FirebaseOptions options, TokenRefresher.Factory factory) {
     checkArgument(!Strings.isNullOrEmpty(name));
     this.name = name;
-    System.err.println("----=-=-=");
-    System.err.println(options);
     this.options = checkNotNull(options);
     this.tokenRefresher = checkNotNull(factory).create(this);
     this.threadManager = options.getThreadManager();
@@ -197,9 +195,6 @@ public class FirebaseApp {
    */
   public static FirebaseApp initializeApp(String name) { 
     DefaultConfigOptions defaultConfigOptions = DefaultConfigOptions.getOptionsFromFile();
-    System.err.println("|||||||0");
-    System.err.println(defaultConfigOptions);
-    System.err.println("|||||||1");   
     FirebaseOptions.Builder builder;
     builder = DefaultConfigOptions.getDefaultOptionsBuilder(defaultConfigOptions);
     try {
@@ -207,10 +202,7 @@ public class FirebaseApp {
     } catch (IOException e) {
       throw new IllegalStateException("Unable to get default credentials.");
     }
-    System.err.println("|||||||2");       
-    System.err.println(builder);
     FirebaseOptions options = builder.build();
-    System.err.println("|||||||3");
     return initializeApp(options, name);
   }
 
@@ -614,20 +606,15 @@ public class FirebaseApp {
         throw new IllegalStateException(e)  ;
       } 
       Gson gson = new Gson();
-      System.err.println(reader);
       DefaultConfigOptions defaultConfigOptions = gson.fromJson(reader ,DefaultConfigOptions.class);
       if (defaultConfigOptions == null) {
         throw new IllegalStateException("null JSON");
       }
-      System.err.println("ooo");
-      System.err.println(defaultConfigOptions);
       return defaultConfigOptions;
     }
 
     private static FirebaseOptions.Builder getDefaultOptionsBuilder(
         DefaultConfigOptions defaultConfigOptions) {
-      System.err.println(";'';';';';'");
-      System.err.println(defaultConfigOptions);
       FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
       if (!Strings.isNullOrEmpty(defaultConfigOptions.databaseURL)) {
         builder.setDatabaseUrl(defaultConfigOptions.databaseURL);
@@ -638,7 +625,6 @@ public class FirebaseApp {
       if (!Strings.isNullOrEmpty(defaultConfigOptions.storageBucket)) {
         builder.setStorageBucket(defaultConfigOptions.storageBucket);
       }
-      System.err.println(";'';';';';--");
       return builder;
     }
   }
