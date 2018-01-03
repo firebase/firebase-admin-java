@@ -194,7 +194,7 @@ public class FirebaseApp {
    * google-services.json.
    */
   public static FirebaseApp initializeApp(String name) { 
-    DefaultConfigOptions defaultConfigOptions = DefaultConfigOptions.getOptionsFromFile();
+    DefaultConfigOptions defaultConfigOptions = DefaultConfigOptions.getOptionsFromEnv();
     FirebaseOptions.Builder builder;
     builder = DefaultConfigOptions.getDefaultOptionsBuilder(defaultConfigOptions);
     try {
@@ -594,19 +594,24 @@ public class FirebaseApp {
 
     private DefaultConfigOptions() {}
 
-    private static DefaultConfigOptions getOptionsFromFile() {
+    private static DefaultConfigOptions getOptionsFromEnv() {
       String defaultConfig = System.getenv(DEFAULT_CONFIG_OPTIONS_VAR);
       if (defaultConfig == null || defaultConfig.isEmpty()) {
         return new DefaultConfigOptions();
       }
-      FileReader reader;
-      try {
-        reader = new FileReader(defaultConfig);
-      } catch (FileNotFoundException e) {
-        throw new IllegalStateException(e)  ;
-      } 
       Gson gson = new Gson();
-      DefaultConfigOptions defaultConfigOptions = gson.fromJson(reader ,DefaultConfigOptions.class);
+      DefaultConfigOptions defaultConfigOptions;
+      if (defaultConfig.charAt(0) == '{') {
+        defaultConfigOptions = gson.fromJson(defaultConfig, DefaultConfigOptions.class);  
+      } else {
+        FileReader reader;
+        try {
+          reader = new FileReader(defaultConfig);
+        } catch (FileNotFoundException e) {
+          throw new IllegalStateException(e)  ;
+        }
+        defaultConfigOptions = gson.fromJson(reader, DefaultConfigOptions.class);
+      }
       if (defaultConfigOptions == null) {
         throw new IllegalStateException("null JSON");
       }
