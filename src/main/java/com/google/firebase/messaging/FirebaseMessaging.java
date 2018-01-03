@@ -199,24 +199,24 @@ public class FirebaseMessaging {
   }
 
   private void handleSendHttpError(HttpResponseException e) throws FirebaseMessagingException {
+    MessagingServiceErrorResponse response = new MessagingServiceErrorResponse();
     try {
-      MessagingServiceErrorResponse response = new MessagingServiceErrorResponse();
       JsonParser parser = jsonFactory.createJsonParser(e.getContent());
       parser.parseAndClose(response);
-      String status = response.getStringValue("status", null);
-      String code = FCM_ERROR_CODES.get(status);
-      if (code != null) {
-        String message = response.getStringValue(
-            "message", "Error while calling FCM backend service");
-        throw new FirebaseMessagingException(code, message, e);
-      }
     } catch (IOException ignored) {
       // ignored
     }
 
-    String msg = String.format("Unexpected HTTP response with status: %d; body: %s",
-        e.getStatusCode(), e.getContent());
-    throw new FirebaseMessagingException(UNKNOWN_ERROR, msg, e);
+    String code = FCM_ERROR_CODES.get(response.getString("status"));
+    if (code == null) {
+      code = UNKNOWN_ERROR;
+    }
+    String msg = response.getString("message");
+    if (Strings.isNullOrEmpty(msg)) {
+      msg = String.format("Unexpected HTTP response with status: %d; body: %s",
+          e.getStatusCode(), e.getContent());
+    }
+    throw new FirebaseMessagingException(code, msg, e);
   }
 
   private TopicManagementResponse makeTopicManagementRequest(List<String> registrationTokens,
@@ -256,24 +256,25 @@ public class FirebaseMessaging {
 
   private void handleTopicManagementHttpError(
       HttpResponseException e) throws FirebaseMessagingException {
-    // Infer error code from HTTP status
-    String code = IID_ERROR_CODES.get(e.getStatusCode());
-    if (code != null) {
-      try {
-        InstanceIdServiceErrorResponse response = new InstanceIdServiceErrorResponse();
-        JsonParser parser = jsonFactory.createJsonParser(e.getContent());
-        parser.parseAndClose(response);
-        String message = !Strings.isNullOrEmpty(response.error)
-            ? response.error : "Error while calling IID backend service";
-        throw new FirebaseMessagingException(code, message, e);
-      } catch (IOException ignored) {
-        // ignored
-      }
+    InstanceIdServiceErrorResponse response = new InstanceIdServiceErrorResponse();
+    try {
+      JsonParser parser = jsonFactory.createJsonParser(e.getContent());
+      parser.parseAndClose(response);
+    } catch (IOException ignored) {
+      // ignored
     }
 
-    String msg = String.format(
-        "Unexpected HTTP response with status: %d; body: %s", e.getStatusCode(), e.getContent());
-    throw new FirebaseMessagingException(UNKNOWN_ERROR, msg, e);
+    // Infer error code from HTTP status
+    String code = IID_ERROR_CODES.get(e.getStatusCode());
+    if (code == null) {
+      code = UNKNOWN_ERROR;
+    }
+    String msg = response.error;
+    if (Strings.isNullOrEmpty(msg)) {
+      msg = String.format("Unexpected HTTP response with status: %d; body: %s",
+          e.getStatusCode(), e.getContent());
+    }
+    throw new FirebaseMessagingException(code, msg, e);
   }
 
   private static void disconnectQuietly(HttpResponse response) {
@@ -333,14 +334,11 @@ public class FirebaseMessaging {
     private Map<String, Object> error;
 
 
-    String getStringValue(String key, String def) {
+    String getString(String key) {
       if (error != null) {
-        String value = (String) error.get(key);
-        if (!Strings.isNullOrEmpty(value)) {
-          return value;
-        }
+        return (String) error.get(key);
       }
-      return def;
+      return null;
     }
   }
 
