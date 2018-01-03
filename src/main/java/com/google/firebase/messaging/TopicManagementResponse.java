@@ -1,10 +1,22 @@
 package com.google.firebase.messaging;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
 
 public class TopicManagementResponse {
+
+  private static final String UNKNOWN_ERROR = "unknown-error";
+
+  // Server error codes as defined in https://developers.google.com/instance-id/reference/server
+  // TODO: Should we handle other error codes here (e.g. PERMISSION_DENIED)?
+  private static final Map<String, String> ERROR_CODES = ImmutableMap.<String, String>builder()
+      .put("INVALID_ARGUMENT", "invalid-argument")
+      .put("NOT_FOUND", "registration-token-not-registered")
+      .put("INTERNAL", "internal-error")
+      .put("TOO_MANY_TOPICS", "too-many-topics")
+      .build();
 
   private final int successCount;
   private final int failureCount;
@@ -46,7 +58,8 @@ public class TopicManagementResponse {
 
     private Error(int index, String reason) {
       this.index = index;
-      this.reason = reason;
+      this.reason = ERROR_CODES.containsKey(reason)
+        ? ERROR_CODES.get(reason) : UNKNOWN_ERROR;
     }
 
     public int getIndex() {

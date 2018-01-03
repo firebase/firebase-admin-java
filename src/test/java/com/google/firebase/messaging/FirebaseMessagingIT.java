@@ -1,7 +1,9 @@
 package com.google.firebase.messaging;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.testing.IntegrationTestUtils;
 import org.junit.BeforeClass;
@@ -21,7 +23,6 @@ public class FirebaseMessagingIT {
   @Test
   public void testSend() throws Exception {
     FirebaseMessaging messaging = FirebaseMessaging.getInstance();
-
     Message message = Message.builder()
         .setNotification(new Notification("Title", "Body"))
         .setAndroidConfig(AndroidConfig.builder()
@@ -30,8 +31,8 @@ public class FirebaseMessagingIT {
         .setWebpushConfig(WebpushConfig.builder().putHeader("X-Custom-Val", "Foo").build())
         .setTopic("foo-bar")
         .build();
-    String resp = messaging.sendAsync(message, true).get();
-    System.out.println(resp);
+    String id = messaging.sendAsync(message, true).get();
+    assertTrue(!Strings.isNullOrEmpty(id));
   }
 
   @Test

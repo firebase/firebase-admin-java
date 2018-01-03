@@ -158,11 +158,11 @@ public class FirebaseMessagingTest {
 
   @Test
   public void testSendError() throws Exception {
-    for (int statusCode : HTTP_ERRORS) {
-      MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
-          .setStatusCode(statusCode)
-          .setContent("test error");
-      FirebaseMessaging messaging = initMessaging(response);
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    FirebaseMessaging messaging = initMessaging(response);
+    for (int code : HTTP_ERRORS) {
+      response.setStatusCode(code)
+          .setContent("{}");
       TestResponseInterceptor interceptor = new TestResponseInterceptor();
       messaging.setInterceptor(interceptor);
       try {
@@ -170,6 +170,8 @@ public class FirebaseMessagingTest {
         fail("No error thrown for HTTP error");
       } catch (ExecutionException e) {
         assertTrue(e.getCause() instanceof FirebaseMessagingException);
+        String msg = String.format("Unexpected HTTP response with status: %d; body: {}", code);
+        assertEquals(msg, e.getCause().getMessage());
         assertTrue(e.getCause().getCause() instanceof HttpResponseException);
       }
 
@@ -178,7 +180,34 @@ public class FirebaseMessagingTest {
       assertEquals("POST", request.getRequestMethod());
       assertEquals(TEST_FCM_URL, request.getUrl().toString());
       assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
-      FirebaseApp.getInstance().delete();
+    }
+  }
+
+  @Test
+  public void testSendBackendError() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    FirebaseMessaging messaging = initMessaging(response);
+    for (int code : HTTP_ERRORS) {
+      response.setStatusCode(code).setContent(
+          "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\"}}");
+      TestResponseInterceptor interceptor = new TestResponseInterceptor();
+      messaging.setInterceptor(interceptor);
+      try {
+        messaging.sendAsync(Message.builder().setTopic("test-topic").build()).get();
+        fail("No error thrown for HTTP error");
+      } catch (ExecutionException e) {
+        assertTrue(e.getCause() instanceof FirebaseMessagingException);
+        assertEquals(
+            "invalid-argument", ((FirebaseMessagingException) e.getCause()).getErrorCode());
+        assertEquals("test error", e.getCause().getMessage());
+        assertTrue(e.getCause().getCause() instanceof HttpResponseException);
+      }
+
+      assertNotNull(interceptor.getResponse());
+      HttpRequest request = interceptor.getResponse().getRequest();
+      assertEquals("POST", request.getRequestMethod());
+      assertEquals(TEST_FCM_URL, request.getUrl().toString());
+      assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
     }
   }
 
@@ -219,7 +248,7 @@ public class FirebaseMessagingTest {
     assertEquals(1, result.getFailureCount());
     assertEquals(1, result.getErrors().size());
     assertEquals(1, result.getErrors().get(0).getIndex());
-    assertEquals("error_reason", result.getErrors().get(0).getReason());
+    assertEquals("unknown-error", result.getErrors().get(0).getReason());
 
     assertNotNull(interceptor.getResponse());
     HttpRequest request = interceptor.getResponse().getRequest();
@@ -236,11 +265,10 @@ public class FirebaseMessagingTest {
 
   @Test
   public void testSubscribeError() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    FirebaseMessaging messaging = initMessaging(response);
     for (int statusCode : HTTP_ERRORS) {
-      MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
-          .setStatusCode(statusCode)
-          .setContent("test error");
-      FirebaseMessaging messaging = initMessaging(response);
+      response.setStatusCode(statusCode).setContent("{\"error\": \"test error\"}");
       TestResponseInterceptor interceptor = new TestResponseInterceptor();
       messaging.setInterceptor(interceptor);
       try {
@@ -248,7 +276,10 @@ public class FirebaseMessagingTest {
         fail("No error thrown for HTTP error");
       } catch (ExecutionException e) {
         assertTrue(e.getCause() instanceof FirebaseMessagingException);
-        assertTrue(e.getCause().getCause() instanceof HttpResponseException);
+        FirebaseMessagingException cause = (FirebaseMessagingException) e.getCause();
+        assertEquals("internal-error", cause.getErrorCode());
+        assertEquals("test error", cause.getMessage());
+        assertTrue(cause.getCause() instanceof HttpResponseException);
       }
 
       assertNotNull(interceptor.getResponse());
@@ -256,7 +287,6 @@ public class FirebaseMessagingTest {
       assertEquals("POST", request.getRequestMethod());
       assertEquals(TEST_IID_SUBSCRIBE_URL, request.getUrl().toString());
       assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
-      FirebaseApp.getInstance().delete();
     }
   }
 
@@ -297,7 +327,7 @@ public class FirebaseMessagingTest {
     assertEquals(1, result.getFailureCount());
     assertEquals(1, result.getErrors().size());
     assertEquals(1, result.getErrors().get(0).getIndex());
-    assertEquals("error_reason", result.getErrors().get(0).getReason());
+    assertEquals("unknown-error", result.getErrors().get(0).getReason());
 
     assertNotNull(interceptor.getResponse());
     HttpRequest request = interceptor.getResponse().getRequest();
@@ -314,11 +344,10 @@ public class FirebaseMessagingTest {
 
   @Test
   public void testUnsubscribeError() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    FirebaseMessaging messaging = initMessaging(response);
     for (int statusCode : HTTP_ERRORS) {
-      MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
-          .setStatusCode(statusCode)
-          .setContent("test error");
-      FirebaseMessaging messaging = initMessaging(response);
+      response.setStatusCode(statusCode).setContent("{\"error\": \"test error\"}");
       TestResponseInterceptor interceptor = new TestResponseInterceptor();
       messaging.setInterceptor(interceptor);
       try {
@@ -326,6 +355,9 @@ public class FirebaseMessagingTest {
         fail("No error thrown for HTTP error");
       } catch (ExecutionException e) {
         assertTrue(e.getCause() instanceof FirebaseMessagingException);
+        FirebaseMessagingException cause = (FirebaseMessagingException) e.getCause();
+        assertEquals("internal-error", cause.getErrorCode());
+        assertEquals("test error", cause.getMessage());
         assertTrue(e.getCause().getCause() instanceof HttpResponseException);
       }
 
@@ -334,7 +366,6 @@ public class FirebaseMessagingTest {
       assertEquals("POST", request.getRequestMethod());
       assertEquals(TEST_IID_UNSUBSCRIBE_URL, request.getUrl().toString());
       assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
-      FirebaseApp.getInstance().delete();
     }
   }
 
