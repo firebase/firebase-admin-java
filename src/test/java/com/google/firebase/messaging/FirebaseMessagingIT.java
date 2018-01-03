@@ -39,7 +39,7 @@ public class FirebaseMessagingIT {
   public void testSubscribe() throws Exception {
     FirebaseMessaging messaging = FirebaseMessaging.getInstance();
     TopicManagementResponse results = messaging.subscribeToTopicAsync(
-        ImmutableList.of(TEST_REGISTRATION_TOKEN), "/topics/mock-topic").get();
+        ImmutableList.of(TEST_REGISTRATION_TOKEN), "mock-topic").get();
     assertEquals(1, results.getSuccessCount() + results.getFailureCount());
   }
 
@@ -47,7 +47,7 @@ public class FirebaseMessagingIT {
   public void testUnsubscribe() throws Exception {
     FirebaseMessaging messaging = FirebaseMessaging.getInstance();
     TopicManagementResponse results = messaging.unsubscribeFromTopicAsync(
-        ImmutableList.of(TEST_REGISTRATION_TOKEN), "/topics/mock-topic").get();
+        ImmutableList.of(TEST_REGISTRATION_TOKEN), "mock-topic").get();
     assertEquals(1, results.getSuccessCount() + results.getFailureCount());
   }
 }

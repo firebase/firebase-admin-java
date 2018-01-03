@@ -259,7 +259,7 @@ public class FirebaseMessagingTest {
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     request.getContent().writeTo(out);
-    assertEquals("{\"to\":\"test-topic\",\"registration_tokens\":[\"id1\",\"id2\"]}",
+    assertEquals("{\"to\":\"/topics/test-topic\",\"registration_tokens\":[\"id1\",\"id2\"]}",
         out.toString());
   }
 
@@ -338,7 +338,7 @@ public class FirebaseMessagingTest {
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     request.getContent().writeTo(out);
-    assertEquals("{\"to\":\"test-topic\",\"registration_tokens\":[\"id1\",\"id2\"]}",
+    assertEquals("{\"to\":\"/topics/test-topic\",\"registration_tokens\":[\"id1\",\"id2\"]}",
         out.toString());
   }
 
