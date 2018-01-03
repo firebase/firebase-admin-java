@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -427,11 +428,39 @@ public class FirebaseAppTest {
   public void testDefaultAppEmptyFile() {
     setDefaultConfigEnv("firebase_config_empty.json");
     FirebaseApp.initializeApp();
+  }  
+  
+  @Test
+  public void testDefaultAppEmptyJSONString() {
+    setDefaultConfigEnv("");
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp();
+    assertEquals(null, firebaseApp.getOptions().getProjectId());
+    assertEquals(null, firebaseApp.getOptions().getStorageBucket());
+    assertEquals(null, firebaseApp.getOptions().getDatabaseUrl());
+    assertEquals(new HashMap<String, Object>(), 
+                 firebaseApp.getOptions().getDatabaseAuthVariableOverride());
+  }
+
+  @Test
+  public void testDefaultAppEmptyJSONObject() {
+    setDefaultConfigEnv("{}");
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp();
+    assertEquals(null, firebaseApp.getOptions().getProjectId());
+    assertEquals(null, firebaseApp.getOptions().getStorageBucket());
+    assertEquals(null, firebaseApp.getOptions().getDatabaseUrl());
+    assertEquals(new HashMap<String, Object>(), 
+                 firebaseApp.getOptions().getDatabaseAuthVariableOverride());
   }
 
   @Test(expected = JsonSyntaxException.class)
   public void testDefaultAppBadFile() {
     setDefaultConfigEnv("firebase_config_bad.json");
+    FirebaseApp.initializeApp();
+  }
+
+  @Test(expected = JsonSyntaxException.class)
+  public void testDefaultAppBadJSON() {
+    setDefaultConfigEnv("{,,");
     FirebaseApp.initializeApp();
   }
 
@@ -450,6 +479,17 @@ public class FirebaseAppTest {
     assertEquals("https://hipster-chat.firebaseio.mock", firebaseApp.getOptions().getDatabaseUrl());
     assertEquals("authVal", firebaseApp.getOptions().getDatabaseAuthVariableOverride()
                               .get("this#is#an#auth#string"));
+  }
+
+  @Test
+  public void testDefaultGoodIgnored() {
+    setDefaultConfigEnv("firebase_config.json");
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS);
+    assertEquals(null, firebaseApp.getOptions().getProjectId());
+    assertEquals(null, firebaseApp.getOptions().getStorageBucket());
+    assertEquals(null, firebaseApp.getOptions().getDatabaseUrl());
+    assertEquals(new HashMap<String, Object>(), 
+                 firebaseApp.getOptions().getDatabaseAuthVariableOverride());
   }
 
   @Test
