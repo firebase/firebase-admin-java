@@ -30,6 +30,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
+import com.google.api.client.json.JsonParser;
 import com.google.api.client.util.Key;
 import com.google.api.core.ApiFuture;
 import com.google.auth.http.HttpCredentialsAdapter;
@@ -52,14 +53,24 @@ public class FirebaseMessaging {
   private static final String FCM_URL = "https://fcm.googleapis.com/v1/projects/%s/messages:send";
 
   private static final String INTERNAL_ERROR = "internal-error";
-  private static final Map<String, String> ERROR_CODES = ImmutableMap.<String, String>builder()
-      .put("INVALID_ARGUMENT", "invalid-argument")
-      .put("NOT_FOUND", "registration-token-not-registered")
-      .put("PERMISSION_DENIED", "authentication-error")
-      .put("RESOURCE_EXHAUSTED", "message-rate-exceeded")
-      .put("UNAUTHENTICATED", "authentication-error")
-      .put("UNAVAILABLE", "server-unavailable")
-      .build();
+  private static final String UNKNOWN_ERROR = "unknown-error";
+  private static final Map<String, String> FCM_ERROR_CODES =
+      ImmutableMap.<String, String>builder()
+        .put("INVALID_ARGUMENT", "invalid-argument")
+        .put("NOT_FOUND", "registration-token-not-registered")
+        .put("PERMISSION_DENIED", "authentication-error")
+        .put("RESOURCE_EXHAUSTED", "message-rate-exceeded")
+        .put("UNAUTHENTICATED", "authentication-error")
+        .put("UNAVAILABLE", "server-unavailable")
+        .build();
+  static final Map<Integer, String> IID_ERROR_CODES =
+      ImmutableMap.<Integer, String>builder()
+        .put(400, "invalid-argument")
+        .put(401, "authentication-error")
+        .put(403, "authentication-error")
+        .put(500, INTERNAL_ERROR)
+        .put(503, "server-unavailable")
+        .build();
 
   private static final String IID_HOST = "https://iid.googleapis.com";
   private static final String IID_SUBSCRIBE_PATH = "iid/v1:batchAdd";
@@ -181,7 +192,7 @@ public class FirebaseMessaging {
       return null;
     } catch (IOException e) {
       throw new FirebaseMessagingException(
-          INTERNAL_ERROR, "Error while calling IID backend service", e);
+          INTERNAL_ERROR, "Error while calling FCM backend service", e);
     } finally {
       disconnectQuietly(response);
     }
@@ -189,22 +200,23 @@ public class FirebaseMessaging {
 
   private void handleSendHttpError(HttpResponseException e) throws FirebaseMessagingException {
     try {
-      Map response = jsonFactory.fromString(e.getContent(), Map.class);
-      Map error = (Map) response.get("error");
-      if (error != null) {
-        String status = (String) error.get("status");
-        String code = ERROR_CODES.get(status);
-        if (code != null) {
-          String message = (String) error.get("message");
-          throw new FirebaseMessagingException(code, message, e);
-        }
+      MessagingServiceErrorResponse response = new MessagingServiceErrorResponse();
+      JsonParser parser = jsonFactory.createJsonParser(e.getContent());
+      parser.parseAndClose(response);
+      String status = response.getStringValue("status", null);
+      String code = FCM_ERROR_CODES.get(status);
+      if (code != null) {
+        String message = response.getStringValue(
+            "message", "Error while calling FCM backend service");
+        throw new FirebaseMessagingException(code, message, e);
       }
     } catch (IOException ignored) {
       // ignored
     }
-    String msg = String.format(
-        "Unexpected HTTP response with status: %d; body: %s", e.getStatusCode(), e.getContent());
-    throw new FirebaseMessagingException(INTERNAL_ERROR, msg, e);
+
+    String msg = String.format("Unexpected HTTP response with status: %d; body: %s",
+        e.getStatusCode(), e.getContent());
+    throw new FirebaseMessagingException(UNKNOWN_ERROR, msg, e);
   }
 
   private TopicManagementResponse makeTopicManagementRequest(List<String> registrationTokens,
@@ -244,18 +256,24 @@ public class FirebaseMessaging {
 
   private void handleTopicManagementHttpError(
       HttpResponseException e) throws FirebaseMessagingException {
-    try {
-      Map response = jsonFactory.fromString(e.getContent(), Map.class);
-      String error = (String) response.get("error");
-      if (!Strings.isNullOrEmpty(error)) {
-        throw new FirebaseMessagingException(INTERNAL_ERROR, error, e);
+    // Infer error code from HTTP status
+    String code = IID_ERROR_CODES.get(e.getStatusCode());
+    if (code != null) {
+      try {
+        InstanceIdServiceErrorResponse response = new InstanceIdServiceErrorResponse();
+        JsonParser parser = jsonFactory.createJsonParser(e.getContent());
+        parser.parseAndClose(response);
+        String message = !Strings.isNullOrEmpty(response.error)
+            ? response.error : "Error while calling IID backend service";
+        throw new FirebaseMessagingException(code, message, e);
+      } catch (IOException ignored) {
+        // ignored
       }
-    } catch (IOException ignored) {
-      // ignored
     }
+
     String msg = String.format(
         "Unexpected HTTP response with status: %d; body: %s", e.getStatusCode(), e.getContent());
-    throw new FirebaseMessagingException(INTERNAL_ERROR, msg, e);
+    throw new FirebaseMessagingException(UNKNOWN_ERROR, msg, e);
   }
 
   private static void disconnectQuietly(HttpResponse response) {
@@ -310,8 +328,29 @@ public class FirebaseMessaging {
     private String name;
   }
 
+  private static class MessagingServiceErrorResponse {
+    @Key("error")
+    private Map<String, Object> error;
+
+
+    String getStringValue(String key, String def) {
+      if (error != null) {
+        String value = (String) error.get(key);
+        if (!Strings.isNullOrEmpty(value)) {
+          return value;
+        }
+      }
+      return def;
+    }
+  }
+
   private static class InstanceIdServiceResponse {
     @Key("results")
     private List<Map<String, Object>> results;
+  }
+
+  private static class InstanceIdServiceErrorResponse {
+    @Key("error")
+    private String error;
   }
 }

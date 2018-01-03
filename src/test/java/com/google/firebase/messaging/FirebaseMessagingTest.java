@@ -212,6 +212,31 @@ public class FirebaseMessagingTest {
   }
 
   @Test
+  public void testSendBackendUnexpectedError() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    FirebaseMessaging messaging = initMessaging(response);
+    response.setStatusCode(500).setContent("not json");
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    messaging.setInterceptor(interceptor);
+    try {
+      messaging.sendAsync(Message.builder().setTopic("test-topic").build()).get();
+      fail("No error thrown for HTTP error");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseMessagingException);
+      assertEquals("unknown-error", ((FirebaseMessagingException) e.getCause()).getErrorCode());
+      assertEquals("Unexpected HTTP response with status: 500; body: not json",
+          e.getCause().getMessage());
+      assertTrue(e.getCause().getCause() instanceof HttpResponseException);
+    }
+
+    assertNotNull(interceptor.getResponse());
+    HttpRequest request = interceptor.getResponse().getRequest();
+    assertEquals("POST", request.getRequestMethod());
+    assertEquals(TEST_FCM_URL, request.getUrl().toString());
+    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+  }
+
+  @Test
   public void testInvalidSubscribe() {
     FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
@@ -276,10 +301,10 @@ public class FirebaseMessagingTest {
         fail("No error thrown for HTTP error");
       } catch (ExecutionException e) {
         assertTrue(e.getCause() instanceof FirebaseMessagingException);
-        FirebaseMessagingException cause = (FirebaseMessagingException) e.getCause();
-        assertEquals("internal-error", cause.getErrorCode());
-        assertEquals("test error", cause.getMessage());
-        assertTrue(cause.getCause() instanceof HttpResponseException);
+        FirebaseMessagingException error = (FirebaseMessagingException) e.getCause();
+        assertEquals(getTopicManagementErrorCode(statusCode), error.getErrorCode());
+        assertEquals(getTopicManagementErrorMessage(statusCode, "test error"), error.getMessage());
+        assertTrue(error.getCause() instanceof HttpResponseException);
       }
 
       assertNotNull(interceptor.getResponse());
@@ -355,10 +380,10 @@ public class FirebaseMessagingTest {
         fail("No error thrown for HTTP error");
       } catch (ExecutionException e) {
         assertTrue(e.getCause() instanceof FirebaseMessagingException);
-        FirebaseMessagingException cause = (FirebaseMessagingException) e.getCause();
-        assertEquals("internal-error", cause.getErrorCode());
-        assertEquals("test error", cause.getMessage());
-        assertTrue(e.getCause().getCause() instanceof HttpResponseException);
+        FirebaseMessagingException error = (FirebaseMessagingException) e.getCause();
+        assertEquals(getTopicManagementErrorCode(statusCode), error.getErrorCode());
+        assertEquals(getTopicManagementErrorMessage(statusCode, "test error"), error.getMessage());
+        assertTrue(error.getCause() instanceof HttpResponseException);
       }
 
       assertNotNull(interceptor.getResponse());
@@ -367,6 +392,22 @@ public class FirebaseMessagingTest {
       assertEquals(TEST_IID_UNSUBSCRIBE_URL, request.getUrl().toString());
       assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
     }
+  }
+
+  private static String getTopicManagementErrorCode(int statusCode) {
+    String code = FirebaseMessaging.IID_ERROR_CODES.get(statusCode);
+    if (code == null) {
+      code = "unknown-error";
+    }
+    return code;
+  }
+
+  private static String getTopicManagementErrorMessage(int statusCode, String message) {
+    if (FirebaseMessaging.IID_ERROR_CODES.containsKey(statusCode)) {
+      return message;
+    }
+    return String.format("Unexpected HTTP response with status: %d; body: {\"error\": \"%s\"}",
+        statusCode, message);
   }
 
   private static FirebaseMessaging initMessaging(MockLowLevelHttpResponse mockResponse) {
