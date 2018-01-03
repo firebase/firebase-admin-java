@@ -425,25 +425,44 @@ public class FirebaseAppTest {
 
   @Test(expected = IllegalStateException.class)
   public void testDefaultAppEmptyFile() {
-    setDefaultConfigFile("firebase_config_empty.json");
+    setDefaultConfigEnv("firebase_config_empty.json");
     FirebaseApp.initializeApp();
   }
 
   @Test(expected = JsonSyntaxException.class)
   public void testDefaultAppBadFile() {
-    setDefaultConfigFile("firebase_config_bad.json");
+    setDefaultConfigEnv("firebase_config_bad.json");
     FirebaseApp.initializeApp();
   }
 
   @Test(expected = IllegalStateException.class)
   public void testDefaultNoSuchFile() {
-    setDefaultConfigFile("no_such.json");
+    setDefaultConfigEnv("no_such.json");
     FirebaseApp.initializeApp();
   }
 
   @Test
   public void testDefaultGood() {
-    setDefaultConfigFile("firebase_config.json");
+    setDefaultConfigEnv("firebase_config.json");
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp();
+    assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
+    assertEquals("hipster-chat.appspot.mock", firebaseApp.getOptions().getStorageBucket());
+    assertEquals("https://hipster-chat.firebaseio.mock", firebaseApp.getOptions().getDatabaseUrl());
+    assertEquals("authVal", firebaseApp.getOptions().getDatabaseAuthVariableOverride()
+                              .get("this#is#an#auth#string"));
+  }
+
+  @Test
+  public void testDefaultGoodJson() {
+    setDefaultConfigEnv("{" 
+        + "\"databaseAuthVariableOverride\": {" 
+        +   "\"this#is#an#auth#string\":" 
+        +   "\"authVal\"" 
+        + "}," 
+        + "\"databaseURL\": \"https://hipster-chat.firebaseio.mock\"," 
+        + "\"projectId\": \"hipster-chat-mock\"," 
+        + "\"storageBucket\": \"hipster-chat.appspot.mock\"" 
+        + "}");
     FirebaseApp firebaseApp = FirebaseApp.initializeApp();
     assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
     assertEquals("hipster-chat.appspot.mock", firebaseApp.getOptions().getStorageBucket());
@@ -453,12 +472,10 @@ public class FirebaseAppTest {
   }
 
   public void testDefaultAppBadKey() {
-    setDefaultConfigFile("firebase_config_bad_key.json");
+    setDefaultConfigEnv("firebase_config_bad_key.json");
     FirebaseApp firebaseApp = FirebaseApp.initializeApp();
     assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
   }
-
-  
 
   @Test(expected = IllegalArgumentException.class)
   public void testFirebaseExceptionNullDetail() {
@@ -471,15 +488,17 @@ public class FirebaseAppTest {
   }
   
 
-  private void setDefaultConfigFile(String fileName) {
-    String filePath = "";
-    if (!fileName.isEmpty()) {
-      filePath  = new File("src/test/resources/" + fileName)
+  private void setDefaultConfigEnv(String configJSON) {
+    String configEnvVal = "";
+    if (configJSON.isEmpty() || configJSON.startsWith("{")) {
+      configEnvVal = configJSON;
+    } else {
+      configEnvVal  = new File("src/test/resources/" + configJSON)
                    .getAbsolutePath();
     }
     Map<String, String> environmentVariables =
         ImmutableMap.<String, String>builder()
-          .put("FIREBASE_CONFIG", filePath)              
+          .put("FIREBASE_CONFIG", configEnvVal)              
           .build();
     TestUtils.setEnvironmentVariables(environmentVariables);
   }
