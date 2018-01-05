@@ -426,13 +426,13 @@ public class FirebaseAppTest {
 
   @Test(expected = IllegalStateException.class)
   public void testDefaultAppEmptyFile() {
-    setDefaultConfigEnv("firebase_config_empty.json");
+    setFirebaseConfigEnvironmentVaraible("firebase_config_empty.json");
     FirebaseApp.initializeApp();
   }  
   
   @Test
   public void testDefaultAppEmptyJSONString() {
-    setDefaultConfigEnv("");
+    setFirebaseConfigEnvironmentVaraible("");
     FirebaseApp firebaseApp = FirebaseApp.initializeApp();
     assertEquals(null, firebaseApp.getOptions().getProjectId());
     assertEquals(null, firebaseApp.getOptions().getStorageBucket());
@@ -443,7 +443,7 @@ public class FirebaseAppTest {
 
   @Test
   public void testDefaultAppEmptyJSONObject() {
-    setDefaultConfigEnv("{}");
+    setFirebaseConfigEnvironmentVaraible("{}");
     FirebaseApp firebaseApp = FirebaseApp.initializeApp();
     assertEquals(null, firebaseApp.getOptions().getProjectId());
     assertEquals(null, firebaseApp.getOptions().getStorageBucket());
@@ -453,26 +453,26 @@ public class FirebaseAppTest {
   }
 
   @Test(expected = JsonSyntaxException.class)
-  public void testDefaultAppBadFile() {
-    setDefaultConfigEnv("firebase_config_bad.json");
+  public void testDefaultAppInvalidFile() {
+    setFirebaseConfigEnvironmentVaraible("firebase_config_Invalid.json");
     FirebaseApp.initializeApp();
   }
 
   @Test(expected = JsonSyntaxException.class)
-  public void testDefaultAppBadJSON() {
-    setDefaultConfigEnv("{,,");
+  public void testDefaultAppInvalidJSON() {
+    setFirebaseConfigEnvironmentVaraible("{,,");
     FirebaseApp.initializeApp();
   }
 
   @Test(expected = IllegalStateException.class)
   public void testDefaultNoSuchFile() {
-    setDefaultConfigEnv("no_such.json");
+    setFirebaseConfigEnvironmentVaraible("no_such.json");
     FirebaseApp.initializeApp();
   }
 
   @Test
-  public void testDefaultGood() {
-    setDefaultConfigEnv("firebase_config.json");
+  public void testDefaultValid() {
+    setFirebaseConfigEnvironmentVaraible("firebase_config.json");
     FirebaseApp firebaseApp = FirebaseApp.initializeApp();
     assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
     assertEquals("hipster-chat.appspot.mock", firebaseApp.getOptions().getStorageBucket());
@@ -482,8 +482,8 @@ public class FirebaseAppTest {
   }
 
   @Test
-  public void testDefaultGoodIgnored() {
-    setDefaultConfigEnv("firebase_config.json");
+  public void testDefaultValidIgnored() {
+    setFirebaseConfigEnvironmentVaraible("firebase_config.json");
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS);
     assertEquals(null, firebaseApp.getOptions().getProjectId());
     assertEquals(null, firebaseApp.getOptions().getStorageBucket());
@@ -493,8 +493,8 @@ public class FirebaseAppTest {
   }
 
   @Test
-  public void testDefaultGoodJson() {
-    setDefaultConfigEnv("{" 
+  public void testDefaultValidJson() {
+    setFirebaseConfigEnvironmentVaraible("{" 
         + "\"databaseAuthVariableOverride\": {" 
         +   "\"this#is#an#auth#string\":" 
         +   "\"authVal\"" 
@@ -511,8 +511,8 @@ public class FirebaseAppTest {
                               .get("this#is#an#auth#string"));
   }
 
-  public void testDefaultAppBadKey() {
-    setDefaultConfigEnv("firebase_config_bad_key.json");
+  public void testDefaultAppInvalidKey() {
+    setFirebaseConfigEnvironmentVaraible("firebase_config_Invalid_key.json");
     FirebaseApp firebaseApp = FirebaseApp.initializeApp();
     assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
   }
@@ -528,7 +528,7 @@ public class FirebaseAppTest {
   }
   
 
-  private void setDefaultConfigEnv(String configJSON) {
+  private void setFirebaseConfigEnvironmentVaraible(String configJSON) {
     String configEnvVal = "";
     if (configJSON.isEmpty() || configJSON.startsWith("{")) {
       configEnvVal = configJSON;
@@ -537,9 +537,7 @@ public class FirebaseAppTest {
                    .getAbsolutePath();
     }
     Map<String, String> environmentVariables =
-        ImmutableMap.<String, String>builder()
-          .put("FIREBASE_CONFIG", configEnvVal)              
-          .build();
+        ImmutableMap.<String, String>of(FirebaseApp.DEFAULT_CONFIG_OPTIONS_VAR , configEnvVal);
     TestUtils.setEnvironmentVariables(environmentVariables);
   }
 
