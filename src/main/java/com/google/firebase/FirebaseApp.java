@@ -591,7 +591,6 @@ public class FirebaseApp {
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
-    Set<String> keys = parsed.keySet();
     
     FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
     if (parsed.containsKey("databaseAuthVariableOverride")) {
