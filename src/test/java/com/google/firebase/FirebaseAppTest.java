@@ -451,7 +451,7 @@ public class FirebaseAppTest {
 
   @Test(expected = IllegalStateException.class)
   public void testDefaultAppInvalidFile() {
-    setFirebaseConfigEnvironmentVaraible("firebase_config_Invalid.json");
+    setFirebaseConfigEnvironmentVaraible("firebase_config_invalid.json");
     FirebaseApp.initializeApp();
   }
 
@@ -465,6 +465,14 @@ public class FirebaseAppTest {
   public void testDefaultNoSuchFile() {
     setFirebaseConfigEnvironmentVaraible("no_such.json");
     FirebaseApp.initializeApp();
+  }
+
+  @Test
+  public void testDefaultValidPartial() {
+    setFirebaseConfigEnvironmentVaraible("firebase_config_partial.json");
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp();
+    assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
+    assertEquals("https://hipster-chat.firebaseio.mock", firebaseApp.getOptions().getDatabaseUrl());
   }
 
   @Test
@@ -495,7 +503,7 @@ public class FirebaseAppTest {
         +   "\"this#is#an#auth#string\":" 
         +   "\"authVal\"" 
         + "}," 
-        + "\"databaseURL\": \"https://hipster-chat.firebaseio.mock\"," 
+        + "\"databaseUrl\": \"https://hipster-chat.firebaseio.mock\"," 
         + "\"projectId\": \"hipster-chat-mock\"," 
         + "\"storageBucket\": \"hipster-chat.appspot.mock\"" 
         + "}");
@@ -508,7 +516,7 @@ public class FirebaseAppTest {
   }
 
   public void testDefaultAppInvalidKey() {
-    setFirebaseConfigEnvironmentVaraible("firebase_config_Invalid_key.json");
+    setFirebaseConfigEnvironmentVaraible("firebase_config_invalid_key.json");
     FirebaseApp firebaseApp = FirebaseApp.initializeApp();
     assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
   }

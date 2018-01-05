@@ -24,6 +24,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.JsonParser;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.OAuth2Credentials;
@@ -44,9 +45,6 @@ import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.RevivingScheduledExecutor;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
-import com.google.gson.Gson;
-import com.google.gson.JsonParser;
-import com.google.gson.reflect.TypeToken;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -574,44 +572,26 @@ public class FirebaseApp {
     if (Strings.isNullOrEmpty(defaultConfig)) {
       return new FirebaseOptions.Builder().build();
     }
-
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    
-    GenericJson parsed ;
+    FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
+    JsonParser parser;
     try { 
       if (defaultConfig.startsWith("{")) {
-        parsed = jsonFactory.fromString(defaultConfig, GenericJson.class);
+        parser = jsonFactory.createJsonParser(defaultConfig);
       } else {
         FileReader reader;
         reader = new FileReader(defaultConfig);
-        parsed = jsonFactory.fromReader(reader, GenericJson.class);
+        parser = jsonFactory.createJsonParser(reader);    
       }
+      parser.parseAndClose(builder);
+      builder.setCredentials(GoogleCredentials.getApplicationDefault());
+
+      return builder.build();
+
     } catch (FileNotFoundException e) {
       throw new IllegalStateException(e);
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }
-    
-    FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
-    if (parsed.containsKey("databaseAuthVariableOverride")) {
-      builder.setDatabaseAuthVariableOverride(new HashMap<String, Object>(
-          (Map<String, Object>)parsed.get("databaseAuthVariableOverride")));
-    }
-    if (parsed.containsKey("databaseURL")) {
-      builder.setDatabaseUrl((String)parsed.get("databaseURL"));
-    }
-    if (parsed.containsKey("projectId")) {
-      builder.setProjectId((String)parsed.get("projectId"));
-    }
-    if (parsed.containsKey("storageBucket")) {
-      builder.setStorageBucket((String)parsed.get("storageBucket"));
-    }
-
-    try {
-      builder.setCredentials(GoogleCredentials.getApplicationDefault());
-    } catch (IOException e) {
-      throw new IllegalStateException("Unable to get default credentials.");
-    }
-    return builder.build();
   }
 }

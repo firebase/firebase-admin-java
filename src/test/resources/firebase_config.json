@@ -3,7 +3,7 @@
     "this#is#an#auth#string":
     "authVal"
   },
-  "databaseURL": "https://hipster-chat.firebaseio.mock",
+  "databaseUrl": "https://hipster-chat.firebaseio.mock",
   "projectId": "hipster-chat-mock",
   "storageBucket": "hipster-chat.appspot.mock"
 }
