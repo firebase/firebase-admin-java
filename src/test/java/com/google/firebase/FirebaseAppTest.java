@@ -42,7 +42,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.testing.FirebaseAppRule;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
-import com.google.gson.JsonSyntaxException;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -424,21 +423,20 @@ public class FirebaseAppTest {
     assertEquals(0, refresher.cancelCalls);
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testDefaultAppEmptyFile() {
     setFirebaseConfigEnvironmentVaraible("firebase_config_empty.json");
     FirebaseApp.initializeApp();
   }  
   
-  @Test
+  @Test(expected = NullPointerException.class)
   public void testDefaultAppEmptyJSONString() {
     setFirebaseConfigEnvironmentVaraible("");
     FirebaseApp firebaseApp = FirebaseApp.initializeApp();
     assertEquals(null, firebaseApp.getOptions().getProjectId());
     assertEquals(null, firebaseApp.getOptions().getStorageBucket());
     assertEquals(null, firebaseApp.getOptions().getDatabaseUrl());
-    assertEquals(new HashMap<String, Object>(), 
-                 firebaseApp.getOptions().getDatabaseAuthVariableOverride());
+    assertTrue(firebaseApp.getOptions().getDatabaseAuthVariableOverride().isEmpty()); 
   }
 
   @Test
@@ -448,17 +446,16 @@ public class FirebaseAppTest {
     assertEquals(null, firebaseApp.getOptions().getProjectId());
     assertEquals(null, firebaseApp.getOptions().getStorageBucket());
     assertEquals(null, firebaseApp.getOptions().getDatabaseUrl());
-    assertEquals(new HashMap<String, Object>(), 
-                 firebaseApp.getOptions().getDatabaseAuthVariableOverride());
+    assertTrue(firebaseApp.getOptions().getDatabaseAuthVariableOverride().isEmpty());
   }
 
-  @Test(expected = JsonSyntaxException.class)
+  @Test(expected = IllegalStateException.class)
   public void testDefaultAppInvalidFile() {
     setFirebaseConfigEnvironmentVaraible("firebase_config_Invalid.json");
     FirebaseApp.initializeApp();
   }
 
-  @Test(expected = JsonSyntaxException.class)
+  @Test(expected = IllegalStateException.class)
   public void testDefaultAppInvalidJSON() {
     setFirebaseConfigEnvironmentVaraible("{,,");
     FirebaseApp.initializeApp();
@@ -488,8 +485,7 @@ public class FirebaseAppTest {
     assertEquals(null, firebaseApp.getOptions().getProjectId());
     assertEquals(null, firebaseApp.getOptions().getStorageBucket());
     assertEquals(null, firebaseApp.getOptions().getDatabaseUrl());
-    assertEquals(new HashMap<String, Object>(), 
-                 firebaseApp.getOptions().getDatabaseAuthVariableOverride());
+    assertTrue(firebaseApp.getOptions().getDatabaseAuthVariableOverride().isEmpty());
   }
 
   @Test
@@ -507,8 +503,8 @@ public class FirebaseAppTest {
     assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
     assertEquals("hipster-chat.appspot.mock", firebaseApp.getOptions().getStorageBucket());
     assertEquals("https://hipster-chat.firebaseio.mock", firebaseApp.getOptions().getDatabaseUrl());
-    assertEquals("authVal", firebaseApp.getOptions().getDatabaseAuthVariableOverride()
-                              .get("this#is#an#auth#string"));
+    assertEquals("authVal", 
+        firebaseApp.getOptions().getDatabaseAuthVariableOverride().get("this#is#an#auth#string"));
   }
 
   public void testDefaultAppInvalidKey() {
@@ -537,7 +533,7 @@ public class FirebaseAppTest {
                    .getAbsolutePath();
     }
     Map<String, String> environmentVariables =
-        ImmutableMap.<String, String>of(FirebaseApp.DEFAULT_CONFIG_OPTIONS_VAR , configEnvVal);
+        ImmutableMap.<String, String>of(FirebaseApp.FIREBASE_CONFIG_ENV_VAR , configEnvVal);
     TestUtils.setEnvironmentVariables(environmentVariables);
   }
 

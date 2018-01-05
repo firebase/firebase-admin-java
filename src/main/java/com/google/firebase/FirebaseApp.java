@@ -21,6 +21,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.json.GenericJson;
+import com.google.api.client.json.JsonFactory;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.OAuth2Credentials;
@@ -85,7 +88,7 @@ public class FirebaseApp {
   private static final Map<String, FirebaseApp> instances = new HashMap<>();
 
   public static final String DEFAULT_APP_NAME = "[DEFAULT]";
-  public static final String DEFAULT_CONFIG_OPTIONS_VAR = "FIREBASE_CONFIG";
+  protected static final String FIREBASE_CONFIG_ENV_VAR = "FIREBASE_CONFIG";
 
   private static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
       new TokenRefresher.Factory();
@@ -172,13 +175,9 @@ public class FirebaseApp {
 
   /**
    * Initializes the default {@link FirebaseApp} instance. Same as {@link
-   * #initializeApp(String)}, but it uses {@link #DEFAULT_APP_NAME} as name. *
+   * #initializeApp(String)}, but it uses {@link #DEFAULT_APP_NAME} as name.
    * Also, it uses the {@link FirebaseOptions} values set in the file pointed to by
-   * {@link DEFAULT_CONFIG_OPTIONS_VAR}, if tht file is available.
-   * 
-   * <p>The creation of the default instance is automatically triggered at app startup time, if
-   * Firebase configuration values are available from resources - populated from
-   * google-services.json.
+   * {@link FIREBASE_CONFIG_ENV_VAR}, if tht file is available.
    */
   public static FirebaseApp initializeApp() {
     return initializeApp(DEFAULT_APP_NAME);
@@ -186,33 +185,17 @@ public class FirebaseApp {
 
   /**
    * Initializes the default {@link FirebaseApp} instance. Same as {@link
-   * #initializeApp(FirebaseOptions, String)}, but it uses the FirebaseOptions values set in the 
-   * file pointed to by {@link DEFAULT_CONFIG_OPTIONS_VAR}, if tht file is available.
-   * 
-   * <p>The creation of the default instance is automatically triggered at app startup time, if
-   * Firebase configuration values are available from resources - populated from
-   * google-services.json.
+   * #initializeApp(FirebaseOptions, String)}, but it uses the {@link FirebaseOptions} values set
+   * in the file pointed to by {@link FIREBASE_CONFIG_ENV_VAR}, if tht file is available.
    */
-  public static FirebaseApp initializeApp(String name) { 
-    DefaultConfigOptions defaultConfigOptions = DefaultConfigOptions.getOptionsFromEnv();
-    FirebaseOptions.Builder builder;
-    builder = DefaultConfigOptions.getDefaultOptionsBuilder(defaultConfigOptions);
-    try {
-      builder.setCredentials(GoogleCredentials.getApplicationDefault());
-    } catch (IOException e) {
-      throw new IllegalStateException("Unable to get default credentials.");
-    }
-    FirebaseOptions options = builder.build();
+  public static FirebaseApp initializeApp(String name) {
+    FirebaseOptions options = getOptionsFromEnvironment();
     return initializeApp(options, name);
   }
 
   /**
    * Initializes the default {@link FirebaseApp} instance. Same as {@link
-   * #initializeApp(FirebaseOptions, String)}, but it uses {@link #DEFAULT_APP_NAME} as name. *
-   *
-   * <p>The creation of the default instance is automatically triggered at app startup time, if
-   * Firebase configuration values are available from resources - populated from
-   * google-services.json.
+   * #initializeApp(FirebaseOptions, String)}, but it uses {@link #DEFAULT_APP_NAME} as name.
    */
   public static FirebaseApp initializeApp(FirebaseOptions options) {
     return initializeApp(options, DEFAULT_APP_NAME);
@@ -586,56 +569,50 @@ public class FirebaseApp {
     }
   }
 
-  private static class DefaultConfigOptions{
-    private String databaseURL;
-    private String storageBucket;
-    private Map<String, Object> databaseAuthVariableOverride;
-    private String projectId;
+  private static FirebaseOptions getOptionsFromEnvironment() {
+    String defaultConfig = System.getenv(FIREBASE_CONFIG_ENV_VAR);
+    if (Strings.isNullOrEmpty(defaultConfig)) {
+      return new FirebaseOptions.Builder().build();
+    }
 
-    private DefaultConfigOptions() {}
-
-    private static DefaultConfigOptions getOptionsFromEnv() {
-      String defaultConfig = System.getenv(DEFAULT_CONFIG_OPTIONS_VAR);
-      if (defaultConfig == null || defaultConfig.isEmpty()) {
-        return new DefaultConfigOptions();
-      }
-      Gson gson = new Gson();
-      DefaultConfigOptions defaultConfigOptions;
-      if (defaultConfig.charAt(0) == '{') {
-        defaultConfigOptions = gson.fromJson(defaultConfig, DefaultConfigOptions.class);  
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    
+    GenericJson parsed ;
+    try { 
+      if (defaultConfig.startsWith("{")) {
+        parsed = jsonFactory.fromString(defaultConfig, GenericJson.class);
       } else {
         FileReader reader;
-        try {
-          reader = new FileReader(defaultConfig);
-        } catch (FileNotFoundException e) {
-          throw new IllegalStateException(e)  ;
-        }
-        defaultConfigOptions = gson.fromJson(reader, DefaultConfigOptions.class);
+        reader = new FileReader(defaultConfig);
+        parsed = jsonFactory.fromReader(reader, GenericJson.class);
       }
-      if (defaultConfigOptions == null) {
-        throw new IllegalStateException("null JSON");
-      }
-      return defaultConfigOptions;
+    } catch (FileNotFoundException e) {
+      throw new IllegalStateException(e);
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+    Set<String> keys = parsed.keySet();
+    
+    FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
+    if (parsed.containsKey("databaseAuthVariableOverride")) {
+      builder.setDatabaseAuthVariableOverride(new HashMap<String, Object>(
+          (Map<String, Object>)parsed.get("databaseAuthVariableOverride")));
+    }
+    if (parsed.containsKey("databaseURL")) {
+      builder.setDatabaseUrl((String)parsed.get("databaseURL"));
+    }
+    if (parsed.containsKey("projectId")) {
+      builder.setProjectId((String)parsed.get("projectId"));
+    }
+    if (parsed.containsKey("storageBucket")) {
+      builder.setStorageBucket((String)parsed.get("storageBucket"));
     }
 
-    private static FirebaseOptions.Builder getDefaultOptionsBuilder(
-        DefaultConfigOptions defaultConfigOptions) {
-      FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
-      if (defaultConfigOptions.databaseAuthVariableOverride != null 
-          && !defaultConfigOptions.databaseAuthVariableOverride.isEmpty()) {
-        builder.setDatabaseAuthVariableOverride(defaultConfigOptions
-                                                .databaseAuthVariableOverride);
-      }
-      if (!Strings.isNullOrEmpty(defaultConfigOptions.databaseURL)) {
-        builder.setDatabaseUrl(defaultConfigOptions.databaseURL);
-      }
-      if (!Strings.isNullOrEmpty(defaultConfigOptions.projectId)) {
-        builder.setProjectId(defaultConfigOptions.projectId);
-      }
-      if (!Strings.isNullOrEmpty(defaultConfigOptions.storageBucket)) {
-        builder.setStorageBucket(defaultConfigOptions.storageBucket);
-      }
-      return builder;
+    try {
+      builder.setCredentials(GoogleCredentials.getApplicationDefault());
+    } catch (IOException e) {
+      throw new IllegalStateException("Unable to get default credentials.");
     }
+    return builder.build();
   }
 }

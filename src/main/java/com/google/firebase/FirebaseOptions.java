@@ -31,6 +31,7 @@ import com.google.firebase.auth.internal.FirebaseCredentialsAdapter;
 import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -148,7 +149,7 @@ public final class FirebaseOptions {
     public Builder() {}
 
     /**
-     * Initializes the builder's values from the options object. *
+     * Initializes the builder's values from the options object.
      *
      * <p>The new builder is not backed by this objects values, that is changes made to the new
      * builder don't change the values of the origin object.
