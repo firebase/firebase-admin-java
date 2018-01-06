@@ -22,7 +22,6 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.api.client.googleapis.util.Utils;
-import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonParser;
 import com.google.auth.oauth2.AccessToken;
@@ -187,8 +186,7 @@ public class FirebaseApp {
    * in the file pointed to by {@link FIREBASE_CONFIG_ENV_VAR}, if tht file is available.
    */
   public static FirebaseApp initializeApp(String name) {
-    FirebaseOptions options = getOptionsFromEnvironment();
-    return initializeApp(options, name);
+    return initializeApp(getOptionsFromEnvironment(), name);
   }
 
   /**
@@ -569,13 +567,15 @@ public class FirebaseApp {
 
   private static FirebaseOptions getOptionsFromEnvironment() {
     String defaultConfig = System.getenv(FIREBASE_CONFIG_ENV_VAR);
-    if (Strings.isNullOrEmpty(defaultConfig)) {
-      return new FirebaseOptions.Builder().build();
-    }
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
-    JsonParser parser;
     try { 
+      if (Strings.isNullOrEmpty(defaultConfig)) {
+        return new FirebaseOptions.Builder()
+          .setCredentials(GoogleCredentials.getApplicationDefault())
+          .build();
+      }
+      JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+      FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
+      JsonParser parser;
       if (defaultConfig.startsWith("{")) {
         parser = jsonFactory.createJsonParser(defaultConfig);
       } else {
@@ -585,7 +585,7 @@ public class FirebaseApp {
       }
       parser.parseAndClose(builder);
       builder.setCredentials(GoogleCredentials.getApplicationDefault());
-
+      
       return builder.build();
 
     } catch (FileNotFoundException e) {
