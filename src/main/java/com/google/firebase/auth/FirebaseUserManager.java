@@ -187,8 +187,7 @@ class FirebaseUserManager {
     DownloadAccountResponse response = post(
         "downloadAccount", builder.build(), DownloadAccountResponse.class);
     if (response == null) {
-      throw new FirebaseAuthException(INTERNAL_ERROR,
-          "Unexpected response from download user account API.");
+      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to retrieve users.");
     }
     return response;
   }
