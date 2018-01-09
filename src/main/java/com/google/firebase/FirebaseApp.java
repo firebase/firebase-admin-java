@@ -85,7 +85,7 @@ public class FirebaseApp {
   private static final Map<String, FirebaseApp> instances = new HashMap<>();
 
   public static final String DEFAULT_APP_NAME = "[DEFAULT]";
-  protected static final String FIREBASE_CONFIG_ENV_VAR = "FIREBASE_CONFIG";
+  static final String FIREBASE_CONFIG_ENV_VAR = "FIREBASE_CONFIG";
 
   private static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
       new TokenRefresher.Factory();
