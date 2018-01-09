@@ -172,9 +172,14 @@ public class FirebaseApp {
 
   /**
    * Initializes the default {@link FirebaseApp} instance. Same as {@link
-   * #initializeApp(String)}, but it uses {@link #DEFAULT_APP_NAME} as name.
-   * Also, it uses the {@link FirebaseOptions} values set in the file pointed to by
-   * {@code FIREBASE_CONFIG_ENV_VAR}, if tht file is available.
+   * #initializeApp(String)}, but uses the name {@link #DEFAULT_APP_NAME}.
+   * Also, uses the {@link FirebaseOptions} values set defined by the JSON in
+   * {@code FIREBASE_CONFIG_ENV_VAR}. If the string value in {@code FIREBASE_CONFIG_ENV_VAR}
+   * starts with {@code "{"}, it is parsed as a JSON object otherwise it is treated
+   * as a file name, and the json is parsed from that file. 
+   * If the {@code FIREBASE_CONFIG_ENV_VAR} is not set, an empty option set is used.
+   * Whether or not the options are populated in {@code FIREBASE_CONFIG_ENV_VAR}, 
+   * the Application Default Credentials are used when initializing the app like this.
    */
   public static FirebaseApp initializeApp() {
     return initializeApp(DEFAULT_APP_NAME);
@@ -182,9 +187,16 @@ public class FirebaseApp {
 
   /**
    * Initializes the default {@link FirebaseApp} instance. Same as {@link
-   * #initializeApp(FirebaseOptions, String)}, but it uses the {@link FirebaseOptions} values set
-   * in the file pointed to by {@code FIREBASE_CONFIG_ENV_VAR}, if that file is available.
+   * #initializeApp(FirebaseOptions, String)}, but uses the {@link FirebaseOptions} values
+   * set defined by the JSON in{@code FIREBASE_CONFIG_ENV_VAR}. If the string value in 
+   * {@code FIREBASE_CONFIG_ENV_VAR} starts with {@code "{"}, it is parsed as a JSON object 
+   * otherwise it is treated as a file name, and the json is parsed from that file. 
+   * If the {@code FIREBASE_CONFIG_ENV_VAR} is not set, an empty option set is used.
+   * Whether or not the options are populated in {@code FIREBASE_CONFIG_ENV_VAR}, 
+   * the Application Default Credentials are used when initializing the app like this.
+  
    */
+
   public static FirebaseApp initializeApp(String name) {
     return initializeApp(getOptionsFromEnvironment(), name);
   }
