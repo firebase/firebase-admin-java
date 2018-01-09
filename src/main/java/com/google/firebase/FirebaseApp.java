@@ -174,7 +174,7 @@ public class FirebaseApp {
    * Initializes the default {@link FirebaseApp} instance. Same as {@link
    * #initializeApp(String)}, but it uses {@link #DEFAULT_APP_NAME} as name.
    * Also, it uses the {@link FirebaseOptions} values set in the file pointed to by
-   * {@link FIREBASE_CONFIG_ENV_VAR}, if tht file is available.
+   * {@code FIREBASE_CONFIG_ENV_VAR}, if tht file is available.
    */
   public static FirebaseApp initializeApp() {
     return initializeApp(DEFAULT_APP_NAME);
@@ -183,7 +183,7 @@ public class FirebaseApp {
   /**
    * Initializes the default {@link FirebaseApp} instance. Same as {@link
    * #initializeApp(FirebaseOptions, String)}, but it uses the {@link FirebaseOptions} values set
-   * in the file pointed to by {@link FIREBASE_CONFIG_ENV_VAR}, if that file is available.
+   * in the file pointed to by {@code FIREBASE_CONFIG_ENV_VAR}, if that file is available.
    */
   public static FirebaseApp initializeApp(String name) {
     return initializeApp(getOptionsFromEnvironment(), name);
