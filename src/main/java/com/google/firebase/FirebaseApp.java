@@ -184,7 +184,8 @@ public class FirebaseApp {
 
 
   /**
-   * Initializes a {@code FirebaseApp} instance with the given name. Similar to #initializeApp().
+   * Initializes a {@code FirebaseApp} instance with the given name. Similar to
+   * {@link #initializeApp()}.
    * Uses Application Default Credentials and also attempts to load {@code FirebaseOptions}
    * from the environment. This is done by looking up the {@code FIREBASE_CONFIG} environment
    * variable. If the value of the variable starts with <code>'{'</code>, it is parsed as a JSON
