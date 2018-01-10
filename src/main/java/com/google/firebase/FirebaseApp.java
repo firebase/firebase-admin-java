@@ -171,10 +171,10 @@ public class FirebaseApp {
   }
 
   /**
-   * Initializes the default {@code FirebaseApp} instance using {@code FirebaseOptions} from
+   * Initializes the default {@link FirebaseApp} instance using {@link FirebaseOptions} from
    * the environment and the default credentials.
    * Similar to {@link #initializeApp(String name)} but uses {@link #DEFAULT_APP_NAME}.
-   * Uses Application Default Credentials and also attempts to load {@code FirebaseOptions}
+   * Uses Application Default Credentials and also attempts to load {@link FirebaseOptions}
    * from the environment. This is done by looking up the {@code FIREBASE_CONFIG} environment
    * variable. If the value of the variable starts with <code>'{'</code>, it is parsed as a JSON
    * object. Otherwise it is treated as a file name and the JSON content is read from the 
@@ -186,10 +186,10 @@ public class FirebaseApp {
 
 
   /**
-   * Initializes a {@code FirebaseApp} instance with the given name using
-   * {@code FirebaseOptions} from the environment and the default credentials.
+   * Initializes a {@link FirebaseApp} instance with the given name using
+   * {@link FirebaseOptions} from the environment and the default credentials.
    * Similar to {@link #initializeApp()} but uses the given name.
-   * Uses Application Default Credentials and also attempts to load {@code FirebaseOptions}
+   * Uses Application Default Credentials and also attempts to load {@link FirebaseOptions}
    * from the environment. This is done by looking up the {@code FIREBASE_CONFIG} environment
    * variable. If the value of the variable starts with <code>'{'</code>, it is parsed as a JSON
    * object. Otherwise it is treated as a file name and the JSON content is read from the
