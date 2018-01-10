@@ -171,15 +171,11 @@ public class FirebaseApp {
   }
 
   /**
-   * Initializes the default {@link FirebaseApp} instance. Same as {@link
-   * #initializeApp(String)}, but uses the name {@link #DEFAULT_APP_NAME}.
-   * Also, uses the {@link FirebaseOptions} values set defined by the JSON in
-   * {@code FIREBASE_CONFIG_ENV_VAR}. If the string value in {@code FIREBASE_CONFIG_ENV_VAR}
-   * starts with '{', it is parsed as a JSON object otherwise it is treated
-   * as a file name, and the json is parsed from that file. 
-   * If the {code FIREBASE_CONFIG_ENV_VAR} is not set, an empty option set is used.
-   * Whether or not the options are populated in {@code FIREBASE_CONFIG_ENV_VAR}, 
-   * the Application Default Credentials are used when initializing the app like this.
+   * Initializes the default {@code FirebaseApp} instance.
+   * Uses Application Default Credentials and also attempts to load {@code FirebaseOptions}
+   * from the environment. This is done by looking up the {@code FIREBASE_CONFIG} environment
+   * variable. If the value of the variable starts with <code>'{'</code>, it is parsed as a JSON object.
+   * Otherwise it is treated as a file name and the JSON content is read from the corresponding file.
    */
   public static FirebaseApp initializeApp() {
     return initializeApp(DEFAULT_APP_NAME);
@@ -187,15 +183,11 @@ public class FirebaseApp {
 
 
   /**
-   * Initializes the default {@link FirebaseApp} instance. Same as {@link 
-   * #initializeApp(FirebaseOptions, String)},
-   * but uses the {@link FirebaseOptions} values
-   * set defined by the JSON in{@code FIREBASE_CONFIG_ENV_VAR}. If the string value in 
-   * {@code FIREBASE_CONFIG_ENV_VAR} starts with '{', it is parsed as a JSON object 
-   * otherwise it is treated as a file name, and the json is parsed from that file. 
-   * If the {code FIREBASE_CONFIG_ENV_VAR} is not set, an empty option set is used.
-   * Whether or not the options are populated in {@code FIREBASE_CONFIG_ENV_VAR}, 
-   * the Application Default Credentials are used when initializing the app like this.
+   * Initializes a {@code FirebaseApp} instance with the given name. Similar to #initializeApp().
+   * Uses Application Default Credentials and also attempts to load {@code FirebaseOptions}
+   * from the environment. This is done by looking up the {@code FIREBASE_CONFIG} environment
+   * variable. If the value of the variable starts with <code>'{'</code>, it is parsed as a JSON object.
+   * Otherwise it is treated as a file name and the JSON content is read from the corresponding file.
    */
   public static FirebaseApp initializeApp(String name) {
     return initializeApp(getOptionsFromEnvironment(), name);
