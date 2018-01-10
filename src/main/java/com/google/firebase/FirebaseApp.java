@@ -171,8 +171,8 @@ public class FirebaseApp {
   }
 
   /**
-   * Initializes the default {@link FirebaseApp} instance using {@link FirebaseOptions} from
-   * the environment and the default credentials.
+   * Initializes the default {@link FirebaseApp} instance using default credentials and
+   * {@link FirebaseOptions}.
    * Similar to {@link #initializeApp(String name)} but uses {@link #DEFAULT_APP_NAME}.
    * Uses Application Default Credentials and also attempts to load {@link FirebaseOptions}
    * from the environment. This is done by looking up the {@code FIREBASE_CONFIG} environment
@@ -186,8 +186,8 @@ public class FirebaseApp {
 
 
   /**
-   * Initializes a {@link FirebaseApp} instance with the given name using
-   * {@link FirebaseOptions} from the environment and the default credentials.
+   * Initializes a {@link FirebaseApp} instance with the given name using default credentials and
+   * {@link FirebaseOptions}.
    * Similar to {@link #initializeApp()} but uses the given name.
    * Uses Application Default Credentials and also attempts to load {@link FirebaseOptions}
    * from the environment. This is done by looking up the {@code FIREBASE_CONFIG} environment
