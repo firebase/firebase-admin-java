@@ -186,7 +186,7 @@ public class FirebaseApp {
 
 
   /**
-   * Initializes a {@link FirebaseApp} instance with the given name using default credentials and
+   * Initializes a {@link FirebaseApp} instance using default credentials and
    * {@link FirebaseOptions}.
    * Similar to {@link #initializeApp()} but uses the given name.
    * Uses Application Default Credentials and also attempts to load {@link FirebaseOptions}
