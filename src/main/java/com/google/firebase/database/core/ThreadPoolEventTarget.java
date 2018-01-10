@@ -18,35 +18,25 @@ package com.google.firebase.database.core;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.firebase.internal.SingleThreadScheduledExecutor;
 import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /** ThreadPoolEventTarget is an event target using a configurable threadpool. */
-class ThreadPoolEventTarget implements EventTarget, UncaughtExceptionHandler {
+class ThreadPoolEventTarget implements EventTarget {
 
   private final ThreadPoolExecutor executor;
   private UncaughtExceptionHandler exceptionHandler;
 
-  public ThreadPoolEventTarget(
-      final ThreadFactory wrappedFactory, final ThreadInitializer threadInitializer) {
-    int poolSize = 1;
-    BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
-
-    executor = new ThreadPoolExecutor(poolSize, poolSize, 3, TimeUnit.SECONDS, queue,
-        new ThreadFactory() {
-          @Override
-          public Thread newThread(Runnable r) {
-            Thread thread = wrappedFactory.newThread(r);
-            threadInitializer.setName(thread, "FirebaseDatabaseEventTarget");
-            threadInitializer.setDaemon(thread, true);
-            threadInitializer.setUncaughtExceptionHandler(thread, ThreadPoolEventTarget.this);
-            return thread;
-          }
-        });
+  public ThreadPoolEventTarget(final ThreadFactory wrappedFactory) {
+    executor = new SingleThreadScheduledExecutor(
+        "FirebaseDatabaseEventTarget", wrappedFactory) {
+      @Override
+      protected void handleException(Throwable t) {
+        uncaughtException(t);
+      }
+    };
   }
 
   public ThreadPoolEventTarget(final ThreadPoolExecutor executor) {
@@ -86,14 +76,13 @@ class ThreadPoolEventTarget implements EventTarget, UncaughtExceptionHandler {
     this.exceptionHandler = exceptionHandler;
   }
 
-  @Override
-  public void uncaughtException(Thread t, Throwable e) {
+  public void uncaughtException(Throwable e) {
     UncaughtExceptionHandler delegate;
     synchronized (this) {
       delegate = exceptionHandler;
     }
     if (delegate != null) {
-      delegate.uncaughtException(t, e);
+      delegate.uncaughtException(Thread.currentThread(), e);
     }
   }
 }

@@ -29,11 +29,12 @@ import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 import com.google.firebase.internal.GaeThreadFactory;
-import com.google.firebase.internal.RevivingScheduledExecutor;
 
+import com.google.firebase.internal.SingleThreadScheduledExecutor;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Represents a Google AppEngine platform.
@@ -58,21 +59,21 @@ class GaePlatform implements Platform {
     return new DefaultLogger(level, components);
   }
 
-  private ThreadFactory getGaeThreadFactory() {
+  private ThreadFactory getThreadFactory() {
     return ImplFirebaseTrampolines.getThreadFactory(firebaseApp);
   }
 
   @Override
   public EventTarget newEventTarget(Context ctx) {
-    RevivingScheduledExecutor eventExecutor =
-        new RevivingScheduledExecutor(getGaeThreadFactory(), "FirebaseDatabaseEventTarget", true);
+    ThreadPoolExecutor eventExecutor = new SingleThreadScheduledExecutor(
+        "FirebaseDatabaseEventTarget", getThreadFactory());
     return new ThreadPoolEventTarget(eventExecutor);
   }
 
   @Override
   public RunLoop newRunLoop(final Context context) {
     final LogWrapper logger = context.getLogger(RunLoop.class);
-    return new DefaultRunLoop(getGaeThreadFactory(), /* periodicRestart= */ true, context) {
+    return new DefaultRunLoop(getThreadFactory()) {
       @Override
       public void handleException(Throwable e) {
         logger.error(DefaultRunLoop.messageForException(e), e);
@@ -107,25 +108,5 @@ class GaePlatform implements Platform {
   @Override
   public PersistenceManager createPersistenceManager(Context ctx, String namespace) {
     return null;
-  }
-
-  @Override
-  public ThreadInitializer getThreadInitializer() {
-    return new ThreadInitializer() {
-      @Override
-      public void setName(Thread t, String name) {
-        // Unsupported by GAE
-      }
-
-      @Override
-      public void setDaemon(Thread t, boolean isDaemon) {
-        // Unsupported by GAE
-      }
-
-      @Override
-      public void setUncaughtExceptionHandler(Thread t, Thread.UncaughtExceptionHandler handler) {
-        // Unsupported by GAE
-      }
-    };
   }
 }

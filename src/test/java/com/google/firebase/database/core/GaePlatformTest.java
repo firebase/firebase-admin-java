@@ -1,8 +1,6 @@
 package com.google.firebase.database.core;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -77,17 +75,6 @@ public class GaePlatformTest {
       assertEquals("AppEngine/AdminJava", platform.getUserAgent(ctx));
       assertEquals("gae-" + FirebaseDatabase.getSdkVersion(), platform.getPlatformVersion());
       assertNull(platform.createPersistenceManager(ctx, "test"));
-
-      ThreadInitializer threadInitializer = platform.getThreadInitializer();
-      Thread t = new Thread();
-      threadInitializer.setName(t, "test-name");
-      threadInitializer.setDaemon(t, true);
-      threadInitializer.setUncaughtExceptionHandler(t, Mockito.mock(
-          Thread.UncaughtExceptionHandler.class));
-      assertNotEquals("test-name", t.getName());
-      assertFalse(t.isDaemon());
-      assertNotNull(t.getUncaughtExceptionHandler());
-
     } finally {
       TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
     }

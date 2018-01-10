@@ -36,15 +36,7 @@ public class FirebaseThreadManagers {
 
   private static final Logger logger = LoggerFactory.getLogger(FirebaseThreadManagers.class);
 
-  public static final ThreadManager DEFAULT_THREAD_MANAGER;
-
-  static {
-    if (GaeThreadFactory.isAvailable()) {
-      DEFAULT_THREAD_MANAGER = new GaeThreadManager();
-    } else {
-      DEFAULT_THREAD_MANAGER = new DefaultThreadManager();
-    }
-  }
+  public static final ThreadManager DEFAULT_THREAD_MANAGER = new DefaultThreadManager();
 
   /**
    * An abstract ThreadManager implementation that uses the same executor service

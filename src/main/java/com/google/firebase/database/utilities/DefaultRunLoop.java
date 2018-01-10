@@ -18,12 +18,9 @@ package com.google.firebase.database.utilities;
 
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.annotations.Nullable;
-import com.google.firebase.database.core.Context;
-import com.google.firebase.database.core.RepoManager;
 import com.google.firebase.database.core.RunLoop;
-import com.google.firebase.internal.RevivingScheduledExecutor;
 
+import com.google.firebase.internal.SingleThreadScheduledExecutor;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -36,41 +33,17 @@ public abstract class DefaultRunLoop implements RunLoop {
   private ScheduledThreadPoolExecutor executor;
   private UncaughtExceptionHandler exceptionHandler;
 
-  /** Creates a DefaultRunLoop that does not periodically restart its threads. */
-  public DefaultRunLoop(ThreadFactory threadFactory) {
-    this(threadFactory, false, null);
-  }
-
   /**
    * Creates a DefaultRunLoop that optionally restarts its threads periodically. If 'context' is
    * provided, these restarts will automatically interrupt and resume all Repo connections.
    */
-  public DefaultRunLoop(
-      final ThreadFactory threadFactory,
-      final boolean periodicRestart,
-      @Nullable final Context context) {
-    executor =
-        new RevivingScheduledExecutor(threadFactory, "FirebaseDatabaseWorker", periodicRestart) {
-          @Override
-          protected void handleException(Throwable throwable) {
-            DefaultRunLoop.this.handleExceptionInternal(throwable);
-          }
-
-          @Override
-          protected void beforeRestart() {
-            if (context != null) {
-              RepoManager.interrupt(context);
-            }
-          }
-
-          @Override
-          protected void afterRestart() {
-            if (context != null) {
-              RepoManager.resume(context);
-            }
-          }
-        };
-
+  public DefaultRunLoop(final ThreadFactory threadFactory) {
+    executor = new SingleThreadScheduledExecutor("FirebaseDatabaseWorker", threadFactory) {
+      @Override
+      protected void handleException(Throwable t) {
+        handleExceptionInternal(t);
+      }
+    };
     // Core threads don't time out, this only takes effect when we drop the number of required
     // core threads
     executor.setKeepAliveTime(3, TimeUnit.SECONDS);

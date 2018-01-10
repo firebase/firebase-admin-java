@@ -17,10 +17,10 @@
 package com.google.firebase.database.utilities;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import com.google.firebase.database.TestHelpers;
 import com.google.firebase.testing.TestUtils;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.ArrayList;
@@ -38,19 +38,21 @@ public class DefaultRunLoopTest {
   public void testLifecycle() {
     MockRunLoop runLoop = new MockRunLoop();
     try {
-      assertEquals(0, runLoop.getThreadPool().getCorePoolSize());
+      assertEquals(0, runLoop.getThreadPool().getActiveCount());
       runLoop.scheduleNow(new Runnable() {
         @Override
         public void run() {
         }
       });
-      assertEquals(1, runLoop.getThreadPool().getCorePoolSize());
+      assertEquals(1, runLoop.getThreadPool().getActiveCount());
 
       runLoop.shutdown();
+      // It will be a few seconds before the core thread actually terminate.
       assertEquals(0, runLoop.getThreadPool().getCorePoolSize());
 
       runLoop.restart();
       assertEquals(1, runLoop.getThreadPool().getCorePoolSize());
+      assertEquals(1, runLoop.getThreadPool().getActiveCount());
 
       assertTrue(runLoop.errors.isEmpty());
     } finally {
@@ -62,13 +64,13 @@ public class DefaultRunLoopTest {
   public void testScheduleWithDelay() throws ExecutionException, InterruptedException {
     MockRunLoop runLoop = new MockRunLoop();
     try {
-      assertEquals(0, runLoop.getThreadPool().getCorePoolSize());
+      assertEquals(0, runLoop.getThreadPool().getActiveCount());
       ScheduledFuture future = runLoop.schedule(new Runnable() {
         @Override
         public void run() {
         }
       }, 500L);
-      assertEquals(1, runLoop.getThreadPool().getCorePoolSize());
+      assertEquals(1, runLoop.getThreadPool().getActiveCount());
 
       future.get();
       assertTrue(runLoop.errors.isEmpty());
@@ -91,15 +93,15 @@ public class DefaultRunLoopTest {
     assertSame(exceptionHandler, runLoop.getExceptionHandler());
 
     try {
-      assertEquals(0, runLoop.getThreadPool().getCorePoolSize());
+      assertEquals(0, runLoop.getThreadPool().getActiveCount());
       runLoop.scheduleNow(new Runnable() {
         @Override
         public void run() {
           throw new RuntimeException("test error");
         }
       });
-      assertEquals(1, runLoop.getThreadPool().getCorePoolSize());
-      semaphore.acquire();
+      assertEquals(1, runLoop.getThreadPool().getActiveCount());
+      TestHelpers.waitFor(semaphore);
 
       synchronized (runLoop.errors) {
         if (runLoop.errors.isEmpty()) {

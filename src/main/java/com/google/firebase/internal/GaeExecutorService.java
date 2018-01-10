@@ -179,7 +179,7 @@ class GaeExecutorService implements ExecutorService {
         && ((GaeThreadFactory) threadFactory).isUsingBackgroundThreads();
     if (background) {
       // Create a thread pool with long-lived threads if background thread support is available.
-      return new RevivingScheduledExecutor(threadFactory, threadName, true);
+      return null;
     } else {
       // Create an executor that creates a new thread for each submitted task, when background
       // thread support is not available.

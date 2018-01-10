@@ -34,11 +34,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseService;
-import com.google.firebase.internal.GaeThreadFactory;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
-import com.google.firebase.internal.RevivingScheduledExecutor;
+import com.google.firebase.internal.SingleThreadScheduledExecutor;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
 import java.io.IOException;
@@ -357,8 +356,8 @@ public class FirebaseApp {
       synchronized (lock) {
         checkNotDeleted();
         if (scheduledExecutor == null) {
-          scheduledExecutor = new RevivingScheduledExecutor(threadManager.getThreadFactory(),
-              "firebase-scheduled-worker", GaeThreadFactory.isAvailable());
+          scheduledExecutor = new SingleThreadScheduledExecutor(
+              "firebase-scheduled-worker", getThreadFactory());
         }
       }
     }
