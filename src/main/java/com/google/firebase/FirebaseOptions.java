@@ -160,7 +160,7 @@ public final class FirebaseOptions {
     /**
      * Initializes the builder's values from the options object.
      *
-     * <p>The new builder is not backed by this objects values, that is changes made to the new
+     * <p>The new builder is not backed by this object's values, that is changes made to the new
      * builder don't change the values of the origin object.
      */
     public Builder(FirebaseOptions options) {
