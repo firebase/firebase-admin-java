@@ -58,6 +58,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -74,17 +75,9 @@ public class FirebaseAppTest {
 
   @Rule public FirebaseAppRule firebaseAppRule = new FirebaseAppRule();
 
-  private static FirebaseOptions getMockCredentialOptions() {
-    return new Builder().setCredentials(new MockGoogleCredentials()).build();
-  }
-
-  private static void invokePublicInstanceMethodWithDefaultValues(Object instance, Method method)
-      throws InvocationTargetException, IllegalAccessException {
-    List<Object> parameters = new ArrayList<>(method.getParameterTypes().length);
-    for (Class<?> parameterType : method.getParameterTypes()) {
-      parameters.add(Defaults.defaultValue(parameterType));
-    }
-    method.invoke(instance, parameters.toArray());
+  @BeforeClass
+  public static void setupClass() throws IOException {
+    TestUtils.getApplicationDefaultCredentials();
   }
 
   @Test(expected = NullPointerException.class)
@@ -539,19 +532,30 @@ public class FirebaseAppTest {
   public void testFirebaseExceptionEmptyDetail() {
     new FirebaseException("");
   }
-  
 
-  private void setFirebaseConfigEnvironmentVariable(String configJSON) {
-    String configValue = "";
+  private static void setFirebaseConfigEnvironmentVariable(String configJSON) {
+    String configValue;
     if (configJSON.isEmpty() || configJSON.startsWith("{")) {
       configValue = configJSON;
     } else {
-      configValue  = new File("src/test/resources/" + configJSON)
-                   .getAbsolutePath();
+      configValue = new File("src/test/resources", configJSON).getAbsolutePath();
     }
     Map<String, String> environmentVariables =
         ImmutableMap.of(FirebaseApp.FIREBASE_CONFIG_ENV_VAR , configValue);
     TestUtils.setEnvironmentVariables(environmentVariables);
+  }
+
+  private static FirebaseOptions getMockCredentialOptions() {
+    return new Builder().setCredentials(new MockGoogleCredentials()).build();
+  }
+
+  private static void invokePublicInstanceMethodWithDefaultValues(Object instance, Method method)
+      throws InvocationTargetException, IllegalAccessException {
+    List<Object> parameters = new ArrayList<>(method.getParameterTypes().length);
+    for (Class<?> parameterType : method.getParameterTypes()) {
+      parameters.add(Defaults.defaultValue(parameterType));
+    }
+    method.invoke(instance, parameters.toArray());
   }
 
   private static class MockTokenRefresher extends TokenRefresher {
