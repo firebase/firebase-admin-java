@@ -171,41 +171,34 @@ public class FirebaseApp {
   }
 
   /**
-   * Initializes the default {@link FirebaseApp} instance using default credentials and 
-   * default {@link FirebaseOptions} and the {@link #DEFAULT_APP_NAME}.
-   * Uses Application Default Credentials and also attempts to load {@link FirebaseOptions}
-   * from the environment. This is done by looking up the {@code FIREBASE_CONFIG} environment
-   * variable. If the value of the variable starts with <code>'{'</code>, it is parsed as a JSON
-   * object. Otherwise it is treated as a file name and the JSON content is read from the 
-   * corresponding file.
+   * Initializes the default {@link FirebaseApp} instance using Google Application Default
+   * Credentials. Also attempts to load additional {@link FirebaseOptions} from the environment
+   * by looking up the {@code FIREBASE_CONFIG} environment variable. If the value of
+   * the variable starts with <code>'{'</code>, it is parsed as a JSON object. Otherwise it is
+   * treated as a file name and the JSON content is read from the corresponding file.
    */
   public static FirebaseApp initializeApp() {
     return initializeApp(DEFAULT_APP_NAME);
   }
 
   /**
-   * Initializes a {@link FirebaseApp} instance using default credentials and default
-   * {@link FirebaseOptions} with a specified name.
-   * Uses Application Default Credentials and also attempts to load {@link FirebaseOptions}
-   * from the environment. This is done by looking up the {@code FIREBASE_CONFIG} environment
-   * variable. If the value of the variable starts with <code>'{'</code>, it is parsed as a JSON
-   * object. Otherwise it is treated as a file name and the JSON content is read from the
-   * corresponding file.
+   * Initializes a named {@link FirebaseApp} instance using Google Application Default Credentials.
+   * Loads additional {@link FirebaseOptions} from the environment in the same way as the
+   * {@link #initializeApp()} method.
    */
   public static FirebaseApp initializeApp(String name) {
     return initializeApp(getOptionsFromEnvironment(), name);
   }
 
   /**
-   * Initializes the default {@link FirebaseApp} instance. Same as {@link
-   * #initializeApp(FirebaseOptions, String)}, but uses {@link #DEFAULT_APP_NAME} as name.
+   * Initializes the default {@link FirebaseApp} instance using the given options.
    */
   public static FirebaseApp initializeApp(FirebaseOptions options) {
     return initializeApp(options, DEFAULT_APP_NAME);
   }
 
   /**
-   * A factory method to initialize a {@link FirebaseApp}.
+   * Initializes a named {@link FirebaseApp} instance using the given options.
    *
    * @param options represents the global {@link FirebaseOptions}
    * @param name unique name for the app. It is an error to initialize an app with an already
