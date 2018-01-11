@@ -78,28 +78,14 @@ public class FirebaseCredentialsTest {
 
   @Test
   public void defaultCredentialDoesntRefetch() throws Exception {
-    MockTokenServerTransport transport = new MockTokenServerTransport();
-    transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
-
-    File credentialsFile = File.createTempFile("google-test-credentials", "json");
-    PrintWriter writer = new PrintWriter(Files.newBufferedWriter(credentialsFile.toPath(), UTF_8));
-    writer.print(ServiceAccount.EDITOR.asString());
-    writer.close();
-    Map<String, String> environmentVariables =
-        ImmutableMap.<String, String>builder()
-            .put("GOOGLE_APPLICATION_CREDENTIALS", credentialsFile.getAbsolutePath())
-            .build();
-    TestUtils.setEnvironmentVariables(environmentVariables);
-
     FirebaseCredential credential = FirebaseCredentials.applicationDefault(
-        transport, Utils.getDefaultJsonFactory());
+        Utils.getDefaultTransport(), Utils.getDefaultJsonFactory());
     GoogleOAuthAccessToken token = Tasks.await(credential.getAccessToken());
     Assert.assertEquals(TestUtils.TEST_ADC_ACCESS_TOKEN, token.getAccessToken());
     Assert.assertNotNull(((BaseCredential) credential).getGoogleCredentials());
 
     // We should still be able to fetch the token since the certificate is cached
-    Assert.assertTrue(credentialsFile.delete());
-    credential = FirebaseCredentials.applicationDefault(transport, Utils.getDefaultJsonFactory());
+    credential = FirebaseCredentials.applicationDefault();
     token = Tasks.await(credential.getAccessToken());
     Assert.assertNotNull(token);
     Assert.assertEquals(TestUtils.TEST_ADC_ACCESS_TOKEN, token.getAccessToken());
