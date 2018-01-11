@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
+import com.google.api.client.util.Key;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import com.google.firebase.auth.FirebaseCredential;
@@ -136,12 +137,19 @@ public final class FirebaseOptions {
    * Builder for constructing {@link FirebaseOptions}. 
    */
   public static final class Builder {
-
-    private String databaseUrl;
-    private String storageBucket;
-    private GoogleCredentials credentials;
+    @Key("databaseAuthVariableOverride")
     private Map<String, Object> databaseAuthVariableOverride = new HashMap<>();
+    
+    @Key("databaseUrl")
+    private String databaseUrl;
+
+    @Key("projectId")
     private String projectId;
+    
+    @Key("storageBucket")
+    private String storageBucket;
+    
+    private GoogleCredentials credentials;
     private HttpTransport httpTransport = Utils.getDefaultTransport();
     private JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     private ThreadManager threadManager = FirebaseThreadManagers.DEFAULT_THREAD_MANAGER;
@@ -150,7 +158,7 @@ public final class FirebaseOptions {
     public Builder() {}
 
     /**
-     * Initializes the builder's values from the options object. *
+     * Initializes the builder's values from the options object.
      *
      * <p>The new builder is not backed by this objects values, that is changes made to the new
      * builder don't change the values of the origin object.

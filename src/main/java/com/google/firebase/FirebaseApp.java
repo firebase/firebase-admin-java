@@ -21,6 +21,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.JsonParser;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.OAuth2Credentials;
@@ -41,6 +44,9 @@ import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.RevivingScheduledExecutor;
 import com.google.firebase.tasks.Task;
 import com.google.firebase.tasks.Tasks;
+
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,6 +85,7 @@ public class FirebaseApp {
   private static final Map<String, FirebaseApp> instances = new HashMap<>();
 
   public static final String DEFAULT_APP_NAME = "[DEFAULT]";
+  static final String FIREBASE_CONFIG_ENV_VAR = "FIREBASE_CONFIG";
 
   private static final TokenRefresher.Factory DEFAULT_TOKEN_REFRESHER_FACTORY =
       new TokenRefresher.Factory();
@@ -164,12 +171,34 @@ public class FirebaseApp {
   }
 
   /**
+   * Initializes the default {@link FirebaseApp} instance using default credentials and 
+   * default {@link FirebaseOptions} and the {@link #DEFAULT_APP_NAME}.
+   * Uses Application Default Credentials and also attempts to load {@link FirebaseOptions}
+   * from the environment. This is done by looking up the {@code FIREBASE_CONFIG} environment
+   * variable. If the value of the variable starts with <code>'{'</code>, it is parsed as a JSON
+   * object. Otherwise it is treated as a file name and the JSON content is read from the 
+   * corresponding file.
+   */
+  public static FirebaseApp initializeApp() {
+    return initializeApp(DEFAULT_APP_NAME);
+  }
+
+  /**
+   * Initializes a {@link FirebaseApp} instance using default credentials and default
+   * {@link FirebaseOptions} with a specified name.
+   * Uses Application Default Credentials and also attempts to load {@link FirebaseOptions}
+   * from the environment. This is done by looking up the {@code FIREBASE_CONFIG} environment
+   * variable. If the value of the variable starts with <code>'{'</code>, it is parsed as a JSON
+   * object. Otherwise it is treated as a file name and the JSON content is read from the
+   * corresponding file.
+   */
+  public static FirebaseApp initializeApp(String name) {
+    return initializeApp(getOptionsFromEnvironment(), name);
+  }
+
+  /**
    * Initializes the default {@link FirebaseApp} instance. Same as {@link
-   * #initializeApp(FirebaseOptions, String)}, but it uses {@link #DEFAULT_APP_NAME} as name. *
-   *
-   * <p>The creation of the default instance is automatically triggered at app startup time, if
-   * Firebase configuration values are available from resources - populated from
-   * google-services.json.
+   * #initializeApp(FirebaseOptions, String)}, but uses {@link #DEFAULT_APP_NAME} as name.
    */
   public static FirebaseApp initializeApp(FirebaseOptions options) {
     return initializeApp(options, DEFAULT_APP_NAME);
@@ -540,6 +569,36 @@ public class FirebaseApp {
       READY,
       STARTED,
       STOPPED
+    }
+  }
+
+  private static FirebaseOptions getOptionsFromEnvironment() {
+    String defaultConfig = System.getenv(FIREBASE_CONFIG_ENV_VAR);
+    try { 
+      if (Strings.isNullOrEmpty(defaultConfig)) {
+        return new FirebaseOptions.Builder()
+          .setCredentials(GoogleCredentials.getApplicationDefault())
+          .build();
+      }
+      JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+      FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
+      JsonParser parser;
+      if (defaultConfig.startsWith("{")) {
+        parser = jsonFactory.createJsonParser(defaultConfig);
+      } else {
+        FileReader reader;
+        reader = new FileReader(defaultConfig);
+        parser = jsonFactory.createJsonParser(reader);    
+      }
+      parser.parseAndClose(builder);
+      builder.setCredentials(GoogleCredentials.getApplicationDefault());
+      
+      return builder.build();
+
+    } catch (FileNotFoundException e) {
+      throw new IllegalStateException(e);
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
     }
   }
 }
