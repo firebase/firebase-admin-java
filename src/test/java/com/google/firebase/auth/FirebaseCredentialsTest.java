@@ -43,6 +43,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -59,6 +60,11 @@ public class FirebaseCredentialsTest {
   private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
 
   @Rule public final ExpectedException thrown = ExpectedException.none();
+
+  @BeforeClass
+  public static void setupClass() throws IOException {
+    TestUtils.getApplicationDefaultCredentials();
+  }
 
   @Test(expected = NullPointerException.class)
   public void testNullCertificate() throws IOException {
@@ -88,7 +94,7 @@ public class FirebaseCredentialsTest {
     FirebaseCredential credential = FirebaseCredentials.applicationDefault(
         transport, Utils.getDefaultJsonFactory());
     GoogleOAuthAccessToken token = Tasks.await(credential.getAccessToken());
-    Assert.assertEquals(ACCESS_TOKEN, token.getAccessToken());
+    Assert.assertEquals(TestUtils.TEST_ADC_ACCESS_TOKEN, token.getAccessToken());
     Assert.assertNotNull(((BaseCredential) credential).getGoogleCredentials());
 
     // We should still be able to fetch the token since the certificate is cached
@@ -96,7 +102,7 @@ public class FirebaseCredentialsTest {
     credential = FirebaseCredentials.applicationDefault(transport, Utils.getDefaultJsonFactory());
     token = Tasks.await(credential.getAccessToken());
     Assert.assertNotNull(token);
-    Assert.assertEquals(ACCESS_TOKEN, token.getAccessToken());
+    Assert.assertEquals(TestUtils.TEST_ADC_ACCESS_TOKEN, token.getAccessToken());
     Assert.assertNotNull(((BaseCredential) credential).getGoogleCredentials());
   }
 
