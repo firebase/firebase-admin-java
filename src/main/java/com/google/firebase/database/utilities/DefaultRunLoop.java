@@ -38,7 +38,7 @@ public abstract class DefaultRunLoop implements RunLoop {
    * provided, these restarts will automatically interrupt and resume all Repo connections.
    */
   public DefaultRunLoop(final ThreadFactory threadFactory) {
-    executor = new SingleThreadScheduledExecutor("FirebaseDatabaseWorker", threadFactory) {
+    executor = new SingleThreadScheduledExecutor("firebase-database-worker", threadFactory) {
       @Override
       protected void handleException(Throwable t) {
         handleExceptionInternal(t);
@@ -80,6 +80,7 @@ public abstract class DefaultRunLoop implements RunLoop {
     }
   }
 
+  // TODO: Remove this extension point
   public abstract void handleException(Throwable e);
 
   public ScheduledExecutorService getExecutorService() {

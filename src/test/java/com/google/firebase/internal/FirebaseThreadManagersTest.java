@@ -16,7 +16,6 @@
 
 package com.google.firebase.internal;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
@@ -34,11 +33,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadFactory;
 import org.junit.After;
-import org.junit.Assume;
 import org.junit.Test;
 
 public class FirebaseThreadManagersTest {
@@ -50,24 +46,19 @@ public class FirebaseThreadManagersTest {
 
   @Test
   public void testGlobalThreadManager() {
-    MockThreadManager threadManager = new MockThreadManager();
+    GlobalThreadManager threadManager = new GlobalThreadManager();
     FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials())
         .setThreadManager(threadManager)
         .build();
     FirebaseApp defaultApp = FirebaseApp.initializeApp(options);
-    assertEquals(1, threadManager.initCount);
 
     ExecutorService exec1 = threadManager.getExecutor(defaultApp);
-    assertEquals(1, threadManager.initCount);
-    assertFalse(exec1.isShutdown());
-
     ExecutorService exec2 = threadManager.getExecutor(defaultApp);
-    assertEquals(1, threadManager.initCount);
-    assertFalse(exec2.isShutdown());
 
     // Should return the same executor for both invocations.
     assertSame(exec1, exec2);
+    assertFalse(exec1.isShutdown());
 
     threadManager.releaseExecutor(defaultApp, exec1);
     assertTrue(exec1.isShutdown());
@@ -75,21 +66,19 @@ public class FirebaseThreadManagersTest {
 
   @Test
   public void testGlobalThreadManagerWithMultipleApps() {
-    MockThreadManager threadManager = new MockThreadManager();
+    GlobalThreadManager threadManager = new GlobalThreadManager();
     FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials())
         .build();
     FirebaseApp defaultApp = FirebaseApp.initializeApp(options);
     FirebaseApp customApp = FirebaseApp.initializeApp(options, "customApp");
-    assertEquals(0, threadManager.initCount);
 
     ExecutorService exec1 = threadManager.getExecutor(defaultApp);
     ExecutorService exec2 = threadManager.getExecutor(customApp);
-    assertEquals(1, threadManager.initCount);
-    assertFalse(exec1.isShutdown());
 
     // Should return the same executor for both invocations.
     assertSame(exec1, exec2);
+    assertFalse(exec1.isShutdown());
 
     threadManager.releaseExecutor(defaultApp, exec1);
     assertFalse(exec1.isShutdown());
@@ -100,16 +89,14 @@ public class FirebaseThreadManagersTest {
 
   @Test
   public void testGlobalThreadManagerReInit() {
-    MockThreadManager threadManager = new MockThreadManager();
+    GlobalThreadManager threadManager = new GlobalThreadManager();
     FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials())
         .setThreadManager(threadManager)
         .build();
     FirebaseApp defaultApp = FirebaseApp.initializeApp(options);
-    assertEquals(1, threadManager.initCount);
 
     ExecutorService exec1 = threadManager.getExecutor(defaultApp);
-    assertEquals(1, threadManager.initCount);
     assertFalse(exec1.isShutdown());
 
     // Simulate app.delete()
@@ -118,7 +105,6 @@ public class FirebaseThreadManagersTest {
 
     // Simulate app re-init
     ExecutorService exec2 = threadManager.getExecutor(defaultApp);
-    assertEquals(2, threadManager.initCount);
     assertNotSame(exec1, exec2);
 
     threadManager.releaseExecutor(defaultApp, exec2);
@@ -127,8 +113,6 @@ public class FirebaseThreadManagersTest {
 
   @Test
   public void testDefaultThreadManager() throws Exception {
-    Assume.assumeFalse(GaeThreadFactory.isAvailable());
-
     FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials())
         .build();
@@ -155,27 +139,6 @@ public class FirebaseThreadManagersTest {
       fail("No error thrown when submitting to deleted app");
     } catch (RejectedExecutionException expected) {
       // expected
-    }
-  }
-
-  private static class MockThreadManager extends GlobalThreadManager {
-
-    private int initCount = 0;
-
-    @Override
-    protected ExecutorService doInit() {
-      initCount++;
-      return Executors.newSingleThreadExecutor();
-    }
-
-    @Override
-    protected void doCleanup(ExecutorService executorService) {
-      executorService.shutdownNow();
-    }
-
-    @Override
-    protected ThreadFactory getThreadFactory() {
-      return Executors.defaultThreadFactory();
     }
   }
 }

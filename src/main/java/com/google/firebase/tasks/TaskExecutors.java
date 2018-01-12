@@ -39,6 +39,7 @@ public class TaskExecutors {
    * for now for backward compatibility, since technically it is part of the public API.
    */
   public static final Executor DEFAULT_THREAD_POOL;
+
   /** An Executor that uses the calling thread. */
   static final Executor DIRECT =
       new Executor() {
@@ -49,15 +50,11 @@ public class TaskExecutors {
       };
 
   static {
-    if (GaeThreadFactory.isAvailable()) {
-      DEFAULT_THREAD_POOL = GaeThreadFactory.DEFAULT_EXECUTOR;
-    } else {
-      ThreadFactory threadFactory = new ThreadFactoryBuilder()
-          .setNameFormat("task-exec-%d")
-          .setDaemon(true)
-          .build();
-      DEFAULT_THREAD_POOL = Executors.newCachedThreadPool(threadFactory);
-    }
+    ThreadFactory threadFactory = new ThreadFactoryBuilder()
+        .setNameFormat("task-exec-%d")
+        .setDaemon(true)
+        .build();
+    DEFAULT_THREAD_POOL = Executors.newCachedThreadPool(threadFactory);
   }
 
   private TaskExecutors() {}

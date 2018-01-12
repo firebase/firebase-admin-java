@@ -51,7 +51,7 @@ class GaePlatform implements Platform {
   }
 
   public static boolean isActive() {
-    return GaeThreadFactory.isAvailable();
+    return System.getProperty("com.google.appengine.runtime.environment") != null;
   }
 
   @Override
@@ -65,9 +65,7 @@ class GaePlatform implements Platform {
 
   @Override
   public EventTarget newEventTarget(Context ctx) {
-    ThreadPoolExecutor eventExecutor = new SingleThreadScheduledExecutor(
-        "FirebaseDatabaseEventTarget", getThreadFactory());
-    return new ThreadPoolEventTarget(eventExecutor);
+    return new ThreadPoolEventTarget(getThreadFactory());
   }
 
   @Override

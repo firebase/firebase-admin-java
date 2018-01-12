@@ -16,31 +16,25 @@
 
 package com.google.firebase.database.core;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.firebase.internal.SingleThreadScheduledExecutor;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 
-/** ThreadPoolEventTarget is an event target using a configurable threadpool. */
+/** ThreadPoolEventTarget is an event target using a configurable thread pool. */
 class ThreadPoolEventTarget implements EventTarget {
 
   private final ThreadPoolExecutor executor;
   private UncaughtExceptionHandler exceptionHandler;
 
-  public ThreadPoolEventTarget(final ThreadFactory wrappedFactory) {
+  ThreadPoolEventTarget(final ThreadFactory wrappedFactory) {
     executor = new SingleThreadScheduledExecutor(
-        "FirebaseDatabaseEventTarget", wrappedFactory) {
+        "firebase-database-event-target", wrappedFactory) {
       @Override
       protected void handleException(Throwable t) {
         uncaughtException(t);
       }
     };
-  }
-
-  public ThreadPoolEventTarget(final ThreadPoolExecutor executor) {
-    this.executor = checkNotNull(executor);
   }
 
   @Override
@@ -76,11 +70,8 @@ class ThreadPoolEventTarget implements EventTarget {
     this.exceptionHandler = exceptionHandler;
   }
 
-  public void uncaughtException(Throwable e) {
-    UncaughtExceptionHandler delegate;
-    synchronized (this) {
-      delegate = exceptionHandler;
-    }
+  private void uncaughtException(Throwable e) {
+    UncaughtExceptionHandler delegate = getExceptionHandler();
     if (delegate != null) {
       delegate.uncaughtException(Thread.currentThread(), e);
     }

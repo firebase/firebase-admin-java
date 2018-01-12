@@ -12,7 +12,6 @@ import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.ThreadManager;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.logging.Logger;
-import com.google.firebase.internal.GaeThreadFactory;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
@@ -25,11 +24,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 public class GaePlatformTest {
-
-  @Test
-  public void testIsActive() {
-    assertEquals(GaeThreadFactory.isAvailable(), GaePlatform.isActive());
-  }
 
   @Test
   public void testGaePlatform() {
