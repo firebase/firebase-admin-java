@@ -371,7 +371,7 @@ public class FirebaseApp {
   }
 
   private void checkNotDeleted() {
-    checkState(!deleted.get(), "FirebaseApp was deleted %s", this);
+    checkState(!deleted.get(), "FirebaseApp '%s' was deleted", new Object[]{name});
   }
 
   private ScheduledExecutorService ensureScheduledExecutorService() {
