@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/firebase/firebase-admin-java.svg?branch=master)](https://travis-ci.org/firebase/firebase-admin-java)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.firebase/firebase-admin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.firebase/firebase-admin)
-[![Javadoc](https://javadoc-emblem.rhcloud.com/doc/com.google.firebase/firebase-admin/badge.svg)](https://firebase.google.com/docs/reference/admin/java/reference/packages)
+[![Javadoc](https://javadoc-badge.appspot.com/com.google.firebase/firebase-admin.svg)](https://firebase.google.com/docs/reference/admin/java/reference/packages)
 
 # Firebase Admin Java SDK
 
