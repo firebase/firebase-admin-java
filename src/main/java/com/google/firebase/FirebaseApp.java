@@ -371,6 +371,10 @@ public class FirebaseApp {
   }
 
   private void checkNotDeleted() {
+    // Wrap the name argument in an array to ensure the invocation gets bound to the commonly
+    // available checkState(boolean, String, Object...) overload. Otherwise the invocation may
+    // get bound to the checkState(boolean, String, Object) overload, which is not present in older
+    // guava versions.
     checkState(!deleted.get(), "FirebaseApp '%s' was deleted", new Object[]{name});
   }
 
