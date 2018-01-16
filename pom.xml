@@ -19,7 +19,7 @@
 
     <groupId>com.google.firebase</groupId>
     <artifactId>firebase-admin</artifactId>
-    <version>5.7.1-SNAPSHOT</version>
+    <version>5.8.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>firebase-admin</name>
@@ -340,7 +340,7 @@
                             <goal>verify</goal>
                         </goals>
                     </execution>                    
-                </executions>                
+                </executions>
             </plugin>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
