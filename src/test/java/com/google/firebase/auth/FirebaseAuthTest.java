@@ -16,7 +16,6 @@
 
 package com.google.firebase.auth;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
@@ -37,7 +36,6 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auth.oauth2.UserCredentials;
 import com.google.common.base.Defaults;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -47,14 +45,11 @@ import com.google.firebase.database.MapBuilder;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -107,7 +102,7 @@ public class FirebaseAuthTest {
           },
           {
             new FirebaseOptions.Builder()
-                .setCredentials(createApplicationDefaultCredential())
+                .setCredentials(TestUtils.getApplicationDefaultCredentials())
                 .build(),
             /* isCertCredential */ false
           },
@@ -122,32 +117,6 @@ public class FirebaseAuthTest {
             /* isCertCredential */ false
           },
         });
-  }
-
-  private static GoogleCredentials createApplicationDefaultCredential() throws IOException {
-    final MockTokenServerTransport transport = new MockTokenServerTransport();
-    transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
-
-    // Set the GOOGLE_APPLICATION_CREDENTIALS environment variable for application-default
-    // credentials. This requires us to write the credentials to the location specified by the
-    // environment variable.
-    File credentialsFile = File.createTempFile("google-test-credentials", "json");
-    PrintWriter writer = new PrintWriter(Files.newBufferedWriter(credentialsFile.toPath(), UTF_8));
-    writer.print(ServiceAccount.EDITOR.asString());
-    writer.close();
-    Map<String, String> environmentVariables =
-        ImmutableMap.<String, String>builder()
-            .put("GOOGLE_APPLICATION_CREDENTIALS", credentialsFile.getAbsolutePath())
-            .build();
-    TestUtils.setEnvironmentVariables(environmentVariables);
-    credentialsFile.deleteOnExit();
-
-    return GoogleCredentials.getApplicationDefault(new HttpTransportFactory() {
-      @Override
-      public HttpTransport create() {
-        return transport;
-      }
-    });
   }
 
   private static GoogleCredentials createRefreshTokenCredential() throws IOException {
