@@ -24,7 +24,9 @@ import java.util.Map;
 
 /**
  * Represents the APNS-specific options that can be included in a {@link Message}.
- * Instances of this class are thread-safe and immutable.
+ * Instances of this class are thread-safe and immutable. Refer to
+ * <a href="https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/CommunicatingwithAPNs.html">
+ * Apple documentation</a> for various headers and payload fields supported by APNS.
  */
 public class ApnsConfig {
 
@@ -78,7 +80,7 @@ public class ApnsConfig {
     }
 
     /**
-     * Sets APNS payload as JSON-serializable map.
+     * Sets the APNS payload as a JSON-serializable map.
      *
      * @param payload Map containing both aps dictionary and custom payload.
      * @return This builder.

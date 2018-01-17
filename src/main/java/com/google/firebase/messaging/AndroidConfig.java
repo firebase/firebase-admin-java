@@ -104,7 +104,7 @@ public class AndroidConfig {
     /**
      * Sets a collapse key for the message. Collapse key serves as an identifier for a group of
      * messages that can be collapsed, so that only the last message gets sent when delivery can be
-     * resumed. A maximum of 4 different collapse keys is allowed at any given time.
+     * resumed. A maximum of 4 different collapse keys may be active at any given time.
      *
      * @param collapseKey A collapse key string.
      * @return This builder.

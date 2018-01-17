@@ -18,9 +18,13 @@ package com.google.firebase.messaging;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.internal.NonNull;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * The response produced by FCM topic management operations.
+ */
 public class TopicManagementResponse {
 
   private static final String UNKNOWN_ERROR = "unknown-error";
@@ -56,18 +60,38 @@ public class TopicManagementResponse {
     this.errors = errors.build();
   }
 
+  /**
+   * Gets the number of registration tokens that were successfully subscribed or unsubscribed.
+   *
+   * @return The number of successes.
+   */
   public int getSuccessCount() {
     return successCount;
   }
 
+  /**
+   * Gets the number of registration tokens that could not be subscribed or unsubscribed, and
+   * resulted in an error.
+   *
+   * @return The number of failures.
+   */
   public int getFailureCount() {
     return failureCount;
   }
 
+  /**
+   * Gets a list of errors encountered while executing the topic management operation.
+   *
+   * @return A non-null list.
+   */
+  @NonNull
   public List<Error> getErrors() {
     return errors;
   }
 
+  /**
+   * A topic management error.
+   */
   public static class Error {
     private final int index;
     private final String reason;
@@ -78,10 +102,21 @@ public class TopicManagementResponse {
         ? ERROR_CODES.get(reason) : UNKNOWN_ERROR;
     }
 
+    /**
+     * Index of the registration token to which this error is related to.
+     *
+     * @return An index into the original registration token list.
+     */
     public int getIndex() {
       return index;
     }
 
+    /**
+     * String describing the nature of the error.
+     *
+     * @return A non-null, non-empty error message.
+     */
+    @NonNull
     public String getReason() {
       return reason;
     }

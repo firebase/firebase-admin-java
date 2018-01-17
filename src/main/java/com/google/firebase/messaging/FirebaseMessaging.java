@@ -141,8 +141,8 @@ public class FirebaseMessaging {
 
   /**
    * Sends the given {@link Message} via Firebase Cloud Messaging. If the {@code dryRun} option
-   * is set to true, this will not actually send the message. Instead it will perform all the
-   * necessary validations, and emulate the send operation.
+   * is set to true, the message will not be actually sent. Instead FCM performs all the
+   * necessary validations, and emulates the send operation.
    *
    * @param message A non-null {@link Message} to be sent.
    * @param dryRun a boolean indicating whether to perform a dry run (validation only) of the send.

@@ -203,8 +203,8 @@ public class AndroidNotification {
     }
 
     /**
-     * Sets the key to the body string in the app's string resources to use to localize the body
-     * text to the user's current localization.
+     * Sets the key of the body string in the app's string resources to use to localize the body
+     * text.
      *
      * @param bodyLocKey Resource key string.
      * @return This builder.
@@ -239,8 +239,8 @@ public class AndroidNotification {
     }
 
     /**
-     * Sets the key to the title string in the app's string resources to use to localize the title
-     * text to the user's current localization.
+     * Sets the key of the title string in the app's string resources to use to localize the title
+     * text.
      *
      * @param titleLocKey Resource key string.
      * @return This builder.
