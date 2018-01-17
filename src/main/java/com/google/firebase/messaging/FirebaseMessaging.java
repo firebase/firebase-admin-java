@@ -163,8 +163,16 @@ public class FirebaseMessaging {
     });
   }
 
+  /**
+   * Subscribes a list of registration tokens to a topic.
+   *
+   * @param registrationTokens A non-null, non-empty list of device registration tokens, with at
+   *     most 1000 entries.
+   * @param topic Name of the topic to subscribe to. May contain the {@code /topics/} prefix.
+   * @return An {@code ApiFuture} that will complete with a {@link TopicManagementResponse}.
+   */
   public ApiFuture<TopicManagementResponse> subscribeToTopicAsync(
-      List<String> registrationTokens, String topic) {
+      @NonNull List<String> registrationTokens, @NonNull String topic) {
     return new TaskToApiFuture<>(subscribeToTopic(registrationTokens, topic));
   }
 
@@ -181,8 +189,16 @@ public class FirebaseMessaging {
     });
   }
 
+  /**
+   * Unubscribes a list of registration tokens from a topic.
+   *
+   * @param registrationTokens A non-null, non-empty list of device registration tokens, with at
+   *     most 1000 entries.
+   * @param topic Name of the topic to unsubscribe from. May contain the {@code /topics/} prefix.
+   * @return An {@code ApiFuture} that will complete with a {@link TopicManagementResponse}.
+   */
   public ApiFuture<TopicManagementResponse> unsubscribeFromTopicAsync(
-      List<String> registrationTokens, String topic) {
+      @NonNull List<String> registrationTokens, @NonNull String topic) {
     return new TaskToApiFuture<>(unsubscribeFromTopic(registrationTokens, topic));
   }
 
