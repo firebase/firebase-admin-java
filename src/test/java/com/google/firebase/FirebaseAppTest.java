@@ -34,6 +34,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.auth.oauth2.OAuth2Credentials.CredentialsChangedListener;
 import com.google.common.base.Defaults;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
 import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.FirebaseOptions.Builder;
@@ -41,6 +42,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.testing.FirebaseAppRule;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -50,11 +52,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -71,17 +75,9 @@ public class FirebaseAppTest {
 
   @Rule public FirebaseAppRule firebaseAppRule = new FirebaseAppRule();
 
-  private static FirebaseOptions getMockCredentialOptions() {
-    return new Builder().setCredentials(new MockGoogleCredentials()).build();
-  }
-
-  private static void invokePublicInstanceMethodWithDefaultValues(Object instance, Method method)
-      throws InvocationTargetException, IllegalAccessException {
-    List<Object> parameters = new ArrayList<>(method.getParameterTypes().length);
-    for (Class<?> parameterType : method.getParameterTypes()) {
-      parameters.add(Defaults.defaultValue(parameterType));
-    }
-    method.invoke(instance, parameters.toArray());
+  @BeforeClass
+  public static void setupClass() throws IOException {
+    TestUtils.getApplicationDefaultCredentials();
   }
 
   @Test(expected = NullPointerException.class)
@@ -420,6 +416,114 @@ public class FirebaseAppTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
+  public void testEmptyFirebaseConfigFile() {
+    setFirebaseConfigEnvironmentVariable("firebase_config_empty.json");
+    FirebaseApp.initializeApp();
+  }  
+  
+  @Test
+  public void testEmptyFirebaseConfigString() {
+    setFirebaseConfigEnvironmentVariable("");
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp();
+    assertEquals(null, firebaseApp.getOptions().getProjectId());
+    assertEquals(null, firebaseApp.getOptions().getStorageBucket());
+    assertEquals(null, firebaseApp.getOptions().getDatabaseUrl());
+    assertTrue(firebaseApp.getOptions().getDatabaseAuthVariableOverride().isEmpty()); 
+  }
+
+  @Test
+  public void testEmptyFirebaseConfigJSONObject() {
+    setFirebaseConfigEnvironmentVariable("{}");
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp();
+    assertEquals(null, firebaseApp.getOptions().getProjectId());
+    assertEquals(null, firebaseApp.getOptions().getStorageBucket());
+    assertEquals(null, firebaseApp.getOptions().getDatabaseUrl());
+    assertTrue(firebaseApp.getOptions().getDatabaseAuthVariableOverride().isEmpty());
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testInvalidFirebaseConfigFile() {
+    setFirebaseConfigEnvironmentVariable("firebase_config_invalid.json");
+    FirebaseApp.initializeApp();
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testInvalidFirebaseConfigString() {
+    setFirebaseConfigEnvironmentVariable("{,,");
+    FirebaseApp.initializeApp();
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testFirebaseConfigMissingFile() {
+    setFirebaseConfigEnvironmentVariable("no_such.json");
+    FirebaseApp.initializeApp();
+  }
+
+  @Test
+  public void testFirebaseConfigFileWithSomeKeysMissing() {
+    setFirebaseConfigEnvironmentVariable("firebase_config_partial.json");
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp();
+    assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
+    assertEquals("https://hipster-chat.firebaseio.mock", firebaseApp.getOptions().getDatabaseUrl());
+  }
+
+  @Test
+  public void testValidFirebaseConfigFile() {
+    setFirebaseConfigEnvironmentVariable("firebase_config.json");
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp();
+    assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
+    assertEquals("hipster-chat.appspot.mock", firebaseApp.getOptions().getStorageBucket());
+    assertEquals("https://hipster-chat.firebaseio.mock", firebaseApp.getOptions().getDatabaseUrl());
+    assertEquals("testuser", firebaseApp.getOptions().getDatabaseAuthVariableOverride().get("uid"));
+  }
+
+  @Test
+  public void testEnvironmentVariableIgnored() {
+    setFirebaseConfigEnvironmentVariable("firebase_config.json");
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS);
+    assertEquals(null, firebaseApp.getOptions().getProjectId());
+    assertEquals(null, firebaseApp.getOptions().getStorageBucket());
+    assertEquals(null, firebaseApp.getOptions().getDatabaseUrl());
+    assertTrue(firebaseApp.getOptions().getDatabaseAuthVariableOverride().isEmpty());
+  }
+
+  @Test
+  public void testValidFirebaseConfigString() {
+    setFirebaseConfigEnvironmentVariable("{" 
+        + "\"databaseAuthVariableOverride\": {" 
+        +   "\"uid\":" 
+        +   "\"testuser\"" 
+        + "}," 
+        + "\"databaseUrl\": \"https://hipster-chat.firebaseio.mock\"," 
+        + "\"projectId\": \"hipster-chat-mock\"," 
+        + "\"storageBucket\": \"hipster-chat.appspot.mock\"" 
+        + "}");
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp();
+    assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
+    assertEquals("hipster-chat.appspot.mock", firebaseApp.getOptions().getStorageBucket());
+    assertEquals("https://hipster-chat.firebaseio.mock", firebaseApp.getOptions().getDatabaseUrl());
+    assertEquals("testuser", 
+        firebaseApp.getOptions().getDatabaseAuthVariableOverride().get("uid"));
+  }
+
+  @Test
+  public void testFirebaseConfigFileIgnoresInvalidKey() {
+    setFirebaseConfigEnvironmentVariable("firebase_config_invalid_key.json");
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp();
+    assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
+  }
+
+  @Test
+  public void testFirebaseConfigStringIgnoresInvalidKey() {
+    setFirebaseConfigEnvironmentVariable("{"
+        + "\"databaseUareL\": \"https://hipster-chat.firebaseio.mock\","
+        + "\"projectId\": \"hipster-chat-mock\""
+        + "}");
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp();
+    assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
   public void testFirebaseExceptionNullDetail() {
     new FirebaseException(null);
   }
@@ -427,6 +531,31 @@ public class FirebaseAppTest {
   @Test(expected = IllegalArgumentException.class)
   public void testFirebaseExceptionEmptyDetail() {
     new FirebaseException("");
+  }
+
+  private static void setFirebaseConfigEnvironmentVariable(String configJSON) {
+    String configValue;
+    if (configJSON.isEmpty() || configJSON.startsWith("{")) {
+      configValue = configJSON;
+    } else {
+      configValue = new File("src/test/resources", configJSON).getAbsolutePath();
+    }
+    Map<String, String> environmentVariables =
+        ImmutableMap.of(FirebaseApp.FIREBASE_CONFIG_ENV_VAR , configValue);
+    TestUtils.setEnvironmentVariables(environmentVariables);
+  }
+
+  private static FirebaseOptions getMockCredentialOptions() {
+    return new Builder().setCredentials(new MockGoogleCredentials()).build();
+  }
+
+  private static void invokePublicInstanceMethodWithDefaultValues(Object instance, Method method)
+      throws InvocationTargetException, IllegalAccessException {
+    List<Object> parameters = new ArrayList<>(method.getParameterTypes().length);
+    for (Class<?> parameterType : method.getParameterTypes()) {
+      parameters.add(Defaults.defaultValue(parameterType));
+    }
+    method.invoke(instance, parameters.toArray());
   }
 
   private static class MockTokenRefresher extends TokenRefresher {

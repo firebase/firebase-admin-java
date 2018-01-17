@@ -18,9 +18,14 @@ package com.google.firebase.testing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.client.googleapis.testing.auth.oauth2.MockTokenServerTransport;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.webtoken.JsonWebSignature;
+import com.google.auth.http.HttpTransportFactory;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -36,6 +41,9 @@ import java.util.Map;
 public class TestUtils {
 
   public static final long TEST_TIMEOUT_MILLIS = 7 * 1000;
+  public static final String TEST_ADC_ACCESS_TOKEN = "test-adc-access-token";
+
+  private static GoogleCredentials defaultCredentials;
 
   public static boolean verifySignature(JsonWebSignature token, List<PublicKey> keys)
       throws Exception {
@@ -85,5 +93,33 @@ public class TestUtils {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * Ensures initialization of Google Application Default Credentials. Any test that depends on
+   * ADC should consider this as a fixture, and invoke it before hand. Since ADC are initialized
+   * once per JVM, this makes sure that all dependent tests get the same ADC instance, and
+   * can reliably reason about the tokens minted using it.
+   */
+  public static synchronized GoogleCredentials getApplicationDefaultCredentials()
+      throws IOException {
+    if (defaultCredentials != null) {
+      return defaultCredentials;
+    }
+    final MockTokenServerTransport transport = new MockTokenServerTransport();
+    transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), TEST_ADC_ACCESS_TOKEN);
+    File serviceAccount = new File("src/test/resources/service_accounts", "editor.json");
+    Map<String, String> environmentVariables =
+        ImmutableMap.<String, String>builder()
+            .put("GOOGLE_APPLICATION_CREDENTIALS", serviceAccount.getAbsolutePath())
+            .build();
+    setEnvironmentVariables(environmentVariables);
+    defaultCredentials = GoogleCredentials.getApplicationDefault(new HttpTransportFactory() {
+      @Override
+      public HttpTransport create() {
+        return transport;
+      }
+    });
+    return defaultCredentials;
   }
 }

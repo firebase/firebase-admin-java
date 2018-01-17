@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -43,6 +44,7 @@ import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
@@ -294,66 +296,92 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetUserHttpError() throws Exception {
-    Map<UserManagerOp, String> operations = ImmutableMap.<UserManagerOp, String>builder()
-        .put(new UserManagerOp() {
+    List<UserManagerOp> operations = ImmutableList.<UserManagerOp>builder()
+        .add(new UserManagerOp() {
           @Override
           public void call(FirebaseUserManager userManager) throws Exception {
             userManager.getUserById("testuser");
           }
-        }, FirebaseUserManager.INTERNAL_ERROR)
-        .put(new UserManagerOp() {
+        })
+        .add(new UserManagerOp() {
           @Override
           public void call(FirebaseUserManager userManager) throws Exception {
             userManager.getUserByEmail("testuser@example.com");
           }
-        }, FirebaseUserManager.INTERNAL_ERROR)
-        .put(new UserManagerOp() {
+        })
+        .add(new UserManagerOp() {
           @Override
           public void call(FirebaseUserManager userManager) throws Exception {
             userManager.getUserByPhoneNumber("+1234567890");
           }
-        }, FirebaseUserManager.INTERNAL_ERROR)
-        .put(new UserManagerOp() {
+        })
+        .add(new UserManagerOp() {
           @Override
           public void call(FirebaseUserManager userManager) throws Exception {
             userManager.createUser(new CreateRequest());
           }
-        }, FirebaseUserManager.USER_CREATE_ERROR)
-        .put(new UserManagerOp() {
+        })
+        .add(new UserManagerOp() {
           @Override
           public void call(FirebaseUserManager userManager) throws Exception {
             userManager.updateUser(new UpdateRequest("test"), Utils.getDefaultJsonFactory());
           }
-        }, FirebaseUserManager.USER_UPDATE_ERROR)
-        .put(new UserManagerOp() {
+        })
+        .add(new UserManagerOp() {
           @Override
           public void call(FirebaseUserManager userManager) throws Exception {
             userManager.deleteUser("testuser");
           }
-        }, FirebaseUserManager.USER_DELETE_ERROR)
+        })
+        .add(new UserManagerOp() {
+          @Override
+          public void call(FirebaseUserManager userManager) throws Exception {
+            userManager.listUsers(1000, null);
+          }
+        })
         .build();
+
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
+
+    // Test for common HTTP error codes
     for (int code : ImmutableList.of(302, 400, 401, 404, 500)) {
-      MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-      response.setContent("{}");
-      response.setStatusCode(code);
-      MockHttpTransport transport = new MockHttpTransport.Builder()
-          .setLowLevelHttpResponse(response)
-          .build();
-      FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
-      for (Map.Entry<UserManagerOp, String> entry : operations.entrySet()) {
+      for (UserManagerOp operation : operations) {
+        // Need to reset these every iteration
+        response.setContent("{}");
+        response.setStatusCode(code);
         try {
-          entry.getKey().call(userManager);
+          operation.call(userManager);
           fail("No error thrown for HTTP error");
         }  catch (FirebaseAuthException e) {
-          assertTrue(e.getCause() instanceof IOException);
-          assertEquals(entry.getValue(), e.getErrorCode());
+          String msg = String.format("Unexpected HTTP response with status: %d; body: {}", code);
+          assertEquals(msg, e.getMessage());
+          assertTrue(e.getCause() instanceof HttpResponseException);
+          assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
         }
+      }
+    }
+
+    // Test error payload parsing
+    for (UserManagerOp operation : operations) {
+      response.setContent("{\"error\": {\"message\": \"USER_NOT_FOUND\"}}");
+      response.setStatusCode(500);
+      try {
+        operation.call(userManager);
+        fail("No error thrown for HTTP error");
+      }  catch (FirebaseAuthException e) {
+        assertEquals("User management service responded with an error", e.getMessage());
+        assertTrue(e.getCause() instanceof HttpResponseException);
+        assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, e.getErrorCode());
       }
     }
   }
 
   @Test
-  public void testGetUserJsonError() throws Exception {
+  public void testGetUserMalformedJsonError() throws Exception {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     response.setContent("{\"not\" json}");
     MockHttpTransport transport = new MockHttpTransport.Builder()
@@ -365,6 +393,27 @@ public class FirebaseUserManagerTest {
       fail("No error thrown for JSON error");
     }  catch (FirebaseAuthException e) {
       assertTrue(e.getCause() instanceof IOException);
+      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+    }
+  }
+
+  @Test
+  public void testGetUserUnexpectedHttpError() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setContent("{\"not\" json}");
+    response.setStatusCode(500);
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseUserManager userManager = new FirebaseUserManager(gson, transport, credentials);
+    try {
+      userManager.getUserById("testuser");
+      fail("No error thrown for JSON error");
+    }  catch (FirebaseAuthException e) {
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertEquals("Unexpected HTTP response with status: 500; body: {\"not\" json}",
+          e.getMessage());
+      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
     }
   }
 
