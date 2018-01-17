@@ -41,6 +41,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.FirebaseService;
+import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.TaskToApiFuture;
 import com.google.firebase.tasks.Task;
 import java.io.IOException;
@@ -48,6 +49,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
+/**
+ * This class is the entry point for all server-side Firebase Cloud Messaging actions.
+ *
+ * <p>You can get an instance of FirebaseMessaging via {@link #getInstance(FirebaseApp)}, and
+ * then use it to send messages or manage FCM topic subscriptions.
+ */
 public class FirebaseMessaging {
 
   private static final String FCM_URL = "https://fcm.googleapis.com/v1/projects/%s/messages:send";
@@ -98,6 +105,11 @@ public class FirebaseMessaging {
     this.url = String.format(FCM_URL, projectId);
   }
 
+  /**
+   * Gets the {@link FirebaseMessaging} instance for the default {@link FirebaseApp}.
+   *
+   * @return The {@link FirebaseMessaging} instance for the default {@link FirebaseApp}.
+   */
   public static FirebaseMessaging getInstance() {
     return getInstance(FirebaseApp.getInstance());
   }
@@ -116,11 +128,28 @@ public class FirebaseMessaging {
     return service.getInstance();
   }
 
-  public ApiFuture<String> sendAsync(Message message) {
+  /**
+   * Sends the given {@link Message} via Firebase Cloud Messaging.
+   *
+   * @param message A non-null {@link Message} to be sent.
+   * @return An {@code ApiFuture} that will complete with a message ID string when the message
+   *     has been sent.
+   */
+  public ApiFuture<String> sendAsync(@NonNull Message message) {
     return sendAsync(message, false);
   }
 
-  public ApiFuture<String> sendAsync(Message message, boolean dryRun) {
+  /**
+   * Sends the given {@link Message} via Firebase Cloud Messaging. If the {@code dryRun} option
+   * is set to true, this will not actually send the message. Instead it will perform all the
+   * necessary validations, and emulate the send operation.
+   *
+   * @param message A non-null {@link Message} to be sent.
+   * @param dryRun a boolean indicating whether to perform a dry run (validation only) of the send.
+   * @return An {@code ApiFuture} that will complete with a message ID string when the message
+   *     has been sent, or when the emulation has finished.
+   */
+  public ApiFuture<String> sendAsync(@NonNull Message message, boolean dryRun) {
     return new TaskToApiFuture<>(send(message, dryRun));
   }
 

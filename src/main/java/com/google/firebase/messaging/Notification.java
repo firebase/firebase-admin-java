@@ -18,6 +18,10 @@ package com.google.firebase.messaging;
 
 import com.google.api.client.util.Key;
 
+/**
+ * Represents the notification parameters that can be included in a {@link Message}. Instances
+ * of this class are thread-safe and immutable.
+ */
 public class Notification {
 
   @Key("title")
@@ -26,6 +30,12 @@ public class Notification {
   @Key("body")
   private final String body;
 
+  /**
+   * Creates a new {@code Notification} using the given title and body.
+   *
+   * @param title Title of the notification.
+   * @param body Body of the notification.
+   */
   public Notification(String title, String body) {
     this.title = title;
     this.body = body;

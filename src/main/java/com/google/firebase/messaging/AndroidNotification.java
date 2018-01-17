@@ -21,9 +21,14 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.internal.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents the Android-specific notification options that can be included in a {@link Message}.
+ * Instances of this class are thread-safe and immutable.
+ */
 public class AndroidNotification {
 
   @Key("title")
@@ -90,6 +95,11 @@ public class AndroidNotification {
     }
   }
 
+  /**
+   * Creates a new {@link AndroidNotification.Builder}.
+   *
+   * @return A {@link AndroidNotification.Builder} instance.
+   */
   public static Builder builder() {
     return new Builder();
   }
@@ -111,75 +121,168 @@ public class AndroidNotification {
     private Builder() {
     }
 
+    /**
+     * Sets the title of the Android notification. When provided, overrides the title sent
+     * via {@link Notification}.
+     *
+     * @param title Title of the notification.
+     * @return This builder.
+     */
     public Builder setTitle(String title) {
       this.title = title;
       return this;
     }
 
+    /**
+     * Sets the body of the Android notification. When provided, overrides the body sent
+     * via {@link Notification}.
+     *
+     * @param body Body of the notification.
+     * @return This builder.
+     */
     public Builder setBody(String body) {
       this.body = body;
       return this;
     }
 
+    /**
+     * Sets the icon of the Android notification.
+     *
+     * @param icon Icon resource for the notification.
+     * @return This builder.
+     */
     public Builder setIcon(String icon) {
       this.icon = icon;
       return this;
     }
 
+    /**
+     * Sets the notification icon color.
+     *
+     * @param color Color specified in the {@code #rrggbb} format.
+     * @return This builder.
+     */
     public Builder setColor(String color) {
       this.color = color;
       return this;
     }
 
+    /**
+     * Sets the sound to be played when the device receives the notification.
+     *
+     * @param sound File name of the sound resource or "default".
+     * @return This builder.
+     */
     public Builder setSound(String sound) {
       this.sound = sound;
       return this;
     }
 
+    /**
+     * Sets the notification tag. This is an identifier used to replace existing notifications in
+     * the notification drawer. If not specified, each request creates a new notification.
+     *
+     * @param tag Notification tag.
+     * @return This builder.
+     */
     public Builder setTag(String tag) {
       this.tag = tag;
       return this;
     }
 
+    /**
+     * Sets the action associated with a user click on the notification. If specified, an activity
+     * with a matching intent filter is launched when a user clicks on the notification.
+     *
+     * @param clickAction Click action name.
+     * @return This builder.
+     */
     public Builder setClickAction(String clickAction) {
       this.clickAction = clickAction;
       return this;
     }
 
+    /**
+     * Sets the key to the body string in the app's string resources to use to localize the body
+     * text to the user's current localization.
+     *
+     * @param bodyLocKey Resource key string.
+     * @return This builder.
+     */
     public Builder setBodyLocKey(String bodyLocKey) {
       this.bodyLocKey = bodyLocKey;
       return this;
     }
 
-    public Builder addBodyLocArg(String arg) {
+    /**
+     * Adds a resource key string that will be used in place of the format specifiers in
+     * {@code bodyLocKey}.
+     *
+     * @param arg Resource key string.
+     * @return This builder.
+     */
+    public Builder addBodyLocArg(@NonNull String arg) {
       this.bodyLocArgs.add(arg);
       return this;
     }
 
-    public Builder addAllBodyLocArgs(List<String> args) {
+    /**
+     * Adds a list of resource keys that will be used in place of the format specifiers in
+     * {@code bodyLocKey}.
+     *
+     * @param args List of resource key strings.
+     * @return This builder.
+     */
+    public Builder addAllBodyLocArgs(@NonNull List<String> args) {
       this.bodyLocArgs.addAll(args);
       return this;
     }
 
+    /**
+     * Sets the key to the title string in the app's string resources to use to localize the title
+     * text to the user's current localization.
+     *
+     * @param titleLocKey Resource key string.
+     * @return This builder.
+     */
     public Builder setTitleLocKey(String titleLocKey) {
       this.titleLocKey = titleLocKey;
       return this;
     }
 
-    public Builder addTitleLocArg(String arg) {
+    /**
+     * Adds a resource key string that will be used in place of the format specifiers in
+     * {@code titleLocKey}.
+     *
+     * @param arg Resource key string.
+     * @return This builder.
+     */
+    public Builder addTitleLocArg(@NonNull String arg) {
       this.titleLocArgs.add(arg);
       return this;
     }
 
-    public Builder addAllTitleLocArgs(List<String> args) {
+    /**
+     * Adds a list of resource keys that will be used in place of the format specifiers in
+     * {@code titleLocKey}.
+     *
+     * @param args List of resource key strings.
+     * @return This builder.
+     */
+    public Builder addAllTitleLocArgs(@NonNull List<String> args) {
       this.titleLocArgs.addAll(args);
       return this;
     }
 
+    /**
+     * Creates a new {@link AndroidNotification} instance from the parameters set on this builder.
+     *
+     * @return A new {@link AndroidNotification} instance.
+     * @throws IllegalArgumentException If any of the parameters set on the builder are invalid.
+     */
     public AndroidNotification build() {
       return new AndroidNotification(this);
     }
-
   }
 
 }

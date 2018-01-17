@@ -18,9 +18,14 @@ package com.google.firebase.messaging;
 
 import com.google.api.client.util.Key;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.internal.NonNull;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents the Webpush protocol options that can be included in a {@link Message}. Instances
+ * of this class are thread-safe and immutable.
+ */
 public class WebpushConfig {
 
   @Key("headers")
@@ -38,6 +43,11 @@ public class WebpushConfig {
     this.notification = builder.notification;
   }
 
+  /**
+   * Creates a new {@link WebpushConfig.Builder}.
+   *
+   * @return A {@link WebpushConfig.Builder} instance.
+   */
   public static Builder builder() {
     return new Builder();
   }
@@ -48,31 +58,73 @@ public class WebpushConfig {
     private final Map<String, String> data = new HashMap<>();
     private WebpushNotification notification;
 
-    public Builder putHeader(String key, String value) {
+    /**
+     * Adds the given key-value pair as a Webpush HTTP header. Refer to
+     * <a href="https://tools.ietf.org/html/rfc8030#section-5">Webpush specification</a>
+     * for supported headers.
+     *
+     * @param key Name of the header. Must not be null.
+     * @param value Value of the header. Must not be null.
+     * @return This builder.
+     */
+    public Builder putHeader(@NonNull String key, @NonNull String value) {
       headers.put(key, value);
       return this;
     }
 
-    public Builder putAllHeaders(Map<String, String> map) {
+    /**
+     * Adds all the key-value pairs in the given map as Webpush headers. Refer to
+     * <a href="https://tools.ietf.org/html/rfc8030#section-5">Webpush specification</a>
+     * for supported headers.
+     *
+     * @param map A non-null map of header values. Map must not contain null keys or values.
+     * @return This builder.
+     */
+    public Builder putAllHeaders(@NonNull Map<String, String> map) {
       headers.putAll(map);
       return this;
     }
 
+    /**
+     * Sets the given key-value pair as a Webpush data field.
+     *
+     * @param key Name of the data field. Must not be null.
+     * @param value Value of the data field. Must not be null.
+     * @return This builder.
+     */
     public Builder putData(String key, String value) {
       data.put(key, value);
       return this;
     }
 
+    /**
+     * Adds all the key-value pairs in the given map as Webpush data fields.
+     *
+     * @param map A non-null map of data values. Map must not contain null keys or values.
+     * @return This builder.
+     */
     public Builder putAllData(Map<String, String> map) {
       data.putAll(map);
       return this;
     }
 
+    /**
+     * Sets the Webpush notification to be included in the message.
+     *
+     * @param notification A {@link WebpushNotification} instance.
+     * @return This builder.
+     */
     public Builder setNotification(WebpushNotification notification) {
       this.notification = notification;
       return this;
     }
 
+    /**
+     * Creates a new {@link WebpushConfig} instance from the parameters set on this builder.
+     *
+     * @return A new {@link WebpushConfig} instance.
+     * @throws IllegalArgumentException If any of the parameters set on the builder are invalid.
+     */
     public WebpushConfig build() {
       return new WebpushConfig(this);
     }

@@ -17,7 +17,12 @@
 package com.google.firebase.messaging;
 
 import com.google.api.client.util.Key;
+import com.google.firebase.internal.Nullable;
 
+/**
+ * Represents the Webpush-specific notification options that can be included in a {@link Message}.
+ * Instances of this class are thread-safe and immutable.
+ */
 public class WebpushNotification {
 
   @Key("title")
@@ -29,11 +34,26 @@ public class WebpushNotification {
   @Key("icon")
   private final String icon;
 
+  /**
+   * Creates a new notification with the given title and body. Overrides the options set via
+   * {@link Notification}.
+   *
+   * @param title Title of the notification.
+   * @param body Body of the notification.
+   */
   public WebpushNotification(String title, String body) {
     this(title, body, null);
   }
 
-  public WebpushNotification(String title, String body, String icon) {
+  /**
+   * Creates a new notification with the given title, body and icon. Overrides the options set via
+   * {@link Notification}.
+   *
+   * @param title Title of the notification.
+   * @param body Body of the notification.
+   * @param icon URL to the notifications icon.
+   */
+  public WebpushNotification(String title, String body, @Nullable String icon) {
     this.title = title;
     this.body = body;
     this.icon = icon;
