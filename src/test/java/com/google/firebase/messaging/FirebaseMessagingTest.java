@@ -438,7 +438,7 @@ public class FirebaseMessagingTest {
     builder.put(
         Message.builder()
             .setAndroidConfig(AndroidConfig.builder()
-                .setPriority(AndroidConfig.Priority.high)
+                .setPriority(AndroidConfig.Priority.HIGH)
                 .setTtl("1.23s")
                 .setRestrictedPackageName("test-package")
                 .setCollapseKey("test-key")

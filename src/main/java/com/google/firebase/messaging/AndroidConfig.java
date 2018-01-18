@@ -51,7 +51,7 @@ public class AndroidConfig {
   private AndroidConfig(Builder builder) {
     this.collapseKey = builder.collapseKey;
     if (builder.priority != null) {
-      this.priority = builder.priority.name();
+      this.priority = builder.priority.name().toLowerCase();
     } else {
       this.priority = null;
     }
@@ -75,8 +75,8 @@ public class AndroidConfig {
    * Priority levels that can be set on an {@link AndroidConfig}.
    */
   public enum Priority {
-    high,
-    normal,
+    HIGH,
+    NORMAL,
   }
 
   /**

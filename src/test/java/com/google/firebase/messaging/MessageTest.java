@@ -8,6 +8,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonParser;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.messaging.AndroidConfig.Priority;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -68,7 +69,7 @@ public class MessageTest {
     Message message = Message.builder()
         .setAndroidConfig(AndroidConfig.builder()
             .setCollapseKey("test-key")
-            .setPriority(AndroidConfig.Priority.high)
+            .setPriority(Priority.HIGH)
             .setTtl("10s")
             .setRestrictedPackageName("test-pkg-name")
             .putData("k1", "v1")
@@ -91,7 +92,7 @@ public class MessageTest {
     Message message = Message.builder()
         .setAndroidConfig(AndroidConfig.builder()
             .setCollapseKey("test-key")
-            .setPriority(AndroidConfig.Priority.high)
+            .setPriority(Priority.HIGH)
             .setTtl("10.001s")
             .setRestrictedPackageName("test-pkg-name")
             .setNotification(AndroidNotification.builder()
@@ -140,7 +141,7 @@ public class MessageTest {
     Message message = Message.builder()
         .setAndroidConfig(AndroidConfig.builder()
             .setCollapseKey("test-key")
-            .setPriority(AndroidConfig.Priority.high)
+            .setPriority(Priority.NORMAL)
             .setTtl("10.001s")
             .setRestrictedPackageName("test-pkg-name")
             .setNotification(AndroidNotification.builder()
@@ -166,7 +167,7 @@ public class MessageTest {
         .build();
     Map<String, Object> data = ImmutableMap.of(
         "collapse_key", "test-key",
-        "priority", "high",
+        "priority", "normal",
         "ttl", "10.001s",
         "restricted_package_name", "test-pkg-name",
         "notification", notification
