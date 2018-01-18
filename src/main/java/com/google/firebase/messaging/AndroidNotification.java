@@ -122,7 +122,7 @@ public class AndroidNotification {
     }
 
     /**
-     * Sets the title of the Android notification. When provided, overrides the title sent
+     * Sets the title of the Android notification. When provided, overrides the title set
      * via {@link Notification}.
      *
      * @param title Title of the notification.
