@@ -25,11 +25,7 @@ import com.google.firebase.internal.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Represents the Android-specific notification options that can be included in a {@link Message}.
- * Instances of this class are thread-safe and immutable.
- */
-public class AndroidNotification {
+public class ApsAlert {
 
   @Key("title")
   private final String title;
@@ -37,52 +33,35 @@ public class AndroidNotification {
   @Key("body")
   private final String body;
 
-  @Key("icon")
-  private final String icon;
+  @Key("loc-key")
+  private final String locKey;
 
-  @Key("color")
-  private final String color;
+  @Key("loc-args")
+  private final List<String> locArgs;
 
-  @Key("sound")
-  private final String sound;
-
-  @Key("tag")
-  private final String tag;
-
-  @Key("click_action")
-  private final String clickAction;
-
-  @Key("body_loc_key")
-  private final String bodyLocKey;
-
-  @Key("body_loc_args")
-  private final List<String> bodyLocArgs;
-
-  @Key("title_loc_key")
+  @Key("title-loc-key")
   private final String titleLocKey;
 
-  @Key("title_loc_args")
+  @Key("title-loc-args")
   private final List<String> titleLocArgs;
 
-  private AndroidNotification(Builder builder) {
+  @Key("action-loc-key")
+  private final String actionLocKey;
+
+  @Key("launch-image")
+  private final String launchImage;
+
+  private ApsAlert(Builder builder) {
     this.title = builder.title;
     this.body = builder.body;
-    this.icon = builder.icon;
-    if (builder.color != null) {
-      checkArgument(builder.color.matches("^#[0-9a-fA-F]{6}$"),
-          "color must be in the form #RRGGBB");
-    }
-    this.color = builder.color;
-    this.sound = builder.sound;
-    this.tag = builder.tag;
-    this.clickAction = builder.clickAction;
-    this.bodyLocKey = builder.bodyLocKey;
-    if (!builder.bodyLocArgs.isEmpty()) {
-      checkArgument(!Strings.isNullOrEmpty(builder.bodyLocKey),
-          "bodyLocKey is required when specifying bodyLocArgs");
-      this.bodyLocArgs = ImmutableList.copyOf(builder.bodyLocArgs);
+    this.actionLocKey = builder.actionLocKey;
+    this.locKey = builder.locKey;
+    if (!builder.locArgs.isEmpty()) {
+      checkArgument(!Strings.isNullOrEmpty(builder.locKey),
+          "locKey is required when specifying locArgs");
+      this.locArgs = ImmutableList.copyOf(builder.locArgs);
     } else {
-      this.bodyLocArgs = null;
+      this.locArgs = null;
     }
 
     this.titleLocKey = builder.titleLocKey;
@@ -93,12 +72,13 @@ public class AndroidNotification {
     } else {
       this.titleLocArgs = null;
     }
+    this.launchImage = builder.launchImage;
   }
 
   /**
-   * Creates a new {@link AndroidNotification.Builder}.
+   * Creates a new {@link ApsAlert.Builder}.
    *
-   * @return A {@link AndroidNotification.Builder} instance.
+   * @return A {@link ApsAlert.Builder} instance.
    */
   public static Builder builder() {
     return new Builder();
@@ -108,21 +88,18 @@ public class AndroidNotification {
 
     private String title;
     private String body;
-    private String icon;
-    private String color;
-    private String sound;
-    private String tag;
-    private String clickAction;
-    private String bodyLocKey;
-    private List<String> bodyLocArgs = new ArrayList<>();
+    private String locKey;
+    private List<String> locArgs = new ArrayList<>();
     private String titleLocKey;
     private List<String> titleLocArgs = new ArrayList<>();
+    private String actionLocKey;
+    private String launchImage;
 
     private Builder() {
     }
 
     /**
-     * Sets the title of the Android notification. When provided, overrides the title sent
+     * Sets the title of the alert. When provided, overrides the title sent
      * via {@link Notification}.
      *
      * @param title Title of the notification.
@@ -134,7 +111,7 @@ public class AndroidNotification {
     }
 
     /**
-     * Sets the body of the Android notification. When provided, overrides the body sent
+     * Sets the body of the alert. When provided, overrides the body sent
      * via {@link Notification}.
      *
      * @param body Body of the notification.
@@ -145,60 +122,8 @@ public class AndroidNotification {
       return this;
     }
 
-    /**
-     * Sets the icon of the Android notification.
-     *
-     * @param icon Icon resource for the notification.
-     * @return This builder.
-     */
-    public Builder setIcon(String icon) {
-      this.icon = icon;
-      return this;
-    }
-
-    /**
-     * Sets the notification icon color.
-     *
-     * @param color Color specified in the {@code #rrggbb} format.
-     * @return This builder.
-     */
-    public Builder setColor(String color) {
-      this.color = color;
-      return this;
-    }
-
-    /**
-     * Sets the sound to be played when the device receives the notification.
-     *
-     * @param sound File name of the sound resource or "default".
-     * @return This builder.
-     */
-    public Builder setSound(String sound) {
-      this.sound = sound;
-      return this;
-    }
-
-    /**
-     * Sets the notification tag. This is an identifier used to replace existing notifications in
-     * the notification drawer. If not specified, each request creates a new notification.
-     *
-     * @param tag Notification tag.
-     * @return This builder.
-     */
-    public Builder setTag(String tag) {
-      this.tag = tag;
-      return this;
-    }
-
-    /**
-     * Sets the action associated with a user click on the notification. If specified, an activity
-     * with a matching intent filter is launched when a user clicks on the notification.
-     *
-     * @param clickAction Click action name.
-     * @return This builder.
-     */
-    public Builder setClickAction(String clickAction) {
-      this.clickAction = clickAction;
+    public Builder setActionLocalizationKey(String actionLocKey) {
+      this.actionLocKey = actionLocKey;
       return this;
     }
 
@@ -206,11 +131,11 @@ public class AndroidNotification {
      * Sets the key of the body string in the app's string resources to use to localize the body
      * text.
      *
-     * @param bodyLocKey Resource key string.
+     * @param locKey Resource key string.
      * @return This builder.
      */
-    public Builder setBodyLocalizationKey(String bodyLocKey) {
-      this.bodyLocKey = bodyLocKey;
+    public Builder setLocalizationKey(String locKey) {
+      this.locKey = locKey;
       return this;
     }
 
@@ -221,8 +146,8 @@ public class AndroidNotification {
      * @param arg Resource key string.
      * @return This builder.
      */
-    public Builder addBodyLocalizationArg(@NonNull String arg) {
-      this.bodyLocArgs.add(arg);
+    public Builder addLocalizationArg(@NonNull String arg) {
+      this.locArgs.add(arg);
       return this;
     }
 
@@ -233,8 +158,8 @@ public class AndroidNotification {
      * @param args List of resource key strings.
      * @return This builder.
      */
-    public Builder addAllBodyLocalizationArgs(@NonNull List<String> args) {
-      this.bodyLocArgs.addAll(args);
+    public Builder addAllLocalizationArgs(@NonNull List<String> args) {
+      this.locArgs.addAll(args);
       return this;
     }
 
@@ -269,19 +194,25 @@ public class AndroidNotification {
      * @param args List of resource key strings.
      * @return This builder.
      */
-    public Builder addAllTitleLocalizationArgs(@NonNull List<String> args) {
+    public Builder addAllTitleLocArgs(@NonNull List<String> args) {
       this.titleLocArgs.addAll(args);
       return this;
     }
 
+    public Builder setLaunchImage(String launchImage) {
+      this.launchImage = launchImage;
+      return this;
+    }
+
     /**
-     * Creates a new {@link AndroidNotification} instance from the parameters set on this builder.
+     * Creates a new {@link ApsAlert} instance from the parameters set on this builder.
      *
-     * @return A new {@link AndroidNotification} instance.
+     * @return A new {@link ApsAlert} instance.
      * @throws IllegalArgumentException If any of the parameters set on the builder are invalid.
      */
-    public AndroidNotification build() {
-      return new AndroidNotification(this);
+    public ApsAlert build() {
+      return new ApsAlert(this);
     }
   }
+
 }

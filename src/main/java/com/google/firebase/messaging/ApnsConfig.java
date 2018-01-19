@@ -16,6 +16,8 @@
 
 package com.google.firebase.messaging;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.api.client.util.Key;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
@@ -37,9 +39,14 @@ public class ApnsConfig {
   private final Map<String, Object> payload;
 
   private ApnsConfig(Builder builder) {
+    checkArgument(builder.aps != null, "aps must be specified");
+    checkArgument(!builder.customData.containsKey("aps"),
+        "aps cannot be specified as part of custom data");
     this.headers = builder.headers.isEmpty() ? null : ImmutableMap.copyOf(builder.headers);
-    this.payload = builder.payload == null || builder.payload.isEmpty()
-        ? null : ImmutableMap.copyOf(builder.payload);
+    this.payload = ImmutableMap.<String, Object>builder()
+        .putAll(builder.customData)
+        .put("aps", builder.aps)
+        .build();
   }
 
   /**
@@ -54,10 +61,11 @@ public class ApnsConfig {
   public static class Builder {
 
     private final Map<String, String> headers = new HashMap<>();
-    private Map<String, Object> payload;
+    private final Map<String, Object> customData = new HashMap<>();
+    private Aps aps;
 
     /**
-     * Sets the given key-value pair as an APNS header.
+     * Adds the given key-value pair as an APNS header.
      *
      * @param key Name of the header field. Must not be null.
      * @param value Value of the header field. Must not be null.
@@ -80,13 +88,36 @@ public class ApnsConfig {
     }
 
     /**
-     * Sets the APNS payload as a JSON-serializable map.
+     * Sets the aps dictionary of the APNS message.
      *
-     * @param payload Map containing both aps dictionary and custom payload.
+     * @param aps A non-null instance of {@link Aps}.
      * @return This builder.
      */
-    public Builder setPayload(Map<String, Object> payload) {
-      this.payload = payload;
+    public Builder setAps(@NonNull Aps aps) {
+      this.aps = aps;
+      return this;
+    }
+
+    /**
+     * Adds the given key-value pair as an APNS custom data field.
+     *
+     * @param key Name of the data field. Must not be null.
+     * @param value Value of the data field. Must not be null.
+     * @return This builder.
+     */
+    public Builder putCustomData(@NonNull String key, @NonNull Object value) {
+      this.customData.put(key, value);
+      return this;
+    }
+
+    /**
+     * Adds all the key-value pairs in the given map as APNS custom data fields.
+     *
+     * @param map A non-null map. Map must not contain null keys or values.
+     * @return This builder.
+     */
+    public Builder putAllCustomData(@NonNull Map<String, Object> map) {
+      this.customData.putAll(map);
       return this;
     }
 

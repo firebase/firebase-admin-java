@@ -22,6 +22,7 @@ import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.testing.TestResponseInterceptor;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -450,12 +451,12 @@ public class FirebaseMessagingTest {
                     .setColor("#112233")
                     .setTag("test-tag")
                     .setSound("test-sound")
-                    .setTitleLocKey("test-title-key")
-                    .setBodyLocKey("test-body-key")
-                    .addTitleLocArg("t-arg1")
-                    .addAllTitleLocArgs(ImmutableList.of("t-arg2", "t-arg3"))
-                    .addBodyLocArg("b-arg1")
-                    .addAllBodyLocArgs(ImmutableList.of("b-arg2", "b-arg3"))
+                    .setTitleLocalizationKey("test-title-key")
+                    .setBodyLocalizationKey("test-body-key")
+                    .addTitleLocalizationArg("t-arg1")
+                    .addAllTitleLocalizationArgs(ImmutableList.of("t-arg2", "t-arg3"))
+                    .addBodyLocalizationArg("b-arg1")
+                    .addAllBodyLocalizationArgs(ImmutableList.of("b-arg2", "b-arg3"))
                     .build())
                 .build())
             .setTopic("test-topic")
@@ -489,7 +490,14 @@ public class FirebaseMessagingTest {
             .setApnsConfig(ApnsConfig.builder()
                 .putHeader("h1", "v1")
                 .putAllHeaders(ImmutableMap.of("h2", "v2", "h3", "v3"))
-                .setPayload(ImmutableMap.<String, Object>of("k1", "v1", "k2", true))
+                .putAllCustomData(ImmutableMap.<String, Object>of("k1", "v1", "k2", true))
+                .setAps(Aps.builder()
+                    .setBadge(42)
+                    .setAlert(ApsAlert.builder()
+                        .setTitle("test-title")
+                        .setBody("test-body")
+                        .build())
+                    .build())
                 .build())
             .setTopic("test-topic")
             .build(),
@@ -497,7 +505,10 @@ public class FirebaseMessagingTest {
             "topic", "test-topic",
             "apns", ImmutableMap.of(
                 "headers", ImmutableMap.of("h1", "v1", "h2", "v2", "h3", "v3"),
-                "payload", ImmutableMap.of("k1", "v1", "k2", true))
+                "payload", ImmutableMap.of("k1", "v1", "k2", true,
+                    "aps", ImmutableMap.<String, Object>of("badge", new BigDecimal(42),
+                        "alert", ImmutableMap.<String, Object>of(
+                            "title", "test-title", "body", "test-body"))))
         ));
 
     // Webpush message

@@ -10,6 +10,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.messaging.AndroidConfig.Priority;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,12 +104,12 @@ public class MessageTest {
                 .setColor("#112233")
                 .setTag("android-tag")
                 .setClickAction("android-click")
-                .setTitleLocKey("title-loc")
-                .addTitleLocArg("title-arg1")
-                .addAllTitleLocArgs(ImmutableList.of("title-arg2", "title-arg3"))
-                .setBodyLocKey("body-loc")
-                .addBodyLocArg("body-arg1")
-                .addAllBodyLocArgs(ImmutableList.of("body-arg2", "body-arg3"))
+                .setTitleLocalizationKey("title-loc")
+                .addTitleLocalizationArg("title-arg1")
+                .addAllTitleLocalizationArgs(ImmutableList.of("title-arg2", "title-arg3"))
+                .setBodyLocalizationKey("body-loc")
+                .addBodyLocalizationArg("body-arg1")
+                .addAllBodyLocalizationArgs(ImmutableList.of("body-arg2", "body-arg3"))
                 .build())
             .build())
         .setTopic("test-topic")
@@ -200,8 +201,8 @@ public class MessageTest {
         AndroidNotification.builder().setColor("foo"),
         AndroidNotification.builder().setColor("123"),
         AndroidNotification.builder().setColor("#AABBCK"),
-        AndroidNotification.builder().addBodyLocArg("foo"),
-        AndroidNotification.builder().addTitleLocArg("foo")
+        AndroidNotification.builder().addBodyLocalizationArg("foo"),
+        AndroidNotification.builder().addTitleLocalizationArg("foo")
     );
     for (int i = 0; i < notificationBuilders.size(); i++) {
       try {
@@ -292,68 +293,155 @@ public class MessageTest {
   @Test
   public void testEmptyApnsMessage() throws IOException {
     Message message = Message.builder()
-        .setApnsConfig(ApnsConfig.builder().build())
+        .setApnsConfig(ApnsConfig.builder().setAps(Aps.builder().build()).build())
         .setTopic("test-topic")
         .build();
-    Map<String, Object> data = ImmutableMap.of();
-    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "apns", data), message);
-  }
-
-  @Test
-  public void testApnsMessageWithoutPayload() throws IOException {
-    Message message = Message.builder()
-        .setApnsConfig(ApnsConfig.builder()
-            .putHeader("k1", "v1")
-            .putAllHeaders(ImmutableMap.of("k2", "v2", "k3", "v3"))
-            .build())
-        .setTopic("test-topic")
-        .build();
-    Map<String, Object> data = ImmutableMap.<String, Object>of(
-        "headers", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3")
-    );
-    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "apns", data), message);
-
-    message = Message.builder()
-        .setApnsConfig(ApnsConfig.builder()
-            .putHeader("k1", "v1")
-            .putAllHeaders(ImmutableMap.of("k2", "v2", "k3", "v3"))
-            .setPayload(null)
-            .build())
-        .setTopic("test-topic")
-        .build();
-    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "apns", data), message);
-
-    message = Message.builder()
-        .setApnsConfig(ApnsConfig.builder()
-            .putHeader("k1", "v1")
-            .putAllHeaders(ImmutableMap.of("k2", "v2", "k3", "v3"))
-            .setPayload(ImmutableMap.<String, Object>of())
-            .build())
-        .setTopic("test-topic")
-        .build();
+    Map<String, Object> data = ImmutableMap.<String, Object>of("payload",
+        ImmutableMap.of("aps", ImmutableMap.of()));
     assertJsonEquals(ImmutableMap.of("topic", "test-topic", "apns", data), message);
   }
 
   @Test
   public void testApnsMessageWithPayload() throws IOException {
-    Map<String, Object> payload = ImmutableMap.<String, Object>builder()
-        .put("k1", "v1")
-        .put("k2", true)
-        .put("k3", ImmutableMap.of("k4", "v4"))
-        .build();
     Message message = Message.builder()
         .setApnsConfig(ApnsConfig.builder()
             .putHeader("k1", "v1")
             .putAllHeaders(ImmutableMap.of("k2", "v2", "k3", "v3"))
-            .setPayload(payload)
+            .putCustomData("cd1", "cd-v1")
+            .putAllCustomData(ImmutableMap.<String, Object>of("cd2", "cd-v2", "cd3", true))
+            .setAps(Aps.builder().build())
             .build())
         .setTopic("test-topic")
+        .build();
+
+    Map<String, Object> payload = ImmutableMap.<String, Object>builder()
+        .put("cd1", "cd-v1")
+        .put("cd2", "cd-v2")
+        .put("cd3", true)
+        .put("aps", ImmutableMap.of())
         .build();
     Map<String, Object> data = ImmutableMap.<String, Object>of(
         "headers", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"),
         "payload", payload
     );
     assertJsonEquals(ImmutableMap.of("topic", "test-topic", "apns", data), message);
+  }
+
+  @Test
+  public void testApnsMessageWithPayloadAndAps() throws IOException {
+    Message message = Message.builder()
+        .setApnsConfig(ApnsConfig.builder()
+            .putCustomData("cd1", "cd-v1")
+            .setAps(Aps.builder()
+                .setAlert("alert string")
+                .setBadge(42)
+                .setCategory("test-category")
+                .setContentAvailable(true)
+                .setSound("test-sound")
+                .setThreadId("test-thread-id")
+                .build())
+            .build())
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> payload = ImmutableMap.<String, Object>of(
+        "cd1", "cd-v1",
+        "aps", ImmutableMap.builder()
+            .put("alert", "alert string")
+            .put("badge", new BigDecimal(42))
+            .put("category", "test-category")
+            .put("content-available", new BigDecimal(1))
+            .put("sound", "test-sound")
+            .put("thread-id", "test-thread-id")
+            .build());
+    assertJsonEquals(
+        ImmutableMap.of(
+            "topic", "test-topic",
+            "apns", ImmutableMap.<String, Object>of("payload", payload)),
+        message);
+
+    message = Message.builder()
+        .setApnsConfig(ApnsConfig.builder()
+            .putCustomData("cd1", "cd-v1")
+            .setAps(Aps.builder()
+                .setAlert(ApsAlert.builder()
+                    .setTitle("test-title")
+                    .setBody("test-body")
+                    .setLocalizationKey("test-loc-key")
+                    .setActionLocalizationKey("test-action-loc-key")
+                    .setTitleLocalizationKey("test-title-loc-key")
+                    .addLocalizationArg("arg1")
+                    .addAllLocalizationArgs(ImmutableList.of("arg2", "arg3"))
+                    .addTitleLocalizationArg("arg4")
+                    .addAllTitleLocArgs(ImmutableList.of("arg5", "arg6"))
+                    .setLaunchImage("test-image")
+                    .build())
+                .setCategory("test-category")
+                .setSound("test-sound")
+                .setThreadId("test-thread-id")
+                .build())
+            .build())
+        .setTopic("test-topic")
+        .build();
+    payload = ImmutableMap.<String, Object>of(
+        "cd1", "cd-v1",
+        "aps", ImmutableMap.<String, Object>builder()
+            .put("alert", ImmutableMap.<String, Object>builder()
+                .put("title", "test-title")
+                .put("body", "test-body")
+                .put("loc-key", "test-loc-key")
+                .put("action-loc-key", "test-action-loc-key")
+                .put("title-loc-key", "test-title-loc-key")
+                .put("loc-args", ImmutableList.of("arg1", "arg2", "arg3"))
+                .put("title-loc-args", ImmutableList.of("arg4", "arg5", "arg6"))
+                .put("launch-image", "test-image")
+                .build())
+            .put("category", "test-category")
+            .put("sound", "test-sound")
+            .put("thread-id", "test-thread-id")
+            .build());
+    assertJsonEquals(
+        ImmutableMap.of(
+            "topic", "test-topic",
+            "apns", ImmutableMap.<String, Object>of("payload", payload)),
+        message);
+  }
+
+  @Test
+  public void testInvalidApnsConfig() {
+    List<ApnsConfig.Builder> configBuilders = ImmutableList.of(
+        ApnsConfig.builder(),
+        ApnsConfig.builder().putCustomData("aps", "foo"),
+        ApnsConfig.builder().putCustomData("aps", "foo").setAps(Aps.builder().build())
+    );
+    for (int i = 0; i < configBuilders.size(); i++) {
+      try {
+        configBuilders.get(i).build();
+        fail("No error thrown for invalid config: " + i);
+      } catch (IllegalArgumentException expected) {
+        // expected
+      }
+    }
+
+    Aps.Builder builder = Aps.builder().setAlert("string").setAlert(ApsAlert.builder().build());
+    try {
+      builder.build();
+      fail("No error thrown for invalid aps");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+
+    List<ApsAlert.Builder> notificationBuilders = ImmutableList.of(
+        ApsAlert.builder().addLocalizationArg("foo"),
+        ApsAlert.builder().addTitleLocalizationArg("foo")
+    );
+    for (int i = 0; i < notificationBuilders.size(); i++) {
+      try {
+        notificationBuilders.get(i).build();
+        fail("No error thrown for invalid alert: " + i);
+      } catch (IllegalArgumentException expected) {
+        // expected
+      }
+    }
   }
 
   private static void assertJsonEquals(
