@@ -16,14 +16,11 @@
 
 package com.google.firebase.auth;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import com.google.api.client.googleapis.testing.auth.oauth2.MockTokenServerTransport;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.internal.BaseCredential;
 import com.google.firebase.auth.internal.FirebaseCredentialsAdapter;
 import com.google.firebase.tasks.Task;
@@ -31,12 +28,9 @@ import com.google.firebase.tasks.Tasks;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;

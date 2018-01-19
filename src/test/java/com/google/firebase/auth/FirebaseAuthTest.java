@@ -107,7 +107,7 @@ public class FirebaseAuthTest {
           },
           {
             new FirebaseOptions.Builder()
-                .setCredentials(createApplicationDefaultCredential())
+                .setCredentials(TestUtils.getApplicationDefaultCredentials())
                 .build(),
             /* isCertCredential */ false
           },
