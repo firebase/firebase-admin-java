@@ -86,7 +86,9 @@ public class WebpushConfig {
     }
 
     /**
-     * Sets the given key-value pair as a Webpush data field.
+     * Sets the given key-value pair as a Webpush data field. When set, overrides any data fields
+     * set using the methods {@link Message.Builder#putData(String, String)} and
+     * {@link Message.Builder#putAllData(Map)}.
      *
      * @param key Name of the data field. Must not be null.
      * @param value Value of the data field. Must not be null.
@@ -98,7 +100,9 @@ public class WebpushConfig {
     }
 
     /**
-     * Adds all the key-value pairs in the given map as Webpush data fields.
+     * Adds all the key-value pairs in the given map as Webpush data fields. When set, overrides any
+     * data fields set using the methods {@link Message.Builder#putData(String, String)} and
+     * {@link Message.Builder#putAllData(Map)}.
      *
      * @param map A non-null map of data values. Map must not contain null keys or values.
      * @return This builder.

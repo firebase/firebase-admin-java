@@ -3,7 +3,6 @@ package com.google.firebase.messaging;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.testing.IntegrationTestUtils;
 import org.junit.BeforeClass;
@@ -32,7 +31,7 @@ public class FirebaseMessagingIT {
         .setTopic("foo-bar")
         .build();
     String id = messaging.sendAsync(message, true).get();
-    assertTrue(!Strings.isNullOrEmpty(id));
+    assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
   }
 
   @Test
