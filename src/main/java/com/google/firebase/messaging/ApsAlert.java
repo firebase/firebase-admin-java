@@ -25,6 +25,10 @@ import com.google.firebase.internal.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents the <a href="https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/PayloadKeyReference.html#//apple_ref/doc/uid/TP40008194-CH17-SW5">
+ * alert property</a> that can be included in the aps dictionary of an APNS payload.
+ */
 public class ApsAlert {
 
   @Key("title")
@@ -122,6 +126,13 @@ public class ApsAlert {
       return this;
     }
 
+    /**
+     * Sets the key of the text in the app's string resources to use to localize the action button
+     * text.
+     *
+     * @param actionLocKey Resource key string.
+     * @return This builder.
+     */
     public Builder setActionLocalizationKey(String actionLocKey) {
       this.actionLocKey = actionLocKey;
       return this;
@@ -199,6 +210,12 @@ public class ApsAlert {
       return this;
     }
 
+    /**
+     * Sets the launch image for the notification action.
+     *
+     * @param launchImage An image file name.
+     * @return This builder.
+     */
     public Builder setLaunchImage(String launchImage) {
       this.launchImage = launchImage;
       return this;

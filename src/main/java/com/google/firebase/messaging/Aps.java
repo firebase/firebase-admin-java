@@ -128,7 +128,7 @@ public class Aps {
     }
 
     /**
-     * Sets whether to configure a background update notification.
+     * Specifies whether to configure a background update notification.
      *
      * @param contentAvailable true to perform a background update.
      * @return This builder.
