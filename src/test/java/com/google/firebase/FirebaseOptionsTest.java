@@ -174,6 +174,14 @@ public class FirebaseOptionsTest {
     new FirebaseOptions.Builder().setCredentials(null).build();
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void createOptionsWithStorageBucketUrl() throws IOException {
+    new FirebaseOptions.Builder()
+        .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
+        .setStorageBucket("gs://mock-storage-bucket")
+        .build();
+  }
+
   @Test(expected = NullPointerException.class)
   public void createOptionsWithNullThreadManager() {
     new FirebaseOptions.Builder()

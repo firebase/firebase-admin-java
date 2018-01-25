@@ -57,13 +57,17 @@ public final class FirebaseOptions {
     this.databaseUrl = builder.databaseUrl;
     this.databaseAuthVariableOverride = builder.databaseAuthVariableOverride;
     this.projectId = builder.projectId;
+    if (!Strings.isNullOrEmpty(builder.storageBucket)) {
+      checkArgument(!builder.storageBucket.startsWith("gs://"),
+          "StorageBucket must not include 'gs://' prefix.");
+    }
     this.storageBucket = builder.storageBucket;
     this.httpTransport = checkNotNull(builder.httpTransport,
         "FirebaseOptions must be initialized with a non-null HttpTransport.");
     this.jsonFactory = checkNotNull(builder.jsonFactory,
         "FirebaseOptions must be initialized with a non-null JsonFactory.");
     this.threadManager = checkNotNull(builder.threadManager,
-        "FirebaseOptions must be initialized with a non-null ThreadManager");
+        "FirebaseOptions must be initialized with a non-null ThreadManager.");
   }
 
   /**
@@ -190,13 +194,17 @@ public final class FirebaseOptions {
 
     /**
      * Sets the name of the Google Cloud Storage bucket for reading and writing application data.
-     * The same credential used to initialize the SDK (see {@link Builder#setCredential}) will be
+     * This should be the full name of the bucket as listed in the
+     * <a href="https://console.cloud.google.com">Google Cloud Platform Console</a>, and must not
+     * include {@code gs://} or any other protocol prefixes.
+     * The same credential used to initialize the SDK (see {@link Builder#setCredentials}) is
      * used to access the bucket.
      *
-     * <p>See <a href="https://firebase.google.com/docs/admin/setup#initialize_the_sdk">
-     * Initialize the SDK</a> for code samples and detailed documentation.
+     * <p>See <a href="https://firebase.google.com/docs/storage/admin/start">
+     * Introduction to the Admin Cloud Storage API</a> for code samples and detailed documentation.
      *
-     * @param storageBucket The name of an existing Google Cloud Storage bucket.
+     * @param storageBucket The full name of an existing Google Cloud Storage bucket, excluding any
+     *     protocol prefixes.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setStorageBucket(String storageBucket) {
