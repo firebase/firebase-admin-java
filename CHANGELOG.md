@@ -1,5 +1,10 @@
 # Unreleased
-- 
+
+### Initialization
+
+- [fixed] The [`FirebaseOptions.Builder.setStorageBucket()`](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/FirebaseOptions.Builder.html#setStorageBucket(java.lang.String))
+  method now throws a clear exception when invoked with a bucket URL
+  instead of the name.
 
 # v5.8.0
 
