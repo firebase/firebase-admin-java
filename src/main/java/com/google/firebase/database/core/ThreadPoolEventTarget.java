@@ -24,9 +24,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** ThreadPoolEventTarget is an event target using a configurable threadpool. */
 class ThreadPoolEventTarget implements EventTarget, UncaughtExceptionHandler {
+
+  private static final Logger logger = LoggerFactory.getLogger(ThreadPoolEventTarget.class);
 
   private final ThreadPoolExecutor executor;
   private UncaughtExceptionHandler exceptionHandler;
@@ -92,8 +96,12 @@ class ThreadPoolEventTarget implements EventTarget, UncaughtExceptionHandler {
     synchronized (this) {
       delegate = exceptionHandler;
     }
-    if (delegate != null) {
-      delegate.uncaughtException(t, e);
+    try {
+      if (delegate != null) {
+        delegate.uncaughtException(t, e);
+      }
+    } finally {
+      logger.error("Event handler threw an exception", e);
     }
   }
 }
