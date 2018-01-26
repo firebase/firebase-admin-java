@@ -6,6 +6,11 @@
   method now throws a clear exception when invoked with a bucket URL
   instead of the name.
 
+### Cloud Messaging
+
+- [feature] Added the `FirebaseCloudMessaging` API for sending
+  Firebase notifications and managing topic subscriptions.
+
 # v5.8.0
 
 ### Initialization
