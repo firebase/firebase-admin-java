@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Represents the Android-specific options that can be included in a {@link Message}.
@@ -56,16 +57,17 @@ public class AndroidConfig {
       this.priority = null;
     }
     if (builder.ttl != null) {
-      checkArgument(builder.ttl.endsWith("s"), "ttl must end with 's'");
-      String numeric = builder.ttl.substring(0, builder.ttl.length() - 1);
-      checkArgument(numeric.matches("[0-9.\\-]*"), "malformed ttl string");
-      try {
-        checkArgument(Double.parseDouble(numeric) >= 0, "ttl must not be negative");
-      } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("invalid ttl value", e);
+      checkArgument(builder.ttl >= 0, "ttl must not be negative");
+      long seconds = TimeUnit.MILLISECONDS.toSeconds(builder.ttl);
+      long nanos = TimeUnit.MILLISECONDS.toNanos(builder.ttl - seconds * 1000L);
+      if (nanos > 0) {
+        this.ttl = String.format("%d.%09ds", seconds, nanos);
+      } else {
+        this.ttl = String.format("%ds", seconds);
       }
+    } else {
+      this.ttl = null;
     }
-    this.ttl = builder.ttl;
     this.restrictedPackageName = builder.restrictedPackageName;
     this.data = builder.data.isEmpty() ? null : ImmutableMap.copyOf(builder.data);
     this.notification = builder.notification;
@@ -92,7 +94,7 @@ public class AndroidConfig {
 
     private String collapseKey;
     private Priority priority;
-    private String ttl;
+    private Long ttl;
     private String restrictedPackageName;
     private final Map<String, String> data = new HashMap<>();
     private AndroidNotification notification;
@@ -126,18 +128,12 @@ public class AndroidConfig {
     }
 
     /**
-     * Sets the time-to-live duration of the message. This indicates how long (in seconds)
-     * the message should be kept in FCM storage if the target device is offline. Set to 0 to
-     * send the message immediately. The duration must be encoded as a string, where the
-     * string ends in the suffix "s" (indicating seconds) and is preceded by the number of seconds,
-     * with nanoseconds expressed as fractional seconds. For example, 3 seconds with 0 nanoseconds
-     * should be encoded as {@code "3s"}, while 3 seconds and 1 nanosecond should be
-     * expressed as {@code "3.000000001s"}.
+     * Sets the time-to-live duration of the message in milliseconds.
      *
-     * @param ttl Time-to-live duration encoded as a string with suffix {@code "s"}.
+     * @param ttl Time-to-live duration in milliseconds.
      * @return This builder.
      */
-    public Builder setTtl(String ttl) {
+    public Builder setTtl(long ttl) {
       this.ttl = ttl;
       return this;
     }

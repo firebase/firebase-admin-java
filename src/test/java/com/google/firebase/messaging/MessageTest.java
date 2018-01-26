@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
 public class MessageTest {
@@ -71,7 +72,7 @@ public class MessageTest {
         .setAndroidConfig(AndroidConfig.builder()
             .setCollapseKey("test-key")
             .setPriority(Priority.HIGH)
-            .setTtl("10s")
+            .setTtl(10)
             .setRestrictedPackageName("test-pkg-name")
             .putData("k1", "v1")
             .putAllData(ImmutableMap.of("k2", "v2", "k3", "v3"))
@@ -81,7 +82,7 @@ public class MessageTest {
     Map<String, Object> data = ImmutableMap.<String, Object>of(
         "collapse_key", "test-key",
         "priority", "high",
-        "ttl", "10s",
+        "ttl", "0.010000000s", // 10 ms = 10,000,000 ns
         "restricted_package_name", "test-pkg-name",
         "data", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3")
     );
@@ -94,7 +95,7 @@ public class MessageTest {
         .setAndroidConfig(AndroidConfig.builder()
             .setCollapseKey("test-key")
             .setPriority(Priority.HIGH)
-            .setTtl("10.001s")
+            .setTtl(TimeUnit.DAYS.toMillis(30))
             .setRestrictedPackageName("test-pkg-name")
             .setNotification(AndroidNotification.builder()
                 .setTitle("android-title")
@@ -130,7 +131,7 @@ public class MessageTest {
     Map<String, Object> data = ImmutableMap.of(
         "collapse_key", "test-key",
         "priority", "high",
-        "ttl", "10.001s",
+        "ttl", "2592000s",
         "restricted_package_name", "test-pkg-name",
         "notification", notification
     );
@@ -143,7 +144,7 @@ public class MessageTest {
         .setAndroidConfig(AndroidConfig.builder()
             .setCollapseKey("test-key")
             .setPriority(Priority.NORMAL)
-            .setTtl("10.001s")
+            .setTtl(TimeUnit.SECONDS.toMillis(10))
             .setRestrictedPackageName("test-pkg-name")
             .setNotification(AndroidNotification.builder()
                 .setTitle("android-title")
@@ -169,7 +170,7 @@ public class MessageTest {
     Map<String, Object> data = ImmutableMap.of(
         "collapse_key", "test-key",
         "priority", "normal",
-        "ttl", "10.001s",
+        "ttl", "10s",
         "restricted_package_name", "test-pkg-name",
         "notification", notification
     );
@@ -178,22 +179,11 @@ public class MessageTest {
 
   @Test
   public void testInvalidAndroidConfig() throws IOException {
-    List<AndroidConfig.Builder> configBuilders = ImmutableList.of(
-        AndroidConfig.builder().setTtl(""),
-        AndroidConfig.builder().setTtl("s"),
-        AndroidConfig.builder().setTtl("10"),
-        AndroidConfig.builder().setTtl("10e1s"),
-        AndroidConfig.builder().setTtl("1.2.3s"),
-        AndroidConfig.builder().setTtl("10 s"),
-        AndroidConfig.builder().setTtl("-10s")
-    );
-    for (int i = 0; i < configBuilders.size(); i++) {
-      try {
-        configBuilders.get(i).build();
-        fail("No error thrown for invalid config: " + i);
-      } catch (IllegalArgumentException expected) {
-        // expected
-      }
+    try {
+      AndroidConfig.builder().setTtl(-1).build();
+      fail("No error thrown for invalid ttl");
+    } catch (IllegalArgumentException expected) {
+      // expected
     }
 
     List<AndroidNotification.Builder> notificationBuilders = ImmutableList.of(

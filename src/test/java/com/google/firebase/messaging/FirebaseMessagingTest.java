@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Test;
 
@@ -440,7 +441,7 @@ public class FirebaseMessagingTest {
         Message.builder()
             .setAndroidConfig(AndroidConfig.builder()
                 .setPriority(AndroidConfig.Priority.HIGH)
-                .setTtl("1.23s")
+                .setTtl(TimeUnit.SECONDS.toMillis(123))
                 .setRestrictedPackageName("test-package")
                 .setCollapseKey("test-key")
                 .setNotification(AndroidNotification.builder()
@@ -466,7 +467,7 @@ public class FirebaseMessagingTest {
             "android", ImmutableMap.of(
                 "priority", "high",
                 "collapse_key", "test-key",
-                "ttl", "1.23s",
+                "ttl", "123s",
                 "restricted_package_name", "test-package",
                 "notification", ImmutableMap.builder()
                     .put("click_action", "test-action")
