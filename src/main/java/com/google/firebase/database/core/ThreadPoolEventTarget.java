@@ -92,11 +92,11 @@ class ThreadPoolEventTarget implements EventTarget, UncaughtExceptionHandler {
 
   @Override
   public void uncaughtException(Thread t, Throwable e) {
-    UncaughtExceptionHandler delegate;
-    synchronized (this) {
-      delegate = exceptionHandler;
-    }
     try {
+      UncaughtExceptionHandler delegate;
+      synchronized (this) {
+        delegate = exceptionHandler;
+      }
       if (delegate != null) {
         delegate.uncaughtException(t, e);
       }
