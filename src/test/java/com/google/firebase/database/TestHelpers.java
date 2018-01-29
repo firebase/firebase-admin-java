@@ -34,7 +34,6 @@ import com.google.firebase.database.future.WriteFuture;
 import com.google.firebase.database.logging.DefaultLogger;
 import com.google.firebase.database.logging.Logger.Level;
 import com.google.firebase.database.snapshot.ChildKey;
-import com.google.firebase.database.util.GAuthToken;
 import com.google.firebase.database.util.JsonMapper;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 import com.google.firebase.internal.NonNull;
@@ -283,7 +282,7 @@ public class TestHelpers {
    * the wrapForErrorHandling method. Invoke this method in integration tests from an After
    * test fixture.
    *
-   * @param app AFireabseApp instance already instrumented by wrapForErrorHandling
+   * @param app A FirebaseApp instance already instrumented by wrapForErrorHandling
    */
   public static void assertAndUnwrapErrorHandlers(FirebaseApp app) {
     DatabaseConfig context = getDatabaseConfig(app);

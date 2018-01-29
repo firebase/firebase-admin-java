@@ -11,6 +11,10 @@
 - [feature] Added the `FirebaseCloudMessaging` API for sending
   Firebase notifications and managing topic subscriptions.
 
+### Realtime Database
+
+- [fixed] Exceptions thrown by database event handlers are now logged.
+
 # v5.8.0
 
 ### Initialization
