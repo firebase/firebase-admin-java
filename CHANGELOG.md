@@ -6,6 +6,10 @@
   method now throws a clear exception when invoked with a bucket URL
   instead of the name.
 
+### Realtime Database
+
+- [fixed] Exceptions thrown by database event handlers are now logged.
+
 # v5.8.0
 
 ### Initialization
