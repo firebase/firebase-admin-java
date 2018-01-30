@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import java.util.Map;
  * Represents a message that can be sent via Firebase Cloud Messaging (FCM). Contains payload
  * information as well as the recipient information. In particular, the message must contain
  * exactly one of token, topic or condition parameters. Instances of this class are thread-safe
- * and immutable. Use {@link Message.Builder} co crete new instances.
+ * and immutable. Use {@link Message.Builder} to crete new instances.
  *
  * @see
  * <a href="https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages">FCM message
@@ -104,9 +104,7 @@ public class Message {
     private String topic;
     private String condition;
 
-    private Builder() {
-
-    }
+    private Builder() {}
 
     /**
      * Sets the notification information to be included in the message.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,24 +39,20 @@ public class TopicManagementResponse {
       .build();
 
   private final int successCount;
-  private final int failureCount;
   private final List<Error> errors;
 
   TopicManagementResponse(List<Map<String, Object>> results) {
     int successCount = 0;
-    int failureCount = 0;
     ImmutableList.Builder<Error> errors = ImmutableList.builder();
     for (int i = 0; i < results.size(); i++) {
       Map result = results.get(i);
       if (result.isEmpty()) {
         successCount++;
       } else {
-        failureCount++;
         errors.add(new Error(i, (String) result.get("error")));
       }
     }
     this.successCount = successCount;
-    this.failureCount = failureCount;
     this.errors = errors.build();
   }
 
@@ -76,7 +72,7 @@ public class TopicManagementResponse {
    * @return The number of failures.
    */
   public int getFailureCount() {
-    return failureCount;
+    return errors.size();
   }
 
   /**

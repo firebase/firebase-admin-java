@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
-import com.google.common.primitives.Booleans;
 
 /**
  * Represents the <a href="https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/PayloadKeyReference.html">
@@ -47,10 +46,8 @@ public class Aps {
   private final String threadId;
 
   private Aps(Builder builder) {
-    int alerts = Booleans.countTrue(
-        !Strings.isNullOrEmpty(builder.alertString),
-        builder.alert != null);
-    checkArgument(alerts != 2, "Multiple alert specifications (string and ApsAlert) found.");
+    checkArgument(Strings.isNullOrEmpty(builder.alertString) || (builder.alert == null),
+        "Multiple alert specifications (string and ApsAlert) found.");
     if (builder.alert != null) {
       this.alert = builder.alert;
     } else {
@@ -82,6 +79,8 @@ public class Aps {
     private String category;
     private String threadId;
 
+    private Builder() {}
+
     /**
      * Sets the alert field as a string.
      *
@@ -105,8 +104,8 @@ public class Aps {
     }
 
     /**
-     * Sets the badge to be displayed with the message. Set to 0 to remove the badge. Do not
-     * specify any value to keep the badge unchanged.
+     * Sets the badge to be displayed with the message. Set to 0 to remove the badge. When not
+     * invoked, the badge will remain unchanged.
      *
      * @param badge An integer representing the badge.
      * @return This builder.
@@ -130,7 +129,7 @@ public class Aps {
     /**
      * Specifies whether to configure a background update notification.
      *
-     * @param contentAvailable true to perform a background update.
+     * @param contentAvailable True to perform a background update.
      * @return This builder.
      */
     public Builder setContentAvailable(boolean contentAvailable) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,8 +118,7 @@ public class AndroidNotification {
     private String titleLocKey;
     private List<String> titleLocArgs = new ArrayList<>();
 
-    private Builder() {
-    }
+    private Builder() {}
 
     /**
      * Sets the title of the Android notification. When provided, overrides the title set
@@ -192,7 +191,7 @@ public class AndroidNotification {
 
     /**
      * Sets the action associated with a user click on the notification. If specified, an activity
-     * with a matching intent filter is launched when a user clicks on the notification.
+     * with a matching Intent Filter is launched when a user clicks on the notification.
      *
      * @param clickAction Click action name.
      * @return This builder.

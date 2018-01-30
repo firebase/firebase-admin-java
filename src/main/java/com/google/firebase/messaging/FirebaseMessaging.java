@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,9 +140,10 @@ public class FirebaseMessaging {
   }
 
   /**
-   * Sends the given {@link Message} via Firebase Cloud Messaging. If the {@code dryRun} option
-   * is set to true, the message will not be actually sent. Instead FCM performs all the
-   * necessary validations, and emulates the send operation.
+   * Sends the given {@link Message} via Firebase Cloud Messaging.
+   *
+   * <p>If the {@code dryRun} option is set to true, the message will not be actually sent. Instead
+   * FCM performs all the necessary validations, and emulates the send operation.
    *
    * @param message A non-null {@link Message} to be sent.
    * @param dryRun a boolean indicating whether to perform a dry run (validation only) of the send.

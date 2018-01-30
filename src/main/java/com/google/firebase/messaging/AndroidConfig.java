@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2018 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,9 +59,9 @@ public class AndroidConfig {
     if (builder.ttl != null) {
       checkArgument(builder.ttl >= 0, "ttl must not be negative");
       long seconds = TimeUnit.MILLISECONDS.toSeconds(builder.ttl);
-      long nanos = TimeUnit.MILLISECONDS.toNanos(builder.ttl - seconds * 1000L);
-      if (nanos > 0) {
-        this.ttl = String.format("%d.%09ds", seconds, nanos);
+      long subsecondNanos = TimeUnit.MILLISECONDS.toNanos(builder.ttl - seconds * 1000L);
+      if (subsecondNanos > 0) {
+        this.ttl = String.format("%d.%09ds", seconds, subsecondNanos);
       } else {
         this.ttl = String.format("%ds", seconds);
       }
@@ -99,9 +99,7 @@ public class AndroidConfig {
     private final Map<String, String> data = new HashMap<>();
     private AndroidNotification notification;
 
-    private Builder() {
-
-    }
+    private Builder() {}
 
     /**
      * Sets a collapse key for the message. Collapse key serves as an identifier for a group of
@@ -151,8 +149,8 @@ public class AndroidConfig {
     }
 
     /**
-     * Adds the given key-value pair to the message as a data field. Key or the value may not be
-     * null. When set, overrides any data fields set using the methods
+     * Adds the given key-value pair to the message as a data field. Key and the value may not be
+     * null. When set, overrides any data fields set on the top-level {@link Message} via
      * {@link Message.Builder#putData(String, String)} and {@link Message.Builder#putAllData(Map)}.
      *
      * @param key Name of the data field. Must not be null.
@@ -166,8 +164,9 @@ public class AndroidConfig {
 
     /**
      * Adds all the key-value pairs in the given map to the message as data fields. None of the
-     * keys or values may be null. When set, overrides any data fields set using the methods
-     * {@link Message.Builder#putData(String, String)} and {@link Message.Builder#putAllData(Map)}.
+     * keys and values may be null. When set, overrides any data fields set on the top-level
+     * {@link Message} via {@link Message.Builder#putData(String, String)} and
+     * {@link Message.Builder#putAllData(Map)}.
      *
      * @param map A non-null map of data fields. Map must not contain null keys or values.
      * @return This builder.
