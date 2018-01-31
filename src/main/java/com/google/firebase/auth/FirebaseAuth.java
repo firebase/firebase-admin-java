@@ -40,7 +40,7 @@ import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.TaskToApiFuture;
 import com.google.firebase.tasks.Task;
-
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -201,6 +201,10 @@ public class FirebaseAuth {
    * @deprecated Use {@link #verifyIdTokenAsync(String)}
    */
   public Task<FirebaseToken> verifyIdToken(final String token) {
+    return verifyIdToken(token, false);
+  }
+ 
+  private Task<FirebaseToken> verifyIdToken(final String token, final boolean checkRevoked) {
     checkNotDestroyed();
     checkState(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifyIdToken()");
@@ -217,10 +221,46 @@ public class FirebaseAuth {
 
         // This will throw a FirebaseAuthException with details on how the token is invalid.
         firebaseTokenVerifier.verifyTokenAndSignature(firebaseToken.getToken());
-
+        
+        if (checkRevoked) {
+          String uid = firebaseToken.getUid();
+          UserRecord user = userManager.getUserById(uid);
+          if (user.getTokensValidAfterTime() 
+              > ((long)firebaseToken.getClaims().get("iat")) * 1000) {
+                throw new FirebaseAuthException("id-token-revoked", "Firebase auth token revoked");
+          }        
+        }       
         return firebaseToken;
       }
     });
+  }
+
+  private Task<Void> revokeRefreshTokens(String uid) {
+    final UpdateRequest request = new UpdateRequest(uid).setValidSince(new Date().getTime() / 1000);
+    return call(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        userManager.updateUser(request, jsonFactory);
+        return null;
+      }
+    });
+  }
+
+  /**
+   * 
+   * 
+   * 
+   * 
+   * 
+   * 
+   * 
+   * 
+   * 
+   * 
+   * 
+   */
+  public ApiFuture<Void> revokeRefreshTokensAsync(String uid) {
+    return new TaskToApiFuture<>(revokeRefreshTokens(uid));
   }
 
   /**
@@ -244,7 +284,33 @@ public class FirebaseAuth {
    *     unsuccessfully with the failure Exception.
    */
   public ApiFuture<FirebaseToken> verifyIdTokenAsync(final String token) {
-    return new TaskToApiFuture<>(verifyIdToken(token));
+    return verifyIdTokenAsync(token, false);
+  }
+
+  /**
+   * Parses and verifies a Firebase ID Token and if requested, checks whether it was revoked.
+   *
+   * <p>A Firebase application can identify itself to a trusted backend server by sending its
+   * Firebase ID Token (accessible via the getToken API in the Firebase Authentication client) with
+   * its request.
+   *
+   * <p>The backend server can then use the verifyIdToken() method to verify the token is valid,
+   * meaning: the token is properly signed, has not expired, and it was issued for the project
+   * associated with this FirebaseAuth instance (which by default is extracted from your service
+   * account)
+   *
+   * <p>If the token is valid, the returned Future will complete successfully and provide a
+   * parsed version of the token from which the UID and other claims in the token can be inspected.
+   * If the token is invalid, the future throws an exception indicating the failure.
+   *
+   * @param token A Firebase ID Token to verify and parse.
+   * @param checkRevoked A boolean denoting whether to check if the tokens were revoked.
+   * @return An {@code ApiFuture} which will complete successfully with the parsed token, or
+   *     unsuccessfully with the failure Exception.
+   */
+  public ApiFuture<FirebaseToken> verifyIdTokenAsync(final String token,
+                                                     final boolean checkRevoked) {
+    return new TaskToApiFuture<>(verifyIdToken(token, checkRevoked));
   }
 
   /**

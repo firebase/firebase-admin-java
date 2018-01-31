@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,7 @@ public class UserRecord implements UserInfo {
   private final String photoUrl;
   private final boolean disabled;
   private final ProviderUserInfo[] providers;
+  private final long tokensValidAfterTime;
   private final UserMetadata userMetadata;
   private final Map<String, Object> customClaims;
 
@@ -79,6 +81,7 @@ public class UserRecord implements UserInfo {
         this.providers[i] = new ProviderUserInfo(response.getProviders()[i]);
       }
     }
+    this.tokensValidAfterTime = response.getValidSince() * 1000;
     this.userMetadata = new UserMetadata(response.getCreatedAt(), response.getLastLoginAt());
     this.customClaims = parseCustomClaims(response.getCustomClaims(), jsonFactory);
   }
@@ -189,6 +192,15 @@ public class UserRecord implements UserInfo {
   }
 
   /**
+   * Returns the timestamp beginning with which tokens are valid in seconds since the epoch.
+   *
+   * @return the timestamp beginning with which tokens are valid in seconds since the epoch.
+   */
+  public long getTokensValidAfterTime() {
+    return tokensValidAfterTime;
+  }
+
+  /**
    * Returns additional metadata associated with this user.
    *
    * @return a non-null UserMetadata instance.
@@ -243,6 +255,10 @@ public class UserRecord implements UserInfo {
       checkArgument(!FirebaseUserManager.RESERVED_CLAIMS.contains(key),
           "Claim '" + key + "' is reserved and cannot be set");
     }
+  }
+
+  private static void checkValidSince(long epochSeconds) {
+    checkArgument(epochSeconds < 1e12, "validSince must be in epoch seconds");
   }
 
   private static String serializeCustomClaims(Map customClaims, JsonFactory jsonFactory) {
@@ -496,6 +512,12 @@ public class UserRecord implements UserInfo {
     public UpdateRequest setCustomClaims(Map<String,Object> customClaims) {
       checkCustomClaims(customClaims);
       properties.put(CUSTOM_ATTRIBUTES, customClaims);
+      return this;
+    }
+
+    public UpdateRequest setValidSince(long epochSeconds) {
+      checkValidSince(epochSeconds);
+      properties.put("validSince", epochSeconds);
       return this;
     }
 

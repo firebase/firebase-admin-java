@@ -358,6 +358,30 @@ public class FirebaseAuthIT {
   }
 
   @Test
+  public void testVerifyIDToken() throws Exception {
+    String customToken = auth.createCustomTokenAsync("user_ver").get();
+    String idToken = signInWithCustomToken(customToken);
+    FirebaseToken decoded = auth.verifyIdTokenAsync(idToken).get();
+    assertEquals("user_ver", decoded.getUid());
+    decoded = auth.verifyIdTokenAsync(idToken, true).get();
+    assertEquals("user_ver", decoded.getUid());
+    Thread.sleep(1100);
+    auth.revokeRefreshTokensAsync("user_ver").get();
+    decoded = auth.verifyIdTokenAsync(idToken, false).get();
+    assertEquals("user_ver", decoded.getUid());
+    try {
+      decoded = auth.verifyIdTokenAsync(idToken, true).get();
+      fail("expecting exception");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertEquals("id-token-revoked", ((FirebaseAuthException) e.getCause()).getErrorCode());
+    }
+    idToken = signInWithCustomToken(customToken);
+    decoded = auth.verifyIdTokenAsync(idToken, true).get();
+    assertEquals("user_ver", decoded.getUid());    
+  }
+
+  @Test
   public void testCustomTokenWithClaims() throws Exception {
     Map<String, Object> devClaims = ImmutableMap.<String, Object>of(
         "premium", true, "subscription", "silver");
