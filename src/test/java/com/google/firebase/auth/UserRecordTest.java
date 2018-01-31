@@ -9,9 +9,9 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
-import com.google.firebase.auth.UserRecord.UpdateRequest;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
