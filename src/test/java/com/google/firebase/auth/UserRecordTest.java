@@ -11,11 +11,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
+import com.google.firebase.auth.UserRecord.UpdateRequest;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.Date;
 import org.junit.Test;
 
 public class UserRecordTest {
@@ -144,6 +146,17 @@ public class UserRecordTest {
     UserRecord userRecord = parseUser(json);
     assertEquals("user", userRecord.getUid());
     assertEquals(0, userRecord.getCustomClaims().size());
+  }
+
+  @Test
+  public void testInvalidVaidSince() {
+    UpdateRequest update = new UpdateRequest("test");
+    try {
+      update.setValidSince(new Date().getTime());
+      fail("No error thrown for time in milliseconds");
+    } catch (Exception ignore) {
+      // expected
+    }
   }
 
   @Test

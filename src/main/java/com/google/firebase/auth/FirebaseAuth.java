@@ -236,6 +236,7 @@ public class FirebaseAuth {
   }
 
   private Task<Void> revokeRefreshTokens(String uid) {
+    checkNotDestroyed();  
     final UpdateRequest request = new UpdateRequest(uid).setValidSince(new Date().getTime() / 1000);
     return call(new Callable<Void>() {
       @Override

@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.api.client.json.JsonFactory;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -258,7 +259,8 @@ public class UserRecord implements UserInfo {
   }
 
   private static void checkValidSince(long epochSeconds) {
-    checkArgument(epochSeconds < 1e12, "validSince must be in epoch seconds");
+    checkArgument(epochSeconds < 1e12,
+                  "validSince must be in epoch seconds: " + Long.toString(epochSeconds));
   }
 
   private static String serializeCustomClaims(Map customClaims, JsonFactory jsonFactory) {
@@ -515,7 +517,8 @@ public class UserRecord implements UserInfo {
       return this;
     }
 
-    public UpdateRequest setValidSince(long epochSeconds) {
+    @VisibleForTesting
+    UpdateRequest setValidSince(long epochSeconds) {
       checkValidSince(epochSeconds);
       properties.put("validSince", epochSeconds);
       return this;
