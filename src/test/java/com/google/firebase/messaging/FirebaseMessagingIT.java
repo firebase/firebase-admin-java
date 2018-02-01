@@ -41,7 +41,7 @@ public class FirebaseMessagingIT {
     Message message = Message.builder()
         .setNotification(new Notification("Title", "Body"))
         .setAndroidConfig(AndroidConfig.builder()
-            .setRestrictedPackageName("com.demoapps.hkj")
+            .setRestrictedPackageName("com.google.firebase.testing")
             .build())
         .setApnsConfig(ApnsConfig.builder()
             .setAps(Aps.builder()
