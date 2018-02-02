@@ -149,17 +149,6 @@ public class UserRecordTest {
   }
 
   @Test
-  public void testInvalidVaidSince() {
-    UpdateRequest update = new UpdateRequest("test");
-    try {
-      update.setValidSince(new Date().getTime());
-      fail("No error thrown for time in milliseconds");
-    } catch (Exception ignore) {
-      // expected
-    }
-  }
-
-  @Test
   public void testExportedUserUidOnly() throws IOException {
     ImmutableMap<String, Object> resp = ImmutableMap.<String, Object>of("localId", "user");
     String json = JSON_FACTORY.toString(resp);
