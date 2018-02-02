@@ -225,7 +225,7 @@ public class FirebaseAuth {
         if (checkRevoked) {
           String uid = firebaseToken.getUid();
           UserRecord user = userManager.getUserById(uid);
-          if (user.getTokensValidAfterTime() 
+          if (user.getTokensValidAfterTimestamp() 
               > ((long)firebaseToken.getClaims().get("iat")) * 1000) {
                 throw new FirebaseAuthException("id-token-revoked", "Firebase auth token revoked");
           }        

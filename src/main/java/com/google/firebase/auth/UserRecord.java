@@ -59,7 +59,7 @@ public class UserRecord implements UserInfo {
   private final String photoUrl;
   private final boolean disabled;
   private final ProviderUserInfo[] providers;
-  private final long tokensValidAfterTime;
+  private final long tokensValidAfterTimestamp;
   private final UserMetadata userMetadata;
   private final Map<String, Object> customClaims;
 
@@ -82,7 +82,7 @@ public class UserRecord implements UserInfo {
         this.providers[i] = new ProviderUserInfo(response.getProviders()[i]);
       }
     }
-    this.tokensValidAfterTime = response.getValidSince() * 1000;
+    this.tokensValidAfterTimestamp = response.getValidSince() * 1000;
     this.userMetadata = new UserMetadata(response.getCreatedAt(), response.getLastLoginAt());
     this.customClaims = parseCustomClaims(response.getCustomClaims(), jsonFactory);
   }
@@ -197,8 +197,8 @@ public class UserRecord implements UserInfo {
    *
    * @return the timestamp beginning with which tokens are valid in seconds since the epoch.
    */
-  public long getTokensValidAfterTime() {
-    return tokensValidAfterTime;
+  public long getTokensValidAfterTimestamp() {
+    return tokensValidAfterTimestamp;
   }
 
   /**
