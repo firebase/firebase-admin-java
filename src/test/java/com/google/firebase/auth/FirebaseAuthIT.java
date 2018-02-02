@@ -379,6 +379,7 @@ public class FirebaseAuthIT {
     idToken = signInWithCustomToken(customToken);
     decoded = auth.verifyIdTokenAsync(idToken, true).get();
     assertEquals("user_ver", decoded.getUid());    
+    auth.deleteUserAsync("user_ver");
   }
 
   @Test
