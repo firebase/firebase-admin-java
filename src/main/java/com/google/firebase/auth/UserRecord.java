@@ -258,11 +258,6 @@ public class UserRecord implements UserInfo {
     }
   }
 
-  private static void checkValidSince(long epochSeconds) {
-    checkArgument(epochSeconds < 1e12,
-                  "validSince must be in epoch seconds: " + Long.toString(epochSeconds));
-  }
-
   private static String serializeCustomClaims(Map customClaims, JsonFactory jsonFactory) {
     checkNotNull(jsonFactory, "JsonFactory must not be null");
     if (customClaims == null || customClaims.isEmpty()) {
@@ -519,7 +514,6 @@ public class UserRecord implements UserInfo {
 
     @VisibleForTesting
     UpdateRequest setValidSince(long epochSeconds) {
-      checkValidSince(epochSeconds);
       properties.put("validSince", epochSeconds);
       return this;
     }

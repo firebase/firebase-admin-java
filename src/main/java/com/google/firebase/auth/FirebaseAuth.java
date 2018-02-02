@@ -248,17 +248,15 @@ public class FirebaseAuth {
   }
 
   /**
+   * Revokes all refresh tokens for the specified user.
    * 
+   * <p> In addition to revoking all refresh tokens for a user, all ID tokens issued
+   * before revocation will also be revoked at the Auth backend. Any request with an
+   * ID token generated before revocation will be rejected with a token expired error.
    * 
-   * 
-   * 
-   * 
-   * 
-   * 
-   * 
-   * 
-   * 
-   * 
+   * @param uid The user id for which tokens are revoked.
+   * @return An {@code ApiFuture} which will complete successfully or if updating the user fails,
+   *     unsuccessfully with the failure Exception.
    */
   public ApiFuture<Void> revokeRefreshTokensAsync(String uid) {
     return new TaskToApiFuture<>(revokeRefreshTokens(uid));
@@ -299,9 +297,16 @@ public class FirebaseAuth {
    * meaning: the token is properly signed, has not expired, and it was issued for the project
    * associated with this FirebaseAuth instance (which by default is extracted from your service
    * account)
+   * 
+   * <p> If a request was made to check revoked, the issued-at property of the token (like all 
+   * token timestamps, it is in seconds since the epoch) will be compared with the "tokens valid
+   * after time" property of the user. (Which, like other user property timetamps is in
+   * milliseconds since the epoch).
+   * If the token was issued before the valid-after time, it is considered revoked.
    *
-   * <p>If the token is valid, the returned Future will complete successfully and provide a
-   * parsed version of the token from which the UID and other claims in the token can be inspected.
+   * <p>If the token is valid, and not revoked, the returned Future will complete successfully and
+   * provide a parsed version of the token from which the UID and other claims in the token can be
+   * inspected.
    * If the token is invalid, the future throws an exception indicating the failure.
    *
    * @param token A Firebase ID Token to verify and parse.
