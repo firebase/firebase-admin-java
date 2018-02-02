@@ -250,7 +250,7 @@ public class FirebaseAuth {
   /**
    * Revokes all refresh tokens for the specified user.
    * 
-   * <p> In addition to revoking all refresh tokens for a user, all ID tokens issued
+   * <p>In addition to revoking all refresh tokens for a user, all ID tokens issued
    * before revocation will also be revoked at the Auth backend. Any request with an
    * ID token generated before revocation will be rejected with a token expired error.
    * 
@@ -298,7 +298,7 @@ public class FirebaseAuth {
    * associated with this FirebaseAuth instance (which by default is extracted from your service
    * account)
    * 
-   * <p> If a request was made to check revoked, the issued-at property of the token (like all 
+   * <p>If a request was made to check revoked, the issued-at property of the token (like all 
    * token timestamps, it is in seconds since the epoch) will be compared with the "tokens valid
    * after time" property of the user. (Which, like other user property timetamps is in
    * milliseconds since the epoch).
