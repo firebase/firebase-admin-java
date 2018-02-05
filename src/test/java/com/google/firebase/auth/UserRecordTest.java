@@ -165,6 +165,7 @@ public class UserRecordTest {
     assertEquals(0, userRecord.getProviderData().length);
     assertNull(userRecord.getPasswordHash());
     assertNull(userRecord.getPasswordSalt());
+    assertEquals(0L, userRecord.getTokensValidAfterTimestamp());
   }
 
   @Test
