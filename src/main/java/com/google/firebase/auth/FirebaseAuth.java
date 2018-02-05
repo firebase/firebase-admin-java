@@ -227,8 +227,8 @@ public class FirebaseAuth {
           UserRecord user = userManager.getUserById(uid);
           long issuedAt = (long) firebaseToken.getClaims().get("iat");
           if (user.getTokensValidAfterTimestamp() > issuedAt * 1000) {
-                throw new FirebaseAuthException(FirebaseUserManager.ID_TOKEN_REVOKED_ERROR,
-                                                "Firebase auth token revoked");
+              throw new FirebaseAuthException(FirebaseUserManager.ID_TOKEN_REVOKED_ERROR,
+                                              "Firebase auth token revoked");
           }        
         }       
         return firebaseToken;
@@ -237,9 +237,9 @@ public class FirebaseAuth {
   }
 
   private Task<Void> revokeRefreshTokens(String uid) {
-    checkNotDestroyed();  
-    final UpdateRequest request = new UpdateRequest(uid).setValidSince(
-        (int) (System.currentTimeMillis() / 1000));
+    checkNotDestroyed();
+    int currentTimeSeconds = (int) (System.currentTimeMillis() / 1000);
+    final UpdateRequest request = new UpdateRequest(uid).setValidSince(currentTimeSeconds);
     return call(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
@@ -252,9 +252,9 @@ public class FirebaseAuth {
   /**
    * Revokes all refresh tokens for the specified user.
    * 
-   * <p>Updates the user's tokensValidAfterTimestamp to the current UTC second expressed in
-   * milliseconds since the epoch. It is important that the server on which this is called has its
-   * clock set correctly and synchronized.
+   * <p>Updates the user's tokensValidAfterTimestamp to the current UTC time expressed in
+   * milliseconds since the epoch and truncated to 1 second accuracy. It is important that the
+   * server on which this is called has its clock set correctly and synchronized.
    * 
    * <p>While this will revoke all sessions for a specified user and disable any new ID tokens for
    * existing sessions from getting minted, existing ID tokens may remain active until their
@@ -285,8 +285,8 @@ public class FirebaseAuth {
    * parsed version of the token from which the UID and other claims in the token can be inspected.
    * If the token is invalid, the future throws an exception indicating the failure.
    * 
-   * <p>This does not check whether a token has been revoked,
-   * see `verifyIdTokenAsync(token, checkRevoked)` below.
+   * <p>This does not check whether a token has been revoked. 
+   * See `verifyIdTokenAsync(token, checkRevoked)` below.
    *
    * @param token A Firebase ID Token to verify and parse.
    * @return An {@code ApiFuture} which will complete successfully with the parsed token, or

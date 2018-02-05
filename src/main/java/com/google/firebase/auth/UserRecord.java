@@ -193,10 +193,11 @@ public class UserRecord implements UserInfo {
   }
 
   /**
-   * Returns the timestamp beginning with which tokens are valid in milliseconds since the epoch.
-   * Truncated to 1 second accuracy.
-   *
-   * @return the timestamp beginning with which tokens are valid in milliseconds since the epoch.
+   * Returns a timestamp in milliseconds since epoch, truncated down to the closest second. 
+   * Tokens minted before this timestamp are considered invalid.
+   * 
+   * @return Timestamp in milliseconds since the epoch. Tokens minted before this timestamp are
+   * considered invalid.
    */
   public long getTokensValidAfterTimestamp() {
     return tokensValidAfterTimestamp;
@@ -260,9 +261,8 @@ public class UserRecord implements UserInfo {
   }
 
   private static void checkValidSince(long epochSeconds) {
-    checkArgument(epochSeconds > 0,
-                  "validSince must be greater than 0 in seconds since the epoch: " 
-                  + Long.toString(epochSeconds));
+    checkArgument(epochSeconds > 0, "validSince (seconds since epoch) must be greater than 0: "
+        + Long.toString(epochSeconds));
   }
 
   private static String serializeCustomClaims(Map customClaims, JsonFactory jsonFactory) {
