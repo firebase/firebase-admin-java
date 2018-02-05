@@ -225,9 +225,10 @@ public class FirebaseAuth {
         if (checkRevoked) {
           String uid = firebaseToken.getUid();
           UserRecord user = userManager.getUserById(uid);
-          if (user.getTokensValidAfterTimestamp() 
-              > ((long)firebaseToken.getClaims().get("iat")) * 1000) {
-                throw new FirebaseAuthException("id-token-revoked", "Firebase auth token revoked");
+          long issuedAt = (long) firebaseToken.getClaims().get("iat");
+          if (user.getTokensValidAfterTimestamp() > issuedAt * 1000) {
+                throw new FirebaseAuthException(FirebaseUserManager.ID_TOKEN_REVOKED_ERROR,
+                                                "Firebase auth token revoked");
           }        
         }       
         return firebaseToken;
@@ -237,7 +238,8 @@ public class FirebaseAuth {
 
   private Task<Void> revokeRefreshTokens(String uid) {
     checkNotDestroyed();  
-    final UpdateRequest request = new UpdateRequest(uid).setValidSince(new Date().getTime() / 1000);
+    final UpdateRequest request = new UpdateRequest(uid).setValidSince(
+        (int) (System.currentTimeMillis() / 1000));
     return call(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
@@ -250,9 +252,14 @@ public class FirebaseAuth {
   /**
    * Revokes all refresh tokens for the specified user.
    * 
-   * <p>In addition to revoking all refresh tokens for a user, all ID tokens issued
-   * before revocation will also be revoked at the Auth backend. Any request with an
-   * ID token generated before revocation will be rejected with a token expired error.
+   * <p>Updates the user's tokensValidAfterTimestamp to the current UTC second expressed in
+   * milliseconds since the epoch. It is important that the server on which this is called has its
+   * clock set correctly and synchronized.
+   * 
+   * <p>While this will revoke all sessions for a specified user and disable any new ID tokens for
+   * existing sessions from getting minted, existing ID tokens may remain active until their
+   * natural expiration (one hour). 
+   * To verify that ID tokens are revoked, use `verifyIdToken(idToken, true)`.
    * 
    * @param uid The user id for which tokens are revoked.
    * @return An {@code ApiFuture} which will complete successfully or if updating the user fails,
@@ -277,6 +284,9 @@ public class FirebaseAuth {
    * <p>If the token is valid, the returned Future will complete successfully and provide a
    * parsed version of the token from which the UID and other claims in the token can be inspected.
    * If the token is invalid, the future throws an exception indicating the failure.
+   * 
+   * <p>This does not check whether a token has been revoked,
+   * see `verifyIdTokenAsync(token, checkRevoked)` below.
    *
    * @param token A Firebase ID Token to verify and parse.
    * @return An {@code ApiFuture} which will complete successfully with the parsed token, or
@@ -298,16 +308,13 @@ public class FirebaseAuth {
    * associated with this FirebaseAuth instance (which by default is extracted from your service
    * account)
    * 
-   * <p>If a request was made to check revoked, the issued-at property of the token (like all 
-   * token timestamps, it is in seconds since the epoch) will be compared with the "tokens valid
-   * after time" property of the user. (Which, like other user property timetamps is in
-   * milliseconds since the epoch).
-   * If the token was issued before the valid-after time, it is considered revoked.
-   *
+   * <p>If `checkRevoked` is true, additionally checks if the token has been revoked.
+   * 
    * <p>If the token is valid, and not revoked, the returned Future will complete successfully and
    * provide a parsed version of the token from which the UID and other claims in the token can be
    * inspected.
-   * If the token is invalid, the future throws an exception indicating the failure.
+   * If the token is invalid or has been revoked, the future throws an exception indicating the
+   * failure.
    *
    * @param token A Firebase ID Token to verify and parse.
    * @param checkRevoked A boolean denoting whether to check if the tokens were revoked.

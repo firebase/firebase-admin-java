@@ -195,4 +195,16 @@ public class UserRecordTest {
         .parseAndClose(stream, Charset.defaultCharset(), DownloadAccountResponse.User.class);
     return new ExportedUserRecord(user, JSON_FACTORY);
   }
+
+
+  @Test
+  public void testInvalidVaidSince() {
+    UpdateRequest update = new UpdateRequest("test");
+    try {
+      update.setValidSince(-1);
+      fail("No error thrown for negative time");
+    } catch (Exception ignore) {
+      // expected
+    }
+  }
 }

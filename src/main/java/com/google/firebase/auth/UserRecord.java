@@ -193,9 +193,10 @@ public class UserRecord implements UserInfo {
   }
 
   /**
-   * Returns the timestamp beginning with which tokens are valid in seconds since the epoch.
+   * Returns the timestamp beginning with which tokens are valid in milliseconds since the epoch.
+   * Truncated to 1 second accuracy.
    *
-   * @return the timestamp beginning with which tokens are valid in seconds since the epoch.
+   * @return the timestamp beginning with which tokens are valid in milliseconds since the epoch.
    */
   public long getTokensValidAfterTimestamp() {
     return tokensValidAfterTimestamp;
@@ -256,6 +257,12 @@ public class UserRecord implements UserInfo {
       checkArgument(!FirebaseUserManager.RESERVED_CLAIMS.contains(key),
           "Claim '" + key + "' is reserved and cannot be set");
     }
+  }
+
+  private static void checkValidSince(long epochSeconds) {
+    checkArgument(epochSeconds > 0,
+                  "validSince must be greater than 0 in seconds since the epoch: " 
+                  + Long.toString(epochSeconds));
   }
 
   private static String serializeCustomClaims(Map customClaims, JsonFactory jsonFactory) {
@@ -512,8 +519,8 @@ public class UserRecord implements UserInfo {
       return this;
     }
 
-    @VisibleForTesting
     UpdateRequest setValidSince(long epochSeconds) {
+      checkValidSince(epochSeconds);
       properties.put("validSince", epochSeconds);
       return this;
     }

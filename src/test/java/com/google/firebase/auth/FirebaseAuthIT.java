@@ -358,28 +358,29 @@ public class FirebaseAuthIT {
   }
 
   @Test
-  public void testVerifyIDToken() throws Exception {
-    String customToken = auth.createCustomTokenAsync("user_ver").get();
+  public void testVerifyIdToken() throws Exception {
+    String customToken = auth.createCustomTokenAsync("user2").get();
     String idToken = signInWithCustomToken(customToken);
     FirebaseToken decoded = auth.verifyIdTokenAsync(idToken).get();
-    assertEquals("user_ver", decoded.getUid());
+    assertEquals("user2", decoded.getUid());
     decoded = auth.verifyIdTokenAsync(idToken, true).get();
-    assertEquals("user_ver", decoded.getUid());
-    Thread.sleep(1100);
-    auth.revokeRefreshTokensAsync("user_ver").get();
+    assertEquals("user2", decoded.getUid());
+    Thread.sleep(1000);
+    auth.revokeRefreshTokensAsync("user2").get();
     decoded = auth.verifyIdTokenAsync(idToken, false).get();
-    assertEquals("user_ver", decoded.getUid());
+    assertEquals("user2", decoded.getUid());
     try {
       decoded = auth.verifyIdTokenAsync(idToken, true).get();
       fail("expecting exception");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals("id-token-revoked", ((FirebaseAuthException) e.getCause()).getErrorCode());
+      assertEquals(FirebaseUserManager.ID_TOKEN_REVOKED_ERROR,
+                   ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
     idToken = signInWithCustomToken(customToken);
     decoded = auth.verifyIdTokenAsync(idToken, true).get();
-    assertEquals("user_ver", decoded.getUid());    
-    auth.deleteUserAsync("user_ver");
+    assertEquals("user2", decoded.getUid());    
+    auth.deleteUserAsync("user2");
   }
 
   @Test
