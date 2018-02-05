@@ -197,7 +197,7 @@ public class UserRecord implements UserInfo {
    * Tokens minted before this timestamp are considered invalid.
    * 
    * @return Timestamp in milliseconds since the epoch. Tokens minted before this timestamp are
-   * considered invalid.
+   *     considered invalid.
    */
   public long getTokensValidAfterTimestamp() {
     return tokensValidAfterTimestamp;
