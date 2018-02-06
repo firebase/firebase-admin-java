@@ -29,7 +29,7 @@ import java.util.Map;
 /**
  * Represents a message that can be sent via Firebase Cloud Messaging (FCM). Contains payload
  * information as well as the recipient information. In particular, the message must contain
- * exactly one of token, topic or condition parameters. Instances of this class are thread-safe
+ * exactly one token, topic or condition parameter. Instances of this class are thread-safe
  * and immutable. Use {@link Message.Builder} to create new instances.
  *
  * @see

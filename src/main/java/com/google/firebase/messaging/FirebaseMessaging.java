@@ -364,7 +364,7 @@ public class FirebaseMessaging {
 
     @Override
     public void destroy() {
-      // NOTE: We don't explicitly tear down anything here, but public methods of StorageClient
+      // NOTE: We don't explicitly tear down anything here, but public methods of FirebaseMessaging
       // will now fail because calls to getOptions() and getToken() will hit FirebaseApp,
       // which will throw once the app is deleted.
     }

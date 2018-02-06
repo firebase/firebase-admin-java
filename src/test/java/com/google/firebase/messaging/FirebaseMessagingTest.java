@@ -56,6 +56,7 @@ public class FirebaseMessagingTest {
   private static final String TEST_IID_UNSUBSCRIBE_URL =
       "https://iid.googleapis.com/iid/v1:batchRemove";
   private static final List<Integer> HTTP_ERRORS = ImmutableList.of(401, 404, 500);
+  private static final String MOCK_RESPONSE = "{\"name\": \"mock-name\"}";
 
   private static final ImmutableList.Builder<String> tooManyIds = ImmutableList.builder();
 
@@ -97,13 +98,7 @@ public class FirebaseMessagingTest {
 
   @Test
   public void testNullMessage() throws Exception {
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredentials(new MockGoogleCredentials("test-token"))
-        .setProjectId("test-project")
-        .build();
-    FirebaseApp.initializeApp(options);
-
-    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    FirebaseMessaging messaging = initDefaultMessaging();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     messaging.setInterceptor(interceptor);
     try {
@@ -119,12 +114,12 @@ public class FirebaseMessagingTest {
   @Test
   public void testSend() throws Exception {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
-        .setContent("{\"name\": \"mock-name\"}");
+        .setContent(MOCK_RESPONSE);
     FirebaseMessaging messaging = initMessaging(response);
     Map<Message, Map<String, Object>> testMessages = buildTestMessages();
 
     for (Map.Entry<Message, Map<String, Object>> entry : testMessages.entrySet()) {
-      response.setContent("{\"name\": \"mock-name\"}");
+      response.setContent(MOCK_RESPONSE);
       TestResponseInterceptor interceptor = new TestResponseInterceptor();
       messaging.setInterceptor(interceptor);
       String resp = messaging.sendAsync(entry.getKey()).get();
@@ -143,12 +138,12 @@ public class FirebaseMessagingTest {
   @Test
   public void testSendDryRun() throws Exception {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
-        .setContent("{\"name\": \"mock-name\"}");
+        .setContent(MOCK_RESPONSE);
     FirebaseMessaging messaging = initMessaging(response);
     Map<Message, Map<String, Object>> testMessages = buildTestMessages();
 
     for (Map.Entry<Message, Map<String, Object>> entry : testMessages.entrySet()) {
-      response.setContent("{\"name\": \"mock-name\"}");
+      response.setContent(MOCK_RESPONSE);
       TestResponseInterceptor interceptor = new TestResponseInterceptor();
       messaging.setInterceptor(interceptor);
       String resp = messaging.sendAsync(entry.getKey(), true).get();
@@ -193,12 +188,7 @@ public class FirebaseMessagingTest {
             error.getMessage());
         assertTrue(error.getCause() instanceof HttpResponseException);
       }
-
-      assertNotNull(interceptor.getResponse());
-      HttpRequest request = interceptor.getResponse().getRequest();
-      assertEquals("POST", request.getRequestMethod());
-      assertEquals(TEST_FCM_URL, request.getUrl().toString());
-      assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+      checkMessagingRequest(interceptor);
     }
   }
 
@@ -221,23 +211,13 @@ public class FirebaseMessagingTest {
         assertEquals("test error", error.getMessage());
         assertTrue(error.getCause() instanceof HttpResponseException);
       }
-
-      assertNotNull(interceptor.getResponse());
-      HttpRequest request = interceptor.getResponse().getRequest();
-      assertEquals("POST", request.getRequestMethod());
-      assertEquals(TEST_FCM_URL, request.getUrl().toString());
-      assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+      checkMessagingRequest(interceptor);
     }
   }
 
   @Test
   public void testInvalidSubscribe() {
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredentials(new MockGoogleCredentials("test-token"))
-        .setProjectId("test-project")
-        .build();
-    FirebaseApp.initializeApp(options);
-    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    FirebaseMessaging messaging = initDefaultMessaging();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     messaging.setInterceptor(interceptor);
 
@@ -263,23 +243,7 @@ public class FirebaseMessagingTest {
 
     TopicManagementResponse result = messaging.subscribeToTopicAsync(
         ImmutableList.of("id1", "id2"), "test-topic").get();
-    assertEquals(1, result.getSuccessCount());
-    assertEquals(1, result.getFailureCount());
-    assertEquals(1, result.getErrors().size());
-    assertEquals(1, result.getErrors().get(0).getIndex());
-    assertEquals("unknown-error", result.getErrors().get(0).getReason());
-
-    assertNotNull(interceptor.getResponse());
-    HttpRequest request = interceptor.getResponse().getRequest();
-    assertEquals("POST", request.getRequestMethod());
-    assertEquals(TEST_IID_SUBSCRIBE_URL, request.getUrl().toString());
-    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
-    assertEquals("true", request.getHeaders().get("access_token_auth"));
-
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    request.getContent().writeTo(out);
-    assertEquals("{\"to\":\"/topics/test-topic\",\"registration_tokens\":[\"id1\",\"id2\"]}",
-        out.toString());
+    checkTopicManagementCall(TEST_IID_SUBSCRIBE_URL, result, interceptor);
   }
 
   @Test
@@ -311,12 +275,7 @@ public class FirebaseMessagingTest {
 
   @Test
   public void testInvalidUnsubscribe() {
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredentials(new MockGoogleCredentials("test-token"))
-        .setProjectId("test-project")
-        .build();
-    FirebaseApp.initializeApp(options);
-    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    FirebaseMessaging messaging = initDefaultMessaging();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     messaging.setInterceptor(interceptor);
 
@@ -342,23 +301,7 @@ public class FirebaseMessagingTest {
 
     TopicManagementResponse result = messaging.unsubscribeFromTopicAsync(
         ImmutableList.of("id1", "id2"), "test-topic").get();
-    assertEquals(1, result.getSuccessCount());
-    assertEquals(1, result.getFailureCount());
-    assertEquals(1, result.getErrors().size());
-    assertEquals(1, result.getErrors().get(0).getIndex());
-    assertEquals("unknown-error", result.getErrors().get(0).getReason());
-
-    assertNotNull(interceptor.getResponse());
-    HttpRequest request = interceptor.getResponse().getRequest();
-    assertEquals("POST", request.getRequestMethod());
-    assertEquals(TEST_IID_UNSUBSCRIBE_URL, request.getUrl().toString());
-    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
-    assertEquals("true", request.getHeaders().get("access_token_auth"));
-
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    request.getContent().writeTo(out);
-    assertEquals("{\"to\":\"/topics/test-topic\",\"registration_tokens\":[\"id1\",\"id2\"]}",
-        out.toString());
+    checkTopicManagementCall(TEST_IID_UNSUBSCRIBE_URL, result, interceptor);
   }
 
   @Test
@@ -410,6 +353,48 @@ public class FirebaseMessagingTest {
     FirebaseMessaging messaging = FirebaseMessaging.getInstance();
     assertSame(messaging, FirebaseMessaging.getInstance(app));
     return messaging;
+  }
+
+  private static FirebaseMessaging initDefaultMessaging() {
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId("test-project")
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
+    return FirebaseMessaging.getInstance(app);
+  }
+
+  private static void checkMessagingRequest(TestResponseInterceptor interceptor) {
+    assertNotNull(interceptor.getResponse());
+    HttpRequest request = interceptor.getResponse().getRequest();
+    assertEquals("POST", request.getRequestMethod());
+    assertEquals(TEST_FCM_URL, request.getUrl().toString());
+    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+  }
+
+  private static void checkTopicManagementCall(String url,
+      TopicManagementResponse result, TestResponseInterceptor interceptor) throws IOException {
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(1, result.getFailureCount());
+    assertEquals(1, result.getErrors().size());
+    assertEquals(1, result.getErrors().get(0).getIndex());
+    assertEquals("unknown-error", result.getErrors().get(0).getReason());
+
+    assertNotNull(interceptor.getResponse());
+    HttpRequest request = interceptor.getResponse().getRequest();
+    assertEquals("POST", request.getRequestMethod());
+    assertEquals(url, request.getUrl().toString());
+    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+    assertEquals("true", request.getHeaders().get("access_token_auth"));
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    request.getContent().writeTo(out);
+    Map<String, Object> parsed = new HashMap<>();
+    JsonParser parser = Utils.getDefaultJsonFactory().createJsonParser(out.toString());
+    parser.parseAndClose(parsed);
+    assertEquals(2, parsed.size());
+    assertEquals("/topics/test-topic", parsed.get("to"));
+    assertEquals(ImmutableList.of("id1", "id2"), parsed.get("registration_tokens"));
   }
 
   private static class TopicMgtArgs {
