@@ -125,12 +125,7 @@ public class FirebaseMessagingTest {
       String resp = messaging.sendAsync(entry.getKey()).get();
       assertEquals("mock-name", resp);
 
-      assertNotNull(interceptor.getResponse());
-      HttpRequest request = interceptor.getResponse().getRequest();
-      assertEquals("POST", request.getRequestMethod());
-      assertEquals(TEST_FCM_URL, request.getUrl().toString());
-      assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
-
+      HttpRequest request = checkRequestHeader(interceptor);
       checkRequest(request, ImmutableMap.<String, Object>of("message", entry.getValue()));
     }
   }
@@ -149,24 +144,9 @@ public class FirebaseMessagingTest {
       String resp = messaging.sendAsync(entry.getKey(), true).get();
       assertEquals("mock-name", resp);
 
-      assertNotNull(interceptor.getResponse());
-      HttpRequest request = interceptor.getResponse().getRequest();
-      assertEquals("POST", request.getRequestMethod());
-      assertEquals(TEST_FCM_URL, request.getUrl().toString());
-      assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
-
+      HttpRequest request = checkRequestHeader(interceptor);
       checkRequest(request, ImmutableMap.of("message", entry.getValue(), "validate_only", true));
     }
-  }
-
-  private static void checkRequest(
-      HttpRequest request, Map<String, Object> expected) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    request.getContent().writeTo(out);
-    JsonParser parser = Utils.getDefaultJsonFactory().createJsonParser(out.toString());
-    Map<String, Object> parsed = new HashMap<>();
-    parser.parseAndClose(parsed);
-    assertEquals(expected, parsed);
   }
 
   @Test
@@ -188,7 +168,7 @@ public class FirebaseMessagingTest {
             error.getMessage());
         assertTrue(error.getCause() instanceof HttpResponseException);
       }
-      checkMessagingRequest(interceptor);
+      checkRequestHeader(interceptor);
     }
   }
 
@@ -211,7 +191,7 @@ public class FirebaseMessagingTest {
         assertEquals("test error", error.getMessage());
         assertTrue(error.getCause() instanceof HttpResponseException);
       }
-      checkMessagingRequest(interceptor);
+      checkRequestHeader(interceptor);
     }
   }
 
@@ -243,7 +223,8 @@ public class FirebaseMessagingTest {
 
     TopicManagementResponse result = messaging.subscribeToTopicAsync(
         ImmutableList.of("id1", "id2"), "test-topic").get();
-    checkTopicManagementCall(TEST_IID_SUBSCRIBE_URL, result, interceptor);
+    HttpRequest request = checkTopicManagementRequestHeader(interceptor, TEST_IID_SUBSCRIBE_URL);
+    checkTopicManagementRequest(request, result);
   }
 
   @Test
@@ -265,11 +246,7 @@ public class FirebaseMessagingTest {
         assertTrue(error.getCause() instanceof HttpResponseException);
       }
 
-      assertNotNull(interceptor.getResponse());
-      HttpRequest request = interceptor.getResponse().getRequest();
-      assertEquals("POST", request.getRequestMethod());
-      assertEquals(TEST_IID_SUBSCRIBE_URL, request.getUrl().toString());
-      assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+      checkTopicManagementRequestHeader(interceptor, TEST_IID_SUBSCRIBE_URL);
     }
   }
 
@@ -301,7 +278,8 @@ public class FirebaseMessagingTest {
 
     TopicManagementResponse result = messaging.unsubscribeFromTopicAsync(
         ImmutableList.of("id1", "id2"), "test-topic").get();
-    checkTopicManagementCall(TEST_IID_UNSUBSCRIBE_URL, result, interceptor);
+    HttpRequest request = checkTopicManagementRequestHeader(interceptor, TEST_IID_UNSUBSCRIBE_URL);
+    checkTopicManagementRequest(request, result);
   }
 
   @Test
@@ -323,11 +301,7 @@ public class FirebaseMessagingTest {
         assertTrue(error.getCause() instanceof HttpResponseException);
       }
 
-      assertNotNull(interceptor.getResponse());
-      HttpRequest request = interceptor.getResponse().getRequest();
-      assertEquals("POST", request.getRequestMethod());
-      assertEquals(TEST_IID_UNSUBSCRIBE_URL, request.getUrl().toString());
-      assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+      checkTopicManagementRequestHeader(interceptor, TEST_IID_UNSUBSCRIBE_URL);
     }
   }
 
@@ -364,28 +338,32 @@ public class FirebaseMessagingTest {
     return FirebaseMessaging.getInstance(app);
   }
 
-  private static void checkMessagingRequest(TestResponseInterceptor interceptor) {
+  private static void checkRequest(
+      HttpRequest request, Map<String, Object> expected) throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    request.getContent().writeTo(out);
+    JsonParser parser = Utils.getDefaultJsonFactory().createJsonParser(out.toString());
+    Map<String, Object> parsed = new HashMap<>();
+    parser.parseAndClose(parsed);
+    assertEquals(expected, parsed);
+  }
+
+  private static HttpRequest checkRequestHeader(TestResponseInterceptor interceptor) {
     assertNotNull(interceptor.getResponse());
     HttpRequest request = interceptor.getResponse().getRequest();
     assertEquals("POST", request.getRequestMethod());
     assertEquals(TEST_FCM_URL, request.getUrl().toString());
     assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+    return request;
   }
 
-  private static void checkTopicManagementCall(String url,
-      TopicManagementResponse result, TestResponseInterceptor interceptor) throws IOException {
+  private static void checkTopicManagementRequest(
+      HttpRequest request, TopicManagementResponse result) throws IOException {
     assertEquals(1, result.getSuccessCount());
     assertEquals(1, result.getFailureCount());
     assertEquals(1, result.getErrors().size());
     assertEquals(1, result.getErrors().get(0).getIndex());
     assertEquals("unknown-error", result.getErrors().get(0).getReason());
-
-    assertNotNull(interceptor.getResponse());
-    HttpRequest request = interceptor.getResponse().getRequest();
-    assertEquals("POST", request.getRequestMethod());
-    assertEquals(url, request.getUrl().toString());
-    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
-    assertEquals("true", request.getHeaders().get("access_token_auth"));
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     request.getContent().writeTo(out);
@@ -395,6 +373,16 @@ public class FirebaseMessagingTest {
     assertEquals(2, parsed.size());
     assertEquals("/topics/test-topic", parsed.get("to"));
     assertEquals(ImmutableList.of("id1", "id2"), parsed.get("registration_tokens"));
+  }
+
+  private static HttpRequest checkTopicManagementRequestHeader(
+      TestResponseInterceptor interceptor, String expectedUrl) {
+    assertNotNull(interceptor.getResponse());
+    HttpRequest request = interceptor.getResponse().getRequest();
+    assertEquals("POST", request.getRequestMethod());
+    assertEquals(expectedUrl, request.getUrl().toString());
+    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+    return request;
   }
 
   private static class TopicMgtArgs {
