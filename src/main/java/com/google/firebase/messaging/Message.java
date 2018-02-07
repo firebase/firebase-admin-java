@@ -169,10 +169,10 @@ public class Message {
     }
 
     /**
-     * Sets the name of the FCM topic to which the message should be sent. Topic names must
-     * not contain the {@code /topics/} prefix.
+     * Sets the name of the FCM topic to which the message should be sent. Topic names may
+     * contain the {@code /topics/} prefix.
      *
-     * @param topic A valid topic name excluding the {@code /topics/} prefix.
+     * @param topic A valid topic name.
      * @return This builder.
      */
     public Builder setTopic(String topic) {
