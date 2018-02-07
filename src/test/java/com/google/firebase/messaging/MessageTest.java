@@ -63,6 +63,18 @@ public class MessageTest {
   }
 
   @Test
+  public void testInvalidTopicNames() {
+    List<String> invalidTopicNames = ImmutableList.of("/topics/", "/foo/bar", "foo bar");
+    for (String topicName : invalidTopicNames) {
+      try {
+        Message.builder().setTopic(topicName).build();
+      } catch (IllegalArgumentException expected) {
+        // expected
+      }
+    }
+  }
+
+  @Test
   public void testPrefixedTopicName() throws IOException {
     Message message = Message.builder()
         .setTopic("/topics/test-topic")
