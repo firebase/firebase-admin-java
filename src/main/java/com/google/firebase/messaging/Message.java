@@ -68,19 +68,25 @@ public class Message {
     this.androidConfig = builder.androidConfig;
     this.webpushConfig = builder.webpushConfig;
     this.apnsConfig = builder.apnsConfig;
+
+    String unprefixedTopic = null;
+    if (builder.topic != null) {
+      if (builder.topic.startsWith("/topics/")) {
+        unprefixedTopic = builder.topic.replaceFirst("^/topics/", "");
+      } else {
+        unprefixedTopic = builder.topic;
+      }
+      checkArgument(unprefixedTopic.matches("[a-zA-Z0-9-_.~%]+"), "Malformed topic name");
+    }
+
     int count = Booleans.countTrue(
         !Strings.isNullOrEmpty(builder.token),
-        !Strings.isNullOrEmpty(builder.topic),
+        !Strings.isNullOrEmpty(unprefixedTopic),
         !Strings.isNullOrEmpty(builder.condition)
     );
     checkArgument(count == 1, "Exactly one of token, topic or condition must be specified");
-    if (builder.topic != null) {
-      checkArgument(!builder.topic.startsWith("/topics/"),
-          "Topic name must not contain the /topics/ prefix");
-      checkArgument(builder.topic.matches("[a-zA-Z0-9-_.~%]+"), "Malformed topic name");
-    }
     this.token = builder.token;
-    this.topic = builder.topic;
+    this.topic = unprefixedTopic;
     this.condition = builder.condition;
   }
 

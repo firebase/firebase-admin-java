@@ -63,6 +63,14 @@ public class MessageTest {
   }
 
   @Test
+  public void testPrefixedTopicName() throws IOException {
+    Message message = Message.builder()
+        .setTopic("/topics/test-topic")
+        .build();
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic"), message);
+  }
+
+  @Test
   public void testNotificationMessage() throws IOException {
     Message message = Message.builder()
         .setNotification(new Notification("title", "body"))
