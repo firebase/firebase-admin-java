@@ -74,14 +74,21 @@ public class Message {
         !Strings.isNullOrEmpty(builder.condition)
     );
     checkArgument(count == 1, "Exactly one of token, topic or condition must be specified");
-    if (builder.topic != null) {
-      checkArgument(!builder.topic.startsWith("/topics/"),
-          "Topic name must not contain the /topics/ prefix");
-      checkArgument(builder.topic.matches("[a-zA-Z0-9-_.~%]+"), "Malformed topic name");
-    }
     this.token = builder.token;
-    this.topic = builder.topic;
+    this.topic = stripPrefix(builder.topic);
     this.condition = builder.condition;
+  }
+
+  private static String stripPrefix(String topic) {
+    if (Strings.isNullOrEmpty(topic)) {
+      return null;
+    }
+    if (topic.startsWith("/topics/")) {
+      topic = topic.replaceFirst("^/topics/", "");
+    }
+    // Checks for illegal characters and empty string.
+    checkArgument(topic.matches("[a-zA-Z0-9-_.~%]+"), "Malformed topic name");
+    return topic;
   }
 
   /**
@@ -162,10 +169,10 @@ public class Message {
     }
 
     /**
-     * Sets the name of the FCM topic to which the message should be sent. Topic names must
-     * not contain the {@code /topics/} prefix.
+     * Sets the name of the FCM topic to which the message should be sent. Topic names may
+     * contain the {@code /topics/} prefix.
      *
-     * @param topic A valid topic name excluding the {@code /topics/} prefix.
+     * @param topic A valid topic name.
      * @return This builder.
      */
     public Builder setTopic(String topic) {
