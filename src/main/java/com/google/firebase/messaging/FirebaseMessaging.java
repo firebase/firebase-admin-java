@@ -63,11 +63,12 @@ public class FirebaseMessaging {
   private static final String UNKNOWN_ERROR = "unknown-error";
   private static final Map<String, String> FCM_ERROR_CODES =
       ImmutableMap.<String, String>builder()
+        .put("APNS_AUTH_ERROR", "authentication-error")
+        .put("INTERNAL", INTERNAL_ERROR)
         .put("INVALID_ARGUMENT", "invalid-argument")
-        .put("NOT_FOUND", "registration-token-not-registered")
-        .put("PERMISSION_DENIED", "authentication-error")
-        .put("RESOURCE_EXHAUSTED", "message-rate-exceeded")
-        .put("UNAUTHENTICATED", "authentication-error")
+        .put("UNREGISTERED", "registration-token-not-registered")
+        .put("QUOTA_EXCEEDED", "message-rate-exceeded")
+        .put("SENDER_ID_MISMATCH", "authentication-error")
         .put("UNAVAILABLE", "server-unavailable")
         .build();
   static final Map<Integer, String> IID_ERROR_CODES =
