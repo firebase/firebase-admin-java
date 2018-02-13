@@ -237,12 +237,12 @@ public class Query {
   }
 
   /**
-   * By calling `keepSynced(true)` on a location, the data for that location will automatically be
+   * By calling {@code keepSynced(true)} on a location, the data for that location will automatically be
    * downloaded and kept in sync, even when no listeners are attached for that location.
    * Additionally, while a location is kept synced, it will not be evicted from the persistent disk
    * cache.
    *
-   * @param keepSynced Pass `true` to keep this location synchronized, pass `false` to stop
+   * @param keepSynced Pass {@code true} to keep this location synchronized, pass {@code false} to stop
    *     synchronization.
    * @since 2.3
    */

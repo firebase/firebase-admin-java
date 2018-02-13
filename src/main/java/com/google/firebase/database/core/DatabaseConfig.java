@@ -133,7 +133,7 @@ public class DatabaseConfig extends Context {
 
   /**
    * By default the Firebase Database client will keep data in memory while your application is
-   * running, but not when it is restarted. By setting this value to `true`, the data will be
+   * running, but not when it is restarted. By setting this value to {@code true} the data will be
    * persisted to on-device (disk) storage and will thus be available again when the app is
    * restarted (even when there is no network connectivity at that time). Note that this method must
    * be called before creating your first Database reference and only needs to be called once per
