@@ -6,7 +6,7 @@
   additional check is performed to see whether the token has been revoked. 
 - [added] A new method ['FirebaseAuth.revokeRefreshTokens(uid)'](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/FirebaseAuth.html#revokeRefreshTokens)
   has been added to invalidate all tokens issued to a user before the current second.
-- [added] A new getter `getTokensValidAfterMillis` has been added to the   
+- [added] A new getter `getTokensValidAfterTimestamp()` has been added to the   
   ['UserRecord'](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/UserRecord),
   which denotes the time in epoch milliseconds before which tokens are not valid. This is truncated to 1000 milliseconds.
 ### Initialization
