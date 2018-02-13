@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.api.client.json.JsonFactory;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +59,7 @@ public class UserRecord implements UserInfo {
   private final String photoUrl;
   private final boolean disabled;
   private final ProviderUserInfo[] providers;
+  private final long tokensValidAfterTimestamp;
   private final UserMetadata userMetadata;
   private final Map<String, Object> customClaims;
 
@@ -79,6 +82,7 @@ public class UserRecord implements UserInfo {
         this.providers[i] = new ProviderUserInfo(response.getProviders()[i]);
       }
     }
+    this.tokensValidAfterTimestamp = response.getValidSince() * 1000;
     this.userMetadata = new UserMetadata(response.getCreatedAt(), response.getLastLoginAt());
     this.customClaims = parseCustomClaims(response.getCustomClaims(), jsonFactory);
   }
@@ -189,6 +193,17 @@ public class UserRecord implements UserInfo {
   }
 
   /**
+   * Returns a timestamp in milliseconds since epoch, truncated down to the closest second. 
+   * Tokens minted before this timestamp are considered invalid.
+   * 
+   * @return Timestamp in milliseconds since the epoch. Tokens minted before this timestamp are
+   *     considered invalid.
+   */
+  public long getTokensValidAfterTimestamp() {
+    return tokensValidAfterTimestamp;
+  }
+
+  /**
    * Returns additional metadata associated with this user.
    *
    * @return a non-null UserMetadata instance.
@@ -243,6 +258,11 @@ public class UserRecord implements UserInfo {
       checkArgument(!FirebaseUserManager.RESERVED_CLAIMS.contains(key),
           "Claim '" + key + "' is reserved and cannot be set");
     }
+  }
+
+  private static void checkValidSince(long epochSeconds) {
+    checkArgument(epochSeconds > 0, "validSince (seconds since epoch) must be greater than 0: "
+        + Long.toString(epochSeconds));
   }
 
   private static String serializeCustomClaims(Map customClaims, JsonFactory jsonFactory) {
@@ -496,6 +516,12 @@ public class UserRecord implements UserInfo {
     public UpdateRequest setCustomClaims(Map<String,Object> customClaims) {
       checkCustomClaims(customClaims);
       properties.put(CUSTOM_ATTRIBUTES, customClaims);
+      return this;
+    }
+
+    UpdateRequest setValidSince(long epochSeconds) {
+      checkValidSince(epochSeconds);
+      properties.put("validSince", epochSeconds);
       return this;
     }
 

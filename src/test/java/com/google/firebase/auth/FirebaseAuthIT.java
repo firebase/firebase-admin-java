@@ -358,6 +358,32 @@ public class FirebaseAuthIT {
   }
 
   @Test
+  public void testVerifyIdToken() throws Exception {
+    String customToken = auth.createCustomTokenAsync("user2").get();
+    String idToken = signInWithCustomToken(customToken);
+    FirebaseToken decoded = auth.verifyIdTokenAsync(idToken).get();
+    assertEquals("user2", decoded.getUid());
+    decoded = auth.verifyIdTokenAsync(idToken, true).get();
+    assertEquals("user2", decoded.getUid());
+    Thread.sleep(1000);
+    auth.revokeRefreshTokensAsync("user2").get();
+    decoded = auth.verifyIdTokenAsync(idToken, false).get();
+    assertEquals("user2", decoded.getUid());
+    try {
+      decoded = auth.verifyIdTokenAsync(idToken, true).get();
+      fail("expecting exception");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertEquals(FirebaseUserManager.ID_TOKEN_REVOKED_ERROR,
+                   ((FirebaseAuthException) e.getCause()).getErrorCode());
+    }
+    idToken = signInWithCustomToken(customToken);
+    decoded = auth.verifyIdTokenAsync(idToken, true).get();
+    assertEquals("user2", decoded.getUid());    
+    auth.deleteUserAsync("user2");
+  }
+
+  @Test
   public void testCustomTokenWithClaims() throws Exception {
     Map<String, Object> devClaims = ImmutableMap.<String, Object>of(
         "premium", true, "subscription", "silver");
