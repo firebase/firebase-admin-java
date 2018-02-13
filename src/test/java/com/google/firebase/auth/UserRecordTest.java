@@ -9,6 +9,7 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 
@@ -164,6 +165,7 @@ public class UserRecordTest {
     assertEquals(0, userRecord.getProviderData().length);
     assertNull(userRecord.getPasswordHash());
     assertNull(userRecord.getPasswordSalt());
+    assertEquals(0L, userRecord.getTokensValidAfterTimestamp());
   }
 
   @Test
@@ -192,5 +194,17 @@ public class UserRecordTest {
     DownloadAccountResponse.User user = JSON_FACTORY.createJsonObjectParser()
         .parseAndClose(stream, Charset.defaultCharset(), DownloadAccountResponse.User.class);
     return new ExportedUserRecord(user, JSON_FACTORY);
+  }
+
+
+  @Test
+  public void testInvalidVaidSince() {
+    UpdateRequest update = new UpdateRequest("test");
+    try {
+      update.setValidSince(-1);
+      fail("No error thrown for negative time");
+    } catch (Exception ignore) {
+      // expected
+    }
   }
 }

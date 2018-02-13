@@ -776,6 +776,7 @@ public class FirebaseUserManagerTest {
     assertEquals(2, userRecord.getProviderData().length);
     assertFalse(userRecord.isDisabled());
     assertTrue(userRecord.isEmailVerified());
+    assertEquals(1494364393000L, userRecord.getTokensValidAfterTimestamp());
 
     UserInfo provider = userRecord.getProviderData()[0];
     assertEquals("testuser@example.com", provider.getUid());

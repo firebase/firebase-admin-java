@@ -35,10 +35,11 @@ public class FirebaseInstanceIdIT {
   public void testDeleteNonExisting() throws Exception {
     FirebaseInstanceId instanceId = FirebaseInstanceId.getInstance();
     try {
-      instanceId.deleteInstanceIdAsync("non-existing").get();
+      // instance ids have to conform to /[cdef][A-Za-z0-9_-]{9}[AEIMQUYcgkosw048]/
+      instanceId.deleteInstanceIdAsync("fictive-ID0").get();
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseInstanceIdException);
-      assertEquals("Instance ID \"non-existing\": Failed to find the instance ID.",
+      assertEquals("Instance ID \"fictive-ID0\": Failed to find the instance ID.",
           e.getCause().getMessage());
     }
   }
