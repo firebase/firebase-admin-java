@@ -1,14 +1,15 @@
 # Unreleased
 
-### Token revokaction
-- [added] The ['verifyIdToken(...)'](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/FirebaseAuth.html#verifyIdTokenAsync)
+### Token revocation
+- [added] The [`verifyIdTokenAsync(...)`](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/FirebaseAuth.html#verifyIdTokenAsync)
   method has an added signature that accepts a boolean `checkRevoked` parameter. When `true`, an 
   additional check is performed to see whether the token has been revoked. 
-- [added] A new method ['FirebaseAuth.revokeRefreshTokens(uid)'](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/FirebaseAuth.html#revokeRefreshTokens)
+- [added] A new method [`FirebaseAuth.revokeRefreshTokensAsync(uid)`](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/FirebaseAuth.html#revokeRefreshTokens)
   has been added to invalidate all tokens issued to a user before the current second.
 - [added] A new getter `getTokensValidAfterTimestamp()` has been added to the   
-  ['UserRecord'](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/UserRecord),
+  [`UserRecord`](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/UserRecord),
   which denotes the time in epoch milliseconds before which tokens are not valid. This is truncated to 1000 milliseconds.
+
 ### Initialization
 
 - [fixed] The [`FirebaseOptions.Builder.setStorageBucket()`](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/FirebaseOptions.Builder.html#setStorageBucket(java.lang.String))
