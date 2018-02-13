@@ -276,10 +276,10 @@ public class FirebaseAuth {
    * Firebase ID Token (accessible via the getToken API in the Firebase Authentication client) with
    * its request.
    *
-   * <p>The backend server can then use the verifyIdTokenAsync() method to verify the token is
-   * valid, meaning: the token is properly signed, has not expired, and it was issued for the
-   * project associated with this FirebaseAuth instance (which by default is extracted from your
-   * service account)
+   * <p>The backend server can then use the verifyIdToken() method to verify the token is valid,
+   * meaning: the token is properly signed, has not expired, and it was issued for the project
+   * associated with this FirebaseAuth instance (which by default is extracted from your service
+   * account)
    *
    * <p>If the token is valid, the returned Future will complete successfully and provide a
    * parsed version of the token from which the UID and other claims in the token can be inspected.
@@ -303,10 +303,10 @@ public class FirebaseAuth {
    * Firebase ID Token (accessible via the getToken API in the Firebase Authentication client) with
    * its request.
    *
-   * <p>The backend server can then use the verifyIdTokenAsync() method to verify the token is
-   * valid, meaning: the token is properly signed, has not expired, and it was issued for the
-   * project associated with this FirebaseAuth instance (which by default is extracted from your
-   * service account)
+   * <p>The backend server can then use the verifyIdToken() method to verify the token is valid,
+   * meaning: the token is properly signed, has not expired, and it was issued for the project
+   * associated with this FirebaseAuth instance (which by default is extracted from your service
+   * account)
    * 
    * <p>If {@code checkRevoked} is true, additionally checks if the token has been revoked.
    * 
