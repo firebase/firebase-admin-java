@@ -11,7 +11,7 @@
   method has an overload that accepts a boolean `checkRevoked` parameter.
   When `true`, an additional check is performed to see whether the token
   has been revoked.
-- [added] A new [`revokeRefreshTokensAsync(uid)`](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/FirebaseAuth.html#revokeRefreshTokens)
+- [added] A new [`revokeRefreshTokensAsync()`](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/FirebaseAuth.html#revokeRefreshTokens)
   method has been added to invalidate all tokens issued to a user.
 - [added] A new getter `getTokensValidAfterTimestamp()` has been added
   to the [`UserRecord`](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/UserRecord)
