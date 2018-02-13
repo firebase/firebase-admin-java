@@ -259,7 +259,7 @@ public class FirebaseAuth {
    * <p>While this will revoke all sessions for a specified user and disable any new ID tokens for
    * existing sessions from getting minted, existing ID tokens may remain active until their
    * natural expiration (one hour). 
-   * To verify that ID tokens are revoked, use `verifyIdToken(idToken, true)`.
+   * To verify that ID tokens are revoked, use {@link verifyIdTokenAsync(String, boolean)}.
    * 
    * @param uid The user id for which tokens are revoked.
    * @return An {@code ApiFuture} which will complete successfully or if updating the user fails,
@@ -286,7 +286,7 @@ public class FirebaseAuth {
    * If the token is invalid, the future throws an exception indicating the failure.
    * 
    * <p>This does not check whether a token has been revoked. 
-   * See `verifyIdTokenAsync(token, checkRevoked)` below.
+   * See {@link verifyIdTokenAsync(String, boolean)} below.
    *
    * @param token A Firebase ID Token to verify and parse.
    * @return An {@code ApiFuture} which will complete successfully with the parsed token, or
@@ -308,7 +308,7 @@ public class FirebaseAuth {
    * associated with this FirebaseAuth instance (which by default is extracted from your service
    * account)
    * 
-   * <p>If `checkRevoked` is true, additionally checks if the token has been revoked.
+   * <p>If {@code checkRevoked} is true, additionally checks if the token has been revoked.
    * 
    * <p>If the token is valid, and not revoked, the returned Future will complete successfully and
    * provide a parsed version of the token from which the UID and other claims in the token can be
