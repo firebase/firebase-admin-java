@@ -280,10 +280,11 @@ public class FirebaseDatabase {
    * connections and re-sends write operations when the network connection is restored.
    *
    * <p>However by default your write operations and cached data are only stored in-memory and will
-   * be lost when your app restarts. By setting this value to {@code true}, the data will be persisted to
-   * on-device (disk) storage and will thus be available again when the app is restarted (even when
-   * there is no network connectivity at that time). Note that this method must be called before
-   * creating your first Database reference and only needs to be called once per application.
+   * be lost when your app restarts. By setting this value to {@code true}, the data will be
+   * persisted to on-device (disk) storage and will thus be available again when the app is
+   * restarted (even when there is no network connectivity at that time). Note that this method
+   * must be called before creating your first Database reference and only needs to be called once per
+   * application.
    *
    * @param isEnabled Set to true to enable disk persistence, set to false to disable it.
    */
