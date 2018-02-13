@@ -1,24 +1,39 @@
 # Unreleased
 
-### Token revocation
-- [added] The [`verifyIdTokenAsync(...)`](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/FirebaseAuth.html#verifyIdTokenAsync)
-  method has an added signature that accepts a boolean `checkRevoked` parameter. When `true`, an 
-  additional check is performed to see whether the token has been revoked. 
-- [added] A new method [`FirebaseAuth.revokeRefreshTokensAsync(uid)`](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/FirebaseAuth.html#revokeRefreshTokens)
-  has been added to invalidate all tokens issued to a user before the current second.
-- [added] A new getter `getTokensValidAfterTimestamp()` has been added to the   
-  [`UserRecord`](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/UserRecord),
-  which denotes the time in epoch milliseconds before which tokens are not valid. This is truncated to 1000 milliseconds.
+### Cloud Messaging
+
+- [feature] Added the `FirebaseCloudMessaging` API for sending
+  Firebase notifications and managing topic subscriptions.
+
+### Authentication
+
+- [added] The [`verifyIdTokenAsync()`](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/FirebaseAuth.html#verifyIdTokenAsync)
+  method has an overload that accepts a boolean `checkRevoked` parameter.
+  When `true`, an additional check is performed to see whether the token
+  has been revoked.
+- [added] A new [`revokeRefreshTokensAsync()`](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/FirebaseAuth.html#revokeRefreshTokens)
+  method has been added to invalidate all tokens issued to a user.
+- [added] A new getter `getTokensValidAfterTimestamp()` has been added
+  to the [`UserRecord`](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/auth/UserRecord)
+  class, which denotes the time before which tokens are not valid.
+
+### Realtime Database
+
+- [fixed] Exceptions thrown by database event handlers are now logged.
 
 ### Initialization
 
 - [fixed] The [`FirebaseOptions.Builder.setStorageBucket()`](https://firebase.google.com/docs/reference/admin/java/reference/com/google/firebase/FirebaseOptions.Builder.html#setStorageBucket(java.lang.String))
   method now throws a clear exception when invoked with a bucket URL
   instead of the name.
+- [fixed] Implemented a fix for a potential Guava version conflict which
+  was causing an `IllegalStateException` (precondition failure) in some
+  environments.
 
-### Realtime Database
+### Cloud Firestore
 
-- [fixed] Exceptions thrown by database event handlers are now logged.
+- [fixed] Upgraded the Cloud Firestore client to the latest available
+  version.
 
 # v5.8.0
 
