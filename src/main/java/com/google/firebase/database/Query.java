@@ -243,7 +243,7 @@ public class Query {
    * persistent disk cache.
    *
    * @param keepSynced Pass {@code true} to keep this location synchronized, pass {@code false} to
-   * stop synchronization.
+   *     stop synchronization.
    * @since 2.3
    */
   public void keepSynced(final boolean keepSynced) {
