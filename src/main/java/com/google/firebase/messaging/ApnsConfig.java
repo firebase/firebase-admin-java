@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * Represents the APNS-specific options that can be included in a {@link Message}.
  * Instances of this class are thread-safe and immutable. Refer to
- * <a href="https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/CommunicatingwithAPNs.html">
+ * <a href="https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/APNSOverview.html">
  * Apple documentation</a> for various headers and payload fields supported by APNS.
  */
 public class ApnsConfig {
