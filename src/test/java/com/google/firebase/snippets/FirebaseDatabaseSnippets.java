@@ -16,6 +16,9 @@
 
 package com.google.firebase.snippets;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -25,6 +28,8 @@ import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class FirebaseDatabaseSnippets {
 
+  // CSOFF: MemberName
   // [START user_class]
   public static class User {
 
@@ -41,16 +47,16 @@ public class FirebaseDatabaseSnippets {
     public String full_name;
     public String nickname;
 
-    public User(String date_of_birth, String full_name) {
+    public User(String dateOfBirth, String fullName) {
       // [START_EXCLUDE]
-      this(date_of_birth, full_name, null);
+      this(dateOfBirth, fullName, null);
       // [END_EXCLUDE]
     }
 
-    public User(String date_of_birth, String full_name, String nickname) {
+    public User(String dateOfBirth, String fullName, String nickname) {
       // [START_EXCLUDE]
-      this.date_of_birth = date_of_birth;
-      this.full_name = full_name;
+      this.date_of_birth = dateOfBirth;
+      this.full_name = fullName;
       this.nickname = nickname;
       // [END_EXCLUDE]
     }
@@ -90,6 +96,7 @@ public class FirebaseDatabaseSnippets {
   }
   // [END dinosaur_class]
 
+  // CSOFF: LineLength
   public void savingData() {
     // [START get_database_and_reference]
     final FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -185,7 +192,8 @@ public class FirebaseDatabaseSnippets {
       }
 
       @Override
-      public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
+      public void onComplete(
+          DatabaseError databaseError, boolean committed, DataSnapshot dataSnapshot) {
         System.out.println("Transaction completed");
       }
     });
@@ -663,7 +671,32 @@ public class FirebaseDatabaseSnippets {
     // [END complex_combined]
   }
 
-  public static void main(String[] args) {
-    // write your code here
+  public void initializeApp() throws IOException {
+    // [START init_admin_sdk_for_db]
+    // Fetch the service account key JSON file contents
+    FileInputStream serviceAccount = new FileInputStream("path/to/serviceAccount.json");
+
+    // Initialize the app with a service account, granting admin privileges
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+        .setDatabaseUrl("https://<databaseName>.firebaseio.com")
+        .build();
+    FirebaseApp.initializeApp(options);
+
+    // As an admin, the app has access to read and write all data, regardless of Security Rules
+    DatabaseReference ref = FirebaseDatabase.getInstance()
+        .getReference("restricted_access/secret_document");
+    ref.addListenerForSingleValueEvent(new ValueEventListener() {
+      @Override
+      public void onDataChange(DataSnapshot dataSnapshot) {
+        Object document = dataSnapshot.getValue();
+        System.out.println(document);
+      }
+
+      @Override
+      public void onCancelled(DatabaseError error) {
+      }
+    });
+    // [END init_admin_sdk_for_db]
   }
 }
