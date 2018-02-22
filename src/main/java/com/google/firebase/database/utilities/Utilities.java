@@ -16,6 +16,8 @@
 
 package com.google.firebase.database.utilities;
 
+import com.google.api.core.ApiFuture;
+import com.google.api.core.SettableApiFuture;
 import com.google.common.io.BaseEncoding;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
@@ -237,22 +239,22 @@ public class Utilities {
     }
   }
 
-  public static Pair<Task<Void>, DatabaseReference.CompletionListener> wrapOnComplete(
+  public static Pair<ApiFuture<Void>, DatabaseReference.CompletionListener> wrapOnComplete(
       DatabaseReference.CompletionListener optListener) {
     if (optListener == null) {
-      final TaskCompletionSource<Void> source = new TaskCompletionSource<>();
+      final SettableApiFuture<Void> future = SettableApiFuture.create();
       DatabaseReference.CompletionListener listener =
           new DatabaseReference.CompletionListener() {
             @Override
             public void onComplete(DatabaseError error, DatabaseReference ref) {
               if (error != null) {
-                source.setException(error.toException());
+                future.setException(error.toException());
               } else {
-                source.setResult(null);
+                future.set(null);
               }
             }
           };
-      return new Pair<>(source.getTask(), listener);
+      return new Pair<ApiFuture<Void>, DatabaseReference.CompletionListener>(future, listener);
     } else {
       // If a listener is supplied we do not want to create a Task
       return new Pair<>(null, optListener);

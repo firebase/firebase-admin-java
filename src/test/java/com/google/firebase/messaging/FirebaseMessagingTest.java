@@ -98,7 +98,7 @@ public class FirebaseMessagingTest {
   }
 
   @Test
-  public void testNullMessage() throws Exception {
+  public void testNullMessage() {
     FirebaseMessaging messaging = initDefaultMessaging();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     messaging.setInterceptor(interceptor);
@@ -252,8 +252,6 @@ public class FirebaseMessagingTest {
     final String responseString = "{\"results\": [{}, {\"error\": \"error_reason\"}]}";
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     final FirebaseMessaging messaging = initMessaging(response);
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    messaging.setInterceptor(interceptor);
 
     List<GenericFunction<TopicManagementResponse>> functions = ImmutableList.of(
         new GenericFunction<TopicManagementResponse>() {
@@ -279,6 +277,8 @@ public class FirebaseMessagingTest {
     );
 
     for (GenericFunction<TopicManagementResponse> fn : functions) {
+      TestResponseInterceptor interceptor = new TestResponseInterceptor();
+      messaging.setInterceptor(interceptor);
       response.setContent(responseString);
       TopicManagementResponse result = fn.call();
       HttpRequest request = checkTopicManagementRequestHeader(interceptor, TEST_IID_SUBSCRIBE_URL);
@@ -332,8 +332,6 @@ public class FirebaseMessagingTest {
     final String responseString = "{\"results\": [{}, {\"error\": \"error_reason\"}]}";
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     final FirebaseMessaging messaging = initMessaging(response);
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    messaging.setInterceptor(interceptor);
 
     List<GenericFunction<TopicManagementResponse>> functions = ImmutableList.of(
         new GenericFunction<TopicManagementResponse>() {
@@ -359,6 +357,8 @@ public class FirebaseMessagingTest {
     );
 
     for (GenericFunction<TopicManagementResponse> fn : functions) {
+      TestResponseInterceptor interceptor = new TestResponseInterceptor();
+      messaging.setInterceptor(interceptor);
       response.setContent(responseString);
       TopicManagementResponse result = fn.call();
       HttpRequest request = checkTopicManagementRequestHeader(
