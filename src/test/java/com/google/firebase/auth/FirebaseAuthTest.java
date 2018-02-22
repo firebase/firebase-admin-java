@@ -335,7 +335,7 @@ public class FirebaseAuthTest {
     try {
       FirebaseAuth.getInstance(app).createCustomTokenAsync("foo").get();
       fail("Expected exception.");
-    } catch (IllegalStateException expected) {
+    } catch (IllegalArgumentException expected) {
       Assert.assertEquals(
           "Must initialize FirebaseApp with a service account credential to call "
               + "createCustomToken()",
@@ -353,7 +353,7 @@ public class FirebaseAuthTest {
     try {
       FirebaseAuth.getInstance(app).verifyIdTokenAsync("foo").get();
       fail("Expected exception.");
-    } catch (IllegalStateException expected) {
+    } catch (IllegalArgumentException expected) {
       Assert.assertEquals(
           "Must initialize FirebaseApp with a project ID to call verifyIdToken()",
           expected.getMessage());

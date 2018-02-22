@@ -24,6 +24,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonParser;
+import com.google.api.core.ApiFuture;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.OAuth2Credentials;
@@ -38,14 +39,11 @@ import com.google.common.io.BaseEncoding;
 import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.GaeThreadFactory;
+import com.google.firebase.internal.ListenableFuture2ApiFuture;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
-
 import com.google.firebase.internal.RevivingScheduledExecutor;
-import com.google.firebase.tasks.Task;
-import com.google.firebase.tasks.Tasks;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -187,7 +185,11 @@ public class FirebaseApp {
    * {@link #initializeApp()} method.
    */
   public static FirebaseApp initializeApp(String name) {
-    return initializeApp(getOptionsFromEnvironment(), name);
+    try {
+      return initializeApp(getOptionsFromEnvironment(), name);
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Failed to load settings from the environment", e);
+    }
   }
 
   /**
@@ -395,10 +397,9 @@ public class FirebaseApp {
     return threadManager.getThreadFactory();
   }
 
-  // TODO: Return an ApiFuture once Task API is fully removed.
-  <T> Task<T> submit(Callable<T> command) {
+  <T> ApiFuture<T> submit(Callable<T> command) {
     checkNotNull(command);
-    return Tasks.call(executors.getListeningExecutor(), command);
+    return new ListenableFuture2ApiFuture<>(executors.getListeningExecutor().submit(command));
   }
 
   <T> ScheduledFuture<T> schedule(Callable<T> command, long delayMillis) {
@@ -569,33 +570,26 @@ public class FirebaseApp {
     }
   }
 
-  private static FirebaseOptions getOptionsFromEnvironment() {
+  private static FirebaseOptions getOptionsFromEnvironment() throws IOException {
     String defaultConfig = System.getenv(FIREBASE_CONFIG_ENV_VAR);
-    try { 
-      if (Strings.isNullOrEmpty(defaultConfig)) {
-        return new FirebaseOptions.Builder()
-          .setCredentials(GoogleCredentials.getApplicationDefault())
-          .build();
-      }
-      JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-      FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
-      JsonParser parser;
-      if (defaultConfig.startsWith("{")) {
-        parser = jsonFactory.createJsonParser(defaultConfig);
-      } else {
-        FileReader reader;
-        reader = new FileReader(defaultConfig);
-        parser = jsonFactory.createJsonParser(reader);    
-      }
-      parser.parseAndClose(builder);
-      builder.setCredentials(GoogleCredentials.getApplicationDefault());
-      
-      return builder.build();
-
-    } catch (FileNotFoundException e) {
-      throw new IllegalStateException(e);
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+    if (Strings.isNullOrEmpty(defaultConfig)) {
+      return new FirebaseOptions.Builder()
+        .setCredentials(GoogleCredentials.getApplicationDefault())
+        .build();
     }
+
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
+    JsonParser parser;
+    if (defaultConfig.startsWith("{")) {
+      parser = jsonFactory.createJsonParser(defaultConfig);
+    } else {
+      FileReader reader;
+      reader = new FileReader(defaultConfig);
+      parser = jsonFactory.createJsonParser(reader);
+    }
+    parser.parseAndClose(builder);
+    builder.setCredentials(GoogleCredentials.getApplicationDefault());
+    return builder.build();
   }
 }

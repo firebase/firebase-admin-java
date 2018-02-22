@@ -125,10 +125,10 @@ public class FirebaseInstanceId {
    *     or unsuccessfully with the failure Exception..
    */
   public ApiFuture<Void> deleteInstanceIdAsync(@NonNull String instanceId) {
-    return new TaskToApiFuture<>(deleteInstanceId(instanceId));
+    return deleteInstanceId(instanceId);
   }
 
-  private Task<Void> deleteInstanceId(final String instanceId) {
+  private ApiFuture<Void> deleteInstanceId(final String instanceId) {
     checkArgument(!Strings.isNullOrEmpty(instanceId), "instance ID must not be null or empty");
     return ImplFirebaseTrampolines.submitCallable(app, new Callable<Void>(){
       @Override

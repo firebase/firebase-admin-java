@@ -29,7 +29,6 @@ import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.FirebaseThreadManagers.GlobalThreadManager;
-import com.google.firebase.tasks.Tasks;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -143,7 +142,7 @@ public class FirebaseThreadManagersTest {
         return null;
       }
     };
-    Tasks.await(ImplFirebaseTrampolines.submitCallable(defaultApp, command));
+    ImplFirebaseTrampolines.submitCallable(defaultApp, command).get();
 
     // Check for default JVM thread properties.
     assertTrue(threadInfo.get("name").toString().startsWith("firebase-default-"));

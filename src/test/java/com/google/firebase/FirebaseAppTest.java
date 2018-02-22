@@ -441,19 +441,19 @@ public class FirebaseAppTest {
     assertTrue(firebaseApp.getOptions().getDatabaseAuthVariableOverride().isEmpty());
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testInvalidFirebaseConfigFile() {
     setFirebaseConfigEnvironmentVariable("firebase_config_invalid.json");
     FirebaseApp.initializeApp();
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testInvalidFirebaseConfigString() {
     setFirebaseConfigEnvironmentVariable("{,,");
     FirebaseApp.initializeApp();
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testFirebaseConfigMissingFile() {
     setFirebaseConfigEnvironmentVariable("no_such.json");
     FirebaseApp.initializeApp();

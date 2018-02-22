@@ -16,6 +16,7 @@
 
 package com.google.firebase;
 
+import com.google.api.core.ApiFuture;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
@@ -70,7 +71,8 @@ public final class ImplFirebaseTrampolines {
     return app.getThreadFactory();
   }
 
-  public static <T> Task<T> submitCallable(@NonNull FirebaseApp app, @NonNull Callable<T> command) {
+  public static <T> ApiFuture<T> submitCallable(
+      @NonNull FirebaseApp app, @NonNull Callable<T> command) {
     return app.submit(command);
   }
 

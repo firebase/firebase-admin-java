@@ -42,8 +42,6 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.internal.TaskToApiFuture;
-import com.google.firebase.tasks.Task;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -152,10 +150,10 @@ public class FirebaseMessaging {
    *     has been sent, or when the emulation has finished.
    */
   public ApiFuture<String> sendAsync(@NonNull Message message, boolean dryRun) {
-    return new TaskToApiFuture<>(send(message, dryRun));
+    return send(message, dryRun);
   }
 
-  private Task<String> send(final Message message, final boolean dryRun) {
+  private ApiFuture<String> send(final Message message, final boolean dryRun) {
     checkNotNull(message, "message must not be null");
     return ImplFirebaseTrampolines.submitCallable(app, new Callable<String>() {
       @Override
@@ -175,10 +173,10 @@ public class FirebaseMessaging {
    */
   public ApiFuture<TopicManagementResponse> subscribeToTopicAsync(
       @NonNull List<String> registrationTokens, @NonNull String topic) {
-    return new TaskToApiFuture<>(subscribeToTopic(registrationTokens, topic));
+    return subscribeToTopic(registrationTokens, topic);
   }
 
-  private Task<TopicManagementResponse> subscribeToTopic(
+  private ApiFuture<TopicManagementResponse> subscribeToTopic(
       final List<String> registrationTokens, final String topic) {
     checkRegistrationTokens(registrationTokens);
     checkTopic(topic);
@@ -201,10 +199,10 @@ public class FirebaseMessaging {
    */
   public ApiFuture<TopicManagementResponse> unsubscribeFromTopicAsync(
       @NonNull List<String> registrationTokens, @NonNull String topic) {
-    return new TaskToApiFuture<>(unsubscribeFromTopic(registrationTokens, topic));
+    return unsubscribeFromTopic(registrationTokens, topic);
   }
 
-  private Task<TopicManagementResponse> unsubscribeFromTopic(
+  private ApiFuture<TopicManagementResponse> unsubscribeFromTopic(
       final List<String> registrationTokens, final String topic) {
     checkRegistrationTokens(registrationTokens);
     checkTopic(topic);
