@@ -18,6 +18,7 @@ package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -237,9 +238,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testSetCustomAttributes() throws Exception {
-    initializeAppForUserManagement(
-        TestUtils.loadResource("createUser.json"),
-        TestUtils.loadResource("getUser.json"));
+    initializeAppForUserManagement(TestUtils.loadResource("createUser.json"));
     FirebaseAuth auth = FirebaseAuth.getInstance();
     FirebaseUserManager userManager = auth.getUserManager();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
@@ -247,17 +246,36 @@ public class FirebaseUserManagerTest {
     // should not throw
     ImmutableMap<String, Object> claims = ImmutableMap.<String, Object>of(
         "admin", true, "package", "gold");
-    UserRecord user  = auth.updateUserAsync(new UpdateRequest("testuser")
-        .setCustomClaims(claims)).get();
-    checkUserRecord(user);
+    auth.setCustomUserClaimsAsync("testuser", claims).get();
     checkRequestHeaders(interceptor);
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.getResponse(0).getRequest().getContent().writeTo(out);
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
     assertEquals("testuser", parsed.get("localId"));
     assertEquals(jsonFactory.toString(claims), parsed.get("customAttributes"));
+  }
+
+  @Test
+  public void testRevokeRefreshTokens() throws Exception {
+    initializeAppForUserManagement(TestUtils.loadResource("createUser.json"));
+    FirebaseAuth auth = FirebaseAuth.getInstance();
+    FirebaseUserManager userManager = auth.getUserManager();
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    userManager.setInterceptor(interceptor);
+    // should not throw
+    ImmutableMap<String, Object> claims = ImmutableMap.<String, Object>of(
+        "admin", true, "package", "gold");
+    auth.revokeRefreshTokensAsync("testuser").get();
+    checkRequestHeaders(interceptor);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals("testuser", parsed.get("localId"));
+    assertNotNull(parsed.get("validSince"));
   }
 
   @Test

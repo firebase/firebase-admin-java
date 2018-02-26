@@ -24,6 +24,10 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * A mock HttpTransport that can simulate multiple (sequential) HTTP interactions. This can be
+ * used when an SDK operation makes multiple backend calls.
+ */
 public class MultiRequestMockHttpTransport extends MockHttpTransport {
 
   private final List<MockLowLevelHttpResponse> responses;
