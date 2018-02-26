@@ -106,16 +106,6 @@ public class FirebaseAuthTest {
                 .build(),
             /* isCertCredential */ false
           },
-          {
-            new FirebaseOptions.Builder().setCredential(
-                createFirebaseCertificateCredential()).build(),
-            /* isCertCredential */ true
-          },
-          {
-            new FirebaseOptions.Builder().setCredential(
-                createFirebaseRefreshTokenCredential()).build(),
-            /* isCertCredential */ false
-          },
         });
   }
 
@@ -141,23 +131,6 @@ public class FirebaseAuthTest {
     });
   }
 
-  private static FirebaseCredential createFirebaseRefreshTokenCredential()
-      throws IOException {
-
-    final MockTokenServerTransport transport = new MockTokenServerTransport();
-    transport.addClient(CLIENT_ID, CLIENT_SECRET);
-    transport.addRefreshToken(REFRESH_TOKEN, ACCESS_TOKEN);
-
-    Map<String, Object> secretJson = new HashMap<>();
-    secretJson.put("client_id", CLIENT_ID);
-    secretJson.put("client_secret", CLIENT_SECRET);
-    secretJson.put("refresh_token", REFRESH_TOKEN);
-    secretJson.put("type", "authorized_user");
-    InputStream refreshTokenStream =
-        new ByteArrayInputStream(JSON_FACTORY.toByteArray(secretJson));
-    return FirebaseCredentials.fromRefreshToken(refreshTokenStream, transport, JSON_FACTORY);
-  }
-
   private static GoogleCredentials createCertificateCredential() throws IOException {
     final MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
@@ -168,13 +141,6 @@ public class FirebaseAuthTest {
             return transport;
           }
         });
-  }
-
-  private static FirebaseCredential createFirebaseCertificateCredential() throws IOException {
-    final MockTokenServerTransport transport = new MockTokenServerTransport();
-    transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
-    return FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream(),
-        transport, JSON_FACTORY);
   }
 
   @Before
@@ -189,7 +155,7 @@ public class FirebaseAuthTest {
   }
 
   @Test
-  public void testGetInstance() throws ExecutionException, InterruptedException {
+  public void testGetInstance() {
     FirebaseAuth defaultAuth = FirebaseAuth.getInstance();
     assertNotNull(defaultAuth);
     assertSame(defaultAuth, FirebaseAuth.getInstance());
@@ -198,7 +164,7 @@ public class FirebaseAuthTest {
   }
 
   @Test
-  public void testGetInstanceForApp() throws ExecutionException, InterruptedException {
+  public void testGetInstanceForApp() {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testGetInstanceForApp");
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
     assertNotNull(auth);
@@ -208,7 +174,7 @@ public class FirebaseAuthTest {
   }
 
   @Test
-  public void testAppDelete() throws ExecutionException, InterruptedException {
+  public void testAppDelete() {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testAppDelete");
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
     assertNotNull(auth);
@@ -272,7 +238,7 @@ public class FirebaseAuthTest {
   }
 
   @Test
-  public void testAppWithAuthVariableOverrides() throws ExecutionException, InterruptedException {
+  public void testAppWithAuthVariableOverrides() {
     Map<String, Object> authVariableOverrides = Collections.singletonMap("uid", (Object) "uid1");
     FirebaseOptions options =
         new FirebaseOptions.Builder(firebaseOptions)
