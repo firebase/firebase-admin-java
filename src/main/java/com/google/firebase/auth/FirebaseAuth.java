@@ -40,7 +40,6 @@ import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.TaskToApiFuture;
 import com.google.firebase.tasks.Task;
-import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -606,6 +605,11 @@ public class FirebaseAuth {
 
   private <T> Task<T> call(Callable<T> command) {
     return ImplFirebaseTrampolines.submitCallable(firebaseApp, command);
+  }
+
+  @VisibleForTesting
+  FirebaseUserManager getUserManager() {
+    return this.userManager;
   }
 
   private void checkNotDestroyed() {
