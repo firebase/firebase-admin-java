@@ -24,7 +24,7 @@ import com.google.firebase.ImplFirebaseTrampolines;
 import java.util.concurrent.Callable;
 
 /**
- * An operation that can be invoked with synchronously or asynchronously. Subclasses can specify
+ * An operation that can be invoked synchronously or asynchronously. Subclasses can specify
  * the return type and a specific exception type to be thrown.
  */
 public abstract class CallableOperation<T, V extends Exception> implements Callable<T> {
