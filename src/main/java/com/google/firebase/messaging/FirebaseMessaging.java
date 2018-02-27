@@ -64,15 +64,15 @@ public class FirebaseMessaging {
   private static final Map<String, String> FCM_ERROR_CODES =
       ImmutableMap.<String, String>builder()
         // FCM v1 canonical error codes
-        .put("UNAUTHENTICATED", "invalid-apns-credentials")
         .put("NOT_FOUND", "registration-token-not-registered")
+        .put("PERMISSION_DENIED", "mismatched-credential")
         .put("RESOURCE_EXHAUSTED", "message-rate-exceeded")
+        .put("UNAUTHENTICATED", "invalid-apns-credentials")
 
         // FCM v1 new error codes
         .put("APNS_AUTH_ERROR", "invalid-apns-credentials")
         .put("INTERNAL", INTERNAL_ERROR)
         .put("INVALID_ARGUMENT", "invalid-argument")
-        .put("PERMISSION_DENIED", "mismatched-credential")
         .put("QUOTA_EXCEEDED", "message-rate-exceeded")
         .put("SENDER_ID_MISMATCH", "mismatched-credential")
         .put("UNAVAILABLE", "server-unavailable")
