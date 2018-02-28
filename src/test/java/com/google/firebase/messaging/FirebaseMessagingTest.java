@@ -196,6 +196,29 @@ public class FirebaseMessagingTest {
   }
 
   @Test
+  public void testSendErrorWithCanonicalCode() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    FirebaseMessaging messaging = initMessaging(response);
+    for (int code : HTTP_ERRORS) {
+      response.setStatusCode(code).setContent(
+          "{\"error\": {\"status\": \"NOT_FOUND\", \"message\": \"test error\"}}");
+      TestResponseInterceptor interceptor = new TestResponseInterceptor();
+      messaging.setInterceptor(interceptor);
+      try {
+        messaging.sendAsync(Message.builder().setTopic("test-topic").build()).get();
+        fail("No error thrown for HTTP error");
+      } catch (ExecutionException e) {
+        assertTrue(e.getCause() instanceof FirebaseMessagingException);
+        FirebaseMessagingException error = (FirebaseMessagingException) e.getCause();
+        assertEquals("registration-token-not-registered", error.getErrorCode());
+        assertEquals("test error", error.getMessage());
+        assertTrue(error.getCause() instanceof HttpResponseException);
+      }
+      checkRequestHeader(interceptor);
+    }
+  }
+
+  @Test
   public void testInvalidSubscribe() {
     FirebaseMessaging messaging = initDefaultMessaging();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
