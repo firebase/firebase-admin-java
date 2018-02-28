@@ -22,7 +22,9 @@ import com.google.api.client.testing.http.MockLowLevelHttpRequest;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 
 /**
  * A mock HttpTransport that can simulate multiple (sequential) HTTP interactions. This can be
@@ -30,17 +32,16 @@ import java.util.List;
  */
 public class MultiRequestMockHttpTransport extends MockHttpTransport {
 
-  private final List<MockLowLevelHttpResponse> responses;
-  private int index = 0;
+  private final Queue<MockLowLevelHttpResponse> responses;
 
   public MultiRequestMockHttpTransport(List<MockLowLevelHttpResponse> responses) {
-    this.responses = ImmutableList.copyOf(responses);
+    this.responses = new  LinkedList<>(responses);
   }
 
   @Override
   public LowLevelHttpRequest buildRequest(String method, String url) throws IOException {
     LowLevelHttpRequest request = super.buildRequest(method, url);
-    ((MockLowLevelHttpRequest) request).setResponse(responses.get(index++));
+    ((MockLowLevelHttpRequest) request).setResponse(responses.remove());
     return request;
   }
 }

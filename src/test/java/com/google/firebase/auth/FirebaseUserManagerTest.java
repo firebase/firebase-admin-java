@@ -67,12 +67,9 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetUser() throws Exception {
-    initializeAppForUserManagement(TestUtils.loadResource("getUser.json"));
-    FirebaseAuth auth = FirebaseAuth.getInstance();
-    FirebaseUserManager userManager = auth.getUserManager();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    userManager.setInterceptor(interceptor);
-    UserRecord userRecord = auth.getUserAsync("testuser").get();
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("getUser.json"));
+    UserRecord userRecord = FirebaseAuth.getInstance().getUserAsync("testuser").get();
     checkUserRecord(userRecord);
     checkRequestHeaders(interceptor);
   }
@@ -80,9 +77,8 @@ public class FirebaseUserManagerTest {
   @Test
   public void testGetUserWithNotFoundError() throws Exception {
     initializeAppForUserManagement(TestUtils.loadResource("getUserError.json"));
-    FirebaseAuth auth = FirebaseAuth.getInstance();
     try {
-      auth.getUserAsync("testuser").get();
+      FirebaseAuth.getInstance().getUserAsync("testuser").get();
       fail("No error thrown for invalid response");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -93,12 +89,10 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetUserByEmail() throws Exception {
-    initializeAppForUserManagement(TestUtils.loadResource("getUser.json"));
-    FirebaseAuth auth = FirebaseAuth.getInstance();
-    FirebaseUserManager userManager = auth.getUserManager();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    userManager.setInterceptor(interceptor);
-    UserRecord userRecord = auth.getUserByEmailAsync("testuser@example.com").get();
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("getUser.json"));
+    UserRecord userRecord = FirebaseAuth.getInstance()
+        .getUserByEmailAsync("testuser@example.com").get();
     checkUserRecord(userRecord);
     checkRequestHeaders(interceptor);
   }
@@ -106,9 +100,8 @@ public class FirebaseUserManagerTest {
   @Test
   public void testGetUserByEmailWithNotFoundError() throws Exception {
     initializeAppForUserManagement(TestUtils.loadResource("getUserError.json"));
-    FirebaseAuth auth = FirebaseAuth.getInstance();
     try {
-      auth.getUserByEmailAsync("testuser@example.com").get();
+      FirebaseAuth.getInstance().getUserByEmailAsync("testuser@example.com").get();
       fail("No error thrown for invalid response");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -119,12 +112,10 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetUserByPhoneNumber() throws Exception {
-    initializeAppForUserManagement(TestUtils.loadResource("getUser.json"));
-    FirebaseAuth auth = FirebaseAuth.getInstance();
-    FirebaseUserManager userManager = auth.getUserManager();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    userManager.setInterceptor(interceptor);
-    UserRecord userRecord = auth.getUserByPhoneNumberAsync("+1234567890").get();
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("getUser.json"));
+    UserRecord userRecord = FirebaseAuth.getInstance()
+        .getUserByPhoneNumberAsync("+1234567890").get();
     checkUserRecord(userRecord);
     checkRequestHeaders(interceptor);
   }
@@ -132,9 +123,8 @@ public class FirebaseUserManagerTest {
   @Test
   public void testGetUserByPhoneNumberWithNotFoundError() throws Exception {
     initializeAppForUserManagement(TestUtils.loadResource("getUserError.json"));
-    FirebaseAuth auth = FirebaseAuth.getInstance();
     try {
-      auth.getUserByPhoneNumberAsync("+1234567890").get();
+      FirebaseAuth.getInstance().getUserByPhoneNumberAsync("+1234567890").get();
       fail("No error thrown for invalid response");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -145,13 +135,9 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testListUsers() throws Exception {
-    initializeAppForUserManagement(TestUtils.loadResource("listUsers.json"));
-    FirebaseAuth auth = FirebaseAuth.getInstance();
-    FirebaseUserManager userManager = auth.getUserManager();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    userManager.setInterceptor(interceptor);
-
-    ListUsersPage page = auth.listUsersAsync(null, 999).get();
+    final TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("listUsers.json"));
+    ListUsersPage page = FirebaseAuth.getInstance().listUsersAsync(null, 999).get();
     assertEquals(2, Iterables.size(page.getValues()));
     for (ExportedUserRecord userRecord : page.getValues()) {
       checkUserRecord(userRecord);
@@ -171,13 +157,9 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testListUsersWithPageToken() throws Exception {
-    initializeAppForUserManagement(TestUtils.loadResource("listUsers.json"));
-    FirebaseAuth auth = FirebaseAuth.getInstance();
-    FirebaseUserManager userManager = auth.getUserManager();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    userManager.setInterceptor(interceptor);
-
-    ListUsersPage page = auth.listUsersAsync("token", 999).get();
+    final TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("listUsers.json"));
+    ListUsersPage page = FirebaseAuth.getInstance().listUsersAsync("token", 999).get();
     assertEquals(2, Iterables.size(page.getValues()));
     for (ExportedUserRecord userRecord : page.getValues()) {
       checkUserRecord(userRecord);
@@ -197,56 +179,42 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testListZeroUsers() throws Exception {
-    initializeAppForUserManagement("{}");
-    FirebaseAuth auth = FirebaseAuth.getInstance();
-    FirebaseUserManager userManager = auth.getUserManager();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    userManager.setInterceptor(interceptor);
-    ListUsersPage page = auth.listUsersAsync(null).get();
-    assertEquals(0, Iterables.size(page.getValues()));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    ListUsersPage page = FirebaseAuth.getInstance().listUsersAsync(null).get();
+    assertTrue(Iterables.isEmpty(page.getValues()));
     assertEquals("", page.getNextPageToken());
     checkRequestHeaders(interceptor);
   }
 
   @Test
   public void testCreateUser() throws Exception {
-    initializeAppForUserManagement(
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("createUser.json"),
         TestUtils.loadResource("getUser.json"));
-    FirebaseAuth auth = FirebaseAuth.getInstance();
-    FirebaseUserManager userManager = auth.getUserManager();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    userManager.setInterceptor(interceptor);
-    UserRecord user = auth.createUserAsync(new CreateRequest()).get();
+    UserRecord user = FirebaseAuth.getInstance().createUserAsync(new CreateRequest()).get();
     checkUserRecord(user);
     checkRequestHeaders(interceptor);
   }
 
   @Test
   public void testUpdateUser() throws Exception {
-    initializeAppForUserManagement(
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("createUser.json"),
         TestUtils.loadResource("getUser.json"));
-    FirebaseAuth auth = FirebaseAuth.getInstance();
-    FirebaseUserManager userManager = auth.getUserManager();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    userManager.setInterceptor(interceptor);
-    UserRecord user = auth.updateUserAsync(new UpdateRequest("testuser")).get();
+    UserRecord user = FirebaseAuth.getInstance()
+        .updateUserAsync(new UpdateRequest("testuser")).get();
     checkUserRecord(user);
     checkRequestHeaders(interceptor);
   }
 
   @Test
   public void testSetCustomAttributes() throws Exception {
-    initializeAppForUserManagement(TestUtils.loadResource("createUser.json"));
-    FirebaseAuth auth = FirebaseAuth.getInstance();
-    FirebaseUserManager userManager = auth.getUserManager();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    userManager.setInterceptor(interceptor);
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("createUser.json"));
     // should not throw
     ImmutableMap<String, Object> claims = ImmutableMap.<String, Object>of(
         "admin", true, "package", "gold");
-    auth.setCustomUserClaimsAsync("testuser", claims).get();
+    FirebaseAuth.getInstance().setCustomUserClaimsAsync("testuser", claims).get();
     checkRequestHeaders(interceptor);
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -259,15 +227,10 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testRevokeRefreshTokens() throws Exception {
-    initializeAppForUserManagement(TestUtils.loadResource("createUser.json"));
-    FirebaseAuth auth = FirebaseAuth.getInstance();
-    FirebaseUserManager userManager = auth.getUserManager();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    userManager.setInterceptor(interceptor);
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("createUser.json"));
     // should not throw
-    ImmutableMap<String, Object> claims = ImmutableMap.<String, Object>of(
-        "admin", true, "package", "gold");
-    auth.revokeRefreshTokensAsync("testuser").get();
+    FirebaseAuth.getInstance().revokeRefreshTokensAsync("testuser").get();
     checkRequestHeaders(interceptor);
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -280,13 +243,10 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeleteUser() throws Exception {
-    initializeAppForUserManagement(TestUtils.loadResource("deleteUser.json"));
-    FirebaseAuth auth = FirebaseAuth.getInstance();
-    FirebaseUserManager userManager = auth.getUserManager();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    userManager.setInterceptor(interceptor);
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("deleteUser.json"));
     // should not throw
-    auth.deleteUserAsync("testuser").get();
+    FirebaseAuth.getInstance().deleteUserAsync("testuser").get();
     checkRequestHeaders(interceptor);
   }
 
@@ -386,9 +346,8 @@ public class FirebaseUserManagerTest {
   @Test
   public void testGetUserMalformedJsonError() throws Exception {
     initializeAppForUserManagement("{\"not\" json}");
-    FirebaseAuth auth = FirebaseAuth.getInstance();
     try {
-      auth.getUserAsync("testuser").get();
+      FirebaseAuth.getInstance().getUserAsync("testuser").get();
       fail("No error thrown for JSON error");
     }  catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -771,16 +730,21 @@ public class FirebaseUserManagerTest {
     }
   }
 
-  private static FirebaseApp initializeAppForUserManagement(String ...responses) {
+  private static TestResponseInterceptor initializeAppForUserManagement(String ...responses) {
     List<MockLowLevelHttpResponse> mocks = new ArrayList<>();
     for (String response : responses) {
       mocks.add(new MockLowLevelHttpResponse().setContent(response));
     }
     MockHttpTransport transport = new MultiRequestMockHttpTransport(mocks);
-    return FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(credentials)
         .setHttpTransport(transport)
         .build());
+    FirebaseAuth auth = FirebaseAuth.getInstance();
+    FirebaseUserManager userManager = auth.getUserManager();
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    userManager.setInterceptor(interceptor);
+    return interceptor;
   }
 
   private static void checkUserRecord(UserRecord userRecord) {

@@ -41,8 +41,4 @@ public class TestResponseInterceptor implements HttpResponseInterceptor {
     }
     return Iterables.getLast(responses);
   }
-
-  public HttpResponse getResponse(int index) {
-    return responses.get(index);
-  }
 }
