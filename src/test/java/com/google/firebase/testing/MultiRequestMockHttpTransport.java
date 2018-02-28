@@ -35,7 +35,7 @@ public class MultiRequestMockHttpTransport extends MockHttpTransport {
   private final Queue<MockLowLevelHttpResponse> responses;
 
   public MultiRequestMockHttpTransport(List<MockLowLevelHttpResponse> responses) {
-    this.responses = new  LinkedList<>(responses);
+    this.responses = new LinkedList<>(responses);
   }
 
   @Override
