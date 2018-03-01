@@ -188,7 +188,8 @@ public class FirebaseApp {
     try {
       return initializeApp(getOptionsFromEnvironment(), name);
     } catch (IOException e) {
-      throw new IllegalArgumentException("Failed to load settings from the environment", e);
+      throw new IllegalArgumentException(
+          "Failed to load settings from the system's environment variables", e);
     }
   }
 

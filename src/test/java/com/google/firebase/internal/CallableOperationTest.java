@@ -17,6 +17,8 @@
 package com.google.firebase.internal;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -36,7 +38,6 @@ import org.junit.Test;
 public class CallableOperationTest {
 
   private static final String TEST_FIREBASE_THREAD = "test-firebase-thread";
-  private static final String SAME_THREAD = "same-thread";
   private static final FirebaseOptions OPTIONS = new Builder()
       .setCredentials(new MockGoogleCredentials())
       .setThreadManager(new MockThreadManager())
@@ -50,40 +51,32 @@ public class CallableOperationTest {
   @Test
   public void testCallResult() throws Exception {
     FirebaseApp app = FirebaseApp.initializeApp(OPTIONS);
-    CallableOperation<String,Exception> operation = new CallableOperation<String, Exception>() {
+    CallableOperation<Boolean,Exception> operation = new CallableOperation<Boolean, Exception>() {
       @Override
-      protected String execute() throws Exception {
+      protected Boolean execute() throws Exception {
         String threadName = Thread.currentThread().getName();
-        if (TEST_FIREBASE_THREAD.equals(threadName)) {
-          return threadName;
-        }
-        return SAME_THREAD;
+        return TEST_FIREBASE_THREAD.equals(threadName);
       }
     };
-    assertEquals(SAME_THREAD, operation.call());
-    assertEquals(TEST_FIREBASE_THREAD, operation.callAsync(app).get());
+    assertFalse(operation.call());
+    assertTrue(operation.callAsync(app).get());
   }
 
   @Test
   public void testCallException() throws Exception {
     FirebaseApp app = FirebaseApp.initializeApp(OPTIONS);
-    CallableOperation<String,Exception> operation = new CallableOperation<String, Exception>() {
+    CallableOperation<Boolean,Exception> operation = new CallableOperation<Boolean, Exception>() {
       @Override
-      protected String execute() throws Exception {
+      protected Boolean execute() throws Exception {
         String threadName = Thread.currentThread().getName();
         if (TEST_FIREBASE_THREAD.equals(threadName)) {
           throw new Exception(threadName);
         }
-        throw new Exception(SAME_THREAD);
+        return false;
       }
     };
-    try {
-      operation.call();
-      fail("No exception thrown");
-    } catch (Exception e) {
-      assertEquals(SAME_THREAD, e.getMessage());
-    }
 
+    assertFalse(operation.call());
     try {
       operation.callAsync(app).get();
       fail("No exception thrown");

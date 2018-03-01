@@ -131,7 +131,7 @@ public class FirebaseAuth {
    * @return A Firebase custom token string.
    * @throws IllegalArgumentException If the specified uid is null or empty, or if the app has not
    *     been initialized with service account credentials.
-   * @throws FirebaseAuthException If an error occurs while minting the custom token.
+   * @throws FirebaseAuthException If an error occurs while generating the custom token.
    */
   public String createCustomToken(@NonNull String uid) throws FirebaseAuthException {
     return createCustomToken(uid, null);
@@ -154,7 +154,7 @@ public class FirebaseAuth {
    * @return A Firebase custom token string.
    * @throws IllegalArgumentException If the specified uid is null or empty, or if the app has not
    *     been initialized with service account credentials.
-   * @throws FirebaseAuthException If an error occurs while minting the custom token.
+   * @throws FirebaseAuthException If an error occurs while generating the custom token.
    */
   public String createCustomToken(@NonNull String uid,
       @Nullable Map<String, Object> developerClaims) throws FirebaseAuthException {
@@ -213,7 +213,8 @@ public class FirebaseAuth {
               serviceAccount.getClientEmail(),
               serviceAccount.getPrivateKey());
         } catch (GeneralSecurityException | IOException e) {
-          throw new FirebaseAuthException(ERROR_CUSTOM_TOKEN, "Failed to mint a custom token", e);
+          throw new FirebaseAuthException(ERROR_CUSTOM_TOKEN,
+              "Failed to generate a custom token", e);
         }
       }
     };
