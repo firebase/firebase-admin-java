@@ -16,10 +16,8 @@
 
 package com.google.firebase.database.core;
 
-import com.google.firebase.internal.ThreadUtils;
+import com.google.firebase.internal.FirebaseScheduledExecutor;
 import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -35,10 +33,8 @@ class ThreadPoolEventTarget implements EventTarget, UncaughtExceptionHandler {
   private UncaughtExceptionHandler exceptionHandler;
 
   ThreadPoolEventTarget(ThreadFactory threadFactory) {
-    final int poolSize = 1;
-    BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
-    executor = new ThreadPoolExecutor(poolSize, poolSize, 3, TimeUnit.SECONDS, queue,
-        ThreadUtils.decorateThreadFactory(threadFactory, "firebase-database-event-target", this));
+    executor = new FirebaseScheduledExecutor(threadFactory, "firebase-database-event-target", this);
+    executor.setKeepAliveTime(3, TimeUnit.SECONDS);
   }
 
   @Override

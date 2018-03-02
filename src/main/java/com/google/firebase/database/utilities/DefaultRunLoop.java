@@ -20,7 +20,7 @@ import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.core.RunLoop;
 
-import com.google.firebase.internal.ThreadUtils;
+import com.google.firebase.internal.FirebaseScheduledExecutor;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -41,9 +41,7 @@ public abstract class DefaultRunLoop implements RunLoop {
    * provided, these restarts will automatically interrupt and resume all Repo connections.
    */
   protected DefaultRunLoop(ThreadFactory threadFactory) {
-    ThreadFactory wrappedThreadFactory = ThreadUtils.decorateThreadFactory(
-        threadFactory, "firebase-database-worker");
-    executor = new ScheduledThreadPoolExecutor(1, wrappedThreadFactory) {
+    executor = new FirebaseScheduledExecutor(threadFactory, "firebase-database-worker") {
       @Override
       protected void afterExecute(Runnable runnable, Throwable throwable) {
         if (throwable == null && runnable instanceof Future<?>) {
@@ -71,7 +69,6 @@ public abstract class DefaultRunLoop implements RunLoop {
     // Core threads don't time out, this only takes effect when we drop the number of required
     // core threads
     executor.setKeepAliveTime(3, TimeUnit.SECONDS);
-    executor.setRemoveOnCancelPolicy(true);
   }
 
   public static String messageForException(Throwable t) {
