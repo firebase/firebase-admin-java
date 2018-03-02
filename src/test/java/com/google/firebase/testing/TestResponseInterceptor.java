@@ -18,27 +18,21 @@ package com.google.firebase.testing;
 
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseInterceptor;
-import com.google.common.collect.Iterables;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Can be used to intercept HTTP requests and responses made by the SDK during tests.
  */
 public class TestResponseInterceptor implements HttpResponseInterceptor {
 
-  private List<HttpResponse> responses = new ArrayList<>();
+  private HttpResponse response;
 
   @Override
   public void interceptResponse(HttpResponse response) throws IOException {
-    this.responses.add(response);
+    this.response = response;
   }
 
   public HttpResponse getResponse() {
-    if (responses.isEmpty()) {
-      return null;
-    }
-    return Iterables.getLast(responses);
+    return response;
   }
 }
