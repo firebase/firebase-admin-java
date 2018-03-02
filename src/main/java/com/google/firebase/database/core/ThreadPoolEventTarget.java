@@ -16,6 +16,7 @@
 
 package com.google.firebase.database.core;
 
+import com.google.firebase.internal.ThreadUtils;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -25,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** ThreadPoolEventTarget is an event target using a configurable threadpool. */
+/** ThreadPoolEventTarget is an event target using a configurable thread pool. */
 class ThreadPoolEventTarget implements EventTarget, UncaughtExceptionHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(ThreadPoolEventTarget.class);
@@ -33,21 +34,11 @@ class ThreadPoolEventTarget implements EventTarget, UncaughtExceptionHandler {
   private final ThreadPoolExecutor executor;
   private UncaughtExceptionHandler exceptionHandler;
 
-  ThreadPoolEventTarget(
-       final ThreadFactory wrappedFactory, final ThreadInitializer threadInitializer) {
+  ThreadPoolEventTarget(ThreadFactory threadFactory) {
     final int poolSize = 1;
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     executor = new ThreadPoolExecutor(poolSize, poolSize, 3, TimeUnit.SECONDS, queue,
-        new ThreadFactory() {
-          @Override
-          public Thread newThread(Runnable r) {
-            Thread thread = wrappedFactory.newThread(r);
-            threadInitializer.setName(thread, "FirebaseDatabaseEventTarget");
-            threadInitializer.setDaemon(thread, true);
-            threadInitializer.setUncaughtExceptionHandler(thread, ThreadPoolEventTarget.this);
-            return thread;
-          }
-        });
+        ThreadUtils.decorateThreadFactory(threadFactory, "firebase-database-event-target", this));
   }
 
   @Override

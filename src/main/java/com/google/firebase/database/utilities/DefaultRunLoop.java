@@ -20,7 +20,7 @@ import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.core.RunLoop;
 
-import com.google.firebase.internal.FirebaseThreadManagers;
+import com.google.firebase.internal.ThreadUtils;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -40,13 +40,12 @@ public abstract class DefaultRunLoop implements RunLoop {
    * Creates a DefaultRunLoop that optionally restarts its threads periodically. If 'context' is
    * provided, these restarts will automatically interrupt and resume all Repo connections.
    */
-  protected DefaultRunLoop(final ThreadFactory threadFactory) {
-    ThreadFactory wrappedThreadFactory = FirebaseThreadManagers.wrapThreadFactory(
+  protected DefaultRunLoop(ThreadFactory threadFactory) {
+    ThreadFactory wrappedThreadFactory = ThreadUtils.decorateThreadFactory(
         threadFactory, "firebase-database-worker");
     executor = new ScheduledThreadPoolExecutor(1, wrappedThreadFactory) {
       @Override
       protected void afterExecute(Runnable runnable, Throwable throwable) {
-        super.afterExecute(runnable, throwable);
         if (throwable == null && runnable instanceof Future<?>) {
           Future<?> future = (Future<?>) runnable;
           try {
@@ -71,8 +70,8 @@ public abstract class DefaultRunLoop implements RunLoop {
 
     // Core threads don't time out, this only takes effect when we drop the number of required
     // core threads
-    executor.setRemoveOnCancelPolicy(true);
     executor.setKeepAliveTime(3, TimeUnit.SECONDS);
+    executor.setRemoveOnCancelPolicy(true);
   }
 
   public static String messageForException(Throwable t) {

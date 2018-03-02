@@ -16,7 +16,6 @@
 
 package com.google.firebase.internal;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ThreadManager;
 
@@ -35,14 +34,6 @@ public class FirebaseThreadManagers {
   private static final Logger logger = LoggerFactory.getLogger(FirebaseThreadManagers.class);
 
   public static final ThreadManager DEFAULT_THREAD_MANAGER = new DefaultThreadManager();
-
-  public static ThreadFactory wrapThreadFactory(ThreadFactory threadFactory, String name) {
-    return new ThreadFactoryBuilder()
-        .setThreadFactory(threadFactory)
-        .setNameFormat(name)
-        .setDaemon(true)
-        .build();
-  }
 
   /**
    * An abstract ThreadManager implementation that uses the same executor service
@@ -91,12 +82,8 @@ public class FirebaseThreadManagers {
 
     @Override
     protected ExecutorService doInit() {
-      // Create threads as daemons to ensure JVM exit when all foreground jobs are complete.
-      ThreadFactory threadFactory = new ThreadFactoryBuilder()
-          .setNameFormat("firebase-default-%d")
-          .setDaemon(true)
-          .setThreadFactory(getThreadFactory())
-          .build();
+      ThreadFactory threadFactory = ThreadUtils.decorateThreadFactory(
+          getThreadFactory(), "firebase-default-%d");
       return Executors.newCachedThreadPool(threadFactory);
     }
 

@@ -19,7 +19,6 @@ package com.google.firebase;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
@@ -35,14 +34,13 @@ import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.BaseEncoding;
 import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseService;
-import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.ListenableFuture2ApiFuture;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
+import com.google.firebase.internal.ThreadUtils;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -243,19 +241,6 @@ public class FirebaseApp {
     }
   }
 
-  /**
-   * Returns persistence key. Exists to support getting {@link FirebaseApp} persistence key after
-   * the app has been deleted.
-   */
-  static String getPersistenceKey(String name, FirebaseOptions options) {
-    return BaseEncoding.base64Url().omitPadding().encode(name.getBytes(UTF_8));
-  }
-
-  /** Use this key to store data per FirebaseApp. */
-  String getPersistenceKey() {
-    return FirebaseApp.getPersistenceKey(getName(), getOptions());
-  }
-
   private static List<String> getAllAppNames() {
     Set<String> allAppNames = new HashSet<>();
     synchronized (appsLock) {
@@ -319,10 +304,7 @@ public class FirebaseApp {
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof FirebaseApp)) {
-      return false;
-    }
-    return name.equals(((FirebaseApp) o).getName());
+    return o instanceof FirebaseApp && name.equals(((FirebaseApp) o).getName());
   }
 
   @Override
@@ -385,7 +367,7 @@ public class FirebaseApp {
       synchronized (lock) {
         checkNotDeleted();
         if (scheduledExecutor == null) {
-          ThreadFactory threadFactory = FirebaseThreadManagers.wrapThreadFactory(
+          ThreadFactory threadFactory = ThreadUtils.decorateThreadFactory(
               getThreadFactory(), "firebase-scheduled-worker");
           scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
         }
@@ -464,7 +446,7 @@ public class FirebaseApp {
     }
 
     @Override
-    public final synchronized void onChanged(OAuth2Credentials credentials) throws IOException {
+    public final synchronized void onChanged(OAuth2Credentials credentials) {
       if (state.get() != State.STARTED) {
         return;
       }

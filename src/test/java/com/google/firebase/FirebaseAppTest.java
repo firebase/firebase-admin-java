@@ -16,7 +16,6 @@
 
 package com.google.firebase;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
@@ -35,7 +34,6 @@ import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.auth.oauth2.OAuth2Credentials.CredentialsChangedListener;
 import com.google.common.base.Defaults;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.BaseEncoding;
 import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.FirebaseOptions.Builder;
 import com.google.firebase.database.FirebaseDatabase;
@@ -231,15 +229,6 @@ public class FirebaseAppTest {
         }
       }
     }
-  }
-
-  @Test
-  public void testPersistenceKey() {
-    String name = "myApp";
-    FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS, name);
-    String persistenceKey = firebaseApp.getPersistenceKey();
-    assertEquals(name, new String(BaseEncoding.base64Url().omitPadding().decode(persistenceKey),
-        UTF_8));
   }
 
   // Order of test cases matters.
