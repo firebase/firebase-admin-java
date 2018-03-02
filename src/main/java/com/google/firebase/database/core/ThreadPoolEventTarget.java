@@ -16,8 +16,6 @@
 
 package com.google.firebase.database.core;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -35,11 +33,10 @@ class ThreadPoolEventTarget implements EventTarget, UncaughtExceptionHandler {
   private final ThreadPoolExecutor executor;
   private UncaughtExceptionHandler exceptionHandler;
 
-  public ThreadPoolEventTarget(
-      final ThreadFactory wrappedFactory, final ThreadInitializer threadInitializer) {
-    int poolSize = 1;
+  ThreadPoolEventTarget(
+       final ThreadFactory wrappedFactory, final ThreadInitializer threadInitializer) {
+    final int poolSize = 1;
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
-
     executor = new ThreadPoolExecutor(poolSize, poolSize, 3, TimeUnit.SECONDS, queue,
         new ThreadFactory() {
           @Override
@@ -51,10 +48,6 @@ class ThreadPoolEventTarget implements EventTarget, UncaughtExceptionHandler {
             return thread;
           }
         });
-  }
-
-  public ThreadPoolEventTarget(final ThreadPoolExecutor executor) {
-    this.executor = checkNotNull(executor);
   }
 
   @Override

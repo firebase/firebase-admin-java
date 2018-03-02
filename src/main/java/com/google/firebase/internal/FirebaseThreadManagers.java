@@ -16,8 +16,6 @@
 
 package com.google.firebase.internal;
 
-import static com.google.common.base.Preconditions.checkState;
-
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ThreadManager;
@@ -36,14 +34,14 @@ public class FirebaseThreadManagers {
 
   private static final Logger logger = LoggerFactory.getLogger(FirebaseThreadManagers.class);
 
-  public static final ThreadManager DEFAULT_THREAD_MANAGER;
+  public static final ThreadManager DEFAULT_THREAD_MANAGER = new DefaultThreadManager();
 
-  static {
-    if (GaeThreadFactory.isAvailable()) {
-      DEFAULT_THREAD_MANAGER = new GaeThreadManager();
-    } else {
-      DEFAULT_THREAD_MANAGER = new DefaultThreadManager();
-    }
+  public static ThreadFactory wrapThreadFactory(ThreadFactory threadFactory, String name) {
+    return new ThreadFactoryBuilder()
+        .setThreadFactory(threadFactory)
+        .setNameFormat(name)
+        .setDaemon(true)
+        .build();
   }
 
   /**
@@ -111,54 +109,6 @@ public class FirebaseThreadManagers {
     @Override
     protected ThreadFactory getThreadFactory() {
       return Executors.defaultThreadFactory();
-    }
-  }
-
-  /**
-   * The ThreadManager implementation that will be used by default in the Google App Engine
-   * environment.
-   *
-   * <p>Auto-scaling: Creates an ExecutorService backed by the request-scoped ThreadFactory. This
-   * can be used for any short-lived task, such as the ones submitted by components like
-   * FirebaseAuth. {@link #getThreadFactory()} throws an exception, since long-lived threads
-   * cannot be supported. Therefore task scheduling and RTDB will not work.
-   *
-   * <p>Manual-scaling: Creates a single-threaded ExecutorService backed by the background
-   * ThreadFactory. Keeps the threads alive indefinitely by periodically restarting them (see
-   * {@link RevivingScheduledExecutor}). Threads will be terminated only when the method
-   * {@link #releaseExecutor(FirebaseApp, ExecutorService)} is invoked. The
-   * {@link #getThreadFactory()} also returns the background ThreadFactory enabling other
-   * components in the SDK to start long-lived threads when necessary. Therefore task scheduling
-   * and RTDB can be supported as if running on the regular JVM.
-   *
-   * <p>Basic-scaling: Behavior is similar to manual-scaling. Since the threads are kept alive
-   * indefinitely, prevents the GAE idle instance shutdown. Developers are advised to use
-   * a custom ThreadManager implementation if idle instance shutdown should be supported. In
-   * general, a ThreadManager implementation that uses the request-scoped ThreadFactory, or the
-   * background ThreadFactory with specific keep-alive times can easily facilitate GAE idle
-   * instance shutdown. Note that this often comes at the cost of losing scheduled tasks and RTDB
-   * support. Therefore, for these features, manual-scaling is the recommended GAE deployment mode
-   * regardless of the ThreadManager implementation used.
-   */
-  private static class GaeThreadManager extends GlobalThreadManager {
-
-    @Override
-    protected ExecutorService doInit() {
-      return new GaeExecutorService("gae-firebase-default");
-    }
-
-    @Override
-    protected void doCleanup(ExecutorService executorService) {
-      executorService.shutdownNow();
-    }
-
-    @Override
-    protected ThreadFactory getThreadFactory() {
-      GaeThreadFactory threadFactory = GaeThreadFactory.getInstance();
-      checkState(threadFactory.isUsingBackgroundThreads(),
-          "Failed to initialize a GAE background thread factory. Background thread support "
-              + "is required to create long-lived threads.");
-      return threadFactory;
     }
   }
 }

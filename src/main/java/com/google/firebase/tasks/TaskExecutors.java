@@ -17,7 +17,6 @@
 package com.google.firebase.tasks;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.firebase.internal.GaeThreadFactory;
 import com.google.firebase.internal.NonNull;
 
 import java.util.concurrent.Executor;
@@ -49,15 +48,11 @@ public class TaskExecutors {
       };
 
   static {
-    if (GaeThreadFactory.isAvailable()) {
-      DEFAULT_THREAD_POOL = GaeThreadFactory.DEFAULT_EXECUTOR;
-    } else {
-      ThreadFactory threadFactory = new ThreadFactoryBuilder()
-          .setNameFormat("task-exec-%d")
-          .setDaemon(true)
-          .build();
-      DEFAULT_THREAD_POOL = Executors.newCachedThreadPool(threadFactory);
-    }
+    ThreadFactory threadFactory = new ThreadFactoryBuilder()
+        .setNameFormat("task-exec-%d")
+        .setDaemon(true)
+        .build();
+    DEFAULT_THREAD_POOL = Executors.newCachedThreadPool(threadFactory);
   }
 
   private TaskExecutors() {}

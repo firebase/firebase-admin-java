@@ -21,7 +21,6 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 
-import com.google.firebase.tasks.Task;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadFactory;
 
@@ -46,14 +45,6 @@ public final class ImplFirebaseTrampolines {
 
   public static boolean isDefaultApp(@NonNull FirebaseApp app) {
     return app.isDefaultApp();
-  }
-
-  public static String getPersistenceKey(@NonNull FirebaseApp app) {
-    return app.getPersistenceKey();
-  }
-  
-  public static String getPersistenceKey(String name, FirebaseOptions options) {
-    return FirebaseApp.getPersistenceKey(name, options);
   }
 
   public static <T extends FirebaseService> T getService(

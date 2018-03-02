@@ -38,11 +38,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseService;
-import com.google.firebase.internal.GaeThreadFactory;
+import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.ListenableFuture2ApiFuture;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
-import com.google.firebase.internal.RevivingScheduledExecutor;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -54,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -385,8 +385,9 @@ public class FirebaseApp {
       synchronized (lock) {
         checkNotDeleted();
         if (scheduledExecutor == null) {
-          scheduledExecutor = new RevivingScheduledExecutor(threadManager.getThreadFactory(),
-              "firebase-scheduled-worker", GaeThreadFactory.isAvailable());
+          ThreadFactory threadFactory = FirebaseThreadManagers.wrapThreadFactory(
+              getThreadFactory(), "firebase-scheduled-worker");
+          scheduledExecutor = Executors.newSingleThreadScheduledExecutor(threadFactory);
         }
       }
     }

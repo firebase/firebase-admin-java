@@ -28,12 +28,11 @@ import com.google.firebase.database.logging.DefaultLogger;
 import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.utilities.DefaultRunLoop;
-import com.google.firebase.internal.GaeThreadFactory;
-import com.google.firebase.internal.RevivingScheduledExecutor;
 
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+
 
 /**
  * Represents a Google AppEngine platform.
@@ -42,15 +41,22 @@ import java.util.concurrent.ThreadFactory;
  */
 class GaePlatform implements Platform {
 
+  private static final String GAE_THREAD_MANAGER_CLASS = "com.google.appengine.api.ThreadManager";
+
   private static final String PROCESS_PLATFORM = "AppEngine";
   private final FirebaseApp firebaseApp;
 
-  public GaePlatform(FirebaseApp firebaseApp) {
+  GaePlatform(FirebaseApp firebaseApp) {
     this.firebaseApp = firebaseApp;
   }
 
   public static boolean isActive() {
-    return GaeThreadFactory.isAvailable();
+    try {
+      Class.forName(GAE_THREAD_MANAGER_CLASS);
+      return System.getProperty("com.google.appengine.runtime.environment") != null;
+    } catch (ClassNotFoundException e) {
+      return false;
+    }
   }
 
   @Override
@@ -64,15 +70,13 @@ class GaePlatform implements Platform {
 
   @Override
   public EventTarget newEventTarget(Context ctx) {
-    RevivingScheduledExecutor eventExecutor =
-        new RevivingScheduledExecutor(getGaeThreadFactory(), "FirebaseDatabaseEventTarget", true);
-    return new ThreadPoolEventTarget(eventExecutor);
+    return new ThreadPoolEventTarget(getGaeThreadFactory(), ThreadInitializer.defaultInstance);
   }
 
   @Override
   public RunLoop newRunLoop(final Context context) {
     final LogWrapper logger = context.getLogger(RunLoop.class);
-    return new DefaultRunLoop(getGaeThreadFactory(), /* periodicRestart= */ true, context) {
+    return new DefaultRunLoop(getGaeThreadFactory()) {
       @Override
       public void handleException(Throwable e) {
         logger.error(DefaultRunLoop.messageForException(e), e);

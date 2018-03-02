@@ -37,7 +37,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import org.junit.After;
-import org.junit.Assume;
 import org.junit.Test;
 
 public class FirebaseThreadManagersTest {
@@ -126,8 +125,6 @@ public class FirebaseThreadManagersTest {
 
   @Test
   public void testDefaultThreadManager() throws Exception {
-    Assume.assumeFalse(GaeThreadFactory.isAvailable());
-
     FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials())
         .build();
