@@ -556,11 +556,7 @@ public class FirebaseAuth {
     return new CallableOperation<ListUsersPage, FirebaseAuthException>() {
       @Override
       protected ListUsersPage execute() throws FirebaseAuthException {
-        try {
-          return factory.create();
-        } catch (Exception e) {
-          throw new FirebaseAuthException(ERROR_LIST_USERS, "Error while retrieving user data", e);
-        }
+        return factory.create();
       }
     };
   }
@@ -722,6 +718,11 @@ public class FirebaseAuth {
         return null;
       }
     };
+  }
+
+  @VisibleForTesting
+  FirebaseUserManager getUserManager() {
+    return this.userManager;
   }
 
   private void checkNotDestroyed() {

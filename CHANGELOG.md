@@ -1,9 +1,9 @@
 # Unreleased
 
--
+- [fixed] Improved error handling in FCM by mapping more server-side
+  errors to client-side error codes.
 
 # v5.9.0
-
 
 ### Cloud Messaging
 

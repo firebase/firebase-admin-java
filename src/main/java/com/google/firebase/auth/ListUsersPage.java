@@ -81,7 +81,11 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
   public ListUsersPage getNextPage() {
     if (hasNextPage()) {
       PageFactory factory = new PageFactory(source, maxResults, currentBatch.getNextPageToken());
-      return factory.create();
+      try {
+        return factory.create();
+      } catch (FirebaseAuthException e) {
+        throw new RuntimeException(e);
+      }
     }
     return null;
   }
@@ -179,7 +183,7 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
    */
   interface UserSource {
     @NonNull
-    ListUsersResult fetch(int maxResults, String pageToken);
+    ListUsersResult fetch(int maxResults, String pageToken) throws FirebaseAuthException;
   }
 
   static class DefaultUserSource implements UserSource {
@@ -193,21 +197,17 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
     }
 
     @Override
-    public ListUsersResult fetch(int maxResults, String pageToken) {
-      try {
-        DownloadAccountResponse response = userManager.listUsers(maxResults, pageToken);
-        ImmutableList.Builder<ExportedUserRecord> builder = ImmutableList.builder();
-        if (response.hasUsers()) {
-          for (DownloadAccountResponse.User user : response.getUsers()) {
-            builder.add(new ExportedUserRecord(user, jsonFactory));
-          }
+    public ListUsersResult fetch(int maxResults, String pageToken) throws FirebaseAuthException {
+      DownloadAccountResponse response = userManager.listUsers(maxResults, pageToken);
+      ImmutableList.Builder<ExportedUserRecord> builder = ImmutableList.builder();
+      if (response.hasUsers()) {
+        for (DownloadAccountResponse.User user : response.getUsers()) {
+          builder.add(new ExportedUserRecord(user, jsonFactory));
         }
-        String nextPageToken = response.getPageToken() != null
-            ? response.getPageToken() : END_OF_LIST;
-        return new ListUsersResult(builder.build(), nextPageToken);
-      } catch (Exception e) {
-        throw new RuntimeException("Error while downloading user accounts", e);
       }
+      String nextPageToken = response.getPageToken() != null
+          ? response.getPageToken() : END_OF_LIST;
+      return new ListUsersResult(builder.build(), nextPageToken);
     }
   }
 
@@ -257,7 +257,7 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
       this.pageToken = pageToken;
     }
 
-    ListUsersPage create() {
+    ListUsersPage create() throws FirebaseAuthException {
       ListUsersResult batch = source.fetch(maxResults, pageToken);
       return new ListUsersPage(batch, source, maxResults);
     }
