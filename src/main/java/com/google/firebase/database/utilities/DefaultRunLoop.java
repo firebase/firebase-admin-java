@@ -20,8 +20,11 @@ import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.core.RunLoop;
 
-import com.google.firebase.internal.SingleThreadScheduledExecutor;
+import com.google.firebase.internal.FirebaseScheduledExecutor;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -30,20 +33,39 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class DefaultRunLoop implements RunLoop {
 
-  private ScheduledThreadPoolExecutor executor;
+  private final ScheduledThreadPoolExecutor executor;
   private UncaughtExceptionHandler exceptionHandler;
 
   /**
    * Creates a DefaultRunLoop that optionally restarts its threads periodically. If 'context' is
    * provided, these restarts will automatically interrupt and resume all Repo connections.
    */
-  public DefaultRunLoop(final ThreadFactory threadFactory) {
-    executor = new SingleThreadScheduledExecutor("firebase-database-worker", threadFactory) {
+  protected DefaultRunLoop(ThreadFactory threadFactory) {
+    executor = new FirebaseScheduledExecutor(threadFactory, "firebase-database-worker") {
       @Override
-      protected void handleException(Throwable t) {
-        handleExceptionInternal(t);
+      protected void afterExecute(Runnable runnable, Throwable throwable) {
+        if (throwable == null && runnable instanceof Future<?>) {
+          Future<?> future = (Future<?>) runnable;
+          try {
+            // Not all Futures will be done, e.g. when used with scheduledAtFixedRate
+            if (future.isDone()) {
+              future.get();
+            }
+          } catch (CancellationException ce) {
+            // Cancellation exceptions are okay, we expect them to happen sometimes
+          } catch (ExecutionException ee) {
+            throwable = ee.getCause();
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
+        }
+
+        if (throwable != null) {
+          handleExceptionInternal(throwable);
+        }
       }
     };
+
     // Core threads don't time out, this only takes effect when we drop the number of required
     // core threads
     executor.setKeepAliveTime(3, TimeUnit.SECONDS);
@@ -80,7 +102,6 @@ public abstract class DefaultRunLoop implements RunLoop {
     }
   }
 
-  // TODO: Remove this extension point
   public abstract void handleException(Throwable e);
 
   public ScheduledExecutorService getExecutorService() {

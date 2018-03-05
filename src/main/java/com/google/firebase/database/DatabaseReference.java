@@ -33,8 +33,6 @@ import com.google.firebase.database.utilities.PushIdGenerator;
 import com.google.firebase.database.utilities.Utilities;
 import com.google.firebase.database.utilities.Validation;
 import com.google.firebase.database.utilities.encoding.CustomClassMapper;
-import com.google.firebase.internal.TaskToApiFuture;
-import com.google.firebase.tasks.Task;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -177,7 +175,7 @@ public class DatabaseReference extends Query {
    * @return The ApiFuture for this operation.
    */
   public ApiFuture<Void> setValueAsync(Object value) {
-    return new TaskToApiFuture<>(setValue(value));
+    return setValueInternal(value, PriorityUtilities.parsePriority(this.path, null), null);
   }
 
   /**
@@ -215,29 +213,6 @@ public class DatabaseReference extends Query {
    * @return The ApiFuture for this operation.
    */
   public ApiFuture<Void> setValueAsync(Object value, Object priority) {
-    return new TaskToApiFuture<>(setValue(value, priority));
-  }
-
-  /**
-   * Similar to {@link #setValueAsync(Object)} but returns a Task.
-   *
-   * @param value The value to set at this location
-   * @return The {@link Task} for this operation.
-   * @deprecated Use {@link #setValueAsync(Object)}
-   */
-  public Task<Void> setValue(Object value) {
-    return setValueInternal(value, PriorityUtilities.parsePriority(this.path, null), null);
-  }
-
-  /**
-   * Similar to {@link #setValueAsync(Object, Object)} but returns a Task.
-   *
-   * @param value The value to set at this location
-   * @param priority The priority to set at this location
-   * @return The {@link Task} for this operation.
-   * @deprecated Use {@link #setValueAsync(Object, Object)}
-   */
-  public Task<Void> setValue(Object value, Object priority) {
     return setValueInternal(value, PriorityUtilities.parsePriority(this.path, priority), null);
   }
 
@@ -315,13 +290,14 @@ public class DatabaseReference extends Query {
     setValueInternal(value, PriorityUtilities.parsePriority(this.path, priority), listener);
   }
 
-  private Task<Void> setValueInternal(Object value, Node priority, CompletionListener optListener) {
+  private ApiFuture<Void> setValueInternal(Object value, Node priority, CompletionListener
+      optListener) {
     Validation.validateWritablePath(getPath());
     ValidationPath.validateWithObject(getPath(), value);
     Object bouncedValue = CustomClassMapper.convertToPlainJavaTypes(value);
     Validation.validateWritableObject(bouncedValue);
     final Node node = NodeUtilities.NodeFromJSON(bouncedValue, priority);
-    final Pair<Task<Void>, CompletionListener> wrapped = Utilities.wrapOnComplete(optListener);
+    final Pair<ApiFuture<Void>, CompletionListener> wrapped = Utilities.wrapOnComplete(optListener);
     repo.scheduleNow(
         new Runnable() {
           @Override
@@ -364,17 +340,6 @@ public class DatabaseReference extends Query {
    * @return The ApiFuture for this operation.
    */
   public ApiFuture<Void> setPriorityAsync(Object priority) {
-    return new TaskToApiFuture<>(setPriority(priority));
-  }
-
-  /**
-   * Similar to {@link #setPriorityAsync(Object)} but returns a Task.
-   *
-   * @param priority The priority to set at the specified location.
-   * @return The {@link Task} for this operation.
-   * @deprecated Use {@link #setPriorityAsync(Object)}
-   */
-  public Task<Void> setPriority(Object priority) {
     return setPriorityInternal(PriorityUtilities.parsePriority(this.path, priority), null);
   }
 
@@ -413,10 +378,10 @@ public class DatabaseReference extends Query {
 
   // Remove
 
-  private Task<Void> setPriorityInternal(final Node priority, CompletionListener optListener) {
+  private ApiFuture<Void> setPriorityInternal(final Node priority, CompletionListener optListener) {
     Validation.validateWritablePath(getPath());
 
-    final Pair<Task<Void>, CompletionListener> wrapped = Utilities.wrapOnComplete(optListener);
+    final Pair<ApiFuture<Void>, CompletionListener> wrapped = Utilities.wrapOnComplete(optListener);
     repo.scheduleNow(
         new Runnable() {
           @Override
@@ -438,17 +403,6 @@ public class DatabaseReference extends Query {
    * @return The ApiFuture for this operation.
    */
   public ApiFuture<Void> updateChildrenAsync(Map<String, Object> update) {
-    return new TaskToApiFuture<>(updateChildren(update));
-  }
-
-  /**
-   * Similar to {@link #updateChildrenAsync(Map)} but returns a Task.
-   *
-   * @param update The paths to update and their new values
-   * @return The {@link Task} for this operation.
-   * @deprecated Use {@link #updateChildrenAsync(Map)}
-   */
-  public Task<Void> updateChildren(Map<String, Object> update) {
     return updateChildrenInternal(update, null);
   }
 
@@ -467,7 +421,7 @@ public class DatabaseReference extends Query {
 
   // Transactions
 
-  private Task<Void> updateChildrenInternal(
+  private ApiFuture<Void> updateChildrenInternal(
       final Map<String, Object> update, final CompletionListener optListener) {
     if (update == null) {
       throw new NullPointerException("Can't pass null for argument 'update' in updateChildren()");
@@ -477,7 +431,7 @@ public class DatabaseReference extends Query {
         Validation.parseAndValidateUpdate(getPath(), bouncedUpdate);
     final CompoundWrite merge = CompoundWrite.fromPathMerge(parsedUpdate);
 
-    final Pair<Task<Void>, CompletionListener> wrapped = Utilities.wrapOnComplete(optListener);
+    final Pair<ApiFuture<Void>, CompletionListener> wrapped = Utilities.wrapOnComplete(optListener);
     repo.scheduleNow(
         new Runnable() {
           @Override
@@ -494,17 +448,7 @@ public class DatabaseReference extends Query {
    * @return The ApiFuture for this operation.
    */
   public ApiFuture<Void> removeValueAsync() {
-    return new TaskToApiFuture<>(removeValue());
-  }
-
-  /**
-   * Similar to {@link #removeValueAsync()} but returns a Task.
-   *
-   * @return The Task for this operation.
-   * @deprecated Use {@link #removeValueAsync()}
-   */
-  public Task<Void> removeValue() {
-    return setValue(null);
+    return setValueAsync(null);
   }
 
   // Manual Connection Management

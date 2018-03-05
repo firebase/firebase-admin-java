@@ -16,7 +16,6 @@
 
 package com.google.firebase.auth;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
@@ -37,7 +36,6 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auth.oauth2.UserCredentials;
 import com.google.common.base.Defaults;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -47,14 +45,11 @@ import com.google.firebase.database.MapBuilder;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -107,47 +102,11 @@ public class FirebaseAuthTest {
           },
           {
             new FirebaseOptions.Builder()
-                .setCredentials(createApplicationDefaultCredential())
+                .setCredentials(TestUtils.getApplicationDefaultCredentials())
                 .build(),
             /* isCertCredential */ false
           },
-          {
-            new FirebaseOptions.Builder().setCredential(
-                createFirebaseCertificateCredential()).build(),
-            /* isCertCredential */ true
-          },
-          {
-            new FirebaseOptions.Builder().setCredential(
-                createFirebaseRefreshTokenCredential()).build(),
-            /* isCertCredential */ false
-          },
         });
-  }
-
-  private static GoogleCredentials createApplicationDefaultCredential() throws IOException {
-    final MockTokenServerTransport transport = new MockTokenServerTransport();
-    transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
-
-    // Set the GOOGLE_APPLICATION_CREDENTIALS environment variable for application-default
-    // credentials. This requires us to write the credentials to the location specified by the
-    // environment variable.
-    File credentialsFile = File.createTempFile("google-test-credentials", "json");
-    PrintWriter writer = new PrintWriter(Files.newBufferedWriter(credentialsFile.toPath(), UTF_8));
-    writer.print(ServiceAccount.EDITOR.asString());
-    writer.close();
-    Map<String, String> environmentVariables =
-        ImmutableMap.<String, String>builder()
-            .put("GOOGLE_APPLICATION_CREDENTIALS", credentialsFile.getAbsolutePath())
-            .build();
-    TestUtils.setEnvironmentVariables(environmentVariables);
-    credentialsFile.deleteOnExit();
-
-    return GoogleCredentials.getApplicationDefault(new HttpTransportFactory() {
-      @Override
-      public HttpTransport create() {
-        return transport;
-      }
-    });
   }
 
   private static GoogleCredentials createRefreshTokenCredential() throws IOException {
@@ -172,23 +131,6 @@ public class FirebaseAuthTest {
     });
   }
 
-  private static FirebaseCredential createFirebaseRefreshTokenCredential()
-      throws IOException {
-
-    final MockTokenServerTransport transport = new MockTokenServerTransport();
-    transport.addClient(CLIENT_ID, CLIENT_SECRET);
-    transport.addRefreshToken(REFRESH_TOKEN, ACCESS_TOKEN);
-
-    Map<String, Object> secretJson = new HashMap<>();
-    secretJson.put("client_id", CLIENT_ID);
-    secretJson.put("client_secret", CLIENT_SECRET);
-    secretJson.put("refresh_token", REFRESH_TOKEN);
-    secretJson.put("type", "authorized_user");
-    InputStream refreshTokenStream =
-        new ByteArrayInputStream(JSON_FACTORY.toByteArray(secretJson));
-    return FirebaseCredentials.fromRefreshToken(refreshTokenStream, transport, JSON_FACTORY);
-  }
-
   private static GoogleCredentials createCertificateCredential() throws IOException {
     final MockTokenServerTransport transport = new MockTokenServerTransport();
     transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
@@ -199,13 +141,6 @@ public class FirebaseAuthTest {
             return transport;
           }
         });
-  }
-
-  private static FirebaseCredential createFirebaseCertificateCredential() throws IOException {
-    final MockTokenServerTransport transport = new MockTokenServerTransport();
-    transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
-    return FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream(),
-        transport, JSON_FACTORY);
   }
 
   @Before
@@ -220,7 +155,7 @@ public class FirebaseAuthTest {
   }
 
   @Test
-  public void testGetInstance() throws ExecutionException, InterruptedException {
+  public void testGetInstance() {
     FirebaseAuth defaultAuth = FirebaseAuth.getInstance();
     assertNotNull(defaultAuth);
     assertSame(defaultAuth, FirebaseAuth.getInstance());
@@ -229,7 +164,7 @@ public class FirebaseAuthTest {
   }
 
   @Test
-  public void testGetInstanceForApp() throws ExecutionException, InterruptedException {
+  public void testGetInstanceForApp() {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testGetInstanceForApp");
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
     assertNotNull(auth);
@@ -239,7 +174,7 @@ public class FirebaseAuthTest {
   }
 
   @Test
-  public void testAppDelete() throws ExecutionException, InterruptedException {
+  public void testAppDelete() {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testAppDelete");
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
     assertNotNull(auth);
@@ -303,7 +238,7 @@ public class FirebaseAuthTest {
   }
 
   @Test
-  public void testAppWithAuthVariableOverrides() throws ExecutionException, InterruptedException {
+  public void testAppWithAuthVariableOverrides() {
     Map<String, Object> authVariableOverrides = Collections.singletonMap("uid", (Object) "uid1");
     FirebaseOptions options =
         new FirebaseOptions.Builder(firebaseOptions)
@@ -366,7 +301,7 @@ public class FirebaseAuthTest {
     try {
       FirebaseAuth.getInstance(app).createCustomTokenAsync("foo").get();
       fail("Expected exception.");
-    } catch (IllegalStateException expected) {
+    } catch (IllegalArgumentException expected) {
       Assert.assertEquals(
           "Must initialize FirebaseApp with a service account credential to call "
               + "createCustomToken()",
@@ -384,7 +319,7 @@ public class FirebaseAuthTest {
     try {
       FirebaseAuth.getInstance(app).verifyIdTokenAsync("foo").get();
       fail("Expected exception.");
-    } catch (IllegalStateException expected) {
+    } catch (IllegalArgumentException expected) {
       Assert.assertEquals(
           "Must initialize FirebaseApp with a project ID to call verifyIdToken()",
           expected.getMessage());

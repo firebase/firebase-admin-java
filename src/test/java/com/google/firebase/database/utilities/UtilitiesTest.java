@@ -25,13 +25,14 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.core.ApiFuture;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.DatabaseReference.CompletionListener;
-import com.google.firebase.tasks.Task;
+import java.util.concurrent.ExecutionException;
 import org.junit.Test;
 
 public class UtilitiesTest {
@@ -142,37 +143,32 @@ public class UtilitiesTest {
   }
 
   @Test
-  public void testWrapOnComplete() {
-    Pair<Task<Void>, DatabaseReference.CompletionListener> result =
+  public void testWrapOnComplete() throws Exception {
+    Pair<ApiFuture<Void>, DatabaseReference.CompletionListener> result =
         Utilities.wrapOnComplete(null);
     assertNotNull(result.getFirst());
     assertNotNull(result.getSecond());
-    try {
-      result.getFirst().getResult();
-      fail("No error thrown for pending task");
-    } catch (Exception e) {
-      // expected
-    }
+    assertFalse(result.getFirst().isDone());
 
     result.getSecond().onComplete(null, null);
-    result.getFirst().getResult();
+    assertTrue(result.getFirst().isDone());
+    assertNull(result.getFirst().get());
   }
 
   @Test
-  public void testWrapOnCompleteErrorResult() {
-    Pair<Task<Void>, DatabaseReference.CompletionListener> result =
+  public void testWrapOnCompleteErrorResult() throws InterruptedException {
+    Pair<ApiFuture<Void>, DatabaseReference.CompletionListener> result =
         Utilities.wrapOnComplete(null);
     assertNotNull(result.getFirst());
     assertNotNull(result.getSecond());
-    try {
-      result.getFirst().getResult();
-      fail("No error thrown for pending task");
-    } catch (Exception e) {
-      // expected
-    }
+    assertFalse(result.getFirst().isDone());
 
     result.getSecond().onComplete(DatabaseError.fromStatus("test error"), null);
-    assertNotNull(result.getFirst().getException());
+    try {
+      result.getFirst().get();
+    } catch (ExecutionException e) {
+      assertNotNull(e.getCause());
+    }
   }
 
   @Test
@@ -183,7 +179,7 @@ public class UtilitiesTest {
 
       }
     };
-    Pair<Task<Void>, DatabaseReference.CompletionListener> result =
+    Pair<ApiFuture<Void>, DatabaseReference.CompletionListener> result =
         Utilities.wrapOnComplete(listener);
     assertNull(result.getFirst());
     assertSame(listener, result.getSecond());

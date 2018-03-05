@@ -73,6 +73,9 @@ public final class GetAccountInfoResponse {
     @Key("lastLoginAt")
     private long lastLoginAt;
 
+    @Key("validSince")
+    private long validSince;
+
     @Key("customAttributes")
     private String customClaims;
 
@@ -116,6 +119,10 @@ public final class GetAccountInfoResponse {
       return lastLoginAt;
     }
 
+    public long getValidSince() {
+      return validSince;
+    }
+    
     public String getCustomClaims() {
       return customClaims;
     }

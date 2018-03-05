@@ -16,25 +16,25 @@
 
 package com.google.firebase.database.core;
 
-import com.google.firebase.internal.SingleThreadScheduledExecutor;
+import com.google.firebase.internal.FirebaseScheduledExecutor;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** ThreadPoolEventTarget is an event target using a configurable thread pool. */
-class ThreadPoolEventTarget implements EventTarget {
+class ThreadPoolEventTarget implements EventTarget, UncaughtExceptionHandler {
+
+  private static final Logger logger = LoggerFactory.getLogger(ThreadPoolEventTarget.class);
 
   private final ThreadPoolExecutor executor;
   private UncaughtExceptionHandler exceptionHandler;
 
-  ThreadPoolEventTarget(final ThreadFactory wrappedFactory) {
-    executor = new SingleThreadScheduledExecutor(
-        "firebase-database-event-target", wrappedFactory) {
-      @Override
-      protected void handleException(Throwable t) {
-        uncaughtException(t);
-      }
-    };
+  ThreadPoolEventTarget(ThreadFactory threadFactory) {
+    executor = new FirebaseScheduledExecutor(threadFactory, "firebase-database-event-target", this);
+    executor.setKeepAliveTime(3, TimeUnit.SECONDS);
   }
 
   @Override
@@ -70,10 +70,18 @@ class ThreadPoolEventTarget implements EventTarget {
     this.exceptionHandler = exceptionHandler;
   }
 
-  private void uncaughtException(Throwable e) {
-    UncaughtExceptionHandler delegate = getExceptionHandler();
-    if (delegate != null) {
-      delegate.uncaughtException(Thread.currentThread(), e);
+  @Override
+  public void uncaughtException(Thread t, Throwable e) {
+    try {
+      UncaughtExceptionHandler delegate;
+      synchronized (this) {
+        delegate = exceptionHandler;
+      }
+      if (delegate != null) {
+        delegate.uncaughtException(t, e);
+      }
+    } finally {
+      logger.error("Event handler threw an exception", e);
     }
   }
 }

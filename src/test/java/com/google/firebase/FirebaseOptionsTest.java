@@ -27,12 +27,9 @@ import static org.junit.Assert.assertTrue;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
-import com.google.firebase.auth.FirebaseCredential;
-import com.google.firebase.auth.FirebaseCredentials;
-import com.google.firebase.auth.GoogleOAuthAccessToken;
-import com.google.firebase.tasks.Task;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
@@ -75,7 +72,7 @@ public class FirebaseOptionsTest {
   };
 
   @Test
-  public void createOptionsWithAllValuesSet() throws IOException, InterruptedException {
+  public void createOptionsWithAllValuesSet() throws IOException {
     GsonFactory jsonFactory = new GsonFactory();
     NetHttpTransport httpTransport = new NetHttpTransport();
     FirebaseOptions firebaseOptions =
@@ -104,7 +101,7 @@ public class FirebaseOptionsTest {
   }
 
   @Test
-  public void createOptionsWithOnlyMandatoryValuesSet() throws IOException, InterruptedException {
+  public void createOptionsWithOnlyMandatoryValuesSet() throws IOException {
     FirebaseOptions firebaseOptions =
         new FirebaseOptions.Builder()
             .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
@@ -124,32 +121,12 @@ public class FirebaseOptionsTest {
   }
 
   @Test
-  public void createOptionsWithFirebaseCredential() throws IOException {
+  public void createOptionsWithCustomFirebaseCredential() {
     FirebaseOptions firebaseOptions =
         new FirebaseOptions.Builder()
-            .setCredential(FirebaseCredentials.fromCertificate(ServiceAccount.EDITOR.asStream()))
-            .build();
-
-    assertNotNull(firebaseOptions.getJsonFactory());
-    assertNotNull(firebaseOptions.getHttpTransport());
-    assertNull(firebaseOptions.getDatabaseUrl());
-    assertNull(firebaseOptions.getStorageBucket());
-
-    GoogleCredentials credentials = firebaseOptions.getCredentials();
-    assertNotNull(credentials);
-    assertTrue(credentials instanceof ServiceAccountCredentials);
-    assertEquals(
-        GoogleCredential.fromStream(ServiceAccount.EDITOR.asStream()).getServiceAccountId(),
-        ((ServiceAccountCredentials) credentials).getClientEmail());
-  }
-
-  @Test
-  public void createOptionsWithCustomFirebaseCredential() throws IOException {
-    FirebaseOptions firebaseOptions =
-        new FirebaseOptions.Builder()
-            .setCredential(new FirebaseCredential() {
+            .setCredentials(new GoogleCredentials() {
               @Override
-              public Task<GoogleOAuthAccessToken> getAccessToken() {
+              public AccessToken refreshAccessToken() {
                 return null;
               }
             })
@@ -172,6 +149,14 @@ public class FirebaseOptionsTest {
   @Test(expected = NullPointerException.class)
   public void createOptionsWithNullCredentials() {
     new FirebaseOptions.Builder().setCredentials(null).build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void createOptionsWithStorageBucketUrl() throws IOException {
+    new FirebaseOptions.Builder()
+        .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
+        .setStorageBucket("gs://mock-storage-bucket")
+        .build();
   }
 
   @Test(expected = NullPointerException.class)

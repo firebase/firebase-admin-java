@@ -17,7 +17,6 @@
 package com.google.firebase.tasks;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import com.google.firebase.internal.GaeThreadFactory;
 import com.google.firebase.internal.NonNull;
 
 import java.util.concurrent.Executor;
@@ -39,7 +38,6 @@ public class TaskExecutors {
    * for now for backward compatibility, since technically it is part of the public API.
    */
   public static final Executor DEFAULT_THREAD_POOL;
-
   /** An Executor that uses the calling thread. */
   static final Executor DIRECT =
       new Executor() {

@@ -14,13 +14,19 @@
  * limitations under the License.
  */
 
-package com.google.firebase.database.core;
+package com.google.firebase.internal;
 
-public interface ThreadInitializer {
+import com.google.api.core.ApiFuture;
+import com.google.common.util.concurrent.ForwardingListenableFuture.SimpleForwardingListenableFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 
-  void setName(Thread t, String name);
+/**
+ * Adapter from Guava ListenableFuture to GAX ApiFuture.
+ */
+public class ListenableFuture2ApiFuture<V> extends SimpleForwardingListenableFuture<V> implements
+    ApiFuture<V> {
 
-  void setDaemon(Thread t, boolean isDaemon);
-
-  void setUncaughtExceptionHandler(Thread t, Thread.UncaughtExceptionHandler handler);
+  public ListenableFuture2ApiFuture(ListenableFuture<V> delegate) {
+    super(delegate);
+  }
 }

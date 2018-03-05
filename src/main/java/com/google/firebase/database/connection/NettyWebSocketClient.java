@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.base.Strings;
-import com.google.firebase.internal.SingleThreadScheduledExecutor;
+import com.google.firebase.internal.FirebaseScheduledExecutor;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -65,8 +65,8 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
     this.uri = checkNotNull(uri, "uri must not be null");
     this.eventHandler = checkNotNull(eventHandler, "event handler must not be null");
     this.channelHandler = new WebSocketClientHandler(uri, userAgent, eventHandler);
-    this.executorService = new SingleThreadScheduledExecutor(
-        "firebase-websocket-worker", threadFactory);
+    this.executorService = new FirebaseScheduledExecutor(threadFactory,
+        "firebase-websocket-worker");
     this.group = new NioEventLoopGroup(1, this.executorService);
   }
 
@@ -102,7 +102,7 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
       channelFuture.addListener(
           new ChannelFutureListener() {
             @Override
-            public void operationComplete(ChannelFuture future) throws Exception {
+            public void operationComplete(ChannelFuture future) {
               if (!future.isSuccess()) {
                 eventHandler.onError(future.cause());
               }
@@ -168,7 +168,7 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
     }
 
     @Override
-    public void channelRead0(ChannelHandlerContext context, Object message) throws Exception {
+    public void channelRead0(ChannelHandlerContext context, Object message) {
       Channel channel = context.channel();
       if (message instanceof FullHttpResponse) {
         checkState(!handshaker.isHandshakeComplete());

@@ -39,7 +39,7 @@ class JvmPlatform implements Platform {
 
   private final FirebaseApp firebaseApp;
 
-  public JvmPlatform(FirebaseApp firebaseApp) {
+  JvmPlatform(FirebaseApp firebaseApp) {
     this.firebaseApp = firebaseApp;
   }
 

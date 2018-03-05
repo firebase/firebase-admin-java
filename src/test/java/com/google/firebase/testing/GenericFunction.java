@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-package com.google.firebase.internal;
+package com.google.firebase.testing;
 
 /**
- * GaeThreadFactory is a thread factory that works on App Engine. It uses background threads on
- * manually-scaled GAE backends and request-scoped threads on automatically scaled instances.
- *
- * <p>This class is thread-safe.
+ * A generic operation that can be called with arbitrary arguments.
  */
-public class GaeThreadFactory {
+public interface GenericFunction<T> {
 
-  private static final String GAE_THREAD_MANAGER_CLASS = "com.google.appengine.api.ThreadManager";
-
-  /** Returns whether GaeThreadFactory can be used on this system (true for GAE). */
+  T call(Object ...args) throws Exception;
 
 }

@@ -25,21 +25,35 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Key;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
-import com.google.firebase.auth.FirebaseCredential;
-import com.google.firebase.auth.FirebaseCredentials;
-import com.google.firebase.auth.internal.BaseCredential;
-import com.google.firebase.auth.internal.FirebaseCredentialsAdapter;
+import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /** Configurable Firebase options. */
 public final class FirebaseOptions {
 
-  // TODO: deprecate and remove it once we can fetch these from Remote Config.
+  private static final List<String> FIREBASE_SCOPES =
+      ImmutableList.of(
+          // Enables access to Firebase Realtime Database.
+          "https://www.googleapis.com/auth/firebase.database",
+
+          // Enables access to the email address associated with a project.
+          "https://www.googleapis.com/auth/userinfo.email",
+
+          // Enables access to Google Identity Toolkit (for user management APIs).
+          "https://www.googleapis.com/auth/identitytoolkit",
+
+          // Enables access to Google Cloud Storage.
+          "https://www.googleapis.com/auth/devstorage.full_control",
+
+          // Enables access to Google Cloud Firestore
+          "https://www.googleapis.com/auth/cloud-platform",
+          "https://www.googleapis.com/auth/datastore");
 
   private final String databaseUrl;
   private final String storageBucket;
@@ -53,17 +67,21 @@ public final class FirebaseOptions {
   private FirebaseOptions(@NonNull FirebaseOptions.Builder builder) {
     this.credentials = checkNotNull(builder.credentials,
         "FirebaseOptions must be initialized with setCredentials().")
-        .createScoped(BaseCredential.FIREBASE_SCOPES);
+        .createScoped(FIREBASE_SCOPES);
     this.databaseUrl = builder.databaseUrl;
     this.databaseAuthVariableOverride = builder.databaseAuthVariableOverride;
     this.projectId = builder.projectId;
+    if (!Strings.isNullOrEmpty(builder.storageBucket)) {
+      checkArgument(!builder.storageBucket.startsWith("gs://"),
+          "StorageBucket must not include 'gs://' prefix.");
+    }
     this.storageBucket = builder.storageBucket;
     this.httpTransport = checkNotNull(builder.httpTransport,
         "FirebaseOptions must be initialized with a non-null HttpTransport.");
     this.jsonFactory = checkNotNull(builder.jsonFactory,
         "FirebaseOptions must be initialized with a non-null JsonFactory.");
     this.threadManager = checkNotNull(builder.threadManager,
-        "FirebaseOptions must be initialized with a non-null ThreadManager");
+        "FirebaseOptions must be initialized with a non-null ThreadManager.");
   }
 
   /**
@@ -190,13 +208,17 @@ public final class FirebaseOptions {
 
     /**
      * Sets the name of the Google Cloud Storage bucket for reading and writing application data.
-     * The same credential used to initialize the SDK (see {@link Builder#setCredential}) will be
+     * This should be the full name of the bucket as listed in the
+     * <a href="https://console.cloud.google.com">Google Cloud Platform Console</a>, and must not
+     * include {@code gs://} or any other protocol prefixes.
+     * The same credential used to initialize the SDK (see {@link Builder#setCredentials}) is
      * used to access the bucket.
      *
-     * <p>See <a href="https://firebase.google.com/docs/admin/setup#initialize_the_sdk">
-     * Initialize the SDK</a> for code samples and detailed documentation.
+     * <p>See <a href="https://firebase.google.com/docs/storage/admin/start">
+     * Introduction to the Admin Cloud Storage API</a> for code samples and detailed documentation.
      *
-     * @param storageBucket The name of an existing Google Cloud Storage bucket.
+     * @param storageBucket The full name of an existing Google Cloud Storage bucket, excluding any
+     *     protocol prefixes.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setStorageBucket(String storageBucket) {
@@ -219,24 +241,6 @@ public final class FirebaseOptions {
      */
     public Builder setCredentials(GoogleCredentials credentials) {
       this.credentials = checkNotNull(credentials);
-      return this;
-    }
-
-    /**
-     * Sets the <code>FirebaseCredential</code> to use to authenticate the SDK.
-     *
-     * @param credential A <code>FirebaseCredential</code> used to authenticate the SDK. See {@link
-     *     FirebaseCredentials} for default implementations.
-     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
-     * @deprecated Use {@link FirebaseOptions.Builder#setCredentials(GoogleCredentials)}.
-     */
-    public Builder setCredential(@NonNull FirebaseCredential credential) {
-      checkNotNull(credential);
-      if (credential instanceof BaseCredential) {
-        this.credentials = ((BaseCredential) credential).getGoogleCredentials();
-      } else {
-        this.credentials = new FirebaseCredentialsAdapter(credential);
-      }
       return this;
     }
 

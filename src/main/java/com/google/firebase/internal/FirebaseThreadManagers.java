@@ -16,7 +16,6 @@
 
 package com.google.firebase.internal;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ThreadManager;
 
@@ -34,14 +33,14 @@ public class FirebaseThreadManagers {
 
   private static final Logger logger = LoggerFactory.getLogger(FirebaseThreadManagers.class);
 
-  public static final ThreadManager DEFAULT_THREAD_MANAGER = new GlobalThreadManager();
+  public static final ThreadManager DEFAULT_THREAD_MANAGER = new DefaultThreadManager();
 
   /**
-   * A {@code ThreadManager} implementation that uses the same executor service
+   * An abstract ThreadManager implementation that uses the same executor service
    * across all active apps. The executor service is initialized when the first app is initialized,
    * and terminated when the last app is deleted. This class is thread safe.
    */
-  static class GlobalThreadManager extends ThreadManager {
+  abstract static class GlobalThreadManager extends ThreadManager {
 
     private final Object lock = new Object();
     private final Set<String> apps = new HashSet<>();
@@ -51,13 +50,7 @@ public class FirebaseThreadManagers {
     protected ExecutorService getExecutor(FirebaseApp app) {
       synchronized (lock) {
         if (executorService == null) {
-          logger.debug("Initializing default global executor");
-          ThreadFactory threadFactory = new ThreadFactoryBuilder()
-              .setNameFormat("firebase-default-%d")
-              .setDaemon(true)
-              .setThreadFactory(getThreadFactory())
-              .build();
-          executorService = Executors.newCachedThreadPool(threadFactory);
+          executorService = doInit();
         }
         apps.add(app.getName());
         return executorService;
@@ -68,13 +61,39 @@ public class FirebaseThreadManagers {
     protected void releaseExecutor(FirebaseApp app, ExecutorService executor) {
       synchronized (lock) {
         if (apps.remove(app.getName()) && apps.isEmpty()) {
-          logger.debug("Shutting down default global executor");
-          executorService.shutdownNow();
+          doCleanup(executorService);
           executorService = null;
         }
       }
     }
 
+    /**
+     * Initializes the executor service. Called when the first application is initialized.
+     */
+    protected abstract ExecutorService doInit();
+
+    /**
+     * Cleans up the executor service. Called when the last application is deleted.
+     */
+    protected abstract void doCleanup(ExecutorService executorService);
+  }
+
+  private static class DefaultThreadManager extends GlobalThreadManager {
+
+    @Override
+    protected ExecutorService doInit() {
+      ThreadFactory threadFactory = FirebaseScheduledExecutor.decorateThreadFactory(
+          getThreadFactory(), "firebase-default-%d");
+      return Executors.newCachedThreadPool(threadFactory);
+    }
+
+    @Override
+    protected void doCleanup(ExecutorService executorService) {
+      logger.debug("Shutting down default executor");
+      executorService.shutdownNow();
+    }
+
+    @Override
     protected ThreadFactory getThreadFactory() {
       return Executors.defaultThreadFactory();
     }
