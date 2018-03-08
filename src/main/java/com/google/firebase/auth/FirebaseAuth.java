@@ -127,7 +127,7 @@ public class FirebaseAuth {
    * call this method.
    *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
-   *     (Firebase Realtime Database, Firebase Auth, etc.).
+   *     (Realtime Database, Firebase Auth, etc.). Should be less than 128 characters.
    * @return A Firebase custom token string.
    * @throws IllegalArgumentException If the specified uid is null or empty, or if the app has not
    *     been initialized with service account credentials.
@@ -147,7 +147,7 @@ public class FirebaseAuth {
    * call this method.
    *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
-   *     (Firebase Realtime Database, Firebase Auth, etc.).
+   *     (Realtime Database, Firebase Auth, etc.). Should be less than 128 characters.
    * @param developerClaims Additional claims to be stored in the token (and made available to
    *     security rules in Database, Storage, etc.). These must be able to be serialized to JSON
    *     (e.g. contain only Maps, Arrays, Strings, Booleans, Numbers, etc.)
@@ -165,7 +165,7 @@ public class FirebaseAuth {
    * Similar to {@link #createCustomToken(String)} but performs the operation asynchronously.
    *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
-   *     (Firebase Realtime Database, Firebase Auth, etc.)
+   *     (Realtime Database, Firebase Auth, etc.). Should be less than 128 characters.
    * @return An {@code ApiFuture} which will complete successfully with the created Firebase custom
    *     token, or unsuccessfully with the failure Exception.
    * @throws IllegalArgumentException If the specified uid is null or empty, or if the app has not

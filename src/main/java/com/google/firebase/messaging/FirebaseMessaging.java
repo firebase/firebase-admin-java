@@ -155,7 +155,7 @@ public class FirebaseMessaging {
    * @return A message ID string.
    */
   public String send(@NonNull Message message, boolean dryRun) throws FirebaseMessagingException {
-    return makeSendRequest(message, dryRun).call();
+    return sendOp(message, dryRun).call();
   }
 
   /**
@@ -178,7 +178,7 @@ public class FirebaseMessaging {
    *     has been sent, or when the emulation has finished.
    */
   public ApiFuture<String> sendAsync(@NonNull Message message, boolean dryRun) {
-    return makeSendRequest(message, dryRun).callAsync(app);
+    return sendOp(message, dryRun).callAsync(app);
   }
 
   /**
@@ -191,7 +191,7 @@ public class FirebaseMessaging {
    */
   public TopicManagementResponse subscribeToTopic(@NonNull List<String> registrationTokens,
       @NonNull String topic) throws FirebaseMessagingException {
-    return makeTopicManagementRequest(registrationTokens, topic, IID_SUBSCRIBE_PATH).call();
+    return manageTopicOp(registrationTokens, topic, IID_SUBSCRIBE_PATH).call();
   }
 
   /**
@@ -204,7 +204,7 @@ public class FirebaseMessaging {
    */
   public ApiFuture<TopicManagementResponse> subscribeToTopicAsync(
       @NonNull List<String> registrationTokens, @NonNull String topic) {
-    return makeTopicManagementRequest(registrationTokens, topic, IID_SUBSCRIBE_PATH).callAsync(app);
+    return manageTopicOp(registrationTokens, topic, IID_SUBSCRIBE_PATH).callAsync(app);
   }
 
   /**
@@ -217,7 +217,7 @@ public class FirebaseMessaging {
    */
   public TopicManagementResponse unsubscribeFromTopic(@NonNull List<String> registrationTokens,
       @NonNull String topic) throws FirebaseMessagingException {
-    return makeTopicManagementRequest(registrationTokens, topic, IID_UNSUBSCRIBE_PATH).call();
+    return manageTopicOp(registrationTokens, topic, IID_UNSUBSCRIBE_PATH).call();
   }
 
   /**
@@ -231,11 +231,11 @@ public class FirebaseMessaging {
    */
   public ApiFuture<TopicManagementResponse> unsubscribeFromTopicAsync(
       @NonNull List<String> registrationTokens, @NonNull String topic) {
-    return makeTopicManagementRequest(registrationTokens, topic, IID_UNSUBSCRIBE_PATH)
+    return manageTopicOp(registrationTokens, topic, IID_UNSUBSCRIBE_PATH)
         .callAsync(app);
   }
 
-  private CallableOperation<String, FirebaseMessagingException> makeSendRequest(
+  private CallableOperation<String, FirebaseMessagingException> sendOp(
       final Message message, final boolean dryRun) {
     checkNotNull(message, "message must not be null");
     return new CallableOperation<String, FirebaseMessagingException>() {
@@ -291,7 +291,7 @@ public class FirebaseMessaging {
   }
 
   private CallableOperation<TopicManagementResponse, FirebaseMessagingException>
-      makeTopicManagementRequest(
+      manageTopicOp(
           final List<String> registrationTokens, final String topic, final String path) {
     checkRegistrationTokens(registrationTokens);
     checkTopic(topic);

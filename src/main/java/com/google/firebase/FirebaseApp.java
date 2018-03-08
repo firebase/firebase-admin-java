@@ -174,6 +174,9 @@ public class FirebaseApp {
    * by looking up the {@code FIREBASE_CONFIG} environment variable. If the value of
    * the variable starts with <code>'{'</code>, it is parsed as a JSON object. Otherwise it is
    * treated as a file name and the JSON content is read from the corresponding file.
+   *
+   * @throws IllegalStateException if the default app has already been initialized.
+   * @throws IllegalArgumentException if an error occurs while loading options from the environment.
    */
   public static FirebaseApp initializeApp() {
     return initializeApp(DEFAULT_APP_NAME);
@@ -183,6 +186,9 @@ public class FirebaseApp {
    * Initializes a named {@link FirebaseApp} instance using Google Application Default Credentials.
    * Loads additional {@link FirebaseOptions} from the environment in the same way as the
    * {@link #initializeApp()} method.
+   *
+   * @throws IllegalStateException if an app with the same name has already been initialized.
+   * @throws IllegalArgumentException if an error occurs while loading options from the environment.
    */
   public static FirebaseApp initializeApp(String name) {
     try {
@@ -195,6 +201,8 @@ public class FirebaseApp {
 
   /**
    * Initializes the default {@link FirebaseApp} instance using the given options.
+   *
+   * @throws IllegalStateException if the default app has already been initialized.
    */
   public static FirebaseApp initializeApp(FirebaseOptions options) {
     return initializeApp(options, DEFAULT_APP_NAME);
