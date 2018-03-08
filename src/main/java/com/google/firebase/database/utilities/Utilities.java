@@ -24,8 +24,6 @@ import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.RepoInfo;
-import com.google.firebase.tasks.Task;
-import com.google.firebase.tasks.TaskCompletionSource;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
