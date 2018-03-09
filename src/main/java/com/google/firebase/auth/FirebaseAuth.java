@@ -66,7 +66,10 @@ public class FirebaseAuth {
   private final Object lock;
 
   private FirebaseAuth(FirebaseApp firebaseApp) {
-    this(firebaseApp, FirebaseTokenVerifier.DEFAULT_KEY_MANAGER, Clock.SYSTEM);
+    this(firebaseApp,
+         FirebaseTokenVerifier.buildGooglePublicKeysManager(
+                 firebaseApp.getOptions().getHttpTransport()),
+         Clock.SYSTEM);
   }
 
   /**
@@ -210,12 +213,14 @@ public class FirebaseAuth {
     return call(new Callable<FirebaseToken>() {
       @Override
       public FirebaseToken call() throws Exception {
+
         FirebaseTokenVerifier firebaseTokenVerifier =
             new FirebaseTokenVerifier.Builder()
                 .setProjectId(projectId)
                 .setPublicKeysManager(googlePublicKeysManager)
                 .setClock(clock)
                 .build();
+
         FirebaseToken firebaseToken = FirebaseToken.parse(jsonFactory, token);
 
         // This will throw a FirebaseAuthException with details on how the token is invalid.
