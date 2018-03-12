@@ -1,9 +1,16 @@
 # Unreleased
 
--
+- [fixed] Improved error handling in FCM by mapping more server-side
+  errors to client-side error codes.
+- [added] `FirebaseAuth`, `'FirebaseMessaging` and `FirebaseInstanceId`
+  interfaces now expose a set of blocking methods. Each operation has
+  blocking an asynchronous versions.
+- [changed] Removed the deprecated `FirebaseCredential` interface.
+- [changed] Removed the deprecated `Task` interface along with the
+  `com.google.firebase.tasks` package.
+- [changed] Dropped support for App Engine Java 7 runtime.
 
 # v5.9.0
-
 
 ### Cloud Messaging
 

@@ -39,7 +39,7 @@ import org.junit.Test;
 public class ListUsersPageTest {
 
   @Test
-  public void testSinglePage() throws IOException {
+  public void testSinglePage() throws FirebaseAuthException, IOException {
     TestUserSource source = new TestUserSource(3);
     ListUsersPage page = new ListUsersPage.PageFactory(source).create();
     assertFalse(page.hasNextPage());
@@ -56,7 +56,7 @@ public class ListUsersPageTest {
   }
 
   @Test
-  public void testMultiplePages() throws IOException {
+  public void testMultiplePages() throws FirebaseAuthException, IOException {
     ListUsersResult result = new ListUsersResult(
         ImmutableList.of(newUser("user0"), newUser("user1"), newUser("user2")),
         "token");
@@ -106,7 +106,7 @@ public class ListUsersPageTest {
   }
 
   @Test
-  public void testListUsersIterable() throws IOException {
+  public void testListUsersIterable() throws FirebaseAuthException, IOException {
     TestUserSource source = new TestUserSource(3);
     ListUsersPage page = new ListUsersPage.PageFactory(source).create();
     Iterable<ExportedUserRecord> users = page.iterateAll();
@@ -132,7 +132,7 @@ public class ListUsersPageTest {
   }
 
   @Test
-  public void testListUsersIterator() throws IOException {
+  public void testListUsersIterator() throws FirebaseAuthException, IOException {
     TestUserSource source = new TestUserSource(3);
     ListUsersPage page = new ListUsersPage.PageFactory(source).create();
     Iterable<ExportedUserRecord> users = page.iterateAll();
@@ -159,7 +159,7 @@ public class ListUsersPageTest {
   }
 
   @Test
-  public void testListUsersPagedIterable() throws IOException {
+  public void testListUsersPagedIterable() throws FirebaseAuthException, IOException {
     ListUsersResult result = new ListUsersResult(
         ImmutableList.of(newUser("user0"), newUser("user1"), newUser("user2")),
         "token");
@@ -185,7 +185,7 @@ public class ListUsersPageTest {
   }
 
   @Test
-  public void testListUsersPagedIterator() throws IOException {
+  public void testListUsersPagedIterator() throws FirebaseAuthException, IOException {
     ListUsersResult result = new ListUsersResult(
         ImmutableList.of(newUser("user0"), newUser("user1"), newUser("user2")),
         "token");
@@ -218,7 +218,7 @@ public class ListUsersPageTest {
   }
 
   @Test
-  public void testPageWithNoUsers() {
+  public void testPageWithNoUsers() throws FirebaseAuthException {
     ListUsersResult result = new ListUsersResult(
         ImmutableList.<ExportedUserRecord>of(),
         ListUsersPage.END_OF_LIST);
@@ -232,7 +232,7 @@ public class ListUsersPageTest {
   }
 
   @Test
-  public void testIterableWithNoUsers() {
+  public void testIterableWithNoUsers() throws FirebaseAuthException {
     ListUsersResult result = new ListUsersResult(
         ImmutableList.<ExportedUserRecord>of(),
         ListUsersPage.END_OF_LIST);
@@ -245,7 +245,7 @@ public class ListUsersPageTest {
   }
 
   @Test
-  public void testIteratorWithNoUsers() {
+  public void testIteratorWithNoUsers() throws FirebaseAuthException {
     ListUsersResult result = new ListUsersResult(
         ImmutableList.<ExportedUserRecord>of(),
         ListUsersPage.END_OF_LIST);
@@ -260,7 +260,7 @@ public class ListUsersPageTest {
   }
 
   @Test
-  public void testRemove() throws IOException {
+  public void testRemove() throws FirebaseAuthException, IOException {
     ListUsersResult result = new ListUsersResult(
         ImmutableList.of(newUser("user1")),
         ListUsersPage.END_OF_LIST);
