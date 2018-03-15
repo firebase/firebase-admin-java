@@ -181,10 +181,10 @@ public class RandomPersistenceTest {
       DatabaseConfig cfg = TestHelpers.newFrozenTestConfig(testApp);
       MockPersistenceStorageEngine storageEngine = new MockPersistenceStorageEngine();
       DefaultPersistenceManager manager =
-          new DefaultPersistenceManager(cfg, storageEngine, CachePolicy.NONE);
+          new DefaultPersistenceManager(storageEngine, CachePolicy.NONE);
       final HashMap<QuerySpec, Tag> tagMap = new HashMap<>();
       SyncTree syncTree =
-          new SyncTree(cfg, manager, new SyncTree.ListenProvider() {
+          new SyncTree( manager, new SyncTree.ListenProvider() {
               @Override
               public void startListening(
                   QuerySpec query,

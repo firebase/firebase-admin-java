@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.util.JsonMapper;
 
 import java.io.EOFException;
@@ -33,6 +32,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents a WebSocket connection to the Firebase Realtime Database. This abstraction acts as
@@ -49,7 +50,7 @@ class WebsocketConnection {
   private static final AtomicLong CONN_ID = new AtomicLong(0);
 
   private final ScheduledExecutorService executorService;
-  private final LogWrapper logger;
+  private final PrefixedLogger logger;
   private final WSClient conn;
   private final Delegate delegate;
 
@@ -75,8 +76,8 @@ class WebsocketConnection {
       WSClientFactory clientFactory) {
     this.executorService = connectionContext.getExecutorService();
     this.delegate = delegate;
-    this.logger = new LogWrapper(connectionContext.getLogger(), WebsocketConnection.class,
-        "ws_" + CONN_ID.getAndIncrement());
+    this.logger = new PrefixedLogger(LoggerFactory.getLogger(WebsocketConnection.class),
+        "[ws_" + CONN_ID.getAndIncrement() + "]");
     this.conn = clientFactory.newClient(new WSClientHandlerImpl());
   }
 
@@ -99,9 +100,7 @@ class WebsocketConnection {
   }
 
   void close() {
-    if (logger.logsDebug()) {
-      logger.debug("websocket is being closed");
-    }
+    logger.debug("websocket is being closed");
     isClosed = true;
     conn.close();
 
@@ -150,9 +149,7 @@ class WebsocketConnection {
   }
 
   private void handleNewFrameCount(int numFrames) {
-    if (logger.logsDebug()) {
-      logger.debug("HandleNewFrameCount: " + numFrames);
-    }
+    logger.debug("HandleNewFrameCount: {}", numFrames);
     buffer = new StringList(numFrames);
   }
 
@@ -165,9 +162,7 @@ class WebsocketConnection {
     String combined = buffer.combine();
     try {
       Map<String, Object> decoded = JsonMapper.parseJson(combined);
-      if (logger.logsDebug()) {
-        logger.debug("handleIncomingFrame complete frame: " + decoded);
-      }
+      logger.debug("handleIncomingFrame complete frame: {}", decoded);
       delegate.onMessage(decoded);
     } catch (IOException e) {
       logger.error("Error parsing frame: " + combined, e);
@@ -218,13 +213,9 @@ class WebsocketConnection {
     }
     if (keepAlive != null) {
       keepAlive.cancel(false);
-      if (logger.logsDebug()) {
-        logger.debug("Reset keepAlive. Remaining: " + keepAlive.getDelay(TimeUnit.MILLISECONDS));
-      }
+      logger.debug("Reset keepAlive. Remaining: {}", keepAlive.getDelay(TimeUnit.MILLISECONDS));
     } else {
-      if (logger.logsDebug()) {
-        logger.debug("Reset keepAlive");
-      }
+      logger.debug("Reset keepAlive");
     }
     keepAlive = executorService.schedule(nop(), KEEP_ALIVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
   }
@@ -253,18 +244,14 @@ class WebsocketConnection {
 
   private void onClosed() {
     if (!isClosed) {
-      if (logger.logsDebug()) {
-        logger.debug("closing itself");
-      }
+      logger.debug("closing itself");
       closeAndNotify();
     }
   }
 
   private void closeIfNeverConnected() {
     if (!everConnected && !isClosed) {
-      if (logger.logsDebug()) {
-        logger.debug("timed out on connect");
-      }
+      logger.debug("timed out on connect");
       closeAndNotify();
     }
   }
@@ -278,9 +265,7 @@ class WebsocketConnection {
 
     @Override
     public void onOpen() {
-      if (logger.logsDebug()) {
-        logger.debug("websocket opened");
-      }
+      logger.debug("websocket opened");
       executorService.execute(new Runnable() {
         @Override
         public void run() {
@@ -293,9 +278,7 @@ class WebsocketConnection {
 
     @Override
     public void onMessage(final String message) {
-      if (logger.logsDebug()) {
-        logger.debug("ws message: " + message);
-      }
+      logger.debug("ws message: {}", message);
       executorService.execute(new Runnable() {
         @Override
         public void run() {
@@ -306,9 +289,7 @@ class WebsocketConnection {
 
     @Override
     public void onClose() {
-      if (logger.logsDebug()) {
-        logger.debug("closed");
-      }
+      logger.debug("closed");
       if (!isClosed) {
         // If the connection tear down was initiated by the higher-layer, isClosed will already
         // be true. Nothing more to do in that case.

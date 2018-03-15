@@ -28,7 +28,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.InternalHelpers;
 import com.google.firebase.database.Query;
-import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.annotations.NotNull;
 import com.google.firebase.database.connection.ListenHashProvider;
 import com.google.firebase.database.core.persistence.NoopPersistenceManager;
@@ -37,9 +36,6 @@ import com.google.firebase.database.core.view.Change;
 import com.google.firebase.database.core.view.DataEvent;
 import com.google.firebase.database.core.view.Event;
 import com.google.firebase.database.core.view.QuerySpec;
-import com.google.firebase.database.logging.DefaultLogger;
-import com.google.firebase.database.logging.LogWrapper;
-import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.snapshot.IndexedNode;
 import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
@@ -60,8 +56,12 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SyncPointTest {
+
+  private static final Logger logger = LoggerFactory.getLogger(SyncPointTest.class);
 
   private static FirebaseApp testApp;
 
@@ -79,7 +79,7 @@ public class SyncPointTest {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
-  private static SyncTree.ListenProvider getNewListenProvider(final LogWrapper logger) {
+  private static SyncTree.ListenProvider getNewListenProvider() {
     return new SyncTree.ListenProvider() {
       private final HashSet<QuerySpec> listens = new HashSet<>();
 
@@ -314,12 +314,9 @@ public class SyncPointTest {
 
   @SuppressWarnings("unchecked")
   private static void runTest(Map<String, Object> testSpec, String basePath) {
-    DatabaseConfig config = TestHelpers.newTestConfig(testApp);
-    TestHelpers.setLogger(config, new DefaultLogger(Logger.Level.WARN, null));
-    LogWrapper logger = config.getLogger("SyncPointTest");
     logger.info("Running \"" + testSpec.get("name") + '"');
-    SyncTree.ListenProvider listenProvider = getNewListenProvider(logger);
-    SyncTree syncTree = new SyncTree(config, new NoopPersistenceManager(), listenProvider);
+    SyncTree.ListenProvider listenProvider = getNewListenProvider();
+    SyncTree syncTree = new SyncTree(new NoopPersistenceManager(), listenProvider);
 
     int currentWriteId = 0;
 

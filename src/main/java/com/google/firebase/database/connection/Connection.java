@@ -17,10 +17,10 @@
 package com.google.firebase.database.connection;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.firebase.database.logging.LogWrapper;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.LoggerFactory;
 
 class Connection implements WebsocketConnection.Delegate {
 
@@ -41,7 +41,7 @@ class Connection implements WebsocketConnection.Delegate {
   private static final String SERVER_HELLO_SESSION_ID = "s";
   private static long connectionIds = 0;
 
-  private final LogWrapper logger;
+  private final PrefixedLogger logger;
   private final HostInfo hostInfo;
   private final Delegate delegate;
 
@@ -54,36 +54,32 @@ class Connection implements WebsocketConnection.Delegate {
       String cachedHost,
       Delegate delegate,
       String optLastSessionId) {
-    this(context, hostInfo, delegate,
+    this(hostInfo, delegate,
         new DefaultWebsocketConnectionFactory(context, hostInfo, cachedHost, optLastSessionId));
   }
 
   @VisibleForTesting
   Connection(
-      ConnectionContext context,
       HostInfo hostInfo,
       Delegate delegate,
       WebsocketConnectionFactory connFactory) {
     long connId = connectionIds++;
     this.hostInfo = hostInfo;
     this.delegate = delegate;
-    this.logger = new LogWrapper(context.getLogger(), Connection.class, "conn_" + connId);
+    this.logger = new PrefixedLogger(LoggerFactory.getLogger(Connection.class),
+        "[conn_" + connId + "]");
     this.state = State.REALTIME_CONNECTING;
     this.conn = connFactory.newConnection(this);
   }
 
   public void open() {
-    if (logger.logsDebug()) {
-      logger.debug("Opening a connection");
-    }
+    logger.debug("Opening a connection");
     conn.open();
   }
 
   public void close(DisconnectReason reason) {
     if (state != State.REALTIME_DISCONNECTED) {
-      if (logger.logsDebug()) {
-        logger.debug("closing realtime connection");
-      }
+      logger.debug("closing realtime connection");
       state = State.REALTIME_DISCONNECTED;
 
       if (conn != null) {
@@ -123,21 +119,14 @@ class Connection implements WebsocketConnection.Delegate {
           Map<String, Object> data = (Map<String, Object>) message.get(SERVER_ENVELOPE_DATA);
           onControlMessage(data);
         } else {
-          if (logger.logsDebug()) {
-            logger.debug("Ignoring unknown server message type: " + messageType);
-          }
+          logger.debug("Ignoring unknown server message type: {}", messageType);
         }
       } else {
-        if (logger.logsDebug()) {
-          logger.debug(
-              "Failed to parse server message: missing message type:" + message.toString());
-        }
+        logger.debug("Failed to parse server message: missing message type: {}", message);
         close();
       }
     } catch (ClassCastException e) {
-      if (logger.logsDebug()) {
-        logger.debug("Failed to parse server message: " + e.toString());
-      }
+      logger.debug("Failed to parse server message", e);
       close();
     }
   }
@@ -146,30 +135,22 @@ class Connection implements WebsocketConnection.Delegate {
   public void onDisconnect(boolean wasEverConnected) {
     conn = null;
     if (!wasEverConnected && state == State.REALTIME_CONNECTING) {
-      if (logger.logsDebug()) {
-        logger.debug("Realtime connection failed");
-      }
+      logger.debug("Realtime connection failed");
     } else {
-      if (logger.logsDebug()) {
-        logger.debug("Realtime connection lost");
-      }
+      logger.debug("Realtime connection lost");
     }
 
     close();
   }
 
   private void onDataMessage(Map<String, Object> data) {
-    if (logger.logsDebug()) {
-      logger.debug("received data message: " + data.toString());
-    }
+    logger.debug("received data message: {}", data);
     // We don't do anything with data messages, just kick them up a level
     delegate.onDataMessage(data);
   }
 
   private void onControlMessage(Map<String, Object> data) {
-    if (logger.logsDebug()) {
-      logger.debug("Got control message: " + data.toString());
-    }
+    logger.debug("Got control message: {}", data);
     try {
       String messageType = (String) data.get(SERVER_CONTROL_MESSAGE_TYPE);
       if (messageType != null) {
@@ -185,28 +166,20 @@ class Connection implements WebsocketConnection.Delegate {
               (Map<String, Object>) data.get(SERVER_CONTROL_MESSAGE_DATA);
           onHandshake(handshakeData);
         } else {
-          if (logger.logsDebug()) {
-            logger.debug("Ignoring unknown control message: " + messageType);
-          }
+          logger.debug("Ignoring unknown control message: {}", messageType);
         }
       } else {
-        if (logger.logsDebug()) {
-          logger.debug("Got invalid control message: " + data.toString());
-        }
+        logger.debug("Got invalid control message: {}", data);
         close();
       }
     } catch (ClassCastException e) {
-      if (logger.logsDebug()) {
-        logger.debug("Failed to parse control message: " + e.toString());
-      }
+      logger.debug("Failed to parse control message", e);
       close();
     }
   }
 
   private void onConnectionShutdown(String reason) {
-    if (logger.logsDebug()) {
-      logger.debug("Connection shutdown command received. Shutting down...");
-    }
+    logger.debug("Connection shutdown command received. Shutting down...");
     delegate.onKill(reason);
     close();
   }
@@ -224,21 +197,15 @@ class Connection implements WebsocketConnection.Delegate {
   }
 
   private void onConnectionReady(long timestamp, String sessionId) {
-    if (logger.logsDebug()) {
-      logger.debug("realtime connection established");
-    }
+    logger.debug("realtime connection established");
     state = State.REALTIME_CONNECTED;
     delegate.onReady(timestamp, sessionId);
   }
 
   private void onReset(String host) {
-    if (logger.logsDebug()) {
-      logger.debug(
-          "Got a reset; killing connection to "
-              + this.hostInfo.getHost()
-              + "; Updating internalHost to "
-              + host);
-    }
+    logger.debug(
+        "Got a reset; killing connection to {}; Updating internalHost to {}",
+            this.hostInfo.getHost(), host);
     delegate.onCacheHost(host);
 
     // Explicitly close the connection with SERVER_RESET so calling code knows to reconnect
@@ -253,7 +220,7 @@ class Connection implements WebsocketConnection.Delegate {
       if (isSensitive) {
         logger.debug("Sending data (contents hidden)");
       } else {
-        logger.debug("Sending data: %s", data);
+        logger.debug("Sending data: {}", data);
       }
       conn.send(data);
     }

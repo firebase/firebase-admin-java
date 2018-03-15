@@ -257,24 +257,6 @@ public class FirebaseDatabase {
   }
 
   /**
-   * By default, this is set to {@link Logger.Level#INFO INFO}. This includes any internal errors
-   * ({@link Logger.Level#ERROR ERROR}) and any security debug messages ({@link Logger.Level#INFO
-   * INFO}) that the client receives. Set to {@link Logger.Level#DEBUG DEBUG} to turn on the
-   * diagnostic logging, and {@link Logger.Level#NONE NONE} to disable all logging.
-   *
-   * @param logLevel The desired minimum log level
-   * @deprecated This method will be removed in a future release. Use SLF4J-based logging instead.
-   *     For example, add the slf4j-simple.jar to the classpath to log to STDERR. See
-   *     <a href="https://www.slf4j.org/manual.html">SLF4J user manual</a> for more details.
-   */
-  public synchronized void setLogLevel(Logger.Level logLevel) {
-    synchronized (lock) {
-      assertUnfrozen("setLogLevel");
-      this.config.setLogLevel(logLevel);
-    }
-  }
-
-  /**
    * The Firebase Database client will cache synchronized data and keep track of all writes you've
    * initiated while your application is running. It seamlessly handles intermittent network
    * connections and re-sends write operations when the network connection is restored.

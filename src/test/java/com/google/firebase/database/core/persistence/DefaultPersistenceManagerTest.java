@@ -70,7 +70,7 @@ public class DefaultPersistenceManagerTest {
   private PersistenceManager newTestPersistenceManager() {
     MockPersistenceStorageEngine engine = new MockPersistenceStorageEngine();
     engine.disableTransactionCheck = true;
-    return new DefaultPersistenceManager(newFrozenTestConfig(testApp), engine, CachePolicy.NONE);
+    return new DefaultPersistenceManager(engine, CachePolicy.NONE);
   }
 
   @Test
@@ -131,7 +131,7 @@ public class DefaultPersistenceManagerTest {
     engine.overwriteServerCache(path(""), initialData);
 
     DefaultPersistenceManager manager =
-        new DefaultPersistenceManager(newFrozenTestConfig(testApp), engine, CachePolicy.NONE);
+        new DefaultPersistenceManager(engine, CachePolicy.NONE);
 
     CompoundWrite write =
         CompoundWrite.fromValue(fromSingleQuotedString("{'baz': 'new-baz', 'qux': 'qux'}"));

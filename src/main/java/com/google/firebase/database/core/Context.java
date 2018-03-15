@@ -26,8 +26,6 @@ import com.google.firebase.database.connection.HostInfo;
 import com.google.firebase.database.connection.PersistentConnection;
 import com.google.firebase.database.core.persistence.NoopPersistenceManager;
 import com.google.firebase.database.core.persistence.PersistenceManager;
-import com.google.firebase.database.logging.LogWrapper;
-import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 
 import java.util.List;
@@ -37,7 +35,6 @@ public class Context {
 
   private static final long DEFAULT_CACHE_SIZE = 10 * 1024 * 1024;
 
-  protected Logger logger;
   protected FirebaseApp firebaseApp;
 
   EventTarget eventTarget;
@@ -45,7 +42,6 @@ public class Context {
   RunLoop runLoop;
   String persistenceKey;
   List<String> loggedComponents;
-  Logger.Level logLevel = Logger.Level.INFO;
   boolean persistenceEnabled;
   long cacheSize = DEFAULT_CACHE_SIZE;
 
@@ -103,8 +99,6 @@ public class Context {
   }
 
   private void initServices() {
-    // Do the logger first, so that other components can get a LogWrapper
-    ensureLogger();
     // Cache platform
     getPlatform();
     ensureUserAgent();
@@ -137,21 +131,8 @@ public class Context {
     }
   }
 
-  public LogWrapper getLogger(String component) {
-    return new LogWrapper(logger, component, null);
-  }
-
-  public LogWrapper getLogger(Class component) {
-    return new LogWrapper(logger, component);
-  }
-
-  public LogWrapper getLogger(Class component, String prefix) {
-    return new LogWrapper(logger, component, prefix);
-  }
-
   public ConnectionContext getConnectionContext() {
     return new ConnectionContext(
-        this.logger,
         wrapAuthTokenProvider(this.getAuthTokenProvider()),
         this.getExecutorService(),
         this.isPersistenceEnabled(),
@@ -211,12 +192,6 @@ public class Context {
       throw new RuntimeException("Custom run loops are not supported!");
     }
     return ((DefaultRunLoop) loop).getExecutorService();
-  }
-
-  private void ensureLogger() {
-    if (logger == null) {
-      logger = getPlatform().newLogger(this, logLevel, loggedComponents);
-    }
   }
 
   private void ensureRunLoop() {

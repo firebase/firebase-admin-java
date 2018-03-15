@@ -18,9 +18,6 @@ package com.google.firebase.database.core;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.DatabaseException;
-import com.google.firebase.database.Logger;
-
-import java.util.List;
 
 /**
  * TODO: Since this is no longer public, we should merge it with Context and clean all
@@ -28,21 +25,6 @@ import java.util.List;
  * them.
  */
 public class DatabaseConfig extends Context {
-
-  // TODO: Remove this from the public API since we currently can't pass logging
-  // across AIDL interface.
-
-  /**
-   * If you would like to provide a custom log target, pass an object that implements the {@link
-   * com.google.firebase.database.Logger Logger} interface.
-   *
-   * @hide
-   * @param logger The custom logger that will be called with all log messages
-   */
-  public synchronized void setLogger(com.google.firebase.database.logging.Logger logger) {
-    assertUnfrozen();
-    this.logger = logger;
-  }
 
   /**
    * In the default setup, the Firebase Database library will create a thread to handle all
@@ -59,51 +41,6 @@ public class DatabaseConfig extends Context {
   public synchronized void setEventTarget(EventTarget eventTarget) {
     assertUnfrozen();
     this.eventTarget = eventTarget;
-  }
-
-  /**
-   * By default, this is set to {@link Logger.Level#INFO INFO}. This includes any internal errors
-   * ({@link Logger.Level#ERROR ERROR}) and any security debug messages ({@link Logger.Level#INFO
-   * INFO}) that the client receives. Set to {@link Logger.Level#DEBUG DEBUG} to turn on the
-   * diagnostic logging, and {@link Logger.Level#NONE NONE} to disable all logging.
-   *
-   * @param logLevel The desired minimum log level
-   */
-  public synchronized void setLogLevel(Logger.Level logLevel) {
-    assertUnfrozen();
-    switch (logLevel) {
-      case DEBUG:
-        this.logLevel = com.google.firebase.database.logging.Logger.Level.DEBUG;
-        break;
-      case INFO:
-        this.logLevel = com.google.firebase.database.logging.Logger.Level.INFO;
-        break;
-      case WARN:
-        this.logLevel = com.google.firebase.database.logging.Logger.Level.WARN;
-        break;
-      case ERROR:
-        this.logLevel = com.google.firebase.database.logging.Logger.Level.ERROR;
-        break;
-      case NONE:
-        this.logLevel = com.google.firebase.database.logging.Logger.Level.NONE;
-        break;
-      default:
-        throw new IllegalArgumentException("Unknown log level: " + logLevel);
-    }
-  }
-
-  /**
-   * Used primarily for debugging. Limits the debug output to the specified components. By default,
-   * this is null, which enables logging from all components. Setting this explicitly will also set
-   * the log level to {@link Logger.Level#DEBUG DEBUG}.
-   *
-   * @param debugComponents A list of components for which logs are desired, or null to enable all
-   *     components
-   */
-  public synchronized void setDebugLogComponents(List<String> debugComponents) {
-    assertUnfrozen();
-    setLogLevel(Logger.Level.DEBUG);
-    loggedComponents = debugComponents;
   }
 
   public void setRunLoop(RunLoop runLoop) {
