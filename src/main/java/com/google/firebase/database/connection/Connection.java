@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 class Connection implements WebsocketConnection.Delegate {
@@ -39,11 +40,14 @@ class Connection implements WebsocketConnection.Delegate {
   private static final String SERVER_HELLO_TIMESTAMP = "ts";
   private static final String SERVER_HELLO_HOST = "h";
   private static final String SERVER_HELLO_SESSION_ID = "s";
+
+  private static final Logger logger = LoggerFactory.getLogger(Connection.class);
+
   private static long connectionIds = 0;
 
-  private final PrefixedLogger logger;
   private final HostInfo hostInfo;
   private final Delegate delegate;
+  private final String label;
 
   private WebsocketConnection conn;
   private State state;
@@ -66,20 +70,19 @@ class Connection implements WebsocketConnection.Delegate {
     long connId = connectionIds++;
     this.hostInfo = hostInfo;
     this.delegate = delegate;
-    this.logger = new PrefixedLogger(LoggerFactory.getLogger(Connection.class),
-        "[conn_" + connId + "]");
+    this.label = "[conn_" + connId + "]";
     this.state = State.REALTIME_CONNECTING;
     this.conn = connFactory.newConnection(this);
   }
 
   public void open() {
-    logger.debug("Opening a connection");
+    logger.debug("{} Opening a connection", label);
     conn.open();
   }
 
   public void close(DisconnectReason reason) {
     if (state != State.REALTIME_DISCONNECTED) {
-      logger.debug("closing realtime connection");
+      logger.debug("{} Closing realtime connection", label);
       state = State.REALTIME_DISCONNECTED;
 
       if (conn != null) {
@@ -119,14 +122,14 @@ class Connection implements WebsocketConnection.Delegate {
           Map<String, Object> data = (Map<String, Object>) message.get(SERVER_ENVELOPE_DATA);
           onControlMessage(data);
         } else {
-          logger.debug("Ignoring unknown server message type: {}", messageType);
+          logger.debug("{} Ignoring unknown server message type: {}", label, messageType);
         }
       } else {
-        logger.debug("Failed to parse server message: missing message type: {}", message);
+        logger.debug("{} Failed to parse server message: missing message type: {}", label, message);
         close();
       }
     } catch (ClassCastException e) {
-      logger.debug("Failed to parse server message", e);
+      logger.debug("{} Failed to parse server message", label, e);
       close();
     }
   }
@@ -135,22 +138,22 @@ class Connection implements WebsocketConnection.Delegate {
   public void onDisconnect(boolean wasEverConnected) {
     conn = null;
     if (!wasEverConnected && state == State.REALTIME_CONNECTING) {
-      logger.debug("Realtime connection failed");
+      logger.debug("{} Realtime connection failed", label);
     } else {
-      logger.debug("Realtime connection lost");
+      logger.debug("{} Realtime connection lost", label);
     }
 
     close();
   }
 
   private void onDataMessage(Map<String, Object> data) {
-    logger.debug("received data message: {}", data);
+    logger.debug("{} Received data message: {}", label, data);
     // We don't do anything with data messages, just kick them up a level
     delegate.onDataMessage(data);
   }
 
   private void onControlMessage(Map<String, Object> data) {
-    logger.debug("Got control message: {}", data);
+    logger.debug("{} Got control message: {}", label, data);
     try {
       String messageType = (String) data.get(SERVER_CONTROL_MESSAGE_TYPE);
       if (messageType != null) {
@@ -166,20 +169,20 @@ class Connection implements WebsocketConnection.Delegate {
               (Map<String, Object>) data.get(SERVER_CONTROL_MESSAGE_DATA);
           onHandshake(handshakeData);
         } else {
-          logger.debug("Ignoring unknown control message: {}", messageType);
+          logger.debug("{} Ignoring unknown control message: {}", label, messageType);
         }
       } else {
-        logger.debug("Got invalid control message: {}", data);
+        logger.debug("{} Got invalid control message: {}", label, data);
         close();
       }
     } catch (ClassCastException e) {
-      logger.debug("Failed to parse control message", e);
+      logger.debug("{} Failed to parse control message", label, e);
       close();
     }
   }
 
   private void onConnectionShutdown(String reason) {
-    logger.debug("Connection shutdown command received. Shutting down...");
+    logger.debug("{} Connection shutdown command received. Shutting down...", label);
     delegate.onKill(reason);
     close();
   }
@@ -197,15 +200,15 @@ class Connection implements WebsocketConnection.Delegate {
   }
 
   private void onConnectionReady(long timestamp, String sessionId) {
-    logger.debug("realtime connection established");
+    logger.debug("{} Realtime connection established", label);
     state = State.REALTIME_CONNECTED;
     delegate.onReady(timestamp, sessionId);
   }
 
   private void onReset(String host) {
     logger.debug(
-        "Got a reset; killing connection to {}; Updating internalHost to {}",
-            this.hostInfo.getHost(), host);
+        "{} Got a reset; killing connection to {}; Updating internalHost to {}",
+            label, hostInfo.getHost(), host);
     delegate.onCacheHost(host);
 
     // Explicitly close the connection with SERVER_RESET so calling code knows to reconnect
@@ -215,12 +218,12 @@ class Connection implements WebsocketConnection.Delegate {
 
   private void sendData(Map<String, Object> data, boolean isSensitive) {
     if (state != State.REALTIME_CONNECTED) {
-      logger.debug("Tried to send on an unconnected connection");
+      logger.debug("{} Tried to send on an unconnected connection", label);
     } else {
       if (isSensitive) {
-        logger.debug("Sending data (contents hidden)");
+        logger.debug("{} Sending data (contents hidden)", label);
       } else {
-        logger.debug("Sending data: {}", data);
+        logger.debug("{} Sending data: {}", label, data);
       }
       conn.send(data);
     }

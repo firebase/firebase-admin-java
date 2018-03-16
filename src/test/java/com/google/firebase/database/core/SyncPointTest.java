@@ -96,7 +96,7 @@ public class SyncPointTest {
       @Override
       public void stopListening(QuerySpec query, Tag tag) {
         Path path = query.getPath();
-        logger.debug("Listening at " + path + " for Tag " + tag);
+        logger.debug("Listening at {} for Tag {}", path, tag);
         checkState(this.listens.contains(query),
             "Stopped listening for query already");
         this.listens.remove(query);
@@ -314,7 +314,7 @@ public class SyncPointTest {
 
   @SuppressWarnings("unchecked")
   private static void runTest(Map<String, Object> testSpec, String basePath) {
-    logger.info("Running \"" + testSpec.get("name") + '"');
+    logger.debug("Running \"{}\"", testSpec.get("name"));
     SyncTree.ListenProvider listenProvider = getNewListenProvider();
     SyncTree syncTree = new SyncTree(new NoopPersistenceManager(), listenProvider);
 

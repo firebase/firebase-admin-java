@@ -184,7 +184,7 @@ public class RandomPersistenceTest {
           new DefaultPersistenceManager(storageEngine, CachePolicy.NONE);
       final HashMap<QuerySpec, Tag> tagMap = new HashMap<>();
       SyncTree syncTree =
-          new SyncTree( manager, new SyncTree.ListenProvider() {
+          new SyncTree(manager, new SyncTree.ListenProvider() {
               @Override
               public void startListening(
                   QuerySpec query,
