@@ -8,7 +8,9 @@
 - [changed] Removed the deprecated `FirebaseCredential` interface.
 - [changed] Removed the deprecated `Task` interface along with the
   `com.google.firebase.tasks` package.
-- [changed] Dropped support for App Engine Java 7 runtime.
+- [changed] Dropped support for App Engine's Java 7 runtime. Developers
+  are advised to use the Admin SDK with Java 8 when deploying to App
+  Engine.
 
 # v5.9.0
 

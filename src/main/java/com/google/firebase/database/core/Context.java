@@ -38,7 +38,7 @@ public class Context {
   private static final long DEFAULT_CACHE_SIZE = 10 * 1024 * 1024;
 
   protected Logger logger;
-  protected FirebaseApp firebaseApp;
+  FirebaseApp firebaseApp;
 
   EventTarget eventTarget;
   AuthTokenProvider authTokenProvider;
