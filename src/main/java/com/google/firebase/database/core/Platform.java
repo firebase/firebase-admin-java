@@ -48,6 +48,4 @@ public interface Platform {
   String getPlatformVersion();
 
   PersistenceManager createPersistenceManager(Context ctx, String firebaseId);
-
-  ThreadInitializer getThreadInitializer();
 }

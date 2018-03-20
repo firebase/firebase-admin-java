@@ -2,6 +2,15 @@
 
 - [fixed] Improved error handling in FCM by mapping more server-side
   errors to client-side error codes.
+- [added] `FirebaseAuth`, `'FirebaseMessaging` and `FirebaseInstanceId`
+  interfaces now expose a set of blocking methods. Each operation has
+  blocking an asynchronous versions.
+- [changed] Removed the deprecated `FirebaseCredential` interface.
+- [changed] Removed the deprecated `Task` interface along with the
+  `com.google.firebase.tasks` package.
+- [changed] Dropped support for App Engine's Java 7 runtime. Developers
+  are advised to use the Admin SDK with Java 8 when deploying to App
+  Engine.
 
 # v5.9.0
 

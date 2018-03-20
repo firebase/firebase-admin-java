@@ -39,7 +39,7 @@ class JvmPlatform implements Platform {
 
   private final FirebaseApp firebaseApp;
 
-  public JvmPlatform(FirebaseApp firebaseApp) {
+  JvmPlatform(FirebaseApp firebaseApp) {
     this.firebaseApp = firebaseApp;
   }
 
@@ -51,7 +51,7 @@ class JvmPlatform implements Platform {
   @Override
   public EventTarget newEventTarget(Context ctx) {
     ThreadFactory threadFactory = ImplFirebaseTrampolines.getThreadFactory(firebaseApp);
-    return new ThreadPoolEventTarget(threadFactory, ThreadInitializer.defaultInstance);
+    return new ThreadPoolEventTarget(threadFactory);
   }
 
   @Override
@@ -93,10 +93,5 @@ class JvmPlatform implements Platform {
   @Override
   public PersistenceManager createPersistenceManager(Context ctx, String namespace) {
     return null;
-  }
-
-  @Override
-  public ThreadInitializer getThreadInitializer() {
-    return ThreadInitializer.defaultInstance;
   }
 }

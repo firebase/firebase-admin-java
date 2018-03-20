@@ -38,7 +38,7 @@ public class DefaultRunLoopTest {
   public void testLifecycle() {
     MockRunLoop runLoop = new MockRunLoop();
     try {
-      assertEquals(0, runLoop.getThreadPool().getCorePoolSize());
+      assertEquals(1, runLoop.getThreadPool().getCorePoolSize());
       runLoop.scheduleNow(new Runnable() {
         @Override
         public void run() {
@@ -62,7 +62,7 @@ public class DefaultRunLoopTest {
   public void testScheduleWithDelay() throws ExecutionException, InterruptedException {
     MockRunLoop runLoop = new MockRunLoop();
     try {
-      assertEquals(0, runLoop.getThreadPool().getCorePoolSize());
+      assertEquals(1, runLoop.getThreadPool().getCorePoolSize());
       ScheduledFuture future = runLoop.schedule(new Runnable() {
         @Override
         public void run() {
@@ -91,7 +91,7 @@ public class DefaultRunLoopTest {
     assertSame(exceptionHandler, runLoop.getExceptionHandler());
 
     try {
-      assertEquals(0, runLoop.getThreadPool().getCorePoolSize());
+      assertEquals(1, runLoop.getThreadPool().getCorePoolSize());
       runLoop.scheduleNow(new Runnable() {
         @Override
         public void run() {

@@ -47,14 +47,6 @@ public final class ImplFirebaseTrampolines {
     return app.isDefaultApp();
   }
 
-  public static String getPersistenceKey(@NonNull FirebaseApp app) {
-    return app.getPersistenceKey();
-  }
-  
-  public static String getPersistenceKey(String name, FirebaseOptions options) {
-    return FirebaseApp.getPersistenceKey(name, options);
-  }
-
   public static <T extends FirebaseService> T getService(
       @NonNull FirebaseApp app, @NonNull String id, @NonNull Class<T> type) {
     return type.cast(app.getService(id));
