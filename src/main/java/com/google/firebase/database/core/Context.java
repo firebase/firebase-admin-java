@@ -28,20 +28,18 @@ import com.google.firebase.database.core.persistence.NoopPersistenceManager;
 import com.google.firebase.database.core.persistence.PersistenceManager;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 
-import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class Context {
 
   private static final long DEFAULT_CACHE_SIZE = 10 * 1024 * 1024;
 
-  protected FirebaseApp firebaseApp;
+  FirebaseApp firebaseApp;
 
   EventTarget eventTarget;
   AuthTokenProvider authTokenProvider;
   RunLoop runLoop;
   String persistenceKey;
-  List<String> loggedComponents;
   boolean persistenceEnabled;
   long cacheSize = DEFAULT_CACHE_SIZE;
 

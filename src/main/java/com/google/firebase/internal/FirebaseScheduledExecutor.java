@@ -29,17 +29,19 @@ import java.util.concurrent.ThreadFactory;
  */
 public class FirebaseScheduledExecutor extends ScheduledThreadPoolExecutor {
 
-  public FirebaseScheduledExecutor(ThreadFactory threadFactory, String name) {
+  public FirebaseScheduledExecutor(@NonNull ThreadFactory threadFactory, @NonNull String name) {
     this(threadFactory, name, null);
   }
 
   public FirebaseScheduledExecutor(
-      ThreadFactory threadFactory, String name, Thread.UncaughtExceptionHandler handler) {
+      @NonNull ThreadFactory threadFactory, @NonNull String name,
+      @Nullable Thread.UncaughtExceptionHandler handler) {
     super(1, decorateThreadFactory(threadFactory, name, handler));
     setRemoveOnCancelPolicy(true);
   }
 
-  static ThreadFactory decorateThreadFactory(ThreadFactory threadFactory, String name) {
+  static ThreadFactory getThreadFactoryWithName(
+      @NonNull ThreadFactory threadFactory, @NonNull String name) {
     return decorateThreadFactory(threadFactory, name, null);
   }
 

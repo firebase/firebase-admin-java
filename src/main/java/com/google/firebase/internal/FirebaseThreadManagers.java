@@ -82,7 +82,7 @@ public class FirebaseThreadManagers {
 
     @Override
     protected ExecutorService doInit() {
-      ThreadFactory threadFactory = FirebaseScheduledExecutor.decorateThreadFactory(
+      ThreadFactory threadFactory = FirebaseScheduledExecutor.getThreadFactoryWithName(
           getThreadFactory(), "firebase-default-%d");
       return Executors.newCachedThreadPool(threadFactory);
     }

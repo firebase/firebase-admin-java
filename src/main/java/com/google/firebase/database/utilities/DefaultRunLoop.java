@@ -44,6 +44,7 @@ public abstract class DefaultRunLoop implements RunLoop {
     executor = new FirebaseScheduledExecutor(threadFactory, "firebase-database-worker") {
       @Override
       protected void afterExecute(Runnable runnable, Throwable throwable) {
+        super.afterExecute(runnable, throwable);
         if (throwable == null && runnable instanceof Future<?>) {
           Future<?> future = (Future<?>) runnable;
           try {
