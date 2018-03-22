@@ -161,11 +161,11 @@ public class Aps {
     /**
      * Puts a custom key-value pair to the aps dictionary.
      *
-     * @param key A non-null, non-empty key
-     * @param value A non-null, json-serializable value
-     * @return This builder
+     * @param key A non-null key.
+     * @param value A non-null, json-serializable value.
+     * @return This builder.
      */
-    public Builder putCustomField(String key, @NonNull Object value) {
+    public Builder putCustomField(@NonNull String key, @NonNull Object value) {
       this.customFields.put(key, value);
       return this;
     }
@@ -173,10 +173,10 @@ public class Aps {
     /**
      * Puts all the key-value pairs in the specified map to the aps dictionary.
      *
-     * @param fields A map of key-value pairs
-     * @return This builder
+     * @param fields A non-null map. Map must not contain null keys or values.
+     * @return This builder.
      */
-    public Builder putAllCustomFields(Map<String, Object> fields) {
+    public Builder putAllCustomFields(@NonNull Map<String, Object> fields) {
       this.customFields.putAll(fields);
       return this;
     }
