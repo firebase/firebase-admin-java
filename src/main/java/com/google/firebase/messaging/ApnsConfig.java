@@ -45,7 +45,7 @@ public class ApnsConfig {
     this.headers = builder.headers.isEmpty() ? null : ImmutableMap.copyOf(builder.headers);
     this.payload = ImmutableMap.<String, Object>builder()
         .putAll(builder.customData)
-        .put("aps", builder.aps)
+        .put("aps", builder.aps.getFields())
         .build();
   }
 
