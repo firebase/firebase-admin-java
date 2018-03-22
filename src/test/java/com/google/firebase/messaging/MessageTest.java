@@ -363,7 +363,7 @@ public class MessageTest {
                 .setBadge(42)
                 .setCategory("test-category")
                 .setContentAvailable(true)
-                .setContentMutable(true)
+                .setMutableContent(true)
                 .setSound("test-sound")
                 .setThreadId("test-thread-id")
                 .build())
@@ -377,7 +377,7 @@ public class MessageTest {
             .put("badge", new BigDecimal(42))
             .put("category", "test-category")
             .put("content-available", new BigDecimal(1))
-            .put("content-mutable", new BigDecimal(1))
+            .put("mutable-content", new BigDecimal(1))
             .put("sound", "test-sound")
             .put("thread-id", "test-thread-id")
             .build());

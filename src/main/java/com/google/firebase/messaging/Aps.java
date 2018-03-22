@@ -50,8 +50,8 @@ public class Aps {
     if (builder.contentAvailable) {
       fields.put("content-available", 1);
     }
-    if (builder.contentMutable) {
-      fields.put("content-mutable", 1);
+    if (builder.mutableContent) {
+      fields.put("mutable-content", 1);
     }
     if (builder.category != null) {
       fields.put("category", builder.category);
@@ -83,7 +83,7 @@ public class Aps {
     private Integer badge;
     private String sound;
     private boolean contentAvailable;
-    private boolean contentMutable;
+    private boolean mutableContent;
     private String category;
     private String threadId;
     private final Map<String, Object> customFields = new HashMap<>();
@@ -147,14 +147,14 @@ public class Aps {
     }
 
     /**
-     * Specifies whether to set the {@code content-mutable} property on the message, so the
+     * Specifies whether to set the {@code mutable-content} property on the message, so the
      * clients can modify the notification via app extensions.
      *
-     * @param contentMutable True to make the content mutable via app extensions.
+     * @param mutableContent True to make the content mutable via app extensions.
      * @return This builder.
      */
-    public Builder setContentMutable(boolean contentMutable) {
-      this.contentMutable = contentMutable;
+    public Builder setMutableContent(boolean mutableContent) {
+      this.mutableContent = mutableContent;
       return this;
     }
 
