@@ -313,11 +313,9 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
 
   @Override
   public void onKill(String reason) {
-    if (logger.isDebugEnabled()) {
-      logger.debug(
-          "{} Firebase Database connection was forcefully killed by the server. Will not attempt "
-              + "reconnect. Reason: {}", label, reason);
-    }
+    logger.debug(
+        "{} Firebase Database connection was forcefully killed by the server. Will not attempt "
+            + "reconnect. Reason: {}", label, reason);
     interrupt(SERVER_KILL_INTERRUPT_REASON);
   }
 
@@ -595,7 +593,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   }
 
   private OutstandingListen removeListen(ListenQuerySpec query) {
-    logger.debug("removing query {}", query);
+    logger.debug("{} removing query {}", label, query);
     if (!listens.containsKey(query)) {
       logger.debug(
           "{} Trying to remove listener for QuerySpec {} but no listener exists.", label, query);
