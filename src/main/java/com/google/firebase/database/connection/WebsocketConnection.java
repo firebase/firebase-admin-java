@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.util.JsonMapper;
 
 import java.io.EOFException;
@@ -33,6 +32,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Represents a WebSocket connection to the Firebase Realtime Database. This abstraction acts as
@@ -47,11 +48,12 @@ class WebsocketConnection {
   private static final long CONNECT_TIMEOUT_MS = 30 * 1000; // 30 seconds
   private static final int MAX_FRAME_SIZE = 16384;
   private static final AtomicLong CONN_ID = new AtomicLong(0);
+  private static final Logger logger = LoggerFactory.getLogger(WebsocketConnection.class);
 
   private final ScheduledExecutorService executorService;
-  private final LogWrapper logger;
   private final WSClient conn;
   private final Delegate delegate;
+  private final String label;
 
   private StringList buffer;
   private boolean everConnected = false;
@@ -75,8 +77,7 @@ class WebsocketConnection {
       WSClientFactory clientFactory) {
     this.executorService = connectionContext.getExecutorService();
     this.delegate = delegate;
-    this.logger = new LogWrapper(connectionContext.getLogger(), WebsocketConnection.class,
-        "ws_" + CONN_ID.getAndIncrement());
+    this.label = "[ws_" + CONN_ID.getAndIncrement() + "]";
     this.conn = clientFactory.newClient(new WSClientHandlerImpl());
   }
 
@@ -99,9 +100,7 @@ class WebsocketConnection {
   }
 
   void close() {
-    if (logger.logsDebug()) {
-      logger.debug("websocket is being closed");
-    }
+    logger.debug("{} Websocket is being closed", label);
     isClosed = true;
     conn.close();
 
@@ -130,7 +129,7 @@ class WebsocketConnection {
         conn.send(seg);
       }
     } catch (IOException e) {
-      logger.error("Failed to serialize message: " + message.toString(), e);
+      logger.error("{} Failed to serialize message: {}", label, message, e);
       closeAndNotify();
     }
   }
@@ -150,9 +149,7 @@ class WebsocketConnection {
   }
 
   private void handleNewFrameCount(int numFrames) {
-    if (logger.logsDebug()) {
-      logger.debug("HandleNewFrameCount: " + numFrames);
-    }
+    logger.debug("{} Handle new frame count: {}", label, numFrames);
     buffer = new StringList(numFrames);
   }
 
@@ -165,15 +162,13 @@ class WebsocketConnection {
     String combined = buffer.combine();
     try {
       Map<String, Object> decoded = JsonMapper.parseJson(combined);
-      if (logger.logsDebug()) {
-        logger.debug("handleIncomingFrame complete frame: " + decoded);
-      }
+      logger.debug("{} Parsed complete frame: {}", label, decoded);
       delegate.onMessage(decoded);
     } catch (IOException e) {
-      logger.error("Error parsing frame: " + combined, e);
+      logger.error("{} Error parsing frame: {}", label, combined, e);
       closeAndNotify();
     } catch (ClassCastException e) {
-      logger.error("Error parsing frame (cast error): " + combined, e);
+      logger.error("{} Error parsing frame (cast error): {}", label, combined, e);
       closeAndNotify();
     }
   }
@@ -218,13 +213,10 @@ class WebsocketConnection {
     }
     if (keepAlive != null) {
       keepAlive.cancel(false);
-      if (logger.logsDebug()) {
-        logger.debug("Reset keepAlive. Remaining: " + keepAlive.getDelay(TimeUnit.MILLISECONDS));
-      }
+      logger.debug("{} Reset keepAlive. Remaining: {}", label,
+          keepAlive.getDelay(TimeUnit.MILLISECONDS));
     } else {
-      if (logger.logsDebug()) {
-        logger.debug("Reset keepAlive");
-      }
+      logger.debug("{} Reset keepAlive", label);
     }
     keepAlive = executorService.schedule(nop(), KEEP_ALIVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
   }
@@ -253,18 +245,14 @@ class WebsocketConnection {
 
   private void onClosed() {
     if (!isClosed) {
-      if (logger.logsDebug()) {
-        logger.debug("closing itself");
-      }
+      logger.debug("{} Closing itself", label);
       closeAndNotify();
     }
   }
 
   private void closeIfNeverConnected() {
     if (!everConnected && !isClosed) {
-      if (logger.logsDebug()) {
-        logger.debug("timed out on connect");
-      }
+      logger.debug("{} Timed out on connect", label);
       closeAndNotify();
     }
   }
@@ -278,9 +266,7 @@ class WebsocketConnection {
 
     @Override
     public void onOpen() {
-      if (logger.logsDebug()) {
-        logger.debug("websocket opened");
-      }
+      logger.debug("{} Websocket opened", label);
       executorService.execute(new Runnable() {
         @Override
         public void run() {
@@ -293,9 +279,7 @@ class WebsocketConnection {
 
     @Override
     public void onMessage(final String message) {
-      if (logger.logsDebug()) {
-        logger.debug("ws message: " + message);
-      }
+      logger.debug("{} WS message: {}", label, message);
       executorService.execute(new Runnable() {
         @Override
         public void run() {
@@ -306,9 +290,7 @@ class WebsocketConnection {
 
     @Override
     public void onClose() {
-      if (logger.logsDebug()) {
-        logger.debug("closed");
-      }
+      logger.debug("{} Closed", label);
       if (!isClosed) {
         // If the connection tear down was initiated by the higher-layer, isClosed will already
         // be true. Nothing more to do in that case.
@@ -325,9 +307,9 @@ class WebsocketConnection {
     @Override
     public void onError(final Throwable e) {
       if (e.getCause() != null && e.getCause() instanceof EOFException) {
-        logger.error("WebSocket reached EOF", e);
+        logger.error("{} WebSocket reached EOF", label, e);
       } else {
-        logger.error("WebSocket error", e);
+        logger.error("{} WebSocket error", label, e);
       }
       executorService.execute(
           new Runnable() {

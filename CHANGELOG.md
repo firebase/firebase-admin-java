@@ -11,6 +11,9 @@
 - [changed] Dropped support for App Engine's Java 7 runtime. Developers
   are advised to use the Admin SDK with Java 8 when deploying to App
   Engine.
+- [changed] Removed the deprecated `FirebaseDatabase.setLogLevel()` API
+  and the related logging utilities. Developers should use SLF4J to
+  configure logging directly.
 
 # v5.9.0
 

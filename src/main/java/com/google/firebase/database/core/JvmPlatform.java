@@ -24,14 +24,12 @@ import com.google.firebase.database.connection.HostInfo;
 import com.google.firebase.database.connection.PersistentConnection;
 import com.google.firebase.database.connection.PersistentConnectionImpl;
 import com.google.firebase.database.core.persistence.PersistenceManager;
-import com.google.firebase.database.logging.DefaultLogger;
-import com.google.firebase.database.logging.LogWrapper;
-import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 
-import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class JvmPlatform implements Platform {
 
@@ -44,11 +42,6 @@ class JvmPlatform implements Platform {
   }
 
   @Override
-  public Logger newLogger(Context ctx, Logger.Level level, List<String> components) {
-    return new DefaultLogger(level, components);
-  }
-
-  @Override
   public EventTarget newEventTarget(Context ctx) {
     ThreadFactory threadFactory = ImplFirebaseTrampolines.getThreadFactory(firebaseApp);
     return new ThreadPoolEventTarget(threadFactory);
@@ -56,7 +49,7 @@ class JvmPlatform implements Platform {
 
   @Override
   public RunLoop newRunLoop(final Context context) {
-    final LogWrapper logger = context.getLogger(RunLoop.class);
+    final Logger logger = LoggerFactory.getLogger(RunLoop.class);
     ThreadFactory threadFactory = ImplFirebaseTrampolines.getThreadFactory(firebaseApp);
     return new DefaultRunLoop(threadFactory) {
       @Override
