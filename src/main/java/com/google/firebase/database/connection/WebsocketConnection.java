@@ -325,9 +325,9 @@ class WebsocketConnection {
     @Override
     public void onError(final Throwable e) {
       if (e.getCause() != null && e.getCause() instanceof EOFException) {
-        logger.error("WebSocket reached EOF", e);
+        logger.debug("WebSocket reached EOF", e);
       } else {
-        logger.error("WebSocket error", e);
+        logger.debug("WebSocket error", e);
       }
       executorService.execute(
           new Runnable() {

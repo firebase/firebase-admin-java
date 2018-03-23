@@ -130,8 +130,13 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
 
   @Override
   public void send(String msg) {
-    checkState(channel != null && channel.isActive(), "channel not connected for sending");
-    channel.writeAndFlush(new TextWebSocketFrame(msg));
+    if (channel == null) {
+      eventHandler.onError(new IllegalStateException("Channel not initialized"));
+    } else if (!channel.isActive()) {
+      eventHandler.onError(new IllegalStateException("Channel not connected for sending"));
+    } else {
+      channel.writeAndFlush(new TextWebSocketFrame(msg));
+    }
   }
 
   /**
