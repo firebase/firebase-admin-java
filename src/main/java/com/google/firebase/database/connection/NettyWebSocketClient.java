@@ -33,6 +33,7 @@ import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 
+import java.io.EOFException;
 import java.net.URI;
 import java.security.KeyStore;
 import java.util.concurrent.ExecutorService;
@@ -130,10 +131,9 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
 
   @Override
   public void send(String msg) {
-    if (channel == null) {
-      eventHandler.onError(new IllegalStateException("Channel not initialized"));
-    } else if (!channel.isActive()) {
-      eventHandler.onError(new IllegalStateException("Channel not connected for sending"));
+    checkState(channel != null, "Channel not initialized");
+    if (!channel.isActive()) {
+      eventHandler.onError(new EOFException("WebSocket channel became inactive"));
     } else {
       channel.writeAndFlush(new TextWebSocketFrame(msg));
     }
