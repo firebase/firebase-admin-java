@@ -47,6 +47,8 @@ public final class FirebaseOptions {
   private final Map<String, Object> databaseAuthVariableOverride;
   private final String projectId;
   private final HttpTransport httpTransport;
+  private final int connectTimeout;
+  private final int readTimeout;
   private final JsonFactory jsonFactory;
   private final ThreadManager threadManager;
 
@@ -68,6 +70,10 @@ public final class FirebaseOptions {
         "FirebaseOptions must be initialized with a non-null JsonFactory.");
     this.threadManager = checkNotNull(builder.threadManager,
         "FirebaseOptions must be initialized with a non-null ThreadManager.");
+    checkArgument(builder.connectTimeout >= 0);
+    this.connectTimeout = builder.connectTimeout;
+    checkArgument(builder.readTimeout >= 0);
+    this.readTimeout = builder.readTimeout;
   }
 
   /**
@@ -132,6 +138,26 @@ public final class FirebaseOptions {
     return jsonFactory;
   }
 
+  /**
+   * Returns the connection timeout in milliseconds, which is applied to outgoing REST calls
+   * made by the SDK.
+   *
+   * @return Connection timeout in milliseconds. 0 indicates an infinite timeout.
+   */
+  public int getConnectTimeout() {
+    return connectTimeout;
+  }
+
+  /**
+   * Returns the read timeout in milliseconds, which is applied to outgoing REST calls
+   * made by the SDK.
+   *
+   * @return Read timeout in milliseconds. 0 indicates an infinite timeout.
+   */
+  public int getReadTimeout() {
+    return readTimeout;
+  }
+
   @NonNull
   ThreadManager getThreadManager() {
     return threadManager;
@@ -157,6 +183,8 @@ public final class FirebaseOptions {
     private HttpTransport httpTransport = Utils.getDefaultTransport();
     private JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     private ThreadManager threadManager = FirebaseThreadManagers.DEFAULT_THREAD_MANAGER;
+    private int connectTimeout;
+    private int readTimeout;
 
     /** Constructs an empty builder. */
     public Builder() {}
@@ -176,6 +204,8 @@ public final class FirebaseOptions {
       httpTransport = options.httpTransport;
       jsonFactory = options.jsonFactory;
       threadManager = options.threadManager;
+      connectTimeout = options.connectTimeout;
+      readTimeout = options.readTimeout;
     }
 
     /**
@@ -318,6 +348,28 @@ public final class FirebaseOptions {
      */
     public Builder setThreadManager(ThreadManager threadManager) {
       this.threadManager = threadManager;
+      return this;
+    }
+
+    /**
+     * Sets the connection timeout for outgoing HTTP (REST) calls made by the SDK.
+     *
+     * @param connectTimeout Connection timeout in milliseconds. Must not be negative.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setConnectTimeout(int connectTimeout) {
+      this.connectTimeout = connectTimeout;
+      return this;
+    }
+
+    /**
+     * Sets the read timeout for outgoing HTTP (REST) calls made by the SDK.
+     *
+     * @param readTimeout Read timeout in milliseconds. Must not be negative.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setReadTimeout(int readTimeout) {
+      this.readTimeout = readTimeout;
       return this;
     }
 
