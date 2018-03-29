@@ -57,7 +57,6 @@ public class FirebaseAuth {
 
   private static final String ERROR_CUSTOM_TOKEN = "ERROR_CUSTOM_TOKEN";
   private static final String ERROR_INVALID_ID_TOKEN = "ERROR_INVALID_CREDENTIAL";
-  private static final String ERROR_LIST_USERS = "ERROR_LIST_USERS";
 
   private final GooglePublicKeysManager googlePublicKeysManager;
   private final Clock clock;
@@ -71,7 +70,10 @@ public class FirebaseAuth {
   private final Object lock;
 
   private FirebaseAuth(FirebaseApp firebaseApp) {
-    this(firebaseApp, FirebaseTokenVerifier.DEFAULT_KEY_MANAGER, Clock.SYSTEM);
+    this(firebaseApp,
+         FirebaseTokenVerifier.buildGooglePublicKeysManager(
+             firebaseApp.getOptions().getHttpTransport()),
+         Clock.SYSTEM);
   }
 
   /**
