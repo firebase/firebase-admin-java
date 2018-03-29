@@ -97,7 +97,7 @@ public class FirebaseMessagingTest {
   }
 
   @Test
-  public void testNullMessage() throws Exception {
+  public void testNullMessage() {
     FirebaseMessaging messaging = initDefaultMessaging();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     messaging.setInterceptor(interceptor);
@@ -224,9 +224,9 @@ public class FirebaseMessagingTest {
     FirebaseMessaging messaging = initMessaging(response);
     for (int code : HTTP_ERRORS) {
       response.setStatusCode(code).setContent(
-          "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\", " +
-              "\"details\":[{\"@type\": \"type.googleapis.com/google.firebase.fcm" +
-              ".v1.FcmErrorCode\", \"errorCode\": \"UNREGISTERED\"}]}}");
+          "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\", "
+              + "\"details\":[{\"@type\": \"type.googleapis.com/google.firebase.fcm"
+              + ".v1.FcmErrorCode\", \"errorCode\": \"UNREGISTERED\"}]}}");
       TestResponseInterceptor interceptor = new TestResponseInterceptor();
       messaging.setInterceptor(interceptor);
       try {
