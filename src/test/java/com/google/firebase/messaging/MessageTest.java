@@ -36,7 +36,7 @@ import org.junit.Test;
 public class MessageTest {
 
   @Test(expected = IllegalArgumentException.class)
-  public void testMessageWithoutTarget() throws IOException {
+  public void testMessageWithoutTarget() {
     Message.builder().build();
   }
 
@@ -214,7 +214,7 @@ public class MessageTest {
   }
 
   @Test
-  public void testInvalidAndroidConfig() throws IOException {
+  public void testInvalidAndroidConfig() {
     try {
       AndroidConfig.builder().setTtl(-1).build();
       fail("No error thrown for invalid ttl");
@@ -406,8 +406,8 @@ public class MessageTest {
                 .setCategory("test-category")
                 .setSound("test-sound")
                 .setThreadId("test-thread-id")
-                .putCustomField("ck1", "cv1")
-                .putAllCustomFields(ImmutableMap.<String, Object>of("ck2", "cv2", "ck3", 1))
+                .putCustomData("ck1", "cv1")
+                .putAllCustomData(ImmutableMap.<String, Object>of("ck2", "cv2", "ck3", 1))
                 .build())
             .build())
         .setTopic("test-topic")
@@ -462,6 +462,15 @@ public class MessageTest {
     } catch (IllegalArgumentException expected) {
       // expected
     }
+
+    builder = Aps.builder().setMutableContent(true).putCustomData("mutable-content", 1);
+    try {
+      builder.build();
+      fail("No error thrown for invalid aps");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+
 
     List<ApsAlert.Builder> notificationBuilders = ImmutableList.of(
         ApsAlert.builder().addLocalizationArg("foo"),

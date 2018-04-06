@@ -59,7 +59,7 @@ public class Aps {
     if (builder.threadId != null) {
       fields.put("thread-id", builder.threadId);
     }
-    fields.putAll(builder.customFields);
+    fields.putAll(builder.customData);
     this.fields = fields.build();
   }
 
@@ -86,7 +86,7 @@ public class Aps {
     private boolean mutableContent;
     private String category;
     private String threadId;
-    private final Map<String, Object> customFields = new HashMap<>();
+    private final Map<String, Object> customData = new HashMap<>();
 
     private Builder() {}
 
@@ -165,8 +165,8 @@ public class Aps {
      * @param value A non-null, json-serializable value.
      * @return This builder.
      */
-    public Builder putCustomField(@NonNull String key, @NonNull Object value) {
-      this.customFields.put(key, value);
+    public Builder putCustomData(@NonNull String key, @NonNull Object value) {
+      this.customData.put(key, value);
       return this;
     }
 
@@ -176,8 +176,8 @@ public class Aps {
      * @param fields A non-null map. Map must not contain null keys or values.
      * @return This builder.
      */
-    public Builder putAllCustomFields(@NonNull Map<String, Object> fields) {
-      this.customFields.putAll(fields);
+    public Builder putAllCustomData(@NonNull Map<String, Object> fields) {
+      this.customData.putAll(fields);
       return this;
     }
 
