@@ -37,6 +37,7 @@ import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.internal.FirebaseService;
+import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.TaskToApiFuture;
 import com.google.firebase.tasks.Task;
@@ -113,6 +114,34 @@ public class FirebaseAuth {
       service = ImplFirebaseTrampolines.addService(app, new FirebaseAuthService(app));
     }
     return service.getInstance();
+  }
+
+  private Task<String> createSessionCookie(final String idToken, final SessionCookieOptions options) {
+    checkNotDestroyed();
+    checkArgument(!Strings.isNullOrEmpty(idToken), "idToken must not be null or empty");
+    checkNotNull(options, "options must not be null");
+    return call(new Callable<String>() {
+      @Override
+      public String call() throws Exception {
+        return userManager.createSessionCookie(idToken, options);
+      }
+    });
+  }
+
+  /**
+   * Creates a new Firebase session cookie from the given ID token and options. The returned JWT
+   * can be set as a server-side session cookie with a custom cookie policy.
+   *
+   * @param idToken The Firebase ID token to exchange for a session cookie.
+   * @param options Additional options required to create the cookie.
+   * @return An {@code ApiFuture} which will complete successfully with a session cookie string.
+   *     If an error occurs while generating the cookie or if the specified ID token is invalid,
+   *     the future throws a {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the ID token is null or empty, or if options is null.
+   */
+  public ApiFuture<String> createSessionCookieAsync(
+      @NonNull String idToken, @NonNull SessionCookieOptions options) {
+    return new TaskToApiFuture<>(createSessionCookie(idToken, options));
   }
 
   /**

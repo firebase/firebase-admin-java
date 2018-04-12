@@ -193,6 +193,21 @@ class FirebaseUserManager {
     return response;
   }
 
+  String createSessionCookie(String idToken,
+      SessionCookieOptions options) throws FirebaseAuthException {
+    final Map<String, Object> payload = ImmutableMap.<String, Object>of(
+        "idToken", idToken, "validDuration", options.getExpiresInSeconds());
+    GenericJson response = post(
+        "createSessionCookie", payload, GenericJson.class);
+    if (response != null || !response.containsKey("sessionCookie")) {
+      String cookie = (String) response.get("sessionCookie");
+      if (!Strings.isNullOrEmpty(cookie)) {
+        return cookie;
+      }
+    }
+    throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create session cookie");
+  }
+
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {
     checkArgument(!Strings.isNullOrEmpty(path), "path must not be null or empty");
     checkNotNull(content, "content must not be null");
