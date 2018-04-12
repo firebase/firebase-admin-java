@@ -116,7 +116,8 @@ public class FirebaseAuth {
     return service.getInstance();
   }
 
-  private Task<String> createSessionCookie(final String idToken, final SessionCookieOptions options) {
+  private Task<String> createSessionCookie(
+      final String idToken, final SessionCookieOptions options) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(idToken), "idToken must not be null or empty");
     checkNotNull(options, "options must not be null");
