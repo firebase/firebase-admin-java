@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Clock;
 import com.google.api.core.ApiFuture;
@@ -36,6 +35,7 @@ import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
+import com.google.firebase.auth.internal.KeyManagers;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
@@ -55,10 +55,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class FirebaseAuth {
 
-  private final GooglePublicKeysManager googlePublicKeysManager;
   private final Clock clock;
 
   private final FirebaseApp firebaseApp;
+  private final KeyManagers keyManagers;
   private final GoogleCredentials credentials;
   private final String projectId;
   private final JsonFactory jsonFactory;
@@ -67,10 +67,7 @@ public class FirebaseAuth {
   private final Object lock;
 
   private FirebaseAuth(FirebaseApp firebaseApp) {
-    this(firebaseApp,
-         FirebaseTokenVerifier.buildGooglePublicKeysManager(
-                 firebaseApp.getOptions().getHttpTransport()),
-         Clock.SYSTEM);
+    this(firebaseApp, KeyManagers.getDefault(firebaseApp, Clock.SYSTEM), Clock.SYSTEM);
   }
 
   /**
@@ -78,10 +75,9 @@ public class FirebaseAuth {
    * correctly signed. This should only be used for testing to override the default key manager.
    */
   @VisibleForTesting
-  FirebaseAuth(
-      FirebaseApp firebaseApp, GooglePublicKeysManager googlePublicKeysManager, Clock clock) {
+  FirebaseAuth(FirebaseApp firebaseApp, KeyManagers keyManagers, Clock clock) {
     this.firebaseApp = checkNotNull(firebaseApp);
-    this.googlePublicKeysManager = checkNotNull(googlePublicKeysManager);
+    this.keyManagers = checkNotNull(keyManagers);
     this.clock = checkNotNull(clock);
     this.credentials = ImplFirebaseTrampolines.getCredentials(firebaseApp);
     this.projectId = ImplFirebaseTrampolines.getProjectId(firebaseApp);
@@ -143,6 +139,79 @@ public class FirebaseAuth {
   public ApiFuture<String> createSessionCookieAsync(
       @NonNull String idToken, @NonNull SessionCookieOptions options) {
     return new TaskToApiFuture<>(createSessionCookie(idToken, options));
+  }
+
+  /**
+   * Parses and verifies a Firebase session cookie.
+   *
+   * <p>If the cookie is valid, the returned Future will complete successfully and provide a
+   * parsed version of the cookie from which the UID and other claims can be read.
+   * If the cookie is invalid, the future throws an exception indicating the failure.
+   *
+   * <p>This does not check whether the cookie has been revoked. See
+   * {@link #verifySessionCookie(String, boolean)}.
+   *
+   * @param cookie A Firebase session cookie string to verify and parse.
+   * @return An {@code ApiFuture} which will complete successfully with the parsed cookie, or
+   *     unsuccessfully with the failure Exception.
+   */
+  public ApiFuture<FirebaseToken> verifySessionCookieAsync(String cookie) {
+    return new TaskToApiFuture<>(verifySessionCookie(cookie, false));
+  }
+
+  /**
+   * Parses and verifies a Firebase session cookie.
+   *
+   * <p>If the cookie is valid, the returned Future will complete successfully and provide a
+   * parsed version of the cookie from which the UID and other claims can be inspected.
+   * If the cookie is invalid, the future throws an exception indicating the failure.
+   *
+   * <p>If {@code checkRevoked} is true, additionally checks if the cookie has been revoked.
+   *
+   * <p>If the cookie is valid, and not revoked, the returned Future will complete successfully and
+   * provide a parsed version of the cookie from which the UID and other claims can be read.
+   * If the cookie is invalid or has been revoked, the future throws an exception indicating the
+   * failure.
+   *
+   * @param cookie A Firebase session cookie string to verify and parse.
+   * @param checkRevoked A boolean indicating whether to check if the cookie was revoked.
+   * @return An {@code ApiFuture} which will complete successfully with the parsed cookie, or
+   *     unsuccessfully with the failure Exception.
+   */
+  public ApiFuture<FirebaseToken> verifySessionCookieAsync(String cookie, boolean checkRevoked) {
+    return new TaskToApiFuture<>(verifySessionCookie(cookie, checkRevoked));
+  }
+
+  private Task<FirebaseToken> verifySessionCookie(final String cookie, final boolean checkRevoked) {
+    checkNotDestroyed();
+    checkState(!Strings.isNullOrEmpty(projectId),
+        "Must initialize FirebaseApp with a project ID to call verifySessionCookie()");
+    return call(new Callable<FirebaseToken>() {
+      @Override
+      public FirebaseToken call() throws Exception {
+        FirebaseTokenVerifier firebaseTokenVerifier =
+            FirebaseTokenVerifier.createSessionCookieVerifier(projectId, keyManagers, clock);
+        FirebaseToken firebaseToken = FirebaseToken.parse(jsonFactory, cookie);
+        // This will throw a FirebaseAuthException with details on how the token is invalid.
+        firebaseTokenVerifier.verifyTokenAndSignature(firebaseToken.getToken());
+
+        if (checkRevoked) {
+          checkRevoked(firebaseToken, "session cookie",
+              FirebaseUserManager.SESSION_COOKIE_REVOKED_ERROR);
+        }
+        return firebaseToken;
+      }
+    });
+  }
+
+  private void checkRevoked(
+      FirebaseToken firebaseToken, String label, String errorCode) throws FirebaseAuthException {
+    String uid = firebaseToken.getUid();
+    UserRecord user = userManager.getUserById(uid);
+    long issuedAt = (long) firebaseToken.getClaims().get("iat");
+    if (user.getTokensValidAfterTimestamp() > issuedAt * 1000) {
+      throw new FirebaseAuthException(errorCode, "Firebase " + label + " revoked");
+    }
   }
 
   /**
@@ -243,27 +312,14 @@ public class FirebaseAuth {
     return call(new Callable<FirebaseToken>() {
       @Override
       public FirebaseToken call() throws Exception {
-
         FirebaseTokenVerifier firebaseTokenVerifier =
-            new FirebaseTokenVerifier.Builder()
-                .setProjectId(projectId)
-                .setPublicKeysManager(googlePublicKeysManager)
-                .setClock(clock)
-                .build();
-
+            FirebaseTokenVerifier.createIdTokenVerifier(projectId, keyManagers, clock);
         FirebaseToken firebaseToken = FirebaseToken.parse(jsonFactory, token);
-
         // This will throw a FirebaseAuthException with details on how the token is invalid.
         firebaseTokenVerifier.verifyTokenAndSignature(firebaseToken.getToken());
-        
+
         if (checkRevoked) {
-          String uid = firebaseToken.getUid();
-          UserRecord user = userManager.getUserById(uid);
-          long issuedAt = (long) firebaseToken.getClaims().get("iat");
-          if (user.getTokensValidAfterTimestamp() > issuedAt * 1000) {
-              throw new FirebaseAuthException(FirebaseUserManager.ID_TOKEN_REVOKED_ERROR,
-                                              "Firebase auth token revoked");
-          }        
+          checkRevoked(firebaseToken, "auth token", FirebaseUserManager.ID_TOKEN_REVOKED_ERROR);
         }       
         return firebaseToken;
       }
@@ -351,7 +407,7 @@ public class FirebaseAuth {
    * failure.
    *
    * @param token A Firebase ID Token to verify and parse.
-   * @param checkRevoked A boolean denoting whether to check if the tokens were revoked.
+   * @param checkRevoked A boolean indicating whether to check if the tokens were revoked.
    * @return An {@code ApiFuture} which will complete successfully with the parsed token, or
    *     unsuccessfully with the failure Exception.
    */
