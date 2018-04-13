@@ -57,6 +57,8 @@ import java.util.concurrent.Callable;
 public class FirebaseMessaging {
 
   private static final String FCM_URL = "https://fcm.googleapis.com/v1/projects/%s/messages:send";
+  private static final String FCM_ERROR_TYPE =
+      "type.googleapis.com/google.firebase.fcm.v1.FcmErrorCode";
 
   private static final String INTERNAL_ERROR = "internal-error";
   private static final String UNKNOWN_ERROR = "unknown-error";
@@ -258,11 +260,11 @@ public class FirebaseMessaging {
       // ignored
     }
 
-    String code = FCM_ERROR_CODES.get(response.getString("status"));
+    String code = FCM_ERROR_CODES.get(response.getErrorCode());
     if (code == null) {
       code = UNKNOWN_ERROR;
     }
-    String msg = response.getString("message");
+    String msg = response.getErrorMessage();
     if (Strings.isNullOrEmpty(msg)) {
       msg = String.format("Unexpected HTTP response with status: %d; body: %s",
           e.getStatusCode(), e.getContent());
@@ -385,9 +387,27 @@ public class FirebaseMessaging {
     private Map<String, Object> error;
 
 
-    String getString(String key) {
+    String getErrorCode() {
+      if (error == null) {
+        return null;
+      }
+      Object details = error.get("details");
+      if (details != null && details instanceof List) {
+        for (Object detail : (List) details) {
+          if (detail instanceof Map) {
+            Map detailMap = (Map) detail;
+            if (FCM_ERROR_TYPE.equals(detailMap.get("@type"))) {
+              return (String) detailMap.get("errorCode");
+            }
+          }
+        }
+      }
+      return (String) error.get("status");
+    }
+
+    String getErrorMessage() {
       if (error != null) {
-        return (String) error.get(key);
+        return (String) error.get("message");
       }
       return null;
     }

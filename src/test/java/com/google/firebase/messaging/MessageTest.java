@@ -36,7 +36,7 @@ import org.junit.Test;
 public class MessageTest {
 
   @Test(expected = IllegalArgumentException.class)
-  public void testMessageWithoutTarget() throws IOException {
+  public void testMessageWithoutTarget() {
     Message.builder().build();
   }
 
@@ -214,7 +214,7 @@ public class MessageTest {
   }
 
   @Test
-  public void testInvalidAndroidConfig() throws IOException {
+  public void testInvalidAndroidConfig() {
     try {
       AndroidConfig.builder().setTtl(-1).build();
       fail("No error thrown for invalid ttl");
@@ -363,6 +363,7 @@ public class MessageTest {
                 .setBadge(42)
                 .setCategory("test-category")
                 .setContentAvailable(true)
+                .setMutableContent(true)
                 .setSound("test-sound")
                 .setThreadId("test-thread-id")
                 .build())
@@ -376,6 +377,7 @@ public class MessageTest {
             .put("badge", new BigDecimal(42))
             .put("category", "test-category")
             .put("content-available", new BigDecimal(1))
+            .put("mutable-content", new BigDecimal(1))
             .put("sound", "test-sound")
             .put("thread-id", "test-thread-id")
             .build());
@@ -404,6 +406,8 @@ public class MessageTest {
                 .setCategory("test-category")
                 .setSound("test-sound")
                 .setThreadId("test-thread-id")
+                .putCustomData("ck1", "cv1")
+                .putAllCustomData(ImmutableMap.<String, Object>of("ck2", "cv2", "ck3", 1))
                 .build())
             .build())
         .setTopic("test-topic")
@@ -424,6 +428,9 @@ public class MessageTest {
             .put("category", "test-category")
             .put("sound", "test-sound")
             .put("thread-id", "test-thread-id")
+            .put("ck1", "cv1")
+            .put("ck2", "cv2")
+            .put("ck3", new BigDecimal(1))
             .build());
     assertJsonEquals(
         ImmutableMap.of(
@@ -455,6 +462,15 @@ public class MessageTest {
     } catch (IllegalArgumentException expected) {
       // expected
     }
+
+    builder = Aps.builder().setMutableContent(true).putCustomData("mutable-content", 1);
+    try {
+      builder.build();
+      fail("No error thrown for invalid aps");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+
 
     List<ApsAlert.Builder> notificationBuilders = ImmutableList.of(
         ApsAlert.builder().addLocalizationArg("foo"),
