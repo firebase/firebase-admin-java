@@ -18,8 +18,11 @@ package com.google.firebase.messaging;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
+import com.google.firebase.internal.NonNull;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Represents the <a href="https://developer.apple.com/library/content/documentation/NetworkingInternet/Conceptual/RemoteNotificationsPG/PayloadKeyReference.html">
@@ -27,37 +30,41 @@ import com.google.common.base.Strings;
  */
 public class Aps {
 
-  @Key("alert")
-  private final Object alert;
-
-  @Key("badge")
-  private final Integer badge;
-
-  @Key("sound")
-  private final String sound;
-
-  @Key("content-available")
-  private final Integer contentAvailable;
-
-  @Key("category")
-  private final String category;
-
-  @Key("thread-id")
-  private final String threadId;
+  private final Map<String, Object> fields;
 
   private Aps(Builder builder) {
     checkArgument(Strings.isNullOrEmpty(builder.alertString) || (builder.alert == null),
         "Multiple alert specifications (string and ApsAlert) found.");
+    ImmutableMap.Builder<String, Object> fields = ImmutableMap.builder();
     if (builder.alert != null) {
-      this.alert = builder.alert;
-    } else {
-      this.alert = builder.alertString;
+      fields.put("alert", builder.alert);
+    } else if (builder.alertString != null) {
+      fields.put("alert", builder.alertString);
     }
-    this.badge = builder.badge;
-    this.sound = builder.sound;
-    this.contentAvailable = builder.contentAvailable ? 1 : null;
-    this.category = builder.category;
-    this.threadId = builder.threadId;
+    if (builder.badge != null) {
+      fields.put("badge", builder.badge);
+    }
+    if (builder.sound != null) {
+      fields.put("sound", builder.sound);
+    }
+    if (builder.contentAvailable) {
+      fields.put("content-available", 1);
+    }
+    if (builder.mutableContent) {
+      fields.put("mutable-content", 1);
+    }
+    if (builder.category != null) {
+      fields.put("category", builder.category);
+    }
+    if (builder.threadId != null) {
+      fields.put("thread-id", builder.threadId);
+    }
+    fields.putAll(builder.customData);
+    this.fields = fields.build();
+  }
+
+  Map<String, Object> getFields() {
+    return this.fields;
   }
 
   /**
@@ -76,8 +83,10 @@ public class Aps {
     private Integer badge;
     private String sound;
     private boolean contentAvailable;
+    private boolean mutableContent;
     private String category;
     private String threadId;
+    private final Map<String, Object> customData = new HashMap<>();
 
     private Builder() {}
 
@@ -138,6 +147,41 @@ public class Aps {
     }
 
     /**
+     * Specifies whether to set the {@code mutable-content} property on the message, so the
+     * clients can modify the notification via app extensions.
+     *
+     * @param mutableContent True to make the content mutable via app extensions.
+     * @return This builder.
+     */
+    public Builder setMutableContent(boolean mutableContent) {
+      this.mutableContent = mutableContent;
+      return this;
+    }
+
+    /**
+     * Puts a custom key-value pair to the aps dictionary.
+     *
+     * @param key A non-null key.
+     * @param value A non-null, json-serializable value.
+     * @return This builder.
+     */
+    public Builder putCustomData(@NonNull String key, @NonNull Object value) {
+      this.customData.put(key, value);
+      return this;
+    }
+
+    /**
+     * Puts all the key-value pairs in the specified map to the aps dictionary.
+     *
+     * @param fields A non-null map. Map must not contain null keys or values.
+     * @return This builder.
+     */
+    public Builder putAllCustomData(@NonNull Map<String, Object> fields) {
+      this.customData.putAll(fields);
+      return this;
+    }
+
+    /**
      * Sets the notification type.
      *
      * @param category A string identifier.
@@ -159,6 +203,13 @@ public class Aps {
       return this;
     }
 
+    /**
+     * Builds a new {@link Aps} instance from the fields set on this builder.
+     *
+     * @return A non-null {@link Aps}.
+     * @throws IllegalArgumentException If the alert is specified both as an object and a string.
+     *     Or if the same field is set both using a setter method, and as a custom field.
+     */
     public Aps build() {
       return new Aps(this);
     }

@@ -1,5 +1,7 @@
 # Unreleased
 
+- [added] Added new `setMutableContent()`, `putCustomData()` and
+  `putAllCustomData()` methods to the `Aps.Builder` API.
 - [fixed] Improved error handling in FCM by mapping more server-side
   errors to client-side error codes.
 
