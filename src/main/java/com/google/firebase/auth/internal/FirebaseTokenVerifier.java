@@ -23,8 +23,6 @@ import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.auth.openidconnect.IdToken.Payload;
 import com.google.api.client.auth.openidconnect.IdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.json.webtoken.JsonWebSignature.Header;
 import com.google.api.client.util.ArrayMap;
 import com.google.api.client.util.Clock;
@@ -252,14 +250,6 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
     public FirebaseTokenVerifier build() {
       return new FirebaseTokenVerifier(this);
     }
-  }
-
-  static GooglePublicKeysManager createKeysManager(
-      HttpTransport transport, Clock clock, String certUrl) {
-    return new GooglePublicKeysManager.Builder(transport, new GsonFactory())
-        .setClock(clock)
-        .setPublicCertsEncodedUrl(certUrl)
-        .build();
   }
 
   /**

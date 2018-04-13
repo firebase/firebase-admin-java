@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.Clock;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.firebase.FirebaseApp;
@@ -68,10 +69,18 @@ public class KeyManagers {
   @VisibleForTesting
   static KeyManagers getDefault(HttpTransport transport, Clock clock) {
     return new Builder()
-        .setIdTokenKeysManager(FirebaseTokenVerifier.createKeysManager(
+        .setIdTokenKeysManager(createPublicKeysManager(
             transport, clock, FirebaseTokenVerifier.ID_TOKEN_CERT_URL))
-        .setSessionCookieKeysManager(FirebaseTokenVerifier.createKeysManager(
+        .setSessionCookieKeysManager(createPublicKeysManager(
             transport, clock, FirebaseTokenVerifier.SESSION_COOKIE_CERT_URL))
+        .build();
+  }
+
+  private static GooglePublicKeysManager createPublicKeysManager(
+      HttpTransport transport, Clock clock, String certUrl) {
+    return new GooglePublicKeysManager.Builder(transport, new GsonFactory())
+        .setClock(clock)
+        .setPublicCertsEncodedUrl(certUrl)
         .build();
   }
 
