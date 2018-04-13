@@ -1,5 +1,8 @@
 # Unreleased
 
+- [added] Connection timeout and read timeout for HTTP/REST connections
+  can now be configured via `FirebaseOptions.Builder` at app
+  initialization.
 - [fixed] Improved error handling in FCM by mapping more server-side
   errors to client-side error codes.
 
