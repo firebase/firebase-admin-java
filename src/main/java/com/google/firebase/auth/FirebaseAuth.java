@@ -36,7 +36,6 @@ import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
-import com.google.firebase.internal.FirebaseRequestInitializer;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.TaskToApiFuture;

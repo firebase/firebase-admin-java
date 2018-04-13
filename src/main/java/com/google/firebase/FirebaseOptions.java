@@ -352,9 +352,12 @@ public final class FirebaseOptions {
     }
 
     /**
-     * Sets the connection timeout for outgoing HTTP (REST) calls made by the SDK.
+     * Sets the connect timeout for outgoing HTTP (REST) connections made by the SDK. This is used
+     * when opening a communication link to a remote HTTP endpoint. This setting does not
+     * affect the {@link com.google.firebase.database.FirebaseDatabase} and
+     * {@link com.google.firebase.cloud.FirestoreClient} APIs.
      *
-     * @param connectTimeout Connection timeout in milliseconds. Must not be negative.
+     * @param connectTimeout Connect timeout in milliseconds. Must not be negative.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setConnectTimeout(int connectTimeout) {
@@ -363,7 +366,9 @@ public final class FirebaseOptions {
     }
 
     /**
-     * Sets the read timeout for outgoing HTTP (REST) calls made by the SDK.
+     * Sets the read timeout for outgoing HTTP (REST) calls made by the SDK. This does not affect
+     * the {@link com.google.firebase.database.FirebaseDatabase} and
+     * {@link com.google.firebase.cloud.FirestoreClient} APIs.
      *
      * @param readTimeout Read timeout in milliseconds. Must not be negative.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
