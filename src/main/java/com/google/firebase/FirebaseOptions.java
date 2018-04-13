@@ -139,10 +139,10 @@ public final class FirebaseOptions {
   }
 
   /**
-   * Returns the connection timeout in milliseconds, which is applied to outgoing REST calls
+   * Returns the connect timeout in milliseconds, which is applied to outgoing REST calls
    * made by the SDK.
    *
-   * @return Connection timeout in milliseconds. 0 indicates an infinite timeout.
+   * @return Connect timeout in milliseconds. 0 indicates an infinite timeout.
    */
   public int getConnectTimeout() {
     return connectTimeout;
