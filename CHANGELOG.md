@@ -1,5 +1,13 @@
 # Unreleased
 
+- [added] A new `FirebaseAuth.createSessionCookieAsync()` method for
+  creating a long-lived session cookie given a valid ID token.
+- [added] A new `FirebaseAuth.verifySessionCookieAsync()` method for
+  verifying a given cookie string is valid.
+- [fixed] Using the `HttpTransport` specified at `FirebaseOptions` in
+  `GooglePublicKeysManager`. This enables developers to use a custom
+  transport to fetch public keys when verifying ID tokens and session
+  cookies.
 - [fixed] Improved error handling in FCM by mapping more server-side
   errors to client-side error codes.
 

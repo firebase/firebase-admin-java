@@ -20,6 +20,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * A set of additional options that can be passed to
+ * {@link FirebaseAuth#createSessionCookieAsync(String, SessionCookieOptions)}.
+ */
 public class SessionCookieOptions {
 
   private final long expiresIn;
@@ -36,6 +40,9 @@ public class SessionCookieOptions {
     return TimeUnit.MILLISECONDS.toSeconds(expiresIn);
   }
 
+  /**
+   * Creates a new {@link Builder}.
+   */
   public static Builder builder() {
     return new Builder();
   }
@@ -46,11 +53,21 @@ public class SessionCookieOptions {
 
     private Builder() {}
 
+    /**
+     * Sets the duration until the cookie is expired in milliseconds. Must be between 5 minutes
+     * and 14 days.
+     *
+     * @param expiresIn Time duration in milliseconds.
+     * @return This builder.
+     */
     public Builder setExpiresIn(long expiresIn) {
       this.expiresIn = expiresIn;
       return this;
     }
 
+    /**
+     * Creates a new {@link SessionCookieOptions} instance.
+     */
     public SessionCookieOptions build() {
       return new SessionCookieOptions(this);
     }
