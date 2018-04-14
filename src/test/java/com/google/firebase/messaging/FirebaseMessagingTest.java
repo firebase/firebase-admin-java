@@ -253,6 +253,31 @@ public class FirebaseMessagingTest {
   }
 
   @Test
+  public void testSendErrorWithFcmErrorCode() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    FirebaseMessaging messaging = initMessaging(response);
+    for (int code : HTTP_ERRORS) {
+      response.setStatusCode(code).setContent(
+          "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\", "
+              + "\"details\":[{\"@type\": \"type.googleapis.com/google.firebase.fcm"
+              + ".v1.FcmErrorCode\", \"errorCode\": \"UNREGISTERED\"}]}}");
+      TestResponseInterceptor interceptor = new TestResponseInterceptor();
+      messaging.setInterceptor(interceptor);
+      try {
+        messaging.sendAsync(Message.builder().setTopic("test-topic").build()).get();
+        fail("No error thrown for HTTP error");
+      } catch (ExecutionException e) {
+        assertTrue(e.getCause() instanceof FirebaseMessagingException);
+        FirebaseMessagingException error = (FirebaseMessagingException) e.getCause();
+        assertEquals("registration-token-not-registered", error.getErrorCode());
+        assertEquals("test error", error.getMessage());
+        assertTrue(error.getCause() instanceof HttpResponseException);
+      }
+      checkRequestHeader(interceptor);
+    }
+  }
+
+  @Test
   public void testInvalidSubscribe() {
     FirebaseMessaging messaging = initDefaultMessaging();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();

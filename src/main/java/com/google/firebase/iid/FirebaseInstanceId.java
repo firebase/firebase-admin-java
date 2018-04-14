@@ -28,8 +28,6 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.core.ApiFuture;
-import com.google.auth.http.HttpCredentialsAdapter;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -37,6 +35,7 @@ import com.google.common.io.ByteStreams;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.CallableOperation;
+import com.google.firebase.internal.FirebaseRequestInitializer;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 
@@ -73,10 +72,8 @@ public class FirebaseInstanceId {
 
   private FirebaseInstanceId(FirebaseApp app) {
     HttpTransport httpTransport = app.getOptions().getHttpTransport();
-    GoogleCredentials credentials = ImplFirebaseTrampolines.getCredentials(app);
     this.app = app;
-    this.requestFactory = httpTransport.createRequestFactory(
-        new HttpCredentialsAdapter(credentials));
+    this.requestFactory = httpTransport.createRequestFactory(new FirebaseRequestInitializer(app));
     this.jsonFactory = app.getOptions().getJsonFactory();
     this.projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkArgument(!Strings.isNullOrEmpty(projectId),
