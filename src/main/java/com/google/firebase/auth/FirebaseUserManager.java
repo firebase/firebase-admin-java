@@ -30,18 +30,19 @@ import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
-import com.google.auth.http.HttpCredentialsAdapter;
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 
 import com.google.firebase.auth.internal.HttpErrorResponse;
+import com.google.firebase.internal.FirebaseRequestInitializer;
+import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.SdkUtils;
 import java.io.IOException;
 import java.util.List;
@@ -99,13 +100,13 @@ class FirebaseUserManager {
   /**
    * Creates a new FirebaseUserManager instance.
    *
-   * @param jsonFactory JsonFactory instance used to transform Java objects into JSON and back.
-   * @param transport HttpTransport used to make REST API calls.
+   * @param app A non-null {@link FirebaseApp}.
    */
-  FirebaseUserManager(JsonFactory jsonFactory, HttpTransport transport,
-      GoogleCredentials credentials) {
-    this.jsonFactory = checkNotNull(jsonFactory, "jsonFactory must not be null");
-    this.requestFactory = transport.createRequestFactory(new HttpCredentialsAdapter(credentials));
+  FirebaseUserManager(@NonNull FirebaseApp app) {
+    checkNotNull(app, "FirebaseApp must not be null");
+    this.jsonFactory = app.getOptions().getJsonFactory();
+    HttpTransport transport = app.getOptions().getHttpTransport();
+    this.requestFactory = transport.createRequestFactory(new FirebaseRequestInitializer(app));
   }
 
   @VisibleForTesting

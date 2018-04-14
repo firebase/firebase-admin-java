@@ -82,8 +82,7 @@ public class FirebaseAuth {
     this.credentials = ImplFirebaseTrampolines.getCredentials(firebaseApp);
     this.projectId = ImplFirebaseTrampolines.getProjectId(firebaseApp);
     this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
-    this.userManager = new FirebaseUserManager(jsonFactory,
-        firebaseApp.getOptions().getHttpTransport(), this.credentials);
+    this.userManager = new FirebaseUserManager(firebaseApp);
     this.destroyed = new AtomicBoolean(false);
     this.lock = new Object();
   }

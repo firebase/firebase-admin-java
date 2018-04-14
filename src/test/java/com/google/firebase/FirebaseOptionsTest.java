@@ -87,6 +87,8 @@ public class FirebaseOptionsTest {
             .setJsonFactory(jsonFactory)
             .setHttpTransport(httpTransport)
             .setThreadManager(MOCK_THREAD_MANAGER)
+            .setConnectTimeout(30000)
+            .setReadTimeout(60000)
             .build();
     assertEquals(FIREBASE_DB_URL, firebaseOptions.getDatabaseUrl());
     assertEquals(FIREBASE_STORAGE_BUCKET, firebaseOptions.getStorageBucket());
@@ -94,6 +96,8 @@ public class FirebaseOptionsTest {
     assertSame(jsonFactory, firebaseOptions.getJsonFactory());
     assertSame(httpTransport, firebaseOptions.getHttpTransport());
     assertSame(MOCK_THREAD_MANAGER, firebaseOptions.getThreadManager());
+    assertEquals(30000, firebaseOptions.getConnectTimeout());
+    assertEquals(60000, firebaseOptions.getReadTimeout());
 
     GoogleCredentials credentials = firebaseOptions.getCredentials();
     assertNotNull(credentials);
@@ -114,6 +118,8 @@ public class FirebaseOptionsTest {
     assertNotNull(firebaseOptions.getThreadManager());
     assertNull(firebaseOptions.getDatabaseUrl());
     assertNull(firebaseOptions.getStorageBucket());
+    assertEquals(0, firebaseOptions.getConnectTimeout());
+    assertEquals(0, firebaseOptions.getReadTimeout());
 
     GoogleCredentials credentials = firebaseOptions.getCredentials();
     assertNotNull(credentials);
@@ -200,6 +206,24 @@ public class FirebaseOptionsTest {
     assertEquals(ALL_VALUES_OPTIONS.getJsonFactory(), allValuesOptionsCopy.getJsonFactory());
     assertEquals(ALL_VALUES_OPTIONS.getHttpTransport(), allValuesOptionsCopy.getHttpTransport());
     assertEquals(ALL_VALUES_OPTIONS.getThreadManager(), allValuesOptionsCopy.getThreadManager());
+    assertEquals(ALL_VALUES_OPTIONS.getConnectTimeout(), allValuesOptionsCopy.getConnectTimeout());
+    assertEquals(ALL_VALUES_OPTIONS.getReadTimeout(), allValuesOptionsCopy.getReadTimeout());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void createOptionsWithInvalidConnectTimeout() {
+    new FirebaseOptions.Builder()
+        .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
+        .setConnectTimeout(-1)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void createOptionsWithInvalidReadTimeout() {
+    new FirebaseOptions.Builder()
+        .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
+        .setReadTimeout(-1)
+        .build();
   }
 
   @Test

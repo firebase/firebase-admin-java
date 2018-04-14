@@ -8,6 +8,11 @@
   `GooglePublicKeysManager`. This enables developers to use a custom
   transport to fetch public keys when verifying ID tokens and session
   cookies.
+- [added] Connection timeout and read timeout for HTTP/REST connections
+  can now be configured via `FirebaseOptions.Builder` at app
+  initialization.
+- [added] Added new `setMutableContent()`, `putCustomData()` and
+  `putAllCustomData()` methods to the `Aps.Builder` API.
 - [fixed] Improved error handling in FCM by mapping more server-side
   errors to client-side error codes.
 

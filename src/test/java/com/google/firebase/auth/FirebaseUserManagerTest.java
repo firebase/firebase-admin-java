@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
@@ -454,6 +455,27 @@ public class FirebaseUserManagerTest {
           authException.getMessage());
       assertEquals(FirebaseUserManager.INTERNAL_ERROR, authException.getErrorCode());
     }
+  }
+
+  @Test
+  public void testTimeout() throws Exception {
+    MockHttpTransport transport = new MultiRequestMockHttpTransport(ImmutableList.of(
+        new MockLowLevelHttpResponse().setContent(TestUtils.loadResource("getUser.json"))));
+    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(credentials)
+        .setHttpTransport(transport)
+        .setConnectTimeout(30000)
+        .setReadTimeout(60000)
+        .build());
+    FirebaseAuth auth = FirebaseAuth.getInstance();
+    FirebaseUserManager userManager = auth.getUserManager();
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    userManager.setInterceptor(interceptor);
+
+    FirebaseAuth.getInstance().getUserAsync("testuser").get();
+    HttpRequest request = interceptor.getResponse().getRequest();
+    assertEquals(30000, request.getConnectTimeout());
+    assertEquals(60000, request.getReadTimeout());
   }
 
   @Test
