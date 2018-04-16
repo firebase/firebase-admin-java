@@ -1,5 +1,10 @@
 # Unreleased
 
+-
+
+# v5.10.0
+
+
 - [added] Connection timeout and read timeout for HTTP/REST connections
   can now be configured via `FirebaseOptions.Builder` at app
   initialization.
