@@ -147,8 +147,8 @@ public class Aps {
     }
 
     /**
-     * Specifies whether to set the {@code mutable-content} property on the message, so the
-     * clients can modify the notification via app extensions.
+     * Specifies whether to set the {@code mutable-content} property on the message. When set, this
+     * property allows clients to modify the notification via app extensions.
      *
      * @param mutableContent True to make the content mutable via app extensions.
      * @return This builder.
