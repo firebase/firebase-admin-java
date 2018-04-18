@@ -1,6 +1,7 @@
 # Unreleased
 
--
+- [added] Added new `importUsersAsync()` API for bulk importing users
+  into Firebase Auth.
 
 # v5.10.0
 

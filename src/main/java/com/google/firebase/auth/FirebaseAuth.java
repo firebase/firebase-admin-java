@@ -28,8 +28,10 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.auth.FirebaseUserManager.UserImportRequest;
 import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
 import com.google.firebase.auth.ListUsersPage.PageFactory;
 import com.google.firebase.auth.UserRecord.CreateRequest;
@@ -40,6 +42,8 @@ import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.TaskToApiFuture;
 import com.google.firebase.tasks.Task;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -605,6 +609,23 @@ public class FirebaseAuth {
    */
   public ApiFuture<Void> deleteUserAsync(final String uid) {
     return new TaskToApiFuture<>(deleteUser(uid));
+  }
+
+  public ApiFuture<UserImportResult> importUsersAsync(List<UserImportRecord> users,
+      @Nullable UserImportOptions options) {
+    return new TaskToApiFuture<>(importUsers(users, options));
+  }
+
+  private Task<UserImportResult> importUsers(
+      List<UserImportRecord> users, UserImportOptions options) {
+    checkNotDestroyed();
+    final UserImportRequest request = new UserImportRequest(users, options, jsonFactory);
+    return call(new Callable<UserImportResult>() {
+      @Override
+      public UserImportResult call() throws Exception {
+        return userManager.importUsers(request);
+      }
+    });
   }
 
   private <T> Task<T> call(Callable<T> command) {

@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.api.client.json.JsonFactory;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -33,7 +32,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +46,7 @@ public class UserRecord implements UserInfo {
   private static final Map<String, String> REMOVABLE_FIELDS = ImmutableMap.of(
       "displayName", "DISPLAY_NAME",
       "photoUrl", "PHOTO_URL");
-  private static final String CUSTOM_ATTRIBUTES = "customAttributes";
+  static final String CUSTOM_ATTRIBUTES = "customAttributes";
   private static final int MAX_CLAIMS_PAYLOAD_SIZE = 1000;
 
   private final String uid;
@@ -232,17 +230,31 @@ public class UserRecord implements UserInfo {
     return new UpdateRequest(uid);
   }
 
-  private static void checkEmail(String email) {
+  static void checkUid(String uid) {
+    checkArgument(!Strings.isNullOrEmpty(uid), "uid cannot be null or empty");
+    checkArgument(uid.length() <= 128, "UID cannot be longer than 128 characters");
+  }
+
+  static void checkEmail(String email) {
     checkArgument(!Strings.isNullOrEmpty(email), "email cannot be null or empty");
     checkArgument(email.matches("^[^@]+@[^@]+$"));
   }
 
-  private static void checkPhoneNumber(String phoneNumber) {
+  static void checkPhoneNumber(String phoneNumber) {
     // Phone number verification is very lax here. Backend will enforce E.164 spec compliance, and
     // normalize accordingly.
     checkArgument(!Strings.isNullOrEmpty(phoneNumber), "phone number cannot be null or empty");
-    checkState(phoneNumber.startsWith("+"),
+    checkArgument(phoneNumber.startsWith("+"),
         "phone number must be a valid, E.164 compliant identifier starting with a '+' sign");
+  }
+
+  static void checkPhotoUrl(String photoUrl) {
+    checkArgument(!Strings.isNullOrEmpty(photoUrl), "photoUrl cannot be null or empty");
+    try {
+      new URL(photoUrl);
+    } catch (MalformedURLException e) {
+      throw new IllegalArgumentException("malformed photoUrl string", e);
+    }
   }
 
   private static void checkPassword(String password) {
@@ -265,7 +277,7 @@ public class UserRecord implements UserInfo {
         + Long.toString(epochSeconds));
   }
 
-  private static String serializeCustomClaims(Map customClaims, JsonFactory jsonFactory) {
+  static String serializeCustomClaims(Map customClaims, JsonFactory jsonFactory) {
     checkNotNull(jsonFactory, "JsonFactory must not be null");
     if (customClaims == null || customClaims.isEmpty()) {
       return "{}";
@@ -305,8 +317,7 @@ public class UserRecord implements UserInfo {
      *     must not be longer than 128 characters.
      */
     public CreateRequest setUid(String uid) {
-      checkArgument(!Strings.isNullOrEmpty(uid), "uid cannot be null or empty");
-      checkArgument(uid.length() <= 128, "UID cannot be longer than 128 characters");
+      checkUid(uid);
       properties.put("localId", uid);
       return this;
     }
@@ -360,12 +371,7 @@ public class UserRecord implements UserInfo {
      * @param photoUrl a non-null, non-empty URL string.
      */
     public CreateRequest setPhotoUrl(String photoUrl) {
-      checkArgument(!Strings.isNullOrEmpty(photoUrl), "photoUrl cannot be null or empty");
-      try {
-        new URL(photoUrl);
-      } catch (MalformedURLException e) {
-        throw new IllegalArgumentException("malformed photoUrl string", e);
-      }
+      checkPhotoUrl(photoUrl);
       properties.put("photoUrl", photoUrl);
       return this;
     }
@@ -475,12 +481,9 @@ public class UserRecord implements UserInfo {
      * @param photoUrl a valid URL string or null
      */
     public UpdateRequest setPhotoUrl(@Nullable String photoUrl) {
+      // This is allowed to be null
       if (photoUrl != null) {
-        try {
-          new URL(photoUrl);
-        } catch (MalformedURLException e) {
-          throw new IllegalArgumentException("malformed photoUrl string", e);
-        }
+        checkPhotoUrl(photoUrl);
       }
       properties.put("photoUrl", photoUrl);
       return this;

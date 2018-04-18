@@ -35,11 +35,13 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.common.io.BaseEncoding;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
+import com.google.firebase.auth.hash.HmacSha512;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestResponseInterceptor;
@@ -249,6 +251,132 @@ public class FirebaseUserManagerTest {
     // should not throw
     FirebaseAuth.getInstance().deleteUserAsync("testuser").get();
     checkRequestHeaders(interceptor);
+  }
+
+  @Test
+  public void testImportUsers() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    UserImportRecord user1 = UserImportRecord.builder()
+        .setUid("user1")
+        .build();
+    UserImportRecord user2 = UserImportRecord.builder()
+        .setUid("user2")
+        .build();
+
+    List<UserImportRecord> users = ImmutableList.of(user1, user2);
+    UserImportResult result = FirebaseAuth.getInstance().importUsersAsync(users, null).get();
+    checkRequestHeaders(interceptor);
+    assertEquals(2, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+    assertTrue(result.getErrors().isEmpty());
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(1, parsed.size());
+    List<Map<String, Object>> expected = ImmutableList.of(
+        user1.getProperties(jsonFactory),
+        user2.getProperties(jsonFactory)
+    );
+    assertEquals(expected, parsed.get("users"));
+  }
+
+  @Test
+  public void testImportUsersError() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("importUsersError.json"));
+    UserImportRecord user1 = UserImportRecord.builder()
+        .setUid("user1")
+        .build();
+    UserImportRecord user2 = UserImportRecord.builder()
+        .setUid("user2")
+        .build();
+    UserImportRecord user3 = UserImportRecord.builder()
+        .setUid("user2")
+        .build();
+
+    List<UserImportRecord> users = ImmutableList.of(user1, user2, user3);
+    UserImportResult result = FirebaseAuth.getInstance().importUsersAsync(users, null).get();
+    checkRequestHeaders(interceptor);
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(2, result.getFailureCount());
+    assertEquals(2, result.getErrors().size());
+
+    ErrorInfo error = result.getErrors().get(0);
+    assertEquals(0, error.getIndex());
+    assertEquals("Some error occurred in user1", error.getReason());
+    error = result.getErrors().get(1);
+    assertEquals(2, error.getIndex());
+    assertEquals("Another error occurred in user3", error.getReason());
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(1, parsed.size());
+    List<Map<String, Object>> expected = ImmutableList.of(
+        user1.getProperties(jsonFactory),
+        user2.getProperties(jsonFactory),
+        user3.getProperties(jsonFactory)
+    );
+    assertEquals(expected, parsed.get("users"));
+  }
+
+  @Test
+  public void testImportUsersWithHash() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    UserImportRecord user1 = UserImportRecord.builder()
+        .setUid("user1")
+        .build();
+    UserImportRecord user2 = UserImportRecord.builder()
+        .setUid("user2")
+        .setPasswordHash("password".getBytes())
+        .build();
+
+    List<UserImportRecord> users = ImmutableList.of(user1, user2);
+    UserImportHash hash = HmacSha512.builder()
+        .setKey("key".getBytes())
+        .build();
+    UserImportResult result = FirebaseAuth.getInstance().importUsersAsync(users,
+        UserImportOptions.withHash(hash)).get();
+    checkRequestHeaders(interceptor);
+    assertEquals(2, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+    assertTrue(result.getErrors().isEmpty());
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(3, parsed.size());
+    List<Map<String, Object>> expected = ImmutableList.of(
+        user1.getProperties(jsonFactory),
+        user2.getProperties(jsonFactory)
+    );
+    assertEquals(expected, parsed.get("users"));
+    assertEquals("HMAC_SHA512", parsed.get("hashAlgorithm"));
+    assertEquals(BaseEncoding.base64Url().encode("key".getBytes()), parsed.get("signerKey"));
+  }
+
+  @Test
+  public void testImportUsersMissingHash() {
+    initializeAppForUserManagement();
+    UserImportRecord user1 = UserImportRecord.builder()
+        .setUid("user1")
+        .build();
+    UserImportRecord user2 = UserImportRecord.builder()
+        .setUid("user2")
+        .setPasswordHash("password".getBytes())
+        .build();
+
+    List<UserImportRecord> users = ImmutableList.of(user1, user2);
+    try {
+      FirebaseAuth.getInstance().importUsersAsync(users, null);
+      fail("No error thrown for missing hash option");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
   }
 
   @Test

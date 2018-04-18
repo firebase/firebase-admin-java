@@ -30,6 +30,7 @@ import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
+import com.google.api.client.util.Key;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -41,6 +42,7 @@ import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 
 import com.google.firebase.auth.internal.HttpErrorResponse;
+import com.google.firebase.auth.internal.UploadAccountResponse;
 import com.google.firebase.internal.FirebaseRequestInitializer;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.SdkUtils;
@@ -81,6 +83,7 @@ class FirebaseUserManager {
       .build();
 
   static final int MAX_LIST_USERS_RESULTS = 1000;
+  static final int MAX_IMPORT_USERS = 1000;
 
   static final List<String> RESERVED_CLAIMS = ImmutableList.of(
       "amr", "at_hash", "aud", "auth_time", "azp", "cnf", "c_hash", "exp", "iat",
@@ -194,6 +197,15 @@ class FirebaseUserManager {
     return response;
   }
 
+  UserImportResult importUsers(UserImportRequest request) throws FirebaseAuthException {
+    checkNotNull(request);
+    UploadAccountResponse response = post("uploadAccount", request, UploadAccountResponse.class);
+    if (response == null) {
+      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to import users.");
+    }
+    return new UserImportResult(request.getUsersCount(), response);
+  }
+
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {
     checkArgument(!Strings.isNullOrEmpty(path), "path must not be null or empty");
     checkNotNull(content, "content must not be null");
@@ -241,5 +253,38 @@ class FirebaseUserManager {
     String msg = String.format(
         "Unexpected HTTP response with status: %d; body: %s", e.getStatusCode(), e.getContent());
     throw new FirebaseAuthException(INTERNAL_ERROR, msg, e);
+  }
+
+  static class UserImportRequest extends GenericJson {
+
+    @Key("users")
+    private final List<Map<String, Object>> users;
+
+    UserImportRequest(List<UserImportRecord> users, UserImportOptions options,
+        JsonFactory jsonFactory) {
+      checkArgument(users != null && !users.isEmpty(), "users must not be null or empty");
+      checkArgument(users.size() <= FirebaseUserManager.MAX_IMPORT_USERS,
+          "users list must not contain more than %s items", FirebaseUserManager.MAX_IMPORT_USERS);
+
+      boolean hasPassword = false;
+      ImmutableList.Builder<Map<String, Object>> usersBuilder = ImmutableList.builder();
+      for (UserImportRecord user : users) {
+        if (user.hasPassword()) {
+          hasPassword = true;
+        }
+        usersBuilder.add(user.getProperties(jsonFactory));
+      }
+      this.users = usersBuilder.build();
+
+      if (hasPassword) {
+        checkArgument(options != null && options.getHash() != null,
+            "UserImportHash option is required when at least one user has a password");
+        this.putAll(options.getProperties());
+      }
+    }
+
+    int getUsersCount() {
+      return users.size();
+    }
   }
 }
