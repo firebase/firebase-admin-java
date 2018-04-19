@@ -4,6 +4,9 @@
   creating a long-lived session cookie given a valid ID token.
 - [added] A new `FirebaseAuth.verifySessionCookieAsync()` method for
   verifying a given cookie string is valid.
+
+# v5.10.0
+
 - [fixed] Using the `HttpTransport` specified at `FirebaseOptions` in
   `GooglePublicKeysManager`. This enables developers to use a custom
   transport to fetch public keys when verifying ID tokens and session
