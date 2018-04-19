@@ -73,9 +73,9 @@ public final class UserImportOptions {
     private Builder() {}
 
     /**
-     * Sets the hash algorithm configuration for processing user passwords. This is required
+     * Sets the algorithm used to hash user passwords. This is required
      * when at least one of the {@link UserImportRecord} instances being imported has a password
-     * hash set on it. See {@link UserImportRecord.Builder#setPasswordHash(byte[])}.
+     * hash. See {@link UserImportRecord.Builder#setPasswordHash(byte[])}.
      *
      * @param hash A {@link UserImportHash}.
      * @return This builder.

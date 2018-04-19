@@ -172,9 +172,10 @@ public final class UserImportRecord {
     }
 
     /**
-     * Sets a byte array representing the user's hashed password. A {@link UserImportHash} must be
-     * specified in the {@link FirebaseAuth#importUsersAsync(List, UserImportOptions)} call when
-     * at least one user account has a password hash set.
+     * Sets a byte array representing the user's hashed password. If at least one user account
+     * carries a password hash, a {@link UserImportHash} must be specified when calling the
+     * {@link FirebaseAuth#importUsersAsync(List, UserImportOptions)} method. See
+     * {@link UserImportOptions.Builder#setHash(UserImportHash)}.
      *
      * @param passwordHash A byte array.
      * @return This builder.

@@ -22,6 +22,14 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
+/**
+ * Represents a hash algorithm and the related configuration parameters used to hash user
+ * passwords. An instance of this class must be specified if importing any users with password
+ * hashes (see {@link UserImportOptions.Builder#setHash(UserImportHash)}.
+ *
+ * <p>This is not expected to be extended in user code. Applications should use one of the provided
+ * concrete implementations in the {@link com.google.firebase.auth.hash} package.
+ */
 public abstract class UserImportHash {
 
   private final String name;
