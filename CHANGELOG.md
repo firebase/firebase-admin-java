@@ -1,6 +1,8 @@
 # Unreleased
 
--
+- [fixed] Upgraded Cloud Firestore dependency version to 0.44.0-beta.
+- [fixed] Upgraded Cloud Storage dependency version to 1.26.0.
+- [fixed] Upgraded Netty dependency version to 4.1.22.
 
 # v5.10.0
 
