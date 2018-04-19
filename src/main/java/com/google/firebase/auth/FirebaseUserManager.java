@@ -199,9 +199,8 @@ class FirebaseUserManager {
       SessionCookieOptions options) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "idToken", idToken, "validDuration", options.getExpiresInSeconds());
-    GenericJson response = post(
-        "createSessionCookie", payload, GenericJson.class);
-    if (response != null || !response.containsKey("sessionCookie")) {
+    GenericJson response = post("createSessionCookie", payload, GenericJson.class);
+    if (response != null && response.containsKey("sessionCookie")) {
       String cookie = (String) response.get("sessionCookie");
       if (!Strings.isNullOrEmpty(cookie)) {
         return cookie;
