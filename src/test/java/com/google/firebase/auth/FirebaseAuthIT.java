@@ -402,6 +402,28 @@ public class FirebaseAuthIT {
   }
 
   @Test
+  public void testImportUsers() throws Exception {
+    final String randomId = UUID.randomUUID().toString().replaceAll("-", "");
+    final String userEmail = ("test" + randomId.substring(0, 12) + "@example."
+        + randomId.substring(12) + ".com").toLowerCase();
+    UserImportRecord user = UserImportRecord.builder()
+        .setUid(randomId)
+        .setEmail(userEmail)
+        .build();
+
+    UserImportResult result = auth.importUsersAsync(ImmutableList.of(user)).get();
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+
+    try {
+      UserRecord savedUser = auth.getUserAsync(randomId).get();
+      assertEquals(userEmail, savedUser.getEmail());
+    } finally {
+      auth.deleteUserAsync(randomId).get();
+    }
+  }
+
+  @Test
   public void testImportUsersWithPassword() throws Exception {
     final String randomId = UUID.randomUUID().toString().replaceAll("-", "");
     final String userEmail = ("test" + randomId.substring(0, 12) + "@example."
@@ -418,14 +440,14 @@ public class FirebaseAuthIT {
     final byte[] scryptKey = BaseEncoding.base64().decode(
         "jxspr8Ki0RYycVU8zykbdLGjFQ3McFUH0uiiTvC8pVMXAn210wjLNmdZJzxUECKbm0QsEmYUSDzZvpjeJ9WmXA==");
     final byte[] saltSeparator = BaseEncoding.base64().decode("Bw==");
-    UserImportHash hash = Scrypt.builder()
-        .setKey(scryptKey)
-        .setSaltSeparator(saltSeparator)
-        .setRounds(8)
-        .setMemoryCost(14)
-        .build();
     UserImportResult result = auth.importUsersAsync(
-        ImmutableList.of(user), UserImportOptions.withHash(hash)).get();
+        ImmutableList.of(user),
+        UserImportOptions.withHash(Scrypt.builder()
+            .setKey(scryptKey)
+            .setSaltSeparator(saltSeparator)
+            .setRounds(8)
+            .setMemoryCost(14)
+            .build())).get();
     assertEquals(1, result.getSuccessCount());
     assertEquals(0, result.getFailureCount());
 
