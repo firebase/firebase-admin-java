@@ -372,8 +372,34 @@ public class FirebaseUserManagerTest {
 
     List<UserImportRecord> users = ImmutableList.of(user1, user2);
     try {
-      FirebaseAuth.getInstance().importUsersAsync(users, null);
+      FirebaseAuth.getInstance().importUsersAsync(users);
       fail("No error thrown for missing hash option");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testImportUsersEmptyList() {
+    initializeAppForUserManagement();
+    try {
+      FirebaseAuth.getInstance().importUsersAsync(ImmutableList.<UserImportRecord>of());
+      fail("No error thrown for empty user list");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testImportUsersLargeList() {
+    initializeAppForUserManagement();
+    ImmutableList.Builder<UserImportRecord> users = ImmutableList.builder();
+    for (int i = 0; i < 1001; i++) {
+      users.add(UserImportRecord.builder().setUid("test" + i).build());
+    }
+    try {
+      FirebaseAuth.getInstance().importUsersAsync(users.build());
+      fail("No error thrown for large list");
     } catch (IllegalArgumentException expected) {
       // expected
     }

@@ -262,11 +262,12 @@ public class UserRecord implements UserInfo {
     checkArgument(password.length() >= 6, "password must be at least 6 characters long");
   }
 
-  private static void checkCustomClaims(Map<String,Object> customClaims) {
+  static void checkCustomClaims(Map<String,Object> customClaims) {
     if (customClaims == null) {
       return;
     }
     for (String key : customClaims.keySet()) {
+      checkArgument(!"".equals(key), "Claim names must not be empty");
       checkArgument(!FirebaseUserManager.RESERVED_CLAIMS.contains(key),
           "Claim '" + key + "' is reserved and cannot be set");
     }

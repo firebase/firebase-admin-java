@@ -16,10 +16,18 @@
 
 package com.google.firebase.auth;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.internal.NonNull;
+import java.util.List;
 import java.util.Map;
 
-public class UserImportOptions {
+/**
+ * A collection of options that can be passed to the
+ * {@link FirebaseAuth#importUsersAsync(List, UserImportOptions)} API.
+ */
+public final class UserImportOptions {
 
   private final UserImportHash hash;
 
@@ -27,10 +35,21 @@ public class UserImportOptions {
     this.hash = builder.hash;
   }
 
-  public static UserImportOptions withHash(UserImportHash hash) {
-    return builder().setHash(hash).build();
+  /**
+   * Creates a new {@link UserImportOptions} containing the provided hash algorithm.
+   *
+   * @param hash A non-null {@link UserImportHash}.
+   * @return A new {@link UserImportOptions}.
+   */
+  public static UserImportOptions withHash(@NonNull UserImportHash hash) {
+    return builder().setHash(checkNotNull(hash)).build();
   }
 
+  /**
+   * Creates a new {@link UserImportOptions.Builder}.
+   *
+   * @return A {@link UserImportOptions.Builder} instance.
+   */
   public static Builder builder() {
     return new Builder();
   }
@@ -53,11 +72,24 @@ public class UserImportOptions {
 
     private Builder() {}
 
+    /**
+     * Sets the hash algorithm configuration for processing user passwords. This is required
+     * when at least one of the {@link UserImportRecord} instances being imported has a password
+     * hash set on it. See {@link UserImportRecord.Builder#setPasswordHash(byte[])}.
+     *
+     * @param hash A {@link UserImportHash}.
+     * @return This builder.
+     */
     public Builder setHash(UserImportHash hash) {
       this.hash = hash;
       return this;
     }
 
+    /**
+     * Builds a new {@link UserImportOptions}.
+     *
+     * @return A non-null {@link UserImportOptions}.
+     */
     public UserImportOptions build() {
       return new UserImportOptions(this);
     }

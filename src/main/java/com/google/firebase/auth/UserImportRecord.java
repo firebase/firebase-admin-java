@@ -21,12 +21,18 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
+import com.google.firebase.internal.NonNull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class UserImportRecord {
+/**
+ * Represents a user account to be imported to Firebase Auth via the
+ * {@link FirebaseAuth#importUsersAsync(List, UserImportOptions)} API. Must contain at least a
+ * uid string.
+ */
+public final class UserImportRecord {
 
   private final Map<String, Object> properties;
 
@@ -49,6 +55,11 @@ public class UserImportRecord {
     return this.properties.containsKey("passwordHash");
   }
 
+  /**
+   * Creates a new {@link UserImportRecord.Builder}.
+   *
+   * @return A {@link UserImportRecord.Builder} instance.
+   */
   public static Builder builder() {
     return new Builder();
   }
@@ -71,76 +82,168 @@ public class UserImportRecord {
 
     private Builder() {}
 
+    /**
+     * Sets a user ID for the user.
+     *
+     * @param uid a non-null, non-empty user ID that uniquely identifies the user. The user ID
+     *     must not be longer than 128 characters.
+     * @return This builder.
+     */
     public Builder setUid(String uid) {
       this.uid = uid;
       return this;
     }
 
+    /**
+     * Sets an email address for the user.
+     *
+     * @param email a non-null, non-empty email address string.
+     * @return This builder.
+     */
     public Builder setEmail(String email) {
       this.email = email;
       return this;
     }
 
+    /**
+     * Sets whether the user email address has been verified or not.
+     *
+     * @param emailVerified a boolean indicating the email verification status.
+     * @return This builder.
+     */
     public Builder setEmailVerified(boolean emailVerified) {
       this.emailVerified = emailVerified;
       return this;
     }
 
+    /**
+     * Sets the display name for the user.
+     *
+     * @param displayName a non-null, non-empty display name string.
+     * @return This builder.
+     */
     public Builder setDisplayName(String displayName) {
       this.displayName = displayName;
       return this;
     }
 
+    /**
+     * Sets the phone number associated with this user.
+     *
+     * @param phoneNumber a valid phone number string.
+     * @return This builder.
+     */
     public Builder setPhoneNumber(String phoneNumber) {
       this.phoneNumber = phoneNumber;
       return this;
     }
 
+    /**
+     * Sets the photo URL for the user.
+     *
+     * @param photoUrl a non-null, non-empty URL string.
+     * @return This builder.
+     */
     public Builder setPhotoUrl(String photoUrl) {
       this.photoUrl = photoUrl;
       return this;
     }
 
+    /**
+     * Sets whether the user account should be disabled by default or not.
+     *
+     * @param disabled a boolean indicating whether the account should be disabled.
+     * @return This builder.
+     */
     public Builder setDisabled(boolean disabled) {
       this.disabled = disabled;
       return this;
     }
 
+    /**
+     * Sets additional metadata about the user.
+     *
+     * @param userMetadata A {@link UserMetadata} instance.
+     * @return This builder.
+     */
     public Builder setUserMetadata(UserMetadata userMetadata) {
       this.userMetadata = userMetadata;
       return this;
     }
 
+    /**
+     * Sets a byte array representing the user's hashed password. A {@link UserImportHash} must be
+     * specified in the {@link FirebaseAuth#importUsersAsync(List, UserImportOptions)} call when
+     * at least one user account has a password hash set.
+     *
+     * @param passwordHash A byte array.
+     * @return This builder.
+     */
     public Builder setPasswordHash(byte[] passwordHash) {
       this.passwordHash = passwordHash;
       return this;
     }
 
+    /**
+     * Sets a byte array representing the user's password salt.
+     *
+     * @param passwordSalt A byte array.
+     * @return This builder.
+     */
     public Builder setPasswordSalt(byte[] passwordSalt) {
       this.passwordSalt = passwordSalt;
       return this;
     }
 
-    public Builder addUserProvider(UserProvider provider) {
+    /**
+     * Adds a user provider to be associated with this user.
+     *
+     * @param provider A non-null {@link UserProvider}.
+     * @return This builder.
+     */
+    public Builder addUserProvider(@NonNull UserProvider provider) {
       this.userProviders.add(provider);
       return this;
     }
 
+    /**
+     * Associates all user provider's in the given list with this user.
+     *
+     * @param providers A list of {@link UserProvider} instances.
+     * @return This builder.
+     */
     public Builder addAllUserProviders(List<UserProvider> providers) {
       this.userProviders.addAll(providers);
       return this;
     }
 
+    /**
+     * Sets the specified custom claim on this user account.
+     *
+     * @param key Name of the claim.
+     * @param value Value of the claim.
+     * @return This builder.
+     */
     public Builder putCustomClaim(String key, Object value) {
       this.customClaims.put(key, value);
       return this;
     }
 
-    public Builder putAllCustomClaims(Map<String, Object> claims) {
-      this.customClaims.putAll(claims);
+    /**
+     * Sets the custom claims associated with this user.
+     *
+     * @param customClaims a Map of custom claims
+     */
+    public Builder putAllCustomClaims(Map<String, Object> customClaims) {
+      this.customClaims.putAll(customClaims);
       return this;
     }
 
+    /**
+     * Builds a new {@link UserImportRecord}.
+     *
+     * @return A non-null {@link UserImportRecord}.
+     */
     public UserImportRecord build() {
       Map<String, Object> properties = new HashMap<>();
       UserRecord.checkUid(uid);
@@ -179,7 +282,9 @@ public class UserImportRecord {
         properties.put("providerUserInfo", ImmutableList.copyOf(userProviders));
       }
       if (customClaims.size() > 0) {
-        properties.put(UserRecord.CUSTOM_ATTRIBUTES, ImmutableMap.copyOf(customClaims));
+        ImmutableMap<String, Object> mergedClaims = ImmutableMap.copyOf(customClaims);
+        UserRecord.checkCustomClaims(mergedClaims);
+        properties.put(UserRecord.CUSTOM_ATTRIBUTES, mergedClaims);
       }
       if (emailVerified != null) {
         properties.put("emailVerified", emailVerified);

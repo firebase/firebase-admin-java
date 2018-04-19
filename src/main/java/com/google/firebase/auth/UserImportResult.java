@@ -20,9 +20,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.internal.UploadAccountResponse;
+import com.google.firebase.internal.NonNull;
 import java.util.List;
 
-public class UserImportResult {
+/**
+ * Represents the result of the {@link FirebaseAuth#importUsersAsync(List, UserImportOptions)} API.
+ */
+public final class UserImportResult {
 
   private final int users;
   private final List<ErrorInfo> errors;
@@ -40,15 +44,31 @@ public class UserImportResult {
     this.errors = errorsBuilder.build();
   }
 
+  /**
+   * Returns the number of users that were imported successfully.
+   *
+   * @return an integer (possibly zero).
+   */
   public int getSuccessCount() {
     return users - errors.size();
   }
 
+  /**
+   * Returns the number of users that failed to be imported.
+   *
+   * @return an integer (possibly zero).
+   */
   public int getFailureCount() {
     return errors.size();
   }
 
-  public List<ErrorInfo> getErrors() {
+  /**
+   * A list of {@link ErrorInfo} instances describing the errors that were encountered during
+   * the import. Length of this list is equal to the return value of {@link #getFailureCount()}.
+   *
+   * @return A non-null list (possibly empty).
+   */
+  @NonNull public List<ErrorInfo> getErrors() {
     return errors;
   }
 }

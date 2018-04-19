@@ -611,6 +611,10 @@ public class FirebaseAuth {
     return new TaskToApiFuture<>(deleteUser(uid));
   }
 
+  public ApiFuture<UserImportResult> importUsersAsync(List<UserImportRecord> users) {
+    return new TaskToApiFuture<>(importUsers(users, null));
+  }
+
   public ApiFuture<UserImportResult> importUsersAsync(List<UserImportRecord> users,
       @Nullable UserImportOptions options) {
     return new TaskToApiFuture<>(importUsers(users, options));

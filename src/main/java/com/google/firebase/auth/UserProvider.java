@@ -21,7 +21,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 
-public class UserProvider {
+/**
+ * Represents a user identity provider that can be associated with a Firebase user.
+ */
+public final class UserProvider {
 
   @Key("rawId")
   private final String uid;
@@ -49,6 +52,11 @@ public class UserProvider {
     this.providerId = builder.providerId;
   }
 
+  /**
+   * Creates a new {@link UserProvider.Builder}.
+   *
+   * @return A {@link UserProvider.Builder} instance.
+   */
   public static Builder builder() {
     return new Builder();
   }
@@ -63,31 +71,67 @@ public class UserProvider {
 
     private Builder() {}
 
+    /**
+     * Sets the user's unique ID assigned by the identity provider. This field is required.
+     *
+     * @param uid a user ID string.
+     * @return This builder.
+     */
     public Builder setUid(String uid) {
       this.uid = uid;
       return this;
     }
 
+    /**
+     * Sets the user's display name.
+     *
+     * @param displayName display name of the user.
+     * @return This builder.
+     */
     public Builder setDisplayName(String displayName) {
       this.displayName = displayName;
       return this;
     }
 
+    /**
+     * Sets the user's email address.
+     *
+     * @param email an email address string.
+     * @return This builder.
+     */
     public Builder setEmail(String email) {
       this.email = email;
       return this;
     }
 
+    /**
+     * Sets the photo URl of the user.
+     *
+     * @param photoUrl a photo URL string.
+     * @return This builder.
+     */
     public Builder setPhotoUrl(String photoUrl) {
       this.photoUrl = photoUrl;
       return this;
     }
 
+    /**
+     * Sets the ID of the identity provider. This can be a short domain name (e.g. google.com) or
+     * the identifier of an OpenID identity provider. This field is required.
+     *
+     * @param providerId an ID string that uniquely identifies the identity provider.
+     * @return This builder.
+     */
     public Builder setProviderId(String providerId) {
       this.providerId = providerId;
       return this;
     }
 
+    /**
+     * Builds a new {@link UserProvider}.
+     *
+     * @return A non-null {@link UserProvider}.
+     */
     public UserProvider build() {
       return new UserProvider(this);
     }

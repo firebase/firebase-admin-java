@@ -16,7 +16,12 @@
 
 package com.google.firebase.auth;
 
-public class ErrorInfo {
+import java.util.List;
+
+/**
+ * Represents an error encountered while importing a {@link UserImportRecord}.
+ */
+public final class ErrorInfo {
 
   private final int index;
   private final String reason;
@@ -26,10 +31,21 @@ public class ErrorInfo {
     this.reason = reason;
   }
 
+  /**
+   * The index of the failed user in the list passed to the
+   * {@link FirebaseAuth#importUsersAsync(List, UserImportOptions)} method.
+   *
+   * @return an integer index.
+   */
   public int getIndex() {
     return index;
   }
 
+  /**
+   * A string describing the error.
+   *
+   * @return A string error message.
+   */
   public String getReason() {
     return reason;
   }

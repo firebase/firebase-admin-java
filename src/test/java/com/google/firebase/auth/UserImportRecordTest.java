@@ -17,6 +17,7 @@
 package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
@@ -25,8 +26,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.Test;
 
@@ -105,6 +108,7 @@ public class UserImportRecordTest {
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidEmail() {
     UserImportRecord.builder()
+        .setUid("test")
         .setEmail("not-an-email")
         .build();
   }
@@ -112,6 +116,7 @@ public class UserImportRecordTest {
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidPhotoUrl() {
     UserImportRecord.builder()
+        .setUid("test")
         .setPhotoUrl("not a url")
         .build();
   }
@@ -119,7 +124,89 @@ public class UserImportRecordTest {
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidPhoneNumber() {
     UserImportRecord.builder()
+        .setUid("test")
         .setPhoneNumber("not a phone number")
         .build();
+  }
+
+  @Test
+  public void testNullUserProvider() {
+    try {
+      UserImportRecord.builder()
+          .setUid("test")
+          .addUserProvider(null).build();
+      fail("No error thrown for null provider");
+    } catch (NullPointerException expected) {
+      // expected
+    }
+
+    try {
+      List<UserProvider> providers = new ArrayList<>();
+      providers.add(null);
+      UserImportRecord.builder()
+          .setUid("test")
+          .addAllUserProviders(providers).build();
+      fail("No error thrown for null provider");
+    } catch (NullPointerException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testNullOrEmptyCustomClaims() {
+    try {
+      UserImportRecord.builder()
+          .setUid("test")
+          .putCustomClaim("foo", null).build();
+      fail("No error thrown for null claim value");
+    } catch (NullPointerException expected) {
+      // expected
+    }
+
+    try {
+      UserImportRecord.builder()
+          .setUid("test")
+          .putCustomClaim(null, "foo").build();
+      fail("No error thrown for null claim name");
+    } catch (NullPointerException expected) {
+      // expected
+    }
+
+    try {
+      UserImportRecord.builder()
+          .setUid("test")
+          .putCustomClaim("", "foo").build();
+      fail("No error thrown for empty claim name");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testReservedClaims() {
+    for (String key : FirebaseUserManager.RESERVED_CLAIMS) {
+      try {
+        UserImportRecord.builder()
+            .setUid("test")
+            .putCustomClaim(key, "foo").build();
+        fail("No error thrown for reserved claim");
+      } catch (IllegalArgumentException expected) {
+        // expected
+      }
+    }
+  }
+
+  @Test
+  public void testLargeCustomClaims() {
+    UserImportRecord user = UserImportRecord.builder()
+        .setUid("test")
+        .putCustomClaim("foo", Strings.repeat("a", 1000))
+        .build();
+    try {
+      user.getProperties(JSON_FACTORY);
+      fail("No error thrown for large claim value");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
   }
 }
