@@ -57,11 +57,11 @@ public class SessionCookieOptions {
      * Sets the duration until the cookie is expired in milliseconds. Must be between 5 minutes
      * and 14 days.
      *
-     * @param expiresIn Time duration in milliseconds.
+     * @param expiresInMillis Time duration in milliseconds.
      * @return This builder.
      */
-    public Builder setExpiresIn(long expiresIn) {
-      this.expiresIn = expiresIn;
+    public Builder setExpiresIn(long expiresInMillis) {
+      this.expiresIn = expiresInMillis;
       return this;
     }
 

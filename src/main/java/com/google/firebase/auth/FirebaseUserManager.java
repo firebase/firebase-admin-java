@@ -200,7 +200,7 @@ class FirebaseUserManager {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "idToken", idToken, "validDuration", options.getExpiresInSeconds());
     GenericJson response = post("createSessionCookie", payload, GenericJson.class);
-    if (response != null && response.containsKey("sessionCookie")) {
+    if (response != null) {
       String cookie = (String) response.get("sessionCookie");
       if (!Strings.isNullOrEmpty(cookie)) {
         return cookie;

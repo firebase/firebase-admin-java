@@ -35,9 +35,11 @@ public class KeyManagers {
   private final GooglePublicKeysManager idTokenKeysManager;
   private final GooglePublicKeysManager sessionCookieKeysManager;
 
-  private KeyManagers(Builder builder) {
-    this.idTokenKeysManager = checkNotNull(builder.idTokenKeysManager);
-    this.sessionCookieKeysManager = checkNotNull(builder.sessionCookieKeysManager);
+  private KeyManagers(
+      GooglePublicKeysManager idTokenKeysManager,
+      GooglePublicKeysManager sessionCookieKeysManager) {
+    this.idTokenKeysManager = checkNotNull(idTokenKeysManager);
+    this.sessionCookieKeysManager = checkNotNull(sessionCookieKeysManager);
   }
 
   /**
@@ -68,12 +70,9 @@ public class KeyManagers {
 
   @VisibleForTesting
   static KeyManagers getDefault(HttpTransport transport, Clock clock) {
-    return new Builder()
-        .setIdTokenKeysManager(createPublicKeysManager(
-            transport, clock, FirebaseTokenVerifier.ID_TOKEN_CERT_URL))
-        .setSessionCookieKeysManager(createPublicKeysManager(
-            transport, clock, FirebaseTokenVerifier.SESSION_COOKIE_CERT_URL))
-        .build();
+    return new KeyManagers(
+        createPublicKeysManager(transport, clock, FirebaseTokenVerifier.ID_TOKEN_CERT_URL),
+        createPublicKeysManager(transport, clock, FirebaseTokenVerifier.SESSION_COOKIE_CERT_URL));
   }
 
   private static GooglePublicKeysManager createPublicKeysManager(
@@ -82,27 +81,5 @@ public class KeyManagers {
         .setClock(clock)
         .setPublicCertsEncodedUrl(certUrl)
         .build();
-  }
-
-  public static class Builder {
-
-    private GooglePublicKeysManager idTokenKeysManager;
-    private GooglePublicKeysManager sessionCookieKeysManager;
-
-    public Builder setIdTokenKeysManager(
-        GooglePublicKeysManager idTokenKeysManager) {
-      this.idTokenKeysManager = idTokenKeysManager;
-      return this;
-    }
-
-    public Builder setSessionCookieKeysManager(
-        GooglePublicKeysManager sessionCookieKeysManager) {
-      this.sessionCookieKeysManager = sessionCookieKeysManager;
-      return this;
-    }
-
-    public KeyManagers build() {
-      return new KeyManagers(this);
-    }
   }
 }

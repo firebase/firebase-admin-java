@@ -312,7 +312,8 @@ public class FirebaseAuthSnippets {
     // To ensure that cookies are set only on recently signed in users, check auth_time in
     // ID token before creating a cookie.
     FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdTokenAsync(idToken).get();
-    long authTimeMillis = (long) decodedToken.getClaims().get("auth_time") * 1000L;
+    long authTimeMillis = TimeUnit.SECONDS.toMillis(
+        (long) decodedToken.getClaims().get("auth_time"));
 
     // Only process if the user signed in within the last 5 minutes.
     if (System.currentTimeMillis() - authTimeMillis < TimeUnit.MINUTES.toMillis(5)) {

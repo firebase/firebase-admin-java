@@ -143,12 +143,12 @@ public class FirebaseAuth {
   /**
    * Parses and verifies a Firebase session cookie.
    *
-   * <p>If the cookie is valid, the returned Future will complete successfully and provide a
-   * parsed version of the cookie from which the UID and other claims can be read.
-   * If the cookie is invalid, the future throws an exception indicating the failure.
+   * <p>If verified successfully, the returned {@code ApiFuture} completes with a parsed version of
+   * the cookie from which the UID and the other claims can be read. If the cookie is invalid,
+   * the future throws an exception indicating the failure.
    *
-   * <p>This does not check whether the cookie has been revoked. See
-   * {@link #verifySessionCookie(String, boolean)}.
+   * <p>This method does not check whether the cookie has been revoked. See
+   * {@link #verifySessionCookieAsync(String, boolean)}.
    *
    * @param cookie A Firebase session cookie string to verify and parse.
    * @return An {@code ApiFuture} which will complete successfully with the parsed cookie, or
@@ -161,19 +161,17 @@ public class FirebaseAuth {
   /**
    * Parses and verifies a Firebase session cookie.
    *
-   * <p>If the cookie is valid, the returned Future will complete successfully and provide a
-   * parsed version of the cookie from which the UID and other claims can be inspected.
-   * If the cookie is invalid, the future throws an exception indicating the failure.
+   * <p>If {@code checkRevoked} is true, additionally verifies that the cookie has not been
+   * revoked.
    *
-   * <p>If {@code checkRevoked} is true, additionally checks if the cookie has been revoked.
-   *
-   * <p>If the cookie is valid, and not revoked, the returned Future will complete successfully and
-   * provide a parsed version of the cookie from which the UID and other claims can be read.
-   * If the cookie is invalid or has been revoked, the future throws an exception indicating the
-   * failure.
+   * <p>If verified successfully, the returned {@code ApiFuture} completes with a parsed version of
+   * the cookie from which the UID and the other claims can be read. If the cookie is invalid or
+   * has been revoked while {@code checkRevoked} is true, the future throws an exception indicating
+   * the failure.
    *
    * @param cookie A Firebase session cookie string to verify and parse.
-   * @param checkRevoked A boolean indicating whether to check if the cookie was revoked.
+   * @param checkRevoked A boolean indicating whether to check if the cookie was explicitly
+   *     revoked.
    * @return An {@code ApiFuture} which will complete successfully with the parsed cookie, or
    *     unsuccessfully with the failure Exception.
    */

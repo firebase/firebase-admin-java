@@ -60,10 +60,10 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
   private static final String ERROR_INVALID_CREDENTIAL = "ERROR_INVALID_CREDENTIAL";
   private static final String ERROR_RUNTIME_EXCEPTION = "ERROR_RUNTIME_EXCEPTION";
   private static final String PROJECT_ID_MATCH_MESSAGE =
-      " Make sure the %s comes from the same Firebase project as the service account used to "
+      "Make sure the %s comes from the same Firebase project as the service account used to "
           + "authenticate this SDK.";
   private static final String VERIFY_TOKEN_DOCS_MESSAGE =
-      " See %s for details on how to retrieve %s.";
+      "See %s for details on how to retrieve %s.";
   private static final String ALGORITHM = "RS256";
 
   private final String projectId;
@@ -82,11 +82,7 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
     checkArgument(!Strings.isNullOrEmpty(builder.method), "method must be set");
     this.projectId = builder.projectId;
     this.shortName = builder.shortName;
-    if ("aeiouAEIOU".indexOf(shortName.charAt(0)) < 0) {
-      this.articledShortName = "a " + shortName;
-    } else {
-      this.articledShortName = "an " + shortName;
-    }
+    this.articledShortName = addArticle(shortName);
     this.method = builder.method;
     this.publicKeysManager = checkNotNull(builder.publicKeysManager,
         "publicKeysManager must be set");
@@ -117,12 +113,13 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
 
     if (header.getKeyId() == null) {
       if (isCustomToken) {
-        errorMessage = method + " expects " + articledShortName + ", but was given a custom token.";
+        errorMessage = String.format("%s expects %s, but was given a custom token.",
+            method, articledShortName);
       } else if (isLegacyCustomToken) {
-        errorMessage = method + " expects " + articledShortName
-            + ", but was given a legacy custom token.";
+        errorMessage = String.format("%s expects %s, but was given a legacy custom token.",
+            method, articledShortName);
       } else {
-        errorMessage = "Firebase " + shortName + " has no \"kid\" claim.";
+        errorMessage = String.format("Firebase %s has no \"kid\" claim.", shortName);
       }
     } else if (header.getAlgorithm() == null || !header.getAlgorithm().equals(ALGORITHM)) {
       errorMessage =
@@ -133,43 +130,50 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
       errorMessage =
           String.format(
               "Firebase %s has incorrect \"aud\" (audience) claim. Expected \"%s\" but got "
-                  + "\"%s\".",
-              shortName, concat(getAudience()), concat(token.getPayload().getAudienceAsList()));
-      errorMessage += projectIdMatchMessage;
+                  + "\"%s\". %s", shortName, concat(getAudience()),
+              concat(token.getPayload().getAudienceAsList()), projectIdMatchMessage);
     } else if (!token.verifyIssuer(getIssuers())) {
       errorMessage =
           String.format(
               "Firebase %s has incorrect \"iss\" (issuer) claim. "
-                  + "Expected \"%s\" but got \"%s\".",
-              shortName, concat(getIssuers()), token.getPayload().getIssuer());
-      errorMessage += projectIdMatchMessage;
+                  + "Expected \"%s\" but got \"%s\". %s", shortName, concat(getIssuers()),
+              token.getPayload().getIssuer(), projectIdMatchMessage);
     } else if (payload.getSubject() == null) {
-      errorMessage = "Firebase " + shortName + " has no \"sub\" (subject) claim.";
+      errorMessage = String.format("Firebase %s has no \"sub\" (subject) claim.", shortName);
     } else if (payload.getSubject().isEmpty()) {
-      errorMessage = "Firebase " + shortName + " has an empty string \"sub\" (subject) claim.";
+      errorMessage = String.format("Firebase %s has an empty string \"sub\" (subject) claim.",
+          shortName);
     } else if (payload.getSubject().length() > 128) {
-      errorMessage = "Firebase " + shortName + " has \"sub\" (subject) claim longer than "
-          + "128 characters.";
+      errorMessage = String.format("Firebase %s has \"sub\" (subject) claim longer than "
+          + "128 characters.", shortName);
     } else if (!token.verifyTime(getClock().currentTimeMillis(), getAcceptableTimeSkewSeconds())) {
       errorMessage =
-          "Firebase " + shortName + " has expired or is not yet valid. Get a fresh " + shortName
-              + " and try again.";
+          String.format("Firebase %s has expired or is not yet valid. Get a fresh %s and "
+              + "try again.", shortName, shortName);
     }
 
     if (errorMessage != null) {
-      errorMessage += verifyTokenMessage;
-      throw new FirebaseAuthException(ERROR_INVALID_CREDENTIAL, errorMessage);
+      throw new FirebaseAuthException(ERROR_INVALID_CREDENTIAL,
+          String.format("%s %s", errorMessage, verifyTokenMessage));
     }
 
     try {
       if (!verifySignature(token)) {
-        throw new FirebaseAuthException(
-            ERROR_INVALID_CREDENTIAL, "Firebase " + shortName + " isn't signed by a valid public "
-            + "key." + verifyTokenMessage);
+        throw new FirebaseAuthException(ERROR_INVALID_CREDENTIAL,
+            String.format("Firebase %s isn't signed by a valid public key. %s",
+                shortName, verifyTokenMessage));
       }
     } catch (IOException | GeneralSecurityException e) {
       throw new FirebaseAuthException(
           ERROR_RUNTIME_EXCEPTION, "Error while verifying signature.", e);
+    }
+  }
+
+  private String addArticle(String word) {
+    if ("aeiouAEIOU".indexOf(word.charAt(0)) < 0) {
+      return "a " + word;
+    } else {
+      return "an " + word;
     }
   }
 
@@ -213,6 +217,14 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
       return projectId;
     }
 
+    /**
+     * Sets the project ID and a URL prefix for the issuer (iss) claim. The full issuer claim
+     * is the concatenation of the prefix and the project ID.
+     *
+     * @param issuerPrefix A URL prefix.
+     * @param projectId A Firebase project ID.
+     * @return This builder.
+     */
     public Builder setProjectId(String issuerPrefix, String projectId) {
       this.projectId = projectId;
       this.setAudience(Collections.singleton(projectId));
@@ -220,27 +232,56 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
       return this;
     }
 
+    /**
+     * Sets the short name of the type of tokens being validated (e.g. ID token, session cookie).
+     *
+     * @param shortName A short string identifier.
+     * @return This builder.
+     */
     public Builder setShortName(String shortName) {
       this.shortName = shortName;
       return this;
     }
 
+    /**
+     * Sets the name of the operation that triggers token verification (e.g. verifyIdToken())
+     *
+     * @param method A method name.
+     * @return This builder.
+     */
     public Builder setMethod(String method) {
       this.method = method;
       return this;
     }
 
+    /**
+     * A URL to public documentation where more information about token verification can be found.
+     *
+     * @param docUrl A documentation URL.
+     * @return This builder.
+     */
     public Builder setDocUrl(String docUrl) {
       this.docUrl = docUrl;
       return this;
     }
 
+    /**
+     * Sets the {@code Clock} instance to be used to compare token issue and expiry times.
+     *
+     * @param clock A {@code Clock} instance.
+     * @return This builder.
+     */
     @Override
     public Builder setClock(Clock clock) {
       return (Builder) super.setClock(clock);
     }
 
-    /** Override the GooglePublicKeysManager from the default. */
+    /**
+     * Overrides the GooglePublicKeysManager from the default.
+     *
+     * @param publicKeysManager A public keys manager.
+     * @return This builder.
+     */
     public Builder setPublicKeysManager(GooglePublicKeysManager publicKeysManager) {
       this.publicKeysManager = publicKeysManager;
       return this;
