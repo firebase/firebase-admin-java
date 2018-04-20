@@ -4,6 +4,9 @@
   creating a long-lived session cookie given a valid ID token.
 - [added] A new `FirebaseAuth.verifySessionCookieAsync()` method for
   verifying a given cookie string is valid.
+- [fixed] Upgraded Cloud Firestore dependency version to 0.44.0-beta.
+- [fixed] Upgraded Cloud Storage dependency version to 1.26.0.
+- [fixed] Upgraded Netty dependency version to 4.1.22.
 
 # v5.10.0
 
