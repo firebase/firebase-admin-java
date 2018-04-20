@@ -256,7 +256,7 @@ public class FirebaseMessaging {
     try {
       JsonParser parser = jsonFactory.createJsonParser(e.getContent());
       parser.parseAndClose(response);
-    } catch (IOException ignored) {
+    } catch (IOException | NullPointerException ignored) {
       // ignored
     }
 

@@ -173,6 +173,29 @@ public class FirebaseMessagingTest {
   }
 
   @Test
+  public void testSendErrorWithZeroContentResponse() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    FirebaseMessaging messaging = initMessaging(response);
+    for (int code : HTTP_ERRORS) {
+      response.setStatusCode(code).setZeroContent();
+      TestResponseInterceptor interceptor = new TestResponseInterceptor();
+      messaging.setInterceptor(interceptor);
+      try {
+        messaging.sendAsync(Message.builder().setTopic("test-topic").build()).get();
+        fail("No error thrown for HTTP error");
+      } catch (ExecutionException e) {
+        assertTrue(e.getCause() instanceof FirebaseMessagingException);
+        FirebaseMessagingException error = (FirebaseMessagingException) e.getCause();
+        assertEquals("unknown-error", error.getErrorCode());
+        assertEquals("Unexpected HTTP response with status: " + code + "; body: null",
+            error.getMessage());
+        assertTrue(error.getCause() instanceof HttpResponseException);
+      }
+      checkRequestHeader(interceptor);
+    }
+  }
+
+  @Test
   public void testSendErrorWithDetails() throws Exception {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     FirebaseMessaging messaging = initMessaging(response);
