@@ -21,14 +21,25 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.ListUsersPage;
+import com.google.firebase.auth.SessionCookieOptions;
 import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.CookieParam;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.core.Cookie;
+import javax.ws.rs.core.NewCookie;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 /**
  * Auth snippets for documentation.
@@ -259,6 +270,138 @@ public class FirebaseAuthSnippets {
     userData.put("revokeTime", revocationSecond);
     ref.setValueAsync(userData).get();
     // [END save_revocation_in_db]
-
   }
+
+  static class LoginRequest {
+    String idToken;
+
+    String getIdToken() {
+      return idToken;
+    }
+  }
+
+  // [START session_login]
+  @POST
+  @Path("/sessionLogin")
+  @Consumes("application/json")
+  public Response createSessionCookie(LoginRequest request) {
+    // Get the ID token sent by the client
+    String idToken = request.getIdToken();
+    // Set session expiration to 5 days.
+    long expiresIn = TimeUnit.DAYS.toMillis(5);
+    SessionCookieOptions options = SessionCookieOptions.builder()
+        .setExpiresIn(expiresIn)
+        .build();
+    try {
+      // Create the session cookie. This will also verify the ID token in the process.
+      // The session cookie will have the same claims as the ID token.
+      String sessionCookie = FirebaseAuth.getInstance().createSessionCookieAsync(
+          idToken, options).get();
+      // Set cookie policy parameters as required.
+      NewCookie cookie = new NewCookie("session", sessionCookie /* ... other parameters */);
+      return Response.ok().cookie(cookie).build();
+    } catch (Exception e) {
+      return Response.status(Status.UNAUTHORIZED).entity("Failed to create a session cookie")
+          .build();
+    }
+  }
+  // [END session_login]
+
+  public Response checkAuthTime(String idToken) throws Exception {
+    // [START check_auth_time]
+    // To ensure that cookies are set only on recently signed in users, check auth_time in
+    // ID token before creating a cookie.
+    FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdTokenAsync(idToken).get();
+    long authTimeMillis = TimeUnit.SECONDS.toMillis(
+        (long) decodedToken.getClaims().get("auth_time"));
+
+    // Only process if the user signed in within the last 5 minutes.
+    if (System.currentTimeMillis() - authTimeMillis < TimeUnit.MINUTES.toMillis(5)) {
+      long expiresIn = TimeUnit.DAYS.toMillis(5);
+      SessionCookieOptions options = SessionCookieOptions.builder()
+          .setExpiresIn(expiresIn)
+          .build();
+      String sessionCookie = FirebaseAuth.getInstance().createSessionCookieAsync(
+          idToken, options).get();
+      // Set cookie policy parameters as required.
+      NewCookie cookie = new NewCookie("session", sessionCookie);
+      return Response.ok().cookie(cookie).build();
+    }
+    // User did not sign in recently. To guard against ID token theft, require
+    // re-authentication.
+    return Response.status(Status.UNAUTHORIZED).entity("Recent sign in required").build();
+    // [END check_auth_time]
+  }
+
+  private Response serveContentForUser(FirebaseToken decodedToken) {
+    return null;
+  }
+
+  private Response serveContentForAdmin(FirebaseToken decodedToken) {
+    return null;
+  }
+
+  // [START session_verify]
+  @POST
+  @Path("/profile")
+  public Response verifySessionCookie(@CookieParam("session") Cookie cookie) {
+    String sessionCookie = cookie.getValue();
+    try {
+      // Verify the session cookie. In this case an additional check is added to detect
+      // if the user's Firebase session was revoked, user deleted/disabled, etc.
+      final boolean checkRevoked = true;
+      FirebaseToken decodedToken = FirebaseAuth.getInstance().verifySessionCookieAsync(
+          sessionCookie, checkRevoked).get();
+      return serveContentForUser(decodedToken);
+    } catch (Exception e) {
+      // Session cookie is unavailable, invalid or revoked. Force user to login.
+      return Response.temporaryRedirect(URI.create("/login")).build();
+    }
+  }
+  // [END session_verify]
+
+  public Response checkPermissions(String sessionCookie) {
+    // [START session_verify_with_permission_check]
+    try {
+      final boolean checkRevoked = true;
+      FirebaseToken decodedToken = FirebaseAuth.getInstance().verifySessionCookieAsync(
+          sessionCookie, checkRevoked).get();
+      if (Boolean.TRUE.equals(decodedToken.getClaims().get("admin"))) {
+        return serveContentForAdmin(decodedToken);
+      }
+      return Response.status(Status.UNAUTHORIZED).entity("Insufficient permissions").build();
+    } catch (Exception e) {
+      // Session cookie is unavailable, invalid or revoked. Force user to login.
+      return Response.temporaryRedirect(URI.create("/login")).build();
+    }
+    // [END session_verify_with_permission_check]
+  }
+
+  // [START session_clear]
+  @POST
+  @Path("/sessionLogout")
+  public Response clearSessionCookie(@CookieParam("session") Cookie cookie) {
+    final int maxAge = 0;
+    NewCookie newCookie = new NewCookie(cookie, null, maxAge, true);
+    return Response.temporaryRedirect(URI.create("/login")).cookie(newCookie).build();
+  }
+  // [END session_clear]
+
+  // [START session_clear_and_revoke]
+  @POST
+  @Path("/sessionLogout")
+  public Response clearSessionCookieAndRevoke(@CookieParam("session") Cookie cookie) {
+    String sessionCookie = cookie.getValue();
+    try {
+      FirebaseToken decodedToken = FirebaseAuth.getInstance().verifySessionCookieAsync(
+          sessionCookie).get();
+      FirebaseAuth.getInstance().revokeRefreshTokensAsync(decodedToken.getUid()).get();
+      final int maxAge = 0;
+      NewCookie newCookie = new NewCookie(cookie, null, maxAge, true);
+      return Response.temporaryRedirect(URI.create("/login")).cookie(newCookie).build();
+    } catch (Exception e) {
+      return Response.temporaryRedirect(URI.create("/login")).build();
+    }
+  }
+  // [END session_clear_and_revoke]
 }

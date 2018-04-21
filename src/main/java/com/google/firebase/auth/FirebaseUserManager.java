@@ -60,6 +60,7 @@ class FirebaseUserManager {
   static final String USER_NOT_FOUND_ERROR = "user-not-found";
   static final String INTERNAL_ERROR = "internal-error";
   static final String ID_TOKEN_REVOKED_ERROR = "id-token-revoked";
+  static final String SESSION_COOKIE_REVOKED_ERROR = "session-cookie-revoked";
 
   // Map of server-side error codes to SDK error codes.
   // SDK error codes defined at: https://firebase.google.com/docs/auth/admin/errors
@@ -192,6 +193,20 @@ class FirebaseUserManager {
       throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to retrieve users.");
     }
     return response;
+  }
+
+  String createSessionCookie(String idToken,
+      SessionCookieOptions options) throws FirebaseAuthException {
+    final Map<String, Object> payload = ImmutableMap.<String, Object>of(
+        "idToken", idToken, "validDuration", options.getExpiresInSeconds());
+    GenericJson response = post("createSessionCookie", payload, GenericJson.class);
+    if (response != null) {
+      String cookie = (String) response.get("sessionCookie");
+      if (!Strings.isNullOrEmpty(cookie)) {
+        return cookie;
+      }
+    }
+    throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create session cookie");
   }
 
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {
