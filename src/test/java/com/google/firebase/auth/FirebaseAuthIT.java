@@ -394,7 +394,7 @@ public class FirebaseAuthIT {
         .setExpiresIn(TimeUnit.HOURS.toMillis(1))
         .build();
     String sessionCookie = auth.createSessionCookieAsync(idToken, options).get();
-    assertTrue(!Strings.isNullOrEmpty(sessionCookie));
+    assertFalse(Strings.isNullOrEmpty(sessionCookie));
 
     FirebaseToken decoded = auth.verifySessionCookieAsync(sessionCookie).get();
     assertEquals("user3", decoded.getUid());

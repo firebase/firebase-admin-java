@@ -82,7 +82,7 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
     checkArgument(!Strings.isNullOrEmpty(builder.method), "method must be set");
     this.projectId = builder.projectId;
     this.shortName = builder.shortName;
-    this.articledShortName = addArticle(shortName);
+    this.articledShortName = prefixWithIndefiniteArticle(shortName);
     this.method = builder.method;
     this.publicKeysManager = checkNotNull(builder.publicKeysManager,
         "publicKeysManager must be set");
@@ -169,7 +169,7 @@ public final class FirebaseTokenVerifier extends IdTokenVerifier {
     }
   }
 
-  private String addArticle(String word) {
+  private String prefixWithIndefiniteArticle(String word) {
     if ("aeiouAEIOU".indexOf(word.charAt(0)) < 0) {
       return "a " + word;
     } else {
