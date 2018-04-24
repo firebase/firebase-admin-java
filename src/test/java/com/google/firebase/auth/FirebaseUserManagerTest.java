@@ -293,7 +293,7 @@ public class FirebaseUserManagerTest {
         .setUid("user2")
         .build();
     UserImportRecord user3 = UserImportRecord.builder()
-        .setUid("user2")
+        .setUid("user3")
         .build();
 
     List<UserImportRecord> users = ImmutableList.of(user1, user2, user3);
