@@ -1,5 +1,10 @@
 # Unreleased
 
+-
+
+# v5.11.0
+
+
 - [added] A new `FirebaseAuth.createSessionCookieAsync()` method for
   creating a long-lived session cookie given a valid ID token.
 - [added] A new `FirebaseAuth.verifySessionCookieAsync()` method for
