@@ -83,7 +83,7 @@ public class FirebaseTokenFactory {
       for (String key : developerClaims.keySet()) {
         if (reservedNames.contains(key)) {
           throw new IllegalArgumentException(
-              String.format("developer_claims can not contain a reserved key: %s", key));
+              String.format("developerClaims must not contain a reserved key: %s", key));
         }
       }
       GenericJson jsonObject = new GenericJson();

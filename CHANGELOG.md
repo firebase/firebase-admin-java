@@ -1,18 +1,6 @@
 # Unreleased
 
--
-
-# v5.10.0
-
-
-- [added] Connection timeout and read timeout for HTTP/REST connections
-  can now be configured via `FirebaseOptions.Builder` at app
-  initialization.
-- [added] Added new `setMutableContent()`, `putCustomData()` and
-  `putAllCustomData()` methods to the `Aps.Builder` API.
-- [fixed] Improved error handling in FCM by mapping more server-side
-  errors to client-side error codes.
-- [added] `FirebaseAuth`, `'FirebaseMessaging` and `FirebaseInstanceId`
+- [added] `FirebaseAuth`, `FirebaseMessaging` and `FirebaseInstanceId`
   interfaces now expose a set of blocking methods. Each operation has
   blocking an asynchronous versions.
 - [changed] Removed the deprecated `FirebaseCredential` interface.
@@ -24,6 +12,30 @@
 - [changed] Removed the deprecated `FirebaseDatabase.setLogLevel()` API
   and the related logging utilities. Developers should use SLF4J to
   configure logging directly.
+
+# v5.11.0
+
+- [added] A new `FirebaseAuth.createSessionCookieAsync()` method for
+  creating a long-lived session cookie given a valid ID token.
+- [added] A new `FirebaseAuth.verifySessionCookieAsync()` method for
+  verifying a given cookie string is valid.
+- [fixed] Upgraded Cloud Firestore dependency version to 0.45.0-beta.
+- [fixed] Upgraded Cloud Storage dependency version to 1.27.0.
+- [fixed] Upgraded Netty dependency version to 4.1.22.
+
+# v5.10.0
+
+- [fixed] Using the `HttpTransport` specified at `FirebaseOptions` in
+  `GooglePublicKeysManager`. This enables developers to use a custom
+  transport to fetch public keys when verifying ID tokens and session
+  cookies.
+- [added] Connection timeout and read timeout for HTTP/REST connections
+  can now be configured via `FirebaseOptions.Builder` at app
+  initialization.
+- [added] Added new `setMutableContent()`, `putCustomData()` and
+  `putAllCustomData()` methods to the `Aps.Builder` API.
+- [fixed] Improved error handling in FCM by mapping more server-side
+  errors to client-side error codes.
 
 # v5.9.0
 

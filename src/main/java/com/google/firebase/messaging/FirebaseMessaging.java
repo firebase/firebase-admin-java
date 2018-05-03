@@ -270,13 +270,14 @@ public class FirebaseMessaging {
 
   private void handleSendHttpError(HttpResponseException e) throws FirebaseMessagingException {
     MessagingServiceErrorResponse response = new MessagingServiceErrorResponse();
-    try {
-      JsonParser parser = jsonFactory.createJsonParser(e.getContent());
-      parser.parseAndClose(response);
-    } catch (IOException ignored) {
-      // ignored
+    if (e.getContent() != null) {
+      try {
+        JsonParser parser = jsonFactory.createJsonParser(e.getContent());
+        parser.parseAndClose(response);
+      } catch (IOException ignored) {
+        // ignored
+      }
     }
-
     String code = FCM_ERROR_CODES.get(response.getErrorCode());
     if (code == null) {
       code = UNKNOWN_ERROR;
