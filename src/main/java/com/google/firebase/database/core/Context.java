@@ -26,29 +26,24 @@ import com.google.firebase.database.connection.HostInfo;
 import com.google.firebase.database.connection.PersistentConnection;
 import com.google.firebase.database.core.persistence.NoopPersistenceManager;
 import com.google.firebase.database.core.persistence.PersistenceManager;
-import com.google.firebase.database.logging.LogWrapper;
-import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.utilities.DefaultRunLoop;
 
-import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class Context {
 
   private static final long DEFAULT_CACHE_SIZE = 10 * 1024 * 1024;
 
-  protected Logger logger;
-  protected EventTarget eventTarget;
-  protected AuthTokenProvider authTokenProvider;
-  protected RunLoop runLoop;
-  protected String persistenceKey;
-  protected List<String> loggedComponents;
-  protected String userAgent;
-  protected Logger.Level logLevel = Logger.Level.INFO;
-  protected boolean persistenceEnabled;
-  protected long cacheSize = DEFAULT_CACHE_SIZE;
-  protected FirebaseApp firebaseApp;
-  private PersistenceManager forcedPersistenceManager;
+  FirebaseApp firebaseApp;
+
+  EventTarget eventTarget;
+  AuthTokenProvider authTokenProvider;
+  RunLoop runLoop;
+  String persistenceKey;
+  boolean persistenceEnabled;
+  long cacheSize = DEFAULT_CACHE_SIZE;
+
+  private String userAgent;
   private boolean frozen = false;
   private boolean stopped = false;
 
@@ -78,17 +73,9 @@ public class Context {
 
   private Platform getPlatform() {
     if (platform == null) {
-      if (GaePlatform.isActive()) {
-        platform = new GaePlatform(firebaseApp);
-      } else {
-        platform = new JvmPlatform(firebaseApp);
-      }
+      platform = new JvmPlatform(firebaseApp);
     }
     return platform;
-  }
-
-  public boolean isFrozen() {
-    return frozen;
   }
 
   public boolean isStopped() {
@@ -110,8 +97,6 @@ public class Context {
   }
 
   private void initServices() {
-    // Do the logger first, so that other components can get a LogWrapper
-    ensureLogger();
     // Cache platform
     getPlatform();
     ensureUserAgent();
@@ -137,28 +122,15 @@ public class Context {
     }
   }
 
-  protected void assertUnfrozen() {
-    if (isFrozen()) {
+  void assertUnfrozen() {
+    if (frozen) {
       throw new DatabaseException(
           "Modifications to DatabaseConfig objects must occur before they are in use");
     }
   }
 
-  public LogWrapper getLogger(String component) {
-    return new LogWrapper(logger, component, null);
-  }
-
-  public LogWrapper getLogger(Class component) {
-    return new LogWrapper(logger, component);
-  }
-
-  public LogWrapper getLogger(Class component, String prefix) {
-    return new LogWrapper(logger, component, prefix);
-  }
-
   public ConnectionContext getConnectionContext() {
     return new ConnectionContext(
-        this.logger,
         wrapAuthTokenProvider(this.getAuthTokenProvider()),
         this.getExecutorService(),
         this.isPersistenceEnabled(),
@@ -168,10 +140,6 @@ public class Context {
   }
 
   PersistenceManager getPersistenceManager(String firebaseId) {
-    // TODO[persistence]: Create this once and store it.
-    if (forcedPersistenceManager != null) {
-      return forcedPersistenceManager;
-    }
     if (this.persistenceEnabled) {
       PersistenceManager cache = platform.createPersistenceManager(this, firebaseId);
       if (cache == null) {
@@ -193,11 +161,6 @@ public class Context {
     return this.cacheSize;
   }
 
-  // For testing
-  void forcePersistenceManager(PersistenceManager persistenceManager) {
-    this.forcedPersistenceManager = persistenceManager;
-  }
-
   public EventTarget getEventTarget() {
     return eventTarget;
   }
@@ -208,14 +171,6 @@ public class Context {
 
   public String getUserAgent() {
     return userAgent;
-  }
-
-  public String getPlatformVersion() {
-    return getPlatform().getPlatformVersion();
-  }
-
-  public String getSessionPersistenceKey() {
-    return this.persistenceKey;
   }
 
   public AuthTokenProvider getAuthTokenProvider() {
@@ -235,12 +190,6 @@ public class Context {
       throw new RuntimeException("Custom run loops are not supported!");
     }
     return ((DefaultRunLoop) loop).getExecutorService();
-  }
-
-  private void ensureLogger() {
-    if (logger == null) {
-      logger = getPlatform().newLogger(this, logLevel, loggedComponents);
-    }
   }
 
   private void ensureRunLoop() {

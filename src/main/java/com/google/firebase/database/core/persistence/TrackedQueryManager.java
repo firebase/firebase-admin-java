@@ -23,7 +23,6 @@ import com.google.firebase.database.core.utilities.ImmutableTree;
 import com.google.firebase.database.core.utilities.Predicate;
 import com.google.firebase.database.core.view.QueryParams;
 import com.google.firebase.database.core.view.QuerySpec;
-import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.utilities.Clock;
 import com.google.firebase.database.utilities.Utilities;
@@ -36,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.slf4j.Logger;
 
 public class TrackedQueryManager {
 
@@ -74,7 +74,7 @@ public class TrackedQueryManager {
       };
   // DB, where we permanently store tracked queries.
   private final PersistenceStorageEngine storageLayer;
-  private final LogWrapper logger;
+  private final Logger logger;
   private final Clock clock;
   // In-memory cache of tracked queries.  Should always be in-sync with the DB.
   private ImmutableTree<Map<QueryParams, TrackedQuery>> trackedQueryTree;
@@ -82,7 +82,7 @@ public class TrackedQueryManager {
   private long currentQueryId = 0;
 
   public TrackedQueryManager(
-      PersistenceStorageEngine storageLayer, LogWrapper logger, Clock clock) {
+      PersistenceStorageEngine storageLayer, Logger logger, Clock clock) {
     this.storageLayer = storageLayer;
     this.logger = logger;
     this.clock = clock;
@@ -226,13 +226,8 @@ public class TrackedQueryManager {
     long countToPrune = calculateCountToPrune(cachePolicy, prunable.size());
     PruneForest forest = new PruneForest();
 
-    if (logger.logsDebug()) {
-      logger.debug(
-          "Pruning old queries.  Prunable: "
-              + prunable.size()
-              + " Count to prune: "
-              + countToPrune);
-    }
+    logger.debug(
+        "Pruning old queries.  Prunable: {} Count to prune: {}", prunable.size(), countToPrune);
 
     Collections.sort(
         prunable,
@@ -257,9 +252,7 @@ public class TrackedQueryManager {
 
     // Also keep the unprunable queries.
     List<TrackedQuery> unprunable = getQueriesMatching(IS_QUERY_UNPRUNABLE_PREDICATE);
-    if (logger.logsDebug()) {
-      logger.debug("Unprunable queries: " + unprunable.size());
-    }
+    logger.debug("Unprunable queries: {}", unprunable.size());
     for (TrackedQuery toKeep : unprunable) {
       forest = forest.keep(toKeep.querySpec.getPath());
     }

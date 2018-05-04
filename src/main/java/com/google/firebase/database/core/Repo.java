@@ -38,7 +38,6 @@ import com.google.firebase.database.core.utilities.Tree;
 import com.google.firebase.database.core.view.Event;
 import com.google.firebase.database.core.view.EventRaiser;
 import com.google.firebase.database.core.view.QuerySpec;
-import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.snapshot.EmptyNode;
 import com.google.firebase.database.snapshot.IndexedNode;
@@ -54,6 +53,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Repo implements PersistentConnection.Delegate {
 
@@ -67,14 +68,14 @@ public class Repo implements PersistentConnection.Delegate {
 
   private static final String TRANSACTION_TOO_MANY_RETRIES = "maxretries";
   private static final String TRANSACTION_OVERRIDE_BY_SET = "overriddenBySet";
+
+  private static final Logger logger = LoggerFactory.getLogger(Repo.class);
+
   private final RepoInfo repoInfo;
   private final OffsetClock serverClock = new OffsetClock(new DefaultClock(), 0);
   private final PersistentConnection connection;
   private final EventRaiser eventRaiser;
   private final Context ctx;
-  private final LogWrapper operationLogger;
-  private final LogWrapper transactionLogger;
-  private final LogWrapper dataLogger;
   private SnapshotHolder infoData;
   private SparseSnapshotTree onDisconnect;
   private Tree<List<TransactionData>> transactionQueueTree;
@@ -90,11 +91,6 @@ public class Repo implements PersistentConnection.Delegate {
     this.repoInfo = repoInfo;
     this.ctx = ctx;
     this.database = database;
-
-    operationLogger = this.ctx.getLogger(Repo.class);
-    transactionLogger = this.ctx.getLogger(Repo.class.getName() + ".Transaction");
-    dataLogger = this.ctx.getLogger(Repo.class.getName() + ".DataOperation");
-
     this.eventRaiser = new EventRaiser(this.ctx);
 
     HostInfo hostInfo = new HostInfo(repoInfo.host, repoInfo.namespace, repoInfo.secure);
@@ -134,7 +130,7 @@ public class Repo implements PersistentConnection.Delegate {
           new AuthTokenProvider.TokenChangeListener() {
             @Override
             public void onTokenChange(String token) {
-              operationLogger.debug("Auth token changed, triggering auth token refresh");
+              logger.debug("Auth token changed, triggering auth token refresh");
               connection.refreshAuthToken(token);
             }
           });
@@ -150,7 +146,7 @@ public class Repo implements PersistentConnection.Delegate {
 
     transactionQueueTree = new Tree<>();
 
-    infoSyncTree = new SyncTree(ctx, new NoopPersistenceManager(),
+    infoSyncTree = new SyncTree(new NoopPersistenceManager(),
         new SyncTree.ListenProvider() {
           @Override
           public void startListening(
@@ -178,7 +174,7 @@ public class Repo implements PersistentConnection.Delegate {
           public void stopListening(QuerySpec query, Tag tag) {}
         });
 
-    serverSyncTree = new SyncTree(ctx, persistenceManager,
+    serverSyncTree = new SyncTree(persistenceManager,
         new SyncTree.ListenProvider() {
           @Override
           public void startListening(
@@ -263,12 +259,8 @@ public class Repo implements PersistentConnection.Delegate {
   public void onDataUpdate(
       List<String> pathSegments, Object message, boolean isMerge, Long optTag) {
     Path path = new Path(pathSegments);
-    if (operationLogger.logsDebug()) {
-      operationLogger.debug("onDataUpdate: " + path);
-    }
-    if (dataLogger.logsDebug()) {
-      operationLogger.debug("onDataUpdate: " + path + " " + message);
-    }
+    logger.debug("onDataUpdate: {} {}", path, message);
+
 
     List<? extends Event> events;
     try {
@@ -306,7 +298,7 @@ public class Repo implements PersistentConnection.Delegate {
 
       postEvents(events);
     } catch (DatabaseException e) {
-      operationLogger.error("FIREBASE INTERNAL ERROR", e);
+      logger.error("Firebase internal error", e);
     }
   }
 
@@ -316,12 +308,7 @@ public class Repo implements PersistentConnection.Delegate {
       List<com.google.firebase.database.connection.RangeMerge> merges,
       Long tagNumber) {
     Path path = new Path(pathSegments);
-    if (operationLogger.logsDebug()) {
-      operationLogger.debug("onRangeMergeUpdate: " + path);
-    }
-    if (dataLogger.logsDebug()) {
-      operationLogger.debug("onRangeMergeUpdate: " + path + " " + merges);
-    }
+    logger.debug("onRangeMergeUpdate: {} {}", path, merges);
 
     List<RangeMerge> parsedMerges = new ArrayList<>(merges.size());
     for (com.google.firebase.database.connection.RangeMerge merge : merges) {
@@ -383,12 +370,7 @@ public class Repo implements PersistentConnection.Delegate {
       final Path path,
       Node newValueUnresolved,
       final DatabaseReference.CompletionListener onComplete) {
-    if (operationLogger.logsDebug()) {
-      operationLogger.debug("set: " + path);
-    }
-    if (dataLogger.logsDebug()) {
-      dataLogger.debug("set: " + path + " " + newValueUnresolved);
-    }
+    logger.debug("set: {} {}", path, newValueUnresolved);
 
     Map<String, Object> serverValues = ServerValues.generateServerValues(serverClock);
     Node newValue = ServerValues.resolveDeferredValueSnapshot(newValueUnresolved, serverValues);
@@ -421,16 +403,9 @@ public class Repo implements PersistentConnection.Delegate {
       CompoundWrite updates,
       final DatabaseReference.CompletionListener onComplete,
       Map<String, Object> unParsedUpdates) {
-    if (operationLogger.logsDebug()) {
-      operationLogger.debug("update: " + path);
-    }
-    if (dataLogger.logsDebug()) {
-      dataLogger.debug("update: " + path + " " + unParsedUpdates);
-    }
+    logger.debug("update: {} {}", path, unParsedUpdates);
     if (updates.isEmpty()) {
-      if (operationLogger.logsDebug()) {
-        operationLogger.debug("update called with no changes. No-op");
-      }
+      logger.debug("update called with no changes. No-op");
       // dispatch on complete
       callOnComplete(onComplete, null, path);
       return;
@@ -468,9 +443,7 @@ public class Repo implements PersistentConnection.Delegate {
   }
 
   public void purgeOutstandingWrites() {
-    if (operationLogger.logsDebug()) {
-      operationLogger.debug("Purging writes");
-    }
+    logger.debug("Purging writes");
     List<? extends Event> events = serverSyncTree.removeAllWrites();
     postEvents(events);
     // Abort any transactions
@@ -619,7 +592,7 @@ public class Repo implements PersistentConnection.Delegate {
       List<? extends Event> events = this.infoSyncTree.applyServerOverwrite(path, node);
       this.postEvents(events);
     } catch (DatabaseException e) {
-      operationLogger.error("Failed to parse info update", e);
+      logger.error("Failed to parse info update", e);
     }
   }
 
@@ -652,21 +625,16 @@ public class Repo implements PersistentConnection.Delegate {
     if (error != null
         && !(error.getCode() == DatabaseError.DATA_STALE
         || error.getCode() == DatabaseError.WRITE_CANCELED)) {
-      operationLogger.warn(writeType + " at " + path.toString() + " failed: " + error.toString());
+      logger.warn(writeType + " at " + path.toString() + " failed: " + error.toString());
     }
   }
 
   public void startTransaction(Path path, final Transaction.Handler handler, boolean applyLocally) {
-    if (operationLogger.logsDebug()) {
-      operationLogger.debug("transaction: " + path);
-    }
-    if (dataLogger.logsDebug()) {
-      operationLogger.debug("transaction: " + path);
-    }
+    logger.debug("transaction: {}", path);
 
     if (this.ctx.isPersistenceEnabled() && !loggedTransactionPersistenceWarning) {
       loggedTransactionPersistenceWarning = true;
-      transactionLogger.info(
+      logger.info(
           "runTransaction() usage detected while persistence is enabled. Please be aware that "
               + "transactions *will not* be persisted across database restarts.  See "
               + "https://www.firebase.com/docs/android/guide/offline-capabilities.html"
@@ -1142,11 +1110,7 @@ public class Repo implements PersistentConnection.Delegate {
 
   private Path abortTransactions(Path path, final int reason) {
     Path affectedPath = getAncestorTransactionNode(path).getPath();
-
-    if (transactionLogger.logsDebug()) {
-      operationLogger.debug(
-          "Aborting transactions for path: " + path + ". Affected: " + affectedPath);
-    }
+    logger.debug("Aborting transactions for path: {}. Affected: {}", path, affectedPath);
 
     Tree<List<TransactionData>> transactionNode = transactionQueueTree.subTree(path);
     transactionNode.forEachAncestor(
@@ -1247,7 +1211,7 @@ public class Repo implements PersistentConnection.Delegate {
     try {
       handler.onComplete(error, committed, snapshot);
     } catch (Exception e) {
-      operationLogger.error("Exception in transaction onComplete callback", e);
+      logger.error("Exception in transaction onComplete callback", e);
     }
   }
 

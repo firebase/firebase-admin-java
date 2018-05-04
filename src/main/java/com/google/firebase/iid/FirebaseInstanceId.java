@@ -34,14 +34,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseRequestInitializer;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.internal.TaskToApiFuture;
-import com.google.firebase.tasks.Task;
 
+import java.io.IOException;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 /**
  * This class is the entry point for all server-side Firebase Instance ID actions.
@@ -118,37 +117,58 @@ public class FirebaseInstanceId {
    * pursuant to the General Data Protection Regulation (GDPR).
    *
    * @param instanceId A non-null, non-empty instance ID string.
-   * @return An {@code ApiFuture} which will complete successfully when the instance ID is deleted,
-   *     or unsuccessfully with the failure Exception..
+   * @throws IllegalArgumentException If the instance ID is null or empty.
+   * @throws FirebaseInstanceIdException If an error occurs while deleting the instance ID.
    */
-  public ApiFuture<Void> deleteInstanceIdAsync(@NonNull String instanceId) {
-    return new TaskToApiFuture<>(deleteInstanceId(instanceId));
+  public void deleteInstanceId(@NonNull String instanceId) throws FirebaseInstanceIdException {
+    deleteInstanceIdOp(instanceId).call();
   }
 
-  private Task<Void> deleteInstanceId(final String instanceId) {
+  /**
+   * Similar to {@link #deleteInstanceId(String)} but performs the operation asynchronously.
+   *
+   * @param instanceId A non-null, non-empty instance ID string.
+   * @return An {@code ApiFuture} which will complete successfully when the instance ID is deleted,
+   *     or unsuccessfully with the failure Exception.
+   * @throws IllegalArgumentException If the instance ID is null or empty.
+   */
+  public ApiFuture<Void> deleteInstanceIdAsync(@NonNull String instanceId) {
+    return deleteInstanceIdOp(instanceId).callAsync(app);
+  }
+
+  private CallableOperation<Void, FirebaseInstanceIdException> deleteInstanceIdOp(
+      final String instanceId) {
     checkArgument(!Strings.isNullOrEmpty(instanceId), "instance ID must not be null or empty");
-    return ImplFirebaseTrampolines.submitCallable(app, new Callable<Void>(){
+    return new CallableOperation<Void, FirebaseInstanceIdException>() {
       @Override
-      public Void call() throws Exception {
+      protected Void execute() throws FirebaseInstanceIdException {
         String url = String.format(
             "%s/project/%s/instanceId/%s", IID_SERVICE_URL, projectId, instanceId);
-        HttpRequest request = requestFactory.buildDeleteRequest(new GenericUrl(url));
-        request.setParser(new JsonObjectParser(jsonFactory));
-        request.setResponseInterceptor(interceptor);
         HttpResponse response = null;
         try {
+          HttpRequest request = requestFactory.buildDeleteRequest(new GenericUrl(url));
+          request.setParser(new JsonObjectParser(jsonFactory));
+          request.setResponseInterceptor(interceptor);
           response = request.execute();
           ByteStreams.exhaust(response.getContent());
         } catch (Exception e) {
           handleError(instanceId, e);
         } finally {
-          if (response != null) {
-            response.disconnect();
-          }
+          disconnectQuietly(response);
         }
         return null;
       }
-    });
+    };
+  }
+
+  private static void disconnectQuietly(HttpResponse response) {
+    if (response != null) {
+      try {
+        response.disconnect();
+      } catch (IOException ignored) {
+        // ignored
+      }
+    }
   }
 
   private void handleError(String instanceId, Exception e) throws FirebaseInstanceIdException {

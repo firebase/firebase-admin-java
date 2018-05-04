@@ -37,7 +37,6 @@ import com.google.firebase.database.core.view.DataEvent;
 import com.google.firebase.database.core.view.Event;
 import com.google.firebase.database.core.view.QuerySpec;
 import com.google.firebase.database.core.view.View;
-import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.snapshot.CompoundHash;
 import com.google.firebase.database.snapshot.EmptyNode;
@@ -57,6 +56,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * SyncTree is the central class for managing event callback registration, data caching, views
@@ -80,6 +81,9 @@ public class SyncTree {
 
   // Size after which we start including the compound hash
   private static final long SIZE_THRESHOLD_FOR_COMPOUND_HASH = 1024;
+
+  private static final Logger logger = LoggerFactory.getLogger(SyncTree.class);
+
   /**
    * A tree of all pending user writes (user-initiated set()'s, transaction()'s, update()'s, etc.).
    */
@@ -90,14 +94,13 @@ public class SyncTree {
   private final Set<QuerySpec> keepSyncedQueries;
   private final ListenProvider listenProvider;
   private final PersistenceManager persistenceManager;
-  private final LogWrapper logger;
   /** Tree of SyncPoints. There's a SyncPoint at any location that has 1 or more views. */
   private ImmutableTree<SyncPoint> syncPointTree;
   /** Static tracker for next query tag. */
   private long nextQueryTag = 1L;
 
   public SyncTree(
-      Context context, PersistenceManager persistenceManager, ListenProvider listenProvider) {
+      PersistenceManager persistenceManager, ListenProvider listenProvider) {
     this.syncPointTree = ImmutableTree.emptyInstance();
     this.pendingWriteTree = new WriteTree();
     this.tagToQueryMap = new HashMap<>();
@@ -105,7 +108,6 @@ public class SyncTree {
     this.keepSyncedQueries = new HashSet<>();
     this.listenProvider = listenProvider;
     this.persistenceManager = persistenceManager;
-    this.logger = context.getLogger(SyncTree.class);
   }
 
   public boolean isEmpty() {
@@ -968,7 +970,7 @@ public class SyncTree {
           return SyncTree.this.applyListenComplete(query.getPath());
         }
       } else {
-        logger.warn("Listen at " + view.getQuery().getPath() + " failed: " + error.toString());
+        logger.warn("Listen at {} failed: {}", view.getQuery().getPath(), error);
 
         // If a listen failed, kill all of the listeners here, not just the one that triggered the
         // error. Note that this may need to be scoped to just this listener if we change

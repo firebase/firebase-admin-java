@@ -28,8 +28,6 @@ import com.google.firebase.database.utilities.Pair;
 import com.google.firebase.database.utilities.Utilities;
 import com.google.firebase.database.utilities.Validation;
 import com.google.firebase.database.utilities.encoding.CustomClassMapper;
-import com.google.firebase.internal.TaskToApiFuture;
-import com.google.firebase.tasks.Task;
 
 import java.util.Map;
 
@@ -50,41 +48,6 @@ public class OnDisconnect {
   OnDisconnect(Repo repo, Path path) {
     this.repo = repo;
     this.path = path;
-  }
-
-  /**
-   * Similar to {@link #setValueAsync(Object)}, but returns a Task.
-   *
-   * @param value The value to be set when a disconnect occurs
-   * @return The {@link Task} for this operation.
-   * @deprecated Use {@link #setValueAsync(Object)}
-   */
-  public Task<Void> setValue(Object value) {
-    return onDisconnectSetInternal(value, PriorityUtilities.NullPriority(), null);
-  }
-
-  /**
-   * Similar to {@link #setValueAsync(Object, String)}, but returns a Task.
-   *
-   * @param value The value to be set when a disconnect occurs
-   * @param priority The priority to be set when a disconnect occurs
-   * @return The {@link Task} for this operation.
-   * @deprecated Use {@link #setValueAsync(Object, String)}
-   */
-  public Task<Void> setValue(Object value, String priority) {
-    return onDisconnectSetInternal(value, PriorityUtilities.parsePriority(path, priority), null);
-  }
-
-  /**
-   * Similar to {@link #setValueAsync(Object, double)}, but returns a Task.
-   *
-   * @param value The value to be set when a disconnect occurs
-   * @param priority The priority to be set when a disconnect occurs
-   * @return The {@link Task} for this operation.
-   * @deprecated Use {@link #setValueAsync(Object, double)}
-   */
-  public Task<Void> setValue(Object value, double priority) {
-    return onDisconnectSetInternal(value, PriorityUtilities.parsePriority(path, priority), null);
   }
 
   /**
@@ -157,7 +120,7 @@ public class OnDisconnect {
    * @return The ApiFuture for this operation.
    */
   public ApiFuture<Void> setValueAsync(Object value) {
-    return new TaskToApiFuture<>(setValue(value));
+    return onDisconnectSetInternal(value, PriorityUtilities.NullPriority(), null);
   }
 
   /**
@@ -172,7 +135,7 @@ public class OnDisconnect {
    * @return The ApiFuture for this operation.
    */
   public ApiFuture<Void> setValueAsync(Object value, String priority) {
-    return new TaskToApiFuture<>(setValue(value, priority));
+    return onDisconnectSetInternal(value, PriorityUtilities.parsePriority(path, priority), null);
   }
 
   /**
@@ -187,17 +150,17 @@ public class OnDisconnect {
    * @return The ApiFuture for this operation.
    */
   public ApiFuture<Void> setValueAsync(Object value, double priority) {
-    return new TaskToApiFuture<>(setValue(value, priority));
+    return onDisconnectSetInternal(value, PriorityUtilities.parsePriority(path, priority), null);
   }
 
-  private Task<Void> onDisconnectSetInternal(
+  private ApiFuture<Void> onDisconnectSetInternal(
       Object value, Node priority, final CompletionListener optListener) {
     Validation.validateWritablePath(path);
     ValidationPath.validateWithObject(path, value);
     Object bouncedValue = CustomClassMapper.convertToPlainJavaTypes(value);
     Validation.validateWritableObject(bouncedValue);
     final Node node = NodeUtilities.NodeFromJSON(bouncedValue, priority);
-    final Pair<Task<Void>, CompletionListener> wrapped = Utilities.wrapOnComplete(optListener);
+    final Pair<ApiFuture<Void>, CompletionListener> wrapped = Utilities.wrapOnComplete(optListener);
     repo.scheduleNow(
         new Runnable() {
           @Override
@@ -209,17 +172,6 @@ public class OnDisconnect {
   }
 
   // Update
-
-  /**
-   * Similar to {@link #updateChildrenAsync(Map)}, but returns a Task.
-   *
-   * @param update The paths to update, along with their desired values
-   * @return The {@link Task} for this operation.
-   * @deprecated Use {@link #updateChildrenAsync(Map)}
-   */
-  public Task<Void> updateChildren(Map<String, Object> update) {
-    return updateChildrenInternal(update, null);
-  }
 
   /**
    * Ensure the data has the specified child values updated when the client is disconnected
@@ -238,13 +190,13 @@ public class OnDisconnect {
    * @return The ApiFuture for this operation.
    */
   public ApiFuture<Void> updateChildrenAsync(Map<String, Object> update) {
-    return new TaskToApiFuture<>(updateChildren(update));
+    return updateChildrenInternal(update, null);
   }
 
-  private Task<Void> updateChildrenInternal(
+  private ApiFuture<Void> updateChildrenInternal(
       final Map<String, Object> update, final CompletionListener optListener) {
     final Map<Path, Node> parsedUpdate = Validation.parseAndValidateUpdate(path, update);
-    final Pair<Task<Void>, CompletionListener> wrapped = Utilities.wrapOnComplete(optListener);
+    final Pair<ApiFuture<Void>, CompletionListener> wrapped = Utilities.wrapOnComplete(optListener);
     repo.scheduleNow(
         new Runnable() {
           @Override
@@ -256,16 +208,6 @@ public class OnDisconnect {
   }
 
   // Remove
-
-  /**
-   * Similar to {@link #removeValueAsync()}, but returns a Task.
-   *
-   * @return The {@link Task} for this operation.
-   * @deprecated Use {@link #removeValueAsync()}
-   */
-  public Task<Void> removeValue() {
-    return setValue(null);
-  }
 
   /**
    * Remove the value at this location when the client disconnects
@@ -282,20 +224,10 @@ public class OnDisconnect {
    * @return The ApiFuture for this operation.
    */
   public ApiFuture<Void> removeValueAsync() {
-    return new TaskToApiFuture<>(removeValue());
+    return setValueAsync(null);
   }
 
   // Cancel the operation
-
-  /**
-   * Similar to {@link #cancelAsync()} ()}, but returns a Task.
-   *
-   * @return The {@link Task} for this operation.
-   * @deprecated Use {@link #cancelAsync()}.
-   */
-  public Task<Void> cancel() {
-    return cancelInternal(null);
-  }
 
   /**
    * Cancel any disconnect operations that are queued up at this location
@@ -312,11 +244,11 @@ public class OnDisconnect {
    * @return The ApiFuture for this operation.
    */
   public ApiFuture<Void> cancelAsync() {
-    return new TaskToApiFuture<>(cancel());
+    return cancelInternal(null);
   }
 
-  private Task<Void> cancelInternal(final CompletionListener optListener) {
-    final Pair<Task<Void>, CompletionListener> wrapped = Utilities.wrapOnComplete(optListener);
+  private ApiFuture<Void> cancelInternal(final CompletionListener optListener) {
+    final Pair<ApiFuture<Void>, CompletionListener> wrapped = Utilities.wrapOnComplete(optListener);
     repo.scheduleNow(
         new Runnable() {
           @Override

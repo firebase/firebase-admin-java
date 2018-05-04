@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import com.google.api.client.auth.openidconnect.IdToken;
-import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.http.LowLevelHttpRequest;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -58,7 +57,10 @@ public class FirebaseTokenVerifierTest {
   private static final JsonFactory FACTORY = new GsonFactory();
   private static final FixedClock CLOCK = new FixedClock(2002000L * 1000);
   private static final String PROJECT_ID = "proj-test-101";
-  private static final String ISSUER = "https://securetoken.google.com/" + PROJECT_ID;
+  private static final String TOKEN_ISSUER =
+      FirebaseTokenVerifier.ID_TOKEN_ISSUER_PREFIX + PROJECT_ID;
+  private static final String COOKIE_ISSUER =
+      FirebaseTokenVerifier.SESSION_COOKIE_ISSUER_PREFIX + PROJECT_ID;
   private static final String PRIVATE_KEY_ID = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd";
   private static final String UID = "someUid";
   private static final String ALGORITHM = "RS256";
@@ -68,9 +70,12 @@ public class FirebaseTokenVerifierTest {
           + "yc3R1dnd4eXpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWiwuLzsnW11cXDw"
           + "-P1wie318In0sInYiOjAsImlhdCI6MTQ4MDk4Mj"
           + "U2NH0.ZWEpoHgIPCAz8Q-cNFBS8jiqClTJ3j27yuRkQo-QxyI";
+
   @Rule public ExpectedException thrown = ExpectedException.none();
+
   private PrivateKey privateKey;
-  private FirebaseTokenVerifier verifier;
+  private FirebaseTokenVerifier idTokenVerifier;
+  private FirebaseTokenVerifier cookieVerifier;
 
   private void initCrypto(String privateKey, String certificate)
       throws NoSuchAlgorithmException, InvalidKeySpecException {
@@ -84,17 +89,12 @@ public class FirebaseTokenVerifierTest {
             .setLowLevelHttpResponse(
                 new MockLowLevelHttpResponse().setContent(serviceAccountCertificates))
             .build();
+    KeyManagers keyManagers = KeyManagers.getDefault(mockTransport, CLOCK);
     this.privateKey = KeyFactory.getInstance("RSA").generatePrivate(spec);
-    this.verifier =
-        new FirebaseTokenVerifier.Builder()
-            .setClock(CLOCK)
-            .setPublicKeysManager(
-                new GooglePublicKeysManager.Builder(mockTransport, FACTORY)
-                    .setClock(CLOCK)
-                    .setPublicCertsEncodedUrl(FirebaseTokenVerifier.CLIENT_CERT_URL)
-                    .build())
-            .setProjectId(PROJECT_ID)
-            .build();
+    this.idTokenVerifier = FirebaseTokenVerifier.createIdTokenVerifier(
+        PROJECT_ID, keyManagers, CLOCK);
+    this.cookieVerifier = FirebaseTokenVerifier.createSessionCookieVerifier(
+        PROJECT_ID, keyManagers, CLOCK);
   }
 
   @Before
@@ -102,7 +102,7 @@ public class FirebaseTokenVerifierTest {
     initCrypto(ServiceAccount.EDITOR.getPrivateKey(), ServiceAccount.EDITOR.getCert());
   }
 
-  private JsonWebSignature.Header createHeader() throws Exception {
+  private JsonWebSignature.Header createHeader() {
     JsonWebSignature.Header header = new JsonWebSignature.Header();
     header.setAlgorithm(ALGORITHM);
     header.setType("JWT");
@@ -110,9 +110,19 @@ public class FirebaseTokenVerifierTest {
     return header;
   }
 
-  private JsonWebToken.Payload createPayload() {
+  private JsonWebToken.Payload createTokenPayload() {
     JsonWebToken.Payload payload = new JsonWebToken.Payload();
-    payload.setIssuer(ISSUER);
+    payload.setIssuer(TOKEN_ISSUER);
+    payload.setAudience(PROJECT_ID);
+    payload.setIssuedAtTimeSeconds(CLOCK.currentTimeMillis() / 1000);
+    payload.setExpirationTimeSeconds(CLOCK.currentTimeMillis() / 1000 + 3600);
+    payload.setSubject(UID);
+    return payload;
+  }
+
+  private JsonWebToken.Payload createCookiePayload() {
+    JsonWebToken.Payload payload = new JsonWebToken.Payload();
+    payload.setIssuer(COOKIE_ISSUER);
     payload.setAudience(PROJECT_ID);
     payload.setIssuedAtTimeSeconds(CLOCK.currentTimeMillis() / 1000);
     payload.setExpirationTimeSeconds(CLOCK.currentTimeMillis() / 1000 + 3600);
@@ -129,13 +139,36 @@ public class FirebaseTokenVerifierTest {
   public void verifyToken() throws Exception {
     FirebaseToken token =
         TestOnlyImplFirebaseAuthTrampolines.parseToken(
-            FACTORY, createToken(createHeader(), createPayload()));
+            FACTORY, createToken(createHeader(), createTokenPayload()));
 
     IdToken.Payload payload = (IdToken.Payload) token.getClaims();
     assertTrue(payload.getAudienceAsList().contains(PROJECT_ID));
-    assertEquals(ISSUER, payload.getIssuer());
+    assertEquals(TOKEN_ISSUER, payload.getIssuer());
+    idTokenVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
 
-    verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+    token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(
+            FACTORY, createToken(createHeader(), createCookiePayload()));
+    thrown.expectMessage("Firebase ID token has incorrect \"iss\" (issuer) claim.");
+    idTokenVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+  }
+
+  @Test
+  public void verifyCookie() throws Exception {
+    FirebaseToken token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(
+            FACTORY, createToken(createHeader(), createCookiePayload()));
+
+    IdToken.Payload payload = (IdToken.Payload) token.getClaims();
+    assertTrue(payload.getAudienceAsList().contains(PROJECT_ID));
+    assertEquals(COOKIE_ISSUER, payload.getIssuer());
+    cookieVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+
+    token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(
+            FACTORY, createToken(createHeader(), createTokenPayload()));
+    thrown.expectMessage("Firebase session cookie has incorrect \"iss\" (issuer) claim.");
+    cookieVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
   }
 
   @Test
@@ -144,23 +177,49 @@ public class FirebaseTokenVerifierTest {
     header.setKeyId(null);
     FirebaseToken token =
         TestOnlyImplFirebaseAuthTrampolines.parseToken(
-            FACTORY, createToken(header, createPayload()));
+            FACTORY, createToken(header, createTokenPayload()));
     thrown.expectMessage("Firebase ID token has no \"kid\" claim.");
-    verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+    idTokenVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+  }
+
+  @Test
+  public void verifyCookieFailure_MissingKeyId() throws Exception {
+    Header header = createHeader();
+    header.setKeyId(null);
+    FirebaseToken token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(
+            FACTORY, createToken(header, createCookiePayload()));
+    thrown.expectMessage("Firebase session cookie has no \"kid\" claim.");
+    cookieVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
   }
 
   @Test
   public void verifyTokenFailure_MissingKeyId_CustomToken() throws Exception {
     Header header = createHeader();
     header.setKeyId(null);
-    Payload payload = createPayload();
+    Payload payload = createTokenPayload();
     payload.setAudience(
         "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit"
             + ".v1.IdentityToolkit");
     FirebaseToken token =
         TestOnlyImplFirebaseAuthTrampolines.parseToken(FACTORY, createToken(header, payload));
     thrown.expectMessage("verifyIdToken() expects an ID token, but was given a custom token.");
-    verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+    idTokenVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+  }
+
+  @Test
+  public void verifyCookieFailure_MissingKeyId_CustomToken() throws Exception {
+    Header header = createHeader();
+    header.setKeyId(null);
+    Payload payload = createCookiePayload();
+    payload.setAudience(
+        "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit"
+            + ".v1.IdentityToolkit");
+    FirebaseToken token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(FACTORY, createToken(header, payload));
+    thrown.expectMessage(
+        "verifySessionCookie() expects a session cookie, but was given a custom token.");
+    cookieVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
   }
 
   @Test
@@ -169,14 +228,25 @@ public class FirebaseTokenVerifierTest {
     header.setAlgorithm("HS256");
     FirebaseToken token =
         TestOnlyImplFirebaseAuthTrampolines.parseToken(
-            FACTORY, createToken(header, createPayload()));
+            FACTORY, createToken(header, createTokenPayload()));
     thrown.expectMessage("Firebase ID token has incorrect algorithm.");
-    verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+    idTokenVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+  }
+
+  @Test
+  public void verifyCookieFailure_IncorrectAlgorithm() throws Exception {
+    Header header = createHeader();
+    header.setAlgorithm("HS256");
+    FirebaseToken token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(
+            FACTORY, createToken(header, createCookiePayload()));
+    thrown.expectMessage("Firebase session cookie has incorrect algorithm.");
+    cookieVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
   }
 
   @Test
   public void verifyTokenFailure_IncorrectAudience() throws Exception {
-    Payload payload = createPayload();
+    Payload payload = createTokenPayload();
     payload.setAudience(
         "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1."
             + "IdentityToolkit");
@@ -184,45 +254,91 @@ public class FirebaseTokenVerifierTest {
         TestOnlyImplFirebaseAuthTrampolines.parseToken(
             FACTORY, createToken(createHeader(), payload));
     thrown.expectMessage("Firebase ID token has incorrect \"aud\" (audience) claim.");
-    verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+    idTokenVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+  }
+
+  @Test
+  public void verifyCookieFailure_IncorrectAudience() throws Exception {
+    Payload payload = createCookiePayload();
+    payload.setAudience(
+        "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1."
+            + "IdentityToolkit");
+    FirebaseToken token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(
+            FACTORY, createToken(createHeader(), payload));
+    thrown.expectMessage("Firebase session cookie has incorrect \"aud\" (audience) claim.");
+    cookieVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
   }
 
   @Test
   public void verifyTokenFailure_IncorrectIssuer() throws Exception {
-    Payload payload = createPayload();
+    Payload payload = createTokenPayload();
     payload.setIssuer("https://foobar.google.com/" + PROJECT_ID);
     FirebaseToken token =
         TestOnlyImplFirebaseAuthTrampolines.parseToken(
             FACTORY, createToken(createHeader(), payload));
     thrown.expectMessage("Firebase ID token has incorrect \"iss\" (issuer) claim.");
-    verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+    idTokenVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+  }
+
+  @Test
+  public void verifyCookieFailure_IncorrectIssuer() throws Exception {
+    Payload payload = createCookiePayload();
+    payload.setIssuer("https://foobar.google.com/" + PROJECT_ID);
+    FirebaseToken token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(
+            FACTORY, createToken(createHeader(), payload));
+    thrown.expectMessage("Firebase session cookie has incorrect \"iss\" (issuer) claim.");
+    cookieVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
   }
 
   @Test
   public void verifyTokenFailure_MissingSubject() throws Exception {
-    Payload payload = createPayload();
+    Payload payload = createTokenPayload();
     payload.setSubject(null);
     FirebaseToken token =
         TestOnlyImplFirebaseAuthTrampolines.parseToken(
             FACTORY, createToken(createHeader(), payload));
     thrown.expectMessage("Firebase ID token has no \"sub\" (subject) claim.");
-    verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+    idTokenVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+  }
+
+  @Test
+  public void verifyCookieFailure_MissingSubject() throws Exception {
+    Payload payload = createCookiePayload();
+    payload.setSubject(null);
+    FirebaseToken token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(
+            FACTORY, createToken(createHeader(), payload));
+    thrown.expectMessage("Firebase session cookie has no \"sub\" (subject) claim.");
+    cookieVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
   }
 
   @Test
   public void verifyTokenFailure_EmptySubject() throws Exception {
-    Payload payload = createPayload();
+    Payload payload = createTokenPayload();
     payload.setSubject("");
     FirebaseToken token =
         TestOnlyImplFirebaseAuthTrampolines.parseToken(
             FACTORY, createToken(createHeader(), payload));
     thrown.expectMessage("Firebase ID token has an empty string \"sub\" (subject) claim.");
-    verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+    idTokenVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+  }
+
+  @Test
+  public void verifyCookieFailure_EmptySubject() throws Exception {
+    Payload payload = createCookiePayload();
+    payload.setSubject("");
+    FirebaseToken token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(
+            FACTORY, createToken(createHeader(), payload));
+    thrown.expectMessage("Firebase session cookie has an empty string \"sub\" (subject) claim.");
+    cookieVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
   }
 
   @Test
   public void verifyTokenFailure_LongSubject() throws Exception {
-    Payload payload = createPayload();
+    Payload payload = createTokenPayload();
     payload.setSubject(
         "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv"
             + "wxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
@@ -231,31 +347,69 @@ public class FirebaseTokenVerifierTest {
             FACTORY, createToken(createHeader(), payload));
     thrown.expectMessage(
         "Firebase ID token has \"sub\" (subject) claim longer than 128 characters.");
-    verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+    idTokenVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+  }
+
+  @Test
+  public void verifyCookieFailure_LongSubject() throws Exception {
+    Payload payload = createCookiePayload();
+    payload.setSubject(
+        "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuv"
+            + "wxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz");
+    FirebaseToken token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(
+            FACTORY, createToken(createHeader(), payload));
+    thrown.expectMessage(
+        "Firebase session cookie has \"sub\" (subject) claim longer than 128 characters.");
+    cookieVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
   }
 
   @Test
   public void verifyTokenFailure_NotYetIssued() throws Exception {
-    Payload payload = createPayload();
+    Payload payload = createTokenPayload();
     payload.setIssuedAtTimeSeconds(System.currentTimeMillis() / 1000);
     payload.setExpirationTimeSeconds(System.currentTimeMillis() / 1000 + 3600);
     FirebaseToken token =
         TestOnlyImplFirebaseAuthTrampolines.parseToken(
             FACTORY, createToken(createHeader(), payload));
     thrown.expectMessage("Firebase ID token has expired or is not yet valid.");
-    verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+    idTokenVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+  }
+
+  @Test
+  public void verifyCookieFailure_NotYetIssued() throws Exception {
+    Payload payload = createCookiePayload();
+    payload.setIssuedAtTimeSeconds(System.currentTimeMillis() / 1000);
+    payload.setExpirationTimeSeconds(System.currentTimeMillis() / 1000 + 3600);
+    FirebaseToken token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(
+            FACTORY, createToken(createHeader(), payload));
+    thrown.expectMessage("Firebase session cookie has expired or is not yet valid.");
+    cookieVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
   }
 
   @Test
   public void verifyTokenFailure_Expired() throws Exception {
-    Payload payload = createPayload();
+    Payload payload = createTokenPayload();
     payload.setIssuedAtTimeSeconds(0L);
     payload.setExpirationTimeSeconds(3600L);
     FirebaseToken token =
         TestOnlyImplFirebaseAuthTrampolines.parseToken(
             FACTORY, createToken(createHeader(), payload));
     thrown.expectMessage("Firebase ID token has expired or is not yet valid.");
-    verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+    idTokenVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+  }
+
+  @Test
+  public void verifyCookieFailure_Expired() throws Exception {
+    Payload payload = createCookiePayload();
+    payload.setIssuedAtTimeSeconds(0L);
+    payload.setExpirationTimeSeconds(3600L);
+    FirebaseToken token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(
+            FACTORY, createToken(createHeader(), payload));
+    thrown.expectMessage("Firebase session cookie has expired or is not yet valid.");
+    cookieVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
   }
 
   @Test
@@ -263,16 +417,22 @@ public class FirebaseTokenVerifierTest {
     initCrypto(ServiceAccount.OWNER.getPrivateKey(), ServiceAccount.NONE.getCert());
     FirebaseToken token =
         TestOnlyImplFirebaseAuthTrampolines.parseToken(
-            FACTORY, createToken(createHeader(), createPayload()));
+            FACTORY, createToken(createHeader(), createTokenPayload()));
     thrown.expectMessage("Firebase ID token isn't signed by a valid public key.");
-    verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+    idTokenVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+
+    token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(
+            FACTORY, createToken(createHeader(), createCookiePayload()));
+    thrown.expectMessage("Firebase session cookie isn't signed by a valid public key.");
+    cookieVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
   }
 
   @Test
   public void verifyTokenCertificateError() throws Exception {
     FirebaseToken token =
         TestOnlyImplFirebaseAuthTrampolines.parseToken(
-            FACTORY, createToken(createHeader(), createPayload()));
+            FACTORY, createToken(createHeader(), createTokenPayload()));
 
     MockHttpTransport mockTransport = new MockHttpTransport() {
       @Override
@@ -280,15 +440,21 @@ public class FirebaseTokenVerifierTest {
         throw new IOException("Expected error");
       }
     };
-    FirebaseTokenVerifier verifier = new FirebaseTokenVerifier.Builder()
-        .setClock(CLOCK)
-        .setPublicKeysManager(
-            new GooglePublicKeysManager.Builder(mockTransport, FACTORY)
-                .setClock(CLOCK)
-                .setPublicCertsEncodedUrl(FirebaseTokenVerifier.CLIENT_CERT_URL)
-                .build())
-        .setProjectId(PROJECT_ID)
-        .build();
+    KeyManagers keyManagers = KeyManagers.getDefault(mockTransport, CLOCK);
+    FirebaseTokenVerifier verifier = FirebaseTokenVerifier.createIdTokenVerifier(
+        PROJECT_ID, keyManagers, CLOCK);
+    try {
+      verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+      Assert.fail("No exception thrown");
+    } catch (FirebaseAuthException expected) {
+      assertTrue(expected.getCause() instanceof IOException);
+      assertEquals("Expected error", expected.getCause().getMessage());
+    }
+
+    token =
+        TestOnlyImplFirebaseAuthTrampolines.parseToken(
+            FACTORY, createToken(createHeader(), createCookiePayload()));
+    verifier = FirebaseTokenVerifier.createSessionCookieVerifier(PROJECT_ID, keyManagers, CLOCK);
     try {
       verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
       Assert.fail("No exception thrown");
@@ -305,6 +471,6 @@ public class FirebaseTokenVerifierTest {
         TestOnlyImplFirebaseAuthTrampolines.parseToken(FACTORY, LEGACY_CUSTOM_TOKEN);
     thrown.expectMessage(
         "verifyIdToken() expects an ID token, but was given a legacy custom token.");
-    verifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
+    idTokenVerifier.verifyTokenAndSignature(TestOnlyImplFirebaseAuthTrampolines.getToken(token));
   }
 }

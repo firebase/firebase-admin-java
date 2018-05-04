@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package com.google.firebase.tasks;
+package com.google.firebase.internal;
 
-import com.google.firebase.internal.NonNull;
+import com.google.api.core.ApiFuture;
+import com.google.common.util.concurrent.ForwardingListenableFuture.SimpleForwardingListenableFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 
 /**
- * A listener that is called upon {@link Task} completion.
- *
- * @param <T> Task result type.
+ * Adapter from Guava ListenableFuture to GAX ApiFuture.
  */
-interface TaskCompletionListener<T> {
+public class ListenableFuture2ApiFuture<V> extends SimpleForwardingListenableFuture<V> implements
+    ApiFuture<V> {
 
-  void onComplete(@NonNull Task<T> task);
-
-  void cancel();
+  public ListenableFuture2ApiFuture(ListenableFuture<V> delegate) {
+    super(delegate);
+  }
 }

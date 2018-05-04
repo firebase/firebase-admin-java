@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Test;
 
@@ -406,6 +407,80 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testCreateSessionCookie() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("createSessionCookie.json"));
+    SessionCookieOptions options = SessionCookieOptions.builder()
+        .setExpiresIn(TimeUnit.HOURS.toMillis(1))
+        .build();
+    String cookie = FirebaseAuth.getInstance().createSessionCookieAsync("testToken", options).get();
+    assertEquals("MockCookieString", cookie);
+    checkRequestHeaders(interceptor);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(2, parsed.size());
+    assertEquals("testToken", parsed.get("idToken"));
+    assertEquals(new BigDecimal(3600), parsed.get("validDuration"));
+  }
+
+  @Test
+  public void testCreateSessionCookieInvalidArguments() {
+    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(credentials)
+        .build());
+    SessionCookieOptions options = SessionCookieOptions.builder()
+        .setExpiresIn(TimeUnit.HOURS.toMillis(1))
+        .build();
+    try {
+      FirebaseAuth.getInstance().createSessionCookieAsync(null, options);
+      fail("No error thrown for null id token");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+
+    try {
+      FirebaseAuth.getInstance().createSessionCookieAsync("", options);
+      fail("No error thrown for empty id token");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+
+    try {
+      FirebaseAuth.getInstance().createSessionCookieAsync("idToken", null);
+      fail("No error thrown for null options");
+    } catch (NullPointerException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testInvalidSessionCookieOptions() {
+    try {
+      SessionCookieOptions.builder().build();
+      fail("No error thrown for unspecified expiresIn");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+
+    try {
+      SessionCookieOptions.builder().setExpiresIn(TimeUnit.SECONDS.toMillis(299)).build();
+      fail("No error thrown for low expiresIn");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+
+    try {
+      SessionCookieOptions.builder().setExpiresIn(TimeUnit.DAYS.toMillis(14) + 1).build();
+      fail("No error thrown for high expiresIn");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
   public void testGetUserHttpError() throws Exception {
     List<UserManagerOp> operations = ImmutableList.<UserManagerOp>builder()
         .add(new UserManagerOp() {
@@ -471,7 +546,7 @@ public class FirebaseUserManagerTest {
           operation.call(FirebaseAuth.getInstance());
           fail("No error thrown for HTTP error: " + code);
         } catch (ExecutionException e) {
-          assertTrue(e.getCause().toString(), e.getCause() instanceof FirebaseAuthException);
+          assertTrue(e.getCause() instanceof FirebaseAuthException);
           FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
           String msg = String.format("Unexpected HTTP response with status: %d; body: {}", code);
           assertEquals(msg, authException.getMessage());

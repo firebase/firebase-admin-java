@@ -17,7 +17,6 @@
 package com.google.firebase.database.connection;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.connection.Connection.Delegate;
 import com.google.firebase.database.connection.Connection.DisconnectReason;
 import com.google.firebase.database.connection.Connection.WebsocketConnectionFactory;
@@ -187,7 +186,6 @@ public class ConnectionTest {
 
     MockConnectionFactory() {
       this.connection = new Connection(
-          TestHelpers.newConnectionContext(executor),
           Mockito.mock(HostInfo.class),
           delegate,
           this);

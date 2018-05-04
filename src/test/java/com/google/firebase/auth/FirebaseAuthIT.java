@@ -52,6 +52,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -387,6 +388,42 @@ public class FirebaseAuthIT {
     decoded = auth.verifyIdTokenAsync(idToken, true).get();
     assertEquals("user2", decoded.getUid());    
     auth.deleteUserAsync("user2");
+  }
+
+  @Test
+  public void testVerifySessionCookie() throws Exception {
+    String customToken = auth.createCustomTokenAsync("user3").get();
+    String idToken = signInWithCustomToken(customToken);
+
+    SessionCookieOptions options = SessionCookieOptions.builder()
+        .setExpiresIn(TimeUnit.HOURS.toMillis(1))
+        .build();
+    String sessionCookie = auth.createSessionCookieAsync(idToken, options).get();
+    assertFalse(Strings.isNullOrEmpty(sessionCookie));
+
+    FirebaseToken decoded = auth.verifySessionCookieAsync(sessionCookie).get();
+    assertEquals("user3", decoded.getUid());
+    decoded = auth.verifySessionCookieAsync(sessionCookie, true).get();
+    assertEquals("user3", decoded.getUid());
+    Thread.sleep(1000);
+
+    auth.revokeRefreshTokensAsync("user3").get();
+    decoded = auth.verifySessionCookieAsync(sessionCookie, false).get();
+    assertEquals("user3", decoded.getUid());
+    try {
+      auth.verifySessionCookieAsync(sessionCookie, true).get();
+      fail("expecting exception");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertEquals(FirebaseUserManager.SESSION_COOKIE_REVOKED_ERROR,
+          ((FirebaseAuthException) e.getCause()).getErrorCode());
+    }
+
+    idToken = signInWithCustomToken(customToken);
+    sessionCookie = auth.createSessionCookieAsync(idToken, options).get();
+    decoded = auth.verifySessionCookieAsync(sessionCookie, true).get();
+    assertEquals("user3", decoded.getUid());
+    auth.deleteUserAsync("user3");
   }
 
   @Test

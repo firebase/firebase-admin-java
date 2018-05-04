@@ -31,14 +31,12 @@ import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.utilities.TestClock;
 import com.google.firebase.database.core.view.QueryParams;
 import com.google.firebase.database.core.view.QuerySpec;
-import com.google.firebase.database.logging.DefaultLogger;
-import com.google.firebase.database.logging.LogWrapper;
-import com.google.firebase.database.logging.Logger;
 import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.snapshot.PathIndex;
 import com.google.firebase.database.utilities.Clock;
 import java.util.Collections;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 
 public class TrackedQueryManagerTest {
 
@@ -66,9 +64,8 @@ public class TrackedQueryManagerTest {
       e.disableTransactionCheck = true;
       engine = e;
     }
-    LogWrapper logWrapper =
-        new LogWrapper(new DefaultLogger(Logger.Level.WARN, null), TrackedQueryManagerTest.class);
-    return new TrackedQueryManager(engine, logWrapper, clock);
+    return new TrackedQueryManager(
+        engine, LoggerFactory.getLogger(TrackedQueryManagerTest.class), clock);
   }
 
   @Test

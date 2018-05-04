@@ -18,10 +18,11 @@ package com.google.firebase.database.core.view;
 
 import com.google.firebase.database.core.Context;
 import com.google.firebase.database.core.EventTarget;
-import com.google.firebase.database.logging.LogWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Each view owns an instance of this class, and it is used to send events to the event target
@@ -33,18 +34,16 @@ import java.util.List;
  */
 public class EventRaiser {
 
+  private static final Logger logger = LoggerFactory.getLogger(EventRaiser.class);
+
   private final EventTarget eventTarget;
-  private final LogWrapper logger;
 
   public EventRaiser(Context ctx) {
     eventTarget = ctx.getEventTarget();
-    logger = ctx.getLogger(EventRaiser.class);
   }
 
   public void raiseEvents(final List<? extends Event> events) {
-    if (logger.logsDebug()) {
-      logger.debug("Raising " + events.size() + " event(s)");
-    }
+    logger.debug("Raising {} event(s)", events.size());
     // TODO: Use an immutable data structure for events so we don't have to clone to be safe.
     final ArrayList<Event> eventsClone = new ArrayList<>(events);
     eventTarget.postEvent(
@@ -52,9 +51,7 @@ public class EventRaiser {
           @Override
           public void run() {
             for (Event event : eventsClone) {
-              if (logger.logsDebug()) {
-                logger.debug("Raising " + event.toString());
-              }
+              logger.debug("Raising {}", event);
               event.fire();
             }
           }

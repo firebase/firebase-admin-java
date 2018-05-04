@@ -16,18 +16,18 @@
 
 package com.google.firebase.database.connection.util;
 
-import com.google.firebase.database.logging.LogWrapper;
-import com.google.firebase.database.logging.Logger;
-
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RetryHelper {
 
+  private static final Logger logger = LoggerFactory.getLogger(RetryHelper.class);
+
   private final ScheduledExecutorService executorService;
-  private final LogWrapper logger;
   /** The minimum delay for a retry in ms. */
   private final long minRetryDelayAfterFailure;
   /** The maximum retry delay in ms. */
@@ -49,13 +49,11 @@ public class RetryHelper {
 
   private RetryHelper(
       ScheduledExecutorService executorService,
-      LogWrapper logger,
       long minRetryDelayAfterFailure,
       long maxRetryDelay,
       double retryExponent,
       double jitterFactor) {
     this.executorService = executorService;
-    this.logger = logger;
     this.minRetryDelayAfterFailure = minRetryDelayAfterFailure;
     this.maxRetryDelay = maxRetryDelay;
     this.retryExponent = retryExponent;
@@ -84,7 +82,7 @@ public class RetryHelper {
                   + (jitterFactor * currentRetryDelay * random.nextDouble()));
     }
     this.lastWasSuccess = false;
-    logger.debug("Scheduling retry in %dms", delay);
+    logger.debug("Scheduling retry in {}ms", delay);
     Runnable wrapped =
         new Runnable() {
           @Override
@@ -119,15 +117,13 @@ public class RetryHelper {
   public static class Builder {
 
     private final ScheduledExecutorService service;
-    private final LogWrapper logger;
     private long minRetryDelayAfterFailure = 1000;
     private double jitterFactor = 0.5;
     private long retryMaxDelay = 30 * 1000;
     private double retryExponent = 1.3;
 
-    public Builder(ScheduledExecutorService service, Logger logger, Class tag) {
+    public Builder(ScheduledExecutorService service, Class tag) {
       this.service = service;
-      this.logger = new LogWrapper(logger, tag);
     }
 
     public Builder withMinDelayAfterFailure(long delay) {
@@ -156,7 +152,6 @@ public class RetryHelper {
     public RetryHelper build() {
       return new RetryHelper(
           this.service,
-          this.logger,
           this.minRetryDelayAfterFailure,
           this.retryMaxDelay,
           this.retryExponent,

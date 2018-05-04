@@ -16,8 +16,6 @@
 
 package com.google.firebase.database.connection;
 
-import com.google.firebase.database.logging.Logger;
-
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
@@ -25,31 +23,24 @@ public class ConnectionContext {
 
   private final ScheduledExecutorService executorService;
   private final ConnectionAuthTokenProvider authTokenProvider;
-  private final Logger logger;
   private final boolean persistenceEnabled;
   private final String clientSdkVersion;
   private final String userAgent;
   private final ThreadFactory threadFactory;
 
   public ConnectionContext(
-      Logger logger,
       ConnectionAuthTokenProvider authTokenProvider,
       ScheduledExecutorService executorService,
       boolean persistenceEnabled,
       String clientSdkVersion,
       String userAgent,
       ThreadFactory threadFactory) {
-    this.logger = logger;
     this.authTokenProvider = authTokenProvider;
     this.executorService = executorService;
     this.persistenceEnabled = persistenceEnabled;
     this.clientSdkVersion = clientSdkVersion;
     this.userAgent = userAgent;
     this.threadFactory = threadFactory;
-  }
-
-  public Logger getLogger() {
-    return this.logger;
   }
 
   public ConnectionAuthTokenProvider getAuthTokenProvider() {
