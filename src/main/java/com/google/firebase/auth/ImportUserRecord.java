@@ -32,11 +32,11 @@ import java.util.Map;
  * {@link FirebaseAuth#importUsersAsync(List, UserImportOptions)} API. Must contain at least a
  * uid string.
  */
-public final class UserImportRecord {
+public final class ImportUserRecord {
 
   private final Map<String, Object> properties;
 
-  private UserImportRecord(Map<String, Object> properties) {
+  private ImportUserRecord(Map<String, Object> properties) {
     this.properties = ImmutableMap.copyOf(properties);
   }
 
@@ -56,9 +56,9 @@ public final class UserImportRecord {
   }
 
   /**
-   * Creates a new {@link UserImportRecord.Builder}.
+   * Creates a new {@link ImportUserRecord.Builder}.
    *
-   * @return A {@link UserImportRecord.Builder} instance.
+   * @return A {@link ImportUserRecord.Builder} instance.
    */
   public static Builder builder() {
     return new Builder();
@@ -241,11 +241,11 @@ public final class UserImportRecord {
     }
 
     /**
-     * Builds a new {@link UserImportRecord}.
+     * Builds a new {@link ImportUserRecord}.
      *
-     * @return A non-null {@link UserImportRecord}.
+     * @return A non-null {@link ImportUserRecord}.
      */
-    public UserImportRecord build() {
+    public ImportUserRecord build() {
       Map<String, Object> properties = new HashMap<>();
       UserRecord.checkUid(uid);
       properties.put("localId", uid);
@@ -293,7 +293,7 @@ public final class UserImportRecord {
       if (disabled != null) {
         properties.put("disabled", disabled);
       }
-      return new UserImportRecord(properties);
+      return new ImportUserRecord(properties);
     }
   }
 }

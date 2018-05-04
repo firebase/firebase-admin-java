@@ -275,7 +275,7 @@ class FirebaseUserManager {
     @Key("users")
     private final List<Map<String, Object>> users;
 
-    UserImportRequest(List<UserImportRecord> users, UserImportOptions options,
+    UserImportRequest(List<ImportUserRecord> users, UserImportOptions options,
         JsonFactory jsonFactory) {
       checkArgument(users != null && !users.isEmpty(), "users must not be null or empty");
       checkArgument(users.size() <= FirebaseUserManager.MAX_IMPORT_USERS,
@@ -283,7 +283,7 @@ class FirebaseUserManager {
 
       boolean hasPassword = false;
       ImmutableList.Builder<Map<String, Object>> usersBuilder = ImmutableList.builder();
-      for (UserImportRecord user : users) {
+      for (ImportUserRecord user : users) {
         if (user.hasPassword()) {
           hasPassword = true;
         }

@@ -443,7 +443,7 @@ public class FirebaseAuthIT {
     final String randomId = UUID.randomUUID().toString().replaceAll("-", "");
     final String userEmail = ("test" + randomId.substring(0, 12) + "@example."
         + randomId.substring(12) + ".com").toLowerCase();
-    UserImportRecord user = UserImportRecord.builder()
+    ImportUserRecord user = ImportUserRecord.builder()
         .setUid(randomId)
         .setEmail(userEmail)
         .build();
@@ -467,7 +467,7 @@ public class FirebaseAuthIT {
         + randomId.substring(12) + ".com").toLowerCase();
     final byte[] passwordHash = BaseEncoding.base64().decode(
         "V358E8LdWJXAO7muq0CufVpEOXaj8aFiC7T/rcaGieN04q/ZPJ08WhJEHGjj9lz/2TT+/86N5VjVoc5DdBhBiw==");
-    UserImportRecord user = UserImportRecord.builder()
+    ImportUserRecord user = ImportUserRecord.builder()
         .setUid(randomId)
         .setEmail(userEmail)
         .setPasswordHash(passwordHash)

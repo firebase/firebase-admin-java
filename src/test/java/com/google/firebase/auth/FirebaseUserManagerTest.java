@@ -255,14 +255,10 @@ public class FirebaseUserManagerTest {
   @Test
   public void testImportUsers() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
-    UserImportRecord user1 = UserImportRecord.builder()
-        .setUid("user1")
-        .build();
-    UserImportRecord user2 = UserImportRecord.builder()
-        .setUid("user2")
-        .build();
+    ImportUserRecord user1 = ImportUserRecord.builder().setUid("user1").build();
+    ImportUserRecord user2 = ImportUserRecord.builder().setUid("user2").build();
 
-    List<UserImportRecord> users = ImmutableList.of(user1, user2);
+    List<ImportUserRecord> users = ImmutableList.of(user1, user2);
     UserImportResult result = FirebaseAuth.getInstance().importUsersAsync(users, null).get();
     checkRequestHeaders(interceptor);
     assertEquals(2, result.getSuccessCount());
@@ -285,17 +281,17 @@ public class FirebaseUserManagerTest {
   public void testImportUsersError() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("importUsersError.json"));
-    UserImportRecord user1 = UserImportRecord.builder()
+    ImportUserRecord user1 = ImportUserRecord.builder()
         .setUid("user1")
         .build();
-    UserImportRecord user2 = UserImportRecord.builder()
+    ImportUserRecord user2 = ImportUserRecord.builder()
         .setUid("user2")
         .build();
-    UserImportRecord user3 = UserImportRecord.builder()
+    ImportUserRecord user3 = ImportUserRecord.builder()
         .setUid("user3")
         .build();
 
-    List<UserImportRecord> users = ImmutableList.of(user1, user2, user3);
+    List<ImportUserRecord> users = ImmutableList.of(user1, user2, user3);
     UserImportResult result = FirebaseAuth.getInstance().importUsersAsync(users, null).get();
     checkRequestHeaders(interceptor);
     assertEquals(1, result.getSuccessCount());
@@ -325,15 +321,15 @@ public class FirebaseUserManagerTest {
   @Test
   public void testImportUsersWithHash() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
-    UserImportRecord user1 = UserImportRecord.builder()
+    ImportUserRecord user1 = ImportUserRecord.builder()
         .setUid("user1")
         .build();
-    UserImportRecord user2 = UserImportRecord.builder()
+    ImportUserRecord user2 = ImportUserRecord.builder()
         .setUid("user2")
         .setPasswordHash("password".getBytes())
         .build();
 
-    List<UserImportRecord> users = ImmutableList.of(user1, user2);
+    List<ImportUserRecord> users = ImmutableList.of(user1, user2);
     UserImportHash hash = new UserImportHash("MOCK_HASH") {
       @Override
       protected Map<String, Object> getOptions() {
@@ -365,15 +361,15 @@ public class FirebaseUserManagerTest {
   @Test
   public void testImportUsersMissingHash() {
     initializeAppForUserManagement();
-    UserImportRecord user1 = UserImportRecord.builder()
+    ImportUserRecord user1 = ImportUserRecord.builder()
         .setUid("user1")
         .build();
-    UserImportRecord user2 = UserImportRecord.builder()
+    ImportUserRecord user2 = ImportUserRecord.builder()
         .setUid("user2")
         .setPasswordHash("password".getBytes())
         .build();
 
-    List<UserImportRecord> users = ImmutableList.of(user1, user2);
+    List<ImportUserRecord> users = ImmutableList.of(user1, user2);
     try {
       FirebaseAuth.getInstance().importUsersAsync(users);
       fail("No error thrown for missing hash option");
@@ -386,7 +382,7 @@ public class FirebaseUserManagerTest {
   public void testImportUsersEmptyList() {
     initializeAppForUserManagement();
     try {
-      FirebaseAuth.getInstance().importUsersAsync(ImmutableList.<UserImportRecord>of());
+      FirebaseAuth.getInstance().importUsersAsync(ImmutableList.<ImportUserRecord>of());
       fail("No error thrown for empty user list");
     } catch (IllegalArgumentException expected) {
       // expected
@@ -396,9 +392,9 @@ public class FirebaseUserManagerTest {
   @Test
   public void testImportUsersLargeList() {
     initializeAppForUserManagement();
-    ImmutableList.Builder<UserImportRecord> users = ImmutableList.builder();
+    ImmutableList.Builder<ImportUserRecord> users = ImmutableList.builder();
     for (int i = 0; i < 1001; i++) {
-      users.add(UserImportRecord.builder().setUid("test" + i).build());
+      users.add(ImportUserRecord.builder().setUid("test" + i).build());
     }
     try {
       FirebaseAuth.getInstance().importUsersAsync(users.build());

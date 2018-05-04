@@ -19,7 +19,7 @@ package com.google.firebase.auth;
 import java.util.List;
 
 /**
- * Represents an error encountered while importing a {@link UserImportRecord}.
+ * Represents an error encountered while importing an {@link ImportUserRecord}.
  */
 public final class ErrorInfo {
 

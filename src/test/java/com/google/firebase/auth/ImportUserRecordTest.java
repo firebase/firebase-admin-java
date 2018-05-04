@@ -33,13 +33,13 @@ import java.util.List;
 import java.util.Map;
 import org.junit.Test;
 
-public class UserImportRecordTest {
+public class ImportUserRecordTest {
 
   private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
 
   @Test
   public void testUidOnlyRecord() {
-    UserImportRecord record = UserImportRecord.builder()
+    ImportUserRecord record = ImportUserRecord.builder()
         .setUid("testuid")
         .build();
     assertEquals(ImmutableMap.of("localId", "testuid"), record.getProperties(JSON_FACTORY));
@@ -56,7 +56,7 @@ public class UserImportRecordTest {
         .setUid("testuid")
         .setProviderId("test.com")
         .build();
-    UserImportRecord record = UserImportRecord.builder()
+    ImportUserRecord record = ImportUserRecord.builder()
         .setUid("testuid")
         .setEmail("test@example.com")
         .setDisplayName("Test User")
@@ -100,14 +100,14 @@ public class UserImportRecordTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidUid() {
-    UserImportRecord.builder()
+    ImportUserRecord.builder()
         .setUid(Strings.repeat("a", 129))
         .build();
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidEmail() {
-    UserImportRecord.builder()
+    ImportUserRecord.builder()
         .setUid("test")
         .setEmail("not-an-email")
         .build();
@@ -115,7 +115,7 @@ public class UserImportRecordTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidPhotoUrl() {
-    UserImportRecord.builder()
+    ImportUserRecord.builder()
         .setUid("test")
         .setPhotoUrl("not a url")
         .build();
@@ -123,7 +123,7 @@ public class UserImportRecordTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidPhoneNumber() {
-    UserImportRecord.builder()
+    ImportUserRecord.builder()
         .setUid("test")
         .setPhoneNumber("not a phone number")
         .build();
@@ -132,7 +132,7 @@ public class UserImportRecordTest {
   @Test
   public void testNullUserProvider() {
     try {
-      UserImportRecord.builder()
+      ImportUserRecord.builder()
           .setUid("test")
           .addUserProvider(null).build();
       fail("No error thrown for null provider");
@@ -143,7 +143,7 @@ public class UserImportRecordTest {
     try {
       List<UserProvider> providers = new ArrayList<>();
       providers.add(null);
-      UserImportRecord.builder()
+      ImportUserRecord.builder()
           .setUid("test")
           .addAllUserProviders(providers).build();
       fail("No error thrown for null provider");
@@ -155,7 +155,7 @@ public class UserImportRecordTest {
   @Test
   public void testNullOrEmptyCustomClaims() {
     try {
-      UserImportRecord.builder()
+      ImportUserRecord.builder()
           .setUid("test")
           .putCustomClaim("foo", null).build();
       fail("No error thrown for null claim value");
@@ -164,7 +164,7 @@ public class UserImportRecordTest {
     }
 
     try {
-      UserImportRecord.builder()
+      ImportUserRecord.builder()
           .setUid("test")
           .putCustomClaim(null, "foo").build();
       fail("No error thrown for null claim name");
@@ -173,7 +173,7 @@ public class UserImportRecordTest {
     }
 
     try {
-      UserImportRecord.builder()
+      ImportUserRecord.builder()
           .setUid("test")
           .putCustomClaim("", "foo").build();
       fail("No error thrown for empty claim name");
@@ -186,7 +186,7 @@ public class UserImportRecordTest {
   public void testReservedClaims() {
     for (String key : FirebaseUserManager.RESERVED_CLAIMS) {
       try {
-        UserImportRecord.builder()
+        ImportUserRecord.builder()
             .setUid("test")
             .putCustomClaim(key, "foo").build();
         fail("No error thrown for reserved claim");
@@ -198,7 +198,7 @@ public class UserImportRecordTest {
 
   @Test
   public void testLargeCustomClaims() {
-    UserImportRecord user = UserImportRecord.builder()
+    ImportUserRecord user = ImportUserRecord.builder()
         .setUid("test")
         .putCustomClaim("foo", Strings.repeat("a", 1000))
         .build();

@@ -854,26 +854,26 @@ public class FirebaseAuth {
     };
   }
 
-  public UserImportResult importUsers(List<UserImportRecord> users) throws FirebaseAuthException {
+  public UserImportResult importUsers(List<ImportUserRecord> users) throws FirebaseAuthException {
     return importUsers(users, null);
   }
 
-  public UserImportResult importUsers(List<UserImportRecord> users,
+  public UserImportResult importUsers(List<ImportUserRecord> users,
       @Nullable UserImportOptions options) throws FirebaseAuthException {
     return importUsersOp(users, options).call();
   }
 
-  public ApiFuture<UserImportResult> importUsersAsync(List<UserImportRecord> users) {
+  public ApiFuture<UserImportResult> importUsersAsync(List<ImportUserRecord> users) {
     return importUsersAsync(users, null);
   }
 
-  public ApiFuture<UserImportResult> importUsersAsync(List<UserImportRecord> users,
+  public ApiFuture<UserImportResult> importUsersAsync(List<ImportUserRecord> users,
       @Nullable UserImportOptions options) {
     return importUsersOp(users, options).callAsync(firebaseApp);
   }
 
   private CallableOperation<UserImportResult, FirebaseAuthException> importUsersOp(
-      List<UserImportRecord> users, UserImportOptions options) {
+      List<ImportUserRecord> users, UserImportOptions options) {
     checkNotDestroyed();
     final UserImportRequest request = new UserImportRequest(users, options, jsonFactory);
     return new CallableOperation<UserImportResult, FirebaseAuthException>() {
