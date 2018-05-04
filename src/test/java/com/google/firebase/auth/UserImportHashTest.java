@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
+import com.google.firebase.auth.hash.Bcrypt;
 import com.google.firebase.auth.hash.HmacMd5;
 import com.google.firebase.auth.hash.HmacSha1;
 import com.google.firebase.auth.hash.HmacSha256;
@@ -31,6 +32,7 @@ import com.google.firebase.auth.hash.Scrypt;
 import com.google.firebase.auth.hash.Sha1;
 import com.google.firebase.auth.hash.Sha256;
 import com.google.firebase.auth.hash.Sha512;
+import com.google.firebase.auth.hash.StandardScrypt;
 import java.util.Map;
 import org.junit.Test;
 
@@ -90,6 +92,24 @@ public class UserImportHashTest {
   }
 
   @Test
+  public void testStandardScryptHash() {
+    UserImportHash scrypt = StandardScrypt.builder()
+        .setBlockSize(1)
+        .setParallelization(2)
+        .setDerivedKeyLength(3)
+        .setMemoryCost(4)
+        .build();
+    Map<String, Object> properties = ImmutableMap.<String, Object>of(
+        "hashAlgorithm", "STANDARD_SCRYPT",
+        "blockSize", 1,
+        "parallelization", 2,
+        "dkLen", 3,
+        "memoryCost", 4
+    );
+    assertEquals(properties, scrypt.getProperties());
+  }
+
+  @Test
   public void testHmacHash() {
     Map<String, UserImportHash> hashes = ImmutableMap.<String, UserImportHash>of(
         "HMAC_SHA512", HmacSha512.builder().setKey(SIGNER_KEY).build(),
@@ -123,5 +143,12 @@ public class UserImportHashTest {
       );
       assertEquals(properties, entry.getValue().getProperties());
     }
+  }
+
+  @Test
+  public void testBcryptHash() {
+    UserImportHash bcrypt = Bcrypt.getInstance();
+    Map<String, Object> properties = ImmutableMap.<String, Object>of("hashAlgorithm", "BCRYPT");
+    assertEquals(properties, bcrypt.getProperties());
   }
 }
