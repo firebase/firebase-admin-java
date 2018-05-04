@@ -19,33 +19,32 @@ package com.google.firebase.auth.hash;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.BaseEncoding;
 import com.google.firebase.auth.UserImportHash;
 import java.util.Map;
 
-abstract class Hmac extends UserImportHash {
+abstract class Basic extends UserImportHash {
 
-  private final String key;
+  private final int rounds;
 
-  Hmac(String name, Builder builder) {
+  Basic(String name, Builder builder) {
     super(name);
-    checkArgument(builder.key != null && builder.key.length > 0,
+    checkArgument(builder.rounds >= 0 && builder.rounds <= 120000,
         "A non-empty key is required for HMAC algorithms");
-    this.key = BaseEncoding.base64().encode(builder.key);
+    this.rounds = builder.rounds;
   }
 
   @Override
   protected final Map<String, Object> getOptions() {
-    return ImmutableMap.<String, Object>of("signerKey", key);
+    return ImmutableMap.<String, Object>of("rounds", rounds);
   }
 
   abstract static class Builder<T extends Builder, U extends UserImportHash> {
-    private byte[] key;
+    private int rounds;
 
     protected abstract T getInstance();
 
-    public T setKey(byte[] key) {
-      this.key = key;
+    public T setRounds(int rounds) {
+      this.rounds = rounds;
       return getInstance();
     }
 

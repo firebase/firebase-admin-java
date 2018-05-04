@@ -26,7 +26,7 @@ public class HmacSha512 extends Hmac {
     return new Builder();
   }
 
-  public static class Builder extends Hmac.Builder<Builder> {
+  public static class Builder extends Hmac.Builder<Builder, HmacSha512> {
 
     private Builder() {}
 

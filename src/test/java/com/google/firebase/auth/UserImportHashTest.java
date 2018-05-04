@@ -17,13 +17,20 @@
 package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
+import com.google.firebase.auth.hash.HmacMd5;
+import com.google.firebase.auth.hash.HmacSha1;
 import com.google.firebase.auth.hash.HmacSha256;
 import com.google.firebase.auth.hash.HmacSha512;
+import com.google.firebase.auth.hash.Md5;
+import com.google.firebase.auth.hash.Pbkdf2Sha256;
+import com.google.firebase.auth.hash.PbkdfSha1;
 import com.google.firebase.auth.hash.Scrypt;
+import com.google.firebase.auth.hash.Sha1;
+import com.google.firebase.auth.hash.Sha256;
+import com.google.firebase.auth.hash.Sha512;
 import java.util.Map;
 import org.junit.Test;
 
@@ -51,7 +58,7 @@ public class UserImportHashTest {
   }
 
   @Test
-  public void testValidScrypt() {
+  public void testScryptHash() {
     UserImportHash scrypt = Scrypt.builder()
         .setKey(SIGNER_KEY)
         .setSaltSeparator(SALT_SEPARATOR)
@@ -83,78 +90,38 @@ public class UserImportHashTest {
   }
 
   @Test
-  public void testInvalidScrypt() {
-    try {
-      Scrypt.builder()
-          .setSaltSeparator(SALT_SEPARATOR)
-          .setRounds(5)
-          .setMemoryCost(12)
-          .build();
-      fail("No error thrown for missing key");
-    } catch (IllegalArgumentException expected) {
-      // expected
-    }
-
-    try {
-      Scrypt.builder()
-          .setKey(SIGNER_KEY)
-          .setSaltSeparator(SALT_SEPARATOR)
-          .setRounds(9)
-          .setMemoryCost(14)
-          .build();
-      fail("No error thrown for invalid rounds");
-    } catch (IllegalArgumentException expected) {
-      // expected
-    }
-
-    try {
-      Scrypt.builder()
-          .setKey(SIGNER_KEY)
-          .setSaltSeparator(SALT_SEPARATOR)
-          .setRounds(8)
-          .setMemoryCost(15)
-          .build();
-      fail("No error thrown for invalid memory cost");
-    } catch (IllegalArgumentException expected) {
-      // expected
+  public void testHmacHash() {
+    Map<String, UserImportHash> hashes = ImmutableMap.<String, UserImportHash>of(
+        "HMAC_SHA512", HmacSha512.builder().setKey(SIGNER_KEY).build(),
+        "HMAC_SHA256", HmacSha256.builder().setKey(SIGNER_KEY).build(),
+        "HMAC_SHA1", HmacSha1.builder().setKey(SIGNER_KEY).build(),
+        "HMAC_MD5", HmacMd5.builder().setKey(SIGNER_KEY).build()
+    );
+    for (Map.Entry<String, UserImportHash> entry : hashes.entrySet()) {
+      Map<String, Object> properties = ImmutableMap.<String, Object>of(
+          "hashAlgorithm", entry.getKey(),
+          "signerKey", BaseEncoding.base64Url().encode(SIGNER_KEY)
+      );
+      assertEquals(properties, entry.getValue().getProperties());
     }
   }
 
   @Test
-  public void testValidHmac() {
-    UserImportHash hmac = HmacSha512.builder()
-        .setKey(SIGNER_KEY)
+  public void testBasicHash() {
+    Map<String, UserImportHash> hashes = ImmutableMap.<String, UserImportHash>builder()
+        .put("SHA512", Sha512.builder().setRounds(42).build())
+        .put("SHA256", Sha256.builder().setRounds(42).build())
+        .put("SHA1", Sha1.builder().setRounds(42).build())
+        .put("MD5", Md5.builder().setRounds(42).build())
+        .put("PBKDF2_SHA256", Pbkdf2Sha256.builder().setRounds(42).build())
+        .put("PBKDF_SHA1", PbkdfSha1.builder().setRounds(42).build())
         .build();
-    Map<String, Object> properties = ImmutableMap.<String, Object>of(
-        "hashAlgorithm", "HMAC_SHA512",
-        "signerKey", BaseEncoding.base64Url().encode(SIGNER_KEY)
-    );
-    assertEquals(properties, hmac.getProperties());
-
-    hmac = HmacSha256.builder()
-        .setKey(SIGNER_KEY)
-        .build();
-    properties = ImmutableMap.<String, Object>of(
-        "hashAlgorithm", "HMAC_SHA256",
-        "signerKey", BaseEncoding.base64Url().encode(SIGNER_KEY)
-    );
-    assertEquals(properties, hmac.getProperties());
-  }
-
-  @Test
-  public void testInvalidHmac() {
-    try {
-      HmacSha512.builder().build();
-      fail("No error thrown for missing key");
-    } catch (IllegalArgumentException expected) {
-      // expected
-    }
-
-    try {
-      HmacSha256.builder().build();
-      fail("No error thrown for missing key");
-    } catch (IllegalArgumentException expected) {
-      // expected
+    for (Map.Entry<String, UserImportHash> entry : hashes.entrySet()) {
+      Map<String, Object> properties = ImmutableMap.<String, Object>of(
+          "hashAlgorithm", entry.getKey(),
+          "rounds", 42
+      );
+      assertEquals(properties, entry.getValue().getProperties());
     }
   }
 }

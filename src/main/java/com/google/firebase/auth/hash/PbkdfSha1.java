@@ -16,17 +16,17 @@
 
 package com.google.firebase.auth.hash;
 
-public class HmacSha256 extends Hmac {
+public class PbkdfSha1 extends Basic {
 
-  private HmacSha256(Builder builder) {
-    super("HMAC_SHA256", builder);
+  private PbkdfSha1(Builder builder) {
+    super("PBKDF_SHA1", builder);
   }
 
   public static Builder builder() {
     return new Builder();
   }
 
-  public static class Builder extends Hmac.Builder<Builder, HmacSha256> {
+  public static class Builder extends Basic.Builder<Builder, PbkdfSha1> {
 
     private Builder() {}
 
@@ -35,8 +35,8 @@ public class HmacSha256 extends Hmac {
       return this;
     }
 
-    public HmacSha256 build() {
-      return new HmacSha256(this);
+    public PbkdfSha1 build() {
+      return new PbkdfSha1(this);
     }
   }
 }

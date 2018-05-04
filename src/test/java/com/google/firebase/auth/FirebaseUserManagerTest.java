@@ -35,13 +35,11 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
-import com.google.common.io.BaseEncoding;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
-import com.google.firebase.auth.hash.HmacSha512;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestResponseInterceptor;
@@ -336,9 +334,12 @@ public class FirebaseUserManagerTest {
         .build();
 
     List<UserImportRecord> users = ImmutableList.of(user1, user2);
-    UserImportHash hash = HmacSha512.builder()
-        .setKey("key".getBytes())
-        .build();
+    UserImportHash hash = new UserImportHash("MOCK_HASH") {
+      @Override
+      protected Map<String, Object> getOptions() {
+        return ImmutableMap.<String, Object>of("key1", "value1", "key2", true);
+      }
+    };
     UserImportResult result = FirebaseAuth.getInstance().importUsersAsync(users,
         UserImportOptions.withHash(hash)).get();
     checkRequestHeaders(interceptor);
@@ -350,14 +351,15 @@ public class FirebaseUserManagerTest {
     interceptor.getResponse().getRequest().getContent().writeTo(out);
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
-    assertEquals(3, parsed.size());
+    assertEquals(4, parsed.size());
     List<Map<String, Object>> expected = ImmutableList.of(
         user1.getProperties(jsonFactory),
         user2.getProperties(jsonFactory)
     );
     assertEquals(expected, parsed.get("users"));
-    assertEquals("HMAC_SHA512", parsed.get("hashAlgorithm"));
-    assertEquals(BaseEncoding.base64Url().encode("key".getBytes()), parsed.get("signerKey"));
+    assertEquals("MOCK_HASH", parsed.get("hashAlgorithm"));
+    assertEquals("value1", parsed.get("key1"));
+    assertEquals(Boolean.TRUE, parsed.get("key2"));
   }
 
   @Test
