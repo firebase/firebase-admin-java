@@ -28,7 +28,9 @@ import java.util.Map;
  * hashes (see {@link UserImportOptions.Builder#setHash(UserImportHash)}.
  *
  * <p>This is not expected to be extended in user code. Applications should use one of the provided
- * concrete implementations in the {@link com.google.firebase.auth.hash} package.
+ * concrete implementations in the {@link com.google.firebase.auth.hash} package. See
+ * <a href="https://firebase.google.com/docs/auth/admin/import-users">documentation</a> for more
+ * details on available options.
  */
 public abstract class UserImportHash {
 

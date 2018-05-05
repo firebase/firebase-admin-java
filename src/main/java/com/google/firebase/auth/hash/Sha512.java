@@ -16,6 +16,10 @@
 
 package com.google.firebase.auth.hash;
 
+/**
+ * Represents the SHA512 password hashing algorithm. Can be used as an instance of
+ * {@link com.google.firebase.auth.UserImportHash} when importing users.
+ */
 public class Sha512 extends Basic {
 
   private Sha512(Builder builder) {

@@ -23,6 +23,12 @@ import com.google.common.io.BaseEncoding;
 import com.google.firebase.auth.UserImportHash;
 import java.util.Map;
 
+/**
+ * Represents the SCRYPT password hashing algorithm. This is the
+ * <a href="https://github.com/firebase/scrypt">modified SCRYPT algorithm</a> used by
+ * Firebase Auth. See {@link StandardScrypt} for the standard SCRYPT algorithm. Can be used as an
+ * instance of {@link com.google.firebase.auth.UserImportHash} when importing users.
+ */
 public final class Scrypt extends UserImportHash {
 
   private final String key;

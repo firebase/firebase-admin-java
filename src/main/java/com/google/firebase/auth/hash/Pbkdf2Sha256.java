@@ -16,6 +16,10 @@
 
 package com.google.firebase.auth.hash;
 
+/**
+ * Represents the PBKDF2 SHA256 password hashing algorithm. Can be used as an instance of
+ * {@link com.google.firebase.auth.UserImportHash} when importing users.
+ */
 public class Pbkdf2Sha256 extends Basic {
 
   private Pbkdf2Sha256(Builder builder) {

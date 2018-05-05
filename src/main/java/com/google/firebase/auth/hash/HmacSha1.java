@@ -16,6 +16,10 @@
 
 package com.google.firebase.auth.hash;
 
+/**
+ * Represents the HMAC SHA1 password hashing algorithm. Can be used as an instance of
+ * {@link com.google.firebase.auth.UserImportHash} when importing users.
+ */
 public class HmacSha1 extends Hmac {
 
   private HmacSha1(Builder builder) {

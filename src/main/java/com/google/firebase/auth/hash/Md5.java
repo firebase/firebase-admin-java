@@ -16,6 +16,10 @@
 
 package com.google.firebase.auth.hash;
 
+/**
+ * Represents the MD5 password hashing algorithm. Can be used as an instance of
+ * {@link com.google.firebase.auth.UserImportHash} when importing users.
+ */
 public class Md5 extends Basic {
 
   private Md5(Builder builder) {

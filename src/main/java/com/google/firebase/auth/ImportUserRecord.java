@@ -29,7 +29,7 @@ import java.util.Map;
 
 /**
  * Represents a user account to be imported to Firebase Auth via the
- * {@link FirebaseAuth#importUsersAsync(List, UserImportOptions)} API. Must contain at least a
+ * {@link FirebaseAuth#importUsers(List, UserImportOptions)} API. Must contain at least a
  * uid string.
  */
 public final class ImportUserRecord {
