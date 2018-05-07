@@ -53,7 +53,7 @@ public interface ChildEventListener {
 
   /**
    * This method is triggered when a child location's priority changes. See {@link
-   * DatabaseReference#setPriority(Object)} and <a
+   * DatabaseReference#setPriorityAsync(Object)} and <a
    * href="https://firebase.google.com/docs/database/android/retrieve-data#data_order"
    * target="_blank">Ordered Data</a> for more information on priorities and ordering data.
    *
