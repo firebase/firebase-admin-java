@@ -1,5 +1,17 @@
 # Unreleased
 
+- [added] `FirebaseAuth`, `FirebaseMessaging` and `FirebaseInstanceId`
+  interfaces now expose a set of blocking methods. Each operation has
+  blocking an asynchronous versions.
+- [changed] Removed the deprecated `FirebaseCredential` interface.
+- [changed] Removed the deprecated `Task` interface along with the
+  `com.google.firebase.tasks` package.
+- [changed] Dropped support for App Engine's Java 7 runtime. Developers
+  are advised to use the Admin SDK with Java 8 when deploying to App
+  Engine.
+- [changed] Removed the deprecated `FirebaseDatabase.setLogLevel()` API
+  and the related logging utilities. Developers should use SLF4J to
+  configure logging directly.
 
 # v5.11.0
 

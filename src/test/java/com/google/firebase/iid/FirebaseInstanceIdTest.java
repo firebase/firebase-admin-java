@@ -27,12 +27,15 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.testing.GenericFunction;
 import com.google.firebase.testing.TestResponseInterceptor;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.junit.After;
@@ -60,7 +63,7 @@ public class FirebaseInstanceIdTest {
   }
 
   @Test
-  public void testInvalidInstanceId() throws Exception {
+  public void testInvalidInstanceId() {
     FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId("test-project")
@@ -100,19 +103,38 @@ public class FirebaseInstanceIdTest {
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
 
-    FirebaseInstanceId instanceId = FirebaseInstanceId.getInstance();
+    final FirebaseInstanceId instanceId = FirebaseInstanceId.getInstance();
     assertSame(instanceId, FirebaseInstanceId.getInstance(app));
 
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    instanceId.setInterceptor(interceptor);
-    instanceId.deleteInstanceIdAsync("test-iid").get();
+    List<GenericFunction<Void>> functions = ImmutableList.of(
+        new GenericFunction<Void>() {
+          @Override
+          public Void call(Object... args) throws Exception {
+            instanceId.deleteInstanceIdAsync("test-iid").get();
+            return null;
+          }
+        },
+        new GenericFunction<Void>() {
+          @Override
+          public Void call(Object... args) throws Exception {
+            instanceId.deleteInstanceId("test-iid");
+            return null;
+          }
+        }
+    );
 
-    assertNotNull(interceptor.getResponse());
-    HttpRequest request = interceptor.getResponse().getRequest();
-    assertEquals("DELETE", request.getRequestMethod());
     String url = "https://console.firebase.google.com/v1/project/test-project/instanceId/test-iid";
-    assertEquals(url, request.getUrl().toString());
-    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+    for (GenericFunction<Void> fn : functions) {
+      TestResponseInterceptor interceptor = new TestResponseInterceptor();
+      instanceId.setInterceptor(interceptor);
+      fn.call();
+
+      assertNotNull(interceptor.getResponse());
+      HttpRequest request = interceptor.getResponse().getRequest();
+      assertEquals("DELETE", request.getRequestMethod());
+      assertEquals(url, request.getUrl().toString());
+      assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+    }
   }
 
   @Test

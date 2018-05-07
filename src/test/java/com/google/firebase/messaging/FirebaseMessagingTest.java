@@ -35,6 +35,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.testing.GenericFunction;
 import com.google.firebase.testing.TestResponseInterceptor;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -115,18 +116,34 @@ public class FirebaseMessagingTest {
   public void testSend() throws Exception {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setContent(MOCK_RESPONSE);
-    FirebaseMessaging messaging = initMessaging(response);
+    final FirebaseMessaging messaging = initMessaging(response);
     Map<Message, Map<String, Object>> testMessages = buildTestMessages();
 
-    for (Map.Entry<Message, Map<String, Object>> entry : testMessages.entrySet()) {
-      response.setContent(MOCK_RESPONSE);
-      TestResponseInterceptor interceptor = new TestResponseInterceptor();
-      messaging.setInterceptor(interceptor);
-      String resp = messaging.sendAsync(entry.getKey()).get();
-      assertEquals("mock-name", resp);
+    List<GenericFunction<String>> functions = ImmutableList.of(
+        new GenericFunction<String>() {
+          @Override
+          public String call(Object... args) throws Exception {
+            return messaging.sendAsync((Message) args[0]).get();
+          }
+        },
+        new GenericFunction<String>() {
+          @Override
+          public String call(Object... args) throws Exception {
+            return messaging.send((Message) args[0]);
+          }
+        }
+    );
+    for (GenericFunction<String> fn : functions) {
+      for (Map.Entry<Message, Map<String, Object>> entry : testMessages.entrySet()) {
+        response.setContent(MOCK_RESPONSE);
+        TestResponseInterceptor interceptor = new TestResponseInterceptor();
+        messaging.setInterceptor(interceptor);
+        String resp = fn.call(entry.getKey());
+        assertEquals("mock-name", resp);
 
-      HttpRequest request = checkRequestHeader(interceptor);
-      checkRequest(request, ImmutableMap.<String, Object>of("message", entry.getValue()));
+        HttpRequest request = checkRequestHeader(interceptor);
+        checkRequest(request, ImmutableMap.<String, Object>of("message", entry.getValue()));
+      }
     }
   }
 
@@ -134,18 +151,35 @@ public class FirebaseMessagingTest {
   public void testSendDryRun() throws Exception {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setContent(MOCK_RESPONSE);
-    FirebaseMessaging messaging = initMessaging(response);
+    final FirebaseMessaging messaging = initMessaging(response);
     Map<Message, Map<String, Object>> testMessages = buildTestMessages();
 
-    for (Map.Entry<Message, Map<String, Object>> entry : testMessages.entrySet()) {
-      response.setContent(MOCK_RESPONSE);
-      TestResponseInterceptor interceptor = new TestResponseInterceptor();
-      messaging.setInterceptor(interceptor);
-      String resp = messaging.sendAsync(entry.getKey(), true).get();
-      assertEquals("mock-name", resp);
+    List<GenericFunction<String>> functions = ImmutableList.of(
+        new GenericFunction<String>() {
+          @Override
+          public String call(Object... args) throws Exception {
+            return messaging.sendAsync((Message) args[0], true).get();
+          }
+        },
+        new GenericFunction<String>() {
+          @Override
+          public String call(Object... args) throws Exception {
+            return messaging.send((Message) args[0], true);
+          }
+        }
+    );
 
-      HttpRequest request = checkRequestHeader(interceptor);
-      checkRequest(request, ImmutableMap.of("message", entry.getValue(), "validate_only", true));
+    for (GenericFunction<String> fn : functions) {
+      for (Map.Entry<Message, Map<String, Object>> entry : testMessages.entrySet()) {
+        response.setContent(MOCK_RESPONSE);
+        TestResponseInterceptor interceptor = new TestResponseInterceptor();
+        messaging.setInterceptor(interceptor);
+        String resp = fn.call(entry.getKey());
+        assertEquals("mock-name", resp);
+
+        HttpRequest request = checkRequestHeader(interceptor);
+        checkRequest(request, ImmutableMap.of("message", entry.getValue(), "validate_only", true));
+      }
     }
   }
 
@@ -286,16 +320,41 @@ public class FirebaseMessagingTest {
 
   @Test
   public void testSubscribe() throws Exception {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
-        .setContent("{\"results\": [{}, {\"error\": \"error_reason\"}]}");
-    FirebaseMessaging messaging = initMessaging(response);
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    messaging.setInterceptor(interceptor);
+    final String responseString = "{\"results\": [{}, {\"error\": \"error_reason\"}]}";
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    final FirebaseMessaging messaging = initMessaging(response);
 
-    TopicManagementResponse result = messaging.subscribeToTopicAsync(
-        ImmutableList.of("id1", "id2"), "test-topic").get();
-    HttpRequest request = checkTopicManagementRequestHeader(interceptor, TEST_IID_SUBSCRIBE_URL);
-    checkTopicManagementRequest(request, result);
+    List<GenericFunction<TopicManagementResponse>> functions = ImmutableList.of(
+        new GenericFunction<TopicManagementResponse>() {
+          @Override
+          public TopicManagementResponse call(Object... args) throws Exception {
+            return messaging.subscribeToTopicAsync(ImmutableList.of("id1", "id2"),
+                "test-topic").get();
+          }
+        },
+        new GenericFunction<TopicManagementResponse>() {
+          @Override
+          public TopicManagementResponse call(Object... args) throws Exception {
+            return messaging.subscribeToTopic(ImmutableList.of("id1", "id2"), "test-topic");
+          }
+        },
+        new GenericFunction<TopicManagementResponse>() {
+          @Override
+          public TopicManagementResponse call(Object... args) throws Exception {
+            return messaging.subscribeToTopic(ImmutableList.of("id1", "id2"),
+                "/topics/test-topic");
+          }
+        }
+    );
+
+    for (GenericFunction<TopicManagementResponse> fn : functions) {
+      TestResponseInterceptor interceptor = new TestResponseInterceptor();
+      messaging.setInterceptor(interceptor);
+      response.setContent(responseString);
+      TopicManagementResponse result = fn.call();
+      HttpRequest request = checkTopicManagementRequestHeader(interceptor, TEST_IID_SUBSCRIBE_URL);
+      checkTopicManagementRequest(request, result);
+    }
   }
 
   @Test
@@ -341,16 +400,42 @@ public class FirebaseMessagingTest {
 
   @Test
   public void testUnsubscribe() throws Exception {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
-        .setContent("{\"results\": [{}, {\"error\": \"error_reason\"}]}");
-    FirebaseMessaging messaging = initMessaging(response);
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    messaging.setInterceptor(interceptor);
+    final String responseString = "{\"results\": [{}, {\"error\": \"error_reason\"}]}";
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    final FirebaseMessaging messaging = initMessaging(response);
 
-    TopicManagementResponse result = messaging.unsubscribeFromTopicAsync(
-        ImmutableList.of("id1", "id2"), "test-topic").get();
-    HttpRequest request = checkTopicManagementRequestHeader(interceptor, TEST_IID_UNSUBSCRIBE_URL);
-    checkTopicManagementRequest(request, result);
+    List<GenericFunction<TopicManagementResponse>> functions = ImmutableList.of(
+        new GenericFunction<TopicManagementResponse>() {
+          @Override
+          public TopicManagementResponse call(Object... args) throws Exception {
+            return messaging.unsubscribeFromTopicAsync(ImmutableList.of("id1", "id2"),
+                "test-topic").get();
+          }
+        },
+        new GenericFunction<TopicManagementResponse>() {
+          @Override
+          public TopicManagementResponse call(Object... args) throws Exception {
+            return messaging.unsubscribeFromTopic(ImmutableList.of("id1", "id2"), "test-topic");
+          }
+        },
+        new GenericFunction<TopicManagementResponse>() {
+          @Override
+          public TopicManagementResponse call(Object... args) throws Exception {
+            return messaging.unsubscribeFromTopic(ImmutableList.of("id1", "id2"),
+                "/topics/test-topic");
+          }
+        }
+    );
+
+    for (GenericFunction<TopicManagementResponse> fn : functions) {
+      TestResponseInterceptor interceptor = new TestResponseInterceptor();
+      messaging.setInterceptor(interceptor);
+      response.setContent(responseString);
+      TopicManagementResponse result = fn.call();
+      HttpRequest request = checkTopicManagementRequestHeader(
+          interceptor, TEST_IID_UNSUBSCRIBE_URL);
+      checkTopicManagementRequest(request, result);
+    }
   }
 
   @Test

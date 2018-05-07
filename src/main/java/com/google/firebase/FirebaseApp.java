@@ -19,11 +19,11 @@ package com.google.firebase;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonParser;
+import com.google.api.core.ApiFuture;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.OAuth2Credentials;
@@ -34,18 +34,13 @@ import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.BaseEncoding;
 import com.google.firebase.internal.FirebaseAppStore;
+import com.google.firebase.internal.FirebaseScheduledExecutor;
 import com.google.firebase.internal.FirebaseService;
-import com.google.firebase.internal.GaeThreadFactory;
+import com.google.firebase.internal.ListenableFuture2ApiFuture;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
-import com.google.firebase.internal.RevivingScheduledExecutor;
-import com.google.firebase.tasks.Task;
-import com.google.firebase.tasks.Tasks;
-
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -176,6 +171,9 @@ public class FirebaseApp {
    * by looking up the {@code FIREBASE_CONFIG} environment variable. If the value of
    * the variable starts with <code>'{'</code>, it is parsed as a JSON object. Otherwise it is
    * treated as a file name and the JSON content is read from the corresponding file.
+   *
+   * @throws IllegalStateException if the default app has already been initialized.
+   * @throws IllegalArgumentException if an error occurs while loading options from the environment.
    */
   public static FirebaseApp initializeApp() {
     return initializeApp(DEFAULT_APP_NAME);
@@ -185,13 +183,23 @@ public class FirebaseApp {
    * Initializes a named {@link FirebaseApp} instance using Google Application Default Credentials.
    * Loads additional {@link FirebaseOptions} from the environment in the same way as the
    * {@link #initializeApp()} method.
+   *
+   * @throws IllegalStateException if an app with the same name has already been initialized.
+   * @throws IllegalArgumentException if an error occurs while loading options from the environment.
    */
   public static FirebaseApp initializeApp(String name) {
-    return initializeApp(getOptionsFromEnvironment(), name);
+    try {
+      return initializeApp(getOptionsFromEnvironment(), name);
+    } catch (IOException e) {
+      throw new IllegalArgumentException(
+          "Failed to load settings from the system's environment variables", e);
+    }
   }
 
   /**
    * Initializes the default {@link FirebaseApp} instance using the given options.
+   *
+   * @throws IllegalStateException if the default app has already been initialized.
    */
   public static FirebaseApp initializeApp(FirebaseOptions options) {
     return initializeApp(options, DEFAULT_APP_NAME);
@@ -239,19 +247,6 @@ public class FirebaseApp {
       }
       instances.clear();
     }
-  }
-
-  /**
-   * Returns persistence key. Exists to support getting {@link FirebaseApp} persistence key after
-   * the app has been deleted.
-   */
-  static String getPersistenceKey(String name, FirebaseOptions options) {
-    return BaseEncoding.base64Url().omitPadding().encode(name.getBytes(UTF_8));
-  }
-
-  /** Use this key to store data per FirebaseApp. */
-  String getPersistenceKey() {
-    return FirebaseApp.getPersistenceKey(getName(), getOptions());
   }
 
   private static List<String> getAllAppNames() {
@@ -317,10 +312,7 @@ public class FirebaseApp {
 
   @Override
   public boolean equals(Object o) {
-    if (!(o instanceof FirebaseApp)) {
-      return false;
-    }
-    return name.equals(((FirebaseApp) o).getName());
+    return o instanceof FirebaseApp && name.equals(((FirebaseApp) o).getName());
   }
 
   @Override
@@ -383,8 +375,8 @@ public class FirebaseApp {
       synchronized (lock) {
         checkNotDeleted();
         if (scheduledExecutor == null) {
-          scheduledExecutor = new RevivingScheduledExecutor(threadManager.getThreadFactory(),
-              "firebase-scheduled-worker", GaeThreadFactory.isAvailable());
+          scheduledExecutor = new FirebaseScheduledExecutor(getThreadFactory(),
+              "firebase-scheduled-worker");
         }
       }
     }
@@ -395,10 +387,9 @@ public class FirebaseApp {
     return threadManager.getThreadFactory();
   }
 
-  // TODO: Return an ApiFuture once Task API is fully removed.
-  <T> Task<T> submit(Callable<T> command) {
+  <T> ApiFuture<T> submit(Callable<T> command) {
     checkNotNull(command);
-    return Tasks.call(executors.getListeningExecutor(), command);
+    return new ListenableFuture2ApiFuture<>(executors.getListeningExecutor().submit(command));
   }
 
   <T> ScheduledFuture<T> schedule(Callable<T> command, long delayMillis) {
@@ -462,7 +453,7 @@ public class FirebaseApp {
     }
 
     @Override
-    public final synchronized void onChanged(OAuth2Credentials credentials) throws IOException {
+    public final synchronized void onChanged(OAuth2Credentials credentials) {
       if (state.get() != State.STARTED) {
         return;
       }
@@ -569,33 +560,26 @@ public class FirebaseApp {
     }
   }
 
-  private static FirebaseOptions getOptionsFromEnvironment() {
+  private static FirebaseOptions getOptionsFromEnvironment() throws IOException {
     String defaultConfig = System.getenv(FIREBASE_CONFIG_ENV_VAR);
-    try { 
-      if (Strings.isNullOrEmpty(defaultConfig)) {
-        return new FirebaseOptions.Builder()
-          .setCredentials(GoogleCredentials.getApplicationDefault())
-          .build();
-      }
-      JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-      FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
-      JsonParser parser;
-      if (defaultConfig.startsWith("{")) {
-        parser = jsonFactory.createJsonParser(defaultConfig);
-      } else {
-        FileReader reader;
-        reader = new FileReader(defaultConfig);
-        parser = jsonFactory.createJsonParser(reader);    
-      }
-      parser.parseAndClose(builder);
-      builder.setCredentials(GoogleCredentials.getApplicationDefault());
-      
-      return builder.build();
-
-    } catch (FileNotFoundException e) {
-      throw new IllegalStateException(e);
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
+    if (Strings.isNullOrEmpty(defaultConfig)) {
+      return new FirebaseOptions.Builder()
+        .setCredentials(GoogleCredentials.getApplicationDefault())
+        .build();
     }
+
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
+    JsonParser parser;
+    if (defaultConfig.startsWith("{")) {
+      parser = jsonFactory.createJsonParser(defaultConfig);
+    } else {
+      FileReader reader;
+      reader = new FileReader(defaultConfig);
+      parser = jsonFactory.createJsonParser(reader);
+    }
+    parser.parseAndClose(builder);
+    builder.setCredentials(GoogleCredentials.getApplicationDefault());
+    return builder.build();
   }
 }

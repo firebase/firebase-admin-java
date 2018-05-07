@@ -177,7 +177,7 @@ public class MutableData {
    *   <li>List&lt;Object&gt;
    * </ul>
    *
-   * <p>This list is recursive; the possible types for {@link java.lang.Object} in the above list is
+   * <p>This list is recursive; the possible types for <code>Object</code> in the above list is
    * given by the same list. These types correspond to the types available in JSON.
    *
    * @return The data contained in this instance as native types, or null if there is no data at
@@ -190,7 +190,7 @@ public class MutableData {
 
   /**
    * Due to the way that Java implements generics, it takes an extra step to get back a
-   * properly-typed Collection. So, in the case where you want a {@link java.util.List} of Message
+   * properly-typed Collection. So, in the case where you want a <code>List</code> of Message
    * instances, you will need to do something like the following:
    *
    * <pre><code>

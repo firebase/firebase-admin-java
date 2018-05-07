@@ -19,7 +19,6 @@ package com.google.firebase.database.connection;
 import static com.google.firebase.database.connection.ConnectionUtils.hardAssert;
 
 import com.google.firebase.database.connection.util.RetryHelper;
-import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.util.GAuthToken;
 
 import java.util.ArrayList;
@@ -33,6 +32,8 @@ import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PersistentConnectionImpl implements Connection.Delegate, PersistentConnection {
 
@@ -91,6 +92,9 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   private static final String SERVER_KILL_INTERRUPT_REASON = "server_kill";
   private static final String IDLE_INTERRUPT_REASON = "connection_idle";
   private static final String TOKEN_REFRESH_INTERRUPT_REASON = "token_refresh";
+
+  private static final Logger logger = LoggerFactory.getLogger(PersistentConnection.class);
+
   private static long connectionIds = 0;
 
   private final Delegate delegate;
@@ -99,8 +103,8 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   private final ConnectionFactory connFactory;
   private final ConnectionAuthTokenProvider authTokenProvider;
   private final ScheduledExecutorService executorService;
-  private final LogWrapper logger;
   private final RetryHelper retryHelper;
+  private final String label;
 
   private String cachedHost;
   private HashSet<String> interruptReasons = new HashSet<>();
@@ -143,7 +147,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     this.outstandingPuts = new HashMap<>();
     this.onDisconnectRequestQueue = new ArrayList<>();
     this.retryHelper =
-        new RetryHelper.Builder(this.executorService, context.getLogger(), RetryHelper.class)
+        new RetryHelper.Builder(this.executorService, RetryHelper.class)
             .withMinDelayAfterFailure(1000)
             .withRetryExponent(1.3)
             .withMaxDelay(30 * 1000)
@@ -151,7 +155,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
             .build();
 
     long connId = connectionIds++;
-    this.logger = new LogWrapper(context.getLogger(), PersistentConnection.class, "pc_" + connId);
+    this.label = "[pc_" + connId + "]";
     this.lastSessionId = null;
     doIdleCheck();
   }
@@ -159,9 +163,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   // Connection.Delegate methods
   @Override
   public void onReady(long timestamp, String sessionId) {
-    if (logger.logsDebug()) {
-      logger.debug("onReady");
-    }
+    logger.debug("{} onReady", label);
     lastConnectionEstablishedTime = System.currentTimeMillis();
     handleTimestamp(timestamp);
 
@@ -188,16 +190,12 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
       Long tag,
       RequestResultCallback listener) {
     ListenQuerySpec query = new ListenQuerySpec(path, queryParams);
-    if (logger.logsDebug()) {
-      logger.debug("Listening on " + query);
-    }
+    logger.debug("{} Listening on {}", label, query);
     // TODO: Fix this somehow?
     //hardAssert(query.isDefault() || !query.loadsAllData(), "listen() called for non-default but "
     //          + "complete query");
     hardAssert(!listens.containsKey(query), "listen() called twice for same QuerySpec.");
-    if (logger.logsDebug()) {
-      logger.debug("Adding listen query: " + query);
-    }
+    logger.debug("{} Adding listen query: {}", label, query);
     OutstandingListen outstandingListen =
         new OutstandingListen(listener, query, tag, currentHashFn);
     listens.put(query, outstandingListen);
@@ -277,23 +275,19 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
       Map<String, Object> body = (Map<String, Object>) message.get(SERVER_ASYNC_PAYLOAD);
       onDataPush(action, body);
     } else {
-      if (logger.logsDebug()) {
-        logger.debug("Ignoring unknown message: " + message);
-      }
+      logger.debug("{} Ignoring unknown message: {}", label, message);
     }
   }
 
   @Override
   public void onDisconnect(Connection.DisconnectReason reason) {
-    if (logger.logsDebug()) {
-      logger.debug("Got on disconnect due to " + reason.name());
-    }
+    logger.debug("{} Got on disconnect due to {}", label, reason.name());
     this.connectionState = ConnectionState.Disconnected;
     this.realtime = null;
     this.hasOnDisconnects = false;
     requestCBHash.clear();
     if (inactivityTimer != null) {
-      logger.debug("cancelling idle time checker");
+      logger.debug("{} Cancelling idle time checker", label);
       inactivityTimer.cancel(false);
       inactivityTimer = null;
     }
@@ -319,21 +313,16 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
 
   @Override
   public void onKill(String reason) {
-    if (logger.logsDebug()) {
-      logger.debug(
-          "Firebase Database connection was forcefully killed by the server. Will not attempt "
-              + "reconnect. Reason: "
-              + reason);
-    }
+    logger.debug(
+        "{} Firebase Database connection was forcefully killed by the server. Will not attempt "
+            + "reconnect. Reason: {}", label, reason);
     interrupt(SERVER_KILL_INTERRUPT_REASON);
   }
 
   @Override
   public void unlisten(List<String> path, Map<String, Object> queryParams) {
     ListenQuerySpec query = new ListenQuerySpec(path, queryParams);
-    if (logger.logsDebug()) {
-      logger.debug("unlistening on " + query);
-    }
+    logger.debug("{} Unlistening on {}", label, query);
 
     // TODO: fix this by understanding query params?
     //Utilities.hardAssert(query.isDefault() || !query.loadsAllData(),
@@ -395,9 +384,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
 
   @Override
   public void interrupt(String reason) {
-    if (logger.logsDebug()) {
-      logger.debug("Connection interrupted for: " + reason);
-    }
+    logger.debug("{} Connection interrupted for: {}", label, reason);
     interruptReasons.add(reason);
 
     if (realtime != null) {
@@ -414,10 +401,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
 
   @Override
   public void resume(String reason) {
-    if (logger.logsDebug()) {
-      logger.debug("Connection no longer interrupted for: " + reason);
-    }
-
+    logger.debug("{} Connection no longer interrupted for: {}", label, reason);
     interruptReasons.remove(reason);
 
     if (shouldReconnect() && connectionState == ConnectionState.Disconnected) {
@@ -444,7 +428,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     // we close the connection to make sure any writes/listens are queued until the connection
     // is reauthed with the current token after reconnecting. Note that this will trigger
     // onDisconnects which isn't ideal.
-    logger.debug("Auth token refresh requested");
+    logger.debug("{} Auth token refresh requested", label);
 
     // By using interrupt instead of closing the connection we make sure there are no race
     // conditions with other fetch token attempts (interrupt/resume is expected to handle those
@@ -455,7 +439,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
 
   @Override
   public void refreshAuthToken(String token) {
-    logger.debug("Auth token refreshed.");
+    logger.debug("{} Auth token refreshed.", label);
     this.authToken = token;
     if (connected()) {
       if (token != null) {
@@ -473,13 +457,13 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
           "Not in disconnected state: %s",
           this.connectionState);
       final boolean forceRefresh = this.forceAuthTokenRefresh;
-      logger.debug("Scheduling connection attempt");
+      logger.debug("{} Scheduling connection attempt", label);
       this.forceAuthTokenRefresh = false;
       retryHelper.retry(
           new Runnable() {
             @Override
             public void run() {
-              logger.debug("Trying to fetch auth token");
+              logger.debug("{} Trying to fetch auth token", label);
               hardAssert(
                   connectionState == ConnectionState.Disconnected,
                   "Not in disconnected state: %s",
@@ -496,7 +480,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
                         // Someone could have interrupted us while fetching the token,
                         // marking the connection as Disconnected
                         if (connectionState == ConnectionState.GettingToken) {
-                          logger.debug("Successfully fetched token, opening connection");
+                          logger.debug("{} Successfully fetched token, opening connection", label);
                           openNetworkConnection(token);
                         } else {
                           hardAssert(
@@ -504,13 +488,13 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
                               "Expected connection state disconnected, but was %s",
                               connectionState);
                           logger.debug(
-                              "Not opening connection after token refresh, "
-                                  + "because connection was set to disconnected");
+                              "{} Not opening connection after token refresh, because connection "
+                                  + "was set to disconnected", label);
                         }
                       } else {
                         logger.debug(
-                            "Ignoring getToken result, because this was not the "
-                                + "latest attempt.");
+                            "{} Ignoring getToken result, because this was not the "
+                                + "latest attempt.", label);
                       }
                     }
 
@@ -518,12 +502,12 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
                     public void onError(String error) {
                       if (thisGetTokenAttempt == currentGetTokenAttempt) {
                         connectionState = ConnectionState.Disconnected;
-                        logger.debug("Error fetching token: " + error);
+                        logger.debug("{} Error fetching token: {}", label, error);
                         tryScheduleReconnect();
                       } else {
                         logger.debug(
-                            "Ignoring getToken error, because this was not the "
-                                + "latest attempt.");
+                            "{} Ignoring getToken error, because this was not the "
+                                + "latest attempt.", label);
                       }
                     }
                   });
@@ -609,14 +593,10 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   }
 
   private OutstandingListen removeListen(ListenQuerySpec query) {
-    if (logger.logsDebug()) {
-      logger.debug("removing query " + query);
-    }
+    logger.debug("{} removing query {}", label, query);
     if (!listens.containsKey(query)) {
-      if (logger.logsDebug()) {
-        logger.debug(
-            "Trying to remove listener for QuerySpec " + query + " but no listener exists.");
-      }
+      logger.debug(
+          "{} Trying to remove listener for QuerySpec {} but no listener exists.", label, query);
       return null;
     } else {
       OutstandingListen oldListen = listens.get(query);
@@ -627,9 +607,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   }
 
   private Collection<OutstandingListen> removeListens(List<String> path) {
-    if (logger.logsDebug()) {
-      logger.debug("removing all listens at path " + path);
-    }
+    logger.debug("{} Removing all listens at path {}", label, path);
     List<OutstandingListen> removedListens = new ArrayList<>();
     for (Map.Entry<ListenQuerySpec, OutstandingListen> entry : listens.entrySet()) {
       ListenQuerySpec query = entry.getKey();
@@ -649,9 +627,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   }
 
   private void onDataPush(String action, Map<String, Object> body) {
-    if (logger.logsDebug()) {
-      logger.debug("handleServerMessage: " + action + " " + body);
-    }
+    logger.debug("{} handleServerMessage: {} {}", label, action, body);
     if (action.equals(SERVER_ASYNC_DATA_UPDATE) || action.equals(SERVER_ASYNC_DATA_MERGE)) {
       boolean isMerge = action.equals(SERVER_ASYNC_DATA_MERGE);
 
@@ -660,9 +636,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
       Long tagNumber = ConnectionUtils.longFromObject(body.get(SERVER_DATA_TAG));
       // ignore empty merges
       if (isMerge && (payloadData instanceof Map) && ((Map) payloadData).size() == 0) {
-        if (logger.logsDebug()) {
-          logger.debug("ignoring empty merge for path " + pathString);
-        }
+        logger.debug("{} Ignoring empty merge for path {}", label, pathString);
       } else {
         List<String> path = ConnectionUtils.stringToPath(pathString);
         delegate.onDataUpdate(path, payloadData, isMerge, tagNumber);
@@ -684,9 +658,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
         rangeMerges.add(new RangeMerge(start, end, update));
       }
       if (rangeMerges.isEmpty()) {
-        if (logger.logsDebug()) {
-          logger.debug("Ignoring empty range merge for path " + pathString);
-        }
+        logger.debug("{} Ignoring empty range merge for path {}", label, pathString);
       } else {
         this.delegate.onRangeMergeUpdate(path, rangeMerges, tag);
       }
@@ -701,9 +673,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     } else if (action.equals(SERVER_ASYNC_SECURITY_DEBUG)) {
       onSecurityDebugPacket(body);
     } else {
-      if (logger.logsDebug()) {
-        logger.debug("Unrecognized action from server: " + action);
-      }
+      logger.debug("{} Unrecognized action from server: {}", label, action);
     }
   }
 
@@ -723,7 +693,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     // This might be for an earlier token than we just recently sent. But since we need to close
     // the connection anyways, we can set it to null here and we will refresh the token later
     // on reconnect.
-    logger.debug("Auth token revoked: " + errorCode + " (" + errorMessage + ")");
+    logger.debug("{} Auth token revoked: {} ({})", label, errorCode, errorMessage);
     this.authToken = null;
     this.forceAuthTokenRefresh = true;
     this.delegate.onAuthStatus(false);
@@ -733,7 +703,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
 
   private void onSecurityDebugPacket(Map<String, Object> message) {
     // TODO: implement on iOS too
-    logger.info((String) message.get("msg"));
+    logger.info("{} {}", label, message.get("msg"));
   }
 
   private void upgradeAuth() {
@@ -766,7 +736,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
               forceAuthTokenRefresh = true;
               delegate.onAuthStatus(false);
               String reason = (String) response.get(SERVER_RESPONSE_DATA);
-              logger.debug("Authentication failed: " + status + " (" + reason + ")");
+              logger.debug("{} Authentication failed: {} ({})", label, status, reason);
               realtime.close();
 
               if (status.equals("invalid_token") || status.equals("permission_denied")) {
@@ -778,11 +748,11 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
                   // Set a long reconnect delay because recovery is unlikely.
                   retryHelper.setMaxDelay();
                   logger.warn(
-                      "Provided authentication credentials are invalid. This "
+                      "{} Provided authentication credentials are invalid. This "
                           + "usually indicates your FirebaseApp instance was not initialized "
                           + "correctly. Make sure your database URL is correct and that your "
                           + "service account is for the correct project and is authorized to "
-                          + "access it.");
+                          + "access it.", label);
                 }
               }
             }
@@ -814,9 +784,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   }
 
   private void restoreAuth() {
-    if (logger.logsDebug()) {
-      logger.debug("calling restore state");
-    }
+    logger.debug("{} Calling restore state", label);
 
     hardAssert(
         this.connectionState == ConnectionState.Connecting,
@@ -824,15 +792,11 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
         this.connectionState);
 
     if (authToken == null) {
-      if (logger.logsDebug()) {
-        logger.debug("Not restoring auth because token is null.");
-      }
+      logger.debug("{} Not restoring auth because token is null.", label);
       this.connectionState = ConnectionState.Connected;
       restoreState();
     } else {
-      if (logger.logsDebug()) {
-        logger.debug("Restoring auth.");
-      }
+      logger.debug("{} Restoring auth.", label);
       this.connectionState = ConnectionState.Authenticating;
       sendAuthAndRestoreState();
     }
@@ -845,19 +809,13 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
         this.connectionState);
 
     // Restore listens
-    if (logger.logsDebug()) {
-      logger.debug("Restoring outstanding listens");
-    }
+    logger.debug("{} Restoring outstanding listens", label);
     for (OutstandingListen listen : listens.values()) {
-      if (logger.logsDebug()) {
-        logger.debug("Restoring listen " + listen.getQuery());
-      }
+      logger.debug("{} Restoring listen {}", label, listen.getQuery());
       sendListen(listen);
     }
 
-    if (logger.logsDebug()) {
-      logger.debug("Restoring writes.");
-    }
+    logger.debug("{} Restoring writes.", label);
     // Restore puts
     ArrayList<Long> outstanding = new ArrayList<>(outstandingPuts.keySet());
     // Make sure puts are restored in order
@@ -878,9 +836,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
   }
 
   private void handleTimestamp(long timestamp) {
-    if (logger.logsDebug()) {
-      logger.debug("handling timestamp");
-    }
+    logger.debug("{} Handling timestamp", label);
     long timestampDelta = timestamp - System.currentTimeMillis();
     Map<String, Object> updates = new HashMap<>();
     updates.put(Constants.DOT_INFO_SERVERTIME_OFFSET, timestampDelta);
@@ -930,9 +886,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
         new ConnectionRequestCallback() {
           @Override
           public void onResponse(Map<String, Object> response) {
-            if (logger.logsDebug()) {
-              logger.debug(action + " response: " + response);
-            }
+            logger.debug("{} {} response: {}", label, action, response);
 
             OutstandingPut currentPut = outstandingPuts.get(putId);
             if (currentPut == put) {
@@ -948,10 +902,8 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
                 }
               }
             } else {
-              if (logger.logsDebug()) {
-                logger.debug(
-                    "Ignoring on complete for put " + putId + " because it was removed already.");
-              }
+              logger.debug("{} Ignoring on complete for put {} because it was removed already.",
+                  label, putId);
             }
             doIdleCheck();
           }
@@ -1032,17 +984,13 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
               String status = (String) response.get(REQUEST_STATUS);
               if (!status.equals("ok")) {
                 String errorMessage = (String) response.get(SERVER_DATA_UPDATE_BODY);
-                if (logger.logsDebug()) {
-                  logger.debug(
-                      "Failed to send stats: " + status + " (message: " + errorMessage + ")");
-                }
+                logger.debug(
+                    "{} Failed to send stats: {} (message: {})", label, stats, errorMessage);
               }
             }
           });
     } else {
-      if (logger.logsDebug()) {
-        logger.debug("Not sending stats because stats are empty");
-      }
+      logger.debug("{} Not sending stats because stats are empty", label);
     }
   }
 
@@ -1051,11 +999,9 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     if (warnings.contains("no_index")) {
       String indexSpec = "\".indexOn\": \"" + query.queryParams.get("i") + '\"';
       logger.warn(
-          "Using an unspecified index. Consider adding '"
-              + indexSpec
-              + "' at "
-              + ConnectionUtils.pathToString(query.path)
-              + " to your security and Firebase Database rules for better performance");
+          "{} Using an unspecified index. Consider adding '{}' at {} to your security and "
+              + "Firebase Database rules for better performance",
+          label, indexSpec, ConnectionUtils.pathToString(query.path));
     }
   }
 
@@ -1064,9 +1010,7 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
     assert !this.context.isPersistenceEnabled()
         : "Stats for persistence on JVM missing (persistence not yet supported)";
     stats.put("sdk.admin_java." + context.getClientSdkVersion().replace('.', '-'), 1);
-    if (logger.logsDebug()) {
-      logger.debug("Sending first connection stats");
-    }
+    logger.debug("{} Sending first connection stats", label);
     sendStats(stats);
   }
 

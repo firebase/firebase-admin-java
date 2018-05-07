@@ -36,13 +36,13 @@ import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.auth.internal.KeyManagers;
+import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
-import com.google.firebase.internal.TaskToApiFuture;
-import com.google.firebase.tasks.Task;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -54,6 +54,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * creating new FirebaseApp instances that are scoped to a particular authentication UID.
  */
 public class FirebaseAuth {
+
+  private static final String ERROR_CUSTOM_TOKEN = "ERROR_CUSTOM_TOKEN";
+  private static final String ERROR_INVALID_ID_TOKEN = "ERROR_INVALID_CREDENTIAL";
+  private static final String ERROR_INVALID_SESSION_COOKIE = "ERROR_INVALID_COOKIE";
 
   private final Clock clock;
 
@@ -111,22 +115,24 @@ public class FirebaseAuth {
     return service.getInstance();
   }
 
-  private Task<String> createSessionCookie(
-      final String idToken, final SessionCookieOptions options) {
-    checkNotDestroyed();
-    checkArgument(!Strings.isNullOrEmpty(idToken), "idToken must not be null or empty");
-    checkNotNull(options, "options must not be null");
-    return call(new Callable<String>() {
-      @Override
-      public String call() throws Exception {
-        return userManager.createSessionCookie(idToken, options);
-      }
-    });
-  }
-
   /**
    * Creates a new Firebase session cookie from the given ID token and options. The returned JWT
    * can be set as a server-side session cookie with a custom cookie policy.
+   *
+   * @param idToken The Firebase ID token to exchange for a session cookie.
+   * @param options Additional options required to create the cookie.
+   * @return A Firebase session cookie string.
+   * @throws IllegalArgumentException If the ID token is null or empty, or if options is null.
+   * @throws FirebaseAuthException If an error occurs while generating the session cookie.
+   */
+  public String createSessionCookie(
+      @NonNull String idToken, @NonNull SessionCookieOptions options) throws FirebaseAuthException {
+    return createSessionCookieOp(idToken, options).call();
+  }
+
+  /**
+   * Similar to {@link #createSessionCookie(String, SessionCookieOptions)} but performs the
+   * operation asynchronously.
    *
    * @param idToken The Firebase ID token to exchange for a session cookie.
    * @param options Additional options required to create the cookie.
@@ -137,25 +143,36 @@ public class FirebaseAuth {
    */
   public ApiFuture<String> createSessionCookieAsync(
       @NonNull String idToken, @NonNull SessionCookieOptions options) {
-    return new TaskToApiFuture<>(createSessionCookie(idToken, options));
+    return createSessionCookieOp(idToken, options).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<String, FirebaseAuthException> createSessionCookieOp(
+      final String idToken, final SessionCookieOptions options) {
+    checkNotDestroyed();
+    checkArgument(!Strings.isNullOrEmpty(idToken), "idToken must not be null or empty");
+    checkNotNull(options, "options must not be null");
+    return new CallableOperation<String, FirebaseAuthException>() {
+      @Override
+      protected String execute() throws FirebaseAuthException {
+        return userManager.createSessionCookie(idToken, options);
+      }
+    };
   }
 
   /**
    * Parses and verifies a Firebase session cookie.
    *
-   * <p>If verified successfully, the returned {@code ApiFuture} completes with a parsed version of
-   * the cookie from which the UID and the other claims can be read. If the cookie is invalid,
-   * the future throws an exception indicating the failure.
+   * <p>If verified successfully, returns a parsed version of the cookie from which the UID and the
+   * other claims can be read. If the cookie is invalid, throws a {@link FirebaseAuthException}.
    *
    * <p>This method does not check whether the cookie has been revoked. See
-   * {@link #verifySessionCookieAsync(String, boolean)}.
+   * {@link #verifySessionCookie(String, boolean)}.
    *
    * @param cookie A Firebase session cookie string to verify and parse.
-   * @return An {@code ApiFuture} which will complete successfully with the parsed cookie, or
-   *     unsuccessfully with the failure Exception.
+   * @return A {@link FirebaseToken} representing the verified and decoded cookie.
    */
-  public ApiFuture<FirebaseToken> verifySessionCookieAsync(String cookie) {
-    return new TaskToApiFuture<>(verifySessionCookie(cookie, false));
+  public FirebaseToken verifySessionCookie(String cookie) throws FirebaseAuthException {
+    return verifySessionCookie(cookie, false);
   }
 
   /**
@@ -164,10 +181,34 @@ public class FirebaseAuth {
    * <p>If {@code checkRevoked} is true, additionally verifies that the cookie has not been
    * revoked.
    *
-   * <p>If verified successfully, the returned {@code ApiFuture} completes with a parsed version of
-   * the cookie from which the UID and the other claims can be read. If the cookie is invalid or
-   * has been revoked while {@code checkRevoked} is true, the future throws an exception indicating
-   * the failure.
+   * <p>If verified successfully, returns a parsed version of the cookie from which the UID and the
+   * other claims can be read. If the cookie is invalid or has been revoked while
+   * {@code checkRevoked} is true, throws a {@link FirebaseAuthException}.
+   *
+   * @param cookie A Firebase session cookie string to verify and parse.
+   * @param checkRevoked A boolean indicating whether to check if the cookie was explicitly
+   *     revoked.
+   * @return A {@link FirebaseToken} representing the verified and decoded cookie.
+   */
+  public FirebaseToken verifySessionCookie(
+      String cookie, boolean checkRevoked) throws FirebaseAuthException {
+    return verifySessionCookieOp(cookie, checkRevoked).call();
+  }
+
+  /**
+   * Similar to {@link #verifySessionCookie(String)} but performs the operation asynchronously.
+   *
+   * @param cookie A Firebase session cookie string to verify and parse.
+   * @return An {@code ApiFuture} which will complete successfully with the parsed cookie, or
+   *     unsuccessfully with the failure Exception.
+   */
+  public ApiFuture<FirebaseToken> verifySessionCookieAsync(String cookie) {
+    return verifySessionCookieAsync(cookie, false);
+  }
+
+  /**
+   * Similar to {@link #verifySessionCookie(String, boolean)} but performs the operation
+   * asynchronously.
    *
    * @param cookie A Firebase session cookie string to verify and parse.
    * @param checkRevoked A boolean indicating whether to check if the cookie was explicitly
@@ -176,19 +217,26 @@ public class FirebaseAuth {
    *     unsuccessfully with the failure Exception.
    */
   public ApiFuture<FirebaseToken> verifySessionCookieAsync(String cookie, boolean checkRevoked) {
-    return new TaskToApiFuture<>(verifySessionCookie(cookie, checkRevoked));
+    return verifySessionCookieOp(cookie, checkRevoked).callAsync(firebaseApp);
   }
 
-  private Task<FirebaseToken> verifySessionCookie(final String cookie, final boolean checkRevoked) {
+  private CallableOperation<FirebaseToken, FirebaseAuthException> verifySessionCookieOp(
+      final String cookie, final boolean checkRevoked) {
     checkNotDestroyed();
     checkState(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifySessionCookie()");
-    return call(new Callable<FirebaseToken>() {
+    return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
       @Override
-      public FirebaseToken call() throws Exception {
+      public FirebaseToken execute() throws FirebaseAuthException {
         FirebaseTokenVerifier firebaseTokenVerifier =
             FirebaseTokenVerifier.createSessionCookieVerifier(projectId, keyManagers, clock);
-        FirebaseToken firebaseToken = FirebaseToken.parse(jsonFactory, cookie);
+        FirebaseToken firebaseToken;
+        try {
+          firebaseToken = FirebaseToken.parse(jsonFactory, cookie);
+        } catch (IOException e) {
+          throw new FirebaseAuthException(ERROR_INVALID_SESSION_COOKIE,
+              "Failed to parse cookie", e);
+        }
         // This will throw a FirebaseAuthException with details on how the token is invalid.
         firebaseTokenVerifier.verifyTokenAndSignature(firebaseToken.getToken());
 
@@ -198,7 +246,7 @@ public class FirebaseAuth {
         }
         return firebaseToken;
       }
-    });
+    };
   }
 
   private void checkRevoked(
@@ -212,106 +260,202 @@ public class FirebaseAuth {
   }
 
   /**
-   * Similar to {@link #createCustomTokenAsync(String)}, but returns a {@link Task}.
+   * Creates a Firebase custom token for the given UID. This token can then be sent back to a client
+   * application to be used with the
+   * <a href="/docs/auth/admin/create-custom-tokens#sign_in_using_custom_tokens_on_clients">signInWithCustomToken</a>
+   * authentication API.
+   *
+   * <p>{@link FirebaseApp} must have been initialized with service account credentials to use
+   * call this method.
    *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
-   *     (Firebase Database, Firebase Auth, etc.)
-   * @return A {@link Task} which will complete successfully with the created Firebase Custom Token,
-   *     or unsuccessfully with the failure Exception.
-   * @deprecated Use {@link #createCustomTokenAsync(String)}
+   *     (Realtime Database, Firebase Auth, etc.). Should be less than 128 characters.
+   * @return A Firebase custom token string.
+   * @throws IllegalArgumentException If the specified uid is null or empty, or if the app has not
+   *     been initialized with service account credentials.
+   * @throws FirebaseAuthException If an error occurs while generating the custom token.
    */
-  public Task<String> createCustomToken(String uid) {
+  public String createCustomToken(@NonNull String uid) throws FirebaseAuthException {
     return createCustomToken(uid, null);
   }
 
   /**
-   * Similar to {@link #createCustomTokenAsync(String, Map)}, but returns a {@link Task}.
-   *
-   * @param uid The UID to store in the token. This identifies the user to other Firebase services
-   *     (Realtime Database, Storage, etc.). Should be less than 128 characters.
-   * @param developerClaims Additional claims to be stored in the token (and made available to
-   *     security rules in Database, Storage, etc.). These must be able to be serialized to JSON
-   *     (e.g. contain only Maps, Arrays, Strings, Booleans, Numbers, etc.)
-   * @return A {@link Task} which will complete successfully with the created Firebase Custom Token,
-   *     or unsuccessfully with the failure Exception.
-   * @deprecated Use {@link #createCustomTokenAsync(String, Map)}
-   */
-  public Task<String> createCustomToken(
-      final String uid, final Map<String, Object> developerClaims) {
-    checkNotDestroyed();
-    checkState(credentials instanceof ServiceAccountCredentials,
-        "Must initialize FirebaseApp with a service account credential to call "
-            + "createCustomToken()");
-
-    final ServiceAccountCredentials serviceAccount = (ServiceAccountCredentials) credentials;
-    return call(new Callable<String>() {
-      @Override
-      public String call() throws Exception {
-        FirebaseTokenFactory tokenFactory = FirebaseTokenFactory.getInstance();
-        return tokenFactory.createSignedCustomAuthTokenForUser(
-            uid,
-            developerClaims,
-            serviceAccount.getClientEmail(),
-            serviceAccount.getPrivateKey());
-      }
-    });
-  }
-
-  /**
-   * Creates a Firebase Custom Token associated with the given UID. This token can then be provided
-   * back to a client application for use with the
+   * Creates a Firebase custom token for the given UID, containing the specified additional
+   * claims. This token can then be sent back to a client application to be used with the
    * <a href="/docs/auth/admin/create-custom-tokens#sign_in_using_custom_tokens_on_clients">signInWithCustomToken</a>
    * authentication API.
    *
+   * <p>{@link FirebaseApp} must have been initialized with service account credentials to use
+   * call this method.
+   *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
-   *     (Firebase Realtime Database, Firebase Auth, etc.)
-   * @return An {@code ApiFuture} which will complete successfully with the created Firebase Custom
-   *     Token, or unsuccessfully with the failure Exception.
+   *     (Realtime Database, Firebase Auth, etc.). Should be less than 128 characters.
+   * @param developerClaims Additional claims to be stored in the token (and made available to
+   *     security rules in Database, Storage, etc.). These must be able to be serialized to JSON
+   *     (e.g. contain only Maps, Arrays, Strings, Booleans, Numbers, etc.)
+   * @return A Firebase custom token string.
+   * @throws IllegalArgumentException If the specified uid is null or empty, or if the app has not
+   *     been initialized with service account credentials.
+   * @throws FirebaseAuthException If an error occurs while generating the custom token.
    */
-  public ApiFuture<String> createCustomTokenAsync(String uid) {
-    return new TaskToApiFuture<>(createCustomToken(uid));
+  public String createCustomToken(@NonNull String uid,
+      @Nullable Map<String, Object> developerClaims) throws FirebaseAuthException {
+    return createCustomTokenOp(uid, developerClaims).call();
   }
 
   /**
-   * Creates a Firebase Custom Token associated with the given UID and additionally containing the
-   * specified developerClaims. This token can then be provided back to a client application for use
-   * with the signInWithCustomToken authentication API.
+   * Similar to {@link #createCustomToken(String)} but performs the operation asynchronously.
+   *
+   * @param uid The UID to store in the token. This identifies the user to other Firebase services
+   *     (Realtime Database, Firebase Auth, etc.). Should be less than 128 characters.
+   * @return An {@code ApiFuture} which will complete successfully with the created Firebase custom
+   *     token, or unsuccessfully with the failure Exception.
+   * @throws IllegalArgumentException If the specified uid is null or empty, or if the app has not
+   *     been initialized with service account credentials.
+   */
+  public ApiFuture<String> createCustomTokenAsync(@NonNull String uid) {
+    return createCustomTokenAsync(uid, null);
+  }
+
+  /**
+   * Similar to {@link #createCustomToken(String, Map)} but performs the operation
+   * asynchronously.
    *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
    *     (Realtime Database, Storage, etc.). Should be less than 128 characters.
    * @param developerClaims Additional claims to be stored in the token (and made available to
    *     security rules in Database, Storage, etc.). These must be able to be serialized to JSON
    *     (e.g. contain only Maps, Arrays, Strings, Booleans, Numbers, etc.)
-   * @return An {@code ApiFuture} which will complete successfully with the created Firebase Custom
-   *     Token, or unsuccessfully with the failure Exception.
+   * @return An {@code ApiFuture} which will complete successfully with the created Firebase custom
+   *     token, or unsuccessfully with the failure Exception.
+   * @throws IllegalArgumentException If the specified uid is null or empty, or if the app has not
+   *     been initialized with service account credentials.
    */
   public ApiFuture<String> createCustomTokenAsync(
+      @NonNull String uid, @Nullable Map<String, Object> developerClaims) {
+    return createCustomTokenOp(uid, developerClaims).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<String, FirebaseAuthException> createCustomTokenOp(
       final String uid, final Map<String, Object> developerClaims) {
-    return new TaskToApiFuture<>(createCustomToken(uid, developerClaims));
+    checkNotDestroyed();
+    checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
+    checkArgument(credentials instanceof ServiceAccountCredentials,
+        "Must initialize FirebaseApp with a service account credential to call "
+            + "createCustomToken()");
+    return new CallableOperation<String, FirebaseAuthException>() {
+      @Override
+      public String execute() throws FirebaseAuthException {
+        final ServiceAccountCredentials serviceAccount = (ServiceAccountCredentials) credentials;
+        FirebaseTokenFactory tokenFactory = FirebaseTokenFactory.getInstance();
+        try {
+          return tokenFactory.createSignedCustomAuthTokenForUser(
+              uid,
+              developerClaims,
+              serviceAccount.getClientEmail(),
+              serviceAccount.getPrivateKey());
+        } catch (GeneralSecurityException | IOException e) {
+          throw new FirebaseAuthException(ERROR_CUSTOM_TOKEN,
+              "Failed to generate a custom token", e);
+        }
+      }
+    };
   }
 
   /**
-   * Similar to {@link #verifyIdTokenAsync(String)}, but returns a {@link Task}.
+   * Parses and verifies a Firebase ID Token.
    *
-   * @param token A Firebase ID Token to verify and parse.
-   * @return A {@link Task} which will complete successfully with the parsed token, or
-   *     unsuccessfully with the failure Exception.
-   * @deprecated Use {@link #verifyIdTokenAsync(String)}
+   * <p>A Firebase application can identify itself to a trusted backend server by sending its
+   * Firebase ID Token (accessible via the {@code getToken} API in the Firebase Authentication
+   * client) with its requests. The backend server can then use the {@code verifyIdToken()} method
+   * to verify that the token is valid. This method ensures that the token is correctly signed,
+   * has not expired, and it was issued to the Firebase project associated with this
+   * {@link FirebaseAuth} instance.
+   *
+   * <p>This method does not check whether a token has been revoked. Use
+   * {@link #verifyIdToken(String, boolean)} to perform an additional revocation check.
+   *
+   * @param token A Firebase ID token string to parse and verify.
+   * @return A {@link FirebaseToken} representing the verified and decoded token.
+   * @throws IllegalArgumentException If the token is null, empty, or if the {@link FirebaseApp}
+   *     instance does not have a project ID associated with it.
+   * @throws FirebaseAuthException If an error occurs while parsing or validating the token.
    */
-  public Task<FirebaseToken> verifyIdToken(final String token) {
+  public FirebaseToken verifyIdToken(@NonNull String token) throws FirebaseAuthException {
     return verifyIdToken(token, false);
   }
- 
-  private Task<FirebaseToken> verifyIdToken(final String token, final boolean checkRevoked) {
+
+  /**
+   * Parses and verifies a Firebase ID Token.
+   *
+   * <p>A Firebase application can identify itself to a trusted backend server by sending its
+   * Firebase ID Token (accessible via the {@code getToken} API in the Firebase Authentication
+   * client) with its requests. The backend server can then use the {@code verifyIdToken()} method
+   * to verify that the token is valid. This method ensures that the token is correctly signed,
+   * has not expired, and it was issued to the Firebase project associated with this
+   * {@link FirebaseAuth} instance.
+   *
+   * <p>If {@code checkRevoked} is set to true, this method performs an additional check to see
+   * if the ID token has been revoked since it was issues. This requires making an additional
+   * remote API call.
+   *
+   * @param token A Firebase ID token string to parse and verify.
+   * @param checkRevoked A boolean denoting whether to check if the tokens were revoked.
+   * @return A {@link FirebaseToken} representing the verified and decoded token.
+   * @throws IllegalArgumentException If the token is null, empty, or if the {@link FirebaseApp}
+   *     instance does not have a project ID associated with it.
+   * @throws FirebaseAuthException If an error occurs while parsing or validating the token.
+   */
+  public FirebaseToken verifyIdToken(
+      @NonNull String token, boolean checkRevoked) throws FirebaseAuthException {
+    return verifyIdTokenOp(token, checkRevoked).call();
+  }
+
+  /**
+   * Similar to {@link #verifyIdToken(String)} but performs the operation asynchronously.
+   *
+   * @param token A Firebase ID Token to verify and parse.
+   * @return An {@code ApiFuture} which will complete successfully with the parsed token, or
+   *     unsuccessfully with a {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the token is null, empty, or if the {@link FirebaseApp}
+   *     instance does not have a project ID associated with it.
+   */
+  public ApiFuture<FirebaseToken> verifyIdTokenAsync(@NonNull String token) {
+    return verifyIdTokenAsync(token, false);
+  }
+
+  /**
+   * Similar to {@link #verifyIdToken(String, boolean)} but performs the operation asynchronously.
+   *
+   * @param token A Firebase ID Token to verify and parse.
+   * @param checkRevoked A boolean denoting whether to check if the tokens were revoked.
+   * @return An {@code ApiFuture} which will complete successfully with the parsed token, or
+   *     unsuccessfully with a {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the token is null, empty, or if the {@link FirebaseApp}
+   *     instance does not have a project ID associated with it.
+   */
+  public ApiFuture<FirebaseToken> verifyIdTokenAsync(@NonNull String token, boolean checkRevoked) {
+    return verifyIdTokenOp(token, checkRevoked).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<FirebaseToken, FirebaseAuthException> verifyIdTokenOp(
+      final String token, final boolean checkRevoked) {
     checkNotDestroyed();
-    checkState(!Strings.isNullOrEmpty(projectId),
+    checkArgument(!Strings.isNullOrEmpty(token), "ID token must not be null or empty");
+    checkArgument(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifyIdToken()");
-    return call(new Callable<FirebaseToken>() {
+    return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
       @Override
-      public FirebaseToken call() throws Exception {
+      protected FirebaseToken execute() throws FirebaseAuthException {
         FirebaseTokenVerifier firebaseTokenVerifier =
             FirebaseTokenVerifier.createIdTokenVerifier(projectId, keyManagers, clock);
-        FirebaseToken firebaseToken = FirebaseToken.parse(jsonFactory, token);
+        FirebaseToken firebaseToken;
+        try {
+          firebaseToken = FirebaseToken.parse(jsonFactory, token);
+        } catch (IOException e) {
+          throw new FirebaseAuthException(ERROR_INVALID_ID_TOKEN, "Failed to parse token", e);
+        }
+
         // This will throw a FirebaseAuthException with details on how the token is invalid.
         firebaseTokenVerifier.verifyTokenAndSignature(firebaseToken.getToken());
 
@@ -320,122 +464,69 @@ public class FirebaseAuth {
         }       
         return firebaseToken;
       }
-    });
-  }
-
-  private Task<Void> revokeRefreshTokens(String uid) {
-    checkNotDestroyed();
-    long currentTimeSeconds = System.currentTimeMillis() / 1000L;
-    final UpdateRequest request = new UpdateRequest(uid).setValidSince(currentTimeSeconds);
-    return call(new Callable<Void>() {
-      @Override
-      public Void call() throws Exception {
-        userManager.updateUser(request, jsonFactory);
-        return null;
-      }
-    });
+    };
   }
 
   /**
    * Revokes all refresh tokens for the specified user.
-   * 
+   *
    * <p>Updates the user's tokensValidAfterTimestamp to the current UTC time expressed in
    * milliseconds since the epoch and truncated to 1 second accuracy. It is important that the
    * server on which this is called has its clock set correctly and synchronized.
-   * 
+   *
    * <p>While this will revoke all sessions for a specified user and disable any new ID tokens for
    * existing sessions from getting minted, existing ID tokens may remain active until their
-   * natural expiration (one hour). 
+   * natural expiration (one hour).
    * To verify that ID tokens are revoked, use {@link #verifyIdTokenAsync(String, boolean)}.
+   *
+   * @param uid The user id for which tokens are revoked.
+   * @throws IllegalArgumentException If the user ID is null or empty.
+   * @throws FirebaseAuthException If an error occurs while revoking tokens.
+   */
+  public void revokeRefreshTokens(@NonNull String uid) throws FirebaseAuthException {
+    revokeRefreshTokensOp(uid).call();
+  }
+
+  /**
+   * Similar to {@link #revokeRefreshTokens(String)} but performs the operation asynchronously.
    * 
    * @param uid The user id for which tokens are revoked.
-   * @return An {@code ApiFuture} which will complete successfully or if updating the user fails,
-   *     unsuccessfully with the failure Exception.
+   * @return An {@code ApiFuture} which will complete successfully or fail with a
+   *     {@link FirebaseAuthException} in the event of an error.
+   * @throws IllegalArgumentException If the user ID is null or empty.
    */
-  public ApiFuture<Void> revokeRefreshTokensAsync(String uid) {
-    return new TaskToApiFuture<>(revokeRefreshTokens(uid));
+  public ApiFuture<Void> revokeRefreshTokensAsync(@NonNull String uid) {
+    return revokeRefreshTokensOp(uid).callAsync(firebaseApp);
   }
 
-  /**
-   * Parses and verifies a Firebase ID Token.
-   *
-   * <p>A Firebase application can identify itself to a trusted backend server by sending its
-   * Firebase ID Token (accessible via the getToken API in the Firebase Authentication client) with
-   * its request.
-   *
-   * <p>The backend server can then use the verifyIdToken() method to verify the token is valid,
-   * meaning: the token is properly signed, has not expired, and it was issued for the project
-   * associated with this FirebaseAuth instance (which by default is extracted from your service
-   * account)
-   *
-   * <p>If the token is valid, the returned Future will complete successfully and provide a
-   * parsed version of the token from which the UID and other claims in the token can be inspected.
-   * If the token is invalid, the future throws an exception indicating the failure.
-   * 
-   * <p>This does not check whether a token has been revoked. 
-   * See {@link #verifyIdTokenAsync(String, boolean)} below.
-   *
-   * @param token A Firebase ID Token to verify and parse.
-   * @return An {@code ApiFuture} which will complete successfully with the parsed token, or
-   *     unsuccessfully with the failure Exception.
-   */
-  public ApiFuture<FirebaseToken> verifyIdTokenAsync(final String token) {
-    return verifyIdTokenAsync(token, false);
-  }
-
-  /**
-   * Parses and verifies a Firebase ID Token and if requested, checks whether it was revoked.
-   *
-   * <p>A Firebase application can identify itself to a trusted backend server by sending its
-   * Firebase ID Token (accessible via the getToken API in the Firebase Authentication client) with
-   * its request.
-   *
-   * <p>The backend server can then use the verifyIdToken() method to verify the token is valid,
-   * meaning: the token is properly signed, has not expired, and it was issued for the project
-   * associated with this FirebaseAuth instance (which by default is extracted from your service
-   * account)
-   * 
-   * <p>If {@code checkRevoked} is true, additionally checks if the token has been revoked.
-   * 
-   * <p>If the token is valid, and not revoked, the returned Future will complete successfully and
-   * provide a parsed version of the token from which the UID and other claims in the token can be
-   * inspected.
-   * If the token is invalid or has been revoked, the future throws an exception indicating the
-   * failure.
-   *
-   * @param token A Firebase ID Token to verify and parse.
-   * @param checkRevoked A boolean indicating whether to check if the tokens were revoked.
-   * @return An {@code ApiFuture} which will complete successfully with the parsed token, or
-   *     unsuccessfully with the failure Exception.
-   */
-  public ApiFuture<FirebaseToken> verifyIdTokenAsync(final String token,
-                                                     final boolean checkRevoked) {
-    return new TaskToApiFuture<>(verifyIdToken(token, checkRevoked));
-  }
-
-  /**
-   * Similar to {@link #getUserAsync(String)}, but returns a {@link Task}.
-   *
-   * @param uid A user ID string.
-   * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance.
-   *     If an error occurs while retrieving user data or if the specified user ID does not exist,
-   *     the task fails with a {@link FirebaseAuthException}.
-   * @throws IllegalArgumentException If the user ID string is null or empty.
-   * @deprecated Use {@link #getUserAsync(String)}
-   */
-  public Task<UserRecord> getUser(final String uid) {
+  private CallableOperation<Void, FirebaseAuthException> revokeRefreshTokensOp(final String uid) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
-    return call(new Callable<UserRecord>() {
+    return new CallableOperation<Void, FirebaseAuthException>() {
       @Override
-      public UserRecord call() throws Exception {
-        return userManager.getUserById(uid);
+      protected Void execute() throws FirebaseAuthException {
+        int currentTimeSeconds = (int) (System.currentTimeMillis() / 1000);
+        UpdateRequest request = new UpdateRequest(uid).setValidSince(currentTimeSeconds);
+        userManager.updateUser(request, jsonFactory);
+        return null;
       }
-    });
+    };
   }
 
   /**
    * Gets the user data corresponding to the specified user ID.
+   *
+   * @param uid A user ID string.
+   * @return A {@link UserRecord} instance.
+   * @throws IllegalArgumentException If the user ID string is null or empty.
+   * @throws FirebaseAuthException If an error occurs while retrieving user data.
+   */
+  public UserRecord getUser(@NonNull String uid) throws FirebaseAuthException {
+    return getUserOp(uid).call();
+  }
+
+  /**
+   * Similar to {@link #getUser(String)} but performs the operation asynchronously.
    *
    * @param uid A user ID string.
    * @return An {@code ApiFuture} which will complete successfully with a {@link UserRecord}
@@ -443,33 +534,35 @@ public class FirebaseAuth {
    *     not exist, the future throws a {@link FirebaseAuthException}.
    * @throws IllegalArgumentException If the user ID string is null or empty.
    */
-  public ApiFuture<UserRecord> getUserAsync(final String uid) {
-    return new TaskToApiFuture<>(getUser(uid));
+  public ApiFuture<UserRecord> getUserAsync(@NonNull String uid) {
+    return getUserOp(uid).callAsync(firebaseApp);
   }
 
-  /**
-   * Similar to {@link #getUserByEmailAsync(String)}, but returns a {@link Task}.
-   *
-   * @param email A user email address string.
-   * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance.
-   *     If an error occurs while retrieving user data or if the email address does not correspond
-   *     to a user, the task fails with a {@link FirebaseAuthException}.
-   * @throws IllegalArgumentException If the email is null or empty.
-   * @deprecated Use {@link #getUserByEmailAsync(String)}
-   */
-  public Task<UserRecord> getUserByEmail(final String email) {
+  private CallableOperation<UserRecord, FirebaseAuthException> getUserOp(final String uid) {
     checkNotDestroyed();
-    checkArgument(!Strings.isNullOrEmpty(email), "email must not be null or empty");
-    return call(new Callable<UserRecord>() {
+    checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
+    return new CallableOperation<UserRecord, FirebaseAuthException>() {
       @Override
-      public UserRecord call() throws Exception {
-        return userManager.getUserByEmail(email);
+      protected UserRecord execute() throws FirebaseAuthException {
+        return userManager.getUserById(uid);
       }
-    });
+    };
   }
 
   /**
    * Gets the user data corresponding to the specified user email.
+   *
+   * @param email A user email address string.
+   * @return A {@link UserRecord} instance.
+   * @throws IllegalArgumentException If the email is null or empty.
+   * @throws FirebaseAuthException If an error occurs while retrieving user data.
+   */
+  public UserRecord getUserByEmail(@NonNull String email) throws FirebaseAuthException {
+    return getUserByEmailOp(email).call();
+  }
+
+  /**
+   * Similar to {@link #getUserByEmail(String)} but performs the operation asynchronously.
    *
    * @param email A user email address string.
    * @return An {@code ApiFuture} which will complete successfully with a {@link UserRecord}
@@ -477,29 +570,32 @@ public class FirebaseAuth {
    *     correspond to a user, the future throws a {@link FirebaseAuthException}.
    * @throws IllegalArgumentException If the email is null or empty.
    */
-  public ApiFuture<UserRecord> getUserByEmailAsync(final String email) {
-    return new TaskToApiFuture<>(getUserByEmail(email));
+  public ApiFuture<UserRecord> getUserByEmailAsync(@NonNull String email) {
+    return getUserByEmailOp(email).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<UserRecord, FirebaseAuthException> getUserByEmailOp(
+      final String email) {
+    checkNotDestroyed();
+    checkArgument(!Strings.isNullOrEmpty(email), "email must not be null or empty");
+    return new CallableOperation<UserRecord, FirebaseAuthException>() {
+      @Override
+      protected UserRecord execute() throws FirebaseAuthException {
+        return userManager.getUserByEmail(email);
+      }
+    };
   }
 
   /**
-   * Similar to {@link #getUserByPhoneNumberAsync(String)}, but returns a {@link Task}.
+   * Gets the user data corresponding to the specified user phone number.
    *
    * @param phoneNumber A user phone number string.
-   * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance.
-   *     If an error occurs while retrieving user data or if the phone number does not
-   *     correspond to a user, the task fails with a {@link FirebaseAuthException}.
+   * @return A a {@link UserRecord} instance.
    * @throws IllegalArgumentException If the phone number is null or empty.
-   * @deprecated Use {@link #getUserByPhoneNumberAsync(String)}
+   * @throws FirebaseAuthException If an error occurs while retrieving user data.
    */
-  public Task<UserRecord> getUserByPhoneNumber(final String phoneNumber) {
-    checkNotDestroyed();
-    checkArgument(!Strings.isNullOrEmpty(phoneNumber), "phone number must not be null or empty");
-    return call(new Callable<UserRecord>() {
-      @Override
-      public UserRecord call() throws Exception {
-        return userManager.getUserByPhoneNumber(phoneNumber);
-      }
-    });
+  public UserRecord getUserByPhoneNumber(@NonNull String phoneNumber) throws FirebaseAuthException {
+    return getUserByPhoneNumberOp(phoneNumber).call();
   }
 
   /**
@@ -511,25 +607,53 @@ public class FirebaseAuth {
    *     correspond to a user, the future throws a {@link FirebaseAuthException}.
    * @throws IllegalArgumentException If the phone number is null or empty.
    */
-  public ApiFuture<UserRecord> getUserByPhoneNumberAsync(final String phoneNumber) {
-    return new TaskToApiFuture<>(getUserByPhoneNumber(phoneNumber));
+  public ApiFuture<UserRecord> getUserByPhoneNumberAsync(@NonNull String phoneNumber) {
+    return getUserByPhoneNumberOp(phoneNumber).callAsync(firebaseApp);
   }
 
-  private Task<ListUsersPage> listUsers(@Nullable String pageToken, int maxResults) {
+  private CallableOperation<UserRecord, FirebaseAuthException> getUserByPhoneNumberOp(
+      final String phoneNumber) {
     checkNotDestroyed();
-    final PageFactory factory = new PageFactory(
-        new DefaultUserSource(userManager, jsonFactory), maxResults, pageToken);
-    return call(new Callable<ListUsersPage>() {
+    checkArgument(!Strings.isNullOrEmpty(phoneNumber), "phone number must not be null or empty");
+    return new CallableOperation<UserRecord, FirebaseAuthException>() {
       @Override
-      public ListUsersPage call() throws Exception {
-        return factory.create();
+      protected UserRecord execute() throws FirebaseAuthException {
+        return userManager.getUserByPhoneNumber(phoneNumber);
       }
-    });
+    };
   }
 
   /**
    * Gets a page of users starting from the specified {@code pageToken}. Page size will be
    * limited to 1000 users.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of users.
+   * @return A {@link ListUsersPage} instance.
+   * @throws IllegalArgumentException If the specified page token is empty.
+   * @throws FirebaseAuthException If an error occurs while retrieving user data.
+   */
+  public ListUsersPage listUsers(@Nullable String pageToken) throws FirebaseAuthException {
+    return listUsers(pageToken, FirebaseUserManager.MAX_LIST_USERS_RESULTS);
+  }
+
+  /**
+   * Gets a page of users starting from the specified {@code pageToken}.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of users.
+   * @param maxResults Maximum number of users to include in the returned page. This may not
+   *     exceed 1000.
+   * @return A {@link ListUsersPage} instance.
+   * @throws IllegalArgumentException If the specified page token is empty, or max results value
+   *     is invalid.
+   * @throws FirebaseAuthException If an error occurs while retrieving user data.
+   */
+  public ListUsersPage listUsers(
+      @Nullable String pageToken, int maxResults) throws FirebaseAuthException {
+    return listUsersOp(pageToken, maxResults).call();
+  }
+
+  /**
+   * Similar to {@link #listUsers(String)} but performs the operation asynchronously.
    *
    * @param pageToken A non-empty page token string, or null to retrieve the first page of users.
    * @return An {@code ApiFuture} which will complete successfully with a {@link ListUsersPage}
@@ -541,7 +665,7 @@ public class FirebaseAuth {
   }
 
   /**
-   * Gets a page of users starting from the specified {@code pageToken}.
+   * Similar to {@link #listUsers(String, int)} but performs the operation asynchronously.
    *
    * @param pageToken A non-empty page token string, or null to retrieve the first page of users.
    * @param maxResults Maximum number of users to include in the returned page. This may not
@@ -551,30 +675,22 @@ public class FirebaseAuth {
    * @throws IllegalArgumentException If the specified page token is empty, or max results value
    *     is invalid.
    */
-  public ApiFuture<ListUsersPage> listUsersAsync(@Nullable String pageToken, int maxResults) {
-    return new TaskToApiFuture<>(listUsers(pageToken, maxResults));
+  public ApiFuture<ListUsersPage> listUsersAsync(
+      @Nullable final String pageToken, final int maxResults) {
+    return listUsersOp(pageToken, maxResults).callAsync(firebaseApp);
   }
 
-  /**
-   * Similar to {@link #createUserAsync(CreateRequest)}, but returns a {@link Task}.
-   *
-   * @param request A non-null {@link CreateRequest} instance.
-   * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance
-   *     corresponding to the newly created account. If an error occurs while creating the user
-   *     account, the task fails with a {@link FirebaseAuthException}.
-   * @throws NullPointerException if the provided request is null.
-   * @deprecated Use {@link #createUserAsync(CreateRequest)}
-   */
-  public Task<UserRecord> createUser(final CreateRequest request) {
+  private CallableOperation<ListUsersPage, FirebaseAuthException> listUsersOp(
+      @Nullable String pageToken, int maxResults) {
     checkNotDestroyed();
-    checkNotNull(request, "create request must not be null");
-    return call(new Callable<UserRecord>() {
+    final PageFactory factory = new PageFactory(
+        new DefaultUserSource(userManager, jsonFactory), maxResults, pageToken);
+    return new CallableOperation<ListUsersPage, FirebaseAuthException>() {
       @Override
-      public UserRecord call() throws Exception {
-        String uid = userManager.createUser(request);
-        return userManager.getUserById(uid);
+      protected ListUsersPage execute() throws FirebaseAuthException {
+        return factory.create();
       }
-    });
+    };
   }
 
   /**
@@ -582,35 +698,38 @@ public class FirebaseAuth {
    * {@link CreateRequest}.
    *
    * @param request A non-null {@link CreateRequest} instance.
+   * @return A {@link UserRecord} instance corresponding to the newly created account.
+   * @throws NullPointerException if the provided request is null.
+   * @throws FirebaseAuthException if an error occurs while creating the user account.
+   */
+  public UserRecord createUser(@NonNull CreateRequest request) throws FirebaseAuthException {
+    return createUserOp(request).call();
+  }
+
+  /**
+   * Similar to {@link #createUser(CreateRequest)} but performs the operation asynchronously.
+   *
+   * @param request A non-null {@link CreateRequest} instance.
    * @return An {@code ApiFuture} which will complete successfully with a {@link UserRecord}
    *     instance corresponding to the newly created account. If an error occurs while creating the
    *     user account, the future throws a {@link FirebaseAuthException}.
    * @throws NullPointerException if the provided request is null.
    */
-  public ApiFuture<UserRecord> createUserAsync(final CreateRequest request) {
-    return new TaskToApiFuture<>(createUser(request));
+  public ApiFuture<UserRecord> createUserAsync(@NonNull CreateRequest request) {
+    return createUserOp(request).callAsync(firebaseApp);
   }
 
-  /**
-   * Similar to {@link #updateUserAsync(UpdateRequest)}, but returns a {@link Task}.
-   *
-   * @param request A non-null {@link UpdateRequest} instance.
-   * @return A {@link Task} which will complete successfully with a {@link UserRecord} instance
-   *     corresponding to the updated user account. If an error occurs while updating the user
-   *     account, the task fails with a {@link FirebaseAuthException}.
-   * @throws NullPointerException if the provided update request is null.
-   * @deprecated Use {@link #updateUserAsync(UpdateRequest)}
-   */
-  public Task<UserRecord> updateUser(final UpdateRequest request) {
+  private CallableOperation<UserRecord, FirebaseAuthException> createUserOp(
+      final CreateRequest request) {
     checkNotDestroyed();
-    checkNotNull(request, "update request must not be null");
-    return call(new Callable<UserRecord>() {
+    checkNotNull(request, "create request must not be null");
+    return new CallableOperation<UserRecord, FirebaseAuthException>() {
       @Override
-      public UserRecord call() throws Exception {
-        userManager.updateUser(request, jsonFactory);
-        return userManager.getUserById(request.getUid());
+      protected UserRecord execute() throws FirebaseAuthException {
+        String uid = userManager.createUser(request);
+        return userManager.getUserById(uid);
       }
-    });
+    };
   }
 
   /**
@@ -618,25 +737,38 @@ public class FirebaseAuth {
    * {@link UpdateRequest}.
    *
    * @param request A non-null {@link UpdateRequest} instance.
+   * @return A {@link UserRecord} instance corresponding to the updated user account.
+   *     account, the task fails with a {@link FirebaseAuthException}.
+   * @throws NullPointerException if the provided update request is null.
+   * @throws FirebaseAuthException if an error occurs while updating the user account.
+   */
+  public UserRecord updateUser(@NonNull UpdateRequest request) throws FirebaseAuthException {
+    return updateUserOp(request).call();
+  }
+
+  /**
+   * Similar to {@link #updateUser(UpdateRequest)} but performs the operation asynchronously.
+   *
+   * @param request A non-null {@link UpdateRequest} instance.
    * @return An {@code ApiFuture} which will complete successfully with a {@link UserRecord}
    *     instance corresponding to the updated user account. If an error occurs while updating the
    *     user account, the future throws a {@link FirebaseAuthException}.
-   * @throws NullPointerException if the provided update request is null.
    */
-  public ApiFuture<UserRecord> updateUserAsync(final UpdateRequest request) {
-    return new TaskToApiFuture<>(updateUser(request));
+  public ApiFuture<UserRecord> updateUserAsync(@NonNull UpdateRequest request) {
+    return updateUserOp(request).callAsync(firebaseApp);
   }
 
-  private Task<Void> setCustomClaims(String uid, Map<String, Object> claims) {
+  private CallableOperation<UserRecord, FirebaseAuthException> updateUserOp(
+      final UpdateRequest request) {
     checkNotDestroyed();
-    final UpdateRequest request = new UpdateRequest(uid).setCustomClaims(claims);
-    return call(new Callable<Void>() {
+    checkNotNull(request, "update request must not be null");
+    return new CallableOperation<UserRecord, FirebaseAuthException>() {
       @Override
-      public Void call() throws Exception {
+      protected UserRecord execute() throws FirebaseAuthException {
         userManager.updateUser(request, jsonFactory);
-        return null;
+        return userManager.getUserById(request.getUid());
       }
-    });
+    };
   }
 
   /**
@@ -646,40 +778,57 @@ public class FirebaseAuth {
    *
    * @param uid A user ID string.
    * @param claims A map of custom claims or null.
-   * @return An {@code ApiFuture} which will complete successfully when the user account has been
-   *     updated. If an error occurs while deleting the user account, the future throws a
-   *     {@link FirebaseAuthException}.
+   * @throws FirebaseAuthException If an error occurs while updating custom claims.
    * @throws IllegalArgumentException If the user ID string is null or empty, or the claims
    *     payload is invalid or too large.
    */
-  public ApiFuture<Void> setCustomUserClaimsAsync(String uid, Map<String, Object> claims) {
-    return new TaskToApiFuture<>(setCustomClaims(uid, claims));
+  public void setCustomClaims(@NonNull String uid,
+      @Nullable Map<String, Object> claims) throws FirebaseAuthException {
+    setCustomUserClaimsOp(uid, claims).call();
   }
 
   /**
-   * Similar to {@link #deleteUserAsync(String)}, but returns a {@link Task}.
+   * Similar to {@link #setCustomClaims(String, Map)} but performs the operation asynchronously.
    *
    * @param uid A user ID string.
-   * @return A {@link Task} which will complete successfully when the specified user account has
-   *     been deleted. If an error occurs while deleting the user account, the task fails with a
+   * @param claims A map of custom claims or null.
+   * @return An {@code ApiFuture} which will complete successfully when the user account has been
+   *     updated. If an error occurs while deleting the user account, the future throws a
    *     {@link FirebaseAuthException}.
    * @throws IllegalArgumentException If the user ID string is null or empty.
-   * @deprecated Use {@link #deleteUserAsync(String)}
    */
-  public Task<Void> deleteUser(final String uid) {
+  public ApiFuture<Void> setCustomUserClaimsAsync(
+      @NonNull String uid, @Nullable Map<String, Object> claims) {
+    return setCustomUserClaimsOp(uid, claims).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<Void, FirebaseAuthException> setCustomUserClaimsOp(
+      final String uid, final Map<String, Object> claims) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
-    return call(new Callable<Void>() {
+    return new CallableOperation<Void, FirebaseAuthException>() {
       @Override
-      public Void call() throws Exception {
-        userManager.deleteUser(uid);
+      protected Void execute() throws FirebaseAuthException {
+        final UpdateRequest request = new UpdateRequest(uid).setCustomClaims(claims);
+        userManager.updateUser(request, jsonFactory);
         return null;
       }
-    });
+    };
   }
 
   /**
    * Deletes the user identified by the specified user ID.
+   *
+   * @param uid A user ID string.
+   * @throws IllegalArgumentException If the user ID string is null or empty.
+   * @throws FirebaseAuthException If an error occurs while deleting the user.
+   */
+  public void deleteUser(@NonNull String uid) throws FirebaseAuthException {
+    deleteUserOp(uid).call();
+  }
+
+  /**
+   * Similar to {@link #deleteUser(String)} but performs the operation asynchronously.
    *
    * @param uid A user ID string.
    * @return An {@code ApiFuture} which will complete successfully when the specified user account
@@ -688,11 +837,19 @@ public class FirebaseAuth {
    * @throws IllegalArgumentException If the user ID string is null or empty.
    */
   public ApiFuture<Void> deleteUserAsync(final String uid) {
-    return new TaskToApiFuture<>(deleteUser(uid));
+    return deleteUserOp(uid).callAsync(firebaseApp);
   }
 
-  private <T> Task<T> call(Callable<T> command) {
-    return ImplFirebaseTrampolines.submitCallable(firebaseApp, command);
+  private CallableOperation<Void, FirebaseAuthException> deleteUserOp(final String uid) {
+    checkNotDestroyed();
+    checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
+    return new CallableOperation<Void, FirebaseAuthException>() {
+      @Override
+      protected Void execute() throws FirebaseAuthException {
+        userManager.deleteUser(uid);
+        return null;
+      }
+    };
   }
 
   @VisibleForTesting

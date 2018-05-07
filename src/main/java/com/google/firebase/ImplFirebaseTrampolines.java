@@ -16,11 +16,11 @@
 
 package com.google.firebase;
 
+import com.google.api.core.ApiFuture;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 
-import com.google.firebase.tasks.Task;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadFactory;
 
@@ -47,14 +47,6 @@ public final class ImplFirebaseTrampolines {
     return app.isDefaultApp();
   }
 
-  public static String getPersistenceKey(@NonNull FirebaseApp app) {
-    return app.getPersistenceKey();
-  }
-  
-  public static String getPersistenceKey(String name, FirebaseOptions options) {
-    return FirebaseApp.getPersistenceKey(name, options);
-  }
-
   public static <T extends FirebaseService> T getService(
       @NonNull FirebaseApp app, @NonNull String id, @NonNull Class<T> type) {
     return type.cast(app.getService(id));
@@ -70,7 +62,8 @@ public final class ImplFirebaseTrampolines {
     return app.getThreadFactory();
   }
 
-  public static <T> Task<T> submitCallable(@NonNull FirebaseApp app, @NonNull Callable<T> command) {
+  public static <T> ApiFuture<T> submitCallable(
+      @NonNull FirebaseApp app, @NonNull Callable<T> command) {
     return app.submit(command);
   }
 

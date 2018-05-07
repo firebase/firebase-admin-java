@@ -38,15 +38,13 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseRequestInitializer;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.internal.TaskToApiFuture;
-import com.google.firebase.tasks.Task;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 /**
  * This class is the entry point for all server-side Firebase Cloud Messaging actions.
@@ -139,11 +137,10 @@ public class FirebaseMessaging {
    * Sends the given {@link Message} via Firebase Cloud Messaging.
    *
    * @param message A non-null {@link Message} to be sent.
-   * @return An {@code ApiFuture} that will complete with a message ID string when the message
-   *     has been sent.
+   * @return A message ID string.
    */
-  public ApiFuture<String> sendAsync(@NonNull Message message) {
-    return sendAsync(message, false);
+  public String send(@NonNull Message message) throws FirebaseMessagingException {
+    return send(message, false);
   }
 
   /**
@@ -154,21 +151,33 @@ public class FirebaseMessaging {
    *
    * @param message A non-null {@link Message} to be sent.
    * @param dryRun a boolean indicating whether to perform a dry run (validation only) of the send.
+   * @return A message ID string.
+   */
+  public String send(@NonNull Message message, boolean dryRun) throws FirebaseMessagingException {
+    return sendOp(message, dryRun).call();
+  }
+
+  /**
+   * Similar to {@link #send(Message)} but performs the operation asynchronously.
+   *
+   * @param message A non-null {@link Message} to be sent.
+   * @return An {@code ApiFuture} that will complete with a message ID string when the message
+   *     has been sent.
+   */
+  public ApiFuture<String> sendAsync(@NonNull Message message) {
+    return sendAsync(message, false);
+  }
+
+  /**
+   * Similar to {@link #send(Message, boolean)} but performs the operation asynchronously.
+   *
+   * @param message A non-null {@link Message} to be sent.
+   * @param dryRun a boolean indicating whether to perform a dry run (validation only) of the send.
    * @return An {@code ApiFuture} that will complete with a message ID string when the message
    *     has been sent, or when the emulation has finished.
    */
   public ApiFuture<String> sendAsync(@NonNull Message message, boolean dryRun) {
-    return new TaskToApiFuture<>(send(message, dryRun));
-  }
-
-  private Task<String> send(final Message message, final boolean dryRun) {
-    checkNotNull(message, "message must not be null");
-    return ImplFirebaseTrampolines.submitCallable(app, new Callable<String>() {
-      @Override
-      public String call() throws FirebaseMessagingException {
-        return makeSendRequest(message, dryRun);
-      }
-    });
+    return sendOp(message, dryRun).callAsync(app);
   }
 
   /**
@@ -177,24 +186,24 @@ public class FirebaseMessaging {
    * @param registrationTokens A non-null, non-empty list of device registration tokens, with at
    *     most 1000 entries.
    * @param topic Name of the topic to subscribe to. May contain the {@code /topics/} prefix.
+   * @return A {@link TopicManagementResponse}.
+   */
+  public TopicManagementResponse subscribeToTopic(@NonNull List<String> registrationTokens,
+      @NonNull String topic) throws FirebaseMessagingException {
+    return manageTopicOp(registrationTokens, topic, IID_SUBSCRIBE_PATH).call();
+  }
+
+  /**
+   * Similar to {@link #subscribeToTopic(List, String)} but performs the operation asynchronously.
+   *
+   * @param registrationTokens A non-null, non-empty list of device registration tokens, with at
+   *     most 1000 entries.
+   * @param topic Name of the topic to subscribe to. May contain the {@code /topics/} prefix.
    * @return An {@code ApiFuture} that will complete with a {@link TopicManagementResponse}.
    */
   public ApiFuture<TopicManagementResponse> subscribeToTopicAsync(
       @NonNull List<String> registrationTokens, @NonNull String topic) {
-    return new TaskToApiFuture<>(subscribeToTopic(registrationTokens, topic));
-  }
-
-  private Task<TopicManagementResponse> subscribeToTopic(
-      final List<String> registrationTokens, final String topic) {
-    checkRegistrationTokens(registrationTokens);
-    checkTopic(topic);
-
-    return ImplFirebaseTrampolines.submitCallable(app, new Callable<TopicManagementResponse>() {
-      @Override
-      public TopicManagementResponse call() throws FirebaseMessagingException {
-        return makeTopicManagementRequest(registrationTokens, topic, IID_SUBSCRIBE_PATH);
-      }
-    });
+    return manageTopicOp(registrationTokens, topic, IID_SUBSCRIBE_PATH).callAsync(app);
   }
 
   /**
@@ -203,52 +212,60 @@ public class FirebaseMessaging {
    * @param registrationTokens A non-null, non-empty list of device registration tokens, with at
    *     most 1000 entries.
    * @param topic Name of the topic to unsubscribe from. May contain the {@code /topics/} prefix.
+   * @return A {@link TopicManagementResponse}.
+   */
+  public TopicManagementResponse unsubscribeFromTopic(@NonNull List<String> registrationTokens,
+      @NonNull String topic) throws FirebaseMessagingException {
+    return manageTopicOp(registrationTokens, topic, IID_UNSUBSCRIBE_PATH).call();
+  }
+
+  /**
+   * Similar to {@link #unsubscribeFromTopic(List, String)} but performs the operation
+   * asynchronously.
+   *
+   * @param registrationTokens A non-null, non-empty list of device registration tokens, with at
+   *     most 1000 entries.
+   * @param topic Name of the topic to unsubscribe from. May contain the {@code /topics/} prefix.
    * @return An {@code ApiFuture} that will complete with a {@link TopicManagementResponse}.
    */
   public ApiFuture<TopicManagementResponse> unsubscribeFromTopicAsync(
       @NonNull List<String> registrationTokens, @NonNull String topic) {
-    return new TaskToApiFuture<>(unsubscribeFromTopic(registrationTokens, topic));
+    return manageTopicOp(registrationTokens, topic, IID_UNSUBSCRIBE_PATH)
+        .callAsync(app);
   }
 
-  private Task<TopicManagementResponse> unsubscribeFromTopic(
-      final List<String> registrationTokens, final String topic) {
-    checkRegistrationTokens(registrationTokens);
-    checkTopic(topic);
-
-    return ImplFirebaseTrampolines.submitCallable(app, new Callable<TopicManagementResponse>() {
+  private CallableOperation<String, FirebaseMessagingException> sendOp(
+      final Message message, final boolean dryRun) {
+    checkNotNull(message, "message must not be null");
+    return new CallableOperation<String, FirebaseMessagingException>() {
       @Override
-      public TopicManagementResponse call() throws FirebaseMessagingException {
-        return makeTopicManagementRequest(registrationTokens, topic, IID_UNSUBSCRIBE_PATH);
+      protected String execute() throws FirebaseMessagingException {
+        ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
+            .put("message", message);
+        if (dryRun) {
+          payload.put("validate_only", true);
+        }
+        HttpResponse response = null;
+        try {
+          HttpRequest request = requestFactory.buildPostRequest(
+              new GenericUrl(url), new JsonHttpContent(jsonFactory, payload.build()));
+          request.setParser(new JsonObjectParser(jsonFactory));
+          request.setResponseInterceptor(interceptor);
+          response = request.execute();
+          MessagingServiceResponse parsed = new MessagingServiceResponse();
+          jsonFactory.createJsonParser(response.getContent()).parseAndClose(parsed);
+          return parsed.name;
+        } catch (HttpResponseException e) {
+          handleSendHttpError(e);
+          return null;
+        } catch (IOException e) {
+          throw new FirebaseMessagingException(
+              INTERNAL_ERROR, "Error while calling FCM backend service", e);
+        } finally {
+          disconnectQuietly(response);
+        }
       }
-    });
-  }
-
-  private String makeSendRequest(Message message,
-      boolean dryRun) throws FirebaseMessagingException {
-    ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
-        .put("message", message);
-    if (dryRun) {
-      payload.put("validate_only", true);
-    }
-    HttpResponse response = null;
-    try {
-      HttpRequest request = requestFactory.buildPostRequest(
-          new GenericUrl(url), new JsonHttpContent(jsonFactory, payload.build()));
-      request.setParser(new JsonObjectParser(jsonFactory));
-      request.setResponseInterceptor(interceptor);
-      response = request.execute();
-      MessagingServiceResponse parsed = new MessagingServiceResponse();
-      jsonFactory.createJsonParser(response.getContent()).parseAndClose(parsed);
-      return parsed.name;
-    } catch (HttpResponseException e) {
-      handleSendHttpError(e);
-      return null;
-    } catch (IOException e) {
-      throw new FirebaseMessagingException(
-          INTERNAL_ERROR, "Error while calling FCM backend service", e);
-    } finally {
-      disconnectQuietly(response);
-    }
+    };
   }
 
   private void handleSendHttpError(HttpResponseException e) throws FirebaseMessagingException {
@@ -273,39 +290,50 @@ public class FirebaseMessaging {
     throw new FirebaseMessagingException(code, msg, e);
   }
 
-  private TopicManagementResponse makeTopicManagementRequest(List<String> registrationTokens,
-      String topic, String path) throws FirebaseMessagingException {
-    if (!topic.startsWith("/topics/")) {
-      topic = "/topics/" + topic;
-    }
-    Map<String, Object> payload = ImmutableMap.of(
-        "to", topic,
-        "registration_tokens", registrationTokens
-    );
+  private CallableOperation<TopicManagementResponse, FirebaseMessagingException>
+      manageTopicOp(
+          final List<String> registrationTokens, final String topic, final String path) {
+    checkRegistrationTokens(registrationTokens);
+    checkTopic(topic);
+    return new CallableOperation<TopicManagementResponse, FirebaseMessagingException>() {
+      @Override
+      protected TopicManagementResponse execute() throws FirebaseMessagingException {
+        final String prefixedTopic;
+        if (topic.startsWith("/topics/")) {
+          prefixedTopic = topic;
+        } else {
+          prefixedTopic = "/topics/" + topic;
+        }
+        Map<String, Object> payload = ImmutableMap.of(
+            "to", prefixedTopic,
+            "registration_tokens", registrationTokens
+        );
 
-    final String url = String.format("%s/%s", IID_HOST, path);
-    HttpResponse response = null;
-    try {
-      HttpRequest request = requestFactory.buildPostRequest(
-          new GenericUrl(url), new JsonHttpContent(jsonFactory, payload));
-      request.getHeaders().set("access_token_auth", "true");
-      request.setParser(new JsonObjectParser(jsonFactory));
-      request.setResponseInterceptor(interceptor);
-      response = request.execute();
-      InstanceIdServiceResponse parsed = new InstanceIdServiceResponse();
-      jsonFactory.createJsonParser(response.getContent()).parseAndClose(parsed);
-      checkState(parsed.results != null && !parsed.results.isEmpty(),
-          "unexpected response from topic management service");
-      return new TopicManagementResponse(parsed.results);
-    } catch (HttpResponseException e) {
-      handleTopicManagementHttpError(e);
-      return null;
-    } catch (IOException e) {
-      throw new FirebaseMessagingException(
-          INTERNAL_ERROR, "Error while calling IID backend service", e);
-    } finally {
-      disconnectQuietly(response);
-    }
+        final String url = String.format("%s/%s", IID_HOST, path);
+        HttpResponse response = null;
+        try {
+          HttpRequest request = requestFactory.buildPostRequest(
+              new GenericUrl(url), new JsonHttpContent(jsonFactory, payload));
+          request.getHeaders().set("access_token_auth", "true");
+          request.setParser(new JsonObjectParser(jsonFactory));
+          request.setResponseInterceptor(interceptor);
+          response = request.execute();
+          InstanceIdServiceResponse parsed = new InstanceIdServiceResponse();
+          jsonFactory.createJsonParser(response.getContent()).parseAndClose(parsed);
+          checkState(parsed.results != null && !parsed.results.isEmpty(),
+              "unexpected response from topic management service");
+          return new TopicManagementResponse(parsed.results);
+        } catch (HttpResponseException e) {
+          handleTopicManagementHttpError(e);
+          return null;
+        } catch (IOException e) {
+          throw new FirebaseMessagingException(
+              INTERNAL_ERROR, "Error while calling IID backend service", e);
+        } finally {
+          disconnectQuietly(response);
+        }
+      }
+    };
   }
 
   private void handleTopicManagementHttpError(

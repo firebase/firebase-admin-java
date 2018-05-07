@@ -17,12 +17,10 @@
 package com.google.firebase.database.core.persistence;
 
 import com.google.firebase.database.core.CompoundWrite;
-import com.google.firebase.database.core.Context;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.UserWriteRecord;
 import com.google.firebase.database.core.view.CacheNode;
 import com.google.firebase.database.core.view.QuerySpec;
-import com.google.firebase.database.logging.LogWrapper;
 import com.google.firebase.database.snapshot.ChildKey;
 import com.google.firebase.database.snapshot.EmptyNode;
 import com.google.firebase.database.snapshot.IndexedNode;
@@ -34,24 +32,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultPersistenceManager implements PersistenceManager {
 
+  private static final Logger logger = LoggerFactory.getLogger(PersistenceManager.class);
+
   private final PersistenceStorageEngine storageLayer;
   private final TrackedQueryManager trackedQueryManager;
-  private final LogWrapper logger;
   private final CachePolicy cachePolicy;
   private long serverCacheUpdatesSinceLastPruneCheck = 0;
 
   public DefaultPersistenceManager(
-      Context ctx, PersistenceStorageEngine engine, CachePolicy cachePolicy) {
-    this(ctx, engine, cachePolicy, new DefaultClock());
+      PersistenceStorageEngine engine, CachePolicy cachePolicy) {
+    this(engine, cachePolicy, new DefaultClock());
   }
 
   public DefaultPersistenceManager(
-      Context ctx, PersistenceStorageEngine engine, CachePolicy cachePolicy, Clock clock) {
+      PersistenceStorageEngine engine, CachePolicy cachePolicy, Clock clock) {
     this.storageLayer = engine;
-    this.logger = ctx.getLogger(PersistenceManager.class);
     this.trackedQueryManager = new TrackedQueryManager(storageLayer, logger, clock);
     this.cachePolicy = cachePolicy;
   }
@@ -253,15 +253,11 @@ public class DefaultPersistenceManager implements PersistenceManager {
   private void doPruneCheckAfterServerUpdate() {
     serverCacheUpdatesSinceLastPruneCheck++;
     if (cachePolicy.shouldCheckCacheSize(serverCacheUpdatesSinceLastPruneCheck)) {
-      if (logger.logsDebug()) {
-        logger.debug("Reached prune check threshold.");
-      }
+      logger.debug("Reached prune check threshold.");
       serverCacheUpdatesSinceLastPruneCheck = 0;
       boolean canPrune = true;
       long cacheSize = storageLayer.serverCacheEstimatedSizeInBytes();
-      if (logger.logsDebug()) {
-        logger.debug("Cache size: " + cacheSize);
-      }
+      logger.debug("Cache size: {}", cacheSize);
       while (canPrune
           && cachePolicy.shouldPrune(cacheSize, trackedQueryManager.countOfPrunableQueries())) {
         PruneForest pruneForest = this.trackedQueryManager.pruneOldQueries(cachePolicy);
@@ -271,9 +267,7 @@ public class DefaultPersistenceManager implements PersistenceManager {
           canPrune = false;
         }
         cacheSize = storageLayer.serverCacheEstimatedSizeInBytes();
-        if (logger.logsDebug()) {
-          logger.debug("Cache size after prune: " + cacheSize);
-        }
+        logger.debug("Cache size after prune: {}", cacheSize);
       }
     }
   }

@@ -391,7 +391,7 @@ public class FirebaseUserManagerTest {
           operation.call(FirebaseAuth.getInstance());
           fail("No error thrown for HTTP error: " + code);
         } catch (ExecutionException e) {
-          assertTrue(e.getCause().toString(), e.getCause() instanceof FirebaseAuthException);
+          assertTrue(e.getCause() instanceof FirebaseAuthException);
           FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
           String msg = String.format("Unexpected HTTP response with status: %d; body: {}", code);
           assertEquals(msg, authException.getMessage());

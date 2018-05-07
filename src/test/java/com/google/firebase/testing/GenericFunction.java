@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
+package com.google.firebase.testing;
+
 /**
- * @hide
+ * A generic operation that can be called with arbitrary arguments.
  */
-package com.google.firebase.database.logging;
+public interface GenericFunction<T> {
+
+  T call(Object ...args) throws Exception;
+
+}
