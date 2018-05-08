@@ -1,5 +1,9 @@
 # Unreleased
 
+-
+
+# v6.0.0
+
 - [added] `FirebaseAuth`, `FirebaseMessaging` and `FirebaseInstanceId`
   interfaces now expose a set of blocking methods. Each operation has
   blocking an asynchronous versions.
