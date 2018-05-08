@@ -57,7 +57,7 @@ public abstract class ThreadManager {
    * {@link #getThreadFactory()} method.
    *
    * @param app A {@link FirebaseApp} instance.
-   * @return A non-null {@link ExecutorService} instance.
+   * @return A non-null <code>ExecutorService</code> instance.
    */
   @NonNull
   protected abstract ExecutorService getExecutor(@NonNull FirebaseApp app);

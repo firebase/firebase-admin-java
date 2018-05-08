@@ -165,7 +165,7 @@ public class FirebaseAuth {
    * Parses and verifies a Firebase session cookie.
    *
    * <p>If verified successfully, returns a parsed version of the cookie from which the UID and the
-   * other claims can be read. If the cookie is invalid, throws a {@link FirebaseAuthException\}.
+   * other claims can be read. If the cookie is invalid, throws a {@link FirebaseAuthException}.
    *
    * <p>This method does not check whether the cookie has been revoked. See
    * {@link #verifySessionCookie(String, boolean)}.

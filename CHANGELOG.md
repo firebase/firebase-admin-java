@@ -2,6 +2,10 @@
 
 - [added] Added new `importUsersAsync()` API for bulk importing users
   into Firebase Auth.
+
+# v6.0.0
+
+>>>>>>> master
 - [added] `FirebaseAuth`, `FirebaseMessaging` and `FirebaseInstanceId`
   interfaces now expose a set of blocking methods. Each operation has
   blocking an asynchronous versions.

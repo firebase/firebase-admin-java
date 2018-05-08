@@ -38,7 +38,7 @@ import java.util.Iterator;
  * They are efficiently-generated immutable copies of the data at a Firebase Database location. They
  * can't be modified and will never change. To modify data at a location, use a {@link
  * DatabaseReference DatabaseReference} reference (e.g. with {@link
- * DatabaseReference#setValue(Object)}).
+ * DatabaseReference#setValueAsync(Object)}).
  */
 public class DataSnapshot {
 
@@ -114,7 +114,7 @@ public class DataSnapshot {
    *   <li>List&lt;Object&gt;
    * </ul>
    *
-   * <p>This list is recursive; the possible types for {@link java.lang.Object} in the above list
+   * <p>This list is recursive; the possible types for <code>Object</code> in the above list
    * is given by the same list. These types correspond to the types available in JSON.
    *
    * @return The data contained in this snapshot as native types or null if there is no data at this
@@ -138,7 +138,7 @@ public class DataSnapshot {
    *   <li>List&lt;Object&gt;
    * </ul>
    *
-   * <p>This list is recursive; the possible types for {@link java.lang.Object} in the above list is
+   * <p>This list is recursive; the possible types for <code>Object</code> in the above list is
    * given by the same list. These types correspond to the types available in JSON.
    *
    * <p>If useExportFormat is set to true, priority information will be included in the output.
@@ -206,7 +206,7 @@ public class DataSnapshot {
 
   /**
    * Due to the way that Java implements generics, it takes an extra step to get back a
-   * properly-typed Collection. So, in the case where you want a {@link java.util.List} of Message
+   * properly-typed Collection. So, in the case where you want a <code>List</code> of Message
    * instances, you will need to do something like the following:
    *
    * <pre><code>
