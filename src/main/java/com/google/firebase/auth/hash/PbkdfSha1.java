@@ -20,7 +20,7 @@ package com.google.firebase.auth.hash;
  * Represents the PBKDF SHA1 password hashing algorithm. Can be used as an instance of
  * {@link com.google.firebase.auth.UserImportHash} when importing users.
  */
-public class PbkdfSha1 extends Basic {
+public class PbkdfSha1 extends BasicHash {
 
   private PbkdfSha1(Builder builder) {
     super("PBKDF_SHA1", builder);
@@ -30,7 +30,7 @@ public class PbkdfSha1 extends Basic {
     return new Builder();
   }
 
-  public static class Builder extends Basic.Builder<Builder, PbkdfSha1> {
+  public static class Builder extends BasicHash.Builder<Builder, PbkdfSha1> {
 
     private Builder() {}
 

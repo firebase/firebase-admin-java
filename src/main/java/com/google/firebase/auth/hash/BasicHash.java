@@ -22,11 +22,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.UserImportHash;
 import java.util.Map;
 
-abstract class Basic extends UserImportHash {
+abstract class BasicHash extends UserImportHash {
 
   private final int rounds;
 
-  Basic(String name, Builder builder) {
+  BasicHash(String name, Builder builder) {
     super(name);
     checkArgument(builder.rounds >= 0 && builder.rounds <= 120000,
         "A non-empty key is required for HMAC algorithms");
@@ -43,6 +43,12 @@ abstract class Basic extends UserImportHash {
 
     protected abstract T getInstance();
 
+    /**
+     * Sets the number of rounds for the hash algorithm.
+     *
+     * @param rounds an integer between 0 and 120000 (inclusive).
+     * @return this builder.
+     */
     public T setRounds(int rounds) {
       this.rounds = rounds;
       return getInstance();

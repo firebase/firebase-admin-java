@@ -24,9 +24,9 @@ import com.google.firebase.auth.UserImportHash;
 import java.util.Map;
 
 /**
- * Represents the SCRYPT password hashing algorithm. This is the
- * <a href="https://github.com/firebase/scrypt">modified SCRYPT algorithm</a> used by
- * Firebase Auth. See {@link StandardScrypt} for the standard SCRYPT algorithm. Can be used as an
+ * Represents the Scrypt password hashing algorithm. This is the
+ * <a href="https://github.com/firebase/scrypt">modified Scrypt algorithm</a> used by
+ * Firebase Auth. See {@link StandardScrypt} for the standard Scrypt algorithm. Can be used as an
  * instance of {@link com.google.firebase.auth.UserImportHash} when importing users.
  */
 public final class Scrypt extends UserImportHash {
@@ -39,7 +39,7 @@ public final class Scrypt extends UserImportHash {
   private Scrypt(Builder builder) {
     super("SCRYPT");
     checkArgument(builder.key != null && builder.key.length > 0,
-        "A non-empty key is required for SCRYPT");
+        "A non-empty key is required for Scrypt");
     checkArgument(builder.rounds > 0 && builder.rounds <= 8, "rounds must be between 1 and 8");
     checkArgument(builder.memoryCost > 0 && builder.memoryCost <= 14,
         "memoryCost must be between 1 and 14");
@@ -76,21 +76,45 @@ public final class Scrypt extends UserImportHash {
 
     private Builder() {}
 
+    /**
+     * Sets the signer key. Required field.
+     *
+     * @param key Signer key as a byte array.
+     * @return This builder.
+     */
     public Builder setKey(byte[] key) {
       this.key = key;
       return this;
     }
 
+    /**
+     * Sets the salt separator.
+     *
+     * @param saltSeparator Salt separator as a byte array.
+     * @return This builder.
+     */
     public Builder setSaltSeparator(byte[] saltSeparator) {
       this.saltSeparator = saltSeparator;
       return this;
     }
 
+    /**
+     * Sets the number of rounds. Required field.
+     *
+     * @param rounds an integer between 1 and 8 (inclusive).
+     * @return this builder.
+     */
     public Builder setRounds(int rounds) {
       this.rounds = rounds;
       return this;
     }
 
+    /**
+     * Sets the memory cost. Required field.
+     *
+     * @param memoryCost an integer between 1 and 14 (inclusive).
+     * @return this builder.
+     */
     public Builder setMemoryCost(int memoryCost) {
       this.memoryCost = memoryCost;
       return this;

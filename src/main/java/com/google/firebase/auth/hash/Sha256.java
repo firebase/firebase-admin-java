@@ -20,7 +20,7 @@ package com.google.firebase.auth.hash;
  * Represents the SHA256 password hashing algorithm. Can be used as an instance of
  * {@link com.google.firebase.auth.UserImportHash} when importing users.
  */
-public class Sha256 extends Basic {
+public class Sha256 extends BasicHash {
 
   private Sha256(Builder builder) {
     super("SHA256", builder);
@@ -30,7 +30,7 @@ public class Sha256 extends Basic {
     return new Builder();
   }
 
-  public static class Builder extends Basic.Builder<Builder, Sha256> {
+  public static class Builder extends BasicHash.Builder<Builder, Sha256> {
 
     private Builder() {}
 

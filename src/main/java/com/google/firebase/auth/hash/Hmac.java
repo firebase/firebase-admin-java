@@ -44,6 +44,12 @@ abstract class Hmac extends UserImportHash {
 
     protected abstract T getInstance();
 
+    /**
+     * Sets the signer key for the HMAC hash algorithm. Required field.
+     *
+     * @param key Signer key as a byte array.
+     * @return This builder.
+     */
     public T setKey(byte[] key) {
       this.key = key;
       return getInstance();

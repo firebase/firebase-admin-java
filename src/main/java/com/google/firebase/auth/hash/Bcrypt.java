@@ -21,7 +21,7 @@ import com.google.firebase.auth.UserImportHash;
 import java.util.Map;
 
 /**
- * Represents the BCRYPT password hashing algorithm. Can be used as an instance of
+ * Represents the Bcrypt password hashing algorithm. Can be used as an instance of
  * {@link com.google.firebase.auth.UserImportHash} when importing users.
  */
 public class Bcrypt extends UserImportHash {
