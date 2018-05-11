@@ -30,7 +30,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.CookieParam;
@@ -46,32 +45,32 @@ import javax.ws.rs.core.Response.Status;
  */
 public class FirebaseAuthSnippets {
 
-  public static void getUserById(String uid) throws InterruptedException, ExecutionException {
+  public static void getUserById(String uid) throws FirebaseAuthException {
     // [START get_user_by_id]
-    UserRecord userRecord = FirebaseAuth.getInstance().getUserAsync(uid).get();
+    UserRecord userRecord = FirebaseAuth.getInstance().getUser(uid);
     // See the UserRecord reference doc for the contents of userRecord.
     System.out.println("Successfully fetched user data: " + userRecord.getUid());
     // [END get_user_by_id]
   }
 
-  public static void getUserByEmail(String email) throws InterruptedException, ExecutionException {
+  public static void getUserByEmail(String email) throws FirebaseAuthException {
     // [START get_user_by_email]
-    UserRecord userRecord = FirebaseAuth.getInstance().getUserByEmailAsync(email).get();
+    UserRecord userRecord = FirebaseAuth.getInstance().getUserByEmail(email);
     // See the UserRecord reference doc for the contents of userRecord.
     System.out.println("Successfully fetched user data: " + userRecord.getEmail());
     // [END get_user_by_email]
   }
 
   public static void getUserByPhoneNumber(
-      String phoneNumber) throws InterruptedException, ExecutionException {
+      String phoneNumber) throws FirebaseAuthException {
     // [START get_user_by_phone]
-    UserRecord userRecord = FirebaseAuth.getInstance().getUserByPhoneNumberAsync(phoneNumber).get();
+    UserRecord userRecord = FirebaseAuth.getInstance().getUserByPhoneNumber(phoneNumber);
     // See the UserRecord reference doc for the contents of userRecord.
     System.out.println("Successfully fetched user data: " + userRecord.getPhoneNumber());
     // [END get_user_by_phone]
   }
 
-  public static void createUser() throws InterruptedException, ExecutionException {
+  public static void createUser() throws FirebaseAuthException {
     // [START create_user]
     CreateRequest request = new CreateRequest()
         .setEmail("user@example.com")
@@ -82,24 +81,24 @@ public class FirebaseAuthSnippets {
         .setPhotoUrl("http://www.example.com/12345678/photo.png")
         .setDisabled(false);
 
-    UserRecord userRecord = FirebaseAuth.getInstance().createUserAsync(request).get();
+    UserRecord userRecord = FirebaseAuth.getInstance().createUser(request);
     System.out.println("Successfully created new user: " + userRecord.getUid());
     // [END create_user]
   }
 
-  public static void createUserWithUid() throws InterruptedException, ExecutionException {
+  public static void createUserWithUid() throws FirebaseAuthException {
     // [START create_user_with_uid]
     CreateRequest request = new CreateRequest()
         .setUid("some-uid")
         .setEmail("user@example.com")
         .setPhoneNumber("+11234567890");
 
-    UserRecord userRecord = FirebaseAuth.getInstance().createUserAsync(request).get();
+    UserRecord userRecord = FirebaseAuth.getInstance().createUser(request);
     System.out.println("Successfully created new user: " + userRecord.getUid());
     // [END create_user_with_uid]
   }
 
-  public static void updateUser(String uid) throws InterruptedException, ExecutionException {
+  public static void updateUser(String uid) throws FirebaseAuthException {
     // [START update_user]
     UpdateRequest request = new UpdateRequest(uid)
         .setEmail("user@example.com")
@@ -110,18 +109,18 @@ public class FirebaseAuthSnippets {
         .setPhotoUrl("http://www.example.com/12345678/photo.png")
         .setDisabled(true);
 
-    UserRecord userRecord = FirebaseAuth.getInstance().updateUserAsync(request).get();
+    UserRecord userRecord = FirebaseAuth.getInstance().updateUser(request);
     System.out.println("Successfully updated user: " + userRecord.getUid());
     // [END update_user]
   }
 
   public static void setCustomUserClaims(
-      String uid) throws InterruptedException, ExecutionException {
+      String uid) throws FirebaseAuthException {
     // [START set_custom_user_claims]
     // Set admin privilege on the user corresponding to uid.
     Map<String, Object> claims = new HashMap<>();
     claims.put("admin", true);
-    FirebaseAuth.getInstance().setCustomUserClaimsAsync(uid, claims).get();
+    FirebaseAuth.getInstance().setCustomUserClaims(uid, claims);
     // The new custom claims will propagate to the user's ID token the
     // next time a new one is issued.
     // [END set_custom_user_claims]
@@ -129,7 +128,7 @@ public class FirebaseAuthSnippets {
     String idToken = "id_token";
     // [START verify_custom_claims]
     // Verify the ID token first.
-    FirebaseToken decoded = FirebaseAuth.getInstance().verifyIdTokenAsync(idToken).get();
+    FirebaseToken decoded = FirebaseAuth.getInstance().verifyIdToken(idToken);
     if (Boolean.TRUE.equals(decoded.getClaims().get("admin"))) {
       // Allow access to requested admin resource.
     }
@@ -137,43 +136,43 @@ public class FirebaseAuthSnippets {
 
     // [START read_custom_user_claims]
     // Lookup the user associated with the specified uid.
-    UserRecord user = FirebaseAuth.getInstance().getUserAsync(uid).get();
+    UserRecord user = FirebaseAuth.getInstance().getUser(uid);
     System.out.println(user.getCustomClaims().get("admin"));
     // [END read_custom_user_claims]
   }
 
-  public static void setCustomUserClaimsScript() throws InterruptedException, ExecutionException {
+  public static void setCustomUserClaimsScript() throws FirebaseAuthException {
     // [START set_custom_user_claims_script]
     UserRecord user = FirebaseAuth.getInstance()
-        .getUserByEmailAsync("user@admin.example.com").get();
+        .getUserByEmail("user@admin.example.com");
     // Confirm user is verified.
     if (user.isEmailVerified()) {
       Map<String, Object> claims = new HashMap<>();
       claims.put("admin", true);
-      FirebaseAuth.getInstance().setCustomUserClaimsAsync(user.getUid(), claims).get();
+      FirebaseAuth.getInstance().setCustomUserClaims(user.getUid(), claims);
     }
     // [END set_custom_user_claims_script]
   }
 
-  public static void setCustomUserClaimsInc() throws InterruptedException, ExecutionException {
+  public static void setCustomUserClaimsInc() throws FirebaseAuthException {
     // [START set_custom_user_claims_incremental]
     UserRecord user = FirebaseAuth.getInstance()
-        .getUserByEmailAsync("user@admin.example.com").get();
+        .getUserByEmail("user@admin.example.com");
     // Add incremental custom claim without overwriting the existing claims.
     Map<String, Object> currentClaims = user.getCustomClaims();
     if (Boolean.TRUE.equals(currentClaims.get("admin"))) {
       // Add level.
       currentClaims.put("level", 10);
       // Add custom claims for additional privileges.
-      FirebaseAuth.getInstance().setCustomUserClaimsAsync(user.getUid(), currentClaims).get();
+      FirebaseAuth.getInstance().setCustomUserClaims(user.getUid(), currentClaims);
     }
     // [END set_custom_user_claims_incremental]
   }
 
-  public static void listAllUsers() throws InterruptedException, ExecutionException  {
+  public static void listAllUsers() throws FirebaseAuthException {
     // [START list_all_users]
     // Start listing users from the beginning, 1000 at a time.
-    ListUsersPage page = FirebaseAuth.getInstance().listUsersAsync(null).get();
+    ListUsersPage page = FirebaseAuth.getInstance().listUsers(null);
     while (page != null) {
       for (ExportedUserRecord user : page.getValues()) {
         System.out.println("User: " + user.getUid());
@@ -183,82 +182,78 @@ public class FirebaseAuthSnippets {
 
     // Iterate through all users. This will still retrieve users in batches,
     // buffering no more than 1000 users in memory at a time.
-    page = FirebaseAuth.getInstance().listUsersAsync(null).get();
+    page = FirebaseAuth.getInstance().listUsers(null);
     for (ExportedUserRecord user : page.iterateAll()) {
       System.out.println("User: " + user.getUid());
     }
     // [END list_all_users]
   }
 
-  public static void deleteUser(String uid) throws InterruptedException, ExecutionException {
+  public static void deleteUser(String uid) throws FirebaseAuthException {
     // [START delete_user]
-    FirebaseAuth.getInstance().deleteUserAsync(uid).get();
+    FirebaseAuth.getInstance().deleteUser(uid);
     System.out.println("Successfully deleted user.");
     // [END delete_user]
   }
 
-  public static void createCustomToken() throws InterruptedException, ExecutionException {
+  public static void createCustomToken() throws FirebaseAuthException {
     // [START custom_token]
     String uid = "some-uid";
 
-    String customToken = FirebaseAuth.getInstance().createCustomTokenAsync(uid).get();
+    String customToken = FirebaseAuth.getInstance().createCustomToken(uid);
     // Send token back to client
     // [END custom_token]
     System.out.println("Created custom token: " + customToken);
   }
 
-  public static void createCustomTokenWithClaims() throws InterruptedException, ExecutionException {
+  public static void createCustomTokenWithClaims() throws FirebaseAuthException {
     // [START custom_token_with_claims]
     String uid = "some-uid";
     Map<String, Object> additionalClaims = new HashMap<String, Object>();
     additionalClaims.put("premiumAccount", true);
 
     String customToken = FirebaseAuth.getInstance()
-        .createCustomTokenAsync(uid, additionalClaims).get();
+        .createCustomToken(uid, additionalClaims);
     // Send token back to client
     // [END custom_token_with_claims]
     System.out.println("Created custom token: " + customToken);
   }
 
-  public static void verifyIdToken(
-      String idToken) throws InterruptedException, ExecutionException {
+  public static void verifyIdToken(String idToken) throws FirebaseAuthException {
     // [START verify_id_token]
     // idToken comes from the client app (shown above)
-    FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdTokenAsync(idToken).get();
+    FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
     String uid = decodedToken.getUid();
     // [END verify_id_token]
     System.out.println("Decoded ID token from user: " + uid);
   }
 
-  public static void verifyIdTokenCheckRevoked(String idToken) throws InterruptedException {
+  public static void verifyIdTokenCheckRevoked(String idToken) {
     // [START verify_id_token_check_revoked]
     try {
       // Verify the ID token while checking if the token is revoked by passing checkRevoked
       // as true.
       boolean checkRevoked = true;
       FirebaseToken decodedToken = FirebaseAuth.getInstance()
-          .verifyIdTokenAsync(idToken, checkRevoked).get();
+          .verifyIdToken(idToken, checkRevoked);
       // Token is valid and not revoked.
       String uid = decodedToken.getUid();
-    } catch (ExecutionException e) {
-      if (e.getCause() instanceof FirebaseAuthException) {
-        FirebaseAuthException authError = (FirebaseAuthException) e.getCause();
-        if (authError.getErrorCode().equals("id-token-revoked")) {
-          // Token has been revoked. Inform the user to reauthenticate or signOut() the user.
-        } else {
-          // Token is invalid.
-        }
+    } catch (FirebaseAuthException e) {
+      if (e.getErrorCode().equals("id-token-revoked")) {
+        // Token has been revoked. Inform the user to re-authenticate or signOut() the user.
+      } else {
+        // Token is invalid.
       }
     }
     // [END verify_id_token_check_revoked]
   }
 
   public static void revokeIdTokens(
-      String idToken) throws InterruptedException, ExecutionException {
+      String idToken) throws FirebaseAuthException {
     String uid = "someUid";
     // [START revoke_tokens]
-    FirebaseAuth.getInstance().revokeRefreshTokensAsync(uid).get();
-    UserRecord user = FirebaseAuth.getInstance().getUserAsync(uid).get();
+    FirebaseAuth.getInstance().revokeRefreshTokens(uid);
+    UserRecord user = FirebaseAuth.getInstance().getUser(uid);
     // Convert to seconds as the auth_time in the token claims is in seconds too.
     long revocationSecond = user.getTokensValidAfterTimestamp() / 1000;
     System.out.println("Tokens revoked at: " + revocationSecond);
@@ -268,7 +263,7 @@ public class FirebaseAuthSnippets {
     DatabaseReference ref = FirebaseDatabase.getInstance().getReference("metadata/" + uid);
     Map<String, Object> userData = new HashMap<>();
     userData.put("revokeTime", revocationSecond);
-    ref.setValueAsync(userData).get();
+    ref.setValueAsync(userData);
     // [END save_revocation_in_db]
   }
 
@@ -295,23 +290,22 @@ public class FirebaseAuthSnippets {
     try {
       // Create the session cookie. This will also verify the ID token in the process.
       // The session cookie will have the same claims as the ID token.
-      String sessionCookie = FirebaseAuth.getInstance().createSessionCookieAsync(
-          idToken, options).get();
+      String sessionCookie = FirebaseAuth.getInstance().createSessionCookie(idToken, options);
       // Set cookie policy parameters as required.
       NewCookie cookie = new NewCookie("session", sessionCookie /* ... other parameters */);
       return Response.ok().cookie(cookie).build();
-    } catch (Exception e) {
+    } catch (FirebaseAuthException e) {
       return Response.status(Status.UNAUTHORIZED).entity("Failed to create a session cookie")
           .build();
     }
   }
   // [END session_login]
 
-  public Response checkAuthTime(String idToken) throws Exception {
+  public Response checkAuthTime(String idToken) throws FirebaseAuthException {
     // [START check_auth_time]
     // To ensure that cookies are set only on recently signed in users, check auth_time in
     // ID token before creating a cookie.
-    FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdTokenAsync(idToken).get();
+    FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken);
     long authTimeMillis = TimeUnit.SECONDS.toMillis(
         (long) decodedToken.getClaims().get("auth_time"));
 
@@ -321,8 +315,7 @@ public class FirebaseAuthSnippets {
       SessionCookieOptions options = SessionCookieOptions.builder()
           .setExpiresIn(expiresIn)
           .build();
-      String sessionCookie = FirebaseAuth.getInstance().createSessionCookieAsync(
-          idToken, options).get();
+      String sessionCookie = FirebaseAuth.getInstance().createSessionCookie(idToken, options);
       // Set cookie policy parameters as required.
       NewCookie cookie = new NewCookie("session", sessionCookie);
       return Response.ok().cookie(cookie).build();
@@ -350,10 +343,10 @@ public class FirebaseAuthSnippets {
       // Verify the session cookie. In this case an additional check is added to detect
       // if the user's Firebase session was revoked, user deleted/disabled, etc.
       final boolean checkRevoked = true;
-      FirebaseToken decodedToken = FirebaseAuth.getInstance().verifySessionCookieAsync(
-          sessionCookie, checkRevoked).get();
+      FirebaseToken decodedToken = FirebaseAuth.getInstance().verifySessionCookie(
+          sessionCookie, checkRevoked);
       return serveContentForUser(decodedToken);
-    } catch (Exception e) {
+    } catch (FirebaseAuthException e) {
       // Session cookie is unavailable, invalid or revoked. Force user to login.
       return Response.temporaryRedirect(URI.create("/login")).build();
     }
@@ -364,13 +357,13 @@ public class FirebaseAuthSnippets {
     // [START session_verify_with_permission_check]
     try {
       final boolean checkRevoked = true;
-      FirebaseToken decodedToken = FirebaseAuth.getInstance().verifySessionCookieAsync(
-          sessionCookie, checkRevoked).get();
+      FirebaseToken decodedToken = FirebaseAuth.getInstance().verifySessionCookie(
+          sessionCookie, checkRevoked);
       if (Boolean.TRUE.equals(decodedToken.getClaims().get("admin"))) {
         return serveContentForAdmin(decodedToken);
       }
       return Response.status(Status.UNAUTHORIZED).entity("Insufficient permissions").build();
-    } catch (Exception e) {
+    } catch (FirebaseAuthException e) {
       // Session cookie is unavailable, invalid or revoked. Force user to login.
       return Response.temporaryRedirect(URI.create("/login")).build();
     }
@@ -393,13 +386,12 @@ public class FirebaseAuthSnippets {
   public Response clearSessionCookieAndRevoke(@CookieParam("session") Cookie cookie) {
     String sessionCookie = cookie.getValue();
     try {
-      FirebaseToken decodedToken = FirebaseAuth.getInstance().verifySessionCookieAsync(
-          sessionCookie).get();
-      FirebaseAuth.getInstance().revokeRefreshTokensAsync(decodedToken.getUid()).get();
+      FirebaseToken decodedToken = FirebaseAuth.getInstance().verifySessionCookie(sessionCookie);
+      FirebaseAuth.getInstance().revokeRefreshTokens(decodedToken.getUid());
       final int maxAge = 0;
       NewCookie newCookie = new NewCookie(cookie, null, maxAge, true);
       return Response.temporaryRedirect(URI.create("/login")).cookie(newCookie).build();
-    } catch (Exception e) {
+    } catch (FirebaseAuthException e) {
       return Response.temporaryRedirect(URI.create("/login")).build();
     }
   }

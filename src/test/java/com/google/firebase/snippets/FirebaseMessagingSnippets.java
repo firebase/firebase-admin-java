@@ -22,6 +22,7 @@ import com.google.firebase.messaging.ApnsConfig;
 import com.google.firebase.messaging.Aps;
 import com.google.firebase.messaging.ApsAlert;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import com.google.firebase.messaging.TopicManagementResponse;
@@ -35,7 +36,7 @@ import java.util.List;
  */
 public class FirebaseMessagingSnippets {
 
-  public void sendToToken() throws Exception {
+  public void sendToToken() throws FirebaseMessagingException {
     // [START send_to_token]
     // This registration token comes from the client FCM SDKs.
     String registrationToken = "YOUR_REGISTRATION_TOKEN";
@@ -49,13 +50,13 @@ public class FirebaseMessagingSnippets {
 
     // Send a message to the device corresponding to the provided
     // registration token.
-    String response = FirebaseMessaging.getInstance().sendAsync(message).get();
+    String response = FirebaseMessaging.getInstance().send(message);
     // Response is a message ID string.
     System.out.println("Successfully sent message: " + response);
     // [END send_to_token]
   }
 
-  public void sendToTopic() throws Exception {
+  public void sendToTopic() throws FirebaseMessagingException {
     // [START send_to_topic]
     // The topic name can be optionally prefixed with "/topics/".
     String topic = "highScores";
@@ -68,13 +69,13 @@ public class FirebaseMessagingSnippets {
         .build();
 
     // Send a message to the devices subscribed to the provided topic.
-    String response = FirebaseMessaging.getInstance().sendAsync(message).get();
+    String response = FirebaseMessaging.getInstance().send(message);
     // Response is a message ID string.
     System.out.println("Successfully sent message: " + response);
     // [END send_to_topic]
   }
 
-  public void sendToCondition() throws Exception {
+  public void sendToCondition() throws FirebaseMessagingException {
     // [START send_to_condition]
     // Define a condition which will send to devices which are subscribed
     // to either the Google stock or the tech industry topics.
@@ -90,13 +91,13 @@ public class FirebaseMessagingSnippets {
 
     // Send a message to devices subscribed to the combination of topics
     // specified by the provided condition.
-    String response = FirebaseMessaging.getInstance().sendAsync(message).get();
+    String response = FirebaseMessaging.getInstance().send(message);
     // Response is a message ID string.
     System.out.println("Successfully sent message: " + response);
     // [END send_to_condition]
   }
 
-  public void sendDryRun() throws Exception {
+  public void sendDryRun() throws FirebaseMessagingException {
     Message message = Message.builder()
         .putData("score", "850")
         .putData("time", "2:45")
@@ -106,7 +107,7 @@ public class FirebaseMessagingSnippets {
     // [START send_dry_run]
     // Send a message in the dry run mode.
     boolean dryRun = true;
-    String response = FirebaseMessaging.getInstance().sendAsync(message, dryRun).get();
+    String response = FirebaseMessaging.getInstance().send(message, dryRun);
     // Response is a message ID string.
     System.out.println("Dry run successful: " + response);
     // [END send_dry_run]
@@ -189,7 +190,7 @@ public class FirebaseMessagingSnippets {
     return message;
   }
 
-  public void subscribeToTopic() throws Exception {
+  public void subscribeToTopic() throws FirebaseMessagingException {
     String topic = "highScores";
     // [START subscribe]
     // These registration tokens come from the client FCM SDKs.
@@ -201,15 +202,15 @@ public class FirebaseMessagingSnippets {
 
     // Subscribe the devices corresponding to the registration tokens to the
     // topic.
-    TopicManagementResponse response = FirebaseMessaging.getInstance().subscribeToTopicAsync(
-        registrationTokens, topic).get();
+    TopicManagementResponse response = FirebaseMessaging.getInstance().subscribeToTopic(
+        registrationTokens, topic);
     // See the TopicManagementResponse reference documentation
     // for the contents of response.
     System.out.println(response.getSuccessCount() + " tokens were subscribed successfully");
     // [END subscribe]
   }
 
-  public void unsubscribeFromTopic() throws Exception {
+  public void unsubscribeFromTopic() throws FirebaseMessagingException {
     String topic = "highScores";
     // [START unsubscribe]
     // These registration tokens come from the client FCM SDKs.
@@ -221,8 +222,8 @@ public class FirebaseMessagingSnippets {
 
     // Unsubscribe the devices corresponding to the registration tokens from
     // the topic.
-    TopicManagementResponse response = FirebaseMessaging.getInstance().unsubscribeFromTopicAsync(
-        registrationTokens, topic).get();
+    TopicManagementResponse response = FirebaseMessaging.getInstance().unsubscribeFromTopic(
+        registrationTokens, topic);
     // See the TopicManagementResponse reference documentation
     // for the contents of response.
     System.out.println(response.getSuccessCount() + " tokens were unsubscribed successfully");
