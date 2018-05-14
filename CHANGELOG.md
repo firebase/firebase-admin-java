@@ -4,8 +4,9 @@
 
 # v6.1.0
 
-
--
+- [changed] Deprecated the `FirebaseAuth.setCustomClaims()` method.
+  Developers should use the `FirebaseAuth.setCustomUserClaims()` method
+  instead.
 
 # v6.0.0
 
