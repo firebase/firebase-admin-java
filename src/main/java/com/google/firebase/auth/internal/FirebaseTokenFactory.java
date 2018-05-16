@@ -49,15 +49,14 @@ public class FirebaseTokenFactory {
     this.signer = checkNotNull(signer);
   }
 
-  String createSignedCustomAuthTokenForUser(String uid, String issuer) throws IOException {
-    return createSignedCustomAuthTokenForUser(uid, issuer, null);
+  String createSignedCustomAuthTokenForUser(String uid) throws IOException {
+    return createSignedCustomAuthTokenForUser(uid, null);
   }
 
   public String createSignedCustomAuthTokenForUser(
-      String uid, String issuer, Map<String, Object> developerClaims) throws IOException {
+      String uid, Map<String, Object> developerClaims) throws IOException {
     checkArgument(!Strings.isNullOrEmpty(uid), "Uid must be provided.");
     checkArgument(uid.length() <= 128, "Uid must be shorter than 128 characters.");
-    checkArgument(!Strings.isNullOrEmpty(issuer), "Must provide an issuer.");
 
     JsonWebSignature.Header header = new JsonWebSignature.Header().setAlgorithm("RS256");
 
@@ -65,8 +64,8 @@ public class FirebaseTokenFactory {
     FirebaseCustomAuthToken.Payload payload =
         new FirebaseCustomAuthToken.Payload()
             .setUid(uid)
-            .setIssuer(issuer)
-            .setSubject(issuer)
+            .setIssuer(signer.getAccount())
+            .setSubject(signer.getAccount())
             .setAudience(FirebaseCustomAuthToken.FIREBASE_AUDIENCE)
             .setIssuedAtTimeSeconds(issuedAt)
             .setExpirationTimeSeconds(issuedAt + FirebaseCustomAuthToken.TOKEN_DURATION_SECONDS);

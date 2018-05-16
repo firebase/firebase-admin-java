@@ -23,8 +23,6 @@ import static com.google.common.base.Preconditions.checkState;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Clock;
 import com.google.api.core.ApiFuture;
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
@@ -63,7 +61,6 @@ public class FirebaseAuth {
 
   private final FirebaseApp firebaseApp;
   private final KeyManagers keyManagers;
-  private final GoogleCredentials credentials;
   private final String projectId;
   private final JsonFactory jsonFactory;
   private final FirebaseUserManager userManager;
@@ -84,7 +81,6 @@ public class FirebaseAuth {
     this.firebaseApp = checkNotNull(firebaseApp);
     this.keyManagers = checkNotNull(keyManagers);
     this.clock = checkNotNull(clock);
-    this.credentials = ImplFirebaseTrampolines.getCredentials(firebaseApp);
     this.projectId = ImplFirebaseTrampolines.getProjectId(firebaseApp);
     this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
     this.userManager = new FirebaseUserManager(firebaseApp);
@@ -346,10 +342,8 @@ public class FirebaseAuth {
     return new CallableOperation<String, FirebaseAuthException>() {
       @Override
       public String execute() throws FirebaseAuthException {
-        final ServiceAccountCredentials serviceAccount = (ServiceAccountCredentials) credentials;
         try {
-          return tokenFactory.createSignedCustomAuthTokenForUser(
-              uid, serviceAccount.getClientEmail(), developerClaims);
+          return tokenFactory.createSignedCustomAuthTokenForUser(uid, developerClaims);
         } catch (IOException e) {
           throw new FirebaseAuthException(ERROR_CUSTOM_TOKEN,
               "Failed to generate a custom token", e);

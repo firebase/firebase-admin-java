@@ -43,6 +43,11 @@ class CryptoSigners {
     public byte[] sign(byte[] payload) {
       return signer.sign(payload);
     }
+
+    @Override
+    public String getAccount() {
+      return signer.getAccount();
+    }
   }
 
   static class IAMCryptoSigner implements CryptoSigner {
@@ -90,6 +95,11 @@ class CryptoSigners {
           }
         }
       }
+    }
+
+    @Override
+    public String getAccount() {
+      return serviceAccount;
     }
   }
 

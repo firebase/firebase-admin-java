@@ -35,9 +35,14 @@ import com.google.api.client.json.JsonObjectParser;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.auth.ServiceAccountSigner;
+import com.google.auth.oauth2.AccessToken;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.testing.IntegrationTestUtils;
@@ -357,6 +362,31 @@ public class FirebaseAuthIT {
     String idToken = signInWithCustomToken(customToken);
     FirebaseToken decoded = auth.verifyIdTokenAsync(idToken).get();
     assertEquals("user1", decoded.getUid());
+  }
+
+  @Test
+  public void testCustomTokenWithIAM() throws Exception {
+    FirebaseApp masterApp = IntegrationTestUtils.ensureDefaultApp();
+    GoogleCredentials credentials = ImplFirebaseTrampolines.getCredentials(masterApp);
+    AccessToken token = credentials.getAccessToken();
+    if (token == null) {
+      token = credentials.refreshAccessToken();
+    }
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(GoogleCredentials.of(token))
+        .setServiceAccount(((ServiceAccountSigner) credentials).getAccount())
+        .setProjectId(IntegrationTestUtils.getProjectId())
+        .build();
+    FirebaseApp customApp = FirebaseApp.initializeApp(options, "tempApp");
+    try {
+      FirebaseAuth auth = FirebaseAuth.getInstance(customApp);
+      String customToken = auth.createCustomTokenAsync("user1").get();
+      String idToken = signInWithCustomToken(customToken);
+      FirebaseToken decoded = auth.verifyIdTokenAsync(idToken).get();
+      assertEquals("user1", decoded.getUid());
+    } finally {
+      customApp.delete();
+    }
   }
 
   @Test
