@@ -275,6 +275,7 @@ public class FirebaseUserManagerTest {
   public void testCreateSessionInvalidArguments() {
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(credentials)
+        .setServiceAccount("test") // TODO: Try and get rid of this
         .build());
     SessionCookieOptions options = SessionCookieOptions.builder()
         .setExpiresIn(TimeUnit.HOURS.toMillis(1))
@@ -378,6 +379,7 @@ public class FirebaseUserManagerTest {
         .build();
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(credentials)
+        .setServiceAccount("test") // TODO: Try and get rid of this
         .setHttpTransport(transport)
         .build());
 
@@ -442,6 +444,7 @@ public class FirebaseUserManagerTest {
         .build();
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(credentials)
+        .setServiceAccount("test") // TODO: Try and get rid of this
         .setHttpTransport(transport)
         .build());
     try {
@@ -463,6 +466,7 @@ public class FirebaseUserManagerTest {
         new MockLowLevelHttpResponse().setContent(TestUtils.loadResource("getUser.json"))));
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(credentials)
+        .setServiceAccount("test") // TODO: Try and get rid of this
         .setHttpTransport(transport)
         .setConnectTimeout(30000)
         .setReadTimeout(60000)
@@ -834,6 +838,7 @@ public class FirebaseUserManagerTest {
     MockHttpTransport transport = new MultiRequestMockHttpTransport(mocks);
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(credentials)
+        .setServiceAccount("test") // TODO: Try and get rid of this
         .setHttpTransport(transport)
         .build());
     FirebaseAuth auth = FirebaseAuth.getInstance();
