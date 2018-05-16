@@ -1,6 +1,9 @@
 # Unreleased
 
--
+- [added] Implemented the ability to create custom tokens without
+  service account credentials.
+- [added] Added the `setServiceAccount()` method to the
+  `FirebaseOptions.Builder` API.
 
 # v6.1.0
 

@@ -834,7 +834,6 @@ public class FirebaseUserManagerTest {
     MockHttpTransport transport = new MultiRequestMockHttpTransport(mocks);
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(credentials)
-        .setServiceAccount("test") // TODO: Try and get rid of this
         .setHttpTransport(transport)
         .build());
     FirebaseAuth auth = FirebaseAuth.getInstance();

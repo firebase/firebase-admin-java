@@ -21,5 +21,3 @@ import java.io.IOException;
 interface CryptoSigner {
   byte[] sign(byte[] payload) throws IOException;
 }
-
-
