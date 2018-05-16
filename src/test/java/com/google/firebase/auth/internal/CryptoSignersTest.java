@@ -39,7 +39,7 @@ import java.io.IOException;
 import org.junit.After;
 import org.junit.Test;
 
-public class CryptoSignerTest {
+public class CryptoSignersTest {
 
   @Test
   public void testServiceAccountCryptoSigner() throws IOException {
@@ -49,6 +49,16 @@ public class CryptoSignerTest {
     CryptoSigner signer = new CryptoSigners.ServiceAccountCryptoSigner(credentials);
     byte[] data = signer.sign("foo".getBytes());
     assertArrayEquals(expected, data);
+  }
+
+  @Test
+  public void testInvalidServiceAccountCryptoSigner() {
+    try {
+      new CryptoSigners.ServiceAccountCryptoSigner(null);
+      fail("No error thrown for null service account signer");
+    } catch (NullPointerException expected) {
+      // expected
+    }
   }
 
   @Test
@@ -108,7 +118,7 @@ public class CryptoSignerTest {
   }
 
   @Test
-  public void testIAMCryptoSignerMetadataService() throws IOException {
+  public void testMetadataService() throws IOException {
     String signature = BaseEncoding.base64().encode("signed-bytes".getBytes());
     String response = Utils.getDefaultJsonFactory().toString(
         ImmutableMap.of("signature", signature));

@@ -63,17 +63,22 @@ public class FirebaseTokenFactoryTest {
     FirebaseTokenFactory tokenFactory = new FirebaseTokenFactory(FACTORY, clock,
         new TestCryptoSigner(keys.getPrivate()));
 
-    String jwt =
-        tokenFactory.createSignedCustomAuthTokenForUser(
-            USER_ID, EXTRA_CLAIMS, ISSUER);
-
+    String jwt = tokenFactory.createSignedCustomAuthTokenForUser(USER_ID, ISSUER, EXTRA_CLAIMS);
     FirebaseCustomAuthToken signedJwt = FirebaseCustomAuthToken.parse(FACTORY, jwt);
     assertEquals("RS256", signedJwt.getHeader().getAlgorithm());
     assertEquals(ISSUER, signedJwt.getPayload().getIssuer());
     assertEquals(ISSUER, signedJwt.getPayload().getSubject());
     assertEquals(USER_ID, signedJwt.getPayload().getUid());
     assertEquals(2L, signedJwt.getPayload().getIssuedAtTimeSeconds().longValue());
+    assertTrue(TestUtils.verifySignature(signedJwt, ImmutableList.of(keys.getPublic())));
 
+    jwt = tokenFactory.createSignedCustomAuthTokenForUser(USER_ID, ISSUER);
+    signedJwt = FirebaseCustomAuthToken.parse(FACTORY, jwt);
+    assertEquals("RS256", signedJwt.getHeader().getAlgorithm());
+    assertEquals(ISSUER, signedJwt.getPayload().getIssuer());
+    assertEquals(ISSUER, signedJwt.getPayload().getSubject());
+    assertEquals(USER_ID, signedJwt.getPayload().getUid());
+    assertEquals(2L, signedJwt.getPayload().getIssuedAtTimeSeconds().longValue());
     assertTrue(TestUtils.verifySignature(signedJwt, ImmutableList.of(keys.getPublic())));
   }
 
@@ -136,8 +141,7 @@ public class FirebaseTokenFactoryTest {
 
     Map<String, Object> extraClaims = ImmutableMap.<String, Object>of("iss", "repeat issuer");
     thrown.expect(IllegalArgumentException.class);
-    tokenFactory.createSignedCustomAuthTokenForUser(
-        USER_ID, extraClaims, ISSUER);
+    tokenFactory.createSignedCustomAuthTokenForUser(USER_ID, ISSUER, extraClaims);
   }
 
   private static class TestCryptoSigner implements CryptoSigner {

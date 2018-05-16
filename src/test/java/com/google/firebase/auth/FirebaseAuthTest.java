@@ -303,8 +303,8 @@ public class FirebaseAuthTest {
       fail("Expected exception.");
     } catch (IllegalStateException expected) {
       Assert.assertEquals(
-          "Token factory not initialized. Make sure to initialize the SDK with a service "
-              + "account credential. Or specify a service account ID with the "
+          "Failed to initialize FirebaseTokenFactory. Make sure to initialize the SDK with a "
+              + "service account credential. Alternatively specify a service account with "
               + "iam.serviceAccounts.signBlob permission.",
           expected.getMessage());
     }
