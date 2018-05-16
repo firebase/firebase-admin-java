@@ -18,8 +18,7 @@ package com.google.firebase.auth.internal;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
@@ -33,8 +32,6 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
-import com.google.firebase.auth.internal.CryptoSigner.IAMCryptoSigner;
-import com.google.firebase.auth.internal.CryptoSigner.ServiceAccountCryptoSigner;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestResponseInterceptor;
@@ -49,7 +46,7 @@ public class CryptoSignerTest {
     ServiceAccountCredentials credentials = ServiceAccountCredentials.fromStream(
         ServiceAccount.EDITOR.asStream());
     byte[] expected = credentials.sign("foo".getBytes());
-    CryptoSigner signer = new ServiceAccountCryptoSigner(credentials);
+    CryptoSigner signer = new CryptoSigners.ServiceAccountCryptoSigner(credentials);
     byte[] data = signer.sign("foo".getBytes());
     assertArrayEquals(expected, data);
   }
@@ -59,17 +56,15 @@ public class CryptoSignerTest {
     String signature = BaseEncoding.base64().encode("signed-bytes".getBytes());
     String response = Utils.getDefaultJsonFactory().toString(
         ImmutableMap.of("signature", signature));
-    MockHttpTransport transport = new MultiRequestMockHttpTransport(
-        ImmutableList.of(new MockLowLevelHttpResponse().setContent(response)));
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredentials(new MockGoogleCredentials("test-token"))
-        .setServiceAccount("test-service-account@iam.gserviceaccount.com")
-        .setHttpTransport(transport)
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(new MockLowLevelHttpResponse().setContent(response))
         .build();
-    FirebaseApp app = FirebaseApp.initializeApp(options);
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    CryptoSigner signer = new IAMCryptoSigner(app, interceptor);
-    assertNull(interceptor.getResponse());
+    CryptoSigners.IAMCryptoSigner signer = new CryptoSigners.IAMCryptoSigner(
+        transport.createRequestFactory(),
+        Utils.getDefaultJsonFactory(),
+        "test-service-account@iam.gserviceaccount.com");
+    signer.setInterceptor(interceptor);
 
     byte[] data = signer.sign("foo".getBytes());
     assertArrayEquals("signed-bytes".getBytes(), data);
@@ -79,15 +74,35 @@ public class CryptoSignerTest {
   }
 
   @Test
-  public void testIAMCryptoSignerNoServiceAccount() {
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredentials(new MockGoogleCredentials("test-token"))
-        .build();
-    FirebaseApp app = FirebaseApp.initializeApp(options);
+  public void testInvalidIAMCryptoSigner() {
     try {
-      new IAMCryptoSigner(app);
-      fail("No error thrown when service account not specified");
-    } catch (IOException expected) {
+      new CryptoSigners.IAMCryptoSigner(null, Utils.getDefaultJsonFactory(), "test");
+      fail("No error thrown for null request factory");
+    } catch (NullPointerException expected) {
+      // expected
+    }
+
+    MockHttpTransport transport = new MockHttpTransport();
+    try {
+      new CryptoSigners.IAMCryptoSigner(transport.createRequestFactory(), null, "test");
+      fail("No error thrown for null json factory");
+    } catch (NullPointerException expected) {
+      // expected
+    }
+
+    try {
+      new CryptoSigners.IAMCryptoSigner(transport.createRequestFactory(),
+          Utils.getDefaultJsonFactory(), null);
+      fail("No error thrown for null service account");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+
+    try {
+      new CryptoSigners.IAMCryptoSigner(transport.createRequestFactory(),
+          Utils.getDefaultJsonFactory(), "");
+      fail("No error thrown for empty service account");
+    } catch (IllegalArgumentException expected) {
       // expected
     }
   }
@@ -106,11 +121,11 @@ public class CryptoSignerTest {
         .setHttpTransport(transport)
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
+    CryptoSigner signer = CryptoSigners.getCryptoSigner(app);
+
+    assertTrue(signer instanceof CryptoSigners.IAMCryptoSigner);
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    CryptoSigner signer = new IAMCryptoSigner(app, interceptor);
-    assertNotNull(interceptor.getResponse());
-    assertEquals("Google", interceptor.getResponse().getRequest()
-        .getHeaders().get("Metadata-Flavor"));
+    ((CryptoSigners.IAMCryptoSigner) signer).setInterceptor(interceptor);
 
     byte[] data = signer.sign("foo".getBytes());
     assertArrayEquals("signed-bytes".getBytes(), data);
