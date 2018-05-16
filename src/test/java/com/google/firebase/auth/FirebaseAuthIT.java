@@ -459,5 +459,4 @@ public class FirebaseAuthIT {
       assertEquals("uid-already-exists", ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
-
 }

@@ -16,16 +16,24 @@
 
 package com.google.firebase.auth.internal;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
+
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.json.webtoken.JsonWebSignature;
+import com.google.api.client.util.Base64;
 import com.google.api.client.util.Clock;
-import com.google.common.base.Preconditions;
+import com.google.api.client.util.StringUtils;
 
+import com.google.auth.ServiceAccountSigner;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.auth.internal.CryptoSigner.IAMCryptoSigner;
+import com.google.firebase.auth.internal.CryptoSigner.ServiceAccountCryptoSigner;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
-import java.security.PrivateKey;
 import java.util.Collection;
 import java.util.Map;
 
@@ -36,35 +44,41 @@ import java.util.Map;
  */
 public class FirebaseTokenFactory {
 
-  private static FirebaseTokenFactory instance;
+  private final JsonFactory factory;
+  private final Clock clock;
+  private final CryptoSigner signer;
 
-  private JsonFactory factory;
-  private Clock clock;
-
-  public FirebaseTokenFactory(JsonFactory factory, Clock clock) {
-    this.factory = factory;
-    this.clock = clock;
+  public FirebaseTokenFactory(FirebaseApp app, Clock clock) throws IOException {
+    this(app.getOptions().getJsonFactory(), clock, initSigner(app));
   }
 
-  public static FirebaseTokenFactory getInstance() {
-    if (null == instance) {
-      instance = new FirebaseTokenFactory(new GsonFactory(), Clock.SYSTEM);
+  FirebaseTokenFactory(JsonFactory factory, Clock clock, CryptoSigner signer) {
+    this.factory = checkNotNull(factory);
+    this.clock = checkNotNull(clock);
+    this.signer = checkNotNull(signer);
+  }
+
+  private static CryptoSigner initSigner(FirebaseApp app) throws IOException {
+    GoogleCredentials credentials = ImplFirebaseTrampolines.getCredentials(app);
+    if (credentials instanceof ServiceAccountSigner) {
+      return new ServiceAccountCryptoSigner((ServiceAccountSigner) credentials);
     }
-
-    return instance;
-  }
-
-  public String createSignedCustomAuthTokenForUser(String uid, String issuer, PrivateKey privateKey)
-      throws GeneralSecurityException, IOException {
-    return createSignedCustomAuthTokenForUser(uid, null, issuer, privateKey);
+    return new IAMCryptoSigner(app);
   }
 
   public String createSignedCustomAuthTokenForUser(
-      String uid, Map<String, Object> developerClaims, String issuer, PrivateKey privateKey)
-      throws GeneralSecurityException, IOException {
-    Preconditions.checkState(uid != null, "Uid must be provided.");
-    Preconditions.checkState(issuer != null && !"".equals(issuer), "Must provide an issuer.");
-    Preconditions.checkState(uid.length() <= 128, "Uid must be shorter than 128 characters.");
+      String uid, String issuer) throws IOException {
+    return createSignedCustomAuthTokenForUser(uid, null, issuer);
+  }
+
+  public String createSignedCustomAuthTokenForUser(
+      String uid, Map<String, Object> developerClaims, String issuer) throws IOException {
+    checkState(signer != null, "Crypto signer not initialized. Make sure "
+        + "to initialize the SDK with a service account credential, or at least specify a service "
+        + "account ID with iam.serviceAccounts.signBlob permission that can be accessed remotely.");
+    checkArgument(uid != null, "Uid must be provided.");
+    checkArgument(issuer != null && !"".equals(issuer), "Must provide an issuer.");
+    checkArgument(uid.length() <= 128, "Uid must be shorter than 128 characters.");
 
     JsonWebSignature.Header header = new JsonWebSignature.Header().setAlgorithm("RS256");
 
@@ -90,7 +104,16 @@ public class FirebaseTokenFactory {
       jsonObject.putAll(developerClaims);
       payload.setDeveloperClaims(jsonObject);
     }
+    return signPayload(header, payload);
+  }
 
-    return JsonWebSignature.signUsingRsaSha256(privateKey, factory, header, payload);
+  private String signPayload(JsonWebSignature.Header header,
+      FirebaseCustomAuthToken.Payload payload) throws IOException {
+    String headerString = Base64.encodeBase64URLSafeString(factory.toByteArray(header));
+    String payloadString = Base64.encodeBase64URLSafeString(factory.toByteArray(payload));
+    String content = headerString + "." + payloadString;
+    byte[] contentBytes = StringUtils.getBytesUtf8(content);
+    String signature = Base64.encodeBase64URLSafeString(signer.sign(contentBytes));
+    return content + "." + signature;
   }
 }

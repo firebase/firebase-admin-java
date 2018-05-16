@@ -23,6 +23,7 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Key;
+import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -60,6 +61,7 @@ public final class FirebaseOptions {
   private final GoogleCredentials credentials;
   private final Map<String, Object> databaseAuthVariableOverride;
   private final String projectId;
+  private final String serviceAccount;
   private final HttpTransport httpTransport;
   private final int connectTimeout;
   private final int readTimeout;
@@ -76,6 +78,13 @@ public final class FirebaseOptions {
     if (!Strings.isNullOrEmpty(builder.storageBucket)) {
       checkArgument(!builder.storageBucket.startsWith("gs://"),
           "StorageBucket must not include 'gs://' prefix.");
+    }
+    if (!Strings.isNullOrEmpty(builder.serviceAccount)) {
+      this.serviceAccount = builder.serviceAccount;
+    } else if (credentials instanceof ServiceAccountSigner) {
+      this.serviceAccount = ((ServiceAccountSigner) credentials).getAccount();
+    } else {
+      this.serviceAccount = null;
     }
     this.storageBucket = builder.storageBucket;
     this.httpTransport = checkNotNull(builder.httpTransport,
@@ -129,6 +138,10 @@ public final class FirebaseOptions {
    */
   public String getProjectId() {
     return projectId;
+  }
+
+  public String getServiceAccount() {
+    return serviceAccount;
   }
 
   /**
@@ -192,6 +205,9 @@ public final class FirebaseOptions {
     
     @Key("storageBucket")
     private String storageBucket;
+
+    @Key("serviceAccount")
+    private String serviceAccount;
     
     private GoogleCredentials credentials;
     private HttpTransport httpTransport = Utils.getDefaultTransport();
@@ -307,6 +323,11 @@ public final class FirebaseOptions {
     public Builder setProjectId(@NonNull String projectId) {
       checkArgument(!Strings.isNullOrEmpty(projectId), "Project ID must not be null or empty");
       this.projectId = projectId;
+      return this;
+    }
+
+    public Builder setServiceAccount(String serviceAccount) {
+      this.serviceAccount = serviceAccount;
       return this;
     }
 
