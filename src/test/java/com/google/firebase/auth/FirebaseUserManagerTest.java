@@ -374,7 +374,8 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().importUsersAsync(users);
       fail("No error thrown for missing hash option");
     } catch (IllegalArgumentException expected) {
-      // expected
+      assertEquals("UserImportHash option is required when at least one user has a password. "
+          + "Provide a UserImportHash via UserImportOptions.withHash().", expected.getMessage());
     }
   }
 

@@ -29,7 +29,7 @@ import java.util.List;
 public final class UserImportResult {
 
   private final int users;
-  private final List<ErrorInfo> errors;
+  private final ImmutableList<ErrorInfo> errors;
 
   UserImportResult(int users, UploadAccountResponse response) {
     ImmutableList.Builder<ErrorInfo> errorsBuilder = ImmutableList.builder();
@@ -47,7 +47,7 @@ public final class UserImportResult {
   /**
    * Returns the number of users that were imported successfully.
    *
-   * @return an integer (possibly zero).
+   * @return number of users successfully imported (possibly zero).
    */
   public int getSuccessCount() {
     return users - errors.size();
@@ -56,7 +56,7 @@ public final class UserImportResult {
   /**
    * Returns the number of users that failed to be imported.
    *
-   * @return an integer (possibly zero).
+   * @return number of users that resulted in import failures (possibly zero).
    */
   public int getFailureCount() {
     return errors.size();

@@ -19,6 +19,9 @@ package com.google.firebase.auth.internal;
 import com.google.api.client.util.Key;
 import java.util.List;
 
+/**
+ * Represents the response from identity toolkit for a user import request.
+ */
 public class UploadAccountResponse {
 
   @Key("error")

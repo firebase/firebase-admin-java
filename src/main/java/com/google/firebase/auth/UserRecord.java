@@ -247,12 +247,12 @@ public class UserRecord implements UserInfo {
         "phone number must be a valid, E.164 compliant identifier starting with a '+' sign");
   }
 
-  static void checkPhotoUrl(String photoUrl) {
-    checkArgument(!Strings.isNullOrEmpty(photoUrl), "photoUrl cannot be null or empty");
+  static void checkUrl(String photoUrl) {
+    checkArgument(!Strings.isNullOrEmpty(photoUrl), "url cannot be null or empty");
     try {
       new URL(photoUrl);
     } catch (MalformedURLException e) {
-      throw new IllegalArgumentException("malformed photoUrl string", e);
+      throw new IllegalArgumentException("malformed url string", e);
     }
   }
 
@@ -266,7 +266,7 @@ public class UserRecord implements UserInfo {
       return;
     }
     for (String key : customClaims.keySet()) {
-      checkArgument(!"".equals(key), "Claim names must not be empty");
+      checkArgument(!Strings.isNullOrEmpty(key), "Claim names must not be null or empty");
       checkArgument(!FirebaseUserManager.RESERVED_CLAIMS.contains(key),
           "Claim '" + key + "' is reserved and cannot be set");
     }
@@ -371,7 +371,7 @@ public class UserRecord implements UserInfo {
      * @param photoUrl a non-null, non-empty URL string.
      */
     public CreateRequest setPhotoUrl(String photoUrl) {
-      checkPhotoUrl(photoUrl);
+      checkUrl(photoUrl);
       properties.put("photoUrl", photoUrl);
       return this;
     }
@@ -483,7 +483,7 @@ public class UserRecord implements UserInfo {
     public UpdateRequest setPhotoUrl(@Nullable String photoUrl) {
       // This is allowed to be null
       if (photoUrl != null) {
-        checkPhotoUrl(photoUrl);
+        checkUrl(photoUrl);
       }
       properties.put("photoUrl", photoUrl);
       return this;

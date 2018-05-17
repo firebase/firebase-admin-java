@@ -492,7 +492,7 @@ public class FirebaseAuthIT {
       UserRecord savedUser = auth.getUserAsync(randomId).get();
       assertEquals(userEmail, savedUser.getEmail());
       String idToken = signInWithPassword(userEmail, "password");
-      assertTrue(!Strings.isNullOrEmpty(idToken));
+      assertFalse(Strings.isNullOrEmpty(idToken));
     } finally {
       auth.deleteUserAsync(randomId).get();
     }

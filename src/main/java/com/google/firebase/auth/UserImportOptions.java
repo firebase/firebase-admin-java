@@ -32,7 +32,7 @@ public final class UserImportOptions {
   private final UserImportHash hash;
 
   private UserImportOptions(Builder builder) {
-    this.hash = builder.hash;
+    this.hash = checkNotNull(builder.hash);
   }
 
   /**
@@ -55,11 +55,9 @@ public final class UserImportOptions {
   }
 
   Map<String, Object> getProperties() {
-    ImmutableMap.Builder<String, Object> properties = ImmutableMap.builder();
-    if (hash != null) {
-      properties.putAll(hash.getProperties());
-    }
-    return properties.build();
+    return ImmutableMap.<String, Object>builder()
+        .putAll(hash.getProperties())
+        .build();
   }
 
   UserImportHash getHash() {
@@ -80,7 +78,7 @@ public final class UserImportOptions {
      * @param hash A {@link UserImportHash}.
      * @return This builder.
      */
-    public Builder setHash(UserImportHash hash) {
+    public Builder setHash(@NonNull UserImportHash hash) {
       this.hash = hash;
       return this;
     }

@@ -293,7 +293,8 @@ class FirebaseUserManager {
 
       if (hasPassword) {
         checkArgument(options != null && options.getHash() != null,
-            "UserImportHash option is required when at least one user has a password");
+            "UserImportHash option is required when at least one user has a password. Provide "
+                + "a UserImportHash via UserImportOptions.withHash().");
         this.putAll(options.getProperties());
       }
     }

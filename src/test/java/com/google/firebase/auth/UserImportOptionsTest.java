@@ -17,7 +17,6 @@
 package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
 import com.google.common.collect.ImmutableMap;
@@ -28,11 +27,9 @@ import org.junit.Test;
 
 public class UserImportOptionsTest {
 
-  @Test
+  @Test(expected = NullPointerException.class)
   public void testEmptyOptions() {
-    UserImportOptions options = UserImportOptions.builder().build();
-    assertEquals(ImmutableMap.of(), options.getProperties());
-    assertNull(options.getHash());
+    UserImportOptions.builder().build();
   }
 
   @Test

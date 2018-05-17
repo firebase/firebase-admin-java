@@ -29,7 +29,7 @@ abstract class BasicHash extends UserImportHash {
   BasicHash(String name, Builder builder) {
     super(name);
     checkArgument(builder.rounds >= 0 && builder.rounds <= 120000,
-        "A non-empty key is required for HMAC algorithms");
+        "Rounds value must be between 0 and 120000 (inclusive).");
     this.rounds = builder.rounds;
   }
 

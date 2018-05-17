@@ -199,6 +199,10 @@ public final class ImportUserRecord {
     /**
      * Adds a user provider to be associated with this user.
      *
+     * <p>A {@link UserProvider} represents the identity of the user as specified by an
+     * identity provider that is linked to this user account. The identity provider can specify
+     * its own values for common user attributes like email, display name and photo URL.
+     *
      * @param provider A non-null {@link UserProvider}.
      * @return This builder.
      */
@@ -255,7 +259,7 @@ public final class ImportUserRecord {
         properties.put("email", email);
       }
       if (!Strings.isNullOrEmpty(photoUrl)) {
-        UserRecord.checkPhotoUrl(photoUrl);
+        UserRecord.checkUrl(photoUrl);
         properties.put("photoUrl", photoUrl);
       }
       if (!Strings.isNullOrEmpty(phoneNumber)) {
