@@ -22,19 +22,19 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.UserImportHash;
 import java.util.Map;
 
-abstract class BasicHash extends UserImportHash {
+abstract class RepeatableHash extends UserImportHash {
 
   private final int rounds;
 
-  BasicHash(String name, Builder builder) {
+  RepeatableHash(String name, int min, int max, Builder builder) {
     super(name);
-    checkArgument(builder.rounds >= 0 && builder.rounds <= 120000,
-        "Rounds value must be between 0 and 120000 (inclusive).");
+    checkArgument(builder.rounds >= min && builder.rounds <= max,
+        "Rounds value must be between %s and %s (inclusive).", min, max);
     this.rounds = builder.rounds;
   }
 
   @Override
-  protected final Map<String, Object> getOptions() {
+  protected Map<String, Object> getOptions() {
     return ImmutableMap.<String, Object>of("rounds", rounds);
   }
 

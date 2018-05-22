@@ -47,8 +47,8 @@ public class InvalidHashTest {
   }
 
   @Test
-  public void testInvalidBasic() {
-    List<BasicHash.Builder> builders = ImmutableList.<BasicHash.Builder>builder()
+  public void testInvalidRepeatableHash() {
+    List<RepeatableHash.Builder> builders = ImmutableList.<RepeatableHash.Builder>builder()
         .add(Sha512.builder().setRounds(-1))
         .add(Sha256.builder().setRounds(-1))
         .add(Sha1.builder().setRounds(-1))
@@ -62,7 +62,7 @@ public class InvalidHashTest {
         .add(Pbkdf2Sha256.builder().setRounds(120001))
         .add(PbkdfSha1.builder().setRounds(120001))
         .build();
-    for (BasicHash.Builder builder : builders) {
+    for (RepeatableHash.Builder builder : builders) {
       try {
         builder.build();
         fail("No error thrown for invalid rounds");
@@ -83,6 +83,11 @@ public class InvalidHashTest {
             .setKey(SIGNER_KEY)
             .setSaltSeparator(SALT_SEPARATOR)
             .setRounds(9)
+            .setMemoryCost(14),
+        Scrypt.builder() // invalid rounds (< 0)
+            .setKey(SIGNER_KEY)
+            .setSaltSeparator(SALT_SEPARATOR)
+            .setRounds(-1)
             .setMemoryCost(14),
         Scrypt.builder() // invalid memory cost (> 15)
             .setKey(SIGNER_KEY)

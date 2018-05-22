@@ -20,17 +20,17 @@ package com.google.firebase.auth.hash;
  * Represents the MD5 password hashing algorithm. Can be used as an instance of
  * {@link com.google.firebase.auth.UserImportHash} when importing users.
  */
-public class Md5 extends BasicHash {
+public class Md5 extends RepeatableHash {
 
   private Md5(Builder builder) {
-    super("MD5", builder);
+    super("MD5", 0, 120000, builder);
   }
 
   public static Builder builder() {
     return new Builder();
   }
 
-  public static class Builder extends BasicHash.Builder<Builder, Md5> {
+  public static class Builder extends RepeatableHash.Builder<Builder, Md5> {
 
     private Builder() {}
 

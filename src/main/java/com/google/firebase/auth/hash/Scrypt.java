@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
-import com.google.firebase.auth.UserImportHash;
 import java.util.Map;
 
 /**
@@ -29,18 +28,16 @@ import java.util.Map;
  * Firebase Auth. See {@link StandardScrypt} for the standard Scrypt algorithm. Can be used as an
  * instance of {@link com.google.firebase.auth.UserImportHash} when importing users.
  */
-public final class Scrypt extends UserImportHash {
+public final class Scrypt extends RepeatableHash {
 
   private final String key;
   private final String saltSeparator;
-  private final int rounds;
   private final int memoryCost;
 
   private Scrypt(Builder builder) {
-    super("SCRYPT");
+    super("SCRYPT",0, 8, builder);
     checkArgument(builder.key != null && builder.key.length > 0,
         "A non-empty key is required for Scrypt");
-    checkArgument(builder.rounds > 0 && builder.rounds <= 8, "rounds must be between 1 and 8");
     checkArgument(builder.memoryCost > 0 && builder.memoryCost <= 14,
         "memoryCost must be between 1 and 14");
     this.key = BaseEncoding.base64Url().encode(builder.key);
@@ -49,29 +46,27 @@ public final class Scrypt extends UserImportHash {
     } else {
       this.saltSeparator = BaseEncoding.base64Url().encode(new byte[0]);
     }
-    this.rounds = builder.rounds;
     this.memoryCost = builder.memoryCost;
   }
 
   @Override
   protected Map<String, Object> getOptions() {
-    return ImmutableMap.<String, Object>of(
-        "signerKey", key,
-        "rounds", rounds,
-        "memoryCost", memoryCost,
-        "saltSeparator", saltSeparator
-    );
+    return ImmutableMap.<String, Object>builder()
+        .putAll(super.getOptions())
+        .put("signerKey", key)
+        .put("memoryCost", memoryCost)
+        .put("saltSeparator", saltSeparator)
+        .build();
   }
 
   public static Builder builder() {
     return new Builder();
   }
 
-  public static class Builder {
+  public static class Builder extends RepeatableHash.Builder<Builder, Scrypt> {
 
     private byte[] key;
     private byte[] saltSeparator;
-    private int rounds;
     private int memoryCost;
 
     private Builder() {}
@@ -99,17 +94,6 @@ public final class Scrypt extends UserImportHash {
     }
 
     /**
-     * Sets the number of rounds. Required field.
-     *
-     * @param rounds an integer between 1 and 8 (inclusive).
-     * @return this builder.
-     */
-    public Builder setRounds(int rounds) {
-      this.rounds = rounds;
-      return this;
-    }
-
-    /**
      * Sets the memory cost. Required field.
      *
      * @param memoryCost an integer between 1 and 14 (inclusive).
@@ -117,6 +101,11 @@ public final class Scrypt extends UserImportHash {
      */
     public Builder setMemoryCost(int memoryCost) {
       this.memoryCost = memoryCost;
+      return this;
+    }
+
+    @Override
+    protected Builder getInstance() {
       return this;
     }
 

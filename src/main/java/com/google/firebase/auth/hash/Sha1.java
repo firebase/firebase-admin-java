@@ -20,17 +20,17 @@ package com.google.firebase.auth.hash;
  * Represents the SHA1 password hashing algorithm. Can be used as an instance of
  * {@link com.google.firebase.auth.UserImportHash} when importing users.
  */
-public class Sha1 extends BasicHash {
+public class Sha1 extends RepeatableHash {
 
   private Sha1(Builder builder) {
-    super("SHA1", builder);
+    super("SHA1", 0, 120000, builder);
   }
 
   public static Builder builder() {
     return new Builder();
   }
 
-  public static class Builder extends BasicHash.Builder<Builder, Sha1> {
+  public static class Builder extends RepeatableHash.Builder<Builder, Sha1> {
 
     private Builder() {}
 
