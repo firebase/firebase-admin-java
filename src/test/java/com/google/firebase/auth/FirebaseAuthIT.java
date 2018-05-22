@@ -36,10 +36,13 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.BaseEncoding;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
+import com.google.firebase.auth.hash.Scrypt;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -60,6 +63,8 @@ public class FirebaseAuthIT {
 
   private static final String ID_TOOLKIT_URL =
       "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyCustomToken";
+  private static final String ID_TOOLKIT_URL2 =
+      "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword";
   private static final JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
   private static final HttpTransport transport = Utils.getDefaultTransport();
 
@@ -433,11 +438,88 @@ public class FirebaseAuthIT {
     assertEquals("silver", decoded.getClaims().get("subscription"));
   }
 
+  @Test
+  public void testImportUsers() throws Exception {
+    final String randomId = UUID.randomUUID().toString().replaceAll("-", "");
+    final String userEmail = ("test" + randomId.substring(0, 12) + "@example."
+        + randomId.substring(12) + ".com").toLowerCase();
+    ImportUserRecord user = ImportUserRecord.builder()
+        .setUid(randomId)
+        .setEmail(userEmail)
+        .build();
+
+    UserImportResult result = auth.importUsersAsync(ImmutableList.of(user)).get();
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+
+    try {
+      UserRecord savedUser = auth.getUserAsync(randomId).get();
+      assertEquals(userEmail, savedUser.getEmail());
+    } finally {
+      auth.deleteUserAsync(randomId).get();
+    }
+  }
+
+  @Test
+  public void testImportUsersWithPassword() throws Exception {
+    final String randomId = UUID.randomUUID().toString().replaceAll("-", "");
+    final String userEmail = ("test" + randomId.substring(0, 12) + "@example."
+        + randomId.substring(12) + ".com").toLowerCase();
+    final byte[] passwordHash = BaseEncoding.base64().decode(
+        "V358E8LdWJXAO7muq0CufVpEOXaj8aFiC7T/rcaGieN04q/ZPJ08WhJEHGjj9lz/2TT+/86N5VjVoc5DdBhBiw==");
+    ImportUserRecord user = ImportUserRecord.builder()
+        .setUid(randomId)
+        .setEmail(userEmail)
+        .setPasswordHash(passwordHash)
+        .setPasswordSalt("NaCl".getBytes())
+        .build();
+
+    final byte[] scryptKey = BaseEncoding.base64().decode(
+        "jxspr8Ki0RYycVU8zykbdLGjFQ3McFUH0uiiTvC8pVMXAn210wjLNmdZJzxUECKbm0QsEmYUSDzZvpjeJ9WmXA==");
+    final byte[] saltSeparator = BaseEncoding.base64().decode("Bw==");
+    UserImportResult result = auth.importUsersAsync(
+        ImmutableList.of(user),
+        UserImportOptions.withHash(Scrypt.builder()
+            .setKey(scryptKey)
+            .setSaltSeparator(saltSeparator)
+            .setRounds(8)
+            .setMemoryCost(14)
+            .build())).get();
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+
+    try {
+      UserRecord savedUser = auth.getUserAsync(randomId).get();
+      assertEquals(userEmail, savedUser.getEmail());
+      String idToken = signInWithPassword(userEmail, "password");
+      assertFalse(Strings.isNullOrEmpty(idToken));
+    } finally {
+      auth.deleteUserAsync(randomId).get();
+    }
+  }
+
   private String signInWithCustomToken(String customToken) throws IOException {
     GenericUrl url = new GenericUrl(ID_TOOLKIT_URL + "?key="
         + IntegrationTestUtils.getApiKey());
     Map<String, Object> content = ImmutableMap.<String, Object>of(
         "token", customToken, "returnSecureToken", true);
+    HttpRequest request = transport.createRequestFactory().buildPostRequest(url,
+        new JsonHttpContent(jsonFactory, content));
+    request.setParser(new JsonObjectParser(jsonFactory));
+    HttpResponse response = request.execute();
+    try {
+      GenericJson json = response.parseAs(GenericJson.class);
+      return json.get("idToken").toString();
+    } finally {
+      response.disconnect();
+    }
+  }
+
+  private String signInWithPassword(String email, String password) throws IOException {
+    GenericUrl url = new GenericUrl(ID_TOOLKIT_URL2 + "?key="
+        + IntegrationTestUtils.getApiKey());
+    Map<String, Object> content = ImmutableMap.<String, Object>of(
+        "email", email, "password", password);
     HttpRequest request = transport.createRequestFactory().buildPostRequest(url,
         new JsonHttpContent(jsonFactory, content));
     request.setParser(new JsonObjectParser(jsonFactory));

@@ -24,7 +24,11 @@ public class UserMetadata {
   private final long creationTimestamp;
   private final long lastSignInTimestamp;
 
-  UserMetadata(long creationTimestamp, long lastSignInTimestamp) {
+  public UserMetadata(long creationTimestamp) {
+    this(creationTimestamp, 0L);
+  }
+
+  public UserMetadata(long creationTimestamp, long lastSignInTimestamp) {
     this.creationTimestamp = creationTimestamp;
     this.lastSignInTimestamp = lastSignInTimestamp;
   }
