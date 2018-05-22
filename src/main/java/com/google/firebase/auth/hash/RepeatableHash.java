@@ -22,6 +22,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.UserImportHash;
 import java.util.Map;
 
+/**
+ * An abstract {@link UserImportHash} implementation that accepts a {@code rounds} parameter in
+ * a given range.
+ */
 abstract class RepeatableHash extends UserImportHash {
 
   private final int rounds;
