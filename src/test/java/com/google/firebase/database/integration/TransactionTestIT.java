@@ -41,6 +41,8 @@ import com.google.firebase.database.TestChildEventListener;
 import com.google.firebase.database.TestFailure;
 import com.google.firebase.database.TestHelpers;
 import com.google.firebase.database.Transaction;
+import com.google.firebase.database.Transaction.Handler;
+import com.google.firebase.database.Transaction.Result;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.database.core.AuthTokenProvider;
 import com.google.firebase.database.core.DatabaseConfig;
@@ -55,6 +57,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
@@ -572,6 +575,62 @@ public class TransactionTestIT {
     // original
     // transaction
     // value, and a second one with the re-run value from the third transaction
+  }
+
+  @Test
+  public void testTransactionIsCanceledAfterServerUpdate()
+      throws InterruptedException, ExecutionException {
+    // This test reproduces https://github.com/firebase/firebase-admin-java/issues/178:
+    //
+    // If we run two transactions (one at "path/nested1" and one at "path"), the SDK did not
+    // correctly re-run the "path" transaction if it got an update from the server for
+    // "path/nested2". This caused the "path" transaction to succeed on the server
+    // (our hash included the update from the server), merging stale data.
+    final DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
+    ref.getDatabase().goOffline();
+
+    // Write data to the backend from a secondary instance. The primary instance receives this data
+    // when it goes online during the first transaction.
+    FirebaseApp secondaryApp = IntegrationTestUtils.initApp("secondaryApp");
+    DatabaseReference initialData = FirebaseDatabase.getInstance(secondaryApp).getReference(ref.getKey());
+    initialData.setValueAsync(new MapBuilder().put("a", "a").build()).get();
+    secondaryApp.delete();
+
+    final CountDownLatch countDownLatch = new CountDownLatch(2);
+
+    ref.child("b").runTransaction(new Handler() {
+      @Override
+      public Result doTransaction(MutableData currentData) {
+        ref.getDatabase().goOnline();
+        currentData.setValue("b");
+        return Transaction.success(currentData);
+      }
+
+      @Override
+      public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+        Assert.assertTrue(committed);
+        countDownLatch.countDown();
+      }
+    });
+
+    ref.runTransaction(new Handler() {
+      @Override
+      public Result doTransaction(MutableData currentData) {
+        currentData.child("c").setValue("c");
+        return Transaction.success(currentData);
+      }
+
+      @Override
+      public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
+        Assert.assertTrue(committed);
+        countDownLatch.countDown();
+      }
+    });
+
+    countDownLatch.await();
+
+    DataSnapshot dataSnapshot = TestHelpers.getSnap(ref);
+    assertEquals(3, dataSnapshot.getChildrenCount());
   }
 
   @Test
