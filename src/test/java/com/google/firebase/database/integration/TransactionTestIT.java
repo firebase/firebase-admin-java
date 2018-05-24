@@ -592,7 +592,8 @@ public class TransactionTestIT {
     // Write data to the backend from a secondary instance. The primary instance receives this data
     // when it goes online during the first transaction.
     FirebaseApp secondaryApp = IntegrationTestUtils.initApp("secondaryApp");
-    DatabaseReference initialData = FirebaseDatabase.getInstance(secondaryApp).getReference(ref.getKey());
+    DatabaseReference initialData =
+        FirebaseDatabase.getInstance(secondaryApp).getReference(ref.getKey());
     initialData.setValueAsync(new MapBuilder().put("a", "a").build()).get();
     secondaryApp.delete();
 
