@@ -290,12 +290,8 @@ public class Repo implements PersistentConnection.Delegate {
         Node snap = NodeUtilities.NodeFromJSON(message);
         events = this.serverSyncTree.applyServerOverwrite(path, snap);
       }
-      if (events.size() > 0) {
-        // Since we have a listener outstanding for each transaction, receiving any events
-        // is a proxy for some change having occurred.
-        this.rerunTransactions(path);
-      }
 
+      this.rerunTransactions(path);
       postEvents(events);
     } catch (DatabaseException e) {
       logger.error("Firebase internal error", e);
