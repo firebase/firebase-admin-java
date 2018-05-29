@@ -436,9 +436,8 @@ public class FirebaseAuthSnippets {
             .build());
     try {
       UserImportResult result = FirebaseAuth.getInstance().importUsers(users, options);
-      // The number of successful imports is determined via: result.getSuccessCount().
-      // The number of failed imports is determined via: result.getFailureCount().
-      // To get the error details:
+      System.out.println("Successfully imported " + result.getSuccessCount() + " users");
+      System.out.println("Failed to import " + result.getFailureCount() + " users");
       for (ErrorInfo indexedError : result.getErrors()) {
         System.out.println("Failed to import user at index: " + indexedError.getIndex()
             + " due to error: " + indexedError.getReason());
