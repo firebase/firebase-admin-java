@@ -413,6 +413,7 @@ public class FirebaseAuthSnippets {
 
   public void importUsers() {
     // [START build_user_list]
+    // Up to 1000 users can be imported at once.
     List<ImportUserRecord> users = new ArrayList<>();
     users.add(ImportUserRecord.builder()
         .setUid("uid1")
