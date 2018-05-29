@@ -13,7 +13,7 @@ import com.google.firebase.internal.NonNull;
 
 /**
  * {@code FirestoreClient} provides access to Google Cloud Firestore. Use this API to obtain a
- * <a href="https://googlecloudplatform.github.io/google-cloud-java/latest/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
+ * <a href="https://googlecloudplatform.github.io/google-cloud-java/google-cloud-clients/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
  * instance, which provides methods for updating and querying data in Firestore.
  *
  * <p>A Google Cloud project ID is required to access Firestore. FirestoreClient determines the
@@ -44,7 +44,7 @@ public class FirestoreClient {
   /**
    * Returns the Firestore instance associated with the default Firebase app.
    *
-   * @return A non-null <a href="https://googlecloudplatform.github.io/google-cloud-java/latest/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
+   * @return A non-null <a href="https://googlecloudplatform.github.io/google-cloud-java/google-cloud-clients/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
    *     instance.
    */
   @NonNull
@@ -56,7 +56,7 @@ public class FirestoreClient {
    * Returns the Firestore instance associated with the specified Firebase app.
    *
    * @param app A non-null {@link FirebaseApp}.
-   * @return A non-null <a href="https://googlecloudplatform.github.io/google-cloud-java/latest/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
+   * @return A non-null <a href="https://googlecloudplatform.github.io/google-cloud-java/google-cloud-clients/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
    *     instance.
    */
   @NonNull
