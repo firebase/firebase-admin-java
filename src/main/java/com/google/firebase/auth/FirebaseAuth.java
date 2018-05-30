@@ -355,13 +355,14 @@ public class FirebaseAuth {
   }
 
   private FirebaseTokenFactory ensureTokenFactory() {
-    FirebaseTokenFactory tokenFactory = this.tokenFactory.get();
-    if (tokenFactory == null) {
+    FirebaseTokenFactory result = this.tokenFactory.get();
+    if (result == null) {
       synchronized (lock) {
-        tokenFactory = this.tokenFactory.get();
-        if (tokenFactory == null) {
+        result = this.tokenFactory.get();
+        if (result == null) {
           try {
-            tokenFactory = FirebaseTokenFactory.fromApp(firebaseApp, clock);
+            result = FirebaseTokenFactory.fromApp(firebaseApp, clock);
+            this.tokenFactory.set(result);
           } catch (IOException e) {
             throw new IllegalStateException(
                 "Failed to initialize FirebaseTokenFactory. Make sure to initialize the SDK "
@@ -371,7 +372,7 @@ public class FirebaseAuth {
         }
       }
     }
-    return tokenFactory;
+    return result;
   }
 
   /**

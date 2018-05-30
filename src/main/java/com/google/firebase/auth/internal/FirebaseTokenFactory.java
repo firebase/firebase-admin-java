@@ -33,7 +33,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * Provides helper methods to simplify the creation of FirebaseCustomAuthTokens.
+ * Provides helper methods to simplify the creation of Firebase custom auth tokens.
  *
  * <p>This class is designed to hide underlying implementation details from a Firebase developer.
  */
