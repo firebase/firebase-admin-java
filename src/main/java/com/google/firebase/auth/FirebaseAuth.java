@@ -366,7 +366,7 @@ public class FirebaseAuth {
             throw new IllegalStateException(
                 "Failed to initialize FirebaseTokenFactory. Make sure to initialize the SDK "
                     + "with a service account credential. Alternatively specify a service account "
-                    + "with iam.serviceAccounts.signBlob permission.", e);
+                    + "email with iam.serviceAccounts.signBlob permission.", e);
           }
         }
       }

@@ -23,7 +23,6 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Key;
-import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -81,8 +80,6 @@ public final class FirebaseOptions {
     }
     if (!Strings.isNullOrEmpty(builder.serviceAccount)) {
       this.serviceAccount = builder.serviceAccount;
-    } else if (credentials instanceof ServiceAccountSigner) {
-      this.serviceAccount = ((ServiceAccountSigner) credentials).getAccount();
     } else {
       this.serviceAccount = null;
     }

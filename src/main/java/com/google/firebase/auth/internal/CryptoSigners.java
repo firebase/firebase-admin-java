@@ -15,6 +15,7 @@ import com.google.api.client.util.Key;
 import com.google.api.client.util.StringUtils;
 import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
@@ -110,22 +111,37 @@ class CryptoSigners {
 
   static CryptoSigner getCryptoSigner(FirebaseApp firebaseApp) throws IOException {
     GoogleCredentials credentials = ImplFirebaseTrampolines.getCredentials(firebaseApp);
-    if (credentials instanceof ServiceAccountSigner) {
-      return new ServiceAccountCryptoSigner((ServiceAccountSigner) credentials);
+
+    // If the SDK was initialized with a service account, use it to sign bytes.
+    if (credentials instanceof ServiceAccountCredentials) {
+      return new ServiceAccountCryptoSigner((ServiceAccountCredentials) credentials);
     }
 
     FirebaseOptions options = firebaseApp.getOptions();
     HttpRequestFactory requestFactory = options.getHttpTransport().createRequestFactory(
         new FirebaseRequestInitializer(firebaseApp));
-    String serviceAccount = options.getServiceAccount();
-    if (Strings.isNullOrEmpty(serviceAccount)) {
-      HttpRequest request = requestFactory.buildGetRequest(new GenericUrl(METADATA_SERVICE_URL));
-      request.getHeaders().set("Metadata-Flavor", "Google");
-      HttpResponse response = request.execute();
-      byte[] output = ByteStreams.toByteArray(response.getContent());
-      serviceAccount = StringUtils.newStringUtf8(output).trim();
-    }
     JsonFactory jsonFactory = options.getJsonFactory();
+
+    // If the SDK was initialized with a service account email, use it with the IAM service
+    // to sign bytes.
+    String serviceAccount = options.getServiceAccount();
+    if (!Strings.isNullOrEmpty(serviceAccount)) {
+      return new IAMCryptoSigner(requestFactory, jsonFactory, serviceAccount);
+    }
+
+    // If the SDK was initialized with some other credential type that supports signing
+    // (e.g. GAE credentials), use it to sign bytes.
+    if (credentials instanceof ServiceAccountSigner) {
+      return new ServiceAccountCryptoSigner((ServiceAccountSigner) credentials);
+    }
+
+    // Attempt to discover a service account email from the local Metadata service. Use it
+    // with the IAM service to sign bytes.
+    HttpRequest request = requestFactory.buildGetRequest(new GenericUrl(METADATA_SERVICE_URL));
+    request.getHeaders().set("Metadata-Flavor", "Google");
+    HttpResponse response = request.execute();
+    byte[] output = ByteStreams.toByteArray(response.getContent());
+    serviceAccount = StringUtils.newStringUtf8(output).trim();
     return new IAMCryptoSigner(requestFactory, jsonFactory, serviceAccount);
   }
 }

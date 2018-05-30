@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
+import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -144,8 +145,69 @@ public class CryptoSignersTest {
     assertEquals(url, interceptor.getResponse().getRequest().getUrl().toString());
   }
 
+  @Test
+  public void testExplicitServiceAccountEmail() throws IOException {
+    String signature = BaseEncoding.base64().encode("signed-bytes".getBytes());
+    String response = Utils.getDefaultJsonFactory().toString(
+        ImmutableMap.of("signature", signature));
+
+    // Explicit service account should get precedence
+    MockHttpTransport transport = new MultiRequestMockHttpTransport(
+        ImmutableList.of(
+            new MockLowLevelHttpResponse().setContent(response)));
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setServiceAccount("explicit-service-account@iam.gserviceaccount.com")
+        .setCredentials(new MockGoogleCredentialsWithSigner("test-token"))
+        .setHttpTransport(transport)
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
+    CryptoSigner signer = CryptoSigners.getCryptoSigner(app);
+    assertTrue(signer instanceof CryptoSigners.IAMCryptoSigner);
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    ((CryptoSigners.IAMCryptoSigner) signer).setInterceptor(interceptor);
+
+    byte[] data = signer.sign("foo".getBytes());
+    assertArrayEquals("signed-bytes".getBytes(), data);
+    final String url = "https://iam.googleapis.com/v1/projects/-/serviceAccounts/"
+        + "explicit-service-account@iam.gserviceaccount.com:signBlob";
+    assertEquals(url, interceptor.getResponse().getRequest().getUrl().toString());
+
+    // Should fall back to signing-enabled credential
+    transport = new MultiRequestMockHttpTransport(
+        ImmutableList.of(
+            new MockLowLevelHttpResponse().setContent(response)));
+    options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentialsWithSigner("test-token"))
+        .setHttpTransport(transport)
+        .build();
+    app = FirebaseApp.initializeApp(options, "customApp");
+    signer = CryptoSigners.getCryptoSigner(app);
+    assertTrue(signer instanceof CryptoSigners.ServiceAccountCryptoSigner);
+    assertEquals("credential-signer@iam.gserviceaccount.com", signer.getAccount());
+    data = signer.sign("foo".getBytes());
+    assertArrayEquals("local-signed-bytes".getBytes(), data);
+  }
+
   @After
   public void tearDown() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+  }
+
+  private static class MockGoogleCredentialsWithSigner extends MockGoogleCredentials implements
+      ServiceAccountSigner {
+
+    MockGoogleCredentialsWithSigner(String tokenValue) {
+      super(tokenValue);
+    }
+
+    @Override
+    public String getAccount() {
+      return "credential-signer@iam.gserviceaccount.com";
+    }
+
+    @Override
+    public byte[] sign(byte[] toSign) {
+      return "local-signed-bytes".getBytes();
+    }
   }
 }
