@@ -4,6 +4,8 @@
   service account credentials.
 - [added] Added the `setServiceAccount()` method to the
   `FirebaseOptions.Builder` API.
+- [added] Added new `importUsersAsync()` API for bulk importing users
+  into Firebase Auth.
 
 # v6.1.0
 

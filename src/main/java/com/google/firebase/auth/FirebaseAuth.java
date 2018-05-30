@@ -27,6 +27,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.auth.FirebaseUserManager.UserImportRequest;
 import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
 import com.google.firebase.auth.ListUsersPage.PageFactory;
 import com.google.firebase.auth.UserRecord.CreateRequest;
@@ -39,6 +40,7 @@ import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -866,6 +868,86 @@ public class FirebaseAuth {
       protected Void execute() throws FirebaseAuthException {
         userManager.deleteUser(uid);
         return null;
+      }
+    };
+  }
+
+  /**
+   * Imports the provided list of users into Firebase Auth. At most 1000 users can be imported at a
+   * time. This operation is optimized for bulk imports and will ignore checks on identifier
+   * uniqueness which could result in duplications.
+   *
+   * <p>{@link UserImportOptions} is required to import users with passwords. See
+   * {@link #importUsers(List, UserImportOptions)}.
+   *
+   * @param users A non-empty list of users to be imported. Length must not exceed 1000.
+   * @return A {@link UserImportResult} instance.
+   * @throws IllegalArgumentException If the users list is null, empty or has more than 1000
+   *     elements. Or if at least one user specifies a password.
+   * @throws FirebaseAuthException If an error occurs while importing users.
+   */
+  public UserImportResult importUsers(List<ImportUserRecord> users) throws FirebaseAuthException {
+    return importUsers(users, null);
+  }
+
+  /**
+   * Imports the provided list of users into Firebase Auth. At most 1000 users can be imported at a
+   * time. This operation is optimized for bulk imports and will ignore checks on identifier
+   * uniqueness which could result in duplications.
+   *
+   * @param users A non-empty list of users to be imported. Length must not exceed 1000.
+   * @param options a {@link UserImportOptions} instance or null. Required when importing users
+   *     with passwords.
+   * @return A {@link UserImportResult} instance.
+   * @throws IllegalArgumentException If the users list is null, empty or has more than 1000
+   *     elements. Or if at least one user specifies a password, and options is null.
+   * @throws FirebaseAuthException If an error occurs while importing users.
+   */
+  public UserImportResult importUsers(List<ImportUserRecord> users,
+      @Nullable UserImportOptions options) throws FirebaseAuthException {
+    return importUsersOp(users, options).call();
+  }
+
+  /**
+   * Similar to {@link #importUsers(List)} but performs the operation asynchronously.
+   *
+   * @param users A non-empty list of users to be imported. Length must not exceed 1000.
+   * @return An {@code ApiFuture} which will complete successfully when the user accounts are
+   *      imported. If an error occurs while importing the users, the future throws a
+   *     {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the users list is null, empty or has more than 1000
+   *     elements. Or if at least one user specifies a password.
+   */
+  public ApiFuture<UserImportResult> importUsersAsync(List<ImportUserRecord> users) {
+    return importUsersAsync(users, null);
+  }
+
+  /**
+   * Similar to {@link #importUsers(List, UserImportOptions)} but performs the operation
+   * asynchronously.
+   *
+   * @param users A non-empty list of users to be imported. Length must not exceed 1000.
+   * @param options a {@link UserImportOptions} instance or null. Required when importing users
+   *     with passwords.
+   * @return An {@code ApiFuture} which will complete successfully when the user accounts are
+   *      imported. If an error occurs while importing the users, the future throws a
+   *     {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the users list is null, empty or has more than 1000
+   *     elements. Or if at least one user specifies a password, and options is null.
+   */
+  public ApiFuture<UserImportResult> importUsersAsync(List<ImportUserRecord> users,
+      @Nullable UserImportOptions options) {
+    return importUsersOp(users, options).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<UserImportResult, FirebaseAuthException> importUsersOp(
+      List<ImportUserRecord> users, UserImportOptions options) {
+    checkNotDestroyed();
+    final UserImportRequest request = new UserImportRequest(users, options, jsonFactory);
+    return new CallableOperation<UserImportResult, FirebaseAuthException>() {
+      @Override
+      protected UserImportResult execute() throws FirebaseAuthException {
+        return userManager.importUsers(request);
       }
     };
   }

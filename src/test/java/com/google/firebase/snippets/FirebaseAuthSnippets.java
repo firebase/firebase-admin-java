@@ -16,19 +16,33 @@
 
 package com.google.firebase.snippets;
 
+import com.google.common.io.BaseEncoding;
+import com.google.firebase.auth.ErrorInfo;
 import com.google.firebase.auth.ExportedUserRecord;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
+import com.google.firebase.auth.ImportUserRecord;
 import com.google.firebase.auth.ListUsersPage;
 import com.google.firebase.auth.SessionCookieOptions;
+import com.google.firebase.auth.UserImportOptions;
+import com.google.firebase.auth.UserImportResult;
+import com.google.firebase.auth.UserProvider;
 import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
+import com.google.firebase.auth.hash.Bcrypt;
+import com.google.firebase.auth.hash.HmacSha256;
+import com.google.firebase.auth.hash.Pbkdf2Sha256;
+import com.google.firebase.auth.hash.Scrypt;
+import com.google.firebase.auth.hash.StandardScrypt;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.Consumes;
@@ -396,4 +410,190 @@ public class FirebaseAuthSnippets {
     }
   }
   // [END session_clear_and_revoke]
+
+  public void importUsers() {
+    // [START build_user_list]
+    // Up to 1000 users can be imported at once.
+    List<ImportUserRecord> users = new ArrayList<>();
+    users.add(ImportUserRecord.builder()
+        .setUid("uid1")
+        .setEmail("user1@example.com")
+        .setPasswordHash("passwordHash1".getBytes())
+        .setPasswordSalt("salt1".getBytes())
+        .build());
+    users.add(ImportUserRecord.builder()
+        .setUid("uid2")
+        .setEmail("user2@example.com")
+        .setPasswordHash("passwordHash2".getBytes())
+        .setPasswordSalt("salt2".getBytes())
+        .build());
+    // [END build_user_list]
+
+    // [START import_users]
+    UserImportOptions options = UserImportOptions.withHash(
+        HmacSha256.builder()
+            .setKey("secretKey".getBytes())
+            .build());
+    try {
+      UserImportResult result = FirebaseAuth.getInstance().importUsers(users, options);
+      System.out.println("Successfully imported " + result.getSuccessCount() + " users");
+      System.out.println("Failed to import " + result.getFailureCount() + " users");
+      for (ErrorInfo indexedError : result.getErrors()) {
+        System.out.println("Failed to import user at index: " + indexedError.getIndex()
+            + " due to error: " + indexedError.getReason());
+      }
+    } catch (FirebaseAuthException e) {
+      // Some unrecoverable error occurred that prevented the operation from running.
+    }
+    // [END import_users]
+  }
+
+  public void importWithHmac() {
+    // [START import_with_hmac]
+    try {
+      List<ImportUserRecord> users = Collections.singletonList(ImportUserRecord.builder()
+          .setUid("some-uid")
+          .setEmail("user@example.com")
+          .setPasswordHash("password-hash".getBytes())
+          .setPasswordSalt("salt".getBytes())
+          .build());
+      UserImportOptions options = UserImportOptions.withHash(
+          HmacSha256.builder()
+              .setKey("secret".getBytes())
+              .build());
+      UserImportResult result = FirebaseAuth.getInstance().importUsers(users, options);
+      for (ErrorInfo indexedError : result.getErrors()) {
+        System.out.println("Failed to import user: " + indexedError.getReason());
+      }
+    } catch (FirebaseAuthException e) {
+      System.out.println("Error importing users: " + e.getMessage());
+    }
+    // [END import_with_hmac]
+  }
+
+  public void importWithPbkdf() {
+    // [START import_with_pbkdf]
+    try {
+      List<ImportUserRecord> users = Collections.singletonList(ImportUserRecord.builder()
+          .setUid("some-uid")
+          .setEmail("user@example.com")
+          .setPasswordHash("password-hash".getBytes())
+          .setPasswordSalt("salt".getBytes())
+          .build());
+      UserImportOptions options = UserImportOptions.withHash(
+          Pbkdf2Sha256.builder()
+              .setRounds(100000)
+              .build());
+      UserImportResult result = FirebaseAuth.getInstance().importUsers(users, options);
+      for (ErrorInfo indexedError : result.getErrors()) {
+        System.out.println("Failed to import user: " + indexedError.getReason());
+      }
+    } catch (FirebaseAuthException e) {
+      System.out.println("Error importing users: " + e.getMessage());
+    }
+    // [END import_with_pbkdf]
+  }
+
+  public void importWithStandardScrypt() {
+    // [START import_with_standard_scrypt]
+    try {
+      List<ImportUserRecord> users = Collections.singletonList(ImportUserRecord.builder()
+          .setUid("some-uid")
+          .setEmail("user@example.com")
+          .setPasswordHash("password-hash".getBytes())
+          .setPasswordSalt("salt".getBytes())
+          .build());
+      UserImportOptions options = UserImportOptions.withHash(
+          StandardScrypt.builder()
+              .setMemoryCost(1024)
+              .setParallelization(16)
+              .setBlockSize(8)
+              .setDerivedKeyLength(64)
+              .build());
+      UserImportResult result = FirebaseAuth.getInstance().importUsers(users, options);
+      for (ErrorInfo indexedError : result.getErrors()) {
+        System.out.println("Failed to import user: " + indexedError.getReason());
+      }
+    } catch (FirebaseAuthException e) {
+      System.out.println("Error importing users: " + e.getMessage());
+    }
+    // [END import_with_standard_scrypt]
+  }
+
+  public void importWithBcrypt() {
+    // [START import_with_bcrypt]
+    try {
+      List<ImportUserRecord> users = Collections.singletonList(ImportUserRecord.builder()
+          .setUid("some-uid")
+          .setEmail("user@example.com")
+          .setPasswordHash("password-hash".getBytes())
+          .setPasswordSalt("salt".getBytes())
+          .build());
+      UserImportOptions options = UserImportOptions.withHash(Bcrypt.getInstance());
+      UserImportResult result = FirebaseAuth.getInstance().importUsers(users, options);
+      for (ErrorInfo indexedError : result.getErrors()) {
+        System.out.println("Failed to import user: " + indexedError.getReason());
+      }
+    } catch (FirebaseAuthException e) {
+      System.out.println("Error importing users: " + e.getMessage());
+    }
+    // [END import_with_bcrypt]
+  }
+
+  public void importWithScrypt() {
+    // [START import_with_scrypt]
+    try {
+      List<ImportUserRecord> users = Collections.singletonList(ImportUserRecord.builder()
+          .setUid("some-uid")
+          .setEmail("user@example.com")
+          .setPasswordHash("password-hash".getBytes())
+          .setPasswordSalt("salt".getBytes())
+          .build());
+      UserImportOptions options = UserImportOptions.withHash(
+          Scrypt.builder()
+              // All the parameters below can be obtained from the Firebase Console's "Users"
+              // section. Base64 encoded parameters must be decoded into raw bytes.
+              .setKey(BaseEncoding.base64().decode("base64-secret"))
+              .setSaltSeparator(BaseEncoding.base64().decode("base64-salt-separator"))
+              .setRounds(8)
+              .setMemoryCost(14)
+              .build());
+      UserImportResult result = FirebaseAuth.getInstance().importUsers(users, options);
+      for (ErrorInfo indexedError : result.getErrors()) {
+        System.out.println("Failed to import user: " + indexedError.getReason());
+      }
+    } catch (FirebaseAuthException e) {
+      System.out.println("Error importing users: " + e.getMessage());
+    }
+    // [END import_with_scrypt]
+  }
+
+  public void importWithoutPassword() {
+    // [START import_without_password]
+    try {
+      List<ImportUserRecord> users = Collections.singletonList(ImportUserRecord.builder()
+          .setUid("some-uid")
+          .setDisplayName("John Doe")
+          .setEmail("johndoe@gmail.com")
+          .setPhotoUrl("http://www.example.com/12345678/photo.png")
+          .setEmailVerified(true)
+          .setPhoneNumber("+11234567890")
+          .putCustomClaim("admin", true) // set this user as admin
+          .addUserProvider(UserProvider.builder() // user with Google provider
+              .setUid("google-uid")
+              .setEmail("johndoe@gmail.com")
+              .setDisplayName("John Doe")
+              .setPhotoUrl("http://www.example.com/12345678/photo.png")
+              .setProviderId("google.com")
+              .build())
+          .build());
+      UserImportResult result = FirebaseAuth.getInstance().importUsers(users);
+      for (ErrorInfo indexedError : result.getErrors()) {
+        System.out.println("Failed to import user: " + indexedError.getReason());
+      }
+    } catch (FirebaseAuthException e) {
+      System.out.println("Error importing users: " + e.getMessage());
+    }
+    // [END import_without_password]
+  }
 }

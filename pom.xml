@@ -36,8 +36,8 @@
     </organization>
     <licenses>
         <license>
-            <name>Commercial</name>
-            <url>https://firebase.google.com/terms/</url>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
         </license>
     </licenses>
     <developers>

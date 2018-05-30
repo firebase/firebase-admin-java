@@ -253,6 +253,159 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testImportUsers() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    ImportUserRecord user1 = ImportUserRecord.builder().setUid("user1").build();
+    ImportUserRecord user2 = ImportUserRecord.builder().setUid("user2").build();
+
+    List<ImportUserRecord> users = ImmutableList.of(user1, user2);
+    UserImportResult result = FirebaseAuth.getInstance().importUsersAsync(users, null).get();
+    checkRequestHeaders(interceptor);
+    assertEquals(2, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+    assertTrue(result.getErrors().isEmpty());
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(1, parsed.size());
+    List<Map<String, Object>> expected = ImmutableList.of(
+        user1.getProperties(jsonFactory),
+        user2.getProperties(jsonFactory)
+    );
+    assertEquals(expected, parsed.get("users"));
+  }
+
+  @Test
+  public void testImportUsersError() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("importUsersError.json"));
+    ImportUserRecord user1 = ImportUserRecord.builder()
+        .setUid("user1")
+        .build();
+    ImportUserRecord user2 = ImportUserRecord.builder()
+        .setUid("user2")
+        .build();
+    ImportUserRecord user3 = ImportUserRecord.builder()
+        .setUid("user3")
+        .build();
+
+    List<ImportUserRecord> users = ImmutableList.of(user1, user2, user3);
+    UserImportResult result = FirebaseAuth.getInstance().importUsersAsync(users, null).get();
+    checkRequestHeaders(interceptor);
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(2, result.getFailureCount());
+    assertEquals(2, result.getErrors().size());
+
+    ErrorInfo error = result.getErrors().get(0);
+    assertEquals(0, error.getIndex());
+    assertEquals("Some error occurred in user1", error.getReason());
+    error = result.getErrors().get(1);
+    assertEquals(2, error.getIndex());
+    assertEquals("Another error occurred in user3", error.getReason());
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(1, parsed.size());
+    List<Map<String, Object>> expected = ImmutableList.of(
+        user1.getProperties(jsonFactory),
+        user2.getProperties(jsonFactory),
+        user3.getProperties(jsonFactory)
+    );
+    assertEquals(expected, parsed.get("users"));
+  }
+
+  @Test
+  public void testImportUsersWithHash() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    ImportUserRecord user1 = ImportUserRecord.builder()
+        .setUid("user1")
+        .build();
+    ImportUserRecord user2 = ImportUserRecord.builder()
+        .setUid("user2")
+        .setPasswordHash("password".getBytes())
+        .build();
+
+    List<ImportUserRecord> users = ImmutableList.of(user1, user2);
+    UserImportHash hash = new UserImportHash("MOCK_HASH") {
+      @Override
+      protected Map<String, Object> getOptions() {
+        return ImmutableMap.<String, Object>of("key1", "value1", "key2", true);
+      }
+    };
+    UserImportResult result = FirebaseAuth.getInstance().importUsersAsync(users,
+        UserImportOptions.withHash(hash)).get();
+    checkRequestHeaders(interceptor);
+    assertEquals(2, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+    assertTrue(result.getErrors().isEmpty());
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(4, parsed.size());
+    List<Map<String, Object>> expected = ImmutableList.of(
+        user1.getProperties(jsonFactory),
+        user2.getProperties(jsonFactory)
+    );
+    assertEquals(expected, parsed.get("users"));
+    assertEquals("MOCK_HASH", parsed.get("hashAlgorithm"));
+    assertEquals("value1", parsed.get("key1"));
+    assertEquals(Boolean.TRUE, parsed.get("key2"));
+  }
+
+  @Test
+  public void testImportUsersMissingHash() {
+    initializeAppForUserManagement();
+    ImportUserRecord user1 = ImportUserRecord.builder()
+        .setUid("user1")
+        .build();
+    ImportUserRecord user2 = ImportUserRecord.builder()
+        .setUid("user2")
+        .setPasswordHash("password".getBytes())
+        .build();
+
+    List<ImportUserRecord> users = ImmutableList.of(user1, user2);
+    try {
+      FirebaseAuth.getInstance().importUsersAsync(users);
+      fail("No error thrown for missing hash option");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("UserImportHash option is required when at least one user has a password. "
+          + "Provide a UserImportHash via UserImportOptions.withHash().", expected.getMessage());
+    }
+  }
+
+  @Test
+  public void testImportUsersEmptyList() {
+    initializeAppForUserManagement();
+    try {
+      FirebaseAuth.getInstance().importUsersAsync(ImmutableList.<ImportUserRecord>of());
+      fail("No error thrown for empty user list");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testImportUsersLargeList() {
+    initializeAppForUserManagement();
+    ImmutableList.Builder<ImportUserRecord> users = ImmutableList.builder();
+    for (int i = 0; i < 1001; i++) {
+      users.add(ImportUserRecord.builder().setUid("test" + i).build());
+    }
+    try {
+      FirebaseAuth.getInstance().importUsersAsync(users.build());
+      fail("No error thrown for large list");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
   public void testCreateSessionCookie() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("createSessionCookie.json"));
@@ -267,12 +420,13 @@ public class FirebaseUserManagerTest {
     interceptor.getResponse().getRequest().getContent().writeTo(out);
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(2, parsed.size());
     assertEquals("testToken", parsed.get("idToken"));
     assertEquals(new BigDecimal(3600), parsed.get("validDuration"));
   }
 
   @Test
-  public void testCreateSessionInvalidArguments() {
+  public void testCreateSessionCookieInvalidArguments() {
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(credentials)
         .build());

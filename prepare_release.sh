@@ -80,7 +80,7 @@ echo "[INFO] Updating CHANGELOG.md"
 if [ $HOST == "Darwin" ]; then
     sed -i "" -e "1 s/# Unreleased//" "CHANGELOG.md"
 else
-    sed -i -e "1 s/# Unreleased//" "CHANGELOG.md"
+    sed -i -e "/# Unreleased/d" "CHANGELOG.md"
 fi
 
 echo -e "# Unreleased\n\n-\n\n# v${VERSION}" | cat - CHANGELOG.md > TEMP_CHANGELOG.md
