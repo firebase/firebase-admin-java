@@ -16,11 +16,32 @@
 
 package com.google.firebase.auth.internal;
 
+import com.google.firebase.internal.NonNull;
 import java.io.IOException;
 
+/**
+ * Represents an  object that can be used to cryptographically sign data. Mainly used for signing
+ * custom JWT tokens issued to Firebase users.
+ *
+ * <p>See {@link com.google.firebase.auth.FirebaseAuth#createCustomToken(String)}.
+ */
 interface CryptoSigner {
 
-  byte[] sign(byte[] payload) throws IOException;
+  /**
+   * Signs the given payload.
+   *
+   * @param payload Data to be signed
+   * @return Signature as a byte array
+   * @throws IOException If an error occurs during signing
+   */
+  @NonNull
+  byte[] sign(@NonNull byte[] payload) throws IOException;
 
+  /**
+   * Returns the name of the service account used to sign payloads.
+   *
+   * @return A service account name
+   */
+  @NonNull
   String getAccount();
 }

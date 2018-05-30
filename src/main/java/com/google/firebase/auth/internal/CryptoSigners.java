@@ -24,19 +24,27 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.FirebaseRequestInitializer;
+import com.google.firebase.internal.NonNull;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * A set of {@link CryptoSigner} implementations and utilities for interacting with them.
+ */
 class CryptoSigners {
 
   private static final String METADATA_SERVICE_URL =
       "http://metadata/computeMetadata/v1/instance/service-accounts/default/email";
 
+  /**
+   * A {@link CryptoSigner} implementation that uses service account credentials or equivalent
+   * crypto-capable credentials for signing data.
+   */
   static class ServiceAccountCryptoSigner implements CryptoSigner {
 
     private final ServiceAccountSigner signer;
 
-    ServiceAccountCryptoSigner(ServiceAccountSigner signer) {
+    ServiceAccountCryptoSigner(@NonNull ServiceAccountSigner signer) {
       this.signer = checkNotNull(signer);
     }
 
@@ -51,6 +59,11 @@ class CryptoSigners {
     }
   }
 
+  /**
+   * @ {@link CryptoSigner} implementation that uses the
+   * <a href="https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob">
+   * Google IAM service</a> to sign data.
+   */
   static class IAMCryptoSigner implements CryptoSigner {
 
     private static final String IAM_SIGN_BLOB_URL =
@@ -62,7 +75,9 @@ class CryptoSigners {
     private HttpResponseInterceptor interceptor;
 
     IAMCryptoSigner(
-        HttpRequestFactory requestFactory, JsonFactory jsonFactory, String serviceAccount) {
+        @NonNull HttpRequestFactory requestFactory,
+        @NonNull JsonFactory jsonFactory,
+        @NonNull String serviceAccount) {
       this.requestFactory = checkNotNull(requestFactory);
       this.jsonFactory = checkNotNull(jsonFactory);
       checkArgument(!Strings.isNullOrEmpty(serviceAccount));
@@ -109,6 +124,10 @@ class CryptoSigners {
     private String signature;
   }
 
+  /**
+   * Initializes a {@link CryptoSigner} instance for the given Firebase app. Follows the protocol
+   * documented at go/firebase-admin-sign.
+   */
   static CryptoSigner getCryptoSigner(FirebaseApp firebaseApp) throws IOException {
     GoogleCredentials credentials = ImplFirebaseTrampolines.getCredentials(firebaseApp);
 
