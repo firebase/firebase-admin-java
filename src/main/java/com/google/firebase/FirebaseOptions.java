@@ -137,6 +137,11 @@ public final class FirebaseOptions {
     return projectId;
   }
 
+  /**
+   * Returns the service account email.
+   *
+   * @return The service account email set via {@link Builder#setServiceAccount(String)}
+   */
   public String getServiceAccount() {
     return serviceAccount;
   }
@@ -323,7 +328,19 @@ public final class FirebaseOptions {
       return this;
     }
 
-    public Builder setServiceAccount(String serviceAccount) {
+    /**
+     * Sets the service account email that should be associated with an app.
+     *
+     * <p>This is used to <a href="https://firebase.google.com/docs/auth/admin/create-custom-tokens">
+     * create custom auth tokens</a>, when service account credentials are not available. Service
+     * account email can be found in the {@code client_email} field of a service account JSON.
+     *
+     * @param serviceAccount A service account email address string.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setServiceAccount(@NonNull String serviceAccount) {
+      checkArgument(!Strings.isNullOrEmpty(serviceAccount),
+          "Service account must not be null or empty");
       this.serviceAccount = serviceAccount;
       return this;
     }

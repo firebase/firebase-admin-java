@@ -285,8 +285,24 @@ public class FirebaseAuth {
    * <a href="/docs/auth/admin/create-custom-tokens#sign_in_using_custom_tokens_on_clients">signInWithCustomToken</a>
    * authentication API.
    *
-   * <p>{@link FirebaseApp} must have been initialized with service account credentials to use
-   * call this method.
+   * <p>This method follows the protocol outlined below to sign the generated custom tokens:
+   * <ol>
+   *   <li>If the {@link FirebaseApp} was initialized with service account credentials, uses the
+   *   private key present in the credentials to sign tokens locally.
+   *   <li>If a service account email was specified
+   *   ({@link com.google.firebase.FirebaseOptions.Builder#setServiceAccount(String)}) during
+   *   initialization, calls the <a href="https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob">IAM service</a>
+   *   with that email to sign tokens remotely.
+   *   <li>If the code is deployed in the Google App Engine standard environment, uses the
+   *   <a href="https://cloud.google.com/appengine/docs/standard/java/appidentity/">App Identity
+   *   service</a> to sign tokens.
+   *   <li>If the code is deployed in a different GCP-managed environment, (e.g. Google Compute
+   *   Engine), uses the <a href="https://cloud.google.com/compute/docs/storing-retrieving-metadata">
+   *   local Metadata server</a> to auto discover a service account email. This is used in
+   *   conjunction with the IAM service to sign tokens remotely.
+   * </ol>
+   *
+   * This method throws an exception when all the above fails.
    *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
    *     (Realtime Database, Firebase Auth, etc.). Should be less than 128 characters.
@@ -294,8 +310,9 @@ public class FirebaseAuth {
    *     security rules in Database, Storage, etc.). These must be able to be serialized to JSON
    *     (e.g. contain only Maps, Arrays, Strings, Booleans, Numbers, etc.)
    * @return A Firebase custom token string.
-   * @throws IllegalArgumentException If the specified uid is null or empty, or if the app has not
-   *     been initialized with service account credentials.
+   * @throws IllegalArgumentException If the specified uid is null or empty.
+   * @throws IllegalStateException If the SDK fails to discover a viable approach for signing
+   *     tokens.
    * @throws FirebaseAuthException If an error occurs while generating the custom token.
    */
   public String createCustomToken(@NonNull String uid,
