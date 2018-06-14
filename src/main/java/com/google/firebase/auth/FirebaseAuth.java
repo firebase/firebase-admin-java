@@ -285,21 +285,18 @@ public class FirebaseAuth {
    * <a href="/docs/auth/admin/create-custom-tokens#sign_in_using_custom_tokens_on_clients">signInWithCustomToken</a>
    * authentication API.
    *
-   * <p>This method follows the protocol outlined below to sign the generated custom tokens:
+   * <p>This method attempts to generate a token using:
    * <ol>
-   *   <li>If the {@link FirebaseApp} was initialized with service account credentials, uses the
-   *   private key present in the credentials to sign tokens locally.
-   *   <li>If a service account email was specified
-   *   ({@link com.google.firebase.FirebaseOptions.Builder#setServiceAccount(String)}) during
-   *   initialization, calls the <a href="https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob">IAM service</a>
-   *   with that email to sign tokens remotely.
-   *   <li>If the code is deployed in the Google App Engine standard environment, uses the
-   *   <a href="https://cloud.google.com/appengine/docs/standard/java/appidentity/">App Identity
-   *   service</a> to sign tokens.
-   *   <li>If the code is deployed in a different GCP-managed environment, (e.g. Google Compute
-   *   Engine), uses the <a href="https://cloud.google.com/compute/docs/storing-retrieving-metadata">
-   *   local Metadata server</a> to auto discover a service account email. This is used in
-   *   conjunction with the IAM service to sign tokens remotely.
+   *   <li>the private key of {@link FirebaseApp}'s service account credentials, if provided at
+   *   initialization.
+   *   <li>the <a href="https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob">IAM service</a>
+   *   if a service account email was specified via
+   *   {@link com.google.firebase.FirebaseOptions.Builder#setServiceAccount(String)}.
+   *   <li>the <a href="https://cloud.google.com/appengine/docs/standard/java/appidentity/">App Identity
+   *   service</a> if the code is deployed in the Google App Engine standard environment.
+   *   <li>the <a href="https://cloud.google.com/compute/docs/storing-retrieving-metadata">
+   *   local Metadata server</a> if the code is deployed in a different GCP-managed environment
+   *   like Google Compute Engine.
    * </ol>
    *
    * <p>This method throws an exception when all the above fails.
@@ -383,7 +380,7 @@ public class FirebaseAuth {
           } catch (IOException e) {
             throw new IllegalStateException(
                 "Failed to initialize FirebaseTokenFactory. Make sure to initialize the SDK "
-                    + "with a service account credential. Alternatively specify a service account "
+                    + "with a service account credential or specify a service account "
                     + "email with iam.serviceAccounts.signBlob permission. Please refer to "
                     + "https://firebase.google.com/docs/auth/admin/create-custom-tokens for more "
                     + "details on creating custom tokens.", e);

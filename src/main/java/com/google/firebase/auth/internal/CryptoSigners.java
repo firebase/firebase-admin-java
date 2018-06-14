@@ -159,8 +159,12 @@ class CryptoSigners {
     HttpRequest request = requestFactory.buildGetRequest(new GenericUrl(METADATA_SERVICE_URL));
     request.getHeaders().set("Metadata-Flavor", "Google");
     HttpResponse response = request.execute();
-    byte[] output = ByteStreams.toByteArray(response.getContent());
-    serviceAccount = StringUtils.newStringUtf8(output).trim();
-    return new IAMCryptoSigner(requestFactory, jsonFactory, serviceAccount);
+    try {
+      byte[] output = ByteStreams.toByteArray(response.getContent());
+      serviceAccount = StringUtils.newStringUtf8(output).trim();
+      return new IAMCryptoSigner(requestFactory, jsonFactory, serviceAccount);
+    } finally {
+      response.disconnect();
+    }
   }
 }

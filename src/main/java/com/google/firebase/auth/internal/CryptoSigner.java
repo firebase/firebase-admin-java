@@ -38,9 +38,9 @@ interface CryptoSigner {
   byte[] sign(@NonNull byte[] payload) throws IOException;
 
   /**
-   * Returns the name of the service account used to sign payloads.
+   * Returns the client email of the service account used to sign payloads.
    *
-   * @return A service account name
+   * @return A service account client email
    */
   @NonNull
   String getAccount();

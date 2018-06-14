@@ -171,20 +171,19 @@ public class CryptoSignersTest {
     final String url = "https://iam.googleapis.com/v1/projects/-/serviceAccounts/"
         + "explicit-service-account@iam.gserviceaccount.com:signBlob";
     assertEquals(url, interceptor.getResponse().getRequest().getUrl().toString());
+  }
 
+  @Test
+  public void testCredentialsWithSigner() throws IOException {
     // Should fall back to signing-enabled credential
-    transport = new MultiRequestMockHttpTransport(
-        ImmutableList.of(
-            new MockLowLevelHttpResponse().setContent(response)));
-    options = new FirebaseOptions.Builder()
+    FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentialsWithSigner("test-token"))
-        .setHttpTransport(transport)
         .build();
-    app = FirebaseApp.initializeApp(options, "customApp");
-    signer = CryptoSigners.getCryptoSigner(app);
+    FirebaseApp app = FirebaseApp.initializeApp(options, "customApp");
+    CryptoSigner signer = CryptoSigners.getCryptoSigner(app);
     assertTrue(signer instanceof CryptoSigners.ServiceAccountCryptoSigner);
     assertEquals("credential-signer@iam.gserviceaccount.com", signer.getAccount());
-    data = signer.sign("foo".getBytes());
+    byte[] data = signer.sign("foo".getBytes());
     assertArrayEquals("local-signed-bytes".getBytes(), data);
   }
 
