@@ -143,9 +143,9 @@ class CryptoSigners {
 
     // If the SDK was initialized with a service account email, use it with the IAM service
     // to sign bytes.
-    String serviceAccount = options.getServiceAccount();
-    if (!Strings.isNullOrEmpty(serviceAccount)) {
-      return new IAMCryptoSigner(requestFactory, jsonFactory, serviceAccount);
+    String serviceAccountId = options.getServiceAccountId();
+    if (!Strings.isNullOrEmpty(serviceAccountId)) {
+      return new IAMCryptoSigner(requestFactory, jsonFactory, serviceAccountId);
     }
 
     // If the SDK was initialized with some other credential type that supports signing
@@ -161,8 +161,8 @@ class CryptoSigners {
     HttpResponse response = request.execute();
     try {
       byte[] output = ByteStreams.toByteArray(response.getContent());
-      serviceAccount = StringUtils.newStringUtf8(output).trim();
-      return new IAMCryptoSigner(requestFactory, jsonFactory, serviceAccount);
+      serviceAccountId = StringUtils.newStringUtf8(output).trim();
+      return new IAMCryptoSigner(requestFactory, jsonFactory, serviceAccountId);
     } finally {
       response.disconnect();
     }

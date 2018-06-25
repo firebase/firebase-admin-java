@@ -379,7 +379,7 @@ public class FirebaseAuthIT {
     }
     FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(GoogleCredentials.of(token))
-        .setServiceAccount(((ServiceAccountSigner) credentials).getAccount())
+        .setServiceAccountId(((ServiceAccountSigner) credentials).getAccount())
         .setProjectId(IntegrationTestUtils.getProjectId())
         .build();
     FirebaseApp customApp = FirebaseApp.initializeApp(options, "tempApp");

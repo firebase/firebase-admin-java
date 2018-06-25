@@ -291,7 +291,7 @@ public class FirebaseAuth {
    *   initialization.
    *   <li>the <a href="https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob">IAM service</a>
    *   if a service account email was specified via
-   *   {@link com.google.firebase.FirebaseOptions.Builder#setServiceAccount(String)}.
+   *   {@link com.google.firebase.FirebaseOptions.Builder#setServiceAccountId(String)}.
    *   <li>the <a href="https://cloud.google.com/appengine/docs/standard/java/appidentity/">App Identity
    *   service</a> if the code is deployed in the Google App Engine standard environment.
    *   <li>the <a href="https://cloud.google.com/compute/docs/storing-retrieving-metadata">

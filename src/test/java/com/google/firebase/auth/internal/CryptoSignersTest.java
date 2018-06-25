@@ -156,7 +156,7 @@ public class CryptoSignersTest {
         ImmutableList.of(
             new MockLowLevelHttpResponse().setContent(response)));
     FirebaseOptions options = new FirebaseOptions.Builder()
-        .setServiceAccount("explicit-service-account@iam.gserviceaccount.com")
+        .setServiceAccountId("explicit-service-account@iam.gserviceaccount.com")
         .setCredentials(new MockGoogleCredentialsWithSigner("test-token"))
         .setHttpTransport(transport)
         .build();
