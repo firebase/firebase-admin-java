@@ -140,7 +140,8 @@ public final class FirebaseOptions {
   /**
    * Returns the client email address of the service account.
    *
-   * @return The client email of the service account set via {@link Builder#setServiceAccountId(String)}
+   * @return The client email of the service account set via
+   *     {@link Builder#setServiceAccountId(String)}
    */
   public String getServiceAccountId() {
     return serviceAccountId;
