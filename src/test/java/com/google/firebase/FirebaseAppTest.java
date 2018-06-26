@@ -51,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -131,6 +132,28 @@ public class FirebaseAppTest {
         TestUtils.setEnvironmentVariables(ImmutableMap.of(
             variable, Strings.nullToEmpty(gcloudProject)));
       }
+    }
+  }
+
+  @Test
+  public void testProjectIdEnvironmentVariablePrecedence() {
+    Map<String, String> currentValues = new HashMap<>();
+    currentValues.put("GCLOUD_PROJECT", Strings.nullToEmpty(
+        System.getenv("GCLOUD_PROJECT")));
+    currentValues.put("GOOGLE_CLOUD_PROJECT", Strings.nullToEmpty(
+        System.getenv("GOOGLE_CLOUD_PROJECT")));
+
+    TestUtils.setEnvironmentVariables(ImmutableMap.of(
+        "GCLOUD_PROJECT", "project-id-1", "GOOGLE_CLOUD_PROJECT", "project-id-2"));
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials())
+        .build();
+    try {
+      FirebaseApp app = FirebaseApp.initializeApp(options,"myApp");
+      String projectId = ImplFirebaseTrampolines.getProjectId(app);
+      assertEquals("project-id-2", projectId);
+    } finally {
+      TestUtils.setEnvironmentVariables(currentValues);
     }
   }
 
