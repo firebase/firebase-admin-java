@@ -19,9 +19,9 @@ import com.google.firebase.internal.NonNull;
  * <p>A Google Cloud project ID is required to access Firestore. FirestoreClient determines the
  * project ID from the {@link com.google.firebase.FirebaseOptions} used to initialize the underlying
  * {@link FirebaseApp}. If that is not available, it examines the credentials used to initialize
- * the app. Finally it attempts to get the project ID by looking up the GCLOUD_PROJECT environment
- * variable. If a project ID cannot be determined by any of these methods, this API will throw
- * a runtime exception.
+ * the app. Finally it attempts to get the project ID by looking up the GOOGLE_CLOUD_PROJECT and
+ * GCLOUD_PROJECT environment variables. If a project ID cannot be determined by any of these
+ * methods, this API will throw a runtime exception.
  */
 public class FirestoreClient {
 
@@ -33,7 +33,7 @@ public class FirestoreClient {
     checkArgument(!Strings.isNullOrEmpty(projectId),
         "Project ID is required for accessing Firestore. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
-            + "set the project ID via the GCLOUD_PROJECT environment variable.");
+            + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
     this.firestore = FirestoreOptions.newBuilder()
         .setCredentials(ImplFirebaseTrampolines.getCredentials(app))
         .setProjectId(projectId)
