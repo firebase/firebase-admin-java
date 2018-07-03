@@ -380,8 +380,8 @@ public class FirebaseAuth {
           } catch (IOException e) {
             throw new IllegalStateException(
                 "Failed to initialize FirebaseTokenFactory. Make sure to initialize the SDK "
-                    + "with a service account credential or specify a service account "
-                    + "email with iam.serviceAccounts.signBlob permission. Please refer to "
+                    + "with service account credentials or specify a service account "
+                    + "ID with iam.serviceAccounts.signBlob permission. Please refer to "
                     + "https://firebase.google.com/docs/auth/admin/create-custom-tokens for more "
                     + "details on creating custom tokens.", e);
           }
