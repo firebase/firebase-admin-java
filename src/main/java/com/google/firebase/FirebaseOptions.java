@@ -334,7 +334,7 @@ public final class FirebaseOptions {
      *
      * <p>This is used to <a href="https://firebase.google.com/docs/auth/admin/create-custom-tokens">
      * create custom auth tokens</a> when service account credentials are not available. The client
-     * email address of a service account can be found in the {@code client_email} field of a
+     * email address of a service account can be found in the {@code client_email} field of the
      * service account JSON.
      *
      * @param serviceAccountId A service account email address string.

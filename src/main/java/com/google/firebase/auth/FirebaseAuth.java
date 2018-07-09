@@ -299,7 +299,7 @@ public class FirebaseAuth {
    *   like Google Compute Engine.
    * </ol>
    *
-   * <p>This method throws an exception when all the above fails.
+   * <p>This method throws an exception when all the above fail.
    *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
    *     (Realtime Database, Firebase Auth, etc.). Should be less than 128 characters.
