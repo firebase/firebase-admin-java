@@ -145,7 +145,7 @@ public class FirebaseDatabaseSnippets {
 
     // [START adding_completion_callback]
     DatabaseReference dataRef = ref.child("data");
-    dataRef.setValueAsync("I'm writing data", new DatabaseReference.CompletionListener() {
+    dataRef.setValue("I'm writing data", new DatabaseReference.CompletionListener() {
       @Override
       public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
         if (databaseError != null) {
