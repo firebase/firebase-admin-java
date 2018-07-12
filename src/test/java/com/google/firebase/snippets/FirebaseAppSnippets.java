@@ -120,4 +120,13 @@ public class FirebaseAppSnippets {
     FirebaseDatabase otherDatabase = FirebaseDatabase.getInstance(otherApp);
     // [END access_services_nondefault]
   }
+
+  public void initializeWithServiceAccountId() {
+    // [START initialize_sdk_with_service_account_id]
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setServiceAccountId("my-client-id@my-project-id.iam.gserviceaccount.com")
+        .build();
+    FirebaseApp.initializeApp(options);
+    // [END initialize_sdk_with_service_account_id]
+  }
 }

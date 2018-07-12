@@ -301,10 +301,13 @@ public class FirebaseAuthTest {
     try {
       FirebaseAuth.getInstance(app).createCustomTokenAsync("foo").get();
       fail("Expected exception.");
-    } catch (IllegalArgumentException expected) {
+    } catch (IllegalStateException expected) {
       Assert.assertEquals(
-          "Must initialize FirebaseApp with a service account credential to call "
-              + "createCustomToken()",
+          "Failed to initialize FirebaseTokenFactory. Make sure to initialize the SDK with "
+              + "service account credentials or specify a service account ID with "
+              + "iam.serviceAccounts.signBlob permission. Please refer to "
+              + "https://firebase.google.com/docs/auth/admin/create-custom-tokens for more details "
+              + "on creating custom tokens.",
           expected.getMessage());
     }
   }

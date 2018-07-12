@@ -60,6 +60,7 @@ public final class FirebaseOptions {
   private final GoogleCredentials credentials;
   private final Map<String, Object> databaseAuthVariableOverride;
   private final String projectId;
+  private final String serviceAccountId;
   private final HttpTransport httpTransport;
   private final int connectTimeout;
   private final int readTimeout;
@@ -76,6 +77,11 @@ public final class FirebaseOptions {
     if (!Strings.isNullOrEmpty(builder.storageBucket)) {
       checkArgument(!builder.storageBucket.startsWith("gs://"),
           "StorageBucket must not include 'gs://' prefix.");
+    }
+    if (!Strings.isNullOrEmpty(builder.serviceAccountId)) {
+      this.serviceAccountId = builder.serviceAccountId;
+    } else {
+      this.serviceAccountId = null;
     }
     this.storageBucket = builder.storageBucket;
     this.httpTransport = checkNotNull(builder.httpTransport,
@@ -129,6 +135,16 @@ public final class FirebaseOptions {
    */
   public String getProjectId() {
     return projectId;
+  }
+
+  /**
+   * Returns the client email address of the service account.
+   *
+   * @return The client email of the service account set via
+   *     {@link Builder#setServiceAccountId(String)}
+   */
+  public String getServiceAccountId() {
+    return serviceAccountId;
   }
 
   /**
@@ -192,6 +208,9 @@ public final class FirebaseOptions {
     
     @Key("storageBucket")
     private String storageBucket;
+
+    @Key("serviceAccountId")
+    private String serviceAccountId;
     
     private GoogleCredentials credentials;
     private HttpTransport httpTransport = Utils.getDefaultTransport();
@@ -307,6 +326,24 @@ public final class FirebaseOptions {
     public Builder setProjectId(@NonNull String projectId) {
       checkArgument(!Strings.isNullOrEmpty(projectId), "Project ID must not be null or empty");
       this.projectId = projectId;
+      return this;
+    }
+
+    /**
+     * Sets the client email address of the service account that should be associated with an app.
+     *
+     * <p>This is used to <a href="https://firebase.google.com/docs/auth/admin/create-custom-tokens">
+     * create custom auth tokens</a> when service account credentials are not available. The client
+     * email address of a service account can be found in the {@code client_email} field of the
+     * service account JSON.
+     *
+     * @param serviceAccountId A service account email address string.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setServiceAccountId(@NonNull String serviceAccountId) {
+      checkArgument(!Strings.isNullOrEmpty(serviceAccountId),
+          "Service account ID must not be null or empty");
+      this.serviceAccountId = serviceAccountId;
       return this;
     }
 

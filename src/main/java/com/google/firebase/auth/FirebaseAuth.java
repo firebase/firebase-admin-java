@@ -23,8 +23,6 @@ import static com.google.common.base.Preconditions.checkState;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Clock;
 import com.google.api.core.ApiFuture;
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
@@ -42,10 +40,10 @@ import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This class is the entry point for all server-side Firebase Authentication actions.
@@ -65,10 +63,10 @@ public class FirebaseAuth {
 
   private final FirebaseApp firebaseApp;
   private final KeyManagers keyManagers;
-  private final GoogleCredentials credentials;
   private final String projectId;
   private final JsonFactory jsonFactory;
   private final FirebaseUserManager userManager;
+  private final AtomicReference<FirebaseTokenFactory> tokenFactory;
   private final AtomicBoolean destroyed;
   private final Object lock;
 
@@ -85,10 +83,10 @@ public class FirebaseAuth {
     this.firebaseApp = checkNotNull(firebaseApp);
     this.keyManagers = checkNotNull(keyManagers);
     this.clock = checkNotNull(clock);
-    this.credentials = ImplFirebaseTrampolines.getCredentials(firebaseApp);
     this.projectId = ImplFirebaseTrampolines.getProjectId(firebaseApp);
     this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
     this.userManager = new FirebaseUserManager(firebaseApp);
+    this.tokenFactory = new AtomicReference<>(null);
     this.destroyed = new AtomicBoolean(false);
     this.lock = new Object();
   }
@@ -287,8 +285,21 @@ public class FirebaseAuth {
    * <a href="/docs/auth/admin/create-custom-tokens#sign_in_using_custom_tokens_on_clients">signInWithCustomToken</a>
    * authentication API.
    *
-   * <p>{@link FirebaseApp} must have been initialized with service account credentials to use
-   * call this method.
+   * <p>This method attempts to generate a token using:
+   * <ol>
+   *   <li>the private key of {@link FirebaseApp}'s service account credentials, if provided at
+   *   initialization.
+   *   <li>the <a href="https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob">IAM service</a>
+   *   if a service account email was specified via
+   *   {@link com.google.firebase.FirebaseOptions.Builder#setServiceAccountId(String)}.
+   *   <li>the <a href="https://cloud.google.com/appengine/docs/standard/java/appidentity/">App Identity
+   *   service</a> if the code is deployed in the Google App Engine standard environment.
+   *   <li>the <a href="https://cloud.google.com/compute/docs/storing-retrieving-metadata">
+   *   local Metadata server</a> if the code is deployed in a different GCP-managed environment
+   *   like Google Compute Engine.
+   * </ol>
+   *
+   * <p>This method throws an exception when all the above fail.
    *
    * @param uid The UID to store in the token. This identifies the user to other Firebase services
    *     (Realtime Database, Firebase Auth, etc.). Should be less than 128 characters.
@@ -296,8 +307,9 @@ public class FirebaseAuth {
    *     security rules in Database, Storage, etc.). These must be able to be serialized to JSON
    *     (e.g. contain only Maps, Arrays, Strings, Booleans, Numbers, etc.)
    * @return A Firebase custom token string.
-   * @throws IllegalArgumentException If the specified uid is null or empty, or if the app has not
-   *     been initialized with service account credentials.
+   * @throws IllegalArgumentException If the specified uid is null or empty.
+   * @throws IllegalStateException If the SDK fails to discover a viable approach for signing
+   *     tokens.
    * @throws FirebaseAuthException If an error occurs while generating the custom token.
    */
   public String createCustomToken(@NonNull String uid,
@@ -342,26 +354,41 @@ public class FirebaseAuth {
       final String uid, final Map<String, Object> developerClaims) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
-    checkArgument(credentials instanceof ServiceAccountCredentials,
-        "Must initialize FirebaseApp with a service account credential to call "
-            + "createCustomToken()");
+    final FirebaseTokenFactory tokenFactory = ensureTokenFactory();
     return new CallableOperation<String, FirebaseAuthException>() {
       @Override
       public String execute() throws FirebaseAuthException {
-        final ServiceAccountCredentials serviceAccount = (ServiceAccountCredentials) credentials;
-        FirebaseTokenFactory tokenFactory = FirebaseTokenFactory.getInstance();
         try {
-          return tokenFactory.createSignedCustomAuthTokenForUser(
-              uid,
-              developerClaims,
-              serviceAccount.getClientEmail(),
-              serviceAccount.getPrivateKey());
-        } catch (GeneralSecurityException | IOException e) {
+          return tokenFactory.createSignedCustomAuthTokenForUser(uid, developerClaims);
+        } catch (IOException e) {
           throw new FirebaseAuthException(ERROR_CUSTOM_TOKEN,
               "Failed to generate a custom token", e);
         }
       }
     };
+  }
+
+  private FirebaseTokenFactory ensureTokenFactory() {
+    FirebaseTokenFactory result = this.tokenFactory.get();
+    if (result == null) {
+      synchronized (lock) {
+        result = this.tokenFactory.get();
+        if (result == null) {
+          try {
+            result = FirebaseTokenFactory.fromApp(firebaseApp, clock);
+            this.tokenFactory.set(result);
+          } catch (IOException e) {
+            throw new IllegalStateException(
+                "Failed to initialize FirebaseTokenFactory. Make sure to initialize the SDK "
+                    + "with service account credentials or specify a service account "
+                    + "ID with iam.serviceAccounts.signBlob permission. Please refer to "
+                    + "https://firebase.google.com/docs/auth/admin/create-custom-tokens for more "
+                    + "details on creating custom tokens.", e);
+          }
+        }
+      }
+    }
+    return result;
   }
 
   /**

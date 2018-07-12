@@ -16,6 +16,7 @@
 
 package com.google.firebase.auth.internal;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -23,12 +24,16 @@ import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.testing.http.FixedClock;
+import com.google.api.client.util.SecurityUtils;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.testing.TestUtils;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.PrivateKey;
 import java.util.Map;
 import org.junit.Rule;
 import org.junit.Test;
@@ -55,19 +60,25 @@ public class FirebaseTokenFactoryTest {
 
     FixedClock clock = new FixedClock(2002L);
 
-    FirebaseTokenFactory tokenFactory = new FirebaseTokenFactory(FACTORY, clock);
+    FirebaseTokenFactory tokenFactory = new FirebaseTokenFactory(FACTORY, clock,
+        new TestCryptoSigner(keys.getPrivate()));
 
-    String jwt =
-        tokenFactory.createSignedCustomAuthTokenForUser(
-            USER_ID, EXTRA_CLAIMS, ISSUER, keys.getPrivate());
-
+    String jwt = tokenFactory.createSignedCustomAuthTokenForUser(USER_ID, EXTRA_CLAIMS);
     FirebaseCustomAuthToken signedJwt = FirebaseCustomAuthToken.parse(FACTORY, jwt);
     assertEquals("RS256", signedJwt.getHeader().getAlgorithm());
     assertEquals(ISSUER, signedJwt.getPayload().getIssuer());
     assertEquals(ISSUER, signedJwt.getPayload().getSubject());
     assertEquals(USER_ID, signedJwt.getPayload().getUid());
     assertEquals(2L, signedJwt.getPayload().getIssuedAtTimeSeconds().longValue());
+    assertTrue(TestUtils.verifySignature(signedJwt, ImmutableList.of(keys.getPublic())));
 
+    jwt = tokenFactory.createSignedCustomAuthTokenForUser(USER_ID);
+    signedJwt = FirebaseCustomAuthToken.parse(FACTORY, jwt);
+    assertEquals("RS256", signedJwt.getHeader().getAlgorithm());
+    assertEquals(ISSUER, signedJwt.getPayload().getIssuer());
+    assertEquals(ISSUER, signedJwt.getPayload().getSubject());
+    assertEquals(USER_ID, signedJwt.getPayload().getUid());
+    assertEquals(2L, signedJwt.getPayload().getIssuedAtTimeSeconds().longValue());
     assertTrue(TestUtils.verifySignature(signedJwt, ImmutableList.of(keys.getPublic())));
   }
 
@@ -79,10 +90,11 @@ public class FirebaseTokenFactoryTest {
 
     FixedClock clock = new FixedClock(2002L);
 
-    FirebaseTokenFactory tokenFactory = new FirebaseTokenFactory(FACTORY, clock);
+    FirebaseTokenFactory tokenFactory = new FirebaseTokenFactory(FACTORY, clock,
+        new TestCryptoSigner(keys.getPrivate()));
 
-    thrown.expect(IllegalStateException.class);
-    tokenFactory.createSignedCustomAuthTokenForUser(null, ISSUER, keys.getPrivate());
+    thrown.expect(IllegalArgumentException.class);
+    tokenFactory.createSignedCustomAuthTokenForUser(null);
   }
 
   @Test
@@ -93,25 +105,12 @@ public class FirebaseTokenFactoryTest {
 
     FixedClock clock = new FixedClock(2002L);
 
-    FirebaseTokenFactory tokenFactory = new FirebaseTokenFactory(FACTORY, clock);
+    FirebaseTokenFactory tokenFactory = new FirebaseTokenFactory(FACTORY, clock,
+        new TestCryptoSigner(keys.getPrivate()));
 
-    thrown.expect(IllegalStateException.class);
+    thrown.expect(IllegalArgumentException.class);
     tokenFactory.createSignedCustomAuthTokenForUser(
-        Strings.repeat("a", 129), ISSUER, keys.getPrivate());
-  }
-
-  @Test
-  public void failsWhenIssuerIsNull() throws Exception {
-    KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-    keyGen.initialize(512);
-    KeyPair keys = keyGen.genKeyPair();
-
-    FixedClock clock = new FixedClock(2002L);
-
-    FirebaseTokenFactory tokenFactory = new FirebaseTokenFactory(FACTORY, clock);
-
-    thrown.expect(IllegalStateException.class);
-    tokenFactory.createSignedCustomAuthTokenForUser(USER_ID, null, keys.getPrivate());
+        Strings.repeat("a", 129));
   }
 
   @Test
@@ -122,11 +121,35 @@ public class FirebaseTokenFactoryTest {
 
     FixedClock clock = new FixedClock(2002L);
 
-    FirebaseTokenFactory tokenFactory = new FirebaseTokenFactory(FACTORY, clock);
+    FirebaseTokenFactory tokenFactory = new FirebaseTokenFactory(FACTORY, clock,
+        new TestCryptoSigner(keys.getPrivate()));
 
     Map<String, Object> extraClaims = ImmutableMap.<String, Object>of("iss", "repeat issuer");
     thrown.expect(IllegalArgumentException.class);
-    tokenFactory.createSignedCustomAuthTokenForUser(
-        USER_ID, extraClaims, ISSUER, keys.getPrivate());
+    tokenFactory.createSignedCustomAuthTokenForUser(USER_ID, extraClaims);
+  }
+
+  private static class TestCryptoSigner implements CryptoSigner {
+
+    private final PrivateKey privateKey;
+
+    TestCryptoSigner(PrivateKey privateKey) {
+      this.privateKey = checkNotNull(privateKey);
+    }
+
+    @Override
+    public byte[] sign(byte[] payload) throws IOException {
+      try {
+        return SecurityUtils.sign(SecurityUtils.getSha256WithRsaSignatureAlgorithm(),
+            privateKey, payload);
+      } catch (GeneralSecurityException e) {
+        throw new IOException(e);
+      }
+    }
+
+    @Override
+    public String getAccount() {
+      return ISSUER;
+    }
   }
 }
