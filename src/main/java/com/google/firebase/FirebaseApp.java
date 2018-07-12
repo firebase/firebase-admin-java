@@ -305,6 +305,9 @@ public class FirebaseApp {
 
     // Try to get project ID from the environment.
     if (Strings.isNullOrEmpty(projectId)) {
+      projectId = System.getenv("GOOGLE_CLOUD_PROJECT");
+    }
+    if (Strings.isNullOrEmpty(projectId)) {
       projectId = System.getenv("GCLOUD_PROJECT");
     }
     return projectId;

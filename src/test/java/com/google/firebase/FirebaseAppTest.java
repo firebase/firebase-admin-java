@@ -33,6 +33,8 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.auth.oauth2.OAuth2Credentials.CredentialsChangedListener;
 import com.google.common.base.Defaults;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.FirebaseOptions.Builder;
@@ -49,11 +51,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -97,7 +99,7 @@ public class FirebaseAppTest {
   }
 
   @Test
-  public void testGetProjectIdFromOptions() throws Exception {
+  public void testGetProjectIdFromOptions() {
     FirebaseOptions options = new FirebaseOptions.Builder(OPTIONS)
         .setProjectId("explicit-project-id")
         .build();
@@ -107,10 +109,52 @@ public class FirebaseAppTest {
   }
 
   @Test
-  public void testGetProjectIdFromCredential() throws Exception {
+  public void testGetProjectIdFromCredential() {
     FirebaseApp app = FirebaseApp.initializeApp(OPTIONS, "myApp");
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     assertEquals("mock-project-id", projectId);
+  }
+
+  @Test
+  public void testGetProjectIdFromEnvironment() {
+    List<String> variables = ImmutableList.of("GCLOUD_PROJECT", "GOOGLE_CLOUD_PROJECT");
+    for (String variable : variables) {
+      String gcloudProject = System.getenv(variable);
+      TestUtils.setEnvironmentVariables(ImmutableMap.of(variable, "project-id-1"));
+      FirebaseOptions options = new FirebaseOptions.Builder()
+          .setCredentials(new MockGoogleCredentials())
+          .build();
+      try {
+        FirebaseApp app = FirebaseApp.initializeApp(options,"myApp_" + variable);
+        String projectId = ImplFirebaseTrampolines.getProjectId(app);
+        assertEquals("project-id-1", projectId);
+      } finally {
+        TestUtils.setEnvironmentVariables(ImmutableMap.of(
+            variable, Strings.nullToEmpty(gcloudProject)));
+      }
+    }
+  }
+
+  @Test
+  public void testProjectIdEnvironmentVariablePrecedence() {
+    Map<String, String> currentValues = new HashMap<>();
+    currentValues.put("GCLOUD_PROJECT", Strings.nullToEmpty(
+        System.getenv("GCLOUD_PROJECT")));
+    currentValues.put("GOOGLE_CLOUD_PROJECT", Strings.nullToEmpty(
+        System.getenv("GOOGLE_CLOUD_PROJECT")));
+
+    TestUtils.setEnvironmentVariables(ImmutableMap.of(
+        "GCLOUD_PROJECT", "project-id-1", "GOOGLE_CLOUD_PROJECT", "project-id-2"));
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials())
+        .build();
+    try {
+      FirebaseApp app = FirebaseApp.initializeApp(options,"myApp");
+      String projectId = ImplFirebaseTrampolines.getProjectId(app);
+      assertEquals("project-id-2", projectId);
+    } finally {
+      TestUtils.setEnvironmentVariables(currentValues);
+    }
   }
 
   @Test(expected = IllegalStateException.class)
@@ -251,7 +295,7 @@ public class FirebaseAppTest {
   }
 
   @Test
-  public void testTokenCaching() throws ExecutionException, InterruptedException, IOException {
+  public void testTokenCaching() {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
     String token1 = TestOnlyImplFirebaseTrampolines.getToken(
         firebaseApp, false);
@@ -263,7 +307,7 @@ public class FirebaseAppTest {
   }
 
   @Test
-  public void testTokenForceRefresh() throws ExecutionException, InterruptedException, IOException {
+  public void testTokenForceRefresh() {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(getMockCredentialOptions(), "myApp");
     String token1 = TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, false);
     String token2 = TestOnlyImplFirebaseTrampolines.getToken(firebaseApp, true);
@@ -618,7 +662,7 @@ public class FirebaseAppTest {
   private static class MockGoogleCredentials extends GoogleCredentials {
 
     @Override
-    public AccessToken refreshAccessToken() throws IOException {
+    public AccessToken refreshAccessToken() {
       Date expiry = new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1));
       return new AccessToken(UUID.randomUUID().toString(), expiry);
     }

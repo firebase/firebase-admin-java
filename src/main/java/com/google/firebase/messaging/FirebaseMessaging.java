@@ -106,7 +106,7 @@ public class FirebaseMessaging {
     checkArgument(!Strings.isNullOrEmpty(projectId),
         "Project ID is required to access messaging service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
-            + "set the project ID via the GCLOUD_PROJECT environment variable.");
+            + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
     this.url = String.format(FCM_URL, projectId);
   }
 

@@ -4,6 +4,8 @@
   service account credentials.
 - [added] Added the `setServiceAccount()` method to the
   `FirebaseOptions.Builder` API.
+- [added] The SDK can now read the Firebase/GCP project ID from both
+  `GCLOUD_PROJECT` and `GOOGLE_CLOUD_PROJECT` environment variables.
 
 # v6.2.0
 
