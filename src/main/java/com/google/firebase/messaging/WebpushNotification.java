@@ -43,6 +43,9 @@ public class WebpushNotification {
   @Key("body")
   private final String body;
 
+  @Key("data")
+  private final Object data;
+
   @Key("dir")
   private final String direction;
 
@@ -103,6 +106,7 @@ public class WebpushNotification {
     this.actions = !builder.actions.isEmpty() ? ImmutableList.copyOf(builder.actions) : null;
     this.badge = builder.badge;
     this.body = builder.body;
+    this.data = builder.data;
     this.direction = builder.direction != null ? builder.direction.value : null;
     this.icon = builder.icon;
     this.image = builder.image;
@@ -116,10 +120,18 @@ public class WebpushNotification {
     this.vibrate = builder.vibrate;
   }
 
+  /**
+   * Creates a new {@link WebpushNotification.Builder}.
+   *
+   * @return A {@link WebpushNotification.Builder} instance.
+   */
   public static Builder builder() {
     return new Builder();
   }
 
+  /**
+   * Different directions a notification can be displayed in.
+   */
   public enum Direction {
     AUTO("auto"),
     LEFT_TO_RIGHT("ltr"),
@@ -132,6 +144,9 @@ public class WebpushNotification {
     }
   }
 
+  /**
+   * Represents an action available to the users when the notification is presented.
+   */
   public static class Action {
     @Key("action")
     private final String action;
@@ -142,10 +157,23 @@ public class WebpushNotification {
     @Key("icon")
     private final String icon;
 
+    /**
+     * Creates a new Action with the given action string and title.
+     *
+     * @param action Action string.
+     * @param title Title text.
+     */
     public Action(String action, String title) {
       this(action, title, null);
     }
 
+    /**
+     * Creates a new Action with the given action string, title and icon URL.
+     *
+     * @param action Action string.
+     * @param title Title text.
+     * @param icon Icon URL or null.
+     */
     public Action(String action, String title, @Nullable String icon) {
       checkArgument(!Strings.isNullOrEmpty(action));
       checkArgument(!Strings.isNullOrEmpty(title));
@@ -160,6 +188,7 @@ public class WebpushNotification {
     private final List<Action> actions = new ArrayList<>();
     private String badge;
     private String body;
+    private Object data;
     private Direction direction;
     private String icon;
     private String image;
@@ -174,61 +203,180 @@ public class WebpushNotification {
 
     private Builder() {}
 
-    public Builder setTitle(String title) {
-      this.title = title;
+    /**
+     * Adds a notification action to the notification.
+     *
+     * @param action A non-null {@link Action}.
+     * @return This builder.
+     */
+    public Builder addAction(@NonNull Action action) {
+      this.actions.add(action);
       return this;
     }
 
-    public Builder setBody(String body) {
-      this.body = body;
+    /**
+     * Adds all the actions in the given list to the notification.
+     *
+     * @param actions A non-null list of actions.
+     * @return This builder.
+     */
+    public Builder addAllActions(@NonNull List<Action> actions) {
+      this.actions.addAll(actions);
       return this;
     }
 
-    public Builder setIcon(String icon) {
-      this.icon = icon;
-      return this;
-    }
-
+    /**
+     * Sets the URL of the image used to represent the notification when there is
+     * not enough space to display the notification itself.
+     *
+     * @param badge Badge URL.
+     * @return This builder.
+     */
     public Builder setBadge(String badge) {
       this.badge = badge;
       return this;
     }
 
+    /**
+     * Sets the body text of the notification.
+     *
+     * @param body Body text.
+     * @return This builder.
+     */
+    public Builder setBody(String body) {
+      this.body = body;
+      return this;
+    }
+
+    /**
+     * Sets any arbitrary data that should be associated with the notification.
+     *
+     * @param data A json-serializable object.
+     * @return This builder.
+     */
+    public Builder setData(Object data) {
+      this.data = data;
+      return this;
+    }
+
+    /**
+     * Sets the direction in which to display the notification.
+     *
+     * @param direction Direction enum value.
+     * @return This builder.
+     */
+    public Builder setDirection(Direction direction) {
+      this.direction = direction;
+      return this;
+    }
+
+    /**
+     * Sets the URL to the icon of the notification.
+     *
+     * @param icon Icon URL.
+     * @return This builder.
+     */
+    public Builder setIcon(String icon) {
+      this.icon = icon;
+      return this;
+    }
+
+    /**
+     * Sets the URL of an image to be displayed in the notification.
+     *
+     * @param image Image URL
+     * @return This builder.
+     */
     public Builder setImage(String image) {
       this.image = image;
       return this;
     }
 
+    /**
+     * Sets the language of the notification.
+     *
+     * @param language Notification language.
+     * @return This builder.
+     */
     public Builder setLanguage(String language) {
       this.language = language;
       return this;
     }
 
+    /**
+     * Sets whether the user should be notified after a new notification replaces an old one.
+     *
+     * @param renotify true to notify the user on replacement.
+     * @return This builder.
+     */
     public Builder setRenotify(boolean renotify) {
       this.renotify = renotify;
       return this;
     }
 
+    /**
+     * Sets whether a notification should remain active until the user clicks or dismisses it,
+     * rather than closing automatically.
+     *
+     * @param requireInteraction true to keep the notification active until user interaction.
+     * @return This builder.
+     */
     public Builder setRequireInteraction(boolean requireInteraction) {
       this.requireInteraction = requireInteraction;
       return this;
     }
 
+    /**
+     * Sets whether the notification should be silent.
+     *
+     * @param silent true to indicate that the notification should be silent.
+     * @return This builder.
+     */
     public Builder setSilent(boolean silent) {
       this.silent = silent;
       return this;
     }
 
+    /**
+     * Sets an identifying tag on the notification.
+     *
+     * @param tag A tag to be associated with the notification.
+     * @return This builder.
+     */
     public Builder setTag(String tag) {
       this.tag = tag;
       return this;
     }
 
+    /**
+     * Sets a timestamp value on the notification.
+     *
+     * @param timestamp A timestamp value as a number.
+     * @return This builder.
+     */
     public Builder setTimestamp(long timestamp) {
       this.timestamp = timestamp;
       return this;
     }
 
+    /**
+     * Sets the title text of the notification.
+     *
+     * @param title Title text.
+     * @return This builder.
+     */
+    public Builder setTitle(String title) {
+      this.title = title;
+      return this;
+    }
+
+    /**
+     * Sets a vibration pattern for the device's vibration hardware to emit
+     * when the notification fires.
+     *
+     * @param pattern An integer array representing a vibration pattern.
+     * @return This builder.
+     */
     public Builder setVibrate(int[] pattern) {
       List<Integer> list = new ArrayList<>();
       for (int value : pattern) {
@@ -238,21 +386,11 @@ public class WebpushNotification {
       return this;
     }
 
-    public Builder setDirection(Direction direction) {
-      this.direction = direction;
-      return this;
-    }
-
-    public Builder addAction(@NonNull Action action) {
-      this.actions.add(action);
-      return this;
-    }
-
-    public Builder addAllActions(@NonNull List<Action> actions) {
-      this.actions.addAll(actions);
-      return this;
-    }
-
+    /**
+     * Creates a new {@link WebpushNotification} from the parameters set on this builder.
+     *
+     * @return A new {@link WebpushNotification} instance.
+     */
     public WebpushNotification build() {
       return new WebpushNotification(this);
     }
