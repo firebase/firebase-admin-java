@@ -1,5 +1,7 @@
 # Unreleased
 
+- [added] WebpushNotification type now supports arbitrary key-value
+  pairs in its payload.
 - [added] Implemented the ability to create custom tokens without
   service account credentials.
 - [added] Added the `setServiceAccount()` method to the
