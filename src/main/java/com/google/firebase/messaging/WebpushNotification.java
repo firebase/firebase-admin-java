@@ -67,48 +67,20 @@ public class WebpushNotification {
     if (!builder.actions.isEmpty()) {
       fields.put("actions", ImmutableList.copyOf(builder.actions));
     }
-    if (!Strings.isNullOrEmpty(builder.badge)) {
-      fields.put("badge", builder.badge);
-    }
-    if (!Strings.isNullOrEmpty(builder.body)) {
-      fields.put("body", builder.body);
-    }
-    if (builder.data != null) {
-      fields.put("data", builder.data);
-    }
-    if (builder.direction != null) {
-      fields.put("dir", builder.direction.value);
-    }
-    if (!Strings.isNullOrEmpty(builder.icon)) {
-      fields.put("icon", builder.icon);
-    }
-    if (!Strings.isNullOrEmpty(builder.image)) {
-      fields.put("image", builder.image);
-    }
-    if (!Strings.isNullOrEmpty(builder.language)) {
-      fields.put("lang", builder.language);
-    }
-    if (builder.renotify != null) {
-      fields.put("renotify", builder.renotify);
-    }
-    if (builder.requireInteraction != null) {
-      fields.put("requireInteraction", builder.requireInteraction);
-    }
-    if (builder.silent != null) {
-      fields.put("silent", builder.silent);
-    }
-    if (!Strings.isNullOrEmpty(builder.tag)) {
-      fields.put("tag", builder.tag);
-    }
-    if (builder.timestamp != null) {
-      fields.put("timestamp", builder.timestamp);
-    }
-    if (!Strings.isNullOrEmpty(builder.title)) {
-      fields.put("title", builder.title);
-    }
-    if (builder.vibrate != null) {
-      fields.put("vibrate", builder.vibrate);
-    }
+    addNonNullNonEmpty(fields, "badge", builder.badge);
+    addNonNullNonEmpty(fields, "body", builder.body);
+    addNonNull(fields, "data", builder.data);
+    addNonNullNonEmpty(fields, "dir", builder.direction != null ? builder.direction.value : null);
+    addNonNullNonEmpty(fields, "icon", builder.icon);
+    addNonNullNonEmpty(fields, "image", builder.image);
+    addNonNullNonEmpty(fields, "lang", builder.language);
+    addNonNull(fields, "renotify", builder.renotify);
+    addNonNull(fields, "requireInteraction", builder.requireInteraction);
+    addNonNull(fields, "silent", builder.silent);
+    addNonNullNonEmpty(fields, "tag", builder.tag);
+    addNonNull(fields, "timestamp", builder.timestamp);
+    addNonNullNonEmpty(fields, "title", builder.title);
+    addNonNull(fields, "vibrate", builder.vibrate);
     fields.putAll(builder.customData);
     this.fields = fields.build();
   }
@@ -414,6 +386,20 @@ public class WebpushNotification {
      */
     public WebpushNotification build() {
       return new WebpushNotification(this);
+    }
+  }
+
+  private static void addNonNull(
+      ImmutableMap.Builder<String, Object> fields, String key, Object value) {
+    if (value != null) {
+      fields.put(key, value);
+    }
+  }
+
+  private static void addNonNullNonEmpty(
+      ImmutableMap.Builder<String, Object> fields, String key, String value) {
+    if (!Strings.isNullOrEmpty(value)) {
+      fields.put(key, value);
     }
   }
 }
