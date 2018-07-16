@@ -21,10 +21,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents the Webpush-specific notification options that can be included in a {@link Message}.
@@ -34,50 +37,7 @@ import java.util.List;
  */
 public class WebpushNotification {
 
-  @Key("actions")
-  private final List<Action> actions;
-
-  @Key("badge")
-  private final String badge;
-
-  @Key("body")
-  private final String body;
-
-  @Key("data")
-  private final Object data;
-
-  @Key("dir")
-  private final String direction;
-
-  @Key("icon")
-  private final String icon;
-
-  @Key("image")
-  private final String image;
-
-  @Key("lang")
-  private final String language;
-
-  @Key("renotify")
-  private final Boolean renotify;
-
-  @Key("requireInteraction")
-  private final Boolean requireInteraction;
-
-  @Key("silent")
-  private final Boolean silent;
-
-  @Key("tag")
-  private final String tag;
-
-  @Key("timestamp")
-  private final Long timestamp;
-
-  @Key("title")
-  private final String title;
-
-  @Key("vibrate")
-  private final List<Integer> vibrate;
+  private final Map<String, Object> fields;
 
   /**
    * Creates a new notification with the given title and body. Overrides the options set via
@@ -103,21 +63,58 @@ public class WebpushNotification {
   }
 
   private WebpushNotification(Builder builder) {
-    this.actions = !builder.actions.isEmpty() ? ImmutableList.copyOf(builder.actions) : null;
-    this.badge = builder.badge;
-    this.body = builder.body;
-    this.data = builder.data;
-    this.direction = builder.direction != null ? builder.direction.value : null;
-    this.icon = builder.icon;
-    this.image = builder.image;
-    this.language = builder.language;
-    this.renotify = builder.renotify;
-    this.requireInteraction = builder.requireInteraction;
-    this.silent = builder.silent;
-    this.tag = builder.tag;
-    this.timestamp = builder.timestamp;
-    this.title = builder.title;
-    this.vibrate = builder.vibrate;
+    ImmutableMap.Builder<String, Object> fields = ImmutableMap.builder();
+    if (!builder.actions.isEmpty()) {
+      fields.put("actions", ImmutableList.copyOf(builder.actions));
+    }
+    if (!Strings.isNullOrEmpty(builder.badge)) {
+      fields.put("badge", builder.badge);
+    }
+    if (!Strings.isNullOrEmpty(builder.body)) {
+      fields.put("body", builder.body);
+    }
+    if (builder.data != null) {
+      fields.put("data", builder.data);
+    }
+    if (builder.direction != null) {
+      fields.put("dir", builder.direction.value);
+    }
+    if (!Strings.isNullOrEmpty(builder.icon)) {
+      fields.put("icon", builder.icon);
+    }
+    if (!Strings.isNullOrEmpty(builder.image)) {
+      fields.put("image", builder.image);
+    }
+    if (!Strings.isNullOrEmpty(builder.language)) {
+      fields.put("lang", builder.language);
+    }
+    if (builder.renotify != null) {
+      fields.put("renotify", builder.renotify);
+    }
+    if (builder.requireInteraction != null) {
+      fields.put("requireInteraction", builder.requireInteraction);
+    }
+    if (builder.silent != null) {
+      fields.put("silent", builder.silent);
+    }
+    if (!Strings.isNullOrEmpty(builder.tag)) {
+      fields.put("tag", builder.tag);
+    }
+    if (builder.timestamp != null) {
+      fields.put("timestamp", builder.timestamp);
+    }
+    if (!Strings.isNullOrEmpty(builder.title)) {
+      fields.put("title", builder.title);
+    }
+    if (builder.vibrate != null) {
+      fields.put("vibrate", builder.vibrate);
+    }
+    fields.putAll(builder.customData);
+    this.fields = fields.build();
+  }
+
+  Map<String, Object> getFields() {
+    return fields;
   }
 
   /**
@@ -200,6 +197,7 @@ public class WebpushNotification {
     private Long timestamp;
     private String title;
     private List<Integer> vibrate;
+    private final Map<String, Object> customData = new HashMap<>();
 
     private Builder() {}
 
@@ -383,6 +381,29 @@ public class WebpushNotification {
         list.add(value);
       }
       this.vibrate = ImmutableList.copyOf(list);
+      return this;
+    }
+
+    /**
+     * Puts a custom key-value pair to the notification.
+     *
+     * @param key A non-null key.
+     * @param value A non-null, json-serializable value.
+     * @return This builder.
+     */
+    public Builder putCustomData(@NonNull String key, @NonNull Object value) {
+      this.customData.put(key, value);
+      return this;
+    }
+
+    /**
+     * Puts all the key-value pairs in the specified map to the notification.
+     *
+     * @param fields A non-null map. Map must not contain null keys or values.
+     * @return This builder.
+     */
+    public Builder putAllCustomData(@NonNull Map<String, Object> fields) {
+      this.customData.putAll(fields);
       return this;
     }
 

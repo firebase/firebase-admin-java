@@ -659,7 +659,25 @@ public class FirebaseMessagingTest {
                             "title", "test-title", "body", "test-body"))))
         ));
 
-    // Webpush message (simple)
+    // Webpush message (no notification)
+    builder.put(
+        Message.builder()
+            .setWebpushConfig(WebpushConfig.builder()
+                .putHeader("h1", "v1")
+                .putAllHeaders(ImmutableMap.of("h2", "v2", "h3", "v3"))
+                .putData("k1", "v1")
+                .putAllData(ImmutableMap.of("k2", "v2", "k3", "v3"))
+                .build())
+            .setTopic("test-topic")
+            .build(),
+        ImmutableMap.<String, Object>of(
+            "topic", "test-topic",
+            "webpush", ImmutableMap.of(
+                "headers", ImmutableMap.of("h1", "v1", "h2", "v2", "h3", "v3"),
+                "data", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"))
+        ));
+
+    // Webpush message (simple notification)
     builder.put(
         Message.builder()
             .setWebpushConfig(WebpushConfig.builder()
@@ -705,6 +723,8 @@ public class FirebaseMessagingTest {
                     .setVibrate(new int[]{200, 100, 200})
                     .addAction(new Action("action1", "title1"))
                     .addAllActions(ImmutableList.of(new Action("action2", "title2", "icon2")))
+                    .putCustomData("k4", "v4")
+                    .putAllCustomData(ImmutableMap.<String, Object>of("k5", "v5", "k6", "v6"))
                     .build())
                 .build())
             .setTopic("test-topic")
@@ -733,6 +753,9 @@ public class FirebaseMessagingTest {
                     .put("actions", ImmutableList.of(
                         ImmutableMap.of("action", "action1", "title", "title1"),
                         ImmutableMap.of("action", "action2", "title", "title2", "icon", "icon2")))
+                    .put("k4", "v4")
+                    .put("k5", "v5")
+                    .put("k6", "v6")
                     .build())
         ));
 

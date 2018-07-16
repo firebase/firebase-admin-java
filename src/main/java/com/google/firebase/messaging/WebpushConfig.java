@@ -35,12 +35,12 @@ public class WebpushConfig {
   private final Map<String, String> data;
 
   @Key("notification")
-  private final WebpushNotification notification;
+  private final Map<String, Object> notification;
 
   private WebpushConfig(Builder builder) {
     this.headers = builder.headers.isEmpty() ? null : ImmutableMap.copyOf(builder.headers);
     this.data = builder.data.isEmpty() ? null : ImmutableMap.copyOf(builder.data);
-    this.notification = builder.notification;
+    this.notification = builder.notification != null ? builder.notification.getFields() : null;
   }
 
   /**
