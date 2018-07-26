@@ -221,7 +221,7 @@ public class WebpushNotification {
     /**
      * Sets any arbitrary data that should be associated with the notification.
      *
-     * @param data A json-serializable object.
+     * @param data A JSON-serializable object.
      * @return This builder.
      */
     public Builder setData(Object data) {
