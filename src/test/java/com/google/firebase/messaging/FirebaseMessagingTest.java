@@ -719,7 +719,7 @@ public class FirebaseMessagingTest {
                     .setRenotify(true)
                     .setRequireInteraction(false)
                     .setSilent(true)
-                    .setTimestamp(100L)
+                    .setTimestampMillis(100L)
                     .setVibrate(new int[]{200, 100, 200})
                     .addAction(new Action("action1", "title1"))
                     .addAllActions(ImmutableList.of(new Action("action2", "title2", "icon2")))

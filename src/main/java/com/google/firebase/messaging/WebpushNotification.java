@@ -78,7 +78,7 @@ public class WebpushNotification {
     addNonNull(fields, "requireInteraction", builder.requireInteraction);
     addNonNull(fields, "silent", builder.silent);
     addNonNullNonEmpty(fields, "tag", builder.tag);
-    addNonNull(fields, "timestamp", builder.timestamp);
+    addNonNull(fields, "timestamp", builder.timestampMillis);
     addNonNullNonEmpty(fields, "title", builder.title);
     addNonNull(fields, "vibrate", builder.vibrate);
     fields.putAll(builder.customData);
@@ -166,7 +166,7 @@ public class WebpushNotification {
     private Boolean requireInteraction;
     private Boolean silent;
     private String tag;
-    private Long timestamp;
+    private Long timestampMillis;
     private String title;
     private List<Integer> vibrate;
     private final Map<String, Object> customData = new HashMap<>();
@@ -319,13 +319,13 @@ public class WebpushNotification {
     }
 
     /**
-     * Sets a timestamp value on the notification.
+     * Sets a timestamp value in milliseconds on the notification.
      *
-     * @param timestamp A timestamp value as a number.
+     * @param timestampMillis A timestamp value as a number.
      * @return This builder.
      */
-    public Builder setTimestamp(long timestamp) {
-      this.timestamp = timestamp;
+    public Builder setTimestampMillis(long timestampMillis) {
+      this.timestampMillis = timestampMillis;
       return this;
     }
 
