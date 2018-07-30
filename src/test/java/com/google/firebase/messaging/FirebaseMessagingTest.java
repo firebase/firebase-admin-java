@@ -35,6 +35,8 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.messaging.WebpushNotification.Action;
+import com.google.firebase.messaging.WebpushNotification.Direction;
 import com.google.firebase.testing.GenericFunction;
 import com.google.firebase.testing.TestResponseInterceptor;
 import java.io.ByteArrayOutputStream;
@@ -657,7 +659,25 @@ public class FirebaseMessagingTest {
                             "title", "test-title", "body", "test-body"))))
         ));
 
-    // Webpush message
+    // Webpush message (no notification)
+    builder.put(
+        Message.builder()
+            .setWebpushConfig(WebpushConfig.builder()
+                .putHeader("h1", "v1")
+                .putAllHeaders(ImmutableMap.of("h2", "v2", "h3", "v3"))
+                .putData("k1", "v1")
+                .putAllData(ImmutableMap.of("k2", "v2", "k3", "v3"))
+                .build())
+            .setTopic("test-topic")
+            .build(),
+        ImmutableMap.<String, Object>of(
+            "topic", "test-topic",
+            "webpush", ImmutableMap.of(
+                "headers", ImmutableMap.of("h1", "v1", "h2", "v2", "h3", "v3"),
+                "data", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"))
+        ));
+
+    // Webpush message (simple notification)
     builder.put(
         Message.builder()
             .setWebpushConfig(WebpushConfig.builder()
@@ -676,6 +696,67 @@ public class FirebaseMessagingTest {
                 "data", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"),
                 "notification", ImmutableMap.of(
                     "title", "test-title", "body", "test-body", "icon", "test-icon"))
+        ));
+
+    // Webpush message (all fields)
+    builder.put(
+        Message.builder()
+            .setWebpushConfig(WebpushConfig.builder()
+                .putHeader("h1", "v1")
+                .putAllHeaders(ImmutableMap.of("h2", "v2", "h3", "v3"))
+                .putData("k1", "v1")
+                .putAllData(ImmutableMap.of("k2", "v2", "k3", "v3"))
+                .setNotification(WebpushNotification.builder()
+                    .setTitle("test-title")
+                    .setBody("test-body")
+                    .setIcon("test-icon")
+                    .setBadge("test-badge")
+                    .setImage("test-image")
+                    .setLanguage("test-lang")
+                    .setTag("test-tag")
+                    .setData(ImmutableList.of("arbitrary", "data"))
+                    .setDirection(Direction.AUTO)
+                    .setRenotify(true)
+                    .setRequireInteraction(false)
+                    .setSilent(true)
+                    .setTimestampMillis(100L)
+                    .setVibrate(new int[]{200, 100, 200})
+                    .addAction(new Action("action1", "title1"))
+                    .addAllActions(ImmutableList.of(new Action("action2", "title2", "icon2")))
+                    .putCustomData("k4", "v4")
+                    .putAllCustomData(ImmutableMap.<String, Object>of("k5", "v5", "k6", "v6"))
+                    .build())
+                .build())
+            .setTopic("test-topic")
+            .build(),
+        ImmutableMap.<String, Object>of(
+            "topic", "test-topic",
+            "webpush", ImmutableMap.of(
+                "headers", ImmutableMap.of("h1", "v1", "h2", "v2", "h3", "v3"),
+                "data", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"),
+                "notification", ImmutableMap.builder()
+                    .put("title", "test-title")
+                    .put("body", "test-body")
+                    .put("icon", "test-icon")
+                    .put("badge", "test-badge")
+                    .put("image", "test-image")
+                    .put("lang", "test-lang")
+                    .put("tag", "test-tag")
+                    .put("data", ImmutableList.of("arbitrary", "data"))
+                    .put("renotify", true)
+                    .put("requireInteraction", false)
+                    .put("silent", true)
+                    .put("dir", "auto")
+                    .put("timestamp", new BigDecimal(100))
+                    .put("vibrate", ImmutableList.of(
+                        new BigDecimal(200), new BigDecimal(100), new BigDecimal(200)))
+                    .put("actions", ImmutableList.of(
+                        ImmutableMap.of("action", "action1", "title", "title1"),
+                        ImmutableMap.of("action", "action2", "title", "title2", "icon", "icon2")))
+                    .put("k4", "v4")
+                    .put("k5", "v5")
+                    .put("k6", "v6")
+                    .build())
         ));
 
     return builder.build();
