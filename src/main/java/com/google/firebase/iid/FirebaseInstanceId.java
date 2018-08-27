@@ -111,10 +111,12 @@ public class FirebaseInstanceId {
   }
 
   /**
-   * Deletes the specified instance ID from Firebase.
+   * Deletes the specified instance ID and the associated data from Firebase.
    *
-   * <p>This can be used to delete an instance ID and associated user data from a Firebase project,
-   * pursuant to the General Data Protection Regulation (GDPR).
+   * <p>Note that Google Analytics for Firebase uses its own form of Instance ID to keep track of
+   * analytics data. Therefore deleting a regular Instance ID does not delete Analytics data.
+   * See <a href="https://firebase.google.com/support/privacy/manage-iids#delete_an_instance_id">
+   * Delete an Instance ID</a> for more information.
    *
    * @param instanceId A non-null, non-empty instance ID string.
    * @throws IllegalArgumentException If the instance ID is null or empty.
