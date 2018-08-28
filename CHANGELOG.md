@@ -1,5 +1,9 @@
 # Unreleased
 
+-
+
+# v6.4.0
+
 - [added] `WebpushNotification` type now supports arbitrary key-value
   pairs in its payload.
 
