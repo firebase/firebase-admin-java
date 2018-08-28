@@ -114,7 +114,7 @@ public class WebpushNotification {
   }
 
   /**
-   * Represents an action available to the users when the notification is presented.
+   * Represents an action available to users when the notification is presented.
    */
   public static class Action {
     @Key("action")
