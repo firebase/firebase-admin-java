@@ -18,6 +18,7 @@ package com.google.firebase;
 
 import com.google.api.core.ApiFuture;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.firestore.FirestoreOptions;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 
@@ -41,6 +42,10 @@ public final class ImplFirebaseTrampolines {
 
   public static String getProjectId(@NonNull FirebaseApp app) {
     return app.getProjectId();
+  }
+
+  public static FirestoreOptions getFirestoreOptions(@NonNull FirebaseApp app) {
+    return app.getOptions().getFirestoreOptions();
   }
 
   public static boolean isDefaultApp(@NonNull FirebaseApp app) {

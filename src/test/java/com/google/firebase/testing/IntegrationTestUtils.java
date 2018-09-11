@@ -20,10 +20,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.GenericJson;
+import com.google.cloud.firestore.FirestoreOptions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.CharStreams;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+import com.google.firebase.FirebaseOptions.Builder;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -105,10 +107,13 @@ public class IntegrationTestUtils {
   public static synchronized FirebaseApp ensureDefaultApp() {
     if (masterApp == null) {
       FirebaseOptions options =
-          new FirebaseOptions.Builder()
+          FirebaseOptions.builder()
               .setDatabaseUrl(getDatabaseUrl())
               .setStorageBucket(getStorageBucket())
               .setCredentials(TestUtils.getCertCredential(getServiceAccountCertificate()))
+              .setFirestoreOptions(FirestoreOptions.newBuilder()
+                  .setTimestampsInSnapshotsEnabled(true)
+                  .build())
               .build();
       masterApp = FirebaseApp.initializeApp(options);
     }

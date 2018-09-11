@@ -24,6 +24,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Key;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.firestore.FirestoreOptions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.FirebaseThreadManagers;
@@ -66,6 +67,7 @@ public final class FirebaseOptions {
   private final int readTimeout;
   private final JsonFactory jsonFactory;
   private final ThreadManager threadManager;
+  private final FirestoreOptions firestoreOptions;
 
   private FirebaseOptions(@NonNull FirebaseOptions.Builder builder) {
     this.credentials = checkNotNull(builder.credentials,
@@ -94,6 +96,7 @@ public final class FirebaseOptions {
     this.connectTimeout = builder.connectTimeout;
     checkArgument(builder.readTimeout >= 0);
     this.readTimeout = builder.readTimeout;
+    this.firestoreOptions = builder.firestoreOptions;
   }
 
   /**
@@ -193,6 +196,19 @@ public final class FirebaseOptions {
     return threadManager;
   }
 
+  FirestoreOptions getFirestoreOptions() {
+    return firestoreOptions;
+  }
+
+  /**
+   * Creates an empty builder.
+   *
+   * @return A new builder instance.
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
   /**
    * Builder for constructing {@link FirebaseOptions}. 
    */
@@ -213,6 +229,7 @@ public final class FirebaseOptions {
     private String serviceAccountId;
     
     private GoogleCredentials credentials;
+    private FirestoreOptions firestoreOptions;
     private HttpTransport httpTransport = Utils.getDefaultTransport();
     private JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     private ThreadManager threadManager = FirebaseThreadManagers.DEFAULT_THREAD_MANAGER;
@@ -239,6 +256,7 @@ public final class FirebaseOptions {
       threadManager = options.threadManager;
       connectTimeout = options.connectTimeout;
       readTimeout = options.readTimeout;
+      firestoreOptions = options.firestoreOptions;
     }
 
     /**
@@ -381,6 +399,22 @@ public final class FirebaseOptions {
      */
     public Builder setThreadManager(ThreadManager threadManager) {
       this.threadManager = threadManager;
+      return this;
+    }
+
+    /**
+     * Sets the <code>FirestoreOptions</code> used to initialize Firestore in the
+     * {@link com.google.firebase.cloud.FirestoreClient} API. This can be used to customize
+     * low-level transport (GRPC) parameters, and timestamp handling behavior.
+     *
+     * <p>If credentials or a project ID is set in FirestoreClient, they will get overwritten by
+     * the corresponding parameters set on <code>FirebaseOptions</code>.
+     *
+     * @param firestoreOptions A <code>FirestoreOptions</code> instance.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setFirestoreOptions(FirestoreOptions firestoreOptions) {
+      this.firestoreOptions = firestoreOptions;
       return this;
     }
 
