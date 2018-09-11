@@ -407,8 +407,8 @@ public final class FirebaseOptions {
      * {@link com.google.firebase.cloud.FirestoreClient} API. This can be used to customize
      * low-level transport (GRPC) parameters, and timestamp handling behavior.
      *
-     * <p>If credentials or a project ID is set in FirestoreClient, they will get overwritten by
-     * the corresponding parameters set on <code>FirebaseOptions</code>.
+     * <p>If credentials or a project ID is set in <code>FirestoreOptions</code>, they will get
+     * overwritten by the corresponding parameters in <code>FirebaseOptions</code>.
      *
      * @param firestoreOptions A <code>FirestoreOptions</code> instance.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
