@@ -47,6 +47,33 @@ public class FirestoreClientTest {
   }
 
   @Test
+  public void testFirestoreTimestampsInSnapshotsEnabled_defaultsToFalse() throws IOException {
+    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
+        .setProjectId("explicit-project-id")
+        .build());
+    Firestore firestore = FirestoreClient.getFirestore(app);
+    assertEquals(false, firestore.getOptions().areTimestampsInSnapshotsEnabled());
+
+    firestore = FirestoreClient.getFirestore();
+    assertEquals(false, firestore.getOptions().areTimestampsInSnapshotsEnabled());
+  }
+
+  @Test
+  public void testFirestoreTimestampsInSnapshotsEnabled_setToTrue() throws IOException {
+    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
+        .setProjectId("explicit-project-id")
+        .setFirestoreTimestampsInSnapshotsEnabled(true)
+        .build());
+    Firestore firestore = FirestoreClient.getFirestore(app);
+    assertEquals(true, firestore.getOptions().areTimestampsInSnapshotsEnabled());
+
+    firestore = FirestoreClient.getFirestore();
+    assertEquals(true, firestore.getOptions().areTimestampsInSnapshotsEnabled());
+  }
+
+  @Test
   public void testAppDelete() throws IOException {
     FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))

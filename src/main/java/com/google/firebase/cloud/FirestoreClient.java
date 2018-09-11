@@ -35,6 +35,8 @@ public class FirestoreClient {
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
     this.firestore = FirestoreOptions.newBuilder()
+        .setTimestampsInSnapshotsEnabled(
+            app.getOptions().areFirestoreTimestampsInSnapshotsEnabled())
         .setCredentials(ImplFirebaseTrampolines.getCredentials(app))
         .setProjectId(projectId)
         .build()

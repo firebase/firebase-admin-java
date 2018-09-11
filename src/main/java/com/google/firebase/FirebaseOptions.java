@@ -66,6 +66,7 @@ public final class FirebaseOptions {
   private final int readTimeout;
   private final JsonFactory jsonFactory;
   private final ThreadManager threadManager;
+  private final boolean firestoreTimestampsInSnapshotsEnabled;
 
   private FirebaseOptions(@NonNull FirebaseOptions.Builder builder) {
     this.credentials = checkNotNull(builder.credentials,
@@ -94,6 +95,8 @@ public final class FirebaseOptions {
     this.connectTimeout = builder.connectTimeout;
     checkArgument(builder.readTimeout >= 0);
     this.readTimeout = builder.readTimeout;
+    this.firestoreTimestampsInSnapshotsEnabled =
+        builder.firestoreTimestampsInSnapshotsEnabled;
   }
 
   /**
@@ -188,6 +191,14 @@ public final class FirebaseOptions {
     return readTimeout;
   }
 
+  /**
+   * Returns whether or not {@link com.google.cloud.firestore.DocumentSnapshot DocumentSnapshots}
+   * return timestamp fields as {@link com.google.cloud.Timestamp Timestamps}.
+   */
+  public boolean areFirestoreTimestampsInSnapshotsEnabled() {
+    return firestoreTimestampsInSnapshotsEnabled;
+  }
+
   @NonNull
   ThreadManager getThreadManager() {
     return threadManager;
@@ -218,6 +229,7 @@ public final class FirebaseOptions {
     private ThreadManager threadManager = FirebaseThreadManagers.DEFAULT_THREAD_MANAGER;
     private int connectTimeout;
     private int readTimeout;
+    private boolean firestoreTimestampsInSnapshotsEnabled;
 
     /** Constructs an empty builder. */
     public Builder() {}
@@ -239,6 +251,7 @@ public final class FirebaseOptions {
       threadManager = options.threadManager;
       connectTimeout = options.connectTimeout;
       readTimeout = options.readTimeout;
+      firestoreTimestampsInSnapshotsEnabled = options.firestoreTimestampsInSnapshotsEnabled;
     }
 
     /**
@@ -408,6 +421,20 @@ public final class FirebaseOptions {
      */
     public Builder setReadTimeout(int readTimeout) {
       this.readTimeout = readTimeout;
+      return this;
+    }
+
+    /**
+     * Sets whether timestamps are enabled in Firestore
+     * {@link com.google.cloud.firestore.DocumentSnapshot DocumentSnapshots}.
+     *
+     * @param firestoreTimestampsInSnapshotsEnabled If true, timestamps are enabled in Firestore
+     *     DocumentSnapshots.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setFirestoreTimestampsInSnapshotsEnabled(
+        boolean firestoreTimestampsInSnapshotsEnabled) {
+      this.firestoreTimestampsInSnapshotsEnabled = firestoreTimestampsInSnapshotsEnabled;
       return this;
     }
 

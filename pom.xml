@@ -399,6 +399,11 @@
             <version>1.2.0</version>
         </dependency>
         <dependency>
+            <groupId>com.google.api</groupId>
+            <artifactId>gax</artifactId>
+            <version>1.30.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.google.auth</groupId>
             <artifactId>google-auth-library-oauth2-http</artifactId>
             <version>0.8.0</version>
@@ -411,7 +416,7 @@
         <dependency>
             <groupId>com.google.cloud</groupId>
             <artifactId>google-cloud-firestore</artifactId>
-            <version>0.45.0-beta</version>
+            <version>0.61.0-beta</version>
         </dependency>
 
         <!-- Utilities -->
