@@ -106,7 +106,8 @@ public class TestUtils {
     if (defaultCredentials != null) {
       return defaultCredentials;
     }
-    final MockTokenServerTransport transport = new MockTokenServerTransport();
+    final MockTokenServerTransport transport = new MockTokenServerTransport(
+        "https://accounts.google.com/o/oauth2/token");
     transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), TEST_ADC_ACCESS_TOKEN);
     File serviceAccount = new File("src/test/resources/service_accounts", "editor.json");
     Map<String, String> environmentVariables =

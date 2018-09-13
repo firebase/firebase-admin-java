@@ -30,6 +30,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
+import com.google.cloud.firestore.FirestoreOptions;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
@@ -75,6 +76,9 @@ public class FirebaseOptionsTest {
   public void createOptionsWithAllValuesSet() throws IOException {
     GsonFactory jsonFactory = new GsonFactory();
     NetHttpTransport httpTransport = new NetHttpTransport();
+    FirestoreOptions firestoreOptions = FirestoreOptions.newBuilder()
+        .setTimestampsInSnapshotsEnabled(true)
+        .build();
     FirebaseOptions firebaseOptions =
         new FirebaseOptions.Builder()
             .setDatabaseUrl(FIREBASE_DB_URL)
@@ -86,6 +90,7 @@ public class FirebaseOptionsTest {
             .setThreadManager(MOCK_THREAD_MANAGER)
             .setConnectTimeout(30000)
             .setReadTimeout(60000)
+            .setFirestoreOptions(firestoreOptions)
             .build();
     assertEquals(FIREBASE_DB_URL, firebaseOptions.getDatabaseUrl());
     assertEquals(FIREBASE_STORAGE_BUCKET, firebaseOptions.getStorageBucket());
@@ -95,6 +100,7 @@ public class FirebaseOptionsTest {
     assertSame(MOCK_THREAD_MANAGER, firebaseOptions.getThreadManager());
     assertEquals(30000, firebaseOptions.getConnectTimeout());
     assertEquals(60000, firebaseOptions.getReadTimeout());
+    assertSame(firestoreOptions, firebaseOptions.getFirestoreOptions());
 
     GoogleCredentials credentials = firebaseOptions.getCredentials();
     assertNotNull(credentials);
@@ -124,6 +130,7 @@ public class FirebaseOptionsTest {
     assertEquals(
         GoogleCredential.fromStream(ServiceAccount.EDITOR.asStream()).getServiceAccountId(),
         ((ServiceAccountCredentials) credentials).getClientEmail());
+    assertNull(firebaseOptions.getFirestoreOptions());
   }
 
   @Test
@@ -185,6 +192,8 @@ public class FirebaseOptionsTest {
     assertEquals(ALL_VALUES_OPTIONS.getThreadManager(), allValuesOptionsCopy.getThreadManager());
     assertEquals(ALL_VALUES_OPTIONS.getConnectTimeout(), allValuesOptionsCopy.getConnectTimeout());
     assertEquals(ALL_VALUES_OPTIONS.getReadTimeout(), allValuesOptionsCopy.getReadTimeout());
+    assertSame(ALL_VALUES_OPTIONS.getFirestoreOptions(),
+        allValuesOptionsCopy.getFirestoreOptions());
   }
 
   @Test(expected = IllegalArgumentException.class)

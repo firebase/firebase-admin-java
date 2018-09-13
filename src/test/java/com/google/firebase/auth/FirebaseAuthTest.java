@@ -36,6 +36,7 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auth.oauth2.UserCredentials;
 import com.google.common.base.Defaults;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -132,7 +133,8 @@ public class FirebaseAuthTest {
   }
 
   private static GoogleCredentials createCertificateCredential() throws IOException {
-    final MockTokenServerTransport transport = new MockTokenServerTransport();
+    final MockTokenServerTransport transport = new MockTokenServerTransport(
+        "https://accounts.google.com/o/oauth2/token");
     transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
     return ServiceAccountCredentials.fromStream(ServiceAccount.EDITOR.asStream(),
         new HttpTransportFactory() {

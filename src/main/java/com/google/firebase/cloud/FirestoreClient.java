@@ -3,6 +3,7 @@ package com.google.firebase.cloud;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.FirestoreOptions;
 import com.google.common.base.Strings;
@@ -34,8 +35,13 @@ public class FirestoreClient {
         "Project ID is required for accessing Firestore. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
-    this.firestore = FirestoreOptions.newBuilder()
-        .setCredentials(ImplFirebaseTrampolines.getCredentials(app))
+    FirestoreOptions userOptions = ImplFirebaseTrampolines.getFirestoreOptions(app);
+    FirestoreOptions.Builder builder = userOptions != null
+        ? userOptions.toBuilder() : FirestoreOptions.newBuilder();
+    this.firestore = builder
+        // CredentialsProvider has highest priority in FirestoreOptions, so we set that.
+        .setCredentialsProvider(
+            FixedCredentialsProvider.create(ImplFirebaseTrampolines.getCredentials(app)))
         .setProjectId(projectId)
         .build()
         .getService();
