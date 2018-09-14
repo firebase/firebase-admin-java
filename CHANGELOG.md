@@ -2,6 +2,13 @@
 
 -
 
+# v6.5.0
+
+- [added] `FirebaseOptions.Builder` class now provides a
+  `setFirestoreOptions()` method for configuring the Firestore client.
+- [changed] Upgraded the Cloud Firestore client to 0.61.0-beta.
+- [changed] Upgraded the Cloud Storage client to 1.43.0.
+
 # v6.4.0
 
 - [added] `WebpushNotification` type now supports arbitrary key-value
