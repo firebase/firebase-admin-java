@@ -24,6 +24,7 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Key;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.ServiceOptions;
 import com.google.cloud.firestore.FirestoreOptions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -61,6 +62,7 @@ public final class FirebaseOptions {
   private final GoogleCredentials credentials;
   private final Map<String, Object> databaseAuthVariableOverride;
   private final String projectId;
+  private final String defaultProjectId;
   private final String serviceAccountId;
   private final HttpTransport httpTransport;
   private final int connectTimeout;
@@ -76,6 +78,12 @@ public final class FirebaseOptions {
     this.databaseUrl = builder.databaseUrl;
     this.databaseAuthVariableOverride = builder.databaseAuthVariableOverride;
     this.projectId = builder.projectId;
+    if (Strings.isNullOrEmpty(this.projectId)) {
+      String id = ServiceOptions.getDefaultProjectId();
+      this.defaultProjectId = Strings.isNullOrEmpty(id) ? null : id;
+    } else {
+      this.defaultProjectId = this.projectId;
+    }
     if (!Strings.isNullOrEmpty(builder.storageBucket)) {
       checkArgument(!builder.storageBucket.startsWith("gs://"),
           "StorageBucket must not include 'gs://' prefix.");
@@ -138,6 +146,16 @@ public final class FirebaseOptions {
    */
   public String getProjectId() {
     return projectId;
+  }
+
+  /**
+   * Returns the Google Cloud project ID.
+   *
+   * @return The project ID set via {@link Builder#setProjectId(String)} or
+   * {@link ServiceOptions#getDefaultProjectId()}
+   */
+  public String getDefaultProjectId() {
+    return defaultProjectId;
   }
 
   /**
