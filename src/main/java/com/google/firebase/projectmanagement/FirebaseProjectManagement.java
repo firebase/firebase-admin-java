@@ -108,10 +108,10 @@ public class FirebaseProjectManagement {
 
   /**
    * Lists all Android Apps associated with the associated Firebase Project, returning a list of
-   * {@link IosApp} references to each. This returned list is read-only and cannot be modified.
+   * {@link AndroidApp} references to each. This returned list is read-only and cannot be modified.
    *
    * @throws FirebaseProjectManagementException if there was an error during the RPC
-   * @see IosApp
+   * @see AndroidApp
    */
   @NonNull
   public List<AndroidApp> listAndroidApps() throws FirebaseProjectManagementException {
@@ -120,10 +120,10 @@ public class FirebaseProjectManagement {
 
   /**
    * Lists all Android Apps associated with the associated Firebase Project, returning a {@link
-   * ApiFuture} of a list of {@link IosApp} references to each. This returned list is read-only and
-   * cannot be modified.
+   * ApiFuture} of a list of {@link AndroidApp} references to each. This returned list is read-only
+   * and cannot be modified.
    *
-   * @see IosApp
+   * @see AndroidApp
    */
   @NonNull
   public ApiFuture<List<AndroidApp>> listAndroidAppsAsync() {
@@ -149,7 +149,7 @@ public class FirebaseProjectManagement {
    * reference to it.
    *
    * @param packageName the package name of the Android App to be created
-   * @param displayName a nickname for this iOS App
+   * @param displayName a nickname for this Android App
    * @throws FirebaseProjectManagementException if there was an error during the RPC
    * @see AndroidApp
    */
@@ -176,7 +176,7 @@ public class FirebaseProjectManagement {
    * {@link ApiFuture} that will eventually contain the {@link AndroidApp} reference to it.
    *
    * @param packageName the package name of the Android App to be created
-   * @param displayName a nickname for this iOS App
+   * @param displayName a nickname for this Android App
    * @see AndroidApp
    */
   @NonNull
