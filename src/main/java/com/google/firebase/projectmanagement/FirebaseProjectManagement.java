@@ -107,8 +107,8 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Lists all Android Apps associated with the associated Firebase Project, returning a list of
-   * {@link AndroidApp} references to each. This returned list is read-only and cannot be modified.
+   * Lists all Android Apps in the associated Firebase Project, returning a list of {@link
+   * AndroidApp} references to each. This returned list is read-only and cannot be modified.
    *
    * @throws FirebaseProjectManagementException if there was an error during the RPC
    * @see AndroidApp
@@ -119,7 +119,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Lists all Android Apps associated with the associated Firebase Project, returning a {@link
+   * Asynchronously lists all Android Apps in the associated Firebase Project, returning an {@link
    * ApiFuture} of a list of {@link AndroidApp} references to each. This returned list is read-only
    * and cannot be modified.
    *
@@ -199,8 +199,8 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Lists all iOS App associated with the associated Firebase Project, returning a list of {@link
-   * IosApp} references to each. This returned list is read-only and cannot be modified.
+   * Lists all iOS Apps in the associated Firebase Project, returning a list of {@link IosApp}
+   * references to each. This returned list is read-only and cannot be modified.
    *
    * @throws FirebaseProjectManagementException if there was an error during the RPC
    * @see IosApp
@@ -211,9 +211,9 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Asynchronously lists all iOS App associated with the associated Firebase Project, returning an
-   * {@link ApiFuture} that will eventually be populated with a list of {@link IosApp} references to
-   * each of those iOS Apps. This list is read-only and cannot be modified.
+   * Asynchronously lists all iOS Apps in the associated Firebase Project, returning an {@link
+   * ApiFuture} of a list of {@link IosApp} references to each. This returned list is read-only and
+   * cannot be modified.
    *
    * @see IosApp
    */
