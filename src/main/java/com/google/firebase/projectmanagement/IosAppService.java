@@ -22,7 +22,7 @@ import java.util.List;
  * An interface to interact with the iOS-specific functionalities in the Firebase Project Management
  * Service.
  *
- * <p>Note: All methods in this service make an RPC.
+ * <p>Note: Implementations of methods in this service may make RPCs.
  */
 interface IosAppService {
   /**

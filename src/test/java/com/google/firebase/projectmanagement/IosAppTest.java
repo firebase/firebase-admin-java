@@ -39,6 +39,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
 public class IosAppTest {
+
   private static final String TEST_APP_NAME =
       "projects/hello-world/iosApps/1:1234567890:ios:cafef00ddeadbeef";
   private static final String TEST_APP_ID = "1:1234567890:ios:cafef00ddeadbeef";
@@ -88,14 +89,14 @@ public class IosAppTest {
   }
 
   @Test
-  public void testGetIosApp_shouldSucceed() throws Exception {
+  public void testGetIosAppShouldSucceed() throws Exception {
     when(iosAppService.getIosApp(TEST_APP_ID)).thenReturn(TEST_IOS_APP_METADATA);
 
     assertEquals(TEST_IOS_APP_METADATA, iosApp.getMetadata());
   }
 
   @Test
-  public void testGetIosApp_shouldRethrow() throws Exception {
+  public void testGetIosAppShouldRethrow() throws Exception {
     when(iosAppService.getIosApp(TEST_APP_ID)).thenThrow(FIREBASE_PROJECT_MANAGEMENT_EXCEPTION);
 
     thrown.expect(FirebaseProjectManagementException.class);
@@ -104,7 +105,7 @@ public class IosAppTest {
   }
 
   @Test
-  public void testGetIosAppAsync_shouldSucceed() throws Exception {
+  public void testGetIosAppAsyncShouldSucceed() throws Exception {
     when(iosAppService.getIosAppAsync(TEST_APP_ID))
         .thenReturn(immediateFuture(TEST_IOS_APP_METADATA));
 
@@ -112,7 +113,7 @@ public class IosAppTest {
   }
 
   @Test
-  public void testGetIosAppAsync_shouldRethrow() throws Exception {
+  public void testGetIosAppAsyncShouldRethrow() throws Exception {
     when(iosAppService.getIosAppAsync(TEST_APP_ID))
         .thenReturn(immediateIosAppMetadataFailedFuture());
 
@@ -125,14 +126,14 @@ public class IosAppTest {
   }
 
   @Test
-  public void testSetDisplayName_shouldSucceed() throws Exception {
+  public void testSetDisplayNameShouldSucceed() throws Exception {
     iosApp.setDisplayName(NEW_DISPLAY_NAME);
 
     verify(iosAppService).setIosDisplayName(TEST_APP_ID, NEW_DISPLAY_NAME);
   }
 
   @Test
-  public void testSetDisplayName_shouldRethrow() throws Exception {
+  public void testSetDisplayNameShouldRethrow() throws Exception {
     doThrow(FIREBASE_PROJECT_MANAGEMENT_EXCEPTION)
         .when(iosAppService)
         .setIosDisplayName(TEST_APP_ID, NEW_DISPLAY_NAME);
@@ -143,7 +144,7 @@ public class IosAppTest {
   }
 
   @Test
-  public void testSetDisplayNameAsync_shouldSucceed() throws Exception {
+  public void testSetDisplayNameAsyncShouldSucceed() throws Exception {
     when(iosAppService.setIosDisplayNameAsync(TEST_APP_ID, NEW_DISPLAY_NAME))
         .thenReturn(immediateFuture((Void) null));
 
@@ -151,7 +152,7 @@ public class IosAppTest {
   }
 
   @Test
-  public void testSetDisplayNameAsync_shouldRethrow() throws Exception {
+  public void testSetDisplayNameAsyncShouldRethrow() throws Exception {
     when(iosAppService.setIosDisplayNameAsync(TEST_APP_ID, NEW_DISPLAY_NAME))
         .thenReturn(immediateVoidFailedFuture());
 
@@ -164,14 +165,14 @@ public class IosAppTest {
   }
 
   @Test
-  public void testGetConfig_shouldSucceed() throws Exception {
+  public void testGetConfigShouldSucceed() throws Exception {
     when(iosAppService.getIosConfig(TEST_APP_ID)).thenReturn(TEST_APP_CONFIG);
 
     assertEquals(TEST_APP_CONFIG, iosApp.getConfig());
   }
 
   @Test
-  public void testGetConfig_shouldRethrow() throws Exception {
+  public void testGetConfigShouldRethrow() throws Exception {
     when(iosAppService.getIosConfig(TEST_APP_ID)).thenThrow(FIREBASE_PROJECT_MANAGEMENT_EXCEPTION);
 
     thrown.expect(FirebaseProjectManagementException.class);
@@ -180,14 +181,14 @@ public class IosAppTest {
   }
 
   @Test
-  public void testGetConfigAsync_shouldSucceed() throws Exception {
+  public void testGetConfigAsyncShouldSucceed() throws Exception {
     when(iosAppService.getIosConfigAsync(TEST_APP_ID)).thenReturn(immediateFuture(TEST_APP_CONFIG));
 
     assertEquals(TEST_APP_CONFIG, iosApp.getConfigAsync().get());
   }
 
   @Test
-  public void testGetConfigAsync_shouldRethrow() throws Exception {
+  public void testGetConfigAsyncShouldRethrow() throws Exception {
     when(iosAppService.getIosConfigAsync(TEST_APP_ID)).thenReturn(immediateStringFailedFuture());
 
     try {

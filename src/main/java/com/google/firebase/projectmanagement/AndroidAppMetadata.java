@@ -15,6 +15,8 @@
 
 package com.google.firebase.projectmanagement;
 
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
 /**
@@ -76,13 +78,13 @@ public class AndroidAppMetadata {
 
   @Override
   public String toString() {
-    return "AndroidAppMetadata{"
-        + "name=" + name + ", "
-        + "appId=" + appId + ", "
-        + "displayName=" + displayName + ", "
-        + "projectId=" + projectId + ", "
-        + "packageName=" + packageName
-        + "}";
+    return MoreObjects.toStringHelper("AndroidAppMetadata")
+        .add("name", name)
+        .add("appId", appId)
+        .add("displayName", displayName)
+        .add("projectId", projectId)
+        .add("packageName", packageName)
+        .toString();
   }
 
   @Override
@@ -92,29 +94,18 @@ public class AndroidAppMetadata {
     }
     if (o instanceof AndroidAppMetadata) {
       AndroidAppMetadata that = (AndroidAppMetadata) o;
-      return (this.name.equals(that.getName()))
-          && (this.appId.equals(that.getAppId()))
-          && (this.displayName.equals(that.getDisplayName()))
-          && (this.projectId.equals(that.getProjectId()))
-          && (this.packageName.equals(that.getPackageName()));
+      return Objects.equal(this.name, that.name)
+          && Objects.equal(this.appId, that.appId)
+          && Objects.equal(this.displayName, that.displayName)
+          && Objects.equal(this.projectId, that.projectId)
+          && Objects.equal(this.packageName, that.packageName);
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    int h = 1;
-    h *= 1000003;
-    h ^= this.name.hashCode();
-    h *= 1000003;
-    h ^= this.appId.hashCode();
-    h *= 1000003;
-    h ^= this.displayName.hashCode();
-    h *= 1000003;
-    h ^= this.projectId.hashCode();
-    h *= 1000003;
-    h ^= this.packageName.hashCode();
-    return h;
+    return Objects.hashCode(name, appId, displayName, projectId, packageName);
   }
 
 }

@@ -24,6 +24,8 @@ import com.google.common.base.Strings;
  * An instance of this class is a reference to an iOS App within a Firebase Project; it can be used
  * to query detailed information about the App, modify the display name of the App, or download the
  * configuration file for the App.
+ *
+ * <p>Note: the methods in this class make RPCs.
  */
 public class IosApp {
   private final String appId;
@@ -39,17 +41,12 @@ public class IosApp {
     return new IosApp(appId, iosAppService);
   }
 
-  /**
-   * Returns the App ID of this iOS App.
-   */
-  public String getAppId() {
+  String getAppId() {
     return appId;
   }
 
   /**
    * Retrieves detailed information about this iOS App.
-   *
-   * <p>Note: this method makes an RPC.
    *
    * @return an {@link IosAppMetadata} instance describing this App
    * @throws FirebaseProjectManagementException if there was an error during the RPC
@@ -61,8 +58,6 @@ public class IosApp {
   /**
    * Asynchronously retrieves information about this iOS App.
    *
-   * <p>Note: this method makes an RPC.
-   *
    * @return an {@link ApiFuture} containing an {@link IosAppMetadata} instance describing this App
    */
   public ApiFuture<IosAppMetadata> getMetadataAsync() {
@@ -72,8 +67,6 @@ public class IosApp {
   /**
    * Updates the Display Name attribute of this iOS App to the one given.
    *
-   * <p>Note: this method makes an RPC.
-   *
    * @throws FirebaseProjectManagementException if there was an error during the RPC
    */
   public void setDisplayName(String newDisplayName) throws FirebaseProjectManagementException {
@@ -82,8 +75,6 @@ public class IosApp {
 
   /**
    * Asynchronously updates the Display Name attribute of this iOS App to the one given.
-   *
-   * <p>Note: this method makes an RPC.
    */
   public ApiFuture<Void> setDisplayNameAsync(String newDisplayName) {
     return iosAppService.setIosDisplayNameAsync(appId, newDisplayName);
@@ -91,8 +82,6 @@ public class IosApp {
 
   /**
    * Retrieves the configuration artifact associated with this iOS App.
-   *
-   * <p>Note: this method makes an RPC.
    *
    * @return a modified UTF-8 encoded {@code String} containing the contents of the artifact
    * @throws FirebaseProjectManagementException if there was an error during the RPC
@@ -104,10 +93,8 @@ public class IosApp {
   /**
    * Asynchronously retrieves the configuration artifact associated with this iOS App.
    *
-   * <p>Note: this method makes an RPC.
-   *
-   * @return an {@link ApiFuture} of a modified UTF-8 encoded {@code String} containing the contents
-   *     of the artifact
+   * @return an {@link ApiFuture} of a UTF-8 encoded {@code String} containing the contents of the
+   *     artifact
    */
   public ApiFuture<String> getConfigAsync() {
     return iosAppService.getIosConfigAsync(appId);

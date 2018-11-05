@@ -15,8 +15,6 @@
 
 package com.google.firebase.projectmanagement;
 
-import static com.google.api.core.ApiFutures.transform;
-import static com.google.api.core.ApiFutures.transformAsync;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.api.client.http.GenericUrl;
@@ -25,7 +23,6 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
@@ -34,6 +31,7 @@ import com.google.api.client.util.Key;
 import com.google.api.core.ApiAsyncFunction;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
@@ -44,9 +42,9 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseRequestInitializer;
-import com.google.firebase.internal.FirebaseScheduledExecutor;
 import com.google.firebase.internal.Nullable;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
@@ -55,6 +53,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppService {
+
   @VisibleForTesting static final String FIREBASE_PROJECT_MANAGEMENT_URL =
       "https://firebase.googleapis.com";
   @VisibleForTesting static final int MAXIMUM_LIST_APPS_PAGE_SIZE = 100;
@@ -93,16 +92,10 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
 
   FirebaseProjectManagementServiceImpl(FirebaseApp app) {
     this.app = app;
-
-    JsonFactory jsonFactory = app.getOptions().getJsonFactory();
-    this.jsonFactory = jsonFactory;
-
-    HttpTransport httpTransport = app.getOptions().getHttpTransport();
-    this.requestFactory =
-        httpTransport.createRequestFactory(new FirebaseRequestInitializer(app));
-
-    this.scheduledExecutor = new FirebaseScheduledExecutor(
-        ImplFirebaseTrampolines.getThreadFactory(app), "firebase-project-management");
+    this.jsonFactory = app.getOptions().getJsonFactory();
+    this.requestFactory = app.getOptions().getHttpTransport().createRequestFactory(
+        new FirebaseRequestInitializer(app));
+    this.scheduledExecutor = ImplFirebaseTrampolines.getScheduledExecutorService(app);
   }
 
   @VisibleForTesting
@@ -111,11 +104,11 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
   }
 
   void destroy() {
-    // NOTE: Any instance of IosApp, AndroidApp, or FirebaseProjectManagement that depends on this
-    // instance will no longer be able to make RPC calls. All polling or waiting iOS or Android App
-    // creations will be interrupted, even though the initial creation RPC (if made successfully) is
-    // still processed normally (asynchronously) by the server.
-    scheduledExecutor.shutdownNow();
+    // NOTE: We don't explicitly tear down anything here. Any instance of IosApp, AndroidApp, or
+    // FirebaseProjectManagement that depends on this instance will no longer be able to make RPC
+    // calls. All polling or waiting iOS or Android App creations will be interrupted, even though
+    // the initial creation RPC (if made successfully) is still processed normally (asynchronously)
+    // by the server.
   }
 
   /* getAndroidApp */
@@ -275,8 +268,8 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
       String projectId, String packageName, String displayName) {
     checkArgument(!Strings.isNullOrEmpty(packageName), "package name must not be null or empty");
     return
-        transform(
-            transformAsync(
+        ApiFutures.transform(
+            ApiFutures.transformAsync(
                 createAndroidAppOp(projectId, packageName, displayName).callAsync(app),
                 new WaitOperationFunction(projectId),
                 scheduledExecutor),
@@ -299,8 +292,8 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
       String projectId, String bundleId, String displayName) {
     checkArgument(!Strings.isNullOrEmpty(bundleId), "bundle ID must not be null or empty");
     return
-        transform(
-            transformAsync(
+        ApiFutures.transform(
+            ApiFutures.transformAsync(
                 createIosAppOp(projectId, bundleId, displayName).callAsync(app),
                 new WaitOperationFunction(projectId),
                 scheduledExecutor),
@@ -410,8 +403,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
     @Override
     public void run() {
       String url = String.format("%s/v1/%s", FIREBASE_PROJECT_MANAGEMENT_URL, operationName);
-      OperationResponse operationResponseInstance;
-      operationResponseInstance = new OperationResponse();
+      OperationResponse operationResponseInstance = new OperationResponse();
       try {
         makeGetRequest(url, operationResponseInstance, projectId, "Project ID");
       } catch (FirebaseProjectManagementException e) {
@@ -611,7 +603,8 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
             appId);
         AppConfigResponse parsedResponse = new AppConfigResponse();
         makeGetRequest(url, parsedResponse, appId, "App ID");
-        return new String(Base64.decodeBase64(parsedResponse.configFileContents), Charsets.UTF_8);
+        return new String(
+            Base64.decodeBase64(parsedResponse.configFileContents), StandardCharsets.UTF_8);
       }
     };
   }

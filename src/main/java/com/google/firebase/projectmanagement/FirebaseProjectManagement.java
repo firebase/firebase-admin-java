@@ -32,8 +32,8 @@ import java.util.List;
  * This class is the entry point for all Firebase Project Management actions.
  *
  * <p>You can get an instance of FirebaseProjectManagement via {@link #getInstance(FirebaseApp)},
- * and then use it to modify or retrieve information about your Firebase Project, as well as create,
- * modify, or retrieve information about the Android or iOS Apps in your Firebase Project.
+ * and then use it to modify or retrieve information about your Firebase project, as well as create,
+ * modify, or retrieve information about the Android or iOS Apps in your Firebase project.
  */
 public class FirebaseProjectManagement {
   private static final String SERVICE_ID = FirebaseProjectManagement.class.getName();
@@ -41,7 +41,6 @@ public class FirebaseProjectManagement {
   private static final Object GET_INSTANCE_LOCK = new Object();
 
   private final String projectId;
-  @SuppressWarnings("unused")
   private AndroidAppService androidAppService;
   private IosAppService iosAppService;
 
@@ -96,7 +95,7 @@ public class FirebaseProjectManagement {
   /* Android App */
 
   /**
-   * Obtains an {@link AndroidApp} reference to an Android App in the associated Firebase Project.
+   * Obtains an {@link AndroidApp} reference to an Android App in the associated Firebase project.
    *
    * @param appId the App ID that identifies this Android App.
    * @see AndroidApp
@@ -107,7 +106,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Lists all Android Apps in the associated Firebase Project, returning a list of {@link
+   * Lists all Android Apps in the associated Firebase project, returning a list of {@link
    * AndroidApp} references to each. This returned list is read-only and cannot be modified.
    *
    * @throws FirebaseProjectManagementException if there was an error during the RPC
@@ -119,7 +118,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Asynchronously lists all Android Apps in the associated Firebase Project, returning an {@link
+   * Asynchronously lists all Android Apps in the associated Firebase project, returning an {@link
    * ApiFuture} of a list of {@link AndroidApp} references to each. This returned list is read-only
    * and cannot be modified.
    *
@@ -131,7 +130,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Creates a new Android App in the associated Firebase Project and returns an {@link AndroidApp}
+   * Creates a new Android App in the associated Firebase project and returns an {@link AndroidApp}
    * reference to it.
    *
    * @param packageName the package name of the Android App to be created
@@ -145,7 +144,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Creates a new Android App in the associated Firebase Project and returns an {@link AndroidApp}
+   * Creates a new Android App in the associated Firebase project and returns an {@link AndroidApp}
    * reference to it.
    *
    * @param packageName the package name of the Android App to be created
@@ -160,7 +159,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Asynchronously creates a new Android App in the associated Firebase Project and returns an
+   * Asynchronously creates a new Android App in the associated Firebase project and returns an
    * {@link ApiFuture} that will eventually contain the {@link AndroidApp} reference to it.
    *
    * @param packageName the package name of the Android App to be created
@@ -172,7 +171,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Asynchronously creates a new Android App in the associated Firebase Project and returns an
+   * Asynchronously creates a new Android App in the associated Firebase project and returns an
    * {@link ApiFuture} that will eventually contain the {@link AndroidApp} reference to it.
    *
    * @param packageName the package name of the Android App to be created
@@ -188,7 +187,7 @@ public class FirebaseProjectManagement {
   /* iOS App */
 
   /**
-   * Obtains an {@link IosApp} reference to an iOS App in the associated Firebase Project.
+   * Obtains an {@link IosApp} reference to an iOS App in the associated Firebase project.
    *
    * @param appId the App ID that identifies this iOS App.
    * @see IosApp
@@ -199,7 +198,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Lists all iOS Apps in the associated Firebase Project, returning a list of {@link IosApp}
+   * Lists all iOS Apps in the associated Firebase project, returning a list of {@link IosApp}
    * references to each. This returned list is read-only and cannot be modified.
    *
    * @throws FirebaseProjectManagementException if there was an error during the RPC
@@ -211,7 +210,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Asynchronously lists all iOS Apps in the associated Firebase Project, returning an {@link
+   * Asynchronously lists all iOS Apps in the associated Firebase project, returning an {@link
    * ApiFuture} of a list of {@link IosApp} references to each. This returned list is read-only and
    * cannot be modified.
    *
@@ -223,7 +222,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Creates a new iOS App in the associated Firebase Project and returns an {@link IosApp}
+   * Creates a new iOS App in the associated Firebase project and returns an {@link IosApp}
    * reference to it.
    *
    * @param bundleId the bundle ID of the iOS App to be created
@@ -236,7 +235,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Creates a new iOS App in the associated Firebase Project and returns an {@link IosApp}
+   * Creates a new iOS App in the associated Firebase project and returns an {@link IosApp}
    * reference to it.
    *
    * @param bundleId the bundle ID of the iOS App to be created
@@ -251,7 +250,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Asynchronously creates a new iOS App in the associated Firebase Project and returns an {@link
+   * Asynchronously creates a new iOS App in the associated Firebase project and returns an {@link
    * ApiFuture} that will eventually contain the {@link IosApp} reference to it.
    *
    * @param bundleId the bundle ID of the iOS App to be created
@@ -263,7 +262,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Asynchronously creates a new iOS App in the associated Firebase Project and returns an {@link
+   * Asynchronously creates a new iOS App in the associated Firebase project and returns an {@link
    * ApiFuture} that will eventually contain the {@link IosApp} reference to it.
    *
    * @param bundleId the bundle ID of the iOS App to be created
@@ -278,7 +277,7 @@ public class FirebaseProjectManagement {
 
   private static class FirebaseProjectManagementService
       extends FirebaseService<FirebaseProjectManagement> {
-    private FirebaseProjectManagementServiceImpl serviceImpl;
+    private final FirebaseProjectManagementServiceImpl serviceImpl;
 
     private FirebaseProjectManagementService(FirebaseApp app) {
       super(SERVICE_ID, new FirebaseProjectManagement(ImplFirebaseTrampolines.getProjectId(app)));

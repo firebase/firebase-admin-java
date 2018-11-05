@@ -23,6 +23,7 @@ import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -65,6 +66,10 @@ public final class ImplFirebaseTrampolines {
 
   public static ThreadFactory getThreadFactory(@NonNull FirebaseApp app) {
     return app.getThreadFactory();
+  }
+
+  public static ScheduledExecutorService getScheduledExecutorService(@NonNull FirebaseApp app) {
+    return app.getScheduledExecutorService();
   }
 
   public static <T> ApiFuture<T> submitCallable(

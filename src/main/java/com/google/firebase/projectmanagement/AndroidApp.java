@@ -24,6 +24,8 @@ import java.util.List;
  * An instance of this class is a reference to an Android App within a Firebase Project; it can be
  * used to query detailed information about the App, modify the display name of the App, or download
  * the configuration file for the App.
+ *
+ * <p>Note: the methods in this class make RPCs.
  */
 public class AndroidApp {
 
@@ -31,12 +33,8 @@ public class AndroidApp {
   private final String appId;
 
   private AndroidApp(String appId, AndroidAppService androidAppService) {
-    this.androidAppService = androidAppService;
     this.appId = appId;
-  }
-
-  String getAppId() {
-    return appId;
+    this.androidAppService = androidAppService;
   }
 
   static AndroidApp create(String appId, AndroidAppService androidAppService) {
@@ -44,10 +42,12 @@ public class AndroidApp {
     return new AndroidApp(appId, androidAppService);
   }
 
+  String getAppId() {
+    return appId;
+  }
+
   /**
    * Retrieves detailed information about this Android App.
-   *
-   * <p>Note: this method makes an RPC.
    *
    * @return an {@link AndroidAppMetadata} instance describing this App
    * @throws FirebaseProjectManagementException if there was an error during the RPC
@@ -59,8 +59,6 @@ public class AndroidApp {
   /**
    * Asynchronously retrieves information about this Android App.
    *
-   * <p>Note: this method makes an RPC.
-   *
    * @return an {@link ApiFuture} containing an {@link AndroidAppMetadata} instance describing this
    *     App
    */
@@ -71,8 +69,6 @@ public class AndroidApp {
   /**
    * Updates the Display Name attribute of this Android App to the one given.
    *
-   * <p>Note: this method makes an RPC.
-   *
    * @throws FirebaseProjectManagementException if there was an error during the RPC
    */
   public void setDisplayName(String newDisplayName) throws FirebaseProjectManagementException {
@@ -81,8 +77,6 @@ public class AndroidApp {
 
   /**
    * Asynchronously updates the Display Name attribute of this Android App to the one given.
-   *
-   * <p>Note: this method makes an RPC.
    */
   public ApiFuture<Void> setDisplayNameAsync(String newDisplayName) {
     return androidAppService.setAndroidDisplayNameAsync(appId, newDisplayName);
@@ -90,8 +84,6 @@ public class AndroidApp {
 
   /**
    * Retrieves the configuration artifact associated with this Android App.
-   *
-   * <p>Note: this method makes an RPC.
    *
    * @return a modified UTF-8 encoded {@code String} containing the contents of the artifact
    * @throws FirebaseProjectManagementException if there was an error during the RPC
@@ -103,10 +95,8 @@ public class AndroidApp {
   /**
    * Asynchronously retrieves the configuration artifact associated with this Android App.
    *
-   * <p>Note: this method makes an RPC.
-   *
-   * @return an {@link ApiFuture} of a modified UTF-8 encoded {@code String} containing the contents
-   *     of the artifact
+   * @return an {@link ApiFuture} of a UTF-8 encoded {@code String} containing the contents of the
+   *     artifact
    */
   public ApiFuture<String> getConfigAsync() {
     return androidAppService.getAndroidConfigAsync(appId);
@@ -114,8 +104,6 @@ public class AndroidApp {
 
   /**
    * Retrieves the entire list of SHA certificates associated with this Android app.
-   *
-   * <p>Note: this method makes an RPC.
    *
    * @return a list of {@link ShaCertificate} containing resource name, SHA hash and certificate
    *     type
@@ -128,8 +116,6 @@ public class AndroidApp {
   /**
    * Asynchronously retrieves the entire list of SHA certificates associated with this Android app.
    *
-   * <p>Note: this method makes an RPC.
-   *
    * @return an {@link ApiFuture} of a list of {@link ShaCertificate} containing resource name,
    *     SHA hash and certificate type
    */
@@ -139,8 +125,6 @@ public class AndroidApp {
 
   /**
    * Adds a SHA certificate to this Android app.
-   *
-   * <p>Note: this method makes an RPC.
    *
    * @param shaHash hash of the SHA certificate to be added to this Android app
    * @return a {@link ShaCertificate} that was created for this Android app, containing resource
@@ -155,8 +139,6 @@ public class AndroidApp {
   /**
    * Asynchronously adds a SHA certificate to this Android app.
    *
-   * <p>Note: this method makes an RPC.
-   *
    * @param shaHash hash of the SHA certificate to be added to this Android app
    * @return a {@link ApiFuture} of a {@link ShaCertificate} that was created for this Android app,
    *     containing resource name, SHA hash, and certificate type
@@ -168,8 +150,6 @@ public class AndroidApp {
   /**
    * Removes a SHA certificate from this Android app.
    *
-   * <p>Note: this method makes an RPC.
-   *
    * @param resourceName the fully qualified resource name of the SHA certificate
    * @throws FirebaseProjectManagementException if there was an error during the RPC
    */
@@ -179,8 +159,6 @@ public class AndroidApp {
 
   /**
    * Asynchronously removes a SHA certificate from this Android app.
-   *
-   * <p>Note: this method makes an RPC.
    *
    * @param resourceName the fully qualified resource name of the SHA certificate
    */

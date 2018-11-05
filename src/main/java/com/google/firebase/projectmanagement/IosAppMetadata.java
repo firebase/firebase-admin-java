@@ -16,6 +16,8 @@
 package com.google.firebase.projectmanagement;
 
 import com.google.api.client.util.Preconditions;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 
 /**
  * Contains detailed information about an iOS App. Instances of this class are immutable.
@@ -75,13 +77,13 @@ public class IosAppMetadata {
 
   @Override
   public String toString() {
-    return "IosAppMetadata{"
-        + "name=" + name + ", "
-        + "appId=" + appId + ", "
-        + "displayName=" + displayName + ", "
-        + "projectId=" + projectId + ", "
-        + "bundleId=" + bundleId
-        + "}";
+    return MoreObjects.toStringHelper("IosAppMetadata")
+        .add("name", name)
+        .add("appId", appId)
+        .add("displayName", displayName)
+        .add("projectId", projectId)
+        .add("bundleId", bundleId)
+        .toString();
   }
 
   @Override
@@ -91,28 +93,17 @@ public class IosAppMetadata {
     }
     if (o instanceof IosAppMetadata) {
       IosAppMetadata that = (IosAppMetadata) o;
-      return (this.name.equals(that.getName()))
-          && (this.appId.equals(that.getAppId()))
-          && (this.displayName.equals(that.getDisplayName()))
-          && (this.projectId.equals(that.getProjectId()))
-          && (this.bundleId.equals(that.getBundleId()));
+      return Objects.equal(this.name, that.name)
+          && Objects.equal(this.appId, that.appId)
+          && Objects.equal(this.displayName, that.displayName)
+          && Objects.equal(this.projectId, that.projectId)
+          && Objects.equal(this.bundleId, that.bundleId);
     }
     return false;
   }
 
   @Override
   public int hashCode() {
-    int h = 1;
-    h *= 1000003;
-    h ^= this.name.hashCode();
-    h *= 1000003;
-    h ^= this.appId.hashCode();
-    h *= 1000003;
-    h ^= this.displayName.hashCode();
-    h *= 1000003;
-    h ^= this.projectId.hashCode();
-    h *= 1000003;
-    h ^= this.bundleId.hashCode();
-    return h;
+    return Objects.hashCode(name, appId, displayName, projectId, bundleId);
   }
 }

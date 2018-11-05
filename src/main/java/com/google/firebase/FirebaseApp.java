@@ -276,8 +276,8 @@ public class FirebaseApp {
     return name;
   }
 
-  /** 
-   * Returns the specified {@link FirebaseOptions}. 
+  /**
+   * Returns the specified {@link FirebaseOptions}.
    */
   @NonNull
   public FirebaseOptions getOptions() {
@@ -388,6 +388,10 @@ public class FirebaseApp {
 
   ThreadFactory getThreadFactory() {
     return threadManager.getThreadFactory();
+  }
+
+  ScheduledExecutorService getScheduledExecutorService() {
+    return ensureScheduledExecutorService();
   }
 
   <T> ApiFuture<T> submit(Callable<T> command) {

@@ -23,24 +23,24 @@ import org.junit.Test;
 public class ShaCertificateTest {
 
   @Test
-  public void getTypeFromHashTest_sha1() {
+  public void getTypeFromHashSha1() {
     assertEquals(
         ShaCertificate.getTypeFromHash("1111AAAA1111AAAA1111AAAA1111AAAA1111AAAA"),
         ShaCertificateType.SHA_1);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void getTypeFromHashTest_sha1WithSpecialCharacter() {
+  public void getTypeFromHashSha1WithSpecialCharacter() {
     ShaCertificate.getTypeFromHash("&111AAAA1111AAAA1111AAAA1111AAAA1111AAA$");
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void getTypeFromHashTest_sha1WithIncorrectSize() {
+  public void getTypeFromHashSha1WithIncorrectSize() {
     ShaCertificate.getTypeFromHash("1111AAAA1111AAAA1111AAAA1111AAAA1111");
   }
 
   @Test
-  public void getTypeFromHashTest_sha256() {
+  public void getTypeFromHashSha256() {
     assertEquals(
         ShaCertificate.getTypeFromHash(
             "1111AAAA1111AAAA1111AAAA1111AAAA1111AAAA1111AAAA1111AAAA1111AAAA"),
@@ -48,13 +48,13 @@ public class ShaCertificateTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void getTypeFromHashTest_sha256WithSpecialCharacter() {
+  public void getTypeFromHashSha256WithSpecialCharacter() {
     ShaCertificate.getTypeFromHash(
         "&111AAAA1111AAAA1111AAAA1111AAAA1111AAAA1111AAAA1111AAAA1111AAA&");
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void getTypeFromHashTest_sha256WithIncorrectSize() {
+  public void getTypeFromHashSha256WithIncorrectSize() {
     ShaCertificate.getTypeFromHash(
         "1111AAAA1111AAAA1111AAAA1111AAAA1111AAAA1111AAAA1111AAAA");
   }

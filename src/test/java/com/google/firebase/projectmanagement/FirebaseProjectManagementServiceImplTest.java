@@ -39,8 +39,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.projectmanagement.FirebaseProjectManagementServiceImpl;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -280,7 +282,7 @@ public class FirebaseProjectManagementServiceImplTest {
   }
 
   @Test
-  public void listIosApps_multiplePages() throws Exception {
+  public void listIosAppsMultiplePages() throws Exception {
     firstRpcResponse.setContent(LIST_IOS_APPS_PAGE_1_RESPONSE);
     MockLowLevelHttpResponse secondRpcResponse = new MockLowLevelHttpResponse();
     secondRpcResponse.setContent(LIST_IOS_APPS_PAGE_2_RESPONSE);
@@ -308,7 +310,7 @@ public class FirebaseProjectManagementServiceImplTest {
   }
 
   @Test
-  public void listIosAppsAsync_multiplePages() throws Exception {
+  public void listIosAppsAsyncMultiplePages() throws Exception {
     firstRpcResponse.setContent(LIST_IOS_APPS_PAGE_1_RESPONSE);
     MockLowLevelHttpResponse secondRpcResponse = new MockLowLevelHttpResponse();
     secondRpcResponse.setContent(LIST_IOS_APPS_PAGE_2_RESPONSE);
@@ -522,7 +524,7 @@ public class FirebaseProjectManagementServiceImplTest {
   }
 
   @Test
-  public void listAndroidApps_multiplePages() throws Exception {
+  public void listAndroidAppsMultiplePages() throws Exception {
     firstRpcResponse.setContent(LIST_ANDROID_APPS_PAGE_1_RESPONSE);
     MockLowLevelHttpResponse secondRpcResponse = new MockLowLevelHttpResponse();
     secondRpcResponse.setContent(LIST_ANDROID_APPS_PAGE_2_RESPONSE);
@@ -550,7 +552,7 @@ public class FirebaseProjectManagementServiceImplTest {
   }
 
   @Test
-  public void listAndroidAppsAsync_multiplePages() throws Exception {
+  public void listAndroidAppsAsyncMultiplePages() throws Exception {
     firstRpcResponse.setContent(LIST_ANDROID_APPS_PAGE_1_RESPONSE);
     MockLowLevelHttpResponse secondRpcResponse = new MockLowLevelHttpResponse();
     secondRpcResponse.setContent(LIST_ANDROID_APPS_PAGE_2_RESPONSE);
@@ -840,6 +842,7 @@ public class FirebaseProjectManagementServiceImplTest {
     FirebaseProjectManagementServiceImpl serviceImpl =
         new FirebaseProjectManagementServiceImpl(app);
     serviceImpl.setInterceptor(interceptor);
+    assertNotNull(ImplFirebaseTrampolines.getScheduledExecutorService(app));
     return serviceImpl;
   }
 
@@ -893,7 +896,7 @@ public class FirebaseProjectManagementServiceImplTest {
    * Can be used to intercept multiple HTTP requests and responses made by the SDK during tests.
    */
   private class MultiRequestTestResponseInterceptor implements HttpResponseInterceptor {
-    private List<HttpResponse> responsesList = new ArrayList<HttpResponse>();
+    private final List<HttpResponse> responsesList = new ArrayList<>();
 
     @Override
     public void interceptResponse(HttpResponse response) throws IOException {
