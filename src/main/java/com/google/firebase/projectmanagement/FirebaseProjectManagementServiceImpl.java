@@ -645,7 +645,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
         }
         for (ShaCertificateResponse certificate : parsedResponse.certificates) {
           certificates.add(
-              ShaCertificate.create(certificate.name, certificate.shaHash, certificate.certType));
+              ShaCertificate.create(certificate.name, certificate.shaHash));
         }
         return certificates;
       }
@@ -673,13 +673,13 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
         String url = String.format(
             "%s/v1beta1/projects/-/androidApps/%s/sha", FIREBASE_PROJECT_MANAGEMENT_URL, appId);
         ShaCertificateResponse parsedResponse = new ShaCertificateResponse();
+        ShaCertificate certificateToBeCreated = ShaCertificate.create(shaHash);
         ImmutableMap<String, String> payload = ImmutableMap.<String, String>builder()
-            .put("sha_hash", shaHash)
-            .put("cert_type", ShaCertificate.getTypeFromHash(shaHash).name())
+            .put("sha_hash", certificateToBeCreated.getShaHash())
+            .put("cert_type", certificateToBeCreated.getCertType().toString())
             .build();
         makePostRequest(url, payload, parsedResponse, appId, "App ID");
-        return ShaCertificate.create(
-            parsedResponse.name, parsedResponse.shaHash, parsedResponse.certType);
+        return ShaCertificate.create(parsedResponse.name, parsedResponse.shaHash);
       }
     };
   }

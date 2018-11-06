@@ -15,7 +15,10 @@
 
 package com.google.firebase.projectmanagement;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Ascii;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import java.util.regex.Pattern;
 
@@ -37,8 +40,19 @@ public class ShaCertificate {
     this.certType = Preconditions.checkNotNull(certType, "Null certType");
   }
 
-  public static ShaCertificate create(String name, String shaHash, String certType) {
-    return new ShaCertificate(name, shaHash, ShaCertificateType.valueOf(certType));
+  /**
+   * Creates a {@link ShaCertificate} from certificate hash. Name will be left as empty string since
+   * the certificate doesn't have a generated name yet.
+   *
+   * @param shaHash SHA hash of the certificate
+   * @return a SHA certificate
+   */
+  public static ShaCertificate create(String shaHash) {
+    return new ShaCertificate("", shaHash, getTypeFromHash(shaHash));
+  }
+
+  static ShaCertificate create(String name, String shaHash) {
+    return new ShaCertificate(name, shaHash, getTypeFromHash(shaHash));
   }
 
   /**
@@ -46,7 +60,8 @@ public class ShaCertificate {
    *
    * @throws IllegalArgumentException if the SHA hash is neither SHA-1 nor SHA-256
    */
-  public static ShaCertificateType getTypeFromHash(String shaHash) {
+  @VisibleForTesting
+  static ShaCertificateType getTypeFromHash(String shaHash) {
     Preconditions.checkNotNull(shaHash, "Null shaHash");
     shaHash = Ascii.toLowerCase(shaHash);
     if (SHA1_PATTERN.matcher(shaHash).matches()) {
@@ -94,22 +109,15 @@ public class ShaCertificate {
 
   @Override
   public String toString() {
-    return "ShaCertificate {"
-        + "name=" + name + ", "
-        + "shaHash=" + shaHash + ", "
-        + "certType=" + certType
-        + "}";
+    return MoreObjects.toStringHelper("ShaCertificate")
+        .add("name", name)
+        .add("shaHash", shaHash)
+        .add("certType", certType)
+        .toString();
   }
 
   @Override
   public int hashCode() {
-    int h = 1;
-    h *= 1000003;
-    h ^= this.name.hashCode();
-    h *= 1000003;
-    h ^= this.shaHash.hashCode();
-    h *= 1000003;
-    h ^= this.certType.hashCode();
-    return h;
+    return Objects.hashCode(name, shaHash, certType);
   }
 }

@@ -49,7 +49,7 @@ public class AndroidAppTest {
   private static final AndroidAppMetadata ANDROID_APP_METADATA =
       new AndroidAppMetadata(APP_NAME, APP_ID, APP_DISPLAY_NAME, PROJECT_ID, APP_PACKAGE_NAME);
   private static final ShaCertificate SHA_CERTIFICATE =
-      ShaCertificate.create(CERTIFICATE_NAME, SHA_HASH, ShaCertificateType.SHA_1.name());
+      ShaCertificate.create(CERTIFICATE_NAME, SHA_HASH);
 
   @Rule
   public final MockitoRule mockitoRule = MockitoJUnit.rule();
