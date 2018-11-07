@@ -723,10 +723,10 @@ public class FirebaseProjectManagementServiceImplTest {
     assertEquals(certificateList.size(), 2);
     assertEquals(
         certificateList.get(0),
-        ShaCertificate.create("test-project/sha/11111", SHA1_HASH, SHA_1.name()));
+        ShaCertificate.create("test-project/sha/11111", SHA1_HASH));
     assertEquals(
         certificateList.get(1),
-        ShaCertificate.create("test-project/sha/11111", SHA256_HASH, SHA_256.name()));
+        ShaCertificate.create("test-project/sha/11111", SHA256_HASH));
   }
 
   @Test
@@ -745,10 +745,10 @@ public class FirebaseProjectManagementServiceImplTest {
     assertEquals(certificateList.size(), 2);
     assertEquals(
         certificateList.get(0),
-        ShaCertificate.create("test-project/sha/11111", SHA1_HASH, SHA_1.name()));
+        ShaCertificate.create("test-project/sha/11111", SHA1_HASH));
     assertEquals(
         certificateList.get(1),
-        ShaCertificate.create("test-project/sha/11111", SHA256_HASH, SHA_256.name()));
+        ShaCertificate.create("test-project/sha/11111", SHA256_HASH));
   }
 
   @Test
@@ -766,12 +766,10 @@ public class FirebaseProjectManagementServiceImplTest {
     checkRequestHeader(expectedUrl, HttpMethod.POST);
     ImmutableMap<String, String> payload = ImmutableMap.<String, String>builder()
         .put("sha_hash", SHA1_HASH)
-        .put("cert_type", ShaCertificate.getTypeFromHash(SHA1_HASH).name())
+        .put("cert_type", SHA_1.toString())
         .build();
     checkRequestPayload(payload);
-    assertEquals(
-        certificate,
-        ShaCertificate.create("test-project/sha/11111", SHA1_HASH, "SHA_1"));
+    assertEquals(certificate, ShaCertificate.create("test-project/sha/11111", SHA1_HASH));
   }
 
   @Test
@@ -790,12 +788,10 @@ public class FirebaseProjectManagementServiceImplTest {
     checkRequestHeader(expectedUrl, HttpMethod.POST);
     ImmutableMap<String, String> payload = ImmutableMap.<String, String>builder()
         .put("sha_hash", SHA256_HASH)
-        .put("cert_type", ShaCertificate.getTypeFromHash(SHA256_HASH).name())
+        .put("cert_type", SHA_256.toString())
         .build();
     checkRequestPayload(payload);
-    assertEquals(
-        ShaCertificate.create("test-project/sha/11111", SHA256_HASH, "SHA_256"),
-        certificate);
+    assertEquals(ShaCertificate.create("test-project/sha/11111", SHA256_HASH), certificate);
   }
 
   @Test
