@@ -619,8 +619,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
           return certificates;
         }
         for (ShaCertificateResponse certificate : parsedResponse.certificates) {
-          certificates.add(
-              ShaCertificate.create(certificate.name, certificate.shaHash));
+          certificates.add(ShaCertificate.create(certificate.name, certificate.shaHash));
         }
         return certificates;
       }
