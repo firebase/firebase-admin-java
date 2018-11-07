@@ -31,7 +31,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.Nullable;
 import java.io.IOException;
 
-public class HttpHelper {
+class HttpHelper {
 
   @VisibleForTesting static final String PATCH_OVERRIDE_KEY = "X-HTTP-Method-Override";
   @VisibleForTesting static final String PATCH_OVERRIDE_VALUE = "PATCH";
@@ -145,7 +145,7 @@ public class HttpHelper {
     }
   }
 
-  static void disconnectQuietly(HttpResponse response) {
+  private static void disconnectQuietly(HttpResponse response) {
     if (response != null) {
       try {
         response.disconnect();
@@ -155,7 +155,7 @@ public class HttpHelper {
     }
   }
 
-  static void handleError(
+  private static void handleError(
       String requestIdentifier, String requestIdentifierDescription, Exception e)
           throws FirebaseProjectManagementException {
     String messageBody = "Error while invoking Firebase Project Management service.";
