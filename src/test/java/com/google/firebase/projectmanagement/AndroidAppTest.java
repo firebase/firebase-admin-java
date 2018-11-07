@@ -61,7 +61,7 @@ public class AndroidAppTest {
 
   @Before
   public void setUp() {
-    androidApp = AndroidApp.create(APP_ID, androidAppService);
+    androidApp = new AndroidApp(APP_ID, androidAppService);
   }
 
   @After

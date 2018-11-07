@@ -18,8 +18,8 @@ package com.google.firebase.projectmanagement;
 
 import static com.google.firebase.projectmanagement.FirebaseProjectManagementServiceImpl.FIREBASE_PROJECT_MANAGEMENT_URL;
 import static com.google.firebase.projectmanagement.FirebaseProjectManagementServiceImpl.MAXIMUM_LIST_APPS_PAGE_SIZE;
-import static com.google.firebase.projectmanagement.FirebaseProjectManagementServiceImpl.PATCH_OVERRIDE_KEY;
-import static com.google.firebase.projectmanagement.FirebaseProjectManagementServiceImpl.PATCH_OVERRIDE_VALUE;
+import static com.google.firebase.projectmanagement.HttpHelper.PATCH_OVERRIDE_KEY;
+import static com.google.firebase.projectmanagement.HttpHelper.PATCH_OVERRIDE_VALUE;
 import static com.google.firebase.projectmanagement.ShaCertificateType.SHA_1;
 import static com.google.firebase.projectmanagement.ShaCertificateType.SHA_256;
 import static org.junit.Assert.assertEquals;
@@ -42,7 +42,6 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
-import com.google.firebase.projectmanagement.FirebaseProjectManagementServiceImpl;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

@@ -17,15 +17,7 @@ package com.google.firebase.projectmanagement;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
-import com.google.api.client.http.json.JsonHttpContent;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.util.Base64;
 import com.google.api.client.util.Key;
 import com.google.api.core.ApiAsyncFunction;
@@ -34,7 +26,6 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -42,8 +33,6 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseRequestInitializer;
-import com.google.firebase.internal.Nullable;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,8 +46,6 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
   @VisibleForTesting static final String FIREBASE_PROJECT_MANAGEMENT_URL =
       "https://firebase.googleapis.com";
   @VisibleForTesting static final int MAXIMUM_LIST_APPS_PAGE_SIZE = 100;
-  @VisibleForTesting static final String PATCH_OVERRIDE_KEY = "X-HTTP-Method-Override";
-  @VisibleForTesting static final String PATCH_OVERRIDE_VALUE = "PATCH";
 
   private static final int MAXIMUM_POLLING_ATTEMPTS = 8;
   private static final long POLL_BASE_WAIT_TIME_MILLIS = 500L;
@@ -67,20 +54,9 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
   private static final String IOS_APPS_RESOURCE_NAME = "iosApps";
   private static final String ANDROID_NAMESPACE_PROPERTY = "package_name";
   private static final String IOS_NAMESPACE_PROPERTY = "bundle_id";
-  private static final ImmutableMap<Integer, String> ERROR_CODES =
-      ImmutableMap.<Integer, String>builder()
-          .put(401, "Request not authorized.")
-          .put(403, "Client does not have sufficient privileges.")
-          .put(404, "Failed to find the resource.")
-          .put(409, "The resource already exists.")
-          .put(429, "Request throttled by the backend server.")
-          .put(500, "Internal server error.")
-          .put(503, "Backend servers are over capacity. Try again later.")
-          .build();
 
   private final FirebaseApp app;
-  private final JsonFactory jsonFactory;
-  private final HttpRequestFactory requestFactory;
+  private final HttpHelper httpHelper;
   private final ScheduledExecutorService scheduledExecutor;
 
   private final CreateAndroidAppFromAppIdFunction createAndroidAppFromAppIdFunction =
@@ -88,19 +64,18 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
   private final CreateIosAppFromAppIdFunction createIosAppFromAppIdFunction =
       new CreateIosAppFromAppIdFunction();
 
-  private HttpResponseInterceptor interceptor;
-
   FirebaseProjectManagementServiceImpl(FirebaseApp app) {
     this.app = app;
-    this.jsonFactory = app.getOptions().getJsonFactory();
-    this.requestFactory = app.getOptions().getHttpTransport().createRequestFactory(
-        new FirebaseRequestInitializer(app));
+    this.httpHelper = new HttpHelper(
+        app.getOptions().getJsonFactory(),
+        app.getOptions().getHttpTransport().createRequestFactory(
+            new FirebaseRequestInitializer(app)));
     this.scheduledExecutor = ImplFirebaseTrampolines.getScheduledExecutorService(app);
   }
 
   @VisibleForTesting
   void setInterceptor(HttpResponseInterceptor interceptor) {
-    this.interceptor = interceptor;
+    httpHelper.setInterceptor(interceptor);
   }
 
   void destroy() {
@@ -131,7 +106,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
         String url = String.format(
             "%s/v1beta1/projects/-/androidApps/%s", FIREBASE_PROJECT_MANAGEMENT_URL, appId);
         AndroidAppResponse parsedResponse = new AndroidAppResponse();
-        makeGetRequest(url, parsedResponse, appId, "App ID");
+        httpHelper.makeGetRequest(url, parsedResponse, appId, "App ID");
         return new AndroidAppMetadata(
             parsedResponse.name,
             parsedResponse.appId,
@@ -162,7 +137,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
         String url = String.format(
             "%s/v1beta1/projects/-/iosApps/%s", FIREBASE_PROJECT_MANAGEMENT_URL, appId);
         IosAppResponse parsedResponse = new IosAppResponse();
-        makeGetRequest(url, parsedResponse, appId, "App ID");
+        httpHelper.makeGetRequest(url, parsedResponse, appId, "App ID");
         return new IosAppMetadata(
             parsedResponse.name,
             parsedResponse.appId,
@@ -223,7 +198,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
         ListAppsResponse parsedResponse;
         do {
           parsedResponse = new ListAppsResponse();
-          makeGetRequest(url, parsedResponse, projectId, "Project ID");
+          httpHelper.makeGetRequest(url, parsedResponse, projectId, "Project ID");
           if (parsedResponse.apps == null) {
             break;
           }
@@ -333,10 +308,10 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
           payloadBuilder.put("display_name", displayName);
         }
         OperationResponse operationResponseInstance = new OperationResponse();
-        makePostRequest(
+        httpHelper.makePostRequest(
             url, payloadBuilder.build(), operationResponseInstance, projectId, "Project ID");
         if (Strings.isNullOrEmpty(operationResponseInstance.name)) {
-          throw createFirebaseProjectManagementException(
+          throw HttpHelper.createFirebaseProjectManagementException(
               namespace,
               "Bundle ID",
               "Unable to create App: server returned null operation name.",
@@ -405,14 +380,14 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
       String url = String.format("%s/v1/%s", FIREBASE_PROJECT_MANAGEMENT_URL, operationName);
       OperationResponse operationResponseInstance = new OperationResponse();
       try {
-        makeGetRequest(url, operationResponseInstance, projectId, "Project ID");
+        httpHelper.makeGetRequest(url, operationResponseInstance, projectId, "Project ID");
       } catch (FirebaseProjectManagementException e) {
         settableFuture.setException(e);
         return;
       }
       if (!operationResponseInstance.done) {
         if (numberOfPreviousPolls + 1 >= MAXIMUM_POLLING_ATTEMPTS) {
-          settableFuture.setException(createFirebaseProjectManagementException(
+          settableFuture.setException(HttpHelper.createFirebaseProjectManagementException(
               projectId,
               "Project ID",
               "Unable to create App: deadline exceeded.",
@@ -436,7 +411,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
       // or 'error' is set.
       if (operationResponseInstance.response == null
           || Strings.isNullOrEmpty(operationResponseInstance.response.appId)) {
-        settableFuture.setException(createFirebaseProjectManagementException(
+        settableFuture.setException(HttpHelper.createFirebaseProjectManagementException(
             projectId,
             "Project ID",
             "Unable to create App: internal server error.",
@@ -551,7 +526,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
         ImmutableMap<String, String> payload =
             ImmutableMap.<String, String>builder().put("display_name", newDisplayName).build();
         EmptyResponse emptyResponseInstance = new EmptyResponse();
-        makePatchRequest(url, payload, emptyResponseInstance, appId, "App ID");
+        httpHelper.makePatchRequest(url, payload, emptyResponseInstance, appId, "App ID");
         return null;
       }
     };
@@ -602,7 +577,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
             platformResourceName,
             appId);
         AppConfigResponse parsedResponse = new AppConfigResponse();
-        makeGetRequest(url, parsedResponse, appId, "App ID");
+        httpHelper.makeGetRequest(url, parsedResponse, appId, "App ID");
         return new String(
             Base64.decodeBase64(parsedResponse.configFileContents), StandardCharsets.UTF_8);
       }
@@ -638,7 +613,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
         String url = String.format(
             "%s/v1beta1/projects/-/androidApps/%s/sha", FIREBASE_PROJECT_MANAGEMENT_URL, appId);
         ListShaCertificateResponse parsedResponse = new ListShaCertificateResponse();
-        makeGetRequest(url, parsedResponse, appId, "App ID");
+        httpHelper.makeGetRequest(url, parsedResponse, appId, "App ID");
         List<ShaCertificate> certificates = new ArrayList<>();
         if (parsedResponse.certificates == null) {
           return certificates;
@@ -677,7 +652,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
             .put("sha_hash", shaHash)
             .put("cert_type", ShaCertificate.getTypeFromHash(shaHash).name())
             .build();
-        makePostRequest(url, payload, parsedResponse, appId, "App ID");
+        httpHelper.makePostRequest(url, payload, parsedResponse, appId, "App ID");
         return ShaCertificate.create(
             parsedResponse.name, parsedResponse.shaHash, parsedResponse.certType);
       }
@@ -705,7 +680,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
         String url = String.format(
             "%s/v1beta1/%s", FIREBASE_PROJECT_MANAGEMENT_URL, resourceName);
         EmptyResponse parsedResponse = new EmptyResponse();
-        makeDeleteRequest(url, parsedResponse, resourceName, "SHA name");
+        httpHelper.makeDeleteRequest(url, parsedResponse, resourceName, "SHA name");
         return null;
       }
     };
@@ -732,116 +707,6 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
 
   /* Helper methods. */
 
-  private <T> void makeGetRequest(
-      String url,
-      T parsedResponseInstance,
-      String requestIdentifier,
-      String requestIdentifierDescription) throws FirebaseProjectManagementException {
-    try {
-      makeRequest(
-          requestFactory.buildGetRequest(new GenericUrl(url)),
-          parsedResponseInstance,
-          requestIdentifier,
-          requestIdentifierDescription);
-    } catch (IOException e) {
-      handleError(requestIdentifier, requestIdentifierDescription, e);
-    }
-  }
-
-  private <T> void makePostRequest(
-      String url,
-      Object payload,
-      T parsedResponseInstance,
-      String requestIdentifier,
-      String requestIdentifierDescription) throws FirebaseProjectManagementException {
-    try {
-      makeRequest(
-          requestFactory.buildPostRequest(
-              new GenericUrl(url), new JsonHttpContent(jsonFactory, payload)),
-          parsedResponseInstance,
-          requestIdentifier,
-          requestIdentifierDescription);
-    } catch (IOException e) {
-      handleError(requestIdentifier, requestIdentifierDescription, e);
-    }
-  }
-
-  private <T> void makePatchRequest(
-      String url,
-      Object payload,
-      T parsedResponseInstance,
-      String requestIdentifier,
-      String requestIdentifierDescription) throws FirebaseProjectManagementException {
-    try {
-      HttpRequest baseRequest = requestFactory.buildPostRequest(
-          new GenericUrl(url), new JsonHttpContent(jsonFactory, payload));
-      baseRequest.getHeaders().set(PATCH_OVERRIDE_KEY, PATCH_OVERRIDE_VALUE);
-      makeRequest(
-          baseRequest, parsedResponseInstance, requestIdentifier, requestIdentifierDescription);
-    } catch (IOException e) {
-      handleError(requestIdentifier, requestIdentifierDescription, e);
-    }
-  }
-
-  private <T> void makeDeleteRequest(
-      String url,
-      T parsedResponseInstance,
-      String requestIdentifier,
-      String requestIdentifierDescription) throws FirebaseProjectManagementException {
-    try {
-      makeRequest(
-          requestFactory.buildDeleteRequest(new GenericUrl(url)),
-          parsedResponseInstance,
-          requestIdentifier,
-          requestIdentifierDescription);
-    } catch (IOException e) {
-      handleError(requestIdentifier, requestIdentifierDescription, e);
-    }
-  }
-
-  private <T> void makeRequest(
-      HttpRequest baseRequest,
-      T parsedResponseInstance,
-      String requestIdentifier,
-      String requestIdentifierDescription) throws FirebaseProjectManagementException {
-    HttpResponse response = null;
-    try {
-      baseRequest.setParser(new JsonObjectParser(jsonFactory));
-      baseRequest.setResponseInterceptor(interceptor);
-      response = baseRequest.execute();
-      jsonFactory.createJsonParser(response.getContent(), Charsets.UTF_8)
-          .parseAndClose(parsedResponseInstance);
-    } catch (Exception e) {
-      handleError(requestIdentifier, requestIdentifierDescription, e);
-    } finally {
-      disconnectQuietly(response);
-    }
-  }
-
-  private static void disconnectQuietly(HttpResponse response) {
-    if (response != null) {
-      try {
-        response.disconnect();
-      } catch (IOException ignored) {
-        // Ignored.
-      }
-    }
-  }
-
-  private static void handleError(
-      String requestIdentifier, String requestIdentifierDescription, Exception e)
-          throws FirebaseProjectManagementException {
-    String messageBody = "Error while invoking Firebase Project Management service.";
-    if (e instanceof HttpResponseException) {
-      int statusCode = ((HttpResponseException) e).getStatusCode();
-      if (ERROR_CODES.containsKey(statusCode)) {
-        messageBody = ERROR_CODES.get(statusCode);
-      }
-    }
-    throw createFirebaseProjectManagementException(
-        requestIdentifier, requestIdentifierDescription, messageBody, e);
-  }
-
   private <T> T blockOnFutureAndHandleExceptions(
       ApiFuture<T> future,
       String requestIdentifier,
@@ -853,32 +718,21 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
       if (e.getCause() instanceof FirebaseProjectManagementException) {
         throw (FirebaseProjectManagementException) e.getCause();
       }
-      throw createFirebaseProjectManagementException(
+      throw HttpHelper.createFirebaseProjectManagementException(
           requestIdentifier, requestIdentifierDescription, String.format("%s.", errorMessage), e);
     } catch (CancellationException e) {
-      throw createFirebaseProjectManagementException(
+      throw HttpHelper.createFirebaseProjectManagementException(
           requestIdentifier,
           requestIdentifierDescription,
           String.format("%s; the operation was cancelled.", errorMessage),
           e);
     } catch (InterruptedException e) {
-      throw createFirebaseProjectManagementException(
+      throw HttpHelper.createFirebaseProjectManagementException(
           requestIdentifier,
           requestIdentifierDescription,
           String.format("%s; the operation was interrupted.", errorMessage),
           e);
     }
-  }
-
-  private static FirebaseProjectManagementException createFirebaseProjectManagementException(
-      String requestIdentifier,
-      String requestIdentifierDescription,
-      String messageBody,
-      @Nullable Exception cause) {
-    return new FirebaseProjectManagementException(
-        String.format(
-            "%s \"%s\": %s", requestIdentifierDescription, requestIdentifier, messageBody),
-        cause);
   }
 
   /* Helper types. */
@@ -889,14 +743,14 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
       implements CreateAppFromAppIdFunction<AndroidApp> {
     @Override
     public AndroidApp apply(String appId) {
-      return AndroidApp.create(appId, FirebaseProjectManagementServiceImpl.this);
+      return new AndroidApp(appId, FirebaseProjectManagementServiceImpl.this);
     }
   }
 
   private class CreateIosAppFromAppIdFunction implements CreateAppFromAppIdFunction<IosApp> {
     @Override
     public IosApp apply(String appId) {
-      return IosApp.create(appId, FirebaseProjectManagementServiceImpl.this);
+      return new IosApp(appId, FirebaseProjectManagementServiceImpl.this);
     }
   }
 }

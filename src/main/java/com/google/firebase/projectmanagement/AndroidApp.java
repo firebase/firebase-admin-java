@@ -32,14 +32,10 @@ public class AndroidApp {
   private final AndroidAppService androidAppService;
   private final String appId;
 
-  private AndroidApp(String appId, AndroidAppService androidAppService) {
+  AndroidApp(String appId, AndroidAppService androidAppService) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(appId), "app ID cannot be null or empty");
     this.appId = appId;
     this.androidAppService = androidAppService;
-  }
-
-  static AndroidApp create(String appId, AndroidAppService androidAppService) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(appId), "app ID cannot be null or empty");
-    return new AndroidApp(appId, androidAppService);
   }
 
   String getAppId() {
@@ -59,7 +55,7 @@ public class AndroidApp {
   /**
    * Asynchronously retrieves information about this Android App.
    *
-   * @return an {@link ApiFuture} containing an {@link AndroidAppMetadata} instance describing this
+   * @return an {@code ApiFuture} containing an {@link AndroidAppMetadata} instance describing this
    *     App
    */
   public ApiFuture<AndroidAppMetadata> getMetadataAsync() {
@@ -95,7 +91,7 @@ public class AndroidApp {
   /**
    * Asynchronously retrieves the configuration artifact associated with this Android App.
    *
-   * @return an {@link ApiFuture} of a UTF-8 encoded {@code String} containing the contents of the
+   * @return an {@code ApiFuture} of a UTF-8 encoded {@code String} containing the contents of the
    *     artifact
    */
   public ApiFuture<String> getConfigAsync() {
@@ -116,7 +112,7 @@ public class AndroidApp {
   /**
    * Asynchronously retrieves the entire list of SHA certificates associated with this Android app.
    *
-   * @return an {@link ApiFuture} of a list of {@link ShaCertificate} containing resource name,
+   * @return an {@code ApiFuture} of a list of {@link ShaCertificate} containing resource name,
    *     SHA hash and certificate type
    */
   public ApiFuture<List<ShaCertificate>> getShaCertificatesAsync() {
@@ -140,7 +136,7 @@ public class AndroidApp {
    * Asynchronously adds a SHA certificate to this Android app.
    *
    * @param shaHash hash of the SHA certificate to be added to this Android app
-   * @return a {@link ApiFuture} of a {@link ShaCertificate} that was created for this Android app,
+   * @return a {@code ApiFuture} of a {@link ShaCertificate} that was created for this Android app,
    *     containing resource name, SHA hash, and certificate type
    */
   public ApiFuture<ShaCertificate> createShaCertificateAsync(String shaHash) {

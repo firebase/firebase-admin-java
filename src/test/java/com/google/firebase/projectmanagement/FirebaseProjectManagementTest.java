@@ -84,7 +84,7 @@ public class FirebaseProjectManagementTest {
   @Test
   public void testCreateAndroidAppShouldSucceed() throws Exception {
     when(androidAppService.createAndroidApp(TEST_PROJECT_ID, TEST_APP_BUNDLE_ID, NULL_DISPLAY_NAME))
-        .thenReturn(AndroidApp.create(TEST_APP_ID, androidAppService));
+        .thenReturn(new AndroidApp(TEST_APP_ID, androidAppService));
 
     AndroidApp androidApp = projectManagement.createAndroidApp(TEST_APP_BUNDLE_ID);
 
@@ -108,7 +108,7 @@ public class FirebaseProjectManagementTest {
   public void testCreateAndroidAppWithDisplayNameShouldSucceed() throws Exception {
     when(androidAppService
             .createAndroidApp(TEST_PROJECT_ID, TEST_APP_BUNDLE_ID, TEST_APP_DISPLAY_NAME))
-        .thenReturn(AndroidApp.create(TEST_APP_ID, androidAppService));
+        .thenReturn(new AndroidApp(TEST_APP_ID, androidAppService));
 
     AndroidApp androidApp =
         projectManagement.createAndroidApp(TEST_APP_BUNDLE_ID, TEST_APP_DISPLAY_NAME);
@@ -134,7 +134,7 @@ public class FirebaseProjectManagementTest {
   public void testCreateAndroidAppAsyncShouldSucceed() throws Exception {
     when(androidAppService
             .createAndroidAppAsync(TEST_PROJECT_ID, TEST_APP_BUNDLE_ID, NULL_DISPLAY_NAME))
-        .thenReturn(immediateFuture(AndroidApp.create(TEST_APP_ID, androidAppService)));
+        .thenReturn(immediateFuture(new AndroidApp(TEST_APP_ID, androidAppService)));
 
     AndroidApp androidApp = projectManagement.createAndroidAppAsync(TEST_APP_BUNDLE_ID).get();
 
@@ -159,7 +159,7 @@ public class FirebaseProjectManagementTest {
   public void testCreateAndroidAppAsyncWithDisplayNameShouldSucceed() throws Exception {
     when(androidAppService
             .createAndroidAppAsync(TEST_PROJECT_ID, TEST_APP_BUNDLE_ID, TEST_APP_DISPLAY_NAME))
-        .thenReturn(immediateFuture(AndroidApp.create(TEST_APP_ID, androidAppService)));
+        .thenReturn(immediateFuture(new AndroidApp(TEST_APP_ID, androidAppService)));
 
     AndroidApp androidApp =
         projectManagement.createAndroidAppAsync(TEST_APP_BUNDLE_ID, TEST_APP_DISPLAY_NAME).get();
@@ -183,9 +183,9 @@ public class FirebaseProjectManagementTest {
 
   @Test
   public void testListAndroidAppsShouldSucceed() throws Exception {
-    AndroidApp app1 = AndroidApp.create(TEST_APP_ID, androidAppService);
-    AndroidApp app2 = AndroidApp.create(TEST_APP_ID_2, androidAppService);
-    AndroidApp app3 = AndroidApp.create(TEST_APP_ID_3, androidAppService);
+    AndroidApp app1 = new AndroidApp(TEST_APP_ID, androidAppService);
+    AndroidApp app2 = new AndroidApp(TEST_APP_ID_2, androidAppService);
+    AndroidApp app3 = new AndroidApp(TEST_APP_ID_3, androidAppService);
     when(androidAppService.listAndroidApps(TEST_PROJECT_ID))
         .thenReturn(ImmutableList.of(app1, app2, app3));
 
@@ -213,9 +213,9 @@ public class FirebaseProjectManagementTest {
 
   @Test
   public void testListAndroidAppsAsyncShouldSucceed() throws Exception {
-    AndroidApp app1 = AndroidApp.create(TEST_APP_ID, androidAppService);
-    AndroidApp app2 = AndroidApp.create(TEST_APP_ID_2, androidAppService);
-    AndroidApp app3 = AndroidApp.create(TEST_APP_ID_3, androidAppService);
+    AndroidApp app1 = new AndroidApp(TEST_APP_ID, androidAppService);
+    AndroidApp app2 = new AndroidApp(TEST_APP_ID_2, androidAppService);
+    AndroidApp app3 = new AndroidApp(TEST_APP_ID_3, androidAppService);
     List<AndroidApp> androidApps = ImmutableList.of(app1, app2, app3);
     when(androidAppService.listAndroidAppsAsync(TEST_PROJECT_ID))
         .thenReturn(immediateFuture(androidApps));
@@ -247,7 +247,7 @@ public class FirebaseProjectManagementTest {
   @Test
   public void testCreateIosAppShouldSucceed() throws Exception {
     when(iosAppService.createIosApp(TEST_PROJECT_ID, TEST_APP_BUNDLE_ID, NULL_DISPLAY_NAME))
-        .thenReturn(IosApp.create(TEST_APP_ID, iosAppService));
+        .thenReturn(new IosApp(TEST_APP_ID, iosAppService));
 
     IosApp iosApp = projectManagement.createIosApp(TEST_APP_BUNDLE_ID);
 
@@ -270,7 +270,7 @@ public class FirebaseProjectManagementTest {
   @Test
   public void testCreateIosAppWithDisplayNameShouldSucceed() throws Exception {
     when(iosAppService.createIosApp(TEST_PROJECT_ID, TEST_APP_BUNDLE_ID, TEST_APP_DISPLAY_NAME))
-        .thenReturn(IosApp.create(TEST_APP_ID, iosAppService));
+        .thenReturn(new IosApp(TEST_APP_ID, iosAppService));
 
     IosApp iosApp = projectManagement.createIosApp(TEST_APP_BUNDLE_ID, TEST_APP_DISPLAY_NAME);
 
@@ -293,7 +293,7 @@ public class FirebaseProjectManagementTest {
   @Test
   public void testCreateIosAppAsyncShouldSucceed() throws Exception {
     when(iosAppService.createIosAppAsync(TEST_PROJECT_ID, TEST_APP_BUNDLE_ID, NULL_DISPLAY_NAME))
-        .thenReturn(immediateFuture(IosApp.create(TEST_APP_ID, iosAppService)));
+        .thenReturn(immediateFuture(new IosApp(TEST_APP_ID, iosAppService)));
 
     IosApp iosApp = projectManagement.createIosAppAsync(TEST_APP_BUNDLE_ID).get();
 
@@ -317,7 +317,7 @@ public class FirebaseProjectManagementTest {
   public void testCreateIosAppAsyncWithDisplayNameShouldSucceed() throws Exception {
     when(iosAppService
             .createIosAppAsync(TEST_PROJECT_ID, TEST_APP_BUNDLE_ID, TEST_APP_DISPLAY_NAME))
-        .thenReturn(immediateFuture(IosApp.create(TEST_APP_ID, iosAppService)));
+        .thenReturn(immediateFuture(new IosApp(TEST_APP_ID, iosAppService)));
 
     IosApp iosApp =
         projectManagement.createIosAppAsync(TEST_APP_BUNDLE_ID, TEST_APP_DISPLAY_NAME).get();
@@ -341,9 +341,9 @@ public class FirebaseProjectManagementTest {
 
   @Test
   public void testListIosAppsShouldSucceed() throws Exception {
-    IosApp app1 = IosApp.create(TEST_APP_ID, iosAppService);
-    IosApp app2 = IosApp.create(TEST_APP_ID_2, iosAppService);
-    IosApp app3 = IosApp.create(TEST_APP_ID_3, iosAppService);
+    IosApp app1 = new IosApp(TEST_APP_ID, iosAppService);
+    IosApp app2 = new IosApp(TEST_APP_ID_2, iosAppService);
+    IosApp app3 = new IosApp(TEST_APP_ID_3, iosAppService);
     when(iosAppService.listIosApps(TEST_PROJECT_ID)).thenReturn(ImmutableList.of(app1, app2, app3));
 
     List<IosApp> iosApps = projectManagement.listIosApps();
@@ -370,9 +370,9 @@ public class FirebaseProjectManagementTest {
 
   @Test
   public void testListIosAppsAsyncShouldSucceed() throws Exception {
-    IosApp app1 = IosApp.create(TEST_APP_ID, iosAppService);
-    IosApp app2 = IosApp.create(TEST_APP_ID_2, iosAppService);
-    IosApp app3 = IosApp.create(TEST_APP_ID_3, iosAppService);
+    IosApp app1 = new IosApp(TEST_APP_ID, iosAppService);
+    IosApp app2 = new IosApp(TEST_APP_ID_2, iosAppService);
+    IosApp app3 = new IosApp(TEST_APP_ID_3, iosAppService);
     List<IosApp> iosApps = ImmutableList.of(app1, app2, app3);
     when(iosAppService.listIosAppsAsync(TEST_PROJECT_ID)).thenReturn(immediateFuture(iosApps));
 

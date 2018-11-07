@@ -75,7 +75,7 @@ public class IosAppTest {
 
   @Before
   public void setUp() {
-    iosApp = IosApp.create(TEST_APP_ID, iosAppService);
+    iosApp = new IosApp(TEST_APP_ID, iosAppService);
   }
 
   @After

@@ -102,7 +102,7 @@ public class FirebaseProjectManagement {
    */
   @NonNull
   public AndroidApp getAndroidApp(@NonNull String appId) {
-    return AndroidApp.create(appId, androidAppService);
+    return new AndroidApp(appId, androidAppService);
   }
 
   /**
@@ -118,7 +118,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Asynchronously lists all Android Apps in the associated Firebase project, returning an {@link
+   * Asynchronously lists all Android Apps in the associated Firebase project, returning an {@code
    * ApiFuture} of a list of {@link AndroidApp} references to each. This returned list is read-only
    * and cannot be modified.
    *
@@ -160,7 +160,7 @@ public class FirebaseProjectManagement {
 
   /**
    * Asynchronously creates a new Android App in the associated Firebase project and returns an
-   * {@link ApiFuture} that will eventually contain the {@link AndroidApp} reference to it.
+   * {@code ApiFuture} that will eventually contain the {@link AndroidApp} reference to it.
    *
    * @param packageName the package name of the Android App to be created
    * @see AndroidApp
@@ -172,7 +172,7 @@ public class FirebaseProjectManagement {
 
   /**
    * Asynchronously creates a new Android App in the associated Firebase project and returns an
-   * {@link ApiFuture} that will eventually contain the {@link AndroidApp} reference to it.
+   * {@code ApiFuture} that will eventually contain the {@link AndroidApp} reference to it.
    *
    * @param packageName the package name of the Android App to be created
    * @param displayName a nickname for this Android App
@@ -194,7 +194,7 @@ public class FirebaseProjectManagement {
    */
   @NonNull
   public IosApp getIosApp(@NonNull String appId) {
-    return IosApp.create(appId, iosAppService);
+    return new IosApp(appId, iosAppService);
   }
 
   /**
@@ -210,7 +210,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Asynchronously lists all iOS Apps in the associated Firebase project, returning an {@link
+   * Asynchronously lists all iOS Apps in the associated Firebase project, returning an {@code
    * ApiFuture} of a list of {@link IosApp} references to each. This returned list is read-only and
    * cannot be modified.
    *
@@ -250,7 +250,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Asynchronously creates a new iOS App in the associated Firebase project and returns an {@link
+   * Asynchronously creates a new iOS App in the associated Firebase project and returns an {@code
    * ApiFuture} that will eventually contain the {@link IosApp} reference to it.
    *
    * @param bundleId the bundle ID of the iOS App to be created
@@ -262,7 +262,7 @@ public class FirebaseProjectManagement {
   }
 
   /**
-   * Asynchronously creates a new iOS App in the associated Firebase project and returns an {@link
+   * Asynchronously creates a new iOS App in the associated Firebase project and returns an {@code
    * ApiFuture} that will eventually contain the {@link IosApp} reference to it.
    *
    * @param bundleId the bundle ID of the iOS App to be created

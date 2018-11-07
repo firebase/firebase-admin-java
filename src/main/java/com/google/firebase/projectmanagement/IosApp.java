@@ -31,14 +31,10 @@ public class IosApp {
   private final String appId;
   private final IosAppService iosAppService;
 
-  private IosApp(String appId, IosAppService iosAppService) {
+  IosApp(String appId, IosAppService iosAppService) {
+    Preconditions.checkArgument(!Strings.isNullOrEmpty(appId), "app ID cannot be null or empty");
     this.appId = appId;
     this.iosAppService = iosAppService;
-  }
-
-  static IosApp create(String appId, IosAppService iosAppService) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(appId), "app ID cannot be null or empty");
-    return new IosApp(appId, iosAppService);
   }
 
   String getAppId() {
@@ -58,7 +54,7 @@ public class IosApp {
   /**
    * Asynchronously retrieves information about this iOS App.
    *
-   * @return an {@link ApiFuture} containing an {@link IosAppMetadata} instance describing this App
+   * @return an {@code ApiFuture} containing an {@link IosAppMetadata} instance describing this App
    */
   public ApiFuture<IosAppMetadata> getMetadataAsync() {
     return iosAppService.getIosAppAsync(appId);
@@ -93,7 +89,7 @@ public class IosApp {
   /**
    * Asynchronously retrieves the configuration artifact associated with this iOS App.
    *
-   * @return an {@link ApiFuture} of a UTF-8 encoded {@code String} containing the contents of the
+   * @return an {@code ApiFuture} of a UTF-8 encoded {@code String} containing the contents of the
    *     artifact
    */
   public ApiFuture<String> getConfigAsync() {
