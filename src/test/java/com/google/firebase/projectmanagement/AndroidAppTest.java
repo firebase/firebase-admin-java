@@ -151,20 +151,21 @@ public class AndroidAppTest {
 
   @Test
   public void testCreateShaCertificate() throws Exception {
-    when(androidAppService.createShaCertificate(APP_ID, SHA_HASH))
+    when(androidAppService.createShaCertificate(APP_ID, ShaCertificate.create(SHA_HASH)))
         .thenReturn(SHA_CERTIFICATE);
 
-    ShaCertificate certificate = androidApp.createShaCertificate(SHA_HASH);
+    ShaCertificate certificate = androidApp.createShaCertificate(ShaCertificate.create(SHA_HASH));
 
     assertEquals(certificate, SHA_CERTIFICATE);
   }
 
   @Test
   public void testCreateShaCertificateAsync() throws Exception {
-    when(androidAppService.createShaCertificateAsync(APP_ID, SHA_HASH))
+    when(androidAppService.createShaCertificateAsync(APP_ID, ShaCertificate.create(SHA_HASH)))
         .thenReturn(createApiFuture(SHA_CERTIFICATE));
 
-    ShaCertificate certificate = androidApp.createShaCertificateAsync(SHA_HASH).get();
+    ShaCertificate certificate = androidApp
+        .createShaCertificateAsync(ShaCertificate.create(SHA_HASH)).get();
 
     assertEquals(certificate, SHA_CERTIFICATE);
   }
@@ -173,7 +174,7 @@ public class AndroidAppTest {
   public void testDeleteShaCertificate() throws Exception {
     doNothing().when(androidAppService).deleteShaCertificate(CERTIFICATE_NAME);
 
-    androidApp.deleteShaCertificate(CERTIFICATE_NAME);
+    androidApp.deleteShaCertificate(ShaCertificate.create(CERTIFICATE_NAME, SHA_HASH));
 
     Mockito.verify(androidAppService).deleteShaCertificate(CERTIFICATE_NAME);
   }
@@ -183,7 +184,7 @@ public class AndroidAppTest {
     when(androidAppService.deleteShaCertificateAsync(CERTIFICATE_NAME))
         .thenReturn(createApiFuture((Void) null));
 
-    androidApp.deleteShaCertificateAsync(CERTIFICATE_NAME).get();
+    androidApp.deleteShaCertificateAsync(ShaCertificate.create(CERTIFICATE_NAME, SHA_HASH)).get();
 
     Mockito.verify(androidAppService).deleteShaCertificateAsync(CERTIFICATE_NAME);
   }

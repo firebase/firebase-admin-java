@@ -757,7 +757,8 @@ public class FirebaseProjectManagementServiceImplTest {
         String.format(CREATE_SHA_CERTIFICATE_RESPONSE, SHA1_HASH, SHA_1.name()));
     serviceImpl = initServiceImpl(firstRpcResponse, interceptor);
 
-    ShaCertificate certificate = serviceImpl.createShaCertificate(ANDROID_APP_ID, SHA1_HASH);
+    ShaCertificate certificate = serviceImpl
+        .createShaCertificate(ANDROID_APP_ID, ShaCertificate.create(SHA1_HASH));
 
     String expectedUrl = String.format(
         "%s/v1beta1/projects/-/androidApps/%s/sha",
@@ -779,7 +780,7 @@ public class FirebaseProjectManagementServiceImplTest {
     serviceImpl = initServiceImpl(firstRpcResponse, interceptor);
 
     ShaCertificate certificate = serviceImpl
-        .createShaCertificateAsync(ANDROID_APP_ID, SHA256_HASH).get();
+        .createShaCertificateAsync(ANDROID_APP_ID, ShaCertificate.create(SHA256_HASH)).get();
 
     String expectedUrl = String.format(
         "%s/v1beta1/projects/-/androidApps/%s/sha",

@@ -28,9 +28,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -77,6 +80,11 @@ public class FirebaseProjectManagementTest {
     projectManagement = FirebaseProjectManagement.getInstance();
     projectManagement.setAndroidAppService(androidAppService);
     projectManagement.setIosAppService(iosAppService);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
   /* Android */

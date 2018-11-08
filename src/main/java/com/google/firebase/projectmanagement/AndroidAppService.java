@@ -139,23 +139,24 @@ interface AndroidAppService {
    * Adds a SHA certificate to this Android App.
    *
    * @param appId the App ID of the Android App
-   * @param shaHash hash of the SHA certificate to be added to this Android App
+   * @param certificateToAdd the SHA certificate to be added to this Android App
    * @return a {@link ShaCertificate} that was created for this Android App, containing resource
    *     name, SHA hash, and certificate type
    * @throws FirebaseProjectManagementException if there was an error during the RPC
    */
-  ShaCertificate createShaCertificate(String appId, String shaHash)
+  ShaCertificate createShaCertificate(String appId, ShaCertificate certificateToAdd)
       throws FirebaseProjectManagementException;
 
   /**
    * Asynchronously adds a SHA certificate to this Android App.
    *
    * @param appId the App ID of the Android App
-   * @param shaHash hash of the SHA certificate to be added to this Android App
+   * @param certificateToAdd the SHA certificate to be added to this Android App
    * @return a {@link ApiFuture} of a {@link ShaCertificate} that was created for this Android App,
    *     containing resource name, SHA hash, and certificate type
    */
-  ApiFuture<ShaCertificate> createShaCertificateAsync(String appId, String shaHash);
+  ApiFuture<ShaCertificate> createShaCertificateAsync(
+      String appId, ShaCertificate certificateToAdd);
 
   /**
    * Removes a SHA certificate from this Android App.
