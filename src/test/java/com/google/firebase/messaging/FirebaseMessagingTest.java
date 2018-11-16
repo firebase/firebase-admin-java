@@ -512,6 +512,7 @@ public class FirebaseMessagingTest {
     assertEquals("POST", request.getRequestMethod());
     assertEquals(TEST_FCM_URL, request.getUrl().toString());
     assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+    assertEquals("2", request.getHeaders().get("X-GOOG-API-FORMAT-VERSION"));
     return request;
   }
 

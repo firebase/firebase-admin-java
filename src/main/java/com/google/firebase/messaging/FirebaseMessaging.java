@@ -249,6 +249,7 @@ public class FirebaseMessaging {
         try {
           HttpRequest request = requestFactory.buildPostRequest(
               new GenericUrl(url), new JsonHttpContent(jsonFactory, payload.build()));
+          request.getHeaders().set("X-GOOG-API-FORMAT-VERSION", "2");
           request.setParser(new JsonObjectParser(jsonFactory));
           request.setResponseInterceptor(interceptor);
           response = request.execute();
