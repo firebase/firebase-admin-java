@@ -378,6 +378,7 @@
                 <reportSets>
                     <reportSet>
                         <configuration>
+                            <!-- Disable additional Maven reports, since we do not use them. -->
                             <skip>true</skip>
                         </configuration>
                     </reportSet>
