@@ -1,7 +1,10 @@
 # Unreleased
 
 - [fixed] Fixing error handling in FCM. The SDK now checks the key
-  type.googleapis.com/google.firebase.fcm.v1.FcmError to set error code.
+  `type.googleapis.com/google.firebase.fcm.v1.FcmError` to set error
+  code.
+- [fixed] FCM errors sent by the back-end now include more details
+  that are helpful when debugging problems.
 
 # v6.5.0
 
