@@ -42,7 +42,7 @@ public class AndroidAppMetadata {
   /**
    * Returns the fully qualified resource name of this Android App.
    */
-  String getName() {
+  public String getName() {
     return name;
   }
 
@@ -50,14 +50,14 @@ public class AndroidAppMetadata {
    * Returns the globally unique, Firebase-assigned identifier of this Android App. This ID is
    * unique even across Apps of different platforms, such as iOS Apps.
    */
-  String getAppId() {
+  public String getAppId() {
     return appId;
   }
 
   /**
    * Returns the user-assigned display name of this Android App.
    */
-  String getDisplayName() {
+  public String getDisplayName() {
     return displayName;
   }
 
@@ -65,14 +65,14 @@ public class AndroidAppMetadata {
    * Returns the permanent, globally unique, user-assigned ID of the parent Project for this Android
    * App.
    */
-  String getProjectId() {
+  public String getProjectId() {
     return projectId;
   }
 
   /**
    * Returns the canonical package name of this Android app as it would appear in Play store.
    */
-  String getPackageName() {
+  public String getPackageName() {
     return packageName;
   }
 

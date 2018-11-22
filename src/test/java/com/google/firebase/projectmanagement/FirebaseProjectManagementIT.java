@@ -121,7 +121,7 @@ public class FirebaseProjectManagementIT {
     // Use the Synchronous version of the API.
     {
       // Add SHA-1 certificate.
-      androidApp.createShaCertificate(TEST_SHA1_CERTIFICATE);
+      androidApp.createShaCertificate(ShaCertificate.create(TEST_SHA1_CERTIFICATE));
       List<ShaCertificate> certificates = androidApp.getShaCertificates();
       ShaCertificate expectedCertificate = null;
       for (ShaCertificate certificate : certificates) {
@@ -133,7 +133,7 @@ public class FirebaseProjectManagementIT {
       assertEquals(expectedCertificate.getCertType(), ShaCertificateType.SHA_1);
 
       // Delete SHA-1 certificate.
-      androidApp.deleteShaCertificate(expectedCertificate.getName());
+      androidApp.deleteShaCertificate(expectedCertificate);
       for (ShaCertificate certificate : androidApp.getShaCertificates()) {
         if (certificate.getShaHash().equals(TEST_SHA1_CERTIFICATE)) {
           fail("Test SHA-1 certificate is not deleted.");
@@ -144,7 +144,7 @@ public class FirebaseProjectManagementIT {
     // Use the asynchronous version of the API.
     {
       // Add SHA-256 certificate.
-      androidApp.createShaCertificateAsync(TEST_SHA256_CERTIFICATE).get();
+      androidApp.createShaCertificateAsync(ShaCertificate.create(TEST_SHA256_CERTIFICATE)).get();
       List<ShaCertificate> certificates = androidApp.getShaCertificatesAsync().get();
       ShaCertificate expectedCertificate = null;
       for (ShaCertificate certificate : certificates) {
@@ -156,7 +156,7 @@ public class FirebaseProjectManagementIT {
       assertEquals(expectedCertificate.getCertType(), ShaCertificateType.SHA_256);
 
       // Delete SHA-256 certificate.
-      androidApp.deleteShaCertificateAsync(expectedCertificate.getName()).get();
+      androidApp.deleteShaCertificateAsync(expectedCertificate).get();
       for (ShaCertificate certificate : androidApp.getShaCertificatesAsync().get()) {
         if (certificate.getShaHash().equals(TEST_SHA256_CERTIFICATE)) {
           fail("Test SHA-1 certificate is not deleted.");

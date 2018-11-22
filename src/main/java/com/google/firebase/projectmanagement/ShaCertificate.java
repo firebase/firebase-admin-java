@@ -75,21 +75,21 @@ public class ShaCertificate {
   /**
    * Returns the fully qualified resource name of this SHA certificate.
    */
-  String getName() {
+  public String getName() {
     return name;
   }
 
   /**
    * Returns the hash of this SHA certificate.
    */
-  String getShaHash() {
+  public String getShaHash() {
     return shaHash;
   }
 
   /**
    * Returns the type {@link ShaCertificateType} of this SHA certificate.
    */
-  ShaCertificateType getCertType() {
+  public ShaCertificateType getCertType() {
     return certType;
   }
 

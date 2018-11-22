@@ -122,44 +122,45 @@ public class AndroidApp {
   /**
    * Adds a SHA certificate to this Android app.
    *
-   * @param shaHash hash of the SHA certificate to be added to this Android app
+   * @param certificateToAdd the SHA certificate to be added to this Android app
    * @return a {@link ShaCertificate} that was created for this Android app, containing resource
    *     name, SHA hash, and certificate type
    * @throws FirebaseProjectManagementException if there was an error during the RPC
    */
-  public ShaCertificate createShaCertificate(String shaHash)
+  public ShaCertificate createShaCertificate(ShaCertificate certificateToAdd)
       throws FirebaseProjectManagementException {
-    return androidAppService.createShaCertificate(appId, shaHash);
+    return androidAppService.createShaCertificate(appId, certificateToAdd);
   }
 
   /**
    * Asynchronously adds a SHA certificate to this Android app.
    *
-   * @param shaHash hash of the SHA certificate to be added to this Android app
+   * @param certificateToAdd the SHA certificate to be added to this Android app
    * @return a {@code ApiFuture} of a {@link ShaCertificate} that was created for this Android app,
    *     containing resource name, SHA hash, and certificate type
    */
-  public ApiFuture<ShaCertificate> createShaCertificateAsync(String shaHash) {
-    return androidAppService.createShaCertificateAsync(appId, shaHash);
+  public ApiFuture<ShaCertificate> createShaCertificateAsync(ShaCertificate certificateToAdd) {
+    return androidAppService.createShaCertificateAsync(appId, certificateToAdd);
   }
 
   /**
    * Removes a SHA certificate from this Android app.
    *
-   * @param resourceName the fully qualified resource name of the SHA certificate
+   * @param certificateToRemove the SHA certificate to be removed from this Android app
    * @throws FirebaseProjectManagementException if there was an error during the RPC
    */
-  public void deleteShaCertificate(String resourceName) throws FirebaseProjectManagementException {
-    androidAppService.deleteShaCertificate(resourceName);
+  public void deleteShaCertificate(ShaCertificate certificateToRemove)
+      throws FirebaseProjectManagementException {
+    androidAppService.deleteShaCertificate(certificateToRemove.getName());
   }
 
   /**
    * Asynchronously removes a SHA certificate from this Android app.
    *
-   * @param resourceName the fully qualified resource name of the SHA certificate
+   * @param certificateToRemove the SHA certificate to be removed from this Android app
    */
-  public ApiFuture<Void> deleteShaCertificateAsync(String resourceName) {
-    return androidAppService.deleteShaCertificateAsync(resourceName);
+  public ApiFuture<Void> deleteShaCertificateAsync(ShaCertificate certificateToRemove) {
+    return androidAppService.deleteShaCertificateAsync(certificateToRemove.getName());
   }
 
 }

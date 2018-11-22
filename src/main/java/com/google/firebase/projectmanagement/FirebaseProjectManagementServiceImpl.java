@@ -650,28 +650,28 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
   /* createShaCertificate */
 
   @Override
-  public ShaCertificate createShaCertificate(String appId, String shaHash)
+  public ShaCertificate createShaCertificate(String appId, ShaCertificate certificateToAdd)
       throws FirebaseProjectManagementException {
-    return createShaCertificateOp(appId, shaHash).call();
+    return createShaCertificateOp(appId, certificateToAdd).call();
   }
 
   @Override
-  public ApiFuture<ShaCertificate> createShaCertificateAsync(String appId, String shaHash) {
-    return createShaCertificateOp(appId, shaHash).callAsync(app);
+  public ApiFuture<ShaCertificate> createShaCertificateAsync(
+      String appId, ShaCertificate certificateToAdd) {
+    return createShaCertificateOp(appId, certificateToAdd).callAsync(app);
   }
 
   private CallableOperation<ShaCertificate, FirebaseProjectManagementException>
-      createShaCertificateOp(final String appId, final String shaHash) {
+      createShaCertificateOp(final String appId, final ShaCertificate certificateToAdd) {
     return new CallableOperation<ShaCertificate, FirebaseProjectManagementException>() {
       @Override
       protected ShaCertificate execute() throws FirebaseProjectManagementException {
         String url = String.format(
             "%s/v1beta1/projects/-/androidApps/%s/sha", FIREBASE_PROJECT_MANAGEMENT_URL, appId);
         ShaCertificateResponse parsedResponse = new ShaCertificateResponse();
-        ShaCertificate certificateToBeCreated = ShaCertificate.create(shaHash);
         ImmutableMap<String, String> payload = ImmutableMap.<String, String>builder()
-            .put("sha_hash", certificateToBeCreated.getShaHash())
-            .put("cert_type", certificateToBeCreated.getCertType().toString())
+            .put("sha_hash", certificateToAdd.getShaHash())
+            .put("cert_type", certificateToAdd.getCertType().toString())
             .build();
         httpHelper.makePostRequest(url, payload, parsedResponse, appId, "App ID");
         return ShaCertificate.create(parsedResponse.name, parsedResponse.shaHash);
