@@ -23,7 +23,6 @@ import com.google.api.client.util.Key;
 import com.google.api.core.ApiAsyncFunction;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
-import com.google.api.core.ApiFutures;
 import com.google.api.core.SettableApiFuture;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -38,8 +37,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppService {
 
@@ -57,7 +54,6 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
 
   private final FirebaseApp app;
   private final HttpHelper httpHelper;
-  private final ScheduledExecutorService scheduledExecutor;
 
   private final CreateAndroidAppFromAppIdFunction createAndroidAppFromAppIdFunction =
       new CreateAndroidAppFromAppIdFunction();
@@ -70,7 +66,6 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
         app.getOptions().getJsonFactory(),
         app.getOptions().getHttpTransport().createRequestFactory(
             new FirebaseRequestInitializer(app)));
-    this.scheduledExecutor = ImplFirebaseTrampolines.getScheduledExecutorService(app);
   }
 
   @VisibleForTesting
@@ -243,13 +238,13 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
       String projectId, String packageName, String displayName) {
     checkArgument(!Strings.isNullOrEmpty(packageName), "package name must not be null or empty");
     return
-        ApiFutures.transform(
-            ApiFutures.transformAsync(
+        ImplFirebaseTrampolines.transform(
+            ImplFirebaseTrampolines.transformAsync(
                 createAndroidAppOp(projectId, packageName, displayName).callAsync(app),
                 new WaitOperationFunction(projectId),
-                scheduledExecutor),
+                app),
             createAndroidAppFromAppIdFunction,
-            scheduledExecutor);
+            app);
   }
 
   @Override
@@ -267,13 +262,13 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
       String projectId, String bundleId, String displayName) {
     checkArgument(!Strings.isNullOrEmpty(bundleId), "bundle ID must not be null or empty");
     return
-        ApiFutures.transform(
-            ApiFutures.transformAsync(
+        ImplFirebaseTrampolines.transform(
+            ImplFirebaseTrampolines.transformAsync(
                 createIosAppOp(projectId, bundleId, displayName).callAsync(app),
                 new WaitOperationFunction(projectId),
-                scheduledExecutor),
+                app),
             createIosAppFromAppIdFunction,
-            scheduledExecutor);
+            app);
   }
 
   private CallableOperation<String, FirebaseProjectManagementException> createAndroidAppOp(
@@ -342,14 +337,14 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
     @Override
     public ApiFuture<String> apply(String operationName) throws FirebaseProjectManagementException {
       SettableApiFuture<String> settableFuture = SettableApiFuture.<String>create();
-      scheduledExecutor.schedule(
+      ImplFirebaseTrampolines.schedule(
+          app,
           new WaitOperationRunnable(
               /* numberOfPreviousPolls= */ 0,
               operationName,
               projectId,
               settableFuture),
-          /* delay= */ 0L,
-          TimeUnit.MILLISECONDS);
+          /* delayMillis= */ 0L);
       return settableFuture;
     }
   }
@@ -393,17 +388,17 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
               "Unable to create App: deadline exceeded.",
               /* cause= */ null));
         } else {
-          long delay = (long) (
+          long delayMillis = (long) (
               POLL_BASE_WAIT_TIME_MILLIS
                   * Math.pow(POLL_EXPONENTIAL_BACKOFF_FACTOR, numberOfPreviousPolls));
-          scheduledExecutor.schedule(
+          ImplFirebaseTrampolines.schedule(
+              app,
               new WaitOperationRunnable(
                   numberOfPreviousPolls + 1,
                   operationName,
                   projectId,
                   settableFuture),
-              delay,
-              TimeUnit.MILLISECONDS);
+              delayMillis);
         }
         return;
       }

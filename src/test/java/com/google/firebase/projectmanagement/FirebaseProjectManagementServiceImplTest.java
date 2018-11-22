@@ -837,7 +837,6 @@ public class FirebaseProjectManagementServiceImplTest {
     FirebaseProjectManagementServiceImpl serviceImpl =
         new FirebaseProjectManagementServiceImpl(app);
     serviceImpl.setInterceptor(interceptor);
-    assertNotNull(ImplFirebaseTrampolines.getScheduledExecutorService(app));
     return serviceImpl;
   }
 

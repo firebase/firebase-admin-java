@@ -409,6 +409,17 @@ public class FirebaseApp {
     }
   }
 
+  ScheduledFuture<?> schedule(Runnable runnable, long delayMillis) {
+    checkNotNull(runnable);
+    try {
+      return ensureScheduledExecutorService()
+          .schedule(runnable, delayMillis, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      // This may fail if the underlying ThreadFactory does not support long-lived threads.
+      throw new UnsupportedOperationException("Scheduled tasks not supported", e);
+    }
+  }
+
   void startTokenRefresher() {
     synchronized (lock) {
       checkNotDeleted();
