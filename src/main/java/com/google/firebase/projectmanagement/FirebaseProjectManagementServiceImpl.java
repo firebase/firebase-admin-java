@@ -35,8 +35,6 @@ import com.google.firebase.internal.FirebaseRequestInitializer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 
 class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppService {
 
@@ -44,7 +42,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
       "https://firebase.googleapis.com";
   @VisibleForTesting static final int MAXIMUM_LIST_APPS_PAGE_SIZE = 100;
 
-  private static final int MAXIMUM_POLLING_ATTEMPTS = 8;
+  private static final int MAXIMUM_POLLING_ATTEMPTS = 7;
   private static final long POLL_BASE_WAIT_TIME_MILLIS = 500L;
   private static final double POLL_EXPONENTIAL_BACKOFF_FACTOR = 1.5;
   private static final String ANDROID_APPS_RESOURCE_NAME = "androidApps";
@@ -226,11 +224,9 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
   @Override
   public AndroidApp createAndroidApp(String projectId, String packageName, String displayName)
       throws FirebaseProjectManagementException {
-    return blockOnFutureAndHandleExceptions(
-        createAndroidAppAsync(projectId, packageName, displayName),
-        packageName,
-        "Package name",
-        "Unable to create Android App");
+    String operationName = createAndroidAppOp(projectId, packageName, displayName).call();
+    String appId = pollOperation(projectId, operationName);
+    return new AndroidApp(appId, this);
   }
 
   @Override
@@ -250,11 +246,9 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
   @Override
   public IosApp createIosApp(String projectId, String bundleId, String displayName)
       throws FirebaseProjectManagementException {
-    return blockOnFutureAndHandleExceptions(
-        createIosAppAsync(projectId, bundleId, displayName),
-        bundleId,
-        "Bundle ID",
-        "Unable to create iOS App");
+    String operationName = createIosAppOp(projectId, bundleId, displayName).call();
+    String appId = pollOperation(projectId, operationName);
+    return new IosApp(appId, this);
   }
 
   @Override
@@ -317,6 +311,38 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
     };
   }
 
+  private String pollOperation(String projectId, String operationName)
+      throws FirebaseProjectManagementException {
+    String url = String.format("%s/v1/%s", FIREBASE_PROJECT_MANAGEMENT_URL, operationName);
+    for (int currentAttempt = 0; currentAttempt < MAXIMUM_POLLING_ATTEMPTS; currentAttempt++) {
+      long delayMillis = (long) (
+          POLL_BASE_WAIT_TIME_MILLIS
+              * Math.pow(POLL_EXPONENTIAL_BACKOFF_FACTOR, currentAttempt));
+      sleepOrThrow(projectId, delayMillis);
+      OperationResponse operationResponseInstance = new OperationResponse();
+      httpHelper.makeGetRequest(url, operationResponseInstance, projectId, "Project ID");
+      if (!operationResponseInstance.done) {
+        continue;
+      }
+      // The Long Running Operation API guarantees that when done == true, exactly one of 'response'
+      // or 'error' is set.
+      if (operationResponseInstance.response == null
+          || Strings.isNullOrEmpty(operationResponseInstance.response.appId)) {
+        throw HttpHelper.createFirebaseProjectManagementException(
+            projectId,
+            "Project ID",
+            "Unable to create App: internal server error.",
+            /* cause= */ null);
+      }
+      return operationResponseInstance.response.appId;
+    }
+    throw HttpHelper.createFirebaseProjectManagementException(
+        projectId,
+        "Project ID",
+        "Unable to create App: deadline exceeded.",
+        /* cause= */ null);
+  }
+
   /**
    * An {@link ApiAsyncFunction} that transforms a Long Running Operation name to an {@link IosApp}
    * or an {@link AndroidApp} instance by repeatedly polling the server (with exponential backoff)
@@ -344,7 +370,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
               operationName,
               projectId,
               settableFuture),
-          /* delayMillis= */ 0L);
+          /* delayMillis= */ POLL_BASE_WAIT_TIME_MILLIS);
       return settableFuture;
     }
   }
@@ -390,7 +416,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
         } else {
           long delayMillis = (long) (
               POLL_BASE_WAIT_TIME_MILLIS
-                  * Math.pow(POLL_EXPONENTIAL_BACKOFF_FACTOR, numberOfPreviousPolls));
+                  * Math.pow(POLL_EXPONENTIAL_BACKOFF_FACTOR, numberOfPreviousPolls + 1));
           ImplFirebaseTrampolines.schedule(
               app,
               new WaitOperationRunnable(
@@ -701,31 +727,16 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
 
   /* Helper methods. */
 
-  private <T> T blockOnFutureAndHandleExceptions(
-      ApiFuture<T> future,
-      String requestIdentifier,
-      String requestIdentifierDescription,
-      String errorMessage) throws FirebaseProjectManagementException {
+  private void sleepOrThrow(String projectId, long delayMillis)
+      throws FirebaseProjectManagementException {
     try {
-      return future.get();
-    } catch (ExecutionException e) {
-      if (e.getCause() instanceof FirebaseProjectManagementException) {
-        throw (FirebaseProjectManagementException) e.getCause();
-      }
-      throw HttpHelper.createFirebaseProjectManagementException(
-          requestIdentifier, requestIdentifierDescription, String.format("%s.", errorMessage), e);
-    } catch (CancellationException e) {
-      throw HttpHelper.createFirebaseProjectManagementException(
-          requestIdentifier,
-          requestIdentifierDescription,
-          String.format("%s; the operation was cancelled.", errorMessage),
-          e);
+      Thread.sleep(delayMillis);
     } catch (InterruptedException e) {
       throw HttpHelper.createFirebaseProjectManagementException(
-          requestIdentifier,
-          requestIdentifierDescription,
-          String.format("%s; the operation was interrupted.", errorMessage),
-          e);
+          projectId,
+          "Project ID",
+          "Unable to create App: exponential backoff interrupted.",
+          /* cause= */ null);
     }
   }
 
