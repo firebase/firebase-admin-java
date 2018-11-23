@@ -45,6 +45,7 @@ import com.google.firebase.auth.internal.HttpErrorResponse;
 import com.google.firebase.auth.internal.UploadAccountResponse;
 import com.google.firebase.internal.FirebaseRequestInitializer;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.SdkUtils;
 import java.io.IOException;
 import java.util.List;
@@ -221,6 +222,17 @@ class FirebaseUserManager {
     throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create session cookie");
   }
 
+  String getEmailActionLink(EmailLinkType type, String email, @Nullable ActionCodeSettings settings) {
+    checkArgument(!Strings.isNullOrEmpty(email), "Email must not be null or empty");
+    if (type == EmailLinkType.EMAIL_SIGNIN) {
+      checkNotNull(settings, "ActionCodeSettings must not be null when generating sign in links.");
+    }
+    final Map<String, Object> payload = ImmutableMap.<String, Object>of(
+          "requestType", type.name(), "returnOobLink", true);
+    // TODO: Make RPC call
+    return null;
+  }
+
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {
     checkArgument(!Strings.isNullOrEmpty(path), "path must not be null or empty");
     checkNotNull(content, "content must not be null");
@@ -302,5 +314,11 @@ class FirebaseUserManager {
     int getUsersCount() {
       return users.size();
     }
+  }
+
+  enum EmailLinkType {
+    VERIFY_EMAIL,
+    EMAIL_SIGNIN,
+    PASSWORD_RESET,
   }
 }

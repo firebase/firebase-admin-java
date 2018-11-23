@@ -14,19 +14,31 @@
  * limitations under the License.
  */
 
-package com.google.firebase;
+package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import java.net.MalformedURLException;
 import java.net.URL;
 
 public final class ActionCodeSettings {
 
+  @Key("url")
   private final String url;
+
+  @Key("handleCodeInApp")
   private final boolean handleCodeInApp;
+
+  @Key("dynamicLinkDomain")
   private final String dynamicLinkDomain;
+
+  @Key("android")
+  private final AndroidActionCodeSettings androidActionCodeSettings;
+
+  @Key("iOS")
+  private final IosActionCodeSettings iosActionCodeSettings;
 
   private ActionCodeSettings(Builder builder) {
     checkArgument(!Strings.isNullOrEmpty(builder.url), "URL must not be null or empty");
@@ -38,6 +50,8 @@ public final class ActionCodeSettings {
     this.url = builder.url;
     this.handleCodeInApp = builder.handleCodeInApp;
     this.dynamicLinkDomain = builder.dynamicLinkDomain;
+    this.androidActionCodeSettings = builder.androidActionCodeSettings;
+    this.iosActionCodeSettings = builder.iosActionCodeSettings;
   }
 
   public static Builder builder() {
@@ -45,9 +59,12 @@ public final class ActionCodeSettings {
   }
 
   public static final class Builder {
+
     private String url;
     private boolean handleCodeInApp;
     private String dynamicLinkDomain;
+    private AndroidActionCodeSettings androidActionCodeSettings;
+    private IosActionCodeSettings iosActionCodeSettings;
 
     private Builder() { }
 
@@ -63,6 +80,16 @@ public final class ActionCodeSettings {
 
     public Builder setDynamicLinkDomain(String dynamicLinkDomain) {
       this.dynamicLinkDomain = dynamicLinkDomain;
+      return this;
+    }
+
+    public Builder setAndroidActionCodeSettings(AndroidActionCodeSettings androidActionCodeSettings) {
+      this.androidActionCodeSettings = androidActionCodeSettings;
+      return this;
+    }
+
+    public Builder setIosActionCodeSettings(IosActionCodeSettings iosActionCodeSettings) {
+      this.iosActionCodeSettings = iosActionCodeSettings;
       return this;
     }
 
