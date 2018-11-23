@@ -242,8 +242,8 @@ public class ApsAlert {
     }
 
     /**
-     * Sets the key of the subtitle string in the app's string resources to use to localize the subtitle
-     * text.
+     * Sets the key of the subtitle string in the app's string resources to use to localize 
+     * the subtitle text.
      *
      * @param subtitleLocKey Resource key string.
      * @return This builder.
