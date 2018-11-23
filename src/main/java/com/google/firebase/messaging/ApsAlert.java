@@ -34,6 +34,9 @@ public class ApsAlert {
   @Key("title")
   private final String title;
 
+  @Key("subtitle")
+  private final String subtitle;
+
   @Key("body")
   private final String body;
 
@@ -49,6 +52,12 @@ public class ApsAlert {
   @Key("title-loc-args")
   private final List<String> titleLocArgs;
 
+  @Key("subtitle-loc-key")
+  private final String subtitleLocKey;
+
+  @Key("subtitle-loc-args")
+  private final List<String> subtitleLocArgs;
+
   @Key("action-loc-key")
   private final String actionLocKey;
 
@@ -57,6 +66,7 @@ public class ApsAlert {
 
   private ApsAlert(Builder builder) {
     this.title = builder.title;
+    this.subtitle = builder.subtitle;
     this.body = builder.body;
     this.actionLocKey = builder.actionLocKey;
     this.locKey = builder.locKey;
@@ -76,6 +86,14 @@ public class ApsAlert {
     } else {
       this.titleLocArgs = null;
     }
+    this.subtitleLocKey = builder.subtitleLocKey;
+    if (!builder.subtitleLocArgs.isEmpty()) {
+      checkArgument(!Strings.isNullOrEmpty(builder.subtitleLocKey),
+          "subtitleLocKey is required when specifying subtitleLocArgs");
+      this.subtitleLocArgs = ImmutableList.copyOf(builder.subtitleLocArgs);
+    } else {
+      this.subtitleLocArgs = null;
+    }
     this.launchImage = builder.launchImage;
   }
 
@@ -91,11 +109,14 @@ public class ApsAlert {
   public static class Builder {
 
     private String title;
+    private String subtitle;
     private String body;
     private String locKey;
     private List<String> locArgs = new ArrayList<>();
     private String titleLocKey;
     private List<String> titleLocArgs = new ArrayList<>();
+    private String subtitleLocKey;
+    private List<String> subtitleLocArgs = new ArrayList<>();
     private String actionLocKey;
     private String launchImage;
 
@@ -110,6 +131,17 @@ public class ApsAlert {
      */
     public Builder setTitle(String title) {
       this.title = title;
+      return this;
+    }
+
+    /**
+     * Sets the subtitle of the alert.
+     *
+     * @param subtitle Subtitle of the notification.
+     * @return This builder.
+     */
+    public Builder setSubtitle(String subtitle) {
+      this.subtitle = subtitle;
       return this;
     }
 
@@ -206,6 +238,42 @@ public class ApsAlert {
      */
     public Builder addAllTitleLocArgs(@NonNull List<String> args) {
       this.titleLocArgs.addAll(args);
+      return this;
+    }
+
+    /**
+     * Sets the key of the subtitle string in the app's string resources to use to localize the subtitle
+     * text.
+     *
+     * @param subtitleLocKey Resource key string.
+     * @return This builder.
+     */
+    public Builder setSubtitleLocalizationKey(String subtitleLocKey) {
+      this.subtitleLocKey = subtitleLocKey;
+      return this;
+    }
+
+    /**
+     * Adds a resource key string that will be used in place of the format specifiers in
+     * {@code subtitleLocKey}.
+     *
+     * @param arg Resource key string.
+     * @return This builder.
+     */
+    public Builder addSubtitleLocalizationArg(@NonNull String arg) {
+      this.subtitleLocArgs.add(arg);
+      return this;
+    }
+
+    /**
+     * Adds a list of resource keys that will be used in place of the format specifiers in
+     * {@code subtitleLocKey}.
+     *
+     * @param args List of resource key strings.
+     * @return This builder.
+     */
+    public Builder addAllSubtitleLocArgs(@NonNull List<String> args) {
+      this.subtitleLocArgs.addAll(args);
       return this;
     }
 
