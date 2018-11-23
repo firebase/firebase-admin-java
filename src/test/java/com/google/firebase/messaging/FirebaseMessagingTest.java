@@ -658,7 +658,7 @@ public class FirebaseMessagingTest {
                 "payload", ImmutableMap.of("k1", "v1", "k2", true,
                     "aps", ImmutableMap.<String, Object>of("badge", new BigDecimal(42),
                         "alert", ImmutableMap.<String, Object>of(
-                            "title", "test-title", "test-subtitle", "body", "test-body"))))
+                            "title", "test-title", "sutitle", "test-subtitle", "body", "test-body"))))
         ));
 
     // Webpush message (no notification)
