@@ -5,6 +5,8 @@
   code.
 - [fixed] FCM errors sent by the back-end now include more details
   that are helpful when debugging problems.
+- [changed] Migrated the `FirebaseAuth` user management API to the
+  new Identity Toolkit endpoint.
 
 # v6.5.0
 

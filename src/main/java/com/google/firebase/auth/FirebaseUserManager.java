@@ -235,21 +235,20 @@ class FirebaseUserManager {
     throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create session cookie");
   }
 
-  private <T> T post(
-          String path, Object content, Class<T> responseClass) throws FirebaseAuthException {
+  private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {
     checkArgument(!Strings.isNullOrEmpty(path), "path must not be null or empty");
     checkNotNull(content, "content must not be null for POST requests");
     GenericUrl url = new GenericUrl(baseUrl + path);
-    return sendRequest("POST", url, content, responseClass);
+    return sendRequest("POST", url, content, clazz);
   }
 
   private <T> T sendRequest(
           String method, GenericUrl url,
-          @Nullable Object content, Class<T> responseClass) throws FirebaseAuthException {
+          @Nullable Object content, Class<T> clazz) throws FirebaseAuthException {
 
     checkArgument(!Strings.isNullOrEmpty(method), "method must not be null or empty");
     checkNotNull(url, "url must not be null");
-    checkNotNull(responseClass, "response class must not be null");
+    checkNotNull(clazz, "response class must not be null");
     HttpResponse response = null;
     try {
       HttpContent httpContent = content != null ? new JsonHttpContent(jsonFactory, content) : null;
@@ -258,7 +257,7 @@ class FirebaseUserManager {
       request.getHeaders().set(CLIENT_VERSION_HEADER, clientVersion);
       request.setResponseInterceptor(interceptor);
       response = request.execute();
-      return response.parseAs(responseClass);
+      return response.parseAs(clazz);
     } catch (HttpResponseException e) {
       // Server responded with an HTTP error
       handleHttpError(e);
