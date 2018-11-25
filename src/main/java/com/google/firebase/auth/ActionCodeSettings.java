@@ -18,27 +18,16 @@ package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
+
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 
 public final class ActionCodeSettings {
 
-  @Key("url")
-  private final String url;
-
-  @Key("handleCodeInApp")
-  private final boolean handleCodeInApp;
-
-  @Key("dynamicLinkDomain")
-  private final String dynamicLinkDomain;
-
-  @Key("android")
-  private final AndroidActionCodeSettings androidActionCodeSettings;
-
-  @Key("iOS")
-  private final IosActionCodeSettings iosActionCodeSettings;
+  private final Map<String, Object> properties;
 
   private ActionCodeSettings(Builder builder) {
     checkArgument(!Strings.isNullOrEmpty(builder.url), "URL must not be null or empty");
@@ -47,11 +36,23 @@ public final class ActionCodeSettings {
     } catch (MalformedURLException e) {
       throw new IllegalArgumentException("Malformed URL string", e);
     }
-    this.url = builder.url;
-    this.handleCodeInApp = builder.handleCodeInApp;
-    this.dynamicLinkDomain = builder.dynamicLinkDomain;
-    this.androidActionCodeSettings = builder.androidActionCodeSettings;
-    this.iosActionCodeSettings = builder.iosActionCodeSettings;
+    ImmutableMap.Builder<String, Object> properties = ImmutableMap.<String, Object>builder()
+            .put("url", builder.url)
+            .put("handleCodeInApp", builder.handleCodeInApp);
+    if (!Strings.isNullOrEmpty(builder.dynamicLinkDomain)) {
+      properties.put("dynamicLinkDomain", builder.dynamicLinkDomain);
+    }
+    if (builder.androidActionCodeSettings != null) {
+      properties.put("android", builder.androidActionCodeSettings);
+    }
+    if (builder.iosActionCodeSettings != null) {
+      properties.put("iOS", builder.iosActionCodeSettings);
+    }
+    this.properties = properties.build();
+  }
+
+  Map<String, Object> getProperties() {
+    return this.properties;
   }
 
   public static Builder builder() {
@@ -83,7 +84,8 @@ public final class ActionCodeSettings {
       return this;
     }
 
-    public Builder setAndroidActionCodeSettings(AndroidActionCodeSettings androidActionCodeSettings) {
+    public Builder setAndroidActionCodeSettings(
+            AndroidActionCodeSettings androidActionCodeSettings) {
       this.androidActionCodeSettings = androidActionCodeSettings;
       return this;
     }

@@ -56,7 +56,11 @@ import java.util.Map;
 
 /**
  * FirebaseUserManager provides methods for interacting with the Google Identity Toolkit via its
- * REST API. This class does not hold any mutable state, and is thread safe.
+ * REST API. It is a convenience wrapper around network primitives for making HTTP calls, marshaling
+ * request payloads, parsing response payloads and handling HTTP errors. It does not validate
+ * arguments or the semantic correctness of requests. Callers should perform any necessary
+ * validations before invoking this API. This class does not hold any mutable state, and is
+ * thread safe.
  *
  * @see <a href="https://developers.google.com/identity/toolkit/web/reference/relyingparty">
  *   Google Identity Toolkit</a>
@@ -235,15 +239,23 @@ class FirebaseUserManager {
     throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create session cookie");
   }
 
-  String getEmailActionLink(EmailLinkType type, String email, @Nullable ActionCodeSettings settings) {
-    checkArgument(!Strings.isNullOrEmpty(email), "Email must not be null or empty");
-    if (type == EmailLinkType.EMAIL_SIGNIN) {
-      checkNotNull(settings, "ActionCodeSettings must not be null when generating sign in links.");
+  String getEmailActionLink(EmailLinkType type, String email,
+      @Nullable ActionCodeSettings settings) throws FirebaseAuthException {
+    ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
+            .put("requestType", type.name())
+            .put("email", email)
+            .put("returnOobLink", true);
+    if (settings != null) {
+      payload.putAll(settings.getProperties());
     }
-    final Map<String, Object> payload = ImmutableMap.<String, Object>of(
-          "requestType", type.name(), "returnOobLink", true);
-    // TODO: Make RPC call
-    return null;
+    GenericJson response = post("/accounts:sendOobCode", payload.build(), GenericJson.class);
+    if (response != null) {
+      String link = (String) response.get("oobLink");
+      if (!Strings.isNullOrEmpty(link)) {
+        return link;
+      }
+    }
+    throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create email action link");
   }
 
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {

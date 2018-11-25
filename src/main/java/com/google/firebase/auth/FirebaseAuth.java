@@ -27,6 +27,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
 import com.google.firebase.auth.FirebaseUserManager.UserImportRequest;
 import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
 import com.google.firebase.auth.ListUsersPage.PageFactory;
@@ -965,6 +966,71 @@ public class FirebaseAuth {
       @Override
       protected UserImportResult execute() throws FirebaseAuthException {
         return userManager.importUsers(request);
+      }
+    };
+  }
+
+  public String generatePasswordResetLink(String email) throws FirebaseAuthException {
+    return generatePasswordResetLink(email, null);
+  }
+
+  public String generatePasswordResetLink(
+          String email, @Nullable ActionCodeSettings settings) throws FirebaseAuthException {
+    return generateEmailActionLinkOp(EmailLinkType.PASSWORD_RESET, email, settings).call();
+  }
+
+  public ApiFuture<String> generatePasswordResetLinkAsync(String email) {
+    return generatePasswordResetLinkAsync(email, null);
+  }
+
+  public ApiFuture<String> generatePasswordResetLinkAsync(
+          String email, @Nullable ActionCodeSettings settings) {
+    return generateEmailActionLinkOp(EmailLinkType.PASSWORD_RESET, email, settings)
+            .callAsync(firebaseApp);
+  }
+
+  public String generateEmailVerificationLink(String email) throws FirebaseAuthException {
+    return generateEmailVerificationLink(email, null);
+  }
+
+  public String generateEmailVerificationLink(
+          String email, @Nullable ActionCodeSettings settings) throws FirebaseAuthException {
+    return generateEmailActionLinkOp(EmailLinkType.VERIFY_EMAIL, email, settings).call();
+  }
+
+  public ApiFuture<String> generateEmailVerificationLinkAsync(String email) {
+    return generateEmailVerificationLinkAsync(email, null);
+  }
+
+  public ApiFuture<String> generateEmailVerificationLinkAsync(
+          String email, @Nullable ActionCodeSettings settings) {
+    return generateEmailActionLinkOp(EmailLinkType.VERIFY_EMAIL, email, settings)
+            .callAsync(firebaseApp);
+  }
+
+  public String generateSignInWithEmailLink(
+          String email, ActionCodeSettings settings) throws FirebaseAuthException {
+    return generateEmailActionLinkOp(EmailLinkType.EMAIL_SIGNIN, email, settings).call();
+  }
+
+  public ApiFuture<String> generateSignInWithEmailLinkAsync(
+          String email, ActionCodeSettings settings) {
+    return generateEmailActionLinkOp(EmailLinkType.EMAIL_SIGNIN, email, settings)
+            .callAsync(firebaseApp);
+  }
+
+
+  private CallableOperation<String, FirebaseAuthException> generateEmailActionLinkOp(
+          final EmailLinkType type, final String email, final ActionCodeSettings settings) {
+    checkNotDestroyed();
+    checkArgument(!Strings.isNullOrEmpty(email), "email must not be null or empty");
+    if (type == EmailLinkType.EMAIL_SIGNIN) {
+      checkNotNull(settings, "ActionCodeSettings must not be null when generating sign-in links");
+    }
+    return new CallableOperation<String, FirebaseAuthException>() {
+      @Override
+      protected String execute() throws FirebaseAuthException {
+        return userManager.getEmailActionLink(type, email, settings);
       }
     };
   }

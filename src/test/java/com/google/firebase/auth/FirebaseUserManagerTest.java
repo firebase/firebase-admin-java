@@ -62,6 +62,28 @@ public class FirebaseUserManagerTest {
 
   private static final String TEST_TOKEN = "token";
   private static final GoogleCredentials credentials = new MockGoogleCredentials(TEST_TOKEN);
+  private static final ActionCodeSettings ACTION_CODE_SETTINGS = ActionCodeSettings.builder()
+          .setUrl("https://example.dynamic.link")
+          .setHandleCodeInApp(true)
+          .setDynamicLinkDomain("custom.page.link")
+          .setIosActionCodeSettings(new IosActionCodeSettings("com.example.ios"))
+          .setAndroidActionCodeSettings(AndroidActionCodeSettings.builder()
+                  .setPackageName("com.example.android")
+                  .setInstallApp(true)
+                  .setMinimumVersion("6")
+                  .build())
+          .build();
+  private static final Map<String, Object> ACTION_CODE_SETTINGS_MAP =
+          ImmutableMap.<String, Object>builder()
+                  .put("url", "https://example.dynamic.link")
+                  .put("handleCodeInApp", true)
+                  .put("dynamicLinkDomain", "custom.page.link")
+                  .put("iOS", ImmutableMap.of("bundleId", "com.example.ios"))
+                  .put("android", ImmutableMap.of(
+                          "packageName", "com.example.android",
+                          "installApp", true,
+                          "minimumVersion", "6"))
+                  .build();
 
   @After
   public void tearDown() {
@@ -986,6 +1008,63 @@ public class FirebaseUserManagerTest {
     } catch (Exception ignore) {
       // expected
     }
+  }
+
+  @Test
+  public void testGeneratePasswordNoEmail() throws Exception {
+    initializeAppForUserManagement();
+    try {
+      FirebaseAuth.getInstance().generatePasswordResetLinkAsync(null).get();
+      fail("No error thrown for null email");
+    } catch (IllegalArgumentException expected) {
+    }
+
+    try {
+      FirebaseAuth.getInstance().generatePasswordResetLinkAsync("").get();
+      fail("No error thrown for empty email");
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test
+  public void testGeneratePasswordResetLinkWithSettings() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+            TestUtils.loadResource("generateEmailLink.json"));
+    String link = FirebaseAuth.getInstance()
+            .generatePasswordResetLinkAsync("test@example.com", ACTION_CODE_SETTINGS).get();
+    assertEquals("https://mock-oob-link.for.auth.tests", link);
+    checkRequestHeaders(interceptor);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(3 + ACTION_CODE_SETTINGS_MAP.size(), parsed.size());
+    assertEquals("test@example.com", parsed.get("email"));
+    assertEquals("PASSWORD_RESET", parsed.get("requestType"));
+    assertTrue((Boolean) parsed.get("returnOobLink"));
+    for (Map.Entry<String, Object> entry : ACTION_CODE_SETTINGS_MAP.entrySet()) {
+      assertEquals(entry.getValue(), parsed.get(entry.getKey()));
+    }
+  }
+
+  @Test
+  public void testGeneratePasswordResetLink() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+            TestUtils.loadResource("generateEmailLink.json"));
+    String link = FirebaseAuth.getInstance()
+            .generatePasswordResetLinkAsync("test@example.com").get();
+    assertEquals("https://mock-oob-link.for.auth.tests", link);
+    checkRequestHeaders(interceptor);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(3, parsed.size());
+    assertEquals("test@example.com", parsed.get("email"));
+    assertEquals("PASSWORD_RESET", parsed.get("requestType"));
+    assertTrue((Boolean) parsed.get("returnOobLink"));
   }
 
   private static TestResponseInterceptor initializeAppForUserManagement(String ...responses) {
