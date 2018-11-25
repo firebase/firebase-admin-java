@@ -36,7 +36,6 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auth.oauth2.UserCredentials;
 import com.google.common.base.Defaults;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -98,7 +97,10 @@ public class FirebaseAuthTest {
             /* isCertCredential */ true
           },
           {
-            new FirebaseOptions.Builder().setCredentials(createRefreshTokenCredential()).build(),
+            new FirebaseOptions.Builder()
+                .setCredentials(createRefreshTokenCredential())
+                .setProjectId("test-project-id")
+                .build(),
             /* isCertCredential */ false
           },
           {
