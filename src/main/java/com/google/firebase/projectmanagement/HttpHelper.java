@@ -29,6 +29,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.Nullable;
+import com.google.firebase.internal.SdkUtils;
 import java.io.IOException;
 
 class HttpHelper {
@@ -45,7 +46,9 @@ class HttpHelper {
           .put(500, "Internal server error.")
           .put(503, "Backend servers are over capacity. Try again later.")
           .build();
+  private static final String CLIENT_VERSION_HEADER = "X-Client-Version";
 
+  private final String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
   private final JsonFactory jsonFactory;
   private final HttpRequestFactory requestFactory;
   private HttpResponseInterceptor interceptor;
@@ -133,6 +136,7 @@ class HttpHelper {
       String requestIdentifierDescription) throws FirebaseProjectManagementException {
     HttpResponse response = null;
     try {
+      baseRequest.getHeaders().set(CLIENT_VERSION_HEADER, clientVersion);
       baseRequest.setParser(new JsonObjectParser(jsonFactory));
       baseRequest.setResponseInterceptor(interceptor);
       response = baseRequest.execute();
