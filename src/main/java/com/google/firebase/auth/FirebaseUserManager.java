@@ -56,11 +56,7 @@ import java.util.Map;
 
 /**
  * FirebaseUserManager provides methods for interacting with the Google Identity Toolkit via its
- * REST API. It is a convenience wrapper around network primitives for making HTTP calls, marshaling
- * request payloads, parsing response payloads and handling HTTP errors. It does not validate
- * arguments or the semantic correctness of requests. Callers should perform any necessary
- * validations before invoking this API. This class does not hold any mutable state, and is
- * thread safe.
+ * REST API. This class does not hold any mutable state, and is thread safe.
  *
  * @see <a href="https://developers.google.com/identity/toolkit/web/reference/relyingparty">
  *   Google Identity Toolkit</a>

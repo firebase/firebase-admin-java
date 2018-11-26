@@ -970,55 +970,165 @@ public class FirebaseAuth {
     };
   }
 
-  public String generatePasswordResetLink(String email) throws FirebaseAuthException {
+  /**
+   * Generates the out-of-band email action link for password reset flows for the specified email
+   * address.
+   *
+   * @param email The email of the user whose password is to be reset.
+   * @return A password reset link.
+   * @throws IllegalArgumentException If the email address is null or empty.
+   * @throws FirebaseAuthException If an error occurs while generating the link.
+   */
+  public String generatePasswordResetLink(@NonNull String email) throws FirebaseAuthException {
     return generatePasswordResetLink(email, null);
   }
 
+  /**
+   * Generates the out-of-band email action link for password reset flows for the specified email
+   * address.
+   *
+   * @param email The email of the user whose password is to be reset.
+   * @param settings The action code settings which defines whether
+   *     the link is to be handled by a mobile app and the additional state information to be
+   *     passed in the deep link, etc.
+   * @return A password reset link.
+   * @throws IllegalArgumentException If the email address is null or empty.
+   * @throws FirebaseAuthException If an error occurs while generating the link.
+   */
   public String generatePasswordResetLink(
-          String email, @Nullable ActionCodeSettings settings) throws FirebaseAuthException {
+      @NonNull String email, @Nullable ActionCodeSettings settings) throws FirebaseAuthException {
     return generateEmailActionLinkOp(EmailLinkType.PASSWORD_RESET, email, settings).call();
   }
 
-  public ApiFuture<String> generatePasswordResetLinkAsync(String email) {
+  /**
+   * Similar to {@link #generatePasswordResetLink(String)} but performs the operation
+   * asynchronously.
+   *
+   * @param email The email of the user whose password is to be reset.
+   * @return An {@code ApiFuture} which will complete successfully with the generated email action
+   *     link. If an error occurs while generating the link, the future throws a
+   *     {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the email address is null or empty.
+   */
+  public ApiFuture<String> generatePasswordResetLinkAsync(@NonNull String email) {
     return generatePasswordResetLinkAsync(email, null);
   }
 
+  /**
+   * Similar to {@link #generatePasswordResetLink(String, ActionCodeSettings)} but performs the
+   * operation asynchronously.
+   *
+   * @param email The email of the user whose password is to be reset.
+   * @param settings The action code settings which defines whether
+   *     the link is to be handled by a mobile app and the additional state information to be
+   *     passed in the deep link, etc.
+   * @return An {@code ApiFuture} which will complete successfully with the generated email action
+   *     link. If an error occurs while generating the link, the future throws a
+   *     {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the email address is null or empty.
+   */
   public ApiFuture<String> generatePasswordResetLinkAsync(
-          String email, @Nullable ActionCodeSettings settings) {
+      @NonNull String email, @Nullable ActionCodeSettings settings) {
     return generateEmailActionLinkOp(EmailLinkType.PASSWORD_RESET, email, settings)
             .callAsync(firebaseApp);
   }
 
-  public String generateEmailVerificationLink(String email) throws FirebaseAuthException {
+  /**
+   * Generates the out-of-band email action link for email verification flows for the specified
+   * email address.
+   *
+   * @param email The email of the user to be verified.
+   * @return An email verification link.
+   * @throws IllegalArgumentException If the email address is null or empty.
+   * @throws FirebaseAuthException If an error occurs while generating the link.
+   */
+  public String generateEmailVerificationLink(@NonNull String email) throws FirebaseAuthException {
     return generateEmailVerificationLink(email, null);
   }
 
+  /**
+   * Generates the out-of-band email action link for email verification flows for the specified
+   * email address, using the action code settings provided.
+   *
+   * @param email The email of the user to be verified.
+   * @return An email verification link.
+   * @throws IllegalArgumentException If the email address is null or empty.
+   * @throws FirebaseAuthException If an error occurs while generating the link.
+   */
   public String generateEmailVerificationLink(
-          String email, @Nullable ActionCodeSettings settings) throws FirebaseAuthException {
+      @NonNull String email, @Nullable ActionCodeSettings settings) throws FirebaseAuthException {
     return generateEmailActionLinkOp(EmailLinkType.VERIFY_EMAIL, email, settings).call();
   }
 
-  public ApiFuture<String> generateEmailVerificationLinkAsync(String email) {
+  /**
+   * Similar to {@link #generateEmailVerificationLink(String)} but performs the
+   * operation asynchronously.
+   *
+   * @param email The email of the user to be verified.
+   * @return An {@code ApiFuture} which will complete successfully with the generated email action
+   *     link. If an error occurs while generating the link, the future throws a
+   *     {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the email address is null or empty.
+   */
+  public ApiFuture<String> generateEmailVerificationLinkAsync(@NonNull String email) {
     return generateEmailVerificationLinkAsync(email, null);
   }
 
+  /**
+   * Similar to {@link #generateEmailVerificationLink(String, ActionCodeSettings)} but performs the
+   * operation asynchronously.
+   *
+   * @param email The email of the user to be verified.
+   * @param settings The action code settings which defines whether
+   *     the link is to be handled by a mobile app and the additional state information to be
+   *     passed in the deep link, etc.
+   * @return An {@code ApiFuture} which will complete successfully with the generated email action
+   *     link. If an error occurs while generating the link, the future throws a
+   *     {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the email address is null or empty.
+   */
   public ApiFuture<String> generateEmailVerificationLinkAsync(
-          String email, @Nullable ActionCodeSettings settings) {
+      @NonNull String email, @Nullable ActionCodeSettings settings) {
     return generateEmailActionLinkOp(EmailLinkType.VERIFY_EMAIL, email, settings)
             .callAsync(firebaseApp);
   }
 
+  /**
+   * Generates the out-of-band email action link for email link sign-in flows, using the action
+   * code settings provided.
+   *
+   * @param email The email of the user signing in.
+   * @param settings The action code settings which defines whether
+   *     the link is to be handled by a mobile app and the additional state information to be
+   *     passed in the deep link, etc.
+   * @return An email verification link.
+   * @throws IllegalArgumentException If the email address is null or empty.
+   * @throws FirebaseAuthException If an error occurs while generating the link.
+   */
   public String generateSignInWithEmailLink(
-          String email, ActionCodeSettings settings) throws FirebaseAuthException {
+      @NonNull String email, @NonNull ActionCodeSettings settings) throws FirebaseAuthException {
     return generateEmailActionLinkOp(EmailLinkType.EMAIL_SIGNIN, email, settings).call();
   }
 
+  /**
+   * Similar to {@link #generateSignInWithEmailLink(String, ActionCodeSettings)} but performs the
+   * operation asynchronously.
+   *
+   * @param email The email of the user signing in.
+   * @param settings The action code settings which defines whether
+   *     the link is to be handled by a mobile app and the additional state information to be
+   *     passed in the deep link, etc.
+   * @return An {@code ApiFuture} which will complete successfully with the generated email action
+   *     link. If an error occurs while generating the link, the future throws a
+   *     {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the email address is null or empty.
+   * @throws NullPointerException If the settings is null.
+   */
   public ApiFuture<String> generateSignInWithEmailLinkAsync(
-          String email, ActionCodeSettings settings) {
+          String email, @NonNull ActionCodeSettings settings) {
     return generateEmailActionLinkOp(EmailLinkType.EMAIL_SIGNIN, email, settings)
             .callAsync(firebaseApp);
   }
-
 
   private CallableOperation<String, FirebaseAuthException> generateEmailActionLinkOp(
           final EmailLinkType type, final String email, final ActionCodeSettings settings) {
