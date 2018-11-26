@@ -276,8 +276,8 @@ public class FirebaseApp {
     return name;
   }
 
-  /** 
-   * Returns the specified {@link FirebaseOptions}. 
+  /**
+   * Returns the specified {@link FirebaseOptions}.
    */
   @NonNull
   public FirebaseOptions getOptions() {
@@ -390,6 +390,10 @@ public class FirebaseApp {
     return threadManager.getThreadFactory();
   }
 
+  ScheduledExecutorService getScheduledExecutorService() {
+    return ensureScheduledExecutorService();
+  }
+
   <T> ApiFuture<T> submit(Callable<T> command) {
     checkNotNull(command);
     return new ListenableFuture2ApiFuture<>(executors.getListeningExecutor().submit(command));
@@ -399,6 +403,17 @@ public class FirebaseApp {
     checkNotNull(command);
     try {
       return ensureScheduledExecutorService().schedule(command, delayMillis, TimeUnit.MILLISECONDS);
+    } catch (Exception e) {
+      // This may fail if the underlying ThreadFactory does not support long-lived threads.
+      throw new UnsupportedOperationException("Scheduled tasks not supported", e);
+    }
+  }
+
+  ScheduledFuture<?> schedule(Runnable runnable, long delayMillis) {
+    checkNotNull(runnable);
+    try {
+      return ensureScheduledExecutorService()
+          .schedule(runnable, delayMillis, TimeUnit.MILLISECONDS);
     } catch (Exception e) {
       // This may fail if the underlying ThreadFactory does not support long-lived threads.
       throw new UnsupportedOperationException("Scheduled tasks not supported", e);
