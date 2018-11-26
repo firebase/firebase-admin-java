@@ -481,7 +481,8 @@ public class MessageTest {
 
     List<ApsAlert.Builder> notificationBuilders = ImmutableList.of(
         ApsAlert.builder().addLocalizationArg("foo"),
-        ApsAlert.builder().addTitleLocalizationArg("foo")
+        ApsAlert.builder().addTitleLocalizationArg("foo"),
+        ApsAlert.builder().addSubtitleLocalizationArg("foo")
     );
     for (int i = 0; i < notificationBuilders.size(); i++) {
       try {
