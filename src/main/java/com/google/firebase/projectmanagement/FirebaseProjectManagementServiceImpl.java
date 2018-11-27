@@ -103,7 +103,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
         return new AndroidAppMetadata(
             parsedResponse.name,
             parsedResponse.appId,
-            parsedResponse.displayName,
+            Strings.emptyToNull(parsedResponse.displayName),
             parsedResponse.projectId,
             parsedResponse.packageName);
       }

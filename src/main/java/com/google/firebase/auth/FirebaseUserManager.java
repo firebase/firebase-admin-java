@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
@@ -36,6 +37,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
@@ -45,7 +47,9 @@ import com.google.firebase.auth.internal.HttpErrorResponse;
 import com.google.firebase.auth.internal.UploadAccountResponse;
 import com.google.firebase.internal.FirebaseRequestInitializer;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.SdkUtils;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -91,9 +95,10 @@ class FirebaseUserManager {
       "iss", "jti", "nbf", "nonce", "sub", "firebase");
 
   private static final String ID_TOOLKIT_URL =
-      "https://www.googleapis.com/identitytoolkit/v3/relyingparty/";
+      "https://identitytoolkit.googleapis.com/v1/projects/%s";
   private static final String CLIENT_VERSION_HEADER = "X-Client-Version";
 
+  private final String baseUrl;
   private final JsonFactory jsonFactory;
   private final HttpRequestFactory requestFactory;
   private final String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
@@ -107,6 +112,12 @@ class FirebaseUserManager {
    */
   FirebaseUserManager(@NonNull FirebaseApp app) {
     checkNotNull(app, "FirebaseApp must not be null");
+    String projectId = ImplFirebaseTrampolines.getProjectId(app);
+    checkArgument(!Strings.isNullOrEmpty(projectId),
+        "Project ID is required to access the auth service. Use a service account credential or "
+            + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
+            + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
+    this.baseUrl = String.format(ID_TOOLKIT_URL, projectId);
     this.jsonFactory = app.getOptions().getJsonFactory();
     HttpTransport transport = app.getOptions().getHttpTransport();
     this.requestFactory = transport.createRequestFactory(new FirebaseRequestInitializer(app));
@@ -121,7 +132,7 @@ class FirebaseUserManager {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "localId", ImmutableList.of(uid));
     GetAccountInfoResponse response = post(
-        "getAccountInfo", payload, GetAccountInfoResponse.class);
+        "/accounts:lookup", payload, GetAccountInfoResponse.class);
     if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
       throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
           "No user record found for the provided user ID: " + uid);
@@ -133,7 +144,7 @@ class FirebaseUserManager {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "email", ImmutableList.of(email));
     GetAccountInfoResponse response = post(
-        "getAccountInfo", payload, GetAccountInfoResponse.class);
+        "/accounts:lookup", payload, GetAccountInfoResponse.class);
     if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
       throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
           "No user record found for the provided email: " + email);
@@ -145,7 +156,7 @@ class FirebaseUserManager {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "phoneNumber", ImmutableList.of(phoneNumber));
     GetAccountInfoResponse response = post(
-        "getAccountInfo", payload, GetAccountInfoResponse.class);
+        "/accounts:lookup", payload, GetAccountInfoResponse.class);
     if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
       throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
           "No user record found for the provided phone number: " + phoneNumber);
@@ -155,7 +166,7 @@ class FirebaseUserManager {
 
   String createUser(CreateRequest request) throws FirebaseAuthException {
     GenericJson response = post(
-        "signupNewUser", request.getProperties(), GenericJson.class);
+        "/accounts", request.getProperties(), GenericJson.class);
     if (response != null) {
       String uid = (String) response.get("localId");
       if (!Strings.isNullOrEmpty(uid)) {
@@ -167,7 +178,7 @@ class FirebaseUserManager {
 
   void updateUser(UpdateRequest request, JsonFactory jsonFactory) throws FirebaseAuthException {
     GenericJson response = post(
-        "setAccountInfo", request.getProperties(jsonFactory), GenericJson.class);
+        "/accounts:update", request.getProperties(jsonFactory), GenericJson.class);
     if (response == null || !request.getUid().equals(response.get("localId"))) {
       throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to update user: " + request.getUid());
     }
@@ -176,7 +187,7 @@ class FirebaseUserManager {
   void deleteUser(String uid) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of("localId", uid);
     GenericJson response = post(
-        "deleteAccount", payload, GenericJson.class);
+        "/accounts:delete", payload, GenericJson.class);
     if (response == null || !response.containsKey("kind")) {
       throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to delete user: " + uid);
     }
@@ -190,8 +201,10 @@ class FirebaseUserManager {
       builder.put("nextPageToken", pageToken);
     }
 
-    DownloadAccountResponse response = post(
-        "downloadAccount", builder.build(), DownloadAccountResponse.class);
+    GenericUrl url = new GenericUrl(baseUrl + "/accounts:batchGet");
+    url.putAll(builder.build());
+    DownloadAccountResponse response = sendRequest(
+            "GET", url, null, DownloadAccountResponse.class);
     if (response == null) {
       throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to retrieve users.");
     }
@@ -200,7 +213,8 @@ class FirebaseUserManager {
 
   UserImportResult importUsers(UserImportRequest request) throws FirebaseAuthException {
     checkNotNull(request);
-    UploadAccountResponse response = post("uploadAccount", request, UploadAccountResponse.class);
+    UploadAccountResponse response = post(
+            "/accounts:batchCreate", request, UploadAccountResponse.class);
     if (response == null) {
       throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to import users.");
     }
@@ -211,7 +225,7 @@ class FirebaseUserManager {
       SessionCookieOptions options) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "idToken", idToken, "validDuration", options.getExpiresInSeconds());
-    GenericJson response = post("createSessionCookie", payload, GenericJson.class);
+    GenericJson response = post(":createSessionCookie", payload, GenericJson.class);
     if (response != null) {
       String cookie = (String) response.get("sessionCookie");
       if (!Strings.isNullOrEmpty(cookie)) {
@@ -223,14 +237,22 @@ class FirebaseUserManager {
 
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {
     checkArgument(!Strings.isNullOrEmpty(path), "path must not be null or empty");
-    checkNotNull(content, "content must not be null");
-    checkNotNull(clazz, "response class must not be null");
+    checkNotNull(content, "content must not be null for POST requests");
+    GenericUrl url = new GenericUrl(baseUrl + path);
+    return sendRequest("POST", url, content, clazz);
+  }
 
-    GenericUrl url = new GenericUrl(ID_TOOLKIT_URL + path);
+  private <T> T sendRequest(
+          String method, GenericUrl url,
+          @Nullable Object content, Class<T> clazz) throws FirebaseAuthException {
+
+    checkArgument(!Strings.isNullOrEmpty(method), "method must not be null or empty");
+    checkNotNull(url, "url must not be null");
+    checkNotNull(clazz, "response class must not be null");
     HttpResponse response = null;
     try {
-      HttpRequest request = requestFactory.buildPostRequest(url,
-          new JsonHttpContent(jsonFactory, content));
+      HttpContent httpContent = content != null ? new JsonHttpContent(jsonFactory, content) : null;
+      HttpRequest request = requestFactory.buildRequest(method, url, httpContent);
       request.setParser(new JsonObjectParser(jsonFactory));
       request.getHeaders().set(CLIENT_VERSION_HEADER, clientVersion);
       request.setResponseInterceptor(interceptor);

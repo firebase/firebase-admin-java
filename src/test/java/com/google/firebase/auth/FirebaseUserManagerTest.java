@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
@@ -65,6 +66,18 @@ public class FirebaseUserManagerTest {
   @After
   public void tearDown() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+  }
+
+  @Test
+  public void testProjectIdRequired() {
+    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+            .setCredentials(credentials)
+            .build());
+    try {
+      FirebaseAuth.getInstance();
+      fail("No error thrown for missing project ID");
+    } catch (IllegalArgumentException expected) {
+    }
   }
 
   @Test
@@ -149,12 +162,9 @@ public class FirebaseUserManagerTest {
     assertEquals("", page.getNextPageToken());
     checkRequestHeaders(interceptor);
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.getResponse().getRequest().getContent().writeTo(out);
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
-    assertEquals(new BigDecimal(999), parsed.get("maxResults"));
-    assertNull(parsed.get("nextPageToken"));
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(999, url.getFirst("maxResults"));
+    assertNull(url.getFirst("nextPageToken"));
   }
 
   @Test
@@ -171,12 +181,9 @@ public class FirebaseUserManagerTest {
     assertEquals("", page.getNextPageToken());
     checkRequestHeaders(interceptor);
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.getResponse().getRequest().getContent().writeTo(out);
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
-    assertEquals(new BigDecimal(999), parsed.get("maxResults"));
-    assertEquals("token", parsed.get("nextPageToken"));
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(999, url.getFirst("maxResults"));
+    assertEquals("token", url.getFirst("nextPageToken"));
   }
 
   @Test
@@ -427,9 +434,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testCreateSessionCookieInvalidArguments() {
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
-        .setCredentials(credentials)
-        .build());
+    initializeAppForUserManagement();
     SessionCookieOptions options = SessionCookieOptions.builder()
         .setExpiresIn(TimeUnit.HOURS.toMillis(1))
         .build();
@@ -532,6 +537,7 @@ public class FirebaseUserManagerTest {
         .build();
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(credentials)
+        .setProjectId("test-project-id")
         .setHttpTransport(transport)
         .build());
 
@@ -596,6 +602,7 @@ public class FirebaseUserManagerTest {
         .build();
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(credentials)
+        .setProjectId("test-project-id")
         .setHttpTransport(transport)
         .build());
     try {
@@ -617,6 +624,7 @@ public class FirebaseUserManagerTest {
         new MockLowLevelHttpResponse().setContent(TestUtils.loadResource("getUser.json"))));
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(credentials)
+        .setProjectId("test-project-id")
         .setHttpTransport(transport)
         .setConnectTimeout(30000)
         .setReadTimeout(60000)
@@ -989,6 +997,7 @@ public class FirebaseUserManagerTest {
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(credentials)
         .setHttpTransport(transport)
+        .setProjectId("test-project-id")
         .build());
     FirebaseAuth auth = FirebaseAuth.getInstance();
     FirebaseUserManager userManager = auth.getUserManager();

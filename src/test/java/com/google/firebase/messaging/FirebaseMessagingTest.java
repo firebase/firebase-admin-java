@@ -278,14 +278,14 @@ public class FirebaseMessagingTest {
   }
 
   @Test
-  public void testSendErrorWithFcmErrorCode() throws Exception {
+  public void testSendErrorWithFcmError() throws Exception {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     FirebaseMessaging messaging = initMessaging(response);
     for (int code : HTTP_ERRORS) {
       response.setStatusCode(code).setContent(
           "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\", "
               + "\"details\":[{\"@type\": \"type.googleapis.com/google.firebase.fcm"
-              + ".v1.FcmErrorCode\", \"errorCode\": \"UNREGISTERED\"}]}}");
+              + ".v1.FcmError\", \"errorCode\": \"UNREGISTERED\"}]}}");
       TestResponseInterceptor interceptor = new TestResponseInterceptor();
       messaging.setInterceptor(interceptor);
       try {
@@ -512,6 +512,7 @@ public class FirebaseMessagingTest {
     assertEquals("POST", request.getRequestMethod());
     assertEquals(TEST_FCM_URL, request.getUrl().toString());
     assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+    assertEquals("2", request.getHeaders().get("X-GOOG-API-FORMAT-VERSION"));
     return request;
   }
 

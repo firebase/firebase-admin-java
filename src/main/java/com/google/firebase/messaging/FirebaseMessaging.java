@@ -56,7 +56,7 @@ public class FirebaseMessaging {
 
   private static final String FCM_URL = "https://fcm.googleapis.com/v1/projects/%s/messages:send";
   private static final String FCM_ERROR_TYPE =
-      "type.googleapis.com/google.firebase.fcm.v1.FcmErrorCode";
+      "type.googleapis.com/google.firebase.fcm.v1.FcmError";
 
   private static final String INTERNAL_ERROR = "internal-error";
   private static final String UNKNOWN_ERROR = "unknown-error";
@@ -249,6 +249,7 @@ public class FirebaseMessaging {
         try {
           HttpRequest request = requestFactory.buildPostRequest(
               new GenericUrl(url), new JsonHttpContent(jsonFactory, payload.build()));
+          request.getHeaders().set("X-GOOG-API-FORMAT-VERSION", "2");
           request.setParser(new JsonObjectParser(jsonFactory));
           request.setResponseInterceptor(interceptor);
           response = request.execute();
