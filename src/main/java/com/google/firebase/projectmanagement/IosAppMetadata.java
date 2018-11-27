@@ -18,6 +18,7 @@ package com.google.firebase.projectmanagement;
 import com.google.api.client.util.Preconditions;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import com.google.firebase.internal.Nullable;
 
 /**
  * Contains detailed information about an iOS App. Instances of this class are immutable.
@@ -33,7 +34,7 @@ public class IosAppMetadata {
       String name, String appId, String displayName, String projectId, String bundleId) {
     this.name = Preconditions.checkNotNull(name, "Null name");
     this.appId = Preconditions.checkNotNull(appId, "Null appId");
-    this.displayName = Preconditions.checkNotNull(displayName, "Null displayName");
+    this.displayName = displayName;
     this.projectId = Preconditions.checkNotNull(projectId, "Null projectId");
     this.bundleId = Preconditions.checkNotNull(bundleId, "Null bundleId");
   }
@@ -41,7 +42,7 @@ public class IosAppMetadata {
   /**
    * Returns the fully qualified resource name of this iOS App.
    */
-  public String getName() {
+  String getName() {
     return name;
   }
 
@@ -54,8 +55,10 @@ public class IosAppMetadata {
   }
 
   /**
-   * Returns the user-assigned display name of this iOS App.
+   * Returns the user-assigned display name of this iOS App. Returns {@code null} if it has never
+   * been set.
    */
+  @Nullable
   public String getDisplayName() {
     return displayName;
   }

@@ -18,6 +18,7 @@ package com.google.firebase.projectmanagement;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.firebase.internal.Nullable;
 
 /**
  * Contains detailed information about an Android App. Instances of this class are immutable.
@@ -34,7 +35,7 @@ public class AndroidAppMetadata {
       String name, String appId, String displayName, String projectId, String packageName) {
     this.name = Preconditions.checkNotNull(name, "Null name");
     this.appId = Preconditions.checkNotNull(appId, "Null appId");
-    this.displayName = Preconditions.checkNotNull(displayName, "Null displayName");
+    this.displayName = displayName;
     this.projectId = Preconditions.checkNotNull(projectId, "Null projectId");
     this.packageName = Preconditions.checkNotNull(packageName, "Null packageName");
   }
@@ -42,7 +43,7 @@ public class AndroidAppMetadata {
   /**
    * Returns the fully qualified resource name of this Android App.
    */
-  public String getName() {
+  String getName() {
     return name;
   }
 
@@ -55,8 +56,10 @@ public class AndroidAppMetadata {
   }
 
   /**
-   * Returns the user-assigned display name of this Android App.
+   * Returns the user-assigned display name of this Android App. Returns {@code null} if it has
+   * never been set.
    */
+  @Nullable
   public String getDisplayName() {
     return displayName;
   }
