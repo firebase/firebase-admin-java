@@ -393,14 +393,18 @@ public class MessageTest {
             .setAps(Aps.builder()
                 .setAlert(ApsAlert.builder()
                     .setTitle("test-title")
+                    .setSubtitle("test-subtitle")
                     .setBody("test-body")
                     .setLocalizationKey("test-loc-key")
                     .setActionLocalizationKey("test-action-loc-key")
                     .setTitleLocalizationKey("test-title-loc-key")
+                    .setSubtitleLocalizationKey("test-subtitle-loc-key")
                     .addLocalizationArg("arg1")
                     .addAllLocalizationArgs(ImmutableList.of("arg2", "arg3"))
                     .addTitleLocalizationArg("arg4")
                     .addAllTitleLocArgs(ImmutableList.of("arg5", "arg6"))
+                    .addSubtitleLocalizationArg("arg7")
+                    .addAllSubtitleLocArgs(ImmutableList.of("arg8", "arg9"))
                     .setLaunchImage("test-image")
                     .build())
                 .setCategory("test-category")
@@ -417,12 +421,15 @@ public class MessageTest {
         "aps", ImmutableMap.<String, Object>builder()
             .put("alert", ImmutableMap.<String, Object>builder()
                 .put("title", "test-title")
+                .put("subtitle", "test-subtitle")
                 .put("body", "test-body")
                 .put("loc-key", "test-loc-key")
                 .put("action-loc-key", "test-action-loc-key")
                 .put("title-loc-key", "test-title-loc-key")
+                .put("subtitle-loc-key", "test-subtitle-loc-key")
                 .put("loc-args", ImmutableList.of("arg1", "arg2", "arg3"))
                 .put("title-loc-args", ImmutableList.of("arg4", "arg5", "arg6"))
+                .put("subtitle-loc-args", ImmutableList.of("arg7", "arg8", "arg9"))
                 .put("launch-image", "test-image")
                 .build())
             .put("category", "test-category")
@@ -474,7 +481,8 @@ public class MessageTest {
 
     List<ApsAlert.Builder> notificationBuilders = ImmutableList.of(
         ApsAlert.builder().addLocalizationArg("foo"),
-        ApsAlert.builder().addTitleLocalizationArg("foo")
+        ApsAlert.builder().addTitleLocalizationArg("foo"),
+        ApsAlert.builder().addSubtitleLocalizationArg("foo")
     );
     for (int i = 0; i < notificationBuilders.size(); i++) {
       try {
