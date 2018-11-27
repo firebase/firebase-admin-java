@@ -49,7 +49,8 @@ public class FirebaseProjectManagementIT {
     // Ensure that we have created a Test iOS App.
     List<IosApp> iosApps = projectManagement.listIosApps();
     for (IosApp iosApp : iosApps) {
-      if (iosApp.getMetadata().getDisplayName().startsWith(TEST_APP_DISPLAY_NAME_PREFIX)) {
+      if (Strings.nullToEmpty(iosApp.getMetadata().getDisplayName())
+          .startsWith(TEST_APP_DISPLAY_NAME_PREFIX)) {
         testIosAppId = iosApp.getAppId();
       }
     }
@@ -61,7 +62,8 @@ public class FirebaseProjectManagementIT {
     // Ensure that we have created a Test Android App.
     List<AndroidApp> androidApps = projectManagement.listAndroidApps();
     for (AndroidApp androidApp : androidApps) {
-      if (androidApp.getMetadata().getDisplayName().startsWith(TEST_APP_DISPLAY_NAME_PREFIX)) {
+      if (Strings.nullToEmpty(androidApp.getMetadata().getDisplayName())
+          .startsWith(TEST_APP_DISPLAY_NAME_PREFIX)) {
         testAndroidAppId = androidApp.getAppId();
       }
     }
