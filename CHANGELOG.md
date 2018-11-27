@@ -4,6 +4,8 @@
 
 # v6.6.0
 
+- [added] Added a new `FirebaseProjectManagement` API for managing
+  apps in a Firebase project.
 - [fixed] Fixing error handling in FCM. The SDK now checks the key
   `type.googleapis.com/google.firebase.fcm.v1.FcmError` to set error
   code.
