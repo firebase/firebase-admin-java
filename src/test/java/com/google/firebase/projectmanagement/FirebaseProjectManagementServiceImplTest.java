@@ -70,6 +70,11 @@ public class FirebaseProjectManagementServiceImplTest {
   private static final AndroidAppMetadata ANDROID_APP_METADATA =
       new AndroidAppMetadata(
           ANDROID_APP_RESOURCE_NAME, ANDROID_APP_ID, DISPLAY_NAME, PROJECT_ID, PACKAGE_NAME);
+  private static final IosAppMetadata IOS_APP_NO_DISPLAY_NAME_METADATA =
+      new IosAppMetadata(IOS_APP_RESOURCE_NAME, IOS_APP_ID, null, PROJECT_ID, BUNDLE_ID);
+  private static final AndroidAppMetadata ANDROID_APP_NO_DISPLAY_NAME_METADATA =
+      new AndroidAppMetadata(
+          ANDROID_APP_RESOURCE_NAME, ANDROID_APP_ID, null, PROJECT_ID, PACKAGE_NAME);
 
   private static final String IOS_CONFIG_CONTENT = "ios-config-content";
   private static final String ANDROID_CONFIG_CONTENT = "android-config-content";
@@ -98,6 +103,11 @@ public class FirebaseProjectManagementServiceImplTest {
       "{\"name\" : \"ios/11111\", "
           + "\"appId\" : \"test-ios-app-id\", "
           + "\"displayName\" : \"%s\", "
+          + "\"projectId\" : \"test-project-id\", "
+          + "\"bundleId\" : \"test.ios.app\"}";
+  private static final String GET_IOS_NO_DISPLAY_NAME_RESPONSE =
+      "{\"name\" : \"ios/11111\", "
+          + "\"appId\" : \"test-ios-app-id\", "
           + "\"projectId\" : \"test-project-id\", "
           + "\"bundleId\" : \"test.ios.app\"}";
   private static final String GET_IOS_CONFIG_RESPONSE =
@@ -152,6 +162,11 @@ public class FirebaseProjectManagementServiceImplTest {
       "{\"name\" : \"android/11111\", "
           + "\"appId\" : \"test-android-app-id\", "
           + "\"displayName\" : \"%s\", "
+          + "\"projectId\" : \"test-project-id\", "
+          + "\"packageName\" : \"test.android.app\"}";
+  private static final String GET_ANDROID_NO_DISPLAY_NAME_RESPONSE =
+      "{\"name\" : \"android/11111\", "
+          + "\"appId\" : \"test-android-app-id\", "
           + "\"projectId\" : \"test-project-id\", "
           + "\"packageName\" : \"test.android.app\"}";
   private static final String GET_ANDROID_CONFIG_RESPONSE =
@@ -241,6 +256,32 @@ public class FirebaseProjectManagementServiceImplTest {
 
     checkRequestHeader(expectedUrl, HttpMethod.GET);
     assertEquals(iosAppMetadata, IOS_APP_METADATA);
+  }
+
+  @Test
+  public void getIosAppNoDisplayName() throws Exception {
+    String expectedUrl = String.format(
+        "%s/v1beta1/projects/-/iosApps/%s", FIREBASE_PROJECT_MANAGEMENT_URL, IOS_APP_ID);
+    firstRpcResponse.setContent(GET_IOS_NO_DISPLAY_NAME_RESPONSE);
+    serviceImpl = initServiceImpl(firstRpcResponse, interceptor);
+
+    IosAppMetadata iosAppMetadata = serviceImpl.getIosApp(IOS_APP_ID);
+
+    checkRequestHeader(expectedUrl, HttpMethod.GET);
+    assertEquals(iosAppMetadata, IOS_APP_NO_DISPLAY_NAME_METADATA);
+  }
+
+  @Test
+  public void getIosAppAsyncNoDisplayName() throws Exception {
+    String expectedUrl = String.format(
+        "%s/v1beta1/projects/-/iosApps/%s", FIREBASE_PROJECT_MANAGEMENT_URL, IOS_APP_ID);
+    firstRpcResponse.setContent(GET_IOS_NO_DISPLAY_NAME_RESPONSE);
+    serviceImpl = initServiceImpl(firstRpcResponse, interceptor);
+
+    IosAppMetadata iosAppMetadata = serviceImpl.getIosAppAsync(IOS_APP_ID).get();
+
+    checkRequestHeader(expectedUrl, HttpMethod.GET);
+    assertEquals(iosAppMetadata, IOS_APP_NO_DISPLAY_NAME_METADATA);
   }
 
   @Test
@@ -483,6 +524,32 @@ public class FirebaseProjectManagementServiceImplTest {
         "%s/v1beta1/projects/-/androidApps/%s", FIREBASE_PROJECT_MANAGEMENT_URL, ANDROID_APP_ID);
     checkRequestHeader(expectedUrl, HttpMethod.GET);
     assertEquals(androidAppMetadata, ANDROID_APP_METADATA);
+  }
+
+  @Test
+  public void getAndroidAppNoDisplayName() throws Exception {
+    firstRpcResponse.setContent(GET_ANDROID_NO_DISPLAY_NAME_RESPONSE);
+    serviceImpl = initServiceImpl(firstRpcResponse, interceptor);
+
+    AndroidAppMetadata androidAppMetadata = serviceImpl.getAndroidApp(ANDROID_APP_ID);
+
+    String expectedUrl = String.format(
+        "%s/v1beta1/projects/-/androidApps/%s", FIREBASE_PROJECT_MANAGEMENT_URL, ANDROID_APP_ID);
+    checkRequestHeader(expectedUrl, HttpMethod.GET);
+    assertEquals(androidAppMetadata, ANDROID_APP_NO_DISPLAY_NAME_METADATA);
+  }
+
+  @Test
+  public void getAndroidAppAsyncNoDisplayName() throws Exception {
+    firstRpcResponse.setContent(GET_ANDROID_NO_DISPLAY_NAME_RESPONSE);
+    serviceImpl = initServiceImpl(firstRpcResponse, interceptor);
+
+    AndroidAppMetadata androidAppMetadata = serviceImpl.getAndroidAppAsync(ANDROID_APP_ID).get();
+
+    String expectedUrl = String.format(
+        "%s/v1beta1/projects/-/androidApps/%s", FIREBASE_PROJECT_MANAGEMENT_URL, ANDROID_APP_ID);
+    checkRequestHeader(expectedUrl, HttpMethod.GET);
+    assertEquals(androidAppMetadata, ANDROID_APP_NO_DISPLAY_NAME_METADATA);
   }
 
   @Test

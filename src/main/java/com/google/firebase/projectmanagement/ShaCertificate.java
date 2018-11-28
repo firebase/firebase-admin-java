@@ -23,7 +23,7 @@ import com.google.common.base.Preconditions;
 import java.util.regex.Pattern;
 
 /**
- * Contains detailed information of a SHA certificate, which can be associated to an Android app.
+ * Information about an SHA certificate associated with an Android app.
  */
 public class ShaCertificate {
 
@@ -41,11 +41,13 @@ public class ShaCertificate {
   }
 
   /**
-   * Creates a {@link ShaCertificate} from certificate hash. Name will be left as empty string since
-   * the certificate doesn't have a generated name yet.
+   * Creates an {@link ShaCertificate} from the given certificate hash.
+   *
+   * <p>The fully qualified resource name of this certificate will be set to the empty string since
+   * it has not been generated yet.
    *
    * @param shaHash SHA hash of the certificate
-   * @return a SHA certificate
+   * @return a new {@link ShaCertificate} instance
    */
   public static ShaCertificate create(String shaHash) {
     return new ShaCertificate("", shaHash, getTypeFromHash(shaHash));
@@ -69,7 +71,7 @@ public class ShaCertificate {
     } else if (SHA256_PATTERN.matcher(shaHash).matches()) {
       return ShaCertificateType.SHA_256;
     }
-    throw new IllegalArgumentException("Invalid SHA hash, it is neither SHA-1 nor SHA-256.");
+    throw new IllegalArgumentException("Invalid SHA hash; it is neither SHA-1 nor SHA-256.");
   }
 
   /**
@@ -87,7 +89,7 @@ public class ShaCertificate {
   }
 
   /**
-   * Returns the type {@link ShaCertificateType} of this SHA certificate.
+   * Returns the type of this SHA certificate.
    */
   public ShaCertificateType getCertType() {
     return certType;
