@@ -23,47 +23,35 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.googleapis.testing.auth.oauth2.MockTokenServerTransport;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.core.ApiFuture;
-import com.google.auth.http.HttpTransportFactory;
-import com.google.auth.oauth2.GoogleCredentials;
-import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.base.Defaults;
-import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 
 public class FirebaseAuthTest {
 
   private static final FirebaseOptions firebaseOptions = FirebaseOptions.builder()
-      .setCredentials(createCertificateCredential())
+      .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
       .build();
 
   @Before
   public void setup() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
     FirebaseApp.initializeApp(firebaseOptions);
   }
 
@@ -77,8 +65,6 @@ public class FirebaseAuthTest {
     FirebaseAuth defaultAuth = FirebaseAuth.getInstance();
     assertNotNull(defaultAuth);
     assertSame(defaultAuth, FirebaseAuth.getInstance());
-    String token = TestOnlyImplFirebaseTrampolines.getToken(FirebaseApp.getInstance(), false);
-    Assert.assertTrue(!token.isEmpty());
   }
 
   @Test
@@ -87,8 +73,6 @@ public class FirebaseAuthTest {
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
     assertNotNull(auth);
     assertSame(auth, FirebaseAuth.getInstance(app));
-    String token = TestOnlyImplFirebaseTrampolines.getToken(app, false);
-    Assert.assertTrue(!token.isEmpty());
   }
 
   @Test
@@ -154,20 +138,6 @@ public class FirebaseAuthTest {
   }
 
   @Test
-  public void testAppWithAuthVariableOverrides() {
-    // TODO: Move this to somewhere more appropriate
-    Map<String, Object> authVariableOverrides = Collections.singletonMap("uid", (Object) "uid1");
-    FirebaseOptions options =
-        new FirebaseOptions.Builder(firebaseOptions)
-            .setDatabaseAuthVariableOverride(authVariableOverrides)
-            .build();
-    FirebaseApp app = FirebaseApp.initializeApp(options, "testGetAppWithUid");
-    assertEquals("uid1", app.getOptions().getDatabaseAuthVariableOverride().get("uid"));
-    String token = TestOnlyImplFirebaseTrampolines.getToken(app, false);
-    Assert.assertTrue(!token.isEmpty());
-  }
-
-  @Test
   public void testProjectIdRequired() {
     FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials())
@@ -193,22 +163,5 @@ public class FirebaseAuthTest {
   @Test(expected = IllegalArgumentException.class)
   public void testAuthExceptionEmptyErrorCode() {
     new FirebaseAuthException("", "test");
-  }
-
-  private static GoogleCredentials createCertificateCredential() {
-    final MockTokenServerTransport transport = new MockTokenServerTransport(
-        "https://accounts.google.com/o/oauth2/token");
-    transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), "test-token");
-    try {
-      return ServiceAccountCredentials.fromStream(ServiceAccount.EDITOR.asStream(),
-          new HttpTransportFactory() {
-            @Override
-            public HttpTransport create() {
-              return transport;
-            }
-          });
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to initialize service account credential", e);
-    }
   }
 }

@@ -44,7 +44,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -164,30 +163,6 @@ public class FirebaseCustomTokenTest {
     }
   }
 
-  @Test
-  public void testVerifyIdTokenWithExplicitProjectId() throws Exception {
-    GoogleCredentials credentials = TestOnlyImplFirebaseTrampolines.getCredentials(firebaseOptions);
-    Assume.assumeFalse(
-        "Skipping testVerifyIdTokenWithExplicitProjectId for service account credentials",
-        credentials instanceof ServiceAccountCredentials);
-
-    FirebaseOptions options =
-        new FirebaseOptions.Builder(firebaseOptions)
-            .setProjectId("mock-project-id")
-            .build();
-    FirebaseApp app = FirebaseApp.initializeApp(options, "testVerifyIdTokenWithExplicitProjectId");
-    try {
-      FirebaseAuth.getInstance(app).verifyIdTokenAsync("foo").get();
-      fail("Expected exception.");
-    } catch (ExecutionException expected) {
-      Assert.assertNotEquals(
-          "com.google.firebase.FirebaseException: Must initialize FirebaseApp with a project ID "
-              + "to call verifyIdToken()",
-          expected.getMessage());
-      assertTrue(expected.getCause() instanceof IllegalArgumentException);
-    }
-  }
-
   private static GoogleCredentials createRefreshTokenCredential() throws IOException {
 
     final MockTokenServerTransport transport = new MockTokenServerTransport();
@@ -222,5 +197,4 @@ public class FirebaseCustomTokenTest {
           }
         });
   }
-
 }
