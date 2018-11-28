@@ -21,80 +21,27 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.googleapis.testing.auth.oauth2.MockTokenServerTransport;
 import com.google.api.client.googleapis.util.Utils;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
-import com.google.auth.http.HttpTransportFactory;
-import com.google.auth.oauth2.GoogleCredentials;
+import com.google.api.client.testing.http.MockHttpTransport;
+import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.auth.oauth2.ServiceAccountCredentials;
-import com.google.auth.oauth2.UserCredentials;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.io.BaseEncoding;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.FirebaseCustomAuthToken;
 import com.google.firebase.database.MapBuilder;
+import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.ServiceAccount;
-import com.google.firebase.testing.TestUtils;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameters;
 
-@RunWith(Parameterized.class)
 public class FirebaseCustomTokenTest {
-
-  private static final String ACCESS_TOKEN = "mockaccesstoken";
-  private static final String CLIENT_SECRET = "mockclientsecret";
-  private static final String CLIENT_ID = "mockclientid";
-  private static final String REFRESH_TOKEN = "mockrefreshtoken";
-  private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
-
-  private final FirebaseOptions firebaseOptions;
-
-  public FirebaseCustomTokenTest(FirebaseOptions baseOptions) {
-    this.firebaseOptions = baseOptions;
-  }
-
-  @Parameters
-  public static Collection<Object[]> data() throws Exception {
-    // Initialize this test suite with all available credential implementations.
-    return Arrays.asList(
-        new Object[][] {
-            {
-                new FirebaseOptions.Builder().setCredentials(createCertificateCredential()).build(),
-            },
-            {
-                new FirebaseOptions.Builder()
-                    .setCredentials(createRefreshTokenCredential())
-                    .setProjectId("test-project-id")
-                    .build(),
-            },
-            {
-                new FirebaseOptions.Builder()
-                    .setCredentials(TestUtils.getApplicationDefaultCredentials())
-                    .build(),
-            },
-        });
-  }
-
-  @Before
-  public void setup() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
-    FirebaseApp.initializeApp(firebaseOptions);
-  }
 
   @After
   public void cleanup() {
@@ -103,15 +50,13 @@ public class FirebaseCustomTokenTest {
 
   @Test
   public void testCreateCustomToken() throws Exception {
-    GoogleCredentials credentials = TestOnlyImplFirebaseTrampolines.getCredentials(firebaseOptions);
-    Assume.assumeTrue("Skipping testCredentialCertificateRequired for cert credential",
-        credentials instanceof ServiceAccountCredentials);
-
-    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testCreateCustomToken");
+    FirebaseOptions options = FirebaseOptions.builder()
+        .setCredentials(ServiceAccountCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
 
     String token = auth.createCustomTokenAsync("user1").get();
-
     FirebaseCustomAuthToken parsedToken = FirebaseCustomAuthToken.parse(new GsonFactory(), token);
     assertEquals(parsedToken.getPayload().getUid(), "user1");
     assertEquals(parsedToken.getPayload().getSubject(), ServiceAccount.EDITOR.getEmail());
@@ -122,17 +67,14 @@ public class FirebaseCustomTokenTest {
 
   @Test
   public void testCreateCustomTokenWithDeveloperClaims() throws Exception {
-    GoogleCredentials credentials = TestOnlyImplFirebaseTrampolines.getCredentials(firebaseOptions);
-    Assume.assumeTrue("Skipping testCredentialCertificateRequired for cert credential",
-        credentials instanceof ServiceAccountCredentials);
-
-    FirebaseApp app =
-        FirebaseApp.initializeApp(firebaseOptions, "testCreateCustomTokenWithDeveloperClaims");
+    FirebaseOptions options = FirebaseOptions.builder()
+        .setCredentials(ServiceAccountCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
 
-    String token =
-        auth.createCustomTokenAsync("user1", MapBuilder.of("claim", "value")).get();
-
+    String token = auth.createCustomTokenAsync(
+        "user1", MapBuilder.of("claim", "value")).get();
     FirebaseCustomAuthToken parsedToken = FirebaseCustomAuthToken.parse(new GsonFactory(), token);
     assertEquals(parsedToken.getPayload().getUid(), "user1");
     assertEquals(parsedToken.getPayload().getSubject(), ServiceAccount.EDITOR.getEmail());
@@ -143,12 +85,68 @@ public class FirebaseCustomTokenTest {
   }
 
   @Test
-  public void testServiceAccountRequired() throws Exception {
-    GoogleCredentials credentials = TestOnlyImplFirebaseTrampolines.getCredentials(firebaseOptions);
-    Assume.assumeFalse("Skipping testServiceAccountRequired for service account credentials",
-        credentials instanceof ServiceAccountCredentials);
+  public void testCreateCustomTokenWithoutServiceAccountCredentials() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    String content = Utils.getDefaultJsonFactory().toString(
+        ImmutableMap.of("signature", BaseEncoding.base64().encode("test-signature".getBytes())));
+    response.setContent(content);
+    MockHttpTransport transport = new MultiRequestMockHttpTransport(ImmutableList.of(response));
 
-    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testServiceAccountRequired");
+    FirebaseOptions options = FirebaseOptions.builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId("test-project-id")
+        .setServiceAccountId("test@service.account")
+        .setHttpTransport(transport)
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
+    FirebaseAuth auth = FirebaseAuth.getInstance(app);
+
+    String token = auth.createCustomTokenAsync("user1").get();
+    FirebaseCustomAuthToken parsedToken = FirebaseCustomAuthToken.parse(new GsonFactory(), token);
+    assertEquals(parsedToken.getPayload().getUid(), "user1");
+    assertEquals(parsedToken.getPayload().getSubject(), "test@service.account");
+    assertEquals(parsedToken.getPayload().getIssuer(), "test@service.account");
+    assertNull(parsedToken.getPayload().getDeveloperClaims());
+    assertEquals("test-signature", new String(parsedToken.getSignatureBytes()));
+  }
+
+  @Test
+  public void testCreateCustomTokenWithDiscoveredServiceAccount() throws Exception {
+    String content = Utils.getDefaultJsonFactory().toString(
+        ImmutableMap.of("signature", BaseEncoding.base64().encode("test-signature".getBytes())));
+    List<MockLowLevelHttpResponse> responses = ImmutableList.of(
+        // Service account discovery response
+        new MockLowLevelHttpResponse().setContent("test@service.account"),
+
+        // Sign blob response
+        new MockLowLevelHttpResponse().setContent(content)
+    );
+    MockHttpTransport transport = new MultiRequestMockHttpTransport(responses);
+
+    FirebaseOptions options = FirebaseOptions.builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId("test-project-id")
+        .setHttpTransport(transport)
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
+    FirebaseAuth auth = FirebaseAuth.getInstance(app);
+
+    String token = auth.createCustomTokenAsync("user1").get();
+    FirebaseCustomAuthToken parsedToken = FirebaseCustomAuthToken.parse(new GsonFactory(), token);
+    assertEquals(parsedToken.getPayload().getUid(), "user1");
+    assertEquals(parsedToken.getPayload().getSubject(), "test@service.account");
+    assertEquals(parsedToken.getPayload().getIssuer(), "test@service.account");
+    assertNull(parsedToken.getPayload().getDeveloperClaims());
+    assertEquals("test-signature", new String(parsedToken.getSignatureBytes()));
+  }
+
+  @Test
+  public void testNoServiceAccount() throws Exception {
+    FirebaseOptions options = FirebaseOptions.builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId("test-project-id")
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
     try {
       FirebaseAuth.getInstance(app).createCustomTokenAsync("foo").get();
       fail("Expected exception.");
@@ -161,40 +159,5 @@ public class FirebaseCustomTokenTest {
               + "on creating custom tokens.",
           expected.getMessage());
     }
-  }
-
-  private static GoogleCredentials createRefreshTokenCredential() throws IOException {
-
-    final MockTokenServerTransport transport = new MockTokenServerTransport();
-    transport.addClient(CLIENT_ID, CLIENT_SECRET);
-    transport.addRefreshToken(REFRESH_TOKEN, ACCESS_TOKEN);
-
-    Map<String, Object> secretJson = new HashMap<>();
-    secretJson.put("client_id", CLIENT_ID);
-    secretJson.put("client_secret", CLIENT_SECRET);
-    secretJson.put("refresh_token", REFRESH_TOKEN);
-    secretJson.put("type", "authorized_user");
-    InputStream refreshTokenStream =
-        new ByteArrayInputStream(JSON_FACTORY.toByteArray(secretJson));
-
-    return UserCredentials.fromStream(refreshTokenStream, new HttpTransportFactory() {
-      @Override
-      public HttpTransport create() {
-        return transport;
-      }
-    });
-  }
-
-  private static GoogleCredentials createCertificateCredential() throws IOException {
-    final MockTokenServerTransport transport = new MockTokenServerTransport(
-        "https://accounts.google.com/o/oauth2/token");
-    transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), ACCESS_TOKEN);
-    return ServiceAccountCredentials.fromStream(ServiceAccount.EDITOR.asStream(),
-        new HttpTransportFactory() {
-          @Override
-          public HttpTransport create() {
-            return transport;
-          }
-        });
   }
 }
