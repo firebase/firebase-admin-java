@@ -147,6 +147,7 @@ public class MessageTest {
                 .setBodyLocalizationKey("body-loc")
                 .addBodyLocalizationArg("body-arg1")
                 .addAllBodyLocalizationArgs(ImmutableList.of("body-arg2", "body-arg3"))
+                .setChannelId("channel-id")
                 .build())
             .build())
         .setTopic("test-topic")
@@ -163,6 +164,7 @@ public class MessageTest {
         .put("title_loc_args", ImmutableList.of("title-arg1", "title-arg2", "title-arg3"))
         .put("body_loc_key", "body-loc")
         .put("body_loc_args", ImmutableList.of("body-arg1", "body-arg2", "body-arg3"))
+        .put("channel_id", "channel-id")
         .build();
     Map<String, Object> data = ImmutableMap.of(
         "collapse_key", "test-key",

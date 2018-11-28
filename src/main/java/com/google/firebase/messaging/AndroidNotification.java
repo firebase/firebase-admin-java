@@ -63,6 +63,9 @@ public class AndroidNotification {
 
   @Key("title_loc_args")
   private final List<String> titleLocArgs;
+  
+  @Key("channel_id")
+  private final String channelId;
 
   private AndroidNotification(Builder builder) {
     this.title = builder.title;
@@ -93,6 +96,7 @@ public class AndroidNotification {
     } else {
       this.titleLocArgs = null;
     }
+    this.channelId = builder.channelId;
   }
 
   /**
@@ -117,6 +121,7 @@ public class AndroidNotification {
     private List<String> bodyLocArgs = new ArrayList<>();
     private String titleLocKey;
     private List<String> titleLocArgs = new ArrayList<>();
+    private String channelId;
 
     private Builder() {}
 
@@ -270,6 +275,20 @@ public class AndroidNotification {
      */
     public Builder addAllTitleLocalizationArgs(@NonNull List<String> args) {
       this.titleLocArgs.addAll(args);
+      return this;
+    }
+
+    /**
+     * Sets the Android notification channel ID (new in Android O). The app must create a channel
+     * with this channel ID before any notification with this channel ID is received. If you 
+     * don't send this channel ID in the request, or if the channel ID provided has not yet been
+     * created by the app, FCM uses the channel ID specified in the app manifest.
+     *
+     * @param channelId The notification's channel ID.
+     * @return This builder.
+     */
+    public Builder setChannelId(String channelId) {
+      this.channelId = channelId;
       return this;
     }
 
