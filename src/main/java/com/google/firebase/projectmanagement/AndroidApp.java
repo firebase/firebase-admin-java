@@ -120,7 +120,7 @@ public class AndroidApp {
   }
 
   /**
-   * Adds a SHA certificate to this Android app.
+   * Adds the given SHA certificate to this Android app.
    *
    * @param certificateToAdd the SHA certificate to be added to this Android app
    * @return a {@link ShaCertificate} that was created for this Android app, containing resource
@@ -133,7 +133,7 @@ public class AndroidApp {
   }
 
   /**
-   * Asynchronously adds a SHA certificate to this Android app.
+   * Asynchronously adds the given SHA certificate to this Android app.
    *
    * @param certificateToAdd the SHA certificate to be added to this Android app
    * @return a {@code ApiFuture} of a {@link ShaCertificate} that was created for this Android app,
@@ -144,7 +144,7 @@ public class AndroidApp {
   }
 
   /**
-   * Removes a SHA certificate from this Android app.
+   * Removes the given SHA certificate from this Android app.
    *
    * @param certificateToRemove the SHA certificate to be removed from this Android app
    * @throws FirebaseProjectManagementException if there was an error during the RPC
@@ -155,7 +155,7 @@ public class AndroidApp {
   }
 
   /**
-   * Asynchronously removes a SHA certificate from this Android app.
+   * Asynchronously removes the given SHA certificate from this Android app.
    *
    * @param certificateToRemove the SHA certificate to be removed from this Android app
    */
