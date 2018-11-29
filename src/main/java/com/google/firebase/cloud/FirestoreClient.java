@@ -52,7 +52,8 @@ public class FirestoreClient {
   }
 
   /**
-   * Returns the Firestore instance associated with the default Firebase app.
+   * Returns the Firestore instance associated with the default Firebase app. Returns the same
+   * instance for all invocations.
    *
    * @return A non-null <a href="https://googlecloudplatform.github.io/google-cloud-java/google-cloud-clients/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
    *     instance.
@@ -63,7 +64,8 @@ public class FirestoreClient {
   }
 
   /**
-   * Returns the Firestore instance associated with the specified Firebase app.
+   * Returns the Firestore instance associated with the specified Firebase app. For a given app,
+   * always returns the same instance.
    *
    * @param app A non-null {@link FirebaseApp}.
    * @return A non-null <a href="https://googlecloudplatform.github.io/google-cloud-java/google-cloud-clients/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
