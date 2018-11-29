@@ -11,6 +11,8 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@code FirestoreClient} provides access to Google Cloud Firestore. Use this API to obtain a
@@ -25,6 +27,8 @@ import com.google.firebase.internal.NonNull;
  * methods, this API will throw a runtime exception.
  */
 public class FirestoreClient {
+
+  private static final Logger logger = LoggerFactory.getLogger(FirestoreClient.class);
 
   private final Firestore firestore;
 
@@ -89,10 +93,11 @@ public class FirestoreClient {
 
     @Override
     public void destroy() {
-      // NOTE: We don't explicitly tear down anything here (for now). User won't be able to call
-      // FirestoreClient.getFirestore() any more, but already created Firestore instances will
-      // continue to work. Request Firestore team to provide a cleanup/teardown method on the
-      // Firestore object.
+      try {
+        instance.firestore.close();
+      } catch (Exception e) {
+        logger.warn("Error while closing the Firestore instance", e);
+      }
     }
   }
 
