@@ -53,7 +53,8 @@ public class FirestoreClient {
 
   /**
    * Returns the Firestore instance associated with the default Firebase app. Returns the same
-   * instance for all invocations.
+   * instance for all invocations. The Firestore instance and all references obtained from it
+   * becomes unusable, once the default app is deleted.
    *
    * @return A non-null <a href="https://googlecloudplatform.github.io/google-cloud-java/google-cloud-clients/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
    *     instance.
@@ -65,7 +66,8 @@ public class FirestoreClient {
 
   /**
    * Returns the Firestore instance associated with the specified Firebase app. For a given app,
-   * always returns the same instance.
+   * always returns the same instance. The Firestore instance and all references obtained from it
+   * becomes unusable, once the specified app is deleted.
    *
    * @param app A non-null {@link FirebaseApp}.
    * @return A non-null <a href="https://googlecloudplatform.github.io/google-cloud-java/google-cloud-clients/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>

@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.FirestoreOptions;
 import com.google.firebase.FirebaseApp;
@@ -109,10 +110,19 @@ public class FirestoreClientTest {
         .setFirestoreOptions(FIRESTORE_OPTIONS)
         .build());
 
-    assertNotNull(FirestoreClient.getFirestore(app));
+    Firestore firestore = FirestoreClient.getFirestore(app);
+    assertNotNull(firestore);
+    DocumentReference document = firestore.collection("collection").document("doc");
     app.delete();
     try {
       FirestoreClient.getFirestore(app);
+      fail("No error thrown for deleted app");
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+
+    try {
+      document.get();
       fail("No error thrown for deleted app");
     } catch (IllegalStateException expected) {
       // ignore
@@ -125,5 +135,4 @@ public class FirestoreClientTest {
       // ignore
     }
   }
-
 }
