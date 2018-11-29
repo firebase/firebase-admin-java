@@ -13,6 +13,9 @@
   that are helpful when debugging problems.
 - [changed] Migrated the `FirebaseAuth` user management API to the
   new Identity Toolkit endpoint.
+- [added] Added new `setChannelId()` to the 
+  AndroidNotification.Builder API for setting the Android 
+  notification channel ID (new in Android O).
 
 # v6.5.0
 
