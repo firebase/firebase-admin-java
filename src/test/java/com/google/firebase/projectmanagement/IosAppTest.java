@@ -216,6 +216,7 @@ public class IosAppTest {
         TEST_APP_DISPLAY_NAME,
         TEST_PROJECT_ID,
         TEST_APP_BUNDLE_ID);
+
     assertEquals(TEST_IOS_APP_METADATA.hashCode(), other.hashCode());
     assertEquals(TEST_IOS_APP_METADATA, other);
   }

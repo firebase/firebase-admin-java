@@ -63,6 +63,7 @@ public class ShaCertificateTest {
   public void testEquality() {
     ShaCertificate shaOne = ShaCertificate.create("1111AAAA1111AAAA1111AAAA1111AAAA1111AAAA");
     ShaCertificate shaTwo = ShaCertificate.create("1111AAAA1111AAAA1111AAAA1111AAAA1111AAAA");
+
     assertEquals(shaOne, shaTwo);
     assertEquals(shaOne.hashCode(), shaTwo.hashCode());
   }
@@ -70,6 +71,7 @@ public class ShaCertificateTest {
   @Test
   public void testToString() {
     ShaCertificate sha = ShaCertificate.create("cert", "1111AAAA1111AAAA1111AAAA1111AAAA1111AAAA");
+    
     assertEquals(
         "ShaCertificate{name=cert, shaHash=1111AAAA1111AAAA1111AAAA1111AAAA1111AAAA, "
             + "certType=SHA_1}",

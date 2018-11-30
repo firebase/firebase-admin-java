@@ -202,6 +202,7 @@ public class AndroidAppTest {
   public void testAndroidAppMetadataEquality() {
     AndroidAppMetadata other =
         new AndroidAppMetadata(APP_NAME, APP_ID, APP_DISPLAY_NAME, PROJECT_ID, APP_PACKAGE_NAME);
+
     assertEquals(ANDROID_APP_METADATA.hashCode(), other.hashCode());
     assertEquals(ANDROID_APP_METADATA, other);
   }
