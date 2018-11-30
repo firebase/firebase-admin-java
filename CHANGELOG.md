@@ -1,6 +1,7 @@
 # Unreleased
 
--
+- [fixed] `Firestore` instances initialized by the SDK are now cleaned
+  up, when `FirebaseApp.delete()` is called.
 
 # v6.6.0
 
