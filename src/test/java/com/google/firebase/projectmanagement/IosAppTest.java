@@ -199,6 +199,28 @@ public class IosAppTest {
     }
   }
 
+  @Test
+  public void testIosAppMetadata() {
+    assertEquals(TEST_APP_NAME, TEST_IOS_APP_METADATA.getName());
+    assertEquals(TEST_APP_ID, TEST_IOS_APP_METADATA.getAppId());
+    assertEquals(TEST_APP_DISPLAY_NAME, TEST_IOS_APP_METADATA.getDisplayName());
+    assertEquals(TEST_PROJECT_ID, TEST_IOS_APP_METADATA.getProjectId());
+    assertEquals(TEST_APP_BUNDLE_ID, TEST_IOS_APP_METADATA.getBundleId());
+  }
+
+  @Test
+  public void testIosAppMetadataEquality() {
+    IosAppMetadata other = new IosAppMetadata(
+        TEST_APP_NAME,
+        TEST_APP_ID,
+        TEST_APP_DISPLAY_NAME,
+        TEST_PROJECT_ID,
+        TEST_APP_BUNDLE_ID);
+
+    assertEquals(TEST_IOS_APP_METADATA.hashCode(), other.hashCode());
+    assertEquals(TEST_IOS_APP_METADATA, other);
+  }
+
   private ApiFuture<IosAppMetadata> immediateIosAppMetadataFailedFuture() {
     return ApiFutures.<IosAppMetadata>immediateFailedFuture(FIREBASE_PROJECT_MANAGEMENT_EXCEPTION);
   }

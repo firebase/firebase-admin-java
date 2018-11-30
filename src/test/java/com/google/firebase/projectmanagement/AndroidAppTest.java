@@ -189,6 +189,24 @@ public class AndroidAppTest {
     Mockito.verify(androidAppService).deleteShaCertificateAsync(CERTIFICATE_NAME);
   }
 
+  @Test
+  public void testAndroidAppMetadata() {
+    assertEquals(APP_NAME, ANDROID_APP_METADATA.getName());
+    assertEquals(APP_ID, ANDROID_APP_METADATA.getAppId());
+    assertEquals(APP_DISPLAY_NAME, ANDROID_APP_METADATA.getDisplayName());
+    assertEquals(PROJECT_ID, ANDROID_APP_METADATA.getProjectId());
+    assertEquals(APP_PACKAGE_NAME, ANDROID_APP_METADATA.getPackageName());
+  }
+
+  @Test
+  public void testAndroidAppMetadataEquality() {
+    AndroidAppMetadata other =
+        new AndroidAppMetadata(APP_NAME, APP_ID, APP_DISPLAY_NAME, PROJECT_ID, APP_PACKAGE_NAME);
+
+    assertEquals(ANDROID_APP_METADATA.hashCode(), other.hashCode());
+    assertEquals(ANDROID_APP_METADATA, other);
+  }
+
   private <T> SettableApiFuture<T> createApiFuture(T value) {
     final SettableApiFuture<T> future = SettableApiFuture.create();
     future.set(value);

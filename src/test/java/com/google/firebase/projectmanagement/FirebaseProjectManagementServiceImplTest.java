@@ -25,6 +25,7 @@ import static com.google.firebase.projectmanagement.ShaCertificateType.SHA_256;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpRequest;
@@ -256,6 +257,20 @@ public class FirebaseProjectManagementServiceImplTest {
 
     checkRequestHeader(expectedUrl, HttpMethod.GET);
     assertEquals(iosAppMetadata, IOS_APP_METADATA);
+  }
+
+  @Test
+  public void getIosAppHttpError() {
+    firstRpcResponse.setStatusCode(500);
+    firstRpcResponse.setContent("{}");
+    serviceImpl = initServiceImpl(firstRpcResponse, interceptor);
+
+    try {
+      serviceImpl.getIosApp(IOS_APP_ID);
+      fail("No exception thrown for HTTP error");
+    } catch (FirebaseProjectManagementException e) {
+      assertEquals("App ID \"test-ios-app-id\": Internal server error.", e.getMessage());
+    }
   }
 
   @Test
@@ -524,6 +539,20 @@ public class FirebaseProjectManagementServiceImplTest {
         "%s/v1beta1/projects/-/androidApps/%s", FIREBASE_PROJECT_MANAGEMENT_URL, ANDROID_APP_ID);
     checkRequestHeader(expectedUrl, HttpMethod.GET);
     assertEquals(androidAppMetadata, ANDROID_APP_METADATA);
+  }
+
+  @Test
+  public void getAndroidAppHttpError() {
+    firstRpcResponse.setStatusCode(500);
+    firstRpcResponse.setContent("{}");
+    serviceImpl = initServiceImpl(firstRpcResponse, interceptor);
+
+    try {
+      serviceImpl.getAndroidApp(ANDROID_APP_ID);
+      fail("No exception thrown for HTTP error");
+    } catch (FirebaseProjectManagementException e) {
+      assertEquals("App ID \"test-android-app-id\": Internal server error.", e.getMessage());
+    }
   }
 
   @Test
