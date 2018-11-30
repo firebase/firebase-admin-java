@@ -27,7 +27,7 @@ public class FirestoreClientTest {
   }
 
   @Test
-  public void testExplicitProjectId() throws IOException {
+  public void testExplicitProjectId() throws Exception {
     FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setProjectId("explicit-project-id")
@@ -40,10 +40,12 @@ public class FirestoreClientTest {
 
     firestore = FirestoreClient.getFirestore();
     assertEquals("explicit-project-id", firestore.getOptions().getProjectId());
+
+    firestore.close();
   }
 
   @Test
-  public void testServiceAccountProjectId() throws IOException {
+  public void testServiceAccountProjectId() throws Exception {
     FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setFirestoreOptions(FirestoreOptions.newBuilder()
@@ -55,10 +57,12 @@ public class FirestoreClientTest {
 
     firestore = FirestoreClient.getFirestore();
     assertEquals("mock-project-id", firestore.getOptions().getProjectId());
+
+    firestore.close();
   }
 
   @Test
-  public void testFirestoreOptions() throws IOException {
+  public void testFirestoreOptions() throws Exception {
     FirebaseApp app = FirebaseApp.initializeApp(new Builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setProjectId("explicit-project-id")
@@ -73,10 +77,12 @@ public class FirestoreClientTest {
     firestore = FirestoreClient.getFirestore();
     assertEquals("explicit-project-id", firestore.getOptions().getProjectId());
     assertTrue(firestore.getOptions().areTimestampsInSnapshotsEnabled());
+
+    firestore.close();
   }
 
   @Test
-  public void testFirestoreOptionsOverride() throws IOException {
+  public void testFirestoreOptionsOverride() throws Exception {
     FirebaseApp app = FirebaseApp.initializeApp(new Builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setProjectId("explicit-project-id")
@@ -97,6 +103,8 @@ public class FirestoreClientTest {
     assertTrue(firestore.getOptions().areTimestampsInSnapshotsEnabled());
     assertSame(ImplFirebaseTrampolines.getCredentials(app),
         firestore.getOptions().getCredentialsProvider().getCredentials());
+
+    firestore.close();
   }
 
   @Test
