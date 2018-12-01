@@ -1,12 +1,21 @@
 # Unreleased
 
+- [fixed] `Firestore` instances initialized by the SDK are now cleaned
+  up, when `FirebaseApp.delete()` is called.
+- [added] Added new `setChannelId()` to the
+  AndroidNotification.Builder API for setting the Android
+  notification channel ID (new in Android O).
+
+# v6.6.0
+
+- [added] Added a new `FirebaseProjectManagement` API for managing
+  apps in a Firebase project.
 - [fixed] Fixing error handling in FCM. The SDK now checks the key
   `type.googleapis.com/google.firebase.fcm.v1.FcmError` to set error
   code.
 - [fixed] FCM errors sent by the back-end now include more details
   that are helpful when debugging problems.
 - [changed] Migrated the `FirebaseAuth` user management API to the
-  new Identity Toolkit endpoint.
 
 # v6.5.0
 

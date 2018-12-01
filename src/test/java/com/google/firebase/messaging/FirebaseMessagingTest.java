@@ -606,6 +606,7 @@ public class FirebaseMessagingTest {
                     .addAllTitleLocalizationArgs(ImmutableList.of("t-arg2", "t-arg3"))
                     .addBodyLocalizationArg("b-arg1")
                     .addAllBodyLocalizationArgs(ImmutableList.of("b-arg2", "b-arg3"))
+                    .setChannelId("channel-id")
                     .build())
                 .build())
             .setTopic("test-topic")
@@ -629,6 +630,7 @@ public class FirebaseMessagingTest {
                     .put("title_loc_args", ImmutableList.of("t-arg1", "t-arg2", "t-arg3"))
                     .put("body_loc_key", "test-body-key")
                     .put("body_loc_args", ImmutableList.of("b-arg1", "b-arg2", "b-arg3"))
+                    .put("channel_id", "channel-id")
                     .build()
             )
         ));
@@ -644,6 +646,7 @@ public class FirebaseMessagingTest {
                     .setBadge(42)
                     .setAlert(ApsAlert.builder()
                         .setTitle("test-title")
+                        .setSubtitle("test-subtitle")
                         .setBody("test-body")
                         .build())
                     .build())
@@ -657,7 +660,8 @@ public class FirebaseMessagingTest {
                 "payload", ImmutableMap.of("k1", "v1", "k2", true,
                     "aps", ImmutableMap.<String, Object>of("badge", new BigDecimal(42),
                         "alert", ImmutableMap.<String, Object>of(
-                            "title", "test-title", "body", "test-body"))))
+                            "title", "test-title", "subtitle", "test-subtitle", 
+                            "body", "test-body"))))
         ));
 
     // Webpush message (no notification)
