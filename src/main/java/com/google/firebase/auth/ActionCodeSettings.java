@@ -48,10 +48,10 @@ public final class ActionCodeSettings {
       properties.put("dynamicLinkDomain", builder.dynamicLinkDomain);
     }
     if (builder.androidActionCodeSettings != null) {
-      properties.put("android", builder.androidActionCodeSettings);
+      properties.put("android", builder.androidActionCodeSettings.getProperties());
     }
     if (builder.iosActionCodeSettings != null) {
-      properties.put("iOS", builder.iosActionCodeSettings);
+      properties.put("iOS", builder.iosActionCodeSettings.getProperties());
     }
     this.properties = properties.build();
   }

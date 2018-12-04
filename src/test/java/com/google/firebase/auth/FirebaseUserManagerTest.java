@@ -39,6 +39,7 @@ import com.google.common.collect.Iterables;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.internal.SdkUtils;
@@ -74,16 +75,7 @@ public class FirebaseUserManagerTest {
                   .build())
           .build();
   private static final Map<String, Object> ACTION_CODE_SETTINGS_MAP =
-          ImmutableMap.<String, Object>builder()
-                  .put("url", "https://example.dynamic.link")
-                  .put("handleCodeInApp", true)
-                  .put("dynamicLinkDomain", "custom.page.link")
-                  .put("iOS", ImmutableMap.of("bundleId", "com.example.ios"))
-                  .put("android", ImmutableMap.of(
-                          "packageName", "com.example.android",
-                          "installApp", true,
-                          "minimumVersion", "6"))
-                  .build();
+          ACTION_CODE_SETTINGS.getProperties();
 
   @After
   public void tearDown() {
@@ -1172,6 +1164,48 @@ public class FirebaseUserManagerTest {
     assertTrue((Boolean) parsed.get("returnOobLink"));
     for (Map.Entry<String, Object> entry : ACTION_CODE_SETTINGS_MAP.entrySet()) {
       assertEquals(entry.getValue(), parsed.get(entry.getKey()));
+    }
+  }
+
+  @Test
+  public void testHttpErrorWithCode() {
+    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(credentials)
+        .setHttpTransport(new MultiRequestMockHttpTransport(ImmutableList.of(
+            new MockLowLevelHttpResponse()
+                .setContent("{\"error\": {\"message\": \"UNAUTHORIZED_DOMAIN\"}}")
+                .setStatusCode(500))))
+        .setProjectId("test-project-id")
+        .build());
+    FirebaseAuth auth = FirebaseAuth.getInstance();
+    FirebaseUserManager userManager = auth.getUserManager();
+    try {
+      userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
+      fail("No exception thrown for HTTP error");
+    } catch (FirebaseAuthException e) {
+      assertEquals("unauthorized-continue-uri", e.getErrorCode());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+    }
+  }
+
+  @Test
+  public void testUnexpectedHttpError() {
+    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(credentials)
+        .setHttpTransport(new MultiRequestMockHttpTransport(ImmutableList.of(
+            new MockLowLevelHttpResponse()
+                .setContent("{}")
+                .setStatusCode(500))))
+        .setProjectId("test-project-id")
+        .build());
+    FirebaseAuth auth = FirebaseAuth.getInstance();
+    FirebaseUserManager userManager = auth.getUserManager();
+    try {
+      userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
+      fail("No exception thrown for HTTP error");
+    } catch (FirebaseAuthException e) {
+      assertEquals("internal-error", e.getErrorCode());
+      assertTrue(e.getCause() instanceof HttpResponseException);
     }
   }
 

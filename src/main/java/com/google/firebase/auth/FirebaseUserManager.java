@@ -85,6 +85,8 @@ class FirebaseUserManager {
       .put("PROJECT_NOT_FOUND", "project-not-found")
       .put("USER_NOT_FOUND", USER_NOT_FOUND_ERROR)
       .put("WEAK_PASSWORD", "invalid-password")
+      .put("UNAUTHORIZED_DOMAIN", "unauthorized-continue-uri")
+      .put("INVALID_DYNAMIC_LINK_DOMAIN", "invalid-dynamic-link-domain")
       .build();
 
   static final int MAX_LIST_USERS_RESULTS = 1000;
