@@ -1,5 +1,7 @@
 # Unreleased
 
+- [added] Added `generatePasswordResetLink()`, `generateEmailVerificationLink()`
+  and `generateSignInWithEmailLink()` method to the `FirebaseAuth` API.
 - [fixed] `Firestore` instances initialized by the SDK are now cleaned
   up, when `FirebaseApp.delete()` is called.
 - [added] Added new `setChannelId()` to the

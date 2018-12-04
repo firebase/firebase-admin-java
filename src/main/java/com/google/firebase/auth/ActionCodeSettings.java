@@ -42,16 +42,16 @@ public final class ActionCodeSettings {
       throw new IllegalArgumentException("Malformed URL string", e);
     }
     ImmutableMap.Builder<String, Object> properties = ImmutableMap.<String, Object>builder()
-            .put("url", builder.url)
-            .put("handleCodeInApp", builder.handleCodeInApp);
+            .put("continueUrl", builder.url)
+            .put("canHandleCodeInApp", builder.handleCodeInApp);
     if (!Strings.isNullOrEmpty(builder.dynamicLinkDomain)) {
       properties.put("dynamicLinkDomain", builder.dynamicLinkDomain);
     }
     if (builder.androidActionCodeSettings != null) {
-      properties.put("android", builder.androidActionCodeSettings.getProperties());
+      properties.putAll(builder.androidActionCodeSettings.getProperties());
     }
     if (builder.iosActionCodeSettings != null) {
-      properties.put("iOS", builder.iosActionCodeSettings.getProperties());
+      properties.putAll(builder.iosActionCodeSettings.getProperties());
     }
     this.properties = properties.build();
   }

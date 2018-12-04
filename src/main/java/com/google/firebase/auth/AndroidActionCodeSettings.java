@@ -27,9 +27,9 @@ public final class AndroidActionCodeSettings {
 
   Map<String, Object> getProperties() {
     return ImmutableMap.<String, Object>of(
-        "packageName", packageName,
-        "installApp", installApp,
-        "minimumVersion", minimumVersion
+        "androidPackageName", packageName,
+        "androidInstallApp", installApp,
+        "androidMinimumVersion", minimumVersion
     );
   }
 

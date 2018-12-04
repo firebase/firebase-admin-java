@@ -42,6 +42,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -50,7 +51,9 @@ import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.hash.Scrypt;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -66,12 +69,17 @@ import org.junit.Test;
 
 public class FirebaseAuthIT {
 
-  private static final String ID_TOOLKIT_URL =
+  private static final String VERIFY_CUSTOM_TOKEN_URL =
       "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyCustomToken";
-  private static final String ID_TOOLKIT_URL2 =
+  private static final String VERIFY_PASSWORD_URL =
       "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword";
+  private static final String RESET_PASSWORD_URL =
+      "https://www.googleapis.com/identitytoolkit/v3/relyingparty/resetPassword";
+  private static final String EMAIL_LINK_SIGN_IN_URL =
+      "https://www.googleapis.com/identitytoolkit/v3/relyingparty/emailLinkSignin";
   private static final JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
   private static final HttpTransport transport = Utils.getDefaultTransport();
+  public static final String ACTION_LINK_CONTINUE_URL = "http://localhost/?a=1&b=2#c=3";
 
   private static FirebaseAuth auth;
 
@@ -129,24 +137,13 @@ public class FirebaseAuthIT {
     }
   }
 
-  private String randomPhoneNumber() {
-    Random random = new Random();
-    StringBuilder builder = new StringBuilder("+1");
-    for (int i = 0; i < 10; i++) {
-      builder.append(random.nextInt(10));
-    }
-    return builder.toString();
-  }
-
   @Test
   public void testCreateUserWithParams() throws Exception {
-    String randomId = UUID.randomUUID().toString().replaceAll("-", "");
-    String userEmail = ("test" + randomId.substring(0, 12) + "@example." + randomId.substring(12)
-        + ".com").toLowerCase();
+    RandomUser randomUser = RandomUser.create();
     String phone = randomPhoneNumber();
     CreateRequest user = new CreateRequest()
-        .setUid(randomId)
-        .setEmail(userEmail)
+        .setUid(randomUser.uid)
+        .setEmail(randomUser.email)
         .setPhoneNumber(phone)
         .setDisplayName("Random User")
         .setPhotoUrl("https://example.com/photo.png")
@@ -155,9 +152,9 @@ public class FirebaseAuthIT {
 
     UserRecord userRecord = auth.createUserAsync(user).get();
     try {
-      assertEquals(randomId, userRecord.getUid());
+      assertEquals(randomUser.uid, userRecord.getUid());
       assertEquals("Random User", userRecord.getDisplayName());
-      assertEquals(userEmail, userRecord.getEmail());
+      assertEquals(randomUser.email, userRecord.getEmail());
       assertEquals(phone, userRecord.getPhoneNumber());
       assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
       assertTrue(userRecord.isEmailVerified());
@@ -171,7 +168,7 @@ public class FirebaseAuthIT {
       assertTrue(providers.contains("password"));
       assertTrue(providers.contains("phone"));
 
-      checkRecreate(randomId);
+      checkRecreate(randomUser.uid);
     } finally {
       auth.deleteUserAsync(userRecord.getUid()).get();
     }
@@ -198,13 +195,11 @@ public class FirebaseAuthIT {
     assertTrue(userRecord.getCustomClaims().isEmpty());
 
     // Update user
-    String randomId = UUID.randomUUID().toString().replaceAll("-", "");
-    String userEmail = ("test" + randomId.substring(0, 12) + "@example." + randomId.substring(12)
-        + ".com").toLowerCase();
+    RandomUser randomUser = RandomUser.create();
     String phone = randomPhoneNumber();
     UpdateRequest request = userRecord.updateRequest()
         .setDisplayName("Updated Name")
-        .setEmail(userEmail)
+        .setEmail(randomUser.email)
         .setPhoneNumber(phone)
         .setPhotoUrl("https://example.com/photo.png")
         .setEmailVerified(true)
@@ -212,7 +207,7 @@ public class FirebaseAuthIT {
     userRecord = auth.updateUserAsync(request).get();
     assertEquals(uid, userRecord.getUid());
     assertEquals("Updated Name", userRecord.getDisplayName());
-    assertEquals(userEmail, userRecord.getEmail());
+    assertEquals(randomUser.email, userRecord.getEmail());
     assertEquals(phone, userRecord.getPhoneNumber());
     assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
     assertTrue(userRecord.isEmailVerified());
@@ -233,7 +228,7 @@ public class FirebaseAuthIT {
     userRecord = auth.updateUserAsync(request).get();
     assertEquals(uid, userRecord.getUid());
     assertNull(userRecord.getDisplayName());
-    assertEquals(userEmail, userRecord.getEmail());
+    assertEquals(randomUser.email, userRecord.getEmail());
     assertNull(userRecord.getPhoneNumber());
     assertNull(userRecord.getPhotoUrl());
     assertTrue(userRecord.isEmailVerified());
@@ -312,7 +307,7 @@ public class FirebaseAuthIT {
           }
           semaphore.release();
         }
-      });
+      }, MoreExecutors.directExecutor());
       semaphore.acquire();
       assertEquals(uids.size(), collected.get());
       assertNull(error.get());
@@ -378,7 +373,7 @@ public class FirebaseAuthIT {
       token = credentials.refreshAccessToken();
     }
     FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredentials(GoogleCredentials.of(token))
+        .setCredentials(GoogleCredentials.create(token))
         .setServiceAccountId(((ServiceAccountSigner) credentials).getAccount())
         .setProjectId(IntegrationTestUtils.getProjectId())
         .build();
@@ -470,12 +465,10 @@ public class FirebaseAuthIT {
 
   @Test
   public void testImportUsers() throws Exception {
-    final String randomId = UUID.randomUUID().toString().replaceAll("-", "");
-    final String userEmail = ("test" + randomId.substring(0, 12) + "@example."
-        + randomId.substring(12) + ".com").toLowerCase();
+    RandomUser randomUser = RandomUser.create();
     ImportUserRecord user = ImportUserRecord.builder()
-        .setUid(randomId)
-        .setEmail(userEmail)
+        .setUid(randomUser.uid)
+        .setEmail(randomUser.email)
         .build();
 
     UserImportResult result = auth.importUsersAsync(ImmutableList.of(user)).get();
@@ -483,23 +476,21 @@ public class FirebaseAuthIT {
     assertEquals(0, result.getFailureCount());
 
     try {
-      UserRecord savedUser = auth.getUserAsync(randomId).get();
-      assertEquals(userEmail, savedUser.getEmail());
+      UserRecord savedUser = auth.getUserAsync(randomUser.uid).get();
+      assertEquals(randomUser.email, savedUser.getEmail());
     } finally {
-      auth.deleteUserAsync(randomId).get();
+      auth.deleteUserAsync(randomUser.uid).get();
     }
   }
 
   @Test
   public void testImportUsersWithPassword() throws Exception {
-    final String randomId = UUID.randomUUID().toString().replaceAll("-", "");
-    final String userEmail = ("test" + randomId.substring(0, 12) + "@example."
-        + randomId.substring(12) + ".com").toLowerCase();
+    RandomUser randomUser = RandomUser.create();
     final byte[] passwordHash = BaseEncoding.base64().decode(
         "V358E8LdWJXAO7muq0CufVpEOXaj8aFiC7T/rcaGieN04q/ZPJ08WhJEHGjj9lz/2TT+/86N5VjVoc5DdBhBiw==");
     ImportUserRecord user = ImportUserRecord.builder()
-        .setUid(randomId)
-        .setEmail(userEmail)
+        .setUid(randomUser.uid)
+        .setEmail(randomUser.email)
         .setPasswordHash(passwordHash)
         .setPasswordSalt("NaCl".getBytes())
         .build();
@@ -519,17 +510,112 @@ public class FirebaseAuthIT {
     assertEquals(0, result.getFailureCount());
 
     try {
-      UserRecord savedUser = auth.getUserAsync(randomId).get();
-      assertEquals(userEmail, savedUser.getEmail());
-      String idToken = signInWithPassword(userEmail, "password");
+      UserRecord savedUser = auth.getUserAsync(randomUser.uid).get();
+      assertEquals(randomUser.email, savedUser.getEmail());
+      String idToken = signInWithPassword(randomUser.email, "password");
       assertFalse(Strings.isNullOrEmpty(idToken));
     } finally {
-      auth.deleteUserAsync(randomId).get();
+      auth.deleteUserAsync(randomUser.uid).get();
     }
   }
 
+  @Test
+  public void testGeneratePasswordResetLink() throws Exception {
+    RandomUser user = RandomUser.create();
+    auth.createUser(new CreateRequest()
+        .setUid(user.uid)
+        .setEmail(user.email)
+        .setEmailVerified(false)
+        .setPassword("password"));
+    try {
+      String link = auth.generatePasswordResetLink(user.email, ActionCodeSettings.builder()
+          .setUrl(ACTION_LINK_CONTINUE_URL)
+          .setHandleCodeInApp(false)
+          .build());
+      Map<String, String> linkParams = parseLinkParameters(link);
+      assertEquals(ACTION_LINK_CONTINUE_URL, linkParams.get("continueUrl"));
+      String email = resetPassword(user.email, "password", "newpassword",
+          linkParams.get("oobCode"));
+      assertEquals(user.email, email);
+      // Password reset also verifies the user's email
+      assertTrue(auth.getUser(user.uid).isEmailVerified());
+    } finally {
+      auth.deleteUser(user.uid);
+    }
+  }
+
+  @Test
+  public void testGenerateEmailVerificationResetLink() throws Exception {
+    RandomUser user = RandomUser.create();
+    auth.createUser(new CreateRequest()
+        .setUid(user.uid)
+        .setEmail(user.email)
+        .setEmailVerified(false)
+        .setPassword("password"));
+    try {
+      String link = auth.generateEmailVerificationLink(user.email, ActionCodeSettings.builder()
+          .setUrl(ACTION_LINK_CONTINUE_URL)
+          .setHandleCodeInApp(false)
+          .build());
+      Map<String, String> linkParams = parseLinkParameters(link);
+      assertEquals(ACTION_LINK_CONTINUE_URL, linkParams.get("continueUrl"));
+      // There doesn't seem to be a public API for verifying an email, so we cannot do a more
+      // thorough test here.
+      assertEquals("verifyEmail", linkParams.get("mode"));
+    } finally {
+      auth.deleteUser(user.uid);
+    }
+  }
+
+  @Test
+  public void testGenerateSignInWithEmailLink() throws Exception {
+    RandomUser user = RandomUser.create();
+    auth.createUser(new CreateRequest()
+        .setUid(user.uid)
+        .setEmail(user.email)
+        .setEmailVerified(false)
+        .setPassword("password"));
+    try {
+      String link = auth.generateSignInWithEmailLink(user.email, ActionCodeSettings.builder()
+          .setUrl(ACTION_LINK_CONTINUE_URL)
+          .setHandleCodeInApp(false)
+          .build());
+      Map<String, String> linkParams = parseLinkParameters(link);
+      assertEquals(ACTION_LINK_CONTINUE_URL, linkParams.get("continueUrl"));
+      String idToken = signInWithEmailLink(user.email, linkParams.get("oobCode"));
+      assertFalse(Strings.isNullOrEmpty(idToken));
+      assertTrue(auth.getUser(user.uid).isEmailVerified());
+    } finally {
+      auth.deleteUser(user.uid);
+    }
+  }
+
+  private Map<String, String> parseLinkParameters(String link) throws Exception {
+    Map<String, String> result = new HashMap<>();
+    int queryBegin = link.indexOf('?');
+    if (queryBegin != -1) {
+      String[] segments = link.substring(queryBegin + 1).split("&");
+      for (String segment : segments) {
+        int equalSign = segment.indexOf('=');
+        String key = segment.substring(0, equalSign);
+        String value = segment.substring(equalSign + 1);
+        result.put(key, URLDecoder.decode(value, "UTF-8"));
+      }
+    }
+    return result;
+  }
+
+  private String randomPhoneNumber() {
+    Random random = new Random();
+    StringBuilder builder = new StringBuilder("+1");
+    for (int i = 0; i < 10; i++) {
+      builder.append(random.nextInt(10));
+    }
+    return builder.toString();
+  }
+
   private String signInWithCustomToken(String customToken) throws IOException {
-    GenericUrl url = new GenericUrl(ID_TOOLKIT_URL + "?key="
+    GenericUrl url = new GenericUrl(VERIFY_CUSTOM_TOKEN_URL + "?key="
         + IntegrationTestUtils.getApiKey());
     Map<String, Object> content = ImmutableMap.<String, Object>of(
         "token", customToken, "returnSecureToken", true);
@@ -546,10 +632,46 @@ public class FirebaseAuthIT {
   }
 
   private String signInWithPassword(String email, String password) throws IOException {
-    GenericUrl url = new GenericUrl(ID_TOOLKIT_URL2 + "?key="
+    GenericUrl url = new GenericUrl(VERIFY_PASSWORD_URL + "?key="
         + IntegrationTestUtils.getApiKey());
     Map<String, Object> content = ImmutableMap.<String, Object>of(
         "email", email, "password", password);
+    HttpRequest request = transport.createRequestFactory().buildPostRequest(url,
+        new JsonHttpContent(jsonFactory, content));
+    request.setParser(new JsonObjectParser(jsonFactory));
+    HttpResponse response = request.execute();
+    try {
+      GenericJson json = response.parseAs(GenericJson.class);
+      return json.get("idToken").toString();
+    } finally {
+      response.disconnect();
+    }
+  }
+
+  private String resetPassword(
+      String email, String oldPassword, String newPassword, String oobCode) throws IOException {
+    GenericUrl url = new GenericUrl(RESET_PASSWORD_URL + "?key="
+        + IntegrationTestUtils.getApiKey());
+    Map<String, Object> content = ImmutableMap.<String, Object>of(
+        "email", email, "oldPassword", oldPassword, "newPassword", newPassword, "oobCode", oobCode);
+    HttpRequest request = transport.createRequestFactory().buildPostRequest(url,
+        new JsonHttpContent(jsonFactory, content));
+    request.setParser(new JsonObjectParser(jsonFactory));
+    HttpResponse response = request.execute();
+    try {
+      GenericJson json = response.parseAs(GenericJson.class);
+      return json.get("email").toString();
+    } finally {
+      response.disconnect();
+    }
+  }
+
+  private String signInWithEmailLink(
+      String email, String oobCode) throws IOException {
+    GenericUrl url = new GenericUrl(EMAIL_LINK_SIGN_IN_URL + "?key="
+        + IntegrationTestUtils.getApiKey());
+    Map<String, Object> content = ImmutableMap.<String, Object>of(
+        "email", email, "oobCode", oobCode);
     HttpRequest request = transport.createRequestFactory().buildPostRequest(url,
         new JsonHttpContent(jsonFactory, content));
     request.setParser(new JsonObjectParser(jsonFactory));
@@ -569,6 +691,23 @@ public class FirebaseAuthIT {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       assertEquals("uid-already-exists", ((FirebaseAuthException) e.getCause()).getErrorCode());
+    }
+  }
+
+  private static class RandomUser {
+    private final String uid;
+    private final String email;
+
+    private RandomUser(String uid, String email) {
+      this.uid = uid;
+      this.email = email;
+    }
+
+    static RandomUser create() {
+      final String uid = UUID.randomUUID().toString().replaceAll("-", "");
+      final String email = ("test" + uid.substring(0, 12) + "@example."
+          + uid.substring(12) + ".com").toLowerCase();
+      return new RandomUser(uid, email);
     }
   }
 }

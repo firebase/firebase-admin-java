@@ -27,6 +27,6 @@ public final class IosActionCodeSettings {
   }
 
   Map<String, Object> getProperties() {
-    return ImmutableMap.<String, Object>of("bundleId", bundleId);
+    return ImmutableMap.<String, Object>of("iOSBundleId", bundleId);
   }
 }

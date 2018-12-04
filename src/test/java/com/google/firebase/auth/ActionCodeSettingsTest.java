@@ -49,7 +49,7 @@ public class ActionCodeSettingsTest {
         .setUrl("https://example.com")
         .build();
     Map<String, Object> expected = ImmutableMap.<String, Object>of(
-        "url", "https://example.com", "handleCodeInApp", false);
+        "continueUrl", "https://example.com", "canHandleCodeInApp", false);
     assertEquals(expected, settings.getProperties());
   }
 
@@ -66,16 +66,15 @@ public class ActionCodeSettingsTest {
             .setInstallApp(true)
             .build())
         .build();
-    Map<String, Object> expected = ImmutableMap.<String, Object>of(
-        "url", "https://example.com",
-        "handleCodeInApp", true,
-        "dynamicLinkDomain", "myapp.page.link",
-        "iOS", ImmutableMap.of("bundleId", "com.example.ios"),
-        "android", ImmutableMap.<String, Object>of(
-            "packageName", "com.example.android",
-            "minimumVersion", "6.0",
-            "installApp", true)
-    );
+    Map<String, Object> expected = ImmutableMap.<String, Object>builder()
+        .put("continueUrl", "https://example.com")
+        .put("canHandleCodeInApp", true)
+        .put("dynamicLinkDomain", "myapp.page.link")
+        .put("iOSBundleId", "com.example.ios")
+        .put("androidPackageName", "com.example.android")
+        .put("androidMinimumVersion", "6.0")
+        .put("androidInstallApp", true)
+        .build();
     assertEquals(expected, settings.getProperties());
   }
 
