@@ -41,17 +41,27 @@ public final class ActionCodeSettings {
     } catch (MalformedURLException e) {
       throw new IllegalArgumentException("Malformed URL string", e);
     }
+    if (builder.androidInstallApp || !Strings.isNullOrEmpty(builder.androidMinimumVersion)) {
+      checkArgument(!Strings.isNullOrEmpty(builder.androidPackageName),
+          "Android package name is required when specifying other Android settings");
+    }
     ImmutableMap.Builder<String, Object> properties = ImmutableMap.<String, Object>builder()
             .put("continueUrl", builder.url)
             .put("canHandleCodeInApp", builder.handleCodeInApp);
     if (!Strings.isNullOrEmpty(builder.dynamicLinkDomain)) {
       properties.put("dynamicLinkDomain", builder.dynamicLinkDomain);
     }
-    if (builder.androidActionCodeSettings != null) {
-      properties.putAll(builder.androidActionCodeSettings.getProperties());
+    if (!Strings.isNullOrEmpty(builder.iosBundleId)) {
+      properties.put("iOSBundleId", builder.iosBundleId);
     }
-    if (builder.iosActionCodeSettings != null) {
-      properties.putAll(builder.iosActionCodeSettings.getProperties());
+    if (!Strings.isNullOrEmpty(builder.androidPackageName)) {
+      properties.put("androidPackageName", builder.androidPackageName);
+      if (!Strings.isNullOrEmpty(builder.androidMinimumVersion)) {
+        properties.put("androidMinimumVersion", builder.androidMinimumVersion);
+      }
+      if (builder.androidInstallApp) {
+        properties.put("androidInstallApp", builder.androidInstallApp);
+      }
     }
     this.properties = properties.build();
   }
@@ -74,8 +84,10 @@ public final class ActionCodeSettings {
     private String url;
     private boolean handleCodeInApp;
     private String dynamicLinkDomain;
-    private AndroidActionCodeSettings androidActionCodeSettings;
-    private IosActionCodeSettings iosActionCodeSettings;
+    private String iosBundleId;
+    private String androidPackageName;
+    private String androidMinimumVersion;
+    private boolean androidInstallApp;
 
     private Builder() { }
 
@@ -128,27 +140,50 @@ public final class ActionCodeSettings {
     }
 
     /**
-     * Sets the Android package name and other platform-specific settings. This attempts to open
-     * the link in an Android app if it is installed.
+     * Sets the bundle ID of the iOS app where the link should be handled if the
+     * application is already installed on the device.
      *
-     * @param androidActionCodeSettings Android-specific settings for how the link should be
-     *     handled.
-     * @return This builder.
+     * @param iosBundleId The iOS bundle ID string.
      */
-    public Builder setAndroidActionCodeSettings(
-            AndroidActionCodeSettings androidActionCodeSettings) {
-      this.androidActionCodeSettings = androidActionCodeSettings;
+    public Builder setIosBundleId(String iosBundleId) {
+      this.iosBundleId = iosBundleId;
       return this;
     }
 
     /**
-     * Sets the iOS bundle ID. This will try to open the link in an iOS app if it is installed.
+     * Sets the Android package name of the app where the link should be handled if the
+     * Android app is installed. Must be specified when setting other Android-specific settings.
      *
-     * @param iosActionCodeSettings iOS-specific settings for how the link should be handled.
+     * @param androidPackageName Package name string. Must be specified, and must not be null
+     *     or empty.
      * @return This builder.
      */
-    public Builder setIosActionCodeSettings(IosActionCodeSettings iosActionCodeSettings) {
-      this.iosActionCodeSettings = iosActionCodeSettings;
+    public Builder setAndroidPackageName(String androidPackageName) {
+      this.androidPackageName = androidPackageName;
+      return this;
+    }
+
+    /**
+     * Sets the minimum version for Android app. If the installed app is an older version, the user
+     * is taken to the Play Store to upgrade the app.
+     *
+     * @param androidMinimumVersion Minimum version string.
+     * @return This builder.
+     */
+    public Builder setAndroidMinimumVersion(String androidMinimumVersion) {
+      this.androidMinimumVersion = androidMinimumVersion;
+      return this;
+    }
+
+    /**
+     * Specifies whether to install the Android app if the device supports it and the app is not
+     * already installed.
+     *
+     * @param androidInstallApp true to install the app, and false otherwise.
+     * @return This builder.
+     */
+    public Builder setAndroidInstallApp(boolean androidInstallApp) {
+      this.androidInstallApp = androidInstallApp;
       return this;
     }
 

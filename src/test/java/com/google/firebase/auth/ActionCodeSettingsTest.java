@@ -53,18 +53,25 @@ public class ActionCodeSettingsTest {
     assertEquals(expected, settings.getProperties());
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testNoAndroidPackageName() {
+    ActionCodeSettings.builder()
+        .setUrl("https://example.com")
+        .setAndroidMinimumVersion("6.0")
+        .setAndroidInstallApp(true)
+        .build();
+  }
+
   @Test
   public void testAllSettings() {
     ActionCodeSettings settings = ActionCodeSettings.builder()
         .setUrl("https://example.com")
         .setHandleCodeInApp(true)
         .setDynamicLinkDomain("myapp.page.link")
-        .setIosActionCodeSettings(new IosActionCodeSettings("com.example.ios"))
-        .setAndroidActionCodeSettings(AndroidActionCodeSettings.builder()
-            .setPackageName("com.example.android")
-            .setMinimumVersion("6.0")
-            .setInstallApp(true)
-            .build())
+        .setIosBundleId("com.example.ios")
+        .setAndroidPackageName("com.example.android")
+        .setAndroidMinimumVersion("6.0")
+        .setAndroidInstallApp(true)
         .build();
     Map<String, Object> expected = ImmutableMap.<String, Object>builder()
         .put("continueUrl", "https://example.com")
@@ -76,27 +83,5 @@ public class ActionCodeSettingsTest {
         .put("androidInstallApp", true)
         .build();
     assertEquals(expected, settings.getProperties());
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testNullBundleIdIosActionSettings() {
-    new IosActionCodeSettings(null);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testEmptyBundleIdIosActionSettings() {
-    new IosActionCodeSettings("");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testNoPackageNameAndroidActionSettings() {
-    AndroidActionCodeSettings.builder().build();
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testEmptyPackageNameAndroidActionSettings() {
-    AndroidActionCodeSettings.builder()
-        .setPackageName("")
-        .build();
   }
 }

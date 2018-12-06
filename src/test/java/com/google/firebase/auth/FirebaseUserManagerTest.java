@@ -67,12 +67,10 @@ public class FirebaseUserManagerTest {
           .setUrl("https://example.dynamic.link")
           .setHandleCodeInApp(true)
           .setDynamicLinkDomain("custom.page.link")
-          .setIosActionCodeSettings(new IosActionCodeSettings("com.example.ios"))
-          .setAndroidActionCodeSettings(AndroidActionCodeSettings.builder()
-                  .setPackageName("com.example.android")
-                  .setInstallApp(true)
-                  .setMinimumVersion("6")
-                  .build())
+          .setIosBundleId("com.example.ios")
+          .setAndroidPackageName("com.example.android")
+          .setAndroidInstallApp(true)
+          .setAndroidMinimumVersion("6")
           .build();
   private static final Map<String, Object> ACTION_CODE_SETTINGS_MAP =
           ACTION_CODE_SETTINGS.getProperties();
