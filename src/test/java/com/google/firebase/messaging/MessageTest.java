@@ -494,24 +494,24 @@ public class MessageTest {
             "topic", "test-topic",
             "apns", ImmutableMap.<String, Object>of("payload", payload)),
         message);
+  }
 
-    message = Message.builder()
-        .setApnsConfig(ApnsConfig.builder()
-            .setAps(Aps.builder()
-                .setSound(CriticalSound.builder().build()) // Empty
-                .build())
-            .build())
-        .setTopic("test-topic")
-        .build();
-    payload = ImmutableMap.<String, Object>of(
-        "aps", ImmutableMap.builder()
-            .put("sound", ImmutableMap.of())
-            .build());
-    assertJsonEquals(
-        ImmutableMap.of(
-            "topic", "test-topic",
-            "apns", ImmutableMap.<String, Object>of("payload", payload)),
-        message);
+  @Test
+  public void testInvalidCriticalSound() {
+    List<CriticalSound.Builder> soundBuilders = ImmutableList.of(
+        CriticalSound.builder(),
+        CriticalSound.builder().setCritical(true).setVolume(0.5),
+        CriticalSound.builder().setVolume(-0.1),
+        CriticalSound.builder().setVolume(1.1)
+    );
+    for (int i = 0; i < soundBuilders.size(); i++) {
+      try {
+        soundBuilders.get(i).build();
+        fail("No error thrown for invalid sound: " + i);
+      } catch (IllegalArgumentException expected) {
+        // expected
+      }
+    }
   }
 
   @Test
@@ -532,26 +532,15 @@ public class MessageTest {
 
     List<Aps.Builder> apsBuilders = ImmutableList.of(
         Aps.builder().setAlert("string").setAlert(ApsAlert.builder().build()),
-        Aps.builder().setSound("default").setSound(CriticalSound.builder().build()),
+        Aps.builder().setSound("default").setSound(CriticalSound.builder()
+            .setName("default")
+            .build()),
         Aps.builder().setMutableContent(true).putCustomData("mutable-content", 1)
     );
     for (int i = 0; i < apsBuilders.size(); i++) {
       try {
         apsBuilders.get(i).build();
         fail("No error thrown for invalid aps: " + i);
-      } catch (IllegalArgumentException expected) {
-        // expected
-      }
-    }
-
-    List<CriticalSound.Builder> soundBuilders = ImmutableList.of(
-        CriticalSound.builder().setVolume(-0.1),
-        CriticalSound.builder().setVolume(1.1)
-    );
-    for (int i = 0; i < soundBuilders.size(); i++) {
-      try {
-        soundBuilders.get(i).build();
-        fail("No error thrown for invalid sound: " + i);
       } catch (IllegalArgumentException expected) {
         // expected
       }

@@ -30,12 +30,11 @@ public final class CriticalSound {
   private final Map<String, Object> fields;
 
   private CriticalSound(Builder builder) {
-    ImmutableMap.Builder<String, Object> fields = ImmutableMap.builder();
+    checkArgument(!Strings.isNullOrEmpty(builder.name), "name must not be null or empty");
+    ImmutableMap.Builder<String, Object> fields = ImmutableMap.<String, Object>builder()
+        .put("name", builder.name);
     if (builder.critical) {
       fields.put("critical", 1);
-    }
-    if (!Strings.isNullOrEmpty(builder.name)) {
-      fields.put("name", builder.name);
     }
     if (builder.volume != null) {
       checkArgument(builder.volume >= 0 && builder.volume <= 1,
@@ -79,7 +78,7 @@ public final class CriticalSound {
     }
 
     /**
-     * The name of a sound file in your app’s main bundle or in the {@code Library/Sounds} folder
+     * The name of a sound file in your app's main bundle or in the {@code Library/Sounds} folder
      * of your app’s container directory. Specify the string {@code default} to play the system
      * sound.
      *
@@ -92,7 +91,7 @@ public final class CriticalSound {
     }
 
     /**
-     * The volume for the critical alert’s sound. Must be a value between 0.0 (silent) and 1.0
+     * The volume for the critical alert's sound. Must be a value between 0.0 (silent) and 1.0
      * (full volume).
      *
      * @param volume A volume between 0.0 and 1.0.
