@@ -35,6 +35,8 @@ public class Aps {
   private Aps(Builder builder) {
     checkArgument(Strings.isNullOrEmpty(builder.alertString) || (builder.alert == null),
         "Multiple alert specifications (string and ApsAlert) found.");
+    checkArgument(Strings.isNullOrEmpty(builder.sound) || (builder.criticalSound == null),
+        "Multiple sound specifications (sound and CriticalSound) found.");
     ImmutableMap.Builder<String, Object> fields = ImmutableMap.builder();
     if (builder.alert != null) {
       fields.put("alert", builder.alert);
@@ -46,6 +48,8 @@ public class Aps {
     }
     if (builder.sound != null) {
       fields.put("sound", builder.sound);
+    } else if (builder.criticalSound != null) {
+      fields.put("sound", builder.criticalSound.getFields());
     }
     if (builder.contentAvailable) {
       fields.put("content-available", 1);
@@ -82,6 +86,7 @@ public class Aps {
     private ApsAlert alert;
     private Integer badge;
     private String sound;
+    private CriticalSound criticalSound;
     private boolean contentAvailable;
     private boolean mutableContent;
     private String category;
@@ -125,13 +130,25 @@ public class Aps {
     }
 
     /**
-     * Sets the sound to be played with the message.
+     * Sets the sound to be played with the message. For critical alerts use the
+     * {@link #setSound(CriticalSound)} method.
      *
      * @param sound Sound file name or {@code "default"}.
      * @return This builder.
      */
     public Builder setSound(String sound) {
       this.sound = sound;
+      return this;
+    }
+
+    /**
+     * Sets the critical alert sound to be played with the message.
+     *
+     * @param sound Sound file name or {@code "default"}.
+     * @return This builder.
+     */
+    public Builder setSound(CriticalSound sound) {
+      this.criticalSound = sound;
       return this;
     }
 
