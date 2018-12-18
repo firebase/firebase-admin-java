@@ -144,7 +144,7 @@ public class Aps {
     /**
      * Sets the critical alert sound to be played with the message.
      *
-     * @param sound Sound file name or {@code "default"}.
+     * @param sound A {@link CriticalSound} instance containing the alert sound configuration.
      * @return This builder.
      */
     public Builder setSound(CriticalSound sound) {

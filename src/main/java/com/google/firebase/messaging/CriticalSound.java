@@ -94,7 +94,7 @@ public final class CriticalSound {
      * The volume for the critical alert's sound. Must be a value between 0.0 (silent) and 1.0
      * (full volume).
      *
-     * @param volume A volume between 0.0 and 1.0.
+     * @param volume A volume between 0.0 (inclusive) and 1.0 (inclusive).
      * @return This builder.
      */
     public Builder setVolume(double volume) {
