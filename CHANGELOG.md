@@ -2,9 +2,11 @@
 
 - [added] Added `generatePasswordResetLink()`, `generateEmailVerificationLink()`
   and `generateSignInWithEmailLink()` method to the `FirebaseAuth` API.
+- `Aps` class now supports configuring a critical sound. A new
+  `CriticalSound` class has been introduced for this purpose.
 - [fixed] `Firestore` instances initialized by the SDK are now cleaned
   up, when `FirebaseApp.delete()` is called.
-- [added] Added new `setChannelId()` to the
+- [added] Added new `setChannelId()` method to the
   AndroidNotification.Builder API for setting the Android
   notification channel ID (new in Android O).
 
