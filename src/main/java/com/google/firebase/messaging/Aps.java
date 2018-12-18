@@ -46,7 +46,7 @@ public class Aps {
     if (builder.badge != null) {
       fields.put("badge", builder.badge);
     }
-    if (builder.sound != null) {
+    if (!Strings.isNullOrEmpty(builder.sound)) {
       fields.put("sound", builder.sound);
     } else if (builder.criticalSound != null) {
       fields.put("sound", builder.criticalSound.getFields());
