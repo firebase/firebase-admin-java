@@ -1,5 +1,7 @@
 # Unreleased
 
+- `Aps` class now supports configuring a critical sound. A new
+  `CriticalSound` class has been introduced for this purpose.
 - [fixed] `Firestore` instances initialized by the SDK are now cleaned
   up, when `FirebaseApp.delete()` is called.
 
