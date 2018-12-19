@@ -85,6 +85,8 @@ class FirebaseUserManager {
       .put("PROJECT_NOT_FOUND", "project-not-found")
       .put("USER_NOT_FOUND", USER_NOT_FOUND_ERROR)
       .put("WEAK_PASSWORD", "invalid-password")
+      .put("UNAUTHORIZED_DOMAIN", "unauthorized-continue-uri")
+      .put("INVALID_DYNAMIC_LINK_DOMAIN", "invalid-dynamic-link-domain")
       .build();
 
   static final int MAX_LIST_USERS_RESULTS = 1000;
@@ -235,6 +237,25 @@ class FirebaseUserManager {
     throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create session cookie");
   }
 
+  String getEmailActionLink(EmailLinkType type, String email,
+      @Nullable ActionCodeSettings settings) throws FirebaseAuthException {
+    ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
+            .put("requestType", type.name())
+            .put("email", email)
+            .put("returnOobLink", true);
+    if (settings != null) {
+      payload.putAll(settings.getProperties());
+    }
+    GenericJson response = post("/accounts:sendOobCode", payload.build(), GenericJson.class);
+    if (response != null) {
+      String link = (String) response.get("oobLink");
+      if (!Strings.isNullOrEmpty(link)) {
+        return link;
+      }
+    }
+    throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create email action link");
+  }
+
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {
     checkArgument(!Strings.isNullOrEmpty(path), "path must not be null or empty");
     checkNotNull(content, "content must not be null for POST requests");
@@ -324,5 +345,11 @@ class FirebaseUserManager {
     int getUsersCount() {
       return users.size();
     }
+  }
+
+  enum EmailLinkType {
+    VERIFY_EMAIL,
+    EMAIL_SIGNIN,
+    PASSWORD_RESET,
   }
 }

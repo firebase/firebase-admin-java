@@ -39,6 +39,7 @@ import com.google.common.collect.Iterables;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.internal.SdkUtils;
@@ -62,6 +63,17 @@ public class FirebaseUserManagerTest {
 
   private static final String TEST_TOKEN = "token";
   private static final GoogleCredentials credentials = new MockGoogleCredentials(TEST_TOKEN);
+  private static final ActionCodeSettings ACTION_CODE_SETTINGS = ActionCodeSettings.builder()
+          .setUrl("https://example.dynamic.link")
+          .setHandleCodeInApp(true)
+          .setDynamicLinkDomain("custom.page.link")
+          .setIosBundleId("com.example.ios")
+          .setAndroidPackageName("com.example.android")
+          .setAndroidInstallApp(true)
+          .setAndroidMinimumVersion("6")
+          .build();
+  private static final Map<String, Object> ACTION_CODE_SETTINGS_MAP =
+          ACTION_CODE_SETTINGS.getProperties();
 
   @After
   public void tearDown() {
@@ -985,6 +997,213 @@ public class FirebaseUserManagerTest {
       fail("No error thrown for large claims payload");
     } catch (Exception ignore) {
       // expected
+    }
+  }
+
+  @Test
+  public void testGeneratePasswordResetLinkNoEmail() throws Exception {
+    initializeAppForUserManagement();
+    try {
+      FirebaseAuth.getInstance().generatePasswordResetLinkAsync(null).get();
+      fail("No error thrown for null email");
+    } catch (IllegalArgumentException expected) {
+    }
+
+    try {
+      FirebaseAuth.getInstance().generatePasswordResetLinkAsync("").get();
+      fail("No error thrown for empty email");
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test
+  public void testGeneratePasswordResetLinkWithSettings() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+            TestUtils.loadResource("generateEmailLink.json"));
+    String link = FirebaseAuth.getInstance()
+            .generatePasswordResetLinkAsync("test@example.com", ACTION_CODE_SETTINGS).get();
+    assertEquals("https://mock-oob-link.for.auth.tests", link);
+    checkRequestHeaders(interceptor);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(3 + ACTION_CODE_SETTINGS_MAP.size(), parsed.size());
+    assertEquals("test@example.com", parsed.get("email"));
+    assertEquals("PASSWORD_RESET", parsed.get("requestType"));
+    assertTrue((Boolean) parsed.get("returnOobLink"));
+    for (Map.Entry<String, Object> entry : ACTION_CODE_SETTINGS_MAP.entrySet()) {
+      assertEquals(entry.getValue(), parsed.get(entry.getKey()));
+    }
+  }
+
+  @Test
+  public void testGeneratePasswordResetLink() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+            TestUtils.loadResource("generateEmailLink.json"));
+    String link = FirebaseAuth.getInstance()
+            .generatePasswordResetLinkAsync("test@example.com").get();
+    assertEquals("https://mock-oob-link.for.auth.tests", link);
+    checkRequestHeaders(interceptor);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(3, parsed.size());
+    assertEquals("test@example.com", parsed.get("email"));
+    assertEquals("PASSWORD_RESET", parsed.get("requestType"));
+    assertTrue((Boolean) parsed.get("returnOobLink"));
+  }
+
+  @Test
+  public void testGenerateEmailVerificationLinkNoEmail() throws Exception {
+    initializeAppForUserManagement();
+    try {
+      FirebaseAuth.getInstance().generateEmailVerificationLinkAsync(null).get();
+      fail("No error thrown for null email");
+    } catch (IllegalArgumentException expected) {
+    }
+
+    try {
+      FirebaseAuth.getInstance().generateEmailVerificationLinkAsync("").get();
+      fail("No error thrown for empty email");
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test
+  public void testGenerateEmailVerificationLinkWithSettings() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("generateEmailLink.json"));
+    String link = FirebaseAuth.getInstance()
+        .generateEmailVerificationLinkAsync("test@example.com", ACTION_CODE_SETTINGS).get();
+    assertEquals("https://mock-oob-link.for.auth.tests", link);
+    checkRequestHeaders(interceptor);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(3 + ACTION_CODE_SETTINGS_MAP.size(), parsed.size());
+    assertEquals("test@example.com", parsed.get("email"));
+    assertEquals("VERIFY_EMAIL", parsed.get("requestType"));
+    assertTrue((Boolean) parsed.get("returnOobLink"));
+    for (Map.Entry<String, Object> entry : ACTION_CODE_SETTINGS_MAP.entrySet()) {
+      assertEquals(entry.getValue(), parsed.get(entry.getKey()));
+    }
+  }
+
+  @Test
+  public void testGenerateEmailVerificationLink() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("generateEmailLink.json"));
+    String link = FirebaseAuth.getInstance()
+        .generateEmailVerificationLinkAsync("test@example.com").get();
+    assertEquals("https://mock-oob-link.for.auth.tests", link);
+    checkRequestHeaders(interceptor);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(3, parsed.size());
+    assertEquals("test@example.com", parsed.get("email"));
+    assertEquals("VERIFY_EMAIL", parsed.get("requestType"));
+    assertTrue((Boolean) parsed.get("returnOobLink"));
+  }
+
+  @Test
+  public void testGenerateESignInWithEmailLinkNoEmail() throws Exception {
+    initializeAppForUserManagement();
+    try {
+      FirebaseAuth.getInstance().generateSignInWithEmailLinkAsync(
+          null, ACTION_CODE_SETTINGS).get();
+      fail("No error thrown for null email");
+    } catch (IllegalArgumentException expected) {
+    }
+
+    try {
+      FirebaseAuth.getInstance().generateSignInWithEmailLinkAsync(
+          "", ACTION_CODE_SETTINGS).get();
+      fail("No error thrown for empty email");
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test
+  public void testGenerateESignInWithEmailLinkNullSettings() throws Exception {
+    initializeAppForUserManagement();
+    try {
+      FirebaseAuth.getInstance().generateSignInWithEmailLinkAsync(
+          "test@example.com", null).get();
+      fail("No error thrown for null email");
+    } catch (NullPointerException expected) {
+    }
+  }
+
+  @Test
+  public void testGenerateSignInWithEmailLinkWithSettings() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("generateEmailLink.json"));
+    String link = FirebaseAuth.getInstance()
+        .generateSignInWithEmailLinkAsync("test@example.com", ACTION_CODE_SETTINGS).get();
+    assertEquals("https://mock-oob-link.for.auth.tests", link);
+    checkRequestHeaders(interceptor);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    assertEquals(3 + ACTION_CODE_SETTINGS_MAP.size(), parsed.size());
+    assertEquals("test@example.com", parsed.get("email"));
+    assertEquals("EMAIL_SIGNIN", parsed.get("requestType"));
+    assertTrue((Boolean) parsed.get("returnOobLink"));
+    for (Map.Entry<String, Object> entry : ACTION_CODE_SETTINGS_MAP.entrySet()) {
+      assertEquals(entry.getValue(), parsed.get(entry.getKey()));
+    }
+  }
+
+  @Test
+  public void testHttpErrorWithCode() {
+    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(credentials)
+        .setHttpTransport(new MultiRequestMockHttpTransport(ImmutableList.of(
+            new MockLowLevelHttpResponse()
+                .setContent("{\"error\": {\"message\": \"UNAUTHORIZED_DOMAIN\"}}")
+                .setStatusCode(500))))
+        .setProjectId("test-project-id")
+        .build());
+    FirebaseAuth auth = FirebaseAuth.getInstance();
+    FirebaseUserManager userManager = auth.getUserManager();
+    try {
+      userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
+      fail("No exception thrown for HTTP error");
+    } catch (FirebaseAuthException e) {
+      assertEquals("unauthorized-continue-uri", e.getErrorCode());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+    }
+  }
+
+  @Test
+  public void testUnexpectedHttpError() {
+    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(credentials)
+        .setHttpTransport(new MultiRequestMockHttpTransport(ImmutableList.of(
+            new MockLowLevelHttpResponse()
+                .setContent("{}")
+                .setStatusCode(500))))
+        .setProjectId("test-project-id")
+        .build());
+    FirebaseAuth auth = FirebaseAuth.getInstance();
+    FirebaseUserManager userManager = auth.getUserManager();
+    try {
+      userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
+      fail("No exception thrown for HTTP error");
+    } catch (FirebaseAuthException e) {
+      assertEquals("internal-error", e.getErrorCode());
+      assertTrue(e.getCause() instanceof HttpResponseException);
     }
   }
 

@@ -113,6 +113,7 @@ public class IntegrationTestUtils {
               .setCredentials(TestUtils.getCertCredential(getServiceAccountCertificate()))
               .setFirestoreOptions(FirestoreOptions.newBuilder()
                   .setTimestampsInSnapshotsEnabled(true)
+                  .setCredentials(TestUtils.getCertCredential(getServiceAccountCertificate()))
                   .build())
               .build();
       masterApp = FirebaseApp.initializeApp(options);
