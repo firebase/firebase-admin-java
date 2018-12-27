@@ -121,9 +121,10 @@ public class FirebaseAppSnippets {
     // [END access_services_nondefault]
   }
 
-  public void initializeWithServiceAccountId() {
+  public void initializeWithServiceAccountId() throws IOException {
     // [START initialize_sdk_with_service_account_id]
     FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(GoogleCredentials.getApplicationDefault())
         .setServiceAccountId("my-client-id@my-project-id.iam.gserviceaccount.com")
         .build();
     FirebaseApp.initializeApp(options);
