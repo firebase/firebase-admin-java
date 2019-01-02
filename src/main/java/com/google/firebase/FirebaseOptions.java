@@ -296,7 +296,8 @@ public final class FirebaseOptions {
     }
 
     /**
-     * Sets the <code>GoogleCredentials</code> to use to authenticate the SDK.
+     * Sets the <code>GoogleCredentials</code> to use to authenticate the SDK. This parameter
+     * must be specified when creating a new instance of {@link FirebaseOptions}.
      *
      * <p>See <a href="https://firebase.google.com/docs/admin/setup#initialize_the_sdk">
      * Initialize the SDK</a> for code samples and detailed documentation.
