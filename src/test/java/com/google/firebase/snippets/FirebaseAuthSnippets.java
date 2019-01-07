@@ -17,7 +17,6 @@
 package com.google.firebase.snippets;
 
 import com.google.common.io.BaseEncoding;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.ErrorInfo;
 import com.google.firebase.auth.ExportedUserRecord;
@@ -617,7 +616,7 @@ public class FirebaseAuthSnippets {
   public void generatePasswordResetLink() {
     final ActionCodeSettings actionCodeSettings = initActionCodeSettings();
     final String displayName = "Example User";
-    // [START password_reset_email]
+    // [START password_reset_link]
     String email = "user@example.com";
     try {
       String link = FirebaseAuth.getInstance().generatePasswordResetLink(
@@ -628,13 +627,13 @@ public class FirebaseAuthSnippets {
     } catch (FirebaseAuthException e) {
       System.out.println("Error generating email link: " + e.getMessage());
     }
-    // [END password_reset_email]
+    // [END password_reset_link]
   }
 
   public void generateEmailVerificationLink() {
     final ActionCodeSettings actionCodeSettings = initActionCodeSettings();
     final String displayName = "Example User";
-    // [START password_reset_email]
+    // [START email_verification_link]
     String email = "user@example.com";
     try {
       String link = FirebaseAuth.getInstance().generateEmailVerificationLink(
@@ -645,13 +644,13 @@ public class FirebaseAuthSnippets {
     } catch (FirebaseAuthException e) {
       System.out.println("Error generating email link: " + e.getMessage());
     }
-    // [END password_reset_email]
+    // [END email_verification_link]
   }
 
   public void generateSignInWithEmailLink() {
     final ActionCodeSettings actionCodeSettings = initActionCodeSettings();
     final String displayName = "Example User";
-    // [START password_reset_email]
+    // [START sign_in_with_email_link]
     String email = "user@example.com";
     try {
       String link = FirebaseAuth.getInstance().generateSignInWithEmailLink(
@@ -662,7 +661,7 @@ public class FirebaseAuthSnippets {
     } catch (FirebaseAuthException e) {
       System.out.println("Error generating email link: " + e.getMessage());
     }
-    // [END password_reset_email]
+    // [END sign_in_with_email_link]
   }
 
   private void sendCustomPasswordResetEmail(String email, String displayName, String link) {}
