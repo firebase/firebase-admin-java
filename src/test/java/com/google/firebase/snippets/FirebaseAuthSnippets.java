@@ -664,5 +664,7 @@ public class FirebaseAuthSnippets {
     // [END sign_in_with_email_link]
   }
 
+  // Place holder method to make the compiler happy. This is referenced by all email action
+  // link snippets.
   private void sendCustomPasswordResetEmail(String email, String displayName, String link) {}
 }
