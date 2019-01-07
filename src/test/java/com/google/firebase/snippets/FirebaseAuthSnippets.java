@@ -17,6 +17,7 @@
 package com.google.firebase.snippets;
 
 import com.google.common.io.BaseEncoding;
+import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.ErrorInfo;
 import com.google.firebase.auth.ExportedUserRecord;
 import com.google.firebase.auth.FirebaseAuth;
@@ -596,4 +597,74 @@ public class FirebaseAuthSnippets {
     }
     // [END import_without_password]
   }
+
+  public ActionCodeSettings initActionCodeSettings() {
+    // [START init_action_code_settings]
+    ActionCodeSettings actionCodeSettings = ActionCodeSettings.builder()
+        .setUrl("https://www.example.com/checkout?cartId=1234")
+        .setHandleCodeInApp(true)
+        .setIosBundleId("com.example.ios")
+        .setAndroidPackageName("com.example.android")
+        .setAndroidInstallApp(true)
+        .setAndroidMinimumVersion("12")
+        .setDynamicLinkDomain("coolapp.page.link")
+        .build();
+    // [END init_action_code_settings]
+    return actionCodeSettings;
+  }
+
+  public void generatePasswordResetLink() {
+    final ActionCodeSettings actionCodeSettings = initActionCodeSettings();
+    final String displayName = "Example User";
+    // [START password_reset_link]
+    String email = "user@example.com";
+    try {
+      String link = FirebaseAuth.getInstance().generatePasswordResetLink(
+          email, actionCodeSettings);
+      // Construct email verification template, embed the link and send
+      // using custom SMTP server.
+      sendCustomPasswordResetEmail(email, displayName, link);
+    } catch (FirebaseAuthException e) {
+      System.out.println("Error generating email link: " + e.getMessage());
+    }
+    // [END password_reset_link]
+  }
+
+  public void generateEmailVerificationLink() {
+    final ActionCodeSettings actionCodeSettings = initActionCodeSettings();
+    final String displayName = "Example User";
+    // [START email_verification_link]
+    String email = "user@example.com";
+    try {
+      String link = FirebaseAuth.getInstance().generateEmailVerificationLink(
+          email, actionCodeSettings);
+      // Construct email verification template, embed the link and send
+      // using custom SMTP server.
+      sendCustomPasswordResetEmail(email, displayName, link);
+    } catch (FirebaseAuthException e) {
+      System.out.println("Error generating email link: " + e.getMessage());
+    }
+    // [END email_verification_link]
+  }
+
+  public void generateSignInWithEmailLink() {
+    final ActionCodeSettings actionCodeSettings = initActionCodeSettings();
+    final String displayName = "Example User";
+    // [START sign_in_with_email_link]
+    String email = "user@example.com";
+    try {
+      String link = FirebaseAuth.getInstance().generateSignInWithEmailLink(
+          email, actionCodeSettings);
+      // Construct email verification template, embed the link and send
+      // using custom SMTP server.
+      sendCustomPasswordResetEmail(email, displayName, link);
+    } catch (FirebaseAuthException e) {
+      System.out.println("Error generating email link: " + e.getMessage());
+    }
+    // [END sign_in_with_email_link]
+  }
+
+  // Place holder method to make the compiler happy. This is referenced by all email action
+  // link snippets.
+  private void sendCustomPasswordResetEmail(String email, String displayName, String link) {}
 }
