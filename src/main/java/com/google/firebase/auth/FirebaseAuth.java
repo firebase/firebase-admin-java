@@ -988,9 +988,9 @@ public class FirebaseAuth {
    * address.
    *
    * @param email The email of the user whose password is to be reset.
-   * @param settings The action code settings which defines whether
+   * @param settings The action code settings object which defines whether
    *     the link is to be handled by a mobile app and the additional state information to be
-   *     passed in the deep link, etc.
+   *     passed in the deep link.
    * @return A password reset link.
    * @throws IllegalArgumentException If the email address is null or empty.
    * @throws FirebaseAuthException If an error occurs while generating the link.
@@ -1019,9 +1019,9 @@ public class FirebaseAuth {
    * operation asynchronously.
    *
    * @param email The email of the user whose password is to be reset.
-   * @param settings The action code settings which defines whether
+   * @param settings The action code settings object which defines whether
    *     the link is to be handled by a mobile app and the additional state information to be
-   *     passed in the deep link, etc.
+   *     passed in the deep link.
    * @return An {@code ApiFuture} which will complete successfully with the generated email action
    *     link. If an error occurs while generating the link, the future throws a
    *     {@link FirebaseAuthException}.
@@ -1079,9 +1079,9 @@ public class FirebaseAuth {
    * operation asynchronously.
    *
    * @param email The email of the user to be verified.
-   * @param settings The action code settings which defines whether
+   * @param settings The action code settings object which defines whether
    *     the link is to be handled by a mobile app and the additional state information to be
-   *     passed in the deep link, etc.
+   *     passed in the deep link.
    * @return An {@code ApiFuture} which will complete successfully with the generated email action
    *     link. If an error occurs while generating the link, the future throws a
    *     {@link FirebaseAuthException}.
@@ -1098,9 +1098,9 @@ public class FirebaseAuth {
    * code settings provided.
    *
    * @param email The email of the user signing in.
-   * @param settings The action code settings which defines whether
+   * @param settings The action code settings object which defines whether
    *     the link is to be handled by a mobile app and the additional state information to be
-   *     passed in the deep link, etc.
+   *     passed in the deep link.
    * @return An email verification link.
    * @throws IllegalArgumentException If the email address is null or empty.
    * @throws FirebaseAuthException If an error occurs while generating the link.
@@ -1115,9 +1115,9 @@ public class FirebaseAuth {
    * operation asynchronously.
    *
    * @param email The email of the user signing in.
-   * @param settings The action code settings which defines whether
+   * @param settings The action code settings object which defines whether
    *     the link is to be handled by a mobile app and the additional state information to be
-   *     passed in the deep link, etc.
+   *     passed in the deep link.
    * @return An {@code ApiFuture} which will complete successfully with the generated email action
    *     link. If an error occurs while generating the link, the future throws a
    *     {@link FirebaseAuthException}.
