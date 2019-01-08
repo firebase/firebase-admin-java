@@ -92,7 +92,9 @@ public final class ActionCodeSettings {
     private Builder() { }
 
     /**
-     * Sets the link continue/state URL, which has different meanings in different contexts:
+     * Sets the link continue/state URL.
+     *
+     * <p>This parameter has different meanings in different contexts:
      *
      * <ul>
      * <li>When the link is handled in the web action widgets, this is the deep link in the
