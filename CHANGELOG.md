@@ -1,5 +1,9 @@
 # Unreleased
 
+-
+
+# v6.7.0
+
 - [added] Added `generatePasswordResetLink()`, `generateEmailVerificationLink()`
   and `generateSignInWithEmailLink()` methods to the `FirebaseAuth` API.
 - `Aps` class now supports configuring a critical sound. A new
