@@ -1,6 +1,6 @@
 # Unreleased
 
--
+- [added] java 11 build support
 
 # v6.7.0
 

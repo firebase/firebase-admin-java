@@ -112,7 +112,7 @@ public class WebsocketConnectionTest {
   public void testIncomingMessageIOError() {
     MockClientFactory clientFactory = new MockClientFactory();
     ImmutableMap<String, Object> data = ImmutableMap.<String, Object>of("key", "value");
-    Mockito.doThrow(IOException.class).when(clientFactory.delegate).onMessage(data);
+    Mockito.doThrow(ClassCastException.class).when(clientFactory.delegate).onMessage(data);
     clientFactory.eventHandler.onMessage("{\"key\":\"value\"}");
     Mockito.verify(clientFactory.delegate, Mockito.times(1)).onMessage(data);
     Mockito.verify(clientFactory.client, Mockito.times(1)).close();
