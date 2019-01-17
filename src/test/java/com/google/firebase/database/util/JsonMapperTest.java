@@ -17,7 +17,6 @@
 package com.google.firebase.database.util;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
@@ -28,55 +27,42 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.json.JSONException;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class JsonMapperTest {
 
   @Test
   public void testNull() throws IOException {
-    assertEquals("null", JsonMapper.serializeJsonValue(null));
+    assertEquals("null", JsonMapper.serializeJson(null));
   }
 
   @Test
   public void testString() throws IOException {
-    assertEquals("\"foo\"", JsonMapper.serializeJsonValue("foo"));
+    assertEquals("\"foo\"", JsonMapper.serializeJson("foo"));
   }
 
   @Test
   public void testBoolean() throws IOException {
-    assertEquals("true", JsonMapper.serializeJsonValue(true));
-    assertEquals("false", JsonMapper.serializeJsonValue(false));
+    assertEquals("true", JsonMapper.serializeJson(true));
+    assertEquals("false", JsonMapper.serializeJson(false));
   }
 
   @Test
   public void testMap() throws IOException {
-    assertEquals("{\"foo\":\"bar\"}", JsonMapper.serializeJsonValue(ImmutableMap.of("foo", "bar")));
+    assertEquals("{\"foo\":\"bar\"}", JsonMapper.serializeJson(ImmutableMap.of("foo", "bar")));
   }
 
   @Test
   public void testList() throws IOException {
-    assertEquals("[\"foo\",\"bar\"]", JsonMapper.serializeJsonValue(
+    assertEquals("[\"foo\",\"bar\"]", JsonMapper.serializeJson(
         ImmutableList.of("foo", "bar")));
-  }
-
-  @Test
-  public void testInvalidObject() {
-    try {
-      JsonMapper.serializeJsonValue(new Object());
-      fail("No error thrown for invalid object");
-    } catch (IOException expected) {
-      // expected
-      assertTrue(expected.getCause() instanceof JSONException);
-    }
   }
 
   @Test
   public void canConvertLongs() throws IOException {
     List<Long> longs = Arrays.asList(Long.MAX_VALUE, Long.MIN_VALUE);
     for (Long original : longs) {
-      String jsonString = JsonMapper.serializeJsonValue(original);
+      String jsonString = JsonMapper.serializeJson(original);
       long converted = (Long) JsonMapper.parseJsonValue(jsonString);
       assertEquals((long) original, converted);
     }
@@ -86,15 +72,13 @@ public class JsonMapperTest {
   public void canConvertDoubles() throws IOException {
     List<Double> doubles = Arrays.asList(Double.MAX_VALUE, Double.MIN_VALUE, Double.MIN_NORMAL);
     for (Double original : doubles) {
-      String jsonString = JsonMapper.serializeJsonValue(original);
+      String jsonString = JsonMapper.serializeJson(original);
       double converted = (Double) JsonMapper.parseJsonValue(jsonString);
       assertEquals(original, converted, 0);
     }
   }
 
   @Test
-  @Ignore
-  // TODO: Stop ignoring this test once JSON parsing has been fixed.
   public void canNest33LevelsDeep() throws IOException {
     Map<String, Object> root = new HashMap<>();
     Map<String, Object> currentMap = root;
@@ -103,7 +87,7 @@ public class JsonMapperTest {
       currentMap.put("key", newMap);
       currentMap = newMap;
     }
-    String jsonString = JsonMapper.serializeJsonValue(root);
+    String jsonString = JsonMapper.serializeJson(root);
     Object value = JsonMapper.parseJsonValue(jsonString);
     assertEquals(root, value);
   }

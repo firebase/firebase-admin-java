@@ -30,6 +30,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.database.util.JsonMapper;
 import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
@@ -46,7 +47,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Test;
 
@@ -100,7 +100,7 @@ public class JvmAuthTokenProviderTest {
   }
 
   @Test
-  public void testGetTokenWithAuthOverrides() throws InterruptedException {
+  public void testGetTokenWithAuthOverrides() throws InterruptedException, IOException {
     MockGoogleCredentials credentials = new MockGoogleCredentials("mock-token");
     Map<String, Object> auth = ImmutableMap.<String, Object>of("uid", "test");
     FirebaseOptions options = new FirebaseOptions.Builder()
@@ -226,13 +226,15 @@ public class JvmAuthTokenProviderTest {
     assertTrue(semaphore.tryAcquire(TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS));
   }
 
-  private void assertToken(String token, String expectedToken, Map<String, Object> expectedAuth) {
+  private void assertToken(String token, String expectedToken, Map<String, Object> expectedAuth)
+      throws IOException {
     assertTrue(token.startsWith("gauth|"));
     String jsonString = token.substring(6);
-    JSONObject json = new JSONObject(jsonString);
-    assertEquals(expectedToken, json.getString("token"));
+    Map<String, Object> map = JsonMapper.parseJson(jsonString);
 
-    Map<String, Object> auth = json.getJSONObject("auth").toMap();
+    assertEquals(expectedToken, map.get("token"));
+
+    Map<String, Object> auth = (Map)map.get("auth");
     DeepEquals.deepEquals(expectedAuth, auth);
   }
 

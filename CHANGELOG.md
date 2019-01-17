@@ -1,6 +1,7 @@
 # Unreleased
 
-- [added] java 11 build support
+- [changed] Removed org.json dependency and replaced with com.google.code.gson.
+- [changed] Upgraded Mockito dependency, and fixed the build on Java 11.
 
 # v6.7.0
 
