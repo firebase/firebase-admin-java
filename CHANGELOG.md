@@ -2,6 +2,7 @@
 
 - [changed] Removed org.json dependency and replaced with com.google.code.gson.
 - [changed] Upgraded Mockito dependency, and fixed the build on Java 11.
+- [fixed] UploadAccountResponse now has the correct error message/reason.
 
 # v6.7.0
 
