@@ -20,7 +20,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.api.client.googleapis.batch.BatchCallback;
+import com.google.api.client.googleapis.batch.BatchRequest;
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
@@ -28,6 +31,7 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
+import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.JsonParser;
@@ -35,6 +39,7 @@ import com.google.api.client.util.Key;
 import com.google.api.core.ApiFuture;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -42,7 +47,11 @@ import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseRequestInitializer;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.messaging.internal.MessagingServiceErrorResponse;
+import com.google.firebase.messaging.internal.MessagingServiceResponse;
+
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -55,28 +64,10 @@ import java.util.Map;
 public class FirebaseMessaging {
 
   private static final String FCM_URL = "https://fcm.googleapis.com/v1/projects/%s/messages:send";
-  private static final String FCM_ERROR_TYPE =
-      "type.googleapis.com/google.firebase.fcm.v1.FcmError";
+  private static final String FCM_BATCH_URL = "https://fcm.googleapis.com/batch";
 
   private static final String INTERNAL_ERROR = "internal-error";
   private static final String UNKNOWN_ERROR = "unknown-error";
-  private static final Map<String, String> FCM_ERROR_CODES =
-      ImmutableMap.<String, String>builder()
-        // FCM v1 canonical error codes
-        .put("NOT_FOUND", "registration-token-not-registered")
-        .put("PERMISSION_DENIED", "mismatched-credential")
-        .put("RESOURCE_EXHAUSTED", "message-rate-exceeded")
-        .put("UNAUTHENTICATED", "invalid-apns-credentials")
-
-        // FCM v1 new error codes
-        .put("APNS_AUTH_ERROR", "invalid-apns-credentials")
-        .put("INTERNAL", INTERNAL_ERROR)
-        .put("INVALID_ARGUMENT", "invalid-argument")
-        .put("QUOTA_EXCEEDED", "message-rate-exceeded")
-        .put("SENDER_ID_MISMATCH", "mismatched-credential")
-        .put("UNAVAILABLE", "server-unavailable")
-        .put("UNREGISTERED", "registration-token-not-registered")
-        .build();
   static final Map<Integer, String> IID_ERROR_CODES =
       ImmutableMap.<Integer, String>builder()
         .put(400, "invalid-argument")
@@ -230,8 +221,98 @@ public class FirebaseMessaging {
    */
   public ApiFuture<TopicManagementResponse> unsubscribeFromTopicAsync(
       @NonNull List<String> registrationTokens, @NonNull String topic) {
-    return manageTopicOp(registrationTokens, topic, IID_UNSUBSCRIBE_PATH)
-        .callAsync(app);
+    return manageTopicOp(registrationTokens, topic, IID_UNSUBSCRIBE_PATH).callAsync(app);
+  }
+
+  public List<BatchResponse> sendBatch(List<Message> messages) throws FirebaseMessagingException {
+    return sendBatch(messages, false);
+  }
+
+  public List<BatchResponse> sendBatch(
+      List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
+    return sendBatchOp(messages, dryRun).call();
+  }
+
+  public ApiFuture<List<BatchResponse>> sendBatchAsync(List<Message> messages) {
+    return sendBatchAsync(messages, false);
+  }
+
+  public ApiFuture<List<BatchResponse>> sendBatchAsync(List<Message> messages, boolean dryRun) {
+    return sendBatchOp(messages, dryRun).callAsync(app);
+  }
+
+  private CallableOperation<List<BatchResponse>, FirebaseMessagingException> sendBatchOp(
+      final List<Message> messages, final boolean dryRun) {
+
+    final List<Message> immutableMessages = ImmutableList.copyOf(messages);
+    checkArgument(!immutableMessages.isEmpty(), "messages list must not be empty");
+    checkArgument(immutableMessages.size() <= 1000,
+        "messages list must not contain more than 1000 elements");
+    return new CallableOperation<List<BatchResponse>,FirebaseMessagingException>() {
+      @Override
+      protected List<BatchResponse> execute() throws FirebaseMessagingException {
+        try {
+          return sendBatchRequest(immutableMessages, dryRun);
+        } catch (HttpResponseException e) {
+          handleSendHttpError(e);
+          return null;
+        } catch (IOException e) {
+          throw new FirebaseMessagingException(
+              INTERNAL_ERROR, "Error while calling FCM backend service", e);
+        }
+      }
+    };
+  }
+
+  private List<BatchResponse> sendBatchRequest(
+      List<Message> messages, boolean dryRun) throws IOException {
+
+    MessagingBatchCallback callback = new MessagingBatchCallback();
+    BatchRequest batch = newBatchRequest(messages, dryRun, callback);
+    batch.execute();
+    return ImmutableList.copyOf(callback.responses);
+  }
+
+  private BatchRequest newBatchRequest(
+      List<Message> messages, boolean dryRun, MessagingBatchCallback callback) throws IOException {
+
+    BatchRequest batch = new BatchRequest(
+        requestFactory.getTransport(), requestFactory.getInitializer());
+    batch.setBatchUrl(new GenericUrl(FCM_BATCH_URL));
+
+    for (Message message : messages) {
+      ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
+            .put("message", message);
+      if (dryRun) {
+        payload.put("validate_only", true);
+      }
+      HttpRequest request = requestFactory.buildPostRequest(
+          new GenericUrl(url), new JsonHttpContent(jsonFactory, payload.build()));
+      request.getHeaders().set("X-GOOG-API-FORMAT-VERSION", "2");
+      request.setParser(new JsonObjectParser(jsonFactory));
+      batch.queue(
+          request, MessagingServiceResponse.class, MessagingServiceErrorResponse.class, callback);
+    }
+
+    return batch;
+  }
+
+  private static class MessagingBatchCallback
+      implements BatchCallback<MessagingServiceResponse, MessagingServiceErrorResponse> {
+
+    private final List<BatchResponse> responses = new ArrayList<>();
+
+    @Override
+    public void onSuccess(
+        MessagingServiceResponse response, HttpHeaders responseHeaders) throws IOException {
+      responses.add(BatchResponse.fromSuccessResponse(response));
+    }
+
+    @Override
+    public void onFailure(
+        MessagingServiceErrorResponse error, HttpHeaders responseHeaders) throws IOException {
+      responses.add(BatchResponse.fromErrorResponse(error));
+    }
   }
 
   private CallableOperation<String, FirebaseMessagingException> sendOp(
@@ -255,7 +336,7 @@ public class FirebaseMessaging {
           response = request.execute();
           MessagingServiceResponse parsed = new MessagingServiceResponse();
           jsonFactory.createJsonParser(response.getContent()).parseAndClose(parsed);
-          return parsed.name;
+          return parsed.getName();
         } catch (HttpResponseException e) {
           handleSendHttpError(e);
           return null;
@@ -279,16 +360,7 @@ public class FirebaseMessaging {
         // ignored
       }
     }
-    String code = FCM_ERROR_CODES.get(response.getErrorCode());
-    if (code == null) {
-      code = UNKNOWN_ERROR;
-    }
-    String msg = response.getErrorMessage();
-    if (Strings.isNullOrEmpty(msg)) {
-      msg = String.format("Unexpected HTTP response with status: %d; body: %s",
-          e.getStatusCode(), e.getContent());
-    }
-    throw new FirebaseMessagingException(code, msg, e);
+    throw FirebaseMessagingException.fromErrorResponse(response, e);
   }
 
   private CallableOperation<TopicManagementResponse, FirebaseMessagingException>
@@ -404,42 +476,6 @@ public class FirebaseMessaging {
       // NOTE: We don't explicitly tear down anything here, but public methods of FirebaseMessaging
       // will now fail because calls to getOptions() and getToken() will hit FirebaseApp,
       // which will throw once the app is deleted.
-    }
-  }
-
-  private static class MessagingServiceResponse {
-    @Key("name")
-    private String name;
-  }
-
-  private static class MessagingServiceErrorResponse {
-    @Key("error")
-    private Map<String, Object> error;
-
-
-    String getErrorCode() {
-      if (error == null) {
-        return null;
-      }
-      Object details = error.get("details");
-      if (details != null && details instanceof List) {
-        for (Object detail : (List) details) {
-          if (detail instanceof Map) {
-            Map detailMap = (Map) detail;
-            if (FCM_ERROR_TYPE.equals(detailMap.get("@type"))) {
-              return (String) detailMap.get("errorCode");
-            }
-          }
-        }
-      }
-      return (String) error.get("status");
-    }
-
-    String getErrorMessage() {
-      if (error != null) {
-        return (String) error.get("message");
-      }
-      return null;
     }
   }
 

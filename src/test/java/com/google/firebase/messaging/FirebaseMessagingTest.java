@@ -303,6 +303,43 @@ public class FirebaseMessagingTest {
   }
 
   @Test
+  public void testNullBatchSend() {
+    FirebaseMessaging messaging = initDefaultMessaging();
+    try {
+      messaging.sendBatchAsync(null);
+      fail("No error thrown for null message list");
+    } catch (NullPointerException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testEmptyBatchSend() {
+    FirebaseMessaging messaging = initDefaultMessaging();
+    try {
+      messaging.sendBatchAsync(ImmutableList.<Message>of());
+      fail("No error thrown for null message list");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testTooLargeBatchSend() {
+    FirebaseMessaging messaging = initDefaultMessaging();
+    ImmutableList.Builder<Message> listBuilder = ImmutableList.builder();
+    for (int i = 0; i < 1001; i++) {
+      listBuilder.add(Message.builder().setTopic("topic").build());
+    }
+    try {
+      messaging.sendBatchAsync(listBuilder.build());
+      fail("No error thrown for null message list");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
   public void testInvalidSubscribe() {
     FirebaseMessaging messaging = initDefaultMessaging();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
@@ -660,7 +697,7 @@ public class FirebaseMessagingTest {
                 "payload", ImmutableMap.of("k1", "v1", "k2", true,
                     "aps", ImmutableMap.<String, Object>of("badge", new BigDecimal(42),
                         "alert", ImmutableMap.<String, Object>of(
-                            "title", "test-title", "subtitle", "test-subtitle", 
+                            "title", "test-title", "subtitle", "test-subtitle",
                             "body", "test-body"))))
         ));
 

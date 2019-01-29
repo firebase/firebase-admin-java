@@ -1,0 +1,161 @@
+/*
+ * Copyright 2019 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.google.firebase.messaging;
+
+import static com.google.common.base.Preconditions.checkArgument;
+
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.firebase.internal.NonNull;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * BatchMessage
+ */
+public class BatchMessage {
+
+  private final List<String> tokens;
+  private final Map<String, String> data;
+  private final Notification notification;
+  private final AndroidConfig androidConfig;
+  private final WebpushConfig webpushConfig;
+  private final ApnsConfig apnsConfig;
+
+  private BatchMessage(Builder builder) {
+    this.tokens = builder.tokens.build();
+    checkArgument(!this.tokens.isEmpty(), "at least one token must be specified");
+    checkArgument(this.tokens.size() <= 1000, "no more than 1000 tokens can be specified");
+    this.data = builder.data.isEmpty() ? null : ImmutableMap.copyOf(builder.data);
+    this.notification = builder.notification;
+    this.androidConfig = builder.androidConfig;
+    this.webpushConfig = builder.webpushConfig;
+    this.apnsConfig = builder.apnsConfig;
+  }
+
+  /**
+   * Creates a new {@link Message.Builder}.
+   *
+   * @return A {@link Message.Builder} instance.
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static class  Builder {
+
+    private final ImmutableList.Builder<String> tokens = ImmutableList.builder();
+    private final Map<String, String> data = new HashMap<>();
+    private Notification notification;
+    private AndroidConfig androidConfig;
+    private WebpushConfig webpushConfig;
+    private ApnsConfig apnsConfig;
+
+    private Builder() {}
+
+    public Builder addToken(String token) {
+      this.tokens.add(token);
+      return this;
+    }
+
+    public Builder addAllTokens(List<String> tokens) {
+      this.tokens.addAll(tokens);
+      return this;
+    }
+
+    /**
+     * Sets the notification information to be included in the message.
+     *
+     * @param notification A {@link Notification} instance.
+     * @return This builder.
+     */
+    public Builder setNotification(Notification notification) {
+      this.notification = notification;
+      return this;
+    }
+
+    /**
+     * Sets the Android-specific information to be included in the message.
+     *
+     * @param androidConfig An {@link AndroidConfig} instance.
+     * @return This builder.
+     */
+    public Builder setAndroidConfig(AndroidConfig androidConfig) {
+      this.androidConfig = androidConfig;
+      return this;
+    }
+
+    /**
+     * Sets the Webpush-specific information to be included in the message.
+     *
+     * @param webpushConfig A {@link WebpushConfig} instance.
+     * @return This builder.
+     */
+    public Builder setWebpushConfig(WebpushConfig webpushConfig) {
+      this.webpushConfig = webpushConfig;
+      return this;
+    }
+
+    /**
+     * Sets the information specific to APNS (Apple Push Notification Service).
+     *
+     * @param apnsConfig An {@link ApnsConfig} instance.
+     * @return This builder.
+     */
+    public Builder setApnsConfig(ApnsConfig apnsConfig) {
+      this.apnsConfig = apnsConfig;
+      return this;
+    }
+
+    /**
+     * Adds the given key-value pair to the message as a data field. Key or the value may not be
+     * null.
+     *
+     * @param key Name of the data field. Must not be null.
+     * @param value Value of the data field. Must not be null.
+     * @return This builder.
+     */
+    public Builder putData(@NonNull String key, @NonNull String value) {
+      this.data.put(key, value);
+      return this;
+    }
+
+    /**
+     * Adds all the key-value pairs in the given map to the message as data fields. None of the
+     * keys or values may be null.
+     *
+     * @param map A non-null map of data fields. Map must not contain null keys or values.
+     * @return This builder.
+     */
+    public Builder putAllData(@NonNull Map<String, String> map) {
+      this.data.putAll(map);
+      return this;
+    }
+
+    /**
+     * Creates a new {@link Message} instance from the parameters set on this builder.
+     *
+     * @return A new {@link Message} instance.
+     * @throws IllegalArgumentException If any of the parameters set on the builder are invalid.
+     */
+    public BatchMessage build() {
+      return new BatchMessage(this);
+    }
+  }
+
+}

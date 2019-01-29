@@ -17,10 +17,15 @@
 package com.google.firebase.messaging;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.testing.IntegrationTestUtils;
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -59,6 +64,42 @@ public class FirebaseMessagingIT {
         .build();
     String id = messaging.sendAsync(message, true).get();
     assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
+  }
+
+  @Test
+  public void testBatchSend() throws Exception {
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    List<Message> messages = new ArrayList<>();
+    messages.add(
+        Message.builder()
+          .setNotification(new Notification("Title", "Body"))
+          .setTopic("foo-bar")
+          .build());
+    messages.add(
+        Message.builder()
+          .setNotification(new Notification("Title", "Body"))
+          .setTopic("foo-bar")
+          .build());
+    messages.add(
+        Message.builder()
+          .setNotification(new Notification("Title", "Body"))
+          .setToken("not-a-token")
+          .build());
+    List<BatchResponse> responses = messaging.sendBatch(messages, true);
+    assertEquals(3, responses.size());
+    assertTrue(responses.get(0).isSuccessful());
+    String id = responses.get(0).getMessageId();
+    assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
+
+    assertTrue(responses.get(1).isSuccessful());
+    id = responses.get(1).getMessageId();
+    assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
+
+    assertFalse(responses.get(2).isSuccessful());
+    assertNull(responses.get(2).getMessageId());
+    FirebaseMessagingException exception = responses.get(2).getException();
+    assertNotNull(exception);
+    assertEquals("invalid-argument", exception.getErrorCode());
   }
 
   @Test
