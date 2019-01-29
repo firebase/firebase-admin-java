@@ -18,7 +18,6 @@ package com.google.firebase.messaging;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 import com.google.api.client.googleapis.batch.BatchCallback;
 import com.google.api.client.googleapis.batch.BatchRequest;
@@ -35,7 +34,6 @@ import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.JsonParser;
-import com.google.api.client.util.Key;
 import com.google.api.core.ApiFuture;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -47,6 +45,8 @@ import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseRequestInitializer;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.messaging.internal.InstanceIdServiceErrorResponse;
+import com.google.firebase.messaging.internal.InstanceIdServiceResponse;
 import com.google.firebase.messaging.internal.MessagingServiceErrorResponse;
 import com.google.firebase.messaging.internal.MessagingServiceResponse;
 
@@ -66,15 +66,6 @@ public class FirebaseMessaging {
   private static final String FCM_BATCH_URL = "https://fcm.googleapis.com/batch";
 
   private static final String INTERNAL_ERROR = "internal-error";
-  private static final String UNKNOWN_ERROR = "unknown-error";
-  static final Map<Integer, String> IID_ERROR_CODES =
-      ImmutableMap.<Integer, String>builder()
-        .put(400, "invalid-argument")
-        .put(401, "authentication-error")
-        .put(403, "authentication-error")
-        .put(500, INTERNAL_ERROR)
-        .put(503, "server-unavailable")
-        .build();
 
   private static final String IID_HOST = "https://iid.googleapis.com";
   private static final String IID_SUBSCRIBE_PATH = "iid/v1:batchAdd";
@@ -309,11 +300,11 @@ public class FirebaseMessaging {
         // ignored
       }
     }
-    throw FirebaseMessagingException.fromErrorResponse(response, e);
+    throw FirebaseMessagingException.fromFcmErrorResponse(response, e);
   }
 
   private CallableOperation<List<BatchResponse>, FirebaseMessagingException> sendBatchOp(
-      final List<Message> messages, final boolean dryRun) {
+      List<Message> messages, final boolean dryRun) {
 
     final List<Message> immutableMessages = ImmutableList.copyOf(messages);
     checkArgument(!immutableMessages.isEmpty(), "messages list must not be empty");
@@ -351,10 +342,11 @@ public class FirebaseMessaging {
         requestFactory.getTransport(), getBatchRequestInitializer());
     batch.setBatchUrl(new GenericUrl(FCM_BATCH_URL));
 
-    JsonObjectParser jsonParser = new JsonObjectParser(this.jsonFactory);
+    final JsonObjectParser jsonParser = new JsonObjectParser(this.jsonFactory);
+    final GenericUrl sendUrl = new GenericUrl(fcmSendUrl);
     for (Message message : messages) {
       HttpRequest request = requestFactory.buildPostRequest(
-          new GenericUrl(fcmSendUrl),
+          sendUrl,
           new JsonHttpContent(jsonFactory, message.wrapForTransport(dryRun)));
       request.setParser(jsonParser);
       setFcmApiFormatVersion(request.getHeaders());
@@ -403,11 +395,8 @@ public class FirebaseMessaging {
           request.setParser(new JsonObjectParser(jsonFactory));
           request.setResponseInterceptor(interceptor);
           response = request.execute();
-          InstanceIdServiceResponse parsed = new InstanceIdServiceResponse();
-          jsonFactory.createJsonParser(response.getContent()).parseAndClose(parsed);
-          checkState(parsed.results != null && !parsed.results.isEmpty(),
-              "unexpected response from topic management service");
-          return new TopicManagementResponse(parsed.results);
+          InstanceIdServiceResponse parsed = response.parseAs(InstanceIdServiceResponse.class);
+          return new TopicManagementResponse(parsed.getResults());
         } catch (HttpResponseException e) {
           handleTopicManagementHttpError(e);
           return null;
@@ -424,24 +413,15 @@ public class FirebaseMessaging {
   private void handleTopicManagementHttpError(
       HttpResponseException e) throws FirebaseMessagingException {
     InstanceIdServiceErrorResponse response = new InstanceIdServiceErrorResponse();
-    try {
-      JsonParser parser = jsonFactory.createJsonParser(e.getContent());
-      parser.parseAndClose(response);
-    } catch (IOException ignored) {
-      // ignored
+    if (e.getContent() != null) {
+      try {
+        JsonParser parser = jsonFactory.createJsonParser(e.getContent());
+        parser.parseAndClose(response);
+      } catch (IOException ignored) {
+        // ignored
+      }
     }
-
-    // Infer error code from HTTP status
-    String code = IID_ERROR_CODES.get(e.getStatusCode());
-    if (code == null) {
-      code = UNKNOWN_ERROR;
-    }
-    String msg = response.error;
-    if (Strings.isNullOrEmpty(msg)) {
-      msg = String.format("Unexpected HTTP response with status: %d; body: %s",
-          e.getStatusCode(), e.getContent());
-    }
-    throw new FirebaseMessagingException(code, msg, e);
+    throw FirebaseMessagingException.fromInstanceIdErrorResponse(response, e);
   }
 
   private static void disconnectQuietly(HttpResponse response) {
@@ -491,16 +471,6 @@ public class FirebaseMessaging {
     }
   }
 
-  private static class InstanceIdServiceResponse {
-    @Key("results")
-    private List<Map<String, Object>> results;
-  }
-
-  private static class InstanceIdServiceErrorResponse {
-    @Key("error")
-    private String error;
-  }
-
   private static class MessagingBatchCallback
       implements BatchCallback<MessagingServiceResponse, MessagingServiceErrorResponse> {
 
@@ -508,13 +478,13 @@ public class FirebaseMessaging {
 
     @Override
     public void onSuccess(
-        MessagingServiceResponse response, HttpHeaders responseHeaders) throws IOException {
+        MessagingServiceResponse response, HttpHeaders responseHeaders) {
       responses.add(BatchResponse.fromSuccessResponse(response));
     }
 
     @Override
     public void onFailure(
-        MessagingServiceErrorResponse error, HttpHeaders responseHeaders) throws IOException {
+        MessagingServiceErrorResponse error, HttpHeaders responseHeaders) {
       responses.add(BatchResponse.fromErrorResponse(error));
     }
 

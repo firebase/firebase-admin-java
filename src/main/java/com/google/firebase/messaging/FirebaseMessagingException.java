@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
+import com.google.firebase.messaging.internal.InstanceIdServiceErrorResponse;
 import com.google.firebase.messaging.internal.MessagingServiceErrorResponse;
 import java.util.Map;
 
@@ -48,6 +49,14 @@ public class FirebaseMessagingException extends FirebaseException {
         .put("UNAVAILABLE", "server-unavailable")
         .put("UNREGISTERED", "registration-token-not-registered")
         .build();
+  static final Map<Integer, String> IID_ERROR_CODES =
+      ImmutableMap.<Integer, String>builder()
+          .put(400, "invalid-argument")
+          .put(401, "authentication-error")
+          .put(403, "authentication-error")
+          .put(500, INTERNAL_ERROR)
+          .put(503, "server-unavailable")
+          .build();
 
   private final String errorCode;
 
@@ -64,11 +73,11 @@ public class FirebaseMessagingException extends FirebaseException {
     return errorCode;
   }
 
-  static FirebaseMessagingException fromErrorResponse(MessagingServiceErrorResponse response) {
-    return fromErrorResponse(response, null);
+  static FirebaseMessagingException fromFcmErrorResponse(MessagingServiceErrorResponse response) {
+    return fromFcmErrorResponse(response, null);
   }
 
-  static FirebaseMessagingException fromErrorResponse(
+  static FirebaseMessagingException fromFcmErrorResponse(
       MessagingServiceErrorResponse response, @Nullable HttpResponseException e) {
     String code = FCM_ERROR_CODES.get(response.getErrorCode());
     if (code == null) {
@@ -82,6 +91,21 @@ public class FirebaseMessagingException extends FirebaseException {
       } else {
         msg = String.format("Unexpected HTTP response: %s", response.toString());
       }
+    }
+    return new FirebaseMessagingException(code, msg, e);
+  }
+
+  static FirebaseMessagingException fromInstanceIdErrorResponse(
+      InstanceIdServiceErrorResponse response, HttpResponseException e) {
+    // Infer error code from HTTP status
+    String code = IID_ERROR_CODES.get(e.getStatusCode());
+    if (code == null) {
+      code = UNKNOWN_ERROR;
+    }
+    String msg = response.getError();
+    if (Strings.isNullOrEmpty(msg)) {
+      msg = String.format("Unexpected HTTP response with status: %d; body: %s",
+          e.getStatusCode(), e.getContent());
     }
     return new FirebaseMessagingException(code, msg, e);
   }

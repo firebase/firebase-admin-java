@@ -36,7 +36,7 @@ public class FirebaseMessagingIT {
           + "PWB1AykXAVUUGl2h1wT4XI6XazWpvY7RBUSYfoxtqSWGIm2nvWh2BOP1YG501SsRoE";
 
   @BeforeClass
-  public static void setUpClass() throws Exception {
+  public static void setUpClass() {
     IntegrationTestUtils.ensureDefaultApp();
   }
 

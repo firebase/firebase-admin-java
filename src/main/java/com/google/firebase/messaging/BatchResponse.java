@@ -55,7 +55,8 @@ public final class BatchResponse {
   }
 
   static BatchResponse fromErrorResponse(MessagingServiceErrorResponse response) {
-    FirebaseMessagingException exception = FirebaseMessagingException.fromErrorResponse(response);
+    FirebaseMessagingException exception = FirebaseMessagingException
+        .fromFcmErrorResponse(response);
     return new BatchResponse(null, exception);
   }
 }

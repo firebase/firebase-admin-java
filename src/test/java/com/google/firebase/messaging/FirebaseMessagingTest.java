@@ -846,7 +846,7 @@ public class FirebaseMessagingTest {
   }
 
   private static String getTopicManagementErrorCode(int statusCode) {
-    String code = FirebaseMessaging.IID_ERROR_CODES.get(statusCode);
+    String code = FirebaseMessagingException.IID_ERROR_CODES.get(statusCode);
     if (code == null) {
       code = "unknown-error";
     }
