@@ -26,6 +26,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
@@ -50,7 +51,6 @@ import com.google.firebase.messaging.internal.MessagingServiceErrorResponse;
 import com.google.firebase.messaging.internal.MessagingServiceResponse;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -83,7 +83,7 @@ public class FirebaseMessaging {
   private final FirebaseApp app;
   private final HttpRequestFactory requestFactory;
   private final JsonFactory jsonFactory;
-  private final String url;
+  private final String fcmSendUrl;
 
   private HttpResponseInterceptor interceptor;
 
@@ -97,7 +97,7 @@ public class FirebaseMessaging {
         "Project ID is required to access messaging service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
-    this.url = String.format(FCM_URL, projectId);
+    this.fcmSendUrl = String.format(FCM_URL, projectId);
   }
 
   /**
@@ -279,20 +279,16 @@ public class FirebaseMessaging {
   }
 
   private String sendSingleRequest(Message message, boolean dryRun) throws IOException {
-    ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
-        .put("message", message);
-    if (dryRun) {
-      payload.put("validate_only", true);
-    }
     HttpRequest request = requestFactory.buildPostRequest(
-        new GenericUrl(url), new JsonHttpContent(this.jsonFactory, payload.build()));
-    this.setFcmApiFormatVersion(request.getHeaders());
-    request.setParser(new JsonObjectParser(this.jsonFactory));
-    request.setResponseInterceptor(this.interceptor);
+        new GenericUrl(fcmSendUrl),
+        new JsonHttpContent(jsonFactory, message.wrapForTransport(dryRun)));
+    setFcmApiFormatVersion(request.getHeaders());
+    request.setParser(new JsonObjectParser(jsonFactory));
+    request.setResponseInterceptor(interceptor);
     HttpResponse response = request.execute();
     try {
       MessagingServiceResponse parsed = new MessagingServiceResponse();
-      this.jsonFactory.createJsonParser(response.getContent()).parseAndClose(parsed);
+      jsonFactory.createJsonParser(response.getContent()).parseAndClose(parsed);
       return parsed.getName();
     } finally {
       disconnectQuietly(response);
@@ -307,7 +303,7 @@ public class FirebaseMessaging {
     MessagingServiceErrorResponse response = new MessagingServiceErrorResponse();
     if (e.getContent() != null) {
       try {
-        JsonParser parser = this.jsonFactory.createJsonParser(e.getContent());
+        JsonParser parser = jsonFactory.createJsonParser(e.getContent());
         parser.parseAndClose(response);
       } catch (IOException ignored) {
         // ignored
@@ -352,25 +348,31 @@ public class FirebaseMessaging {
       List<Message> messages, boolean dryRun, MessagingBatchCallback callback) throws IOException {
 
     BatchRequest batch = new BatchRequest(
-        this.requestFactory.getTransport(), this.requestFactory.getInitializer());
+        requestFactory.getTransport(), getBatchRequestInitializer());
     batch.setBatchUrl(new GenericUrl(FCM_BATCH_URL));
 
     JsonObjectParser jsonParser = new JsonObjectParser(this.jsonFactory);
     for (Message message : messages) {
-      ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
-          .put("message", message);
-      if (dryRun) {
-        payload.put("validate_only", true);
-      }
-      HttpRequest request = this.requestFactory.buildPostRequest(
-          new GenericUrl(this.url), new JsonHttpContent(this.jsonFactory, payload.build()));
+      HttpRequest request = requestFactory.buildPostRequest(
+          new GenericUrl(fcmSendUrl),
+          new JsonHttpContent(jsonFactory, message.wrapForTransport(dryRun)));
       request.setParser(jsonParser);
-      this.setFcmApiFormatVersion(request.getHeaders());
+      setFcmApiFormatVersion(request.getHeaders());
       batch.queue(
           request, MessagingServiceResponse.class, MessagingServiceErrorResponse.class, callback);
     }
 
     return batch;
+  }
+
+  private HttpRequestInitializer getBatchRequestInitializer() {
+    return new HttpRequestInitializer(){
+      @Override
+      public void initialize(HttpRequest request) throws IOException {
+        requestFactory.getInitializer().initialize(request);
+        request.setResponseInterceptor(interceptor);
+      }
+    };
   }
 
   private CallableOperation<TopicManagementResponse, FirebaseMessagingException>

@@ -111,6 +111,15 @@ public class Message {
     return condition;
   }
 
+  Map<String, Object> wrapForTransport(boolean dryRun) {
+    ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
+        .put("message", this);
+    if (dryRun) {
+      payload.put("validate_only", true);
+    }
+    return payload.build();
+  }
+
   private static String stripPrefix(String topic) {
     if (Strings.isNullOrEmpty(topic)) {
       return null;

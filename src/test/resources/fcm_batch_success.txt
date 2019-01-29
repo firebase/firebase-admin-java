@@ -1,0 +1,29 @@
+--test_boundary
+Content-Type: application/http
+Content-ID: response-1
+
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+Vary: Origin
+Vary: X-Origin
+Vary: Referer
+
+{
+  "name": "projects/test-project/messages/1"
+}
+
+--test_boundary
+Content-Type: application/http
+Content-ID: response-2
+
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+Vary: Origin
+Vary: X-Origin
+Vary: Referer
+
+{
+  "name": "projects/test-project/messages/2"
+}
+
+--test_boundary--

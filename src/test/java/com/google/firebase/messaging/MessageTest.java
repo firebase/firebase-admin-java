@@ -17,6 +17,8 @@
 package com.google.firebase.messaging;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
@@ -559,6 +561,27 @@ public class MessageTest {
         // expected
       }
     }
+  }
+
+  @Test
+  public void testWrapMessageForDryRun() {
+    Message message = Message.builder()
+        .setTopic("foo")
+        .build();
+    Map<String, Object> wrappedMessage = message.wrapForTransport(true);
+    assertEquals(2, wrappedMessage.size());
+    assertSame(message, wrappedMessage.get("message"));
+    assertEquals(Boolean.TRUE, wrappedMessage.get("validate_only"));
+  }
+
+  @Test
+  public void testWrapMessage() {
+    Message message = Message.builder()
+        .setTopic("foo")
+        .build();
+    Map<String, Object> wrappedMessage = message.wrapForTransport(false);
+    assertEquals(1, wrappedMessage.size());
+    assertSame(message, wrappedMessage.get("message"));
   }
 
   private static void assertJsonEquals(
