@@ -24,9 +24,9 @@ public class MessagingServiceErrorResponse extends GenericJson {
     }
     Object details = error.get("details");
     if (details != null && details instanceof List) {
-      for (Object detail : (List) details) {
+      for (Object detail : (List<?>) details) {
         if (detail instanceof Map) {
-          Map detailMap = (Map) detail;
+          Map<?,?> detailMap = (Map<?,?>) detail;
           if (FCM_ERROR_TYPE.equals(detailMap.get("@type"))) {
             return (String) detailMap.get("errorCode");
           }
