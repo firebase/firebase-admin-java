@@ -79,6 +79,38 @@ public class Message {
     this.condition = builder.condition;
   }
 
+  Map<String, String> getData() {
+    return data;
+  }
+
+  Notification getNotification() {
+    return notification;
+  }
+
+  AndroidConfig getAndroidConfig() {
+    return androidConfig;
+  }
+
+  WebpushConfig getWebpushConfig() {
+    return webpushConfig;
+  }
+
+  ApnsConfig getApnsConfig() {
+    return apnsConfig;
+  }
+
+  String getToken() {
+    return token;
+  }
+
+  String getTopic() {
+    return topic;
+  }
+
+  String getCondition() {
+    return condition;
+  }
+
   private static String stripPrefix(String topic) {
     if (Strings.isNullOrEmpty(topic)) {
       return null;
@@ -226,5 +258,4 @@ public class Message {
       return new Message(this);
     }
   }
-
 }

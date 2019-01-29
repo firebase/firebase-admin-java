@@ -31,7 +31,6 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
-import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.JsonParser;
@@ -229,8 +228,27 @@ public class FirebaseMessaging {
   }
 
   public List<BatchResponse> sendBatch(
+      BatchMessage batch, boolean dryRun) throws FirebaseMessagingException {
+    checkNotNull(batch, "batch message must not be null");
+    return sendBatch(batch.getMessageList(), dryRun);
+  }
+
+  public List<BatchResponse> sendBatch(BatchMessage batch) throws FirebaseMessagingException {
+    return sendBatch(batch, false);
+  }
+
+  public List<BatchResponse> sendBatch(
       List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
     return sendBatchOp(messages, dryRun).call();
+  }
+
+  public ApiFuture<List<BatchResponse>> sendBatchAsync(BatchMessage batch) {
+    return sendBatchAsync(batch, false);
+  }
+
+  public ApiFuture<List<BatchResponse>> sendBatchAsync(BatchMessage batch, boolean dryRun) {
+    checkNotNull(batch, "batch message must not be null");
+    return sendBatchAsync(batch.getMessageList(), dryRun);
   }
 
   public ApiFuture<List<BatchResponse>> sendBatchAsync(List<Message> messages) {
@@ -239,80 +257,6 @@ public class FirebaseMessaging {
 
   public ApiFuture<List<BatchResponse>> sendBatchAsync(List<Message> messages, boolean dryRun) {
     return sendBatchOp(messages, dryRun).callAsync(app);
-  }
-
-  private CallableOperation<List<BatchResponse>, FirebaseMessagingException> sendBatchOp(
-      final List<Message> messages, final boolean dryRun) {
-
-    final List<Message> immutableMessages = ImmutableList.copyOf(messages);
-    checkArgument(!immutableMessages.isEmpty(), "messages list must not be empty");
-    checkArgument(immutableMessages.size() <= 1000,
-        "messages list must not contain more than 1000 elements");
-    return new CallableOperation<List<BatchResponse>,FirebaseMessagingException>() {
-      @Override
-      protected List<BatchResponse> execute() throws FirebaseMessagingException {
-        try {
-          return sendBatchRequest(immutableMessages, dryRun);
-        } catch (HttpResponseException e) {
-          handleSendHttpError(e);
-          return null;
-        } catch (IOException e) {
-          throw new FirebaseMessagingException(
-              INTERNAL_ERROR, "Error while calling FCM backend service", e);
-        }
-      }
-    };
-  }
-
-  private List<BatchResponse> sendBatchRequest(
-      List<Message> messages, boolean dryRun) throws IOException {
-
-    MessagingBatchCallback callback = new MessagingBatchCallback();
-    BatchRequest batch = newBatchRequest(messages, dryRun, callback);
-    batch.execute();
-    return ImmutableList.copyOf(callback.responses);
-  }
-
-  private BatchRequest newBatchRequest(
-      List<Message> messages, boolean dryRun, MessagingBatchCallback callback) throws IOException {
-
-    BatchRequest batch = new BatchRequest(
-        requestFactory.getTransport(), requestFactory.getInitializer());
-    batch.setBatchUrl(new GenericUrl(FCM_BATCH_URL));
-
-    for (Message message : messages) {
-      ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
-            .put("message", message);
-      if (dryRun) {
-        payload.put("validate_only", true);
-      }
-      HttpRequest request = requestFactory.buildPostRequest(
-          new GenericUrl(url), new JsonHttpContent(jsonFactory, payload.build()));
-      request.getHeaders().set("X-GOOG-API-FORMAT-VERSION", "2");
-      request.setParser(new JsonObjectParser(jsonFactory));
-      batch.queue(
-          request, MessagingServiceResponse.class, MessagingServiceErrorResponse.class, callback);
-    }
-
-    return batch;
-  }
-
-  private static class MessagingBatchCallback
-      implements BatchCallback<MessagingServiceResponse, MessagingServiceErrorResponse> {
-
-    private final List<BatchResponse> responses = new ArrayList<>();
-
-    @Override
-    public void onSuccess(
-        MessagingServiceResponse response, HttpHeaders responseHeaders) throws IOException {
-      responses.add(BatchResponse.fromSuccessResponse(response));
-    }
-
-    @Override
-    public void onFailure(
-        MessagingServiceErrorResponse error, HttpHeaders responseHeaders) throws IOException {
-      responses.add(BatchResponse.fromErrorResponse(error));
-    }
   }
 
   private CallableOperation<String, FirebaseMessagingException> sendOp(
@@ -432,6 +376,62 @@ public class FirebaseMessaging {
     throw new FirebaseMessagingException(code, msg, e);
   }
 
+  private CallableOperation<List<BatchResponse>, FirebaseMessagingException> sendBatchOp(
+      final List<Message> messages, final boolean dryRun) {
+
+    final List<Message> immutableMessages = ImmutableList.copyOf(messages);
+    checkArgument(!immutableMessages.isEmpty(), "messages list must not be empty");
+    checkArgument(immutableMessages.size() <= 1000,
+        "messages list must not contain more than 1000 elements");
+    return new CallableOperation<List<BatchResponse>,FirebaseMessagingException>() {
+      @Override
+      protected List<BatchResponse> execute() throws FirebaseMessagingException {
+        try {
+          return sendBatchRequest(immutableMessages, dryRun);
+        } catch (HttpResponseException e) {
+          handleSendHttpError(e);
+          return null;
+        } catch (IOException e) {
+          throw new FirebaseMessagingException(
+              INTERNAL_ERROR, "Error while calling FCM backend service", e);
+        }
+      }
+    };
+  }
+
+  private List<BatchResponse> sendBatchRequest(
+      List<Message> messages, boolean dryRun) throws IOException {
+
+    MessagingBatchCallback callback = new MessagingBatchCallback();
+    BatchRequest batch = newBatchRequest(messages, dryRun, callback);
+    batch.execute();
+    return ImmutableList.copyOf(callback.responses);
+  }
+
+  private BatchRequest newBatchRequest(
+      List<Message> messages, boolean dryRun, MessagingBatchCallback callback) throws IOException {
+
+    BatchRequest batch = new BatchRequest(
+        requestFactory.getTransport(), requestFactory.getInitializer());
+    batch.setBatchUrl(new GenericUrl(FCM_BATCH_URL));
+
+    for (Message message : messages) {
+      ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
+            .put("message", message);
+      if (dryRun) {
+        payload.put("validate_only", true);
+      }
+      HttpRequest request = requestFactory.buildPostRequest(
+          new GenericUrl(url), new JsonHttpContent(jsonFactory, payload.build()));
+      request.getHeaders().set("X-GOOG-API-FORMAT-VERSION", "2");
+      request.setParser(new JsonObjectParser(jsonFactory));
+      batch.queue(
+          request, MessagingServiceResponse.class, MessagingServiceErrorResponse.class, callback);
+    }
+
+    return batch;
+  }
+
   private static void disconnectQuietly(HttpResponse response) {
     if (response != null) {
       try {
@@ -487,5 +487,23 @@ public class FirebaseMessaging {
   private static class InstanceIdServiceErrorResponse {
     @Key("error")
     private String error;
+  }
+
+  private static class MessagingBatchCallback
+      implements BatchCallback<MessagingServiceResponse, MessagingServiceErrorResponse> {
+
+    private final List<BatchResponse> responses = new ArrayList<>();
+
+    @Override
+    public void onSuccess(
+        MessagingServiceResponse response, HttpHeaders responseHeaders) throws IOException {
+      responses.add(BatchResponse.fromSuccessResponse(response));
+    }
+
+    @Override
+    public void onFailure(
+        MessagingServiceErrorResponse error, HttpHeaders responseHeaders) throws IOException {
+      responses.add(BatchResponse.fromErrorResponse(error));
+    }
   }
 }

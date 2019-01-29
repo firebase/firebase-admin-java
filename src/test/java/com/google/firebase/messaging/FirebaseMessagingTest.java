@@ -303,10 +303,10 @@ public class FirebaseMessagingTest {
   }
 
   @Test
-  public void testNullBatchSend() {
+  public void testNullListBatchSend() {
     FirebaseMessaging messaging = initDefaultMessaging();
     try {
-      messaging.sendBatchAsync(null);
+      messaging.sendBatchAsync((List<Message>) null);
       fail("No error thrown for null message list");
     } catch (NullPointerException expected) {
       // expected
@@ -314,7 +314,7 @@ public class FirebaseMessagingTest {
   }
 
   @Test
-  public void testEmptyBatchSend() {
+  public void testEmptyListBatchSend() {
     FirebaseMessaging messaging = initDefaultMessaging();
     try {
       messaging.sendBatchAsync(ImmutableList.<Message>of());
@@ -325,7 +325,7 @@ public class FirebaseMessagingTest {
   }
 
   @Test
-  public void testTooLargeBatchSend() {
+  public void testTooLargeListBatchSend() {
     FirebaseMessaging messaging = initDefaultMessaging();
     ImmutableList.Builder<Message> listBuilder = ImmutableList.builder();
     for (int i = 0; i < 1001; i++) {
@@ -335,6 +335,17 @@ public class FirebaseMessagingTest {
       messaging.sendBatchAsync(listBuilder.build());
       fail("No error thrown for null message list");
     } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testNullMessageBatchSend() {
+    FirebaseMessaging messaging = initDefaultMessaging();
+    try {
+      messaging.sendBatchAsync((BatchMessage) null);
+      fail("No error thrown for null batch message");
+    } catch (NullPointerException expected) {
       // expected
     }
   }

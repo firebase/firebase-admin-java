@@ -18,6 +18,7 @@ package com.google.firebase.messaging;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.api.client.util.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
@@ -41,11 +42,30 @@ public class BatchMessage {
     this.tokens = builder.tokens.build();
     checkArgument(!this.tokens.isEmpty(), "at least one token must be specified");
     checkArgument(this.tokens.size() <= 1000, "no more than 1000 tokens can be specified");
+    for (String token : this.tokens) {
+      checkArgument(!Strings.isNullOrEmpty(token), "none of the tokens can be null or empty");
+    }
     this.data = builder.data.isEmpty() ? null : ImmutableMap.copyOf(builder.data);
     this.notification = builder.notification;
     this.androidConfig = builder.androidConfig;
     this.webpushConfig = builder.webpushConfig;
     this.apnsConfig = builder.apnsConfig;
+  }
+
+  List<Message> getMessageList() {
+    Message.Builder builder = Message.builder()
+        .setNotification(this.notification)
+        .setAndroidConfig(this.androidConfig)
+        .setApnsConfig(this.apnsConfig)
+        .setWebpushConfig(this.webpushConfig);
+    if (this.data != null) {
+      builder.putAllData(this.data);
+    }
+    ImmutableList.Builder<Message> messages = ImmutableList.builder();
+    for (String token : this.tokens) {
+      messages.add(builder.setToken(token).build());
+    }
+    return messages.build();
   }
 
   /**
@@ -157,5 +177,4 @@ public class BatchMessage {
       return new BatchMessage(this);
     }
   }
-
 }
