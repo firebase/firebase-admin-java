@@ -42,6 +42,7 @@ public class FirebaseMessaging {
 
   private final FirebaseApp app;
   private final FirebaseMessagingClient messagingClient;
+  private final InstanceIdClient instanceIdClient;
 
   private FirebaseMessaging(FirebaseApp app) {
     this(app, null);
@@ -50,6 +51,7 @@ public class FirebaseMessaging {
   FirebaseMessaging(FirebaseApp app, @Nullable HttpResponseInterceptor responseInterceptor) {
     this.app = checkNotNull(app, "app must not be null");
     this.messagingClient = new FirebaseMessagingClient(app, responseInterceptor);
+    this.instanceIdClient = new InstanceIdClient(app, responseInterceptor);
   }
 
   /**
@@ -224,7 +226,7 @@ public class FirebaseMessaging {
     return new CallableOperation<TopicManagementResponse, FirebaseMessagingException>() {
       @Override
       protected TopicManagementResponse execute() throws FirebaseMessagingException {
-        return messagingClient.subscribeToTopic(topic, registrationTokens);
+        return instanceIdClient.subscribeToTopic(topic, registrationTokens);
       }
     };
   }
@@ -263,7 +265,7 @@ public class FirebaseMessaging {
     return new CallableOperation<TopicManagementResponse, FirebaseMessagingException>() {
       @Override
       protected TopicManagementResponse execute() throws FirebaseMessagingException {
-        return messagingClient.unsubscribeFromTopic(topic, registrationTokens);
+        return instanceIdClient.unsubscribeFromTopic(topic, registrationTokens);
       }
     };
   }

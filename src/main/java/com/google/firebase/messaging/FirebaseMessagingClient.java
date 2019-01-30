@@ -28,7 +28,6 @@ import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
@@ -38,10 +37,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.internal.FirebaseRequestInitializer;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.Nullable;
-import com.google.firebase.messaging.internal.InstanceIdServiceErrorResponse;
-import com.google.firebase.messaging.internal.InstanceIdServiceResponse;
 import com.google.firebase.messaging.internal.MessagingServiceErrorResponse;
 import com.google.firebase.messaging.internal.MessagingServiceResponse;
 import java.io.IOException;
@@ -57,10 +54,6 @@ final class FirebaseMessagingClient {
   private static final String FCM_URL = "https://fcm.googleapis.com/v1/projects/%s/messages:send";
 
   private static final String FCM_BATCH_URL = "https://fcm.googleapis.com/batch";
-
-  private static final String IID_HOST = "https://iid.googleapis.com";
-  private static final String IID_SUBSCRIBE_PATH = "iid/v1:batchAdd";
-  private static final String IID_UNSUBSCRIBE_PATH = "iid/v1:batchRemove";
 
   private static final String INTERNAL_ERROR = "internal-error";
   private static final String UNKNOWN_ERROR = "unknown-error";
@@ -83,15 +76,6 @@ final class FirebaseMessagingClient {
           .put("UNREGISTERED", "registration-token-not-registered")
           .build();
 
-  static final Map<Integer, String> IID_ERROR_CODES =
-      ImmutableMap.<Integer, String>builder()
-          .put(400, "invalid-argument")
-          .put(401, "authentication-error")
-          .put(403, "authentication-error")
-          .put(500, INTERNAL_ERROR)
-          .put(503, "server-unavailable")
-          .build();
-
   private final String fcmSendUrl;
   private final HttpRequestFactory requestFactory;
   private final HttpRequestFactory childRequestFactory;
@@ -105,9 +89,8 @@ final class FirebaseMessagingClient {
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
     this.fcmSendUrl = String.format(FCM_URL, projectId);
-    HttpTransport httpTransport = app.getOptions().getHttpTransport();
-    this.requestFactory = httpTransport.createRequestFactory(new FirebaseRequestInitializer(app));
-    this.childRequestFactory = httpTransport.createRequestFactory();
+    this.requestFactory = ApiClientUtils.newAuthorizedRequestFactory(app);
+    this.childRequestFactory = ApiClientUtils.newUnauthorizedRequestFactory(app);
     this.jsonFactory = app.getOptions().getJsonFactory();
     this.responseInterceptor = responseInterceptor;
   }
@@ -116,8 +99,7 @@ final class FirebaseMessagingClient {
     try {
       return sendSingleRequest(message, dryRun);
     } catch (HttpResponseException e) {
-      handleSendHttpError(e);
-      return null;
+      throw createExceptionFromResponse(e);
     } catch (IOException e) {
       throw new FirebaseMessagingException(
           INTERNAL_ERROR, "Error while calling FCM backend service", e);
@@ -129,37 +111,10 @@ final class FirebaseMessagingClient {
     try {
       return sendBatchRequest(messages, dryRun);
     } catch (HttpResponseException e) {
-      handleSendHttpError(e);
-      return null;
+      throw createExceptionFromResponse(e);
     } catch (IOException e) {
       throw new FirebaseMessagingException(
           INTERNAL_ERROR, "Error while calling FCM backend service", e);
-    }
-  }
-
-  TopicManagementResponse subscribeToTopic(
-      String topic, List<String> registrationTokens) throws FirebaseMessagingException {
-    try {
-      return sendInstanceIdRequest(topic, registrationTokens, IID_SUBSCRIBE_PATH);
-    } catch (HttpResponseException e) {
-      handleTopicManagementHttpError(e);
-      return null;
-    } catch (IOException e) {
-      throw new FirebaseMessagingException(
-          INTERNAL_ERROR, "Error while calling IID backend service", e);
-    }
-  }
-
-  TopicManagementResponse unsubscribeFromTopic(
-      String topic, List<String> registrationTokens) throws FirebaseMessagingException {
-    try {
-      return sendInstanceIdRequest(topic, registrationTokens, IID_UNSUBSCRIBE_PATH);
-    } catch (HttpResponseException e) {
-      handleTopicManagementHttpError(e);
-      return null;
-    } catch (IOException e) {
-      throw new FirebaseMessagingException(
-          INTERNAL_ERROR, "Error while calling IID backend service", e);
     }
   }
 
@@ -176,7 +131,7 @@ final class FirebaseMessagingClient {
       jsonFactory.createJsonParser(response.getContent()).parseAndClose(parsed);
       return parsed.getName();
     } finally {
-      disconnectQuietly(response);
+      ApiClientUtils.disconnectQuietly(response);
     }
   }
 
@@ -217,17 +172,7 @@ final class FirebaseMessagingClient {
     headers.set("X-GOOG-API-FORMAT-VERSION", "2");
   }
 
-  private void disconnectQuietly(HttpResponse response) {
-    if (response != null) {
-      try {
-        response.disconnect();
-      } catch (IOException ignored) {
-        // ignored
-      }
-    }
-  }
-
-  private void handleSendHttpError(HttpResponseException e) throws FirebaseMessagingException {
+  private FirebaseMessagingException createExceptionFromResponse(HttpResponseException e) {
     MessagingServiceErrorResponse response = new MessagingServiceErrorResponse();
     if (e.getContent() != null) {
       try {
@@ -237,7 +182,7 @@ final class FirebaseMessagingClient {
         // ignored
       }
     }
-    throw newException(response, e);
+    return newException(response, e);
   }
 
   private HttpRequestInitializer getBatchRequestInitializer() {
@@ -248,50 +193,6 @@ final class FirebaseMessagingClient {
         request.setResponseInterceptor(responseInterceptor);
       }
     };
-  }
-
-  private TopicManagementResponse sendInstanceIdRequest(
-      String topic, List<String> registrationTokens, String path) throws IOException {
-    String url = String.format("%s/%s", IID_HOST, path);
-    Map<String, Object> payload = ImmutableMap.of(
-        "to", getPrefixedTopic(topic),
-        "registration_tokens", registrationTokens
-    );
-    HttpResponse response = null;
-    try {
-      HttpRequest request = requestFactory.buildPostRequest(
-          new GenericUrl(url), new JsonHttpContent(jsonFactory, payload));
-      request.getHeaders().set("access_token_auth", "true");
-      request.setParser(new JsonObjectParser(jsonFactory));
-      request.setResponseInterceptor(responseInterceptor);
-      response = request.execute();
-      InstanceIdServiceResponse parsed = response.parseAs(InstanceIdServiceResponse.class);
-      return new TopicManagementResponse(parsed.getResults());
-    } finally {
-      disconnectQuietly(response);
-    }
-  }
-
-  private String getPrefixedTopic(String topic) {
-    if (topic.startsWith("/topics/")) {
-      return topic;
-    } else {
-      return "/topics/" + topic;
-    }
-  }
-
-  private void handleTopicManagementHttpError(
-      HttpResponseException e) throws FirebaseMessagingException {
-    InstanceIdServiceErrorResponse response = new InstanceIdServiceErrorResponse();
-    if (e.getContent() != null) {
-      try {
-        JsonParser parser = jsonFactory.createJsonParser(e.getContent());
-        parser.parseAndClose(response);
-      } catch (IOException ignored) {
-        // ignored
-      }
-    }
-    throw newException(response, e);
   }
 
   private static FirebaseMessagingException newException(MessagingServiceErrorResponse response) {
@@ -312,21 +213,6 @@ final class FirebaseMessagingClient {
       } else {
         msg = String.format("Unexpected HTTP response: %s", response.toString());
       }
-    }
-    return new FirebaseMessagingException(code, msg, e);
-  }
-
-  private static FirebaseMessagingException newException(
-      InstanceIdServiceErrorResponse response, HttpResponseException e) {
-    // Infer error code from HTTP status
-    String code = IID_ERROR_CODES.get(e.getStatusCode());
-    if (code == null) {
-      code = UNKNOWN_ERROR;
-    }
-    String msg = response.getError();
-    if (Strings.isNullOrEmpty(msg)) {
-      msg = String.format("Unexpected HTTP response with status: %d; body: %s",
-          e.getStatusCode(), e.getContent());
     }
     return new FirebaseMessagingException(code, msg, e);
   }

@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -27,6 +28,8 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.LowLevelHttpRequest;
 import com.google.api.client.json.JsonParser;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
@@ -95,6 +98,46 @@ public class FirebaseMessagingTest {
   @After
   public void tearDown() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+  }
+
+  @Test
+  public void testGetInstance() {
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId("test-project")
+        .build();
+    FirebaseApp.initializeApp(options);
+
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    assertSame(messaging, FirebaseMessaging.getInstance());
+  }
+
+  @Test
+  public void testGetInstanceByApp() {
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId("test-project")
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options, "custom-app");
+
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance(app);
+    assertSame(messaging, FirebaseMessaging.getInstance(app));
+  }
+
+  @Test
+  public void testPostDeleteApp() {
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId("test-project")
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options, "custom-app");
+    app.delete();
+    try {
+      FirebaseMessaging.getInstance(app);
+      fail("No error thrown for deleted app");
+    } catch (IllegalStateException expected) {
+      // expected
+    }
   }
 
   @Test
@@ -423,7 +466,8 @@ public class FirebaseMessagingTest {
         MOCK_BATCH_FAILURE_RESPONSE, interceptor);
     List<Message> messages = ImmutableList.of(
         Message.builder().setTopic("topic1").build(),
-        Message.builder().setTopic("topic2").build()
+        Message.builder().setTopic("topic2").build(),
+        Message.builder().setTopic("topic3").build()
     );
 
     List<BatchResponse> responses = messaging.sendBatch(messages);
@@ -439,6 +483,7 @@ public class FirebaseMessagingTest {
     BatchMessage batch = BatchMessage.builder()
         .addToken("token1")
         .addToken("token2")
+        .addToken("token3")
         .build();
 
     List<BatchResponse> responses = messaging.sendBatch(batch);
@@ -453,7 +498,8 @@ public class FirebaseMessagingTest {
         MOCK_BATCH_FAILURE_RESPONSE, interceptor);
     List<Message> messages = ImmutableList.of(
         Message.builder().setTopic("topic1").build(),
-        Message.builder().setTopic("topic2").build()
+        Message.builder().setTopic("topic2").build(),
+        Message.builder().setTopic("topic3").build()
     );
 
     List<BatchResponse> responses = messaging.sendBatchAsync(messages).get();
@@ -469,6 +515,7 @@ public class FirebaseMessagingTest {
     BatchMessage batch = BatchMessage.builder()
         .addToken("token1")
         .addToken("token2")
+        .addToken("token3")
         .build();
 
     List<BatchResponse> responses = messaging.sendBatchAsync(batch).get();
@@ -498,6 +545,24 @@ public class FirebaseMessagingTest {
         assertTrue(error.getCause() instanceof HttpResponseException);
       }
       checkBatchRequestHeader(interceptor.getLastRequest());
+    }
+  }
+
+  @Test
+  public void testSendBatchTransportError() throws Exception {
+    FirebaseMessaging messaging = initFaultyTransportMessaging();
+    List<Message> messages = ImmutableList.of(Message.builder()
+        .setTopic("test-topic")
+        .build());
+    try {
+      messaging.sendBatchAsync(messages).get();
+      fail("No error thrown for HTTP error");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseMessagingException);
+      FirebaseMessagingException error = (FirebaseMessagingException) e.getCause();
+      assertEquals("internal-error", error.getErrorCode());
+      assertEquals("Error while calling FCM backend service", error.getMessage());
+      assertTrue(error.getCause() instanceof IOException);
     }
   }
 
@@ -682,6 +747,41 @@ public class FirebaseMessagingTest {
   }
 
   @Test
+  public void testSubscribeUnknownError() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    FirebaseMessaging messaging = initMessaging(response, interceptor);
+    response.setStatusCode(500).setContent("{}");
+    try {
+      messaging.subscribeToTopicAsync(ImmutableList.of("id1", "id2"), "test-topic").get();
+      fail("No error thrown for HTTP error");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseMessagingException);
+      FirebaseMessagingException error = (FirebaseMessagingException) e.getCause();
+      assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
+      assertEquals("Unexpected HTTP response with status: 500; body: {}", error.getMessage());
+      assertTrue(error.getCause() instanceof HttpResponseException);
+    }
+
+    checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_SUBSCRIBE_URL);
+  }
+
+  @Test
+  public void testSubscribeTransportError() throws Exception {
+    FirebaseMessaging messaging = initFaultyTransportMessaging();
+    try {
+      messaging.subscribeToTopicAsync(ImmutableList.of("id1", "id2"), "test-topic").get();
+      fail("No error thrown for HTTP error");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseMessagingException);
+      FirebaseMessagingException error = (FirebaseMessagingException) e.getCause();
+      assertEquals("internal-error", error.getErrorCode());
+      assertEquals("Error while calling IID backend service", error.getMessage());
+      assertTrue(error.getCause() instanceof IOException);
+    }
+  }
+
+  @Test
   public void testInvalidUnsubscribe() {
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     FirebaseMessaging messaging = initDefaultMessaging(interceptor);
@@ -759,76 +859,39 @@ public class FirebaseMessagingTest {
     }
   }
 
-  private FirebaseMessaging getMessagingForBatchRequest(
-      String responsePayload, TestResponseInterceptor interceptor) {
-    MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse()
-        .setContentType("multipart/mixed; boundary=test_boundary")
-        .setContent(responsePayload);
-    return initMessaging(httpResponse, interceptor);
-  }
-
-  private void assertSendBatchSuccess(
-      List<BatchResponse> responses, TestResponseInterceptor interceptor) throws IOException {
-    assertEquals(2, responses.size());
-    for (int i = 0; i < 2; i++) {
-      BatchResponse response = responses.get(i);
-      assertTrue(response.isSuccessful());
-      assertEquals("projects/test-project/messages/" + (i + 1), response.getMessageId());
-      assertNull(response.getException());
+  @Test
+  public void testUnsubscribeUnknownError() throws Exception {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    FirebaseMessaging messaging = initMessaging(response, interceptor);
+    response.setStatusCode(500).setContent("{}");
+    try {
+      messaging.unsubscribeFromTopicAsync(ImmutableList.of("id1", "id2"), "test-topic").get();
+      fail("No error thrown for HTTP error");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseMessagingException);
+      FirebaseMessagingException error = (FirebaseMessagingException) e.getCause();
+      assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
+      assertEquals("Unexpected HTTP response with status: 500; body: {}", error.getMessage());
+      assertTrue(error.getCause() instanceof HttpResponseException);
     }
-    checkBatchRequestHeader(interceptor.getLastRequest());
-    checkBatchRequest(interceptor.getLastRequest());
+
+    checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_UNSUBSCRIBE_URL);
   }
 
-  private void assertSendBatchFailure(
-      List<BatchResponse> responses, TestResponseInterceptor interceptor) throws IOException {
-    assertEquals(2, responses.size());
-    BatchResponse firstResponse = responses.get(0);
-    assertTrue(firstResponse.isSuccessful());
-    assertEquals("projects/test-project/messages/1", firstResponse.getMessageId());
-    assertNull(firstResponse.getException());
-
-    BatchResponse secondResponse = responses.get(1);
-    assertFalse(secondResponse.isSuccessful());
-    assertNull(secondResponse.getMessageId());
-    FirebaseMessagingException exception = secondResponse.getException();
-    assertNotNull(exception);
-    assertEquals("invalid-argument", exception.getErrorCode());
-
-    checkBatchRequestHeader(interceptor.getLastRequest());
-    checkBatchRequest(interceptor.getLastRequest());
-  }
-
-  private void checkBatchRequestHeader(HttpRequest request) {
-    assertEquals("POST", request.getRequestMethod());
-    assertEquals("https://fcm.googleapis.com/batch", request.getUrl().toString());
-    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
-  }
-
-  private void checkBatchRequest(HttpRequest request) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    request.getContent().writeTo(out);
-    String[] lines = out.toString().split("\n");
-    assertEquals(2, countLinesWithPrefix(lines, "POST " + TEST_FCM_URL));
-    assertEquals(2, countLinesWithPrefix(lines, "x-goog-api-format-version: 2"));
-  }
-
-  private int countLinesWithPrefix(String[] lines, String prefix) {
-    int matchCount = 0;
-    for (String line : lines) {
-      if (line.trim().startsWith(prefix)) {
-        matchCount++;
-      }
+  @Test
+  public void testUnsubscribeTransportError() throws Exception {
+    FirebaseMessaging messaging = initFaultyTransportMessaging();
+    try {
+      messaging.unsubscribeFromTopicAsync(ImmutableList.of("id1", "id2"), "test-topic").get();
+      fail("No error thrown for HTTP error");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseMessagingException);
+      FirebaseMessagingException error = (FirebaseMessagingException) e.getCause();
+      assertEquals("internal-error", error.getErrorCode());
+      assertEquals("Error while calling IID backend service", error.getMessage());
+      assertTrue(error.getCause() instanceof IOException);
     }
-    return matchCount;
-  }
-
-  private static String getTopicManagementErrorCode(int statusCode) {
-    String code = FirebaseMessagingClient.IID_ERROR_CODES.get(statusCode);
-    if (code == null) {
-      code = "unknown-error";
-    }
-    return code;
   }
 
   private static FirebaseMessaging initMessaging(
@@ -859,6 +922,16 @@ public class FirebaseMessagingTest {
     return new FirebaseMessaging(app, interceptor);
   }
 
+  private static FirebaseMessaging initFaultyTransportMessaging() {
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId("test-project")
+        .setHttpTransport(new FailingHttpTransport())
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
+    return new FirebaseMessaging(app, null);
+  }
+
   private void checkRequest(
       HttpRequest request, Map<String, Object> expected) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -875,6 +948,86 @@ public class FirebaseMessagingTest {
     assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
     assertEquals("2", request.getHeaders().get("X-GOOG-API-FORMAT-VERSION"));
   }
+
+  private FirebaseMessaging getMessagingForBatchRequest(
+      String responsePayload, TestResponseInterceptor interceptor) {
+    MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse()
+        .setContentType("multipart/mixed; boundary=test_boundary")
+        .setContent(responsePayload);
+    return initMessaging(httpResponse, interceptor);
+  }
+
+  private void assertSendBatchSuccess(
+      List<BatchResponse> responses, TestResponseInterceptor interceptor) throws IOException {
+    assertEquals(2, responses.size());
+    for (int i = 0; i < 2; i++) {
+      BatchResponse response = responses.get(i);
+      assertTrue(response.isSuccessful());
+      assertEquals("projects/test-project/messages/" + (i + 1), response.getMessageId());
+      assertNull(response.getException());
+    }
+    checkBatchRequestHeader(interceptor.getLastRequest());
+    checkBatchRequest(interceptor.getLastRequest(), 2);
+  }
+
+  private void assertSendBatchFailure(
+      List<BatchResponse> responses, TestResponseInterceptor interceptor) throws IOException {
+    assertEquals(3, responses.size());
+    BatchResponse firstResponse = responses.get(0);
+    assertTrue(firstResponse.isSuccessful());
+    assertEquals("projects/test-project/messages/1", firstResponse.getMessageId());
+    assertNull(firstResponse.getException());
+
+    BatchResponse secondResponse = responses.get(1);
+    assertFalse(secondResponse.isSuccessful());
+    assertNull(secondResponse.getMessageId());
+    FirebaseMessagingException exception = secondResponse.getException();
+    assertNotNull(exception);
+    assertEquals("invalid-argument", exception.getErrorCode());
+
+    BatchResponse thirdResponse = responses.get(2);
+    assertFalse(thirdResponse.isSuccessful());
+    assertNull(thirdResponse.getMessageId());
+    exception = thirdResponse.getException();
+    assertNotNull(exception);
+    assertEquals("invalid-argument", exception.getErrorCode());
+
+    checkBatchRequestHeader(interceptor.getLastRequest());
+    checkBatchRequest(interceptor.getLastRequest(), 3);
+  }
+
+  private void checkBatchRequestHeader(HttpRequest request) {
+    assertEquals("POST", request.getRequestMethod());
+    assertEquals("https://fcm.googleapis.com/batch", request.getUrl().toString());
+    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+  }
+
+  private void checkBatchRequest(HttpRequest request, int expected) throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    request.getContent().writeTo(out);
+    String[] lines = out.toString().split("\n");
+    assertEquals(expected, countLinesWithPrefix(lines, "POST " + TEST_FCM_URL));
+    assertEquals(expected, countLinesWithPrefix(lines, "x-goog-api-format-version: 2"));
+  }
+
+  private int countLinesWithPrefix(String[] lines, String prefix) {
+    int matchCount = 0;
+    for (String line : lines) {
+      if (line.trim().startsWith(prefix)) {
+        matchCount++;
+      }
+    }
+    return matchCount;
+  }
+
+  private static String getTopicManagementErrorCode(int statusCode) {
+    String code = InstanceIdClient.IID_ERROR_CODES.get(statusCode);
+    if (code == null) {
+      code = "unknown-error";
+    }
+    return code;
+  }
+
 
   private void checkTopicManagementRequest(
       HttpRequest request, TopicManagementResponse result) throws IOException {
@@ -908,6 +1061,13 @@ public class FirebaseMessagingTest {
     TopicMgtArgs(List<String> registrationTokens, String topic) {
       this.registrationTokens = registrationTokens;
       this.topic = topic;
+    }
+  }
+
+  private static class FailingHttpTransport extends HttpTransport {
+    @Override
+    protected LowLevelHttpRequest buildRequest(String method, String url) throws IOException {
+      throw new IOException("transport error");
     }
   }
 
