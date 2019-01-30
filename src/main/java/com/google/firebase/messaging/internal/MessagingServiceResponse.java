@@ -8,9 +8,9 @@ import com.google.api.client.util.Key;
 public class MessagingServiceResponse {
 
   @Key("name")
-  private String name;
+  private String messageId;
 
-  public String getName() {
-    return this.name;
+  public String getMessageId() {
+    return this.messageId;
   }
 }

@@ -85,20 +85,20 @@ public class FirebaseMessagingIT {
           .setToken("not-a-token")
           .build());
 
-    List<BatchResponse> responses = FirebaseMessaging.getInstance().sendBatch(messages, true);
+    List<SendResponse> response = FirebaseMessaging.getInstance().sendBatch(messages, true);
 
-    assertEquals(3, responses.size());
-    assertTrue(responses.get(0).isSuccessful());
-    String id = responses.get(0).getMessageId();
+    assertEquals(3, response.size());
+    assertTrue(response.get(0).isSuccessful());
+    String id = response.get(0).getMessageId();
     assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
 
-    assertTrue(responses.get(1).isSuccessful());
-    id = responses.get(1).getMessageId();
+    assertTrue(response.get(1).isSuccessful());
+    id = response.get(1).getMessageId();
     assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
 
-    assertFalse(responses.get(2).isSuccessful());
-    assertNull(responses.get(2).getMessageId());
-    FirebaseMessagingException exception = responses.get(2).getException();
+    assertFalse(response.get(2).isSuccessful());
+    assertNull(response.get(2).getMessageId());
+    FirebaseMessagingException exception = response.get(2).getException();
     assertNotNull(exception);
     assertEquals("invalid-argument", exception.getErrorCode());
   }
@@ -109,8 +109,8 @@ public class FirebaseMessagingIT {
     for (int i = 0; i < 1000; i++) {
       messages.add(Message.builder().setTopic("foo-bar").build());
     }
-    List<BatchResponse> responses = FirebaseMessaging.getInstance().sendBatch(messages, true);
-    assertEquals(1000, responses.size());
+    List<SendResponse> response = FirebaseMessaging.getInstance().sendBatch(messages, true);
+    assertEquals(1000, response.size());
   }
 
   @Test

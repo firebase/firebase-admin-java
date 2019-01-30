@@ -106,7 +106,7 @@ final class FirebaseMessagingClient {
     }
   }
 
-  List<BatchResponse> sendBatch(
+  List<SendResponse> sendBatch(
       List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
     try {
       return sendBatchRequest(messages, dryRun);
@@ -129,13 +129,13 @@ final class FirebaseMessagingClient {
     try {
       MessagingServiceResponse parsed = new MessagingServiceResponse();
       jsonFactory.createJsonParser(response.getContent()).parseAndClose(parsed);
-      return parsed.getName();
+      return parsed.getMessageId();
     } finally {
       ApiClientUtils.disconnectQuietly(response);
     }
   }
 
-  private List<BatchResponse> sendBatchRequest(
+  private List<SendResponse> sendBatchRequest(
       List<Message> messages, boolean dryRun) throws IOException {
 
     MessagingBatchCallback callback = new MessagingBatchCallback();
@@ -223,21 +223,21 @@ final class FirebaseMessagingClient {
   private static class MessagingBatchCallback
       implements BatchCallback<MessagingServiceResponse, MessagingServiceErrorResponse> {
 
-    private final ImmutableList.Builder<BatchResponse> responses = ImmutableList.builder();
+    private final ImmutableList.Builder<SendResponse> responses = ImmutableList.builder();
 
     @Override
     public void onSuccess(
         MessagingServiceResponse response, HttpHeaders responseHeaders) {
-      responses.add(BatchResponse.fromResponse(response));
+      responses.add(SendResponse.fromMessageId(response.getMessageId()));
     }
 
     @Override
     public void onFailure(
         MessagingServiceErrorResponse error, HttpHeaders responseHeaders) {
-      responses.add(BatchResponse.fromException(newException(error)));
+      responses.add(SendResponse.fromException(newException(error)));
     }
 
-    List<BatchResponse> getResponses() {
+    List<SendResponse> getResponses() {
       return this.responses.build();
     }
   }

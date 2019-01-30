@@ -409,7 +409,7 @@ public class FirebaseMessagingTest {
         Message.builder().setTopic("topic2").build()
     );
 
-    List<BatchResponse> responses = messaging.sendBatch(messages);
+    List<SendResponse> responses = messaging.sendBatch(messages);
 
     assertSendBatchSuccess(responses, interceptor);
   }
@@ -424,7 +424,7 @@ public class FirebaseMessagingTest {
         .addToken("token2")
         .build();
 
-    List<BatchResponse> responses = messaging.sendBatch(batch);
+    List<SendResponse> responses = messaging.sendBatch(batch);
 
     assertSendBatchSuccess(responses, interceptor);
   }
@@ -439,7 +439,7 @@ public class FirebaseMessagingTest {
         Message.builder().setTopic("topic2").build()
     );
 
-    List<BatchResponse> responses = messaging.sendBatchAsync(messages).get();
+    List<SendResponse> responses = messaging.sendBatchAsync(messages).get();
 
     assertSendBatchSuccess(responses, interceptor);
   }
@@ -454,7 +454,7 @@ public class FirebaseMessagingTest {
         .addToken("token2")
         .build();
 
-    List<BatchResponse> responses = messaging.sendBatchAsync(batch).get();
+    List<SendResponse> responses = messaging.sendBatchAsync(batch).get();
 
     assertSendBatchSuccess(responses, interceptor);
   }
@@ -470,7 +470,7 @@ public class FirebaseMessagingTest {
         Message.builder().setTopic("topic3").build()
     );
 
-    List<BatchResponse> responses = messaging.sendBatch(messages);
+    List<SendResponse> responses = messaging.sendBatch(messages);
 
     assertSendBatchFailure(responses, interceptor);
   }
@@ -486,7 +486,7 @@ public class FirebaseMessagingTest {
         .addToken("token3")
         .build();
 
-    List<BatchResponse> responses = messaging.sendBatch(batch);
+    List<SendResponse> responses = messaging.sendBatch(batch);
 
     assertSendBatchFailure(responses, interceptor);
   }
@@ -502,7 +502,7 @@ public class FirebaseMessagingTest {
         Message.builder().setTopic("topic3").build()
     );
 
-    List<BatchResponse> responses = messaging.sendBatchAsync(messages).get();
+    List<SendResponse> responses = messaging.sendBatchAsync(messages).get();
 
     assertSendBatchFailure(responses, interceptor);
   }
@@ -518,7 +518,7 @@ public class FirebaseMessagingTest {
         .addToken("token3")
         .build();
 
-    List<BatchResponse> responses = messaging.sendBatchAsync(batch).get();
+    List<SendResponse> responses = messaging.sendBatchAsync(batch).get();
 
     assertSendBatchFailure(responses, interceptor);
   }
@@ -958,34 +958,34 @@ public class FirebaseMessagingTest {
   }
 
   private void assertSendBatchSuccess(
-      List<BatchResponse> responses, TestResponseInterceptor interceptor) throws IOException {
+      List<SendResponse> responses, TestResponseInterceptor interceptor) throws IOException {
     assertEquals(2, responses.size());
     for (int i = 0; i < 2; i++) {
-      BatchResponse response = responses.get(i);
-      assertTrue(response.isSuccessful());
-      assertEquals("projects/test-project/messages/" + (i + 1), response.getMessageId());
-      assertNull(response.getException());
+      SendResponse sendResponse = responses.get(i);
+      assertTrue(sendResponse.isSuccessful());
+      assertEquals("projects/test-project/messages/" + (i + 1), sendResponse.getMessageId());
+      assertNull(sendResponse.getException());
     }
     checkBatchRequestHeader(interceptor.getLastRequest());
     checkBatchRequest(interceptor.getLastRequest(), 2);
   }
 
   private void assertSendBatchFailure(
-      List<BatchResponse> responses, TestResponseInterceptor interceptor) throws IOException {
+      List<SendResponse> responses, TestResponseInterceptor interceptor) throws IOException {
     assertEquals(3, responses.size());
-    BatchResponse firstResponse = responses.get(0);
+    SendResponse firstResponse = responses.get(0);
     assertTrue(firstResponse.isSuccessful());
     assertEquals("projects/test-project/messages/1", firstResponse.getMessageId());
     assertNull(firstResponse.getException());
 
-    BatchResponse secondResponse = responses.get(1);
+    SendResponse secondResponse = responses.get(1);
     assertFalse(secondResponse.isSuccessful());
     assertNull(secondResponse.getMessageId());
     FirebaseMessagingException exception = secondResponse.getException();
     assertNotNull(exception);
     assertEquals("invalid-argument", exception.getErrorCode());
 
-    BatchResponse thirdResponse = responses.get(2);
+    SendResponse thirdResponse = responses.get(2);
     assertFalse(thirdResponse.isSuccessful());
     assertNull(thirdResponse.getMessageId());
     exception = thirdResponse.getException();

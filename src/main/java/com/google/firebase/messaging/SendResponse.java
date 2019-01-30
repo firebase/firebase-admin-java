@@ -20,18 +20,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.base.Strings;
 import com.google.common.primitives.Booleans;
-import com.google.firebase.messaging.internal.MessagingServiceErrorResponse;
-import com.google.firebase.messaging.internal.MessagingServiceResponse;
 
-/**
- * BatchResponse
- */
-public final class BatchResponse {
+public final class SendResponse {
 
   private final String messageId;
   private final FirebaseMessagingException exception;
 
-  public BatchResponse(String messageId, FirebaseMessagingException exception) {
+  private SendResponse(String messageId, FirebaseMessagingException exception) {
     int argCount = Booleans.countTrue(!Strings.isNullOrEmpty(messageId), exception != null);
     checkArgument(argCount == 1, "Exactly one of messageId or exception must be specified");
     this.messageId = messageId;
@@ -50,11 +45,11 @@ public final class BatchResponse {
     return !Strings.isNullOrEmpty(this.messageId);
   }
 
-  static BatchResponse fromResponse(MessagingServiceResponse response) {
-    return new BatchResponse(response.getName(), null);
+  static SendResponse fromMessageId(String messageId) {
+    return new SendResponse(messageId, null);
   }
 
-  static BatchResponse fromException(FirebaseMessagingException exception) {
-    return new BatchResponse(null, exception);
+  static SendResponse fromException(FirebaseMessagingException exception) {
+    return new SendResponse(null, exception);
   }
 }
