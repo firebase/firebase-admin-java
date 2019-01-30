@@ -50,13 +50,11 @@ public final class BatchResponse {
     return !Strings.isNullOrEmpty(this.messageId);
   }
 
-  static BatchResponse fromSuccessResponse(MessagingServiceResponse response) {
+  static BatchResponse fromResponse(MessagingServiceResponse response) {
     return new BatchResponse(response.getName(), null);
   }
 
-  static BatchResponse fromErrorResponse(MessagingServiceErrorResponse response) {
-    FirebaseMessagingException exception = FirebaseMessagingException
-        .fromFcmErrorResponse(response);
+  static BatchResponse fromException(FirebaseMessagingException exception) {
     return new BatchResponse(null, exception);
   }
 }

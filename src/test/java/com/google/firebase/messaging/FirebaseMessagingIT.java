@@ -67,8 +67,7 @@ public class FirebaseMessagingIT {
   }
 
   @Test
-  public void testBatchSend() throws Exception {
-    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+  public void testSendBatch() throws Exception {
     List<Message> messages = new ArrayList<>();
     messages.add(
         Message.builder()
@@ -85,7 +84,9 @@ public class FirebaseMessagingIT {
           .setNotification(new Notification("Title", "Body"))
           .setToken("not-a-token")
           .build());
-    List<BatchResponse> responses = messaging.sendBatch(messages, true);
+
+    List<BatchResponse> responses = FirebaseMessaging.getInstance().sendBatch(messages, true);
+
     assertEquals(3, responses.size());
     assertTrue(responses.get(0).isSuccessful());
     String id = responses.get(0).getMessageId();
