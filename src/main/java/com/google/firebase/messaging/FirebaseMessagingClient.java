@@ -155,7 +155,7 @@ final class FirebaseMessagingClient {
     final GenericUrl sendUrl = new GenericUrl(fcmSendUrl);
     for (Message message : messages) {
       // Using a separate request factory without authorization is faster for large batches.
-      // A simple perf test showed a 400-500ms speed up for batches of 1000 messages.
+      // A simple performance test showed a 400-500ms speed up for batches of 1000 messages.
       HttpRequest request = childRequestFactory.buildPostRequest(
           sendUrl,
           new JsonHttpContent(jsonFactory, message.wrapForTransport(dryRun)));
@@ -182,6 +182,7 @@ final class FirebaseMessagingClient {
         // ignored
       }
     }
+
     return newException(response, e);
   }
 
@@ -205,6 +206,7 @@ final class FirebaseMessagingClient {
     if (code == null) {
       code = UNKNOWN_ERROR;
     }
+
     String msg = response.getErrorMessage();
     if (Strings.isNullOrEmpty(msg)) {
       if (e != null) {
@@ -214,6 +216,7 @@ final class FirebaseMessagingClient {
         msg = String.format("Unexpected HTTP response: %s", response.toString());
       }
     }
+
     return new FirebaseMessagingException(code, msg, e);
   }
 
