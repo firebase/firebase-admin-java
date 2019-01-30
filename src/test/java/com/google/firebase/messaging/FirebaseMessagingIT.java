@@ -104,6 +104,16 @@ public class FirebaseMessagingIT {
   }
 
   @Test
+  public void testLargeSendBatch() throws Exception {
+    List<Message> messages = new ArrayList<>();
+    for (int i = 0; i < 1000; i++) {
+      messages.add(Message.builder().setTopic("foo-bar").build());
+    }
+    List<BatchResponse> responses = FirebaseMessaging.getInstance().sendBatch(messages, true);
+    assertEquals(1000, responses.size());
+  }
+
+  @Test
   public void testSubscribe() throws Exception {
     FirebaseMessaging messaging = FirebaseMessaging.getInstance();
     TopicManagementResponse results = messaging.subscribeToTopicAsync(

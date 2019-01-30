@@ -810,7 +810,6 @@ public class FirebaseMessagingTest {
     request.getContent().writeTo(out);
     String[] lines = out.toString().split("\n");
     assertEquals(2, countLinesWithPrefix(lines, "POST " + TEST_FCM_URL));
-    assertEquals(2, countLinesWithPrefix(lines, "Authorization: Bearer test-token"));
     assertEquals(2, countLinesWithPrefix(lines, "x-goog-api-format-version: 2"));
   }
 

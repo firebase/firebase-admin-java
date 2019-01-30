@@ -94,6 +94,7 @@ final class FirebaseMessagingClient {
 
   private final String fcmSendUrl;
   private final HttpRequestFactory requestFactory;
+  private final HttpRequestFactory childRequestFactory;
   private final JsonFactory jsonFactory;
   private final HttpResponseInterceptor responseInterceptor;
 
@@ -106,6 +107,7 @@ final class FirebaseMessagingClient {
     this.fcmSendUrl = String.format(FCM_URL, projectId);
     HttpTransport httpTransport = app.getOptions().getHttpTransport();
     this.requestFactory = httpTransport.createRequestFactory(new FirebaseRequestInitializer(app));
+    this.childRequestFactory = httpTransport.createRequestFactory();
     this.jsonFactory = app.getOptions().getJsonFactory();
     this.responseInterceptor = responseInterceptor;
   }
@@ -197,7 +199,9 @@ final class FirebaseMessagingClient {
     final JsonObjectParser jsonParser = new JsonObjectParser(this.jsonFactory);
     final GenericUrl sendUrl = new GenericUrl(fcmSendUrl);
     for (Message message : messages) {
-      HttpRequest request = requestFactory.buildPostRequest(
+      // Using a separate request factory without authorization is faster for large batches.
+      // A simple perf test showed a 400-500ms speed up for batches of 1000 messages.
+      HttpRequest request = childRequestFactory.buildPostRequest(
           sendUrl,
           new JsonHttpContent(jsonFactory, message.wrapForTransport(dryRun)));
       request.setParser(jsonParser);
