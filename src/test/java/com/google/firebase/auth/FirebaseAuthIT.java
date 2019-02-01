@@ -79,7 +79,7 @@ public class FirebaseAuthIT {
       "https://www.googleapis.com/identitytoolkit/v3/relyingparty/emailLinkSignin";
   private static final JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
   private static final HttpTransport transport = Utils.getDefaultTransport();
-  public static final String ACTION_LINK_CONTINUE_URL = "http://localhost/?a=1&b=2#c=3";
+  private static final String ACTION_LINK_CONTINUE_URL = "http://localhost/?a=1&b=2#c=3";
 
   private static FirebaseAuth auth;
 
@@ -406,7 +406,7 @@ public class FirebaseAuthIT {
       fail("expecting exception");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.ID_TOKEN_REVOKED_ERROR,
+      assertEquals(RevocationCheckDecorator.ID_TOKEN_REVOKED_ERROR,
                    ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
     idToken = signInWithCustomToken(customToken);
@@ -440,7 +440,7 @@ public class FirebaseAuthIT {
       fail("expecting exception");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.SESSION_COOKIE_REVOKED_ERROR,
+      assertEquals(RevocationCheckDecorator.SESSION_COOKIE_REVOKED_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
 

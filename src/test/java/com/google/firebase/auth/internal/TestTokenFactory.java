@@ -19,9 +19,7 @@ package com.google.firebase.auth.internal;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.webtoken.JsonWebSignature;
-import com.google.api.client.json.webtoken.JsonWebSignature.Header;
 import com.google.api.client.json.webtoken.JsonWebToken;
-import com.google.api.client.json.webtoken.JsonWebToken.Payload;
 import com.google.api.client.testing.http.FixedClock;
 import com.google.api.client.util.Clock;
 import com.google.common.io.BaseEncoding;
@@ -39,10 +37,7 @@ class TestTokenFactory {
   public static final String PROJECT_ID = "proj-test-101";
   public static final String PRIVATE_KEY_ID = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd";
   public static final String UID = "someUid";
-  public static final String RS256 = "RS256";
-  public static final String CUSTOM_TOKEN_AUDIENCE =
-      "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit"
-          + ".v1.IdentityToolkit";
+
 
   private final PrivateKey privateKey;
   private final String issuer;
@@ -52,39 +47,6 @@ class TestTokenFactory {
     KeySpec spec = new PKCS8EncodedKeySpec(privateBytes);
     this.privateKey = KeyFactory.getInstance("RSA").generatePrivate(spec);
     this.issuer = issuer;
-  }
-
-  public String createTokenWithoutKeyId() {
-    Header header = createHeader();
-    header.setKeyId(null);
-    return createToken(header);
-  }
-
-  public String createCustomToken() {
-    Header header = createHeader();
-    header.setKeyId(null);
-    Payload payload = createTokenPayload();
-    payload.setAudience(CUSTOM_TOKEN_AUDIENCE);
-    return createToken(header, payload);
-  }
-
-  public String createTokenWithAlgorithm(String alg) {
-    Header header = createHeader();
-    header.setAlgorithm(alg);
-    return createToken(header);
-  }
-
-  public String createTokenWithAudience(String aud) {
-    Payload payload = createTokenPayload();
-    payload.setAudience(aud);
-    return createToken(payload);
-  }
-
-  public String createExpiredToken() {
-    Payload payload = createTokenPayload();
-    payload.setIssuedAtTimeSeconds(0L);
-    payload.setExpirationTimeSeconds(3600L);
-    return createToken(payload);
   }
 
   public String createToken() {
@@ -109,7 +71,7 @@ class TestTokenFactory {
 
   public JsonWebSignature.Header createHeader() {
     JsonWebSignature.Header header = new JsonWebSignature.Header();
-    header.setAlgorithm(RS256);
+    header.setAlgorithm("RS256");
     header.setType("JWT");
     header.setKeyId(PRIVATE_KEY_ID);
     return header;

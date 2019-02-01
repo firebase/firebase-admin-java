@@ -34,7 +34,7 @@ import java.math.BigDecimal;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 
-public final class FirebaseTokenVerifier {
+public final class FirebaseTokenVerifier implements FTV {
 
   private static final String RS256 = "RS256";
   private static final String FIREBASE_AUDIENCE =
@@ -54,22 +54,19 @@ public final class FirebaseTokenVerifier {
     this.jsonFactory = checkNotNull(builder.jsonFactory);
     this.publicKeysManager = checkNotNull(builder.publicKeysManager);
     this.idTokenVerifier = checkNotNull(builder.idTokenVerifier);
-    checkArgument(!Strings.isNullOrEmpty(builder.method));
-    checkArgument(!Strings.isNullOrEmpty(builder.shortName));
-    checkArgument(!Strings.isNullOrEmpty(builder.docUrl));
+    checkArgument(!Strings.isNullOrEmpty(builder.method), "method name must be specified");
+    checkArgument(!Strings.isNullOrEmpty(builder.shortName), "shortName must be specified");
+    checkArgument(!Strings.isNullOrEmpty(builder.docUrl), "docUrl must be specified");
     this.method = builder.method;
     this.shortName = builder.shortName;
     this.articledShortName = prefixWithIndefiniteArticle(this.shortName);
     this.docUrl = builder.docUrl;
   }
 
+  @Override
   public FirebaseIdToken verifyToken(String token) throws FirebaseAuthException {
     FirebaseIdToken firebaseToken = parse(token);
     return checkContentsAndSignature(firebaseToken);
-  }
-
-  JsonFactory getJsonFactory() {
-    return jsonFactory;
   }
 
   GooglePublicKeysManager getPublicKeysManager() {
@@ -138,7 +135,7 @@ public final class FirebaseTokenVerifier {
       if (!isSignatureValid(token)) {
         throw new FirebaseAuthException(ERROR_INVALID_CREDENTIAL,
             String.format(
-                "Firebase %s isn't signed by a valid public key. %s",
+                "Failed to verify the signature of Firebase %s. %s",
                 shortName,
                 getVerifyTokenMessage()));
       }
@@ -291,8 +288,7 @@ public final class FirebaseTokenVerifier {
       return this;
     }
 
-    public Builder setIdTokenVerifier(
-        IdTokenVerifier idTokenVerifier) {
+    public Builder setIdTokenVerifier(IdTokenVerifier idTokenVerifier) {
       this.idTokenVerifier = idTokenVerifier;
       return this;
     }

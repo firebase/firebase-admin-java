@@ -42,6 +42,8 @@ public final class FirebaseTokenUtils {
 
   static final JsonFactory UNQUOTED_CTRL_CHAR_JSON_FACTORY = new GsonFactory();
 
+  private FirebaseTokenUtils() { }
+
   @NonNull
   public static FirebaseTokenVerifier createIdTokenVerifier(
       @NonNull FirebaseApp app, @NonNull Clock clock) {

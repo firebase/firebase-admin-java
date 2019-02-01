@@ -33,19 +33,22 @@ import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
 import com.google.firebase.auth.ListUsersPage.PageFactory;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
+import com.google.firebase.auth.internal.FTV;
 import com.google.firebase.auth.internal.FirebaseIdToken;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenUtils;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseService;
+import com.google.firebase.internal.InitializerFunc;
+import com.google.firebase.internal.LazyInitializer;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This class is the entry point for all server-side Firebase Authentication actions.
@@ -59,39 +62,44 @@ public class FirebaseAuth {
 
   private static final String ERROR_CUSTOM_TOKEN = "ERROR_CUSTOM_TOKEN";
 
-  private final Clock clock;
+  private final Object lock = new Object();
 
   private final FirebaseApp firebaseApp;
-  private final String projectId;
   private final JsonFactory jsonFactory;
   private final FirebaseUserManager userManager;
-  private final AtomicReference<FirebaseTokenFactory> tokenFactory;
   private final AtomicBoolean destroyed;
-  private final Object lock;
-
-  private final AtomicReference<FirebaseTokenVerifier> idTokenVerifier =
-      new AtomicReference<>();
-  private final AtomicReference<FirebaseTokenVerifier> sessionCookieVerifier =
-      new AtomicReference<>();
+  private final LazyInitializer<FirebaseTokenFactory> tokenFactory;
+  private final LazyInitializer<FTV> idTokenVerifier;
+  private final LazyInitializer<FTV> cookieVerifier;
 
   private FirebaseAuth(FirebaseApp firebaseApp) {
-    this(firebaseApp, Clock.SYSTEM);
-  }
-
-  /**
-   * Constructor for injecting a GooglePublicKeysManager, which is used to verify tokens are
-   * correctly signed. This should only be used for testing to override the default key manager.
-   */
-  @VisibleForTesting
-  FirebaseAuth(FirebaseApp firebaseApp, Clock clock) {
     this.firebaseApp = checkNotNull(firebaseApp);
-    this.clock = checkNotNull(clock);
-    this.projectId = ImplFirebaseTrampolines.getProjectId(firebaseApp);
     this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
     this.userManager = new FirebaseUserManager(firebaseApp);
-    this.tokenFactory = new AtomicReference<>(null);
     this.destroyed = new AtomicBoolean(false);
-    this.lock = new Object();
+    this.tokenFactory = new LazyInitializer<>(new InitializerFunc<FirebaseTokenFactory>() {
+      @Override
+      public FirebaseTokenFactory invoke() {
+        return FirebaseTokenFactory.fromApp(
+            FirebaseAuth.this.firebaseApp, Clock.SYSTEM);
+      }
+    }, lock);
+    this.idTokenVerifier = new LazyInitializer<>(new InitializerFunc<FTV>() {
+      @Override
+      public FirebaseTokenVerifier invoke() {
+        checkNotDestroyed();
+        return FirebaseTokenUtils.createIdTokenVerifier(
+            FirebaseAuth.this.firebaseApp, Clock.SYSTEM);
+      }
+    }, lock);
+    this.cookieVerifier = new LazyInitializer<>(new InitializerFunc<FTV>() {
+      @Override
+      public FirebaseTokenVerifier invoke() {
+        checkNotDestroyed();
+        return FirebaseTokenUtils.createSessionCookieVerifier(
+            FirebaseAuth.this.firebaseApp, Clock.SYSTEM);
+      }
+    }, lock);
   }
 
   /**
@@ -224,31 +232,16 @@ public class FirebaseAuth {
   }
 
   private CallableOperation<FirebaseToken, FirebaseAuthException> verifySessionCookieOp(
-      final String cookie, final boolean checkRevoked) {
+      final String cookie, boolean checkRevoked) {
     checkNotDestroyed();
-    final FirebaseTokenVerifier sessionCookieVerifier = ensureSessionCookieVerifier();
+    final FTV sessionCookieVerifier = getSessionCookieVerifier(checkRevoked);
     return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
       @Override
       public FirebaseToken execute() throws FirebaseAuthException {
         FirebaseIdToken idToken = sessionCookieVerifier.verifyToken(cookie);
-        FirebaseToken firebaseToken = new FirebaseToken(idToken);
-        if (checkRevoked) {
-          checkRevoked(firebaseToken, "session cookie",
-              FirebaseUserManager.SESSION_COOKIE_REVOKED_ERROR);
-        }
-        return firebaseToken;
+        return new FirebaseToken(idToken);
       }
     };
-  }
-
-  private void checkRevoked(
-      FirebaseToken firebaseToken, String label, String errorCode) throws FirebaseAuthException {
-    String uid = firebaseToken.getUid();
-    UserRecord user = userManager.getUserById(uid);
-    long issuedAt = (long) firebaseToken.getClaims().get("iat");
-    if (user.getTokensValidAfterTimestamp() > issuedAt * 1000) {
-      throw new FirebaseAuthException(errorCode, "Firebase " + label + " revoked");
-    }
   }
 
   /**
@@ -346,41 +339,18 @@ public class FirebaseAuth {
       final String uid, final Map<String, Object> developerClaims) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
-    final FirebaseTokenFactory tokenFactory = ensureTokenFactory();
+    final FirebaseTokenFactory factory = tokenFactory.getValue();
     return new CallableOperation<String, FirebaseAuthException>() {
       @Override
       public String execute() throws FirebaseAuthException {
         try {
-          return tokenFactory.createSignedCustomAuthTokenForUser(uid, developerClaims);
+          return factory.createSignedCustomAuthTokenForUser(uid, developerClaims);
         } catch (IOException e) {
           throw new FirebaseAuthException(ERROR_CUSTOM_TOKEN,
               "Failed to generate a custom token", e);
         }
       }
     };
-  }
-
-  private FirebaseTokenFactory ensureTokenFactory() {
-    FirebaseTokenFactory result = this.tokenFactory.get();
-    if (result == null) {
-      synchronized (lock) {
-        result = this.tokenFactory.get();
-        if (result == null) {
-          try {
-            result = FirebaseTokenFactory.fromApp(firebaseApp, clock);
-            this.tokenFactory.set(result);
-          } catch (IOException e) {
-            throw new IllegalStateException(
-                "Failed to initialize FirebaseTokenFactory. Make sure to initialize the SDK "
-                    + "with service account credentials or specify a service account "
-                    + "ID with iam.serviceAccounts.signBlob permission. Please refer to "
-                    + "https://firebase.google.com/docs/auth/admin/create-custom-tokens for more "
-                    + "details on creating custom tokens.", e);
-          }
-        }
-      }
-    }
-    return result;
   }
 
   /**
@@ -460,49 +430,31 @@ public class FirebaseAuth {
   }
 
   private CallableOperation<FirebaseToken, FirebaseAuthException> verifyIdTokenOp(
-      final String token, final boolean checkRevoked) {
+      final String token, boolean checkRevoked) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(token), "ID token must not be null or empty");
-    checkArgument(!Strings.isNullOrEmpty(projectId),
-        "Must initialize FirebaseApp with a project ID to call verifyIdToken()");
-    final FirebaseTokenVerifier verifier = ensureIdTokenVerifier();
+    final FTV verifier = getIdTokenVerifier(checkRevoked);
     return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
       @Override
       protected FirebaseToken execute() throws FirebaseAuthException {
         FirebaseIdToken idToken = verifier.verifyToken(token);
-        FirebaseToken firebaseToken = new FirebaseToken(idToken);
-        if (checkRevoked) {
-          checkRevoked(firebaseToken, "auth token", FirebaseUserManager.ID_TOKEN_REVOKED_ERROR);
-        }       
-        return firebaseToken;
+        return new FirebaseToken(idToken);
       }
     };
   }
 
-  private FirebaseTokenVerifier ensureIdTokenVerifier() {
-    FirebaseTokenVerifier verifier = this.idTokenVerifier.get();
-    if (verifier == null) {
-      synchronized (lock) {
-        verifier = this.idTokenVerifier.get();
-        if (verifier == null) {
-          verifier = FirebaseTokenUtils.createIdTokenVerifier(firebaseApp, clock);
-          this.idTokenVerifier.set(verifier);
-        }
-      }
+  private FTV getSessionCookieVerifier(boolean checkRevoked) {
+    FTV verifier = cookieVerifier.getValue();
+    if (checkRevoked) {
+      verifier = RevocationCheckDecorator.decorateSessionCookieVerifier(verifier, userManager);
     }
     return verifier;
   }
 
-  private FirebaseTokenVerifier ensureSessionCookieVerifier() {
-    FirebaseTokenVerifier verifier = this.sessionCookieVerifier.get();
-    if (verifier == null) {
-      synchronized (lock) {
-        verifier = this.sessionCookieVerifier.get();
-        if (verifier == null) {
-          verifier = FirebaseTokenUtils.createSessionCookieVerifier(firebaseApp, clock);
-          this.sessionCookieVerifier.set(verifier);
-        }
-      }
+  private FTV getIdTokenVerifier(boolean checkRevoked) {
+    FTV verifier = idTokenVerifier.getValue();
+    if (checkRevoked) {
+      verifier = RevocationCheckDecorator.decorateIdTokenVerifier(verifier, userManager);
     }
     return verifier;
   }

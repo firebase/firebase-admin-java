@@ -95,11 +95,19 @@ public class FirebaseTokenFactory {
     return content + "." + signature;
   }
 
-  public static FirebaseTokenFactory fromApp(
-      FirebaseApp firebaseApp, Clock clock) throws IOException {
-    return new FirebaseTokenFactory(
-        firebaseApp.getOptions().getJsonFactory(),
-        clock,
-        CryptoSigners.getCryptoSigner(firebaseApp));
+  public static FirebaseTokenFactory fromApp(FirebaseApp firebaseApp, Clock clock) {
+    try {
+      return new FirebaseTokenFactory(
+          firebaseApp.getOptions().getJsonFactory(),
+          clock,
+          CryptoSigners.getCryptoSigner(firebaseApp));
+    } catch (IOException e) {
+      throw new IllegalStateException(
+          "Failed to initialize FirebaseTokenFactory. Make sure to initialize the SDK "
+              + "with service account credentials or specify a service account "
+              + "ID with iam.serviceAccounts.signBlob permission. Please refer to "
+              + "https://firebase.google.com/docs/auth/admin/create-custom-tokens for more "
+              + "details on creating custom tokens.", e);
+    }
   }
 }

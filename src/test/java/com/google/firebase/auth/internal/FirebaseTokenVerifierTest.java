@@ -23,6 +23,7 @@ import com.google.api.client.auth.openidconnect.IdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.LowLevelHttpRequest;
+import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.json.webtoken.JsonWebToken.Payload;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
@@ -31,6 +32,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -39,12 +42,17 @@ import org.junit.rules.ExpectedException;
 
 public class FirebaseTokenVerifierTest {
 
+  private static final String CUSTOM_TOKEN_AUDIENCE =
+      "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit"
+          + ".v1.IdentityToolkit";
+
   private static final String LEGACY_CUSTOM_TOKEN =
       "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJkIjp7"
           + "InVpZCI6IjEiLCJhYmMiOiIwMTIzNDU2Nzg5fiFAIyQlXiYqKClfKy09YWJjZGVmZ2hpamtsbW5vcHF"
           + "yc3R1dnd4eXpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWiwuLzsnW11cXDw"
           + "-P1wie318In0sInYiOjAsImlhdCI6MTQ4MDk4Mj"
           + "U2NH0.ZWEpoHgIPCAz8Q-cNFBS8jiqClTJ3j27yuRkQo-QxyI";
+
   private static final String TEST_TOKEN_ISSUER = "https://test.token.issuer";
 
   @Rule
@@ -62,7 +70,7 @@ public class FirebaseTokenVerifierTest {
   }
 
   @Test
-  public void verifyIdToken() throws Exception {
+  public void testVerifyToken() throws Exception {
     String token = tokenFactory.createToken();
 
     FirebaseIdToken idToken = tokenVerifier.verifyToken(token);
@@ -71,52 +79,51 @@ public class FirebaseTokenVerifierTest {
     assertTrue(payload.getAudienceAsList().contains(TestTokenFactory.PROJECT_ID));
     assertEquals(TEST_TOKEN_ISSUER, payload.getIssuer());
     assertEquals(TestTokenFactory.UID, payload.getUid());
+    assertEquals(TestTokenFactory.PROJECT_ID, payload.getAudience());
   }
 
   @Test
-  public void verifyTokenFailure_MissingKeyId() throws Exception {
-    String token = tokenFactory.createTokenWithoutKeyId();
+  public void testVerifyTokenWithoutKeyId() throws Exception {
+    String token = createTokenWithoutKeyId();
 
     thrown.expectMessage("Firebase test token has no \"kid\" claim.");
     tokenVerifier.verifyToken(token);
   }
 
   @Test
-  public void verifyTokenFailure_MissingKeyId_CustomToken() throws Exception {
-    String token = tokenFactory.createCustomToken();
+  public void testVerifyTokenFirebaseCustomToken() throws Exception {
+    String token = createCustomToken();
 
     thrown.expectMessage("verifyTestToken() expects a test token, but was given a custom token.");
     tokenVerifier.verifyToken(token);
   }
 
   @Test
-  public void verifyTokenFailure_IncorrectAlgorithm() throws Exception {
-    String token = tokenFactory.createTokenWithAlgorithm("HS256");
+  public void testVerifyTokenIncorrectAlgorithm() throws Exception {
+    String token = createTokenWithIncorrectAlgorithm();
 
     thrown.expectMessage("Firebase test token has incorrect algorithm.");
     tokenVerifier.verifyToken(token);
   }
 
   @Test
-  public void verifyTokenFailure_IncorrectAudience() throws Exception {
-    String token = tokenFactory.createTokenWithAudience("invalid-audience");
+  public void testVerifyTokenIncorrectAudience() throws Exception {
+    String token = createTokenWithIncorrectAudience();
 
     thrown.expectMessage("Firebase test token has incorrect \"aud\" (audience) claim.");
     tokenVerifier.verifyToken(token);
   }
 
   @Test
-  public void verifyTokenFailure_IncorrectIssuer() throws Exception {
-    Payload payload = tokenFactory.createTokenPayload();
-    payload.setIssuer("https://incorrect.issuer.prefix/" + TestTokenFactory.PROJECT_ID);
-    String token = tokenFactory.createToken(payload);
+  public void testVerifyTokenIncorrectIssuer() throws Exception {
+    String token = createTokenWithIncorrectIssuer();
 
     thrown.expectMessage("Firebase test token has incorrect \"iss\" (issuer) claim.");
     tokenVerifier.verifyToken(token);
   }
 
   @Test
-  public void verifyTokenFailure_MissingSubject() throws Exception {
+  public void testVerifyTokenMissingSubject() throws Exception {
     String token = createTokenWithSubject(null);
 
     thrown.expectMessage("Firebase test token has no \"sub\" (subject) claim.");
@@ -124,7 +131,7 @@ public class FirebaseTokenVerifierTest {
   }
 
   @Test
-  public void verifyTokenFailure_EmptySubject() throws Exception {
+  public void testVerifyTokenEmptySubject() throws Exception {
     String token = createTokenWithSubject("");
 
     thrown.expectMessage("Firebase test token has an empty string \"sub\" (subject) claim.");
@@ -132,7 +139,7 @@ public class FirebaseTokenVerifierTest {
   }
 
   @Test
-  public void verifyTokenFailure_LongSubject() throws Exception {
+  public void testVerifyTokenLongSubject() throws Exception {
     String token = createTokenWithSubject(Strings.repeat("a", 129));
 
     thrown.expectMessage(
@@ -141,32 +148,38 @@ public class FirebaseTokenVerifierTest {
   }
 
   @Test
-  public void verifyTokenFailure_NotYetIssued() throws Exception {
-    Payload payload = tokenFactory.createTokenPayload();
-    payload.setIssuedAtTimeSeconds(System.currentTimeMillis() / 1000);
-    payload.setExpirationTimeSeconds(System.currentTimeMillis() / 1000 + 3600);
-    String token = tokenFactory.createToken(payload);
+  public void testVerifyTokenIssuedAtInFuture() throws Exception {
+    long tenMinutesIntoTheFuture = (TestTokenFactory.CLOCK.currentTimeMillis() / 1000)
+        + TimeUnit.MINUTES.toSeconds(10);
+    String token = createTokenWithTimestamps(
+        tenMinutesIntoTheFuture,
+        tenMinutesIntoTheFuture + TimeUnit.HOURS.toSeconds(1));
 
     thrown.expectMessage("Firebase test token has expired or is not yet valid.");
     tokenVerifier.verifyToken(token);
   }
 
   @Test
-  public void verifyTokenFailure_Expired() throws Exception {
-    String token = tokenFactory.createExpiredToken();
+  public void testVerifyTokenExpired() throws Exception {
+    long twoHoursInPast = (TestTokenFactory.CLOCK.currentTimeMillis() / 1000)
+        - TimeUnit.HOURS.toSeconds(2);
+    String token = createTokenWithTimestamps(
+        twoHoursInPast,
+        twoHoursInPast + TimeUnit.HOURS.toSeconds(1));
 
     thrown.expectMessage("Firebase test token has expired or is not yet valid.");
     tokenVerifier.verifyToken(token);
   }
 
   @Test
-  public void verifyTokenFailure_WrongCert() throws Exception {
+  public void testVerifyTokenIncorrectCert() throws Exception {
     String token = tokenFactory.createToken();
     GooglePublicKeysManager publicKeysManager = newPublicKeysManager(
         ServiceAccount.NONE.getCert());
     FirebaseTokenVerifier tokenVerifier = newTestTokenVerifier(publicKeysManager);
 
-    thrown.expectMessage("Firebase test token isn't signed by a valid public key.");
+    thrown.expectMessage("Failed to verify the signature of Firebase test token. "
+        + "See https://test.doc.url for details on how to retrieve a test token.");
     tokenVerifier.verifyToken(token);
   }
 
@@ -192,19 +205,49 @@ public class FirebaseTokenVerifierTest {
   }
 
   @Test
-  public void legacyCustomToken() throws Exception {
+  public void testLegacyCustomToken() throws Exception {
     thrown.expectMessage(
         "verifyTestToken() expects a test token, but was given a legacy custom token.");
     tokenVerifier.verifyToken(LEGACY_CUSTOM_TOKEN);
   }
 
   @Test
-  public void malformedToken() throws Exception {
+  public void testMalformedToken() throws Exception {
     thrown.expectMessage(
         "Decoding Firebase test token failed. Make sure you passed a string that "
             + "represents a complete and valid JWT. See https://test.doc.url for details on "
             + "how to retrieve a test token.");
     tokenVerifier.verifyToken("not.a.jwt");
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testBuilderNoPublicKeysManager() {
+    fullyPopulatedBuilder().setPublicKeysManager(null).build();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testBuilderNoJsonFactory() {
+    fullyPopulatedBuilder().setJsonFactory(null).build();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testBuilderNoIdTokenVerifier() {
+    fullyPopulatedBuilder().setIdTokenVerifier(null).build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBuilderNoMethodName() {
+    fullyPopulatedBuilder().setMethod(null).build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBuilderNoShortName() {
+    fullyPopulatedBuilder().setShortName(null).build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBuilderNoDocUrl() {
+    fullyPopulatedBuilder().setDocUrl(null).build();
   }
 
   private GooglePublicKeysManager newPublicKeysManager(String certificate) {
@@ -226,24 +269,76 @@ public class FirebaseTokenVerifierTest {
   }
 
   private FirebaseTokenVerifier newTestTokenVerifier(GooglePublicKeysManager publicKeysManager) {
-    IdTokenVerifier idTokenVerifier = new IdTokenVerifier.Builder()
-        .setClock(TestTokenFactory.CLOCK)
-        .setAudience(ImmutableList.of(TestTokenFactory.PROJECT_ID))
-        .setIssuer(TEST_TOKEN_ISSUER)
-        .build();
     return new FirebaseTokenVerifier.Builder()
         .setShortName("test token")
         .setMethod("verifyTestToken()")
         .setDocUrl("https://test.doc.url")
         .setJsonFactory(TestTokenFactory.JSON_FACTORY)
         .setPublicKeysManager(publicKeysManager)
-        .setIdTokenVerifier(idTokenVerifier)
+        .setIdTokenVerifier(newIdTokenVerifier())
         .build();
+  }
+
+  private FirebaseTokenVerifier.Builder fullyPopulatedBuilder() {
+    return new FirebaseTokenVerifier.Builder()
+        .setShortName("test token")
+        .setMethod("verifyTestToken()")
+        .setDocUrl("https://test.doc.url")
+        .setJsonFactory(TestTokenFactory.JSON_FACTORY)
+        .setPublicKeysManager(newPublicKeysManager(ServiceAccount.EDITOR.getCert()))
+        .setIdTokenVerifier(newIdTokenVerifier());
+  }
+
+  private IdTokenVerifier newIdTokenVerifier() {
+    return new IdTokenVerifier.Builder()
+          .setClock(TestTokenFactory.CLOCK)
+          .setAudience(ImmutableList.of(TestTokenFactory.PROJECT_ID))
+          .setIssuer(TEST_TOKEN_ISSUER)
+          .build();
+  }
+
+  private String createTokenWithoutKeyId() {
+    JsonWebSignature.Header header = tokenFactory.createHeader();
+    header.setKeyId(null);
+    return tokenFactory.createToken(header);
   }
 
   private String createTokenWithSubject(String sub) {
     Payload payload = tokenFactory.createTokenPayload();
     payload.setSubject(sub);
+    return tokenFactory.createToken(payload);
+  }
+
+  private String createCustomToken() {
+    JsonWebSignature.Header header = tokenFactory.createHeader();
+    header.setKeyId(null);
+    Payload payload = tokenFactory.createTokenPayload();
+    payload.setAudience(CUSTOM_TOKEN_AUDIENCE);
+    return tokenFactory.createToken(header, payload);
+  }
+
+  private String createTokenWithIncorrectAlgorithm() {
+    JsonWebSignature.Header header = tokenFactory.createHeader();
+    header.setAlgorithm("HSA");
+    return tokenFactory.createToken(header);
+  }
+
+  private String createTokenWithIncorrectAudience() {
+    Payload payload = tokenFactory.createTokenPayload();
+    payload.setAudience("invalid-audience");
+    return tokenFactory.createToken(payload);
+  }
+
+  private String createTokenWithIncorrectIssuer() {
+    Payload payload = tokenFactory.createTokenPayload();
+    payload.setIssuer("https://incorrect.issuer.prefix/" + TestTokenFactory.PROJECT_ID);
+    return tokenFactory.createToken(payload);
+  }
+
+  private String createTokenWithTimestamps(long issuedAtSeconds, long expirationSeconds) {
+    Payload payload = tokenFactory.createTokenPayload();
+    payload.setIssuedAtTimeSeconds(issuedAtSeconds);
+    payload.setExpirationTimeSeconds(expirationSeconds);
     return tokenFactory.createToken(payload);
   }
 }

@@ -65,8 +65,6 @@ class FirebaseUserManager {
 
   static final String USER_NOT_FOUND_ERROR = "user-not-found";
   static final String INTERNAL_ERROR = "internal-error";
-  static final String ID_TOKEN_REVOKED_ERROR = "id-token-revoked";
-  static final String SESSION_COOKIE_REVOKED_ERROR = "session-cookie-revoked";
 
   // Map of server-side error codes to SDK error codes.
   // SDK error codes defined at: https://firebase.google.com/docs/auth/admin/errors
