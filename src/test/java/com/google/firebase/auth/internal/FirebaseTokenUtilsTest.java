@@ -45,4 +45,16 @@ public class FirebaseTokenUtilsTest {
     FirebaseTokenVerifier idTokenVerifier = FirebaseTokenUtils.createIdTokenVerifier(app, CLOCK);
     assertEquals("verifyIdToken()", idTokenVerifier.getMethod());
   }
+
+  @Test
+  public void testVerifySessionCookie() {
+    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
+        .setCredentials(GoogleCredentials.create(null))
+        .setProjectId("test-project-id")
+        .build());
+
+    FirebaseTokenVerifier idTokenVerifier = FirebaseTokenUtils.createSessionCookieVerifier(
+        app, CLOCK);
+    assertEquals("verifySessionCookie()", idTokenVerifier.getMethod());
+  }
 }
