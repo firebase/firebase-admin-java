@@ -24,8 +24,8 @@ import java.io.IOException;
 
 public final class FirebaseIdToken extends IdToken {
 
-  private FirebaseIdToken(
-      Header header, Payload payload, byte[] signatureBytes, byte[] signedContentBytes) {
+  public FirebaseIdToken(
+      Header header, IdToken.Payload payload, byte[] signatureBytes, byte[] signedContentBytes) {
     super(header, payload, signatureBytes, signedContentBytes);
   }
 

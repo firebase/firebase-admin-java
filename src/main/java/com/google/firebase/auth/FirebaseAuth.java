@@ -62,43 +62,22 @@ public class FirebaseAuth {
   private static final String ERROR_CUSTOM_TOKEN = "ERROR_CUSTOM_TOKEN";
 
   private final Object lock = new Object();
+  private final AtomicBoolean destroyed = new AtomicBoolean(false);
 
   private final FirebaseApp firebaseApp;
-  private final JsonFactory jsonFactory;
-  private final FirebaseUserManager userManager;
-  private final AtomicBoolean destroyed;
   private final Supplier<FirebaseTokenFactory> tokenFactory;
   private final Supplier<FirebaseTokenVerifier> idTokenVerifier;
   private final Supplier<FirebaseTokenVerifier> cookieVerifier;
+  private final JsonFactory jsonFactory;
+  private final FirebaseUserManager userManager;
 
-  private FirebaseAuth(FirebaseApp firebaseApp) {
-    this.firebaseApp = checkNotNull(firebaseApp);
+  FirebaseAuth(Builder builder) {
+    this.firebaseApp = checkNotNull(builder.firebaseApp);
+    this.tokenFactory = ifNotDestroyed(checkNotNull(builder.tokenFactory));
+    this.idTokenVerifier = ifNotDestroyed(checkNotNull(builder.idTokenVerifier));
+    this.cookieVerifier = ifNotDestroyed(checkNotNull(builder.cookieVerifier));
     this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
     this.userManager = new FirebaseUserManager(firebaseApp);
-    this.destroyed = new AtomicBoolean(false);
-    this.tokenFactory = Suppliers.memoize(new Supplier<FirebaseTokenFactory>() {
-      @Override
-      public FirebaseTokenFactory get() {
-        return FirebaseTokenUtils.createTokenFactory(
-            FirebaseAuth.this.firebaseApp, Clock.SYSTEM);
-      }
-    });
-    this.idTokenVerifier = Suppliers.memoize(new Supplier<FirebaseTokenVerifier>() {
-      @Override
-      public FirebaseTokenVerifier get() {
-        checkNotDestroyed();
-        return FirebaseTokenUtils.createIdTokenVerifier(
-            FirebaseAuth.this.firebaseApp, Clock.SYSTEM);
-      }
-    });
-    this.cookieVerifier = Suppliers.memoize(new Supplier<FirebaseTokenVerifier>() {
-      @Override
-      public FirebaseTokenVerifier get() {
-        checkNotDestroyed();
-        return FirebaseTokenUtils.createSessionCookieVerifier(
-            FirebaseAuth.this.firebaseApp, Clock.SYSTEM);
-      }
-    });
   }
 
   /**
@@ -233,6 +212,7 @@ public class FirebaseAuth {
   private CallableOperation<FirebaseToken, FirebaseAuthException> verifySessionCookieOp(
       final String cookie, boolean checkRevoked) {
     checkNotDestroyed();
+    checkArgument(!Strings.isNullOrEmpty(cookie), "Session cookie must not be null or empty");
     final FirebaseTokenVerifier sessionCookieVerifier = getSessionCookieVerifier(checkRevoked);
     return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
       @Override
@@ -1124,12 +1104,79 @@ public class FirebaseAuth {
     }
   }
 
+  private <T> Supplier<T> ifNotDestroyed(final Supplier<T> supplier) {
+    return Suppliers.memoize(new Supplier<T>() {
+      @Override
+      public T get() {
+        synchronized (lock) {
+          checkNotDestroyed();
+          return supplier.get();
+        }
+      }
+    });
+  }
+
+  private static FirebaseAuth fromApp(final FirebaseApp app) {
+    return new Builder()
+        .setFirebaseApp(app)
+        .setTokenFactory(new Supplier<FirebaseTokenFactory>() {
+          @Override
+          public FirebaseTokenFactory get() {
+            return FirebaseTokenUtils.createTokenFactory(app, Clock.SYSTEM);
+          }
+        })
+        .setIdTokenVerifier(new Supplier<FirebaseTokenVerifier>() {
+          @Override
+          public FirebaseTokenVerifier get() {
+            return FirebaseTokenUtils.createIdTokenVerifier(app, Clock.SYSTEM);
+          }
+        })
+        .setCookieVerifier(new Supplier<FirebaseTokenVerifier>() {
+          @Override
+          public FirebaseTokenVerifier get() {
+            return FirebaseTokenUtils.createSessionCookieVerifier(app, Clock.SYSTEM);
+          }
+        })
+        .build();
+  }
+
+  static class Builder {
+    private FirebaseApp firebaseApp;
+    private Supplier<FirebaseTokenFactory> tokenFactory;
+    private Supplier<FirebaseTokenVerifier> idTokenVerifier;
+    private Supplier<FirebaseTokenVerifier> cookieVerifier;
+
+    Builder setFirebaseApp(FirebaseApp firebaseApp) {
+      this.firebaseApp = firebaseApp;
+      return this;
+    }
+
+    Builder setTokenFactory(Supplier<FirebaseTokenFactory> tokenFactory) {
+      this.tokenFactory = tokenFactory;
+      return this;
+    }
+
+    Builder setIdTokenVerifier(Supplier<FirebaseTokenVerifier> idTokenVerifier) {
+      this.idTokenVerifier = idTokenVerifier;
+      return this;
+    }
+
+    Builder setCookieVerifier(Supplier<FirebaseTokenVerifier> cookieVerifier) {
+      this.cookieVerifier = cookieVerifier;
+      return this;
+    }
+
+    FirebaseAuth build() {
+      return new FirebaseAuth(this);
+    }
+  }
+
   private static final String SERVICE_ID = FirebaseAuth.class.getName();
 
   private static class FirebaseAuthService extends FirebaseService<FirebaseAuth> {
 
     FirebaseAuthService(FirebaseApp app) {
-      super(SERVICE_ID, new FirebaseAuth(app));
+      super(SERVICE_ID, FirebaseAuth.fromApp(app));
     }
 
     @Override

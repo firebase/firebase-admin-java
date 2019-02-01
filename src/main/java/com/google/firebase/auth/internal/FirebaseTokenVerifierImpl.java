@@ -170,14 +170,14 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
           "Firebase %s has incorrect \"aud\" (audience) claim. Expected \"%s\" but got \"%s\". %s",
           shortName,
           joinWithComma(idTokenVerifier.getAudience()),
-          joinWithComma(idToken.getPayload().getAudienceAsList()),
+          joinWithComma(payload.getAudienceAsList()),
           getProjectIdMatchMessage());
     } else if (!idToken.verifyIssuer(idTokenVerifier.getIssuers())) {
       errorMessage = String.format(
           "Firebase %s has incorrect \"iss\" (issuer) claim. Expected \"%s\" but got \"%s\". %s",
           shortName,
           joinWithComma(idTokenVerifier.getIssuers()),
-          idToken.getPayload().getIssuer(),
+          payload.getIssuer(),
           getProjectIdMatchMessage());
     } else if (payload.getSubject() == null) {
       errorMessage = String.format(
