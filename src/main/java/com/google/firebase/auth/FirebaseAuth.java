@@ -33,9 +33,10 @@ import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
 import com.google.firebase.auth.ListUsersPage.PageFactory;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
+import com.google.firebase.auth.internal.FirebaseIdToken;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
+import com.google.firebase.auth.internal.FirebaseTokenUtils;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
-import com.google.firebase.auth.internal.KeyManagers;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
@@ -57,13 +58,10 @@ import java.util.concurrent.atomic.AtomicReference;
 public class FirebaseAuth {
 
   private static final String ERROR_CUSTOM_TOKEN = "ERROR_CUSTOM_TOKEN";
-  private static final String ERROR_INVALID_ID_TOKEN = "ERROR_INVALID_CREDENTIAL";
-  private static final String ERROR_INVALID_SESSION_COOKIE = "ERROR_INVALID_COOKIE";
 
   private final Clock clock;
 
   private final FirebaseApp firebaseApp;
-  private final KeyManagers keyManagers;
   private final String projectId;
   private final JsonFactory jsonFactory;
   private final FirebaseUserManager userManager;
@@ -71,8 +69,13 @@ public class FirebaseAuth {
   private final AtomicBoolean destroyed;
   private final Object lock;
 
+  private final AtomicReference<FirebaseTokenVerifier> idTokenVerifier =
+      new AtomicReference<>();
+  private final AtomicReference<FirebaseTokenVerifier> sessionCookieVerifier =
+      new AtomicReference<>();
+
   private FirebaseAuth(FirebaseApp firebaseApp) {
-    this(firebaseApp, KeyManagers.getDefault(firebaseApp, Clock.SYSTEM), Clock.SYSTEM);
+    this(firebaseApp, Clock.SYSTEM);
   }
 
   /**
@@ -80,9 +83,8 @@ public class FirebaseAuth {
    * correctly signed. This should only be used for testing to override the default key manager.
    */
   @VisibleForTesting
-  FirebaseAuth(FirebaseApp firebaseApp, KeyManagers keyManagers, Clock clock) {
+  FirebaseAuth(FirebaseApp firebaseApp, Clock clock) {
     this.firebaseApp = checkNotNull(firebaseApp);
-    this.keyManagers = checkNotNull(keyManagers);
     this.clock = checkNotNull(clock);
     this.projectId = ImplFirebaseTrampolines.getProjectId(firebaseApp);
     this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
@@ -224,23 +226,12 @@ public class FirebaseAuth {
   private CallableOperation<FirebaseToken, FirebaseAuthException> verifySessionCookieOp(
       final String cookie, final boolean checkRevoked) {
     checkNotDestroyed();
-    checkState(!Strings.isNullOrEmpty(projectId),
-        "Must initialize FirebaseApp with a project ID to call verifySessionCookie()");
+    final FirebaseTokenVerifier sessionCookieVerifier = ensureSessionCookieVerifier();
     return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
       @Override
       public FirebaseToken execute() throws FirebaseAuthException {
-        FirebaseTokenVerifier firebaseTokenVerifier =
-            FirebaseTokenVerifier.createSessionCookieVerifier(projectId, keyManagers, clock);
-        FirebaseToken firebaseToken;
-        try {
-          firebaseToken = FirebaseToken.parse(jsonFactory, cookie);
-        } catch (IOException e) {
-          throw new FirebaseAuthException(ERROR_INVALID_SESSION_COOKIE,
-              "Failed to parse cookie", e);
-        }
-        // This will throw a FirebaseAuthException with details on how the token is invalid.
-        firebaseTokenVerifier.verifyTokenAndSignature(firebaseToken.getToken());
-
+        FirebaseIdToken idToken = sessionCookieVerifier.verifyToken(cookie);
+        FirebaseToken firebaseToken = new FirebaseToken(idToken);
         if (checkRevoked) {
           checkRevoked(firebaseToken, "session cookie",
               FirebaseUserManager.SESSION_COOKIE_REVOKED_ERROR);
@@ -474,27 +465,46 @@ public class FirebaseAuth {
     checkArgument(!Strings.isNullOrEmpty(token), "ID token must not be null or empty");
     checkArgument(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifyIdToken()");
+    final FirebaseTokenVerifier verifier = ensureIdTokenVerifier();
     return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
       @Override
       protected FirebaseToken execute() throws FirebaseAuthException {
-        FirebaseTokenVerifier firebaseTokenVerifier =
-            FirebaseTokenVerifier.createIdTokenVerifier(projectId, keyManagers, clock);
-        FirebaseToken firebaseToken;
-        try {
-          firebaseToken = FirebaseToken.parse(jsonFactory, token);
-        } catch (IOException e) {
-          throw new FirebaseAuthException(ERROR_INVALID_ID_TOKEN, "Failed to parse token", e);
-        }
-
-        // This will throw a FirebaseAuthException with details on how the token is invalid.
-        firebaseTokenVerifier.verifyTokenAndSignature(firebaseToken.getToken());
-
+        FirebaseIdToken idToken = verifier.verifyToken(token);
+        FirebaseToken firebaseToken = new FirebaseToken(idToken);
         if (checkRevoked) {
           checkRevoked(firebaseToken, "auth token", FirebaseUserManager.ID_TOKEN_REVOKED_ERROR);
         }       
         return firebaseToken;
       }
     };
+  }
+
+  private FirebaseTokenVerifier ensureIdTokenVerifier() {
+    FirebaseTokenVerifier verifier = this.idTokenVerifier.get();
+    if (verifier == null) {
+      synchronized (lock) {
+        verifier = this.idTokenVerifier.get();
+        if (verifier == null) {
+          verifier = FirebaseTokenUtils.createIdTokenVerifier(firebaseApp, clock);
+          this.idTokenVerifier.set(verifier);
+        }
+      }
+    }
+    return verifier;
+  }
+
+  private FirebaseTokenVerifier ensureSessionCookieVerifier() {
+    FirebaseTokenVerifier verifier = this.sessionCookieVerifier.get();
+    if (verifier == null) {
+      synchronized (lock) {
+        verifier = this.sessionCookieVerifier.get();
+        if (verifier == null) {
+          verifier = FirebaseTokenUtils.createSessionCookieVerifier(firebaseApp, clock);
+          this.sessionCookieVerifier.set(verifier);
+        }
+      }
+    }
+    return verifier;
   }
 
   /**
