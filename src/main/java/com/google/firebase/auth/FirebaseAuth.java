@@ -25,6 +25,8 @@ import com.google.api.client.util.Clock;
 import com.google.api.core.ApiFuture;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
@@ -33,15 +35,12 @@ import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
 import com.google.firebase.auth.ListUsersPage.PageFactory;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
-import com.google.firebase.auth.internal.FTV;
 import com.google.firebase.auth.internal.FirebaseIdToken;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenUtils;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseService;
-import com.google.firebase.internal.InitializerFunc;
-import com.google.firebase.internal.LazyInitializer;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
@@ -68,38 +67,38 @@ public class FirebaseAuth {
   private final JsonFactory jsonFactory;
   private final FirebaseUserManager userManager;
   private final AtomicBoolean destroyed;
-  private final LazyInitializer<FirebaseTokenFactory> tokenFactory;
-  private final LazyInitializer<FTV> idTokenVerifier;
-  private final LazyInitializer<FTV> cookieVerifier;
+  private final Supplier<FirebaseTokenFactory> tokenFactory;
+  private final Supplier<FirebaseTokenVerifier> idTokenVerifier;
+  private final Supplier<FirebaseTokenVerifier> cookieVerifier;
 
   private FirebaseAuth(FirebaseApp firebaseApp) {
     this.firebaseApp = checkNotNull(firebaseApp);
     this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
     this.userManager = new FirebaseUserManager(firebaseApp);
     this.destroyed = new AtomicBoolean(false);
-    this.tokenFactory = new LazyInitializer<>(new InitializerFunc<FirebaseTokenFactory>() {
+    this.tokenFactory = Suppliers.memoize(new Supplier<FirebaseTokenFactory>() {
       @Override
-      public FirebaseTokenFactory invoke() {
-        return FirebaseTokenFactory.fromApp(
+      public FirebaseTokenFactory get() {
+        return FirebaseTokenUtils.createTokenFactory(
             FirebaseAuth.this.firebaseApp, Clock.SYSTEM);
       }
-    }, lock);
-    this.idTokenVerifier = new LazyInitializer<>(new InitializerFunc<FTV>() {
+    });
+    this.idTokenVerifier = Suppliers.memoize(new Supplier<FirebaseTokenVerifier>() {
       @Override
-      public FirebaseTokenVerifier invoke() {
+      public FirebaseTokenVerifier get() {
         checkNotDestroyed();
         return FirebaseTokenUtils.createIdTokenVerifier(
             FirebaseAuth.this.firebaseApp, Clock.SYSTEM);
       }
-    }, lock);
-    this.cookieVerifier = new LazyInitializer<>(new InitializerFunc<FTV>() {
+    });
+    this.cookieVerifier = Suppliers.memoize(new Supplier<FirebaseTokenVerifier>() {
       @Override
-      public FirebaseTokenVerifier invoke() {
+      public FirebaseTokenVerifier get() {
         checkNotDestroyed();
         return FirebaseTokenUtils.createSessionCookieVerifier(
             FirebaseAuth.this.firebaseApp, Clock.SYSTEM);
       }
-    }, lock);
+    });
   }
 
   /**
@@ -234,7 +233,7 @@ public class FirebaseAuth {
   private CallableOperation<FirebaseToken, FirebaseAuthException> verifySessionCookieOp(
       final String cookie, boolean checkRevoked) {
     checkNotDestroyed();
-    final FTV sessionCookieVerifier = getSessionCookieVerifier(checkRevoked);
+    final FirebaseTokenVerifier sessionCookieVerifier = getSessionCookieVerifier(checkRevoked);
     return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
       @Override
       public FirebaseToken execute() throws FirebaseAuthException {
@@ -339,7 +338,7 @@ public class FirebaseAuth {
       final String uid, final Map<String, Object> developerClaims) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
-    final FirebaseTokenFactory factory = tokenFactory.getValue();
+    final FirebaseTokenFactory factory = tokenFactory.get();
     return new CallableOperation<String, FirebaseAuthException>() {
       @Override
       public String execute() throws FirebaseAuthException {
@@ -433,7 +432,7 @@ public class FirebaseAuth {
       final String token, boolean checkRevoked) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(token), "ID token must not be null or empty");
-    final FTV verifier = getIdTokenVerifier(checkRevoked);
+    final FirebaseTokenVerifier verifier = getIdTokenVerifier(checkRevoked);
     return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
       @Override
       protected FirebaseToken execute() throws FirebaseAuthException {
@@ -443,16 +442,16 @@ public class FirebaseAuth {
     };
   }
 
-  private FTV getSessionCookieVerifier(boolean checkRevoked) {
-    FTV verifier = cookieVerifier.getValue();
+  private FirebaseTokenVerifier getSessionCookieVerifier(boolean checkRevoked) {
+    FirebaseTokenVerifier verifier = cookieVerifier.get();
     if (checkRevoked) {
       verifier = RevocationCheckDecorator.decorateSessionCookieVerifier(verifier, userManager);
     }
     return verifier;
   }
 
-  private FTV getIdTokenVerifier(boolean checkRevoked) {
-    FTV verifier = idTokenVerifier.getValue();
+  private FirebaseTokenVerifier getIdTokenVerifier(boolean checkRevoked) {
+    FirebaseTokenVerifier verifier = idTokenVerifier.get();
     if (checkRevoked) {
       verifier = RevocationCheckDecorator.decorateIdTokenVerifier(verifier, userManager);
     }

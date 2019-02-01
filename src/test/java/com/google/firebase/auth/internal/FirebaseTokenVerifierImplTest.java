@@ -40,7 +40,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-public class FirebaseTokenVerifierTest {
+public class FirebaseTokenVerifierImplTest {
 
   private static final String CUSTOM_TOKEN_AUDIENCE =
       "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit"
@@ -269,7 +269,7 @@ public class FirebaseTokenVerifierTest {
   }
 
   private FirebaseTokenVerifier newTestTokenVerifier(GooglePublicKeysManager publicKeysManager) {
-    return new FirebaseTokenVerifier.Builder()
+    return new FirebaseTokenVerifierImpl.Builder()
         .setShortName("test token")
         .setMethod("verifyTestToken()")
         .setDocUrl("https://test.doc.url")
@@ -279,8 +279,8 @@ public class FirebaseTokenVerifierTest {
         .build();
   }
 
-  private FirebaseTokenVerifier.Builder fullyPopulatedBuilder() {
-    return new FirebaseTokenVerifier.Builder()
+  private FirebaseTokenVerifierImpl.Builder fullyPopulatedBuilder() {
+    return new FirebaseTokenVerifierImpl.Builder()
         .setShortName("test token")
         .setMethod("verifyTestToken()")
         .setDocUrl("https://test.doc.url")

@@ -27,7 +27,6 @@ import com.google.api.client.util.Clock;
 import com.google.api.client.util.StringUtils;
 
 import com.google.common.base.Strings;
-import com.google.firebase.FirebaseApp;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -93,21 +92,5 @@ public class FirebaseTokenFactory {
     byte[] contentBytes = StringUtils.getBytesUtf8(content);
     String signature = Base64.encodeBase64URLSafeString(signer.sign(contentBytes));
     return content + "." + signature;
-  }
-
-  public static FirebaseTokenFactory fromApp(FirebaseApp firebaseApp, Clock clock) {
-    try {
-      return new FirebaseTokenFactory(
-          firebaseApp.getOptions().getJsonFactory(),
-          clock,
-          CryptoSigners.getCryptoSigner(firebaseApp));
-    } catch (IOException e) {
-      throw new IllegalStateException(
-          "Failed to initialize FirebaseTokenFactory. Make sure to initialize the SDK "
-              + "with service account credentials or specify a service account "
-              + "ID with iam.serviceAccounts.signBlob permission. Please refer to "
-              + "https://firebase.google.com/docs/auth/admin/create-custom-tokens for more "
-              + "details on creating custom tokens.", e);
-    }
   }
 }

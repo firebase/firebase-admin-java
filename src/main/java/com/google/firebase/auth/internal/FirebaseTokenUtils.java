@@ -30,6 +30,8 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.NonNull;
 
+import java.io.IOException;
+
 public final class FirebaseTokenUtils {
 
   private static final String ID_TOKEN_CERT_URL =
@@ -44,8 +46,25 @@ public final class FirebaseTokenUtils {
 
   private FirebaseTokenUtils() { }
 
+  public static FirebaseTokenFactory createTokenFactory(
+      @NonNull FirebaseApp firebaseApp, @NonNull Clock clock) {
+    try {
+      return new FirebaseTokenFactory(
+          firebaseApp.getOptions().getJsonFactory(),
+          clock,
+          CryptoSigners.getCryptoSigner(firebaseApp));
+    } catch (IOException e) {
+      throw new IllegalStateException(
+          "Failed to initialize FirebaseTokenFactory. Make sure to initialize the SDK "
+              + "with service account credentials or specify a service account "
+              + "ID with iam.serviceAccounts.signBlob permission. Please refer to "
+              + "https://firebase.google.com/docs/auth/admin/create-custom-tokens for more "
+              + "details on creating custom tokens.", e);
+    }
+  }
+
   @NonNull
-  public static FirebaseTokenVerifier createIdTokenVerifier(
+  public static FirebaseTokenVerifierImpl createIdTokenVerifier(
       @NonNull FirebaseApp app, @NonNull Clock clock) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkState(!Strings.isNullOrEmpty(projectId),
@@ -54,7 +73,7 @@ public final class FirebaseTokenUtils {
         clock, ID_TOKEN_ISSUER_PREFIX, projectId);
     GooglePublicKeysManager publicKeysManager = newPublicKeysManager(
         app.getOptions(), clock, ID_TOKEN_CERT_URL);
-    return new FirebaseTokenVerifier.Builder()
+    return new FirebaseTokenVerifierImpl.Builder()
         .setShortName("ID token")
         .setMethod("verifyIdToken()")
         .setDocUrl("https://firebase.google.com/docs/auth/admin/verify-id-tokens")
@@ -65,7 +84,7 @@ public final class FirebaseTokenUtils {
   }
 
   @NonNull
-  public static FirebaseTokenVerifier createSessionCookieVerifier(
+  public static FirebaseTokenVerifierImpl createSessionCookieVerifier(
       @NonNull FirebaseApp app, @NonNull Clock clock) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkState(!Strings.isNullOrEmpty(projectId),
@@ -74,7 +93,7 @@ public final class FirebaseTokenUtils {
         clock, SESSION_COOKIE_ISSUER_PREFIX, projectId);
     GooglePublicKeysManager publicKeysManager = newPublicKeysManager(
         app.getOptions(), clock, SESSION_COOKIE_CERT_URL);
-    return new FirebaseTokenVerifier.Builder()
+    return new FirebaseTokenVerifierImpl.Builder()
         .setJsonFactory(app.getOptions().getJsonFactory())
         .setPublicKeysManager(publicKeysManager)
         .setIdTokenVerifier(idTokenVerifier)

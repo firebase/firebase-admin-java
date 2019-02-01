@@ -57,7 +57,8 @@ public class FirebaseTokenUtilsTest {
         .setProjectId(TEST_PROJECT_ID)
         .build());
 
-    FirebaseTokenVerifier idTokenVerifier = FirebaseTokenUtils.createIdTokenVerifier(app, CLOCK);
+    FirebaseTokenVerifierImpl idTokenVerifier = FirebaseTokenUtils.createIdTokenVerifier(
+        app, CLOCK);
 
     assertEquals("verifyIdToken()", idTokenVerifier.getMethod());
     assertEquals("ID token", idTokenVerifier.getShortName());
@@ -88,7 +89,7 @@ public class FirebaseTokenUtilsTest {
         .setProjectId(TEST_PROJECT_ID)
         .build());
 
-    FirebaseTokenVerifier cookieVerifier = FirebaseTokenUtils.createSessionCookieVerifier(
+    FirebaseTokenVerifierImpl cookieVerifier = FirebaseTokenUtils.createSessionCookieVerifier(
         app, CLOCK);
 
     assertEquals("verifySessionCookie()", cookieVerifier.getMethod());

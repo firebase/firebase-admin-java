@@ -20,21 +20,24 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
-import com.google.firebase.auth.internal.FTV;
 import com.google.firebase.auth.internal.FirebaseIdToken;
+import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 
-class RevocationCheckDecorator implements FTV {
+class RevocationCheckDecorator implements FirebaseTokenVerifier {
 
   static final String ID_TOKEN_REVOKED_ERROR = "id-token-revoked";
   static final String SESSION_COOKIE_REVOKED_ERROR = "session-cookie-revoked";
 
-  private final FTV tokenVerifier;
+  private final FirebaseTokenVerifier tokenVerifier;
   private final FirebaseUserManager userManager;
   private final String errorCode;
   private final String shortName;
 
   private RevocationCheckDecorator(
-      FTV tokenVerifier, FirebaseUserManager userManager, String errorCode, String shortName) {
+      FirebaseTokenVerifier tokenVerifier,
+      FirebaseUserManager userManager,
+      String errorCode,
+      String shortName) {
     this.tokenVerifier = checkNotNull(tokenVerifier);
     this.userManager = checkNotNull(userManager);
     checkArgument(!Strings.isNullOrEmpty(errorCode));
@@ -59,13 +62,15 @@ class RevocationCheckDecorator implements FTV {
     return user.getTokensValidAfterTimestamp() > issuedAtInSeconds * 1000;
   }
 
-  static FTV decorateIdTokenVerifier(FTV ftv, FirebaseUserManager userManager) {
+  static FirebaseTokenVerifier decorateIdTokenVerifier(
+      FirebaseTokenVerifier tokenVerifier, FirebaseUserManager userManager) {
     return new RevocationCheckDecorator(
-        ftv, userManager, ID_TOKEN_REVOKED_ERROR, "id token");
+        tokenVerifier, userManager, ID_TOKEN_REVOKED_ERROR, "id token");
   }
 
-  static FTV decorateSessionCookieVerifier(FTV ftv, FirebaseUserManager userManager) {
+  static FirebaseTokenVerifier decorateSessionCookieVerifier(
+      FirebaseTokenVerifier tokenVerifier, FirebaseUserManager userManager) {
     return new RevocationCheckDecorator(
-        ftv, userManager, SESSION_COOKIE_REVOKED_ERROR, "session cookie");
+        tokenVerifier, userManager, SESSION_COOKIE_REVOKED_ERROR, "session cookie");
   }
 }
