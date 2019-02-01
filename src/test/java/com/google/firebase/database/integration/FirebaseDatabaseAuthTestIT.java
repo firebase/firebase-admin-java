@@ -23,6 +23,7 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.database.DataSnapshot;
@@ -169,7 +170,7 @@ public class FirebaseDatabaseAuthTestIT {
         success.compareAndSet(false, true);
         lock.countDown();
       }
-    });
+    }, MoreExecutors.directExecutor());
     boolean finished = lock.await(TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     if (shouldTimeout) {
       assertTrue("Write finished (expected to timeout).", !finished);
