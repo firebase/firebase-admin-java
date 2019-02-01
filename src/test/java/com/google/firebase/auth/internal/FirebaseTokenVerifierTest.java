@@ -237,6 +237,15 @@ public class FirebaseTokenVerifierTest {
     idTokenVerifier.verifyToken(LEGACY_CUSTOM_TOKEN);
   }
 
+  @Test
+  public void malformedToken() throws Exception {
+    thrown.expectMessage(
+        "Decoding Firebase test token failed. Make sure you passed a string that "
+            + "represents a complete and valid JWT. See https://test.doc.url for details on "
+            + "how to retrieve a test token.");
+    idTokenVerifier.verifyToken("not.a.jwt");
+  }
+
   private PrivateKey parsePrivateKey(String privateKey) throws GeneralSecurityException {
     byte[] privateBytes = BaseEncoding.base64().decode(privateKey);
     KeySpec spec = new PKCS8EncodedKeySpec(privateBytes);

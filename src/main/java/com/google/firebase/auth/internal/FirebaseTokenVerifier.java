@@ -68,6 +68,34 @@ public final class FirebaseTokenVerifier {
     return checkContentsAndSignature(firebaseToken);
   }
 
+  JsonFactory getJsonFactory() {
+    return jsonFactory;
+  }
+
+  GooglePublicKeysManager getPublicKeysManager() {
+    return publicKeysManager;
+  }
+
+  IdTokenVerifier getIdTokenVerifier() {
+    return idTokenVerifier;
+  }
+
+  String getMethod() {
+    return method;
+  }
+
+  String getShortName() {
+    return shortName;
+  }
+
+  String getArticledShortName() {
+    return articledShortName;
+  }
+
+  String getDocUrl() {
+    return docUrl;
+  }
+
   private String prefixWithIndefiniteArticle(String word) {
     if ("aeiouAEIOU".indexOf(word.charAt(0)) < 0) {
       return "a " + word;
