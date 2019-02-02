@@ -18,123 +18,62 @@ package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
- * A decoded and verified Firebase token. It can used to get the uid and other user attributes
+ * A decoded and verified Firebase token. Can be used to get the uid and other user attributes
  * available in the token. See {@link FirebaseAuth#verifyIdToken(String)} and
  * {@link FirebaseAuth#verifySessionCookie(String)} for details on how to obtain an instance of
  * this class.
  */
 public final class FirebaseToken {
 
-  private final String uid;
-  private final String issuer;
-  private final String name;
-  private final String picture;
-  private final String email;
-  private final boolean emailVerified;
   private final Map<String, Object> claims;
 
-  private FirebaseToken(Builder builder) {
-    checkArgument(!Strings.isNullOrEmpty(builder.uid));
-    this.uid = builder.uid;
-    this.issuer = builder.issuer;
-    this.name = builder.name;
-    this.picture = builder.picture;
-    this.email = builder.email;
-    this.emailVerified = builder.emailVerified;
-    this.claims = builder.claims != null ? ImmutableMap.copyOf(builder.claims)
-        : ImmutableMap.<String, Object>of();
+  FirebaseToken(Map<String, Object> claims) {
+    checkArgument(claims != null && claims.containsKey("sub"),
+        "Claims map must at least contain sub");
+    this.claims = ImmutableMap.copyOf(claims);
   }
 
   /** Returns the Uid for the this token. */
   public String getUid() {
-    return this.uid;
+    return (String) claims.get("sub");
   }
 
   /** Returns the Issuer for the this token. */
   public String getIssuer() {
-    return this.issuer;
+    return (String) claims.get("iss");
   }
 
   /** Returns the user's display name. */
   public String getName() {
-    return this.name;
+    return (String) claims.get("name");
   }
 
   /** Returns the Uri string of the user's profile photo. */
   public String getPicture() {
-    return this.picture;
+    return (String) claims.get("picture");
   }
 
   /** 
    * Returns the e-mail address for this user, or {@code null} if it's unavailable.
    */
   public String getEmail() {
-    return this.email;
+    return (String) claims.get("email");
   }
 
   /** 
    * Indicates if the email address returned by {@link #getEmail()} has been verified as good.
    */
   public boolean isEmailVerified() {
-    return this.emailVerified;
+    Object emailVerified = claims.get("email_verified");
+    return emailVerified != null && (Boolean) emailVerified;
   }
 
   /** Returns a map of all of the claims on this token. */
   public Map<String, Object> getClaims() {
     return this.claims;
-  }
-
-  static class Builder {
-    private String uid;
-    private String issuer;
-    private String name;
-    private String picture;
-    private String email;
-    private boolean emailVerified;
-    private Map<String, Object> claims;
-
-    Builder setUid(String uid) {
-      this.uid = uid;
-      return this;
-    }
-
-    Builder setIssuer(String issuer) {
-      this.issuer = issuer;
-      return this;
-    }
-
-    Builder setName(String name) {
-      this.name = name;
-      return this;
-    }
-
-    Builder setPicture(String picture) {
-      this.picture = picture;
-      return this;
-    }
-
-    Builder setEmail(String email) {
-      this.email = email;
-      return this;
-    }
-
-    Builder setEmailVerified(boolean emailVerified) {
-      this.emailVerified = emailVerified;
-      return this;
-    }
-
-    Builder setClaims(Map<String, Object> claims) {
-      this.claims = claims;
-      return this;
-    }
-
-    FirebaseToken build() {
-      return new FirebaseToken(this);
-    }
   }
 }

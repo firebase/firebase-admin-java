@@ -1114,7 +1114,7 @@ public class FirebaseAuth {
   }
 
   private static FirebaseAuth fromApp(final FirebaseApp app) {
-    return new Builder()
+    return FirebaseAuth.builder()
         .setFirebaseApp(app)
         .setTokenFactory(new Supplier<FirebaseTokenFactory>() {
           @Override
@@ -1137,11 +1137,18 @@ public class FirebaseAuth {
         .build();
   }
 
+  @VisibleForTesting
+  static Builder builder() {
+    return new Builder();
+  }
+
   static class Builder {
     private FirebaseApp firebaseApp;
     private Supplier<FirebaseTokenFactory> tokenFactory;
     private Supplier<? extends FirebaseTokenVerifier> idTokenVerifier;
     private Supplier<? extends FirebaseTokenVerifier> cookieVerifier;
+
+    private Builder() { }
 
     Builder setFirebaseApp(FirebaseApp firebaseApp) {
       this.firebaseApp = firebaseApp;

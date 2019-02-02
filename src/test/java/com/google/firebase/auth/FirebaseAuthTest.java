@@ -28,6 +28,7 @@ import com.google.api.core.ApiFuture;
 import com.google.common.base.Defaults;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -404,10 +405,7 @@ public class FirebaseAuthTest {
   }
 
   private FirebaseToken getFirebaseToken(String subject) {
-    return new FirebaseToken.Builder()
-        .setUid(subject)
-        .setIssuer("test-issuer")
-        .build();
+    return new FirebaseToken(ImmutableMap.<String, Object>of("sub", subject));
   }
 
   private FirebaseAuth getAuthForIdTokenVerification(FirebaseTokenVerifier tokenVerifier) {
@@ -417,7 +415,7 @@ public class FirebaseAuthTest {
   private FirebaseAuth getAuthForIdTokenVerification(
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions);
-    return new FirebaseAuth.Builder()
+    return FirebaseAuth.builder()
         .setFirebaseApp(app)
         .setTokenFactory(Suppliers.<FirebaseTokenFactory>ofInstance(null))
         .setIdTokenVerifier(tokenVerifierSupplier)
@@ -432,7 +430,7 @@ public class FirebaseAuthTest {
   private FirebaseAuth getAuthForSessionCookieVerification(
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions);
-    return new FirebaseAuth.Builder()
+    return FirebaseAuth.builder()
         .setFirebaseApp(app)
         .setTokenFactory(Suppliers.<FirebaseTokenFactory>ofInstance(null))
         .setIdTokenVerifier(Suppliers.<FirebaseTokenVerifier>ofInstance(null))

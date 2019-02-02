@@ -21,6 +21,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
 
+/**
+ * A decorator for adding token revocation checks to an existing {@link FirebaseTokenVerifier}.
+ */
 class RevocationCheckDecorator implements FirebaseTokenVerifier {
 
   static final String ID_TOKEN_REVOKED_ERROR = "id-token-revoked";
@@ -44,6 +47,10 @@ class RevocationCheckDecorator implements FirebaseTokenVerifier {
     this.shortName = shortName;
   }
 
+  /**
+   * If the wrapped {@link FirebaseTokenVerifier} deems the input token string is valid, checks
+   * whether the token has been revoked.
+   */
   @Override
   public FirebaseToken verifyToken(String token) throws FirebaseAuthException {
     FirebaseToken firebaseToken = tokenVerifier.verifyToken(token);

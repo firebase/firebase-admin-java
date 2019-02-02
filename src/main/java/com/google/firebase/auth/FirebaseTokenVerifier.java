@@ -16,11 +16,19 @@
 
 package com.google.firebase.auth;
 
-
-import com.google.firebase.internal.NonNull;
-
+/**
+ * An interface for verifying Firebase token strings.  Exists mainly to facilitate easy testing
+ * and extension/decoration of the token verification functionality.
+ */
 interface FirebaseTokenVerifier {
 
-  FirebaseToken verifyToken(@NonNull String token) throws FirebaseAuthException;
+  /**
+   * Verifies that the given token string is a valid Firebase JWT.
+   *
+   * @param token The token string to be verified.
+   * @return A decoded representation of the input token string.
+   * @throws FirebaseAuthException If the input token string fails to verify due to any reason.
+   */
+  FirebaseToken verifyToken(String token) throws FirebaseAuthException;
 
 }

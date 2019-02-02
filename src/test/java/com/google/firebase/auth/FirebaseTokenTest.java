@@ -21,22 +21,26 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.common.collect.ImmutableMap;
+import java.util.Map;
 import org.junit.Test;
 
 public class FirebaseTokenTest {
 
   @Test
   public void testFirebaseToken() {
-    FirebaseToken firebaseToken = new FirebaseToken.Builder()
-        .setUid("testUser")
-        .setIssuer("test-project-id")
-        .setEmail("test@example.com")
-        .setEmailVerified(true)
-        .setName("Test User")
-        .setPicture("https://picture.url")
-        .setClaims(ImmutableMap.<String, Object>of("custom", "claim"))
+    Map<String, Object> claims = ImmutableMap.<String, Object>builder()
+        .put("sub", "testUser")
+        .put("iss", "test-project-id")
+        .put("email", "test@example.com")
+        .put("email_verified", true)
+        .put("name", "Test User")
+        .put("picture", "https://picture.url")
+        .put("custom", "claim")
         .build();
+
+    FirebaseToken firebaseToken = new FirebaseToken(claims);
 
     assertEquals("testUser", firebaseToken.getUid());
     assertEquals("test-project-id", firebaseToken.getIssuer());
@@ -45,14 +49,16 @@ public class FirebaseTokenTest {
     assertEquals("Test User", firebaseToken.getName());
     assertEquals("https://picture.url", firebaseToken.getPicture());
     assertEquals("claim", firebaseToken.getClaims().get("custom"));
-    assertEquals(1, firebaseToken.getClaims().size());
+    assertEquals(7, firebaseToken.getClaims().size());
   }
 
   @Test
   public void testFirebaseTokenMinimal() {
-    FirebaseToken firebaseToken = new FirebaseToken.Builder()
-        .setUid("testUser")
+    Map<String, Object> claims = ImmutableMap.<String, Object>builder()
+        .put("sub", "testUser")
         .build();
+
+    FirebaseToken firebaseToken = new FirebaseToken(claims);
 
     assertEquals("testUser", firebaseToken.getUid());
     assertNull(firebaseToken.getIssuer());
@@ -60,16 +66,57 @@ public class FirebaseTokenTest {
     assertFalse(firebaseToken.isEmailVerified());
     assertNull(firebaseToken.getName());
     assertNull(firebaseToken.getPicture());
-    assertEquals(0, firebaseToken.getClaims().size());
+    assertEquals(1, firebaseToken.getClaims().size());
+  }
+
+  @Test
+  public void testFirebaseTokenFromIdToken() {
+    IdToken.Payload payload = new IdToken.Payload()
+        .setSubject("testUser")
+        .setIssuer("test-project-id")
+        .set("email", "test@example.com")
+        .set("email_verified", true)
+        .set("name", "Test User")
+        .set("picture", "https://picture.url")
+        .set("custom", "claim");
+
+    FirebaseToken firebaseToken = new FirebaseToken(payload);
+
+    assertEquals("testUser", firebaseToken.getUid());
+    assertEquals("test-project-id", firebaseToken.getIssuer());
+    assertEquals("test@example.com", firebaseToken.getEmail());
+    assertTrue(firebaseToken.isEmailVerified());
+    assertEquals("Test User", firebaseToken.getName());
+    assertEquals("https://picture.url", firebaseToken.getPicture());
+    assertEquals("claim", firebaseToken.getClaims().get("custom"));
+    assertEquals(7, firebaseToken.getClaims().size());
+  }
+
+  @Test
+  public void testFirebaseTokenFromMinimalIdToken() {
+    IdToken.Payload payload = new IdToken.Payload()
+        .setSubject("testUser");
+
+    FirebaseToken firebaseToken = new FirebaseToken(payload);
+
+    assertEquals("testUser", firebaseToken.getUid());
+    assertNull(firebaseToken.getIssuer());
+    assertNull(firebaseToken.getEmail());
+    assertFalse(firebaseToken.isEmailVerified());
+    assertNull(firebaseToken.getName());
+    assertNull(firebaseToken.getPicture());
+    assertEquals(1, firebaseToken.getClaims().size());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testFirebaseTokenNullClaims() {
+    new FirebaseToken(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testFirebaseTokenNoUid() {
-    new FirebaseToken.Builder().build();
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testFirebaseTokenEmptyUid() {
-    new FirebaseToken.Builder().setUid("").build();
+    ImmutableMap<String, Object> claimsWithoutSub = ImmutableMap.<String, Object>of(
+        "custom", "claim");
+    new FirebaseToken(claimsWithoutSub);
   }
 }

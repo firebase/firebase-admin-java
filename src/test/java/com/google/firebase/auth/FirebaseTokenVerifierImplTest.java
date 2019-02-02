@@ -265,7 +265,7 @@ public class FirebaseTokenVerifierImplTest {
   }
 
   private FirebaseTokenVerifier newTestTokenVerifier(GooglePublicKeysManager publicKeysManager) {
-    return new FirebaseTokenVerifierImpl.Builder()
+    return FirebaseTokenVerifierImpl.builder()
         .setShortName("test token")
         .setMethod("verifyTestToken()")
         .setDocUrl("https://test.doc.url")
@@ -276,7 +276,7 @@ public class FirebaseTokenVerifierImplTest {
   }
 
   private FirebaseTokenVerifierImpl.Builder fullyPopulatedBuilder() {
-    return new FirebaseTokenVerifierImpl.Builder()
+    return FirebaseTokenVerifierImpl.builder()
         .setShortName("test token")
         .setMethod("verifyTestToken()")
         .setDocUrl("https://test.doc.url")

@@ -18,7 +18,6 @@ package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.auth.openidconnect.IdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.json.JsonFactory;
@@ -44,6 +43,10 @@ final class FirebaseTokenUtils {
       "https://www.googleapis.com/identitytoolkit/v3/relyingparty/publicKeys";
   private static final String SESSION_COOKIE_ISSUER_PREFIX = "https://session.firebase.google.com/";
 
+  // The default JsonFactory implementation we get from Google API client does not support parsing
+  // JSON strings with control characters in text. The public key certificates we get from Google
+  // auth servers contain some control characters, and therefore we must use JsonFactory that is
+  // capable of parsing such text.
   static final JsonFactory UNQUOTED_CTRL_CHAR_JSON_FACTORY = new GsonFactory();
 
   private FirebaseTokenUtils() { }
@@ -72,7 +75,7 @@ final class FirebaseTokenUtils {
         clock, ID_TOKEN_ISSUER_PREFIX, projectId);
     GooglePublicKeysManager publicKeysManager = newPublicKeysManager(
         app.getOptions(), clock, ID_TOKEN_CERT_URL);
-    return new FirebaseTokenVerifierImpl.Builder()
+    return FirebaseTokenVerifierImpl.builder()
         .setShortName("ID token")
         .setMethod("verifyIdToken()")
         .setDocUrl("https://firebase.google.com/docs/auth/admin/verify-id-tokens")
@@ -90,27 +93,13 @@ final class FirebaseTokenUtils {
         clock, SESSION_COOKIE_ISSUER_PREFIX, projectId);
     GooglePublicKeysManager publicKeysManager = newPublicKeysManager(
         app.getOptions(), clock, SESSION_COOKIE_CERT_URL);
-    return new FirebaseTokenVerifierImpl.Builder()
+    return FirebaseTokenVerifierImpl.builder()
         .setJsonFactory(app.getOptions().getJsonFactory())
         .setPublicKeysManager(publicKeysManager)
         .setIdTokenVerifier(idTokenVerifier)
         .setShortName("session cookie")
         .setMethod("verifySessionCookie()")
         .setDocUrl("https://firebase.google.com/docs/auth/admin/manage-cookies")
-        .build();
-  }
-
-  static FirebaseToken newFirebaseToken(IdToken idToken) {
-    IdToken.Payload payload = idToken.getPayload();
-    return new FirebaseToken.Builder()
-        .setUid(payload.getSubject())
-        .setIssuer(payload.getIssuer())
-        .setName((String) payload.get("name"))
-        .setEmail((String) payload.get("email"))
-        .setEmailVerified(payload.containsKey("email_verified")
-            && (Boolean) payload.get("email_verified"))
-        .setPicture((String) payload.get("picture"))
-        .setClaims(payload)
         .build();
   }
 

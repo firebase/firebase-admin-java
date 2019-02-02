@@ -33,6 +33,11 @@ import java.math.BigDecimal;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 
+/**
+ * The default implementation of the {@link FirebaseTokenVerifier} interface. Uses the Google API
+ * client's {@code IdToken} API to decode and verify token strings. Can be customized to verify
+ * both Firebase ID tokens and session cookies.
+ */
 final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
 
   private static final String RS256 = "RS256";
@@ -62,12 +67,30 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     this.docUrl = builder.docUrl;
   }
 
+  /**
+   * Verifies that the given token string is a valid Firebase JWT. This implementation considers
+   * a token string to be valid if all the following conditions are met:
+   * <ol>
+   *   <li>The token string is a valid RS256 JWT.</li>
+   *   <li>The JWT contains a valid key ID (kid) claim.</li>
+   *   <li>The JWT is not expired, and it has been issued some time in the past.</li>
+   *   <li>The JWT contains valid issuer (iss) and audience (aud) claims as determined by the
+   *   {@code IdTokenVerifier}.</li>
+   *   <li>The JWT contains a valid subject (sub) claim.</li>
+   *   <li>The JWT is signed by a Firebase Auth backend server.</li>
+   * </ol>
+   *
+   * @param token The token string to be verified.
+   * @return A decoded representation of the input token string.
+   * @throws FirebaseAuthException If the input token string does not meet any of the conditions
+   *     listed above.
+   */
   @Override
   public FirebaseToken verifyToken(String token) throws FirebaseAuthException {
     IdToken idToken = parse(token);
     checkContents(idToken);
     checkSignature(idToken);
-    return FirebaseTokenUtils.newFirebaseToken(idToken);
+    return new FirebaseToken(idToken.getPayload());
   }
 
   GooglePublicKeysManager getPublicKeysManager() {
@@ -253,6 +276,10 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     return false;
   }
 
+  static Builder builder() {
+    return new Builder();
+  }
+
   static final class Builder {
 
     private JsonFactory jsonFactory;
@@ -262,37 +289,39 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     private IdTokenVerifier idTokenVerifier;
     private String docUrl;
 
-    public Builder setJsonFactory(JsonFactory jsonFactory) {
+    private Builder() { }
+
+    Builder setJsonFactory(JsonFactory jsonFactory) {
       this.jsonFactory = jsonFactory;
       return this;
     }
 
-    public Builder setPublicKeysManager(GooglePublicKeysManager publicKeysManager) {
+    Builder setPublicKeysManager(GooglePublicKeysManager publicKeysManager) {
       this.publicKeysManager = publicKeysManager;
       return this;
     }
 
-    public Builder setMethod(String method) {
+    Builder setMethod(String method) {
       this.method = method;
       return this;
     }
 
-    public Builder setShortName(String shortName) {
+    Builder setShortName(String shortName) {
       this.shortName = shortName;
       return this;
     }
 
-    public Builder setIdTokenVerifier(IdTokenVerifier idTokenVerifier) {
+    Builder setIdTokenVerifier(IdTokenVerifier idTokenVerifier) {
       this.idTokenVerifier = idTokenVerifier;
       return this;
     }
 
-    public Builder setDocUrl(String docUrl) {
+    Builder setDocUrl(String docUrl) {
       this.docUrl = docUrl;
       return this;
     }
 
-    public FirebaseTokenVerifierImpl build() {
+    FirebaseTokenVerifierImpl build() {
       return new FirebaseTokenVerifierImpl(this);
     }
   }
