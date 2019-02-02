@@ -19,13 +19,18 @@ package com.google.firebase.testing;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.http.ByteArrayContent;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
+import com.google.api.client.http.HttpResponse;
 import com.google.api.client.json.GenericJson;
 import com.google.cloud.firestore.FirestoreOptions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.FirebaseOptions.Builder;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -35,13 +40,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 
 public class IntegrationTestUtils {
 
@@ -151,8 +149,10 @@ public class IntegrationTestUtils {
   }
   
   public static class AppHttpClient {
-    
+
     private final FirebaseApp app;
+    private final FirebaseOptions options;
+    private final HttpRequestFactory requestFactory;
     
     public AppHttpClient() {
       this(FirebaseApp.getInstance());
@@ -160,17 +160,23 @@ public class IntegrationTestUtils {
     
     public AppHttpClient(FirebaseApp app) {
       this.app = checkNotNull(app);
+      this.options = app.getOptions();
+      this.requestFactory = this.options.getHttpTransport().createRequestFactory();
     }
     
-    public ResponseInfo put(String path, String data) throws IOException {
-      String url = app.getOptions().getDatabaseUrl() + path + "?access_token=" + getToken();
-      HttpPut put = new HttpPut(url);
-      HttpEntity entity = new StringEntity(data, "UTF-8");
-      put.setEntity(entity);
-      
-      HttpClient httpClient = new DefaultHttpClient();
-      HttpResponse response = httpClient.execute(put);
-      return new ResponseInfo(response);
+    public ResponseInfo put(String path, String json) throws IOException {
+      String url = options.getDatabaseUrl() + path + "?access_token=" + getToken();
+      HttpRequest request = requestFactory.buildPutRequest(new GenericUrl(url),
+          ByteArrayContent.fromString("application/json", json));
+      HttpResponse response = null;
+      try {
+        response = request.execute();
+        return new ResponseInfo(response);
+      } finally {
+        if (response != null) {
+          response.disconnect();
+        }
+      }
     }
     
     private String getToken() {
@@ -185,8 +191,8 @@ public class IntegrationTestUtils {
     private final byte[] payload;
     
     private ResponseInfo(HttpResponse response) throws IOException {
-      this.status = response.getStatusLine().getStatusCode();
-      this.payload = EntityUtils.toByteArray(response.getEntity());
+      this.status = response.getStatusCode();
+      this.payload = ByteStreams.toByteArray(response.getContent());
     }
 
     public int getStatus() {

@@ -24,9 +24,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.database.DatabaseReference.CompletionListener;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.Repo;
+import com.google.firebase.database.snapshot.Node;
 import com.google.firebase.database.snapshot.NodeUtilities;
 import java.util.Map;
 import org.junit.Test;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 
 public class OnDisconnectTest {
@@ -34,11 +36,11 @@ public class OnDisconnectTest {
   private static final Path path = new Path("foo");
 
   @Test
-  public void testSetValue() throws Exception {
+  public void testSetValue() {
     Repo repo = mockRepo();
     OnDisconnect reference = new OnDisconnect(repo, path);
     reference.setValueAsync("value");
-    reference.setValue("value", (CompletionListener) null);
+    reference.setValue("value", null);
     Mockito.verify(repo, times(2))
         .scheduleNow(Mockito.any(Runnable.class));
     Mockito.verify(repo, times(2))
@@ -49,7 +51,7 @@ public class OnDisconnectTest {
   }
 
   @Test
-  public void testSetValueWithPriority() throws Exception {
+  public void testSetValueWithPriority() {
     Repo repo = mockRepo();
     OnDisconnect reference = new OnDisconnect(repo, path);
     reference.setValueAsync("value", 10);
@@ -89,7 +91,7 @@ public class OnDisconnectTest {
   }
 
   @Test
-  public void testUpdateChildren() throws Exception {
+  public void testUpdateChildren() {
     Repo repo = mockRepo();
     OnDisconnect reference = new OnDisconnect(repo, path);
     try {
@@ -107,13 +109,13 @@ public class OnDisconnectTest {
     Mockito.verify(repo, times(2))
         .onDisconnectUpdate(
             Mockito.same(path),
-            Mockito.any(Map.class),
+            ArgumentMatchers.<Map<Path, Node>>any(),
             Mockito.any(CompletionListener.class),
             Mockito.same(update));
   }
 
   @Test
-  public void testRemoveValue() throws Exception {
+  public void testRemoveValue() {
     Repo repo = mockRepo();
     OnDisconnect reference = new OnDisconnect(repo, path);
     reference.removeValueAsync();
@@ -129,7 +131,7 @@ public class OnDisconnectTest {
   }
 
   @Test
-  public void testCancel() throws Exception {
+  public void testCancel() {
     Repo repo = mockRepo();
     OnDisconnect reference = new OnDisconnect(repo, path);
     reference.cancelAsync();
