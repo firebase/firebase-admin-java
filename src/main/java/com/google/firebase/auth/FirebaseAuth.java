@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Clock;
 import com.google.api.core.ApiFuture;
@@ -35,7 +36,6 @@ import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
 import com.google.firebase.auth.ListUsersPage.PageFactory;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
-import com.google.firebase.auth.internal.FirebaseIdToken;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenUtils;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
@@ -217,7 +217,7 @@ public class FirebaseAuth {
     return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
       @Override
       public FirebaseToken execute() throws FirebaseAuthException {
-        FirebaseIdToken idToken = sessionCookieVerifier.verifyToken(cookie);
+        IdToken idToken = sessionCookieVerifier.verifyToken(cookie);
         return new FirebaseToken(idToken);
       }
     };
@@ -416,7 +416,7 @@ public class FirebaseAuth {
     return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
       @Override
       protected FirebaseToken execute() throws FirebaseAuthException {
-        FirebaseIdToken idToken = verifier.verifyToken(token);
+        IdToken idToken = verifier.verifyToken(token);
         return new FirebaseToken(idToken);
       }
     };

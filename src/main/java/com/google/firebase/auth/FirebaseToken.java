@@ -18,7 +18,8 @@ package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.firebase.auth.internal.FirebaseIdToken;
+import com.google.api.client.auth.openidconnect.IdToken;
+import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 
 /**
@@ -27,9 +28,9 @@ import java.util.Map;
  */
 public final class FirebaseToken {
 
-  private final FirebaseIdToken.Payload tokenPayload;
+  private final IdToken.Payload tokenPayload;
 
-  FirebaseToken(FirebaseIdToken token) {
+  FirebaseToken(IdToken token) {
     this.tokenPayload = checkNotNull(token).getPayload();
   }
 
@@ -45,30 +46,31 @@ public final class FirebaseToken {
 
   /** Returns the user's display name. */
   public String getName() {
-    return tokenPayload.getName();
+    return (String) tokenPayload.get("name");
   }
 
   /** Returns the Uri string of the user's profile photo. */
   public String getPicture() {
-    return tokenPayload.getPicture();
+    return (String) tokenPayload.get("picture");
   }
 
   /** 
    * Returns the e-mail address for this user, or {@code null} if it's unavailable.
    */
   public String getEmail() {
-    return tokenPayload.getEmail();
+    return (String) tokenPayload.get("email");
   }
 
   /** 
    * Indicates if the email address returned by {@link #getEmail()} has been verified as good.
    */
   public boolean isEmailVerified() {
-    return tokenPayload.isEmailVerified();
+    Object emailVerified = tokenPayload.get("email_verified");
+    return emailVerified != null && (Boolean) emailVerified;
   }
 
   /** Returns a map of all of the claims on this token. */
   public Map<String, Object> getClaims() {
-    return tokenPayload;
+    return ImmutableMap.copyOf(tokenPayload);
   }
 }

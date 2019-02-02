@@ -19,8 +19,8 @@ package com.google.firebase.auth;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.common.base.Strings;
-import com.google.firebase.auth.internal.FirebaseIdToken;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 
 class RevocationCheckDecorator implements FirebaseTokenVerifier {
@@ -47,16 +47,16 @@ class RevocationCheckDecorator implements FirebaseTokenVerifier {
   }
 
   @Override
-  public FirebaseIdToken verifyToken(String token) throws FirebaseAuthException {
-    FirebaseIdToken firebaseToken = tokenVerifier.verifyToken(token);
+  public IdToken verifyToken(String token) throws FirebaseAuthException {
+    IdToken firebaseToken = tokenVerifier.verifyToken(token);
     if (isRevoked(firebaseToken.getPayload())) {
       throw new FirebaseAuthException(errorCode, "Firebase " + shortName + " revoked");
     }
     return firebaseToken;
   }
 
-  private boolean isRevoked(FirebaseIdToken.Payload tokenPayload) throws FirebaseAuthException {
-    String uid = tokenPayload.getUid();
+  private boolean isRevoked(IdToken.Payload tokenPayload) throws FirebaseAuthException {
+    String uid = tokenPayload.getSubject();
     UserRecord user = userManager.getUserById(uid);
     long issuedAtInSeconds = tokenPayload.getIssuedAtTimeSeconds();
     return user.getTokensValidAfterTimestamp() > issuedAtInSeconds * 1000;

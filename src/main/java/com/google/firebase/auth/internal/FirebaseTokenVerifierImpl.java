@@ -24,6 +24,7 @@ import com.google.api.client.auth.openidconnect.IdToken.Payload;
 import com.google.api.client.auth.openidconnect.IdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.json.webtoken.JsonWebSignature.Header;
 import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Joiner;
@@ -64,8 +65,8 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
   }
 
   @Override
-  public FirebaseIdToken verifyToken(String token) throws FirebaseAuthException {
-    FirebaseIdToken firebaseToken = parse(token);
+  public IdToken verifyToken(String token) throws FirebaseAuthException {
+    IdToken firebaseToken = parse(token);
     return checkContentsAndSignature(firebaseToken);
   }
 
@@ -101,9 +102,16 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     }
   }
 
-  private FirebaseIdToken parse(String token) throws FirebaseAuthException {
+  private IdToken parse(String token) throws FirebaseAuthException {
     try {
-      return FirebaseIdToken.fromString(token, jsonFactory);
+      JsonWebSignature jws = JsonWebSignature.parser(jsonFactory)
+          .setPayloadClass(IdToken.Payload.class)
+          .parse(token);
+      return new IdToken(
+          jws.getHeader(),
+          (IdToken.Payload) jws.getPayload(),
+          jws.getSignatureBytes(),
+          jws.getSignedContentBytes());
     } catch (IOException e) {
       String detailedError = String.format(
           "Decoding Firebase %s failed. Make sure you passed a string that represents a complete "
@@ -115,8 +123,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     }
   }
 
-  private FirebaseIdToken checkContentsAndSignature(
-      FirebaseIdToken idToken) throws FirebaseAuthException {
+  private IdToken checkContentsAndSignature(IdToken idToken) throws FirebaseAuthException {
     checkContents(idToken);
     checkSignature(idToken);
     return idToken;

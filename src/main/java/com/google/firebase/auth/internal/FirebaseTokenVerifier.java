@@ -16,10 +16,11 @@
 
 package com.google.firebase.auth.internal;
 
+import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.firebase.auth.FirebaseAuthException;
 
 public interface FirebaseTokenVerifier {
 
-  FirebaseIdToken verifyToken(String token) throws FirebaseAuthException;
+  IdToken verifyToken(String token) throws FirebaseAuthException;
 
 }

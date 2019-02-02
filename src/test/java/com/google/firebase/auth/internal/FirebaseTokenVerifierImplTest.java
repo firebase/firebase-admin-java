@@ -19,6 +19,7 @@ package com.google.firebase.auth.internal;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.auth.openidconnect.IdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.http.HttpTransport;
@@ -73,12 +74,12 @@ public class FirebaseTokenVerifierImplTest {
   public void testVerifyToken() throws Exception {
     String token = tokenFactory.createToken();
 
-    FirebaseIdToken idToken = tokenVerifier.verifyToken(token);
+    IdToken idToken = tokenVerifier.verifyToken(token);
 
-    FirebaseIdToken.Payload payload = idToken.getPayload();
+    IdToken.Payload payload = idToken.getPayload();
     assertTrue(payload.getAudienceAsList().contains(TestTokenFactory.PROJECT_ID));
     assertEquals(TEST_TOKEN_ISSUER, payload.getIssuer());
-    assertEquals(TestTokenFactory.UID, payload.getUid());
+    assertEquals(TestTokenFactory.UID, payload.getSubject());
     assertEquals(TestTokenFactory.PROJECT_ID, payload.getAudience());
   }
 

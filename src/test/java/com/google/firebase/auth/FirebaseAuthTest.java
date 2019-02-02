@@ -17,12 +17,15 @@
 package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.core.ApiFuture;
 import com.google.common.base.Defaults;
@@ -30,7 +33,6 @@ import com.google.common.base.Suppliers;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
-import com.google.firebase.auth.internal.FirebaseIdToken;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.testing.ServiceAccount;
@@ -376,10 +378,56 @@ public class FirebaseAuthTest {
     }
   }
 
-  private FirebaseIdToken getFirebaseIdToken(String subject) {
-    return new FirebaseIdToken(
+  @Test
+  public void testFirebaseToken() {
+    IdToken.Payload payload = new IdToken.Payload()
+        .setSubject("testUser")
+        .setIssuer("test-project-id")
+        .set("email", "test@example.com")
+        .set("email_verified", true)
+        .set("name", "Test User")
+        .set("picture", "https://picture.url")
+        .set("custom", "claim");
+    IdToken idToken = new IdToken(
         new JsonWebSignature.Header(),
-        new FirebaseIdToken.Payload().setSubject(subject),
+        payload,
+        new byte[0], new byte[0]);
+
+    FirebaseToken firebaseToken = new FirebaseToken(idToken);
+
+    assertEquals("testUser", firebaseToken.getUid());
+    assertEquals("test-project-id", firebaseToken.getIssuer());
+    assertEquals("test@example.com", firebaseToken.getEmail());
+    assertTrue(firebaseToken.isEmailVerified());
+    assertEquals("Test User", firebaseToken.getName());
+    assertEquals("https://picture.url", firebaseToken.getPicture());
+    assertEquals("claim", firebaseToken.getClaims().get("custom"));
+    assertEquals(7, firebaseToken.getClaims().size());
+  }
+
+  @Test
+  public void testFirebaseTokenMinimal() {
+    IdToken.Payload payload = new IdToken.Payload()
+        .setSubject("testUser");
+    IdToken idToken = new IdToken(
+        new JsonWebSignature.Header(),
+        payload,
+        new byte[0], new byte[0]);
+
+    FirebaseToken firebaseToken = new FirebaseToken(idToken);
+    assertEquals("testUser", firebaseToken.getUid());
+    assertNull(firebaseToken.getIssuer());
+    assertNull(firebaseToken.getEmail());
+    assertFalse(firebaseToken.isEmailVerified());
+    assertNull(firebaseToken.getName());
+    assertNull(firebaseToken.getPicture());
+    assertEquals(1, firebaseToken.getClaims().size());
+  }
+
+  private IdToken getFirebaseIdToken(String subject) {
+    return new IdToken(
+        new JsonWebSignature.Header(),
+        new IdToken.Payload().setSubject(subject),
         new byte[0], new byte[0]);
   }
 
@@ -407,16 +455,16 @@ public class FirebaseAuthTest {
 
     private String lastTokenString;
 
-    private FirebaseIdToken result;
+    private IdToken result;
     private FirebaseAuthException exception;
 
-    private MockTokenVerifier(FirebaseIdToken result, FirebaseAuthException exception) {
+    private MockTokenVerifier(IdToken result, FirebaseAuthException exception) {
       this.result = result;
       this.exception = exception;
     }
 
     @Override
-    public FirebaseIdToken verifyToken(String token) throws FirebaseAuthException {
+    public IdToken verifyToken(String token) throws FirebaseAuthException {
       lastTokenString = token;
       if (exception != null) {
         throw exception;
@@ -428,7 +476,7 @@ public class FirebaseAuthTest {
       return this.lastTokenString;
     }
 
-    static MockTokenVerifier fromResult(FirebaseIdToken result) {
+    static MockTokenVerifier fromResult(IdToken result) {
       return new MockTokenVerifier(result, null);
     }
 
