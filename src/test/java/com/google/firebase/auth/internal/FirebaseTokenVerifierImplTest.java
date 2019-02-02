@@ -215,9 +215,9 @@ public class FirebaseTokenVerifierImplTest {
   @Test
   public void testMalformedToken() throws Exception {
     thrown.expectMessage(
-        "Decoding Firebase test token failed. Make sure you passed a string that "
-            + "represents a complete and valid JWT. See https://test.doc.url for details on "
-            + "how to retrieve a test token.");
+        "Failed to parse Firebase test token. Make sure you passed a string that represents a "
+            + "complete and valid JWT. See https://test.doc.url for details on how to retrieve "
+            + "a test token.");
     tokenVerifier.verifyToken("not.a.jwt");
   }
 

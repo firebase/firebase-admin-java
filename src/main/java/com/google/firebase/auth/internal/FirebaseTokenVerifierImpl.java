@@ -24,7 +24,6 @@ import com.google.api.client.auth.openidconnect.IdToken.Payload;
 import com.google.api.client.auth.openidconnect.IdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.json.webtoken.JsonWebSignature.Header;
 import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Joiner;
@@ -104,17 +103,10 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
 
   private IdToken parse(String token) throws FirebaseAuthException {
     try {
-      JsonWebSignature jws = JsonWebSignature.parser(jsonFactory)
-          .setPayloadClass(IdToken.Payload.class)
-          .parse(token);
-      return new IdToken(
-          jws.getHeader(),
-          (IdToken.Payload) jws.getPayload(),
-          jws.getSignatureBytes(),
-          jws.getSignedContentBytes());
+      return IdToken.parse(jsonFactory, token);
     } catch (IOException e) {
       String detailedError = String.format(
-          "Decoding Firebase %s failed. Make sure you passed a string that represents a complete "
+          "Failed to parse Firebase %s. Make sure you passed a string that represents a complete "
               + "and valid JWT. See %s for details on how to retrieve %s.",
           shortName,
           docUrl,

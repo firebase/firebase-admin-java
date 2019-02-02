@@ -16,11 +16,10 @@
 
 package com.google.firebase.auth;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -29,6 +28,7 @@ import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.core.ApiFuture;
 import com.google.common.base.Defaults;
+import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -45,10 +45,10 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 public class FirebaseAuthTest {
@@ -57,11 +57,6 @@ public class FirebaseAuthTest {
       .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
       .build();
 
-  @Before
-  public void setup() {
-    FirebaseApp.initializeApp(firebaseOptions);
-  }
-
   @After
   public void cleanup() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
@@ -69,6 +64,7 @@ public class FirebaseAuthTest {
 
   @Test
   public void testGetInstance() {
+    FirebaseApp.initializeApp(firebaseOptions);
     FirebaseAuth defaultAuth = FirebaseAuth.getInstance();
     assertNotNull(defaultAuth);
     assertSame(defaultAuth, FirebaseAuth.getInstance());
@@ -170,6 +166,22 @@ public class FirebaseAuthTest {
   @Test(expected = IllegalArgumentException.class)
   public void testAuthExceptionEmptyErrorCode() {
     new FirebaseAuthException("", "test");
+  }
+
+  @Test
+  public void testIdTokenVerifierInitializedOnDemand() throws Exception {
+    FirebaseTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
+        getFirebaseIdToken("idTokenUser"));
+    CountingSupplier<FirebaseTokenVerifier> countingSupplier = new CountingSupplier<>(
+        Suppliers.ofInstance(tokenVerifier));
+
+    FirebaseAuth auth = getAuthForIdTokenVerification(countingSupplier);
+    assertEquals(0, countingSupplier.getCount());
+
+    auth.verifyIdToken("idToken");
+    auth.verifyIdToken("idToken");
+
+    assertEquals(1, countingSupplier.getCount());
   }
 
   @Test
@@ -276,6 +288,22 @@ public class FirebaseAuthTest {
   }
 
   @Test
+  public void testSessionCookieVerifierInitializedOnDemand() throws Exception {
+    FirebaseTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
+        getFirebaseIdToken("cookieUser"));
+    CountingSupplier<FirebaseTokenVerifier> countingSupplier = new CountingSupplier<>(
+        Suppliers.ofInstance(tokenVerifier));
+    FirebaseAuth auth = getAuthForSessionCookieVerification(countingSupplier);
+
+    assertEquals(0, countingSupplier.getCount());
+
+    auth.verifySessionCookie("sessionCookie");
+    auth.verifySessionCookie("sessionCookie");
+
+    assertEquals(1, countingSupplier.getCount());
+  }
+
+  @Test
   public void testVerifySessionCookieWithNull() {
     MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(null);
     tokenVerifier.lastTokenString = "_init_";
@@ -378,52 +406,6 @@ public class FirebaseAuthTest {
     }
   }
 
-  @Test
-  public void testFirebaseToken() {
-    IdToken.Payload payload = new IdToken.Payload()
-        .setSubject("testUser")
-        .setIssuer("test-project-id")
-        .set("email", "test@example.com")
-        .set("email_verified", true)
-        .set("name", "Test User")
-        .set("picture", "https://picture.url")
-        .set("custom", "claim");
-    IdToken idToken = new IdToken(
-        new JsonWebSignature.Header(),
-        payload,
-        new byte[0], new byte[0]);
-
-    FirebaseToken firebaseToken = new FirebaseToken(idToken);
-
-    assertEquals("testUser", firebaseToken.getUid());
-    assertEquals("test-project-id", firebaseToken.getIssuer());
-    assertEquals("test@example.com", firebaseToken.getEmail());
-    assertTrue(firebaseToken.isEmailVerified());
-    assertEquals("Test User", firebaseToken.getName());
-    assertEquals("https://picture.url", firebaseToken.getPicture());
-    assertEquals("claim", firebaseToken.getClaims().get("custom"));
-    assertEquals(7, firebaseToken.getClaims().size());
-  }
-
-  @Test
-  public void testFirebaseTokenMinimal() {
-    IdToken.Payload payload = new IdToken.Payload()
-        .setSubject("testUser");
-    IdToken idToken = new IdToken(
-        new JsonWebSignature.Header(),
-        payload,
-        new byte[0], new byte[0]);
-
-    FirebaseToken firebaseToken = new FirebaseToken(idToken);
-    assertEquals("testUser", firebaseToken.getUid());
-    assertNull(firebaseToken.getIssuer());
-    assertNull(firebaseToken.getEmail());
-    assertFalse(firebaseToken.isEmailVerified());
-    assertNull(firebaseToken.getName());
-    assertNull(firebaseToken.getPicture());
-    assertEquals(1, firebaseToken.getClaims().size());
-  }
-
   private IdToken getFirebaseIdToken(String subject) {
     return new IdToken(
         new JsonWebSignature.Header(),
@@ -432,22 +414,32 @@ public class FirebaseAuthTest {
   }
 
   private FirebaseAuth getAuthForIdTokenVerification(FirebaseTokenVerifier tokenVerifier) {
-    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testInitAfterAppDelete");
+    return getAuthForIdTokenVerification(Suppliers.ofInstance(tokenVerifier));
+  }
+
+  private FirebaseAuth getAuthForIdTokenVerification(
+      Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
+    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions);
     return new FirebaseAuth.Builder()
         .setFirebaseApp(app)
         .setTokenFactory(Suppliers.<FirebaseTokenFactory>ofInstance(null))
-        .setIdTokenVerifier(Suppliers.ofInstance(tokenVerifier))
+        .setIdTokenVerifier(tokenVerifierSupplier)
         .setCookieVerifier(Suppliers.<FirebaseTokenVerifier>ofInstance(null))
         .build();
   }
 
   private FirebaseAuth getAuthForSessionCookieVerification(FirebaseTokenVerifier tokenVerifier) {
-    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testInitAfterAppDelete");
+    return getAuthForSessionCookieVerification(Suppliers.ofInstance(tokenVerifier));
+  }
+
+  private FirebaseAuth getAuthForSessionCookieVerification(
+      Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
+    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions);
     return new FirebaseAuth.Builder()
         .setFirebaseApp(app)
         .setTokenFactory(Suppliers.<FirebaseTokenFactory>ofInstance(null))
         .setIdTokenVerifier(Suppliers.<FirebaseTokenVerifier>ofInstance(null))
-        .setCookieVerifier(Suppliers.ofInstance(tokenVerifier))
+        .setCookieVerifier(tokenVerifierSupplier)
         .build();
   }
 
@@ -482,6 +474,26 @@ public class FirebaseAuthTest {
 
     static MockTokenVerifier fromException(FirebaseAuthException exception) {
       return new MockTokenVerifier(null, exception);
+    }
+  }
+
+  private static class CountingSupplier<T> implements Supplier<T> {
+
+    private final AtomicInteger counter = new AtomicInteger(0);
+    private final Supplier<T> supplier;
+
+    CountingSupplier(Supplier<T> supplier) {
+      this.supplier = checkNotNull(supplier);
+    }
+
+    @Override
+    public T get() {
+      counter.incrementAndGet();
+      return supplier.get();
+    }
+
+    int getCount() {
+      return counter.get();
     }
   }
 }
