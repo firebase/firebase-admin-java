@@ -31,7 +31,7 @@ import java.util.Map;
 /**
  * A set of {@link CryptoSigner} implementations and utilities for interacting with them.
  */
-class CryptoSigners {
+public class CryptoSigners {
 
   private static final String METADATA_SERVICE_URL =
       "http://metadata/computeMetadata/v1/instance/service-accounts/default/email";
@@ -128,7 +128,7 @@ class CryptoSigners {
    * Initializes a {@link CryptoSigner} instance for the given Firebase app. Follows the protocol
    * documented at go/firebase-admin-sign.
    */
-  static CryptoSigner getCryptoSigner(FirebaseApp firebaseApp) throws IOException {
+  public static CryptoSigner getCryptoSigner(FirebaseApp firebaseApp) throws IOException {
     GoogleCredentials credentials = ImplFirebaseTrampolines.getCredentials(firebaseApp);
 
     // If the SDK was initialized with a service account, use it to sign bytes.

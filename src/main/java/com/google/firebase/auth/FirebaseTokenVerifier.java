@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth.internal;
+package com.google.firebase.auth;
 
-import com.google.api.client.auth.openidconnect.IdToken;
-import com.google.firebase.auth.FirebaseAuthException;
 
-public interface FirebaseTokenVerifier {
+import com.google.firebase.internal.NonNull;
 
-  IdToken verifyToken(String token) throws FirebaseAuthException;
+interface FirebaseTokenVerifier {
+
+  FirebaseToken verifyToken(@NonNull String token) throws FirebaseAuthException;
 
 }

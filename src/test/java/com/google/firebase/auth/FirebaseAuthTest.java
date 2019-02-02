@@ -34,7 +34,6 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
-import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.lang.reflect.InvocationTargetException;
@@ -447,16 +446,16 @@ public class FirebaseAuthTest {
 
     private String lastTokenString;
 
-    private IdToken result;
+    private FirebaseToken result;
     private FirebaseAuthException exception;
 
     private MockTokenVerifier(IdToken result, FirebaseAuthException exception) {
-      this.result = result;
+      this.result = result != null ? new FirebaseToken(result) : null;
       this.exception = exception;
     }
 
     @Override
-    public IdToken verifyToken(String token) throws FirebaseAuthException {
+    public FirebaseToken verifyToken(String token) throws FirebaseAuthException {
       lastTokenString = token;
       if (exception != null) {
         throw exception;

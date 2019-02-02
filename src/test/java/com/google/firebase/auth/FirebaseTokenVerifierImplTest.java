@@ -1,8 +1,8 @@
 /*
- * Copyright 2019 Google Inc.
+ * Copyright  2019 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ *  you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth.internal;
+package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.auth.openidconnect.IdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.http.HttpTransport;
@@ -30,7 +29,6 @@ import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -74,13 +72,10 @@ public class FirebaseTokenVerifierImplTest {
   public void testVerifyToken() throws Exception {
     String token = tokenFactory.createToken();
 
-    IdToken idToken = tokenVerifier.verifyToken(token);
+    FirebaseToken firebaseToken = tokenVerifier.verifyToken(token);
 
-    IdToken.Payload payload = idToken.getPayload();
-    assertTrue(payload.getAudienceAsList().contains(TestTokenFactory.PROJECT_ID));
-    assertEquals(TEST_TOKEN_ISSUER, payload.getIssuer());
-    assertEquals(TestTokenFactory.UID, payload.getSubject());
-    assertEquals(TestTokenFactory.PROJECT_ID, payload.getAudience());
+    assertEquals(TEST_TOKEN_ISSUER, firebaseToken.getIssuer());
+    assertEquals(TestTokenFactory.UID, firebaseToken.getUid());
   }
 
   @Test

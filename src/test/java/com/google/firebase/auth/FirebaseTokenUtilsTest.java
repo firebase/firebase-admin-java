@@ -1,8 +1,8 @@
 /*
- * Copyright 2019 Google Inc.
+ * Copyright  2019 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ *  you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth.internal;
+package com.google.firebase.auth;
 
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;

@@ -1,8 +1,8 @@
 /*
- * Copyright 2019 Google Inc.
+ * Copyright  2019 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ *  you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth.internal;
+package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -28,11 +28,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.auth.internal.CryptoSigners;
+import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.internal.NonNull;
 
 import java.io.IOException;
 
-public final class FirebaseTokenUtils {
+final class FirebaseTokenUtils {
 
   private static final String ID_TOKEN_CERT_URL =
       "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";

@@ -42,7 +42,7 @@ public class FirebaseTokenFactory {
   private final Clock clock;
   private final CryptoSigner signer;
 
-  FirebaseTokenFactory(JsonFactory jsonFactory, Clock clock, CryptoSigner signer) {
+  public FirebaseTokenFactory(JsonFactory jsonFactory, Clock clock, CryptoSigner signer) {
     this.jsonFactory = checkNotNull(jsonFactory);
     this.clock = checkNotNull(clock);
     this.signer = checkNotNull(signer);

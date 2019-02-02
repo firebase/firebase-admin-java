@@ -1,8 +1,8 @@
 /*
- * Copyright 2019 Google Inc.
+ * Copyright  2019 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
+ *  you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth.internal;
+package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -28,7 +28,6 @@ import com.google.api.client.json.webtoken.JsonWebSignature.Header;
 import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.firebase.auth.FirebaseAuthException;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.security.GeneralSecurityException;
@@ -64,9 +63,11 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
   }
 
   @Override
-  public IdToken verifyToken(String token) throws FirebaseAuthException {
-    IdToken firebaseToken = parse(token);
-    return checkContentsAndSignature(firebaseToken);
+  public FirebaseToken verifyToken(String token) throws FirebaseAuthException {
+    IdToken idToken = parse(token);
+    checkContents(idToken);
+    checkSignature(idToken);
+    return new FirebaseToken(idToken);
   }
 
   GooglePublicKeysManager getPublicKeysManager() {
@@ -113,12 +114,6 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
           articledShortName);
       throw new FirebaseAuthException(ERROR_INVALID_CREDENTIAL, detailedError, e);
     }
-  }
-
-  private IdToken checkContentsAndSignature(IdToken idToken) throws FirebaseAuthException {
-    checkContents(idToken);
-    checkSignature(idToken);
-    return idToken;
   }
 
   private void checkContents(final IdToken token) throws FirebaseAuthException {
