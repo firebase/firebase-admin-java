@@ -18,12 +18,16 @@ package com.google.firebase.auth;
 
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.auth.openidconnect.IdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.testing.http.FixedClock;
 import com.google.api.client.util.Clock;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -114,6 +118,47 @@ public class FirebaseTokenUtilsTest {
     FirebaseTokenUtils.createSessionCookieVerifier(app, CLOCK);
   }
 
+  @Test
+  public void testFirebaseToken() {
+    IdToken.Payload payload = new IdToken.Payload()
+        .setSubject("testUser")
+        .setIssuer("test-project-id")
+        .set("email", "test@example.com")
+        .set("email_verified", true)
+        .set("name", "Test User")
+        .set("picture", "https://picture.url")
+        .set("custom", "claim");
+    IdToken idToken = getIdToken(payload);
+
+    FirebaseToken firebaseToken = FirebaseTokenUtils.newFirebaseToken(idToken);
+
+    assertEquals("testUser", firebaseToken.getUid());
+    assertEquals("test-project-id", firebaseToken.getIssuer());
+    assertEquals("test@example.com", firebaseToken.getEmail());
+    assertTrue(firebaseToken.isEmailVerified());
+    assertEquals("Test User", firebaseToken.getName());
+    assertEquals("https://picture.url", firebaseToken.getPicture());
+    assertEquals("claim", firebaseToken.getClaims().get("custom"));
+    assertEquals(7, firebaseToken.getClaims().size());
+  }
+
+  @Test
+  public void testFirebaseTokenMinimal() {
+    IdToken.Payload payload = new IdToken.Payload()
+        .setSubject("testUser");
+    IdToken idToken = getIdToken(payload);
+
+    FirebaseToken firebaseToken = FirebaseTokenUtils.newFirebaseToken(idToken);
+
+    assertEquals("testUser", firebaseToken.getUid());
+    assertNull(firebaseToken.getIssuer());
+    assertNull(firebaseToken.getEmail());
+    assertFalse(firebaseToken.isEmailVerified());
+    assertNull(firebaseToken.getName());
+    assertNull(firebaseToken.getPicture());
+    assertEquals(1, firebaseToken.getClaims().size());
+  }
+
   private void verifyPublicKeysManager(GooglePublicKeysManager publicKeysManager, String certUrl) {
     assertNotNull(publicKeysManager);
     assertEquals(certUrl, publicKeysManager.getPublicCertsEncodedUrl());
@@ -126,5 +171,12 @@ public class FirebaseTokenUtilsTest {
     assertEquals(issuer, jwtVerifier.getIssuer());
     assertEquals(TEST_PROJECT_ID, Iterables.getOnlyElement(jwtVerifier.getAudience()));
     assertSame(CLOCK, jwtVerifier.getClock());
+  }
+
+  private IdToken getIdToken(IdToken.Payload payload) {
+    return new IdToken(
+        new JsonWebSignature.Header(),
+        payload,
+        new byte[0], new byte[0]);
   }
 }

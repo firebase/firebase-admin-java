@@ -21,25 +21,22 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import com.google.api.client.auth.openidconnect.IdToken;
-import com.google.api.client.json.webtoken.JsonWebSignature;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 public class FirebaseTokenTest {
 
   @Test
   public void testFirebaseToken() {
-    IdToken.Payload payload = new IdToken.Payload()
-        .setSubject("testUser")
+    FirebaseToken firebaseToken = new FirebaseToken.Builder()
+        .setUid("testUser")
         .setIssuer("test-project-id")
-        .set("email", "test@example.com")
-        .set("email_verified", true)
-        .set("name", "Test User")
-        .set("picture", "https://picture.url")
-        .set("custom", "claim");
-    IdToken idToken = getIdToken(payload);
-
-    FirebaseToken firebaseToken = new FirebaseToken(idToken);
+        .setEmail("test@example.com")
+        .setEmailVerified(true)
+        .setName("Test User")
+        .setPicture("https://picture.url")
+        .setClaims(ImmutableMap.<String, Object>of("custom", "claim"))
+        .build();
 
     assertEquals("testUser", firebaseToken.getUid());
     assertEquals("test-project-id", firebaseToken.getIssuer());
@@ -48,16 +45,14 @@ public class FirebaseTokenTest {
     assertEquals("Test User", firebaseToken.getName());
     assertEquals("https://picture.url", firebaseToken.getPicture());
     assertEquals("claim", firebaseToken.getClaims().get("custom"));
-    assertEquals(7, firebaseToken.getClaims().size());
+    assertEquals(1, firebaseToken.getClaims().size());
   }
 
   @Test
   public void testFirebaseTokenMinimal() {
-    IdToken.Payload payload = new IdToken.Payload()
-        .setSubject("testUser");
-    IdToken idToken = getIdToken(payload);
-
-    FirebaseToken firebaseToken = new FirebaseToken(idToken);
+    FirebaseToken firebaseToken = new FirebaseToken.Builder()
+        .setUid("testUser")
+        .build();
 
     assertEquals("testUser", firebaseToken.getUid());
     assertNull(firebaseToken.getIssuer());
@@ -65,13 +60,16 @@ public class FirebaseTokenTest {
     assertFalse(firebaseToken.isEmailVerified());
     assertNull(firebaseToken.getName());
     assertNull(firebaseToken.getPicture());
-    assertEquals(1, firebaseToken.getClaims().size());
+    assertEquals(0, firebaseToken.getClaims().size());
   }
 
-  private IdToken getIdToken(IdToken.Payload payload) {
-    return new IdToken(
-          new JsonWebSignature.Header(),
-          payload,
-          new byte[0], new byte[0]);
+  @Test(expected = IllegalArgumentException.class)
+  public void testFirebaseTokenNoUid() {
+    new FirebaseToken.Builder().build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testFirebaseTokenEmptyUid() {
+    new FirebaseToken.Builder().setUid("").build();
   }
 }

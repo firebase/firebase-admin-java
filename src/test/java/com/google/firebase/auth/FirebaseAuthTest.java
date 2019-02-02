@@ -24,8 +24,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.auth.openidconnect.IdToken;
-import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.core.ApiFuture;
 import com.google.common.base.Defaults;
 import com.google.common.base.Supplier;
@@ -170,7 +168,7 @@ public class FirebaseAuthTest {
   @Test
   public void testIdTokenVerifierInitializedOnDemand() throws Exception {
     FirebaseTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
-        getFirebaseIdToken("idTokenUser"));
+        getFirebaseToken("idTokenUser"));
     CountingSupplier<FirebaseTokenVerifier> countingSupplier = new CountingSupplier<>(
         Suppliers.ofInstance(tokenVerifier));
 
@@ -215,7 +213,7 @@ public class FirebaseAuthTest {
   @Test
   public void testVerifyIdToken() throws Exception {
     MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
-        getFirebaseIdToken("testUser"));
+        getFirebaseToken("testUser"));
     FirebaseAuth auth = getAuthForIdTokenVerification(tokenVerifier);
 
     FirebaseToken firebaseToken = auth.verifyIdToken("idtoken");
@@ -243,7 +241,7 @@ public class FirebaseAuthTest {
   @Test
   public void testVerifyIdTokenAsync() throws Exception {
     MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
-        getFirebaseIdToken("testUser"));
+        getFirebaseToken("testUser"));
     FirebaseAuth auth = getAuthForIdTokenVerification(tokenVerifier);
 
     FirebaseToken firebaseToken = auth.verifyIdTokenAsync("idtoken").get();
@@ -289,7 +287,7 @@ public class FirebaseAuthTest {
   @Test
   public void testSessionCookieVerifierInitializedOnDemand() throws Exception {
     FirebaseTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
-        getFirebaseIdToken("cookieUser"));
+        getFirebaseToken("cookieUser"));
     CountingSupplier<FirebaseTokenVerifier> countingSupplier = new CountingSupplier<>(
         Suppliers.ofInstance(tokenVerifier));
     FirebaseAuth auth = getAuthForSessionCookieVerification(countingSupplier);
@@ -334,7 +332,7 @@ public class FirebaseAuthTest {
   @Test
   public void testVerifySessionCookie() throws Exception {
     MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
-        getFirebaseIdToken("testUser"));
+        getFirebaseToken("testUser"));
     FirebaseAuth auth = getAuthForSessionCookieVerification(tokenVerifier);
 
     FirebaseToken firebaseToken = auth.verifySessionCookie("idtoken");
@@ -362,7 +360,7 @@ public class FirebaseAuthTest {
   @Test
   public void testVerifySessionCookieAsync() throws Exception {
     MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
-        getFirebaseIdToken("testUser"));
+        getFirebaseToken("testUser"));
     FirebaseAuth auth = getAuthForSessionCookieVerification(tokenVerifier);
 
     FirebaseToken firebaseToken = auth.verifySessionCookieAsync("idtoken").get();
@@ -405,11 +403,11 @@ public class FirebaseAuthTest {
     }
   }
 
-  private IdToken getFirebaseIdToken(String subject) {
-    return new IdToken(
-        new JsonWebSignature.Header(),
-        new IdToken.Payload().setSubject(subject),
-        new byte[0], new byte[0]);
+  private FirebaseToken getFirebaseToken(String subject) {
+    return new FirebaseToken.Builder()
+        .setUid(subject)
+        .setIssuer("test-issuer")
+        .build();
   }
 
   private FirebaseAuth getAuthForIdTokenVerification(FirebaseTokenVerifier tokenVerifier) {
@@ -449,8 +447,8 @@ public class FirebaseAuthTest {
     private FirebaseToken result;
     private FirebaseAuthException exception;
 
-    private MockTokenVerifier(IdToken result, FirebaseAuthException exception) {
-      this.result = result != null ? new FirebaseToken(result) : null;
+    private MockTokenVerifier(FirebaseToken result, FirebaseAuthException exception) {
+      this.result = result;
       this.exception = exception;
     }
 
@@ -467,7 +465,7 @@ public class FirebaseAuthTest {
       return this.lastTokenString;
     }
 
-    static MockTokenVerifier fromResult(IdToken result) {
+    static MockTokenVerifier fromResult(FirebaseToken result) {
       return new MockTokenVerifier(result, null);
     }
 

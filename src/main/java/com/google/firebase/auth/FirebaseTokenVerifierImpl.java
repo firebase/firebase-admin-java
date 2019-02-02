@@ -67,7 +67,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     IdToken idToken = parse(token);
     checkContents(idToken);
     checkSignature(idToken);
-    return new FirebaseToken(idToken);
+    return FirebaseTokenUtils.newFirebaseToken(idToken);
   }
 
   GooglePublicKeysManager getPublicKeysManager() {

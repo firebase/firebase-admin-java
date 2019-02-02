@@ -18,6 +18,7 @@ package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.auth.openidconnect.IdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.json.JsonFactory;
@@ -30,7 +31,6 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.CryptoSigners;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
-import com.google.firebase.internal.NonNull;
 
 import java.io.IOException;
 
@@ -48,8 +48,7 @@ final class FirebaseTokenUtils {
 
   private FirebaseTokenUtils() { }
 
-  public static FirebaseTokenFactory createTokenFactory(
-      @NonNull FirebaseApp firebaseApp, @NonNull Clock clock) {
+  static FirebaseTokenFactory createTokenFactory(FirebaseApp firebaseApp, Clock clock) {
     try {
       return new FirebaseTokenFactory(
           firebaseApp.getOptions().getJsonFactory(),
@@ -65,9 +64,7 @@ final class FirebaseTokenUtils {
     }
   }
 
-  @NonNull
-  public static FirebaseTokenVerifierImpl createIdTokenVerifier(
-      @NonNull FirebaseApp app, @NonNull Clock clock) {
+  static FirebaseTokenVerifierImpl createIdTokenVerifier(FirebaseApp app, Clock clock) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkState(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifyIdToken()");
@@ -85,9 +82,7 @@ final class FirebaseTokenUtils {
         .build();
   }
 
-  @NonNull
-  public static FirebaseTokenVerifierImpl createSessionCookieVerifier(
-      @NonNull FirebaseApp app, @NonNull Clock clock) {
+  static FirebaseTokenVerifierImpl createSessionCookieVerifier(FirebaseApp app, Clock clock) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkState(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifySessionCookie()");
@@ -102,6 +97,20 @@ final class FirebaseTokenUtils {
         .setShortName("session cookie")
         .setMethod("verifySessionCookie()")
         .setDocUrl("https://firebase.google.com/docs/auth/admin/manage-cookies")
+        .build();
+  }
+
+  static FirebaseToken newFirebaseToken(IdToken idToken) {
+    IdToken.Payload payload = idToken.getPayload();
+    return new FirebaseToken.Builder()
+        .setUid(payload.getSubject())
+        .setIssuer(payload.getIssuer())
+        .setName((String) payload.get("name"))
+        .setEmail((String) payload.get("email"))
+        .setEmailVerified(payload.containsKey("email_verified")
+            && (Boolean) payload.get("email_verified"))
+        .setPicture((String) payload.get("picture"))
+        .setClaims(payload)
         .build();
   }
 
