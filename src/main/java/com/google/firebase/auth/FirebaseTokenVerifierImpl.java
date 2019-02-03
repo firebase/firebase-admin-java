@@ -162,13 +162,6 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     }
   }
 
-  private String getVerifyTokenMessage() {
-    return String.format(
-        "See %s for details on how to retrieve %s.",
-        docUrl,
-        articledShortName);
-  }
-
   private String getErrorIfContentInvalid(final IdToken idToken) {
     final Header header = idToken.getHeader();
     final Payload payload = idToken.getPayload();
@@ -218,11 +211,24 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     return errorMessage;
   }
 
-  private String getProjectIdMatchMessage() {
+  private String getVerifyTokenMessage() {
     return String.format(
-        "Make sure the %s comes from the same Firebase project as the service account used to "
-          + "authenticate this SDK.",
-        shortName);
+        "See %s for details on how to retrieve %s.",
+        docUrl,
+        articledShortName);
+  }
+
+  /**
+   * Verifies the cryptographic signature on the FirebaseToken. Can block on a web request to fetch
+   * the keys if they have expired.
+   */
+  private boolean isSignatureValid(IdToken token) throws GeneralSecurityException, IOException {
+    for (PublicKey key : publicKeysManager.getPublicKeys()) {
+      if (token.verifySignature(key)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private String getErrorForTokenWithoutKid(IdToken.Header header, IdToken.Payload payload) {
@@ -238,6 +244,13 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
 
   private String joinWithComma(Iterable<String> strings) {
     return Joiner.on(',').join(strings);
+  }
+
+  private String getProjectIdMatchMessage() {
+    return String.format(
+        "Make sure the %s comes from the same Firebase project as the service account used to "
+            + "authenticate this SDK.",
+        shortName);
   }
 
   private boolean verifyTimestamps(IdToken token) {
@@ -259,19 +272,6 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     Object dataField = payload.get("d");
     if (dataField instanceof ArrayMap) {
       return ((ArrayMap) dataField).get("uid") != null;
-    }
-    return false;
-  }
-
-  /**
-   * Verifies the cryptographic signature on the FirebaseToken. Can block on a web request to fetch
-   * the keys if they have expired.
-   */
-  private boolean isSignatureValid(IdToken token) throws GeneralSecurityException, IOException {
-    for (PublicKey key : publicKeysManager.getPublicKeys()) {
-      if (token.verifySignature(key)) {
-        return true;
-      }
     }
     return false;
   }

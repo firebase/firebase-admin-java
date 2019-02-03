@@ -72,9 +72,9 @@ public class FirebaseAuth {
 
   private FirebaseAuth(Builder builder) {
     this.firebaseApp = checkNotNull(builder.firebaseApp);
-    this.tokenFactory = threadSafeMemoize(checkNotNull(builder.tokenFactory));
-    this.idTokenVerifier = threadSafeMemoize(checkNotNull(builder.idTokenVerifier));
-    this.cookieVerifier = threadSafeMemoize(checkNotNull(builder.cookieVerifier));
+    this.tokenFactory = threadSafeMemoize(builder.tokenFactory);
+    this.idTokenVerifier = threadSafeMemoize(builder.idTokenVerifier);
+    this.cookieVerifier = threadSafeMemoize(builder.cookieVerifier);
     this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
     this.userManager = new FirebaseUserManager(firebaseApp);
   }
@@ -1089,6 +1089,7 @@ public class FirebaseAuth {
   }
 
   private <T> Supplier<T> threadSafeMemoize(final Supplier<T> supplier) {
+    checkNotNull(supplier);
     return Suppliers.memoize(new Supplier<T>() {
       @Override
       public T get() {
