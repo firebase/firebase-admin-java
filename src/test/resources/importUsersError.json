@@ -1,6 +1,6 @@
 {
   "error": [
-    {"index": 0, "message": "Some error occurred in user1"},
-    {"index": 2, "message": "Another error occurred in user3"}
+    {"index": 0, "errorMessage": "Some error occurred in user1"},
+    {"index": 2, "errorMessage": "Another error occurred in user3"}
   ]
 }
