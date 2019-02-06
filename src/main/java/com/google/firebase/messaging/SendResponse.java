@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.base.Strings;
 import com.google.common.primitives.Booleans;
+import com.google.firebase.internal.Nullable;
 
 public final class SendResponse {
 
@@ -33,10 +34,12 @@ public final class SendResponse {
     this.exception = exception;
   }
 
+  @Nullable
   public String getMessageId() {
     return this.messageId;
   }
 
+  @Nullable
   public FirebaseMessagingException getException() {
     return this.exception;
   }

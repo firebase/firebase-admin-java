@@ -142,8 +142,11 @@ public class FirebaseMessaging {
    * send the entire list as a single RPC call.
    *
    * <p>Compared to the {@link #send(Message)} method, this method is a significantly more efficient
-   * way to send multiple messages. It also helps avoid potential RPC quota issues that may
+   * way to send multiple messages. It also helps avoid potential RPC quota issues that sometimes
    * arise when making too many invocations of {@link #send(Message)}.
+   *
+   * <p>The responses list obtained by calling {@link BatchResponse#getResponses()} on the return
+   * value corresponds to the order of input messages.
    *
    * @param messages A non-null, non-empty list containing up to 1000 messages.
    * @return A {@link BatchResponse} indicating the result of the operation.
@@ -171,19 +174,19 @@ public class FirebaseMessaging {
   }
 
   public BatchResponse sendMulticast(
-      MulticastMessage batch, boolean dryRun) throws FirebaseMessagingException {
-    checkNotNull(batch, "batch message must not be null");
-    return sendAll(batch.getMessageList(), dryRun);
+      MulticastMessage message, boolean dryRun) throws FirebaseMessagingException {
+    checkNotNull(message, "multicast message must not be null");
+    return sendAll(message.getMessageList(), dryRun);
   }
 
 
-  public ApiFuture<BatchResponse> sendMulticastAsync(MulticastMessage batch) {
-    return sendMulticastAsync(batch, false);
+  public ApiFuture<BatchResponse> sendMulticastAsync(MulticastMessage message) {
+    return sendMulticastAsync(message, false);
   }
 
-  public ApiFuture<BatchResponse> sendMulticastAsync(MulticastMessage batch, boolean dryRun) {
-    checkNotNull(batch, "batch message must not be null");
-    return sendAllAsync(batch.getMessageList(), dryRun);
+  public ApiFuture<BatchResponse> sendMulticastAsync(MulticastMessage message, boolean dryRun) {
+    checkNotNull(message, "multicast message must not be null");
+    return sendAllAsync(message.getMessageList(), dryRun);
   }
 
   private CallableOperation<BatchResponse, FirebaseMessagingException> sendAllOp(

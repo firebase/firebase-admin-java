@@ -17,8 +17,14 @@
 package com.google.firebase.messaging;
 
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.internal.NonNull;
 import java.util.List;
 
+/**
+ * Response from an operation that sends FCM notifications to multiple recipients.
+ * See {@link FirebaseMessaging#sendAll(List)} and {@link
+ * FirebaseMessaging#sendMulticast(MulticastMessage)}.
+ */
 public final class BatchResponse {
 
   private final List<SendResponse> responses;
@@ -35,6 +41,7 @@ public final class BatchResponse {
     this.successCount = successCount;
   }
 
+  @NonNull
   public List<SendResponse> getResponses() {
     return responses;
   }

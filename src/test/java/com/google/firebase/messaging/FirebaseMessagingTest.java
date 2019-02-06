@@ -1045,12 +1045,12 @@ public class FirebaseMessagingTest {
     assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
   }
 
-  private void checkBatchRequest(HttpRequest request, int expected) throws IOException {
+  private void checkBatchRequest(HttpRequest request, int expectedParts) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     request.getContent().writeTo(out);
     String[] lines = out.toString().split("\n");
-    assertEquals(expected, countLinesWithPrefix(lines, "POST " + TEST_FCM_URL));
-    assertEquals(expected, countLinesWithPrefix(lines, "x-goog-api-format-version: 2"));
+    assertEquals(expectedParts, countLinesWithPrefix(lines, "POST " + TEST_FCM_URL));
+    assertEquals(expectedParts, countLinesWithPrefix(lines, "x-goog-api-format-version: 2"));
   }
 
   private int countLinesWithPrefix(String[] lines, String prefix) {

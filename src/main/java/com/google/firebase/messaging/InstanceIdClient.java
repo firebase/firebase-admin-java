@@ -38,13 +38,20 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A helper class for interacting with the Firebase Instance ID service. Implements the FCM
+ * topic management functionality.
+ */
 final class InstanceIdClient {
 
   private static final String IID_HOST = "https://iid.googleapis.com";
+
   private static final String IID_SUBSCRIBE_PATH = "iid/v1:batchAdd";
+
   private static final String IID_UNSUBSCRIBE_PATH = "iid/v1:batchRemove";
 
   private static final String INTERNAL_ERROR = "internal-error";
+
   private static final String UNKNOWN_ERROR = "unknown-error";
 
   static final Map<Integer, String> IID_ERROR_CODES =

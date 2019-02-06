@@ -46,8 +46,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A helper class for interacting with Firebase Cloud Messaging service and the Firebase Instance
- * ID service.
+ * A helper class for interacting with Firebase Cloud Messaging service.
  */
 final class FirebaseMessagingClient {
 
@@ -56,6 +55,7 @@ final class FirebaseMessagingClient {
   private static final String FCM_BATCH_URL = "https://fcm.googleapis.com/batch";
 
   private static final String INTERNAL_ERROR = "internal-error";
+
   private static final String UNKNOWN_ERROR = "unknown-error";
 
   private static final Map<String, String> FCM_ERROR_CODES =

@@ -563,7 +563,7 @@ public class MessageTest {
   }
 
   @Test
-  public void testWrapMessageForDryRun() {
+  public void testWrapForTransportDryRun() {
     Message message = Message.builder()
         .setTopic("foo")
         .build();
@@ -574,7 +574,7 @@ public class MessageTest {
   }
 
   @Test
-  public void testWrapMessage() {
+  public void testWrapForTransport() {
     Message message = Message.builder()
         .setTopic("foo")
         .build();
@@ -596,5 +596,4 @@ public class MessageTest {
     parser.parse(map);
     return map;
   }
-
 }
