@@ -54,10 +54,6 @@ final class FirebaseMessagingClient {
 
   private static final String FCM_BATCH_URL = "https://fcm.googleapis.com/batch";
 
-  private static final String INTERNAL_ERROR = "internal-error";
-
-  private static final String UNKNOWN_ERROR = "unknown-error";
-
   private static final Map<String, String> FCM_ERROR_CODES =
       ImmutableMap.<String, String>builder()
           // FCM v1 canonical error codes
@@ -68,7 +64,7 @@ final class FirebaseMessagingClient {
 
           // FCM v1 new error codes
           .put("APNS_AUTH_ERROR", "invalid-apns-credentials")
-          .put("INTERNAL", INTERNAL_ERROR)
+          .put("INTERNAL", FirebaseMessaging.INTERNAL_ERROR)
           .put("INVALID_ARGUMENT", "invalid-argument")
           .put("QUOTA_EXCEEDED", "message-rate-exceeded")
           .put("SENDER_ID_MISMATCH", "mismatched-credential")
@@ -102,7 +98,7 @@ final class FirebaseMessagingClient {
       throw createExceptionFromResponse(e);
     } catch (IOException e) {
       throw new FirebaseMessagingException(
-          INTERNAL_ERROR, "Error while calling FCM backend service", e);
+          FirebaseMessaging.INTERNAL_ERROR, "Error while calling FCM backend service", e);
     }
   }
 
@@ -114,7 +110,7 @@ final class FirebaseMessagingClient {
       throw createExceptionFromResponse(e);
     } catch (IOException e) {
       throw new FirebaseMessagingException(
-          INTERNAL_ERROR, "Error while calling FCM backend service", e);
+          FirebaseMessaging.INTERNAL_ERROR, "Error while calling FCM backend service", e);
     }
   }
 
@@ -204,7 +200,7 @@ final class FirebaseMessagingClient {
       MessagingServiceErrorResponse response, @Nullable HttpResponseException e) {
     String code = FCM_ERROR_CODES.get(response.getErrorCode());
     if (code == null) {
-      code = UNKNOWN_ERROR;
+      code = FirebaseMessaging.UNKNOWN_ERROR;
     }
 
     String msg = response.getErrorMessage();

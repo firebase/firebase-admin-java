@@ -29,10 +29,17 @@ import java.util.Map;
 /**
  * Represents a message that can be sent to multiple devices via Firebase Cloud Messaging (FCM).
  * Contains payload information as well as the list of device registration tokens to which the
- * message should be sent. A single instance may contain up to 1000 registration tokens. Instances
- * of this class are thread-safe and immutable. Use {@link MulticastMessage.Builder} to create
- * new instances. See {@link FirebaseMessaging#sendMulticast(MulticastMessage)} for details on how
- * to send the message to FCM for multicast delivery.
+ * message should be sent. A single {@code MulticastMessage} may contain up to 1000 registration
+ * tokens.
+ *
+ * <p>Instances of this class are thread-safe and immutable. Use {@link MulticastMessage.Builder}
+ * to create new instances. See {@link FirebaseMessaging#sendMulticast(MulticastMessage)} for
+ * details on how to send the message to FCM for multicast delivery.
+ *
+ * <p>This class and the associated Builder retains the order of tokens. Therefore the order of
+ * the responses list obtained by calling {@link BatchResponse#getResponses()} on the return value
+ * of {@link FirebaseMessaging#sendMulticast(MulticastMessage)} corresponds to the order in which
+ * tokens were added to the {@link MulticastMessage.Builder}.
  */
 public class MulticastMessage {
 
@@ -74,9 +81,9 @@ public class MulticastMessage {
   }
 
   /**
-   * Creates a new {@link Message.Builder}.
+   * Creates a new {@link MulticastMessage.Builder}.
    *
-   * @return A {@link Message.Builder} instance.
+   * @return A {@link MulticastMessage.Builder} instance.
    */
   public static Builder builder() {
     return new Builder();

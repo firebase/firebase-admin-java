@@ -50,16 +50,12 @@ final class InstanceIdClient {
 
   private static final String IID_UNSUBSCRIBE_PATH = "iid/v1:batchRemove";
 
-  private static final String INTERNAL_ERROR = "internal-error";
-
-  private static final String UNKNOWN_ERROR = "unknown-error";
-
   static final Map<Integer, String> IID_ERROR_CODES =
       ImmutableMap.<Integer, String>builder()
           .put(400, "invalid-argument")
           .put(401, "authentication-error")
           .put(403, "authentication-error")
-          .put(500, INTERNAL_ERROR)
+          .put(500, FirebaseMessaging.INTERNAL_ERROR)
           .put(503, "server-unavailable")
           .build();
 
@@ -81,7 +77,7 @@ final class InstanceIdClient {
       throw createExceptionFromResponse(e);
     } catch (IOException e) {
       throw new FirebaseMessagingException(
-          INTERNAL_ERROR, "Error while calling IID backend service", e);
+          FirebaseMessaging.INTERNAL_ERROR, "Error while calling IID backend service", e);
     }
   }
 
@@ -93,7 +89,7 @@ final class InstanceIdClient {
       throw createExceptionFromResponse(e);
     } catch (IOException e) {
       throw new FirebaseMessagingException(
-          INTERNAL_ERROR, "Error while calling IID backend service", e);
+          FirebaseMessaging.INTERNAL_ERROR, "Error while calling IID backend service", e);
     }
   }
 
@@ -148,7 +144,7 @@ final class InstanceIdClient {
     // Infer error code from HTTP status
     String code = IID_ERROR_CODES.get(e.getStatusCode());
     if (code == null) {
-      code = UNKNOWN_ERROR;
+      code = FirebaseMessaging.UNKNOWN_ERROR;
     }
     String msg = response.error;
     if (Strings.isNullOrEmpty(msg)) {

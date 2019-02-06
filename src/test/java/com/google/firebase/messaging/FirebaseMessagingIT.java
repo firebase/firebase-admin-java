@@ -86,8 +86,9 @@ public class FirebaseMessagingIT {
           .build());
 
     BatchResponse response = FirebaseMessaging.getInstance().sendAll(messages, true);
-    assertEquals(3, response.getSuccessCount());
-    assertEquals(0, response.getFailureCount());
+
+    assertEquals(2, response.getSuccessCount());
+    assertEquals(1, response.getFailureCount());
 
     List<SendResponse> responses = response.getResponses();
     assertEquals(3, responses.size());
@@ -112,19 +113,39 @@ public class FirebaseMessagingIT {
     for (int i = 0; i < 1000; i++) {
       messages.add(Message.builder().setTopic("foo-bar").build());
     }
+
     BatchResponse response = FirebaseMessaging.getInstance().sendAll(messages, true);
-    //assertEquals(1000, response.getSuccessCount());
+
+    assertEquals(1000, response.getSuccessCount());
+    assertEquals(0, response.getFailureCount());
+    assertEquals(1000, response.getResponses().size());
+    for (SendResponse sendResponse : response.getResponses()) {
+      assertTrue(sendResponse.isSuccessful());
+      String id = sendResponse.getMessageId();
+      assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
+      assertNull(sendResponse.getException());
+    }
   }
 
   @Test
-  public void testSendThousand2() throws Exception {
-    //List<Message> messages = new ArrayList<>();
-    for (int i = 0; i < 1000; i++) {
-      //messages.add(Message.builder().setTopic("foo-bar").build());
-      FirebaseMessaging.getInstance().send(
-          Message.builder().setTopic("foo-bar").build(), true);
+  public void testSendMulticast() throws Exception {
+    MulticastMessage multicastMessage = MulticastMessage.builder()
+        .setNotification(new Notification("Title", "Body"))
+        .addToken("not-a-token")
+        .addToken("also-not-a-token")
+        .build();
+
+    BatchResponse response = FirebaseMessaging.getInstance().sendMulticast(
+        multicastMessage, true);
+
+    assertEquals(0, response.getSuccessCount());
+    assertEquals(2, response.getFailureCount());
+    assertEquals(2, response.getResponses().size());
+    for (SendResponse sendResponse : response.getResponses()) {
+      assertFalse(sendResponse.isSuccessful());
+      assertNull(sendResponse.getMessageId());
+      assertNotNull(sendResponse.getException());
     }
-    //assertEquals(1000, response.getSuccessCount());
   }
 
   @Test

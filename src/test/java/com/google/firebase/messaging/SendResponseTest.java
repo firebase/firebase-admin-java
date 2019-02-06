@@ -55,4 +55,9 @@ public class SendResponseTest {
   public void testMessageIdCannotBeEmpty() {
     SendResponse.fromMessageId("");
   }
+
+  @Test(expected = NullPointerException.class)
+  public void testExceptionCannotBeNull() {
+    SendResponse.fromException(null);
+  }
 }
