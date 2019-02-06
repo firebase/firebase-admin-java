@@ -113,7 +113,18 @@ public class FirebaseMessagingIT {
       messages.add(Message.builder().setTopic("foo-bar").build());
     }
     BatchResponse response = FirebaseMessaging.getInstance().sendAll(messages, true);
-    assertEquals(1000, response.getSuccessCount());
+    //assertEquals(1000, response.getSuccessCount());
+  }
+
+  @Test
+  public void testSendThousand2() throws Exception {
+    //List<Message> messages = new ArrayList<>();
+    for (int i = 0; i < 1000; i++) {
+      //messages.add(Message.builder().setTopic("foo-bar").build());
+      FirebaseMessaging.getInstance().send(
+          Message.builder().setTopic("foo-bar").build(), true);
+    }
+    //assertEquals(1000, response.getSuccessCount());
   }
 
   @Test

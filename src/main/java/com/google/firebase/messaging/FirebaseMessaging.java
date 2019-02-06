@@ -138,10 +138,15 @@ public class FirebaseMessaging {
   }
 
   /**
-   * Sends all the messages in the given list as a single batch via Firebase Cloud Messaging.
+   * Sends all the messages in the given list via Firebase Cloud Messaging. Employs batching to
+   * send the entire list as a single RPC call.
    *
-   * @param messages A non-null, non-empty list of messages
-   * @return A list of {@link SendResponse} instances corresponding to the list of messages sent.
+   * <p>Compared to the {@link #send(Message)} method, this method is a significantly more efficient
+   * way to send multiple messages. It also helps avoid potential RPC quota issues that may
+   * arise when making too many invocations of {@link #send(Message)}.
+   *
+   * @param messages A non-null, non-empty list containing up to 1000 messages.
+   * @return A {@link BatchResponse} indicating the result of the operation.
    */
   public BatchResponse sendAll(
       @NonNull List<Message> messages) throws FirebaseMessagingException {
@@ -149,7 +154,7 @@ public class FirebaseMessaging {
   }
 
   public BatchResponse sendAll(
-      List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
+      @NonNull List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
     return sendAllOp(messages, dryRun).call();
   }
 

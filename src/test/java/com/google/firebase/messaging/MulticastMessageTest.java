@@ -41,7 +41,7 @@ public class MulticastMessageTest {
   private static final Notification NOTIFICATION = new Notification("title", "body");
 
   @Test
-  public void testBatchMessage() {
+  public void testMulticastMessage() {
     MulticastMessage multicastMessage = MulticastMessage.builder()
         .setAndroidConfig(ANDROID)
         .setApnsConfig(APNS)
@@ -60,15 +60,6 @@ public class MulticastMessageTest {
       Message message = messages.get(i);
       assertMessage(message, "token" + (i + 1));
     }
-  }
-
-  private void assertMessage(Message message, String expectedToken) {
-    assertSame(ANDROID, message.getAndroidConfig());
-    assertSame(APNS, message.getApnsConfig());
-    assertSame(WEBPUSH, message.getWebpushConfig());
-    assertSame(NOTIFICATION, message.getNotification());
-    assertEquals(ImmutableMap.of("key1", "value1", "key2", "value2"), message.getData());
-    assertEquals(expectedToken, message.getToken());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -98,5 +89,14 @@ public class MulticastMessageTest {
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyToken() {
     MulticastMessage.builder().addToken("").build();
+  }
+
+  private void assertMessage(Message message, String expectedToken) {
+    assertSame(ANDROID, message.getAndroidConfig());
+    assertSame(APNS, message.getApnsConfig());
+    assertSame(WEBPUSH, message.getWebpushConfig());
+    assertSame(NOTIFICATION, message.getNotification());
+    assertEquals(ImmutableMap.of("key1", "value1", "key2", "value2"), message.getData());
+    assertEquals(expectedToken, message.getToken());
   }
 }
