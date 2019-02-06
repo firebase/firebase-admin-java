@@ -45,7 +45,7 @@ final class FirebaseTokenUtils {
 
   // The default JsonFactory implementation we get from Google API client does not support parsing
   // JSON strings with control characters in text. The public key certificates we get from Google
-  // auth servers contain some control characters, and therefore we must use JsonFactory that is
+  // auth servers contain some control characters, and therefore we must use a JsonFactory that is
   // capable of parsing such text.
   static final JsonFactory UNQUOTED_CTRL_CHAR_JSON_FACTORY = new GsonFactory();
 
