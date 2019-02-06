@@ -19,6 +19,7 @@ package com.google.firebase.messaging;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.api.client.util.Key;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Booleans;
@@ -79,34 +80,42 @@ public class Message {
     this.condition = builder.condition;
   }
 
+  @VisibleForTesting
   Map<String, String> getData() {
     return data;
   }
 
+  @VisibleForTesting
   Notification getNotification() {
     return notification;
   }
 
+  @VisibleForTesting
   AndroidConfig getAndroidConfig() {
     return androidConfig;
   }
 
+  @VisibleForTesting
   WebpushConfig getWebpushConfig() {
     return webpushConfig;
   }
 
+  @VisibleForTesting
   ApnsConfig getApnsConfig() {
     return apnsConfig;
   }
 
+  @VisibleForTesting
   String getToken() {
     return token;
   }
 
+  @VisibleForTesting
   String getTopic() {
     return topic;
   }
 
+  @VisibleForTesting
   String getCondition() {
     return condition;
   }

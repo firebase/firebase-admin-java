@@ -3,7 +3,7 @@ package com.google.firebase.messaging.internal;
 import com.google.api.client.util.Key;
 
 /**
- * MessagingServiceResponse
+ * The DTO for parsing success responses from the FCM service.
  */
 public class MessagingServiceResponse {
 

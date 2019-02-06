@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * MessagingErrorResponse
+ * The DTO for parsing error responses from the FCM service.
  */
 public class MessagingServiceErrorResponse extends GenericJson {
 

@@ -23,6 +23,9 @@ import com.google.firebase.FirebaseApp;
 
 import java.io.IOException;
 
+/**
+ * A set of shared utilities for using the Google API client.
+ */
 public class ApiClientUtils {
 
   public static HttpRequestFactory newAuthorizedRequestFactory(FirebaseApp app) {
