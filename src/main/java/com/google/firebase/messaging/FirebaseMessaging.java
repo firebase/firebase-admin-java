@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.core.ApiFuture;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
@@ -48,6 +49,7 @@ public class FirebaseMessaging {
     this(app, null);
   }
 
+  @VisibleForTesting
   FirebaseMessaging(FirebaseApp app, @Nullable HttpResponseInterceptor responseInterceptor) {
     this.app = checkNotNull(app, "app must not be null");
     this.messagingClient = new FirebaseMessagingClient(app, responseInterceptor);
@@ -141,54 +143,55 @@ public class FirebaseMessaging {
    * @param messages A non-null, non-empty list of messages
    * @return A list of {@link SendResponse} instances corresponding to the list of messages sent.
    */
-  public List<SendResponse> sendBatch(
+  public BatchResponse sendAll(
       @NonNull List<Message> messages) throws FirebaseMessagingException {
-    return sendBatch(messages, false);
+    return sendAll(messages, false);
   }
 
-  public List<SendResponse> sendBatch(
-      BatchMessage batch, boolean dryRun) throws FirebaseMessagingException {
-    checkNotNull(batch, "batch message must not be null");
-    return sendBatch(batch.getMessageList(), dryRun);
-  }
-
-  public List<SendResponse> sendBatch(BatchMessage batch) throws FirebaseMessagingException {
-    return sendBatch(batch, false);
-  }
-
-  public List<SendResponse> sendBatch(
+  public BatchResponse sendAll(
       List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
-    return sendBatchOp(messages, dryRun).call();
+    return sendAllOp(messages, dryRun).call();
   }
 
-  public ApiFuture<List<SendResponse>> sendBatchAsync(BatchMessage batch) {
-    return sendBatchAsync(batch, false);
+  public ApiFuture<BatchResponse> sendAllAsync(List<Message> messages) {
+    return sendAllAsync(messages, false);
   }
 
-  public ApiFuture<List<SendResponse>> sendBatchAsync(BatchMessage batch, boolean dryRun) {
+  public ApiFuture<BatchResponse> sendAllAsync(List<Message> messages, boolean dryRun) {
+    return sendAllOp(messages, dryRun).callAsync(app);
+  }
+
+  public BatchResponse sendMulticast(MulticastMessage batch) throws FirebaseMessagingException {
+    return sendMulticast(batch, false);
+  }
+
+  public BatchResponse sendMulticast(
+      MulticastMessage batch, boolean dryRun) throws FirebaseMessagingException {
     checkNotNull(batch, "batch message must not be null");
-    return sendBatchAsync(batch.getMessageList(), dryRun);
+    return sendAll(batch.getMessageList(), dryRun);
   }
 
-  public ApiFuture<List<SendResponse>> sendBatchAsync(List<Message> messages) {
-    return sendBatchAsync(messages, false);
+
+  public ApiFuture<BatchResponse> sendMulticastAsync(MulticastMessage batch) {
+    return sendMulticastAsync(batch, false);
   }
 
-  public ApiFuture<List<SendResponse>> sendBatchAsync(List<Message> messages, boolean dryRun) {
-    return sendBatchOp(messages, dryRun).callAsync(app);
+  public ApiFuture<BatchResponse> sendMulticastAsync(MulticastMessage batch, boolean dryRun) {
+    checkNotNull(batch, "batch message must not be null");
+    return sendAllAsync(batch.getMessageList(), dryRun);
   }
 
-  private CallableOperation<List<SendResponse>, FirebaseMessagingException> sendBatchOp(
+  private CallableOperation<BatchResponse, FirebaseMessagingException> sendAllOp(
       final List<Message> messages, final boolean dryRun) {
 
     final List<Message> immutableMessages = ImmutableList.copyOf(messages);
     checkArgument(!immutableMessages.isEmpty(), "messages list must not be empty");
     checkArgument(immutableMessages.size() <= 1000,
         "messages list must not contain more than 1000 elements");
-    return new CallableOperation<List<SendResponse>,FirebaseMessagingException>() {
+    return new CallableOperation<BatchResponse,FirebaseMessagingException>() {
       @Override
-      protected List<SendResponse> execute() throws FirebaseMessagingException {
-        return messagingClient.sendBatch(messages, dryRun);
+      protected BatchResponse execute() throws FirebaseMessagingException {
+        return messagingClient.sendAll(messages, dryRun);
       }
     };
   }

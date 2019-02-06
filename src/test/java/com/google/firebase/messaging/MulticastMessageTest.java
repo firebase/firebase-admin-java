@@ -25,7 +25,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import org.junit.Test;
 
-public class BatchMessageTest {
+public class MulticastMessageTest {
 
   private static final AndroidConfig ANDROID = AndroidConfig.builder()
       .setCollapseKey("collapseKey")
@@ -42,7 +42,7 @@ public class BatchMessageTest {
 
   @Test
   public void testBatchMessage() {
-    BatchMessage batchMessage = BatchMessage.builder()
+    MulticastMessage multicastMessage = MulticastMessage.builder()
         .setAndroidConfig(ANDROID)
         .setApnsConfig(APNS)
         .setWebpushConfig(WEBPUSH)
@@ -53,7 +53,7 @@ public class BatchMessageTest {
         .addAllTokens(ImmutableList.of("token2", "token3"))
         .build();
 
-    List<Message> messages = batchMessage.getMessageList();
+    List<Message> messages = multicastMessage.getMessageList();
 
     assertEquals(3, messages.size());
     for (int i = 0; i < 3; i++) {
@@ -73,12 +73,12 @@ public class BatchMessageTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testNoTokens() {
-    BatchMessage.builder().build();
+    MulticastMessage.builder().build();
   }
 
   @Test
   public void testTooManyTokens() {
-    BatchMessage.Builder builder = BatchMessage.builder();
+    MulticastMessage.Builder builder = MulticastMessage.builder();
     for (int i = 0; i < 1001; i++) {
       builder.addToken("token" + i);
     }
@@ -92,11 +92,11 @@ public class BatchMessageTest {
 
   @Test(expected = NullPointerException.class)
   public void testNullToken() {
-    BatchMessage.builder().addToken(null).build();
+    MulticastMessage.builder().addToken(null).build();
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyToken() {
-    BatchMessage.builder().addToken("").build();
+    MulticastMessage.builder().addToken("").build();
   }
 }

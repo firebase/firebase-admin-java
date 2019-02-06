@@ -27,9 +27,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * BatchMessage
+ * MulticastMessage
  */
-public class BatchMessage {
+public class MulticastMessage {
 
   private final List<String> tokens;
   private final Map<String, String> data;
@@ -38,7 +38,7 @@ public class BatchMessage {
   private final WebpushConfig webpushConfig;
   private final ApnsConfig apnsConfig;
 
-  private BatchMessage(Builder builder) {
+  private MulticastMessage(Builder builder) {
     this.tokens = builder.tokens.build();
     checkArgument(!this.tokens.isEmpty(), "at least one token must be specified");
     checkArgument(this.tokens.size() <= 1000, "no more than 1000 tokens can be specified");
@@ -168,13 +168,13 @@ public class BatchMessage {
     }
 
     /**
-     * Creates a new {@link Message} instance from the parameters set on this builder.
+     * Creates a new {@link MulticastMessage} instance from the parameters set on this builder.
      *
-     * @return A new {@link Message} instance.
+     * @return A new {@link MulticastMessage} instance.
      * @throws IllegalArgumentException If any of the parameters set on the builder are invalid.
      */
-    public BatchMessage build() {
-      return new BatchMessage(this);
+    public MulticastMessage build() {
+      return new MulticastMessage(this);
     }
   }
 }

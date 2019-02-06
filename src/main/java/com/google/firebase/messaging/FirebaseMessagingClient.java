@@ -106,7 +106,7 @@ final class FirebaseMessagingClient {
     }
   }
 
-  List<SendResponse> sendBatch(
+  BatchResponse sendAll(
       List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
     try {
       return sendBatchRequest(messages, dryRun);
@@ -135,13 +135,13 @@ final class FirebaseMessagingClient {
     }
   }
 
-  private List<SendResponse> sendBatchRequest(
+  private BatchResponse sendBatchRequest(
       List<Message> messages, boolean dryRun) throws IOException {
 
     MessagingBatchCallback callback = new MessagingBatchCallback();
     BatchRequest batch = newBatchRequest(messages, dryRun, callback);
     batch.execute();
-    return callback.getResponses();
+    return new BatchResponse(callback.getResponses());
   }
 
   private BatchRequest newBatchRequest(

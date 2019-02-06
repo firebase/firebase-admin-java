@@ -67,7 +67,7 @@ public class FirebaseMessagingIT {
   }
 
   @Test
-  public void testSendBatch() throws Exception {
+  public void testSendAll() throws Exception {
     List<Message> messages = new ArrayList<>();
     messages.add(
         Message.builder()
@@ -85,32 +85,35 @@ public class FirebaseMessagingIT {
           .setToken("not-a-token")
           .build());
 
-    List<SendResponse> response = FirebaseMessaging.getInstance().sendBatch(messages, true);
+    BatchResponse response = FirebaseMessaging.getInstance().sendAll(messages, true);
+    assertEquals(3, response.getSuccessCount());
+    assertEquals(0, response.getFailureCount());
 
-    assertEquals(3, response.size());
-    assertTrue(response.get(0).isSuccessful());
-    String id = response.get(0).getMessageId();
+    List<SendResponse> responses = response.getResponses();
+    assertEquals(3, responses.size());
+    assertTrue(responses.get(0).isSuccessful());
+    String id = responses.get(0).getMessageId();
     assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
 
-    assertTrue(response.get(1).isSuccessful());
-    id = response.get(1).getMessageId();
+    assertTrue(responses.get(1).isSuccessful());
+    id = responses.get(1).getMessageId();
     assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
 
-    assertFalse(response.get(2).isSuccessful());
-    assertNull(response.get(2).getMessageId());
-    FirebaseMessagingException exception = response.get(2).getException();
+    assertFalse(responses.get(2).isSuccessful());
+    assertNull(responses.get(2).getMessageId());
+    FirebaseMessagingException exception = responses.get(2).getException();
     assertNotNull(exception);
     assertEquals("invalid-argument", exception.getErrorCode());
   }
 
   @Test
-  public void testLargeSendBatch() throws Exception {
+  public void testSendThousand() throws Exception {
     List<Message> messages = new ArrayList<>();
     for (int i = 0; i < 1000; i++) {
       messages.add(Message.builder().setTopic("foo-bar").build());
     }
-    List<SendResponse> response = FirebaseMessaging.getInstance().sendBatch(messages, true);
-    assertEquals(1000, response.size());
+    BatchResponse response = FirebaseMessaging.getInstance().sendAll(messages, true);
+    assertEquals(1000, response.getSuccessCount());
   }
 
   @Test

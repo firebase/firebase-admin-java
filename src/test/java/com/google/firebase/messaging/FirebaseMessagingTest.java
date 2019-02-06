@@ -355,7 +355,7 @@ public class FirebaseMessagingTest {
   public void testSendBatchWithNullBatchMessage() {
     FirebaseMessaging messaging = initDefaultMessaging();
     try {
-      messaging.sendBatchAsync((BatchMessage) null);
+      messaging.sendMulticastAsync(null);
       fail("No error thrown for null batch message");
     } catch (NullPointerException expected) {
       // expected
@@ -366,7 +366,7 @@ public class FirebaseMessagingTest {
   public void testSendBatchWithNullList() {
     FirebaseMessaging messaging = initDefaultMessaging();
     try {
-      messaging.sendBatchAsync((List<Message>) null);
+      messaging.sendAllAsync(null);
       fail("No error thrown for null message list");
     } catch (NullPointerException expected) {
       // expected
@@ -377,7 +377,7 @@ public class FirebaseMessagingTest {
   public void testSendBatchWithEmptyList() {
     FirebaseMessaging messaging = initDefaultMessaging();
     try {
-      messaging.sendBatchAsync(ImmutableList.<Message>of());
+      messaging.sendAllAsync(ImmutableList.<Message>of());
       fail("No error thrown for null message list");
     } catch (IllegalArgumentException expected) {
       // expected
@@ -392,7 +392,7 @@ public class FirebaseMessagingTest {
       listBuilder.add(Message.builder().setTopic("topic").build());
     }
     try {
-      messaging.sendBatchAsync(listBuilder.build());
+      messaging.sendAllAsync(listBuilder.build());
       fail("No error thrown for null message list");
     } catch (IllegalArgumentException expected) {
       // expected
@@ -409,7 +409,7 @@ public class FirebaseMessagingTest {
         Message.builder().setTopic("topic2").build()
     );
 
-    List<SendResponse> responses = messaging.sendBatch(messages);
+    BatchResponse responses = messaging.sendAll(messages);
 
     assertSendBatchSuccess(responses, interceptor);
   }
@@ -419,12 +419,12 @@ public class FirebaseMessagingTest {
     final TestResponseInterceptor interceptor = new TestResponseInterceptor();
     FirebaseMessaging messaging = getMessagingForBatchRequest(
         MOCK_BATCH_SUCCESS_RESPONSE, interceptor);
-    BatchMessage batch = BatchMessage.builder()
+    MulticastMessage batch = MulticastMessage.builder()
         .addToken("token1")
         .addToken("token2")
         .build();
 
-    List<SendResponse> responses = messaging.sendBatch(batch);
+    BatchResponse responses = messaging.sendMulticast(batch);
 
     assertSendBatchSuccess(responses, interceptor);
   }
@@ -439,7 +439,7 @@ public class FirebaseMessagingTest {
         Message.builder().setTopic("topic2").build()
     );
 
-    List<SendResponse> responses = messaging.sendBatchAsync(messages).get();
+    BatchResponse responses = messaging.sendAllAsync(messages).get();
 
     assertSendBatchSuccess(responses, interceptor);
   }
@@ -449,12 +449,12 @@ public class FirebaseMessagingTest {
     final TestResponseInterceptor interceptor = new TestResponseInterceptor();
     FirebaseMessaging messaging = getMessagingForBatchRequest(
         MOCK_BATCH_SUCCESS_RESPONSE, interceptor);
-    BatchMessage batch = BatchMessage.builder()
+    MulticastMessage batch = MulticastMessage.builder()
         .addToken("token1")
         .addToken("token2")
         .build();
 
-    List<SendResponse> responses = messaging.sendBatchAsync(batch).get();
+    BatchResponse responses = messaging.sendMulticastAsync(batch).get();
 
     assertSendBatchSuccess(responses, interceptor);
   }
@@ -470,7 +470,7 @@ public class FirebaseMessagingTest {
         Message.builder().setTopic("topic3").build()
     );
 
-    List<SendResponse> responses = messaging.sendBatch(messages);
+    BatchResponse responses = messaging.sendAll(messages);
 
     assertSendBatchFailure(responses, interceptor);
   }
@@ -480,13 +480,13 @@ public class FirebaseMessagingTest {
     final TestResponseInterceptor interceptor = new TestResponseInterceptor();
     FirebaseMessaging messaging = getMessagingForBatchRequest(
         MOCK_BATCH_FAILURE_RESPONSE, interceptor);
-    BatchMessage batch = BatchMessage.builder()
+    MulticastMessage batch = MulticastMessage.builder()
         .addToken("token1")
         .addToken("token2")
         .addToken("token3")
         .build();
 
-    List<SendResponse> responses = messaging.sendBatch(batch);
+    BatchResponse responses = messaging.sendMulticast(batch);
 
     assertSendBatchFailure(responses, interceptor);
   }
@@ -502,7 +502,7 @@ public class FirebaseMessagingTest {
         Message.builder().setTopic("topic3").build()
     );
 
-    List<SendResponse> responses = messaging.sendBatchAsync(messages).get();
+    BatchResponse responses = messaging.sendAllAsync(messages).get();
 
     assertSendBatchFailure(responses, interceptor);
   }
@@ -512,13 +512,13 @@ public class FirebaseMessagingTest {
     final TestResponseInterceptor interceptor = new TestResponseInterceptor();
     FirebaseMessaging messaging = getMessagingForBatchRequest(
         MOCK_BATCH_FAILURE_RESPONSE, interceptor);
-    BatchMessage batch = BatchMessage.builder()
+    MulticastMessage batch = MulticastMessage.builder()
         .addToken("token1")
         .addToken("token2")
         .addToken("token3")
         .build();
 
-    List<SendResponse> responses = messaging.sendBatchAsync(batch).get();
+    BatchResponse responses = messaging.sendMulticastAsync(batch).get();
 
     assertSendBatchFailure(responses, interceptor);
   }
@@ -534,7 +534,7 @@ public class FirebaseMessagingTest {
     for (int code : HTTP_ERRORS) {
       response.setStatusCode(code).setContent("{}");
       try {
-        messaging.sendBatchAsync(messages).get();
+        messaging.sendAllAsync(messages).get();
         fail("No error thrown for HTTP error");
       } catch (ExecutionException e) {
         assertTrue(e.getCause() instanceof FirebaseMessagingException);
@@ -555,7 +555,7 @@ public class FirebaseMessagingTest {
         .setTopic("test-topic")
         .build());
     try {
-      messaging.sendBatchAsync(messages).get();
+      messaging.sendAllAsync(messages).get();
       fail("No error thrown for HTTP error");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseMessagingException);
@@ -577,7 +577,7 @@ public class FirebaseMessagingTest {
     for (int code : HTTP_ERRORS) {
       response.setStatusCode(code).setZeroContent();
       try {
-        messaging.sendBatchAsync(messages).get();
+        messaging.sendAllAsync(messages).get();
         fail("No error thrown for HTTP error");
       } catch (ExecutionException e) {
         assertTrue(e.getCause() instanceof FirebaseMessagingException);
@@ -603,7 +603,7 @@ public class FirebaseMessagingTest {
       response.setStatusCode(code).setContent(
           "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\"}}");
       try {
-        messaging.sendBatchAsync(messages).get();
+        messaging.sendAllAsync(messages).get();
         fail("No error thrown for HTTP error");
       } catch (ExecutionException e) {
         assertTrue(e.getCause() instanceof FirebaseMessagingException);
@@ -628,7 +628,7 @@ public class FirebaseMessagingTest {
       response.setStatusCode(code).setContent(
           "{\"error\": {\"status\": \"NOT_FOUND\", \"message\": \"test error\"}}");
       try {
-        messaging.sendBatchAsync(messages).get();
+        messaging.sendAllAsync(messages).get();
         fail("No error thrown for HTTP error");
       } catch (ExecutionException e) {
         assertTrue(e.getCause() instanceof FirebaseMessagingException);
@@ -655,7 +655,7 @@ public class FirebaseMessagingTest {
               + "\"details\":[{\"@type\": \"type.googleapis.com/google.firebase.fcm"
               + ".v1.FcmError\", \"errorCode\": \"UNREGISTERED\"}]}}");
       try {
-        messaging.sendBatchAsync(messages).get();
+        messaging.sendAllAsync(messages).get();
         fail("No error thrown for HTTP error");
       } catch (ExecutionException e) {
         assertTrue(e.getCause() instanceof FirebaseMessagingException);
@@ -958,7 +958,12 @@ public class FirebaseMessagingTest {
   }
 
   private void assertSendBatchSuccess(
-      List<SendResponse> responses, TestResponseInterceptor interceptor) throws IOException {
+      BatchResponse batchResponse, TestResponseInterceptor interceptor) throws IOException {
+
+    assertEquals(2, batchResponse.getSuccessCount());
+    assertEquals(0, batchResponse.getFailureCount());
+
+    List<SendResponse> responses = batchResponse.getResponses();
     assertEquals(2, responses.size());
     for (int i = 0; i < 2; i++) {
       SendResponse sendResponse = responses.get(i);
@@ -971,7 +976,12 @@ public class FirebaseMessagingTest {
   }
 
   private void assertSendBatchFailure(
-      List<SendResponse> responses, TestResponseInterceptor interceptor) throws IOException {
+      BatchResponse batchResponse, TestResponseInterceptor interceptor) throws IOException {
+
+    assertEquals(1, batchResponse.getSuccessCount());
+    assertEquals(2, batchResponse.getFailureCount());
+
+    List<SendResponse> responses = batchResponse.getResponses();
     assertEquals(3, responses.size());
     SendResponse firstResponse = responses.get(0);
     assertTrue(firstResponse.isSuccessful());
