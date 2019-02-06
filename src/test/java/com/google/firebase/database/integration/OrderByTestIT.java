@@ -19,6 +19,7 @@ package com.google.firebase.database.integration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import com.google.api.client.json.GenericJson;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.ChildEventListener;
@@ -82,7 +83,7 @@ public class OrderByTestIT {
     return String.format(
         "{\"rules\": {\".read\": true, \".write\": true, \"%s\": %s}}", ref.getKey(), rules);
   }
-  
+
   private static void uploadRules(FirebaseApp app, String rules) throws IOException {
     IntegrationTestUtils.AppHttpClient client = new IntegrationTestUtils.AppHttpClient(app);
     IntegrationTestUtils.ResponseInfo response = client.put("/.settings/rules.json", rules);
