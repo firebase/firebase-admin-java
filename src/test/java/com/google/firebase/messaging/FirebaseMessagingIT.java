@@ -111,15 +111,18 @@ public class FirebaseMessagingIT {
   public void testSendThousand() throws Exception {
     List<Message> messages = new ArrayList<>();
     for (int i = 0; i < 1000; i++) {
-      messages.add(Message.builder().setTopic("foo-bar").build());
+      messages.add(Message.builder().setTopic("foo-bar-" + (i % 10)).build());
     }
 
     BatchResponse response = FirebaseMessaging.getInstance().sendAll(messages, true);
 
+    assertEquals(1000, response.getResponses().size());
     assertEquals(1000, response.getSuccessCount());
     assertEquals(0, response.getFailureCount());
-    assertEquals(1000, response.getResponses().size());
     for (SendResponse sendResponse : response.getResponses()) {
+      if (!sendResponse.isSuccessful()) {
+        sendResponse.getException().printStackTrace();
+      }
       assertTrue(sendResponse.isSuccessful());
       String id = sendResponse.getMessageId();
       assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));

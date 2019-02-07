@@ -147,11 +147,8 @@ public class FirebaseMessaging {
 
   /**
    * Sends all the messages in the given list via Firebase Cloud Messaging. Employs batching to
-   * send the entire list as a single RPC call.
-   *
-   * <p>Compared to the {@link #send(Message)} method, this method is a significantly more efficient
-   * way to send multiple messages. It also helps avoid potential RPC quota issues that sometimes
-   * arise when making too many invocations of {@link #send(Message)}.
+   * send the entire list as a single RPC call. Compared to the {@link #send(Message)} method, this
+   * is a significantly more efficient way to send multiple messages.
    *
    * <p>The responses list obtained by calling {@link BatchResponse#getResponses()} on the return
    * value corresponds to the order of input messages.
@@ -169,14 +166,11 @@ public class FirebaseMessaging {
 
   /**
    * Sends all the messages in the given list via Firebase Cloud Messaging. Employs batching to
-   * send the entire list as a single RPC call.
+   * send the entire list as a single RPC call. Compared to the {@link #send(Message)} method, this
+   * is a significantly more efficient way to send multiple messages.
    *
    * <p>If the {@code dryRun} option is set to true, the messages will not be actually sent. Instead
    * FCM performs all the necessary validations, and emulates the send operation.
-   *
-   * <p>Compared to the {@link #send(Message)} method, this method is a significantly more efficient
-   * way to send multiple messages. It also helps avoid potential RPC quota issues that sometimes
-   * arise when making too many invocations of {@link #send(Message)}.
    *
    * <p>The responses list obtained by calling {@link BatchResponse#getResponses()} on the return
    * value corresponds to the order of input messages.
@@ -220,7 +214,7 @@ public class FirebaseMessaging {
   /**
    * Sends the given multicast message to all the FCM registration tokens specified in it.
    *
-   * <p>This method uses the {@link #sendAll(List)} functionality under the hood to send the given
+   * <p>This method uses the {@link #sendAll(List)} API under the hood to send the given
    * message to all the target recipients. The responses list obtained by calling
    * {@link BatchResponse#getResponses()} on the return value corresponds to the order of tokens
    * in the {@link MulticastMessage}.
@@ -243,7 +237,7 @@ public class FirebaseMessaging {
    * <p>If the {@code dryRun} option is set to true, the message will not be actually sent. Instead
    * FCM performs all the necessary validations, and emulates the send operation.
    *
-   * <p>This method uses the {@link #sendAll(List)} functionality under the hood to send the given
+   * <p>This method uses the {@link #sendAll(List)} API under the hood to send the given
    * message to all the target recipients. The responses list obtained by calling
    * {@link BatchResponse#getResponses()} on the return value corresponds to the order of tokens
    * in the {@link MulticastMessage}.
