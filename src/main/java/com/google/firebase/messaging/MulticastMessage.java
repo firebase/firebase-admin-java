@@ -89,7 +89,7 @@ public class MulticastMessage {
     return new Builder();
   }
 
-  public static class  Builder {
+  public static class Builder {
 
     private final ImmutableList.Builder<String> tokens = ImmutableList.builder();
     private final Map<String, String> data = new HashMap<>();
