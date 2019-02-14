@@ -17,12 +17,16 @@
 package com.google.firebase.internal;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.testing.http.MockHttpTransport;
+import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -38,18 +42,23 @@ public class FirebaseRequestInitializerTest {
   }
 
   @Test
-  public void testDefaultTimeouts() throws Exception {
+  public void testDefaultSettings() throws Exception {
     FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials("token"))
         .build());
     HttpTransport transport = new MockHttpTransport();
     HttpRequestFactory factory = transport.createRequestFactory(
         new FirebaseRequestInitializer(app));
+
     HttpRequest request = factory.buildGetRequest(
         new GenericUrl("https://firebase.google.com"));
+
     assertEquals(0, request.getConnectTimeout());
     assertEquals(0, request.getReadTimeout());
     assertEquals("Bearer token", request.getHeaders().getAuthorization());
+    // assertEquals(4, request.getNumberOfRetries());
+    // assertTrue(request.getIOExceptionHandler() instanceof HttpRetryHandler);
+    // assertTrue(request.getUnsuccessfulResponseHandler() instanceof HttpRetryHandler);
   }
 
   @Test
@@ -62,10 +71,58 @@ public class FirebaseRequestInitializerTest {
     HttpTransport transport = new MockHttpTransport();
     HttpRequestFactory factory = transport.createRequestFactory(
         new FirebaseRequestInitializer(app));
+
     HttpRequest request = factory.buildGetRequest(
         new GenericUrl("https://firebase.google.com"));
+
     assertEquals(30000, request.getConnectTimeout());
     assertEquals(60000, request.getReadTimeout());
     assertEquals("Bearer token", request.getHeaders().getAuthorization());
+    // assertEquals(4, request.getNumberOfRetries());
+    // assertTrue(request.getIOExceptionHandler() instanceof HttpRetryHandler);
+    // assertTrue(request.getUnsuccessfulResponseHandler() instanceof HttpRetryHandler);
+  }
+
+  @Test
+  public void testNullRetryConfig() throws Exception {
+    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("token"))
+        .build());
+    HttpTransport transport = new MockHttpTransport();
+    HttpRequestFactory factory = transport.createRequestFactory(
+        new FirebaseRequestInitializer(app, null));
+
+    HttpRequest request = factory.buildGetRequest(
+        new GenericUrl("https://firebase.google.com"));
+
+    assertEquals(0, request.getConnectTimeout());
+    assertEquals(0, request.getReadTimeout());
+    assertEquals("Bearer token", request.getHeaders().getAuthorization());
+    assertEquals(0, request.getNumberOfRetries());
+    assertNull(request.getIOExceptionHandler());
+    assertTrue(request.getUnsuccessfulResponseHandler() instanceof HttpCredentialsAdapter);
+  }
+
+  @Test
+  public void testExplicitRetryConfig() throws Exception {
+    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("token"))
+        .build());
+    HttpTransport transport = new MockHttpTransport();
+    HttpRetryConfig retryConfig = HttpRetryConfig.builder()
+        .setMaxRetries(5)
+        .build();
+    HttpRequestFactory factory = transport.createRequestFactory(
+        new FirebaseRequestInitializer(app, retryConfig));
+
+    HttpRequest request = factory.buildGetRequest(
+        new GenericUrl("https://firebase.google.com"));
+
+    assertEquals(0, request.getConnectTimeout());
+    assertEquals(0, request.getReadTimeout());
+    assertEquals("Bearer token", request.getHeaders().getAuthorization());
+    assertEquals(5, request.getNumberOfRetries());
+    assertTrue(request.getIOExceptionHandler() instanceof HttpRetryHandler);
+    assertTrue(request.getUnsuccessfulResponseHandler() instanceof HttpRetryHandler);
   }
 }
