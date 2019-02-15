@@ -24,7 +24,7 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public final class HttpRetryConfig {
+public final class RetryConfig {
 
   private static final int INITIAL_INTERVAL_MILLIS = 500;
 
@@ -32,7 +32,7 @@ public final class HttpRetryConfig {
   private final int maxRetries;
   private final ExponentialBackOff.Builder backOffBuilder;
 
-  private HttpRetryConfig(Builder builder) {
+  private RetryConfig(Builder builder) {
     if (builder.retryStatusCodes != null) {
       this.retryStatusCodes = ImmutableList.copyOf(builder.retryStatusCodes);
     } else {
@@ -104,8 +104,8 @@ public final class HttpRetryConfig {
       return this;
     }
 
-    public HttpRetryConfig build() {
-      return new HttpRetryConfig(this);
+    public RetryConfig build() {
+      return new RetryConfig(this);
     }
   }
 }

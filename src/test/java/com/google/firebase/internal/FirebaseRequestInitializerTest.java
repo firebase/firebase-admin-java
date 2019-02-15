@@ -109,7 +109,7 @@ public class FirebaseRequestInitializerTest {
         .setCredentials(new MockGoogleCredentials("token"))
         .build());
     HttpTransport transport = new MockHttpTransport();
-    HttpRetryConfig retryConfig = HttpRetryConfig.builder()
+    RetryConfig retryConfig = RetryConfig.builder()
         .setMaxRetries(5)
         .build();
     HttpRequestFactory factory = transport.createRequestFactory(
@@ -123,6 +123,7 @@ public class FirebaseRequestInitializerTest {
     assertEquals("Bearer token", request.getHeaders().getAuthorization());
     assertEquals(5, request.getNumberOfRetries());
     assertTrue(request.getIOExceptionHandler() instanceof HttpBackOffIOExceptionHandler);
-    assertTrue(request.getUnsuccessfulResponseHandler() instanceof HttpRetryHandler);
+    assertTrue(
+        request.getUnsuccessfulResponseHandler() instanceof CredentialsResponseHandlerDecorator);
   }
 }

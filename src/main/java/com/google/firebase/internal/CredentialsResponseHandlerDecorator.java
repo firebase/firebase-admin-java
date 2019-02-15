@@ -24,19 +24,15 @@ import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import com.google.auth.http.HttpCredentialsAdapter;
 import java.io.IOException;
 
-final class HttpRetryHandler implements HttpUnsuccessfulResponseHandler {
+final class CredentialsResponseHandlerDecorator implements HttpUnsuccessfulResponseHandler {
 
   private final HttpCredentialsAdapter credentials;
-  private final HttpUnsuccessfulResponseHandler responseHandler;
+  private final HttpUnsuccessfulResponseHandler delegate;
 
-  HttpRetryHandler(
-      HttpCredentialsAdapter credentials, HttpUnsuccessfulResponseHandler responseHandler) {
+  CredentialsResponseHandlerDecorator(
+      HttpCredentialsAdapter credentials, HttpUnsuccessfulResponseHandler delegate) {
     this.credentials = checkNotNull(credentials);
-    this.responseHandler = checkNotNull(responseHandler);
-  }
-
-  HttpRetryHandler(HttpCredentialsAdapter credentials, HttpRetryConfig retryConfig) {
-    this(credentials, new RetryAfterAwareHttpResponseHandler(retryConfig));
+    this.delegate = checkNotNull(delegate);
   }
 
   @Override
@@ -45,7 +41,7 @@ final class HttpRetryHandler implements HttpUnsuccessfulResponseHandler {
 
     boolean retry = credentials.handleResponse(request, response, supportsRetry);
     if (!retry) {
-      retry = responseHandler.handleResponse(request, response, supportsRetry);
+      retry = delegate.handleResponse(request, response, supportsRetry);
     }
 
     request.setUnsuccessfulResponseHandler(this);

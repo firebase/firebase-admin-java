@@ -26,11 +26,11 @@ import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import org.junit.Test;
 
-public class HttpRetryConfigTest {
+public class RetryConfigTest {
 
   @Test
   public void testEmptyBuilder() {
-    HttpRetryConfig config = HttpRetryConfig.builder().build();
+    RetryConfig config = RetryConfig.builder().build();
 
     assertTrue(config.getRetryStatusCodes().isEmpty());
     assertEquals(0, config.getMaxRetries());
@@ -46,9 +46,9 @@ public class HttpRetryConfigTest {
   }
 
   @Test
-  public void testBuilder() {
+  public void testBuilderWithAllSettings() {
     ImmutableList<Integer> statusCodes = ImmutableList.of(500, 503);
-    HttpRetryConfig config = HttpRetryConfig.builder()
+    RetryConfig config = RetryConfig.builder()
         .setMaxRetries(4)
         .setRetryStatusCodes(statusCodes)
         .setMaxIntervalMillis(5 * 60 * 1000)
@@ -72,7 +72,7 @@ public class HttpRetryConfigTest {
 
   @Test
   public void testExponentialBackOff() throws IOException {
-    HttpRetryConfig config = HttpRetryConfig.builder()
+    RetryConfig config = RetryConfig.builder()
         .setMaxIntervalMillis(12000)
         .build();
 
@@ -88,21 +88,21 @@ public class HttpRetryConfigTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testNegativeMaxRetriesNotAllowed() {
-    HttpRetryConfig.builder()
+    RetryConfig.builder()
         .setMaxRetries(-1)
         .build();
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testMaxIntervalMillisTooSmall() {
-    HttpRetryConfig.builder()
+    RetryConfig.builder()
         .setMaxIntervalMillis(499)
         .build();
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testBackOffMultiplierTooSmall() {
-    HttpRetryConfig.builder()
+    RetryConfig.builder()
         .setBackOffMultiplier(0.99)
         .build();
   }

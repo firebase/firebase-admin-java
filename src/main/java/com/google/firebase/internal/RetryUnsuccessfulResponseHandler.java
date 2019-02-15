@@ -29,17 +29,17 @@ import java.io.IOException;
 import java.util.Date;
 import org.apache.http.client.utils.DateUtils;
 
-final class RetryAfterAwareHttpResponseHandler implements HttpUnsuccessfulResponseHandler {
+final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponseHandler {
 
-  private final HttpRetryConfig retryConfig;
+  private final RetryConfig retryConfig;
   private final HttpBackOffUnsuccessfulResponseHandler backOffHandler;
   private final Clock clock;
 
-  RetryAfterAwareHttpResponseHandler(HttpRetryConfig retryConfig) {
+  RetryUnsuccessfulResponseHandler(RetryConfig retryConfig) {
     this(retryConfig, Clock.SYSTEM);
   }
 
-  RetryAfterAwareHttpResponseHandler(HttpRetryConfig retryConfig, Clock clock) {
+  RetryUnsuccessfulResponseHandler(RetryConfig retryConfig, Clock clock) {
     this.retryConfig = checkNotNull(retryConfig);
     this.backOffHandler = new HttpBackOffUnsuccessfulResponseHandler(retryConfig.newBackOff());
     this.clock = checkNotNull(clock);
@@ -62,16 +62,16 @@ final class RetryAfterAwareHttpResponseHandler implements HttpUnsuccessfulRespon
       return false;
     }
 
-    String retryAfter = response.getHeaders().getRetryAfter();
-    if (!Strings.isNullOrEmpty(retryAfter)) {
-      return handleRetryAfter(retryAfter);
+    String retryAfterHeader = response.getHeaders().getRetryAfter();
+    if (!Strings.isNullOrEmpty(retryAfterHeader)) {
+      return handleRetryAfterHeader(retryAfterHeader);
     }
 
     return backOffHandler.handleResponse(request, response, true);
   }
 
-  private boolean handleRetryAfter(String retryAfter) {
-    long delayMillis = parseRetryAfter(retryAfter.trim());
+  private boolean handleRetryAfterHeader(String retryAfter) {
+    long delayMillis = parseRetryAfterHeader(retryAfter.trim());
     if (delayMillis > retryConfig.getMaxIntervalMillis()) {
       return false;
     }
@@ -86,7 +86,7 @@ final class RetryAfterAwareHttpResponseHandler implements HttpUnsuccessfulRespon
     return true;
   }
 
-  private long parseRetryAfter(String retryAfter) {
+  private long parseRetryAfterHeader(String retryAfter) {
     try {
       return Long.parseLong(retryAfter) * 1000;
     } catch (NumberFormatException e) {

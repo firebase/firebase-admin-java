@@ -44,16 +44,16 @@ import java.util.List;
 import java.util.TimeZone;
 import org.junit.Test;
 
-public class RetryAfterAwareHttpResponseHandlerTest {
+public class RetryUnsuccessfulResponseHandlerTest {
 
   private static final GenericUrl TEST_URL = new GenericUrl("https://firebase.google.com");
-  private static final HttpRetryConfig TEST_RETRY_CONFIG = HttpRetryConfig.builder()
+  private static final RetryConfig TEST_RETRY_CONFIG = RetryConfig.builder()
       .setRetryStatusCodes(ImmutableList.of(503))
       .build();
 
   @Test
   public void testDoesNotRetryOnUnspecifiedHttpStatus() throws IOException {
-    RetryAfterAwareHttpResponseHandler handler = new RetryAfterAwareHttpResponseHandler(
+    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
         TEST_RETRY_CONFIG);
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
     handler.setSleeper(sleeper);
@@ -78,8 +78,8 @@ public class RetryAfterAwareHttpResponseHandlerTest {
   }
 
   @Test
-  public void testRetryWithBackOffWhenRetryAfterIsAbsent() throws IOException {
-    RetryAfterAwareHttpResponseHandler handler = new RetryAfterAwareHttpResponseHandler(
+  public void testRetryAfterIsAbsent() throws IOException {
+    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
         TEST_RETRY_CONFIG);
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
     handler.setSleeper(sleeper);
@@ -102,8 +102,8 @@ public class RetryAfterAwareHttpResponseHandlerTest {
   }
 
   @Test
-  public void testRetryWithRetryAfterGivenAsSeconds() throws IOException {
-    RetryAfterAwareHttpResponseHandler handler = new RetryAfterAwareHttpResponseHandler(
+  public void testRetryAfterGivenAsSeconds() throws IOException {
+    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
         TEST_RETRY_CONFIG);
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
     handler.setSleeper(sleeper);
@@ -129,14 +129,14 @@ public class RetryAfterAwareHttpResponseHandlerTest {
   }
 
   @Test
-  public void testRetryWithRetryAfterGivenAsDate() throws IOException {
+  public void testRetryAfterGivenAsDate() throws IOException {
     SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
     dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
     Date date = new Date(1000);
     Clock clock = new FixedClock(date.getTime());
     String retryAfter = dateFormat.format(new Date(date.getTime() + 30000));
 
-    RetryAfterAwareHttpResponseHandler handler = new RetryAfterAwareHttpResponseHandler(
+    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
         TEST_RETRY_CONFIG, clock);
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
     handler.setSleeper(sleeper);
@@ -163,7 +163,7 @@ public class RetryAfterAwareHttpResponseHandlerTest {
 
   @Test
   public void testDoesNotRetryWhenRetryAfterIsTooLong() throws IOException {
-    RetryAfterAwareHttpResponseHandler handler = new RetryAfterAwareHttpResponseHandler(
+    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
         TEST_RETRY_CONFIG);
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
     handler.setSleeper(sleeper);
