@@ -33,10 +33,13 @@ public class HttpRetryConfigTest {
 
     assertTrue(config.getRetryStatusCodes().isEmpty());
     assertEquals(0, config.getMaxRetries());
+    assertEquals(2 * 60 * 1000, config.getMaxIntervalMillis());
+    assertEquals(2.0, config.getBackoffMultiplier(), 0.01);
+
     ExponentialBackOff backoff = (ExponentialBackOff) config.newBackoff();
-    assertEquals(500, backoff.getInitialIntervalMillis());
     assertEquals(2 * 60 * 1000, backoff.getMaxIntervalMillis());
     assertEquals(2.0, backoff.getMultiplier(), 0.01);
+    assertEquals(500, backoff.getInitialIntervalMillis());
     assertEquals(0.0, backoff.getRandomizationFactor(), 0.01);
     assertNotSame(backoff, config.newBackoff());
   }
@@ -47,14 +50,17 @@ public class HttpRetryConfigTest {
     HttpRetryConfig config = HttpRetryConfig.builder()
         .setMaxRetries(4)
         .setRetryStatusCodes(statusCodes)
-        .setMaxIntervalInMillis(5 * 60 * 1000)
-        .setMultiplier(1.5)
+        .setMaxIntervalMillis(5 * 60 * 1000)
+        .setBackoffMultiplier(1.5)
         .build();
 
     assertEquals(2, config.getRetryStatusCodes().size());
     assertEquals(statusCodes.get(0), config.getRetryStatusCodes().get(0));
     assertEquals(statusCodes.get(1), config.getRetryStatusCodes().get(1));
     assertEquals(4, config.getMaxRetries());
+    assertEquals(5 * 60 * 1000, config.getMaxIntervalMillis());
+    assertEquals(1.5, config.getBackoffMultiplier(), 0.01);
+
     ExponentialBackOff backoff = (ExponentialBackOff) config.newBackoff();
     assertEquals(500, backoff.getInitialIntervalMillis());
     assertEquals(5 * 60 * 1000, backoff.getMaxIntervalMillis());
@@ -73,5 +79,26 @@ public class HttpRetryConfigTest {
     assertEquals(1000, backoff.nextBackOffMillis());
     assertEquals(2000, backoff.nextBackOffMillis());
     assertEquals(4000, backoff.nextBackOffMillis());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testNegativeMaxRetriesNotAllowed() {
+    HttpRetryConfig.builder()
+        .setMaxRetries(-1)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testMaxIntervalMillisTooSmall() {
+    HttpRetryConfig.builder()
+        .setMaxIntervalMillis(499)
+        .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testBackoffMultiplierTooSmall() {
+    HttpRetryConfig.builder()
+        .setBackoffMultiplier(0.99)
+        .build();
   }
 }

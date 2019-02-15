@@ -38,8 +38,8 @@ public class FirebaseRequestInitializer implements HttpRequestInitializer {
       .setRetryStatusCodes(ImmutableList.of(
           STATUS_INTERNAL_SERVER_ERROR, STATUS_SERVICE_UNAVAILABLE))
       .setMaxRetries(4)
-      .setMultiplier(2.0)
-      .setMaxIntervalInMillis((int) TimeUnit.MINUTES.toMillis(2))
+      .setBackoffMultiplier(2.0)
+      .setMaxIntervalMillis((int) TimeUnit.MINUTES.toMillis(2))
       .build();
 
   private final HttpCredentialsAdapter credentialsAdapter;

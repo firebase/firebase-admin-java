@@ -26,9 +26,11 @@ import java.util.concurrent.TimeUnit;
 
 public final class HttpRetryConfig {
 
+  private static final int INITIAL_INTERVAL_MILLIS = 500;
+
   private final List<Integer> retryStatusCodes;
   private final int maxRetries;
-  private final ExponentialBackOff.Builder backOffBuilder;
+  private final ExponentialBackOff.Builder backoffBuilder;
 
   private HttpRetryConfig(Builder builder) {
     if (builder.retryStatusCodes != null) {
@@ -36,24 +38,37 @@ public final class HttpRetryConfig {
     } else {
       this.retryStatusCodes = ImmutableList.of();
     }
+
     checkArgument(builder.maxRetries >= 0, "maxRetries must not be negative");
     this.maxRetries = builder.maxRetries;
-    this.backOffBuilder = new ExponentialBackOff.Builder()
-        .setMaxIntervalMillis(builder.maxIntervalInMillis)
-        .setMultiplier(builder.multiplier)
+    this.backoffBuilder = new ExponentialBackOff.Builder()
+        .setInitialIntervalMillis(INITIAL_INTERVAL_MILLIS)
+        .setMaxIntervalMillis(builder.maxIntervalMillis)
+        .setMultiplier(builder.backoffMultiplier)
         .setRandomizationFactor(0);
+
+    // Force validation of arguments by building the BackOff object
+    this.backoffBuilder.build();
   }
 
-  BackOff newBackoff() {
-    return backOffBuilder.build();
+  List<Integer> getRetryStatusCodes() {
+    return retryStatusCodes;
   }
 
   int getMaxRetries() {
     return maxRetries;
   }
 
-  List<Integer> getRetryStatusCodes() {
-    return retryStatusCodes;
+  int getMaxIntervalMillis() {
+    return backoffBuilder.getMaxIntervalMillis();
+  }
+
+  double getBackoffMultiplier() {
+    return backoffBuilder.getMultiplier();
+  }
+
+  BackOff newBackoff() {
+    return backoffBuilder.build();
   }
 
   public static Builder builder() {
@@ -64,8 +79,8 @@ public final class HttpRetryConfig {
 
     private List<Integer> retryStatusCodes;
     private int maxRetries;
-    private int maxIntervalInMillis = (int) TimeUnit.MINUTES.toMillis(2);
-    private double multiplier = 2.0;
+    private int maxIntervalMillis = (int) TimeUnit.MINUTES.toMillis(2);
+    private double backoffMultiplier = 2.0;
 
     private Builder() { }
 
@@ -79,13 +94,13 @@ public final class HttpRetryConfig {
       return this;
     }
 
-    public Builder setMaxIntervalInMillis(int maxIntervalInMillis) {
-      this.maxIntervalInMillis = maxIntervalInMillis;
+    public Builder setMaxIntervalMillis(int maxIntervalMillis) {
+      this.maxIntervalMillis = maxIntervalMillis;
       return this;
     }
 
-    public Builder setMultiplier(double multiplier) {
-      this.multiplier = multiplier;
+    public Builder setBackoffMultiplier(double backoffMultiplier) {
+      this.backoffMultiplier = backoffMultiplier;
       return this;
     }
 

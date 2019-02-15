@@ -19,31 +19,25 @@ package com.google.firebase.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.http.HttpBackOffIOExceptionHandler;
-import com.google.api.client.http.HttpBackOffUnsuccessfulResponseHandler;
 import com.google.api.client.http.HttpIOExceptionHandler;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
-import com.google.api.client.util.Sleeper;
 import com.google.auth.http.HttpCredentialsAdapter;
 import java.io.IOException;
 
 final class HttpRetryHandler implements HttpUnsuccessfulResponseHandler, HttpIOExceptionHandler {
-
-  static Sleeper SLEEPER = Sleeper.DEFAULT;
 
   private final HttpCredentialsAdapter credentials;
   private final HttpRetryConfig retryConfig;
   private final HttpIOExceptionHandler ioExceptionHandler;
   private final HttpUnsuccessfulResponseHandler responseHandler;
 
-  public HttpRetryHandler(HttpCredentialsAdapter credentials, HttpRetryConfig retryConfig) {
+  HttpRetryHandler(HttpCredentialsAdapter credentials, HttpRetryConfig retryConfig) {
     this.credentials = checkNotNull(credentials);
     this.retryConfig = checkNotNull(retryConfig);
-    this.ioExceptionHandler = new HttpBackOffIOExceptionHandler(retryConfig.newBackoff())
-        .setSleeper(SLEEPER);
-    this.responseHandler = new HttpBackOffUnsuccessfulResponseHandler(retryConfig.newBackoff())
-        .setSleeper(SLEEPER);
+    this.ioExceptionHandler = new HttpBackOffIOExceptionHandler(retryConfig.newBackoff());
+    this.responseHandler = new RetryAfterAwareHttpResponseHandler(retryConfig);
   }
 
   @Override
@@ -52,8 +46,9 @@ final class HttpRetryHandler implements HttpUnsuccessfulResponseHandler, HttpIOE
   }
 
   @Override
-  public boolean handleResponse(HttpRequest request, HttpResponse response, boolean supportsRetry)
-      throws IOException {
+  public boolean handleResponse(
+      HttpRequest request, HttpResponse response, boolean supportsRetry) throws IOException {
+
     boolean retry = credentials.handleResponse(request, response, supportsRetry);
     if (!retry) {
       int status = response.getStatusCode();
