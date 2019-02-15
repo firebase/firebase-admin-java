@@ -57,6 +57,11 @@ final class RetryAfterAwareHttpResponseHandler implements HttpUnsuccessfulRespon
       return false;
     }
 
+    int statusCode = response.getStatusCode();
+    if (!retryConfig.getRetryStatusCodes().contains(statusCode)) {
+      return false;
+    }
+
     String retryAfter = response.getHeaders().getRetryAfter();
     if (!Strings.isNullOrEmpty(retryAfter)) {
       long delayMillis = parseRetryAfter(retryAfter.trim());

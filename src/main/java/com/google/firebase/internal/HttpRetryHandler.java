@@ -27,13 +27,16 @@ import java.io.IOException;
 final class HttpRetryHandler implements HttpUnsuccessfulResponseHandler {
 
   private final HttpCredentialsAdapter credentials;
-  private final HttpRetryConfig retryConfig;
   private final HttpUnsuccessfulResponseHandler responseHandler;
 
-  private HttpRetryHandler(Builder builder) {
-    this.credentials = checkNotNull(builder.credentials);
-    this.retryConfig = checkNotNull(builder.retryConfig);
-    this.responseHandler = checkNotNull(builder.responseHandler);
+  HttpRetryHandler(
+      HttpCredentialsAdapter credentials, HttpUnsuccessfulResponseHandler responseHandler) {
+    this.credentials = checkNotNull(credentials);
+    this.responseHandler = checkNotNull(responseHandler);
+  }
+
+  HttpRetryHandler(HttpCredentialsAdapter credentials, HttpRetryConfig retryConfig) {
+    this(credentials, new RetryAfterAwareHttpResponseHandler(retryConfig));
   }
 
   @Override
@@ -42,44 +45,10 @@ final class HttpRetryHandler implements HttpUnsuccessfulResponseHandler {
 
     boolean retry = credentials.handleResponse(request, response, supportsRetry);
     if (!retry) {
-      int status = response.getStatusCode();
-      if (retryConfig.getRetryStatusCodes().contains(status)) {
-        retry = responseHandler.handleResponse(request, response, supportsRetry);
-      }
+      retry = responseHandler.handleResponse(request, response, supportsRetry);
     }
 
     request.setUnsuccessfulResponseHandler(this);
     return retry;
-  }
-
-  static Builder builder() {
-    return new Builder();
-  }
-
-  static class Builder {
-    private HttpCredentialsAdapter credentials;
-    private HttpRetryConfig retryConfig;
-    private HttpUnsuccessfulResponseHandler responseHandler;
-
-    private Builder() { }
-
-    Builder setCredentials(HttpCredentialsAdapter credentials) {
-      this.credentials = credentials;
-      return this;
-    }
-
-    Builder setRetryConfig(HttpRetryConfig retryConfig) {
-      this.retryConfig = retryConfig;
-      return this;
-    }
-
-    Builder setResponseHandler(HttpUnsuccessfulResponseHandler responseHandler) {
-      this.responseHandler = responseHandler;
-      return this;
-    }
-
-    HttpRetryHandler build() {
-      return new HttpRetryHandler(this);
-    }
   }
 }

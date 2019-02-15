@@ -52,6 +52,32 @@ public class RetryAfterAwareHttpResponseHandlerTest {
       .build();
 
   @Test
+  public void testDoesNotRetryOnUnspecifiedHttpStatus() throws IOException {
+    RetryAfterAwareHttpResponseHandler handler = new RetryAfterAwareHttpResponseHandler(
+        TEST_RETRY_CONFIG);
+    MultipleCallSleeper sleeper = new MultipleCallSleeper();
+    handler.setSleeper(sleeper);
+    CountingHttpRequest failingRequest = CountingHttpRequest.fromResponse(
+        new MockLowLevelHttpResponse()
+            .addHeader("retry-after", "121")
+            .setStatusCode(404)
+            .setZeroContent());
+    HttpRequest request = createRequest(failingRequest);
+    request.setNumberOfRetries(4);
+    request.setUnsuccessfulResponseHandler(handler);
+
+    try {
+      request.execute();
+      fail("No exception thrown for HTTP error");
+    } catch (HttpResponseException e) {
+      assertEquals(404, e.getStatusCode());
+    }
+
+    assertEquals(0, sleeper.getCount());
+    assertEquals(1, failingRequest.getCount());
+  }
+
+  @Test
   public void testRetryWithBackOffWhenRetryAfterIsAbsent() throws IOException {
     RetryAfterAwareHttpResponseHandler handler = new RetryAfterAwareHttpResponseHandler(
         TEST_RETRY_CONFIG);
@@ -182,10 +208,6 @@ public class RetryAfterAwareHttpResponseHandlerTest {
 
     static CountingHttpRequest fromResponse(LowLevelHttpResponse response) {
       return new CountingHttpRequest(checkNotNull(response), null);
-    }
-
-    static CountingHttpRequest fromException(IOException exception) {
-      return new CountingHttpRequest(null, checkNotNull(exception));
     }
 
     @Override
