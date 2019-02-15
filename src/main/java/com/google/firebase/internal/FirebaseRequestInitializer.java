@@ -58,7 +58,7 @@ public class FirebaseRequestInitializer implements HttpRequestInitializer {
       httpRequest.setUnsuccessfulResponseHandler(
           new HttpRetryHandler(credentialsAdapter, retryConfig));
       httpRequest.setIOExceptionHandler(
-          new HttpBackOffIOExceptionHandler(retryConfig.newBackoff()));
+          new HttpBackOffIOExceptionHandler(retryConfig.newBackOff()));
     } else {
       httpRequest.setNumberOfRetries(0);
     }

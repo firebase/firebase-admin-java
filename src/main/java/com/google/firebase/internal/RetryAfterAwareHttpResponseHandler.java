@@ -41,7 +41,7 @@ final class RetryAfterAwareHttpResponseHandler implements HttpUnsuccessfulRespon
 
   RetryAfterAwareHttpResponseHandler(HttpRetryConfig retryConfig, Clock clock) {
     this.retryConfig = checkNotNull(retryConfig);
-    this.backOffHandler = new HttpBackOffUnsuccessfulResponseHandler(retryConfig.newBackoff());
+    this.backOffHandler = new HttpBackOffUnsuccessfulResponseHandler(retryConfig.newBackOff());
     this.clock = checkNotNull(clock);
   }
 
@@ -64,27 +64,31 @@ final class RetryAfterAwareHttpResponseHandler implements HttpUnsuccessfulRespon
 
     String retryAfter = response.getHeaders().getRetryAfter();
     if (!Strings.isNullOrEmpty(retryAfter)) {
-      long delayMillis = parseRetryAfter(retryAfter.trim());
-      if (delayMillis > retryConfig.getMaxIntervalMillis()) {
-        return false;
-      }
-
-      if (delayMillis > 0) {
-        try {
-          backOffHandler.getSleeper().sleep(delayMillis);
-        } catch (InterruptedException e) {
-          // ignore
-        }
-      }
-      return true;
+      return handleRetryAfter(retryAfter);
     }
 
     return backOffHandler.handleResponse(request, response, true);
   }
 
+  private boolean handleRetryAfter(String retryAfter) {
+    long delayMillis = parseRetryAfter(retryAfter.trim());
+    if (delayMillis > retryConfig.getMaxIntervalMillis()) {
+      return false;
+    }
+
+    if (delayMillis > 0) {
+      try {
+        backOffHandler.getSleeper().sleep(delayMillis);
+      } catch (InterruptedException e) {
+        // ignore
+      }
+    }
+    return true;
+  }
+
   private long parseRetryAfter(String retryAfter) {
     try {
-      return Long.parseLong(retryAfter.trim()) * 1000;
+      return Long.parseLong(retryAfter) * 1000;
     } catch (NumberFormatException e) {
       Date date = DateUtils.parseDate(retryAfter);
       if (date != null) {

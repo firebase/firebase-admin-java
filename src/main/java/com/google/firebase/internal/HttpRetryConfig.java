@@ -30,7 +30,7 @@ public final class HttpRetryConfig {
 
   private final List<Integer> retryStatusCodes;
   private final int maxRetries;
-  private final ExponentialBackOff.Builder backoffBuilder;
+  private final ExponentialBackOff.Builder backOffBuilder;
 
   private HttpRetryConfig(Builder builder) {
     if (builder.retryStatusCodes != null) {
@@ -41,14 +41,14 @@ public final class HttpRetryConfig {
 
     checkArgument(builder.maxRetries >= 0, "maxRetries must not be negative");
     this.maxRetries = builder.maxRetries;
-    this.backoffBuilder = new ExponentialBackOff.Builder()
+    this.backOffBuilder = new ExponentialBackOff.Builder()
         .setInitialIntervalMillis(INITIAL_INTERVAL_MILLIS)
         .setMaxIntervalMillis(builder.maxIntervalMillis)
-        .setMultiplier(builder.backoffMultiplier)
+        .setMultiplier(builder.backOffMultiplier)
         .setRandomizationFactor(0);
 
     // Force validation of arguments by building the BackOff object
-    this.backoffBuilder.build();
+    this.backOffBuilder.build();
   }
 
   List<Integer> getRetryStatusCodes() {
@@ -60,15 +60,15 @@ public final class HttpRetryConfig {
   }
 
   int getMaxIntervalMillis() {
-    return backoffBuilder.getMaxIntervalMillis();
+    return backOffBuilder.getMaxIntervalMillis();
   }
 
-  double getBackoffMultiplier() {
-    return backoffBuilder.getMultiplier();
+  double getBackOffMultiplier() {
+    return backOffBuilder.getMultiplier();
   }
 
-  BackOff newBackoff() {
-    return backoffBuilder.build();
+  BackOff newBackOff() {
+    return backOffBuilder.build();
   }
 
   public static Builder builder() {
@@ -80,7 +80,7 @@ public final class HttpRetryConfig {
     private List<Integer> retryStatusCodes;
     private int maxRetries;
     private int maxIntervalMillis = (int) TimeUnit.MINUTES.toMillis(2);
-    private double backoffMultiplier = 2.0;
+    private double backOffMultiplier = 2.0;
 
     private Builder() { }
 
@@ -99,8 +99,8 @@ public final class HttpRetryConfig {
       return this;
     }
 
-    public Builder setBackoffMultiplier(double backoffMultiplier) {
-      this.backoffMultiplier = backoffMultiplier;
+    public Builder setBackOffMultiplier(double backOffMultiplier) {
+      this.backOffMultiplier = backOffMultiplier;
       return this;
     }
 

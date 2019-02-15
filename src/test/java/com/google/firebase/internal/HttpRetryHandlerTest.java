@@ -68,7 +68,7 @@ public class HttpRetryHandlerTest {
     };
     MockSleeper sleeper = new MockSleeper();
     HttpBackOffUnsuccessfulResponseHandler responseHandler =
-        new HttpBackOffUnsuccessfulResponseHandler(RETRY_CONFIG.newBackoff())
+        new HttpBackOffUnsuccessfulResponseHandler(RETRY_CONFIG.newBackOff())
             .setSleeper(sleeper);
     HttpRetryHandler retryHandler = new HttpRetryHandler(credentials, responseHandler);
     request.setUnsuccessfulResponseHandler(retryHandler);
@@ -104,7 +104,7 @@ public class HttpRetryHandlerTest {
     };
     MockSleeper sleeper = new MockSleeper();
     HttpBackOffUnsuccessfulResponseHandler responseHandler =
-        new HttpBackOffUnsuccessfulResponseHandler(RETRY_CONFIG.newBackoff())
+        new HttpBackOffUnsuccessfulResponseHandler(RETRY_CONFIG.newBackOff())
             .setSleeper(sleeper)
             .setBackOffRequired(HttpBackOffUnsuccessfulResponseHandler.BackOffRequired.ALWAYS);
     HttpRetryHandler retryHandler = new HttpRetryHandler(credentials, responseHandler);
