@@ -18,31 +18,22 @@ package com.google.firebase.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.http.HttpBackOffIOExceptionHandler;
-import com.google.api.client.http.HttpIOExceptionHandler;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import com.google.auth.http.HttpCredentialsAdapter;
 import java.io.IOException;
 
-final class HttpRetryHandler implements HttpUnsuccessfulResponseHandler, HttpIOExceptionHandler {
+final class HttpRetryHandler implements HttpUnsuccessfulResponseHandler {
 
   private final HttpCredentialsAdapter credentials;
   private final HttpRetryConfig retryConfig;
-  private final HttpIOExceptionHandler ioExceptionHandler;
   private final HttpUnsuccessfulResponseHandler responseHandler;
 
-  HttpRetryHandler(HttpCredentialsAdapter credentials, HttpRetryConfig retryConfig) {
-    this.credentials = checkNotNull(credentials);
-    this.retryConfig = checkNotNull(retryConfig);
-    this.ioExceptionHandler = new HttpBackOffIOExceptionHandler(retryConfig.newBackoff());
-    this.responseHandler = new RetryAfterAwareHttpResponseHandler(retryConfig);
-  }
-
-  @Override
-  public boolean handleIOException(HttpRequest request, boolean supportsRetry) throws IOException {
-    return ioExceptionHandler.handleIOException(request, supportsRetry);
+  private HttpRetryHandler(Builder builder) {
+    this.credentials = checkNotNull(builder.credentials);
+    this.retryConfig = checkNotNull(builder.retryConfig);
+    this.responseHandler = checkNotNull(builder.responseHandler);
   }
 
   @Override
@@ -56,15 +47,39 @@ final class HttpRetryHandler implements HttpUnsuccessfulResponseHandler, HttpIOE
         retry = responseHandler.handleResponse(request, response, supportsRetry);
       }
     }
+
     request.setUnsuccessfulResponseHandler(this);
     return retry;
   }
 
-  HttpIOExceptionHandler getIoExceptionHandler() {
-    return ioExceptionHandler;
+  static Builder builder() {
+    return new Builder();
   }
 
-  HttpUnsuccessfulResponseHandler getResponseHandler() {
-    return responseHandler;
+  static class Builder {
+    private HttpCredentialsAdapter credentials;
+    private HttpRetryConfig retryConfig;
+    private HttpUnsuccessfulResponseHandler responseHandler;
+
+    private Builder() { }
+
+    Builder setCredentials(HttpCredentialsAdapter credentials) {
+      this.credentials = credentials;
+      return this;
+    }
+
+    Builder setRetryConfig(HttpRetryConfig retryConfig) {
+      this.retryConfig = retryConfig;
+      return this;
+    }
+
+    Builder setResponseHandler(HttpUnsuccessfulResponseHandler responseHandler) {
+      this.responseHandler = responseHandler;
+      return this;
+    }
+
+    HttpRetryHandler build() {
+      return new HttpRetryHandler(this);
+    }
   }
 }

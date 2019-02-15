@@ -16,6 +16,7 @@
 
 package com.google.firebase.internal;
 
+import com.google.api.client.http.HttpBackOffIOExceptionHandler;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.auth.http.HttpCredentialsAdapter;
@@ -66,9 +67,14 @@ public class FirebaseRequestInitializer implements HttpRequestInitializer {
     httpRequest.setReadTimeout(readTimeout);
     if (retryConfig != null) {
       httpRequest.setNumberOfRetries(retryConfig.getMaxRetries());
-      HttpRetryHandler retryHandler = new HttpRetryHandler(credentialsAdapter, retryConfig);
+      HttpRetryHandler retryHandler = HttpRetryHandler.builder()
+          .setCredentials(credentialsAdapter)
+          .setRetryConfig(retryConfig)
+          .setResponseHandler(new RetryAfterAwareHttpResponseHandler(retryConfig))
+          .build();
       httpRequest.setUnsuccessfulResponseHandler(retryHandler);
-      httpRequest.setIOExceptionHandler(retryHandler);
+      httpRequest.setIOExceptionHandler(
+          new HttpBackOffIOExceptionHandler(retryConfig.newBackoff()));
     } else {
       httpRequest.setNumberOfRetries(0);
     }

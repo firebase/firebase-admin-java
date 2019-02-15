@@ -17,11 +17,11 @@
 package com.google.firebase.internal;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpBackOffIOExceptionHandler;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpTransport;
@@ -122,7 +122,7 @@ public class FirebaseRequestInitializerTest {
     assertEquals(0, request.getReadTimeout());
     assertEquals("Bearer token", request.getHeaders().getAuthorization());
     assertEquals(5, request.getNumberOfRetries());
-    assertTrue(request.getIOExceptionHandler() instanceof HttpRetryHandler);
+    assertTrue(request.getIOExceptionHandler() instanceof HttpBackOffIOExceptionHandler);
     assertTrue(request.getUnsuccessfulResponseHandler() instanceof HttpRetryHandler);
   }
 }

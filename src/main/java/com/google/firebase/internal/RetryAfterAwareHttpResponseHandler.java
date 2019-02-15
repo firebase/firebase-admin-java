@@ -32,7 +32,7 @@ import org.apache.http.client.utils.DateUtils;
 final class RetryAfterAwareHttpResponseHandler implements HttpUnsuccessfulResponseHandler {
 
   private final HttpRetryConfig retryConfig;
-  private final HttpBackOffUnsuccessfulResponseHandler backoffHandler;
+  private final HttpBackOffUnsuccessfulResponseHandler backOffHandler;
   private final Clock clock;
 
   RetryAfterAwareHttpResponseHandler(HttpRetryConfig retryConfig) {
@@ -41,12 +41,12 @@ final class RetryAfterAwareHttpResponseHandler implements HttpUnsuccessfulRespon
 
   RetryAfterAwareHttpResponseHandler(HttpRetryConfig retryConfig, Clock clock) {
     this.retryConfig = checkNotNull(retryConfig);
-    this.backoffHandler = new HttpBackOffUnsuccessfulResponseHandler(retryConfig.newBackoff());
+    this.backOffHandler = new HttpBackOffUnsuccessfulResponseHandler(retryConfig.newBackoff());
     this.clock = checkNotNull(clock);
   }
 
   void setSleeper(Sleeper sleeper) {
-    backoffHandler.setSleeper(sleeper);
+    backOffHandler.setSleeper(sleeper);
   }
 
   @Override
@@ -66,7 +66,7 @@ final class RetryAfterAwareHttpResponseHandler implements HttpUnsuccessfulRespon
 
       if (delayMillis > 0) {
         try {
-          backoffHandler.getSleeper().sleep(delayMillis);
+          backOffHandler.getSleeper().sleep(delayMillis);
         } catch (InterruptedException e) {
           // ignore
         }
@@ -74,7 +74,7 @@ final class RetryAfterAwareHttpResponseHandler implements HttpUnsuccessfulRespon
       return true;
     }
 
-    return backoffHandler.handleResponse(request, response, true);
+    return backOffHandler.handleResponse(request, response, true);
   }
 
   private long parseRetryAfter(String retryAfter) {

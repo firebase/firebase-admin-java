@@ -19,7 +19,6 @@ package com.google.firebase.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.http.EmptyContent;
@@ -53,7 +52,7 @@ public class RetryAfterAwareHttpResponseHandlerTest {
       .build();
 
   @Test
-  public void testRetryWithBackoffWhenRetryAfterIsAbsent() throws IOException {
+  public void testRetryWithBackOffWhenRetryAfterIsAbsent() throws IOException {
     RetryAfterAwareHttpResponseHandler handler = new RetryAfterAwareHttpResponseHandler(
         TEST_RETRY_CONFIG);
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
