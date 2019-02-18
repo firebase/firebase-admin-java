@@ -77,7 +77,7 @@ public class RetryUnsuccessfulResponseHandlerTest {
   }
 
   @Test
-  public void testRetryOnHttpClientErrorWhenConfigured() throws IOException {
+  public void testRetryOnHttpClientErrorWhenSpecified() throws IOException {
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
     RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
         testRetryConfig(sleeper));
@@ -229,6 +229,36 @@ public class RetryUnsuccessfulResponseHandlerTest {
     }
 
     assertEquals(0, sleeper.getCount());
+    assertEquals(1, failingRequest.getCount());
+  }
+
+  @Test
+  public void testDoesNotRetryAfterInterruption() throws IOException {
+    MockSleeper sleeper = new MockSleeper() {
+      @Override
+      public void sleep(long millis) throws InterruptedException {
+        super.sleep(millis);
+        throw new InterruptedException();
+      }
+    };
+    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
+        testRetryConfig(sleeper));
+    CountingHttpRequest failingRequest = CountingHttpRequest.fromResponse(
+        new MockLowLevelHttpResponse()
+            .setStatusCode(503)
+            .setZeroContent());
+    HttpRequest request = createRequest(failingRequest);
+    request.setNumberOfRetries(4);
+    request.setUnsuccessfulResponseHandler(handler);
+
+    try {
+      request.execute();
+      fail("No exception thrown for HTTP error");
+    } catch (HttpResponseException e) {
+      assertEquals(503, e.getStatusCode());
+    }
+
+    assertEquals(1, sleeper.getCount());
     assertEquals(1, failingRequest.getCount());
   }
 

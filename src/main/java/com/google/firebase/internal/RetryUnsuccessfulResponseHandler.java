@@ -18,11 +18,13 @@ package com.google.firebase.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.http.HttpBackOffUnsuccessfulResponseHandler;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
+import com.google.api.client.util.BackOff;
+import com.google.api.client.util.BackOffUtils;
 import com.google.api.client.util.Clock;
+import com.google.api.client.util.Sleeper;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.Date;
@@ -31,7 +33,8 @@ import org.apache.http.client.utils.DateUtils;
 final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponseHandler {
 
   private final RetryConfig retryConfig;
-  private final HttpBackOffUnsuccessfulResponseHandler backOffHandler;
+  private final BackOff backOff;
+  private final Sleeper sleeper;
   private final Clock clock;
 
   RetryUnsuccessfulResponseHandler(RetryConfig retryConfig) {
@@ -40,9 +43,8 @@ final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponse
 
   RetryUnsuccessfulResponseHandler(RetryConfig retryConfig, Clock clock) {
     this.retryConfig = checkNotNull(retryConfig);
-    this.backOffHandler = new HttpBackOffUnsuccessfulResponseHandler(retryConfig.newBackOff())
-        .setBackOffRequired(HttpBackOffUnsuccessfulResponseHandler.BackOffRequired.ALWAYS)
-        .setSleeper(retryConfig.getSleeper());
+    this.backOff = retryConfig.newBackOff();
+    this.sleeper = retryConfig.getSleeper();
     this.clock = checkNotNull(clock);
   }
 
@@ -59,15 +61,27 @@ final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponse
       return false;
     }
 
+    try {
+      return waitAndRetry(response);
+    } catch (InterruptedException e) {
+      // ignore
+    }
+    return false;
+  }
+
+  private boolean waitAndRetry(HttpResponse response) throws IOException, InterruptedException {
     String retryAfterHeader = response.getHeaders().getRetryAfter();
     if (!Strings.isNullOrEmpty(retryAfterHeader)) {
       long delayMillis = parseRetryAfterHeader(retryAfterHeader.trim());
-      if (delayMillis > 0) {
-        return waitFor(delayMillis);
+      if (delayMillis > retryConfig.getMaxIntervalMillis()) {
+        return false;
+      } else if (delayMillis > 0) {
+        sleeper.sleep(delayMillis);
+        return true;
       }
     }
 
-    return backOffHandler.handleResponse(request, response, true);
+    return BackOffUtils.next(sleeper, backOff);
   }
 
   private long parseRetryAfterHeader(String retryAfter) {
@@ -80,18 +94,5 @@ final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponse
       }
     }
     return -1L;
-  }
-
-  private boolean waitFor(long delayMillis) {
-    if (delayMillis > retryConfig.getMaxIntervalMillis()) {
-      return false;
-    }
-
-    try {
-      backOffHandler.getSleeper().sleep(delayMillis);
-    } catch (InterruptedException e) {
-      // ignore
-    }
-    return true;
   }
 }
