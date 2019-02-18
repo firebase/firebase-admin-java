@@ -17,9 +17,12 @@
 package com.google.firebase.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.client.util.Sleeper;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +33,7 @@ public final class RetryConfig {
 
   private final List<Integer> retryStatusCodes;
   private final int maxRetries;
+  private final Sleeper sleeper;
   private final ExponentialBackOff.Builder backOffBuilder;
 
   private RetryConfig(Builder builder) {
@@ -41,6 +45,7 @@ public final class RetryConfig {
 
     checkArgument(builder.maxRetries >= 0, "maxRetries must not be negative");
     this.maxRetries = builder.maxRetries;
+    this.sleeper = checkNotNull(builder.sleeper);
     this.backOffBuilder = new ExponentialBackOff.Builder()
         .setInitialIntervalMillis(INITIAL_INTERVAL_MILLIS)
         .setMaxIntervalMillis(builder.maxIntervalMillis)
@@ -67,6 +72,10 @@ public final class RetryConfig {
     return backOffBuilder.getMultiplier();
   }
 
+  Sleeper getSleeper() {
+    return sleeper;
+  }
+
   BackOff newBackOff() {
     return backOffBuilder.build();
   }
@@ -81,6 +90,7 @@ public final class RetryConfig {
     private int maxRetries;
     private int maxIntervalMillis = (int) TimeUnit.MINUTES.toMillis(2);
     private double backOffMultiplier = 2.0;
+    private Sleeper sleeper = Sleeper.DEFAULT;
 
     private Builder() { }
 
@@ -101,6 +111,12 @@ public final class RetryConfig {
 
     public Builder setBackOffMultiplier(double backOffMultiplier) {
       this.backOffMultiplier = backOffMultiplier;
+      return this;
+    }
+
+    @VisibleForTesting
+    Builder setSleeper(Sleeper sleeper) {
+      this.sleeper = sleeper;
       return this;
     }
 

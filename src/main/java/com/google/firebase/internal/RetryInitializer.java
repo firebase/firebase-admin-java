@@ -21,8 +21,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.api.client.http.HttpBackOffIOExceptionHandler;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import com.google.auth.http.HttpCredentialsAdapter;
+import java.io.IOException;
 
 final class RetryInitializer implements HttpRequestInitializer {
 
@@ -48,8 +50,22 @@ final class RetryInitializer implements HttpRequestInitializer {
   }
 
   private HttpUnsuccessfulResponseHandler newUnsuccessfulResponseHandler() {
-    HttpUnsuccessfulResponseHandler retryingHandler =
+    final HttpUnsuccessfulResponseHandler retryHandler =
         new RetryUnsuccessfulResponseHandler(retryConfig);
-    return new CredentialsResponseHandlerDecorator(credentials, retryingHandler);
+    return new HttpUnsuccessfulResponseHandler() {
+      @Override
+      public boolean handleResponse(
+          HttpRequest request,
+          HttpResponse response,
+          boolean supportsRetry) throws IOException {
+        boolean retry = credentials.handleResponse(request, response, supportsRetry);
+        if (!retry) {
+          retry = retryHandler.handleResponse(request, response, supportsRetry);
+        }
+
+        request.setUnsuccessfulResponseHandler(this);
+        return retry;
+      }
+    };
   }
 }

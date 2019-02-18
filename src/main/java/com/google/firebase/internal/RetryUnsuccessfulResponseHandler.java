@@ -23,7 +23,6 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import com.google.api.client.util.Clock;
-import com.google.api.client.util.Sleeper;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.Date;
@@ -41,12 +40,10 @@ final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponse
 
   RetryUnsuccessfulResponseHandler(RetryConfig retryConfig, Clock clock) {
     this.retryConfig = checkNotNull(retryConfig);
-    this.backOffHandler = new HttpBackOffUnsuccessfulResponseHandler(retryConfig.newBackOff());
+    this.backOffHandler = new HttpBackOffUnsuccessfulResponseHandler(retryConfig.newBackOff())
+        .setBackOffRequired(HttpBackOffUnsuccessfulResponseHandler.BackOffRequired.ALWAYS)
+        .setSleeper(retryConfig.getSleeper());
     this.clock = checkNotNull(clock);
-  }
-
-  void setSleeper(Sleeper sleeper) {
-    backOffHandler.setSleeper(sleeper);
   }
 
   @Override
@@ -64,26 +61,13 @@ final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponse
 
     String retryAfterHeader = response.getHeaders().getRetryAfter();
     if (!Strings.isNullOrEmpty(retryAfterHeader)) {
-      return handleRetryAfterHeader(retryAfterHeader);
+      long delayMillis = parseRetryAfterHeader(retryAfterHeader.trim());
+      if (delayMillis > 0) {
+        return waitFor(delayMillis);
+      }
     }
 
     return backOffHandler.handleResponse(request, response, true);
-  }
-
-  private boolean handleRetryAfterHeader(String retryAfter) {
-    long delayMillis = parseRetryAfterHeader(retryAfter.trim());
-    if (delayMillis > retryConfig.getMaxIntervalMillis()) {
-      return false;
-    }
-
-    if (delayMillis > 0) {
-      try {
-        backOffHandler.getSleeper().sleep(delayMillis);
-      } catch (InterruptedException e) {
-        // ignore
-      }
-    }
-    return true;
   }
 
   private long parseRetryAfterHeader(String retryAfter) {
@@ -95,6 +79,19 @@ final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponse
         return date.getTime() - clock.currentTimeMillis();
       }
     }
-    return 0L;
+    return -1L;
+  }
+
+  private boolean waitFor(long delayMillis) {
+    if (delayMillis > retryConfig.getMaxIntervalMillis()) {
+      return false;
+    }
+
+    try {
+      backOffHandler.getSleeper().sleep(delayMillis);
+    } catch (InterruptedException e) {
+      // ignore
+    }
+    return true;
   }
 }

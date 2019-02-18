@@ -17,6 +17,7 @@
 package com.google.firebase.internal;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -123,7 +124,6 @@ public class FirebaseRequestInitializerTest {
     assertEquals("Bearer token", request.getHeaders().getAuthorization());
     assertEquals(5, request.getNumberOfRetries());
     assertTrue(request.getIOExceptionHandler() instanceof HttpBackOffIOExceptionHandler);
-    assertTrue(
-        request.getUnsuccessfulResponseHandler() instanceof CredentialsResponseHandlerDecorator);
+    assertNotNull(request.getUnsuccessfulResponseHandler());
   }
 }

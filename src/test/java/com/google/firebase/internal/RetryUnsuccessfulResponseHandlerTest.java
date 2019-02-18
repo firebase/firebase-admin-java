@@ -34,6 +34,7 @@ import com.google.api.client.testing.http.MockLowLevelHttpRequest;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.api.client.testing.util.MockSleeper;
 import com.google.api.client.util.Clock;
+import com.google.api.client.util.Sleeper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Longs;
 import java.io.IOException;
@@ -47,16 +48,14 @@ import org.junit.Test;
 public class RetryUnsuccessfulResponseHandlerTest {
 
   private static final GenericUrl TEST_URL = new GenericUrl("https://firebase.google.com");
-  private static final RetryConfig TEST_RETRY_CONFIG = RetryConfig.builder()
-      .setRetryStatusCodes(ImmutableList.of(503))
-      .build();
+  private static final RetryConfig.Builder TEST_RETRY_CONFIG = RetryConfig.builder()
+      .setRetryStatusCodes(ImmutableList.of(429, 503));
 
   @Test
   public void testDoesNotRetryOnUnspecifiedHttpStatus() throws IOException {
-    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
-        TEST_RETRY_CONFIG);
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
-    handler.setSleeper(sleeper);
+    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
+        testRetryConfig(sleeper));
     CountingHttpRequest failingRequest = CountingHttpRequest.fromResponse(
         new MockLowLevelHttpResponse()
             .addHeader("retry-after", "121")
@@ -78,11 +77,34 @@ public class RetryUnsuccessfulResponseHandlerTest {
   }
 
   @Test
-  public void testRetryAfterIsAbsent() throws IOException {
-    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
-        TEST_RETRY_CONFIG);
+  public void testRetryOnHttpClientErrorWhenConfigured() throws IOException {
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
-    handler.setSleeper(sleeper);
+    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
+        testRetryConfig(sleeper));
+    CountingHttpRequest failingRequest = CountingHttpRequest.fromResponse(
+        new MockLowLevelHttpResponse().setStatusCode(429).setZeroContent());
+    HttpRequest request = createRequest(failingRequest);
+    request.setNumberOfRetries(4);
+    request.setUnsuccessfulResponseHandler(handler);
+
+    try {
+      request.execute();
+      fail("No exception thrown for HTTP error");
+    } catch (HttpResponseException e) {
+      assertEquals(429, e.getStatusCode());
+    }
+
+    assertEquals(4, sleeper.getCount());
+    assertArrayEquals(new long[]{500, 1000, 2000, 4000}, sleeper.getDelays());
+    assertEquals(5, failingRequest.getCount());
+  }
+
+
+  @Test
+  public void testRetryAfterIsAbsent() throws IOException {
+    MultipleCallSleeper sleeper = new MultipleCallSleeper();
+    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
+        testRetryConfig(sleeper));
     CountingHttpRequest failingRequest = CountingHttpRequest.fromResponse(
         new MockLowLevelHttpResponse().setStatusCode(503).setZeroContent());
     HttpRequest request = createRequest(failingRequest);
@@ -103,10 +125,9 @@ public class RetryUnsuccessfulResponseHandlerTest {
 
   @Test
   public void testRetryAfterGivenAsSeconds() throws IOException {
-    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
-        TEST_RETRY_CONFIG);
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
-    handler.setSleeper(sleeper);
+    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
+        testRetryConfig(sleeper));
     CountingHttpRequest failingRequest = CountingHttpRequest.fromResponse(
         new MockLowLevelHttpResponse()
             .addHeader("retry-after", "2")
@@ -136,10 +157,9 @@ public class RetryUnsuccessfulResponseHandlerTest {
     Clock clock = new FixedClock(date.getTime());
     String retryAfter = dateFormat.format(new Date(date.getTime() + 30000));
 
-    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
-        TEST_RETRY_CONFIG, clock);
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
-    handler.setSleeper(sleeper);
+    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
+        testRetryConfig(sleeper), clock);
     CountingHttpRequest failingRequest = CountingHttpRequest.fromResponse(
         new MockLowLevelHttpResponse()
             .addHeader("retry-after", retryAfter)
@@ -162,11 +182,36 @@ public class RetryUnsuccessfulResponseHandlerTest {
   }
 
   @Test
-  public void testDoesNotRetryWhenRetryAfterIsTooLong() throws IOException {
-    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
-        TEST_RETRY_CONFIG);
+  public void testInvalidRetryAfterFailsOverToExpBackoff() throws IOException {
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
-    handler.setSleeper(sleeper);
+    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
+        testRetryConfig(sleeper));
+    CountingHttpRequest failingRequest = CountingHttpRequest.fromResponse(
+        new MockLowLevelHttpResponse()
+            .addHeader("retry-after", "not valid")
+            .setStatusCode(503)
+            .setZeroContent());
+    HttpRequest request = createRequest(failingRequest);
+    request.setNumberOfRetries(4);
+    request.setUnsuccessfulResponseHandler(handler);
+
+    try {
+      request.execute();
+      fail("No exception thrown for HTTP error");
+    } catch (HttpResponseException e) {
+      assertEquals(503, e.getStatusCode());
+    }
+
+    assertEquals(4, sleeper.getCount());
+    assertArrayEquals(new long[]{500, 1000, 2000, 4000}, sleeper.getDelays());
+    assertEquals(5, failingRequest.getCount());
+  }
+
+  @Test
+  public void testDoesNotRetryWhenRetryAfterIsTooLong() throws IOException {
+    MultipleCallSleeper sleeper = new MultipleCallSleeper();
+    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
+        testRetryConfig(sleeper));
     CountingHttpRequest failingRequest = CountingHttpRequest.fromResponse(
         new MockLowLevelHttpResponse()
             .addHeader("retry-after", "121")
@@ -193,6 +238,10 @@ public class RetryUnsuccessfulResponseHandlerTest {
         .build();
     HttpRequestFactory requestFactory = transport.createRequestFactory();
     return requestFactory.buildPostRequest(TEST_URL, new EmptyContent());
+  }
+
+  private RetryConfig testRetryConfig(Sleeper sleeper) {
+    return TEST_RETRY_CONFIG.setSleeper(sleeper).build();
   }
 
   private static class CountingHttpRequest extends MockLowLevelHttpRequest {

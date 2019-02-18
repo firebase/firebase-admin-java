@@ -18,10 +18,13 @@ package com.google.firebase.internal;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import com.google.api.client.testing.util.MockSleeper;
 import com.google.api.client.util.BackOff;
 import com.google.api.client.util.ExponentialBackOff;
+import com.google.api.client.util.Sleeper;
 import com.google.common.collect.ImmutableList;
 import java.io.IOException;
 import org.junit.Test;
@@ -36,6 +39,7 @@ public class RetryConfigTest {
     assertEquals(0, config.getMaxRetries());
     assertEquals(2 * 60 * 1000, config.getMaxIntervalMillis());
     assertEquals(2.0, config.getBackOffMultiplier(), 0.01);
+    assertSame(Sleeper.DEFAULT, config.getSleeper());
 
     ExponentialBackOff backOff = (ExponentialBackOff) config.newBackOff();
     assertEquals(2 * 60 * 1000, backOff.getMaxIntervalMillis());
@@ -48,11 +52,13 @@ public class RetryConfigTest {
   @Test
   public void testBuilderWithAllSettings() {
     ImmutableList<Integer> statusCodes = ImmutableList.of(500, 503);
+    Sleeper sleeper = new MockSleeper();
     RetryConfig config = RetryConfig.builder()
         .setMaxRetries(4)
         .setRetryStatusCodes(statusCodes)
         .setMaxIntervalMillis(5 * 60 * 1000)
         .setBackOffMultiplier(1.5)
+        .setSleeper(sleeper)
         .build();
 
     assertEquals(2, config.getRetryStatusCodes().size());
@@ -61,6 +67,7 @@ public class RetryConfigTest {
     assertEquals(4, config.getMaxRetries());
     assertEquals(5 * 60 * 1000, config.getMaxIntervalMillis());
     assertEquals(1.5, config.getBackOffMultiplier(), 0.01);
+    assertSame(sleeper, config.getSleeper());
 
     ExponentialBackOff backOff = (ExponentialBackOff) config.newBackOff();
     assertEquals(500, backOff.getInitialIntervalMillis());
@@ -104,6 +111,13 @@ public class RetryConfigTest {
   public void testBackOffMultiplierTooSmall() {
     RetryConfig.builder()
         .setBackOffMultiplier(0.99)
+        .build();
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testSleeperCannotBeNull() {
+    RetryConfig.builder()
+        .setSleeper(null)
         .build();
   }
 }
