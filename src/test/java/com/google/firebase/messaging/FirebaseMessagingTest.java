@@ -450,7 +450,7 @@ public class FirebaseMessagingTest {
   public void testSendAllWithTooManyMessages() {
     FirebaseMessaging messaging = initDefaultMessaging();
     ImmutableList.Builder<Message> listBuilder = ImmutableList.builder();
-    for (int i = 0; i < 1001; i++) {
+    for (int i = 0; i < 101; i++) {
       listBuilder.add(Message.builder().setTopic("topic").build());
     }
     try {
