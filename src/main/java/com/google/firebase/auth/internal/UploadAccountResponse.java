@@ -35,7 +35,7 @@ public class UploadAccountResponse {
     @Key("index")
     private int index;
 
-    @Key("errorMessage")
+    @Key("message")
     private String message;
 
     public int getIndex() {
