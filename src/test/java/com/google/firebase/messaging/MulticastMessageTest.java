@@ -70,12 +70,12 @@ public class MulticastMessageTest {
   @Test
   public void testTooManyTokens() {
     MulticastMessage.Builder builder = MulticastMessage.builder();
-    for (int i = 0; i < 1001; i++) {
+    for (int i = 0; i < 101; i++) {
       builder.addToken("token" + i);
     }
     try {
       builder.build();
-      fail("No error thrown for more than 1000 tokens");
+      fail("No error thrown for more than 100 tokens");
     } catch (IllegalArgumentException expected) {
       // expected
     }
