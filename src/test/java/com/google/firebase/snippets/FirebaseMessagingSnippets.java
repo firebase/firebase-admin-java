@@ -121,7 +121,7 @@ public class FirebaseMessagingSnippets {
     String registrationToken = "YOUR_REGISTRATION_TOKEN";
 
     // [START send_all]
-    // Create a list containing up to 1000 messages.
+    // Create a list containing up to 100 messages.
     List<Message> messages = Arrays.asList(
         Message.builder()
             .setNotification(new Notification("Price drop", "5% off all electronics"))
@@ -143,7 +143,7 @@ public class FirebaseMessagingSnippets {
 
   public void sendMulticast() throws FirebaseMessagingException {
     // [START send_multicast]
-    // Create a list containing up to 1000 registration tokens.
+    // Create a list containing up to 100 registration tokens.
     // These registration tokens come from the client FCM SDKs.
     List<String> registrationTokens = Arrays.asList(
         "YOUR_REGISTRATION_TOKEN_1",
