@@ -39,6 +39,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.Nullable;
+import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.messaging.internal.MessagingServiceErrorResponse;
 import com.google.firebase.messaging.internal.MessagingServiceResponse;
 import java.io.IOException;
@@ -77,6 +78,7 @@ final class FirebaseMessagingClient {
   private final HttpRequestFactory childRequestFactory;
   private final JsonFactory jsonFactory;
   private final HttpResponseInterceptor responseInterceptor;
+  private final String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
 
   FirebaseMessagingClient(FirebaseApp app, @Nullable HttpResponseInterceptor responseInterceptor) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
@@ -118,7 +120,7 @@ final class FirebaseMessagingClient {
     HttpRequest request = requestFactory.buildPostRequest(
         new GenericUrl(fcmSendUrl),
         new JsonHttpContent(jsonFactory, message.wrapForTransport(dryRun)));
-    setFcmApiFormatVersion(request.getHeaders());
+    setCommonFcmHeaders(request.getHeaders());
     request.setParser(new JsonObjectParser(jsonFactory));
     request.setResponseInterceptor(responseInterceptor);
     HttpResponse response = request.execute();
@@ -156,7 +158,7 @@ final class FirebaseMessagingClient {
           sendUrl,
           new JsonHttpContent(jsonFactory, message.wrapForTransport(dryRun)));
       request.setParser(jsonParser);
-      setFcmApiFormatVersion(request.getHeaders());
+      setCommonFcmHeaders(request.getHeaders());
       batch.queue(
           request, MessagingServiceResponse.class, MessagingServiceErrorResponse.class, callback);
     }
@@ -164,8 +166,9 @@ final class FirebaseMessagingClient {
     return batch;
   }
 
-  private void setFcmApiFormatVersion(HttpHeaders headers) {
+  private void setCommonFcmHeaders(HttpHeaders headers) {
     headers.set("X-GOOG-API-FORMAT-VERSION", "2");
+    headers.set("X-Client-Version", clientVersion);
   }
 
   private FirebaseMessagingException createExceptionFromResponse(HttpResponseException e) {

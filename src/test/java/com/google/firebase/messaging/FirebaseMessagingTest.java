@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
@@ -39,6 +40,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.messaging.WebpushNotification.Action;
 import com.google.firebase.messaging.WebpushNotification.Direction;
 import com.google.firebase.testing.GenericFunction;
@@ -978,8 +980,10 @@ public class FirebaseMessagingTest {
   private void checkRequestHeader(HttpRequest request) {
     assertEquals("POST", request.getRequestMethod());
     assertEquals(TEST_FCM_URL, request.getUrl().toString());
-    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
-    assertEquals("2", request.getHeaders().get("X-GOOG-API-FORMAT-VERSION"));
+    HttpHeaders headers = request.getHeaders();
+    assertEquals("Bearer test-token", headers.getAuthorization());
+    assertEquals("2", headers.get("X-GOOG-API-FORMAT-VERSION"));
+    assertEquals("Java/Admin/" + SdkUtils.getVersion(), headers.get("X-Client-Version"));
   }
 
   private FirebaseMessaging getMessagingForBatchRequest(
@@ -1051,6 +1055,8 @@ public class FirebaseMessagingTest {
     String[] lines = out.toString().split("\n");
     assertEquals(expectedParts, countLinesWithPrefix(lines, "POST " + TEST_FCM_URL));
     assertEquals(expectedParts, countLinesWithPrefix(lines, "x-goog-api-format-version: 2"));
+    assertEquals(expectedParts, countLinesWithPrefix(
+        lines, "x-client-version: Java/Admin/" + SdkUtils.getVersion()));
   }
 
   private int countLinesWithPrefix(String[] lines, String prefix) {
