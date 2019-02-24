@@ -23,32 +23,25 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.http.EmptyContent;
-import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpBackOffIOExceptionHandler;
 import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import com.google.api.client.http.LowLevelHttpResponse;
-import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpRequest;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.api.client.testing.util.MockSleeper;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 
 public class RetryInitializerTest {
 
-  private static final GenericUrl TEST_URL = new GenericUrl("https://firebase.google.com");
-  private static final HttpCredentialsAdapter TEST_CREDENTIALS = new HttpCredentialsAdapter(
-      new MockGoogleCredentials());
   private static final RetryConfig RETRY_CONFIG = RetryConfig.builder()
       .setMaxRetries(5)
       .setRetryStatusCodes(ImmutableList.of(503))
@@ -56,8 +49,8 @@ public class RetryInitializerTest {
 
   @Test
   public void testEnableRetry() throws IOException {
-    RetryInitializer initializer = new RetryInitializer(TEST_CREDENTIALS, RETRY_CONFIG);
-    HttpRequest request = createRequest();
+    RetryInitializer initializer = new RetryInitializer(RETRY_CONFIG);
+    HttpRequest request = TestUtils.createRequest();
 
     initializer.initialize(request);
 
@@ -68,8 +61,8 @@ public class RetryInitializerTest {
 
   @Test
   public void testDisableRetry() throws IOException {
-    RetryInitializer initializer = new RetryInitializer(TEST_CREDENTIALS, null);
-    HttpRequest request = createRequest();
+    RetryInitializer initializer = new RetryInitializer(null);
+    HttpRequest request = TestUtils.createRequest();
 
     initializer.initialize(request);
 
@@ -79,57 +72,16 @@ public class RetryInitializerTest {
   }
 
   @Test
-  public void testRetryCredentialsCheck() throws IOException {
-    MockSleeper sleeper = new MockSleeper();
-    HttpCredentialsAdapter credentials = new HttpCredentialsAdapter(new MockGoogleCredentials()){
-      @Override
-      public boolean handleResponse(HttpRequest request, HttpResponse response, boolean
-          supportsRetry) {
-        String auth = request.getHeaders().getAuthorization();
-        if (!"Bearer retry".equals(auth)) {
-          request.getHeaders().setAuthorization("Bearer retry");
-          return true;
-        }
-        return false;
-      }
-    };
-    RetryInitializer initializer = new RetryInitializer(credentials, RetryConfig.builder()
-        .setMaxRetries(4)
-        .setRetryStatusCodes(ImmutableList.of(503))
-        .setSleeper(sleeper)
-        .build());
-
-    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(
-        new MockLowLevelHttpResponse().setStatusCode(401).setZeroContent());
-    HttpRequest request = createRequest(failingRequest);
-    initializer.initialize(request);
-    final HttpUnsuccessfulResponseHandler retryHandler = request.getUnsuccessfulResponseHandler();
-
-    try {
-      request.execute();
-      fail("No exception thrown for HTTP error");
-    } catch (HttpResponseException e) {
-      assertEquals(401, e.getStatusCode());
-    }
-
-    assertEquals("Bearer retry", request.getHeaders().getAuthorization());
-    assertEquals(0, sleeper.getCount());
-    assertEquals(2, failingRequest.getCount());
-    assertSame(retryHandler, request.getUnsuccessfulResponseHandler());
-  }
-
-  @Test
   public void testRetryOnIOException() throws IOException {
     MockSleeper sleeper = new MockSleeper();
-    HttpCredentialsAdapter credentials = new HttpCredentialsAdapter(new MockGoogleCredentials());
-    RetryInitializer initializer = new RetryInitializer(credentials, RetryConfig.builder()
+    RetryInitializer initializer = new RetryInitializer(RetryConfig.builder()
         .setMaxRetries(4)
         .setSleeper(sleeper)
         .build());
 
     CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromException(
         new IOException("test error"));
-    HttpRequest request = createRequest(failingRequest);
+    HttpRequest request = TestUtils.createRequest(failingRequest);
     initializer.initialize(request);
     final HttpUnsuccessfulResponseHandler retryHandler = request.getUnsuccessfulResponseHandler();
 
@@ -146,10 +98,34 @@ public class RetryInitializerTest {
   }
 
   @Test
+  public void testRetryOnHttpError() throws IOException {
+    MockSleeper sleeper = new MockSleeper();
+    RetryInitializer initializer = new RetryInitializer(RetryConfig.builder()
+        .setMaxRetries(4)
+        .setRetryStatusCodes(ImmutableList.of(503))
+        .setSleeper(sleeper)
+        .build());
+    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(503);
+    HttpRequest request = TestUtils.createRequest(failingRequest);
+    initializer.initialize(request);
+    final HttpUnsuccessfulResponseHandler retryHandler = request.getUnsuccessfulResponseHandler();
+
+    try {
+      request.execute();
+      fail("No exception thrown for HTTP error");
+    } catch (HttpResponseException e) {
+      assertEquals(503, e.getStatusCode());
+    }
+
+    assertEquals(4, sleeper.getCount());
+    assertEquals(5, failingRequest.getCount());
+    assertSame(retryHandler, request.getUnsuccessfulResponseHandler());
+  }
+
+  @Test
   public void testMaxRetriesCountIsCumulative() throws IOException {
     MockSleeper sleeper = new MockSleeper();
-    HttpCredentialsAdapter credentials = new HttpCredentialsAdapter(new MockGoogleCredentials());
-    RetryInitializer initializer = new RetryInitializer(credentials, RetryConfig.builder()
+    RetryInitializer initializer = new RetryInitializer(RetryConfig.builder()
         .setMaxRetries(4)
         .setRetryStatusCodes(ImmutableList.of(503))
         .setSleeper(sleeper)
@@ -166,7 +142,7 @@ public class RetryInitializerTest {
         }
       }
     };
-    HttpRequest request = createRequest(failingRequest);
+    HttpRequest request = TestUtils.createRequest(failingRequest);
     initializer.initialize(request);
     final HttpUnsuccessfulResponseHandler retryHandler = request.getUnsuccessfulResponseHandler();
 
@@ -183,29 +159,25 @@ public class RetryInitializerTest {
   }
 
   @Test
-  public void testDelegateCalledAfterCredentials() throws IOException {
-    MockSleeper sleeper = new MockSleeper();
-    HttpCredentialsAdapter credentials = new HttpCredentialsAdapter(new MockGoogleCredentials()){
+  public void testOtherErrorHandlersCalledBeforeRetry() throws IOException {
+    final AtomicInteger otherErrorHandlerCalls = new AtomicInteger(0);
+    HttpCredentialsAdapter credentials = new HttpCredentialsAdapter(new MockGoogleCredentials()) {
       @Override
-      public boolean handleResponse(HttpRequest request, HttpResponse response, boolean
-          supportsRetry) {
-        String auth = request.getHeaders().getAuthorization();
-        if (!"Bearer retry".equals(auth)) {
-          request.getHeaders().setAuthorization("Bearer retry");
-          return true;
-        }
-        return false;
+      public boolean handleResponse(
+          HttpRequest request, HttpResponse response, boolean supportsRetry) {
+        otherErrorHandlerCalls.incrementAndGet();
+        return super.handleResponse(request, response, supportsRetry);
       }
     };
-    RetryInitializer initializer = new RetryInitializer(credentials, RetryConfig.builder()
+    MockSleeper sleeper = new MockSleeper();
+    RetryInitializer initializer = new RetryInitializer(RetryConfig.builder()
         .setMaxRetries(4)
-        .setRetryStatusCodes(ImmutableList.of(401))
+        .setRetryStatusCodes(ImmutableList.of(503))
         .setSleeper(sleeper)
         .build());
-
-    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(
-        new MockLowLevelHttpResponse().setStatusCode(401).setZeroContent());
-    HttpRequest request = createRequest(failingRequest);
+    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(503);
+    HttpRequest request = TestUtils.createRequest(failingRequest);
+    credentials.initialize(request);
     initializer.initialize(request);
     final HttpUnsuccessfulResponseHandler retryHandler = request.getUnsuccessfulResponseHandler();
 
@@ -213,24 +185,12 @@ public class RetryInitializerTest {
       request.execute();
       fail("No exception thrown for HTTP error");
     } catch (HttpResponseException e) {
-      assertEquals(401, e.getStatusCode());
+      assertEquals(503, e.getStatusCode());
     }
 
-    assertEquals("Bearer retry", request.getHeaders().getAuthorization());
-    assertEquals(3, sleeper.getCount());
+    assertEquals(5, otherErrorHandlerCalls.get());
+    assertEquals(4, sleeper.getCount());
     assertEquals(5, failingRequest.getCount());
     assertSame(retryHandler, request.getUnsuccessfulResponseHandler());
-  }
-
-  private HttpRequest createRequest() throws IOException {
-    return createRequest(new MockLowLevelHttpRequest());
-  }
-
-  private HttpRequest createRequest(MockLowLevelHttpRequest request) throws IOException {
-    HttpTransport transport = new MockHttpTransport.Builder()
-        .setLowLevelHttpRequest(request)
-        .build();
-    HttpRequestFactory requestFactory = transport.createRequestFactory();
-    return requestFactory.buildPostRequest(TEST_URL, new EmptyContent());
   }
 }

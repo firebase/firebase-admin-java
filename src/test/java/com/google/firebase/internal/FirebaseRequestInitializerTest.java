@@ -21,26 +21,19 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import com.google.api.client.http.EmptyContent;
-import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpBackOffIOExceptionHandler;
 import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.testing.http.MockHttpTransport;
-import com.google.api.client.testing.http.MockLowLevelHttpRequest;
+import com.google.api.client.http.HttpResponseException;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
-import java.io.IOException;
+import com.google.firebase.testing.TestUtils;
 import org.junit.After;
 import org.junit.Test;
 
 public class FirebaseRequestInitializerTest {
-
-  private static final GenericUrl TEST_URL = new GenericUrl("https://firebase.google.com");
 
   @After
   public void tearDown() {
@@ -52,7 +45,7 @@ public class FirebaseRequestInitializerTest {
     FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials("token"))
         .build());
-    HttpRequest request = createRequest();
+    HttpRequest request = TestUtils.createRequest();
 
     FirebaseRequestInitializer initializer = new FirebaseRequestInitializer(app);
     initializer.initialize(request);
@@ -73,7 +66,7 @@ public class FirebaseRequestInitializerTest {
         .setConnectTimeout(30000)
         .setReadTimeout(60000)
         .build());
-    HttpRequest request = createRequest();
+    HttpRequest request = TestUtils.createRequest();
 
     FirebaseRequestInitializer initializer = new FirebaseRequestInitializer(app);
     initializer.initialize(request);
@@ -94,7 +87,7 @@ public class FirebaseRequestInitializerTest {
     RetryConfig retryConfig = RetryConfig.builder()
         .setMaxRetries(5)
         .build();
-    HttpRequest request = createRequest();
+    HttpRequest request = TestUtils.createRequest();
 
     FirebaseRequestInitializer initializer = new FirebaseRequestInitializer(app, retryConfig);
     initializer.initialize(request);
@@ -107,11 +100,27 @@ public class FirebaseRequestInitializerTest {
     assertNotNull(request.getUnsuccessfulResponseHandler());
   }
 
-  private HttpRequest createRequest() throws IOException {
-    HttpTransport transport = new MockHttpTransport.Builder()
-        .setLowLevelHttpRequest(new MockLowLevelHttpRequest())
+  @Test
+  public void testCredentialsRetryHandler() throws Exception {
+    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("token"))
+        .build());
+    RetryConfig retryConfig = RetryConfig.builder()
+        .setMaxRetries(5)
         .build();
-    HttpRequestFactory requestFactory = transport.createRequestFactory();
-    return requestFactory.buildPostRequest(TEST_URL, new EmptyContent());
+    CountingLowLevelHttpRequest countingRequest = CountingLowLevelHttpRequest.fromResponse(401);
+    HttpRequest request = TestUtils.createRequest(countingRequest);
+    FirebaseRequestInitializer initializer = new FirebaseRequestInitializer(app, retryConfig);
+    initializer.initialize(request);
+    request.getHeaders().setAuthorization((String) null);
+
+    try {
+      request.execute();
+    } catch (HttpResponseException e) {
+      assertEquals(401, e.getStatusCode());
+    }
+
+    assertEquals("Bearer token", request.getHeaders().getAuthorization());
+    assertEquals(6, countingRequest.getCount());
   }
 }
