@@ -30,6 +30,11 @@ import java.io.IOException;
 import java.util.Date;
 import org.apache.http.client.utils.DateUtils;
 
+/**
+ * An {@code HttpUnsuccessfulResponseHandler} that retries failing requests after an interval. The
+ * interval is determined by checking the Retry-After header on the last response. If that
+ * header is not present, uses exponential back off to delay subsequent retries.
+ */
 final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponseHandler {
 
   private final RetryConfig retryConfig;
@@ -72,11 +77,13 @@ final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponse
   private boolean waitAndRetry(HttpResponse response) throws IOException, InterruptedException {
     String retryAfterHeader = response.getHeaders().getRetryAfter();
     if (!Strings.isNullOrEmpty(retryAfterHeader)) {
-      long delayMillis = parseRetryAfterHeader(retryAfterHeader.trim());
-      if (delayMillis > retryConfig.getMaxIntervalMillis()) {
+      long intervalMillis = parseRetryAfterHeaderAsMillis(retryAfterHeader.trim());
+      if (intervalMillis > retryConfig.getMaxIntervalMillis()) {
         return false;
-      } else if (delayMillis > 0) {
-        sleeper.sleep(delayMillis);
+      }
+
+      if (intervalMillis > 0) {
+        sleeper.sleep(intervalMillis);
         return true;
       }
     }
@@ -84,7 +91,7 @@ final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponse
     return BackOffUtils.next(sleeper, backOff);
   }
 
-  private long parseRetryAfterHeader(String retryAfter) {
+  private long parseRetryAfterHeaderAsMillis(String retryAfter) {
     try {
       return Long.parseLong(retryAfter) * 1000;
     } catch (NumberFormatException e) {
@@ -93,6 +100,7 @@ final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponse
         return date.getTime() - clock.currentTimeMillis();
       }
     }
+
     return -1L;
   }
 }

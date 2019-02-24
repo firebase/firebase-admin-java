@@ -27,6 +27,9 @@ import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Configures when and how HTTP requests should be retried.
+ */
 public final class RetryConfig {
 
   private static final int INITIAL_INTERVAL_MILLIS = 500;
@@ -94,21 +97,51 @@ public final class RetryConfig {
 
     private Builder() { }
 
+    /**
+     * Sets a list of HTTP status codes that should be retried. If null or empty, HTTP requests
+     * will not be retried as long as they result in some HTTP response message. I/O errors
+     * will still be retried.
+     *
+     * @param retryStatusCodes A list of status codes.
+     * @return This builder.
+     */
     public Builder setRetryStatusCodes(List<Integer> retryStatusCodes) {
       this.retryStatusCodes = retryStatusCodes;
       return this;
     }
 
+    /**
+     * Maximum number of retry attempts for a request. This is the cumulative total for all retries
+     * regardless of their cause (I/O errors and HTTP error responses).
+     *
+     * @param maxRetries A non-negative integer.
+     * @return This builder.
+     */
     public Builder setMaxRetries(int maxRetries) {
       this.maxRetries = maxRetries;
       return this;
     }
 
+    /**
+     * Maximum interval to wait before a request should be retried. Must be at least 500
+     * milliseconds. Defaults to 2 minutes.
+     *
+     * @param maxIntervalMillis Interval in milliseconds.
+     * @return This builder.
+     */
     public Builder setMaxIntervalMillis(int maxIntervalMillis) {
       this.maxIntervalMillis = maxIntervalMillis;
       return this;
     }
 
+    /**
+     * Factor by which the retry interval is multiplied when employing exponential back
+     * off to delay consecutive retries of the same request. Must be at least 1. Defaults
+     * to 2.
+     *
+     * @param backOffMultiplier Multiplication factor for exponential back off.
+     * @return This builder.
+     */
     public Builder setBackOffMultiplier(double backOffMultiplier) {
       this.backOffMultiplier = backOffMultiplier;
       return this;

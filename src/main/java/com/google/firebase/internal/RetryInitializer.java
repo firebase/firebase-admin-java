@@ -26,6 +26,12 @@ import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import com.google.auth.http.HttpCredentialsAdapter;
 import java.io.IOException;
 
+/**
+ * Configures HTTP requests to be retried. Failures caused by I/O errors are always retried
+ * according to the specified {@link RetryConfig}. Failures caused by unsuccessful HTTP responses
+ * are first referred to the {@code HttpCredentialsAdapter}. If the request does not get retried
+ * by the credentials, {@link RetryConfig} is used to schedule additional retries.
+ */
 final class RetryInitializer implements HttpRequestInitializer {
 
   private final HttpCredentialsAdapter credentials;
@@ -43,7 +49,8 @@ final class RetryInitializer implements HttpRequestInitializer {
       request.setUnsuccessfulResponseHandler(
           newUnsuccessfulResponseHandler());
       request.setIOExceptionHandler(
-          new HttpBackOffIOExceptionHandler(retryConfig.newBackOff()));
+          new HttpBackOffIOExceptionHandler(retryConfig.newBackOff())
+              .setSleeper(retryConfig.getSleeper()));
     } else {
       request.setNumberOfRetries(0);
     }
@@ -63,6 +70,8 @@ final class RetryInitializer implements HttpRequestInitializer {
           retry = retryHandler.handleResponse(request, response, supportsRetry);
         }
 
+        // HttpCredentialsAdapter sometimes resets the unsuccessful response handler on the
+        // request. This changes it back.
         request.setUnsuccessfulResponseHandler(this);
         return retry;
       }

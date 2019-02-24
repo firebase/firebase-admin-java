@@ -16,7 +16,6 @@
 
 package com.google.firebase.internal;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -42,6 +41,7 @@ import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.MockGoogleCredentials;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Test;
 
 public class RetryInitializerTest {
@@ -99,7 +99,7 @@ public class RetryInitializerTest {
         .setSleeper(sleeper)
         .build());
 
-    CountingHttpRequest failingRequest = CountingHttpRequest.fromResponse(
+    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(
         new MockLowLevelHttpResponse().setStatusCode(401).setZeroContent());
     HttpRequest request = createRequest(failingRequest);
     initializer.initialize(request);
@@ -115,6 +115,70 @@ public class RetryInitializerTest {
     assertEquals("Bearer retry", request.getHeaders().getAuthorization());
     assertEquals(0, sleeper.getCount());
     assertEquals(2, failingRequest.getCount());
+    assertSame(retryHandler, request.getUnsuccessfulResponseHandler());
+  }
+
+  @Test
+  public void testRetryOnIOException() throws IOException {
+    MockSleeper sleeper = new MockSleeper();
+    HttpCredentialsAdapter credentials = new HttpCredentialsAdapter(new MockGoogleCredentials());
+    RetryInitializer initializer = new RetryInitializer(credentials, RetryConfig.builder()
+        .setMaxRetries(4)
+        .setSleeper(sleeper)
+        .build());
+
+    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromException(
+        new IOException("test error"));
+    HttpRequest request = createRequest(failingRequest);
+    initializer.initialize(request);
+    final HttpUnsuccessfulResponseHandler retryHandler = request.getUnsuccessfulResponseHandler();
+
+    try {
+      request.execute();
+      fail("No exception thrown for HTTP error");
+    } catch (IOException e) {
+      assertEquals("test error", e.getMessage());
+    }
+
+    assertEquals(4, sleeper.getCount());
+    assertEquals(5, failingRequest.getCount());
+    assertSame(retryHandler, request.getUnsuccessfulResponseHandler());
+  }
+
+  @Test
+  public void testMaxRetriesCountIsCumulative() throws IOException {
+    MockSleeper sleeper = new MockSleeper();
+    HttpCredentialsAdapter credentials = new HttpCredentialsAdapter(new MockGoogleCredentials());
+    RetryInitializer initializer = new RetryInitializer(credentials, RetryConfig.builder()
+        .setMaxRetries(4)
+        .setRetryStatusCodes(ImmutableList.of(503))
+        .setSleeper(sleeper)
+        .build());
+
+    final AtomicInteger counter = new AtomicInteger(0);
+    MockLowLevelHttpRequest failingRequest = new MockLowLevelHttpRequest(){
+      @Override
+      public LowLevelHttpResponse execute() throws IOException {
+        if (counter.getAndIncrement() < 2) {
+          throw new IOException("test error");
+        } else {
+          return new MockLowLevelHttpResponse().setStatusCode(503).setZeroContent();
+        }
+      }
+    };
+    HttpRequest request = createRequest(failingRequest);
+    initializer.initialize(request);
+    final HttpUnsuccessfulResponseHandler retryHandler = request.getUnsuccessfulResponseHandler();
+
+    try {
+      request.execute();
+      fail("No exception thrown for HTTP error");
+    } catch (HttpResponseException e) {
+      assertEquals(503, e.getStatusCode());
+    }
+
+    assertEquals(4, sleeper.getCount());
+    assertEquals(5, counter.get());
     assertSame(retryHandler, request.getUnsuccessfulResponseHandler());
   }
 
@@ -139,7 +203,7 @@ public class RetryInitializerTest {
         .setSleeper(sleeper)
         .build());
 
-    CountingHttpRequest failingRequest = CountingHttpRequest.fromResponse(
+    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(
         new MockLowLevelHttpResponse().setStatusCode(401).setZeroContent());
     HttpRequest request = createRequest(failingRequest);
     initializer.initialize(request);
@@ -158,50 +222,13 @@ public class RetryInitializerTest {
     assertSame(retryHandler, request.getUnsuccessfulResponseHandler());
   }
 
+  private HttpRequest createRequest() throws IOException {
+    return createRequest(new MockLowLevelHttpRequest());
+  }
 
   private HttpRequest createRequest(MockLowLevelHttpRequest request) throws IOException {
     HttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpRequest(request)
-        .build();
-    HttpRequestFactory requestFactory = transport.createRequestFactory();
-    return requestFactory.buildPostRequest(TEST_URL, new EmptyContent());
-  }
-
-  private static class CountingHttpRequest extends MockLowLevelHttpRequest {
-
-    private final LowLevelHttpResponse response;
-    private final IOException exception;
-    private int count;
-
-    private CountingHttpRequest(LowLevelHttpResponse response, IOException exception) {
-      this.response = response;
-      this.exception = exception;
-    }
-
-    static CountingHttpRequest fromResponse(LowLevelHttpResponse response) {
-      return new CountingHttpRequest(checkNotNull(response), null);
-    }
-
-    @Override
-    public void addHeader(String name, String value) { }
-
-    @Override
-    public LowLevelHttpResponse execute() throws IOException {
-      count++;
-      if (response != null) {
-        return response;
-      }
-      throw exception;
-    }
-
-    int getCount() {
-      return count;
-    }
-  }
-
-  private HttpRequest createRequest() throws IOException {
-    HttpTransport transport = new MockHttpTransport.Builder()
-        .setLowLevelHttpRequest(new MockLowLevelHttpRequest())
         .build();
     HttpRequestFactory requestFactory = transport.createRequestFactory();
     return requestFactory.buildPostRequest(TEST_URL, new EmptyContent());

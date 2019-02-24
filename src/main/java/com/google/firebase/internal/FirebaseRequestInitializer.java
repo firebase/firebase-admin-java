@@ -26,10 +26,10 @@ import com.google.firebase.ImplFirebaseTrampolines;
 import java.io.IOException;
 
 /**
- * {@code HttpRequestInitializer} for configuring outgoing REST calls. Handles OAuth2 authorization
- * and setting timeout values.
+ * {@code HttpRequestInitializer} for configuring outgoing REST calls. Initializes requests with
+ * OAuth2 credentials, timeout and retry settings.
  */
-public class FirebaseRequestInitializer implements HttpRequestInitializer {
+public final class FirebaseRequestInitializer implements HttpRequestInitializer {
 
   private final HttpCredentialsAdapter credentialsAdapter;
   private final TimeoutInitializer timeoutInitializer;
