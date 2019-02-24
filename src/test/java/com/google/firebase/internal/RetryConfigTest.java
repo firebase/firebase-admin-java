@@ -91,6 +91,7 @@ public class RetryConfigTest {
     assertEquals(4000, backOff.nextBackOffMillis());
     assertEquals(8000, backOff.nextBackOffMillis());
     assertEquals(12000, backOff.nextBackOffMillis());
+    assertEquals(12000, backOff.nextBackOffMillis());
   }
 
   @Test(expected = IllegalArgumentException.class)

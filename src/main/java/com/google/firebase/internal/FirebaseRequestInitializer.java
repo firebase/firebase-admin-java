@@ -19,11 +19,12 @@ package com.google.firebase.internal;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.auth.http.HttpCredentialsAdapter;
-import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * {@code HttpRequestInitializer} for configuring outgoing REST calls. Initializes requests with
@@ -31,26 +32,26 @@ import java.io.IOException;
  */
 public final class FirebaseRequestInitializer implements HttpRequestInitializer {
 
-  private final HttpCredentialsAdapter credentialsAdapter;
-  private final TimeoutInitializer timeoutInitializer;
-  private final RetryInitializer retryInitializer;
+  private final List<HttpRequestInitializer> initializers;
 
   public FirebaseRequestInitializer(FirebaseApp app) {
     this(app, null);
   }
 
   public FirebaseRequestInitializer(FirebaseApp app, @Nullable RetryConfig retryConfig) {
-    GoogleCredentials credentials = ImplFirebaseTrampolines.getCredentials(app);
-    this.credentialsAdapter = new HttpCredentialsAdapter(credentials);
-    this.timeoutInitializer = new TimeoutInitializer(app.getOptions());
-    this.retryInitializer = new RetryInitializer(this.credentialsAdapter, retryConfig);
+    HttpCredentialsAdapter credentials = new HttpCredentialsAdapter(
+        ImplFirebaseTrampolines.getCredentials(app));
+    this.initializers = ImmutableList.of(
+        credentials,
+        new TimeoutInitializer(app.getOptions()),
+        new RetryInitializer(credentials, retryConfig));
   }
 
   @Override
   public void initialize(HttpRequest request) throws IOException {
-    credentialsAdapter.initialize(request);
-    timeoutInitializer.initialize(request);
-    retryInitializer.initialize(request);
+    for (HttpRequestInitializer initializer : initializers) {
+      initializer.initialize(request);
+    }
   }
 
   private static class TimeoutInitializer implements HttpRequestInitializer {

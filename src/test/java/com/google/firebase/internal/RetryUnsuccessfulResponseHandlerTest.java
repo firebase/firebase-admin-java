@@ -29,11 +29,11 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.testing.http.FixedClock;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpRequest;
-import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.api.client.testing.util.MockSleeper;
 import com.google.api.client.util.Clock;
 import com.google.api.client.util.Sleeper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Longs;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -55,10 +55,7 @@ public class RetryUnsuccessfulResponseHandlerTest {
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
     RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
         testRetryConfig(sleeper));
-    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(
-        new MockLowLevelHttpResponse()
-            .setStatusCode(404)
-            .setZeroContent());
+    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(404);
     HttpRequest request = createRequest(failingRequest);
     request.setUnsuccessfulResponseHandler(handler);
     request.setNumberOfRetries(4);
@@ -79,10 +76,7 @@ public class RetryUnsuccessfulResponseHandlerTest {
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
     RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
         testRetryConfig(sleeper));
-    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(
-        new MockLowLevelHttpResponse()
-            .setStatusCode(429)
-            .setZeroContent());
+    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(429);
     HttpRequest request = createRequest(failingRequest);
     request.setUnsuccessfulResponseHandler(handler);
     request.setNumberOfRetries(4);
@@ -105,10 +99,7 @@ public class RetryUnsuccessfulResponseHandlerTest {
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
     RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
         testRetryConfig(sleeper));
-    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(
-        new MockLowLevelHttpResponse()
-            .setStatusCode(503)
-            .setZeroContent());
+    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(503);
     HttpRequest request = createRequest(failingRequest);
     request.setUnsuccessfulResponseHandler(handler);
     request.setNumberOfRetries(4);
@@ -130,10 +121,7 @@ public class RetryUnsuccessfulResponseHandlerTest {
     MultipleCallSleeper sleeper = new MultipleCallSleeper();
     RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
         testRetryConfig(sleeper));
-    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(
-        new MockLowLevelHttpResponse()
-            .setStatusCode(503)
-            .setZeroContent());
+    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(503);
     HttpRequest request = createRequest(failingRequest);
     request.setUnsuccessfulResponseHandler(handler);
     request.setNumberOfRetries(10);
@@ -158,10 +146,7 @@ public class RetryUnsuccessfulResponseHandlerTest {
     RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
         testRetryConfig(sleeper));
     CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(
-        new MockLowLevelHttpResponse()
-            .addHeader("retry-after", "2")
-            .setStatusCode(503)
-            .setZeroContent());
+        503, ImmutableMap.of("retry-after", "2"));
     HttpRequest request = createRequest(failingRequest);
     request.setUnsuccessfulResponseHandler(handler);
     request.setNumberOfRetries(4);
@@ -190,10 +175,7 @@ public class RetryUnsuccessfulResponseHandlerTest {
     RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
         testRetryConfig(sleeper), clock);
     CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(
-        new MockLowLevelHttpResponse()
-            .addHeader("retry-after", retryAfter)
-            .setStatusCode(503)
-            .setZeroContent());
+        503, ImmutableMap.of("retry-after", retryAfter));
     HttpRequest request = createRequest(failingRequest);
     request.setUnsuccessfulResponseHandler(handler);
     request.setNumberOfRetries(4);
@@ -216,10 +198,7 @@ public class RetryUnsuccessfulResponseHandlerTest {
     RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
         testRetryConfig(sleeper));
     CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(
-        new MockLowLevelHttpResponse()
-            .addHeader("retry-after", "not valid")
-            .setStatusCode(503)
-            .setZeroContent());
+        503, ImmutableMap.of("retry-after", "not valid"));
     HttpRequest request = createRequest(failingRequest);
     request.setUnsuccessfulResponseHandler(handler);
     request.setNumberOfRetries(4);
@@ -242,10 +221,7 @@ public class RetryUnsuccessfulResponseHandlerTest {
     RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
         testRetryConfig(sleeper));
     CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(
-        new MockLowLevelHttpResponse()
-            .addHeader("retry-after", "121")
-            .setStatusCode(503)
-            .setZeroContent());
+        503, ImmutableMap.of("retry-after", "121"));
     HttpRequest request = createRequest(failingRequest);
     request.setUnsuccessfulResponseHandler(handler);
     request.setNumberOfRetries(4);
@@ -272,10 +248,7 @@ public class RetryUnsuccessfulResponseHandlerTest {
     };
     RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
         testRetryConfig(sleeper));
-    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(
-        new MockLowLevelHttpResponse()
-            .setStatusCode(503)
-            .setZeroContent());
+    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromResponse(503);
     HttpRequest request = createRequest(failingRequest);
     request.setUnsuccessfulResponseHandler(handler);
     request.setNumberOfRetries(4);

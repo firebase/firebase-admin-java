@@ -19,6 +19,7 @@ package com.google.firebase.internal;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.http.HttpBackOffIOExceptionHandler;
+import com.google.api.client.http.HttpIOExceptionHandler;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponse;
@@ -37,7 +38,7 @@ final class RetryInitializer implements HttpRequestInitializer {
   private final HttpCredentialsAdapter credentials;
   private final RetryConfig retryConfig;
 
-  RetryInitializer(HttpCredentialsAdapter credentials, RetryConfig retryConfig) {
+  RetryInitializer(HttpCredentialsAdapter credentials, @Nullable RetryConfig retryConfig) {
     this.credentials = checkNotNull(credentials);
     this.retryConfig = retryConfig;
   }
@@ -46,11 +47,8 @@ final class RetryInitializer implements HttpRequestInitializer {
   public void initialize(HttpRequest request) {
     if (retryConfig != null) {
       request.setNumberOfRetries(retryConfig.getMaxRetries());
-      request.setUnsuccessfulResponseHandler(
-          newUnsuccessfulResponseHandler());
-      request.setIOExceptionHandler(
-          new HttpBackOffIOExceptionHandler(retryConfig.newBackOff())
-              .setSleeper(retryConfig.getSleeper()));
+      request.setUnsuccessfulResponseHandler(newUnsuccessfulResponseHandler());
+      request.setIOExceptionHandler(newIOExceptionHandler());
     } else {
       request.setNumberOfRetries(0);
     }
@@ -76,5 +74,10 @@ final class RetryInitializer implements HttpRequestInitializer {
         return retry;
       }
     };
+  }
+
+  private HttpIOExceptionHandler newIOExceptionHandler() {
+    return new HttpBackOffIOExceptionHandler(retryConfig.newBackOff())
+        .setSleeper(retryConfig.getSleeper());
   }
 }

@@ -77,7 +77,7 @@ final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponse
   private boolean waitAndRetry(HttpResponse response) throws IOException, InterruptedException {
     String retryAfterHeader = response.getHeaders().getRetryAfter();
     if (!Strings.isNullOrEmpty(retryAfterHeader)) {
-      long intervalMillis = parseRetryAfterHeaderAsMillis(retryAfterHeader.trim());
+      long intervalMillis = parseRetryAfterHeaderIntoMillis(retryAfterHeader.trim());
       if (intervalMillis > retryConfig.getMaxIntervalMillis()) {
         return false;
       }
@@ -91,7 +91,7 @@ final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponse
     return BackOffUtils.next(sleeper, backOff);
   }
 
-  private long parseRetryAfterHeaderAsMillis(String retryAfter) {
+  private long parseRetryAfterHeaderIntoMillis(String retryAfter) {
     try {
       return Long.parseLong(retryAfter) * 1000;
     } catch (NumberFormatException e) {

@@ -20,7 +20,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.http.LowLevelHttpResponse;
 import com.google.api.client.testing.http.MockLowLevelHttpRequest;
+import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import java.io.IOException;
+import java.util.Map;
 
 class CountingLowLevelHttpRequest extends MockLowLevelHttpRequest {
 
@@ -31,6 +33,22 @@ class CountingLowLevelHttpRequest extends MockLowLevelHttpRequest {
   private CountingLowLevelHttpRequest(LowLevelHttpResponse response, IOException exception) {
     this.response = response;
     this.exception = exception;
+  }
+
+  static CountingLowLevelHttpRequest fromResponse(int status) {
+    return fromResponse(status, null);
+  }
+
+  static CountingLowLevelHttpRequest fromResponse(int status, Map<String, String> headers) {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setStatusCode(status)
+        .setZeroContent();
+    if (headers != null) {
+      for (Map.Entry<String, String> entry : headers.entrySet()) {
+        response.addHeader(entry.getKey(), entry.getValue());
+      }
+    }
+    return fromResponse(response);
   }
 
   static CountingLowLevelHttpRequest fromResponse(LowLevelHttpResponse response) {
@@ -53,5 +71,4 @@ class CountingLowLevelHttpRequest extends MockLowLevelHttpRequest {
   int getCount() {
     return count;
   }
-
 }
