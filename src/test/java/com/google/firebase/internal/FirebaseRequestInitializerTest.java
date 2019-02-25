@@ -35,6 +35,10 @@ import org.junit.Test;
 
 public class FirebaseRequestInitializerTest {
 
+  private static final int MAX_RETRIES = 5;
+  private static final int CONNECT_TIMEOUT_MILLIS = 30000;
+  private static final int READ_TIMEOUT_MILLIS = 60000;
+
   @After
   public void tearDown() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
@@ -63,16 +67,16 @@ public class FirebaseRequestInitializerTest {
   public void testExplicitTimeouts() throws Exception {
     FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials("token"))
-        .setConnectTimeout(30000)
-        .setReadTimeout(60000)
+        .setConnectTimeout(CONNECT_TIMEOUT_MILLIS)
+        .setReadTimeout(READ_TIMEOUT_MILLIS)
         .build());
     HttpRequest request = TestUtils.createRequest();
 
     FirebaseRequestInitializer initializer = new FirebaseRequestInitializer(app);
     initializer.initialize(request);
 
-    assertEquals(30000, request.getConnectTimeout());
-    assertEquals(60000, request.getReadTimeout());
+    assertEquals(CONNECT_TIMEOUT_MILLIS, request.getConnectTimeout());
+    assertEquals(READ_TIMEOUT_MILLIS, request.getReadTimeout());
     assertEquals("Bearer token", request.getHeaders().getAuthorization());
     assertEquals(0, request.getNumberOfRetries());
     assertNull(request.getIOExceptionHandler());
@@ -85,7 +89,7 @@ public class FirebaseRequestInitializerTest {
         .setCredentials(new MockGoogleCredentials("token"))
         .build());
     RetryConfig retryConfig = RetryConfig.builder()
-        .setMaxRetries(5)
+        .setMaxRetries(MAX_RETRIES)
         .build();
     HttpRequest request = TestUtils.createRequest();
 
@@ -95,7 +99,7 @@ public class FirebaseRequestInitializerTest {
     assertEquals(0, request.getConnectTimeout());
     assertEquals(0, request.getReadTimeout());
     assertEquals("Bearer token", request.getHeaders().getAuthorization());
-    assertEquals(5, request.getNumberOfRetries());
+    assertEquals(MAX_RETRIES, request.getNumberOfRetries());
     assertTrue(request.getIOExceptionHandler() instanceof HttpBackOffIOExceptionHandler);
     assertNotNull(request.getUnsuccessfulResponseHandler());
   }
@@ -106,9 +110,9 @@ public class FirebaseRequestInitializerTest {
         .setCredentials(new MockGoogleCredentials("token"))
         .build());
     RetryConfig retryConfig = RetryConfig.builder()
-        .setMaxRetries(5)
+        .setMaxRetries(MAX_RETRIES)
         .build();
-    CountingLowLevelHttpRequest countingRequest = CountingLowLevelHttpRequest.fromResponse(401);
+    CountingLowLevelHttpRequest countingRequest = CountingLowLevelHttpRequest.fromStatus(401);
     HttpRequest request = TestUtils.createRequest(countingRequest);
     FirebaseRequestInitializer initializer = new FirebaseRequestInitializer(app, retryConfig);
     initializer.initialize(request);
@@ -121,6 +125,6 @@ public class FirebaseRequestInitializerTest {
     }
 
     assertEquals("Bearer token", request.getHeaders().getAuthorization());
-    assertEquals(6, countingRequest.getCount());
+    assertEquals(MAX_RETRIES + 1, countingRequest.getCount());
   }
 }

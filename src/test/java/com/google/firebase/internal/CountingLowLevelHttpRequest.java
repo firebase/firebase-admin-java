@@ -35,11 +35,11 @@ class CountingLowLevelHttpRequest extends MockLowLevelHttpRequest {
     this.exception = exception;
   }
 
-  static CountingLowLevelHttpRequest fromResponse(int status) {
-    return fromResponse(status, null);
+  static CountingLowLevelHttpRequest fromStatus(int status) {
+    return fromStatus(status, null);
   }
 
-  static CountingLowLevelHttpRequest fromResponse(int status, Map<String, String> headers) {
+  static CountingLowLevelHttpRequest fromStatus(int status, Map<String, String> headers) {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setStatusCode(status)
         .setZeroContent();
@@ -48,10 +48,10 @@ class CountingLowLevelHttpRequest extends MockLowLevelHttpRequest {
         response.addHeader(entry.getKey(), entry.getValue());
       }
     }
-    return fromResponse(response);
+    return fromStatus(response);
   }
 
-  static CountingLowLevelHttpRequest fromResponse(LowLevelHttpResponse response) {
+  static CountingLowLevelHttpRequest fromStatus(LowLevelHttpResponse response) {
     return new CountingLowLevelHttpRequest(checkNotNull(response), null);
   }
 
