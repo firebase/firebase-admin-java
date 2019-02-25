@@ -18,7 +18,6 @@ package com.google.firebase.internal;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -60,16 +59,9 @@ public class RetryInitializerTest {
     assertTrue(request.getIOExceptionHandler() instanceof HttpBackOffIOExceptionHandler);
   }
 
-  @Test
-  public void testDisableRetry() throws IOException {
-    RetryInitializer initializer = new RetryInitializer(null);
-    HttpRequest request = TestUtils.createRequest();
-
-    initializer.initialize(request);
-
-    assertEquals(0, request.getNumberOfRetries());
-    assertNull(request.getUnsuccessfulResponseHandler());
-    assertNull(request.getIOExceptionHandler());
+  @Test(expected = NullPointerException.class)
+  public void testRetryConfigCannotBeNull() throws IOException {
+    new RetryInitializer(null);
   }
 
   @Test

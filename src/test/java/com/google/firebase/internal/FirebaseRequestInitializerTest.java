@@ -58,7 +58,7 @@ public class FirebaseRequestInitializerTest {
     assertEquals(0, request.getConnectTimeout());
     assertEquals(0, request.getReadTimeout());
     assertEquals("Bearer token", request.getHeaders().getAuthorization());
-    assertEquals(0, request.getNumberOfRetries());
+    assertEquals(HttpRequest.DEFAULT_NUMBER_OF_RETRIES, request.getNumberOfRetries());
     assertNull(request.getIOExceptionHandler());
     assertTrue(request.getUnsuccessfulResponseHandler() instanceof HttpCredentialsAdapter);
   }
@@ -78,13 +78,13 @@ public class FirebaseRequestInitializerTest {
     assertEquals(CONNECT_TIMEOUT_MILLIS, request.getConnectTimeout());
     assertEquals(READ_TIMEOUT_MILLIS, request.getReadTimeout());
     assertEquals("Bearer token", request.getHeaders().getAuthorization());
-    assertEquals(0, request.getNumberOfRetries());
+    assertEquals(HttpRequest.DEFAULT_NUMBER_OF_RETRIES, request.getNumberOfRetries());
     assertNull(request.getIOExceptionHandler());
     assertTrue(request.getUnsuccessfulResponseHandler() instanceof HttpCredentialsAdapter);
   }
 
   @Test
-  public void testExplicitRetryConfig() throws Exception {
+  public void testRetryConfig() throws Exception {
     FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials("token"))
         .build());

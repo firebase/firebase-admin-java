@@ -39,10 +39,14 @@ public final class FirebaseRequestInitializer implements HttpRequestInitializer 
   }
 
   public FirebaseRequestInitializer(FirebaseApp app, @Nullable RetryConfig retryConfig) {
-    this.initializers = ImmutableList.of(
-        new HttpCredentialsAdapter(ImplFirebaseTrampolines.getCredentials(app)),
-        new TimeoutInitializer(app.getOptions()),
-        new RetryInitializer(retryConfig));
+    ImmutableList.Builder<HttpRequestInitializer> initializers =
+        ImmutableList.<HttpRequestInitializer>builder()
+            .add(new HttpCredentialsAdapter(ImplFirebaseTrampolines.getCredentials(app)))
+            .add(new TimeoutInitializer(app.getOptions()));
+    if (retryConfig != null) {
+      initializers.add(new RetryInitializer(retryConfig));
+    }
+    this.initializers = initializers.build();
   }
 
   @Override
