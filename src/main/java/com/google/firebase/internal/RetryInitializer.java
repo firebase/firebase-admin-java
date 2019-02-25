@@ -27,9 +27,9 @@ import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import java.io.IOException;
 
 /**
- * Configures HTTP requests to be retried. Failures caused by I/O errors are always retried
- * according to the specified {@link RetryConfig}. Failures caused by unsuccessful HTTP responses
- * are first referred to the {@code HttpUnsuccessfulResponseHandler} already set on the request. If
+ * Configures HTTP requests to be retried. Requests that encounter I/O errors are always retried
+ * with exponential back off. Requests failing with unsuccessful HTTP responses are first referred
+ * to the {@code HttpUnsuccessfulResponseHandler} that was originally set on the request. If
  * the request does not get retried at that level, {@link RetryUnsuccessfulResponseHandler} is used
  * to schedule additional retries.
  */
@@ -55,7 +55,7 @@ final class RetryInitializer implements HttpRequestInitializer {
   private HttpUnsuccessfulResponseHandler newUnsuccessfulResponseHandler(HttpRequest request) {
     RetryUnsuccessfulResponseHandler retryHandler = new RetryUnsuccessfulResponseHandler(
         retryConfig);
-    return RetryHandlerDecorator.decorate(retryHandler, request);
+    return new RetryHandlerDecorator(retryHandler, request);
   }
 
   private HttpIOExceptionHandler newIOExceptionHandler() {
@@ -70,19 +70,12 @@ final class RetryInitializer implements HttpRequestInitializer {
    */
   private static class RetryHandlerDecorator implements HttpUnsuccessfulResponseHandler {
 
-    private final HttpUnsuccessfulResponseHandler preRetryHandler;
     private final RetryUnsuccessfulResponseHandler retryHandler;
+    private final HttpUnsuccessfulResponseHandler preRetryHandler;
 
     private RetryHandlerDecorator(
-        HttpUnsuccessfulResponseHandler preRetryHandler,
-        RetryUnsuccessfulResponseHandler retryHandler) {
-      this.preRetryHandler = checkNotNull(preRetryHandler);
-      this.retryHandler = checkNotNull(retryHandler);
-    }
-
-    static RetryHandlerDecorator decorate(
         RetryUnsuccessfulResponseHandler retryHandler, HttpRequest request) {
-
+      this.retryHandler = checkNotNull(retryHandler);
       HttpUnsuccessfulResponseHandler preRetryHandler = request.getUnsuccessfulResponseHandler();
       if (preRetryHandler == null) {
         preRetryHandler = new HttpUnsuccessfulResponseHandler() {
@@ -93,7 +86,7 @@ final class RetryInitializer implements HttpRequestInitializer {
           }
         };
       }
-      return new RetryHandlerDecorator(preRetryHandler, retryHandler);
+      this.preRetryHandler = preRetryHandler;
     }
 
     @Override
@@ -101,15 +94,17 @@ final class RetryInitializer implements HttpRequestInitializer {
         HttpRequest request,
         HttpResponse response,
         boolean supportsRetry) throws IOException {
-      boolean retry = preRetryHandler.handleResponse(request, response, supportsRetry);
-      if (!retry) {
-        retry = retryHandler.handleResponse(request, response, supportsRetry);
+      try {
+        boolean retry = preRetryHandler.handleResponse(request, response, supportsRetry);
+        if (!retry) {
+          retry = retryHandler.handleResponse(request, response, supportsRetry);
+        }
+        return retry;
+      } finally {
+        // Pre-retry handler may have reset the unsuccessful response handler on the
+        // request. This changes it back.
+        request.setUnsuccessfulResponseHandler(this);
       }
-
-      // Pre-retry handler may have reset the unsuccessful response handler on the
-      // request. This changes it back.
-      request.setUnsuccessfulResponseHandler(this);
-      return retry;
     }
   }
 }

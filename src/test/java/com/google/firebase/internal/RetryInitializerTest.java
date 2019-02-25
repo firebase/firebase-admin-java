@@ -42,14 +42,12 @@ import org.junit.Test;
 
 public class RetryInitializerTest {
 
-  private static final RetryConfig RETRY_CONFIG = RetryConfig.builder()
-      .setMaxRetries(5)
-      .setRetryStatusCodes(ImmutableList.of(503))
-      .build();
-
   @Test
   public void testEnableRetry() throws IOException {
-    RetryInitializer initializer = new RetryInitializer(RETRY_CONFIG);
+    RetryInitializer initializer = new RetryInitializer(RetryConfig.builder()
+        .setMaxRetries(5)
+        .setRetryStatusCodes(ImmutableList.of(503))
+        .build());
     HttpRequest request = TestUtils.createRequest();
 
     initializer.initialize(request);
