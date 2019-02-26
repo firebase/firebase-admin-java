@@ -63,7 +63,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
       new CreateIosAppFromAppIdFunction();
 
   FirebaseProjectManagementServiceImpl(FirebaseApp app) {
-    this(app, Sleeper.DEFAULT, new Scheduler.FirebaseAppScheduler(app));
+    this(app, Sleeper.DEFAULT, new FirebaseAppScheduler(app));
   }
 
   FirebaseProjectManagementServiceImpl(FirebaseApp app, Sleeper sleeper, Scheduler scheduler) {
@@ -731,6 +731,20 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
 
     @Key("certType")
     private String certType;
+  }
+
+  private static class FirebaseAppScheduler implements Scheduler {
+
+    private final FirebaseApp app;
+
+    FirebaseAppScheduler(FirebaseApp app) {
+      this.app = checkNotNull(app);
+    }
+
+    @Override
+    public void schedule(Runnable runnable, long delayMillis) {
+      ImplFirebaseTrampolines.schedule(app, runnable, delayMillis);
+    }
   }
 
   /* Helper methods. */

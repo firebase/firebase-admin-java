@@ -16,26 +16,10 @@
 
 package com.google.firebase.projectmanagement;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.ImplFirebaseTrampolines;
-
+/**
+ * Schedules a task to be executed after a specified delay.
+ */
 interface Scheduler {
 
   void schedule(Runnable runnable, long delayMillis);
-
-  class FirebaseAppScheduler implements Scheduler {
-
-    private final FirebaseApp app;
-
-    FirebaseAppScheduler(FirebaseApp app) {
-      this.app = checkNotNull(app);
-    }
-
-    @Override
-    public void schedule(Runnable runnable, long delayMillis) {
-      ImplFirebaseTrampolines.schedule(app, runnable, delayMillis);
-    }
-  }
 }
