@@ -18,6 +18,7 @@ package com.google.firebase.internal;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -43,13 +44,10 @@ import org.junit.Test;
 public class RetryInitializerTest {
 
   private static final int MAX_RETRIES = 4;
-  private static final RetryConfig.Builder TEST_RETRY_CONFIG =  RetryConfig.builder()
-      .setMaxRetries(MAX_RETRIES)
-      .setRetryStatusCodes(ImmutableList.of(503));
 
   @Test
   public void testEnableRetry() throws IOException {
-    RetryInitializer initializer = new RetryInitializer(TEST_RETRY_CONFIG.build());
+    RetryInitializer initializer = new RetryInitializer(testRetryConfig(new MockSleeper()));
     HttpRequest request = TestUtils.createRequest();
 
     initializer.initialize(request);
@@ -59,8 +57,24 @@ public class RetryInitializerTest {
     assertTrue(request.getIOExceptionHandler() instanceof HttpBackOffIOExceptionHandler);
   }
 
+  @Test
+  public void testRetryOnIOExceptionDisabled() throws IOException {
+    RetryInitializer initializer = new RetryInitializer(RetryConfig.builder()
+        .setMaxRetries(MAX_RETRIES)
+        .setRetryOnIOExceptions(false)
+        .setRetryStatusCodes(ImmutableList.of(503))
+        .build());
+    HttpRequest request = TestUtils.createRequest();
+
+    initializer.initialize(request);
+
+    assertEquals(MAX_RETRIES, request.getNumberOfRetries());
+    assertNotNull(request.getUnsuccessfulResponseHandler());
+    assertNull(request.getIOExceptionHandler());
+  }
+
   @Test(expected = NullPointerException.class)
-  public void testRetryConfigCannotBeNull() throws IOException {
+  public void testRetryConfigCannotBeNull() {
     new RetryInitializer(null);
   }
 
@@ -177,7 +191,10 @@ public class RetryInitializerTest {
   }
 
   private RetryConfig testRetryConfig(Sleeper sleeper) {
-    return TEST_RETRY_CONFIG
+    return RetryConfig.builder()
+        .setMaxRetries(MAX_RETRIES)
+        .setRetryStatusCodes(ImmutableList.of(503))
+        .setRetryOnIOExceptions(true)
         .setSleeper(sleeper)
         .build();
   }

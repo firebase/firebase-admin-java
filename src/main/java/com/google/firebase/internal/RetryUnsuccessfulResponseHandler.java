@@ -78,6 +78,9 @@ final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponse
     String retryAfterHeader = response.getHeaders().getRetryAfter();
     if (!Strings.isNullOrEmpty(retryAfterHeader)) {
       long intervalMillis = parseRetryAfterHeaderIntoMillis(retryAfterHeader.trim());
+      // Retry-after header can specify very long delay intervals (e.g. 24 hours). If we cannot
+      // wait that long, we should not perform any retries at all. In general it is not correct to
+      // retry earlier than what the server has recommended to us.
       if (intervalMillis > retryConfig.getMaxIntervalMillis()) {
         return false;
       }

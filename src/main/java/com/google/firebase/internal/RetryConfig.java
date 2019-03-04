@@ -35,6 +35,7 @@ public final class RetryConfig {
   private static final int INITIAL_INTERVAL_MILLIS = 500;
 
   private final List<Integer> retryStatusCodes;
+  private final boolean retryOnIOExceptions;
   private final int maxRetries;
   private final Sleeper sleeper;
   private final ExponentialBackOff.Builder backOffBuilder;
@@ -46,6 +47,7 @@ public final class RetryConfig {
       this.retryStatusCodes = ImmutableList.of();
     }
 
+    this.retryOnIOExceptions = builder.retryOnIOExceptions;
     checkArgument(builder.maxRetries >= 0, "maxRetries must not be negative");
     this.maxRetries = builder.maxRetries;
     this.sleeper = checkNotNull(builder.sleeper);
@@ -61,6 +63,10 @@ public final class RetryConfig {
 
   List<Integer> getRetryStatusCodes() {
     return retryStatusCodes;
+  }
+
+  boolean isRetryOnIOExceptions() {
+    return retryOnIOExceptions;
   }
 
   int getMaxRetries() {
@@ -90,6 +96,7 @@ public final class RetryConfig {
   public static final class Builder {
 
     private List<Integer> retryStatusCodes;
+    private boolean retryOnIOExceptions;
     private int maxRetries;
     private int maxIntervalMillis = (int) TimeUnit.MINUTES.toMillis(2);
     private double backOffMultiplier = 2.0;
@@ -107,6 +114,17 @@ public final class RetryConfig {
      */
     public Builder setRetryStatusCodes(List<Integer> retryStatusCodes) {
       this.retryStatusCodes = retryStatusCodes;
+      return this;
+    }
+
+    /**
+     * Sets whether requests should be retried on IOExceptions.
+     *
+     * @param retryOnIOExceptions A boolean indicating whether to retry on IOExceptions.
+     * @return This builder.
+     */
+    public Builder setRetryOnIOExceptions(boolean retryOnIOExceptions) {
+      this.retryOnIOExceptions = retryOnIOExceptions;
       return this;
     }
 

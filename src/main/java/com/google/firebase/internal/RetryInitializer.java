@@ -45,7 +45,9 @@ final class RetryInitializer implements HttpRequestInitializer {
   public void initialize(HttpRequest request) {
     request.setNumberOfRetries(retryConfig.getMaxRetries());
     request.setUnsuccessfulResponseHandler(newUnsuccessfulResponseHandler(request));
-    request.setIOExceptionHandler(newIOExceptionHandler());
+    if (retryConfig.isRetryOnIOExceptions()) {
+      request.setIOExceptionHandler(newIOExceptionHandler());
+    }
   }
 
   private HttpUnsuccessfulResponseHandler newUnsuccessfulResponseHandler(HttpRequest request) {
