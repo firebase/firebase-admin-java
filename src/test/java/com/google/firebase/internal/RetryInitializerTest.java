@@ -190,6 +190,41 @@ public class RetryInitializerTest {
     assertSame(retryHandler, request.getUnsuccessfulResponseHandler());
   }
 
+  @Test
+  public void testRetryHandlerDoesNotGetOverwritten() throws IOException {
+    final AtomicInteger otherErrorHandlerCalls = new AtomicInteger(0);
+    HttpUnsuccessfulResponseHandler credentials = new HttpUnsuccessfulResponseHandler() {
+      @Override
+      public boolean handleResponse(
+          HttpRequest request, HttpResponse response, boolean supportsRetry) throws IOException {
+        otherErrorHandlerCalls.incrementAndGet();
+        request.setUnsuccessfulResponseHandler(this);
+        throw new IOException("test");
+      }
+    };
+    MockSleeper sleeper = new MockSleeper();
+    RetryInitializer initializer = new RetryInitializer(RetryConfig.builder()
+        .setMaxRetries(MAX_RETRIES)
+        .setRetryStatusCodes(ImmutableList.of(503))
+        .setSleeper(sleeper)
+        .build());
+    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromStatus(503);
+    HttpRequest request = TestUtils.createRequest(failingRequest);
+    request.setUnsuccessfulResponseHandler(credentials);
+    initializer.initialize(request);
+    final HttpUnsuccessfulResponseHandler retryHandler = request.getUnsuccessfulResponseHandler();
+
+    try {
+      request.execute();
+      fail("No exception thrown for HTTP error");
+    } catch (Exception e) {
+      assertEquals("test", e.getMessage());
+    }
+
+    assertEquals(1, otherErrorHandlerCalls.get());
+    assertSame(retryHandler, request.getUnsuccessfulResponseHandler());
+  }
+
   private RetryConfig testRetryConfig(Sleeper sleeper) {
     return RetryConfig.builder()
         .setMaxRetries(MAX_RETRIES)
