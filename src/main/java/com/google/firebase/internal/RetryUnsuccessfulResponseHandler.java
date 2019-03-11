@@ -74,6 +74,10 @@ final class RetryUnsuccessfulResponseHandler implements HttpUnsuccessfulResponse
     return false;
   }
 
+  RetryConfig getRetryConfig() {
+    return retryConfig;
+  }
+
   private boolean waitAndRetry(HttpResponse response) throws IOException, InterruptedException {
     String retryAfterHeader = response.getHeaders().getRetryAfter();
     if (!Strings.isNullOrEmpty(retryAfterHeader)) {

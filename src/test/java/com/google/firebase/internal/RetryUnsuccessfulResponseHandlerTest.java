@@ -88,29 +88,6 @@ public class RetryUnsuccessfulResponseHandlerTest {
     assertEquals(MAX_RETRIES + 1, failingRequest.getCount());
   }
 
-
-  @Test
-  public void testRetryAfterIsAbsent() throws IOException {
-    MultipleCallSleeper sleeper = new MultipleCallSleeper();
-    RetryUnsuccessfulResponseHandler handler = new RetryUnsuccessfulResponseHandler(
-        testRetryConfig(sleeper));
-    CountingLowLevelHttpRequest failingRequest = CountingLowLevelHttpRequest.fromStatus(503);
-    HttpRequest request = TestUtils.createRequest(failingRequest);
-    request.setUnsuccessfulResponseHandler(handler);
-    request.setNumberOfRetries(MAX_RETRIES);
-
-    try {
-      request.execute();
-      fail("No exception thrown for HTTP error");
-    } catch (HttpResponseException e) {
-      assertEquals(503, e.getStatusCode());
-    }
-
-    assertEquals(MAX_RETRIES, sleeper.getCount());
-    assertArrayEquals(new long[]{500, 1000, 2000, 4000}, sleeper.getDelays());
-    assertEquals(MAX_RETRIES + 1, failingRequest.getCount());
-  }
-
   @Test
   public void testExponentialBackOffDoesNotExceedMaxInterval() throws IOException {
     MultipleCallSleeper sleeper = new MultipleCallSleeper();

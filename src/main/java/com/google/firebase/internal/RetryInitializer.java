@@ -27,11 +27,11 @@ import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import java.io.IOException;
 
 /**
- * Configures HTTP requests to be retried. Requests that encounter I/O errors are always retried
- * with exponential back off. Requests failing with unsuccessful HTTP responses are first referred
- * to the {@code HttpUnsuccessfulResponseHandler} that was originally set on the request. If
- * the request does not get retried at that level, {@link RetryUnsuccessfulResponseHandler} is used
- * to schedule additional retries.
+ * Configures HTTP requests to be retried. Requests that encounter I/O errors are retried if the
+ * {@link RetryConfig#isRetryOnIOExceptions()} is set. Requests failing with unsuccessful HTTP
+ * responses are first referred to the {@code HttpUnsuccessfulResponseHandler} that was originally
+ * set on the request. If the request does not get retried at that level,
+ * {@link RetryUnsuccessfulResponseHandler} is used to schedule additional retries.
  */
 final class RetryInitializer implements HttpRequestInitializer {
 
@@ -66,7 +66,7 @@ final class RetryInitializer implements HttpRequestInitializer {
    * handler is called. This is needed since some initializers (e.g. HttpCredentialsAdapter)
    * register their own error handlers.
    */
-  private static class RetryHandlerDecorator implements HttpUnsuccessfulResponseHandler {
+  static class RetryHandlerDecorator implements HttpUnsuccessfulResponseHandler {
 
     private final RetryUnsuccessfulResponseHandler retryHandler;
     private final HttpUnsuccessfulResponseHandler preRetryHandler;
@@ -103,6 +103,10 @@ final class RetryInitializer implements HttpRequestInitializer {
         // request. This changes it back.
         request.setUnsuccessfulResponseHandler(this);
       }
+    }
+
+    RetryUnsuccessfulResponseHandler getRetryHandler() {
+      return retryHandler;
     }
   }
 }

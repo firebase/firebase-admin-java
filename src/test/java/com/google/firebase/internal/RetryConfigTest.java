@@ -56,6 +56,7 @@ public class RetryConfigTest {
     RetryConfig config = RetryConfig.builder()
         .setMaxRetries(4)
         .setRetryStatusCodes(statusCodes)
+        .setRetryOnIOExceptions(true)
         .setMaxIntervalMillis(5 * 60 * 1000)
         .setBackOffMultiplier(1.5)
         .setSleeper(sleeper)
@@ -64,6 +65,7 @@ public class RetryConfigTest {
     assertEquals(2, config.getRetryStatusCodes().size());
     assertEquals(statusCodes.get(0), config.getRetryStatusCodes().get(0));
     assertEquals(statusCodes.get(1), config.getRetryStatusCodes().get(1));
+    assertTrue(config.isRetryOnIOExceptions());
     assertEquals(4, config.getMaxRetries());
     assertEquals(5 * 60 * 1000, config.getMaxIntervalMillis());
     assertEquals(1.5, config.getBackOffMultiplier(), 0.01);

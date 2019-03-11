@@ -106,8 +106,7 @@ public final class RetryConfig {
 
     /**
      * Sets a list of HTTP status codes that should be retried. If null or empty, HTTP requests
-     * will not be retried as long as they result in some HTTP response message. I/O errors
-     * will still be retried.
+     * will not be retried as long as they result in some HTTP response message.
      *
      * @param retryStatusCodes A list of status codes.
      * @return This builder.
