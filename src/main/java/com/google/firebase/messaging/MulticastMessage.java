@@ -36,7 +36,7 @@ import java.util.Map;
  * to create new instances. See {@link FirebaseMessaging#sendMulticast(MulticastMessage)} for
  * details on how to send the message to FCM for multicast delivery.
  *
- * <p>This class and the associated Builder retains the order of tokens. Therefore the order of
+ * <p>This class and the associated Builder retain the order of tokens. Therefore the order of
  * the responses list obtained by calling {@link BatchResponse#getResponses()} on the return value
  * of {@link FirebaseMessaging#sendMulticast(MulticastMessage)} corresponds to the order in which
  * tokens were added to the {@link MulticastMessage.Builder}.

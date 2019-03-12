@@ -21,7 +21,7 @@ import com.google.firebase.internal.NonNull;
 import java.util.List;
 
 /**
- * Response from an operation that sends FCM notifications to multiple recipients.
+ * Response from an operation that sends FCM messages to multiple recipients.
  * See {@link FirebaseMessaging#sendAll(List)} and {@link
  * FirebaseMessaging#sendMulticast(MulticastMessage)}.
  */
