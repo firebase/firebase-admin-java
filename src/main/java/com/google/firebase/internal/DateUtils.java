@@ -34,7 +34,7 @@ import org.apache.http.util.Args;
  * 3.3.1 as well as some other common non-standard formats.
  *
  * <p>This class was copied from the
- * <a href="http://svn.apache.org/viewvc/httpcomponents/httpclient/tags/4.3/httpclient/src/main/java/org/apache/http/client/utils/DateUtils.java?view=markup">
+ * <a href="http://svn.apache.org/repos/asf/httpcomponents/httpclient/tags/4.3/httpclient/src/main/java/org/apache/http/client/utils/DateUtils.java">
  * Apache HTTP client</a> in order to avoid a direct dependency on it. We currently
  * have a transitive dependency on this library (via Google API client), but the API
  * client team is working towards removing it.
