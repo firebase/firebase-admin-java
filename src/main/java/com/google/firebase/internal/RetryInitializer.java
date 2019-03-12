@@ -27,7 +27,7 @@ import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import java.io.IOException;
 
 /**
- * Configures HTTP requests to be retried. Requests that encounter I/O errors are retried if the
+ * Configures HTTP requests to be retried. Requests that encounter I/O errors are retried if
  * {@link RetryConfig#isRetryOnIOExceptions()} is set. Requests failing with unsuccessful HTTP
  * responses are first referred to the {@code HttpUnsuccessfulResponseHandler} that was originally
  * set on the request. If the request does not get retried at that level,
