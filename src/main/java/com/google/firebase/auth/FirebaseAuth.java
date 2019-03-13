@@ -209,7 +209,7 @@ public class FirebaseAuth {
   }
 
   private CallableOperation<FirebaseToken, FirebaseAuthException> verifySessionCookieOp(
-      final String cookie, boolean checkRevoked) {
+      final String cookie, final boolean checkRevoked) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(cookie), "Session cookie must not be null or empty");
     final FirebaseTokenVerifier sessionCookieVerifier = getSessionCookieVerifier(checkRevoked);
@@ -324,12 +324,12 @@ public class FirebaseAuth {
       final String uid, final Map<String, Object> developerClaims) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
-    final FirebaseTokenFactory factory = tokenFactory.get();
+    final FirebaseTokenFactory tokenFactory = this.tokenFactory.get();
     return new CallableOperation<String, FirebaseAuthException>() {
       @Override
       public String execute() throws FirebaseAuthException {
         try {
-          return factory.createSignedCustomAuthTokenForUser(uid, developerClaims);
+          return tokenFactory.createSignedCustomAuthTokenForUser(uid, developerClaims);
         } catch (IOException e) {
           throw new FirebaseAuthException(ERROR_CUSTOM_TOKEN,
               "Failed to generate a custom token", e);

@@ -66,13 +66,13 @@ class RevocationCheckDecorator implements FirebaseTokenVerifier {
     return user.getTokensValidAfterTimestamp() > issuedAtInSeconds * 1000;
   }
 
-  static FirebaseTokenVerifier decorateIdTokenVerifier(
+  static RevocationCheckDecorator decorateIdTokenVerifier(
       FirebaseTokenVerifier tokenVerifier, FirebaseUserManager userManager) {
     return new RevocationCheckDecorator(
         tokenVerifier, userManager, ID_TOKEN_REVOKED_ERROR, "id token");
   }
 
-  static FirebaseTokenVerifier decorateSessionCookieVerifier(
+  static RevocationCheckDecorator decorateSessionCookieVerifier(
       FirebaseTokenVerifier tokenVerifier, FirebaseUserManager userManager) {
     return new RevocationCheckDecorator(
         tokenVerifier, userManager, SESSION_COOKIE_REVOKED_ERROR, "session cookie");
