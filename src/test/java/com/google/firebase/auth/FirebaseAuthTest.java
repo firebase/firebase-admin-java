@@ -167,6 +167,18 @@ public class FirebaseAuthTest {
   }
 
   @Test
+  public void testDefaultIdTokenVerifier() {
+    FirebaseApp.initializeApp(firebaseOptions);
+
+    FirebaseTokenVerifier tokenVerifier = FirebaseAuth.getInstance()
+        .getIdTokenVerifier(false);
+
+    assertTrue(tokenVerifier instanceof FirebaseTokenVerifierImpl);
+    String shortName = ((FirebaseTokenVerifierImpl) tokenVerifier).getShortName();
+    assertEquals("ID token", shortName);
+  }
+
+  @Test
   public void testIdTokenVerifierInitializedOnDemand() throws Exception {
     FirebaseTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
         getFirebaseToken("idTokenUser"));
@@ -283,6 +295,18 @@ public class FirebaseAuthTest {
       assertEquals("Test error message", authException.getMessage());
       assertEquals("idtoken", tokenVerifier.getLastTokenString());
     }
+  }
+
+  @Test
+  public void testDefaultSessionCookieVerifier() {
+    FirebaseApp.initializeApp(firebaseOptions);
+
+    FirebaseTokenVerifier tokenVerifier = FirebaseAuth.getInstance()
+        .getSessionCookieVerifier(false);
+
+    assertTrue(tokenVerifier instanceof FirebaseTokenVerifierImpl);
+    String shortName = ((FirebaseTokenVerifierImpl) tokenVerifier).getShortName();
+    assertEquals("session cookie", shortName);
   }
 
   @Test

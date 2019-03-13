@@ -221,7 +221,8 @@ public class FirebaseAuth {
     };
   }
 
-  private FirebaseTokenVerifier getSessionCookieVerifier(boolean checkRevoked) {
+  @VisibleForTesting
+  FirebaseTokenVerifier getSessionCookieVerifier(boolean checkRevoked) {
     FirebaseTokenVerifier verifier = cookieVerifier.get();
     if (checkRevoked) {
       verifier = RevocationCheckDecorator.decorateSessionCookieVerifier(verifier, userManager);
@@ -427,7 +428,8 @@ public class FirebaseAuth {
     };
   }
 
-  private FirebaseTokenVerifier getIdTokenVerifier(boolean checkRevoked) {
+  @VisibleForTesting
+  FirebaseTokenVerifier getIdTokenVerifier(boolean checkRevoked) {
     FirebaseTokenVerifier verifier = idTokenVerifier.get();
     if (checkRevoked) {
       verifier = RevocationCheckDecorator.decorateIdTokenVerifier(verifier, userManager);

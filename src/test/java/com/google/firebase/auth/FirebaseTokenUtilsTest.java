@@ -21,11 +21,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.auth.openidconnect.IdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.testing.http.FixedClock;
 import com.google.api.client.util.Clock;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -128,12 +126,5 @@ public class FirebaseTokenUtilsTest {
     assertEquals(issuer, jwtVerifier.getIssuer());
     assertEquals(TEST_PROJECT_ID, Iterables.getOnlyElement(jwtVerifier.getAudience()));
     assertSame(CLOCK, jwtVerifier.getClock());
-  }
-
-  private IdToken getIdToken(IdToken.Payload payload) {
-    return new IdToken(
-        new JsonWebSignature.Header(),
-        payload,
-        new byte[0], new byte[0]);
   }
 }
