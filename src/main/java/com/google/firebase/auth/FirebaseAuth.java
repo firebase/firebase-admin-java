@@ -416,7 +416,7 @@ public class FirebaseAuth {
   }
 
   private CallableOperation<FirebaseToken, FirebaseAuthException> verifyIdTokenOp(
-      final String token, boolean checkRevoked) {
+      final String token, final boolean checkRevoked) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(token), "ID token must not be null or empty");
     final FirebaseTokenVerifier verifier = getIdTokenVerifier(checkRevoked);
@@ -645,13 +645,12 @@ public class FirebaseAuth {
    * @throws IllegalArgumentException If the specified page token is empty, or max results value
    *     is invalid.
    */
-  public ApiFuture<ListUsersPage> listUsersAsync(
-      @Nullable final String pageToken, final int maxResults) {
+  public ApiFuture<ListUsersPage> listUsersAsync(@Nullable String pageToken, int maxResults) {
     return listUsersOp(pageToken, maxResults).callAsync(firebaseApp);
   }
 
   private CallableOperation<ListUsersPage, FirebaseAuthException> listUsersOp(
-      @Nullable String pageToken, int maxResults) {
+      @Nullable final String pageToken, final int maxResults) {
     checkNotDestroyed();
     final PageFactory factory = new PageFactory(
         new DefaultUserSource(userManager, jsonFactory), maxResults, pageToken);
@@ -814,7 +813,7 @@ public class FirebaseAuth {
    *     {@link FirebaseAuthException}.
    * @throws IllegalArgumentException If the user ID string is null or empty.
    */
-  public ApiFuture<Void> deleteUserAsync(final String uid) {
+  public ApiFuture<Void> deleteUserAsync(String uid) {
     return deleteUserOp(uid).callAsync(firebaseApp);
   }
 
@@ -899,7 +898,7 @@ public class FirebaseAuth {
   }
 
   private CallableOperation<UserImportResult, FirebaseAuthException> importUsersOp(
-      List<ImportUserRecord> users, UserImportOptions options) {
+      final List<ImportUserRecord> users, final UserImportOptions options) {
     checkNotDestroyed();
     final UserImportRequest request = new UserImportRequest(users, options, jsonFactory);
     return new CallableOperation<UserImportResult, FirebaseAuthException>() {
