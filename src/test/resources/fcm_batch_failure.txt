@@ -1,0 +1,80 @@
+--test_boundary
+Content-Type: application/http
+Content-ID: response-1
+
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+Vary: Origin
+Vary: X-Origin
+Vary: Referer
+
+{
+  "name": "projects/test-project/messages/1"
+}
+
+--test_boundary
+Content-Type: application/http
+Content-ID: response-2
+
+HTTP/1.1 400 Bad Request
+Vary: Origin
+Vary: X-Origin
+Vary: Referer
+Content-Type: application/json; charset=UTF-8
+
+{
+  "error": {
+    "code": 400,
+    "message": "The registration token is not a valid FCM registration token",
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+        "errorCode": "INVALID_ARGUMENT"
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "message.token",
+            "description": "The registration token is not a valid FCM registration token"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+--test_boundary
+Content-Type: application/http
+Content-ID: response-3
+
+HTTP/1.1 400 Bad Request
+Vary: Origin
+Vary: X-Origin
+Vary: Referer
+Content-Type: application/json; charset=UTF-8
+
+{
+  "error": {
+    "code": 400,
+    "status": "INVALID_ARGUMENT",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.firebase.fcm.v1.FcmError",
+        "errorCode": "INVALID_ARGUMENT"
+      },
+      {
+        "@type": "type.googleapis.com/google.rpc.BadRequest",
+        "fieldViolations": [
+          {
+            "field": "message.token",
+            "description": "The registration token is not a valid FCM registration token"
+          }
+        ]
+      }
+    ]
+  }
+}
+
+--test_boundary--

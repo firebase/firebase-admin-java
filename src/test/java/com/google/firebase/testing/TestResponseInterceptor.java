@@ -16,6 +16,9 @@
 
 package com.google.firebase.testing;
 
+import static org.junit.Assert.assertNotNull;
+
+import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseInterceptor;
 import java.io.IOException;
@@ -28,11 +31,16 @@ public class TestResponseInterceptor implements HttpResponseInterceptor {
   private HttpResponse response;
 
   @Override
-  public void interceptResponse(HttpResponse response) throws IOException {
+  public void interceptResponse(HttpResponse response) {
     this.response = response;
   }
 
   public HttpResponse getResponse() {
     return response;
+  }
+
+  public HttpRequest getLastRequest() {
+    assertNotNull(response);
+    return response.getRequest();
   }
 }
