@@ -19,8 +19,14 @@ package com.google.firebase.testing;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.googleapis.testing.auth.oauth2.MockTokenServerTransport;
+import com.google.api.client.http.EmptyContent;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.webtoken.JsonWebSignature;
+import com.google.api.client.testing.http.MockHttpTransport;
+import com.google.api.client.testing.http.MockLowLevelHttpRequest;
 import com.google.auth.http.HttpTransportFactory;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableMap;
@@ -41,7 +47,8 @@ import java.util.Map;
 public class TestUtils {
 
   public static final long TEST_TIMEOUT_MILLIS = 7 * 1000;
-  public static final String TEST_ADC_ACCESS_TOKEN = "test-adc-access-token";
+  private static final String TEST_ADC_ACCESS_TOKEN = "test-adc-access-token";
+  private static final GenericUrl TEST_URL = new GenericUrl("https://firebase.google.com");
 
   private static GoogleCredentials defaultCredentials;
 
@@ -122,5 +129,17 @@ public class TestUtils {
       }
     });
     return defaultCredentials;
+  }
+
+  public static HttpRequest createRequest() throws IOException {
+    return createRequest(new MockLowLevelHttpRequest());
+  }
+
+  public static HttpRequest createRequest(MockLowLevelHttpRequest request) throws IOException {
+    HttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpRequest(request)
+        .build();
+    HttpRequestFactory requestFactory = transport.createRequestFactory();
+    return requestFactory.buildPostRequest(TEST_URL, new EmptyContent());
   }
 }

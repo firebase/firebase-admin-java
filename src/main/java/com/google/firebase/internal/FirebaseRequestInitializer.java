@@ -19,32 +19,57 @@ package com.google.firebase.internal;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.auth.http.HttpCredentialsAdapter;
-import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
 import java.io.IOException;
+import java.util.List;
 
 /**
- * {@code HttpRequestInitializer} for configuring outgoing REST calls. Handles OAuth2 authorization
- * and setting timeout values.
+ * {@code HttpRequestInitializer} for configuring outgoing REST calls. Initializes requests with
+ * OAuth2 credentials, timeout and retry settings.
  */
-public class FirebaseRequestInitializer implements HttpRequestInitializer {
+public final class FirebaseRequestInitializer implements HttpRequestInitializer {
 
-  private final HttpCredentialsAdapter credentialsAdapter;
-  private final int connectTimeout;
-  private final int readTimeout;
+  private final List<HttpRequestInitializer> initializers;
 
   public FirebaseRequestInitializer(FirebaseApp app) {
-    GoogleCredentials credentials = ImplFirebaseTrampolines.getCredentials(app);
-    this.credentialsAdapter = new HttpCredentialsAdapter(credentials);
-    this.connectTimeout = app.getOptions().getConnectTimeout();
-    this.readTimeout = app.getOptions().getReadTimeout();
+    this(app, null);
+  }
+
+  public FirebaseRequestInitializer(FirebaseApp app, @Nullable RetryConfig retryConfig) {
+    ImmutableList.Builder<HttpRequestInitializer> initializers =
+        ImmutableList.<HttpRequestInitializer>builder()
+            .add(new HttpCredentialsAdapter(ImplFirebaseTrampolines.getCredentials(app)))
+            .add(new TimeoutInitializer(app.getOptions()));
+    if (retryConfig != null) {
+      initializers.add(new RetryInitializer(retryConfig));
+    }
+    this.initializers = initializers.build();
   }
 
   @Override
-  public void initialize(HttpRequest httpRequest) throws IOException {
-    credentialsAdapter.initialize(httpRequest);
-    httpRequest.setConnectTimeout(connectTimeout);
-    httpRequest.setReadTimeout(readTimeout);
+  public void initialize(HttpRequest request) throws IOException {
+    for (HttpRequestInitializer initializer : initializers) {
+      initializer.initialize(request);
+    }
+  }
+
+  private static class TimeoutInitializer implements HttpRequestInitializer {
+
+    private final int connectTimeoutMillis;
+    private final int readTimeoutMillis;
+
+    TimeoutInitializer(FirebaseOptions options) {
+      this.connectTimeoutMillis = options.getConnectTimeout();
+      this.readTimeoutMillis = options.getReadTimeout();
+    }
+
+    @Override
+    public void initialize(HttpRequest request) {
+      request.setConnectTimeout(connectTimeoutMillis);
+      request.setReadTimeout(readTimeoutMillis);
+    }
   }
 }
