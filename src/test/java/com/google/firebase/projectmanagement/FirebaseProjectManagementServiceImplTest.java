@@ -34,6 +34,7 @@ import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.json.JsonParser;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
+import com.google.api.client.testing.util.MockSleeper;
 import com.google.api.client.util.Base64;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
@@ -341,7 +342,7 @@ public class FirebaseProjectManagementServiceImplTest {
     MockLowLevelHttpResponse secondRpcResponse = new MockLowLevelHttpResponse();
     secondRpcResponse.setContent(LIST_IOS_APPS_PAGE_2_RESPONSE);
     serviceImpl = initServiceImpl(
-        ImmutableList.<MockLowLevelHttpResponse>of(firstRpcResponse, secondRpcResponse),
+        ImmutableList.of(firstRpcResponse, secondRpcResponse),
         interceptor);
 
     List<IosApp> iosAppList = serviceImpl.listIosApps(PROJECT_ID);
@@ -931,7 +932,7 @@ public class FirebaseProjectManagementServiceImplTest {
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
     FirebaseProjectManagementServiceImpl serviceImpl =
-        new FirebaseProjectManagementServiceImpl(app);
+        new FirebaseProjectManagementServiceImpl(app, new MockSleeper(), new MockScheduler());
     serviceImpl.setInterceptor(interceptor);
     return serviceImpl;
   }
@@ -985,7 +986,7 @@ public class FirebaseProjectManagementServiceImplTest {
   /**
    * Can be used to intercept multiple HTTP requests and responses made by the SDK during tests.
    */
-  private class MultiRequestTestResponseInterceptor implements HttpResponseInterceptor {
+  private static class MultiRequestTestResponseInterceptor implements HttpResponseInterceptor {
     private final List<HttpResponse> responsesList = new ArrayList<>();
 
     @Override
@@ -999,6 +1000,13 @@ public class FirebaseProjectManagementServiceImplTest {
 
     public HttpResponse getResponse(int index) {
       return responsesList.get(index);
+    }
+  }
+
+  private static class MockScheduler implements Scheduler {
+    @Override
+    public void schedule(Runnable runnable, long delayMillis) {
+      runnable.run();
     }
   }
 }
