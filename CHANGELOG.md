@@ -1,5 +1,9 @@
 # Unreleased
 
+-
+
+# v6.8.0
+
 - [added] Implemented new `sendAll()` and `sendMulticast()` APIs in
   `FirebaseMessaging`.
 - [changed] Removed org.json dependency and replaced with com.google.code.gson.
