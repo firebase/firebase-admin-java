@@ -27,7 +27,6 @@ import com.google.api.client.util.Clock;
 import com.google.api.client.util.StringUtils;
 
 import com.google.common.base.Strings;
-import com.google.firebase.FirebaseApp;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -43,7 +42,7 @@ public class FirebaseTokenFactory {
   private final Clock clock;
   private final CryptoSigner signer;
 
-  FirebaseTokenFactory(JsonFactory jsonFactory, Clock clock, CryptoSigner signer) {
+  public FirebaseTokenFactory(JsonFactory jsonFactory, Clock clock, CryptoSigner signer) {
     this.jsonFactory = checkNotNull(jsonFactory);
     this.clock = checkNotNull(clock);
     this.signer = checkNotNull(signer);
@@ -93,13 +92,5 @@ public class FirebaseTokenFactory {
     byte[] contentBytes = StringUtils.getBytesUtf8(content);
     String signature = Base64.encodeBase64URLSafeString(signer.sign(contentBytes));
     return content + "." + signature;
-  }
-
-  public static FirebaseTokenFactory fromApp(
-      FirebaseApp firebaseApp, Clock clock) throws IOException {
-    return new FirebaseTokenFactory(
-        firebaseApp.getOptions().getJsonFactory(),
-        clock,
-        CryptoSigners.getCryptoSigner(firebaseApp));
   }
 }

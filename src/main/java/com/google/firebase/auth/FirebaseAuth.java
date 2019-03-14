@@ -25,6 +25,8 @@ import com.google.api.client.util.Clock;
 import com.google.api.core.ApiFuture;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
@@ -34,17 +36,15 @@ import com.google.firebase.auth.ListUsersPage.PageFactory;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
-import com.google.firebase.auth.internal.FirebaseTokenVerifier;
-import com.google.firebase.auth.internal.KeyManagers;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This class is the entry point for all server-side Firebase Authentication actions.
@@ -56,40 +56,27 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class FirebaseAuth {
 
-  private static final String ERROR_CUSTOM_TOKEN = "ERROR_CUSTOM_TOKEN";
-  private static final String ERROR_INVALID_ID_TOKEN = "ERROR_INVALID_CREDENTIAL";
-  private static final String ERROR_INVALID_SESSION_COOKIE = "ERROR_INVALID_COOKIE";
+  private static final String SERVICE_ID = FirebaseAuth.class.getName();
 
-  private final Clock clock;
+  private static final String ERROR_CUSTOM_TOKEN = "ERROR_CUSTOM_TOKEN";
+
+  private final Object lock = new Object();
+  private final AtomicBoolean destroyed = new AtomicBoolean(false);
 
   private final FirebaseApp firebaseApp;
-  private final KeyManagers keyManagers;
-  private final String projectId;
+  private final Supplier<FirebaseTokenFactory> tokenFactory;
+  private final Supplier<? extends FirebaseTokenVerifier> idTokenVerifier;
+  private final Supplier<? extends FirebaseTokenVerifier> cookieVerifier;
   private final JsonFactory jsonFactory;
   private final FirebaseUserManager userManager;
-  private final AtomicReference<FirebaseTokenFactory> tokenFactory;
-  private final AtomicBoolean destroyed;
-  private final Object lock;
 
-  private FirebaseAuth(FirebaseApp firebaseApp) {
-    this(firebaseApp, KeyManagers.getDefault(firebaseApp, Clock.SYSTEM), Clock.SYSTEM);
-  }
-
-  /**
-   * Constructor for injecting a GooglePublicKeysManager, which is used to verify tokens are
-   * correctly signed. This should only be used for testing to override the default key manager.
-   */
-  @VisibleForTesting
-  FirebaseAuth(FirebaseApp firebaseApp, KeyManagers keyManagers, Clock clock) {
-    this.firebaseApp = checkNotNull(firebaseApp);
-    this.keyManagers = checkNotNull(keyManagers);
-    this.clock = checkNotNull(clock);
-    this.projectId = ImplFirebaseTrampolines.getProjectId(firebaseApp);
+  private FirebaseAuth(Builder builder) {
+    this.firebaseApp = checkNotNull(builder.firebaseApp);
+    this.tokenFactory = threadSafeMemoize(builder.tokenFactory);
+    this.idTokenVerifier = threadSafeMemoize(builder.idTokenVerifier);
+    this.cookieVerifier = threadSafeMemoize(builder.cookieVerifier);
     this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
     this.userManager = new FirebaseUserManager(firebaseApp);
-    this.tokenFactory = new AtomicReference<>(null);
-    this.destroyed = new AtomicBoolean(false);
-    this.lock = new Object();
   }
 
   /**
@@ -224,40 +211,23 @@ public class FirebaseAuth {
   private CallableOperation<FirebaseToken, FirebaseAuthException> verifySessionCookieOp(
       final String cookie, final boolean checkRevoked) {
     checkNotDestroyed();
-    checkState(!Strings.isNullOrEmpty(projectId),
-        "Must initialize FirebaseApp with a project ID to call verifySessionCookie()");
+    checkArgument(!Strings.isNullOrEmpty(cookie), "Session cookie must not be null or empty");
+    final FirebaseTokenVerifier sessionCookieVerifier = getSessionCookieVerifier(checkRevoked);
     return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
       @Override
       public FirebaseToken execute() throws FirebaseAuthException {
-        FirebaseTokenVerifier firebaseTokenVerifier =
-            FirebaseTokenVerifier.createSessionCookieVerifier(projectId, keyManagers, clock);
-        FirebaseToken firebaseToken;
-        try {
-          firebaseToken = FirebaseToken.parse(jsonFactory, cookie);
-        } catch (IOException e) {
-          throw new FirebaseAuthException(ERROR_INVALID_SESSION_COOKIE,
-              "Failed to parse cookie", e);
-        }
-        // This will throw a FirebaseAuthException with details on how the token is invalid.
-        firebaseTokenVerifier.verifyTokenAndSignature(firebaseToken.getToken());
-
-        if (checkRevoked) {
-          checkRevoked(firebaseToken, "session cookie",
-              FirebaseUserManager.SESSION_COOKIE_REVOKED_ERROR);
-        }
-        return firebaseToken;
+        return sessionCookieVerifier.verifyToken(cookie);
       }
     };
   }
 
-  private void checkRevoked(
-      FirebaseToken firebaseToken, String label, String errorCode) throws FirebaseAuthException {
-    String uid = firebaseToken.getUid();
-    UserRecord user = userManager.getUserById(uid);
-    long issuedAt = (long) firebaseToken.getClaims().get("iat");
-    if (user.getTokensValidAfterTimestamp() > issuedAt * 1000) {
-      throw new FirebaseAuthException(errorCode, "Firebase " + label + " revoked");
+  @VisibleForTesting
+  FirebaseTokenVerifier getSessionCookieVerifier(boolean checkRevoked) {
+    FirebaseTokenVerifier verifier = cookieVerifier.get();
+    if (checkRevoked) {
+      verifier = RevocationCheckDecorator.decorateSessionCookieVerifier(verifier, userManager);
     }
+    return verifier;
   }
 
   /**
@@ -355,7 +325,7 @@ public class FirebaseAuth {
       final String uid, final Map<String, Object> developerClaims) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
-    final FirebaseTokenFactory tokenFactory = ensureTokenFactory();
+    final FirebaseTokenFactory tokenFactory = this.tokenFactory.get();
     return new CallableOperation<String, FirebaseAuthException>() {
       @Override
       public String execute() throws FirebaseAuthException {
@@ -367,29 +337,6 @@ public class FirebaseAuth {
         }
       }
     };
-  }
-
-  private FirebaseTokenFactory ensureTokenFactory() {
-    FirebaseTokenFactory result = this.tokenFactory.get();
-    if (result == null) {
-      synchronized (lock) {
-        result = this.tokenFactory.get();
-        if (result == null) {
-          try {
-            result = FirebaseTokenFactory.fromApp(firebaseApp, clock);
-            this.tokenFactory.set(result);
-          } catch (IOException e) {
-            throw new IllegalStateException(
-                "Failed to initialize FirebaseTokenFactory. Make sure to initialize the SDK "
-                    + "with service account credentials or specify a service account "
-                    + "ID with iam.serviceAccounts.signBlob permission. Please refer to "
-                    + "https://firebase.google.com/docs/auth/admin/create-custom-tokens for more "
-                    + "details on creating custom tokens.", e);
-          }
-        }
-      }
-    }
-    return result;
   }
 
   /**
@@ -472,29 +419,22 @@ public class FirebaseAuth {
       final String token, final boolean checkRevoked) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(token), "ID token must not be null or empty");
-    checkArgument(!Strings.isNullOrEmpty(projectId),
-        "Must initialize FirebaseApp with a project ID to call verifyIdToken()");
+    final FirebaseTokenVerifier verifier = getIdTokenVerifier(checkRevoked);
     return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
       @Override
       protected FirebaseToken execute() throws FirebaseAuthException {
-        FirebaseTokenVerifier firebaseTokenVerifier =
-            FirebaseTokenVerifier.createIdTokenVerifier(projectId, keyManagers, clock);
-        FirebaseToken firebaseToken;
-        try {
-          firebaseToken = FirebaseToken.parse(jsonFactory, token);
-        } catch (IOException e) {
-          throw new FirebaseAuthException(ERROR_INVALID_ID_TOKEN, "Failed to parse token", e);
-        }
-
-        // This will throw a FirebaseAuthException with details on how the token is invalid.
-        firebaseTokenVerifier.verifyTokenAndSignature(firebaseToken.getToken());
-
-        if (checkRevoked) {
-          checkRevoked(firebaseToken, "auth token", FirebaseUserManager.ID_TOKEN_REVOKED_ERROR);
-        }       
-        return firebaseToken;
+        return verifier.verifyToken(token);
       }
     };
+  }
+
+  @VisibleForTesting
+  FirebaseTokenVerifier getIdTokenVerifier(boolean checkRevoked) {
+    FirebaseTokenVerifier verifier = idTokenVerifier.get();
+    if (checkRevoked) {
+      verifier = RevocationCheckDecorator.decorateIdTokenVerifier(verifier, userManager);
+    }
+    return verifier;
   }
 
   /**
@@ -705,13 +645,12 @@ public class FirebaseAuth {
    * @throws IllegalArgumentException If the specified page token is empty, or max results value
    *     is invalid.
    */
-  public ApiFuture<ListUsersPage> listUsersAsync(
-      @Nullable final String pageToken, final int maxResults) {
+  public ApiFuture<ListUsersPage> listUsersAsync(@Nullable String pageToken, int maxResults) {
     return listUsersOp(pageToken, maxResults).callAsync(firebaseApp);
   }
 
   private CallableOperation<ListUsersPage, FirebaseAuthException> listUsersOp(
-      @Nullable String pageToken, int maxResults) {
+      @Nullable final String pageToken, final int maxResults) {
     checkNotDestroyed();
     final PageFactory factory = new PageFactory(
         new DefaultUserSource(userManager, jsonFactory), maxResults, pageToken);
@@ -874,7 +813,7 @@ public class FirebaseAuth {
    *     {@link FirebaseAuthException}.
    * @throws IllegalArgumentException If the user ID string is null or empty.
    */
-  public ApiFuture<Void> deleteUserAsync(final String uid) {
+  public ApiFuture<Void> deleteUserAsync(String uid) {
     return deleteUserOp(uid).callAsync(firebaseApp);
   }
 
@@ -959,7 +898,7 @@ public class FirebaseAuth {
   }
 
   private CallableOperation<UserImportResult, FirebaseAuthException> importUsersOp(
-      List<ImportUserRecord> users, UserImportOptions options) {
+      final List<ImportUserRecord> users, final UserImportOptions options) {
     checkNotDestroyed();
     final UserImportRequest request = new UserImportRequest(users, options, jsonFactory);
     return new CallableOperation<UserImportResult, FirebaseAuthException>() {
@@ -1130,6 +1069,11 @@ public class FirebaseAuth {
             .callAsync(firebaseApp);
   }
 
+  @VisibleForTesting
+  FirebaseUserManager getUserManager() {
+    return this.userManager;
+  }
+
   private CallableOperation<String, FirebaseAuthException> generateEmailActionLinkOp(
           final EmailLinkType type, final String email, final ActionCodeSettings settings) {
     checkNotDestroyed();
@@ -1145,9 +1089,17 @@ public class FirebaseAuth {
     };
   }
 
-  @VisibleForTesting
-  FirebaseUserManager getUserManager() {
-    return this.userManager;
+  private <T> Supplier<T> threadSafeMemoize(final Supplier<T> supplier) {
+    checkNotNull(supplier);
+    return Suppliers.memoize(new Supplier<T>() {
+      @Override
+      public T get() {
+        synchronized (lock) {
+          checkNotDestroyed();
+          return supplier.get();
+        }
+      }
+    });
   }
 
   private void checkNotDestroyed() {
@@ -1163,12 +1115,72 @@ public class FirebaseAuth {
     }
   }
 
-  private static final String SERVICE_ID = FirebaseAuth.class.getName();
+  private static FirebaseAuth fromApp(final FirebaseApp app) {
+    return FirebaseAuth.builder()
+        .setFirebaseApp(app)
+        .setTokenFactory(new Supplier<FirebaseTokenFactory>() {
+          @Override
+          public FirebaseTokenFactory get() {
+            return FirebaseTokenUtils.createTokenFactory(app, Clock.SYSTEM);
+          }
+        })
+        .setIdTokenVerifier(new Supplier<FirebaseTokenVerifier>() {
+          @Override
+          public FirebaseTokenVerifier get() {
+            return FirebaseTokenUtils.createIdTokenVerifier(app, Clock.SYSTEM);
+          }
+        })
+        .setCookieVerifier(new Supplier<FirebaseTokenVerifier>() {
+          @Override
+          public FirebaseTokenVerifier get() {
+            return FirebaseTokenUtils.createSessionCookieVerifier(app, Clock.SYSTEM);
+          }
+        })
+        .build();
+  }
+
+  @VisibleForTesting
+  static Builder builder() {
+    return new Builder();
+  }
+
+  static class Builder {
+    private FirebaseApp firebaseApp;
+    private Supplier<FirebaseTokenFactory> tokenFactory;
+    private Supplier<? extends FirebaseTokenVerifier> idTokenVerifier;
+    private Supplier<? extends FirebaseTokenVerifier> cookieVerifier;
+
+    private Builder() { }
+
+    Builder setFirebaseApp(FirebaseApp firebaseApp) {
+      this.firebaseApp = firebaseApp;
+      return this;
+    }
+
+    Builder setTokenFactory(Supplier<FirebaseTokenFactory> tokenFactory) {
+      this.tokenFactory = tokenFactory;
+      return this;
+    }
+
+    Builder setIdTokenVerifier(Supplier<? extends FirebaseTokenVerifier> idTokenVerifier) {
+      this.idTokenVerifier = idTokenVerifier;
+      return this;
+    }
+
+    Builder setCookieVerifier(Supplier<? extends FirebaseTokenVerifier> cookieVerifier) {
+      this.cookieVerifier = cookieVerifier;
+      return this;
+    }
+
+    FirebaseAuth build() {
+      return new FirebaseAuth(this);
+    }
+  }
 
   private static class FirebaseAuthService extends FirebaseService<FirebaseAuth> {
 
     FirebaseAuthService(FirebaseApp app) {
-      super(SERVICE_ID, new FirebaseAuth(app));
+      super(SERVICE_ID, FirebaseAuth.fromApp(app));
     }
 
     @Override
