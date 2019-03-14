@@ -28,7 +28,6 @@ import com.google.api.client.util.Sleeper;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.Date;
-import org.apache.http.client.utils.DateUtils;
 
 /**
  * An {@code HttpUnsuccessfulResponseHandler} that retries failing requests after an interval. The
