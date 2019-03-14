@@ -19,6 +19,7 @@ package com.google.firebase.messaging;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.api.client.util.Key;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Booleans;
@@ -77,6 +78,55 @@ public class Message {
     this.token = builder.token;
     this.topic = stripPrefix(builder.topic);
     this.condition = builder.condition;
+  }
+
+  @VisibleForTesting
+  Map<String, String> getData() {
+    return data;
+  }
+
+  @VisibleForTesting
+  Notification getNotification() {
+    return notification;
+  }
+
+  @VisibleForTesting
+  AndroidConfig getAndroidConfig() {
+    return androidConfig;
+  }
+
+  @VisibleForTesting
+  WebpushConfig getWebpushConfig() {
+    return webpushConfig;
+  }
+
+  @VisibleForTesting
+  ApnsConfig getApnsConfig() {
+    return apnsConfig;
+  }
+
+  @VisibleForTesting
+  String getToken() {
+    return token;
+  }
+
+  @VisibleForTesting
+  String getTopic() {
+    return topic;
+  }
+
+  @VisibleForTesting
+  String getCondition() {
+    return condition;
+  }
+
+  Map<String, Object> wrapForTransport(boolean dryRun) {
+    ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
+        .put("message", this);
+    if (dryRun) {
+      payload.put("validate_only", true);
+    }
+    return payload.build();
   }
 
   private static String stripPrefix(String topic) {
@@ -226,5 +276,4 @@ public class Message {
       return new Message(this);
     }
   }
-
 }

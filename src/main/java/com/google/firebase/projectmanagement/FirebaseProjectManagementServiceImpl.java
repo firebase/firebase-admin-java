@@ -16,10 +16,12 @@
 package com.google.firebase.projectmanagement;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.util.Base64;
 import com.google.api.client.util.Key;
+import com.google.api.client.util.Sleeper;
 import com.google.api.core.ApiAsyncFunction;
 import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
@@ -51,6 +53,8 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
   private static final String IOS_NAMESPACE_PROPERTY = "bundle_id";
 
   private final FirebaseApp app;
+  private final Sleeper sleeper;
+  private final Scheduler scheduler;
   private final HttpHelper httpHelper;
 
   private final CreateAndroidAppFromAppIdFunction createAndroidAppFromAppIdFunction =
@@ -59,7 +63,13 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
       new CreateIosAppFromAppIdFunction();
 
   FirebaseProjectManagementServiceImpl(FirebaseApp app) {
-    this.app = app;
+    this(app, Sleeper.DEFAULT, new FirebaseAppScheduler(app));
+  }
+
+  FirebaseProjectManagementServiceImpl(FirebaseApp app, Sleeper sleeper, Scheduler scheduler) {
+    this.app = checkNotNull(app);
+    this.sleeper = checkNotNull(sleeper);
+    this.scheduler = checkNotNull(scheduler);
     this.httpHelper = new HttpHelper(
         app.getOptions().getJsonFactory(),
         app.getOptions().getHttpTransport().createRequestFactory(
@@ -187,7 +197,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
             projectId,
             platformResourceName,
             MAXIMUM_LIST_APPS_PAGE_SIZE);
-        ImmutableList.Builder<T> builder = ImmutableList.<T>builder();
+        ImmutableList.Builder<T> builder = ImmutableList.builder();
         ListAppsResponse parsedResponse;
         do {
           parsedResponse = new ListAppsResponse();
@@ -361,10 +371,9 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
      * or an exception if an error occurred during polling.
      */
     @Override
-    public ApiFuture<String> apply(String operationName) throws FirebaseProjectManagementException {
-      SettableApiFuture<String> settableFuture = SettableApiFuture.<String>create();
-      ImplFirebaseTrampolines.schedule(
-          app,
+    public ApiFuture<String> apply(String operationName) {
+      SettableApiFuture<String> settableFuture = SettableApiFuture.create();
+      scheduler.schedule(
           new WaitOperationRunnable(
               /* numberOfPreviousPolls= */ 0,
               operationName,
@@ -417,8 +426,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
           long delayMillis = (long) (
               POLL_BASE_WAIT_TIME_MILLIS
                   * Math.pow(POLL_EXPONENTIAL_BACKOFF_FACTOR, numberOfPreviousPolls + 1));
-          ImplFirebaseTrampolines.schedule(
-              app,
+          scheduler.schedule(
               new WaitOperationRunnable(
                   numberOfPreviousPolls + 1,
                   operationName,
@@ -725,12 +733,26 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
     private String certType;
   }
 
+  private static class FirebaseAppScheduler implements Scheduler {
+
+    private final FirebaseApp app;
+
+    FirebaseAppScheduler(FirebaseApp app) {
+      this.app = checkNotNull(app);
+    }
+
+    @Override
+    public void schedule(Runnable runnable, long delayMillis) {
+      ImplFirebaseTrampolines.schedule(app, runnable, delayMillis);
+    }
+  }
+
   /* Helper methods. */
 
   private void sleepOrThrow(String projectId, long delayMillis)
       throws FirebaseProjectManagementException {
     try {
-      Thread.sleep(delayMillis);
+      sleeper.sleep(delayMillis);
     } catch (InterruptedException e) {
       throw HttpHelper.createFirebaseProjectManagementException(
           projectId,

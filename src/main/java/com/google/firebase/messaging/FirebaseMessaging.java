@@ -18,33 +18,20 @@ package com.google.firebase.messaging;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.http.json.JsonHttpContent;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.JsonObjectParser;
-import com.google.api.client.json.JsonParser;
-import com.google.api.client.util.Key;
 import com.google.api.core.ApiFuture;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.CallableOperation;
-import com.google.firebase.internal.FirebaseRequestInitializer;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
-import java.io.IOException;
+import com.google.firebase.internal.Nullable;
+
 import java.util.List;
-import java.util.Map;
 
 /**
  * This class is the entry point for all server-side Firebase Cloud Messaging actions.
@@ -54,60 +41,23 @@ import java.util.Map;
  */
 public class FirebaseMessaging {
 
-  private static final String FCM_URL = "https://fcm.googleapis.com/v1/projects/%s/messages:send";
-  private static final String FCM_ERROR_TYPE =
-      "type.googleapis.com/google.firebase.fcm.v1.FcmError";
+  static final String INTERNAL_ERROR = "internal-error";
 
-  private static final String INTERNAL_ERROR = "internal-error";
-  private static final String UNKNOWN_ERROR = "unknown-error";
-  private static final Map<String, String> FCM_ERROR_CODES =
-      ImmutableMap.<String, String>builder()
-        // FCM v1 canonical error codes
-        .put("NOT_FOUND", "registration-token-not-registered")
-        .put("PERMISSION_DENIED", "mismatched-credential")
-        .put("RESOURCE_EXHAUSTED", "message-rate-exceeded")
-        .put("UNAUTHENTICATED", "invalid-apns-credentials")
-
-        // FCM v1 new error codes
-        .put("APNS_AUTH_ERROR", "invalid-apns-credentials")
-        .put("INTERNAL", INTERNAL_ERROR)
-        .put("INVALID_ARGUMENT", "invalid-argument")
-        .put("QUOTA_EXCEEDED", "message-rate-exceeded")
-        .put("SENDER_ID_MISMATCH", "mismatched-credential")
-        .put("UNAVAILABLE", "server-unavailable")
-        .put("UNREGISTERED", "registration-token-not-registered")
-        .build();
-  static final Map<Integer, String> IID_ERROR_CODES =
-      ImmutableMap.<Integer, String>builder()
-        .put(400, "invalid-argument")
-        .put(401, "authentication-error")
-        .put(403, "authentication-error")
-        .put(500, INTERNAL_ERROR)
-        .put(503, "server-unavailable")
-        .build();
-
-  private static final String IID_HOST = "https://iid.googleapis.com";
-  private static final String IID_SUBSCRIBE_PATH = "iid/v1:batchAdd";
-  private static final String IID_UNSUBSCRIBE_PATH = "iid/v1:batchRemove";
+  static final String UNKNOWN_ERROR = "unknown-error";
 
   private final FirebaseApp app;
-  private final HttpRequestFactory requestFactory;
-  private final JsonFactory jsonFactory;
-  private final String url;
-
-  private HttpResponseInterceptor interceptor;
+  private final FirebaseMessagingClient messagingClient;
+  private final InstanceIdClient instanceIdClient;
 
   private FirebaseMessaging(FirebaseApp app) {
-    HttpTransport httpTransport = app.getOptions().getHttpTransport();
-    this.app = app;
-    this.requestFactory = httpTransport.createRequestFactory(new FirebaseRequestInitializer(app));
-    this.jsonFactory = app.getOptions().getJsonFactory();
-    String projectId = ImplFirebaseTrampolines.getProjectId(app);
-    checkArgument(!Strings.isNullOrEmpty(projectId),
-        "Project ID is required to access messaging service. Use a service account credential or "
-            + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
-            + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
-    this.url = String.format(FCM_URL, projectId);
+    this(app, null);
+  }
+
+  @VisibleForTesting
+  FirebaseMessaging(FirebaseApp app, @Nullable HttpResponseInterceptor responseInterceptor) {
+    this.app = checkNotNull(app, "app must not be null");
+    this.messagingClient = new FirebaseMessagingClient(app, responseInterceptor);
+    this.instanceIdClient = new InstanceIdClient(app, responseInterceptor);
   }
 
   /**
@@ -138,6 +88,8 @@ public class FirebaseMessaging {
    *
    * @param message A non-null {@link Message} to be sent.
    * @return A message ID string.
+   * @throws FirebaseMessagingException If an error occurs while handing the message off to FCM for
+   *     delivery.
    */
   public String send(@NonNull Message message) throws FirebaseMessagingException {
     return send(message, false);
@@ -152,6 +104,8 @@ public class FirebaseMessaging {
    * @param message A non-null {@link Message} to be sent.
    * @param dryRun a boolean indicating whether to perform a dry run (validation only) of the send.
    * @return A message ID string.
+   * @throws FirebaseMessagingException If an error occurs while handing the message off to FCM for
+   *     delivery.
    */
   public String send(@NonNull Message message, boolean dryRun) throws FirebaseMessagingException {
     return sendOp(message, dryRun).call();
@@ -180,6 +134,170 @@ public class FirebaseMessaging {
     return sendOp(message, dryRun).callAsync(app);
   }
 
+  private CallableOperation<String, FirebaseMessagingException> sendOp(
+      final Message message, final boolean dryRun) {
+    checkNotNull(message, "message must not be null");
+    return new CallableOperation<String, FirebaseMessagingException>() {
+      @Override
+      protected String execute() throws FirebaseMessagingException {
+        return messagingClient.send(message, dryRun);
+      }
+    };
+  }
+
+  /**
+   * Sends all the messages in the given list via Firebase Cloud Messaging. Employs batching to
+   * send the entire list as a single RPC call. Compared to the {@link #send(Message)} method, this
+   * is a significantly more efficient way to send multiple messages.
+   *
+   * <p>The responses list obtained by calling {@link BatchResponse#getResponses()} on the return
+   * value corresponds to the order of input messages.
+   *
+   * @param messages A non-null, non-empty list containing up to 100 messages.
+   * @return A {@link BatchResponse} indicating the result of the operation.
+   * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
+   *     delivery. An exception here indicates a total failure -- i.e. none of the messages in the
+   *     list could be sent. Partial failures are indicated by a {@link BatchResponse} return value.
+   */
+  public BatchResponse sendAll(
+      @NonNull List<Message> messages) throws FirebaseMessagingException {
+    return sendAll(messages, false);
+  }
+
+  /**
+   * Sends all the messages in the given list via Firebase Cloud Messaging. Employs batching to
+   * send the entire list as a single RPC call. Compared to the {@link #send(Message)} method, this
+   * is a significantly more efficient way to send multiple messages.
+   *
+   * <p>If the {@code dryRun} option is set to true, the messages will not be actually sent. Instead
+   * FCM performs all the necessary validations, and emulates the send operation.
+   *
+   * <p>The responses list obtained by calling {@link BatchResponse#getResponses()} on the return
+   * value corresponds to the order of input messages.
+   *
+   * @param messages A non-null, non-empty list containing up to 100 messages.
+   * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
+   * @return A {@link BatchResponse} indicating the result of the operation.
+   * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
+   *     delivery. An exception here indicates a total failure -- i.e. none of the messages in the
+   *     list could be sent. Partial failures are indicated by a {@link BatchResponse} return value.
+   */
+  public BatchResponse sendAll(
+      @NonNull List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
+    return sendAllOp(messages, dryRun).call();
+  }
+
+  /**
+   * Similar to {@link #sendAll(List)} but performs the operation asynchronously.
+   *
+   * @param messages A non-null, non-empty list containing up to 100 messages.
+   * @return @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
+   *     the messages have been sent.
+   */
+  public ApiFuture<BatchResponse> sendAllAsync(@NonNull List<Message> messages) {
+    return sendAllAsync(messages, false);
+  }
+
+  /**
+   * Similar to {@link #sendAll(List, boolean)} but performs the operation asynchronously.
+   *
+   * @param messages A non-null, non-empty list containing up to 100 messages.
+   * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
+   * @return @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
+   *     the messages have been sent, or when the emulation has finished.
+   */
+  public ApiFuture<BatchResponse> sendAllAsync(
+      @NonNull List<Message> messages, boolean dryRun) {
+    return sendAllOp(messages, dryRun).callAsync(app);
+  }
+
+  /**
+   * Sends the given multicast message to all the FCM registration tokens specified in it.
+   *
+   * <p>This method uses the {@link #sendAll(List)} API under the hood to send the given
+   * message to all the target recipients. The responses list obtained by calling
+   * {@link BatchResponse#getResponses()} on the return value corresponds to the order of tokens
+   * in the {@link MulticastMessage}.
+   *
+   * @param message A non-null {@link MulticastMessage}
+   * @return A {@link BatchResponse} indicating the result of the operation.
+   * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
+   *     delivery. An exception here indicates a total failure -- i.e. the messages could not be
+   *     delivered to any recipient. Partial failures are indicated by a {@link BatchResponse}
+   *     return value.
+   */
+  public BatchResponse sendMulticast(
+      @NonNull MulticastMessage message) throws FirebaseMessagingException {
+    return sendMulticast(message, false);
+  }
+
+  /**
+   * Sends the given multicast message to all the FCM registration tokens specified in it.
+   *
+   * <p>If the {@code dryRun} option is set to true, the message will not be actually sent. Instead
+   * FCM performs all the necessary validations, and emulates the send operation.
+   *
+   * <p>This method uses the {@link #sendAll(List)} API under the hood to send the given
+   * message to all the target recipients. The responses list obtained by calling
+   * {@link BatchResponse#getResponses()} on the return value corresponds to the order of tokens
+   * in the {@link MulticastMessage}.
+   *
+   * @param message A non-null {@link MulticastMessage}.
+   * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
+   * @return A {@link BatchResponse} indicating the result of the operation.
+   * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
+   *     delivery. An exception here indicates a total failure -- i.e. the messages could not be
+   *     delivered to any recipient. Partial failures are indicated by a {@link BatchResponse}
+   *     return value.
+   */
+  public BatchResponse sendMulticast(
+      @NonNull MulticastMessage message, boolean dryRun) throws FirebaseMessagingException {
+    checkNotNull(message, "multicast message must not be null");
+    return sendAll(message.getMessageList(), dryRun);
+  }
+
+  /**
+   * Similar to {@link #sendMulticast(MulticastMessage)} but performs the operation
+   * asynchronously.
+   *
+   * @param message A non-null {@link MulticastMessage}.
+   * @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
+   *     the messages have been sent.
+   */
+  public ApiFuture<BatchResponse> sendMulticastAsync(@NonNull MulticastMessage message) {
+    return sendMulticastAsync(message, false);
+  }
+
+  /**
+   * Similar to {@link #sendMulticast(MulticastMessage, boolean)} but performs the operation
+   * asynchronously.
+   *
+   * @param message A non-null {@link MulticastMessage}.
+   * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
+   * @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
+   *     the messages have been sent.
+   */
+  public ApiFuture<BatchResponse> sendMulticastAsync(
+      @NonNull MulticastMessage message, boolean dryRun) {
+    checkNotNull(message, "multicast message must not be null");
+    return sendAllAsync(message.getMessageList(), dryRun);
+  }
+
+  private CallableOperation<BatchResponse, FirebaseMessagingException> sendAllOp(
+      final List<Message> messages, final boolean dryRun) {
+
+    final List<Message> immutableMessages = ImmutableList.copyOf(messages);
+    checkArgument(!immutableMessages.isEmpty(), "messages list must not be empty");
+    checkArgument(immutableMessages.size() <= 100,
+        "messages list must not contain more than 100 elements");
+    return new CallableOperation<BatchResponse,FirebaseMessagingException>() {
+      @Override
+      protected BatchResponse execute() throws FirebaseMessagingException {
+        return messagingClient.sendAll(messages, dryRun);
+      }
+    };
+  }
+
   /**
    * Subscribes a list of registration tokens to a topic.
    *
@@ -190,7 +308,7 @@ public class FirebaseMessaging {
    */
   public TopicManagementResponse subscribeToTopic(@NonNull List<String> registrationTokens,
       @NonNull String topic) throws FirebaseMessagingException {
-    return manageTopicOp(registrationTokens, topic, IID_SUBSCRIBE_PATH).call();
+    return subscribeOp(registrationTokens, topic).call();
   }
 
   /**
@@ -203,11 +321,23 @@ public class FirebaseMessaging {
    */
   public ApiFuture<TopicManagementResponse> subscribeToTopicAsync(
       @NonNull List<String> registrationTokens, @NonNull String topic) {
-    return manageTopicOp(registrationTokens, topic, IID_SUBSCRIBE_PATH).callAsync(app);
+    return subscribeOp(registrationTokens, topic).callAsync(app);
+  }
+
+  private CallableOperation<TopicManagementResponse, FirebaseMessagingException> subscribeOp(
+      final List<String> registrationTokens, final String topic) {
+    checkRegistrationTokens(registrationTokens);
+    checkTopic(topic);
+    return new CallableOperation<TopicManagementResponse, FirebaseMessagingException>() {
+      @Override
+      protected TopicManagementResponse execute() throws FirebaseMessagingException {
+        return instanceIdClient.subscribeToTopic(topic, registrationTokens);
+      }
+    };
   }
 
   /**
-   * Unubscribes a list of registration tokens from a topic.
+   * Unsubscribes a list of registration tokens from a topic.
    *
    * @param registrationTokens A non-null, non-empty list of device registration tokens, with at
    *     most 1000 entries.
@@ -216,7 +346,7 @@ public class FirebaseMessaging {
    */
   public TopicManagementResponse unsubscribeFromTopic(@NonNull List<String> registrationTokens,
       @NonNull String topic) throws FirebaseMessagingException {
-    return manageTopicOp(registrationTokens, topic, IID_UNSUBSCRIBE_PATH).call();
+    return unsubscribeOp(registrationTokens, topic).call();
   }
 
   /**
@@ -230,144 +360,19 @@ public class FirebaseMessaging {
    */
   public ApiFuture<TopicManagementResponse> unsubscribeFromTopicAsync(
       @NonNull List<String> registrationTokens, @NonNull String topic) {
-    return manageTopicOp(registrationTokens, topic, IID_UNSUBSCRIBE_PATH)
-        .callAsync(app);
+    return unsubscribeOp(registrationTokens, topic).callAsync(app);
   }
 
-  private CallableOperation<String, FirebaseMessagingException> sendOp(
-      final Message message, final boolean dryRun) {
-    checkNotNull(message, "message must not be null");
-    return new CallableOperation<String, FirebaseMessagingException>() {
-      @Override
-      protected String execute() throws FirebaseMessagingException {
-        ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
-            .put("message", message);
-        if (dryRun) {
-          payload.put("validate_only", true);
-        }
-        HttpResponse response = null;
-        try {
-          HttpRequest request = requestFactory.buildPostRequest(
-              new GenericUrl(url), new JsonHttpContent(jsonFactory, payload.build()));
-          request.getHeaders().set("X-GOOG-API-FORMAT-VERSION", "2");
-          request.setParser(new JsonObjectParser(jsonFactory));
-          request.setResponseInterceptor(interceptor);
-          response = request.execute();
-          MessagingServiceResponse parsed = new MessagingServiceResponse();
-          jsonFactory.createJsonParser(response.getContent()).parseAndClose(parsed);
-          return parsed.name;
-        } catch (HttpResponseException e) {
-          handleSendHttpError(e);
-          return null;
-        } catch (IOException e) {
-          throw new FirebaseMessagingException(
-              INTERNAL_ERROR, "Error while calling FCM backend service", e);
-        } finally {
-          disconnectQuietly(response);
-        }
-      }
-    };
-  }
-
-  private void handleSendHttpError(HttpResponseException e) throws FirebaseMessagingException {
-    MessagingServiceErrorResponse response = new MessagingServiceErrorResponse();
-    if (e.getContent() != null) {
-      try {
-        JsonParser parser = jsonFactory.createJsonParser(e.getContent());
-        parser.parseAndClose(response);
-      } catch (IOException ignored) {
-        // ignored
-      }
-    }
-    String code = FCM_ERROR_CODES.get(response.getErrorCode());
-    if (code == null) {
-      code = UNKNOWN_ERROR;
-    }
-    String msg = response.getErrorMessage();
-    if (Strings.isNullOrEmpty(msg)) {
-      msg = String.format("Unexpected HTTP response with status: %d; body: %s",
-          e.getStatusCode(), e.getContent());
-    }
-    throw new FirebaseMessagingException(code, msg, e);
-  }
-
-  private CallableOperation<TopicManagementResponse, FirebaseMessagingException>
-      manageTopicOp(
-          final List<String> registrationTokens, final String topic, final String path) {
+  private CallableOperation<TopicManagementResponse, FirebaseMessagingException> unsubscribeOp(
+      final List<String> registrationTokens, final String topic) {
     checkRegistrationTokens(registrationTokens);
     checkTopic(topic);
     return new CallableOperation<TopicManagementResponse, FirebaseMessagingException>() {
       @Override
       protected TopicManagementResponse execute() throws FirebaseMessagingException {
-        final String prefixedTopic;
-        if (topic.startsWith("/topics/")) {
-          prefixedTopic = topic;
-        } else {
-          prefixedTopic = "/topics/" + topic;
-        }
-        Map<String, Object> payload = ImmutableMap.of(
-            "to", prefixedTopic,
-            "registration_tokens", registrationTokens
-        );
-
-        final String url = String.format("%s/%s", IID_HOST, path);
-        HttpResponse response = null;
-        try {
-          HttpRequest request = requestFactory.buildPostRequest(
-              new GenericUrl(url), new JsonHttpContent(jsonFactory, payload));
-          request.getHeaders().set("access_token_auth", "true");
-          request.setParser(new JsonObjectParser(jsonFactory));
-          request.setResponseInterceptor(interceptor);
-          response = request.execute();
-          InstanceIdServiceResponse parsed = new InstanceIdServiceResponse();
-          jsonFactory.createJsonParser(response.getContent()).parseAndClose(parsed);
-          checkState(parsed.results != null && !parsed.results.isEmpty(),
-              "unexpected response from topic management service");
-          return new TopicManagementResponse(parsed.results);
-        } catch (HttpResponseException e) {
-          handleTopicManagementHttpError(e);
-          return null;
-        } catch (IOException e) {
-          throw new FirebaseMessagingException(
-              INTERNAL_ERROR, "Error while calling IID backend service", e);
-        } finally {
-          disconnectQuietly(response);
-        }
+        return instanceIdClient.unsubscribeFromTopic(topic, registrationTokens);
       }
     };
-  }
-
-  private void handleTopicManagementHttpError(
-      HttpResponseException e) throws FirebaseMessagingException {
-    InstanceIdServiceErrorResponse response = new InstanceIdServiceErrorResponse();
-    try {
-      JsonParser parser = jsonFactory.createJsonParser(e.getContent());
-      parser.parseAndClose(response);
-    } catch (IOException ignored) {
-      // ignored
-    }
-
-    // Infer error code from HTTP status
-    String code = IID_ERROR_CODES.get(e.getStatusCode());
-    if (code == null) {
-      code = UNKNOWN_ERROR;
-    }
-    String msg = response.error;
-    if (Strings.isNullOrEmpty(msg)) {
-      msg = String.format("Unexpected HTTP response with status: %d; body: %s",
-          e.getStatusCode(), e.getContent());
-    }
-    throw new FirebaseMessagingException(code, msg, e);
-  }
-
-  private static void disconnectQuietly(HttpResponse response) {
-    if (response != null) {
-      try {
-        response.disconnect();
-      } catch (IOException ignored) {
-        // ignored
-      }
-    }
   }
 
   private static void checkRegistrationTokens(List<String> registrationTokens) {
@@ -386,11 +391,6 @@ public class FirebaseMessaging {
     checkArgument(topic.matches("^(/topics/)?(private/)?[a-zA-Z0-9-_.~%]+$"), "invalid topic name");
   }
 
-  @VisibleForTesting
-  void setInterceptor(HttpResponseInterceptor interceptor) {
-    this.interceptor = interceptor;
-  }
-
   private static final String SERVICE_ID = FirebaseMessaging.class.getName();
 
   private static class FirebaseMessagingService extends FirebaseService<FirebaseMessaging> {
@@ -405,51 +405,5 @@ public class FirebaseMessaging {
       // will now fail because calls to getOptions() and getToken() will hit FirebaseApp,
       // which will throw once the app is deleted.
     }
-  }
-
-  private static class MessagingServiceResponse {
-    @Key("name")
-    private String name;
-  }
-
-  private static class MessagingServiceErrorResponse {
-    @Key("error")
-    private Map<String, Object> error;
-
-
-    String getErrorCode() {
-      if (error == null) {
-        return null;
-      }
-      Object details = error.get("details");
-      if (details != null && details instanceof List) {
-        for (Object detail : (List) details) {
-          if (detail instanceof Map) {
-            Map detailMap = (Map) detail;
-            if (FCM_ERROR_TYPE.equals(detailMap.get("@type"))) {
-              return (String) detailMap.get("errorCode");
-            }
-          }
-        }
-      }
-      return (String) error.get("status");
-    }
-
-    String getErrorMessage() {
-      if (error != null) {
-        return (String) error.get("message");
-      }
-      return null;
-    }
-  }
-
-  private static class InstanceIdServiceResponse {
-    @Key("results")
-    private List<Map<String, Object>> results;
-  }
-
-  private static class InstanceIdServiceErrorResponse {
-    @Key("error")
-    private String error;
   }
 }
