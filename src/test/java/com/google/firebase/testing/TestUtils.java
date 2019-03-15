@@ -24,6 +24,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.LowLevelHttpRequest;
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpRequest;
@@ -141,5 +142,14 @@ public class TestUtils {
         .build();
     HttpRequestFactory requestFactory = transport.createRequestFactory();
     return requestFactory.buildPostRequest(TEST_URL, new EmptyContent());
+  }
+
+  public static HttpTransport faultyHttpTransport() {
+    return new HttpTransport() {
+      @Override
+      protected LowLevelHttpRequest buildRequest(String s, String s1) throws IOException {
+        throw new IOException("transport error");
+      }
+    };
   }
 }
