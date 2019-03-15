@@ -334,8 +334,9 @@ public class FirebaseMessagingClientImplTest {
     final TestResponseInterceptor interceptor = new TestResponseInterceptor();
     FirebaseMessagingClient client = initMessagingClientForBatchRequests(
         MOCK_BATCH_FAILURE_RESPONSE, interceptor);
+    List<Message> messages = ImmutableList.of(EMPTY_MESSAGE, EMPTY_MESSAGE, EMPTY_MESSAGE);
 
-    BatchResponse responses = client.sendAll(MESSAGE_LIST, false);
+    BatchResponse responses = client.sendAll(messages, false);
 
     assertSendBatchFailure(responses, interceptor);
   }
