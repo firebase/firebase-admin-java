@@ -529,6 +529,18 @@ public class FirebaseMessagingTest {
   }
 
   @Test
+  public void testSubscribeToTopicFailure() {
+    MockInstanceIdClient client = MockInstanceIdClient.fromException(TEST_EXCEPTION);
+    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+
+    try {
+      messaging.subscribeToTopic(ImmutableList.of("id1", "id2"), "test-topic");
+    } catch (FirebaseMessagingException e) {
+      assertSame(TEST_EXCEPTION, e);
+    }
+  }
+
+  @Test
   public void testSubscribeToTopicAsync() throws Exception {
     MockInstanceIdClient client = MockInstanceIdClient.fromResponse(TOPIC_MGT_RESPONSE);
     FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
@@ -537,6 +549,18 @@ public class FirebaseMessagingTest {
         ImmutableList.of("id1", "id2"), "test-topic").get();
 
     assertSame(TOPIC_MGT_RESPONSE, got);
+  }
+
+  @Test
+  public void testSubscribeToTopicAsyncFailure() throws InterruptedException {
+    MockInstanceIdClient client = MockInstanceIdClient.fromException(TEST_EXCEPTION);
+    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+
+    try {
+      messaging.subscribeToTopicAsync(ImmutableList.of("id1", "id2"), "test-topic").get();
+    } catch (ExecutionException e) {
+      assertSame(TEST_EXCEPTION, e.getCause());
+    }
   }
 
   @Test
@@ -569,6 +593,18 @@ public class FirebaseMessagingTest {
   }
 
   @Test
+  public void testUnsubscribeFromTopicFailure() {
+    MockInstanceIdClient client = MockInstanceIdClient.fromException(TEST_EXCEPTION);
+    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+
+    try {
+      messaging.unsubscribeFromTopic(ImmutableList.of("id1", "id2"), "test-topic");
+    } catch (FirebaseMessagingException e) {
+      assertSame(TEST_EXCEPTION, e);
+    }
+  }
+
+  @Test
   public void testUnsubscribeFromTopicAsync() throws Exception {
     MockInstanceIdClient client = MockInstanceIdClient.fromResponse(TOPIC_MGT_RESPONSE);
     FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
@@ -577,6 +613,18 @@ public class FirebaseMessagingTest {
         ImmutableList.of("id1", "id2"), "test-topic").get();
 
     assertSame(TOPIC_MGT_RESPONSE, got);
+  }
+
+  @Test
+  public void testUnsubscribeFromTopicAsyncFailure() throws InterruptedException {
+    MockInstanceIdClient client = MockInstanceIdClient.fromException(TEST_EXCEPTION);
+    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+
+    try {
+      messaging.unsubscribeFromTopicAsync(ImmutableList.of("id1", "id2"), "test-topic").get();
+    } catch (ExecutionException e) {
+      assertSame(TEST_EXCEPTION, e.getCause());
+    }
   }
 
   private FirebaseMessaging getMessagingForSend(
@@ -599,9 +647,12 @@ public class FirebaseMessagingTest {
         .build();
   }
 
-  private BatchResponse getBatchResponse(String messageId) {
-    SendResponse response = SendResponse.fromMessageId(messageId);
-    return new BatchResponse(ImmutableList.of(response));
+  private BatchResponse getBatchResponse(String ...messageIds) {
+    ImmutableList.Builder<SendResponse> listBuilder = ImmutableList.builder();
+    for (String messageId : messageIds) {
+      listBuilder.add(SendResponse.fromMessageId(messageId));
+    }
+    return new BatchResponse(listBuilder.build());
   }
 
   private static class MockFirebaseMessagingClient implements FirebaseMessagingClient {

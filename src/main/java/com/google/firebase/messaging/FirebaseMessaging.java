@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFuture;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -294,6 +295,7 @@ public class FirebaseMessaging {
     };
   }
 
+  @VisibleForTesting
   FirebaseMessagingClient getMessagingClient() {
     return messagingClient.get();
   }
@@ -377,6 +379,7 @@ public class FirebaseMessaging {
     };
   }
 
+  @VisibleForTesting
   InstanceIdClient getInstanceIdClient() {
     return this.instanceIdClient.get();
   }
@@ -399,6 +402,20 @@ public class FirebaseMessaging {
 
   private static final String SERVICE_ID = FirebaseMessaging.class.getName();
 
+  private static class FirebaseMessagingService extends FirebaseService<FirebaseMessaging> {
+
+    FirebaseMessagingService(FirebaseApp app) {
+      super(SERVICE_ID, FirebaseMessaging.fromApp(app));
+    }
+
+    @Override
+    public void destroy() {
+      // NOTE: We don't explicitly tear down anything here, but public methods of FirebaseMessaging
+      // will now fail because calls to getOptions() and getToken() will hit FirebaseApp,
+      // which will throw once the app is deleted.
+    }
+  }
+
   private static FirebaseMessaging fromApp(final FirebaseApp app) {
     return FirebaseMessaging.builder()
         .setFirebaseApp(app)
@@ -415,20 +432,6 @@ public class FirebaseMessaging {
           }
         })
         .build();
-  }
-
-  private static class FirebaseMessagingService extends FirebaseService<FirebaseMessaging> {
-
-    FirebaseMessagingService(FirebaseApp app) {
-      super(SERVICE_ID, FirebaseMessaging.fromApp(app));
-    }
-
-    @Override
-    public void destroy() {
-      // NOTE: We don't explicitly tear down anything here, but public methods of FirebaseMessaging
-      // will now fail because calls to getOptions() and getToken() will hit FirebaseApp,
-      // which will throw once the app is deleted.
-    }
   }
 
   static Builder builder() {

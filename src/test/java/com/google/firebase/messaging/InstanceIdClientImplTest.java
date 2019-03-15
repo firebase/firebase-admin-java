@@ -50,9 +50,11 @@ public class InstanceIdClientImplTest {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setContent(responseString);
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    final InstanceIdClient messaging = initMessaging(response, interceptor);
-    TopicManagementResponse result = messaging.subscribeToTopic(
+    final InstanceIdClient client = initInstanceIdClient(response, interceptor);
+
+    TopicManagementResponse result = client.subscribeToTopic(
         "test-topic", ImmutableList.of("id1", "id2"));
+
     checkTopicManagementRequestHeader(
         interceptor.getLastRequest(), TEST_IID_SUBSCRIBE_URL);
     checkTopicManagementRequest(interceptor.getLastRequest(), result);
@@ -64,9 +66,11 @@ public class InstanceIdClientImplTest {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setContent(responseString);
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    final InstanceIdClient messaging = initMessaging(response, interceptor);
-    TopicManagementResponse result = messaging.subscribeToTopic(
+    final InstanceIdClient client = initInstanceIdClient(response, interceptor);
+
+    TopicManagementResponse result = client.subscribeToTopic(
         "/topics/test-topic", ImmutableList.of("id1", "id2"));
+
     checkTopicManagementRequestHeader(
         interceptor.getLastRequest(), TEST_IID_SUBSCRIBE_URL);
     checkTopicManagementRequest(interceptor.getLastRequest(), result);
@@ -76,11 +80,13 @@ public class InstanceIdClientImplTest {
   public void testSubscribeError() {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    InstanceIdClient messaging = initMessaging(response, interceptor);
+    InstanceIdClient client = initInstanceIdClient(response, interceptor);
+
     for (int statusCode : HTTP_ERRORS) {
       response.setStatusCode(statusCode).setContent("{\"error\": \"test error\"}");
+
       try {
-        messaging.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
+        client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
         assertEquals(getTopicManagementErrorCode(statusCode), error.getErrorCode());
@@ -94,12 +100,13 @@ public class InstanceIdClientImplTest {
 
   @Test
   public void testSubscribeUnknownError() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setStatusCode(500).setContent("{}");
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    InstanceIdClient messaging = initMessaging(response, interceptor);
-    response.setStatusCode(500).setContent("{}");
+    InstanceIdClient client = initInstanceIdClient(response, interceptor);
+
     try {
-      messaging.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
+      client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
@@ -112,12 +119,13 @@ public class InstanceIdClientImplTest {
 
   @Test
   public void testSubscribeMalformedError() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setStatusCode(500).setContent("not json");
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    InstanceIdClient messaging = initMessaging(response, interceptor);
-    response.setStatusCode(500).setContent("not json");
+    InstanceIdClient client = initInstanceIdClient(response, interceptor);
+
     try {
-      messaging.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
+      client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
@@ -130,12 +138,13 @@ public class InstanceIdClientImplTest {
 
   @Test
   public void testSubscribeZeroContentError() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setStatusCode(500).setZeroContent();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    InstanceIdClient messaging = initMessaging(response, interceptor);
-    response.setStatusCode(500).setZeroContent();
+    InstanceIdClient client = initInstanceIdClient(response, interceptor);
+
     try {
-      messaging.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
+      client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
@@ -148,9 +157,10 @@ public class InstanceIdClientImplTest {
 
   @Test
   public void testSubscribeTransportError() {
-    InstanceIdClient messaging = initFaultyTransportMessaging();
+    InstanceIdClient client = initClientWithFaultyTransport();
+
     try {
-      messaging.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
+      client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       assertEquals("internal-error", error.getErrorCode());
@@ -165,10 +175,11 @@ public class InstanceIdClientImplTest {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setContent(responseString);
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    final InstanceIdClient messaging = initMessaging(response, interceptor);
+    final InstanceIdClient client = initInstanceIdClient(response, interceptor);
 
-    TopicManagementResponse result = messaging.unsubscribeFromTopic(
+    TopicManagementResponse result = client.unsubscribeFromTopic(
         "test-topic", ImmutableList.of("id1", "id2"));
+
     checkTopicManagementRequestHeader(
         interceptor.getLastRequest(), TEST_IID_UNSUBSCRIBE_URL);
     checkTopicManagementRequest(interceptor.getLastRequest(), result);
@@ -180,10 +191,11 @@ public class InstanceIdClientImplTest {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setContent(responseString);
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    final InstanceIdClient messaging = initMessaging(response, interceptor);
+    final InstanceIdClient client = initInstanceIdClient(response, interceptor);
 
-    TopicManagementResponse result = messaging.unsubscribeFromTopic(
+    TopicManagementResponse result = client.unsubscribeFromTopic(
         "/topics/test-topic", ImmutableList.of("id1", "id2"));
+
     checkTopicManagementRequestHeader(
         interceptor.getLastRequest(), TEST_IID_UNSUBSCRIBE_URL);
     checkTopicManagementRequest(interceptor.getLastRequest(), result);
@@ -193,11 +205,13 @@ public class InstanceIdClientImplTest {
   public void testUnsubscribeError() {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    InstanceIdClient messaging = initMessaging(response, interceptor);
+    InstanceIdClient client = initInstanceIdClient(response, interceptor);
+
     for (int statusCode : HTTP_ERRORS) {
       response.setStatusCode(statusCode).setContent("{\"error\": \"test error\"}");
+
       try {
-        messaging.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
+        client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
         assertEquals(getTopicManagementErrorCode(statusCode), error.getErrorCode());
@@ -211,12 +225,13 @@ public class InstanceIdClientImplTest {
 
   @Test
   public void testUnsubscribeUnknownError() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setStatusCode(500).setContent("{}");
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    InstanceIdClient messaging = initMessaging(response, interceptor);
-    response.setStatusCode(500).setContent("{}");
+    InstanceIdClient client = initInstanceIdClient(response, interceptor);
+
     try {
-      messaging.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
+      client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
@@ -229,12 +244,13 @@ public class InstanceIdClientImplTest {
 
   @Test
   public void testUnsubscribeMalformedError() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setStatusCode(500).setContent("not json");
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    InstanceIdClient messaging = initMessaging(response, interceptor);
-    response.setStatusCode(500).setContent("not json");
+    InstanceIdClient client = initInstanceIdClient(response, interceptor);
+
     try {
-      messaging.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
+      client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
@@ -247,12 +263,13 @@ public class InstanceIdClientImplTest {
 
   @Test
   public void testUnsubscribeZeroContentError() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setStatusCode(500).setZeroContent();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    InstanceIdClient messaging = initMessaging(response, interceptor);
-    response.setStatusCode(500).setZeroContent();
+    InstanceIdClient client = initInstanceIdClient(response, interceptor);
+
     try {
-      messaging.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
+      client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
@@ -265,9 +282,10 @@ public class InstanceIdClientImplTest {
 
   @Test
   public void testUnsubscribeTransportError() {
-    InstanceIdClient messaging = initFaultyTransportMessaging();
+    InstanceIdClient client = initClientWithFaultyTransport();
+
     try {
-      messaging.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
+      client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       assertEquals("internal-error", error.getErrorCode());
@@ -298,7 +316,6 @@ public class InstanceIdClientImplTest {
       InstanceIdClientImpl client = InstanceIdClientImpl.fromApp(app);
 
       assertSame(options.getJsonFactory(), client.getJsonFactory());
-
       HttpRequest request = client.getRequestFactory().buildGetRequest(
           new GenericUrl("https://example.com"));
       assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
@@ -317,15 +334,7 @@ public class InstanceIdClientImplTest {
     new TopicManagementResponse(ImmutableList.<GenericJson>of());
   }
 
-  private static String getTopicManagementErrorCode(int statusCode) {
-    String code = InstanceIdClientImpl.IID_ERROR_CODES.get(statusCode);
-    if (code == null) {
-      code = "unknown-error";
-    }
-    return code;
-  }
-
-  private static InstanceIdClientImpl initMessaging(
+  private static InstanceIdClientImpl initInstanceIdClient(
       final MockLowLevelHttpResponse mockResponse,
       final HttpResponseInterceptor interceptor) {
 
@@ -362,9 +371,17 @@ public class InstanceIdClientImplTest {
     assertEquals(expectedUrl, request.getUrl().toString());
   }
 
-  private static InstanceIdClient initFaultyTransportMessaging() {
+  private static InstanceIdClient initClientWithFaultyTransport() {
     return new InstanceIdClientImpl(
         TestUtils.faultyHttpTransport().createRequestFactory(),
         Utils.getDefaultJsonFactory());
+  }
+
+  private String getTopicManagementErrorCode(int statusCode) {
+    String code = InstanceIdClientImpl.IID_ERROR_CODES.get(statusCode);
+    if (code == null) {
+      code = "unknown-error";
+    }
+    return code;
   }
 }

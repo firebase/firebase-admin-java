@@ -116,24 +116,6 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     return clientVersion;
   }
 
-  static FirebaseMessagingClientImpl fromApp(FirebaseApp app) {
-    String projectId = ImplFirebaseTrampolines.getProjectId(app);
-    checkArgument(!Strings.isNullOrEmpty(projectId),
-        "Project ID is required to access messaging service. Use a service account credential or "
-            + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
-            + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
-    return FirebaseMessagingClientImpl.builder()
-        .setProjectId(projectId)
-        .setRequestFactory(ApiClientUtils.newAuthorizedRequestFactory(app))
-        .setChildRequestFactory(ApiClientUtils.newUnauthorizedRequestFactory(app))
-        .setJsonFactory(app.getOptions().getJsonFactory())
-        .build();
-  }
-
-  static Builder builder() {
-    return new Builder();
-  }
-
   public String send(Message message, boolean dryRun) throws FirebaseMessagingException {
     try {
       return sendSingleRequest(message, dryRun);
@@ -237,6 +219,24 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
         request.setResponseInterceptor(responseInterceptor);
       }
     };
+  }
+
+  static FirebaseMessagingClientImpl fromApp(FirebaseApp app) {
+    String projectId = ImplFirebaseTrampolines.getProjectId(app);
+    checkArgument(!Strings.isNullOrEmpty(projectId),
+        "Project ID is required to access messaging service. Use a service account credential or "
+            + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
+            + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
+    return FirebaseMessagingClientImpl.builder()
+        .setProjectId(projectId)
+        .setRequestFactory(ApiClientUtils.newAuthorizedRequestFactory(app))
+        .setChildRequestFactory(ApiClientUtils.newUnauthorizedRequestFactory(app))
+        .setJsonFactory(app.getOptions().getJsonFactory())
+        .build();
+  }
+
+  static Builder builder() {
+    return new Builder();
   }
 
   static final class Builder {
