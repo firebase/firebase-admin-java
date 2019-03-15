@@ -145,6 +145,27 @@ public class FirebaseMessagingClientImplTest {
   }
 
   @Test
+  public void testSendSuccessResponseWithUnexpectedPayload() {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    FirebaseMessagingClient messaging = initMessagingClient(response, interceptor);
+    Map<Message, Map<String, Object>> testMessages = buildTestMessages();
+
+    for (Map.Entry<Message, Map<String, Object>> entry : testMessages.entrySet()) {
+      response.setContent("not valid json");
+
+      try {
+        messaging.send(entry.getKey(), false);
+        fail("No error thrown for malformed response");
+      } catch (FirebaseMessagingException error) {
+        assertEquals("internal-error", error.getErrorCode());
+        assertEquals("Error while calling FCM backend service", error.getMessage());
+      }
+      checkRequestHeader(interceptor.getLastRequest());
+    }
+  }
+
+  @Test
   public void testSendErrorWithZeroContentResponse() {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();

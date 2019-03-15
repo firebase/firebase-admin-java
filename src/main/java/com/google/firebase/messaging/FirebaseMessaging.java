@@ -19,20 +19,16 @@ package com.google.firebase.messaging;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.core.ApiFuture;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.internal.Nullable;
 
 import java.util.List;
 
@@ -49,11 +45,10 @@ public class FirebaseMessaging {
   static final String UNKNOWN_ERROR = "unknown-error";
 
   private final FirebaseApp app;
-  private final Supplier<FirebaseMessagingClient> messagingClient;
+  private final Supplier<? extends FirebaseMessagingClient> messagingClient;
   private final Supplier<InstanceIdClient> instanceIdClient;
 
-  @VisibleForTesting
-  FirebaseMessaging(Builder builder) {
+  private FirebaseMessaging(Builder builder) {
     this.app = checkNotNull(builder.firebaseApp);
     this.messagingClient = Suppliers.memoize(builder.messagingClient);
     this.instanceIdClient = Suppliers.memoize(builder.instanceIdClient);
@@ -378,7 +373,7 @@ public class FirebaseMessaging {
     };
   }
 
-  private static void checkRegistrationTokens(List<String> registrationTokens) {
+  private void checkRegistrationTokens(List<String> registrationTokens) {
     checkArgument(registrationTokens != null && !registrationTokens.isEmpty(),
         "registrationTokens list must not be null or empty");
     checkArgument(registrationTokens.size() <= 1000,
@@ -389,26 +384,12 @@ public class FirebaseMessaging {
     }
   }
 
-  private static void checkTopic(String topic) {
+  private void checkTopic(String topic) {
     checkArgument(!Strings.isNullOrEmpty(topic), "topic must not be null or empty");
     checkArgument(topic.matches("^(/topics/)?(private/)?[a-zA-Z0-9-_.~%]+$"), "invalid topic name");
   }
 
   private static final String SERVICE_ID = FirebaseMessaging.class.getName();
-
-  private static class FirebaseMessagingService extends FirebaseService<FirebaseMessaging> {
-
-    FirebaseMessagingService(FirebaseApp app) {
-      super(SERVICE_ID, FirebaseMessaging.fromApp(app));
-    }
-
-    @Override
-    public void destroy() {
-      // NOTE: We don't explicitly tear down anything here, but public methods of FirebaseMessaging
-      // will now fail because calls to getOptions() and getToken() will hit FirebaseApp,
-      // which will throw once the app is deleted.
-    }
-  }
 
   private static FirebaseMessaging fromApp(final FirebaseApp app) {
     return FirebaseMessaging.builder()
@@ -428,6 +409,20 @@ public class FirebaseMessaging {
         .build();
   }
 
+  private static class FirebaseMessagingService extends FirebaseService<FirebaseMessaging> {
+
+    FirebaseMessagingService(FirebaseApp app) {
+      super(SERVICE_ID, FirebaseMessaging.fromApp(app));
+    }
+
+    @Override
+    public void destroy() {
+      // NOTE: We don't explicitly tear down anything here, but public methods of FirebaseMessaging
+      // will now fail because calls to getOptions() and getToken() will hit FirebaseApp,
+      // which will throw once the app is deleted.
+    }
+  }
+
   static Builder builder() {
     return new Builder();
   }
@@ -435,7 +430,7 @@ public class FirebaseMessaging {
   static class Builder {
 
     private FirebaseApp firebaseApp;
-    private Supplier<FirebaseMessagingClient> messagingClient;
+    private Supplier<? extends FirebaseMessagingClient> messagingClient;
     private Supplier<InstanceIdClient> instanceIdClient;
 
     private Builder() { }
@@ -445,7 +440,7 @@ public class FirebaseMessaging {
       return this;
     }
 
-    Builder setMessagingClient(Supplier<FirebaseMessagingClient> messagingClient) {
+    Builder setMessagingClient(Supplier<? extends FirebaseMessagingClient> messagingClient) {
       this.messagingClient = messagingClient;
       return this;
     }
