@@ -28,6 +28,10 @@ public class FirebaseMessagingTest {
   private static final Message EMPTY_MESSAGE = Message.builder()
       .setTopic("test-topic")
       .build();
+  private static final MulticastMessage TEST_MULTICAST_MESSAGE = MulticastMessage.builder()
+      .addToken("test-fcm-token1")
+      .addToken("test-fcm-token2")
+      .build();
   private static final FirebaseMessagingException TEST_EXCEPTION =
       new FirebaseMessagingException("TEST_CODE", "Test error message", new Exception());
 
@@ -52,6 +56,19 @@ public class FirebaseMessagingTest {
     FirebaseMessaging messaging = FirebaseMessaging.getInstance(app);
 
     assertSame(messaging, FirebaseMessaging.getInstance(app));
+  }
+
+  @Test
+  public void testDefaultMessagingClient() {
+    FirebaseApp app = FirebaseApp.initializeApp(TEST_OPTIONS, "custom-app");
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance(app);
+
+    FirebaseMessagingClient client = messaging.getMessagingClient();
+
+    assertTrue(client instanceof FirebaseMessagingClientImpl);
+    assertSame(client, messaging.getMessagingClient());
+    String expectedUrl = "https://fcm.googleapis.com/v1/projects/test-project/messages:send";
+    assertEquals(expectedUrl, ((FirebaseMessagingClientImpl) client).getFcmSendUrl());
   }
 
   @Test
@@ -319,6 +336,119 @@ public class FirebaseMessagingTest {
     }
 
     assertSame(messages, client.lastBatch);
+    assertFalse(client.isLastDryRun);
+  }
+
+  @Test
+  public void testSendMulticastWithNull() throws  FirebaseMessagingException {
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageId(null);
+    FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
+
+    try {
+      messaging.sendMulticast(null);
+      fail("No error thrown for null multicast message");
+    } catch (NullPointerException expected) {
+      // expected
+    }
+
+    assertNull(client.lastBatch);
+  }
+
+  @Test
+  public void testSendMulticast() throws FirebaseMessagingException {
+    BatchResponse batchResponse = getBatchResponse("test");
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient
+        .fromBatchResponse(batchResponse);
+    FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
+
+    BatchResponse response = messaging.sendMulticast(TEST_MULTICAST_MESSAGE);
+
+    assertSame(batchResponse, response);
+    assertEquals(2, client.lastBatch.size());
+    assertEquals("test-fcm-token1", client.lastBatch.get(0).getToken());
+    assertEquals("test-fcm-token2", client.lastBatch.get(1).getToken());
+    assertFalse(client.isLastDryRun);
+  }
+
+  @Test
+  public void testSendMulticastDryRun() throws FirebaseMessagingException {
+    BatchResponse batchResponse = getBatchResponse("test");
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient
+        .fromBatchResponse(batchResponse);
+    FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
+
+    BatchResponse response = messaging.sendMulticast(TEST_MULTICAST_MESSAGE, true);
+
+    assertSame(batchResponse, response);
+    assertEquals(2, client.lastBatch.size());
+    assertEquals("test-fcm-token1", client.lastBatch.get(0).getToken());
+    assertEquals("test-fcm-token2", client.lastBatch.get(1).getToken());
+    assertTrue(client.isLastDryRun);
+  }
+
+  @Test
+  public void testSendMulticastFailure() {
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromException(TEST_EXCEPTION);
+    FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
+
+    try {
+      messaging.sendMulticast(TEST_MULTICAST_MESSAGE);
+    } catch (FirebaseMessagingException e) {
+      assertSame(TEST_EXCEPTION, e);
+    }
+
+    assertEquals(2, client.lastBatch.size());
+    assertEquals("test-fcm-token1", client.lastBatch.get(0).getToken());
+    assertEquals("test-fcm-token2", client.lastBatch.get(1).getToken());
+    assertFalse(client.isLastDryRun);
+  }
+
+  @Test
+  public void testSendMulticastAsync() throws Exception {
+    BatchResponse batchResponse = getBatchResponse("test");
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient
+        .fromBatchResponse(batchResponse);
+    FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
+
+    BatchResponse response = messaging.sendMulticastAsync(TEST_MULTICAST_MESSAGE).get();
+
+    assertSame(batchResponse, response);
+    assertEquals(2, client.lastBatch.size());
+    assertEquals("test-fcm-token1", client.lastBatch.get(0).getToken());
+    assertEquals("test-fcm-token2", client.lastBatch.get(1).getToken());
+    assertFalse(client.isLastDryRun);
+  }
+
+  @Test
+  public void testSendMulticastAsyncDryRun() throws Exception {
+    BatchResponse batchResponse = getBatchResponse("test");
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient
+        .fromBatchResponse(batchResponse);
+    FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
+
+    BatchResponse response = messaging.sendMulticastAsync(TEST_MULTICAST_MESSAGE, true).get();
+
+    assertSame(batchResponse, response);
+    assertEquals(2, client.lastBatch.size());
+    assertEquals("test-fcm-token1", client.lastBatch.get(0).getToken());
+    assertEquals("test-fcm-token2", client.lastBatch.get(1).getToken());
+    assertTrue(client.isLastDryRun);
+  }
+
+  @Test
+  public void testSendMulticastAsyncFailure() throws InterruptedException {
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromException(TEST_EXCEPTION);
+    FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
+
+    try {
+      messaging.sendMulticastAsync(TEST_MULTICAST_MESSAGE).get();
+    } catch (ExecutionException e) {
+      assertSame(TEST_EXCEPTION, e.getCause());
+    }
+
+    assertEquals(2, client.lastBatch.size());
+    assertEquals("test-fcm-token1", client.lastBatch.get(0).getToken());
+    assertEquals("test-fcm-token2", client.lastBatch.get(1).getToken());
     assertFalse(client.isLastDryRun);
   }
 

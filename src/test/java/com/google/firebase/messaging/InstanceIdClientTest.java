@@ -11,6 +11,7 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.LowLevelHttpRequest;
+import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonParser;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
@@ -292,6 +293,16 @@ public class InstanceIdClientTest {
     }
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testTopicManagementResponseWithNullList() {
+    new TopicManagementResponse(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testTopicManagementResponseWithEmptyList() {
+    new TopicManagementResponse(ImmutableList.<GenericJson>of());
+  }
+
   private static String getTopicManagementErrorCode(int statusCode) {
     String code = InstanceIdClient.IID_ERROR_CODES.get(statusCode);
     if (code == null) {
@@ -386,5 +397,4 @@ public class InstanceIdClientTest {
       throw new IOException("transport error");
     }
   }
-
 }

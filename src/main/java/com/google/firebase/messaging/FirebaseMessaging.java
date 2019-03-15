@@ -131,7 +131,7 @@ public class FirebaseMessaging {
   private CallableOperation<String, FirebaseMessagingException> sendOp(
       final Message message, final boolean dryRun) {
     checkNotNull(message, "message must not be null");
-    final FirebaseMessagingClient messagingClient = this.messagingClient.get();
+    final FirebaseMessagingClient messagingClient = getMessagingClient();
     return new CallableOperation<String, FirebaseMessagingException>() {
       @Override
       protected String execute() throws FirebaseMessagingException {
@@ -285,13 +285,17 @@ public class FirebaseMessaging {
     checkArgument(!immutableMessages.isEmpty(), "messages list must not be empty");
     checkArgument(immutableMessages.size() <= 100,
         "messages list must not contain more than 100 elements");
-    final FirebaseMessagingClient messagingClient = this.messagingClient.get();
+    final FirebaseMessagingClient messagingClient = getMessagingClient();
     return new CallableOperation<BatchResponse,FirebaseMessagingException>() {
       @Override
       protected BatchResponse execute() throws FirebaseMessagingException {
         return messagingClient.sendAll(messages, dryRun);
       }
     };
+  }
+
+  FirebaseMessagingClient getMessagingClient() {
+    return messagingClient.get();
   }
 
   /**
