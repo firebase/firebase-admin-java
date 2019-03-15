@@ -14,6 +14,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.testing.TestResponseInterceptor;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import org.junit.After;
@@ -34,6 +35,25 @@ public class FirebaseMessagingTest {
       .build();
   private static final FirebaseMessagingException TEST_EXCEPTION =
       new FirebaseMessagingException("TEST_CODE", "Test error message", new Exception());
+
+  private static final ImmutableList.Builder<String> TOO_MANY_IDS = ImmutableList.builder();
+
+  static {
+    for (int i = 0; i < 1001; i++) {
+      TOO_MANY_IDS.add("id" + i);
+    }
+  }
+
+  private static final List<TopicMgtArgs> INVALID_TOPIC_MGT_ARGS = ImmutableList.of(
+      new TopicMgtArgs(null, null),
+      new TopicMgtArgs(null, "test-topic"),
+      new TopicMgtArgs(ImmutableList.<String>of(), "test-topic"),
+      new TopicMgtArgs(ImmutableList.of(""), "test-topic"),
+      new TopicMgtArgs(TOO_MANY_IDS.build(), "test-topic"),
+      new TopicMgtArgs(ImmutableList.of(""), null),
+      new TopicMgtArgs(ImmutableList.of("id"), ""),
+      new TopicMgtArgs(ImmutableList.of("id"), "foo*")
+  );
 
   @After
   public void tearDown() {
@@ -452,6 +472,42 @@ public class FirebaseMessagingTest {
     assertFalse(client.isLastDryRun);
   }
 
+  @Test
+  public void testInvalidSubscribe() throws FirebaseMessagingException {
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    FirebaseMessaging messaging = getMessagingForTopicManagement(
+        Suppliers.<InstanceIdClient>ofInstance(null));
+
+    for (TopicMgtArgs args : INVALID_TOPIC_MGT_ARGS) {
+      try {
+        messaging.subscribeToTopic(args.registrationTokens, args.topic);
+        fail("No error thrown for invalid args");
+      } catch (IllegalArgumentException expected) {
+        // expected
+      }
+    }
+
+    assertNull(interceptor.getResponse());
+  }
+
+  @Test
+  public void testInvalidUnsubscribe() throws FirebaseMessagingException {
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    FirebaseMessaging messaging = getMessagingForTopicManagement(
+        Suppliers.<InstanceIdClient>ofInstance(null));
+
+    for (TopicMgtArgs args : INVALID_TOPIC_MGT_ARGS) {
+      try {
+        messaging.unsubscribeFromTopic(args.registrationTokens, args.topic);
+        fail("No error thrown for invalid args");
+      } catch (IllegalArgumentException expected) {
+        // expected
+      }
+    }
+
+    assertNull(interceptor.getResponse());
+  }
+
   private FirebaseMessaging getMessagingForSend(
       Supplier<? extends FirebaseMessagingClient> supplier) {
     FirebaseApp app = FirebaseApp.initializeApp(TEST_OPTIONS);
@@ -459,6 +515,16 @@ public class FirebaseMessagingTest {
         .setFirebaseApp(app)
         .setMessagingClient(supplier)
         .setInstanceIdClient(Suppliers.<InstanceIdClient>ofInstance(null))
+        .build();
+  }
+
+  private FirebaseMessaging getMessagingForTopicManagement(
+      Supplier<? extends InstanceIdClient> supplier) {
+    FirebaseApp app = FirebaseApp.initializeApp(TEST_OPTIONS);
+    return FirebaseMessaging.builder()
+        .setFirebaseApp(app)
+        .setMessagingClient(Suppliers.<FirebaseMessagingClient>ofInstance(null))
+        .setInstanceIdClient(supplier)
         .build();
   }
 
@@ -515,6 +581,16 @@ public class FirebaseMessagingTest {
         throw exception;
       }
       return batchResponse;
+    }
+  }
+
+  private static class TopicMgtArgs {
+    private final List<String> registrationTokens;
+    private final String topic;
+
+    TopicMgtArgs(List<String> registrationTokens, String topic) {
+      this.registrationTokens = registrationTokens;
+      this.topic = topic;
     }
   }
 }

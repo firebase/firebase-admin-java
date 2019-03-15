@@ -46,7 +46,7 @@ public class FirebaseMessaging {
 
   private final FirebaseApp app;
   private final Supplier<? extends FirebaseMessagingClient> messagingClient;
-  private final Supplier<InstanceIdClient> instanceIdClient;
+  private final Supplier<? extends InstanceIdClient> instanceIdClient;
 
   private FirebaseMessaging(Builder builder) {
     this.app = checkNotNull(builder.firebaseApp);
@@ -328,7 +328,7 @@ public class FirebaseMessaging {
       final List<String> registrationTokens, final String topic) {
     checkRegistrationTokens(registrationTokens);
     checkTopic(topic);
-    final InstanceIdClient instanceIdClient = this.instanceIdClient.get();
+    final InstanceIdClient instanceIdClient = getInstanceIdClient();
     return new CallableOperation<TopicManagementResponse, FirebaseMessagingException>() {
       @Override
       protected TopicManagementResponse execute() throws FirebaseMessagingException {
@@ -368,13 +368,17 @@ public class FirebaseMessaging {
       final List<String> registrationTokens, final String topic) {
     checkRegistrationTokens(registrationTokens);
     checkTopic(topic);
-    final InstanceIdClient instanceIdClient = this.instanceIdClient.get();
+    final InstanceIdClient instanceIdClient = getInstanceIdClient();
     return new CallableOperation<TopicManagementResponse, FirebaseMessagingException>() {
       @Override
       protected TopicManagementResponse execute() throws FirebaseMessagingException {
         return instanceIdClient.unsubscribeFromTopic(topic, registrationTokens);
       }
     };
+  }
+
+  InstanceIdClient getInstanceIdClient() {
+    return this.instanceIdClient.get();
   }
 
   private void checkRegistrationTokens(List<String> registrationTokens) {
@@ -406,8 +410,8 @@ public class FirebaseMessaging {
         })
         .setInstanceIdClient(new Supplier<InstanceIdClient>() {
           @Override
-          public InstanceIdClient get() {
-            return new InstanceIdClient(app, null);
+          public InstanceIdClientImpl get() {
+            return InstanceIdClientImpl.fromApp(app);
           }
         })
         .build();
@@ -435,7 +439,7 @@ public class FirebaseMessaging {
 
     private FirebaseApp firebaseApp;
     private Supplier<? extends FirebaseMessagingClient> messagingClient;
-    private Supplier<InstanceIdClient> instanceIdClient;
+    private Supplier<? extends InstanceIdClient> instanceIdClient;
 
     private Builder() { }
 
@@ -449,7 +453,7 @@ public class FirebaseMessaging {
       return this;
     }
 
-    Builder setInstanceIdClient(Supplier<InstanceIdClient> instanceIdClient) {
+    Builder setInstanceIdClient(Supplier<? extends InstanceIdClient> instanceIdClient) {
       this.instanceIdClient = instanceIdClient;
       return this;
     }
