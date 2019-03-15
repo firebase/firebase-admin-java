@@ -111,6 +111,42 @@ public class InstanceIdClientImplTest {
   }
 
   @Test
+  public void testSubscribeMalformedError() {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    InstanceIdClient messaging = initMessaging(response, interceptor);
+    response.setStatusCode(500).setContent("not json");
+    try {
+      messaging.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
+      fail("No error thrown for HTTP error");
+    } catch (FirebaseMessagingException error) {
+      assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
+      assertEquals("Unexpected HTTP response with status: 500; body: not json", error.getMessage());
+      assertTrue(error.getCause() instanceof HttpResponseException);
+    }
+
+    checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_SUBSCRIBE_URL);
+  }
+
+  @Test
+  public void testSubscribeZeroContentError() {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    InstanceIdClient messaging = initMessaging(response, interceptor);
+    response.setStatusCode(500).setZeroContent();
+    try {
+      messaging.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
+      fail("No error thrown for HTTP error");
+    } catch (FirebaseMessagingException error) {
+      assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
+      assertEquals("Unexpected HTTP response with status: 500; body: null", error.getMessage());
+      assertTrue(error.getCause() instanceof HttpResponseException);
+    }
+
+    checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_SUBSCRIBE_URL);
+  }
+
+  @Test
   public void testSubscribeTransportError() {
     InstanceIdClient messaging = initFaultyTransportMessaging();
     try {
@@ -192,6 +228,42 @@ public class InstanceIdClientImplTest {
   }
 
   @Test
+  public void testUnsubscribeMalformedError() {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    InstanceIdClient messaging = initMessaging(response, interceptor);
+    response.setStatusCode(500).setContent("not json");
+    try {
+      messaging.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
+      fail("No error thrown for HTTP error");
+    } catch (FirebaseMessagingException error) {
+      assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
+      assertEquals("Unexpected HTTP response with status: 500; body: not json", error.getMessage());
+      assertTrue(error.getCause() instanceof HttpResponseException);
+    }
+
+    checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_UNSUBSCRIBE_URL);
+  }
+
+  @Test
+  public void testUnsubscribeZeroContentError() {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    InstanceIdClient messaging = initMessaging(response, interceptor);
+    response.setStatusCode(500).setZeroContent();
+    try {
+      messaging.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
+      fail("No error thrown for HTTP error");
+    } catch (FirebaseMessagingException error) {
+      assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
+      assertEquals("Unexpected HTTP response with status: 500; body: null", error.getMessage());
+      assertTrue(error.getCause() instanceof HttpResponseException);
+    }
+
+    checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_UNSUBSCRIBE_URL);
+  }
+
+  @Test
   public void testUnsubscribeTransportError() {
     InstanceIdClient messaging = initFaultyTransportMessaging();
     try {
@@ -202,6 +274,16 @@ public class InstanceIdClientImplTest {
       assertEquals("Error while calling IID backend service", error.getMessage());
       assertTrue(error.getCause() instanceof IOException);
     }
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testRequestFactoryIsNull() {
+    new InstanceIdClientImpl(null, Utils.getDefaultJsonFactory());
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testJsonFactoryIsNull() {
+    new InstanceIdClientImpl(Utils.getDefaultTransport().createRequestFactory(), null);
   }
 
   @Test

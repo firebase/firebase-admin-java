@@ -7,6 +7,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.client.json.GenericJson;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
@@ -14,7 +15,6 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
-import com.google.firebase.testing.TestResponseInterceptor;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import org.junit.After;
@@ -22,7 +22,7 @@ import org.junit.Test;
 
 public class FirebaseMessagingTest {
 
-  private static final FirebaseOptions TEST_OPTIONS = new FirebaseOptions.Builder()
+  private static final FirebaseOptions TEST_OPTIONS = FirebaseOptions.builder()
       .setCredentials(new MockGoogleCredentials("test-token"))
       .setProjectId("test-project")
       .build();
@@ -54,6 +54,8 @@ public class FirebaseMessagingTest {
       new TopicMgtArgs(ImmutableList.of("id"), ""),
       new TopicMgtArgs(ImmutableList.of("id"), "foo*")
   );
+  private static final TopicManagementResponse TOPIC_MGT_RESPONSE = new TopicManagementResponse(
+      ImmutableList.of(new GenericJson()));
 
   @After
   public void tearDown() {
@@ -92,6 +94,17 @@ public class FirebaseMessagingTest {
   }
 
   @Test
+  public void testDefaultInstanceIdClient() {
+    FirebaseApp app = FirebaseApp.initializeApp(TEST_OPTIONS, "custom-app");
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance(app);
+
+    InstanceIdClient client = messaging.getInstanceIdClient();
+
+    assertTrue(client instanceof InstanceIdClientImpl);
+    assertSame(client, messaging.getInstanceIdClient());
+  }
+
+  @Test
   public void testPostDeleteApp() {
     FirebaseApp app = FirebaseApp.initializeApp(TEST_OPTIONS, "custom-app");
 
@@ -106,15 +119,15 @@ public class FirebaseMessagingTest {
   }
 
   @Test
-  public void testNoProjectId() throws FirebaseMessagingException {
-    FirebaseOptions options = new FirebaseOptions.Builder()
+  public void testMessagingClientWithoutProjectId() {
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .build();
     FirebaseApp.initializeApp(options);
     FirebaseMessaging messaging = FirebaseMessaging.getInstance();
 
     try {
-      messaging.send(EMPTY_MESSAGE);
+      messaging.getMessagingClient();
       fail("No error thrown for missing project ID");
     } catch (IllegalArgumentException expected) {
       String message = "Project ID is required to access messaging service. Use a service "
@@ -123,6 +136,20 @@ public class FirebaseMessagingTest {
           + "environment variable.";
       assertEquals(message, expected.getMessage());
     }
+  }
+
+  @Test
+  public void testInstanceIdClientWithoutProjectId() {
+    FirebaseOptions options = FirebaseOptions.builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .build();
+    FirebaseApp.initializeApp(options);
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+
+    InstanceIdClient client = messaging.getInstanceIdClient();
+
+    assertTrue(client instanceof InstanceIdClientImpl);
+    assertSame(client, messaging.getInstanceIdClient());
   }
 
   @Test
@@ -474,9 +501,9 @@ public class FirebaseMessagingTest {
 
   @Test
   public void testInvalidSubscribe() throws FirebaseMessagingException {
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    MockInstanceIdClient client = MockInstanceIdClient.fromResponse(null);
     FirebaseMessaging messaging = getMessagingForTopicManagement(
-        Suppliers.<InstanceIdClient>ofInstance(null));
+        Suppliers.<InstanceIdClient>ofInstance(client));
 
     for (TopicMgtArgs args : INVALID_TOPIC_MGT_ARGS) {
       try {
@@ -485,16 +512,38 @@ public class FirebaseMessagingTest {
       } catch (IllegalArgumentException expected) {
         // expected
       }
+      assertNull(client.lastTopic);
+      assertNull(client.lastBatch);
     }
+  }
 
-    assertNull(interceptor.getResponse());
+  @Test
+  public void testSubscribeToTopic() throws FirebaseMessagingException {
+    MockInstanceIdClient client = MockInstanceIdClient.fromResponse(TOPIC_MGT_RESPONSE);
+    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+
+    TopicManagementResponse got = messaging.subscribeToTopic(
+        ImmutableList.of("id1", "id2"), "test-topic");
+
+    assertSame(TOPIC_MGT_RESPONSE, got);
+  }
+
+  @Test
+  public void testSubscribeToTopicAsync() throws Exception {
+    MockInstanceIdClient client = MockInstanceIdClient.fromResponse(TOPIC_MGT_RESPONSE);
+    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+
+    TopicManagementResponse got = messaging.subscribeToTopicAsync(
+        ImmutableList.of("id1", "id2"), "test-topic").get();
+
+    assertSame(TOPIC_MGT_RESPONSE, got);
   }
 
   @Test
   public void testInvalidUnsubscribe() throws FirebaseMessagingException {
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    MockInstanceIdClient client = MockInstanceIdClient.fromResponse(null);
     FirebaseMessaging messaging = getMessagingForTopicManagement(
-        Suppliers.<InstanceIdClient>ofInstance(null));
+        Suppliers.<InstanceIdClient>ofInstance(client));
 
     for (TopicMgtArgs args : INVALID_TOPIC_MGT_ARGS) {
       try {
@@ -503,9 +552,31 @@ public class FirebaseMessagingTest {
       } catch (IllegalArgumentException expected) {
         // expected
       }
+      assertNull(client.lastTopic);
+      assertNull(client.lastBatch);
     }
+  }
 
-    assertNull(interceptor.getResponse());
+  @Test
+  public void testUnsubscribeFromTopic() throws FirebaseMessagingException {
+    MockInstanceIdClient client = MockInstanceIdClient.fromResponse(TOPIC_MGT_RESPONSE);
+    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+
+    TopicManagementResponse got = messaging.unsubscribeFromTopic(
+        ImmutableList.of("id1", "id2"), "test-topic");
+
+    assertSame(TOPIC_MGT_RESPONSE, got);
+  }
+
+  @Test
+  public void testUnsubscribeFromTopicAsync() throws Exception {
+    MockInstanceIdClient client = MockInstanceIdClient.fromResponse(TOPIC_MGT_RESPONSE);
+    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+
+    TopicManagementResponse got = messaging.unsubscribeFromTopicAsync(
+        ImmutableList.of("id1", "id2"), "test-topic").get();
+
+    assertSame(TOPIC_MGT_RESPONSE, got);
   }
 
   private FirebaseMessaging getMessagingForSend(
@@ -581,6 +652,51 @@ public class FirebaseMessagingTest {
         throw exception;
       }
       return batchResponse;
+    }
+  }
+
+  private static class MockInstanceIdClient implements InstanceIdClient {
+
+    private TopicManagementResponse response;
+    private FirebaseMessagingException exception;
+
+    private String lastTopic;
+    private List<String> lastBatch;
+
+    private MockInstanceIdClient(
+        TopicManagementResponse response, FirebaseMessagingException exception) {
+      this.response = response;
+      this.exception = exception;
+    }
+
+    static MockInstanceIdClient fromResponse(TopicManagementResponse response) {
+      return new MockInstanceIdClient(response, null);
+    }
+
+    static MockInstanceIdClient fromException(FirebaseMessagingException exception) {
+      return new MockInstanceIdClient(null, exception);
+    }
+
+    @Override
+    public TopicManagementResponse subscribeToTopic(
+        String topic, List<String> registrationTokens) throws FirebaseMessagingException {
+      this.lastTopic = topic;
+      this.lastBatch = registrationTokens;
+      if (exception != null) {
+        throw exception;
+      }
+      return response;
+    }
+
+    @Override
+    public TopicManagementResponse unsubscribeFromTopic(
+        String topic, List<String> registrationTokens) throws FirebaseMessagingException {
+      this.lastTopic = topic;
+      this.lastBatch = registrationTokens;
+      if (exception != null) {
+        throw exception;
+      }
+      return response;
     }
   }
 

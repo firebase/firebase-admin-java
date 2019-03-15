@@ -28,6 +28,7 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.HttpTransport;
@@ -188,6 +189,28 @@ public class FirebaseMessagingClientImplTest {
   }
 
   @Test
+  public void testSendErrorWithMalformedResponse() {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    FirebaseMessagingClient messaging = initMessagingClient(response, interceptor);
+
+    for (int code : HTTP_ERRORS) {
+      response.setStatusCode(code).setContent("not json");
+
+      try {
+        messaging.send(EMPTY_MESSAGE, false);
+        fail("No error thrown for HTTP error");
+      } catch (FirebaseMessagingException error) {
+        assertEquals("unknown-error", error.getErrorCode());
+        assertEquals("Unexpected HTTP response with status: " + code + "; body: not json",
+            error.getMessage());
+        assertTrue(error.getCause() instanceof HttpResponseException);
+      }
+      checkRequestHeader(interceptor.getLastRequest());
+    }
+  }
+
+  @Test
   public void testSendErrorWithDetails() {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
@@ -281,6 +304,37 @@ public class FirebaseMessagingClientImplTest {
     BatchResponse responses = messaging.sendAll(messages, true);
 
     assertSendBatchSuccess(responses, interceptor);
+  }
+
+  @Test
+  public void testRequestInitializerAppliedToBatchRequests() throws Exception {
+    final TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(getBatchResponse(MOCK_BATCH_SUCCESS_RESPONSE))
+        .build();
+    HttpRequestInitializer initializer = new HttpRequestInitializer() {
+      @Override
+      public void initialize(HttpRequest httpRequest) {
+        httpRequest.getHeaders().set("x-custom-header", "test-value");
+      }
+    };
+    FirebaseMessagingClientImpl messaging = FirebaseMessagingClientImpl.builder()
+        .setProjectId("test-project")
+        .setJsonFactory(Utils.getDefaultJsonFactory())
+        .setRequestFactory(transport.createRequestFactory(initializer))
+        .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory())
+        .setResponseInterceptor(interceptor)
+        .build();
+    List<Message> messages = ImmutableList.of(
+        EMPTY_MESSAGE, EMPTY_MESSAGE
+    );
+
+    try {
+      messaging.sendAll(messages, false);
+    } finally {
+      HttpRequest request = interceptor.getLastRequest();
+      assertEquals("test-value", request.getHeaders().get("x-custom-header"));
+    }
   }
 
   @Test
@@ -518,10 +572,14 @@ public class FirebaseMessagingClientImplTest {
 
   private FirebaseMessagingClientImpl initMessagingClientForBatchRequests(
       String responsePayload, TestResponseInterceptor interceptor) {
-    MockLowLevelHttpResponse httpResponse = new MockLowLevelHttpResponse()
+    MockLowLevelHttpResponse httpResponse = getBatchResponse(responsePayload);
+    return initMessagingClient(httpResponse, interceptor);
+  }
+
+  private MockLowLevelHttpResponse getBatchResponse(String responsePayload) {
+    return new MockLowLevelHttpResponse()
         .setContentType("multipart/mixed; boundary=test_boundary")
         .setContent(responsePayload);
-    return initMessagingClient(httpResponse, interceptor);
   }
 
   private FirebaseMessagingClientImpl initMessagingClientWithFaultyTransport() {
