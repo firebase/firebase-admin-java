@@ -123,20 +123,20 @@ public class CustomClassMapper {
           return ((Number) obj).longValue();
         }
         return doubleValue;
-      } else if (obj instanceof Short) {
-        throw new DatabaseException("Shorts are not supported, please use int or long");
-      } else if (obj instanceof Byte) {
-        throw new DatabaseException("Bytes are not supported, please use int or long");
-      } else {
-        // Long, Integer
+      } else if (obj instanceof Long || obj instanceof Integer) {
         return obj;
+      } else {
+        throw new DatabaseException(
+            String.format(
+                "Numbers of type %s are not supported, please use an int, long, float or double",
+                obj.getClass().getSimpleName()));
       }
     } else if (obj instanceof String) {
       return obj;
     } else if (obj instanceof Boolean) {
       return obj;
     } else if (obj instanceof Character) {
-      throw new DatabaseException("Characters are not supported, please strings");
+      throw new DatabaseException("Characters are not supported, please use Strings");
     } else if (obj instanceof Map) {
       Map<String, Object> result = new HashMap<>();
       for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) obj).entrySet()) {
@@ -282,14 +282,9 @@ public class CustomClassMapper {
       return (T) convertLong(obj);
     } else if (Float.class.isAssignableFrom(clazz) || float.class.isAssignableFrom(clazz)) {
       return (T) (Float) convertDouble(obj).floatValue();
-    } else if (Short.class.isAssignableFrom(clazz) || short.class.isAssignableFrom(clazz)) {
-      throw new DatabaseException("Deserializing to shorts is not supported");
-    } else if (Byte.class.isAssignableFrom(clazz) || byte.class.isAssignableFrom(clazz)) {
-      throw new DatabaseException("Deserializing to bytes is not supported");
-    } else if (Character.class.isAssignableFrom(clazz) || char.class.isAssignableFrom(clazz)) {
-      throw new DatabaseException("Deserializing to char is not supported");
     } else {
-      throw new IllegalArgumentException("Unknown primitive type: " + clazz);
+      throw new DatabaseException(
+          String.format("Deserializing values to %s is not supported", clazz.getSimpleName()));
     }
   }
 
@@ -498,7 +493,7 @@ public class CustomClassMapper {
             if (existingPropertyName != null) {
               if (!existingPropertyName.equals(propertyName)) {
                 throw new DatabaseException(
-                    "Found setter with invalid case-sensitive name: " + method.getName());
+                    "Found setter with invalid " + "case-sensitive name: " + method.getName());
               } else {
                 Method existingSetter = setters.get(propertyName);
                 if (existingSetter == null) {
