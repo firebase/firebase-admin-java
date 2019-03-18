@@ -159,11 +159,11 @@ public class CustomClassMapper {
         return result;
       } else {
         throw new DatabaseException(
-            "Serializing Collections is not supported, " + "please use Lists instead");
+            "Serializing Collections is not supported, please use Lists instead");
       }
     } else if (obj.getClass().isArray()) {
       throw new DatabaseException(
-          "Serializing Arrays is not supported, please use Lists " + "instead");
+          "Serializing Arrays is not supported, please use Lists instead");
     } else if (obj instanceof Enum) {
       return ((Enum<?>) obj).name();
     } else {
@@ -185,7 +185,7 @@ public class CustomClassMapper {
       throw new DatabaseException("Generic wildcard types are not supported");
     } else if (type instanceof GenericArrayType) {
       throw new DatabaseException(
-          "Generic Arrays are not supported, please use Lists " + "instead");
+          "Generic Arrays are not supported, please use Lists instead");
     } else {
       throw new IllegalStateException("Unknown type encountered: " + type);
     }
@@ -204,7 +204,7 @@ public class CustomClassMapper {
       return (T) convertString(obj);
     } else if (clazz.isArray()) {
       throw new DatabaseException(
-          "Converting to Arrays is not supported, please use Lists" + "instead");
+          "Converting to Arrays is not supported, please use Lists instead");
     } else if (clazz.getTypeParameters().length > 0) {
       throw new DatabaseException(
           "Class "
@@ -493,7 +493,7 @@ public class CustomClassMapper {
             if (existingPropertyName != null) {
               if (!existingPropertyName.equals(propertyName)) {
                 throw new DatabaseException(
-                    "Found setter with invalid " + "case-sensitive name: " + method.getName());
+                    "Found setter with invalid case-sensitive name: " + method.getName());
               } else {
                 Method existingSetter = setters.get(propertyName);
                 if (existingSetter == null) {
@@ -711,7 +711,7 @@ public class CustomClassMapper {
           Method setter = this.setters.get(propertyName);
           Type[] params = setter.getGenericParameterTypes();
           if (params.length != 1) {
-            throw new IllegalStateException("Setter does not have exactly one " + "parameter");
+            throw new IllegalStateException("Setter does not have exactly one parameter");
           }
           Type resolvedType = resolveType(params[0], types);
           Object value = CustomClassMapper.deserializeToType(entry.getValue(), resolvedType);
