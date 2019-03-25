@@ -185,7 +185,6 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
       batch.queue(
           request, MessagingServiceResponse.class, MessagingServiceErrorResponse.class, callback);
     }
-
     return batch;
   }
 
