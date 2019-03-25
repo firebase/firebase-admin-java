@@ -52,6 +52,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import org.junit.Before;
 import org.junit.Test;
 
 public class FirebaseMessagingClientImplTest {
@@ -77,11 +78,19 @@ public class FirebaseMessagingClientImplTest {
   private static final boolean DRY_RUN_ENABLED = true;
   private static final boolean DRY_RUN_DISABLED = false;
 
+  private MockLowLevelHttpResponse response;
+  private TestResponseInterceptor interceptor;
+  private FirebaseMessagingClient client;
+
+  @Before
+  public void setUp() {
+    response = new MockLowLevelHttpResponse();
+    interceptor = new TestResponseInterceptor();
+    client = initMessagingClient(response, interceptor);
+  }
+
   @Test
   public void testSend() throws Exception {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClient(response, interceptor);
     Map<Message, Map<String, Object>> testMessages = buildTestMessages();
     
     for (Map.Entry<Message, Map<String, Object>> entry : testMessages.entrySet()) {
@@ -97,9 +106,6 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testSendDryRun() throws Exception {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    final FirebaseMessagingClient client = initMessagingClient(response, interceptor);
     Map<Message, Map<String, Object>> testMessages = buildTestMessages();
 
     for (Map.Entry<Message, Map<String, Object>> entry : testMessages.entrySet()) {
@@ -115,10 +121,6 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testSendHttpError() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClient(response, interceptor);
-
     for (int code : HTTP_ERRORS) {
       response.setStatusCode(code).setContent("{}");
 
@@ -135,7 +137,7 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testSendTransportError() {
-    FirebaseMessagingClient client = initClientWithFaultyTransport();
+    client = initClientWithFaultyTransport();
 
     try {
       client.send(EMPTY_MESSAGE, DRY_RUN_DISABLED);
@@ -149,9 +151,6 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testSendSuccessResponseWithUnexpectedPayload() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClient(response, interceptor);
     Map<Message, Map<String, Object>> testMessages = buildTestMessages();
 
     for (Map.Entry<Message, Map<String, Object>> entry : testMessages.entrySet()) {
@@ -170,10 +169,6 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testSendErrorWithZeroContentResponse() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClient(response, interceptor);
-
     for (int code : HTTP_ERRORS) {
       response.setStatusCode(code).setZeroContent();
 
@@ -190,10 +185,6 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testSendErrorWithMalformedResponse() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClient(response, interceptor);
-
     for (int code : HTTP_ERRORS) {
       response.setStatusCode(code).setContent("not json");
 
@@ -210,10 +201,6 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testSendErrorWithDetails() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClient(response, interceptor);
-
     for (int code : HTTP_ERRORS) {
       response.setStatusCode(code).setContent(
           "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\"}}");
@@ -230,10 +217,6 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testSendErrorWithCanonicalCode() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClient(response, interceptor);
-
     for (int code : HTTP_ERRORS) {
       response.setStatusCode(code).setContent(
           "{\"error\": {\"status\": \"NOT_FOUND\", \"message\": \"test error\"}}");
@@ -250,10 +233,6 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testSendErrorWithFcmError() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClient(response, interceptor);
-
     for (int code : HTTP_ERRORS) {
       response.setStatusCode(code).setContent(
           "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\", "
@@ -334,10 +313,6 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testSendAllHttpError() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClient(response, interceptor);
-
     for (int code : HTTP_ERRORS) {
       response.setStatusCode(code).setContent("{}");
 
@@ -368,10 +343,6 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testSendAllErrorWithEmptyResponse() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClient(response, interceptor);
-
     for (int code : HTTP_ERRORS) {
       response.setStatusCode(code).setZeroContent();
 
@@ -388,10 +359,6 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testSendAllErrorWithDetails() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClient(response, interceptor);
-
     for (int code : HTTP_ERRORS) {
       response.setStatusCode(code).setContent(
           "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\"}}");
@@ -408,10 +375,6 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testSendAllErrorWithCanonicalCode() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClient(response, interceptor);
-
     for (int code : HTTP_ERRORS) {
       response.setStatusCode(code).setContent(
           "{\"error\": {\"status\": \"NOT_FOUND\", \"message\": \"test error\"}}");
@@ -428,10 +391,6 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testSendAllErrorWithFcmError() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClient(response, interceptor);
-
     for (int code : HTTP_ERRORS) {
       response.setStatusCode(code).setContent(
           "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\", "
@@ -450,10 +409,6 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testSendAllErrorWithoutMessage() {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClient(response, interceptor);
-
     final String responseBody = "{\"error\": {\"status\": \"INVALID_ARGUMENT\", "
         + "\"details\":[{\"@type\": \"type.googleapis.com/google.firebase.fcm"
         + ".v1.FcmError\", \"errorCode\": \"UNREGISTERED\"}]}}";
