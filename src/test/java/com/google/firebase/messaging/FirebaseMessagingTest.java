@@ -983,7 +983,7 @@ public class FirebaseMessagingTest {
     HttpHeaders headers = request.getHeaders();
     assertEquals("Bearer test-token", headers.getAuthorization());
     assertEquals("2", headers.get("X-GOOG-API-FORMAT-VERSION"));
-    assertEquals("Java/Admin/" + SdkUtils.getVersion(), headers.get("X-Client-Version"));
+    assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
   }
 
   private FirebaseMessaging getMessagingForBatchRequest(
@@ -1056,7 +1056,7 @@ public class FirebaseMessagingTest {
     assertEquals(expectedParts, countLinesWithPrefix(lines, "POST " + TEST_FCM_URL));
     assertEquals(expectedParts, countLinesWithPrefix(lines, "x-goog-api-format-version: 2"));
     assertEquals(expectedParts, countLinesWithPrefix(
-        lines, "x-client-version: Java/Admin/" + SdkUtils.getVersion()));
+        lines, "x-firebase-client: fire-admin-java/" + SdkUtils.getVersion()));
   }
 
   private int countLinesWithPrefix(String[] lines, String prefix) {
