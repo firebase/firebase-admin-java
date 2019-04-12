@@ -1,4 +1,9 @@
 steps:
   - name: 'maven:3-jdk-7'
+    args: ['java', '-version']
+  - name: 'maven:3-jdk-7'
     entrypoint: 'mvn'
-    args: ['test']
+    args: ['install', '-DskipTests=true', '-Dmaven.javadoc.skip=true', '-V']
+  - name: 'maven:3-jdk-7'
+    entrypoint: 'mvn'
+    args: ['test', '-B']
