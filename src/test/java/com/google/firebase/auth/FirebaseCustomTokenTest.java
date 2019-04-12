@@ -22,6 +22,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.LowLevelHttpRequest;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
@@ -36,6 +38,8 @@ import com.google.firebase.auth.internal.FirebaseCustomAuthToken;
 import com.google.firebase.database.MapBuilder;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.ServiceAccount;
+import com.google.firebase.testing.TestUtils;
+import java.io.IOException;
 import java.util.List;
 import org.junit.After;
 import org.junit.Assert;
@@ -145,6 +149,12 @@ public class FirebaseCustomTokenTest {
     FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId("test-project-id")
+        .setHttpTransport(new HttpTransport() {
+          @Override
+          protected LowLevelHttpRequest buildRequest(String method, String url) throws IOException {
+            throw new IOException("transport error");
+          }
+        })
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
     try {
