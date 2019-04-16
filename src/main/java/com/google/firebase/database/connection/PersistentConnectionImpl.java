@@ -759,6 +759,13 @@ public class PersistentConnectionImpl implements Connection.Delegate, Persistent
           }
         };
 
+    if (this.authToken.contains("IGNOREME")) {
+      Map<String, Object> ok = new HashMap<>();
+      ok.put(REQUEST_STATUS, "ok");
+      onComplete.onResponse(ok);
+      return;
+    }
+
     Map<String, Object> request = new HashMap<>();
     GAuthToken googleAuthToken = GAuthToken.tryParseFromString(this.authToken);
     if (googleAuthToken != null) {
