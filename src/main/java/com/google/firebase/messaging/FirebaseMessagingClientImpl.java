@@ -80,7 +80,7 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   private final HttpRequestFactory childRequestFactory;
   private final JsonFactory jsonFactory;
   private final HttpResponseInterceptor responseInterceptor;
-  private final String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
+  private final String clientVersion = "fire-admin-java/" + SdkUtils.getVersion();
 
   private FirebaseMessagingClientImpl(Builder builder) {
     checkArgument(!Strings.isNullOrEmpty(builder.projectId));
@@ -190,7 +190,7 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
 
   private void setCommonFcmHeaders(HttpHeaders headers) {
     headers.set("X-GOOG-API-FORMAT-VERSION", "2");
-    headers.set("X-Client-Version", clientVersion);
+    headers.set("X-Firebase-Client", clientVersion);
   }
 
   private FirebaseMessagingException createExceptionFromResponse(HttpResponseException e) {

@@ -458,7 +458,7 @@ public class FirebaseMessagingClientImplTest {
       FirebaseMessagingClientImpl client = FirebaseMessagingClientImpl.fromApp(app);
 
       assertEquals(TEST_FCM_URL, client.getFcmSendUrl());
-      assertEquals("Java/Admin/" + SdkUtils.getVersion(), client.getClientVersion());
+      assertEquals("fire-admin-java/" + SdkUtils.getVersion(), client.getClientVersion());
       assertSame(options.getJsonFactory(), client.getJsonFactory());
 
       HttpRequest request = client.getRequestFactory().buildGetRequest(
@@ -515,7 +515,7 @@ public class FirebaseMessagingClientImplTest {
     assertEquals(TEST_FCM_URL, request.getUrl().toString());
     HttpHeaders headers = request.getHeaders();
     assertEquals("2", headers.get("X-GOOG-API-FORMAT-VERSION"));
-    assertEquals("Java/Admin/" + SdkUtils.getVersion(), headers.get("X-Client-Version"));
+    assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
   }
 
   private void checkRequest(
@@ -570,7 +570,7 @@ public class FirebaseMessagingClientImplTest {
     assertEquals(expectedParts, countLinesWithPrefix(lines, "POST " + TEST_FCM_URL));
     assertEquals(expectedParts, countLinesWithPrefix(lines, "x-goog-api-format-version: 2"));
     assertEquals(expectedParts, countLinesWithPrefix(
-        lines, "x-client-version: Java/Admin/" + SdkUtils.getVersion()));
+        lines, "x-firebase-client: fire-admin-java/" + SdkUtils.getVersion()));
   }
 
   private int countLinesWithPrefix(String[] lines, String prefix) {
