@@ -11,7 +11,7 @@ interface FirebaseMessagingClient {
    * Sends the given message with FCM.
    *
    * @param message A non-null {@link Message} to be sent.
-   * @param dryRun a boolean indicating whether to perform a dry run (validation only) of the send.
+   * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
    * @return A message ID string.
    * @throws FirebaseMessagingException If an error occurs while handing the message off to FCM for
    *     delivery.

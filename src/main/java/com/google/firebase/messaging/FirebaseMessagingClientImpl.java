@@ -57,6 +57,10 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
 
   private static final String FCM_BATCH_URL = "https://fcm.googleapis.com/batch";
 
+  private static final String API_FORMAT_VERSION_HEADER = "X-GOOG-API-FORMAT-VERSION";
+
+  private static final String CLIENT_VERSION_HEADER = "X-Firebase-Client";
+
   private static final Map<String, String> FCM_ERROR_CODES =
       ImmutableMap.<String, String>builder()
           // FCM v1 canonical error codes
@@ -189,8 +193,8 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   }
 
   private void setCommonFcmHeaders(HttpHeaders headers) {
-    headers.set("X-GOOG-API-FORMAT-VERSION", "2");
-    headers.set("X-Firebase-Client", clientVersion);
+    headers.set(API_FORMAT_VERSION_HEADER, "2");
+    headers.set(CLIENT_VERSION_HEADER, clientVersion);
   }
 
   private FirebaseMessagingException createExceptionFromResponse(HttpResponseException e) {
