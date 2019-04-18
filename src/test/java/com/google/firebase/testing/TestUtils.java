@@ -144,7 +144,7 @@ public class TestUtils {
     return requestFactory.buildPostRequest(TEST_URL, new EmptyContent());
   }
 
-  public static HttpTransport faultyHttpTransport() {
+  public static HttpTransport createFaultyHttpTransport() {
     return new HttpTransport() {
       @Override
       protected LowLevelHttpRequest buildRequest(String s, String s1) throws IOException {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.firebase.messaging;
 
 import static org.junit.Assert.assertEquals;
@@ -89,9 +105,7 @@ public class InstanceIdClientImplTest {
         client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
-        assertEquals(getTopicManagementErrorCode(statusCode), error.getErrorCode());
-        assertEquals("test error", error.getMessage());
-        assertTrue(error.getCause() instanceof HttpResponseException);
+        checkExceptionFromHttpResponse(error, statusCode, "test error");
       }
 
       checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_SUBSCRIBE_URL);
@@ -99,7 +113,7 @@ public class InstanceIdClientImplTest {
   }
 
   @Test
-  public void testSubscribeUnknownError() {
+  public void testSubscribeEmptyPayloadError() {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setStatusCode(500).setContent("{}");
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
@@ -109,9 +123,8 @@ public class InstanceIdClientImplTest {
       client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
-      assertEquals("Unexpected HTTP response with status: 500; body: {}", error.getMessage());
-      assertTrue(error.getCause() instanceof HttpResponseException);
+      checkExceptionFromHttpResponse(error, 500,
+          "Unexpected HTTP response with status: 500; body: {}");
     }
 
     checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_SUBSCRIBE_URL);
@@ -128,9 +141,8 @@ public class InstanceIdClientImplTest {
       client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
-      assertEquals("Unexpected HTTP response with status: 500; body: not json", error.getMessage());
-      assertTrue(error.getCause() instanceof HttpResponseException);
+      checkExceptionFromHttpResponse(error, 500,
+          "Unexpected HTTP response with status: 500; body: not json");
     }
 
     checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_SUBSCRIBE_URL);
@@ -147,9 +159,8 @@ public class InstanceIdClientImplTest {
       client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
-      assertEquals("Unexpected HTTP response with status: 500; body: null", error.getMessage());
-      assertTrue(error.getCause() instanceof HttpResponseException);
+      checkExceptionFromHttpResponse(error, 500,
+          "Unexpected HTTP response with status: 500; body: null");
     }
 
     checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_SUBSCRIBE_URL);
@@ -214,9 +225,7 @@ public class InstanceIdClientImplTest {
         client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
-        assertEquals(getTopicManagementErrorCode(statusCode), error.getErrorCode());
-        assertEquals("test error", error.getMessage());
-        assertTrue(error.getCause() instanceof HttpResponseException);
+        checkExceptionFromHttpResponse(error, statusCode, "test error");
       }
 
       checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_UNSUBSCRIBE_URL);
@@ -224,7 +233,7 @@ public class InstanceIdClientImplTest {
   }
 
   @Test
-  public void testUnsubscribeUnknownError() {
+  public void testUnsubscribeEmptyPayloadError() {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setStatusCode(500).setContent("{}");
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
@@ -234,9 +243,8 @@ public class InstanceIdClientImplTest {
       client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
-      assertEquals("Unexpected HTTP response with status: 500; body: {}", error.getMessage());
-      assertTrue(error.getCause() instanceof HttpResponseException);
+      checkExceptionFromHttpResponse(error, 500,
+          "Unexpected HTTP response with status: 500; body: {}");
     }
 
     checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_UNSUBSCRIBE_URL);
@@ -253,9 +261,8 @@ public class InstanceIdClientImplTest {
       client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
-      assertEquals("Unexpected HTTP response with status: 500; body: not json", error.getMessage());
-      assertTrue(error.getCause() instanceof HttpResponseException);
+      checkExceptionFromHttpResponse(error, 500,
+          "Unexpected HTTP response with status: 500; body: not json");
     }
 
     checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_UNSUBSCRIBE_URL);
@@ -272,9 +279,8 @@ public class InstanceIdClientImplTest {
       client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals(getTopicManagementErrorCode(500), error.getErrorCode());
-      assertEquals("Unexpected HTTP response with status: 500; body: null", error.getMessage());
-      assertTrue(error.getCause() instanceof HttpResponseException);
+      checkExceptionFromHttpResponse(error, 500,
+          "Unexpected HTTP response with status: 500; body: null");
     }
 
     checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_UNSUBSCRIBE_URL);
@@ -371,9 +377,16 @@ public class InstanceIdClientImplTest {
     assertEquals(expectedUrl, request.getUrl().toString());
   }
 
-  private static InstanceIdClient initClientWithFaultyTransport() {
+  private void checkExceptionFromHttpResponse(FirebaseMessagingException error,
+      int expectedCode, String expectedMessage) {
+    assertEquals(getTopicManagementErrorCode(expectedCode), error.getErrorCode());
+    assertEquals(expectedMessage, error.getMessage());
+    assertTrue(error.getCause() instanceof HttpResponseException);
+  }
+
+  private InstanceIdClient initClientWithFaultyTransport() {
     return new InstanceIdClientImpl(
-        TestUtils.faultyHttpTransport().createRequestFactory(),
+        TestUtils.createFaultyHttpTransport().createRequestFactory(),
         Utils.getDefaultJsonFactory());
   }
 
