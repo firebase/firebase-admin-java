@@ -19,17 +19,17 @@ package com.google.firebase.messaging;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.core.ApiFuture;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.internal.Nullable;
 
 import java.util.List;
 
@@ -46,18 +46,13 @@ public class FirebaseMessaging {
   static final String UNKNOWN_ERROR = "unknown-error";
 
   private final FirebaseApp app;
-  private final FirebaseMessagingClient messagingClient;
-  private final InstanceIdClient instanceIdClient;
+  private final Supplier<? extends FirebaseMessagingClient> messagingClient;
+  private final Supplier<? extends InstanceIdClient> instanceIdClient;
 
-  private FirebaseMessaging(FirebaseApp app) {
-    this(app, null);
-  }
-
-  @VisibleForTesting
-  FirebaseMessaging(FirebaseApp app, @Nullable HttpResponseInterceptor responseInterceptor) {
-    this.app = checkNotNull(app, "app must not be null");
-    this.messagingClient = new FirebaseMessagingClient(app, responseInterceptor);
-    this.instanceIdClient = new InstanceIdClient(app, responseInterceptor);
+  private FirebaseMessaging(Builder builder) {
+    this.app = checkNotNull(builder.firebaseApp);
+    this.messagingClient = Suppliers.memoize(builder.messagingClient);
+    this.instanceIdClient = Suppliers.memoize(builder.instanceIdClient);
   }
 
   /**
@@ -137,6 +132,7 @@ public class FirebaseMessaging {
   private CallableOperation<String, FirebaseMessagingException> sendOp(
       final Message message, final boolean dryRun) {
     checkNotNull(message, "message must not be null");
+    final FirebaseMessagingClient messagingClient = getMessagingClient();
     return new CallableOperation<String, FirebaseMessagingException>() {
       @Override
       protected String execute() throws FirebaseMessagingException {
@@ -290,12 +286,18 @@ public class FirebaseMessaging {
     checkArgument(!immutableMessages.isEmpty(), "messages list must not be empty");
     checkArgument(immutableMessages.size() <= 100,
         "messages list must not contain more than 100 elements");
+    final FirebaseMessagingClient messagingClient = getMessagingClient();
     return new CallableOperation<BatchResponse,FirebaseMessagingException>() {
       @Override
       protected BatchResponse execute() throws FirebaseMessagingException {
         return messagingClient.sendAll(messages, dryRun);
       }
     };
+  }
+
+  @VisibleForTesting
+  FirebaseMessagingClient getMessagingClient() {
+    return messagingClient.get();
   }
 
   /**
@@ -328,6 +330,7 @@ public class FirebaseMessaging {
       final List<String> registrationTokens, final String topic) {
     checkRegistrationTokens(registrationTokens);
     checkTopic(topic);
+    final InstanceIdClient instanceIdClient = getInstanceIdClient();
     return new CallableOperation<TopicManagementResponse, FirebaseMessagingException>() {
       @Override
       protected TopicManagementResponse execute() throws FirebaseMessagingException {
@@ -367,6 +370,7 @@ public class FirebaseMessaging {
       final List<String> registrationTokens, final String topic) {
     checkRegistrationTokens(registrationTokens);
     checkTopic(topic);
+    final InstanceIdClient instanceIdClient = getInstanceIdClient();
     return new CallableOperation<TopicManagementResponse, FirebaseMessagingException>() {
       @Override
       protected TopicManagementResponse execute() throws FirebaseMessagingException {
@@ -375,7 +379,12 @@ public class FirebaseMessaging {
     };
   }
 
-  private static void checkRegistrationTokens(List<String> registrationTokens) {
+  @VisibleForTesting
+  InstanceIdClient getInstanceIdClient() {
+    return this.instanceIdClient.get();
+  }
+
+  private void checkRegistrationTokens(List<String> registrationTokens) {
     checkArgument(registrationTokens != null && !registrationTokens.isEmpty(),
         "registrationTokens list must not be null or empty");
     checkArgument(registrationTokens.size() <= 1000,
@@ -386,7 +395,7 @@ public class FirebaseMessaging {
     }
   }
 
-  private static void checkTopic(String topic) {
+  private void checkTopic(String topic) {
     checkArgument(!Strings.isNullOrEmpty(topic), "topic must not be null or empty");
     checkArgument(topic.matches("^(/topics/)?(private/)?[a-zA-Z0-9-_.~%]+$"), "invalid topic name");
   }
@@ -396,7 +405,7 @@ public class FirebaseMessaging {
   private static class FirebaseMessagingService extends FirebaseService<FirebaseMessaging> {
 
     FirebaseMessagingService(FirebaseApp app) {
-      super(SERVICE_ID, new FirebaseMessaging(app));
+      super(SERVICE_ID, FirebaseMessaging.fromApp(app));
     }
 
     @Override
@@ -404,6 +413,56 @@ public class FirebaseMessaging {
       // NOTE: We don't explicitly tear down anything here, but public methods of FirebaseMessaging
       // will now fail because calls to getOptions() and getToken() will hit FirebaseApp,
       // which will throw once the app is deleted.
+    }
+  }
+
+  private static FirebaseMessaging fromApp(final FirebaseApp app) {
+    return FirebaseMessaging.builder()
+        .setFirebaseApp(app)
+        .setMessagingClient(new Supplier<FirebaseMessagingClient>() {
+          @Override
+          public FirebaseMessagingClient get() {
+            return FirebaseMessagingClientImpl.fromApp(app);
+          }
+        })
+        .setInstanceIdClient(new Supplier<InstanceIdClient>() {
+          @Override
+          public InstanceIdClientImpl get() {
+            return InstanceIdClientImpl.fromApp(app);
+          }
+        })
+        .build();
+  }
+
+  static Builder builder() {
+    return new Builder();
+  }
+
+  static class Builder {
+
+    private FirebaseApp firebaseApp;
+    private Supplier<? extends FirebaseMessagingClient> messagingClient;
+    private Supplier<? extends InstanceIdClient> instanceIdClient;
+
+    private Builder() { }
+
+    Builder setFirebaseApp(FirebaseApp firebaseApp) {
+      this.firebaseApp = firebaseApp;
+      return this;
+    }
+
+    Builder setMessagingClient(Supplier<? extends FirebaseMessagingClient> messagingClient) {
+      this.messagingClient = messagingClient;
+      return this;
+    }
+
+    Builder setInstanceIdClient(Supplier<? extends InstanceIdClient> instanceIdClient) {
+      this.instanceIdClient = instanceIdClient;
+      return this;
+    }
+
+    FirebaseMessaging build() {
+      return new FirebaseMessaging(this);
     }
   }
 }
