@@ -19,6 +19,7 @@ package com.google.firebase.internal;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
+import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
 
 import java.io.IOException;
@@ -28,9 +29,23 @@ import java.io.IOException;
  */
 public class ApiClientUtils {
 
+  private static final RetryConfig DEFAULT_RETRY_CONFIG = RetryConfig.builder()
+      .setMaxRetries(4)
+      .setRetryStatusCodes(ImmutableList.of(500, 503))
+      .setMaxIntervalMillis(60 * 1000)
+      .build();
+
+  /**
+   * Creates a new {@code HttpRequestFactory} which provides authorization (OAuth2), timeouts and
+   * automatic retries.
+   *
+   * @param app {@link FirebaseApp} from which to obtain authorization credentials.
+   * @return A new {@code HttpRequestFactory} instance.
+   */
   public static HttpRequestFactory newAuthorizedRequestFactory(FirebaseApp app) {
     HttpTransport transport = app.getOptions().getHttpTransport();
-    return transport.createRequestFactory(new FirebaseRequestInitializer(app));
+    return transport.createRequestFactory(
+        new FirebaseRequestInitializer(app, DEFAULT_RETRY_CONFIG));
   }
 
   public static HttpRequestFactory newUnauthorizedRequestFactory(FirebaseApp app) {
