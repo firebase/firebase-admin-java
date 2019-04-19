@@ -1,6 +1,7 @@
 # Unreleased
 
--
+- [fixed] Enabled automatic retries for FCM API calls failing with
+  HTTP 500 and 503 errors.
 
 # v6.8.0
 
