@@ -19,7 +19,7 @@
 
     <groupId>com.google.firebase</groupId>
     <artifactId>firebase-admin</artifactId>
-    <version>6.8.1-SNAPSHOT</version>
+    <version>6.8.1</version>
     <packaging>jar</packaging>
 
     <name>firebase-admin</name>
@@ -66,7 +66,7 @@
         <connection>scm:git:https://github.com/firebase/firebase-admin-java.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/firebase/firebase-admin-java.git</developerConnection>
         <url>http://github.com/firebase/firebase-admin-java</url>
-        <tag>HEAD</tag>
+        <tag>v6.8.1</tag>
     </scm>
 
     <distributionManagement>
