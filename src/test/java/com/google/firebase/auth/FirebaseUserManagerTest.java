@@ -85,10 +85,16 @@ public class FirebaseUserManagerTest {
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
             .setCredentials(credentials)
             .build());
+    FirebaseAuth auth = FirebaseAuth.getInstance();
     try {
-      FirebaseAuth.getInstance();
+      auth.getUserManager();
       fail("No error thrown for missing project ID");
     } catch (IllegalArgumentException expected) {
+      assertEquals(
+          "Project ID is required to access the auth service. Use a service account credential "
+              + "or set the project ID explicitly via FirebaseOptions. Alternatively you can "
+              + "also set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.",
+          expected.getMessage());
     }
   }
 
