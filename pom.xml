@@ -392,17 +392,17 @@
         <dependency>
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client</artifactId>
-            <version>1.27.0</version>
+            <version>1.28.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.api-client</groupId>
             <artifactId>google-api-client-gson</artifactId>
-            <version>1.27.0</version>
+            <version>1.28.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.http-client</groupId>
             <artifactId>google-http-client</artifactId>
-            <version>1.27.0</version>
+            <version>1.28.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.api</groupId>
@@ -429,7 +429,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>20.0</version>
+            <version>26.0-android</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

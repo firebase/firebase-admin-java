@@ -128,7 +128,9 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
   private IdToken parse(String token) throws FirebaseAuthException {
     try {
       return IdToken.parse(jsonFactory, token);
-    } catch (IOException e) {
+    } catch (IllegalArgumentException | IOException e) {
+      // Old versions of guava throw an IOException for invalid strings, while new versions
+      // might throw an IllegalArgumentException
       String detailedError = String.format(
           "Failed to parse Firebase %s. Make sure you passed a string that represents a complete "
               + "and valid JWT. See %s for details on how to retrieve %s.",
