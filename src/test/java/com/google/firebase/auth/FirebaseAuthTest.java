@@ -46,7 +46,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 
 public class FirebaseAuthTest {
@@ -139,21 +138,12 @@ public class FirebaseAuthTest {
   }
 
   @Test
-  public void testProjectIdRequired() {
+  public void testProjectIdNotRequiredAtInitialization() {
     FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials())
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options, "testProjectIdRequired");
-    try {
-      FirebaseAuth.getInstance(app);
-      fail("Expected exception.");
-    } catch (IllegalArgumentException expected) {
-      Assert.assertEquals(
-          "Project ID is required to access the auth service. Use a service account credential "
-              + "or set the project ID explicitly via FirebaseOptions. Alternatively you can "
-              + "also set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.",
-          expected.getMessage());
-    }
+    assertNotNull(FirebaseAuth.getInstance(app));
   }
 
   @Test(expected = IllegalArgumentException.class)

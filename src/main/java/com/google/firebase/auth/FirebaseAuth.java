@@ -67,16 +67,21 @@ public class FirebaseAuth {
   private final Supplier<FirebaseTokenFactory> tokenFactory;
   private final Supplier<? extends FirebaseTokenVerifier> idTokenVerifier;
   private final Supplier<? extends FirebaseTokenVerifier> cookieVerifier;
+  private final Supplier<? extends FirebaseUserManager> userManager;
   private final JsonFactory jsonFactory;
-  private final FirebaseUserManager userManager;
 
   private FirebaseAuth(Builder builder) {
     this.firebaseApp = checkNotNull(builder.firebaseApp);
     this.tokenFactory = threadSafeMemoize(builder.tokenFactory);
     this.idTokenVerifier = threadSafeMemoize(builder.idTokenVerifier);
     this.cookieVerifier = threadSafeMemoize(builder.cookieVerifier);
+    this.userManager = threadSafeMemoize(new Supplier<FirebaseUserManager>() {
+      @Override
+      public FirebaseUserManager get() {
+        return new FirebaseUserManager(firebaseApp);
+      }
+    });
     this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
-    this.userManager = new FirebaseUserManager(firebaseApp);
   }
 
   /**
@@ -139,6 +144,7 @@ public class FirebaseAuth {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(idToken), "idToken must not be null or empty");
     checkNotNull(options, "options must not be null");
+    final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<String, FirebaseAuthException>() {
       @Override
       protected String execute() throws FirebaseAuthException {
@@ -225,6 +231,7 @@ public class FirebaseAuth {
   FirebaseTokenVerifier getSessionCookieVerifier(boolean checkRevoked) {
     FirebaseTokenVerifier verifier = cookieVerifier.get();
     if (checkRevoked) {
+      FirebaseUserManager userManager = getUserManager();
       verifier = RevocationCheckDecorator.decorateSessionCookieVerifier(verifier, userManager);
     }
     return verifier;
@@ -432,6 +439,7 @@ public class FirebaseAuth {
   FirebaseTokenVerifier getIdTokenVerifier(boolean checkRevoked) {
     FirebaseTokenVerifier verifier = idTokenVerifier.get();
     if (checkRevoked) {
+      FirebaseUserManager userManager = getUserManager();
       verifier = RevocationCheckDecorator.decorateIdTokenVerifier(verifier, userManager);
     }
     return verifier;
@@ -472,6 +480,7 @@ public class FirebaseAuth {
   private CallableOperation<Void, FirebaseAuthException> revokeRefreshTokensOp(final String uid) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
+    final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<Void, FirebaseAuthException>() {
       @Override
       protected Void execute() throws FirebaseAuthException {
@@ -511,6 +520,7 @@ public class FirebaseAuth {
   private CallableOperation<UserRecord, FirebaseAuthException> getUserOp(final String uid) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
+    final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<UserRecord, FirebaseAuthException>() {
       @Override
       protected UserRecord execute() throws FirebaseAuthException {
@@ -548,6 +558,7 @@ public class FirebaseAuth {
       final String email) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(email), "email must not be null or empty");
+    final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<UserRecord, FirebaseAuthException>() {
       @Override
       protected UserRecord execute() throws FirebaseAuthException {
@@ -585,6 +596,7 @@ public class FirebaseAuth {
       final String phoneNumber) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(phoneNumber), "phone number must not be null or empty");
+    final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<UserRecord, FirebaseAuthException>() {
       @Override
       protected UserRecord execute() throws FirebaseAuthException {
@@ -652,6 +664,7 @@ public class FirebaseAuth {
   private CallableOperation<ListUsersPage, FirebaseAuthException> listUsersOp(
       @Nullable final String pageToken, final int maxResults) {
     checkNotDestroyed();
+    final FirebaseUserManager userManager = getUserManager();
     final PageFactory factory = new PageFactory(
         new DefaultUserSource(userManager, jsonFactory), maxResults, pageToken);
     return new CallableOperation<ListUsersPage, FirebaseAuthException>() {
@@ -692,6 +705,7 @@ public class FirebaseAuth {
       final CreateRequest request) {
     checkNotDestroyed();
     checkNotNull(request, "create request must not be null");
+    final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<UserRecord, FirebaseAuthException>() {
       @Override
       protected UserRecord execute() throws FirebaseAuthException {
@@ -731,6 +745,7 @@ public class FirebaseAuth {
       final UpdateRequest request) {
     checkNotDestroyed();
     checkNotNull(request, "update request must not be null");
+    final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<UserRecord, FirebaseAuthException>() {
       @Override
       protected UserRecord execute() throws FirebaseAuthException {
@@ -783,6 +798,7 @@ public class FirebaseAuth {
       final String uid, final Map<String, Object> claims) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
+    final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<Void, FirebaseAuthException>() {
       @Override
       protected Void execute() throws FirebaseAuthException {
@@ -820,6 +836,7 @@ public class FirebaseAuth {
   private CallableOperation<Void, FirebaseAuthException> deleteUserOp(final String uid) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
+    final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<Void, FirebaseAuthException>() {
       @Override
       protected Void execute() throws FirebaseAuthException {
@@ -901,6 +918,7 @@ public class FirebaseAuth {
       final List<ImportUserRecord> users, final UserImportOptions options) {
     checkNotDestroyed();
     final UserImportRequest request = new UserImportRequest(users, options, jsonFactory);
+    final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<UserImportResult, FirebaseAuthException>() {
       @Override
       protected UserImportResult execute() throws FirebaseAuthException {
@@ -1071,7 +1089,7 @@ public class FirebaseAuth {
 
   @VisibleForTesting
   FirebaseUserManager getUserManager() {
-    return this.userManager;
+    return this.userManager.get();
   }
 
   private CallableOperation<String, FirebaseAuthException> generateEmailActionLinkOp(
@@ -1081,6 +1099,7 @@ public class FirebaseAuth {
     if (type == EmailLinkType.EMAIL_SIGNIN) {
       checkNotNull(settings, "ActionCodeSettings must not be null when generating sign-in links");
     }
+    final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<String, FirebaseAuthException>() {
       @Override
       protected String execute() throws FirebaseAuthException {
