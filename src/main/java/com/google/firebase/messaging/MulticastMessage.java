@@ -22,6 +22,8 @@ import com.google.api.client.util.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
+
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -113,13 +115,13 @@ public class MulticastMessage {
     }
 
     /**
-     * Adds a list of tokens to which the message should be sent. Up to 100 tokens can be
+     * Adds a collection of tokens to which the message should be sent. Up to 100 tokens can be
      * specified on a single instance of {@link MulticastMessage}.
      *
-     * @param tokens List of Firebase device registration tokens.
+     * @param tokens Collection of Firebase device registration tokens.
      * @return This builder.
      */
-    public Builder addAllTokens(@NonNull List<String> tokens) {
+    public Builder addAllTokens(@NonNull Collection<String> tokens) {
       this.tokens.addAll(tokens);
       return this;
     }
