@@ -1,6 +1,8 @@
 # Unreleased
 
--
+- [changed] Upgraded the Cloud Firestore client to 1.9.0.
+- [changed] Upgraded the Cloud Storage client to 1.79.0.
+- [changed] Upgraded the Google API client to 1.30.1.
 
 # v6.8.1
 
