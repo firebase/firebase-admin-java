@@ -115,7 +115,7 @@ public class MulticastMessage {
     }
 
     /**
-     * Adds a list of tokens to which the message should be sent. Up to 100 tokens can be
+     * Adds a collection of tokens to which the message should be sent. Up to 100 tokens can be
      * specified on a single instance of {@link MulticastMessage}.
      *
      * @param tokens Collection of Firebase device registration tokens.
