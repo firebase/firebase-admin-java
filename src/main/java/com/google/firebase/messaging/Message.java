@@ -63,6 +63,9 @@ public class Message {
   @Key("condition")
   private final String condition;
 
+  @Key("fcm_options")
+  private final FcmOptions fcmOptions;
+
   private Message(Builder builder) {
     this.data = builder.data.isEmpty() ? null : ImmutableMap.copyOf(builder.data);
     this.notification = builder.notification;
@@ -78,6 +81,7 @@ public class Message {
     this.token = builder.token;
     this.topic = stripPrefix(builder.topic);
     this.condition = builder.condition;
+    this.fcmOptions = builder.fcmOptions;
   }
 
   @VisibleForTesting
@@ -120,6 +124,11 @@ public class Message {
     return condition;
   }
 
+  @VisibleForTesting
+  FcmOptions getFcmOptions() {
+    return fcmOptions;
+  }
+
   Map<String, Object> wrapForTransport(boolean dryRun) {
     ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
         .put("message", this);
@@ -160,6 +169,7 @@ public class Message {
     private String token;
     private String topic;
     private String condition;
+    private FcmOptions fcmOptions;
 
     private Builder() {}
 
@@ -263,6 +273,15 @@ public class Message {
      */
     public Builder putAllData(@NonNull Map<String, String> map) {
       this.data.putAll(map);
+      return this;
+    }
+
+    /**
+     * Sets the {@link FcmOptions}, which can be overridden by the platform-specific {@code
+     * fcm_options} fields.
+     */
+    public Builder setFcmOptions(FcmOptions fcmOptions) {
+      this.fcmOptions = fcmOptions;
       return this;
     }
 
