@@ -38,6 +38,9 @@ public class ApnsConfig {
   @Key("payload")
   private final Map<String, Object> payload;
 
+  @Key("fcm_options")
+  private final ApnsFcmOptions fcmOptions;
+
   private ApnsConfig(Builder builder) {
     checkArgument(builder.aps != null, "aps must be specified");
     checkArgument(!builder.customData.containsKey("aps"),
@@ -47,6 +50,7 @@ public class ApnsConfig {
         .putAll(builder.customData)
         .put("aps", builder.aps.getFields())
         .build();
+    this.fcmOptions = builder.fcmOptions;
   }
 
   /**
@@ -63,6 +67,7 @@ public class ApnsConfig {
     private final Map<String, String> headers = new HashMap<>();
     private final Map<String, Object> customData = new HashMap<>();
     private Aps aps;
+    private ApnsFcmOptions fcmOptions;
 
     private Builder() {}
 
@@ -120,6 +125,15 @@ public class ApnsConfig {
      */
     public Builder putAllCustomData(@NonNull Map<String, Object> map) {
       this.customData.putAll(map);
+      return this;
+    }
+
+    /**
+     * Sets the {@link ApnsFcmOptions}, which will override values set in the {@link FcmOptions} for
+     * APNS messages.
+     */
+    public Builder setFcmOptions(ApnsFcmOptions apnsFcmOptions) {
+      this.fcmOptions = apnsFcmOptions;
       return this;
     }
 

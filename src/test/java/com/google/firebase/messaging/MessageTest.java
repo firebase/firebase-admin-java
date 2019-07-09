@@ -583,6 +583,101 @@ public class MessageTest {
     assertSame(message, wrappedMessage.get("message"));
   }
 
+  @Test
+  public void testMessageWithAllFcmOptions() throws IOException {
+    Message messageUsingShorthand = Message.builder()
+        .setTopic("foo")
+        .setFcmOptions(FcmOptions.withAnalyticsLabel("message-label"))
+        .setAndroidConfig(AndroidConfig.builder()
+            .setFcmOptions(AndroidFcmOptions.withAnalyticsLabel("android-label")).build())
+        .setApnsConfig(
+            ApnsConfig.builder().setAps(Aps.builder().build())
+                .setFcmOptions(ApnsFcmOptions.withAnalyticsLabel("apns-label"))
+                .build()).build();
+    Message messageUsingBuilder = Message.builder()
+        .setTopic("foo")
+        .setFcmOptions(FcmOptions.builder().setAnalyticsLabel("message-label").build())
+        .setAndroidConfig(AndroidConfig.builder()
+            .setFcmOptions(AndroidFcmOptions.builder().setAnalyticsLabel("android-label").build())
+            .build())
+        .setApnsConfig(
+            ApnsConfig.builder().setAps(Aps.builder().build())
+                .setFcmOptions(ApnsFcmOptions.builder().setAnalyticsLabel("apns-label").build())
+                .build()).build();
+
+    ImmutableMap<String, ImmutableMap<String, String>> androidConfig =
+        ImmutableMap.of("fcm_options", ImmutableMap.of("analytics_label", "android-label"));
+    ImmutableMap<String, Object> apnsConfig =
+        ImmutableMap.<String, Object>builder()
+            .put("fcm_options", ImmutableMap.of("analytics_label", "apns-label"))
+            .put("payload", ImmutableMap.of("aps", ImmutableMap.of()))
+            .build();
+    ImmutableMap<String, Object> expected =
+        ImmutableMap.<String, Object>builder()
+            .put("topic", "foo")
+            .put("fcm_options", ImmutableMap.of("analytics_label", "message-label"))
+            .put("android", androidConfig)
+            .put("apns", apnsConfig)
+            .build();
+    assertJsonEquals(expected, messageUsingBuilder);
+    assertJsonEquals(expected, messageUsingShorthand);
+  }
+
+  @Test
+  public void createMessageWithDefaultFcmOptions() throws IOException {
+    Message message = Message.builder()
+        .setTopic("foo")
+        .setFcmOptions(FcmOptions.builder().build())
+        .setAndroidConfig(
+            AndroidConfig.builder().setFcmOptions(AndroidFcmOptions.builder().build()).build())
+        .setApnsConfig(
+            ApnsConfig.builder()
+                .setAps(Aps.builder().build())
+                .setFcmOptions(ApnsFcmOptions.builder().build())
+                .build())
+        .build();
+
+    ImmutableMap<String, Object> apnsConfig =
+        ImmutableMap.<String, Object>builder()
+            .put("fcm_options", ImmutableMap.of())
+            .put("payload", ImmutableMap.of("aps", ImmutableMap.of()))
+            .build();
+    ImmutableMap<String, Object> expected =
+        ImmutableMap.<String, Object>builder()
+            .put("topic", "foo")
+            .put("fcm_options", ImmutableMap.of())
+            .put("android", ImmutableMap.of("fcm_options", ImmutableMap.of()))
+            .put("apns", apnsConfig)
+            .build();
+    assertJsonEquals(expected, message);
+  }
+
+  @Test
+  public void testIncorrectAnalyticsLabelFormat() {
+    try {
+      FcmOptions.builder().setAnalyticsLabel("!").build();
+      fail("No error thrown when using bad analytics label format.");
+    } catch (IllegalArgumentException expected) {
+      //expected
+    }
+
+    try {
+      FcmOptions.builder()
+          .setAnalyticsLabel("THIS_IS_LONGER_THAN_50_CHARACTERS_WHICH_IS_NOT_ALLOWED")
+          .build();
+      fail("No error thrown when using bad analytics label format.");
+    } catch (IllegalArgumentException expected) {
+      //expected
+    }
+
+    try {
+      FcmOptions.builder().setAnalyticsLabel("   ").build();
+      fail("No error thrown when using bad analytics label format.");
+    } catch (IllegalArgumentException expected) {
+      //expected
+    }
+  }
+
   private static void assertJsonEquals(
       Map expected, Object actual) throws IOException {
     assertEquals(expected, toMap(actual));

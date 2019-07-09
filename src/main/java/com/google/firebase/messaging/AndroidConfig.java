@@ -49,6 +49,9 @@ public class AndroidConfig {
   @Key("notification")
   private final AndroidNotification notification;
 
+  @Key("fcm_options")
+  private final AndroidFcmOptions fcmOptions;
+
   private AndroidConfig(Builder builder) {
     this.collapseKey = builder.collapseKey;
     if (builder.priority != null) {
@@ -71,6 +74,7 @@ public class AndroidConfig {
     this.restrictedPackageName = builder.restrictedPackageName;
     this.data = builder.data.isEmpty() ? null : ImmutableMap.copyOf(builder.data);
     this.notification = builder.notification;
+    this.fcmOptions = builder.fcmOptions;
   }
 
   /**
@@ -98,6 +102,7 @@ public class AndroidConfig {
     private String restrictedPackageName;
     private final Map<String, String> data = new HashMap<>();
     private AndroidNotification notification;
+    private AndroidFcmOptions fcmOptions;
 
     private Builder() {}
 
@@ -184,6 +189,15 @@ public class AndroidConfig {
      */
     public Builder setNotification(AndroidNotification notification) {
       this.notification = notification;
+      return this;
+    }
+
+    /**
+     * Sets the {@link AndroidFcmOptions}, which will override values set in the {@link FcmOptions}
+     * for Android messages.
+     */
+    public Builder setFcmOptions(AndroidFcmOptions androidFcmOptions) {
+      this.fcmOptions = androidFcmOptions;
       return this;
     }
 
