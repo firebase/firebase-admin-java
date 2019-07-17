@@ -123,7 +123,7 @@
                                 </additionalDependency>
                             </additionalDependencies>
                             <additionalparam>
-                                -hdf book.path /_book.yaml
+                                -hdf book.path /docs/reference/_book.yaml
                                 -hdf project.path /_project.yaml
                                 -hdf devsite.path /docs/reference/admin/java/reference/
                                 -d ${project.build.directory}/apidocs
