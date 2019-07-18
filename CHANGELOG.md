@@ -1,5 +1,9 @@
 # Unreleased
 
+-
+
+# v6.9.0
+
 - [added] Added `FcmOptions`, `ApnsFcmOptions` and `AndroidFcmOptions` to the
   `FirebaseMessaging` API, which all provides a `setAnalyticsLabel()` method.
 - [changed] Upgraded the Cloud Firestore client to 1.9.0.
