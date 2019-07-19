@@ -31,10 +31,10 @@ public final class ApnsFcmOptions {
   }
 
   /**
-   * Creates a new {@link ApnsFcmOptions} with the specified analytics label.
+   * Creates a new {@link ApnsFcmOptions} object with the specified analytics label.
    *
    * @param analyticsLabel An analytics label
-   * @return An ApnsFcmOptions with the analytics label set to the supplied value.
+   * @return An {@link ApnsFcmOptions} object with the analytics label set to the supplied value.
    */
   public static ApnsFcmOptions withAnalyticsLabel(String analyticsLabel) {
     return builder().setAnalyticsLabel(analyticsLabel).build();

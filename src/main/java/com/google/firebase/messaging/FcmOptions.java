@@ -31,10 +31,10 @@ public final class FcmOptions {
   }
 
   /**
-   * Creates a new {@link FcmOptions} with the specified analytics label.
+   * Creates a new {@link FcmOptions} object with the specified analytics label.
    *
    * @param analyticsLabel An analytics label
-   * @return An FcmOptions with the analytics label set to the supplied value.
+   * @return An {@link FcmOptions} object with the analytics label set to the supplied value.
    */
   public static FcmOptions withAnalyticsLabel(String analyticsLabel) {
     return new Builder().setAnalyticsLabel(analyticsLabel).build();
