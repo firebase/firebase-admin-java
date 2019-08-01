@@ -59,6 +59,7 @@ public class FirebaseMessagingIT {
         .setWebpushConfig(WebpushConfig.builder()
             .putHeader("X-Custom-Val", "Foo")
             .setNotification(new WebpushNotification("Title", "Body"))
+            .setFcmOptions(new WebpushFcmOptions("https://firebase.google.com"))
             .build())
         .setTopic("foo-bar")
         .build();

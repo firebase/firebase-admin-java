@@ -272,6 +272,26 @@ public class MessageTest {
   }
 
   @Test
+  public void testWebpushMessageWithWebpushOptions() throws IOException {
+    Message message = Message.builder()
+        .setWebpushConfig(WebpushConfig.builder()
+            .putHeader("k1", "v1")
+            .putAllHeaders(ImmutableMap.of("k2", "v2", "k3", "v3"))
+            .putData("k1", "v1")
+            .putAllData(ImmutableMap.of("k2", "v2", "k3", "v3"))
+            .setFcmOptions(new WebpushFcmOptions("https://my-server/page"))
+            .build())
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> data = ImmutableMap.<String, Object>of(
+        "headers", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"),
+        "data", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"),
+        "fcm_options", ImmutableMap.of("link", "https://my-server/page")
+    );
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "webpush", data), message);
+  }
+
+  @Test
   public void testWebpushMessageWithNotification() throws IOException {
     Message message = Message.builder()
         .setWebpushConfig(WebpushConfig.builder()
