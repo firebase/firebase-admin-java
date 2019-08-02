@@ -781,7 +781,7 @@ public class FirebaseMessagingClientImplTest {
                     .putCustomData("k4", "v4")
                     .putAllCustomData(ImmutableMap.<String, Object>of("k5", "v5", "k6", "v6"))
                     .build())
-                .setFcmOptions(new WebpushFcmOptions("https://firebase.google.com"))
+                .setFcmOptions(WebpushFcmOptions.withLink("https://firebase.google.com"))
                 .build())
             .setTopic("test-topic")
             .build(),

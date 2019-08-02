@@ -279,7 +279,7 @@ public class MessageTest {
             .putAllHeaders(ImmutableMap.of("k2", "v2", "k3", "v3"))
             .putData("k1", "v1")
             .putAllData(ImmutableMap.of("k2", "v2", "k3", "v3"))
-            .setFcmOptions(new WebpushFcmOptions("https://my-server/page"))
+            .setFcmOptions(WebpushFcmOptions.withLink("https://my-server/page"))
             .build())
         .setTopic("test-topic")
         .build();

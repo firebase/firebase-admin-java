@@ -240,7 +240,7 @@ public class FirebaseMessagingSnippets {
                 "$GOOG up 1.43% on the day",
                 "$GOOG gained 11.80 points to close at 835.67, up 1.43% on the day.",
                 "https://my-server/icon.png"))
-            .setFcmOptions(new WebpushFcmOptions("https://my-server/page-to-open-on-click"))
+            .setFcmOptions(WebpushFcmOptions.withLink("https://my-server/page-to-open-on-click"))
             .build())
         .setTopic("industry-tech")
         .build();
