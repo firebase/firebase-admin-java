@@ -30,7 +30,7 @@ public final class WebpushFcmOptions {
    *
    * @return An {@link WebpushFcmOptions.Builder} instance.
    */
-  public static WebpushFcmOptions.Builder builder() {
+  public static Builder builder() {
     return new WebpushFcmOptions.Builder();
   }
 
@@ -45,7 +45,7 @@ public final class WebpushFcmOptions {
      *             For all URL values, HTTPS is required.
      * @return This builder
      */
-    public WebpushFcmOptions.Builder setLink(String link) {
+    public Builder setLink(String link) {
       this.link = link;
       return this;
     }
