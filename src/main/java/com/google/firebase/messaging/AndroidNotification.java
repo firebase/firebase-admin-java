@@ -138,7 +138,7 @@ public class AndroidNotification {
     }
 
     /**
-     * Sets the body of the Android notification. When provided, overrides the body sent
+     * Sets the body of the Android notification. When provided, overrides the body set
      * via {@link Notification}.
      *
      * @param body Body of the notification.
