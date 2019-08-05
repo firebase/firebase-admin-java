@@ -24,10 +24,14 @@ public final class ApnsFcmOptions {
 
   @Key("analytics_label")
   private final String analyticsLabel;
+  
+  @Key("image")
+  private final String image;
 
   private ApnsFcmOptions(Builder builder) {
     FcmOptionsUtil.checkAnalyticsLabel(builder.analyticsLabel);
     this.analyticsLabel = builder.analyticsLabel;
+    this.image = builder.image;
   }
 
   /**
@@ -53,6 +57,8 @@ public final class ApnsFcmOptions {
 
     private String analyticsLabel;
 
+    private String image;
+
     private Builder() {}
 
     /**
@@ -61,6 +67,15 @@ public final class ApnsFcmOptions {
      */
     public Builder setAnalyticsLabel(String analyticsLabel) {
       this.analyticsLabel = analyticsLabel;
+      return this;
+    }
+
+    /**
+     * @param image URL of the image that is going to be displayed in the notification.
+     * @return This builder
+     */
+    public Builder setImage(String image) {
+      this.image = image;
       return this;
     }
 

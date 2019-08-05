@@ -678,6 +678,76 @@ public class MessageTest {
     }
   }
 
+  @Test
+  public void testImageInNotification() throws IOException {
+    Message message = Message.builder()
+        .setNotification(new Notification("title", "body", "image.png"))
+        .setTopic("test-topic")
+        .build();
+    Map<String, String> data = ImmutableMap.of(
+        "title", "title", "body", "body", "image", "image.png");
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "notification", data), message);
+  }
+
+  @Test
+  public void testImageInAndroidNotification() throws IOException {
+    Message message = Message.builder()
+        .setNotification(new Notification("title", "body", "image.png"))
+        .setAndroidConfig(AndroidConfig.builder()
+        .setNotification(AndroidNotification.builder()
+            .setTitle("android-title")
+            .setBody("android-body")
+            .setImage("android-image.png")
+            .build())
+        .build())
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> notification = ImmutableMap.<String, Object>builder()
+        .put("title", "title")
+        .put("body", "body")
+        .put("image", "image.png")
+        .build();
+    Map<String, Object> androidConfig = ImmutableMap.<String, Object>builder()
+        .put("notification", ImmutableMap.<String, Object>builder()
+            .put("title", "android-title")
+            .put("body", "android-body")
+            .put("image", "android-image.png")
+            .build())
+        .build();
+    assertJsonEquals(ImmutableMap.of(
+        "topic", "test-topic", "notification", notification, "android", androidConfig), message);
+  }
+  
+  @Test
+  public void testImageInApnsNotification() throws IOException {
+    Message message = Message.builder()
+        .setTopic("test-topic")
+        .setNotification(new Notification("title", "body", "image.png"))
+        .setApnsConfig(
+            ApnsConfig.builder().setAps(Aps.builder().build())
+                .setFcmOptions(ApnsFcmOptions.builder().setImage("apns-image.png").build())
+                .build()).build();
+
+    ImmutableMap<String, Object> notification =
+        ImmutableMap.<String, Object>builder()
+            .put("title", "title")
+            .put("body", "body")
+            .put("image", "image.png")
+            .build();
+    ImmutableMap<String, Object> apnsConfig =
+        ImmutableMap.<String, Object>builder()
+            .put("fcm_options", ImmutableMap.of("image", "apns-image.png"))
+            .put("payload", ImmutableMap.of("aps", ImmutableMap.of()))
+            .build();
+    ImmutableMap<String, Object> expected =
+        ImmutableMap.<String, Object>builder()
+            .put("topic", "test-topic")
+            .put("notification", notification)
+            .put("apns", apnsConfig)
+            .build();
+    assertJsonEquals(expected, message);
+  }
+
   private static void assertJsonEquals(
       Map expected, Object actual) throws IOException {
     assertEquals(expected, toMap(actual));

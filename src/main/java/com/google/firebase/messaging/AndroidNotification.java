@@ -66,6 +66,9 @@ public class AndroidNotification {
   
   @Key("channel_id")
   private final String channelId;
+  
+  @Key("image")
+  private final String image;
 
   private AndroidNotification(Builder builder) {
     this.title = builder.title;
@@ -97,6 +100,7 @@ public class AndroidNotification {
       this.titleLocArgs = null;
     }
     this.channelId = builder.channelId;
+    this.image = builder.image;
   }
 
   /**
@@ -122,6 +126,7 @@ public class AndroidNotification {
     private String titleLocKey;
     private List<String> titleLocArgs = new ArrayList<>();
     private String channelId;
+    private String image;
 
     private Builder() {}
 
@@ -289,6 +294,18 @@ public class AndroidNotification {
      */
     public Builder setChannelId(String channelId) {
       this.channelId = channelId;
+      return this;
+    }
+
+    /**
+     * Sets the URL of the image that is going to be displayed in the notification. When provided, 
+     * overrides the image set via {@link Notification}.
+     *
+     * @param image URL of the image that is going to be displayed in the notification.
+     * @return This builder.
+     */
+    public Builder setImage(String image) {
+      this.image = image;
       return this;
     }
 

@@ -29,6 +29,9 @@ public class Notification {
 
   @Key("body")
   private final String body;
+  
+  @Key("image")
+  private final String image;
 
   /**
    * Creates a new {@code Notification} using the given title and body.
@@ -39,6 +42,20 @@ public class Notification {
   public Notification(String title, String body) {
     this.title = title;
     this.body = body;
+    this.image = null;
+  }
+  
+  /**
+   * Creates a new {@code Notification} using the given title, body, and image.
+   *
+   * @param title Title of the notification.
+   * @param body Body of the notification.
+   * @param image URL of the image that is going to be displayed in the notification.
+   */
+  public Notification(String title, String body, String image) {
+    this.title = title;
+    this.body = body;
+    this.image = image;
   }
 
 }
