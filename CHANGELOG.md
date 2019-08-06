@@ -1,7 +1,7 @@
 # Unreleased
 
-- [added] Added `WebpushFcmOptions` to the `FirebaseMessaging` API, which 
-  provides `setLink()` method.
+- [added] Added `WebpushFcmOptions` to the `FirebaseMessaging` API, providing 
+  the `setLink()` method.
 
 # v6.9.0
 
