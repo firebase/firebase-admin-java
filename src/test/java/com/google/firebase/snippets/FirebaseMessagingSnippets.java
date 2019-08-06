@@ -30,6 +30,7 @@ import com.google.firebase.messaging.Notification;
 import com.google.firebase.messaging.SendResponse;
 import com.google.firebase.messaging.TopicManagementResponse;
 import com.google.firebase.messaging.WebpushConfig;
+import com.google.firebase.messaging.WebpushFcmOptions;
 import com.google.firebase.messaging.WebpushNotification;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -239,6 +240,7 @@ public class FirebaseMessagingSnippets {
                 "$GOOG up 1.43% on the day",
                 "$GOOG gained 11.80 points to close at 835.67, up 1.43% on the day.",
                 "https://my-server/icon.png"))
+            .setFcmOptions(WebpushFcmOptions.withLink("https://my-server/page-to-open-on-click"))
             .build())
         .setTopic("industry-tech")
         .build();
