@@ -19,6 +19,7 @@ package com.google.firebase.database;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -45,6 +46,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class FirebaseDatabase {
 
+  private static final String FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR = "FIREBASE_RTDB_EMULATOR_HOST";
+  private static final String RTDB_EMULATOR_HOST = "localhost:9000";
   private final FirebaseApp app;
   private final RepoInfo repoInfo;
   private final DatabaseConfig config;
@@ -112,15 +115,15 @@ public class FirebaseDatabase {
     if (service == null) {
       service = ImplFirebaseTrampolines.addService(app, new FirebaseDatabaseService());
     }
-
-    DatabaseInstances dbInstances = service.getInstance();
     if (url == null || url.isEmpty()) {
       throw new DatabaseException(
           "Failed to get FirebaseDatabase instance: Specify DatabaseURL within "
               + "FirebaseApp or from your getInstance() call.");
     }
-
     ParsedUrl parsedUrl = Utilities.parseUrl(url);
+    if (shouldTalkToRtdbEmulator()) {
+      parsedUrl = parsedUrlForEmulator(parsedUrl.repoInfo.namespace);
+    }
     if (!parsedUrl.path.isEmpty()) {
       throw new DatabaseException(
           "Specified Database URL '"
@@ -130,6 +133,7 @@ public class FirebaseDatabase {
               + parsedUrl.path.toString());
     }
 
+    DatabaseInstances dbInstances = service.getInstance();
     FirebaseDatabase database = dbInstances.get(parsedUrl.repoInfo);
     if (database == null) {
       DatabaseConfig config = new DatabaseConfig();
@@ -146,6 +150,23 @@ public class FirebaseDatabase {
     }
 
     return database;
+  }
+
+  private static boolean shouldTalkToRtdbEmulator() {
+    String rtdbEmulatorEnvVar = System.getenv(FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR);
+    return !Strings.isNullOrEmpty(rtdbEmulatorEnvVar)
+        && rtdbEmulatorEnvVar.equalsIgnoreCase("true");
+  }
+
+  private static ParsedUrl parsedUrlForEmulator(String dbName) {
+    RepoInfo repoInfo = new RepoInfo();
+    repoInfo.host = RTDB_EMULATOR_HOST;
+    repoInfo.namespace = dbName;
+    repoInfo.secure = false;
+    ParsedUrl parsedUrl = new ParsedUrl();
+    parsedUrl.repoInfo = repoInfo;
+    parsedUrl.path = new Path("");
+    return parsedUrl;
   }
 
   /** This exists so Repo can create FirebaseDatabase objects to keep legacy tests working. */

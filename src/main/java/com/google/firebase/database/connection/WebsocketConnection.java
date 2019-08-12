@@ -414,7 +414,7 @@ class WebsocketConnection {
       URI uri = HostInfo.getConnectionUrl(
           host, hostInfo.isSecure(), hostInfo.getNamespace(), optLastSessionId);
       return new NettyWebSocketClient(
-          uri, context.getUserAgent(), context.getThreadFactory(), delegate);
+          uri, context.getUserAgent(), context.getThreadFactory(), delegate, hostInfo.isSecure());
     }
   }
 
