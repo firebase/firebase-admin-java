@@ -46,8 +46,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class FirebaseDatabase {
 
-  private static final String FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR = "FIREBASE_RTDB_EMULATOR_HOST";
-  private static final String RTDB_EMULATOR_HOST = "localhost:9000";
+  static final String FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR = "FIREBASE_RTDB_EMULATOR_HOST";
+  static final String RTDB_EMULATOR_HOST = "localhost:9000";
   private final FirebaseApp app;
   private final RepoInfo repoInfo;
   private final DatabaseConfig config;

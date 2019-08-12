@@ -23,15 +23,14 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.testing.ServiceAccount;
-
 import com.google.firebase.testing.TestUtils;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -120,7 +119,6 @@ public class FirebaseDatabaseTest {
     assertNotNull(reference);
     assertEquals("bar", reference.getKey());
     assertEquals("foo", reference.getParent().getKey());
-
     try {
       defaultDatabase.getReferenceFromUrl(null);
       fail("No error thrown for null URL");
@@ -170,5 +168,16 @@ public class FirebaseDatabaseTest {
     FirebaseDatabase db2 = FirebaseDatabase.getInstance(app);
     assertNotNull(db2);
     assertNotSame(db1, db2);
+  }
+
+  @Test
+  public void testTalksToEmulatorWithEnvVars() {
+    TestUtils.setEnvironmentVariables(
+        ImmutableMap.of(FirebaseDatabase.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR, "true"));
+    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testTalksToEmulator");
+    FirebaseDatabase db = FirebaseDatabase.getInstance(app);
+    assertNotNull(db);
+    assertSame(FirebaseDatabase.RTDB_EMULATOR_HOST, db.getReference().repo.getRepoInfo().host);
+    assertSame(false, db.getReference().repo.getRepoInfo().isSecure());
   }
 }
