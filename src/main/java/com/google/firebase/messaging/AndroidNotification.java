@@ -299,13 +299,13 @@ public class AndroidNotification {
 
     /**
      * Sets the URL of the image that is going to be displayed in the notification. When provided, 
-     * overrides the image set via {@link Notification}.
+     * overrides the imageUrl set via {@link Notification}.
      *
-     * @param image URL of the image that is going to be displayed in the notification.
+     * @param imageUrl URL of the image that is going to be displayed in the notification.
      * @return This builder.
      */
-    public Builder setImage(String image) {
-      this.image = image;
+    public Builder setImage(String imageUrl) {
+      this.image = imageUrl;
       return this;
     }
 

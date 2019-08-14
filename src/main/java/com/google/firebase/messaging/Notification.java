@@ -50,12 +50,12 @@ public class Notification {
    *
    * @param title Title of the notification.
    * @param body Body of the notification.
-   * @param image URL of the image that is going to be displayed in the notification.
+   * @param imageUrl URL of the image that is going to be displayed in the notification.
    */
-  public Notification(String title, String body, String image) {
+  public Notification(String title, String body, String imageUrl) {
     this.title = title;
     this.body = body;
-    this.image = image;
+    this.image = imageUrl;
   }
 
 }

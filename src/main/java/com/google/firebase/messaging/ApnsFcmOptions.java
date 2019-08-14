@@ -71,11 +71,11 @@ public final class ApnsFcmOptions {
     }
 
     /**
-     * @param image URL of the image that is going to be displayed in the notification.
+     * @param imageUrl URL of the image that is going to be displayed in the notification.
      * @return This builder
      */
-    public Builder setImage(String image) {
-      this.image = image;
+    public Builder setImage(String imageUrl) {
+      this.image = imageUrl;
       return this;
     }
 
