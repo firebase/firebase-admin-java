@@ -23,16 +23,21 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.database.util.EmulatorHelper;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 public class FirebaseDatabaseTest {
@@ -43,13 +48,13 @@ public class FirebaseDatabaseTest {
           .setDatabaseUrl("https://firebase-db-test.firebaseio.com")
           .build();
 
-  @BeforeClass
-  public static void setupClass() {
+  @Before
+  public  void setupClass() {
     FirebaseApp.initializeApp(firebaseOptions);
   }
 
-  @AfterClass
-  public static void tearDownClass() {
+  @After
+  public  void tearDownClass() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
@@ -171,13 +176,125 @@ public class FirebaseDatabaseTest {
   }
 
   @Test
-  public void testTalksToEmulatorWithEnvVars() {
-    TestUtils.setEnvironmentVariables(
-        ImmutableMap.of(FirebaseDatabase.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR, "true"));
-    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testTalksToEmulator");
-    FirebaseDatabase db = FirebaseDatabase.getInstance(app);
-    assertNotNull(db);
-    assertSame(FirebaseDatabase.RTDB_EMULATOR_HOST, db.getReference().repo.getRepoInfo().host);
-    assertSame(false, db.getReference().repo.getRepoInfo().isSecure());
+  public void testDbUrlIsEmulatorUrlWhenSettingOptionsManually() {
+    class CustomTestCase {
+
+      private String suppliedDbUrl;
+      private String envVariableUrl;
+      private String expectedEmulatorUrl;
+      private String namespace;
+
+      private CustomTestCase(String suppliedDbUrl, String envVariableUrl,
+          String expectedEmulatorUrl, String namespace) {
+        this.suppliedDbUrl = suppliedDbUrl;
+        this.envVariableUrl = envVariableUrl;
+        this.expectedEmulatorUrl = expectedEmulatorUrl;
+        this.namespace = namespace;
+      }
+    }
+
+    List<CustomTestCase> testCases;
+    testCases = ImmutableList.of(
+        // cases where the env var is ignored because the supplied DB URL is a valid emulator URL
+        new CustomTestCase("http://my-custom-hosted-emulator.com:80?ns=dummy-ns", "",
+            "http://my-custom-hosted-emulator.com:80", "dummy-ns"),
+        new CustomTestCase("http://localhost:9000?ns=test-ns", null,
+            "http://localhost:9000", "test-ns"),
+
+        // cases where the supplied DB URL is not an emulator URL, so we extract ns from it
+        // and append it to the emulator URL from env var(if it is valid)
+        new CustomTestCase("https://valid-namespace.firebaseio.com", "localhost:8080",
+            "http://localhost:8080", "valid-namespace"),
+        new CustomTestCase("https://firebaseio.com?ns=valid-namespace", "localhost:90",
+            "http://localhost:90", "valid-namespace")
+    );
+    boolean earlierDefaultAppFound = false;
+    try {
+      FirebaseApp.getInstance(FirebaseApp.DEFAULT_APP_NAME).delete();
+      earlierDefaultAppFound = true;
+    } catch (Exception ignored) {
+      // proceed if no leftover default app found.
+    }
+    for (CustomTestCase tc : testCases) {
+      FirebaseApp app = FirebaseApp.initializeApp();
+      TestUtils.setEnvironmentVariables(
+          ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
+              Strings.nullToEmpty(tc.envVariableUrl)));
+      FirebaseDatabase instance = FirebaseDatabase.getInstance(app, tc.suppliedDbUrl);
+      assertEquals(tc.expectedEmulatorUrl, instance.getReference().repo.getRepoInfo().toString());
+      assertEquals(tc.namespace, instance.getReference().repo.getRepoInfo().namespace);
+      // clean up after
+      app.delete();
+      TestUtils.unsetEnvironmentVariables(
+          ImmutableSet.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR));
+    }
+    if (earlierDefaultAppFound) {
+      FirebaseApp.initializeApp();
+    }
+  }
+
+
+  @Test
+  public void testDbUrlIsEmulatorUrlForDbRefWithPath() {
+    class CustomTestCase {
+
+      private String rootDbUrl;
+      private String pathUrl;
+      private String envVariableUrl;
+      private String expectedEmulatorRootUrl;
+      private String namespace;
+      private String path;
+
+      private CustomTestCase(String rootDbUrl, String pathUrl, String envVariableUrl,
+          String expectedEmulatorRootUrl, String namespace, String path) {
+        this.rootDbUrl = rootDbUrl;
+        this.pathUrl = pathUrl;
+        this.envVariableUrl = envVariableUrl;
+        this.expectedEmulatorRootUrl = expectedEmulatorRootUrl;
+        this.namespace = namespace;
+        this.path = path;
+      }
+    }
+
+    List<CustomTestCase> testCases;
+    testCases = ImmutableList.of(
+        new CustomTestCase("http://my-custom-hosted-emulator.com:80?ns=dummy-ns",
+            "http://my-custom-hosted-emulator.com:80?ns=dummy-ns", "",
+            "http://my-custom-hosted-emulator.com:80", "dummy-ns", "/"),
+        new CustomTestCase("http://localhost:9000?ns=test-ns",
+            "http://localhost:9000/a/b/c/d?ns=test-ns", null,
+            "http://localhost:9000", "test-ns", "/a/b/c/d"),
+        new CustomTestCase("http://localhost:9000?ns=test-ns",
+            "https://valid-namespace.firebaseio.com/a/b/c/d?ns=test-ns", "localhost:9000",
+            "http://localhost:9000", "test-ns", "/a/b/c/d"),
+        new CustomTestCase("https://valid-namespace.firebaseio.com",
+            "http://valid-namespace.firebaseio.com/a/b/c/d", "localhost:8080",
+            "http://localhost:8080", "valid-namespace", "/a/b/c/d")
+    );
+    boolean earlierDefaultAppFound = false;
+    try {
+      FirebaseApp.getInstance(FirebaseApp.DEFAULT_APP_NAME).delete();
+      earlierDefaultAppFound = true;
+    } catch (Exception ignored) {
+      // proceed if no leftover default app found.
+    }
+    for (CustomTestCase tc : testCases) {
+      FirebaseApp app = FirebaseApp.initializeApp();
+      TestUtils.setEnvironmentVariables(
+          ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
+              Strings.nullToEmpty(tc.envVariableUrl)));
+      FirebaseDatabase instance = FirebaseDatabase.getInstance(app, tc.rootDbUrl);
+      DatabaseReference dbRef = instance.getReferenceFromUrl(tc.pathUrl);
+      assertEquals(tc.expectedEmulatorRootUrl, dbRef.repo.getRepoInfo().toString());
+      assertEquals(tc.namespace, dbRef.repo.getRepoInfo().namespace);
+      assertEquals(tc.path, dbRef.path.toString());
+      // clean up after
+      app.delete();
+      TestUtils.unsetEnvironmentVariables(
+          ImmutableSet.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR));
+    }
+    if (earlierDefaultAppFound) {
+      FirebaseApp.initializeApp();
+    }
   }
 }

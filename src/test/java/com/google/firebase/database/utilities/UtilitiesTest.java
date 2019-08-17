@@ -32,6 +32,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.DatabaseReference.CompletionListener;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.junit.Test;
 
@@ -185,4 +186,11 @@ public class UtilitiesTest {
     assertSame(listener, result.getSecond());
   }
 
+  @Test
+  public void testExtractParamsFromUrl() {
+    Map<String, String> params = Utilities.getQueryParamsMap("abc=213&qpf=2312&xyz=true&qpf=hi");
+    assertEquals("213", params.get("abc"));
+    assertEquals("2312,hi", params.get("qpf"));
+    assertEquals("true", params.get("xyz"));
+  }
 }
