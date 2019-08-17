@@ -49,12 +49,12 @@ public class FirebaseDatabaseTest {
           .build();
 
   @Before
-  public  void setupClass() {
+  public void setupTestMethod() {
     FirebaseApp.initializeApp(firebaseOptions);
   }
 
   @After
-  public  void tearDownClass() {
+  public void tearDownTestMethod() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
