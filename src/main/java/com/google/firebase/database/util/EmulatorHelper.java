@@ -43,12 +43,13 @@ public final class EmulatorHelper {
     }
     ParsedUrl parsedUrl = Utilities.parseUrl(suppliedDatabaseUrl);
     RepoInfo repoInfo = parsedUrl.repoInfo;
-    if (repoInfo.isSecure() || repoInfo.host.endsWith(".firebaseio.com") || !suppliedDatabaseUrl
+    if (repoInfo.host.endsWith(".firebaseio.com") || !suppliedDatabaseUrl
         .contains("ns=")) {
       return null;
     }
     String pathString = parsedUrl.path.isEmpty() ? "/" : parsedUrl.path.toString() + "/";
-    return String.format("http://%s%s?ns=%s", repoInfo.host, pathString, repoInfo.namespace);
+    String scheme = repoInfo.isSecure() ? "https" : "http";
+    return String.format("%s://%s%s?ns=%s", scheme, repoInfo.host, pathString, repoInfo.namespace);
   }
 
   public static String overwriteDatabaseUrlWithEmulatorHost(String suppliedDatabaseUrl,

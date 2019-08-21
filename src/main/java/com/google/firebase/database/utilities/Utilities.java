@@ -58,13 +58,11 @@ public class Utilities {
 
       RepoInfo repoInfo = new RepoInfo();
       repoInfo.host = host.toLowerCase();
+      repoInfo.secure = scheme.equals("https") || scheme.equals("wss");
 
       int port = uri.getPort();
       if (port != -1) {
-        repoInfo.secure = scheme.equals("https") || scheme.equals("wss");
         repoInfo.host += ":" + port;
-      } else {
-        repoInfo.secure = true;
       }
 
       Map<String, String> params = getQueryParamsMap(uri.getRawQuery());

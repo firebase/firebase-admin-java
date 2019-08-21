@@ -24,7 +24,10 @@ public class EmulatorHelperTest {
         "http://my-custom-hosted-emulator.com:80?ns=dummy-ns",
         "http://my-custom-hosted-emulator.com:80/?ns=dummy-ns",
         "http://my-custom-hosted-emulator.com:80/path/to/document?ns=dummy-ns",
-        "http://my-custom-hosted-emulator.com:80/path/to/document/?ns=dummy-ns"
+        "http://my-custom-hosted-emulator.com:80/path/to/document/?ns=dummy-ns",
+        "https://localhost:9000?ns=test-ns", "https://localhost:9000/?ns=test-ns",
+        "http://my-custom-hosted-emulator.com?ns=dummy-ns",
+        "http://my-custom-hosted-emulator.com/?ns=dummy-ns"
     );
     for (Map.Entry<String, String> e : suppliedToExpectedUrlsMap.entrySet()) {
       assertEquals(e.getValue(), EmulatorHelper.tryToExtractEmulatorUrlFromDbUrl(e.getKey()));
@@ -34,10 +37,7 @@ public class EmulatorHelperTest {
   @Test
   public void testExtractingEmulatorUrlsFromSuppliedUrlFails() {
     List<String> nonEmulatorUrls = ImmutableList.of(
-        "https://localhost:9000?ns=test-ns",// https scheme
-        "http://localhost?ns=test-ns", // missing port
         "http://localhost:9000",// missing ns param
-        "http://my-custom-hosted-emulator.com?ns=dummy-ns", // missing port
         "http://my-custom-hosted-emulator.com:80", // missing ns param
         "http://test-namespace.firebaseio.com" // firebaseio.com not supported
     );
@@ -90,6 +90,8 @@ public class EmulatorHelperTest {
             "http://localhost:9000/?ns=ns-1"),
         new CustomTestCase("http://localhost:9000/a/b/c?ns=ns-1", "http://localhost:8080/ns=ns-2",
             "http://localhost:9000/a/b/c/?ns=ns-1"),
+        new CustomTestCase("https://firebaseio.com?ns=valid-namespace", "localhost:90",
+            "https://firebaseio.com/?ns=valid-namespace"),
 
         // cases where the supplied DB URL is not an emulator URL, so we extract ns from it
         // and append it to the emulator URL from env var(if it is valid)
@@ -103,8 +105,6 @@ public class EmulatorHelperTest {
             "http://192.123.212.145:90/?ns=valid-namespace"),
         new CustomTestCase("https://valid-namespace.firebaseio.com", "[::1]:90",
             "http://[::1]:90/?ns=valid-namespace"),
-        new CustomTestCase("https://firebaseio.com?ns=valid-namespace", "localhost:90",
-            "http://localhost:90/?ns=valid-namespace"),
         new CustomTestCase(null, "localhost:90", "http://localhost:90/?ns=default"),
         new CustomTestCase("", "localhost:90", "http://localhost:90/?ns=default")
     );
