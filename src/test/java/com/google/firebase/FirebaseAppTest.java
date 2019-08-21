@@ -582,14 +582,13 @@ public class FirebaseAppTest {
     new FirebaseException("");
   }
 
-
   @Test
   public void testFirebaseAppCreationWithEmptySupplier() {
     FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setDatabaseUrl("https://test-ns.firebaseio.com")
         .setCredentials(Suppliers.<GoogleCredentials>ofInstance(null)).build());
-
   }
+
   private static void setFirebaseConfigEnvironmentVariable(String configJSON) {
     String configValue;
     if (configJSON.isEmpty() || configJSON.startsWith("{")) {

@@ -314,7 +314,8 @@ public final class FirebaseOptions {
     }
 
     /**
-     * Sets the <code>Supplier</code> of <code>GoogleCredentials</code> to use to authenticate the SDK. This is NOT intended for public use outside the SDK.
+     * Sets the <code>Supplier</code> of <code>GoogleCredentials</code> to use to authenticate the
+     * SDK. This is NOT intended for public use outside the SDK.
      *
      * @param credentialsSupplier Supplier instance that wraps GoogleCredentials.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
@@ -323,6 +324,7 @@ public final class FirebaseOptions {
       this.credentialsSupplier = checkNotNull(credentialsSupplier);
       return this;
     }
+
     /**
      * Sets the <code>auth</code> variable to be used by the Realtime Database rules.
      *
