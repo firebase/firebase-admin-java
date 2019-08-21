@@ -18,6 +18,7 @@ package com.google.firebase.database.utilities;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.SettableApiFuture;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.firebase.database.DatabaseError;
@@ -27,6 +28,7 @@ import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.RepoInfo;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -72,10 +74,7 @@ public class Utilities {
 
       repoInfo.internalHost = repoInfo.host;
 
-      String originalPathString = extractPathString(url);
-      // URLEncoding a space turns it into a '+', which is different
-      // from our expected behavior. Do a manual replace to fix it.
-      originalPathString = originalPathString.replace("+", " ");
+      String originalPathString = uri.getPath();
       Validation.validateRootPathString(originalPathString);
 
       ParsedUrl parsedUrl = new ParsedUrl();
@@ -112,6 +111,14 @@ public class Utilities {
     }
   }
 
+  /**
+   * Extracts a map of query parameters from a non-encoded query string. Repeated parameters have
+   * values concatenated with commas.
+   *
+   * @param queryString to parse params from. Must be non-encoded.
+   * @return map of query parameters and their values.
+   */
+  @VisibleForTesting
   static Map<String, String> getQueryParamsMap(String queryString) {
     Map<String, String> paramsMap = new HashMap<>();
     if (Strings.isNullOrEmpty(queryString)) {

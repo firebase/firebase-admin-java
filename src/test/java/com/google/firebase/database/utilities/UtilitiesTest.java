@@ -75,6 +75,12 @@ public class UtilitiesTest {
     assertTrue(url.repoInfo.isSecure());
     assertEquals("test", url.repoInfo.namespace);
     assertEquals(ImmutableList.of("foo", "bar"), url.path.asList());
+
+    url = Utilities
+        .parseUrl("https://firebaseio.com/path%20with%20spaces/?ns=random%20valid%20namespace");
+    assertTrue(url.repoInfo.isSecure());
+    assertEquals("random valid namespace", url.repoInfo.namespace);
+    assertEquals("/path with spaces", url.path.toString());
   }
 
   @Test
