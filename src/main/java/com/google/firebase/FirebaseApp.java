@@ -92,6 +92,17 @@ public class FirebaseApp {
    * accesses to instances map should be protected by this lock.
    */
   private static final Object appsLock = new Object();
+  private static final Supplier<GoogleCredentials> DEFAULT_CREDS_CALLABLE =
+      new Supplier<GoogleCredentials>() {
+        @Override
+        public GoogleCredentials get() {
+          try {
+            return GoogleCredentials.getApplicationDefault();
+          } catch (IOException e) {
+            throw new IllegalStateException(e);
+          }
+        }
+      };
 
   private final String name;
   private final FirebaseOptions options;
@@ -584,7 +595,7 @@ public class FirebaseApp {
     String defaultConfig = System.getenv(FIREBASE_CONFIG_ENV_VAR);
     if (Strings.isNullOrEmpty(defaultConfig)) {
       return new FirebaseOptions.Builder()
-          .setCredentials(defaultOrNullCredentials())
+          .setCredentials(DEFAULT_CREDS_CALLABLE)
           .build();
     }
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
@@ -598,17 +609,7 @@ public class FirebaseApp {
       parser = jsonFactory.createJsonParser(reader);
     }
     parser.parseAndClose(builder);
-    builder.setCredentials(defaultOrNullCredentials());
+    builder.setCredentials(DEFAULT_CREDS_CALLABLE);
     return builder.build();
-  }
-
-  private static Supplier<GoogleCredentials> defaultOrNullCredentials() {
-    try {
-      return Suppliers.ofInstance(GoogleCredentials.getApplicationDefault());
-    } catch (IOException e) {
-      logger
-          .error("Failed to fetch default application credentials, proceeding with null", e);
-      return Suppliers.ofInstance(null);
-    }
   }
 }

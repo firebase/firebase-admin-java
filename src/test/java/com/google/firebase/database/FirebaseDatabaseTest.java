@@ -205,7 +205,7 @@ public class FirebaseDatabaseTest {
         // and append it to the emulator URL from env var(if it is valid)
         new CustomTestCase("https://valid-namespace.firebaseio.com", "localhost:8080",
             "http://localhost:8080", "valid-namespace"),
-        new CustomTestCase("https://firebaseio.com?ns=valid-namespace", "localhost:90",
+        new CustomTestCase("https://test.firebaseio.com?ns=valid-namespace", "localhost:90",
             "http://localhost:90", "valid-namespace")
     );
     boolean earlierDefaultAppFound = false;
@@ -216,17 +216,20 @@ public class FirebaseDatabaseTest {
       // proceed if no leftover default app found.
     }
     for (CustomTestCase tc : testCases) {
-      FirebaseApp app = FirebaseApp.initializeApp();
-      TestUtils.setEnvironmentVariables(
-          ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
-              Strings.nullToEmpty(tc.envVariableUrl)));
-      FirebaseDatabase instance = FirebaseDatabase.getInstance(app, tc.suppliedDbUrl);
-      assertEquals(tc.expectedEmulatorUrl, instance.getReference().repo.getRepoInfo().toString());
-      assertEquals(tc.namespace, instance.getReference().repo.getRepoInfo().namespace);
-      // clean up after
-      app.delete();
-      TestUtils.unsetEnvironmentVariables(
-          ImmutableSet.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR));
+      try {
+        FirebaseApp app = FirebaseApp.initializeApp();
+        TestUtils.setEnvironmentVariables(
+            ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
+                Strings.nullToEmpty(tc.envVariableUrl)));
+        FirebaseDatabase instance = FirebaseDatabase.getInstance(app, tc.suppliedDbUrl);
+        assertEquals(tc.expectedEmulatorUrl, instance.getReference().repo.getRepoInfo().toString());
+        assertEquals(tc.namespace, instance.getReference().repo.getRepoInfo().namespace);
+        // clean up after
+        app.delete();
+      } finally {
+        TestUtils.unsetEnvironmentVariables(
+            ImmutableSet.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR));
+      }
     }
     if (earlierDefaultAppFound) {
       FirebaseApp.initializeApp();
@@ -278,20 +281,25 @@ public class FirebaseDatabaseTest {
     } catch (Exception ignored) {
       // proceed if no leftover default app found.
     }
+
     for (CustomTestCase tc : testCases) {
-      FirebaseApp app = FirebaseApp.initializeApp();
-      TestUtils.setEnvironmentVariables(
-          ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
-              Strings.nullToEmpty(tc.envVariableUrl)));
-      FirebaseDatabase instance = FirebaseDatabase.getInstance(app, tc.rootDbUrl);
-      DatabaseReference dbRef = instance.getReferenceFromUrl(tc.pathUrl);
-      assertEquals(tc.expectedEmulatorRootUrl, dbRef.repo.getRepoInfo().toString());
-      assertEquals(tc.namespace, dbRef.repo.getRepoInfo().namespace);
-      assertEquals(tc.path, dbRef.path.toString());
-      // clean up after
-      app.delete();
-      TestUtils.unsetEnvironmentVariables(
-          ImmutableSet.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR));
+      try {
+        FirebaseApp app = FirebaseApp.initializeApp();
+        TestUtils.setEnvironmentVariables(
+            ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
+                Strings.nullToEmpty(tc.envVariableUrl)));
+        FirebaseDatabase instance = FirebaseDatabase.getInstance(app, tc.rootDbUrl);
+        DatabaseReference dbRef = instance.getReferenceFromUrl(tc.pathUrl);
+        assertEquals(tc.expectedEmulatorRootUrl, dbRef.repo.getRepoInfo().toString());
+        assertEquals(tc.namespace, dbRef.repo.getRepoInfo().namespace);
+        assertEquals(tc.path, dbRef.path.toString());
+        // clean up after
+        app.delete();
+
+      } finally {
+        TestUtils.unsetEnvironmentVariables(
+            ImmutableSet.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR));
+      }
     }
     if (earlierDefaultAppFound) {
       FirebaseApp.initializeApp();
