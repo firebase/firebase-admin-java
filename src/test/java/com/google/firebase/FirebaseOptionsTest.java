@@ -156,7 +156,7 @@ public class FirebaseOptionsTest {
 
   @Test(expected = NullPointerException.class)
   public void createOptionsWithCredentialMissing() {
-    new FirebaseOptions.Builder().build();
+    new FirebaseOptions.Builder().build().getCredentials();
   }
 
   @Test(expected = NullPointerException.class)

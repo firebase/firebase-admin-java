@@ -34,7 +34,8 @@ import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.database.util.EmulatorHelper;
+import com.google.firebase.FirebaseOptions.DeferredApplicationCredentials;
+import com.google.firebase.FirebaseOptions.DeferredApplicationCredentials.CredentialsGenerator;
 import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseScheduledExecutor;
 import com.google.firebase.internal.FirebaseService;
@@ -46,7 +47,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -583,7 +583,8 @@ public class FirebaseApp {
   private static FirebaseOptions getOptionsFromEnvironment() throws IOException {
     String defaultConfig = System.getenv(FIREBASE_CONFIG_ENV_VAR);
     if (Strings.isNullOrEmpty(defaultConfig)) {
-      return new FirebaseOptions.Builder().setCredentials(getApplicationDefaultOrEmptyCredentials())
+      return new FirebaseOptions.Builder()
+          .setDeferredCredentials(DEFAULT_OR_EMPTY_CREDS)
           .build();
     }
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
@@ -597,18 +598,22 @@ public class FirebaseApp {
       parser = jsonFactory.createJsonParser(reader);
     }
     parser.parseAndClose(builder);
-    builder.setCredentials(getApplicationDefaultOrEmptyCredentials());
+    builder.setDeferredCredentials(DEFAULT_OR_EMPTY_CREDS);
     return builder.build();
   }
 
-  private static GoogleCredentials getApplicationDefaultOrEmptyCredentials() {
-    try {
-      return GoogleCredentials.getApplicationDefault();
-    } catch (IOException e) {
-      logger.error(
-          "Failed to fetch default application credentials. Proceeding with blank credentials.",
-          e);
-      return GoogleCredentials.newBuilder().build();
-    }
-  }
+  private static final DeferredApplicationCredentials DEFAULT_OR_EMPTY_CREDS =
+      new DeferredApplicationCredentials(new CredentialsGenerator() {
+        @Override
+        public GoogleCredentials generate() {
+          try {
+            return GoogleCredentials.getApplicationDefault();
+          } catch (IOException e) {
+            logger
+                .error("Failed to fetch default application credentials, proceeding with null", e);
+            return null;
+          }
+        }
+      }
+      );
 }
