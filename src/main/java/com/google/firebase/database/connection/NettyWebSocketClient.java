@@ -90,15 +90,15 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
             .trustManager(trustFactory).build();
       }
       final int port = uri.getPort() != -1 ? uri.getPort() : DEFAULT_WSS_PORT;
-      final SslContext[] sslContexts = new SslContext[]{sslContext};
+      final SslContext finalSslContext = sslContext;
       bootstrap.group(group)
           .channel(NioSocketChannel.class)
           .handler(new ChannelInitializer<SocketChannel>() {
             @Override
             protected void initChannel(SocketChannel ch) {
               ChannelPipeline p = ch.pipeline();
-              if (sslContexts[0] != null) {
-                p.addLast(sslContexts[0].newHandler(ch.alloc(), uri.getHost(), port));
+              if (finalSslContext != null) {
+                p.addLast(finalSslContext.newHandler(ch.alloc(), uri.getHost(), port));
               }
               p.addLast(
                   new HttpClientCodec(),

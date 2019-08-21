@@ -90,10 +90,10 @@ public class Utilities {
   }
 
   /**
-   * Extracts a map of query parameters from a non-encoded query string. Repeated parameters have
+   * Extracts a map of query parameters from an encoded query string. Repeated parameters have
    * values concatenated with commas.
    *
-   * @param queryString to parse params from. Must be non-encoded.
+   * @param queryString to parse params from. Must be encoded.
    * @return map of query parameters and their values.
    */
   @VisibleForTesting
