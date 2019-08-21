@@ -19,7 +19,10 @@ package com.google.firebase.database;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.auth.oauth2.AccessToken;
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -35,9 +38,13 @@ import com.google.firebase.database.utilities.Validation;
 import com.google.firebase.internal.FirebaseService;
 
 import com.google.firebase.internal.SdkUtils;
+import java.io.IOException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -103,7 +110,7 @@ public class FirebaseDatabase {
 
   /**
    * Gets a FirebaseDatabase instance for the specified URL, using the specified FirebaseApp.
-   getInstance*
+   *
    * @param app The FirebaseApp to get a FirebaseDatabase for.
    * @param url The URL to the Firebase Database instance you want to access.
    * @return A FirebaseDatabase instance.
@@ -119,9 +126,12 @@ public class FirebaseDatabase {
           "Failed to get FirebaseDatabase instance: Specify DatabaseURL within "
               + "FirebaseApp or from your getInstance() call.");
     }
-    String possibleEmulatorUrl = EmulatorHelper.getEmulatorUrl(url);
+    boolean connectingToEmulator = false;
+    String possibleEmulatorUrl = EmulatorHelper
+        .overwriteDatabaseUrlWithEmulatorHost(url, EmulatorHelper.getEmulatorHostFromEnv());
     if (!Strings.isNullOrEmpty(possibleEmulatorUrl)) {
       url = possibleEmulatorUrl;
+      connectingToEmulator = true;
     }
     ParsedUrl parsedUrl = Utilities.parseUrl(url);
     if (!parsedUrl.path.isEmpty()) {
@@ -144,7 +154,9 @@ public class FirebaseDatabase {
         config.setSessionPersistenceKey(app.getName());
       }
       config.setFirebaseApp(app);
-
+      if (connectingToEmulator) {
+        config.setCustomCredentials(new EmulatorCredentials(), true);
+      }
       database = new FirebaseDatabase(app, parsedUrl.repoInfo, config);
       dbInstances.put(parsedUrl.repoInfo, database);
     }
@@ -211,7 +223,8 @@ public class FirebaseDatabase {
   public DatabaseReference getReferenceFromUrl(String url) {
     checkNotNull(url,
         "Can't pass null for argument 'url' in FirebaseDatabase.getReferenceFromUrl()");
-    String possibleEmulatorUrl = EmulatorHelper.getEmulatorUrl(url);
+    String possibleEmulatorUrl = EmulatorHelper
+        .overwriteDatabaseUrlWithEmulatorHost(url, EmulatorHelper.getEmulatorHostFromEnv());
     if (!Strings.isNullOrEmpty(possibleEmulatorUrl)) {
       url = possibleEmulatorUrl;
     }
@@ -386,6 +399,33 @@ public class FirebaseDatabase {
     @Override
     public void destroy() {
       instance.destroy();
+    }
+  }
+
+  private static class EmulatorCredentials extends GoogleCredentials {
+
+    private static AccessToken newToken() {
+      return new AccessToken("owner",
+          new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)));
+    }
+
+    EmulatorCredentials() {
+      super(newToken());
+    }
+
+    @Override
+    public AccessToken refreshAccessToken() {
+      return newToken();
+    }
+
+    @Override
+    public Map<String, List<String>> getRequestMetadata() throws IOException {
+      return ImmutableMap.of();
+    }
+
+    @Override
+    public void refresh() throws IOException {
+      super.refresh();
     }
   }
 }

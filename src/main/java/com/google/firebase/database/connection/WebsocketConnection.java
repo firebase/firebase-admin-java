@@ -413,8 +413,8 @@ class WebsocketConnection {
       String host = (optCachedHost != null) ? optCachedHost : hostInfo.getHost();
       URI uri = HostInfo.getConnectionUrl(
           host, hostInfo.isSecure(), hostInfo.getNamespace(), optLastSessionId);
-      return new NettyWebSocketClient(
-          uri, context.getUserAgent(), context.getThreadFactory(), delegate, hostInfo.isSecure());
+      return new NettyWebSocketClient(uri, hostInfo.isSecure(), context.getUserAgent(),
+          context.getThreadFactory(), delegate);
     }
   }
 

@@ -65,45 +65,41 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
   private Channel channel;
 
   NettyWebSocketClient(
-      URI uri, String userAgent, ThreadFactory threadFactory,
-      WebsocketConnection.WSClientEventHandler eventHandler, boolean isSecure) {
+      URI uri, boolean isSecure, String userAgent, ThreadFactory threadFactory,
+      WebsocketConnection.WSClientEventHandler eventHandler) {
     this.uri = checkNotNull(uri, "uri must not be null");
+    this.isSecure = isSecure;
     this.eventHandler = checkNotNull(eventHandler, "event handler must not be null");
     this.channelHandler = new WebSocketClientHandler(uri, userAgent, eventHandler);
     this.executorService = new FirebaseScheduledExecutor(threadFactory,
         "firebase-websocket-worker");
     this.group = new NioEventLoopGroup(1, this.executorService);
-    this.isSecure = isSecure;
   }
 
   @Override
   public void connect() {
     checkState(channel == null, "channel already initialized");
-    SslContext sslContext = null;
-    if (this.isSecure) {
-      TrustManagerFactory trustFactory = null;
-      try {
+    try {
+      Bootstrap bootstrap = new Bootstrap();
+      SslContext sslContext = null;
+      if (this.isSecure) {
+        TrustManagerFactory trustFactory = null;
         trustFactory = TrustManagerFactory.getInstance(
             TrustManagerFactory.getDefaultAlgorithm());
         trustFactory.init((KeyStore) null);
         sslContext = SslContextBuilder.forClient()
             .trustManager(trustFactory).build();
-      } catch (NoSuchAlgorithmException | KeyStoreException | SSLException e) {
-        eventHandler.onError(e.getCause());
       }
-    }
-    try {
-      Bootstrap bootstrap = new Bootstrap();
       final int port = uri.getPort() != -1 ? uri.getPort() : DEFAULT_WSS_PORT;
-      final SslContext finalSslContext = sslContext;
+      final SslContext[] sslContexts = new SslContext[]{sslContext};
       bootstrap.group(group)
           .channel(NioSocketChannel.class)
           .handler(new ChannelInitializer<SocketChannel>() {
             @Override
             protected void initChannel(SocketChannel ch) {
               ChannelPipeline p = ch.pipeline();
-              if (finalSslContext != null) {
-                p.addLast(finalSslContext.newHandler(ch.alloc(), uri.getHost(), port));
+              if (sslContexts[0] != null) {
+                p.addLast(sslContexts[0].newHandler(ch.alloc(), uri.getHost(), port));
               }
               p.addLast(
                   new HttpClientCodec(),

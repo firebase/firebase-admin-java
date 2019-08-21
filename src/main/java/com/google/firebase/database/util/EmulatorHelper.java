@@ -1,8 +1,24 @@
+/*
+ * Copyright 2019 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.firebase.database.util;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
-import com.google.firebase.database.core.Path;
+import com.google.firebase.database.annotations.Nullable;
 import com.google.firebase.database.core.RepoInfo;
 import com.google.firebase.database.utilities.ParsedUrl;
 import com.google.firebase.database.utilities.Utilities;
@@ -15,23 +31,13 @@ public final class EmulatorHelper {
   @VisibleForTesting
   public static final String FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR = "FIREBASE_RTDB_EMULATOR_HOST";
 
-  private static String getEmulatorHostFromEnv() {
+  public static String getEmulatorHostFromEnv() {
     return System.getenv(FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR);
   }
 
-  public static ParsedUrl parsedUrlForEmulator(String dbName, String emulatorUrl) {
-    RepoInfo repoInfo = new RepoInfo();
-    repoInfo.host = emulatorUrl;
-    repoInfo.namespace = dbName;
-    repoInfo.secure = false;
-    ParsedUrl parsedUrl = new ParsedUrl();
-    parsedUrl.repoInfo = repoInfo;
-    parsedUrl.path = new Path("");
-    return parsedUrl;
-  }
-
   @VisibleForTesting
-  static String extractEmulatorUrlFromDbUrl(String suppliedDatabaseUrl) {
+  @Nullable
+  static String tryToExtractEmulatorUrlFromDbUrl(String suppliedDatabaseUrl) {
     if (Strings.isNullOrEmpty(suppliedDatabaseUrl)) {
       return null;
     }
@@ -45,16 +51,16 @@ public final class EmulatorHelper {
     return String.format("http://%s%s?ns=%s", repoInfo.host, pathString, repoInfo.namespace);
   }
 
-  public static String getEmulatorUrl(String suppliedDatabaseUrl) {
-    String extractedEmulatorUrl = extractEmulatorUrlFromDbUrl(suppliedDatabaseUrl);
+  public static String overwriteDatabaseUrlWithEmulatorHost(String suppliedDatabaseUrl,
+      String emulatorHost) {
+    String extractedEmulatorUrl = tryToExtractEmulatorUrlFromDbUrl(suppliedDatabaseUrl);
     if (!Strings.isNullOrEmpty(extractedEmulatorUrl)) {
       return extractedEmulatorUrl;
     }
-    String emulatorHostFromEnv = getEmulatorHostFromEnv();
-    if (Strings.isNullOrEmpty(emulatorHostFromEnv)) {
+    if (Strings.isNullOrEmpty(emulatorHost)) {
       return null;
     }
-    if (emulatorHostFromEnv.contains("http:") || emulatorHostFromEnv.contains("?ns=")) {
+    if (emulatorHost.contains("http:") || emulatorHost.contains("?ns=")) {
       throw new IllegalArgumentException(
           "emulator host declared in environment variable must be of the format \"host:port\"");
     }
@@ -66,6 +72,6 @@ public final class EmulatorHelper {
       path = parsedUrl.path.isEmpty() ? "/" : parsedUrl.path.toString() + "/";
     }
     // Must format correctly
-    return String.format("http://%s%s?ns=%s", emulatorHostFromEnv, path, namespaceName);
+    return String.format("http://%s%s?ns=%s", emulatorHost, path, namespaceName);
   }
 }

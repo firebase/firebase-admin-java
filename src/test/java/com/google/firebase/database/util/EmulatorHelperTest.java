@@ -3,12 +3,9 @@ package com.google.firebase.database.util;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.firebase.database.DatabaseException;
-import com.google.firebase.testing.TestUtils;
 import java.util.List;
 import java.util.Map;
 import org.junit.Rule;
@@ -30,7 +27,7 @@ public class EmulatorHelperTest {
         "http://my-custom-hosted-emulator.com:80/path/to/document/?ns=dummy-ns"
     );
     for (Map.Entry<String, String> e : suppliedToExpectedUrlsMap.entrySet()) {
-      assertEquals(e.getValue(), EmulatorHelper.extractEmulatorUrlFromDbUrl(e.getKey()));
+      assertEquals(e.getValue(), EmulatorHelper.tryToExtractEmulatorUrlFromDbUrl(e.getKey()));
     }
   }
 
@@ -45,7 +42,7 @@ public class EmulatorHelperTest {
         "http://test-namespace.firebaseio.com" // firebaseio.com not supported
     );
     for (String url : nonEmulatorUrls) {
-      assertNull(EmulatorHelper.extractEmulatorUrlFromDbUrl(url));
+      assertNull(EmulatorHelper.tryToExtractEmulatorUrlFromDbUrl(url));
     }
   }
 
@@ -57,7 +54,7 @@ public class EmulatorHelperTest {
     );
     for (String invalidFormedUrl : invalidFormedUrls) {
       thrown.expect(DatabaseException.class);
-      EmulatorHelper.extractEmulatorUrlFromDbUrl(invalidFormedUrl);
+      EmulatorHelper.tryToExtractEmulatorUrlFromDbUrl(invalidFormedUrl);
     }
   }
 
@@ -113,12 +110,8 @@ public class EmulatorHelperTest {
     );
 
     for (CustomTestCase tc : testCases) {
-      TestUtils.setEnvironmentVariables(
-          ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
-              Strings.nullToEmpty(tc.envVariableUrl)));
-      assertEquals(tc.expectedEmulatorUrl, EmulatorHelper.getEmulatorUrl(tc.suppliedDbUrl));
-      TestUtils.unsetEnvironmentVariables(
-          ImmutableSet.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR));
+      assertEquals(tc.expectedEmulatorUrl,
+          EmulatorHelper.overwriteDatabaseUrlWithEmulatorHost(tc.suppliedDbUrl, tc.envVariableUrl));
     }
   }
 
@@ -130,13 +123,9 @@ public class EmulatorHelperTest {
         "localhost"
     );
     for (String invalidEnvVar : invalidEnvVars) {
-      TestUtils.setEnvironmentVariables(
-          ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
-              Strings.nullToEmpty(invalidEnvVar)));
       thrown.expect(IllegalArgumentException.class);
-      EmulatorHelper.getEmulatorUrl("https://valid-namespace.firebaseio.com");
-      TestUtils.unsetEnvironmentVariables(
-          ImmutableSet.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR));
+      EmulatorHelper.overwriteDatabaseUrlWithEmulatorHost("https://valid-namespace.firebaseio.com",
+          invalidEnvVar);
     }
   }
 }

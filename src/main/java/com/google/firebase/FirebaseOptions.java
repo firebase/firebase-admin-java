@@ -23,21 +23,17 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Key;
-import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.FirestoreOptions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.database.util.EmulatorHelper;
 import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /** Configurable Firebase options. */
 public final class FirebaseOptions {
@@ -74,16 +70,10 @@ public final class FirebaseOptions {
   private final FirestoreOptions firestoreOptions;
 
   private FirebaseOptions(@NonNull FirebaseOptions.Builder builder) {
-    String emulatorUrl = EmulatorHelper.getEmulatorUrl(builder.databaseUrl);
-    if (!Strings.isNullOrEmpty(emulatorUrl)) {
-      this.databaseUrl = emulatorUrl;
-      this.credentials = new EmulatorCredentials();
-    } else {
-      this.databaseUrl = builder.databaseUrl;
-      this.credentials = checkNotNull(builder.credentials,
-          "FirebaseOptions must be initialized with setCredentials().")
-          .createScoped(FIREBASE_SCOPES);
-    }
+    this.databaseUrl = builder.databaseUrl;
+    this.credentials = checkNotNull(builder.credentials,
+        "FirebaseOptions must be initialized with setCredentials().")
+        .createScoped(FIREBASE_SCOPES);
     this.databaseAuthVariableOverride = builder.databaseAuthVariableOverride;
     this.projectId = builder.projectId;
     if (!Strings.isNullOrEmpty(builder.storageBucket)) {
@@ -463,23 +453,6 @@ public final class FirebaseOptions {
      */
     public FirebaseOptions build() {
       return new FirebaseOptions(this);
-    }
-  }
-
-  private static class EmulatorCredentials extends GoogleCredentials {
-
-    private static AccessToken newToken() {
-      return new AccessToken("owner",
-          new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)));
-    }
-
-    EmulatorCredentials() {
-      super(newToken());
-    }
-
-    @Override
-    public AccessToken refreshAccessToken() {
-      return newToken();
     }
   }
 }

@@ -193,4 +193,13 @@ public class UtilitiesTest {
     assertEquals("2312,hi", params.get("qpf"));
     assertEquals("true", params.get("xyz"));
   }
+
+
+  @Test
+  public void testExtractParamsFromEncodedUrl() {
+    Map<String, String> params = Utilities.getQueryParamsMap("abc=213&qpf=2312&xyz=true&qpf=hi");
+    assertEquals("213", params.get("abc"));
+    assertEquals("2312,hi", params.get("qpf"));
+    assertEquals("true", params.get("xyz"));
+  }
 }
