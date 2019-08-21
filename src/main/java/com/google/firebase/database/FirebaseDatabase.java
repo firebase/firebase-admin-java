@@ -126,14 +126,16 @@ public class FirebaseDatabase {
           "Failed to get FirebaseDatabase instance: Specify DatabaseURL within "
               + "FirebaseApp or from your getInstance() call.");
     }
+    ParsedUrl parsedUrl;
     boolean connectingToEmulator = false;
     String possibleEmulatorUrl = EmulatorHelper
         .overwriteDatabaseUrlWithEmulatorHost(url, EmulatorHelper.getEmulatorHostFromEnv());
     if (!Strings.isNullOrEmpty(possibleEmulatorUrl)) {
-      url = possibleEmulatorUrl;
+      parsedUrl = Utilities.parseUrl(possibleEmulatorUrl);
       connectingToEmulator = true;
+    } else {
+      parsedUrl = Utilities.parseUrl(url);
     }
-    ParsedUrl parsedUrl = Utilities.parseUrl(url);
     if (!parsedUrl.path.isEmpty()) {
       throw new DatabaseException(
           "Specified Database URL '"

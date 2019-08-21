@@ -83,8 +83,7 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
       Bootstrap bootstrap = new Bootstrap();
       SslContext sslContext = null;
       if (this.isSecure) {
-        TrustManagerFactory trustFactory = null;
-        trustFactory = TrustManagerFactory.getInstance(
+        TrustManagerFactory trustFactory = TrustManagerFactory.getInstance(
             TrustManagerFactory.getDefaultAlgorithm());
         trustFactory.init((KeyStore) null);
         sslContext = SslContextBuilder.forClient()

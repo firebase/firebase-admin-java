@@ -26,8 +26,9 @@ import com.google.api.client.util.Key;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.FirestoreOptions;
 import com.google.common.base.Strings;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.FirebaseOptions.DeferredApplicationCredentials.CredentialsGenerator;
 import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
@@ -59,7 +60,7 @@ public final class FirebaseOptions {
 
   private final String databaseUrl;
   private final String storageBucket;
-  private final DeferredApplicationCredentials deferredCredentials;
+  private final Supplier<GoogleCredentials> credentialsSupplier;
   private final Map<String, Object> databaseAuthVariableOverride;
   private final String projectId;
   private final String serviceAccountId;
@@ -72,17 +73,8 @@ public final class FirebaseOptions {
 
   private FirebaseOptions(@NonNull final FirebaseOptions.Builder builder) {
     this.databaseUrl = builder.databaseUrl;
-    if (builder.deferredCredentials != null) {
-      this.deferredCredentials = builder.deferredCredentials;
-    } else {
-      this.deferredCredentials = new DeferredApplicationCredentials(new CredentialsGenerator() {
-        @Override
-        public GoogleCredentials generate() {
-          return checkNotNull(builder.credentials,
-              "FirebaseOptions must be initialized with setCredentials().");
-        }
-      });
-    }
+    this.credentialsSupplier = checkNotNull(
+        builder.credentialsSupplier, "FirebaseOptions must be initialized with setCredentials().");
     this.databaseAuthVariableOverride = builder.databaseAuthVariableOverride;
     this.projectId = builder.projectId;
     if (!Strings.isNullOrEmpty(builder.storageBucket)) {
@@ -127,7 +119,7 @@ public final class FirebaseOptions {
   }
 
   GoogleCredentials getCredentials() {
-    return deferredCredentials.getCredentials();
+    return credentialsSupplier.get();
   }
 
   /**
@@ -236,8 +228,7 @@ public final class FirebaseOptions {
 
     @Key("serviceAccountId")
     private String serviceAccountId;
-    private GoogleCredentials credentials;
-    private DeferredApplicationCredentials deferredCredentials;
+    private Supplier<GoogleCredentials> credentialsSupplier;
     private FirestoreOptions firestoreOptions;
     private HttpTransport httpTransport = Utils.getDefaultTransport();
     private JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
@@ -257,7 +248,7 @@ public final class FirebaseOptions {
     public Builder(FirebaseOptions options) {
       databaseUrl = options.databaseUrl;
       storageBucket = options.storageBucket;
-      deferredCredentials = options.deferredCredentials;
+      credentialsSupplier = options.credentialsSupplier;
       databaseAuthVariableOverride = options.databaseAuthVariableOverride;
       projectId = options.projectId;
       httpTransport = options.httpTransport;
@@ -317,19 +308,19 @@ public final class FirebaseOptions {
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setCredentials(GoogleCredentials credentials) {
-      this.credentials = checkNotNull(credentials);
+      this.credentialsSupplier = Suppliers
+          .ofInstance(checkNotNull(credentials).createScoped(FIREBASE_SCOPES));
       return this;
     }
 
     /**
-     * Sets the <code>DeferredApplicationCredentials</code> to use to authenticate the SDK. This is
-     * NOT intended for public use outside the SDK.
+     * Sets the <code>Supplier</code> of <code>GoogleCredentials</code> to use to authenticate the SDK. This is NOT intended for public use outside the SDK.
      *
-     * @param credentials DeferredApplicationCredentials instance that wraps GoogleCredentials.
+     * @param credentialsSupplier Supplier instance that wraps GoogleCredentials.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
-    Builder setDeferredCredentials(DeferredApplicationCredentials credentials) {
-      this.deferredCredentials = checkNotNull(credentials);
+    Builder setCredentials(Supplier<GoogleCredentials> credentialsSupplier) {
+      this.credentialsSupplier = checkNotNull(credentialsSupplier);
       return this;
     }
     /**
@@ -473,29 +464,6 @@ public final class FirebaseOptions {
      */
     public FirebaseOptions build() {
       return new FirebaseOptions(this);
-    }
-  }
-
-  static class DeferredApplicationCredentials {
-
-    private final CredentialsGenerator credentialsGenerator;
-    private GoogleCredentials googleCredentials = null;
-
-    DeferredApplicationCredentials(
-        CredentialsGenerator credentialsGenerator) {
-      this.credentialsGenerator = credentialsGenerator;
-    }
-
-    public GoogleCredentials getCredentials() {
-      if (googleCredentials == null) {
-        googleCredentials = credentialsGenerator.generate().createScoped(FIREBASE_SCOPES);
-      }
-      return googleCredentials;
-    }
-
-    public interface CredentialsGenerator {
-
-      GoogleCredentials generate();
     }
   }
 }

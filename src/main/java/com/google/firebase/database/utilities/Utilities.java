@@ -19,8 +19,10 @@ package com.google.firebase.database.utilities;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.SettableApiFuture;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
+import com.google.common.net.UrlEscapers;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
@@ -28,12 +30,14 @@ import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.RepoInfo;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.http.client.utils.URLEncodedUtils;
 
 public class Utilities {
   private static final char[] HEX_CHARACTERS = "0123456789abcdef".toCharArray();
@@ -63,7 +67,7 @@ public class Utilities {
         repoInfo.secure = true;
       }
 
-      Map<String, String> params = getQueryParamsMap(uri.getQuery());
+      Map<String, String> params = getQueryParamsMap(uri.getRawQuery());
       String namespaceParam = params.get("ns");
       if (!Strings.isNullOrEmpty(namespaceParam)) {
         repoInfo.namespace = namespaceParam;
@@ -73,8 +77,8 @@ public class Utilities {
       }
 
       repoInfo.internalHost = repoInfo.host;
-
-      String originalPathString = uri.getPath();
+      // use raw (encoded) path for backwards compatibility.
+      String originalPathString = uri.getRawPath();
       Validation.validateRootPathString(originalPathString);
 
       ParsedUrl parsedUrl = new ParsedUrl();
@@ -88,30 +92,6 @@ public class Utilities {
   }
 
   /**
-   * Extracts the path string from the original URL without changing the encoding (unlike
-   * Uri.getPath()).
-   */
-  private static String extractPathString(String originalUrl) {
-    int schemeOffset = originalUrl.indexOf("//");
-    if (schemeOffset == -1) {
-      throw new DatabaseException("Firebase Database URL is missing URL scheme");
-    }
-
-    String urlWithoutScheme = originalUrl.substring(schemeOffset + 2);
-    int pathOffset = urlWithoutScheme.indexOf("/");
-    if (pathOffset != -1) {
-      int queryOffset = urlWithoutScheme.indexOf("?");
-      if (queryOffset != -1) {
-        return urlWithoutScheme.substring(pathOffset + 1, queryOffset);
-      } else {
-        return urlWithoutScheme.substring(pathOffset + 1);
-      }
-    } else {
-      return "";
-    }
-  }
-
-  /**
    * Extracts a map of query parameters from a non-encoded query string. Repeated parameters have
    * values concatenated with commas.
    *
@@ -119,7 +99,8 @@ public class Utilities {
    * @return map of query parameters and their values.
    */
   @VisibleForTesting
-  static Map<String, String> getQueryParamsMap(String queryString) {
+  static Map<String, String> getQueryParamsMap(String queryString)
+      throws UnsupportedEncodingException {
     Map<String, String> paramsMap = new HashMap<>();
     if (Strings.isNullOrEmpty(queryString)) {
       return paramsMap;
@@ -127,13 +108,16 @@ public class Utilities {
     String[] paramPairs = queryString.split("&");
     for (String paramPair : paramPairs) {
       String[] pairParts = paramPair.split("=");
-      String value = paramsMap.get(pairParts[0]);
-      if (Strings.isNullOrEmpty(value)) {
-        value = pairParts[1];
+      // both the first and second part will be encoded now, we must decode them
+      String decodedKey = URLDecoder.decode(pairParts[0], Charsets.UTF_8.name());
+      String decodedValue = URLDecoder.decode(pairParts[1], Charsets.UTF_8.name());
+      String runningValue = paramsMap.get(decodedKey);
+      if (Strings.isNullOrEmpty(runningValue)) {
+        runningValue = decodedValue;
       } else {
-        value += "," + pairParts[1];
+        runningValue += "," + decodedValue;
       }
-      paramsMap.put(pairParts[0], value);
+      paramsMap.put(pairParts[0], runningValue);
     }
     return paramsMap;
   }
