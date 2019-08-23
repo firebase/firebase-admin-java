@@ -1,13 +1,17 @@
 package com.google.firebase.database.util;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.database.DatabaseException;
+import com.google.firebase.database.utilities.Utilities;
 import java.util.List;
 import java.util.Map;
+import javax.rmi.CORBA.Util;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -30,7 +34,7 @@ public class EmulatorHelperTest {
         "http://my-custom-hosted-emulator.com/?ns=dummy-ns"
     );
     for (Map.Entry<String, String> e : suppliedToExpectedUrlsMap.entrySet()) {
-      assertEquals(e.getValue(), EmulatorHelper.tryToExtractEmulatorUrlFromDbUrl(e.getKey()));
+      assertTrue(EmulatorHelper.isEmulatorUrl(e.getKey()));
     }
   }
 
@@ -42,7 +46,7 @@ public class EmulatorHelperTest {
         "http://test-namespace.firebaseio.com" // firebaseio.com not supported
     );
     for (String url : nonEmulatorUrls) {
-      assertNull(EmulatorHelper.tryToExtractEmulatorUrlFromDbUrl(url));
+      assertFalse(EmulatorHelper.isEmulatorUrl(url));
     }
   }
 
@@ -54,7 +58,7 @@ public class EmulatorHelperTest {
     );
     for (String invalidFormedUrl : invalidFormedUrls) {
       thrown.expect(DatabaseException.class);
-      EmulatorHelper.tryToExtractEmulatorUrlFromDbUrl(invalidFormedUrl);
+      EmulatorHelper.isEmulatorUrl(invalidFormedUrl);
     }
   }
 
@@ -78,20 +82,20 @@ public class EmulatorHelperTest {
     testCases = ImmutableList.of(
         // cases where the env var is ignored because the supplied DB URL is a valid emulator URL
         new CustomTestCase("http://my-custom-hosted-emulator.com:80?ns=dummy-ns", "",
-            "http://my-custom-hosted-emulator.com:80/?ns=dummy-ns"),
+            "http://my-custom-hosted-emulator.com:80?ns=dummy-ns"),
         new CustomTestCase("http://localhost:9000?ns=test-ns", null,
-            "http://localhost:9000/?ns=test-ns"),
+            "http://localhost:9000?ns=test-ns"),
         new CustomTestCase("http://my-custom-hosted-emulator.com:80?ns=dummy-ns",
-            "http://localhost:8080/ns=ns-2",
-            "http://my-custom-hosted-emulator.com:80/?ns=dummy-ns"),
+            "http://localhost:8080?ns=ns-2",
+            "http://my-custom-hosted-emulator.com:80?ns=dummy-ns"),
         new CustomTestCase("http://localhost:9000?ns=ns-1", "localhost:8080",
-            "http://localhost:9000/?ns=ns-1"),
+            "http://localhost:9000?ns=ns-1"),
         new CustomTestCase("http://localhost:9000?ns=ns-1", "http://localhost:8080/ns=ns-2",
-            "http://localhost:9000/?ns=ns-1"),
+            "http://localhost:9000?ns=ns-1"),
         new CustomTestCase("http://localhost:9000/a/b/c?ns=ns-1", "http://localhost:8080/ns=ns-2",
-            "http://localhost:9000/a/b/c/?ns=ns-1"),
+            "http://localhost:9000/a/b/c?ns=ns-1"),
         new CustomTestCase("https://firebaseio.com?ns=valid-namespace", "localhost:90",
-            "https://firebaseio.com/?ns=valid-namespace"),
+            "https://firebaseio.com?ns=valid-namespace"),
 
         // cases where the supplied DB URL is not an emulator URL, so we extract ns from it
         // and append it to the emulator URL from env var(if it is valid)
@@ -111,7 +115,7 @@ public class EmulatorHelperTest {
 
     for (CustomTestCase tc : testCases) {
       assertEquals(tc.expectedEmulatorUrl,
-          EmulatorHelper.overwriteDatabaseUrlWithEmulatorHost(tc.suppliedDbUrl, tc.envVariableUrl));
+          EmulatorHelper.getEmulatorUrl(tc.suppliedDbUrl, tc.envVariableUrl));
     }
   }
 
@@ -124,7 +128,7 @@ public class EmulatorHelperTest {
     );
     for (String invalidEnvVar : invalidEnvVars) {
       thrown.expect(IllegalArgumentException.class);
-      EmulatorHelper.overwriteDatabaseUrlWithEmulatorHost("https://valid-namespace.firebaseio.com",
+      EmulatorHelper.getEmulatorUrl("https://valid-namespace.firebaseio.com",
           invalidEnvVar);
     }
   }

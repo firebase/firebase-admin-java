@@ -34,10 +34,6 @@ import com.google.firebase.database.util.EmulatorHelper;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 public class FirebaseDatabaseTest {
@@ -48,99 +44,118 @@ public class FirebaseDatabaseTest {
           .setDatabaseUrl("https://firebase-db-test.firebaseio.com")
           .build();
 
-  @Before
-  public void setupTestMethod() {
+  @Test
+  public void testGetInstance() {
     FirebaseApp.initializeApp(firebaseOptions);
-  }
-
-  @After
-  public void tearDownTestMethod() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
-  }
-
-  @Test
-  public void testGetInstance() throws ExecutionException, InterruptedException {
-    FirebaseDatabase defaultDatabase = FirebaseDatabase.getInstance();
-    assertNotNull(defaultDatabase);
-    assertSame(defaultDatabase, FirebaseDatabase.getInstance());
-    assertSame(FirebaseApp.getInstance(), defaultDatabase.getApp());
-  }
-
-  @Test
-  public void testGetInstanceForUrl() throws ExecutionException, InterruptedException {
-    String url = "https://firebase-db-test2.firebaseio.com";
-    FirebaseDatabase otherDatabase = FirebaseDatabase.getInstance(url);
-    assertNotNull(otherDatabase);
-    assertNotSame(otherDatabase, FirebaseDatabase.getInstance());
-  }
-
-  @Test
-  public void testInvalidUrl() throws ExecutionException, InterruptedException {
-    String[] urls = new String[]{
-        null, "", "https://firebase-db-test.firebaseio.com/foo"
-    };
-    for (String url : urls) {
-      try {
-        FirebaseDatabase.getInstance(url);
-        fail("No error thrown for URL: " + url);
-      } catch (DatabaseException expected) {
-        // expected
-      }
+    try {
+      FirebaseDatabase defaultDatabase = FirebaseDatabase.getInstance();
+      assertNotNull(defaultDatabase);
+      assertSame(defaultDatabase, FirebaseDatabase.getInstance());
+      assertSame(FirebaseApp.getInstance(), defaultDatabase.getApp());
+    } finally {
+      TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
     }
   }
 
   @Test
-  public void testGetInstanceForApp() throws ExecutionException, InterruptedException {
+  public void testGetInstanceForUrl() {
+    FirebaseApp.initializeApp(firebaseOptions);
+    try {
+      String url = "https://firebase-db-test2.firebaseio.com";
+      FirebaseDatabase otherDatabase = FirebaseDatabase.getInstance(url);
+      assertNotNull(otherDatabase);
+      assertNotSame(otherDatabase, FirebaseDatabase.getInstance());
+    } finally {
+      TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    }
+  }
+
+  @Test
+  public void testInvalidUrl() {
+    FirebaseApp.initializeApp(firebaseOptions);
+    try {
+      String[] urls = new String[]{
+          null, "", "https://firebase-db-test.firebaseio.com/foo"
+      };
+      for (String url : urls) {
+        try {
+          FirebaseDatabase.getInstance(url);
+          fail("No error thrown for URL: " + url);
+        } catch (DatabaseException expected) {
+          // expected
+        }
+      }
+    } finally {
+      TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    }
+  }
+
+  @Test
+  public void testGetInstanceForApp() {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testGetInstanceForApp");
-    FirebaseDatabase db = FirebaseDatabase.getInstance(app);
-    assertNotNull(db);
-    assertSame(db, FirebaseDatabase.getInstance(app));
+    try {
+      FirebaseDatabase db = FirebaseDatabase.getInstance(app);
+      assertNotNull(db);
+      assertSame(db, FirebaseDatabase.getInstance(app));
+    } finally {
+      TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    }
   }
 
   @Test
   public void testReference() {
-    FirebaseDatabase defaultDatabase = FirebaseDatabase.getInstance();
-    DatabaseReference reference = defaultDatabase.getReference();
-    assertNotNull(reference);
-    assertNull(reference.getKey());
-    assertNull(reference.getParent());
+    FirebaseApp.initializeApp(firebaseOptions);
+    try {
+      FirebaseDatabase defaultDatabase = FirebaseDatabase.getInstance();
+      DatabaseReference reference = defaultDatabase.getReference();
+      assertNotNull(reference);
+      assertNull(reference.getKey());
+      assertNull(reference.getParent());
 
-    reference = defaultDatabase.getReference("foo");
-    assertNotNull(reference);
-    assertEquals("foo", reference.getKey());
-    assertNull(reference.getParent().getKey());
+      reference = defaultDatabase.getReference("foo");
+      assertNotNull(reference);
+      assertEquals("foo", reference.getKey());
+      assertNull(reference.getParent().getKey());
 
-    reference = defaultDatabase.getReference("foo/bar");
-    assertNotNull(reference);
-    assertEquals("bar", reference.getKey());
-    assertEquals("foo", reference.getParent().getKey());
+      reference = defaultDatabase.getReference("foo/bar");
+      assertNotNull(reference);
+      assertEquals("bar", reference.getKey());
+      assertEquals("foo", reference.getParent().getKey());
+    } finally {
+      TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    }
   }
 
   @Test
   public void testReferenceFromUrl() {
-    FirebaseDatabase defaultDatabase = FirebaseDatabase.getInstance();
-    DatabaseReference reference = defaultDatabase.getReferenceFromUrl(
-        "https://firebase-db-test.firebaseio.com/foo/bar");
-    assertNotNull(reference);
-    assertEquals("bar", reference.getKey());
-    assertEquals("foo", reference.getParent().getKey());
+    FirebaseApp.initializeApp(firebaseOptions);
     try {
-      defaultDatabase.getReferenceFromUrl(null);
-      fail("No error thrown for null URL");
-    } catch (NullPointerException expected) {
-      // expected
-    }
+      FirebaseDatabase defaultDatabase = FirebaseDatabase.getInstance();
+      DatabaseReference reference = defaultDatabase.getReferenceFromUrl(
+          "https://firebase-db-test.firebaseio.com/foo/bar");
+      assertNotNull(reference);
+      assertEquals("bar", reference.getKey());
+      assertEquals("foo", reference.getParent().getKey());
+      try {
+        defaultDatabase.getReferenceFromUrl(null);
+        fail("No error thrown for null URL");
+      } catch (NullPointerException expected) {
+        // expected
+      }
 
-    try {
-      defaultDatabase.getReferenceFromUrl("https://other-db-test.firebaseio.com/foo/bar");
-      fail("No error thrown for invalid URL");
-    } catch (DatabaseException expected) {
-      // expected
+      try {
+        defaultDatabase.getReferenceFromUrl("https://other-db-test.firebaseio.com/foo/bar");
+        fail("No error thrown for invalid URL");
+      } catch (DatabaseException expected) {
+        // expected
+      }
+    } finally {
+      TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
     }
   }
 
   @Test
-  public void testAppDelete() throws ExecutionException, InterruptedException {
+  public void testAppDelete() {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testAppDelete");
     FirebaseDatabase db = FirebaseDatabase.getInstance(app);
     assertNotNull(db);
@@ -162,36 +177,24 @@ public class FirebaseDatabaseTest {
   }
 
   @Test
-  public void testInitAfterAppDelete() throws ExecutionException, InterruptedException,
-      TimeoutException {
-    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testInitAfterAppDelete");
-    FirebaseDatabase db1 = FirebaseDatabase.getInstance(app);
-    assertNotNull(db1);
-    app.delete();
+  public void testInitAfterAppDelete() {
+    try {
+      FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testInitAfterAppDelete");
+      FirebaseDatabase db1 = FirebaseDatabase.getInstance(app);
+      assertNotNull(db1);
+      app.delete();
 
-    app = FirebaseApp.initializeApp(firebaseOptions, "testInitAfterAppDelete");
-    FirebaseDatabase db2 = FirebaseDatabase.getInstance(app);
-    assertNotNull(db2);
-    assertNotSame(db1, db2);
+      app = FirebaseApp.initializeApp(firebaseOptions, "testInitAfterAppDelete");
+      FirebaseDatabase db2 = FirebaseDatabase.getInstance(app);
+      assertNotNull(db2);
+      assertNotSame(db1, db2);
+    } finally {
+      TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    }
   }
 
   @Test
   public void testDbUrlIsEmulatorUrlWhenSettingOptionsManually() {
-    class CustomTestCase {
-
-      private String suppliedDbUrl;
-      private String envVariableUrl;
-      private String expectedEmulatorUrl;
-      private String namespace;
-
-      private CustomTestCase(String suppliedDbUrl, String envVariableUrl,
-          String expectedEmulatorUrl, String namespace) {
-        this.suppliedDbUrl = suppliedDbUrl;
-        this.envVariableUrl = envVariableUrl;
-        this.expectedEmulatorUrl = expectedEmulatorUrl;
-        this.namespace = namespace;
-      }
-    }
 
     List<CustomTestCase> testCases;
     testCases = ImmutableList.of(
@@ -208,21 +211,15 @@ public class FirebaseDatabaseTest {
         new CustomTestCase("https://test.firebaseio.com?ns=valid-namespace", "localhost:90",
             "http://localhost:90", "valid-namespace")
     );
-    boolean earlierDefaultAppFound = false;
-    try {
-      FirebaseApp.getInstance(FirebaseApp.DEFAULT_APP_NAME).delete();
-      earlierDefaultAppFound = true;
-    } catch (Exception ignored) {
-      // proceed if no leftover default app found.
-    }
     for (CustomTestCase tc : testCases) {
       try {
         FirebaseApp app = FirebaseApp.initializeApp();
         TestUtils.setEnvironmentVariables(
             ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
                 Strings.nullToEmpty(tc.envVariableUrl)));
-        FirebaseDatabase instance = FirebaseDatabase.getInstance(app, tc.suppliedDbUrl);
-        assertEquals(tc.expectedEmulatorUrl, instance.getReference().repo.getRepoInfo().toString());
+        FirebaseDatabase instance = FirebaseDatabase.getInstance(app, tc.rootDbUrl);
+        assertEquals(tc.expectedEmulatorRootUrl,
+            instance.getReference().repo.getRepoInfo().toString());
         assertEquals(tc.namespace, instance.getReference().repo.getRepoInfo().namespace);
         // clean up after
         app.delete();
@@ -231,33 +228,10 @@ public class FirebaseDatabaseTest {
             ImmutableSet.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR));
       }
     }
-    if (earlierDefaultAppFound) {
-      FirebaseApp.initializeApp();
-    }
   }
-
 
   @Test
   public void testDbUrlIsEmulatorUrlForDbRefWithPath() {
-    class CustomTestCase {
-
-      private String rootDbUrl;
-      private String pathUrl;
-      private String envVariableUrl;
-      private String expectedEmulatorRootUrl;
-      private String namespace;
-      private String path;
-
-      private CustomTestCase(String rootDbUrl, String pathUrl, String envVariableUrl,
-          String expectedEmulatorRootUrl, String namespace, String path) {
-        this.rootDbUrl = rootDbUrl;
-        this.pathUrl = pathUrl;
-        this.envVariableUrl = envVariableUrl;
-        this.expectedEmulatorRootUrl = expectedEmulatorRootUrl;
-        this.namespace = namespace;
-        this.path = path;
-      }
-    }
 
     List<CustomTestCase> testCases;
     testCases = ImmutableList.of(
@@ -274,13 +248,6 @@ public class FirebaseDatabaseTest {
             "http://valid-namespace.firebaseio.com/a/b/c/d", "localhost:8080",
             "http://localhost:8080", "valid-namespace", "/a/b/c/d")
     );
-    boolean earlierDefaultAppFound = false;
-    try {
-      FirebaseApp.getInstance(FirebaseApp.DEFAULT_APP_NAME).delete();
-      earlierDefaultAppFound = true;
-    } catch (Exception ignored) {
-      // proceed if no leftover default app found.
-    }
 
     for (CustomTestCase tc : testCases) {
       try {
@@ -301,8 +268,30 @@ public class FirebaseDatabaseTest {
             ImmutableSet.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR));
       }
     }
-    if (earlierDefaultAppFound) {
-      FirebaseApp.initializeApp();
+  }
+
+  private static class CustomTestCase {
+
+    private String rootDbUrl;
+    private String pathUrl;
+    private String envVariableUrl;
+    private String expectedEmulatorRootUrl;
+    private String namespace;
+    private String path;
+
+    private CustomTestCase(String rootDbUrl, String envVariableUrl,
+        String expectedEmulatorRootUrl, String namespace) {
+      this(rootDbUrl, null, envVariableUrl, expectedEmulatorRootUrl, namespace, null);
+    }
+
+    private CustomTestCase(String rootDbUrl, String pathUrl, String envVariableUrl,
+        String expectedEmulatorRootUrl, String namespace, String path) {
+      this.rootDbUrl = rootDbUrl;
+      this.pathUrl = pathUrl;
+      this.envVariableUrl = envVariableUrl;
+      this.expectedEmulatorRootUrl = expectedEmulatorRootUrl;
+      this.namespace = namespace;
+      this.path = path;
     }
   }
 }

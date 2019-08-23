@@ -40,7 +40,6 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
     this(firebaseApp, executor, true);
   }
 
-
   JvmAuthTokenProvider(FirebaseApp firebaseApp, Executor executor, boolean autoRefresh) {
     this(firebaseApp, executor, autoRefresh, ImplFirebaseTrampolines.getCredentials(firebaseApp));
   }

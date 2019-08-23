@@ -37,26 +37,18 @@ public final class EmulatorHelper {
 
   @VisibleForTesting
   @Nullable
-  static String tryToExtractEmulatorUrlFromDbUrl(String suppliedDatabaseUrl) {
-    if (Strings.isNullOrEmpty(suppliedDatabaseUrl)) {
-      return null;
+  static boolean isEmulatorUrl(String databaseUrl) {
+    if (Strings.isNullOrEmpty(databaseUrl)) {
+      return false;
     }
-    ParsedUrl parsedUrl = Utilities.parseUrl(suppliedDatabaseUrl);
-    RepoInfo repoInfo = parsedUrl.repoInfo;
-    if (repoInfo.host.endsWith(".firebaseio.com") || !suppliedDatabaseUrl
-        .contains("ns=")) {
-      return null;
-    }
-    String pathString = parsedUrl.path.isEmpty() ? "/" : parsedUrl.path.toString() + "/";
-    String scheme = repoInfo.isSecure() ? "https" : "http";
-    return String.format("%s://%s%s?ns=%s", scheme, repoInfo.host, pathString, repoInfo.namespace);
+    RepoInfo repoInfo = Utilities.parseUrl(databaseUrl).repoInfo;
+    return !repoInfo.host.endsWith(".firebaseio.com") && databaseUrl.contains("ns=");
   }
 
-  public static String overwriteDatabaseUrlWithEmulatorHost(String suppliedDatabaseUrl,
-      String emulatorHost) {
-    String extractedEmulatorUrl = tryToExtractEmulatorUrlFromDbUrl(suppliedDatabaseUrl);
-    if (!Strings.isNullOrEmpty(extractedEmulatorUrl)) {
-      return extractedEmulatorUrl;
+  @Nullable
+  public static String getEmulatorUrl(String suppliedDatabaseUrl, String emulatorHost) {
+    if (isEmulatorUrl(suppliedDatabaseUrl)) {
+      return suppliedDatabaseUrl;
     }
     if (Strings.isNullOrEmpty(emulatorHost)) {
       return null;
@@ -68,9 +60,9 @@ public final class EmulatorHelper {
     String namespaceName = "default";
     String path = "/";
     if (!Strings.isNullOrEmpty(suppliedDatabaseUrl)) {
-      ParsedUrl parsedUrl = Utilities.parseUrl(suppliedDatabaseUrl);
-      namespaceName = parsedUrl.repoInfo.namespace;
-      path = parsedUrl.path.isEmpty() ? "/" : parsedUrl.path.toString() + "/";
+      ParsedUrl parsedDbUrl = Utilities.parseUrl(suppliedDatabaseUrl);
+      namespaceName = parsedDbUrl.repoInfo.namespace;
+      path = parsedDbUrl.path.isEmpty() ? "/" : parsedDbUrl.path.toString() + "/";
     }
     // Must format correctly
     return String.format("http://%s%s?ns=%s", emulatorHost, path, namespaceName);

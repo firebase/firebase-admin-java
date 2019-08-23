@@ -129,7 +129,7 @@ public class FirebaseDatabase {
     ParsedUrl parsedUrl;
     boolean connectingToEmulator = false;
     String possibleEmulatorUrl = EmulatorHelper
-        .overwriteDatabaseUrlWithEmulatorHost(url, EmulatorHelper.getEmulatorHostFromEnv());
+        .getEmulatorUrl(url, EmulatorHelper.getEmulatorHostFromEnv());
     if (!Strings.isNullOrEmpty(possibleEmulatorUrl)) {
       parsedUrl = Utilities.parseUrl(possibleEmulatorUrl);
       connectingToEmulator = true;
@@ -164,7 +164,6 @@ public class FirebaseDatabase {
     }
     return database;
   }
-
 
   /** This exists so Repo can create FirebaseDatabase objects to keep legacy tests working. */
   static FirebaseDatabase createForTests(
@@ -226,7 +225,7 @@ public class FirebaseDatabase {
     checkNotNull(url,
         "Can't pass null for argument 'url' in FirebaseDatabase.getReferenceFromUrl()");
     String possibleEmulatorUrl = EmulatorHelper
-        .overwriteDatabaseUrlWithEmulatorHost(url, EmulatorHelper.getEmulatorHostFromEnv());
+        .getEmulatorUrl(url, EmulatorHelper.getEmulatorHostFromEnv());
     if (!Strings.isNullOrEmpty(possibleEmulatorUrl)) {
       url = possibleEmulatorUrl;
     }
@@ -406,13 +405,13 @@ public class FirebaseDatabase {
 
   private static class EmulatorCredentials extends GoogleCredentials {
 
+    EmulatorCredentials() {
+      super(newToken());
+    }
+
     private static AccessToken newToken() {
       return new AccessToken("owner",
           new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)));
-    }
-
-    EmulatorCredentials() {
-      super(newToken());
     }
 
     @Override
@@ -423,11 +422,6 @@ public class FirebaseDatabase {
     @Override
     public Map<String, List<String>> getRequestMetadata() throws IOException {
       return ImmutableMap.of();
-    }
-
-    @Override
-    public void refresh() throws IOException {
-      super.refresh();
     }
   }
 }

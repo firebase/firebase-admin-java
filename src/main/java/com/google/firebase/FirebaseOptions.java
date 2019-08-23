@@ -33,6 +33,7 @@ import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,18 @@ public final class FirebaseOptions {
           // Enables access to Google Cloud Firestore
           "https://www.googleapis.com/auth/cloud-platform",
           "https://www.googleapis.com/auth/datastore");
+
+  static final Supplier<GoogleCredentials> APPLICATION_DEFAULT_CREDENTIALS =
+      new Supplier<GoogleCredentials>() {
+        @Override
+        public GoogleCredentials get() {
+          try {
+            return GoogleCredentials.getApplicationDefault();
+          } catch (IOException e) {
+            throw new IllegalStateException(e);
+          }
+        }
+      };
 
   private final String databaseUrl;
   private final String storageBucket;
