@@ -2,16 +2,13 @@ package com.google.firebase.database.util;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.database.DatabaseException;
-import com.google.firebase.database.utilities.Utilities;
 import java.util.List;
 import java.util.Map;
-import javax.rmi.CORBA.Util;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
