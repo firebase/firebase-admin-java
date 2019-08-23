@@ -130,7 +130,6 @@ public class FirebaseApp {
    *
    * @throws IllegalStateException if the default app was not initialized.
    */
-  @Nullable
   public static FirebaseApp getInstance() {
     return getInstance(DEFAULT_APP_NAME);
   }
