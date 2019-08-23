@@ -41,7 +41,12 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
   }
 
   JvmAuthTokenProvider(FirebaseApp firebaseApp, Executor executor, boolean autoRefresh) {
-    this.credentials = ImplFirebaseTrampolines.getCredentials(firebaseApp);
+    this(firebaseApp, executor, autoRefresh, ImplFirebaseTrampolines.getCredentials(firebaseApp));
+  }
+
+  JvmAuthTokenProvider(FirebaseApp firebaseApp, Executor executor, boolean autoRefresh,
+      GoogleCredentials customCredentials) {
+    this.credentials = customCredentials;
     this.authVariable = firebaseApp.getOptions().getDatabaseAuthVariableOverride();
     this.executor = executor;
     if (autoRefresh) {

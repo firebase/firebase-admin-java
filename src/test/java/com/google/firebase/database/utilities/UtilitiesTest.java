@@ -32,6 +32,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.DatabaseReference.CompletionListener;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import org.junit.Test;
 
@@ -74,6 +77,15 @@ public class UtilitiesTest {
     assertTrue(url.repoInfo.isSecure());
     assertEquals("test", url.repoInfo.namespace);
     assertEquals(ImmutableList.of("foo", "bar"), url.path.asList());
+
+    url = Utilities
+        .parseUrl("https://firebaseio.com/path%20with%20spaces/?ns=random%20valid%20namespace");
+    assertTrue(url.repoInfo.isSecure());
+    assertEquals("random valid namespace", url.repoInfo.namespace);
+    assertEquals("/path%20with%20spaces", url.path.toString());
+
+    url = Utilities.parseUrl("http://test.firebaseio.com/+");
+    assertEquals("/ ", url.path.toString());
   }
 
   @Test
@@ -185,4 +197,21 @@ public class UtilitiesTest {
     assertSame(listener, result.getSecond());
   }
 
+  @Test
+  public void testExtractParamsFromUrl() throws UnsupportedEncodingException {
+    Map<String, String> params = Utilities.getQueryParamsMap("abc=213&qpf=2312&xyz=true&qpf=hi");
+    assertEquals("213", params.get("abc"));
+    assertEquals("2312,hi", params.get("qpf"));
+    assertEquals("true", params.get("xyz"));
+
+    params = Utilities.getQueryParamsMap(
+        "q=a%3D2%26b%3D3&oq=a%3D2%26b%3D3&aqs=chrome..69i57j0l5.4023j0j7&sourceid=chrome&ie=UTF-8");
+    assertEquals("a=2&b=3", params.get("q"));
+    assertEquals("a=2&b=3", params.get("oq"));
+    assertEquals("chrome", params.get("sourceid"));
+
+    params = Utilities.getQueryParamsMap("a=%3F%3F%3F&b=%3D%26%3D");
+    assertEquals("???", params.get("a"));
+    assertEquals("=&=", params.get("b"));
+  }
 }

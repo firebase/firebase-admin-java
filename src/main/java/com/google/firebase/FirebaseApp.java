@@ -19,6 +19,7 @@ package com.google.firebase;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.firebase.FirebaseOptions.APPLICATION_DEFAULT_CREDENTIALS;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
@@ -33,6 +34,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseScheduledExecutor;
@@ -582,10 +584,9 @@ public class FirebaseApp {
     String defaultConfig = System.getenv(FIREBASE_CONFIG_ENV_VAR);
     if (Strings.isNullOrEmpty(defaultConfig)) {
       return new FirebaseOptions.Builder()
-        .setCredentials(GoogleCredentials.getApplicationDefault())
-        .build();
+          .setCredentials(APPLICATION_DEFAULT_CREDENTIALS)
+          .build();
     }
-
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
     JsonParser parser;
@@ -597,7 +598,7 @@ public class FirebaseApp {
       parser = jsonFactory.createJsonParser(reader);
     }
     parser.parseAndClose(builder);
-    builder.setCredentials(GoogleCredentials.getApplicationDefault());
+    builder.setCredentials(APPLICATION_DEFAULT_CREDENTIALS);
     return builder.build();
   }
 }

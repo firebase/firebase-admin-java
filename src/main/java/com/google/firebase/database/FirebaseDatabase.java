@@ -19,6 +19,10 @@ package com.google.firebase.database;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.auth.oauth2.AccessToken;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -27,15 +31,20 @@ import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.Repo;
 import com.google.firebase.database.core.RepoInfo;
 import com.google.firebase.database.core.RepoManager;
+import com.google.firebase.database.util.EmulatorHelper;
 import com.google.firebase.database.utilities.ParsedUrl;
 import com.google.firebase.database.utilities.Utilities;
 import com.google.firebase.database.utilities.Validation;
 import com.google.firebase.internal.FirebaseService;
 
 import com.google.firebase.internal.SdkUtils;
+import java.io.IOException;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -112,15 +121,21 @@ public class FirebaseDatabase {
     if (service == null) {
       service = ImplFirebaseTrampolines.addService(app, new FirebaseDatabaseService());
     }
-
-    DatabaseInstances dbInstances = service.getInstance();
     if (url == null || url.isEmpty()) {
       throw new DatabaseException(
           "Failed to get FirebaseDatabase instance: Specify DatabaseURL within "
               + "FirebaseApp or from your getInstance() call.");
     }
-
-    ParsedUrl parsedUrl = Utilities.parseUrl(url);
+    ParsedUrl parsedUrl;
+    boolean connectingToEmulator = false;
+    String possibleEmulatorUrl = EmulatorHelper
+        .getEmulatorUrl(url, EmulatorHelper.getEmulatorHostFromEnv());
+    if (!Strings.isNullOrEmpty(possibleEmulatorUrl)) {
+      parsedUrl = Utilities.parseUrl(possibleEmulatorUrl);
+      connectingToEmulator = true;
+    } else {
+      parsedUrl = Utilities.parseUrl(url);
+    }
     if (!parsedUrl.path.isEmpty()) {
       throw new DatabaseException(
           "Specified Database URL '"
@@ -130,6 +145,7 @@ public class FirebaseDatabase {
               + parsedUrl.path.toString());
     }
 
+    DatabaseInstances dbInstances = service.getInstance();
     FirebaseDatabase database = dbInstances.get(parsedUrl.repoInfo);
     if (database == null) {
       DatabaseConfig config = new DatabaseConfig();
@@ -140,11 +156,12 @@ public class FirebaseDatabase {
         config.setSessionPersistenceKey(app.getName());
       }
       config.setFirebaseApp(app);
-
+      if (connectingToEmulator) {
+        config.setCustomCredentials(new EmulatorCredentials(), true);
+      }
       database = new FirebaseDatabase(app, parsedUrl.repoInfo, config);
       dbInstances.put(parsedUrl.repoInfo, database);
     }
-
     return database;
   }
 
@@ -207,6 +224,11 @@ public class FirebaseDatabase {
   public DatabaseReference getReferenceFromUrl(String url) {
     checkNotNull(url,
         "Can't pass null for argument 'url' in FirebaseDatabase.getReferenceFromUrl()");
+    String possibleEmulatorUrl = EmulatorHelper
+        .getEmulatorUrl(url, EmulatorHelper.getEmulatorHostFromEnv());
+    if (!Strings.isNullOrEmpty(possibleEmulatorUrl)) {
+      url = possibleEmulatorUrl;
+    }
     ParsedUrl parsedUrl = Utilities.parseUrl(url);
     Repo repo = ensureRepo();
     if (!parsedUrl.repoInfo.host.equals(repo.getRepoInfo().host)) {
@@ -378,6 +400,28 @@ public class FirebaseDatabase {
     @Override
     public void destroy() {
       instance.destroy();
+    }
+  }
+
+  private static class EmulatorCredentials extends GoogleCredentials {
+
+    EmulatorCredentials() {
+      super(newToken());
+    }
+
+    private static AccessToken newToken() {
+      return new AccessToken("owner",
+          new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)));
+    }
+
+    @Override
+    public AccessToken refreshAccessToken() {
+      return newToken();
+    }
+
+    @Override
+    public Map<String, List<String>> getRequestMetadata() throws IOException {
+      return ImmutableMap.of();
     }
   }
 }

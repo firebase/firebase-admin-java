@@ -35,6 +35,8 @@ import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.auth.oauth2.OAuth2Credentials.CredentialsChangedListener;
 import com.google.common.base.Defaults;
 import com.google.common.base.Strings;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp.TokenRefresher;
@@ -578,6 +580,13 @@ public class FirebaseAppTest {
   @Test(expected = IllegalArgumentException.class)
   public void testFirebaseExceptionEmptyDetail() {
     new FirebaseException("");
+  }
+
+  @Test
+  public void testFirebaseAppCreationWithEmptySupplier() {
+    FirebaseApp.initializeApp(FirebaseOptions.builder()
+        .setDatabaseUrl("https://test-ns.firebaseio.com")
+        .setCredentials(Suppliers.<GoogleCredentials>ofInstance(null)).build());
   }
 
   private static void setFirebaseConfigEnvironmentVariable(String configJSON) {

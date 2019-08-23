@@ -26,11 +26,14 @@ import com.google.api.client.util.Key;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.FirestoreOptions;
 import com.google.common.base.Strings;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,9 +59,21 @@ public final class FirebaseOptions {
           "https://www.googleapis.com/auth/cloud-platform",
           "https://www.googleapis.com/auth/datastore");
 
+  static final Supplier<GoogleCredentials> APPLICATION_DEFAULT_CREDENTIALS =
+      new Supplier<GoogleCredentials>() {
+        @Override
+        public GoogleCredentials get() {
+          try {
+            return GoogleCredentials.getApplicationDefault().createScoped(FIREBASE_SCOPES);
+          } catch (IOException e) {
+            throw new IllegalStateException(e);
+          }
+        }
+      };
+
   private final String databaseUrl;
   private final String storageBucket;
-  private final GoogleCredentials credentials;
+  private final Supplier<GoogleCredentials> credentialsSupplier;
   private final Map<String, Object> databaseAuthVariableOverride;
   private final String projectId;
   private final String serviceAccountId;
@@ -69,11 +84,10 @@ public final class FirebaseOptions {
   private final ThreadManager threadManager;
   private final FirestoreOptions firestoreOptions;
 
-  private FirebaseOptions(@NonNull FirebaseOptions.Builder builder) {
-    this.credentials = checkNotNull(builder.credentials,
-        "FirebaseOptions must be initialized with setCredentials().")
-        .createScoped(FIREBASE_SCOPES);
+  private FirebaseOptions(@NonNull final FirebaseOptions.Builder builder) {
     this.databaseUrl = builder.databaseUrl;
+    this.credentialsSupplier = checkNotNull(
+        builder.credentialsSupplier, "FirebaseOptions must be initialized with setCredentials().");
     this.databaseAuthVariableOverride = builder.databaseAuthVariableOverride;
     this.projectId = builder.projectId;
     if (!Strings.isNullOrEmpty(builder.storageBucket)) {
@@ -118,7 +132,7 @@ public final class FirebaseOptions {
   }
 
   GoogleCredentials getCredentials() {
-    return credentials;
+    return credentialsSupplier.get();
   }
 
   /**
@@ -227,8 +241,7 @@ public final class FirebaseOptions {
 
     @Key("serviceAccountId")
     private String serviceAccountId;
-    
-    private GoogleCredentials credentials;
+    private Supplier<GoogleCredentials> credentialsSupplier;
     private FirestoreOptions firestoreOptions;
     private HttpTransport httpTransport = Utils.getDefaultTransport();
     private JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
@@ -248,7 +261,7 @@ public final class FirebaseOptions {
     public Builder(FirebaseOptions options) {
       databaseUrl = options.databaseUrl;
       storageBucket = options.storageBucket;
-      credentials = options.credentials;
+      credentialsSupplier = options.credentialsSupplier;
       databaseAuthVariableOverride = options.databaseAuthVariableOverride;
       projectId = options.projectId;
       httpTransport = options.httpTransport;
@@ -308,7 +321,20 @@ public final class FirebaseOptions {
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setCredentials(GoogleCredentials credentials) {
-      this.credentials = checkNotNull(credentials);
+      this.credentialsSupplier = Suppliers
+          .ofInstance(checkNotNull(credentials).createScoped(FIREBASE_SCOPES));
+      return this;
+    }
+
+    /**
+     * Sets the <code>Supplier</code> of <code>GoogleCredentials</code> to use to authenticate the
+     * SDK. This is NOT intended for public use outside the SDK.
+     *
+     * @param credentialsSupplier Supplier instance that wraps GoogleCredentials.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    Builder setCredentials(Supplier<GoogleCredentials> credentialsSupplier) {
+      this.credentialsSupplier = checkNotNull(credentialsSupplier);
       return this;
     }
 
