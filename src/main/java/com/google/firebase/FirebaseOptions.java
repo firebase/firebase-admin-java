@@ -64,7 +64,7 @@ public final class FirebaseOptions {
         @Override
         public GoogleCredentials get() {
           try {
-            return GoogleCredentials.getApplicationDefault();
+            return GoogleCredentials.getApplicationDefault().createScoped(FIREBASE_SCOPES);
           } catch (IOException e) {
             throw new IllegalStateException(e);
           }

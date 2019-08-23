@@ -76,11 +76,12 @@ public class Utilities {
 
       repoInfo.internalHost = repoInfo.host;
       // use raw (encoded) path for backwards compatibility.
-      String originalPathString = uri.getRawPath();
-      Validation.validateRootPathString(originalPathString);
+      String pathString = uri.getRawPath();
+      pathString = pathString.replace("+", " ");
+      Validation.validateRootPathString(pathString);
 
       ParsedUrl parsedUrl = new ParsedUrl();
-      parsedUrl.path = new Path(originalPathString);
+      parsedUrl.path = new Path(pathString);
       parsedUrl.repoInfo = repoInfo;
 
       return parsedUrl;
