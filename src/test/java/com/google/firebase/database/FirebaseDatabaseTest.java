@@ -196,8 +196,7 @@ public class FirebaseDatabaseTest {
   @Test
   public void testDbUrlIsEmulatorUrlWhenSettingOptionsManually() {
 
-    List<CustomTestCase> testCases;
-    testCases = ImmutableList.of(
+    List<CustomTestCase> testCases = ImmutableList.of(
         // cases where the env var is ignored because the supplied DB URL is a valid emulator URL
         new CustomTestCase("http://my-custom-hosted-emulator.com:80?ns=dummy-ns", "",
             "http://my-custom-hosted-emulator.com:80", "dummy-ns"),
@@ -233,8 +232,7 @@ public class FirebaseDatabaseTest {
   @Test
   public void testDbUrlIsEmulatorUrlForDbRefWithPath() {
 
-    List<CustomTestCase> testCases;
-    testCases = ImmutableList.of(
+    List<CustomTestCase> testCases = ImmutableList.of(
         new CustomTestCase("http://my-custom-hosted-emulator.com:80?ns=dummy-ns",
             "http://my-custom-hosted-emulator.com:80?ns=dummy-ns", "",
             "http://my-custom-hosted-emulator.com:80", "dummy-ns", "/"),
