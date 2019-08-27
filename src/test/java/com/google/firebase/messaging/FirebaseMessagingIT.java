@@ -34,6 +34,7 @@ public class FirebaseMessagingIT {
   private static final String TEST_REGISTRATION_TOKEN =
       "fGw0qy4TGgk:APA91bGtWGjuhp4WRhHXgbabIYp1jxEKI08ofj_v1bKhWAGJQ4e3arRCWzeTfHaLz83mBnDh0a"
           + "PWB1AykXAVUUGl2h1wT4XI6XazWpvY7RBUSYfoxtqSWGIm2nvWh2BOP1YG501SsRoE";
+  private static final String TEST_IMAGE_URL = "https://example.com/image.png";
 
   @BeforeClass
   public static void setUpClass() {
@@ -44,7 +45,7 @@ public class FirebaseMessagingIT {
   public void testSend() throws Exception {
     FirebaseMessaging messaging = FirebaseMessaging.getInstance();
     Message message = Message.builder()
-        .setNotification(new Notification("Title", "Body"))
+        .setNotification(new Notification("Title", "Body", TEST_IMAGE_URL))
         .setAndroidConfig(AndroidConfig.builder()
             .setRestrictedPackageName("com.google.firebase.testing")
             .build())
