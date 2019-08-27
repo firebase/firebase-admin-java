@@ -37,6 +37,8 @@ import org.junit.Test;
 public class MessageTest {
 
   private static final String TEST_IMAGE_URL = "https://example.com/image.png";
+  private static final String TEST_IMAGE_URL_ANDROID = "https://example.com/android-image.png";
+  private static final String TEST_IMAGE_URL_APNS = "https://example.com/apns-image.png";
 
   @Test(expected = IllegalArgumentException.class)
   public void testMessageWithoutTarget() {
@@ -687,19 +689,19 @@ public class MessageTest {
         .setTopic("test-topic")
         .build();
     Map<String, String> data = ImmutableMap.of(
-        "title", "title", "body", "body", "image", "image.png");
+        "title", "title", "body", "body", "image", TEST_IMAGE_URL);
     assertJsonEquals(ImmutableMap.of("topic", "test-topic", "notification", data), message);
   }
 
   @Test
   public void testImageInAndroidNotification() throws IOException {
     Message message = Message.builder()
-        .setNotification(new Notification("title", "body", "image.png"))
+        .setNotification(new Notification("title", "body", TEST_IMAGE_URL))
         .setAndroidConfig(AndroidConfig.builder()
             .setNotification(AndroidNotification.builder()
                 .setTitle("android-title")
                 .setBody("android-body")
-                .setImage("android-image.png")
+                .setImage(TEST_IMAGE_URL_ANDROID)
                 .build())
             .build())
         .setTopic("test-topic")
@@ -707,13 +709,13 @@ public class MessageTest {
     Map<String, Object> notification = ImmutableMap.<String, Object>builder()
         .put("title", "title")
         .put("body", "body")
-        .put("image", "image.png")
+        .put("image", TEST_IMAGE_URL)
         .build();
     Map<String, Object> androidConfig = ImmutableMap.<String, Object>builder()
         .put("notification", ImmutableMap.<String, Object>builder()
             .put("title", "android-title")
             .put("body", "android-body")
-            .put("image", "android-image.png")
+            .put("image", TEST_IMAGE_URL_ANDROID)
             .build())
         .build();
     assertJsonEquals(ImmutableMap.of(
@@ -724,21 +726,21 @@ public class MessageTest {
   public void testImageInApnsNotification() throws IOException {
     Message message = Message.builder()
         .setTopic("test-topic")
-        .setNotification(new Notification("title", "body", "image.png"))
+        .setNotification(new Notification("title", "body", TEST_IMAGE_URL))
         .setApnsConfig(
             ApnsConfig.builder().setAps(Aps.builder().build())
-                .setFcmOptions(ApnsFcmOptions.builder().setImage("apns-image.png").build())
+                .setFcmOptions(ApnsFcmOptions.builder().setImage(TEST_IMAGE_URL_APNS).build())
                 .build()).build();
 
     ImmutableMap<String, Object> notification =
         ImmutableMap.<String, Object>builder()
             .put("title", "title")
             .put("body", "body")
-            .put("image", "image.png")
+            .put("image", TEST_IMAGE_URL)
             .build();
     ImmutableMap<String, Object> apnsConfig =
         ImmutableMap.<String, Object>builder()
-            .put("fcm_options", ImmutableMap.of("image", "apns-image.png"))
+            .put("fcm_options", ImmutableMap.of("image", TEST_IMAGE_URL_APNS))
             .put("payload", ImmutableMap.of("aps", ImmutableMap.of()))
             .build();
     ImmutableMap<String, Object> expected =
