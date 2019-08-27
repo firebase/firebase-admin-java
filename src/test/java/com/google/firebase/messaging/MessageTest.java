@@ -36,6 +36,8 @@ import org.junit.Test;
 
 public class MessageTest {
 
+  private static final String TEST_IMAGE_URL = "https://example.com/image.png";
+
   @Test(expected = IllegalArgumentException.class)
   public void testMessageWithoutTarget() {
     Message.builder().build();
@@ -681,7 +683,7 @@ public class MessageTest {
   @Test
   public void testImageInNotification() throws IOException {
     Message message = Message.builder()
-        .setNotification(new Notification("title", "body", "image.png"))
+        .setNotification(new Notification("title", "body", TEST_IMAGE_URL))
         .setTopic("test-topic")
         .build();
     Map<String, String> data = ImmutableMap.of(

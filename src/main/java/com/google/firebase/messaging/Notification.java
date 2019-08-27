@@ -40,9 +40,7 @@ public class Notification {
    * @param body Body of the notification.
    */
   public Notification(String title, String body) {
-    this.title = title;
-    this.body = body;
-    this.image = null;
+    this(title, body, null);
   }
   
   /**
