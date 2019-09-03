@@ -29,7 +29,7 @@ public final class EmulatorHelper {
   }
 
   @VisibleForTesting
-  public static final String FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR = "FIREBASE_RTDB_EMULATOR_HOST";
+  public static final String FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR = "FIREBASE_DATABASE_EMULATOR_HOST";
 
   public static String getEmulatorHostFromEnv() {
     return System.getenv(FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR);
