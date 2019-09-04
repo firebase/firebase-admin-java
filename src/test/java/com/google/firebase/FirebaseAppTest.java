@@ -39,6 +39,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.FirebaseOptions.Builder;
 import com.google.firebase.database.FirebaseDatabase;
@@ -60,6 +61,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -81,6 +83,11 @@ public class FirebaseAppTest {
   @BeforeClass
   public static void setupClass() throws IOException {
     TestUtils.getApplicationDefaultCredentials();
+  }
+
+  @AfterClass
+  public static void tearDownClass() {
+    TestUtils.unsetEnvironmentVariables(ImmutableSet.of(FirebaseApp.FIREBASE_CONFIG_ENV_VAR));
   }
 
   @Test(expected = NullPointerException.class)
