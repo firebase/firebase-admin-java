@@ -104,6 +104,11 @@ public class AndroidNotification {
     }
     this.channelId = builder.channelId;
     this.image = builder.image;
+    
+    if (builder.notificationCount != null) {
+      checkArgument(builder.notificationCount >= 0, 
+          "notificationCount if specified must be zero or positive valued");
+    }
     this.notificationCount = builder.notificationCount;
   }
 
@@ -331,9 +336,7 @@ public class AndroidNotification {
       //
       // If not null then must be zero or positive
       //
-      this.notificationCount = notificationCount != null 
-        ? (notificationCount >= 0 ? notificationCount : 0) 
-          : null;
+      this.notificationCount = notificationCount;
       return this;
     }
 
