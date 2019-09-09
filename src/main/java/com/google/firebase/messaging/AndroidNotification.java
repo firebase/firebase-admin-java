@@ -70,6 +70,9 @@ public class AndroidNotification {
   @Key("image")
   private final String image;
 
+  @Key("notification_count")
+  private final Integer notificationCount;
+  
   private AndroidNotification(Builder builder) {
     this.title = builder.title;
     this.body = builder.body;
@@ -101,6 +104,7 @@ public class AndroidNotification {
     }
     this.channelId = builder.channelId;
     this.image = builder.image;
+    this.notificationCount = builder.notificationCount;
   }
 
   /**
@@ -127,7 +131,8 @@ public class AndroidNotification {
     private List<String> titleLocArgs = new ArrayList<>();
     private String channelId;
     private String image;
-
+    private Integer notificationCount;
+    
     private Builder() {}
 
     /**
@@ -306,6 +311,29 @@ public class AndroidNotification {
      */
     public Builder setImage(String imageUrl) {
       this.image = imageUrl;
+      return this;
+    }
+
+    /**
+     * Sets the number of items this notification represents. 
+     * May be displayed as a badge count for launchers that support badging.
+     *
+     * <p>Accepts null values and any negative value supplied will be set to ZERO
+     * 
+     * @see <a 
+     * href="https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#androidnotification">
+     * Android Notification Spec</a>
+     * 
+     * @param notificationCount the badge count null=unaffected, zero=reset, positive=count
+     * @return This builder
+     */
+    public Builder setNotificationCount(Integer notificationCount) {
+      //
+      // If not null then must be zero or positive
+      //
+      this.notificationCount = notificationCount != null 
+        ? (notificationCount >= 0 ? notificationCount : 0) 
+          : null;
       return this;
     }
 

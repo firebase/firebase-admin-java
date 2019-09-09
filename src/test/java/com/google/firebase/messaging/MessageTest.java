@@ -153,6 +153,7 @@ public class MessageTest {
                 .addBodyLocalizationArg("body-arg1")
                 .addAllBodyLocalizationArgs(ImmutableList.of("body-arg2", "body-arg3"))
                 .setChannelId("channel-id")
+                .setNotificationCount(4)
                 .build())
             .build())
         .setTopic("test-topic")
@@ -170,6 +171,10 @@ public class MessageTest {
         .put("body_loc_key", "body-loc")
         .put("body_loc_args", ImmutableList.of("body-arg1", "body-arg2", "body-arg3"))
         .put("channel_id", "channel-id")
+        // There is a problem with the JsonParser assignment to BigDecimal takes priority over
+        // all other number types and so this integer value is interpreted as a BigDecimal 
+        // rather than an Integer.
+        .put("notification_count", BigDecimal.valueOf(4L))
         .build();
     Map<String, Object> data = ImmutableMap.of(
         "collapse_key", "test-key",
