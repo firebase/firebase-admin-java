@@ -110,6 +110,7 @@ public class AndroidNotification {
           "notificationCount if specified must be zero or positive valued");
     }
     this.notificationCount = builder.notificationCount;
+    
   }
 
   /**
@@ -323,19 +324,16 @@ public class AndroidNotification {
      * Sets the number of items this notification represents. 
      * May be displayed as a badge count for launchers that support badging.
      *
-     * <p>Accepts null values and any negative value supplied will be set to ZERO
+     * <p>If not invoked then notification count is left unchanged
      * 
      * @see <a 
      * href="https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#androidnotification">
      * Android Notification Spec</a>
      * 
-     * @param notificationCount the badge count null=unaffected, zero=reset, positive=count
+     * @param notificationCount 0=reset, positive=count
      * @return This builder
      */
-    public Builder setNotificationCount(Integer notificationCount) {
-      //
-      // If not null then must be zero or positive
-      //
+    public Builder setNotificationCount(int notificationCount) {
       this.notificationCount = notificationCount;
       return this;
     }
