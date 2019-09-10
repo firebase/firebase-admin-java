@@ -186,6 +186,11 @@ public class MessageTest {
     assertJsonEquals(ImmutableMap.of("topic", "test-topic", "android", data), message);
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void testAndroidMessageWithNegativeNotificationCount() throws IllegalArgumentException {
+    AndroidNotification.builder().setNotificationCount(-1).build();
+  }
+  
   @Test
   public void testAndroidMessageWithoutLocalization() throws IOException {
     Message message = Message.builder()

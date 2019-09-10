@@ -321,17 +321,17 @@ public class AndroidNotification {
     }
 
     /**
-     * Sets the number of items this notification represents. 
+     * Sets the number of items this notification represents.
      * May be displayed as a badge count for launchers that support badging.
      *
-     * <p>If not invoked then notification count is left unchanged
+     * <p>If not invoked then notification count is left unchanged.
      * 
      * @see <a 
      * href="https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#androidnotification">
      * Android Notification Spec</a>
      * 
-     * @param notificationCount 0=reset, positive=count
-     * @return This builder
+     * @param notificationCount Zero or positive value. Zero indicates leave unchanged.
+     * @return This builder.
      */
     public Builder setNotificationCount(int notificationCount) {
       this.notificationCount = notificationCount;
