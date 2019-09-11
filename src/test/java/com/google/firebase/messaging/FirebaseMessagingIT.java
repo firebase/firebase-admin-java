@@ -45,7 +45,11 @@ public class FirebaseMessagingIT {
   public void testSend() throws Exception {
     FirebaseMessaging messaging = FirebaseMessaging.getInstance();
     Message message = Message.builder()
-        .setNotification(new Notification("Title", "Body", TEST_IMAGE_URL))
+        .setNotification(Notification.builder()
+            .setTitle("Title")
+            .setBody("Body")
+            .setImage(TEST_IMAGE_URL)
+            .build())
         .setAndroidConfig(AndroidConfig.builder()
             .setRestrictedPackageName("com.google.firebase.testing")
             .build())
