@@ -38,22 +38,93 @@ public class Notification {
    *
    * @param title Title of the notification.
    * @param body Body of the notification.
+   *
+   * @deprecated Use {@link #Notification(Builder)} instead.
    */
   public Notification(String title, String body) {
     this(title, body, null);
   }
-  
+
   /**
    * Creates a new {@code Notification} using the given title, body, and image.
    *
    * @param title Title of the notification.
    * @param body Body of the notification.
    * @param imageUrl URL of the image that is going to be displayed in the notification.
+   *
+   * @deprecated Use {@link #Notification(Builder)} instead.
    */
   public Notification(String title, String body, String imageUrl) {
     this.title = title;
     this.body = body;
     this.image = imageUrl;
+  }
+
+  private Notification(Builder builder) {
+    this.title = builder.title;
+    this.body = builder.body;
+    this.image = builder.image;
+  }
+
+  /**
+   * Creates a new {@link Notification.Builder}.
+   *
+   * @return A {@link Notification.Builder} instance.
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static class Builder {
+
+    private String title;
+    private String body;
+    private String image;
+
+    private Builder() {}
+
+    /**
+     * Sets the title of the notification.
+     *
+     * @param title Title of the notification.
+     * @return This builder.
+     */
+    public Builder setTitle(String title) {
+      this.title = title;
+      return this;
+    }
+
+    /**
+     * Sets the body of the notification.
+     *
+     * @param body Body of the notification.
+     * @return This builder.
+     */
+    public Builder setBody(String body) {
+      this.body = body;
+      return this;
+    }
+
+    /**
+     * Sets the URL of the image that is going to be displayed in the notification.
+     *
+     * @param imageUrl URL of the image that is going to be displayed in the notification.
+     * @return This builder.
+     */
+    public Builder setImage(String imageUrl) {
+      this.image = imageUrl;
+      return this;
+    }
+
+    /**
+     * Creates a new {@link Notification} instance from the parameters set on this builder.
+     *
+     * @return A new {@link Notification} instance.
+     * @throws IllegalArgumentException If any of the parameters set on the builder are invalid.
+     */
+    public Notification build() {
+      return new Notification(this);
+    }
   }
 
 }

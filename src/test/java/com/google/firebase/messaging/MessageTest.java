@@ -88,9 +88,19 @@ public class MessageTest {
   }
 
   @Test
-  public void testNotificationMessage() throws IOException {
+  public void testNotificationMessageDeprecatedConstructor() throws IOException {
     Message message = Message.builder()
         .setNotification(new Notification("title", "body"))
+        .setTopic("test-topic")
+        .build();
+    Map<String, String> data = ImmutableMap.of("title", "title", "body", "body");
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "notification", data), message);
+  }
+
+  @Test
+  public void testNotificationMessage() throws IOException {
+    Message message = Message.builder()
+        .setNotification(Notification.builder().setTitle("title").setBody("body").build())
         .setTopic("test-topic")
         .build();
     Map<String, String> data = ImmutableMap.of("title", "title", "body", "body");
@@ -703,9 +713,24 @@ public class MessageTest {
   }
 
   @Test
-  public void testImageInNotification() throws IOException {
+  public void testImageInNotificationDeprecatedConstructor() throws IOException {
     Message message = Message.builder()
         .setNotification(new Notification("title", "body", TEST_IMAGE_URL))
+        .setTopic("test-topic")
+        .build();
+    Map<String, String> data = ImmutableMap.of(
+        "title", "title", "body", "body", "image", TEST_IMAGE_URL);
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "notification", data), message);
+  }
+
+  @Test
+  public void testImageInNotification() throws IOException {
+    Message message = Message.builder()
+        .setNotification(Notification.builder()
+            .setTitle("title")
+            .setBody("body")
+            .setImage(TEST_IMAGE_URL)
+            .build())
         .setTopic("test-topic")
         .build();
     Map<String, String> data = ImmutableMap.of(
