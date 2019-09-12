@@ -187,7 +187,7 @@ public class MessageTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testAndroidMessageWithNegativeNotificationCount() throws IllegalArgumentException {
+  public void testAndroidNotificationWithNegativeCount() throws IllegalArgumentException {
     AndroidNotification.builder().setNotificationCount(-1).build();
   }
   
