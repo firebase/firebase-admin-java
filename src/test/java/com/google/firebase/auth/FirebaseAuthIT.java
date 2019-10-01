@@ -264,7 +264,9 @@ public class FirebaseAuthIT {
         for (ExportedUserRecord user : page.getValues()) {
           if (uids.contains(user.getUid())) {
             collected.incrementAndGet();
-            assertNotNull(user.getPasswordHash());
+            assertNotNull("Missing passwordHash field. A common cause would be "
+                + "forgetting to add the \"Firebase Authentication Admin\" permission. See "
+                + "instructions in CONTRIBUTING.md", user.getPasswordHash());
             assertNotNull(user.getPasswordSalt());
           }
         }

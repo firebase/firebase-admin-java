@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.BaseEncoding;
 import com.google.firebase.auth.ListUsersPage.ListUsersResult;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import java.io.IOException;
@@ -37,6 +38,9 @@ import java.util.NoSuchElementException;
 import org.junit.Test;
 
 public class ListUsersPageTest {
+
+  private static final String REDACTED_BASE64 = BaseEncoding.base64Url().encode(
+      "REDACTED".getBytes());
 
   @Test
   public void testSinglePage() throws FirebaseAuthException, IOException {
@@ -50,6 +54,30 @@ public class ListUsersPageTest {
     assertEquals(3, users.size());
     for (int i = 0; i < 3; i++) {
       assertEquals("user" + i, users.get(i).getUid());
+    }
+    assertEquals(1, source.calls.size());
+    assertNull(source.calls.get(0));
+  }
+
+  @Test
+  public void testRedactedPasswords() throws FirebaseAuthException, IOException {
+    ListUsersResult result = new ListUsersResult(
+        ImmutableList.of(
+            newUser("user0", REDACTED_BASE64),
+            newUser("user1", REDACTED_BASE64),
+            newUser("user2", REDACTED_BASE64)),
+        ListUsersPage.END_OF_LIST);
+    TestUserSource source = new TestUserSource(result);
+    ListUsersPage page = new ListUsersPage.PageFactory(source).create();
+    assertFalse(page.hasNextPage());
+    assertEquals(ListUsersPage.END_OF_LIST, page.getNextPageToken());
+    assertNull(page.getNextPage());
+
+    ImmutableList<ExportedUserRecord> users = ImmutableList.copyOf(page.getValues());
+    assertEquals(3, users.size());
+    for (int i = 0; i < 3; i++) {
+      assertEquals("user" + i, users.get(i).getUid());
+      assertNull(users.get(i).getPasswordHash());
     }
     assertEquals(1, source.calls.size());
     assertNull(source.calls.get(0));
@@ -323,6 +351,14 @@ public class ListUsersPageTest {
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     DownloadAccountResponse.User parsed = jsonFactory.fromString(
         String.format("{\"localId\":\"%s\"}", uid), DownloadAccountResponse.User.class);
+    return new ExportedUserRecord(parsed, jsonFactory);
+  }
+
+  private static ExportedUserRecord newUser(String uid, String passwordHash) throws IOException {
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    DownloadAccountResponse.User parsed = jsonFactory.fromString(
+        String.format("{\"localId\":\"%s\", \"passwordHash\":\"%s\"}", uid, passwordHash),
+        DownloadAccountResponse.User.class);
     return new ExportedUserRecord(parsed, jsonFactory);
   }
 
