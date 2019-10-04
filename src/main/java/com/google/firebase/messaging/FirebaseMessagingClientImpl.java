@@ -26,21 +26,22 @@ import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
-import com.google.api.client.json.JsonParser;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseHttpResponse;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.ApiClientUtils;
-import com.google.firebase.internal.Nullable;
+import com.google.firebase.internal.ErrorHandlingHttpClient;
+import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.messaging.internal.MessagingServiceErrorResponse;
 import com.google.firebase.messaging.internal.MessagingServiceResponse;
@@ -84,6 +85,8 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   private final HttpRequestFactory childRequestFactory;
   private final JsonFactory jsonFactory;
   private final HttpResponseInterceptor responseInterceptor;
+  private final MessagingErrorHandler errorHandler;
+  private final ErrorHandlingHttpClient<FirebaseMessagingException> httpClient;
   private final String clientVersion = "fire-admin-java/" + SdkUtils.getVersion();
 
   private FirebaseMessagingClientImpl(Builder builder) {
@@ -93,6 +96,10 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     this.childRequestFactory = checkNotNull(builder.childRequestFactory);
     this.jsonFactory = checkNotNull(builder.jsonFactory);
     this.responseInterceptor = builder.responseInterceptor;
+
+    this.errorHandler = new MessagingErrorHandler(builder.jsonFactory);
+    this.httpClient = new ErrorHandlingHttpClient<>(
+        builder.requestFactory, builder.jsonFactory, errorHandler);
   }
 
   @VisibleForTesting
@@ -121,52 +128,41 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   }
 
   public String send(Message message, boolean dryRun) throws FirebaseMessagingException {
-    try {
-      return sendSingleRequest(message, dryRun);
-    } catch (HttpResponseException e) {
-      throw createExceptionFromResponse(e);
-    } catch (IOException e) {
-      throw new FirebaseMessagingException(
-          FirebaseMessaging.INTERNAL_ERROR, "Error while calling FCM backend service", e);
-    }
+    return sendSingleRequest(message, dryRun);
   }
 
   public BatchResponse sendAll(
       List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
-    try {
-      return sendBatchRequest(messages, dryRun);
-    } catch (HttpResponseException e) {
-      throw createExceptionFromResponse(e);
-    } catch (IOException e) {
-      throw new FirebaseMessagingException(
-          FirebaseMessaging.INTERNAL_ERROR, "Error while calling FCM backend service", e);
-    }
+    return sendBatchRequest(messages, dryRun);
   }
 
-  private String sendSingleRequest(Message message, boolean dryRun) throws IOException {
-    HttpRequest request = requestFactory.buildPostRequest(
-        new GenericUrl(fcmSendUrl),
-        new JsonHttpContent(jsonFactory, message.wrapForTransport(dryRun)));
-    setCommonFcmHeaders(request.getHeaders());
-    request.setParser(new JsonObjectParser(jsonFactory));
-    request.setResponseInterceptor(responseInterceptor);
-    HttpResponse response = request.execute();
-    try {
-      MessagingServiceResponse parsed = new MessagingServiceResponse();
-      jsonFactory.createJsonParser(response.getContent()).parseAndClose(parsed);
-      return parsed.getMessageId();
-    } finally {
-      ApiClientUtils.disconnectQuietly(response);
-    }
+  private String sendSingleRequest(
+      Message message, boolean dryRun) throws FirebaseMessagingException {
+    HttpRequestInfo request =
+        HttpRequestInfo.buildPostRequest(
+            fcmSendUrl, new JsonHttpContent(jsonFactory, message.wrapForTransport(dryRun)))
+        .addHeader(API_FORMAT_VERSION_HEADER, "2")
+        .addHeader(CLIENT_VERSION_HEADER, clientVersion)
+        .setResponseInterceptor(responseInterceptor);
+    MessagingServiceResponse parsed = httpClient.sendAndParse(
+        request, MessagingServiceResponse.class);
+    return parsed.getMessageId();
   }
 
   private BatchResponse sendBatchRequest(
-      List<Message> messages, boolean dryRun) throws IOException {
+      List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
 
     MessagingBatchCallback callback = new MessagingBatchCallback();
-    BatchRequest batch = newBatchRequest(messages, dryRun, callback);
-    batch.execute();
-    return new BatchResponse(callback.getResponses());
+    try {
+      BatchRequest batch = newBatchRequest(messages, dryRun, callback);
+      batch.execute();
+      return new BatchResponse(callback.getResponses());
+    } catch (HttpResponseException e) {
+      FirebaseHttpResponse resp = new FirebaseHttpResponse(e, null);
+      throw errorHandler.handleHttpResponseException(e, resp);
+    } catch (IOException e) {
+      throw errorHandler.handleIOException(e);
+    }
   }
 
   private BatchRequest newBatchRequest(
@@ -195,20 +191,6 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   private void setCommonFcmHeaders(HttpHeaders headers) {
     headers.set(API_FORMAT_VERSION_HEADER, "2");
     headers.set(CLIENT_VERSION_HEADER, clientVersion);
-  }
-
-  private FirebaseMessagingException createExceptionFromResponse(HttpResponseException e) {
-    MessagingServiceErrorResponse response = new MessagingServiceErrorResponse();
-    if (e.getContent() != null) {
-      try {
-        JsonParser parser = jsonFactory.createJsonParser(e.getContent());
-        parser.parseAndClose(response);
-      } catch (IOException ignored) {
-        // ignored
-      }
-    }
-
-    return newException(response, e);
   }
 
   private HttpRequestInitializer getBatchRequestInitializer() {
@@ -283,27 +265,16 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   }
 
   private static FirebaseMessagingException newException(MessagingServiceErrorResponse response) {
-    return newException(response, null);
-  }
 
-  private static FirebaseMessagingException newException(
-      MessagingServiceErrorResponse response, @Nullable HttpResponseException e) {
-    String code = FCM_ERROR_CODES.get(response.getErrorCode());
-    if (code == null) {
-      code = FirebaseMessaging.UNKNOWN_ERROR;
-    }
+    String code = response.getStatus();
+    ErrorCode c = Enum.valueOf(ErrorCode.class, code);
 
     String msg = response.getErrorMessage();
     if (Strings.isNullOrEmpty(msg)) {
-      if (e != null) {
-        msg = String.format("Unexpected HTTP response with status: %d; body: %s",
-            e.getStatusCode(), e.getContent());
-      } else {
-        msg = String.format("Unexpected HTTP response: %s", response.toString());
-      }
+      msg = String.format("Unexpected HTTP response: %s", response.toString());
     }
 
-    return new FirebaseMessagingException(code, msg, e);
+    return new FirebaseMessagingException(c, msg, null, null, null);
   }
 
   private static class MessagingBatchCallback

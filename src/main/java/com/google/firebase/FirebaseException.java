@@ -17,24 +17,42 @@
 package com.google.firebase;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.Nullable;
 
 /** Base class for all Firebase exceptions. */
 public class FirebaseException extends Exception {
 
-  // TODO(b/27677218): Exceptions should have non-empty messages.
-  @Deprecated
-  protected FirebaseException() {}
+  private final ErrorCode errorCode;
+  private final FirebaseHttpResponse response;
 
   public FirebaseException(@NonNull String detailMessage) {
-    super(detailMessage);
-    checkArgument(!Strings.isNullOrEmpty(detailMessage), "Detail message must not be empty");
+    this(detailMessage, null);
   }
 
   public FirebaseException(@NonNull String detailMessage, Throwable cause) {
-    super(detailMessage, cause);
-    checkArgument(!Strings.isNullOrEmpty(detailMessage), "Detail message must not be empty");
+    this(ErrorCode.UNKNOWN, detailMessage, null, cause);
+  }
+
+  public FirebaseException(
+      @NonNull ErrorCode errorCode,
+      @NonNull String message,
+      @Nullable FirebaseHttpResponse response,
+      @Nullable Throwable cause) {
+    super(message, cause);
+    checkArgument(!Strings.isNullOrEmpty(message), "Message must not be null or empty");
+    this.errorCode = checkNotNull(errorCode);
+    this.response = response;
+  }
+
+  public ErrorCode getPlatformErrorCode() {
+    return errorCode;
+  }
+
+  @Nullable public FirebaseHttpResponse getHttpResponse() {
+    return response;
   }
 }

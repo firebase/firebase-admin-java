@@ -19,6 +19,7 @@ package com.google.firebase.internal;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import com.google.api.client.http.GenericUrl;
@@ -29,12 +30,16 @@ import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseException;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.RetryInitializer.RetryHandlerDecorator;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import org.junit.After;
 import org.junit.Test;
 
@@ -114,5 +119,55 @@ public class ApiClientUtilsTest {
     ApiClientUtils.disconnectQuietly(response);
 
     assertTrue(lowLevelResponse.isDisconnected());
+  }
+
+  @Test
+  public void testTimeoutException() {
+    IOException cause = new SocketTimeoutException("test");
+    FirebaseException exception = ApiClientUtils.newFirebaseException(cause);
+    assertEquals(ErrorCode.DEADLINE_EXCEEDED, exception.getPlatformErrorCode());
+    assertEquals("Timed out while making an API call: test", exception.getMessage());
+    assertNull(exception.getHttpResponse());
+    assertSame(cause, exception.getCause());
+  }
+
+  @Test
+  public void testNestedTimeoutException() {
+    IOException cause = new IOException("test", new SocketTimeoutException("nested"));
+    FirebaseException exception = ApiClientUtils.newFirebaseException(cause);
+    assertEquals(ErrorCode.DEADLINE_EXCEEDED, exception.getPlatformErrorCode());
+    assertEquals("Timed out while making an API call: test", exception.getMessage());
+    assertNull(exception.getHttpResponse());
+    assertSame(cause, exception.getCause());
+  }
+
+  @Test
+  public void testNetworkException() {
+    IOException cause = new UnknownHostException("test");
+    FirebaseException exception = ApiClientUtils.newFirebaseException(cause);
+    assertEquals(ErrorCode.UNAVAILABLE, exception.getPlatformErrorCode());
+    assertEquals("Failed to establish a connection: test", exception.getMessage());
+    assertNull(exception.getHttpResponse());
+    assertSame(cause, exception.getCause());
+  }
+
+  @Test
+  public void testNestedNetworkException() {
+    IOException cause = new IOException("test", new UnknownHostException("nested"));
+    FirebaseException exception = ApiClientUtils.newFirebaseException(cause);
+    assertEquals(ErrorCode.UNAVAILABLE, exception.getPlatformErrorCode());
+    assertEquals("Failed to establish a connection: test", exception.getMessage());
+    assertNull(exception.getHttpResponse());
+    assertSame(cause, exception.getCause());
+  }
+
+  @Test
+  public void testUnknownTransportException() {
+    IOException cause = new IOException("test");
+    FirebaseException exception = ApiClientUtils.newFirebaseException(cause);
+    assertEquals(ErrorCode.UNKNOWN, exception.getPlatformErrorCode());
+    assertEquals("Unknown error while making a remote service call: test", exception.getMessage());
+    assertNull(exception.getHttpResponse());
+    assertSame(cause, exception.getCause());
   }
 }

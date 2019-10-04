@@ -20,9 +20,18 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 
+import com.google.firebase.FirebaseException;
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A set of shared utilities for using the Google API client.
@@ -43,9 +52,22 @@ public class ApiClientUtils {
    * @return A new {@code HttpRequestFactory} instance.
    */
   public static HttpRequestFactory newAuthorizedRequestFactory(FirebaseApp app) {
+    return newAuthorizedRequestFactory(app, DEFAULT_RETRY_CONFIG);
+  }
+
+  /**
+   * Creates a new {@code HttpRequestFactory} which provides authorization (OAuth2), timeouts and
+   * automatic retries.
+   *
+   * @param app {@link FirebaseApp} from which to obtain authorization credentials.
+   * @param retryConfig {@link RetryConfig} which specifies how and when to retry errors.
+   * @return A new {@code HttpRequestFactory} instance.
+   */
+  public static HttpRequestFactory newAuthorizedRequestFactory(
+      FirebaseApp app, @Nullable RetryConfig retryConfig) {
     HttpTransport transport = app.getOptions().getHttpTransport();
     return transport.createRequestFactory(
-        new FirebaseRequestInitializer(app, DEFAULT_RETRY_CONFIG));
+        new FirebaseRequestInitializer(app, retryConfig));
   }
 
   public static HttpRequestFactory newUnauthorizedRequestFactory(FirebaseApp app) {
@@ -61,5 +83,39 @@ public class ApiClientUtils {
         // ignored
       }
     }
+  }
+
+  public static FirebaseException newFirebaseException(IOException e) {
+    ErrorCode code = ErrorCode.UNKNOWN;
+    String message = "Unknown error while making a remote service call" ;
+    if (isInstance(e, SocketTimeoutException.class)) {
+      code = ErrorCode.DEADLINE_EXCEEDED;
+      message = "Timed out while making an API call";
+    }
+
+    if (isInstance(e, UnknownHostException.class) || isInstance(e, NoRouteToHostException.class)) {
+      code = ErrorCode.UNAVAILABLE;
+      message = "Failed to establish a connection";
+    }
+
+    return new FirebaseException(code, message + ": " + e.getMessage(), null, e);
+  }
+
+  private static <T> boolean isInstance(IOException t, Class<T> type) {
+    Throwable current = t;
+    Set<Throwable> chain = new HashSet<>();
+    while (current != null) {
+      if (!chain.add(current)) {
+        break;
+      }
+
+      if (type.isInstance(current)) {
+        return true;
+      }
+
+      current = current.getCause();
+    }
+
+    return false;
   }
 }

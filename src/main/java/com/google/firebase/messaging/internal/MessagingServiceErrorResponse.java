@@ -17,6 +17,14 @@ public class MessagingServiceErrorResponse extends GenericJson {
   @Key("error")
   private Map<String, Object> error;
 
+  public String getStatus() {
+    if (error == null) {
+      return null;
+    }
+
+    return (String) error.get("status");
+  }
+
   @Nullable
   public String getErrorCode() {
     if (error == null) {
