@@ -177,19 +177,19 @@ public class ErrorHandlingHttpClientTest {
         .setLowLevelHttpRequest(request)
         .build();
 
-    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
-        .setCredentials(new MockGoogleCredentials("token"))
-        .setHttpTransport(transport)
-        .build());
     RetryConfig retryConfig = RetryConfig.builder()
         .setMaxRetries(4)
         .setRetryStatusCodes(ImmutableList.of(503))
         .setSleeper(new MockSleeper())
         .build();
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildGetRequest("https://firebase.google.com");
 
+    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("token"))
+        .setHttpTransport(transport)
+        .build());
     ErrorHandlingHttpClient<FirebaseException> client = new ErrorHandlingHttpClient<>(
         app, new TestHttpErrorHandler(), retryConfig);
-    HttpRequestInfo requestInfo = HttpRequestInfo.buildGetRequest("https://firebase.google.com");
     try {
       client.sendAndParse(requestInfo, GenericData.class);
       fail("No exception thrown for HTTP error response");
@@ -200,6 +200,8 @@ public class ErrorHandlingHttpClientTest {
       assertNotNull(e.getCause());
 
       assertEquals(5, request.getCount());
+    } finally {
+      app.delete();
     }
   }
 
