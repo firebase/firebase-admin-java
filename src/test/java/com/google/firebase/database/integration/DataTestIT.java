@@ -465,14 +465,14 @@ public class DataTestIT {
     try {
       ref.child(".foo");
       fail("Should fail");
-    } catch (DatabaseException e) {
+    } catch (IllegalArgumentException e) {
       // No-op
     }
 
     try {
       ref.child("foo/.foo");
       fail("Should fail");
-    } catch (DatabaseException e) {
+    } catch (IllegalArgumentException e) {
       // No-op
     }
   }
@@ -662,7 +662,7 @@ public class DataTestIT {
           // removedTwo did equal false, now equals true
           try {
             ref.child("two").removeValueAsync();
-          } catch (DatabaseException e) {
+          } catch (Exception e) {
             fail("Should not fail");
           }
         }
@@ -704,7 +704,7 @@ public class DataTestIT {
         if (sawJson.compareAndSet(false, true)) {
           try {
             writer.setValueAsync(primitive);
-          } catch (DatabaseException e) {
+          } catch (Exception e) {
             fail("Shouldn't happen: " + e.toString());
           }
         } else {
@@ -712,7 +712,7 @@ public class DataTestIT {
           if (sawPrimitive.compareAndSet(false, true)) {
             try {
               writer.setValueAsync(json);
-            } catch (DatabaseException e) {
+            } catch (Exception e) {
               fail("Shouldn't happen: " + e.toString());
             }
           }
@@ -970,7 +970,7 @@ public class DataTestIT {
         if (priority != null && priority.equals(100.0)) {
           try {
             ref2.setValueAsync("whatever");
-          } catch (DatabaseException e) {
+          } catch (Exception e) {
             fail("Shouldn't happen: " + e.toString());
           }
           return true;
@@ -1091,35 +1091,35 @@ public class DataTestIT {
       try {
         ref.child(path);
         fail("Should not be a valid path: " + path);
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // No-op, expected
       }
 
       try {
         root.child(path);
         fail("Should not be a valid path: " + path);
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // No-op, expected
       }
 
       try {
         root.child(IntegrationTestUtils.getDatabaseUrl() + "/tests/" + path);
         fail("Should not be a valid path: " + path);
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // No-op, expected
       }
 
       try {
         snap.child(path);
         fail("Should not be a valid path: " + path);
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // No-op, expected
       }
 
       try {
         snap.hasChild(path);
         fail("Should not be a valid path: " + path);
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // No-op, expected
       }
     }
@@ -1144,14 +1144,14 @@ public class DataTestIT {
       try {
         ref.setValueAsync(badObject);
         fail("Should not be a valid object: " + badObject);
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // No-op, expected
       }
 
       try {
         ref.onDisconnect().setValueAsync(badObject);
         fail("Should not be a valid object: " + badObject);
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // No-op, expected
       }
 
@@ -1160,7 +1160,7 @@ public class DataTestIT {
   }
 
   @Test
-  public void testInvalidUpdates() throws DatabaseException {
+  public void testInvalidUpdates() {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp);
 
     List<Map<String, Object>> badUpdates = ImmutableList.of(
@@ -1176,21 +1176,21 @@ public class DataTestIT {
       try {
         ref.updateChildrenAsync(badUpdate);
         fail("Should not be a valid update: " + badUpdate);
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // No-op, expected
       }
 
       try {
         ref.onDisconnect().updateChildrenAsync(badUpdate);
         fail("Should not be a valid object: " + badUpdate);
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // No-op, expected
       }
     }
   }
 
   @Test
-  public void testAsciiControlCharacters() throws DatabaseException {
+  public void testAsciiControlCharacters() {
     DatabaseReference node = IntegrationTestUtils.getRandomNode(masterApp);
     // Test all controls characters PLUS 0x7F (127).
     for (int i = 0; i <= 32; i++) {
@@ -1199,15 +1199,14 @@ public class DataTestIT {
       try {
         node.setValueAsync(obj);
         fail("Ascii control character should not be allowed in path.");
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // expected
       }
     }
   }
 
   @Test
-  public void invalidDoubleValues()
-      throws DatabaseException, TestFailure, TimeoutException, InterruptedException {
+  public void invalidDoubleValues() {
     DatabaseReference node = IntegrationTestUtils.getRandomNode(masterApp);
     Object[] invalidValues =
         new Object[] {
@@ -1222,7 +1221,7 @@ public class DataTestIT {
       try {
         node.setValueAsync(invalidValue);
         fail("NaN or Inf are not allowed as values.");
-      } catch (DatabaseException expected) {
+      } catch (IllegalArgumentException expected) {
         assertEquals("Invalid value: Value cannot be NaN, Inf or -Inf.", expected.getMessage());
       }
     }
@@ -1291,26 +1290,26 @@ public class DataTestIT {
       try {
         nodeChild.setValueAsync(obj);
         fail("Too-long path for setValue should throw exception.");
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // expected
       }
       try {
         nodeChild.child(key).setValueAsync("another_value");
         fail("Too-long path before setValue should throw exception.");
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // expected
       }
       try {
         nodeChild.updateChildrenAsync(obj);
         fail("Too-long path for updateChildren should throw exception.");
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // expected
       }
       try {
         Map<String, Object> deepUpdate = MapBuilder.of(key, "test_value");
         nodeChild.updateChildrenAsync(deepUpdate);
         fail("Too-long path in deep update for updateChildren should throw exception.");
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // expected
       }
     }
@@ -1321,38 +1320,38 @@ public class DataTestIT {
         try {
           node.setValueAsync(obj);
           fail("Expected setValueAsync(bad key) to throw exception: " + key);
-        } catch (DatabaseException e) {
+        } catch (IllegalArgumentException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
           node.child(key).setValueAsync("another_value");
           fail("Expected child(\"" + key + "\").setValueAsync() to throw exception: " + key);
-        } catch (DatabaseException e) {
+        } catch (IllegalArgumentException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
           node.updateChildrenAsync(obj);
           fail("Expected updateChildrenAsync(bad key) to throw exception: " + key);
-        } catch (DatabaseException e) {
+        } catch (IllegalArgumentException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
           Map<String, Object> deepUpdate = MapBuilder.of(key, "test_value");
           node.updateChildrenAsync(deepUpdate);
           fail("Expected updateChildrean(bad deep update key) to throw exception: " + key);
-        } catch (DatabaseException e) {
+        } catch (IllegalArgumentException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
           node.onDisconnect().setValueAsync(obj);
           fail("Expected onDisconnect.setValueAsync(bad key) to throw exception: " + key);
-        } catch (DatabaseException e) {
+        } catch (IllegalArgumentException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
           node.onDisconnect().updateChildrenAsync(obj);
           fail("Expected onDisconnect.updateChildrenAsync(bad key) to throw exception: " + key);
-        } catch (DatabaseException e) {
+        } catch (IllegalArgumentException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
         try {
@@ -1360,7 +1359,7 @@ public class DataTestIT {
           node.onDisconnect().updateChildrenAsync(deepUpdate);
           fail("Expected onDisconnect.updateChildrenAsync(bad deep update key) to throw exception: "
               + key);
-        } catch (DatabaseException e) {
+        } catch (IllegalArgumentException e) {
           TestHelpers.assertContains(e.getMessage(), badGroup.expectedError);
         }
       }
@@ -2445,7 +2444,7 @@ public class DataTestIT {
       public Transaction.Result doTransaction(MutableData currentData) {
         try {
           currentData.setValue(ServerValue.TIMESTAMP);
-        } catch (DatabaseException e) {
+        } catch (Exception e) {
           fail("Should not fail");
         }
         return Transaction.success(currentData);

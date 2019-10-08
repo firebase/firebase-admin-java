@@ -49,6 +49,11 @@ public final class HttpRequestInfo {
     return this;
   }
 
+  public HttpRequestInfo addAllHeaders(Map<String, String> headers) {
+    this.headers.putAll(headers);
+    return this;
+  }
+
   public HttpRequestInfo setResponseInterceptor(HttpResponseInterceptor interceptor) {
     this.interceptor = interceptor;
     return this;

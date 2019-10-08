@@ -38,7 +38,7 @@ public class ValidationPath {
   private final List<String> parts = new ArrayList<>();
   private int byteLength = 0;
 
-  private ValidationPath(Path path) throws DatabaseException {
+  private ValidationPath(Path path) {
     for (ChildKey key : path) {
       parts.add(key.asString());
     }
@@ -51,7 +51,7 @@ public class ValidationPath {
     checkValid();
   }
 
-  public static void validateWithObject(Path path, Object value) throws DatabaseException {
+  public static void validateWithObject(Path path, Object value) {
     new ValidationPath(path).withObject(value);
   }
 
@@ -89,7 +89,7 @@ public class ValidationPath {
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
-  private void withObject(Object value) throws DatabaseException {
+  private void withObject(Object value) {
     if (value instanceof Map) {
       Map<String, Object> mapValue = (Map<String, Object>) value;
       for (String key : mapValue.keySet()) {
@@ -114,7 +114,7 @@ public class ValidationPath {
     }
   }
 
-  private void push(String child) throws DatabaseException {
+  private void push(String child) {
     // Count the '/'
     if (parts.size() > 0) {
       byteLength += 1;
@@ -134,9 +134,9 @@ public class ValidationPath {
     return last;
   }
 
-  private void checkValid() throws DatabaseException {
+  private void checkValid() {
     if (byteLength > MAX_PATH_LENGTH_BYTES) {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Data has a key path longer than "
               + MAX_PATH_LENGTH_BYTES
               + " bytes ("
@@ -144,7 +144,7 @@ public class ValidationPath {
               + ").");
     }
     if (parts.size() > MAX_PATH_DEPTH) {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Path specified exceeds the maximum depth that can be written ("
               + MAX_PATH_DEPTH
               + ") or object contains a cycle "

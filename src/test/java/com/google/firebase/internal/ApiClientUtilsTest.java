@@ -125,7 +125,7 @@ public class ApiClientUtilsTest {
   public void testTimeoutException() {
     IOException cause = new SocketTimeoutException("test");
     FirebaseException exception = ApiClientUtils.newFirebaseException(cause);
-    assertEquals(ErrorCode.DEADLINE_EXCEEDED, exception.getPlatformErrorCode());
+    assertEquals(ErrorCode.DEADLINE_EXCEEDED, exception.getCode());
     assertEquals("Timed out while making an API call: test", exception.getMessage());
     assertNull(exception.getHttpResponse());
     assertSame(cause, exception.getCause());
@@ -135,7 +135,7 @@ public class ApiClientUtilsTest {
   public void testNestedTimeoutException() {
     IOException cause = new IOException("test", new SocketTimeoutException("nested"));
     FirebaseException exception = ApiClientUtils.newFirebaseException(cause);
-    assertEquals(ErrorCode.DEADLINE_EXCEEDED, exception.getPlatformErrorCode());
+    assertEquals(ErrorCode.DEADLINE_EXCEEDED, exception.getCode());
     assertEquals("Timed out while making an API call: test", exception.getMessage());
     assertNull(exception.getHttpResponse());
     assertSame(cause, exception.getCause());
@@ -145,7 +145,7 @@ public class ApiClientUtilsTest {
   public void testNetworkException() {
     IOException cause = new UnknownHostException("test");
     FirebaseException exception = ApiClientUtils.newFirebaseException(cause);
-    assertEquals(ErrorCode.UNAVAILABLE, exception.getPlatformErrorCode());
+    assertEquals(ErrorCode.UNAVAILABLE, exception.getCode());
     assertEquals("Failed to establish a connection: test", exception.getMessage());
     assertNull(exception.getHttpResponse());
     assertSame(cause, exception.getCause());
@@ -155,7 +155,7 @@ public class ApiClientUtilsTest {
   public void testNestedNetworkException() {
     IOException cause = new IOException("test", new UnknownHostException("nested"));
     FirebaseException exception = ApiClientUtils.newFirebaseException(cause);
-    assertEquals(ErrorCode.UNAVAILABLE, exception.getPlatformErrorCode());
+    assertEquals(ErrorCode.UNAVAILABLE, exception.getCode());
     assertEquals("Failed to establish a connection: test", exception.getMessage());
     assertNull(exception.getHttpResponse());
     assertSame(cause, exception.getCause());
@@ -165,7 +165,7 @@ public class ApiClientUtilsTest {
   public void testUnknownTransportException() {
     IOException cause = new IOException("test");
     FirebaseException exception = ApiClientUtils.newFirebaseException(cause);
-    assertEquals(ErrorCode.UNKNOWN, exception.getPlatformErrorCode());
+    assertEquals(ErrorCode.UNKNOWN, exception.getCode());
     assertEquals("Unknown error while making a remote service call: test", exception.getMessage());
     assertNull(exception.getHttpResponse());
     assertSame(cause, exception.getCause());

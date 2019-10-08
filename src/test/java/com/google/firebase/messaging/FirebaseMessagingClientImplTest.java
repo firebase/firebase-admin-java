@@ -133,7 +133,7 @@ public class FirebaseMessagingClientImplTest {
         client.send(EMPTY_MESSAGE, DRY_RUN_DISABLED);
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code),
+        checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code), null,
             "Unexpected HTTP response with status: " + code + "\n{}");
       }
       checkRequestHeader(interceptor.getLastRequest());
@@ -148,7 +148,7 @@ public class FirebaseMessagingClientImplTest {
       client.send(EMPTY_MESSAGE, DRY_RUN_DISABLED);
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals(ErrorCode.UNKNOWN, error.getPlatformErrorCode());
+      assertEquals(ErrorCode.UNKNOWN, error.getCode());
       assertEquals("Unknown error while making a remote service call: transport error",
           error.getMessage());
       assertTrue(error.getCause() instanceof IOException);
@@ -166,7 +166,7 @@ public class FirebaseMessagingClientImplTest {
         client.send(entry.getKey(), DRY_RUN_DISABLED);
         fail("No error thrown for malformed response");
       } catch (FirebaseMessagingException error) {
-        assertEquals(ErrorCode.UNKNOWN, error.getPlatformErrorCode());
+        assertEquals(ErrorCode.UNKNOWN, error.getCode());
         assertTrue(error.getMessage().startsWith("Error parsing response from FCM: "));
       }
       checkRequestHeader(interceptor.getLastRequest());
@@ -182,7 +182,7 @@ public class FirebaseMessagingClientImplTest {
         client.send(EMPTY_MESSAGE, DRY_RUN_DISABLED);
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code),
+        checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code), null,
             "Unexpected HTTP response with status: " + code + "\nnull");
       }
       checkRequestHeader(interceptor.getLastRequest());
@@ -198,7 +198,7 @@ public class FirebaseMessagingClientImplTest {
         client.send(EMPTY_MESSAGE, DRY_RUN_DISABLED);
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code),
+        checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code), null,
             "Unexpected HTTP response with status: " + code + "\nnot json");
       }
       checkRequestHeader(interceptor.getLastRequest());
@@ -215,7 +215,7 @@ public class FirebaseMessagingClientImplTest {
         client.send(EMPTY_MESSAGE, DRY_RUN_DISABLED);
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT);
+        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT, null);
       }
       checkRequestHeader(interceptor.getLastRequest());
     }
@@ -231,7 +231,7 @@ public class FirebaseMessagingClientImplTest {
         client.send(EMPTY_MESSAGE, DRY_RUN_DISABLED);
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, ErrorCode.NOT_FOUND);
+        checkExceptionFromHttpResponse(error, ErrorCode.NOT_FOUND, null);
       }
       checkRequestHeader(interceptor.getLastRequest());
     }
@@ -249,7 +249,8 @@ public class FirebaseMessagingClientImplTest {
         client.send(EMPTY_MESSAGE, DRY_RUN_DISABLED);
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT);
+        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT,
+            MessagingErrorCode.UNREGISTERED);
       }
       checkRequestHeader(interceptor.getLastRequest());
     }
@@ -326,7 +327,7 @@ public class FirebaseMessagingClientImplTest {
         client.sendAll(MESSAGE_LIST, DRY_RUN_DISABLED);
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code),
+        checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code), null,
             "Unexpected HTTP response with status: " + code + "\n{}");
       }
       checkBatchRequestHeader(interceptor.getLastRequest());
@@ -341,7 +342,7 @@ public class FirebaseMessagingClientImplTest {
       client.sendAll(MESSAGE_LIST, DRY_RUN_DISABLED);
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals(ErrorCode.UNKNOWN, error.getPlatformErrorCode());
+      assertEquals(ErrorCode.UNKNOWN, error.getCode());
       assertEquals("Unknown error while making a remote service call: transport error",
           error.getMessage());
       assertTrue(error.getCause() instanceof IOException);
@@ -357,7 +358,7 @@ public class FirebaseMessagingClientImplTest {
         client.sendAll(MESSAGE_LIST, DRY_RUN_DISABLED);
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code),
+        checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code), null,
             "Unexpected HTTP response with status: " + code + "\nnull");
       }
       checkBatchRequestHeader(interceptor.getLastRequest());
@@ -374,7 +375,7 @@ public class FirebaseMessagingClientImplTest {
         client.sendAll(MESSAGE_LIST, DRY_RUN_DISABLED);
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT);
+        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT, null);
       }
       checkBatchRequestHeader(interceptor.getLastRequest());
     }
@@ -390,7 +391,7 @@ public class FirebaseMessagingClientImplTest {
         client.sendAll(MESSAGE_LIST, DRY_RUN_DISABLED);
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, ErrorCode.NOT_FOUND);
+        checkExceptionFromHttpResponse(error, ErrorCode.NOT_FOUND, null);
       }
       checkBatchRequestHeader(interceptor.getLastRequest());
     }
@@ -408,7 +409,8 @@ public class FirebaseMessagingClientImplTest {
         client.sendAll(MESSAGE_LIST, DRY_RUN_DISABLED);
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT);
+        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT,
+            MessagingErrorCode.UNREGISTERED);
       }
       checkBatchRequestHeader(interceptor.getLastRequest());
     }
@@ -427,6 +429,7 @@ public class FirebaseMessagingClientImplTest {
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
         checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT,
+            MessagingErrorCode.UNREGISTERED,
             "Unexpected HTTP response with status: " + code + "\n" + responseBody);
       }
       checkBatchRequestHeader(interceptor.getLastRequest());
@@ -465,7 +468,6 @@ public class FirebaseMessagingClientImplTest {
       FirebaseMessagingClientImpl client = FirebaseMessagingClientImpl.fromApp(app);
 
       assertEquals(TEST_FCM_URL, client.getFcmSendUrl());
-      assertEquals("fire-admin-java/" + SdkUtils.getVersion(), client.getClientVersion());
       assertSame(options.getJsonFactory(), client.getJsonFactory());
 
       HttpRequest request = client.getRequestFactory().buildGetRequest(
@@ -558,7 +560,7 @@ public class FirebaseMessagingClientImplTest {
 
       FirebaseMessagingException exception = sendResponse.getException();
       assertNotNull(exception);
-      assertEquals(ErrorCode.INVALID_ARGUMENT, exception.getPlatformErrorCode());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, exception.getCode());
     }
 
     checkBatchRequestHeader(interceptor.getLastRequest());
@@ -599,14 +601,20 @@ public class FirebaseMessagingClientImplTest {
   }
 
   private void checkExceptionFromHttpResponse(
-      FirebaseMessagingException error, ErrorCode expectedCode) {
-    checkExceptionFromHttpResponse(error, expectedCode, "test error");
+      FirebaseMessagingException error,
+      ErrorCode expectedCode,
+      MessagingErrorCode expectedMessagingCode) {
+    checkExceptionFromHttpResponse(error, expectedCode, expectedMessagingCode, "test error");
   }
 
   private void checkExceptionFromHttpResponse(
-      FirebaseMessagingException error, ErrorCode expectedCode, String expectedMessage) {
-    assertEquals(expectedCode, error.getPlatformErrorCode());
+      FirebaseMessagingException error,
+      ErrorCode expectedCode,
+      MessagingErrorCode expectedMessagingCode,
+      String expectedMessage) {
+    assertEquals(expectedCode, error.getCode());
     assertEquals(expectedMessage, error.getMessage());
+    assertEquals(expectedMessagingCode, error.getMessagingErrorCode());
     assertTrue(error.getCause() instanceof HttpResponseException);
   }
 

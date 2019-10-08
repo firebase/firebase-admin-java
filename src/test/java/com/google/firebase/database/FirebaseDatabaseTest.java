@@ -81,7 +81,7 @@ public class FirebaseDatabaseTest {
         try {
           FirebaseDatabase.getInstance(url);
           fail("No error thrown for URL: " + url);
-        } catch (DatabaseException expected) {
+        } catch (IllegalArgumentException expected) {
           // expected
         }
       }
@@ -146,7 +146,7 @@ public class FirebaseDatabaseTest {
       try {
         defaultDatabase.getReferenceFromUrl("https://other-db-test.firebaseio.com/foo/bar");
         fail("No error thrown for invalid URL");
-      } catch (DatabaseException expected) {
+      } catch (IllegalArgumentException expected) {
         // expected
       }
     } finally {

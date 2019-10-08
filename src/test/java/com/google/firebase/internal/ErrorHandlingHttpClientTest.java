@@ -103,7 +103,7 @@ public class ErrorHandlingHttpClientTest {
       client.sendAndParse(requestInfo, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      assertEquals(ErrorCode.UNKNOWN, e.getPlatformErrorCode());
+      assertEquals(ErrorCode.UNKNOWN, e.getCode());
       assertEquals("Network error: Test", e.getMessage());
       assertNull(e.getHttpResponse());
       assertSame(exception, e.getCause());
@@ -129,7 +129,7 @@ public class ErrorHandlingHttpClientTest {
       client.sendAndParse(requestInfo, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      assertEquals(ErrorCode.INTERNAL, e.getPlatformErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getCode());
       assertEquals("Example error message: {}", e.getMessage());
       FirebaseHttpResponse httpResponse = e.getHttpResponse();
       assertNotNull(httpResponse);
@@ -137,7 +137,7 @@ public class ErrorHandlingHttpClientTest {
       assertEquals("{}", httpResponse.getContent());
       assertEquals(1, httpResponse.getHeaders().size());
       assertEquals(ImmutableList.of("value"), httpResponse.getHeaders().get("custom-header"));
-      assertEquals("GET", httpResponse.getRequest().getRequestMethod());
+      assertEquals("GET", httpResponse.getRequest().getMethod());
       assertNotNull(e.getCause());
     }
   }
@@ -159,13 +159,13 @@ public class ErrorHandlingHttpClientTest {
       client.sendAndParse(requestInfo, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      assertEquals(ErrorCode.UNKNOWN, e.getPlatformErrorCode());
+      assertEquals(ErrorCode.UNKNOWN, e.getCode());
       assertEquals("Parse error", e.getMessage());
       FirebaseHttpResponse httpResponse = e.getHttpResponse();
       assertNotNull(httpResponse);
       assertEquals(HttpStatusCodes.STATUS_CODE_OK, httpResponse.getStatusCode());
       assertEquals("not json", httpResponse.getContent());
-      assertEquals("GET", httpResponse.getRequest().getRequestMethod());
+      assertEquals("GET", httpResponse.getRequest().getMethod());
       assertNotNull(e.getCause());
     }
   }
@@ -194,7 +194,7 @@ public class ErrorHandlingHttpClientTest {
       client.sendAndParse(requestInfo, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      assertEquals(ErrorCode.INTERNAL, e.getPlatformErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getCode());
       assertEquals("Example error message: null", e.getMessage());
       assertNotNull(e.getHttpResponse());
       assertNotNull(e.getCause());

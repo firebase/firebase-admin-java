@@ -52,13 +52,13 @@ public class PlatformErrorHandlerTest {
       client.sendAndParse(requestInfo, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      assertEquals(ErrorCode.UNAVAILABLE, e.getPlatformErrorCode());
+      assertEquals(ErrorCode.UNAVAILABLE, e.getCode());
       assertEquals("Test error", e.getMessage());
       FirebaseHttpResponse httpResponse = e.getHttpResponse();
       assertNotNull(httpResponse);
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, httpResponse.getStatusCode());
       assertEquals(payload, httpResponse.getContent());
-      assertEquals("GET", httpResponse.getRequest().getRequestMethod());
+      assertEquals("GET", httpResponse.getRequest().getMethod());
       assertNotNull(e.getCause());
     }
   }
@@ -82,13 +82,13 @@ public class PlatformErrorHandlerTest {
       client.sendAndParse(requestInfo, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      assertEquals(ErrorCode.INTERNAL, e.getPlatformErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getCode());
       assertEquals("Unexpected HTTP response with status: 500\nnot json", e.getMessage());
       FirebaseHttpResponse httpResponse = e.getHttpResponse();
       assertNotNull(httpResponse);
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, httpResponse.getStatusCode());
       assertEquals(payload, httpResponse.getContent());
-      assertEquals("GET", httpResponse.getRequest().getRequestMethod());
+      assertEquals("GET", httpResponse.getRequest().getMethod());
       assertNotNull(e.getCause());
     }
   }
@@ -112,13 +112,13 @@ public class PlatformErrorHandlerTest {
       client.sendAndParse(requestInfo, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      assertEquals(ErrorCode.INTERNAL, e.getPlatformErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getCode());
       assertEquals("Test error", e.getMessage());
       FirebaseHttpResponse httpResponse = e.getHttpResponse();
       assertNotNull(httpResponse);
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, httpResponse.getStatusCode());
       assertEquals(payload, httpResponse.getContent());
-      assertEquals("GET", httpResponse.getRequest().getRequestMethod());
+      assertEquals("GET", httpResponse.getRequest().getMethod());
       assertNotNull(e.getCause());
     }
   }
@@ -142,13 +142,13 @@ public class PlatformErrorHandlerTest {
       client.sendAndParse(requestInfo, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getPlatformErrorCode());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getCode());
       assertEquals("Unexpected HTTP response with status: 500\n" + payload, e.getMessage());
       FirebaseHttpResponse httpResponse = e.getHttpResponse();
       assertNotNull(httpResponse);
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, httpResponse.getStatusCode());
       assertEquals(payload, httpResponse.getContent());
-      assertEquals("GET", httpResponse.getRequest().getRequestMethod());
+      assertEquals("GET", httpResponse.getRequest().getMethod());
       assertNotNull(e.getCause());
     }
   }
@@ -172,13 +172,13 @@ public class PlatformErrorHandlerTest {
       client.sendAndParse(requestInfo, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      assertEquals(ErrorCode.INTERNAL, e.getPlatformErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getCode());
       assertEquals("Unexpected HTTP response with status: 500\n" + payload, e.getMessage());
       FirebaseHttpResponse httpResponse = e.getHttpResponse();
       assertNotNull(httpResponse);
       assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, httpResponse.getStatusCode());
       assertEquals(payload, httpResponse.getContent());
-      assertEquals("GET", httpResponse.getRequest().getRequestMethod());
+      assertEquals("GET", httpResponse.getRequest().getMethod());
       assertNotNull(e.getCause());
     }
   }

@@ -63,28 +63,28 @@ public class MapperTest {
     try {
       deserialize("{'value': 1.1}", StringBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
 
     // Int
     try {
       deserialize("{'value': 1}", StringBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
 
     // Long
     try {
       deserialize("{'value': 1234567890123}", StringBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
 
     // Boolean
     try {
       deserialize("{'value': true}", StringBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
   }
 
@@ -97,28 +97,28 @@ public class MapperTest {
     try {
       deserialize("{'value': 1.1}", BooleanBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
 
     // Long
     try {
       deserialize("{'value': 1234567890123}", BooleanBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
 
     // Int
     try {
       deserialize("{'value': 1}", BooleanBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
 
     // String
     try {
       deserialize("{'value': 'foo'}", BooleanBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
   }
 
@@ -138,14 +138,14 @@ public class MapperTest {
     try {
       deserialize("{'value': true}", DoubleBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
 
     // String
     try {
       deserialize("{'value': 'foo'}", DoubleBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
   }
 
@@ -165,14 +165,14 @@ public class MapperTest {
     try {
       deserialize("{'value': true}", FloatBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
 
     // String
     try {
       deserialize("{'value': 'foo'}", FloatBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
   }
 
@@ -189,28 +189,28 @@ public class MapperTest {
     try {
       deserialize("{'value': 1e10}", IntBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
 
     // Long
     try {
       deserialize("{'value': 1234567890123}", IntBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
 
     // Boolean
     try {
       deserialize("{'value': true}", IntBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
 
     // String
     try {
       deserialize("{'value': 'foo'}", IntBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
   }
 
@@ -231,30 +231,30 @@ public class MapperTest {
     try {
       deserialize("{'value': 1e300}", LongBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
 
     // Boolean
     try {
       deserialize("{'value': true}", LongBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
 
     // String
     try {
       deserialize("{'value': 'foo'}", LongBean.class);
       fail("Should throw");
-    } catch (DatabaseException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void primitiveDeserializeWrongTypeMap() {
     deserialize("{'value': {'foo': 'bar'}}", StringBean.class);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void primitiveDeserializeWrongTypeList() {
     deserialize("{'value': ['foo']}", StringBean.class);
   }
@@ -275,12 +275,12 @@ public class MapperTest {
     assertEquals(null, bean.value3);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void packageFieldDeserialze() {
     deserialize("{'value': 'foo'}", PackageFieldBean.class);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void privateFieldDeserialize() {
     deserialize("{'value': 'foo'}", PrivateFieldBean.class);
   }
@@ -307,12 +307,12 @@ public class MapperTest {
     assertEquals("foo", bean.value);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void throwOnUnknownProperties() {
     deserialize("{'value': 'foo', 'unknown': 'bar'}", ThrowOnUnknownPropertiesBean.class);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void twoSetterBean() {
     deserialize("{'value': 'foo'}", TwoSetterBean.class);
   }
@@ -337,12 +337,12 @@ public class MapperTest {
     assertEquals("setter:foo", bean.value);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void setterIsCaseSensitive1() {
     deserialize("{'value': 'foo'}", CaseSensitiveSetterBean1.class);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void setterIsCaseSensitive2() {
     deserialize("{'value': 'foo'}", CaseSensitiveSetterBean2.class);
   }
@@ -365,7 +365,7 @@ public class MapperTest {
     assertEquals("foo", bean.value);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void caseSensitiveSetterMustHaveSameCaseAsSetter() {
     deserialize("{'value': 'foo'}", CaseSensitiveSetterBean6.class);
   }
@@ -410,7 +410,7 @@ public class MapperTest {
     assertEquals("foo", bean.values.get("key").value);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void beanMapsMustHaveStringKeys() {
     deserialize("{'values': {'1': 'bar'}}", IllegalKeyMapBean.class);
   }
@@ -474,14 +474,14 @@ public class MapperTest {
     assertJson("{'value': 'foo'}", serialize(bean));
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void serializePrivateFieldBean() {
     PrivateFieldBean bean = new PrivateFieldBean();
     bean.value = "foo";
     serialize(bean);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void serializePackageFieldBean() {
     PackageFieldBean bean = new PackageFieldBean();
     bean.value = "foo";
@@ -511,7 +511,7 @@ public class MapperTest {
     assertJson("{'value': 'getter:foo'}", serialize(bean));
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void getterAndPublicFieldsConflictOnCaseSensitivity() {
     GetterPublicFieldBeanCaseSensitive bean = new GetterPublicFieldBeanCaseSensitive();
     bean.valueCase = "foo";
@@ -601,7 +601,7 @@ public class MapperTest {
     assertJson("{'values': {'key': {'value': 'foo'}}}", serialize(bean));
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void beanMapsMustHaveStringKeysForSerializing() {
     IllegalKeyMapBean bean = new IllegalKeyMapBean();
     bean.values =
@@ -615,7 +615,7 @@ public class MapperTest {
     serialize(bean);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void twoGettersThrows() {
     TwoGetterBean bean = new TwoGetterBean();
     bean.value = "foo";
@@ -686,62 +686,62 @@ public class MapperTest {
     assertEquals("foo", deserialized.漢字);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void shortsCantBeSerialized() {
     ShortBean bean = new ShortBean();
     bean.value = 1;
     serialize(bean);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void bytesCantBeSerialized() {
     ByteBean bean = new ByteBean();
     bean.value = 1;
     serialize(bean);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void charsCantBeSerialized() {
     CharBean bean = new CharBean();
     bean.value = 1;
     serialize(bean);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void intArraysCantBeSerialized() {
     IntArrayBean bean = new IntArrayBean();
     bean.values = new int[] {1};
     serialize(bean);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void objectArraysCantBeSerialized() {
     StringArrayBean bean = new StringArrayBean();
     bean.values = new String[] {"foo"};
     serialize(bean);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void shortsCantBeDeserialized() {
     deserialize("{'value': 1}", ShortBean.class);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void bytesCantBeDeserialized() {
     deserialize("{'value': 1}", ByteBean.class);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void charsCantBeDeserialized() {
     deserialize("{'value': '1'}", CharBean.class);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void intArraysCantBeDeserialized() {
     deserialize("{'values': [1]}", IntArrayBean.class);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void objectArraysCantBeDeserialized() {
     deserialize("{'values': ['foo']}", StringArrayBean.class);
   }
@@ -758,7 +758,7 @@ public class MapperTest {
     assertEquals("foo", bean.value);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void argConstructorCantBeDeserialized() {
     deserialize("{'value': 'foo'}", ArgConstructorBean.class);
   }
@@ -811,32 +811,32 @@ public class MapperTest {
     assertEquals((Double) 1.1, CustomClassMapper.convertToCustomClass(1.1, Double.class));
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void passingInListTopLevelThrows() {
     CustomClassMapper.convertToCustomClass(Collections.singletonList("foo"), List.class);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void passingInMapTopLevelThrows() {
     CustomClassMapper.convertToCustomClass(Collections.singletonMap("foo", "bar"), Map.class);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void passingInCharacterTopLevelThrows() {
     CustomClassMapper.convertToCustomClass('1', Character.class);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void passingInShortTopLevelThrows() {
     CustomClassMapper.convertToCustomClass(1, Short.class);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void passingInByteTopLevelThrows() {
     CustomClassMapper.convertToCustomClass(1, Byte.class);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void passingInGenericBeanTopLevelThrows() {
     deserialize("{'value': 'foo'}", GenericBean.class);
   }
@@ -848,14 +848,14 @@ public class MapperTest {
     assertJson("{'values': ['foo']}", serialize(bean));
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void collectionsCantBeSerializedWhenSet() {
     CollectionBean bean = new CollectionBean();
     bean.values = Collections.singleton("foo");
     serialize(bean);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void collectionsCantBeDeserialized() {
     deserialize("{'values': ['foo']}", CollectionBean.class);
   }
@@ -930,7 +930,7 @@ public class MapperTest {
     assertJson("{'valueA': 'foo', 'valueB': 1}", serialize(doubleBean));
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void deserializingWrongTypeThrows() {
     deserialize("{'value': 'foo'}", WrongTypeBean.class);
   }
@@ -942,17 +942,17 @@ public class MapperTest {
     assertJson("{'value': '1'}", serialize(bean));
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void extendingGenericTypeIndicatorIsForbidden1() {
     deserialize("{'value': 'foo'}", new GenericTypeIndicatorSubclass<GenericBean<String>>() {});
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void extendingGenericTypeIndicatorIsForbidden2() {
     deserialize("{'value': 'foo'}", new NonGenericTypeIndicatorSubclass() {});
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void extendingGenericTypeIndicatorIsForbidden3() {
     deserialize("{'value': 'foo'}", new NonGenericTypeIndicatorSubclassConcreteSubclass());
   }
@@ -964,12 +964,12 @@ public class MapperTest {
     assertEquals("foo", bean.value);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void unknownTypeParametersNotSupported() {
     deserialize("{'value': 'foo'}", new GenericTypeIndicatorSubclass<GenericBean<?>>() {});
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void unknownTypeParametersSupportedIfBoundedByKnownType() {
     GenericBean<? extends String> bean =
         deserialize(
@@ -1075,7 +1075,7 @@ public class MapperTest {
     assertNull(bean.complexEnum);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void throwsOnUnmatchedEnums() {
     String json = "{'enumField': 'Unavailable', 'enumValue': 'Foo', 'complexEnum': 'One'}";
     deserialize(json, EnumBean.class);
@@ -1146,14 +1146,14 @@ public class MapperTest {
     assertEquals("private-value", baseBean.classPrivateValue);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void settersFromSubclassConflictsWithBaseClass() {
     ConflictingSetterSubBean bean = new ConflictingSetterSubBean();
     bean.value = 1;
     serialize(bean);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void settersFromSubclassConflictsWithBaseClass2() {
     ConflictingSetterSubBean2 bean = new ConflictingSetterSubBean2();
     bean.value = 1;
@@ -1175,7 +1175,7 @@ public class MapperTest {
     assertEquals(-2, bean.value);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void genericSettersFromSubclassConflictsWithBaseClass() {
     ConflictingGenericSetterSubBean<String> bean = new ConflictingGenericSetterSubBean<>();
     bean.value = "hello";
@@ -1184,7 +1184,7 @@ public class MapperTest {
 
   // This should work, but generics and subclassing are tricky to get right. For now we will just
   // throw and we can add support for generics & subclassing if it becomes a high demand feature
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void settersCanOverrideGenericSettersParsingNot() {
     NonConflictingGenericSetterSubBean bean =
         deserialize("{'value': 'value'}", NonConflictingGenericSetterSubBean.class);

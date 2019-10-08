@@ -23,17 +23,23 @@ import com.google.firebase.internal.Nullable;
 
 public class FirebaseMessagingException extends FirebaseException {
 
-  private final String errorCode;
+  private final MessagingErrorCode errorCode;
 
   FirebaseMessagingException(
-      ErrorCode code, String message, String errorCode,
+      ErrorCode code, String message, MessagingErrorCode errorCode,
       Throwable cause, FirebaseHttpResponse response) {
     super(code, message, response, cause);
     this.errorCode = errorCode;
   }
 
   FirebaseMessagingException(
-      String errorCode, String message, Throwable cause) {
+      ErrorCode code, String message, Throwable cause) {
+    super(code, message, null, cause);
+    this.errorCode = null;
+  }
+
+  FirebaseMessagingException(
+      MessagingErrorCode errorCode, String message, Throwable cause) {
     super(ErrorCode.UNKNOWN, message, null, cause);
     this.errorCode = errorCode;
   }
@@ -41,7 +47,7 @@ public class FirebaseMessagingException extends FirebaseException {
 
   /** Returns an error code that may provide more information about the error. */
   @Nullable
-  public String getErrorCode() {
+  public MessagingErrorCode getMessagingErrorCode() {
     return errorCode;
   }
 }

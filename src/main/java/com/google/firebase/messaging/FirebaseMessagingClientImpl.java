@@ -37,6 +37,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseHttpRequest;
 import com.google.firebase.FirebaseHttpResponse;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.ApiClientUtils;
@@ -80,6 +81,11 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
           .put("UNREGISTERED", "registration-token-not-registered")
           .build();
 
+  private static final Map<String, String> COMMON_HEADERS =
+      ImmutableMap.of(
+          API_FORMAT_VERSION_HEADER, "2",
+          CLIENT_VERSION_HEADER, "fire-admin-java/" + SdkUtils.getVersion());
+
   private final String fcmSendUrl;
   private final HttpRequestFactory requestFactory;
   private final HttpRequestFactory childRequestFactory;
@@ -87,7 +93,6 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   private final HttpResponseInterceptor responseInterceptor;
   private final MessagingErrorHandler errorHandler;
   private final ErrorHandlingHttpClient<FirebaseMessagingException> httpClient;
-  private final String clientVersion = "fire-admin-java/" + SdkUtils.getVersion();
 
   private FirebaseMessagingClientImpl(Builder builder) {
     checkArgument(!Strings.isNullOrEmpty(builder.projectId));
@@ -122,11 +127,6 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     return jsonFactory;
   }
 
-  @VisibleForTesting
-  String getClientVersion() {
-    return clientVersion;
-  }
-
   public String send(Message message, boolean dryRun) throws FirebaseMessagingException {
     return sendSingleRequest(message, dryRun);
   }
@@ -141,8 +141,7 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     HttpRequestInfo request =
         HttpRequestInfo.buildPostRequest(
             fcmSendUrl, new JsonHttpContent(jsonFactory, message.wrapForTransport(dryRun)))
-        .addHeader(API_FORMAT_VERSION_HEADER, "2")
-        .addHeader(CLIENT_VERSION_HEADER, clientVersion)
+        .addAllHeaders(COMMON_HEADERS)
         .setResponseInterceptor(responseInterceptor);
     MessagingServiceResponse parsed = httpClient.sendAndParse(
         request, MessagingServiceResponse.class);
@@ -158,7 +157,8 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
       batch.execute();
       return new BatchResponse(callback.getResponses());
     } catch (HttpResponseException e) {
-      FirebaseHttpResponse resp = new FirebaseHttpResponse(e, null);
+      FirebaseHttpRequest req = new FirebaseHttpRequest("POST", FCM_BATCH_URL);
+      FirebaseHttpResponse resp = new FirebaseHttpResponse(e, req);
       throw errorHandler.handleHttpResponseException(e, resp);
     } catch (IOException e) {
       throw errorHandler.handleIOException(e);
@@ -181,16 +181,11 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
           sendUrl,
           new JsonHttpContent(jsonFactory, message.wrapForTransport(dryRun)));
       request.setParser(jsonParser);
-      setCommonFcmHeaders(request.getHeaders());
+      request.getHeaders().putAll(COMMON_HEADERS);
       batch.queue(
           request, MessagingServiceResponse.class, MessagingServiceErrorResponse.class, callback);
     }
     return batch;
-  }
-
-  private void setCommonFcmHeaders(HttpHeaders headers) {
-    headers.set(API_FORMAT_VERSION_HEADER, "2");
-    headers.set(CLIENT_VERSION_HEADER, clientVersion);
   }
 
   private HttpRequestInitializer getBatchRequestInitializer() {

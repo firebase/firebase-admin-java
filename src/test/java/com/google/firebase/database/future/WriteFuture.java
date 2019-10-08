@@ -35,7 +35,7 @@ public class WriteFuture implements Future<DatabaseError> {
   private Semaphore semaphore;
   private boolean done = false;
 
-  public WriteFuture(DatabaseReference ref, Object value) throws DatabaseException {
+  public WriteFuture(DatabaseReference ref, Object value) {
     semaphore = new Semaphore(0);
     ref.setValue(
         value,
@@ -48,8 +48,7 @@ public class WriteFuture implements Future<DatabaseError> {
         });
   }
 
-  public WriteFuture(DatabaseReference ref, Object value, double priority)
-      throws DatabaseException {
+  public WriteFuture(DatabaseReference ref, Object value, double priority) {
     semaphore = new Semaphore(0);
     ref.setValue(
         value,
@@ -63,8 +62,7 @@ public class WriteFuture implements Future<DatabaseError> {
         });
   }
 
-  public WriteFuture(DatabaseReference ref, Object value, String priority)
-      throws DatabaseException {
+  public WriteFuture(DatabaseReference ref, Object value, String priority) {
     semaphore = new Semaphore(0);
     ref.setValue(
         value,

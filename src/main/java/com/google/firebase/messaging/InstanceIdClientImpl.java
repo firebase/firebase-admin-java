@@ -33,6 +33,7 @@ import com.google.api.client.util.Key;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.Nullable;
@@ -103,7 +104,7 @@ final class InstanceIdClientImpl implements InstanceIdClient {
       throw createExceptionFromResponse(e);
     } catch (IOException e) {
       throw new FirebaseMessagingException(
-          FirebaseMessaging.INTERNAL_ERROR, "Error while calling IID backend service", e);
+          ErrorCode.UNKNOWN, "Error while calling IID backend service", e);
     }
   }
 
@@ -115,7 +116,7 @@ final class InstanceIdClientImpl implements InstanceIdClient {
       throw createExceptionFromResponse(e);
     } catch (IOException e) {
       throw new FirebaseMessagingException(
-          FirebaseMessaging.INTERNAL_ERROR, "Error while calling IID backend service", e);
+          ErrorCode.UNKNOWN, "Error while calling IID backend service", e);
     }
   }
 
@@ -177,7 +178,7 @@ final class InstanceIdClientImpl implements InstanceIdClient {
       msg = String.format("Unexpected HTTP response with status: %d; body: %s",
           e.getStatusCode(), e.getContent());
     }
-    return new FirebaseMessagingException(code, msg, e);
+    return new FirebaseMessagingException(ErrorCode.UNKNOWN, msg, e);
   }
 
   private static class InstanceIdServiceResponse {

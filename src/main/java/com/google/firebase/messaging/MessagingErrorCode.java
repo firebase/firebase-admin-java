@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2019 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,21 @@
  * limitations under the License.
  */
 
-package com.google.firebase.database;
+package com.google.firebase.messaging;
 
-import com.google.firebase.ErrorCode;
-import com.google.firebase.FirebaseException;
+public enum MessagingErrorCode {
 
-/**
- * This error is thrown when the Firebase Database library is unable to operate on the input it has
- * been given.
- */
-public class DatabaseException extends FirebaseException {
+  THIRD_PARTY_AUTH_ERROR,
 
-  /**
-   * <strong>For internal use</strong>
-   *
-   * @hide
-   * @param message A human readable description of the error
-   */
-  public DatabaseException(ErrorCode code, String message) {
-    super(code, message, null, null);
-  }
+  INVALID_ARGUMENT,
+
+  INTERNAL,
+
+  QUOTA_EXCEEDED,
+
+  SENDER_ID_MISMATCH,
+
+  UNAVAILABLE,
+
+  UNREGISTERED,
 }

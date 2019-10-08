@@ -30,7 +30,7 @@ import java.io.IOException;
 public abstract class PlatformErrorHandler<T extends FirebaseException>
     extends BaseHttpErrorHandler<T> {
 
-  private final JsonFactory jsonFactory;
+  protected final JsonFactory jsonFactory;
 
   public PlatformErrorHandler(JsonFactory jsonFactory) {
     this.jsonFactory = checkNotNull(jsonFactory, "jsonFactory must not be null");

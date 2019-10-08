@@ -214,14 +214,14 @@ public class MutableDataTest {
       try {
         dataFor(TestHelpers.buildObjFromPath(path, "test_value"));
         fail("Invalid path did not throw exception.");
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // expected
       }
 
       try {
         dataForPath("scalar_value", key);
         fail("Invalid path did not throw exception.");
-      } catch (DatabaseException e) {
+      } catch (IllegalArgumentException e) {
         // expected
       }
     }

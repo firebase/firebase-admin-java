@@ -298,7 +298,7 @@ public class MutableData {
    *
    * @param value The value to set at this location
    */
-  public void setValue(Object value) throws DatabaseException {
+  public void setValue(Object value) {
     ValidationPath.validateWithObject(prefixPath, value);
     Object bouncedValue = CustomClassMapper.convertToPlainJavaTypes(value);
     Validation.validateWritableObject(bouncedValue);

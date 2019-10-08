@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.util.ArrayList;
 import java.util.List;
@@ -110,7 +111,7 @@ public class FirebaseMessagingIT {
     assertNull(responses.get(2).getMessageId());
     FirebaseMessagingException exception = responses.get(2).getException();
     assertNotNull(exception);
-    assertEquals("invalid-argument", exception.getErrorCode());
+    assertEquals(ErrorCode.INVALID_ARGUMENT, exception.getCode());
   }
 
   @Test

@@ -31,6 +31,7 @@ import com.google.api.client.json.JsonParser;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -174,7 +175,7 @@ public class InstanceIdClientImplTest {
       client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals("internal-error", error.getErrorCode());
+      assertEquals(ErrorCode.UNKNOWN, error.getCode());
       assertEquals("Error while calling IID backend service", error.getMessage());
       assertTrue(error.getCause() instanceof IOException);
     }
@@ -294,7 +295,7 @@ public class InstanceIdClientImplTest {
       client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals("internal-error", error.getErrorCode());
+      assertEquals(ErrorCode.UNKNOWN, error.getCode());
       assertEquals("Error while calling IID backend service", error.getMessage());
       assertTrue(error.getCause() instanceof IOException);
     }
@@ -379,7 +380,7 @@ public class InstanceIdClientImplTest {
 
   private void checkExceptionFromHttpResponse(FirebaseMessagingException error,
       int expectedCode, String expectedMessage) {
-    assertEquals(getTopicManagementErrorCode(expectedCode), error.getErrorCode());
+    assertEquals(ErrorCode.UNKNOWN, error.getCode());
     assertEquals(expectedMessage, error.getMessage());
     assertTrue(error.getCause() instanceof HttpResponseException);
   }

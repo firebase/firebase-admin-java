@@ -48,7 +48,7 @@ public class FirebaseException extends Exception {
     this.response = response;
   }
 
-  public ErrorCode getPlatformErrorCode() {
+  public ErrorCode getCode() {
     return errorCode;
   }
 

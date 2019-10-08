@@ -84,7 +84,7 @@ public class Path implements Iterable<ChildKey>, Comparable<Path> {
     } else if (outerFront.equals(innerFront)) {
       return getRelative(from.popFront(), to.popFront());
     } else {
-      throw new DatabaseException("INTERNAL ERROR: " + to + " is not contained in " + from);
+      throw new IllegalArgumentException("INTERNAL ERROR: " + to + " is not contained in " + from);
     }
   }
 

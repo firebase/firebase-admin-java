@@ -29,11 +29,11 @@ import java.util.Map;
 public class NodeUtilities {
 
   // CSOFF: MethodName
-  public static Node NodeFromJSON(Object value) throws DatabaseException {
+  public static Node NodeFromJSON(Object value) {
     return NodeFromJSON(value, PriorityUtilities.NullPriority());
   }
 
-  public static Node NodeFromJSON(Object value, Node priority) throws DatabaseException {
+  public static Node NodeFromJSON(Object value, Node priority) {
     try {
       if (value instanceof Map) {
         Map mapValue = (Map) value;
@@ -104,11 +104,11 @@ public class NodeUtilities {
           return new ChildrenNode(childSet, priority);
         }
       } else {
-        throw new DatabaseException(
+        throw new IllegalArgumentException(
             "Failed to parse node with class " + value.getClass().toString());
       }
     } catch (ClassCastException e) {
-      throw new DatabaseException("Failed to parse node", e);
+      throw new IllegalArgumentException("Failed to parse node", e);
     }
   }
   // CSON: MethodName

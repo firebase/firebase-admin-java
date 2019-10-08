@@ -98,14 +98,14 @@ public class CustomClassMapper {
     if (genericTypeIndicatorType instanceof ParameterizedType) {
       ParameterizedType parameterizedType = (ParameterizedType) genericTypeIndicatorType;
       if (!parameterizedType.getRawType().equals(GenericTypeIndicator.class)) {
-        throw new DatabaseException(
+        throw new IllegalArgumentException(
             "Not a direct subclass of GenericTypeIndicator: " + genericTypeIndicatorType);
       }
       // We are guaranteed to have exactly one type parameter
       Type type = parameterizedType.getActualTypeArguments()[0];
       return deserializeToType(object, type);
     } else {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Not a direct subclass of GenericTypeIndicator: " + genericTypeIndicatorType);
     }
   }
@@ -126,7 +126,7 @@ public class CustomClassMapper {
       } else if (obj instanceof Long || obj instanceof Integer) {
         return obj;
       } else {
-        throw new DatabaseException(
+        throw new IllegalArgumentException(
             String.format(
                 "Numbers of type %s are not supported, please use an int, long, float or double",
                 obj.getClass().getSimpleName()));
@@ -136,7 +136,7 @@ public class CustomClassMapper {
     } else if (obj instanceof Boolean) {
       return obj;
     } else if (obj instanceof Character) {
-      throw new DatabaseException("Characters are not supported, please use Strings");
+      throw new IllegalArgumentException("Characters are not supported, please use Strings");
     } else if (obj instanceof Map) {
       Map<String, Object> result = new HashMap<>();
       for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) obj).entrySet()) {
@@ -145,7 +145,7 @@ public class CustomClassMapper {
           String keyString = (String) key;
           result.put(keyString, serialize(entry.getValue()));
         } else {
-          throw new DatabaseException("Maps with non-string keys are not supported");
+          throw new IllegalArgumentException("Maps with non-string keys are not supported");
         }
       }
       return result;
@@ -158,11 +158,11 @@ public class CustomClassMapper {
         }
         return result;
       } else {
-        throw new DatabaseException(
+        throw new IllegalArgumentException(
             "Serializing Collections is not supported, please use Lists instead");
       }
     } else if (obj.getClass().isArray()) {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Serializing Arrays is not supported, please use Lists instead");
     } else if (obj instanceof Enum) {
       return ((Enum<?>) obj).name();
@@ -182,9 +182,9 @@ public class CustomClassMapper {
     } else if (type instanceof Class) {
       return deserializeToClass(obj, (Class<T>) type);
     } else if (type instanceof WildcardType) {
-      throw new DatabaseException("Generic wildcard types are not supported");
+      throw new IllegalArgumentException("Generic wildcard types are not supported");
     } else if (type instanceof GenericArrayType) {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Generic Arrays are not supported, please use Lists instead");
     } else {
       throw new IllegalStateException("Unknown type encountered: " + type);
@@ -203,10 +203,10 @@ public class CustomClassMapper {
     } else if (String.class.isAssignableFrom(clazz)) {
       return (T) convertString(obj);
     } else if (clazz.isArray()) {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Converting to Arrays is not supported, please use Lists instead");
     } else if (clazz.getTypeParameters().length > 0) {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Class "
               + clazz.getName()
               + " has generic type "
@@ -234,14 +234,14 @@ public class CustomClassMapper {
         }
         return (T) result;
       } else {
-        throw new DatabaseException(
+        throw new IllegalArgumentException(
             "Expected a List while deserializing, but got a " + obj.getClass());
       }
     } else if (Map.class.isAssignableFrom(rawType)) {
       Type keyType = type.getActualTypeArguments()[0];
       Type valueType = type.getActualTypeArguments()[1];
       if (!keyType.equals(String.class)) {
-        throw new DatabaseException(
+        throw new IllegalArgumentException(
             "Only Maps with string keys are supported, "
                 + "but found Map with key type "
                 + keyType);
@@ -253,7 +253,7 @@ public class CustomClassMapper {
       }
       return (T) result;
     } else if (Collection.class.isAssignableFrom(rawType)) {
-      throw new DatabaseException("Collections are not supported, please use Lists instead");
+      throw new IllegalArgumentException("Collections are not supported, please use Lists instead");
     } else {
       Map<String, Object> map = expectMap(obj);
       BeanMapper<T> mapper = (BeanMapper<T>) loadOrCreateBeanMapperForClass(rawType);
@@ -283,7 +283,7 @@ public class CustomClassMapper {
     } else if (Float.class.isAssignableFrom(clazz) || float.class.isAssignableFrom(clazz)) {
       return (T) (Float) convertDouble(obj).floatValue();
     } else {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           String.format("Deserializing values to %s is not supported", clazz.getSimpleName()));
     }
   }
@@ -297,11 +297,11 @@ public class CustomClassMapper {
       try {
         return (T) Enum.valueOf((Class) clazz, value);
       } catch (IllegalArgumentException e) {
-        throw new DatabaseException(
+        throw new IllegalArgumentException(
             "Could not find enum value of " + clazz.getName() + " for value \"" + value + "\"");
       }
     } else {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Expected a String while deserializing to enum "
               + clazz
               + " but got a "
@@ -327,7 +327,7 @@ public class CustomClassMapper {
       // TODO: runtime validation of keys?
       return (Map<String, Object>) object;
     } else {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Expected a Map while deserializing, but got a " + object.getClass());
     }
   }
@@ -340,13 +340,13 @@ public class CustomClassMapper {
       if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
         return ((Number) obj).intValue();
       } else {
-        throw new DatabaseException(
+        throw new IllegalArgumentException(
             "Numeric value out of 32-bit integer range: "
                 + value
                 + ". Did you mean to use a long or double instead of an int?");
       }
     } else {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Failed to convert a value of type " + obj.getClass().getName() + " to int");
     }
   }
@@ -361,13 +361,13 @@ public class CustomClassMapper {
       if (value >= Long.MIN_VALUE && value <= Long.MAX_VALUE) {
         return value.longValue();
       } else {
-        throw new DatabaseException(
+        throw new IllegalArgumentException(
             "Numeric value out of 64-bit long range: "
                 + value
                 + ". Did you mean to use a double instead of a long?");
       }
     } else {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Failed to convert a value of type " + obj.getClass().getName() + " to long");
     }
   }
@@ -381,7 +381,7 @@ public class CustomClassMapper {
       if (doubleValue.longValue() == value) {
         return doubleValue;
       } else {
-        throw new DatabaseException(
+        throw new IllegalArgumentException(
             "Loss of precision while converting number to "
                 + "double: "
                 + obj
@@ -390,7 +390,7 @@ public class CustomClassMapper {
     } else if (obj instanceof Double) {
       return (Double) obj;
     } else {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Failed to convert a value of type " + obj.getClass().getName() + " to double");
     }
   }
@@ -399,7 +399,7 @@ public class CustomClassMapper {
     if (obj instanceof Boolean) {
       return (Boolean) obj;
     } else {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Failed to convert value of type " + obj.getClass().getName() + " to boolean");
     }
   }
@@ -408,7 +408,7 @@ public class CustomClassMapper {
     if (obj instanceof String) {
       return (String) obj;
     } else {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Failed to convert value of type " + obj.getClass().getName() + " to String");
     }
   }
@@ -418,7 +418,7 @@ public class CustomClassMapper {
     if (obj instanceof Map) {
       return mapper.deserialize(expectMap(obj));
     } else {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Can't convert object of type "
               + obj.getClass().getName()
               + " to type "
@@ -465,7 +465,8 @@ public class CustomClassMapper {
           addProperty(propertyName);
           method.setAccessible(true);
           if (getters.containsKey(propertyName)) {
-            throw new DatabaseException("Found conflicting getters for name: " + method.getName());
+            throw new IllegalArgumentException(
+                "Found conflicting getters for name: " + method.getName());
           }
           getters.put(propertyName, method);
         }
@@ -492,7 +493,7 @@ public class CustomClassMapper {
             String existingPropertyName = properties.get(propertyName.toLowerCase());
             if (existingPropertyName != null) {
               if (!existingPropertyName.equals(propertyName)) {
-                throw new DatabaseException(
+                throw new IllegalArgumentException(
                     "Found setter with invalid case-sensitive name: " + method.getName());
               } else {
                 Method existingSetter = setters.get(propertyName);
@@ -502,7 +503,7 @@ public class CustomClassMapper {
                 } else if (!isSetterOverride(method, existingSetter)) {
                   // We require that setters with conflicting property names are
                   // overrides from a base class
-                  throw new DatabaseException(
+                  throw new IllegalArgumentException(
                       "Found a conflicting setters "
                           + "with name: "
                           + method.getName()
@@ -535,7 +536,8 @@ public class CustomClassMapper {
       } while (currentClass != null && !currentClass.equals(Object.class));
 
       if (properties.isEmpty()) {
-        throw new DatabaseException("No properties to serialize found on class " + clazz.getName());
+        throw new IllegalArgumentException(
+            "No properties to serialize found on class " + clazz.getName());
       }
     }
 
@@ -683,7 +685,7 @@ public class CustomClassMapper {
     private void addProperty(String property) {
       String oldValue = this.properties.put(property.toLowerCase(), property);
       if (oldValue != null && !property.equals(oldValue)) {
-        throw new DatabaseException(
+        throw new IllegalArgumentException(
             "Found two getters or fields with conflicting case "
                 + "sensitivity for property: "
                 + property.toLowerCase());
@@ -696,7 +698,7 @@ public class CustomClassMapper {
 
     public T deserialize(Map<String, Object> values, Map<TypeVariable<Class<T>>, Type> types) {
       if (this.constructor == null) {
-        throw new DatabaseException(
+        throw new IllegalArgumentException(
             "Class " + this.clazz.getName() + " is missing a constructor with no arguments");
       }
       T instance;
@@ -740,7 +742,7 @@ public class CustomClassMapper {
             message += " (fields/setters are case sensitive!)";
           }
           if (this.throwOnUnknownProperties) {
-            throw new DatabaseException(message);
+            throw new IllegalArgumentException(message);
           } else if (this.warnOnUnknownProperties) {
             logger.warn(message);
           }

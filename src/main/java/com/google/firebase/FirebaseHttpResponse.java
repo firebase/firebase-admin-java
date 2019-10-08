@@ -27,16 +27,20 @@ public final class FirebaseHttpResponse {
   private final int statusCode;
   private final String content;
   private final Map<String, Object> headers;
-  private final HttpRequest request;
+  private final FirebaseHttpRequest request;
 
   public FirebaseHttpResponse(HttpResponse response, String content) {
     this.statusCode = response.getStatusCode();
     this.content = content;
     this.headers = ImmutableMap.copyOf(response.getHeaders());
-    this.request = response.getRequest();
+    this.request = new FirebaseHttpRequest(response.getRequest());
   }
 
   public FirebaseHttpResponse(HttpResponseException e, HttpRequest request) {
+    this(e, new FirebaseHttpRequest(request));
+  }
+
+  public FirebaseHttpResponse(HttpResponseException e, FirebaseHttpRequest request) {
     this.statusCode = e.getStatusCode();
     this.content = e.getContent();
     this.headers = ImmutableMap.copyOf(e.getHeaders());
@@ -55,7 +59,7 @@ public final class FirebaseHttpResponse {
     return this.headers;
   }
 
-  public HttpRequest getRequest() {
+  public FirebaseHttpRequest getRequest() {
     return request;
   }
 }

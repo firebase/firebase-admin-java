@@ -84,7 +84,7 @@ public class FirebaseDatabaseTestIT {
     try {
       FirebaseDatabase.getInstance(app);
       fail("no error thrown for getInstance() with null URL");
-    } catch (DatabaseException expected) { // ignore
+    } catch (IllegalArgumentException expected) { // ignore
     }
   }
 
@@ -94,7 +94,7 @@ public class FirebaseDatabaseTestIT {
     try {
       FirebaseDatabase.getInstance(app);
       fail("no error thrown for getInstance() with malformed URL");
-    } catch (DatabaseException expected) { // ignore
+    } catch (IllegalArgumentException expected) { // ignore
     }
   }
   
@@ -104,7 +104,7 @@ public class FirebaseDatabaseTestIT {
     try {
       FirebaseDatabase.getInstance(app, "not-a-url");
       fail("no error thrown for getInstance() with malformed URL");
-    } catch (DatabaseException expected) { // ignore
+    } catch (IllegalArgumentException expected) { // ignore
     }
   }
   
@@ -115,7 +115,7 @@ public class FirebaseDatabaseTestIT {
     try {      
       FirebaseDatabase.getInstance(app);
       fail("no error thrown for DB URL with path");
-    } catch (DatabaseException expected) { // ignore
+    } catch (IllegalArgumentException expected) { // ignore
     }
   }
   
@@ -126,7 +126,7 @@ public class FirebaseDatabaseTestIT {
       FirebaseDatabase.getInstance(app, IntegrationTestUtils.getDatabaseUrl() 
           + "/paths/are/not/allowed");
       fail("no error thrown for DB URL with path");
-    } catch (DatabaseException expected) { // ignore
+    } catch (IllegalArgumentException expected) { // ignore
     }
   }
   
@@ -153,7 +153,7 @@ public class FirebaseDatabaseTestIT {
     assertEquals(dbUrl + "/foo/bar", ref.toString());
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void testGetReferenceThrowsWithBadUrl() {
     FirebaseDatabase db = FirebaseDatabase.getInstance();
     db.getReferenceFromUrl("https://tests2.fake-firebaseio.com:9000");

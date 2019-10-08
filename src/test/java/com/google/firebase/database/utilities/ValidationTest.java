@@ -47,7 +47,7 @@ public class ValidationTest {
       try {
         Validation.validatePathString(path);
         fail("No error thrown for invalid path: " + path);
-      } catch (DatabaseException expected) {
+      } catch (IllegalArgumentException expected) {
         // expected
       }
     }
@@ -73,7 +73,7 @@ public class ValidationTest {
       try {
         Validation.validateRootPathString(path);
         fail("No error thrown for invalid path: " + path);
-      } catch (DatabaseException expected) {
+      } catch (IllegalArgumentException expected) {
         // expected
       }
     }
@@ -94,7 +94,7 @@ public class ValidationTest {
       try {
         Validation.validateNullableKey(key);
         fail("No error thrown for invalid nullable key: " + key);
-      } catch (DatabaseException expected) {
+      } catch (IllegalArgumentException expected) {
         // expected
       }
     }
@@ -109,7 +109,7 @@ public class ValidationTest {
       try {
         Validation.validateWritableKey(key);
         fail("No error thrown for non-writable key: " + key);
-      } catch (DatabaseException expected) {
+      } catch (IllegalArgumentException expected) {
         // expected
       }
     }
@@ -136,7 +136,7 @@ public class ValidationTest {
       try {
         Validation.validateWritablePath(path);
         fail("No error thrown for non-writable path: " + pathString);
-      } catch (DatabaseException expected) {
+      } catch (IllegalArgumentException expected) {
         // expected
       }
     }
@@ -173,7 +173,7 @@ public class ValidationTest {
       try {
         Validation.parseAndValidateUpdate(path, map);
         fail("No error thrown for invalid update: " + map);
-      } catch (DatabaseException expected) {
+      } catch (IllegalArgumentException expected) {
         // expected
       }
     }
