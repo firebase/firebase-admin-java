@@ -75,20 +75,6 @@ RELEASE_BRANCH="release-${TIMESTAMP}"
 echo "[INFO] Creating new release branch: ${RELEASE_BRANCH}"
 git checkout -b ${RELEASE_BRANCH} master
 
-HOST=$(uname)
-echo "[INFO] Updating CHANGELOG.md"
-if [ $HOST == "Darwin" ]; then
-    sed -i "" -e "1 s/# Unreleased//" "CHANGELOG.md"
-else
-    sed -i -e "/# Unreleased/d" "CHANGELOG.md"
-fi
-
-echo -e "# Unreleased\n\n-\n\n# v${VERSION}" | cat - CHANGELOG.md > TEMP_CHANGELOG.md
-mv TEMP_CHANGELOG.md CHANGELOG.md
-git add CHANGELOG.md
-git commit -m "Updating CHANGELOG for ${VERSION} release."
-git push origin ${RELEASE_BRANCH}
-
 
 #################################
 #  RUN MAVEN PREPARATION STEPS  #
