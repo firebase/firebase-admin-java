@@ -98,6 +98,9 @@ public class AndroidNotification {
 
   @Key("light_settings")
   private final LightSettings lightSettings;
+  
+  @Key("default_light_settings")
+  private final Boolean defaultLightSettings;
 
   @Key("visibility")
   private final String visibility;
@@ -153,6 +156,7 @@ public class AndroidNotification {
     this.defaultVibrateTimings = builder.defaultVibrateTimings;
     this.defaultSound = builder.defaultSound;
     this.lightSettings = builder.lightSettings;
+    this.defaultLightSettings = builder.defaultLightSettings;
     if (builder.visibility != null) {
       this.visibility = builder.visibility.name().toLowerCase();
     } else {
@@ -208,6 +212,7 @@ public class AndroidNotification {
     private Boolean defaultVibrateTimings;
     private Boolean defaultSound;
     private LightSettings lightSettings;
+    private Boolean defaultLightSettings;
     private Visibility visibility;
     private Integer notificationCount;
 
@@ -531,6 +536,22 @@ public class AndroidNotification {
      */
     public Builder setLightSettings(LightSettings lightSettings) {
       this.lightSettings = lightSettings;
+      return this;
+    }
+
+    /**
+     * Sets the whether to use the default light settings. If set to true, use the Android
+     * framework's default LED light settings for the notification. Default values are 
+     * specified in config.xml. If default_light_settings is set to true and 
+     * light_settings is also set, the user-specified light_settings is used instead of 
+     * the default value.
+     *
+     * @param defaultLightSettings The flag incicating whether to use the default light 
+     *     settings
+     * @return This builder.
+     */
+    public Builder setDefaultLightSettings(Boolean defaultLightSettings) {
+      this.defaultLightSettings = defaultLightSettings;
       return this;
     }
 
