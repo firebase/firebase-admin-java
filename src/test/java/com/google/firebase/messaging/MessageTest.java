@@ -860,7 +860,7 @@ public class MessageTest {
             .put("body", "android-body")
             .put("ticker", "ticker")
             .put("sticky", true)
-            .put("event_time", "2018-12-31T17:02:03.000000123Z")
+            .put("event_time", "2019-01-01T01:02:03.000000123Z")
             .put("local_only", true)
             .put("notification_priority", "high")
             .put("vibrate_timings", ImmutableList.of(new BigDecimal(1001)))
