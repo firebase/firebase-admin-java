@@ -16,7 +16,10 @@
 
 package com.google.firebase.messaging;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.api.client.util.Key;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A class representing light settings in an Android Notification.
@@ -27,10 +30,10 @@ public class LightSettings {
   private final Color color;
   
   @Key("light_on_duration")
-  private final Duration lightOnDuration;
+  private final String lightOnDuration;
   
   @Key("light_off_duration")
-  private final Duration lightOffDuration;
+  private final String lightOffDuration;
   
   private LightSettings(Builder builder) {
     this.color = builder.color;
@@ -50,8 +53,8 @@ public class LightSettings {
   public static class Builder {
 
     private Color color;
-    private Duration lightOnDuration;
-    private Duration lightOffDuration;
+    private String lightOnDuration;
+    private String lightOffDuration;
 
     private Builder() {}
 
@@ -72,8 +75,16 @@ public class LightSettings {
      * @param lightOnDurationInMillis The time duration in milliseconds for the LED light to be on.
      * @return This builder.
      */
-    public Builder setLightOnDurationInMillis(Long lightOnDurationInMillis) {
-      this.lightOnDuration = Duration.fromLongInMillis(lightOnDurationInMillis);
+    public Builder setLightOnDurationInMillis(long lightOnDurationInMillis) {
+      checkArgument(lightOnDurationInMillis >= 0, "ttl must not be negative");
+      long seconds = TimeUnit.MILLISECONDS.toSeconds(lightOnDurationInMillis);
+      long subsecondNanos = TimeUnit.MILLISECONDS
+          .toNanos(lightOnDurationInMillis - seconds * 1000L);
+      if (subsecondNanos > 0) {
+        this.lightOnDuration = String.format("%d.%09ds", seconds, subsecondNanos);
+      } else {
+        this.lightOnDuration = String.format("%ds", seconds);
+      }
       return this;
     }
 
@@ -84,8 +95,16 @@ public class LightSettings {
      *     off.
      * @return This builder.
      */
-    public Builder setLightOffDurationInMillis(Long lightOffDurationInMillis) {
-      this.lightOffDuration = Duration.fromLongInMillis(lightOffDurationInMillis);
+    public Builder setLightOffDurationInMillis(long lightOffDurationInMillis) {
+      checkArgument(lightOffDurationInMillis >= 0, "ttl must not be negative");
+      long seconds = TimeUnit.MILLISECONDS.toSeconds(lightOffDurationInMillis);
+      long subsecondNanos = TimeUnit.MILLISECONDS
+          .toNanos(lightOffDurationInMillis - seconds * 1000L);
+      if (subsecondNanos > 0) {
+        this.lightOffDuration = String.format("%d.%09ds", seconds, subsecondNanos);
+      } else {
+        this.lightOffDuration = String.format("%ds", seconds);
+      }
       return this;
     }
  

@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Represents the Android-specific notification options that can be included in a {@link Message}.
@@ -88,7 +89,7 @@ public class AndroidNotification {
   private final String priority;
 
   @Key("vibrate_timings")
-  private final List<Long> vibrateTimingsInMillis;
+  private final List<String> vibrateTimings;
 
   @Key("default_vibrate_timings")
   private final Boolean defaultVibrateTimings;
@@ -148,10 +149,10 @@ public class AndroidNotification {
     } else {
       this.priority = null;
     }
-    if (!builder.vibrateTimingsInMillis.isEmpty()) {
-      this.vibrateTimingsInMillis = ImmutableList.copyOf(builder.vibrateTimingsInMillis);
+    if (!builder.vibrateTimings.isEmpty()) {
+      this.vibrateTimings = ImmutableList.copyOf(builder.vibrateTimings);
     } else {
-      this.vibrateTimingsInMillis = null;
+      this.vibrateTimings = null;
     }
     this.defaultVibrateTimings = builder.defaultVibrateTimings;
     this.defaultSound = builder.defaultSound;
@@ -208,7 +209,7 @@ public class AndroidNotification {
     private String eventTime;
     private Boolean localOnly;
     private Priority priority;
-    private List<Long> vibrateTimingsInMillis = new ArrayList<>();
+    private List<String> vibrateTimings = new ArrayList<>();
     private Boolean defaultVibrateTimings;
     private Boolean defaultSound;
     private LightSettings lightSettings;
@@ -480,7 +481,14 @@ public class AndroidNotification {
      * @return This builder.
      */
     public Builder addVibrateTimingsInMillis(long vibrateTimingInMillis) {
-      this.vibrateTimingsInMillis.add(vibrateTimingInMillis);
+      checkArgument(vibrateTimingInMillis >= 0, "vibrateTimingInMillis must not be negative");
+      long seconds = TimeUnit.MILLISECONDS.toSeconds(vibrateTimingInMillis);
+      long subsecondNanos = TimeUnit.MILLISECONDS.toNanos(vibrateTimingInMillis - seconds * 1000L);
+      if (subsecondNanos > 0) {
+        this.vibrateTimings.add(String.format("%d.%09ds", seconds, subsecondNanos));
+      } else {
+        this.vibrateTimings.add(String.format("%ds", seconds));
+      }   
       return this;
     }
 
@@ -498,7 +506,14 @@ public class AndroidNotification {
      */
     public Builder addAllVibrateTimingInMillis(long[] vibrateTimingsInMillis) {
       for (long value : vibrateTimingsInMillis) {
-        this.vibrateTimingsInMillis.add(value);
+        checkArgument(value >= 0, "elements in vibrateTimingsInMillis must not be negative");
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(value);
+        long subsecondNanos = TimeUnit.MILLISECONDS.toNanos(value - seconds * 1000L);
+        if (subsecondNanos > 0) {
+          this.vibrateTimings.add(String.format("%d.%09ds", seconds, subsecondNanos));
+        } else {
+          this.vibrateTimings.add(String.format("%ds", seconds));
+        }   
       }
       return this;
     }
