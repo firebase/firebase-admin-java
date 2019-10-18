@@ -29,41 +29,26 @@ public class Duration {
   @Key("nanos")
   private final Integer nanos;
 
-  private Duration(Builder builder) {
-    this.seconds = builder.seconds;
-    this.nanos = builder.nanos;
+  /**
+   * Creates a new {@link Duration} using the given seconds and nanoseconds.
+   *
+   * @param seconds The time duration in seconds.
+   * @param nanos The time duration fraction nanoseconds.
+   */
+  public Duration(long seconds, int nanos) {
+    this.seconds = seconds;
+    this.nanos = nanos;
   }
   
   /**
-   * Creates a new {@link Duration.Builder}.
+   * Creates a new {@link Duration} using the given duration in milliseconds.
    *
-   * @return A {@link Duration.Builder} instance.
+   * @param durationInMillis The time duration in milliseconds.
+   * @return A {@link Duration} instance.
    */
-  public static Builder builder() {
-    return new Builder();
-  }
-  
-  public static class Builder {
-
-    private Long seconds;
-    private Integer nanos;
-
-    private Builder() {}
-
-    /**
-     * Sets the duration in milliseconds.   
-     *
-     * @param durationInMillis The time duration in milliseconds.
-     * @return This builder.
-     */
-    public Builder fromLongInMillis(Long durationInMillis) {
-      this.seconds = durationInMillis / 1000;
-      this.nanos = (int) (durationInMillis % 1000) * 1000;
-      return this;
-    }
-
-    public Duration build() {
-      return new Duration(this);
-    }
+  public static Duration fromLongInMillis(Long durationInMillis) {
+    long seconds = durationInMillis / 1000;
+    int nanos = (int) (durationInMillis % 1000) * 1000;
+    return new Duration(seconds, nanos);
   }
 }

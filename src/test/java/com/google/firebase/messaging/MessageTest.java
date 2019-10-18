@@ -801,22 +801,12 @@ public class MessageTest {
   @Test
   public void testInvalidColorInAndroidNotificationLightSettings() throws IOException {
     try {
-      Message.Builder messageBuilder = Message.builder()
-          .setNotification(new Notification("title", "body"))
-          .setAndroidConfig(AndroidConfig.builder()
-              .setNotification(AndroidNotification.builder()
-                  .setTitle("android-title")
-                  .setBody("android-body")
-                  .setLightSettings(LightSettings.builder()
+      LightSettings.Builder lightSettingsBuilder = LightSettings.builder()
                       .setColorFromString("#01020K")
                       .setLightOnDurationInMillis(1002L)
-                      .setLightOffDurationInMillis(1003L)
-                      .build())
-                  .build())
-              .build())
-          .setTopic("test-topic"); 
+                      .setLightOffDurationInMillis(1003L);
 
-      messageBuilder.build();
+      lightSettingsBuilder.build();
       fail("No error thrown for invalid notification");
     } catch (IllegalArgumentException expected) {
       // expected
@@ -840,7 +830,7 @@ public class MessageTest {
                 .setDefaultVibrateTimings(false)
                 .setDefaultSound(false)
                 .setLightSettings(LightSettings.builder()
-                    .setColorFromString("#010203")
+                    .setColorFromString("#336699")
                     .setLightOnDurationInMillis(1002L)
                     .setLightOffDurationInMillis(1003L)
                     .build())
@@ -869,9 +859,10 @@ public class MessageTest {
             .put("default_sound", false)
             .put("light_settings", ImmutableMap.<String, Object>builder()
                 .put("color", ImmutableMap.<String, Object>builder()
-                    .put("red", new BigDecimal(new BigInteger("10"), 1))
-                    .put("green", new BigDecimal(new BigInteger("20"), 1))
-                    .put("blue", new BigDecimal(new BigInteger("30"), 1))
+                    .put("red", new BigDecimal(new BigInteger("2"), 1))
+                    .put("green", new BigDecimal(new BigInteger("4"), 1))
+                    .put("blue", new BigDecimal(new BigInteger("6"), 1))
+                    .put("alpha", new BigDecimal(new BigInteger("10"), 1))
                     .build())
                 .put("light_on_duration", ImmutableMap.<String, Object>builder()
                     .put("seconds", new BigDecimal(1))

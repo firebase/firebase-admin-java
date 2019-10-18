@@ -16,8 +16,6 @@
 
 package com.google.firebase.messaging;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.google.api.client.util.Key;
 
 /**
@@ -64,9 +62,7 @@ public class LightSettings {
      * @return This builder.
      */
     public Builder setColorFromString(String color) {
-      checkArgument(color.matches("^#[0-9a-fA-F]{6}$"), 
-                "color must be in the form #RRGGBB");
-      this.color = Color.builder().fromString(color).build();
+      this.color = Color.fromString(color);
       return this;
     }
  
@@ -77,7 +73,7 @@ public class LightSettings {
      * @return This builder.
      */
     public Builder setLightOnDurationInMillis(Long lightOnDurationInMillis) {
-      this.lightOnDuration = Duration.builder().fromLongInMillis(lightOnDurationInMillis).build();
+      this.lightOnDuration = Duration.fromLongInMillis(lightOnDurationInMillis);
       return this;
     }
 
@@ -89,7 +85,7 @@ public class LightSettings {
      * @return This builder.
      */
     public Builder setLightOffDurationInMillis(Long lightOffDurationInMillis) {
-      this.lightOffDuration = Duration.builder().fromLongInMillis(lightOffDurationInMillis).build();
+      this.lightOffDuration = Duration.fromLongInMillis(lightOffDurationInMillis);
       return this;
     }
  

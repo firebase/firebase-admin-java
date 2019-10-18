@@ -16,6 +16,8 @@
 
 package com.google.firebase.messaging;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.api.client.util.Key;
 
 /**
@@ -32,50 +34,38 @@ public class Color {
   @Key("blue")
   private final Float blue;
   
-  private Color(Builder builder) {
-    this.red = builder.red;
-    this.green = builder.green;
-    this.blue = builder.blue;
-  }
+  @Key("alpha")
+  private final Float alpha;
   
   /**
-   * Creates a new {@link Color.Builder}.
+   * Creates a new {@link Color} using the given red, green, blue, and
+   * alpha values.
    *
-   * @return A {@link Color.Builder} instance.
+   * @param red The red component.
+   * @param green The green component.
+   * @param blue The blue component.
+   * @param alpha The alpha component.
    */
-  public static Builder builder() {
-    return new Builder();
+  public Color(float red, float green, float blue, float alpha) {
+    this.red = red;
+    this.green = green;
+    this.blue = blue;
+    this.alpha = alpha;
   }
-  
-  public static class Builder {
-    
-    private Float red;
-    private Float green;
-    private Float blue;
 
-    private Builder() {}
-
-    /**
-     * Sets the RGB component values with a string.   
-     *
-     * @param color Color specified in the {@code #rrggbb} format.
-     * @return This builder.
-     */
-    public Builder fromString(String color) {
-      this.red = Float.valueOf(color.substring(1,3));
-      this.green = Float.valueOf(color.substring(3,5));
-      this.blue = Float.valueOf(color.substring(5,7));
-      return this;
-    }
-
-    /**
-     * Builds a new {@link Color} instance from the fields set on this builder.
-     *
-     * @return A non-null {@link Color}.
-     * @throws IllegalArgumentException If the volume value is out of range.
-     */ 
-    public Color build() {
-      return new Color(this);
-    }
+  /**
+   * Creates a new {@link Color} with a string. Alpha of the color will be 
+   * set to 1.
+   *
+   * @param rrggbb Color specified in the {@code #rrggbb} format.
+   * @return A {@link Color} instance.
+   */
+  public static Color fromString(String rrggbb) {
+    checkArgument(rrggbb.matches("^#[0-9a-fA-F]{6}$"), 
+              "color must be in the form #RRGGBB");
+    float red = (float) Integer.parseInt(rrggbb.substring(1, 3), 16) / 255.0f;
+    float green = (float) Integer.valueOf(rrggbb.substring(3, 5), 16) / 255.0f;
+    float blue = (float) Integer.valueOf(rrggbb.substring(5, 7), 16) / 255.0f;
+    return new Color(red, green, blue, 1.0f);
   }
 }

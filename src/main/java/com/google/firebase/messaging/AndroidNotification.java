@@ -418,7 +418,7 @@ public class AndroidNotification {
      * @param sticky The sticky flag
      * @return This builder.
      */
-    public Builder setSticky(Boolean sticky) {
+    public Builder setSticky(boolean sticky) {
       this.sticky = sticky;
       return this;
     }
@@ -433,7 +433,7 @@ public class AndroidNotification {
      * @param eventTimeInMillis The event time in milliseconds
      * @return This builder.
      */
-    public Builder setEventTimeInMillis(Long eventTimeInMillis) {
+    public Builder setEventTimeInMillis(long eventTimeInMillis) {
       this.eventTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'")
           .format(new Date(eventTimeInMillis));
       return this;
@@ -447,7 +447,7 @@ public class AndroidNotification {
      * @param localOnly The "local only" flag
      * @return This builder.
      */
-    public Builder setLocalOnly(Boolean localOnly) {
+    public Builder setLocalOnly(boolean localOnly) {
       this.localOnly = localOnly;
       return this;
     }
@@ -479,7 +479,7 @@ public class AndroidNotification {
      * @param vibrateTimingInMillis vibration time in milliseconds.
      * @return This builder.
      */
-    public Builder addVibrateTimingsInMillis(@NonNull Long vibrateTimingInMillis) {
+    public Builder addVibrateTimingsInMillis(long vibrateTimingInMillis) {
       this.vibrateTimingsInMillis.add(vibrateTimingInMillis);
       return this;
     }
@@ -496,8 +496,10 @@ public class AndroidNotification {
      * @param vibrateTimingsInMillis List of vibration time in milliseconds
      * @return This builder.
      */
-    public Builder addAllVibrateTimingInMillis(@NonNull List<Long> vibrateTimingsInMillis) {
-      this.vibrateTimingsInMillis.addAll(vibrateTimingsInMillis);
+    public Builder addAllVibrateTimingInMillis(long[] vibrateTimingsInMillis) {
+      for (long value : vibrateTimingsInMillis) {
+        this.vibrateTimingsInMillis.add(value);
+      }
       return this;
     }
 
@@ -510,7 +512,7 @@ public class AndroidNotification {
      * @param defaultVibrateTimings The flag incicating whether to use the default vibration timings
      * @return This builder.
      */
-    public Builder setDefaultVibrateTimings(Boolean defaultVibrateTimings) {
+    public Builder setDefaultVibrateTimings(boolean defaultVibrateTimings) {
       this.defaultVibrateTimings = defaultVibrateTimings;
       return this;
     }
@@ -522,7 +524,7 @@ public class AndroidNotification {
      * @param defaultSound The flag incicating whether to use the default sound
      * @return This builder.
      */
-    public Builder setDefaultSound(Boolean defaultSound) {
+    public Builder setDefaultSound(boolean defaultSound) {
       this.defaultSound = defaultSound;
       return this;
     }
@@ -550,7 +552,7 @@ public class AndroidNotification {
      *     settings
      * @return This builder.
      */
-    public Builder setDefaultLightSettings(Boolean defaultLightSettings) {
+    public Builder setDefaultLightSettings(boolean defaultLightSettings) {
       this.defaultLightSettings = defaultLightSettings;
       return this;
     }
