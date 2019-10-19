@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2019 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.google.api.client.util.Key;
 /**
  * A class representing color in LightSettings.
  */
-public class Color {
+public final class Color {
   
   @Key("red")
   private final Float red;

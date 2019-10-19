@@ -469,31 +469,7 @@ public class AndroidNotification {
     }
 
     /**
-     * Adds a vibration timing in milliseconds in the array to use. The first value in the 
-     * array indicates the duration to wait before turning the vibrator on. The next value 
-     * indicates the Duration to keep the vibrator on. Subsequent values alternate between 
-     * duration to turn the vibrator off and to turn the vibrator on. If vibrate_timings 
-     * is set and default_vibrate_timings is set to true, the default value is used instead
-     * of the user-specified vibrate_timings.
-     * A duration in seconds with up to nine fractional digits, terminated by 's'. Example: "3.5s".
-     *
-     * @param vibrateTimingInMillis vibration time in milliseconds.
-     * @return This builder.
-     */
-    public Builder addVibrateTimingsInMillis(long vibrateTimingInMillis) {
-      checkArgument(vibrateTimingInMillis >= 0, "vibrateTimingInMillis must not be negative");
-      long seconds = TimeUnit.MILLISECONDS.toSeconds(vibrateTimingInMillis);
-      long subsecondNanos = TimeUnit.MILLISECONDS.toNanos(vibrateTimingInMillis - seconds * 1000L);
-      if (subsecondNanos > 0) {
-        this.vibrateTimings.add(String.format("%d.%09ds", seconds, subsecondNanos));
-      } else {
-        this.vibrateTimings.add(String.format("%ds", seconds));
-      }   
-      return this;
-    }
-
-    /**
-     * Adds a list of vibration timings in milliseconds in the array to use. The first value in the 
+     * Sets a list of vibration timings in milliseconds in the array to use. The first value in the 
      * array indicates the duration to wait before turning the vibrator on. The next value 
      * indicates the Duration to keep the vibrator on. Subsequent values alternate between 
      * duration to turn the vibrator off and to turn the vibrator on. If vibrate_timings 
@@ -504,17 +480,19 @@ public class AndroidNotification {
      * @param vibrateTimingsInMillis List of vibration time in milliseconds
      * @return This builder.
      */
-    public Builder addAllVibrateTimingInMillis(long[] vibrateTimingsInMillis) {
+    public Builder setVibrateTimingsInMillis(long[] vibrateTimingsInMillis) {
+      List<String> list = new ArrayList<>();
       for (long value : vibrateTimingsInMillis) {
         checkArgument(value >= 0, "elements in vibrateTimingsInMillis must not be negative");
         long seconds = TimeUnit.MILLISECONDS.toSeconds(value);
         long subsecondNanos = TimeUnit.MILLISECONDS.toNanos(value - seconds * 1000L);
         if (subsecondNanos > 0) {
-          this.vibrateTimings.add(String.format("%d.%09ds", seconds, subsecondNanos));
+          list.add(String.format("%d.%09ds", seconds, subsecondNanos));
         } else {
-          this.vibrateTimings.add(String.format("%ds", seconds));
+          list.add(String.format("%ds", seconds));
         }   
       }
+      this.vibrateTimings = ImmutableList.copyOf(list);  
       return this;
     }
 
@@ -594,7 +572,7 @@ public class AndroidNotification {
      * @param notificationCount The notification count
      * @return This builder.
      */
-    public Builder setNotificationCount(Integer notificationCount) {
+    public Builder setNotificationCount(int notificationCount) {
       this.notificationCount = notificationCount;
       return this;
     }

@@ -815,6 +815,7 @@ public class MessageTest {
   
   @Test
   public void testExtendedAndroidNotificationParameters() throws IOException {
+    long[] vibrateTimings = {1000L, 1001L};
     Message message = Message.builder()
         .setNotification(new Notification("title", "body"))
         .setAndroidConfig(AndroidConfig.builder()
@@ -826,7 +827,7 @@ public class MessageTest {
                 .setEventTimeInMillis(1546304523123L)
                 .setLocalOnly(true)
                 .setPriority(AndroidNotification.Priority.HIGH)
-                .addVibrateTimingsInMillis(1001L)
+                .setVibrateTimingsInMillis(vibrateTimings)
                 .setDefaultVibrateTimings(false)
                 .setDefaultSound(false)
                 .setLightSettings(LightSettings.builder()
@@ -854,7 +855,7 @@ public class MessageTest {
             .put("event_time", "2019-01-01T01:02:03.000000123Z")
             .put("local_only", true)
             .put("notification_priority", "high")
-            .put("vibrate_timings", ImmutableList.of("1.001000000s"))
+            .put("vibrate_timings", ImmutableList.of("1s", "1.001000000s"))
             .put("default_vibrate_timings", false)
             .put("default_sound", false)
             .put("light_settings", ImmutableMap.<String, Object>builder()
