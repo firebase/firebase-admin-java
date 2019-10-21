@@ -104,7 +104,7 @@ public final class LightSettings {
     }
 
     private String convertToSecondsAndNanosFormat(long millis) {
-      checkArgument(millis >= 0, "ttl must not be negative");
+      checkArgument(millis >= 0, "Milliseconds duration must not be negative");
       long seconds = TimeUnit.MILLISECONDS.toSeconds(millis);
       long subsecondNanos = TimeUnit.MILLISECONDS
           .toNanos(millis - seconds * 1000L);

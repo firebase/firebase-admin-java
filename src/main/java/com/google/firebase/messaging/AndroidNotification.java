@@ -111,6 +111,15 @@ public class AndroidNotification {
   @Key("notification_count")
   private final Integer notificationCount;
 
+  private static final Map<Priority, String> PRIORITY_MAP = 
+      ImmutableMap.<Priority, String>builder()
+          .put(Priority.MIN, "PRIORITY_MIN")
+          .put(Priority.LOW, "PRIORITY_LOW")
+          .put(Priority.DEFAULT, "PRIORITY_DEFAULT")
+          .put(Priority.HIGH, "PRIORITY_HIGH")
+          .put(Priority.MAX, "PRIORITY_MAX")
+          .build();
+
   private AndroidNotification(Builder builder) {
     this.title = builder.title;
     this.body = builder.body;
@@ -147,7 +156,7 @@ public class AndroidNotification {
     this.eventTime = builder.eventTime;
     this.localOnly = builder.localOnly;
     if (builder.priority != null) {
-      this.priority = PRIORITY_MAP.get(builder.priority);
+      this.priority = builder.priority.toString();
     } else {
       this.priority = null;
     }
@@ -173,7 +182,12 @@ public class AndroidNotification {
     LOW,
     DEFAULT,
     HIGH,
-    MAX,
+    MAX;
+
+    @Override
+    public String toString() {
+      return PRIORITY_MAP.get(this);
+    }
   }
   
   public enum Visibility {
@@ -181,15 +195,6 @@ public class AndroidNotification {
     PUBLIC,
     SECRET,
   }
-
-  private static final Map<Priority, String> PRIORITY_MAP = 
-      ImmutableMap.<Priority, String>builder()
-          .put(Priority.MIN, "PRIORITY_MIN")
-          .put(Priority.LOW, "PRIORITY_LOW")
-          .put(Priority.DEFAULT, "PRIORITY_DEFAULT")
-          .put(Priority.HIGH, "PRIORITY_HIGH")
-          .put(Priority.MAX, "PRIORITY_MAX")
-          .build();
 
   /**
    * Creates a new {@link AndroidNotification.Builder}.
