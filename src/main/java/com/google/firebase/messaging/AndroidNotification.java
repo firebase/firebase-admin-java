@@ -21,11 +21,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -145,7 +147,7 @@ public class AndroidNotification {
     this.eventTime = builder.eventTime;
     this.localOnly = builder.localOnly;
     if (builder.priority != null) {
-      this.priority = builder.priority.name().toLowerCase();
+      this.priority = PRIORITY_MAP.get(builder.priority);
     } else {
       this.priority = null;
     }
@@ -179,6 +181,15 @@ public class AndroidNotification {
     PUBLIC,
     SECRET,
   }
+
+  private static final Map<Priority, String> PRIORITY_MAP = 
+      ImmutableMap.<Priority, String>builder()
+          .put(Priority.MIN, "PRIORITY_MIN")
+          .put(Priority.LOW, "PRIORITY_LOW")
+          .put(Priority.DEFAULT, "PRIORITY_DEFAULT")
+          .put(Priority.HIGH, "PRIORITY_HIGH")
+          .put(Priority.MAX, "PRIORITY_MAX")
+          .build();
 
   /**
    * Creates a new {@link AndroidNotification.Builder}.

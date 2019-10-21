@@ -854,7 +854,7 @@ public class MessageTest {
             .put("sticky", true)
             .put("event_time", "2019-01-01T01:02:03.000000123Z")
             .put("local_only", true)
-            .put("notification_priority", "high")
+            .put("notification_priority", "PRIORITY_HIGH")
             .put("vibrate_timings", ImmutableList.of("1s", "1.001000000s"))
             .put("default_vibrate_timings", false)
             .put("default_sound", false)
