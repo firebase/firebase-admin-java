@@ -75,7 +75,7 @@ public final class LightSettings {
      * @param color Color to be used in the light settings.
      * @return This builder.
      */
-    public Builder setColorFromString(Color color) {
+    public Builder setColor(Color color) {
       this.color = color;
       return this;
     }
