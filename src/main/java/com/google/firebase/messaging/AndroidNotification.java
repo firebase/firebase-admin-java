@@ -441,8 +441,9 @@ public class AndroidNotification {
     }
 
     /**
-     * Sets the time that the event in the notification occurred in milliseconds. Notifications
-     * in the panel are sorted by this time. The time will be formated in RFC3339 UTC "Zulu" 
+     * For notifications that inform users about events with an absolute time reference, sets
+     * the time that the event in the notification occurred in milliseconds. Notifications
+     * in the panel are sorted by this time. The time is be formated in RFC3339 UTC "Zulu" 
      * format, accurate to nanoseconds. Example: "2014-10-02T15:01:23.045123456Z". Note that 
      * since the time is in milliseconds, the last section of the time representation always
      * has 6 leading zeros.
@@ -473,8 +474,7 @@ public class AndroidNotification {
      * Sets the relative priority for this notification. Priority is an indication of how much of 
      * the user's attention should be consumed by this notification. Low-priority notifications 
      * may be hidden from the user in certain situations, while the user might be interrupted 
-     * for a higher-priority notification. The effect of setting the same priorities may differ 
-     * slightly on different platforms.
+     * for a higher-priority notification.
      *
      * @param priority The priority value, one of the values in {MIN, LOW, DEFAULT, HIGH, MAX}
      * @return This builder.
@@ -487,10 +487,10 @@ public class AndroidNotification {
     /**
      * Sets a list of vibration timings in milliseconds in the array to use. The first value in the 
      * array indicates the duration to wait before turning the vibrator on. The next value 
-     * indicates the Duration to keep the vibrator on. Subsequent values alternate between 
-     * duration to turn the vibrator off and to turn the vibrator on. If vibrate_timings 
-     * is set and default_vibrate_timings is set to true, the default value is used instead
-     * of the user-specified vibrate_timings.
+     * indicates the duration to keep the vibrator on. Subsequent values alternate between 
+     * duration to turn the vibrator off and to turn the vibrator on. If {@code vibrate_timings} 
+     * is set and {@code default_vibrate_timings} is set to true, the default value is used instead
+     * of the user-specified {@code vibrate_timings}.
      * A duration in seconds with up to nine fractional digits, terminated by 's'. Example: "3.5s".
      *
      * @param vibrateTimingsInMillis List of vibration time in milliseconds
@@ -515,10 +515,11 @@ public class AndroidNotification {
     /**
      * Sets the whether to use the default vibration timings. If set to true, use the Android 
      * framework's default vibrate pattern for the notification. Default values are specified 
-     * in config.xml. If default_vibrate_timings is set to true and vibrate_timings is also 
-     * set, the default value is used instead of the user-specified vibrate_timings.
+     * in {@code config.xml}. If {@code default_vibrate_timings} is set to true and 
+     * {@code vibrate_timings} is also set, the default value is used instead of the 
+     * user-specified {@code vibrate_timings}.
      *
-     * @param defaultVibrateTimings The flag incicating whether to use the default vibration timings
+     * @param defaultVibrateTimings The flag indicating whether to use the default vibration timings
      * @return This builder.
      */
     public Builder setDefaultVibrateTimings(boolean defaultVibrateTimings) {
@@ -530,7 +531,7 @@ public class AndroidNotification {
      * Sets the whether to use the default sound. If set to true, use the Android framework's 
      * default sound for the notification. Default values are specified in config.xml.
      *
-     * @param defaultSound The flag incicating whether to use the default sound
+     * @param defaultSound The flag indicating whether to use the default sound
      * @return This builder.
      */
     public Builder setDefaultSound(boolean defaultSound) {
@@ -553,11 +554,11 @@ public class AndroidNotification {
     /**
      * Sets the whether to use the default light settings. If set to true, use the Android
      * framework's default LED light settings for the notification. Default values are 
-     * specified in config.xml. If default_light_settings is set to true and 
-     * light_settings is also set, the user-specified light_settings is used instead of 
-     * the default value.
+     * specified in config.xml. If {@code default_light_settings} is set to true and 
+     * {@code light_settings} is also set, the user-specified {@code light_settings} is used
+     * instead of the default value.
      *
-     * @param defaultLightSettings The flag incicating whether to use the default light 
+     * @param defaultLightSettings The flag indicating whether to use the default light 
      *     settings
      * @return This builder.
      */
@@ -579,11 +580,11 @@ public class AndroidNotification {
 
     /**
      * Sets the number of items this notification represents. May be displayed as a badge 
-     * count for launchers that support badging.See Notification Badge. For example, this 
-     * might be useful if you're using just one notification to represent multiple new messages
-     * but you want the count here to represent the number of total new messages. If zero or
-     * unspecified, systems that support badging use the default, which is to increment a number 
-     * displayed on the long-press menu each time a new notification arrives.
+     * count for launchers that support badging. For example, this might be useful if you're 
+     * using just one notification to represent multiple new messages but you want the count 
+     * here to represent the number of total new messages. If zero or unspecified, systems 
+     * that support badging use the default, which is to increment a number displayed on 
+     * the long-press menu each time a new notification arrives.
      *
      * @param notificationCount The notification count
      * @return This builder.
