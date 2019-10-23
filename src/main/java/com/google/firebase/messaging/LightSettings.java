@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 public final class LightSettings {
   
   @Key("color")
-  private final Color color;
+  private final LightSettingsColor lightSettingsColor;
   
   @Key("light_on_duration")
   private final String lightOnDuration;
@@ -36,7 +36,7 @@ public final class LightSettings {
   private final String lightOffDuration;
   
   private LightSettings(Builder builder) {
-    this.color = builder.color;
+    this.lightSettingsColor = builder.lightSettingsColor;
     this.lightOnDuration = builder.lightOnDuration;
     this.lightOffDuration = builder.lightOffDuration;
   }
@@ -52,31 +52,31 @@ public final class LightSettings {
   
   public static class Builder {
 
-    private Color color;
+    private LightSettingsColor lightSettingsColor;
     private String lightOnDuration;
     private String lightOffDuration;
 
     private Builder() {}
 
     /**
-     * Sets the color value with a string.   
+     * Sets the lightSettingsColor value with a string.   
      *
-     * @param color Color specified in the {@code #rrggbb} format.
+     * @param lightSettingsColor LightSettingsColor specified in the {@code #rrggbb} format.
      * @return This builder.
      */
-    public Builder setColorFromString(String color) {
-      this.color = Color.fromString(color);
+    public Builder setLightSettingsColorFromString(String lightSettingsColor) {
+      this.lightSettingsColor = LightSettingsColor.fromString(lightSettingsColor);
       return this;
     }
 
     /**
-     * Sets the color value in the light settings.   
+     * Sets the lightSettingsColor value in the light settings.   
      *
-     * @param color Color to be used in the light settings.
+     * @param lightSettingsColor Color to be used in the light settings.
      * @return This builder.
      */
-    public Builder setColor(Color color) {
-      this.color = color;
+    public Builder setLightSettingsColor(LightSettingsColor lightSettingsColor) {
+      this.lightSettingsColor = lightSettingsColor;
       return this;
     }
  
