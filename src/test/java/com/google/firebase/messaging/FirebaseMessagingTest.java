@@ -296,7 +296,7 @@ public class FirebaseMessagingTest {
     MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageId(null);
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
     ImmutableList.Builder<Message> listBuilder = ImmutableList.builder();
-    for (int i = 0; i < 101; i++) {
+    for (int i = 0; i < 501; i++) {
       listBuilder.add(Message.builder().setTopic("topic").build());
     }
 
