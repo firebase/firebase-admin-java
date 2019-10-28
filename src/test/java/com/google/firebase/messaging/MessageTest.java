@@ -802,7 +802,7 @@ public class MessageTest {
   public void testInvalidColorInAndroidNotificationLightSettings() throws IOException {
     try {
       LightSettings.Builder lightSettingsBuilder = LightSettings.builder()
-                      .setLightSettingsColorFromString("#01020K")
+                      .setColorFromString("#01020K")
                       .setLightOnDurationInMillis(1002L)
                       .setLightOffDurationInMillis(1003L);
 
@@ -831,7 +831,7 @@ public class MessageTest {
                 .setDefaultVibrateTimings(false)
                 .setDefaultSound(false)
                 .setLightSettings(LightSettings.builder()
-                    .setLightSettingsColorFromString("#336699")
+                    .setColorFromString("#336699")
                     .setLightOnDurationInMillis(1002L)
                     .setLightOffDurationInMillis(1003L)
                     .build())

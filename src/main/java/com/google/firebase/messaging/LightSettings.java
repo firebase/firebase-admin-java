@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 public final class LightSettings {
   
   @Key("color")
-  private final LightSettingsColor lightSettingsColor;
+  private final LightSettingsColor color;
   
   @Key("light_on_duration")
   private final String lightOnDuration;
@@ -36,7 +36,7 @@ public final class LightSettings {
   private final String lightOffDuration;
   
   private LightSettings(Builder builder) {
-    this.lightSettingsColor = builder.lightSettingsColor;
+    this.color = builder.color;
     this.lightOnDuration = builder.lightOnDuration;
     this.lightOffDuration = builder.lightOffDuration;
   }
@@ -52,7 +52,7 @@ public final class LightSettings {
   
   public static class Builder {
 
-    private LightSettingsColor lightSettingsColor;
+    private LightSettingsColor color;
     private String lightOnDuration;
     private String lightOffDuration;
 
@@ -64,8 +64,8 @@ public final class LightSettings {
      * @param lightSettingsColor LightSettingsColor specified in the {@code #rrggbb} format.
      * @return This builder.
      */
-    public Builder setLightSettingsColorFromString(String lightSettingsColor) {
-      this.lightSettingsColor = LightSettingsColor.fromString(lightSettingsColor);
+    public Builder setColorFromString(String color) {
+      this.color = LightSettingsColor.fromString(color);
       return this;
     }
 
@@ -75,8 +75,8 @@ public final class LightSettings {
      * @param lightSettingsColor Color to be used in the light settings.
      * @return This builder.
      */
-    public Builder setLightSettingsColor(LightSettingsColor lightSettingsColor) {
-      this.lightSettingsColor = lightSettingsColor;
+    public Builder setColor(LightSettingsColor color) {
+      this.color = color;
       return this;
     }
  
