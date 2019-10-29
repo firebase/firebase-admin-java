@@ -122,7 +122,7 @@ public class FirebaseMessagingSnippets {
     String registrationToken = "YOUR_REGISTRATION_TOKEN";
 
     // [START send_all]
-    // Create a list containing up to 100 messages.
+    // Create a list containing up to 500 messages.
     List<Message> messages = Arrays.asList(
         Message.builder()
             .setNotification(new Notification("Price drop", "5% off all electronics"))

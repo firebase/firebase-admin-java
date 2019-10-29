@@ -316,7 +316,7 @@ public final class FirebaseOptions {
      * Initialize the SDK</a> for code samples and detailed documentation.
      *
      * @param credentials A
-     *     <a href="http://google.github.io/google-auth-library-java/releases/0.7.1/apidocs/com/google/auth/oauth2/GoogleCredentials.html">{@code GoogleCredentials}</a>
+     *     <a href="https://googleapis.dev/java/google-auth-library/latest/index.html?com/google/auth/oauth2/GoogleCredentials.html">{@code GoogleCredentials}</a>
      *     instance used to authenticate the SDK.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
