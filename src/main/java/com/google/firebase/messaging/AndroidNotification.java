@@ -588,7 +588,6 @@ public class AndroidNotification {
     /**
      * Sets the number of items this notification represents. May be displayed as a badge 
      * count for launchers that support badging. 
-     *
      * If not invoked then notification count is left unchanged.
      * 
      * @see <a 
