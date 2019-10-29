@@ -119,9 +119,6 @@ public class AndroidNotification {
           .put(Priority.HIGH, "PRIORITY_HIGH")
           .put(Priority.MAX, "PRIORITY_MAX")
           .build();
-
-  @Key("notification_count")
-  private final Integer notificationCount;
   
   private AndroidNotification(Builder builder) {
     this.title = builder.title;
