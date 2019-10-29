@@ -588,13 +588,13 @@ public class AndroidNotification {
     /**
      * Sets the number of items this notification represents. May be displayed as a badge 
      * count for launchers that support badging. 
-     * <p>If not invoked then notification count is left unchanged.
+     *
+     * If not invoked then notification count is left unchanged.
      * 
      * @see <a 
      * href="https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages#androidnotification">
      * Android Notification Spec</a>
-     * 
-     For example, this might be useful if you're 
+     * For example, this might be useful if you're 
      * using just one notification to represent multiple new messages but you want the count 
      * here to represent the number of total new messages. If zero or unspecified, systems 
      * that support badging use the default, which is to increment a number displayed on 
