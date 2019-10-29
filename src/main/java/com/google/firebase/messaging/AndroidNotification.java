@@ -443,7 +443,7 @@ public class AndroidNotification {
     /**
      * For notifications that inform users about events with an absolute time reference, sets
      * the time that the event in the notification occurred in milliseconds. Notifications
-     * in the panel are sorted by this time. The time is be formated in RFC3339 UTC "Zulu" 
+     * in the panel are sorted by this time. The time will be formatted in RFC3339 UTC "Zulu" 
      * format, accurate to nanoseconds. Example: "2014-10-02T15:01:23.045123456Z". Note that 
      * since the time is in milliseconds, the last section of the time representation always
      * has 6 leading zeros.
