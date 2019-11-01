@@ -23,7 +23,7 @@ package com.google.firebase.auth.hash;
 public class Md5 extends RepeatableHash {
 
   private Md5(Builder builder) {
-    super("MD5", 0, 120000, builder);
+    super("MD5", 0, 8192, builder);
   }
 
   public static Builder builder() {
