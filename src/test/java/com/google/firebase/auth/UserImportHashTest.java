@@ -17,7 +17,6 @@
 package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
@@ -144,91 +143,6 @@ public class UserImportHashTest {
       );
       assertEquals(properties, entry.getValue().getProperties());
     }
-  }
-
-  private void assertBuilderThrowsIllegalArgumentException(Md5.Builder builder) {
-    try {
-      builder.build();
-      fail("Expected IllegalArgumentException to be thrown but no expecption occurred.");
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
-  private void assertBuilderThrowsIllegalArgumentException(Sha1.Builder builder) {
-    try {
-      builder.build();
-      fail("Expected IllegalArgumentException to be thrown but no expecption occurred.");
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
-  private void assertBuilderThrowsIllegalArgumentException(Sha256.Builder builder) {
-    try {
-      builder.build();
-      fail("Expected IllegalArgumentException to be thrown but no expecption occurred.");
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
-  private void assertBuilderThrowsIllegalArgumentException(Sha512.Builder builder) {
-    try {
-      builder.build();
-      fail("Expected IllegalArgumentException to be thrown but no expecption occurred.");
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
-  private void assertBuilderThrowsIllegalArgumentException(PbkdfSha1.Builder builder) {
-    try {
-      builder.build();
-      fail("Expected IllegalArgumentException to be thrown but no expecption occurred.");
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
-  private void assertBuilderThrowsIllegalArgumentException(Pbkdf2Sha256.Builder builder) {
-    try {
-      builder.build();
-      fail("Expected IllegalArgumentException to be thrown but no expecption occurred.");
-    } catch (IllegalArgumentException expected) {
-    }
-  }
-
-  @Test
-  public void testInvalidHashRounds() {
-    // TODO(rsgowman): Once we can update to Java8, we could just do something like this instead of
-    // having all of the helpers:
-    //     assertThrows(IllegalArgumentException.class, ()-> Md5.builder().setRounds(-1).build());
-    //
-
-    assertBuilderThrowsIllegalArgumentException(Md5.builder().setRounds(-1));
-    assertBuilderThrowsIllegalArgumentException(Md5.builder().setRounds(8193));
-    assertBuilderThrowsIllegalArgumentException(Sha1.builder().setRounds(0));
-    assertBuilderThrowsIllegalArgumentException(Sha1.builder().setRounds(8193));
-    assertBuilderThrowsIllegalArgumentException(Sha256.builder().setRounds(0));
-    assertBuilderThrowsIllegalArgumentException(Sha256.builder().setRounds(8193));
-    assertBuilderThrowsIllegalArgumentException(Sha512.builder().setRounds(0));
-    assertBuilderThrowsIllegalArgumentException(Sha512.builder().setRounds(8193));
-    assertBuilderThrowsIllegalArgumentException(PbkdfSha1.builder().setRounds(-1));
-    assertBuilderThrowsIllegalArgumentException(PbkdfSha1.builder().setRounds(120001));
-    assertBuilderThrowsIllegalArgumentException(Pbkdf2Sha256.builder().setRounds(-1));
-    assertBuilderThrowsIllegalArgumentException(Pbkdf2Sha256.builder().setRounds(120001));
-  }
-
-  @Test
-  public void testValidHashRounds() {
-    Md5.builder().setRounds(0).build();
-    Md5.builder().setRounds(8192).build();
-    Sha1.builder().setRounds(1).build();
-    Sha1.builder().setRounds(8192).build();
-    Sha256.builder().setRounds(1).build();
-    Sha256.builder().setRounds(8192).build();
-    Sha512.builder().setRounds(1).build();
-    Sha512.builder().setRounds(8192).build();
-    PbkdfSha1.builder().setRounds(0).build();
-    PbkdfSha1.builder().setRounds(120000).build();
-    Pbkdf2Sha256.builder().setRounds(0).build();
-    Pbkdf2Sha256.builder().setRounds(120000).build();
   }
 
   @Test
