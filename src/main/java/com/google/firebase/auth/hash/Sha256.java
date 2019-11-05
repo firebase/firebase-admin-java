@@ -23,7 +23,7 @@ package com.google.firebase.auth.hash;
 public class Sha256 extends RepeatableHash {
 
   private Sha256(Builder builder) {
-    super("SHA256", 0, 120000, builder);
+    super("SHA256", 1, 8192, builder);
   }
 
   public static Builder builder() {
