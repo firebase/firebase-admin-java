@@ -140,7 +140,7 @@ public class RetryUnsuccessfulResponseHandlerTest {
   @Test
   public void testRetryAfterGivenAsDate() throws IOException {
     SimpleDateFormat dateFormat =
-            new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.UK);
+            new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
     dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
     Date date = new Date(1000);
     Clock clock = new FixedClock(date.getTime());

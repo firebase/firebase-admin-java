@@ -58,9 +58,9 @@ final class DateUtils {
   static final String PATTERN_ASCTIME = "EEE MMM d HH:mm:ss yyyy";
 
   private static final SimpleDateFormat[] DEFAULT_PATTERNS = new SimpleDateFormat[] {
-      new SimpleDateFormat(PATTERN_RFC1123, Locale.UK),
-      new SimpleDateFormat(PATTERN_RFC1036, Locale.UK),
-      new SimpleDateFormat(PATTERN_ASCTIME, Locale.UK)
+      new SimpleDateFormat(PATTERN_RFC1123, Locale.US),
+      new SimpleDateFormat(PATTERN_RFC1036, Locale.US),
+      new SimpleDateFormat(PATTERN_ASCTIME, Locale.US)
   };
 
   static final TimeZone GMT = TimeZone.getTimeZone("GMT");

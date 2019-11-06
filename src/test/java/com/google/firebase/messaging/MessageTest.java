@@ -849,7 +849,7 @@ public class MessageTest {
         .put("title", "title")
         .put("body", "body")
         .build();
-    String eventTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'", Locale.ROOT)
+    String eventTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'", Locale.US)
         .format(new Date(1546304523123L));
     Map<String, Object> androidConfig = ImmutableMap.<String, Object>builder()
         .put("notification", ImmutableMap.<String, Object>builder()
