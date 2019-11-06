@@ -35,7 +35,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.TimeZone;
+
 import org.junit.Test;
 
 public class RetryUnsuccessfulResponseHandlerTest {
@@ -137,7 +139,8 @@ public class RetryUnsuccessfulResponseHandlerTest {
 
   @Test
   public void testRetryAfterGivenAsDate() throws IOException {
-    SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz");
+    SimpleDateFormat dateFormat =
+            new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.ROOT);
     dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
     Date date = new Date(1000);
     Clock clock = new FixedClock(date.getTime());
