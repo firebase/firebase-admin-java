@@ -33,6 +33,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
@@ -769,7 +770,7 @@ public class MessageTest {
     assertJsonEquals(ImmutableMap.of(
         "topic", "test-topic", "notification", notification, "android", androidConfig), message);
   }
-  
+
   @Test
   public void testImageInApnsNotification() throws IOException {
     Message message = Message.builder()
@@ -799,7 +800,7 @@ public class MessageTest {
             .build();
     assertJsonEquals(expected, message);
   }
-  
+
   @Test
   public void testInvalidColorInAndroidNotificationLightSettings() throws IOException {
     try {
@@ -814,7 +815,7 @@ public class MessageTest {
       // expected
     }
   }
-  
+
   @Test
   public void testExtendedAndroidNotificationParameters() throws IOException {
     long[] vibrateTimings = {1000L, 1001L};
@@ -848,7 +849,7 @@ public class MessageTest {
         .put("title", "title")
         .put("body", "body")
         .build();
-    String eventTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'")
+    String eventTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'", Locale.US)
         .format(new Date(1546304523123L));
     Map<String, Object> androidConfig = ImmutableMap.<String, Object>builder()
         .put("notification", ImmutableMap.<String, Object>builder()
