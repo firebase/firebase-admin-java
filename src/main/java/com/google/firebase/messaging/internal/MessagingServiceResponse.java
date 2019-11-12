@@ -5,7 +5,7 @@ import com.google.api.client.util.Key;
 /**
  * The DTO for parsing success responses from the FCM service.
  */
-public class MessagingServiceResponse {
+public class MessagingServiceResponse extends GenericJson {
 
   @Key("name")
   private String messageId;
