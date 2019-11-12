@@ -119,7 +119,7 @@ public class AndroidNotification {
           .put(Priority.HIGH, "PRIORITY_HIGH")
           .put(Priority.MAX, "PRIORITY_MAX")
           .build();
-
+  
   private AndroidNotification(Builder builder) {
     this.title = builder.title;
     this.body = builder.body;
@@ -150,7 +150,7 @@ public class AndroidNotification {
       this.titleLocArgs = null;
     }
     this.channelId = builder.channelId;
-    this.image = builder.image;
+    this.image = builder.image;    
     this.ticker = builder.ticker;
     this.sticky = builder.sticky;
     this.eventTime = builder.eventTime;
@@ -173,6 +173,10 @@ public class AndroidNotification {
       this.visibility = builder.visibility.name().toLowerCase();
     } else {
       this.visibility = null;
+    }
+    if (builder.notificationCount != null) {
+      checkArgument(builder.notificationCount >= 0, 
+          "notificationCount if specified must be zero or positive valued");
     }
     this.notificationCount = builder.notificationCount;
   }
@@ -220,6 +224,7 @@ public class AndroidNotification {
     private List<String> titleLocArgs = new ArrayList<>();
     private String channelId;
     private String image;
+    private Integer notificationCount;
     private String ticker;
     private Boolean sticky;
     private String eventTime;
@@ -231,7 +236,6 @@ public class AndroidNotification {
     private LightSettings lightSettings;
     private Boolean defaultLightSettings;
     private Visibility visibility;
-    private Integer notificationCount;
 
     private Builder() {}
 
@@ -580,13 +584,15 @@ public class AndroidNotification {
 
     /**
      * Sets the number of items this notification represents. May be displayed as a badge 
-     * count for launchers that support badging. For example, this might be useful if you're 
-     * using just one notification to represent multiple new messages but you want the count 
-     * here to represent the number of total new messages. If zero or unspecified, systems 
-     * that support badging use the default, which is to increment a number displayed on 
+     * count for launchers that support badging. 
+     * If not invoked then notification count is left unchanged.
+     * For example, this might be useful if you're using just one notification to represent
+     * multiple new messages but you want the count here to represent the number of total
+     * new messages. If zero or unspecified, systems that support badging use the default, 
+     * which is to increment a number displayed on 
      * the long-press menu each time a new notification arrives.
      *
-     * @param notificationCount The notification count
+     * @param notificationCount Zero or positive value. Zero indicates leave unchanged.
      * @return This builder.
      */
     public Builder setNotificationCount(int notificationCount) {
