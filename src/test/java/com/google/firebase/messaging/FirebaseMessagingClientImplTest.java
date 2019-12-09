@@ -24,6 +24,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.client.googleapis.batch.BatchRequest;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
@@ -48,6 +49,7 @@ import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,6 +79,8 @@ public class FirebaseMessagingClientImplTest {
   
   private static final boolean DRY_RUN_ENABLED = true;
   private static final boolean DRY_RUN_DISABLED = false;
+  private static final String CUSTOM_FCM_URL = "http://custom-fcm-url";
+  private static final String CUSTOM_FCM_BATCH_URL = "http://custom-fcm-batch-url";
 
   private MockLowLevelHttpResponse response;
   private TestResponseInterceptor interceptor;
@@ -469,13 +473,18 @@ public class FirebaseMessagingClientImplTest {
     FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId("test-project")
+        .setCustomFcmUrl(CUSTOM_FCM_URL)
+        .setCustomFcmBatchUrl(CUSTOM_FCM_BATCH_URL)
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
 
     try {
       FirebaseMessagingClientImpl client = FirebaseMessagingClientImpl.fromApp(app);
 
-      assertEquals(TEST_FCM_URL, client.getFcmSendUrl());
+      assertEquals(CUSTOM_FCM_URL, client.getFcmSendUrl());
+      BatchRequest batchRequest = client.newBatchRequest(new ArrayList<Message>(), true, null);
+      assertEquals(batchRequest.getBatchUrl().toString(), CUSTOM_FCM_BATCH_URL);
+
       assertEquals("fire-admin-java/" + SdkUtils.getVersion(), client.getClientVersion());
       assertSame(options.getJsonFactory(), client.getJsonFactory());
 

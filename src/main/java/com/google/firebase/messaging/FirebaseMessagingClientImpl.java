@@ -47,11 +47,15 @@ import com.google.firebase.messaging.internal.MessagingServiceResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A helper class for interacting with Firebase Cloud Messaging service.
  */
 final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
+
+  private static final Logger logger = LoggerFactory.getLogger(FirebaseMessagingClientImpl.class);
 
   private static final String FCM_URL = "https://fcm.googleapis.com/v1/projects/%s/messages:send";
 
@@ -81,6 +85,7 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
           .build();
 
   private final String fcmSendUrl;
+  private final String fcmBatchUrl;
   private final HttpRequestFactory requestFactory;
   private final HttpRequestFactory childRequestFactory;
   private final JsonFactory jsonFactory;
@@ -89,7 +94,23 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
 
   private FirebaseMessagingClientImpl(Builder builder) {
     checkArgument(!Strings.isNullOrEmpty(builder.projectId));
-    this.fcmSendUrl = String.format(FCM_URL, builder.projectId);
+
+    if (builder.customFcmUrl != null) {
+      this.fcmSendUrl = builder.customFcmUrl;
+      logger.warn("Using custom FCM url: {}", this.fcmSendUrl);
+    } else {
+      this.fcmSendUrl = String.format(FCM_URL, builder.projectId);
+      logger.info("Using default FCM url");
+    }
+
+    if (builder.customFcmBatchUrl != null) {
+      this.fcmBatchUrl = builder.customFcmBatchUrl;
+      logger.warn("Using custom FCM batch url: {}", this.fcmBatchUrl);
+    } else {
+      this.fcmBatchUrl = FCM_BATCH_URL;
+      logger.info("Using default FCM batch url");
+    }
+
     this.requestFactory = checkNotNull(builder.requestFactory);
     this.childRequestFactory = checkNotNull(builder.childRequestFactory);
     this.jsonFactory = checkNotNull(builder.jsonFactory);
@@ -170,12 +191,13 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     return new BatchResponse(callback.getResponses());
   }
 
-  private BatchRequest newBatchRequest(
+  @VisibleForTesting
+  BatchRequest newBatchRequest(
       List<Message> messages, boolean dryRun, MessagingBatchCallback callback) throws IOException {
 
     BatchRequest batch = new BatchRequest(
         requestFactory.getTransport(), getBatchRequestInitializer());
-    batch.setBatchUrl(new GenericUrl(FCM_BATCH_URL));
+    batch.setBatchUrl(new GenericUrl(this.fcmBatchUrl));
 
     final JsonObjectParser jsonParser = new JsonObjectParser(this.jsonFactory);
     final GenericUrl sendUrl = new GenericUrl(fcmSendUrl);
@@ -236,6 +258,8 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
         .setRequestFactory(ApiClientUtils.newAuthorizedRequestFactory(app))
         .setChildRequestFactory(ApiClientUtils.newUnauthorizedRequestFactory(app))
         .setJsonFactory(app.getOptions().getJsonFactory())
+        .setCustomFcmUrl(app.getOptions().getCustomFcmUrl())
+        .setCustomFcmBatchUrl(app.getOptions().getCustomFcmBatchUrl())
         .build();
   }
 
@@ -246,6 +270,8 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   static final class Builder {
 
     private String projectId;
+    private String customFcmUrl;
+    private String customFcmBatchUrl;
     private HttpRequestFactory requestFactory;
     private HttpRequestFactory childRequestFactory;
     private JsonFactory jsonFactory;
@@ -255,6 +281,16 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
 
     Builder setProjectId(String projectId) {
       this.projectId = projectId;
+      return this;
+    }
+
+    Builder setCustomFcmUrl(@Nullable String customFcmUrl) {
+      this.customFcmUrl = customFcmUrl;
+      return this;
+    }
+
+    Builder setCustomFcmBatchUrl(@Nullable String customFcmBatchUrl) {
+      this.customFcmBatchUrl = customFcmBatchUrl;
       return this;
     }
 
@@ -307,7 +343,8 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     return new FirebaseMessagingException(code, msg, e);
   }
 
-  private static class MessagingBatchCallback
+  @VisibleForTesting
+  static class MessagingBatchCallback
       implements BatchCallback<MessagingServiceResponse, MessagingServiceErrorResponse> {
 
     private final ImmutableList.Builder<SendResponse> responses = ImmutableList.builder();

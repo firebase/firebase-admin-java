@@ -78,6 +78,8 @@ public final class FirebaseOptions {
   private final String projectId;
   private final String serviceAccountId;
   private final HttpTransport httpTransport;
+  private final String customFcmUrl;
+  private final String customFcmBatchUrl;
   private final int connectTimeout;
   private final int readTimeout;
   private final JsonFactory jsonFactory;
@@ -102,6 +104,8 @@ public final class FirebaseOptions {
     this.storageBucket = builder.storageBucket;
     this.httpTransport = checkNotNull(builder.httpTransport,
         "FirebaseOptions must be initialized with a non-null HttpTransport.");
+    this.customFcmUrl = builder.customFcmUrl;
+    this.customFcmBatchUrl = builder.customFcmBatchUrl;
     this.jsonFactory = checkNotNull(builder.jsonFactory,
         "FirebaseOptions must be initialized with a non-null JsonFactory.");
     this.threadManager = checkNotNull(builder.threadManager,
@@ -176,6 +180,22 @@ public final class FirebaseOptions {
   }
 
   /**
+   * @return custom FCM url (push notifications)
+   */
+  @Nullable
+  public String getCustomFcmUrl() {
+    return customFcmUrl;
+  }
+
+  /**
+   * @return custom FCM batch url (push notifications)
+   */
+  @Nullable
+  public String getCustomFcmBatchUrl() {
+    return customFcmBatchUrl;
+  }
+
+  /**
    * Returns the <code>JsonFactory</code> used to parse JSON when calling remote HTTP endpoints.
    *
    * @return A Google API client <code>JsonFactory</code> instance.
@@ -244,6 +264,8 @@ public final class FirebaseOptions {
     private Supplier<GoogleCredentials> credentialsSupplier;
     private FirestoreOptions firestoreOptions;
     private HttpTransport httpTransport = Utils.getDefaultTransport();
+    private String customFcmUrl;
+    private String customFcmBatchUrl;
     private JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     private ThreadManager threadManager = FirebaseThreadManagers.DEFAULT_THREAD_MANAGER;
     private int connectTimeout;
@@ -265,6 +287,8 @@ public final class FirebaseOptions {
       databaseAuthVariableOverride = options.databaseAuthVariableOverride;
       projectId = options.projectId;
       httpTransport = options.httpTransport;
+      customFcmUrl = options.customFcmUrl;
+      customFcmBatchUrl = options.customFcmBatchUrl;
       jsonFactory = options.jsonFactory;
       threadManager = options.threadManager;
       connectTimeout = options.connectTimeout;
@@ -402,6 +426,28 @@ public final class FirebaseOptions {
      */
     public Builder setHttpTransport(HttpTransport httpTransport) {
       this.httpTransport = httpTransport;
+      return this;
+    }
+
+    /**
+     * WARNING: don't use in production, only for testing
+     *
+     * @param customFcmUrl custom FCM url (push notifications)
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setCustomFcmUrl(String customFcmUrl) {
+      this.customFcmUrl = customFcmUrl;
+      return this;
+    }
+
+    /**
+     * WARNING: don't use in production, only for testing
+     *
+     * @param customFcmBatchUrl custom FCM batch url (push notifications)
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setCustomFcmBatchUrl(String customFcmBatchUrl) {
+      this.customFcmBatchUrl = customFcmBatchUrl;
       return this;
     }
 

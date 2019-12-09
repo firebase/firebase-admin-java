@@ -48,12 +48,17 @@ public class FirebaseOptionsTest {
   private static final String FIREBASE_STORAGE_BUCKET = "mock-storage-bucket";
   private static final String FIREBASE_PROJECT_ID = "explicit-project-id";
 
+  private static final String CUSTOM_FCM_URL = "http://custom-fcm-url";
+  private static final String CUSTOM_FCM_BATCH_URL = "http://custom-fcm-batch-url";
+
   private static final FirebaseOptions ALL_VALUES_OPTIONS =
       new FirebaseOptions.Builder()
           .setDatabaseUrl(FIREBASE_DB_URL)
           .setStorageBucket(FIREBASE_STORAGE_BUCKET)
           .setProjectId(FIREBASE_PROJECT_ID)
           .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
+          .setCustomFcmUrl(CUSTOM_FCM_URL)
+          .setCustomFcmBatchUrl(CUSTOM_FCM_BATCH_URL)
           .build();
 
   private static final ThreadManager MOCK_THREAD_MANAGER = new ThreadManager() {
@@ -87,6 +92,8 @@ public class FirebaseOptionsTest {
             .setProjectId(FIREBASE_PROJECT_ID)
             .setJsonFactory(jsonFactory)
             .setHttpTransport(httpTransport)
+            .setCustomFcmUrl(CUSTOM_FCM_URL)
+            .setCustomFcmBatchUrl(CUSTOM_FCM_BATCH_URL)
             .setThreadManager(MOCK_THREAD_MANAGER)
             .setConnectTimeout(30000)
             .setReadTimeout(60000)
@@ -97,6 +104,8 @@ public class FirebaseOptionsTest {
     assertEquals(FIREBASE_PROJECT_ID, firebaseOptions.getProjectId());
     assertSame(jsonFactory, firebaseOptions.getJsonFactory());
     assertSame(httpTransport, firebaseOptions.getHttpTransport());
+    assertSame(CUSTOM_FCM_URL, firebaseOptions.getCustomFcmUrl());
+    assertSame(CUSTOM_FCM_BATCH_URL, firebaseOptions.getCustomFcmBatchUrl());
     assertSame(MOCK_THREAD_MANAGER, firebaseOptions.getThreadManager());
     assertEquals(30000, firebaseOptions.getConnectTimeout());
     assertEquals(60000, firebaseOptions.getReadTimeout());
@@ -119,6 +128,8 @@ public class FirebaseOptionsTest {
     assertNotNull(firebaseOptions.getJsonFactory());
     assertNotNull(firebaseOptions.getHttpTransport());
     assertNotNull(firebaseOptions.getThreadManager());
+    assertNull(firebaseOptions.getCustomFcmUrl());
+    assertNull(firebaseOptions.getCustomFcmBatchUrl());
     assertNull(firebaseOptions.getDatabaseUrl());
     assertNull(firebaseOptions.getStorageBucket());
     assertEquals(0, firebaseOptions.getConnectTimeout());
