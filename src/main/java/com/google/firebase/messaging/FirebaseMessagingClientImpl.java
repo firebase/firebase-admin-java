@@ -67,14 +67,15 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
           .put("NOT_FOUND", "registration-token-not-registered")
           .put("PERMISSION_DENIED", "mismatched-credential")
           .put("RESOURCE_EXHAUSTED", "message-rate-exceeded")
-          .put("UNAUTHENTICATED", "invalid-apns-credentials")
+          .put("UNAUTHENTICATED", "third-party-auth-error")
 
           // FCM v1 new error codes
-          .put("APNS_AUTH_ERROR", "invalid-apns-credentials")
+          .put("APNS_AUTH_ERROR", "third-party-auth-error")
           .put("INTERNAL", FirebaseMessaging.INTERNAL_ERROR)
           .put("INVALID_ARGUMENT", "invalid-argument")
           .put("QUOTA_EXCEEDED", "message-rate-exceeded")
           .put("SENDER_ID_MISMATCH", "mismatched-credential")
+          .put("THIRD_PARTY_AUTH_ERROR", "third-party-auth-error")
           .put("UNAVAILABLE", "server-unavailable")
           .put("UNREGISTERED", "registration-token-not-registered")
           .build();

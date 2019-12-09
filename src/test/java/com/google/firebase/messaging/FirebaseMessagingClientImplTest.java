@@ -250,6 +250,24 @@ public class FirebaseMessagingClientImplTest {
   }
 
   @Test
+  public void testSendErrorWithThirdPartyError() {
+    for (int code : HTTP_ERRORS) {
+      response.setStatusCode(code).setContent(
+          "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\", "
+              + "\"details\":[{\"@type\": \"type.googleapis.com/google.firebase.fcm"
+              + ".v1.FcmError\", \"errorCode\": \"THIRD_PARTY_AUTH_ERROR\"}]}}");
+
+      try {
+        client.send(EMPTY_MESSAGE, DRY_RUN_DISABLED);
+        fail("No error thrown for HTTP error");
+      } catch (FirebaseMessagingException error) {
+        checkExceptionFromHttpResponse(error, "third-party-auth-error");
+      }
+      checkRequestHeader(interceptor.getLastRequest());
+    }
+  }
+
+  @Test
   public void testSendAll() throws Exception {
     final TestResponseInterceptor interceptor = new TestResponseInterceptor();
     FirebaseMessagingClient client = initMessagingClientForBatchRequests(
