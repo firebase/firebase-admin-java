@@ -23,7 +23,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -34,16 +33,19 @@ import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.util.EmulatorHelper;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
-import java.io.IOException;
 import java.util.List;
 import org.junit.Test;
 
 public class FirebaseDatabaseTest {
   
-  private static FirebaseOptions firebaseOptions =
+  private static final FirebaseOptions firebaseOptions =
       new FirebaseOptions.Builder()
           .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .setDatabaseUrl("https://firebase-db-test.firebaseio.com")
+          .build();
+  private static final FirebaseOptions firebaseOptionsWithoutDatabaseUrl =
+      new FirebaseOptions.Builder()
+          .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .build();
 
   @Test
@@ -196,7 +198,7 @@ public class FirebaseDatabaseTest {
   }
 
   @Test
-  public void testDbUrlIsEmulatorUrlWhenSettingOptionsManually() throws IOException {
+  public void testDbUrlIsEmulatorUrlWhenSettingOptionsManually() {
 
     List<CustomTestCase> testCases = ImmutableList.of(
         // cases where the env var is ignored because the supplied DB URL is a valid emulator URL
@@ -213,13 +215,9 @@ public class FirebaseDatabaseTest {
             "http://localhost:90", "valid-namespace")
     );
 
-    GoogleCredentials credentials = GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream());
-    FirebaseOptions options = FirebaseOptions.builder()
-        .setCredentials(credentials)
-        .build();
     for (CustomTestCase tc : testCases) {
       try {
-        FirebaseApp app = FirebaseApp.initializeApp(options);
+        FirebaseApp app = FirebaseApp.initializeApp(firebaseOptionsWithoutDatabaseUrl);
         TestUtils.setEnvironmentVariables(
             ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
                 Strings.nullToEmpty(tc.envVariableUrl)));
@@ -237,7 +235,7 @@ public class FirebaseDatabaseTest {
   }
 
   @Test
-  public void testDbUrlIsEmulatorUrlForDbRefWithPath() throws IOException {
+  public void testDbUrlIsEmulatorUrlForDbRefWithPath() {
 
     List<CustomTestCase> testCases = ImmutableList.of(
         new CustomTestCase("http://my-custom-hosted-emulator.com:80?ns=dummy-ns",
@@ -254,13 +252,9 @@ public class FirebaseDatabaseTest {
             "http://localhost:8080", "valid-namespace", "/a/b/c/d")
     );
 
-    GoogleCredentials credentials = GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream());
-    FirebaseOptions options = FirebaseOptions.builder()
-        .setCredentials(credentials)
-        .build();
     for (CustomTestCase tc : testCases) {
       try {
-        FirebaseApp app = FirebaseApp.initializeApp(options);
+        FirebaseApp app = FirebaseApp.initializeApp(firebaseOptionsWithoutDatabaseUrl);
         TestUtils.setEnvironmentVariables(
             ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
                 Strings.nullToEmpty(tc.envVariableUrl)));
