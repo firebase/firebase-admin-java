@@ -38,10 +38,14 @@ import org.junit.Test;
 
 public class FirebaseDatabaseTest {
   
-  private static FirebaseOptions firebaseOptions =
+  private static final FirebaseOptions firebaseOptions =
       new FirebaseOptions.Builder()
           .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .setDatabaseUrl("https://firebase-db-test.firebaseio.com")
+          .build();
+  private static final FirebaseOptions firebaseOptionsWithoutDatabaseUrl =
+      new FirebaseOptions.Builder()
+          .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .build();
 
   @Test
@@ -210,9 +214,10 @@ public class FirebaseDatabaseTest {
         new CustomTestCase("https://test.firebaseio.com?ns=valid-namespace", "localhost:90",
             "http://localhost:90", "valid-namespace")
     );
+
     for (CustomTestCase tc : testCases) {
       try {
-        FirebaseApp app = FirebaseApp.initializeApp();
+        FirebaseApp app = FirebaseApp.initializeApp(firebaseOptionsWithoutDatabaseUrl);
         TestUtils.setEnvironmentVariables(
             ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
                 Strings.nullToEmpty(tc.envVariableUrl)));
@@ -249,7 +254,7 @@ public class FirebaseDatabaseTest {
 
     for (CustomTestCase tc : testCases) {
       try {
-        FirebaseApp app = FirebaseApp.initializeApp();
+        FirebaseApp app = FirebaseApp.initializeApp(firebaseOptionsWithoutDatabaseUrl);
         TestUtils.setEnvironmentVariables(
             ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
                 Strings.nullToEmpty(tc.envVariableUrl)));
