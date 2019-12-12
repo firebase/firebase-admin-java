@@ -219,7 +219,7 @@ public class FirebaseDatabaseTest {
         .build();
     for (CustomTestCase tc : testCases) {
       try {
-        FirebaseApp app = FirebaseApp.initializeApp();
+        FirebaseApp app = FirebaseApp.initializeApp(options);
         TestUtils.setEnvironmentVariables(
             ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
                 Strings.nullToEmpty(tc.envVariableUrl)));
