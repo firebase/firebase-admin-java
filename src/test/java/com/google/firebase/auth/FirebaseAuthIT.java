@@ -49,6 +49,7 @@ import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.hash.Scrypt;
+import com.google.firebase.internal.Nullable;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -140,37 +141,98 @@ public class FirebaseAuthIT {
   @Test
   public void testCreateUserWithParams() throws Exception {
     RandomUser randomUser = RandomUser.create();
-    String phone = randomPhoneNumber();
-    CreateRequest user = new CreateRequest()
-        .setUid(randomUser.uid)
-        .setEmail(randomUser.email)
-        .setPhoneNumber(phone)
-        .setDisplayName("Random User")
-        .setPhotoUrl("https://example.com/photo.png")
-        .setEmailVerified(true)
-        .setPassword("password");
-
-    UserRecord userRecord = auth.createUserAsync(user).get();
+    String randomPhoneNumber = randomPhoneNumber();
     try {
-      assertEquals(randomUser.uid, userRecord.getUid());
-      assertEquals("Random User", userRecord.getDisplayName());
-      assertEquals(randomUser.email, userRecord.getEmail());
-      assertEquals(phone, userRecord.getPhoneNumber());
-      assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
-      assertTrue(userRecord.isEmailVerified());
-      assertFalse(userRecord.isDisabled());
+      UserRecord user = createUser(randomUser.uid, randomPhoneNumber, randomUser.email);
+      assertEquals(randomUser.uid, user.getUid());
+      assertEquals("Random User", user.getDisplayName());
+      assertEquals(randomUser.email, user.getEmail());
+      assertEquals(randomPhoneNumber, user.getPhoneNumber());
+      assertEquals("https://example.com/photo.png", user.getPhotoUrl());
+      assertTrue(user.isEmailVerified());
+      assertFalse(user.isDisabled());
 
-      assertEquals(2, userRecord.getProviderData().length);
+      assertEquals(2, user.getProviderData().length);
       List<String> providers = new ArrayList<>();
-      for (UserInfo provider : userRecord.getProviderData()) {
+      for (UserInfo provider : user.getProviderData()) {
         providers.add(provider.getProviderId());
       }
       assertTrue(providers.contains("password"));
       assertTrue(providers.contains("phone"));
 
-      checkRecreate(randomUser.uid);
+      checkRecreate(user.getUid());
     } finally {
-      auth.deleteUserAsync(userRecord.getUid()).get();
+      auth.deleteUserAsync(randomUser.uid).get();
+    }
+  }
+
+  @Test
+  public void testLookupUserByPhone() throws Exception {
+    RandomUser randomUser1 = RandomUser.create();
+    String phoneNumber1 = null;
+    RandomUser randomUser2 = RandomUser.create();
+    String randomPhoneNumber2 = randomPhoneNumber();
+    RandomUser randomUser3 = RandomUser.create();
+    String randomPhoneNumber3 = randomPhoneNumber();
+    try {
+      UserRecord user1 = createUser(
+          randomUser1.uid, /* phoneNumber= */ null, randomUser1.email);
+      UserRecord user2 = createUser(
+          randomUser2.uid, randomPhoneNumber2, randomUser2.email);
+      UserImportResult user3 = importUser(
+          randomUser3.uid, randomPhoneNumber3, randomUser3.email, "google.com");
+
+      UserRecord lookedUpRecord = auth.getUserByPhoneNumberAsync(randomPhoneNumber2).get();
+      assertEquals(lookedUpRecord.getUid(), randomUser2.uid);
+
+      lookedUpRecord = auth.getUserByPhoneNumberAsync(randomPhoneNumber3).get();
+      assertEquals(lookedUpRecord.getUid(), randomUser3.uid);
+    } finally {
+      auth.deleteUserAsync(randomUser1.uid).get();
+      auth.deleteUserAsync(randomUser2.uid).get();
+      auth.deleteUserAsync(randomUser3.uid).get();
+    }
+  }
+
+  @Test
+  public void testLookupUserByFederatedId() throws Exception {
+    RandomUser randomUser1 = RandomUser.create();
+    String phoneNumber1 = null;
+    RandomUser randomUser2 = RandomUser.create();
+    String randomPhoneNumber2 = randomPhoneNumber();
+    RandomUser randomUser3 = RandomUser.create();
+    String randomPhoneNumber3 = randomPhoneNumber();
+    try {
+      UserRecord user1 = createUser(
+          randomUser1.uid, /* phoneNumber= */ null, randomUser1.email);
+      UserRecord user2 = createUser(
+          randomUser2.uid, randomPhoneNumber2, randomUser2.email);
+      UserImportResult user3 = importUser(
+          randomUser3.uid, randomPhoneNumber3, randomUser3.email, "google.com");
+
+      UserRecord lookedUpRecord = auth.getUserByFederatedIdAsync(
+          randomUser3.uid + "_google.com", "google.com").get();
+      assertEquals(lookedUpRecord.getUid(), randomUser3.uid);
+      assertEquals(2, lookedUpRecord.getProviderData().length);
+      List<String> providers = new ArrayList<>();
+      for (UserInfo provider : lookedUpRecord.getProviderData()) {
+        providers.add(provider.getProviderId());
+      }
+      assertTrue(providers.contains("phone"));
+      assertTrue(providers.contains("google.com"));
+
+      try {
+        // Verify that lookup by federated identifier does not accept "phone".
+        lookedUpRecord = auth.getUserByFederatedIdAsync(
+            randomPhoneNumber3, "phone").get();
+        fail("No error thrown for non-federated provider");
+      } catch (IllegalArgumentException ignored) {
+        // expected
+      }
+    } finally {
+      auth.deleteUserAsync(randomUser1.uid).get();
+      auth.deleteUserAsync(randomUser2.uid).get();
+      auth.deleteUserAsync(randomUser3.uid).get();
     }
   }
 
@@ -588,6 +650,52 @@ public class FirebaseAuthIT {
     } finally {
       auth.deleteUser(user.uid);
     }
+  }
+
+  private UserRecord createUser(
+      String uid,
+      @Nullable String phoneNumber,
+      @Nullable String email) throws Exception {
+    RandomUser randomUser = RandomUser.create();
+    CreateRequest user = new CreateRequest()
+        .setUid(uid)
+        .setDisplayName("Random User")
+        .setPhotoUrl("https://example.com/photo.png")
+        .setPassword("password");
+    if (phoneNumber != null) {
+      user.setPhoneNumber(phoneNumber);
+    }
+    if (email != null) {
+      user.setEmail(email);
+      user.setEmailVerified(true);
+    }
+    return auth.createUserAsync(user).get();
+  }
+
+  private UserImportResult importUser(
+      String uid,
+      @Nullable String phoneNumber,
+      @Nullable String email,
+      String providerId) throws Exception {
+    ImportUserRecord.Builder builder = ImportUserRecord.builder()
+        .setUid(uid)
+        .setDisabled(false)
+        .setUserMetadata(
+            new UserMetadata(/* creationTimestamp= */ 20L, /* lastSignInTimestamp= */ 20L))
+        .addUserProvider(
+            UserProvider.builder()
+            .setProviderId(providerId)
+            .setUid(uid + "_" + providerId)
+            .build());
+    if (phoneNumber != null) {
+      builder.setPhoneNumber(phoneNumber);
+    }
+    if (email != null) {
+      builder.setEmail(email);
+      builder.setEmailVerified(true);
+    }
+    ImportUserRecord user = builder.build();
+    return auth.importUsersAsync(ImmutableList.of(user)).get();
   }
 
   private Map<String, String> parseLinkParameters(String link) throws Exception {

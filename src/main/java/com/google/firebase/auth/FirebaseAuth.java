@@ -606,6 +606,56 @@ public class FirebaseAuth {
   }
 
   /**
+   * Gets the user data corresponding to the specified user federated identifier.
+   *
+   * @param providerUid The user identifier with the given provider.
+   * @param providerId Identifier for the given federated provider, for example,
+   *     "google.com" for the Google provider.
+   * @return A {@link UserRecord} instance.
+   * @throws IllegalArgumentException If the providerUid is null or empty, or if
+   *     the providerId is null, empty, or does not belong to a federated provider.
+   * @throws FirebaseAuthException If an error occurs while retrieving user data.
+   */
+  public UserRecord getUserByFederatedId(
+      @NonNull String providerUid, @NonNull String providerId) throws FirebaseAuthException {
+    return getUserByFederatedIdOp(providerUid, providerId).call();
+  }
+
+  /**
+   * Gets the user data corresponding to the specified user federated identifier.
+   *
+   * @param providerUid The user identifier with the given provider.
+   * @param providerId Identifer for the given federated provider, for example,
+   *     "google.com" for the Google provider.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link UserRecord}
+   *     instance. If an error occurs while retrieving user data or if the uid and provider ID
+   *     do not correspond to a user, the future throws a {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the providerUid is null or empty, or if
+   *     the provider ID is null, empty, or does not belong to a federated provider.
+   */
+  public ApiFuture<UserRecord> getUserByFederatedIdAsync(
+      @NonNull String providerUid, @NonNull String providerId) {
+    return getUserByFederatedIdOp(providerUid, providerId).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<UserRecord, FirebaseAuthException> getUserByFederatedIdOp(
+      final String providerUid, final String providerId) {
+    checkNotDestroyed();
+    checkArgument(!Strings.isNullOrEmpty(providerUid), "providerUid must not be null or empty");
+    checkArgument(!Strings.isNullOrEmpty(providerId), "providerId must not be null or empty");
+    checkArgument(!providerId.equals("phone")
+        && !providerId.equals("password")
+        && !providerId.equals("anonymous"), "providerId must belong to a federated provider");
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<UserRecord, FirebaseAuthException>() {
+      @Override
+      protected UserRecord execute() throws FirebaseAuthException {
+        return userManager.getUserByFederatedId(providerUid, providerId);
+      }
+    };
+  }
+
+  /**
    * Gets a page of users starting from the specified {@code pageToken}. Page size will be
    * limited to 1000 users.
    *
