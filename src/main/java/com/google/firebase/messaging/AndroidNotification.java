@@ -459,7 +459,7 @@ public class AndroidNotification {
     public Builder setEventTimeInMillis(long eventTimeInMillis) {
       SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS000000'Z'");
       dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-      this.eventTime = dateFormat.format(new Date(1546304523123L));
+      this.eventTime = dateFormat.format(new Date(eventTimeInMillis));
       return this;
     }
 
