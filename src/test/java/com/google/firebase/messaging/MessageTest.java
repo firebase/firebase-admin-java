@@ -859,15 +859,13 @@ public class MessageTest {
         .put("title", "title")
         .put("body", "body")
         .build();
-    String eventTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'", Locale.US)
-        .format(new Date(1546304523123L));
     Map<String, Object> androidConfig = ImmutableMap.<String, Object>builder()
         .put("notification", ImmutableMap.<String, Object>builder()
             .put("title", "android-title")
             .put("body", "android-body")
             .put("ticker", "ticker")
             .put("sticky", true)
-            .put("event_time", eventTime)
+            .put("event_time", "2019-01-01T01:02:03.123000000Z")
             .put("local_only", true)
             .put("notification_priority", "PRIORITY_HIGH")
             .put("vibrate_timings", ImmutableList.of("1s", "1.001000000s"))
