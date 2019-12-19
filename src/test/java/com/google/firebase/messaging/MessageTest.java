@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
 
@@ -859,15 +860,13 @@ public class MessageTest {
         .put("title", "title")
         .put("body", "body")
         .build();
-    String eventTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'", Locale.US)
-        .format(new Date(1546304523123L));
     Map<String, Object> androidConfig = ImmutableMap.<String, Object>builder()
         .put("notification", ImmutableMap.<String, Object>builder()
             .put("title", "android-title")
             .put("body", "android-body")
             .put("ticker", "ticker")
             .put("sticky", true)
-            .put("event_time", eventTime)
+            .put("event_time", "2019-01-01T01:02:03.000000123Z")
             .put("local_only", true)
             .put("notification_priority", "PRIORITY_HIGH")
             .put("vibrate_timings", ImmutableList.of("1s", "1.001000000s"))
