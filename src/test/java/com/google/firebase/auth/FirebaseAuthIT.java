@@ -141,13 +141,12 @@ public class FirebaseAuthIT {
   @Test
   public void testCreateUserWithParams() throws Exception {
     RandomUser randomUser = RandomUser.create();
-    String randomPhoneNumber = randomPhoneNumber();
     try {
-      UserRecord user = createUser(randomUser.uid, randomPhoneNumber, randomUser.email);
+      UserRecord user = createUser(randomUser.uid, randomUser.phone, randomUser.email);
       assertEquals(randomUser.uid, user.getUid());
       assertEquals("Random User", user.getDisplayName());
       assertEquals(randomUser.email, user.getEmail());
-      assertEquals(randomPhoneNumber, user.getPhoneNumber());
+      assertEquals(randomUser.phone, user.getPhoneNumber());
       assertEquals("https://example.com/photo.png", user.getPhotoUrl());
       assertTrue(user.isEmailVerified());
       assertFalse(user.isDisabled());
@@ -169,24 +168,22 @@ public class FirebaseAuthIT {
   @Test
   public void testLookupUserByPhone() throws Exception {
     RandomUser randomUser1 = RandomUser.create();
-    String phoneNumber1 = null;
     RandomUser randomUser2 = RandomUser.create();
-    String randomPhoneNumber2 = randomPhoneNumber();
     RandomUser randomUser3 = RandomUser.create();
-    String randomPhoneNumber3 = randomPhoneNumber();
     try {
       UserRecord user1 = createUser(
           randomUser1.uid, /* phoneNumber= */ null, randomUser1.email);
       UserRecord user2 = createUser(
-          randomUser2.uid, randomPhoneNumber2, randomUser2.email);
+          randomUser2.uid, randomUser2.phone, randomUser2.email);
       UserImportResult user3 = importUser(
-          randomUser3.uid, randomPhoneNumber3, randomUser3.email, "google.com");
+          randomUser3.uid, randomUser3.phone, randomUser3.email,
+          "google.com", randomUser3.uid + "_google.com");
 
-      UserRecord lookedUpRecord = auth.getUserByPhoneNumberAsync(randomPhoneNumber2).get();
-      assertEquals(lookedUpRecord.getUid(), randomUser2.uid);
+      UserRecord lookedUpRecord = auth.getUserByPhoneNumberAsync(randomUser2.phone).get();
+      assertEquals(randomUser2.uid, lookedUpRecord.getUid());
 
-      lookedUpRecord = auth.getUserByPhoneNumberAsync(randomPhoneNumber3).get();
-      assertEquals(lookedUpRecord.getUid(), randomUser3.uid);
+      lookedUpRecord = auth.getUserByPhoneNumberAsync(randomUser3.phone).get();
+      assertEquals(randomUser3.uid, lookedUpRecord.getUid());
     } finally {
       auth.deleteUserAsync(randomUser1.uid).get();
       auth.deleteUserAsync(randomUser2.uid).get();
@@ -197,22 +194,20 @@ public class FirebaseAuthIT {
   @Test
   public void testLookupUserByFederatedId() throws Exception {
     RandomUser randomUser1 = RandomUser.create();
-    String phoneNumber1 = null;
     RandomUser randomUser2 = RandomUser.create();
-    String randomPhoneNumber2 = randomPhoneNumber();
     RandomUser randomUser3 = RandomUser.create();
-    String randomPhoneNumber3 = randomPhoneNumber();
     try {
       UserRecord user1 = createUser(
           randomUser1.uid, /* phoneNumber= */ null, randomUser1.email);
       UserRecord user2 = createUser(
-          randomUser2.uid, randomPhoneNumber2, randomUser2.email);
+          randomUser2.uid, randomUser2.phone, randomUser2.email);
       UserImportResult user3 = importUser(
-          randomUser3.uid, randomPhoneNumber3, randomUser3.email, "google.com");
+          randomUser3.uid, randomUser3.phone, randomUser3.email,
+          "google.com", randomUser3.uid + "_google.com");
 
       UserRecord lookedUpRecord = auth.getUserByFederatedIdAsync(
           randomUser3.uid + "_google.com", "google.com").get();
-      assertEquals(lookedUpRecord.getUid(), randomUser3.uid);
+      assertEquals(randomUser3.uid, lookedUpRecord.getUid());
       assertEquals(2, lookedUpRecord.getProviderData().length);
       List<String> providers = new ArrayList<>();
       for (UserInfo provider : lookedUpRecord.getProviderData()) {
@@ -224,10 +219,9 @@ public class FirebaseAuthIT {
       try {
         // Verify that lookup by federated identifier does not accept "phone".
         lookedUpRecord = auth.getUserByFederatedIdAsync(
-            randomPhoneNumber3, "phone").get();
+            randomUser3.phone, "phone").get();
         fail("No error thrown for non-federated provider");
-      } catch (IllegalArgumentException ignored) {
-        // expected
+      } catch (IllegalArgumentException expected) {
       }
     } finally {
       auth.deleteUserAsync(randomUser1.uid).get();
@@ -258,11 +252,10 @@ public class FirebaseAuthIT {
 
     // Update user
     RandomUser randomUser = RandomUser.create();
-    String phone = randomPhoneNumber();
     UpdateRequest request = userRecord.updateRequest()
         .setDisplayName("Updated Name")
         .setEmail(randomUser.email)
-        .setPhoneNumber(phone)
+        .setPhoneNumber(randomUser.phone)
         .setPhotoUrl("https://example.com/photo.png")
         .setEmailVerified(true)
         .setPassword("secret");
@@ -270,7 +263,7 @@ public class FirebaseAuthIT {
     assertEquals(uid, userRecord.getUid());
     assertEquals("Updated Name", userRecord.getDisplayName());
     assertEquals(randomUser.email, userRecord.getEmail());
-    assertEquals(phone, userRecord.getPhoneNumber());
+    assertEquals(randomUser.phone, userRecord.getPhoneNumber());
     assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
     assertTrue(userRecord.isEmailVerified());
     assertFalse(userRecord.isDisabled());
@@ -656,7 +649,6 @@ public class FirebaseAuthIT {
       String uid,
       @Nullable String phoneNumber,
       @Nullable String email) throws Exception {
-    RandomUser randomUser = RandomUser.create();
     CreateRequest user = new CreateRequest()
         .setUid(uid)
         .setDisplayName("Random User")
@@ -676,7 +668,8 @@ public class FirebaseAuthIT {
       String uid,
       @Nullable String phoneNumber,
       @Nullable String email,
-      String providerId) throws Exception {
+      String providerId,
+      String providerUid) throws Exception {
     ImportUserRecord.Builder builder = ImportUserRecord.builder()
         .setUid(uid)
         .setDisabled(false)
@@ -685,7 +678,7 @@ public class FirebaseAuthIT {
         .addUserProvider(
             UserProvider.builder()
             .setProviderId(providerId)
-            .setUid(uid + "_" + providerId)
+            .setUid(providerUid)
             .build());
     if (phoneNumber != null) {
       builder.setPhoneNumber(phoneNumber);
@@ -711,15 +704,6 @@ public class FirebaseAuthIT {
       }
     }
     return result;
-  }
-
-  private String randomPhoneNumber() {
-    Random random = new Random();
-    StringBuilder builder = new StringBuilder("+1");
-    for (int i = 0; i < 10; i++) {
-      builder.append(random.nextInt(10));
-    }
-    return builder.toString();
   }
 
   private String signInWithCustomToken(String customToken) throws IOException {
@@ -805,17 +789,25 @@ public class FirebaseAuthIT {
   private static class RandomUser {
     private final String uid;
     private final String email;
+    private final String phone;
 
-    private RandomUser(String uid, String email) {
+    private RandomUser(String uid, String email, String phone) {
       this.uid = uid;
       this.email = email;
+      this.phone = phone;
     }
 
     static RandomUser create() {
       final String uid = UUID.randomUUID().toString().replaceAll("-", "");
       final String email = ("test" + uid.substring(0, 12) + "@example."
           + uid.substring(12) + ".com").toLowerCase();
-      return new RandomUser(uid, email);
+      Random random = new Random();
+      StringBuilder builder = new StringBuilder("+1");
+      for (int i = 0; i < 10; i++) {
+        builder.append(random.nextInt(10));
+      }
+      final String phone = builder.toString();
+      return new RandomUser(uid, email, phone);
     }
   }
 }

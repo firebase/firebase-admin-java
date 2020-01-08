@@ -606,7 +606,7 @@ public class FirebaseAuth {
   }
 
   /**
-   * Gets the user data corresponding to the specified user federated identifier.
+   * Gets the user data corresponding to the specified user\'s federated identifier.
    *
    * @param providerUid The user identifier with the given provider.
    * @param providerId Identifier for the given federated provider, for example,
@@ -622,7 +622,7 @@ public class FirebaseAuth {
   }
 
   /**
-   * Gets the user data corresponding to the specified user federated identifier.
+   * Gets the user data corresponding to the specified user\'s federated identifier.
    *
    * @param providerUid The user identifier with the given provider.
    * @param providerId Identifer for the given federated provider, for example,
