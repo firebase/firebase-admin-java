@@ -190,9 +190,9 @@ public class UserRecord implements UserInfo {
   }
 
   /**
-   * Returns a timestamp in milliseconds since epoch, truncated down to the closest second. 
+   * Returns a timestamp in milliseconds since epoch, truncated down to the closest second.
    * Tokens minted before this timestamp are considered invalid.
-   * 
+   *
    * @return Timestamp in milliseconds since the epoch. Tokens minted before this timestamp are
    *     considered invalid.
    */
@@ -259,6 +259,10 @@ public class UserRecord implements UserInfo {
   private static void checkPassword(String password) {
     checkArgument(!Strings.isNullOrEmpty(password), "password cannot be null or empty");
     checkArgument(password.length() >= 6, "password must be at least 6 characters long");
+  }
+
+  private static void checkProviderId(String providerId) {
+    checkArgument(!Strings.isNullOrEmpty(providerId), "providerId cannot be null or empty");
   }
 
   static void checkCustomClaims(Map<String,Object> customClaims) {
@@ -525,6 +529,17 @@ public class UserRecord implements UserInfo {
     UpdateRequest setValidSince(long epochSeconds) {
       checkValidSince(epochSeconds);
       properties.put("validSince", epochSeconds);
+      return this;
+    }
+
+    UpdateRequest linkProvider(@NonNull UserProvider userProvider) {
+      properties.put("linkProviderUserInfo", userProvider);
+      return this;
+    }
+
+    UpdateRequest deleteProvider(String providerId) {
+      checkProviderId(providerId);
+      properties.put("deleteProvider", ImmutableList.of(providerId));
       return this;
     }
 

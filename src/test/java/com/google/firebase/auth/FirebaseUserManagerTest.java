@@ -74,6 +74,13 @@ public class FirebaseUserManagerTest {
           .build();
   private static final Map<String, Object> ACTION_CODE_SETTINGS_MAP =
           ACTION_CODE_SETTINGS.getProperties();
+  private static final UserProvider USER_PROVIDER = UserProvider.builder()
+        .setUid("testuid")
+        .setProviderId("facebook.com")
+        .setEmail("test@example.com")
+        .setDisplayName("Test User")
+        .setPhotoUrl("https://test.com/user.png")
+        .build();
 
   @After
   public void tearDown() {
@@ -826,8 +833,10 @@ public class FirebaseUserManagerTest {
         .setEmailVerified(true)
         .setPassword("secret")
         .setCustomClaims(claims)
+        .linkProvider(USER_PROVIDER)
+        .deleteProvider("google.com")
         .getProperties(Utils.getDefaultJsonFactory());
-    assertEquals(8, map.size());
+    assertEquals(10, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals("Display Name", map.get("displayName"));
     assertEquals("http://test.com/example.png", map.get("photoUrl"));
@@ -836,6 +845,8 @@ public class FirebaseUserManagerTest {
     assertTrue((Boolean) map.get("emailVerified"));
     assertEquals("secret", map.get("password"));
     assertEquals(Utils.getDefaultJsonFactory().toString(claims), map.get("customAttributes"));
+    assertEquals(USER_PROVIDER, map.get("linkProviderUserInfo"));
+    assertEquals(ImmutableList.of("google.com"), map.get("deleteProvider"));
   }
 
   @Test
@@ -871,6 +882,28 @@ public class FirebaseUserManagerTest {
     assertEquals(2, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals("{}", map.get("customAttributes"));
+  }
+
+  @Test
+  public void testLinkProvider() {
+    UpdateRequest update = new UpdateRequest("test");
+    Map<String, Object> map = update
+        .linkProvider(USER_PROVIDER)
+        .getProperties(Utils.getDefaultJsonFactory());
+    assertEquals(2, map.size());
+    assertEquals(update.getUid(), map.get("localId"));
+    assertEquals(USER_PROVIDER, map.get("linkProviderUserInfo"));
+  }
+
+  @Test
+  public void testDeleteProvider() {
+    UpdateRequest update = new UpdateRequest("test");
+    Map<String, Object> map = update
+        .deleteProvider("google.com")
+        .getProperties(Utils.getDefaultJsonFactory());
+    assertEquals(2, map.size());
+    assertEquals(update.getUid(), map.get("localId"));
+    assertEquals(ImmutableList.of("google.com"), map.get("deleteProvider"));
   }
 
   @Test

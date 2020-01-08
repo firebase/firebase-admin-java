@@ -18,6 +18,7 @@ package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -178,73 +179,134 @@ public class FirebaseAuthIT {
   public void testUserLifecycle() throws Exception {
     // Create user
     UserRecord userRecord = auth.createUserAsync(new CreateRequest()).get();
-    String uid = userRecord.getUid();
-
-    // Get user
-    userRecord = auth.getUserAsync(userRecord.getUid()).get();
-    assertEquals(uid, userRecord.getUid());
-    assertNull(userRecord.getDisplayName());
-    assertNull(userRecord.getEmail());
-    assertNull(userRecord.getPhoneNumber());
-    assertNull(userRecord.getPhotoUrl());
-    assertFalse(userRecord.isEmailVerified());
-    assertFalse(userRecord.isDisabled());
-    assertTrue(userRecord.getUserMetadata().getCreationTimestamp() > 0);
-    assertEquals(0, userRecord.getUserMetadata().getLastSignInTimestamp());
-    assertEquals(0, userRecord.getProviderData().length);
-    assertTrue(userRecord.getCustomClaims().isEmpty());
-
-    // Update user
-    RandomUser randomUser = RandomUser.create();
-    String phone = randomPhoneNumber();
-    UpdateRequest request = userRecord.updateRequest()
-        .setDisplayName("Updated Name")
-        .setEmail(randomUser.email)
-        .setPhoneNumber(phone)
-        .setPhotoUrl("https://example.com/photo.png")
-        .setEmailVerified(true)
-        .setPassword("secret");
-    userRecord = auth.updateUserAsync(request).get();
-    assertEquals(uid, userRecord.getUid());
-    assertEquals("Updated Name", userRecord.getDisplayName());
-    assertEquals(randomUser.email, userRecord.getEmail());
-    assertEquals(phone, userRecord.getPhoneNumber());
-    assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
-    assertTrue(userRecord.isEmailVerified());
-    assertFalse(userRecord.isDisabled());
-    assertEquals(2, userRecord.getProviderData().length);
-    assertTrue(userRecord.getCustomClaims().isEmpty());
-
-    // Get user by email
-    userRecord = auth.getUserByEmailAsync(userRecord.getEmail()).get();
-    assertEquals(uid, userRecord.getUid());
-
-    // Disable user and remove properties
-    request = userRecord.updateRequest()
-        .setPhotoUrl(null)
-        .setDisplayName(null)
-        .setPhoneNumber(null)
-        .setDisabled(true);
-    userRecord = auth.updateUserAsync(request).get();
-    assertEquals(uid, userRecord.getUid());
-    assertNull(userRecord.getDisplayName());
-    assertEquals(randomUser.email, userRecord.getEmail());
-    assertNull(userRecord.getPhoneNumber());
-    assertNull(userRecord.getPhotoUrl());
-    assertTrue(userRecord.isEmailVerified());
-    assertTrue(userRecord.isDisabled());
-    assertEquals(1, userRecord.getProviderData().length);
-    assertTrue(userRecord.getCustomClaims().isEmpty());
-
-    // Delete user
-    auth.deleteUserAsync(userRecord.getUid()).get();
     try {
-      auth.getUserAsync(userRecord.getUid()).get();
-      fail("No error thrown for deleted user");
-    } catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+      String uid = userRecord.getUid();
+
+      // Get user
+      userRecord = auth.getUserAsync(userRecord.getUid()).get();
+      assertEquals(uid, userRecord.getUid());
+      assertNull(userRecord.getDisplayName());
+      assertNull(userRecord.getEmail());
+      assertNull(userRecord.getPhoneNumber());
+      assertNull(userRecord.getPhotoUrl());
+      assertFalse(userRecord.isEmailVerified());
+      assertFalse(userRecord.isDisabled());
+      assertTrue(userRecord.getUserMetadata().getCreationTimestamp() > 0);
+      assertEquals(0, userRecord.getUserMetadata().getLastSignInTimestamp());
+      assertEquals(0, userRecord.getProviderData().length);
+      assertTrue(userRecord.getCustomClaims().isEmpty());
+
+      // Update user
+      RandomUser randomUser = RandomUser.create();
+      UpdateRequest request = userRecord.updateRequest()
+          .setDisplayName("Updated Name")
+          .setEmail(randomUser.email)
+          .setPhoneNumber(randomUser.phone)
+          .setPhotoUrl("https://example.com/photo.png")
+          .setEmailVerified(true)
+          .setPassword("secret");
+      userRecord = auth.updateUserAsync(request).get();
+      assertEquals(uid, userRecord.getUid());
+      assertEquals("Updated Name", userRecord.getDisplayName());
+      assertEquals(randomUser.email, userRecord.getEmail());
+      assertEquals(randomUser.phone, userRecord.getPhoneNumber());
+      assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
+      assertTrue(userRecord.isEmailVerified());
+      assertFalse(userRecord.isDisabled());
+      assertEquals(2, userRecord.getProviderData().length);
+      assertTrue(userRecord.getCustomClaims().isEmpty());
+
+      // Link user to IDP providers
+      request = userRecord.updateRequest()
+          .linkProvider(
+              UserProvider
+                  .builder()
+                  .setUid("testuid")
+                  .setProviderId("google.com")
+                  .setEmail("test@example.com")
+                  .setDisplayName("Test User")
+                  .setPhotoUrl("https://test.com/user.png")
+                  .build());
+      userRecord = auth.updateUserAsync(request).get();
+      assertEquals(uid, userRecord.getUid());
+      assertEquals("Updated Name", userRecord.getDisplayName());
+      assertEquals(randomUser.email, userRecord.getEmail());
+      assertEquals(randomUser.phone, userRecord.getPhoneNumber());
+      assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
+      assertTrue(userRecord.isEmailVerified());
+      assertFalse(userRecord.isDisabled());
+      assertEquals(3, userRecord.getProviderData().length);
+      List<String> providers = new ArrayList<>();
+      for (UserInfo provider : userRecord.getProviderData()) {
+        providers.add(provider.getProviderId());
+      }
+      assertTrue(providers.contains("google.com"));
+      assertTrue(userRecord.getCustomClaims().isEmpty());
+
+      // Unlink phone provider
+      request = userRecord.updateRequest().deleteProvider("phone");
+      userRecord = auth.updateUserAsync(request).get();
+      assertNull(userRecord.getPhoneNumber());
+      assertEquals(2, userRecord.getProviderData().length);
+      providers.clear();
+      for (UserInfo provider : userRecord.getProviderData()) {
+        providers.add(provider.getProviderId());
+      }
+      assertFalse(providers.contains("phone"));
+      assertEquals(uid, userRecord.getUid());
+      assertEquals("Updated Name", userRecord.getDisplayName());
+      assertEquals(randomUser.email, userRecord.getEmail());
+      assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
+      assertTrue(userRecord.isEmailVerified());
+      assertFalse(userRecord.isDisabled());
+      assertTrue(userRecord.getCustomClaims().isEmpty());
+
+      // Unlink IDP provider
+      request = userRecord.updateRequest().deleteProvider("google.com");
+      userRecord = auth.updateUserAsync(request).get();
+      assertEquals(1, userRecord.getProviderData().length);
+      assertNotEquals("google.com", userRecord.getProviderData()[0].getProviderId());
+      assertEquals(uid, userRecord.getUid());
+      assertEquals("Updated Name", userRecord.getDisplayName());
+      assertEquals(randomUser.email, userRecord.getEmail());
+      assertNull(userRecord.getPhoneNumber());
+      assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
+      assertTrue(userRecord.isEmailVerified());
+      assertFalse(userRecord.isDisabled());
+      assertTrue(userRecord.getCustomClaims().isEmpty());
+
+      // Get user by email
+      userRecord = auth.getUserByEmailAsync(userRecord.getEmail()).get();
+      assertEquals(uid, userRecord.getUid());
+
+      // Disable user and remove properties
+      request = userRecord.updateRequest()
+          .setPhotoUrl(null)
+          .setDisplayName(null)
+          .setPhoneNumber(null)
+          .setDisabled(true);
+      userRecord = auth.updateUserAsync(request).get();
+      assertEquals(uid, userRecord.getUid());
+      assertNull(userRecord.getDisplayName());
+      assertEquals(randomUser.email, userRecord.getEmail());
+      assertNull(userRecord.getPhoneNumber());
+      assertNull(userRecord.getPhotoUrl());
+      assertTrue(userRecord.isEmailVerified());
+      assertTrue(userRecord.isDisabled());
+      assertEquals(1, userRecord.getProviderData().length);
+      assertTrue(userRecord.getCustomClaims().isEmpty());
+
+    } finally {
+      // Delete user
+      auth.deleteUserAsync(userRecord.getUid()).get();
+      try {
+        auth.getUserAsync(userRecord.getUid()).get();
+        fail("No error thrown for deleted user");
+      } catch (ExecutionException e) {
+        assertTrue(e.getCause() instanceof FirebaseAuthException);
+        assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
+            ((FirebaseAuthException) e.getCause()).getErrorCode());
+      }
     }
   }
 
