@@ -54,11 +54,16 @@ public abstract class Tenant {
    */
   public abstract boolean isEmailLinkSignInEnabled();
 
-  /** Returns a tenant builder.  */
+  /**
+   * Returns a tenant builder.
+   */
   public static Builder newBuilder() {
     return new AutoValue_Tenant.Builder();
   }
 
+  /**
+   * Builder class used to construct a tenant.
+   */
   @AutoValue.Builder
   abstract static class Builder {
     public abstract Builder setTenantId(String tenantId);
