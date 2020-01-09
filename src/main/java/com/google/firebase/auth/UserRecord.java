@@ -261,10 +261,6 @@ public class UserRecord implements UserInfo {
     checkArgument(password.length() >= 6, "password must be at least 6 characters long");
   }
 
-  private static void checkProviderId(String providerId) {
-    checkArgument(!Strings.isNullOrEmpty(providerId), "providerId cannot be null or empty");
-  }
-
   static void checkCustomClaims(Map<String,Object> customClaims) {
     if (customClaims == null) {
       return;
@@ -526,20 +522,30 @@ public class UserRecord implements UserInfo {
       return this;
     }
 
-    UpdateRequest setValidSince(long epochSeconds) {
-      checkValidSince(epochSeconds);
-      properties.put("validSince", epochSeconds);
-      return this;
-    }
-
-    UpdateRequest linkProvider(@NonNull UserProvider userProvider) {
+    /**
+     * Updates the provider to be linked to this user\'s account.
+     *
+     * @param userProvider provider info to be linked to this user\'s account.
+     */
+    public UpdateRequest setLinkProvider(@NonNull UserProvider userProvider) {
       properties.put("linkProviderUserInfo", userProvider);
       return this;
     }
 
-    UpdateRequest deleteProvider(String providerId) {
-      checkProviderId(providerId);
-      properties.put("deleteProvider", ImmutableList.of(providerId));
+    /**
+     * Updates the identity providers to unlink from this user\'s account.
+     *
+     * @param providerIds list of identifiers for the identity providers.
+     */
+    public UpdateRequest setDeleteProviders(List<String> providerIds) {
+      checkNotNull(providerIds);
+      properties.put("deleteProvider", providerIds);
+      return this;
+    }
+
+    UpdateRequest setValidSince(long epochSeconds) {
+      checkValidSince(epochSeconds);
+      properties.put("validSince", epochSeconds);
       return this;
     }
 

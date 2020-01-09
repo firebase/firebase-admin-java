@@ -833,8 +833,8 @@ public class FirebaseUserManagerTest {
         .setEmailVerified(true)
         .setPassword("secret")
         .setCustomClaims(claims)
-        .linkProvider(USER_PROVIDER)
-        .deleteProvider("google.com")
+        .setLinkProvider(USER_PROVIDER)
+        .setDeleteProviders(ImmutableList.of("google.com"))
         .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(10, map.size());
     assertEquals(update.getUid(), map.get("localId"));
@@ -888,7 +888,7 @@ public class FirebaseUserManagerTest {
   public void testLinkProvider() {
     UpdateRequest update = new UpdateRequest("test");
     Map<String, Object> map = update
-        .linkProvider(USER_PROVIDER)
+        .setLinkProvider(USER_PROVIDER)
         .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(2, map.size());
     assertEquals(update.getUid(), map.get("localId"));
@@ -899,7 +899,7 @@ public class FirebaseUserManagerTest {
   public void testDeleteProvider() {
     UpdateRequest update = new UpdateRequest("test");
     Map<String, Object> map = update
-        .deleteProvider("google.com")
+        .setDeleteProviders(ImmutableList.of("google.com"))
         .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(2, map.size());
     assertEquals(update.getUid(), map.get("localId"));
