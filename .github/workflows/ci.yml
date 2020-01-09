@@ -1,4 +1,4 @@
-name: Java CI
+name: Java Continuous Integration
 
 on: [push, pull_request]
 
