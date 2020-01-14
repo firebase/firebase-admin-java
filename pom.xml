@@ -322,11 +322,11 @@
                     <source>1.7</source>
                     <target>1.7</target>
                     <annotationProcessorPaths>
-                    <path>
-                        <groupId>com.google.auto.value</groupId>
-                        <artifactId>auto-value</artifactId>
-                        <version>1.7</version>
-                    </path>
+                        <path>
+                            <groupId>com.google.auto.value</groupId>
+                            <artifactId>auto-value</artifactId>
+                            <version>1.7</version>
+                        </path>
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
