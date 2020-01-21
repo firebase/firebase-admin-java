@@ -20,7 +20,7 @@ import com.google.auto.value.AutoValue;
 
 /**
  * Contains metadata associated with a Firebase tenant.
- * 
+ *
  * <p>Instances of this class are immutable and thread safe.
  */
 @AutoValue
@@ -45,7 +45,7 @@ public abstract class Tenant {
    *
    * @return true if a user can be authenticated using an email and password, and false otherwise.
    */
-  public abstract boolean isPasswordSignUpAllowed();
+  public abstract boolean isPasswordSignInAllowed();
 
   /**
    * Returns whether to enable email link user authentication.
@@ -70,8 +70,7 @@ public abstract class Tenant {
 
     public abstract Builder setDisplayName(String displayName);
 
-    public abstract Builder setPasswordSignUpAllowed(
-        boolean requirePasswordForEmailLinkSignIn);
+    public abstract Builder setPasswordSignInAllowed(boolean allowPasswordSignIn);
 
     public abstract Builder setEmailLinkSignInEnabled(boolean enableEmailLinkSignIn);
 
