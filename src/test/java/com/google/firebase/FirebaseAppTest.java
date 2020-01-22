@@ -579,16 +579,6 @@ public class FirebaseAppTest {
     assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testFirebaseExceptionNullDetail() {
-    new FirebaseException(null);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testFirebaseExceptionEmptyDetail() {
-    new FirebaseException("");
-  }
-
   @Test
   public void testFirebaseAppCreationWithEmptySupplier() {
     FirebaseApp.initializeApp(FirebaseOptions.builder()
