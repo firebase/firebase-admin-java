@@ -24,7 +24,7 @@ import com.google.auto.value.AutoValue;
  *
  * <p>Instances of this class are immutable and thread safe.
  */
-public class final Tenant {
+public final class Tenant {
 
   @Key("tenantId")
   private String tenantId;
