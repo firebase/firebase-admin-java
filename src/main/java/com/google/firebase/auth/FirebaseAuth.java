@@ -16,8 +16,6 @@
 
 package com.google.firebase.auth;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.api.client.util.Clock;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
