@@ -24,7 +24,7 @@ import com.google.auto.value.AutoValue;
  *
  * <p>Instances of this class are immutable and thread safe.
  */
-public class Tenant {
+public class final Tenant {
 
   @Key("tenantId")
   private String tenantId;
@@ -39,7 +39,7 @@ public class Tenant {
   private String emailLinkSignInEnabled;
 
   /**
-   * Class used to hold the information needs to make a tenant create request. 
+   * Class used to hold the information needs to make a tenant create request.
    */
   @AutoValue
   public abstract static class CreateRequest {
