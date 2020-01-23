@@ -16,6 +16,7 @@
 
 package com.google.firebase.auth;
 
+import com.google.api.client.util.Key;
 import com.google.auto.value.AutoValue;
 
 /**
@@ -23,57 +24,115 @@ import com.google.auto.value.AutoValue;
  *
  * <p>Instances of this class are immutable and thread safe.
  */
-@AutoValue
-public abstract class Tenant {
+public class Tenant {
+
+  @Key("tenantId")
+  private String tenantId;
+
+  @Key("displayName")
+  private String displayName;
+
+  @Key("allowPasswordSignup")
+  private String passwordSignInAllowed;
+
+  @Key("enableEmailLinkSignin")
+  private String emailLinkSignInEnabled;
 
   /**
-   * Returns the ID of this tenant.
-   *
-   * @return a non-empty tenant ID string.
+   * Class used to hold the information needs to make a tenant create request. 
    */
-  public abstract String getTenantId();
+  @AutoValue
+  public abstract static class CreateRequest {
 
-  /**
-   * Returns the display name of this tenant.
-   *
-   * @return a non-empty display name string.
-   */
-  public abstract String getDisplayName();
+    /**
+     * Returns the display name of this tenant.
+     *
+     * @return a non-empty display name string.
+     */
+    public abstract String getDisplayName();
 
-  /**
-   * Returns whether to allow email/password user authentication.
-   *
-   * @return true if a user can be authenticated using an email and password, and false otherwise.
-   */
-  public abstract boolean isPasswordSignInAllowed();
+    /**
+     * Returns whether to allow email/password user authentication.
+     *
+     * @return true if a user can be authenticated using an email and password, and false otherwise.
+     */
+    public abstract boolean isPasswordSignInAllowed();
 
-  /**
-   * Returns whether to enable email link user authentication.
-   *
-   * @return true if a user can be authenticated using an email link, and false otherwise.
-   */
-  public abstract boolean isEmailLinkSignInEnabled();
+    /**
+     * Returns whether to enable email link user authentication.
+     *
+     * @return true if a user can be authenticated using an email link, and false otherwise.
+     */
+    public abstract boolean isEmailLinkSignInEnabled();
 
-  /**
-   * Returns a tenant builder.
+    /**
+     * Returns a builder for a tenant create request.
+     */
+    public static Builder newBuilder() {
+      return new AutoValue_Tenant_CreateRequest.Builder();
+    }
+
+    /**
+   * Builder class used to construct a create request.
    */
-  public static Builder newBuilder() {
-    return new AutoValue_Tenant.Builder();
+    @AutoValue.Builder
+    abstract static class Builder {
+      public abstract Builder setDisplayName(String displayName);
+
+      public abstract Builder setPasswordSignInAllowed(boolean allowPasswordSignIn);
+
+      public abstract Builder setEmailLinkSignInEnabled(boolean enableEmailLinkSignIn);
+
+      public abstract CreateRequest build();
+    }
   }
 
   /**
-   * Builder class used to construct a tenant.
+   * Class used to hold the information needs to make a tenant update request. 
    */
-  @AutoValue.Builder
-  abstract static class Builder {
-    public abstract Builder setTenantId(String tenantId);
+  @AutoValue
+  public abstract static class UpdateRequest {
 
-    public abstract Builder setDisplayName(String displayName);
+    /**
+     * Returns the display name of this tenant.
+     *
+     * @return a non-empty display name string.
+     */
+    public abstract String getDisplayName();
 
-    public abstract Builder setPasswordSignInAllowed(boolean allowPasswordSignIn);
+    /**
+     * Returns whether to allow email/password user authentication.
+     *
+     * @return true if a user can be authenticated using an email and password, and false otherwise.
+     */
+    public abstract boolean isPasswordSignInAllowed();
 
-    public abstract Builder setEmailLinkSignInEnabled(boolean enableEmailLinkSignIn);
+    /**
+     * Returns whether to enable email link user authentication.
+     *
+     * @return true if a user can be authenticated using an email link, and false otherwise.
+     */
+    public abstract boolean isEmailLinkSignInEnabled();
 
-    public abstract Tenant build();
+    /**
+     * Returns a builder for a tenant update request.
+     */
+    public static Builder newBuilder() {
+      return new AutoValue_Tenant_UpdateRequest.Builder();
+    }
+
+    /**
+   * Builder class used to construct a update request.
+   */
+    @AutoValue.Builder
+    abstract static class Builder {
+      public abstract Builder setDisplayName(String displayName);
+
+      public abstract Builder setPasswordSignInAllowed(boolean allowPasswordSignIn);
+
+      public abstract Builder setEmailLinkSignInEnabled(boolean enableEmailLinkSignIn);
+
+      public abstract UpdateRequest build();
+    }
   }
 }
