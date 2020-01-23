@@ -42,7 +42,7 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
 
   private FirebaseAuth(Builder builder) {
     super(
-        checkNotNull(builder.firebaseApp),
+        builder.firebaseApp,
         builder.tokenFactory,
         builder.idTokenVerifier,
         builder.cookieVerifier);

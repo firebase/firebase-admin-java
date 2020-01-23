@@ -64,7 +64,7 @@ public abstract class AbstractFirebaseAuth {
       Supplier<FirebaseTokenFactory> tokenFactory,
       Supplier<? extends FirebaseTokenVerifier> idTokenVerifier,
       Supplier<? extends FirebaseTokenVerifier> cookieVerifier) {
-    this.firebaseApp = firebaseApp;
+    this.firebaseApp = checkNotNull(firebaseApp);
     this.tokenFactory = threadSafeMemoize(tokenFactory);
     this.idTokenVerifier = threadSafeMemoize(idTokenVerifier);
     this.cookieVerifier = threadSafeMemoize(cookieVerifier);
