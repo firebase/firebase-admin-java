@@ -31,7 +31,7 @@ import java.util.Map;
 /**
  * An abstract HttpErrorHandler implementation that maps HTTP status codes to Firebase error codes.
  */
-public abstract class BaseHttpErrorHandler<T extends FirebaseException>
+public abstract class AbstractHttpErrorHandler<T extends FirebaseException>
     implements HttpErrorHandler<T> {
 
   private static final Map<Integer, ErrorCode> HTTP_ERROR_CODES =

@@ -50,8 +50,10 @@ public final class ErrorHandlingHttpClient<T extends FirebaseException> {
         errorHandler);
   }
 
-  public ErrorHandlingHttpClient(HttpRequestFactory requestFactory,
-      JsonFactory jsonFactory, HttpErrorHandler<T> errorHandler) {
+  public ErrorHandlingHttpClient(
+      HttpRequestFactory requestFactory,
+      JsonFactory jsonFactory,
+      HttpErrorHandler<T> errorHandler) {
     this.requestFactory = checkNotNull(requestFactory, "requestFactory must not be null");
     this.jsonFactory = checkNotNull(jsonFactory, "jsonFactory must not be null");
     this.errorHandler = checkNotNull(errorHandler, "errorHandler must not be null");

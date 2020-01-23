@@ -28,14 +28,15 @@ import com.google.firebase.IncomingHttpResponse;
 import java.io.IOException;
 
 /**
- * An abstract HttpErrorHandler that handles Google Cloud error responses.
+ * An abstract HttpErrorHandler that handles Google Cloud error responses. Format of these
+ * error responses are defined at https://cloud.google.com/apis/design/errors.
  */
-public abstract class PlatformErrorHandler<T extends FirebaseException>
-    extends BaseHttpErrorHandler<T> {
+public abstract class AbstractPlatformErrorHandler<T extends FirebaseException>
+    extends AbstractHttpErrorHandler<T> {
 
   protected final JsonFactory jsonFactory;
 
-  public PlatformErrorHandler(JsonFactory jsonFactory) {
+  public AbstractPlatformErrorHandler(JsonFactory jsonFactory) {
     this.jsonFactory = checkNotNull(jsonFactory, "jsonFactory must not be null");
   }
 
@@ -61,17 +62,16 @@ public abstract class PlatformErrorHandler<T extends FirebaseException>
 
   private PlatformErrorResponse parseErrorResponse(String content) {
     PlatformErrorResponse response = new PlatformErrorResponse();
-    if (content == null) {
-      return response;
+    if (!Strings.isNullOrEmpty(content)) {
+      try {
+        jsonFactory.createJsonParser(content).parseAndClose(response);
+      } catch (IOException e) {
+        // Ignore any error that may occur while parsing the error response. The server
+        // may have responded with a non-json payload. Return an empty return value, and
+        // let the base class logic come into play.
+      }
     }
 
-    try {
-      jsonFactory.createJsonParser(content).parseAndClose(response);
-    } catch (IOException e) {
-      // Ignore any error that may occur while parsing the error response. The server
-      // may have responded with a non-json payload. Return an empty return value, and
-      // let the base class logic come into play.
-    }
     return response;
   }
 

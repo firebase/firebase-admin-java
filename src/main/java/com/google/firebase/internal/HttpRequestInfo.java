@@ -16,21 +16,19 @@
 
 package com.google.firebase.internal;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseInterceptor;
-import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Internal API for configuring outgoing HTTP requests.
+ * Internal API for configuring outgoing HTTP requests. To be used with the
+ * {@link ErrorHandlingHttpClient} class.
  */
 public final class HttpRequestInfo {
 
@@ -41,7 +39,6 @@ public final class HttpRequestInfo {
   private HttpResponseInterceptor interceptor;
 
   private HttpRequestInfo(String method, String url, HttpContent content) {
-    checkArgument(!Strings.isNullOrEmpty(method), "method must not be null or empty");
     this.method = method;
     this.url = new GenericUrl(url);
     this.content = content;
