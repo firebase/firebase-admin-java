@@ -35,7 +35,15 @@ public final class IncomingHttpResponse {
   private final Map<String, Object> headers;
   private final OutgoingHttpRequest request;
 
-  IncomingHttpResponse(HttpResponse response, @Nullable String content) {
+  /**
+   * Creates an IncomingHttpResponse from a successful HttpResponse and the content read from it.
+   * The caller is expected to read the content from the response, and handle any errors that
+   * may occur while reading.
+   *
+   * @param response A successful HttpResponse.
+   * @param content Content read from the response.
+   */
+  public IncomingHttpResponse(HttpResponse response, @Nullable String content) {
     checkNotNull(response, "response must not be null");
     this.statusCode = response.getStatusCode();
     this.content = content;
@@ -43,7 +51,13 @@ public final class IncomingHttpResponse {
     this.request = new OutgoingHttpRequest(response.getRequest());
   }
 
-  IncomingHttpResponse(HttpResponseException e, HttpRequest request) {
+  /**
+   * Creates an IncomingHttpResponse from an HTTP error response.
+   *
+   * @param e HttpResponseException representing the HTTP error response.
+   * @param request The HttpRequest that resulted in the error.
+   */
+  public IncomingHttpResponse(HttpResponseException e, HttpRequest request) {
     this(e, new OutgoingHttpRequest(request));
   }
 

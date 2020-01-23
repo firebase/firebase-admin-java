@@ -43,9 +43,22 @@ public class ApiClientUtils {
    * @return A new {@code HttpRequestFactory} instance.
    */
   public static HttpRequestFactory newAuthorizedRequestFactory(FirebaseApp app) {
+    return newAuthorizedRequestFactory(app, DEFAULT_RETRY_CONFIG);
+  }
+
+  /**
+   * Creates a new {@code HttpRequestFactory} which provides authorization (OAuth2), timeouts and
+   * automatic retries.
+   *
+   * @param app {@link FirebaseApp} from which to obtain authorization credentials.
+   * @param retryConfig {@link RetryConfig} which specifies how and when to retry errors.
+   * @return A new {@code HttpRequestFactory} instance.
+   */
+  public static HttpRequestFactory newAuthorizedRequestFactory(
+      FirebaseApp app, @Nullable RetryConfig retryConfig) {
     HttpTransport transport = app.getOptions().getHttpTransport();
     return transport.createRequestFactory(
-        new FirebaseRequestInitializer(app, DEFAULT_RETRY_CONFIG));
+        new FirebaseRequestInitializer(app, retryConfig));
   }
 
   public static HttpRequestFactory newUnauthorizedRequestFactory(FirebaseApp app) {
