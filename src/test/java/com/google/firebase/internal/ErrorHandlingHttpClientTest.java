@@ -102,7 +102,7 @@ public class ErrorHandlingHttpClientTest {
         new JsonHttpContent(DEFAULT_JSON_FACTORY, ImmutableMap.of("key", "value")));
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     request.addHeader("h1", "v1")
-        .addAllHeaders(ImmutableMap.<String, String>of("h2", "v2", "h3", "v3"))
+        .addAllHeaders(ImmutableMap.of("h2", "v2", "h3", "v3"))
         .setResponseInterceptor(interceptor);
     GenericData body = client.sendAndParse(request, GenericData.class);
 
@@ -137,8 +137,7 @@ public class ErrorHandlingHttpClientTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      // TODO: Uncomment this line when getErrorCode is public
-      // assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
       assertEquals("IO error: Test", e.getMessage());
       assertNull(e.getHttpResponse());
       assertSame(exception, e.getCause());
@@ -157,8 +156,7 @@ public class ErrorHandlingHttpClientTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      // TODO: Uncomment this line when getErrorCode is public
-      // assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
       assertEquals("Example error message: {}", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, "{}");
       IncomingHttpResponse httpResponse = e.getHttpResponse();
@@ -179,8 +177,7 @@ public class ErrorHandlingHttpClientTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      // TODO: Uncomment this line when getErrorCode is public
-      // assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
       assertEquals("Parse error", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_OK, payload);
       assertNotNull(e.getCause());
@@ -210,8 +207,7 @@ public class ErrorHandlingHttpClientTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      // TODO: Uncomment this line when getErrorCode is public
-      // assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
       assertEquals("Example error message: null", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE, null);
       assertNotNull(e.getCause());
@@ -245,8 +241,7 @@ public class ErrorHandlingHttpClientTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      // TODO: Uncomment this line when getErrorCode is public
-      // assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
       assertEquals("IO error: Failed to fetch credentials", e.getMessage());
       assertNull(e.getHttpResponse());
       assertNotNull(e.getCause());

@@ -51,8 +51,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      // TODO: Uncomment this line when getErrorCode is public
-      // assertEquals(ErrorCode.UNAVAILABLE, e.getErrorCode());
+      assertEquals(ErrorCode.UNAVAILABLE, e.getErrorCodeNew());
       assertEquals("Test error", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, payload);
       assertNotNull(e.getCause());
@@ -71,8 +70,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      // TODO: Uncomment this line when getErrorCode is public
-      // assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
       assertEquals("Unexpected HTTP response with status: 500\nnot json", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, payload);
       assertNotNull(e.getCause());
@@ -91,8 +89,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      // TODO: Uncomment this line when getErrorCode is public
-      // assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
       assertEquals("Test error", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, payload);
       assertNotNull(e.getCause());
@@ -111,8 +108,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      // TODO: Uncomment this line when getErrorCode is public
-      // assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCodeNew());
       assertEquals("Unexpected HTTP response with status: 500\n" + payload, e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, payload);
       assertNotNull(e.getCause());
@@ -131,8 +127,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      // TODO: Uncomment this line when getErrorCode is public
-      // assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
       assertEquals("Unexpected HTTP response with status: 500\n" + payload, e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, payload);
       assertNotNull(e.getCause());
@@ -157,8 +152,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      // TODO: Uncomment this line when getErrorCode is public
-      // assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
       assertEquals("IO error", e.getMessage());
       assertNull(e.getHttpResponse());
       assertSame(exception, e.getCause());
@@ -176,8 +170,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      // TODO: Uncomment this line when getErrorCode is public
-      // assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
       assertEquals("Parse error", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_OK, payload);
       assertNotNull(e.getCause());
@@ -196,8 +189,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      // TODO: Uncomment this line when getErrorCode is public
-      // assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
       assertEquals("Test error", e.getMessage());
       assertHttpResponse(e, 512, payload);
       assertNotNull(e.getCause());
