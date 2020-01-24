@@ -17,24 +17,59 @@
 package com.google.firebase;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.Nullable;
 
-/** Base class for all Firebase exceptions. */
+/**
+ * Base class for all Firebase exceptions.
+ */
 public class FirebaseException extends Exception {
 
-  // TODO(b/27677218): Exceptions should have non-empty messages.
-  @Deprecated
-  protected FirebaseException() {}
+  private final ErrorCode errorCode;
+  private final IncomingHttpResponse httpResponse;
 
+  @Deprecated
   public FirebaseException(@NonNull String detailMessage) {
-    super(detailMessage);
-    checkArgument(!Strings.isNullOrEmpty(detailMessage), "Detail message must not be empty");
+    this(detailMessage, null);
   }
 
+  @Deprecated
   public FirebaseException(@NonNull String detailMessage, Throwable cause) {
-    super(detailMessage, cause);
-    checkArgument(!Strings.isNullOrEmpty(detailMessage), "Detail message must not be empty");
+    this(ErrorCode.UNKNOWN, detailMessage, null, cause);
+  }
+
+  public FirebaseException(
+      @NonNull ErrorCode errorCode,
+      @NonNull String message,
+      @Nullable IncomingHttpResponse httpResponse,
+      @Nullable Throwable cause) {
+    super(message, cause);
+    checkArgument(!Strings.isNullOrEmpty(message), "Message must not be null or empty");
+    this.errorCode = checkNotNull(errorCode, "ErrorCode must not be null");
+    this.httpResponse = httpResponse;
+  }
+
+  /**
+   * Returns the platform-wide error code associated with this exception.
+   *
+   * @return A Firebase error code.
+   */
+  // TODO: Expose this method publicly
+  ErrorCode getErrorCode() {
+    return errorCode;
+  }
+
+  /**
+   * Returns the HTTP response that resulted in this exception. If the exception was not caused by
+   * an HTTP error response, returns null.
+   *
+   * @return An HTTP response or null.
+   */
+  @Nullable
+  public IncomingHttpResponse getHttpResponse() {
+    return httpResponse;
   }
 }
