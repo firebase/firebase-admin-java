@@ -144,20 +144,15 @@ final class InstanceIdClientImpl implements InstanceIdClient {
       return new FirebaseMessagingException(
           params.getErrorCode(),
           this.getErrorMessage(params),
-          null,
           params.getException(),
-          params.getResponse());
+          params.getResponse(),
+          null);
     }
 
     @Override
     public FirebaseMessagingException handleIOException(IOException e) {
       FirebaseException error = ApiClientUtils.newFirebaseException(e);
-      return new FirebaseMessagingException(
-          error.getErrorCodeNew(),
-          error.getMessage(),
-          null,
-          e,
-          null);
+      return new FirebaseMessagingException(error.getErrorCodeNew(), error.getMessage(), e);
     }
 
     @Override
@@ -166,30 +161,27 @@ final class InstanceIdClientImpl implements InstanceIdClient {
       return new FirebaseMessagingException(
           ErrorCode.UNKNOWN,
           "Error parsing response from the topic management service: " + e.getMessage(),
-          null,
           e,
-          response);
+          response,
+          null);
     }
 
     private String getErrorMessage(ErrorParams params) {
-      String message = params.getMessage();
       String content = params.getResponse().getContent();
-      if (Strings.isNullOrEmpty(content)) {
-        return message;
-      }
-
-      try {
-        InstanceIdServiceErrorResponse response = new InstanceIdServiceErrorResponse();
-        jsonFactory.createJsonParser(content).parse(response);
-        if (!Strings.isNullOrEmpty(response.error)) {
-          message = response.error;
+      if (!Strings.isNullOrEmpty(content)) {
+        try {
+          InstanceIdServiceErrorResponse response = new InstanceIdServiceErrorResponse();
+          jsonFactory.createJsonParser(content).parse(response);
+          if (!Strings.isNullOrEmpty(response.error)) {
+            return response.error;
+          }
+        } catch (IOException ignore) {
+          // Ignore any error that may occur while parsing the error response. The server
+          // may have responded with a non-json payload.
         }
-      } catch (IOException ignore) {
-        // Ignore any error that may occur while parsing the error response. The server
-        // may have responded with a non-json payload.
       }
 
-      return message;
+      return params.getMessage();
     }
   }
 }

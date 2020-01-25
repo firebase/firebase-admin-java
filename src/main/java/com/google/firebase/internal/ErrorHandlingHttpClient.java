@@ -66,6 +66,16 @@ public final class ErrorHandlingHttpClient<T extends FirebaseException> {
     return parse(response, responseType);
   }
 
+  /**
+   * Sends the given HTTP request to the target endpoint, and parses the response while handling
+   * any errors that may occur along the way. This method can be used when the response should
+   * be parsed into an instance of a private or protected class, which cannot be instantiated
+   * outside the call-site.
+   *
+   * @param requestInfo Outgoing request configuration.
+   * @param destination Object to parse the response into.
+   * @throws T If any error occurs while making the request.
+   */
   public void sendAndParse(HttpRequestInfo requestInfo, Object destination) throws T {
     IncomingHttpResponse response = send(requestInfo);
     parse(response, destination);

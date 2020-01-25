@@ -289,19 +289,19 @@ public class ErrorHandlingHttpClientTest {
     @Override
     public FirebaseException handleIOException(IOException e) {
       return new FirebaseException(
-          ErrorCode.UNKNOWN, "IO error: " + e.getMessage(), null, e);
+          ErrorCode.UNKNOWN, "IO error: " + e.getMessage(), e);
     }
 
     @Override
     public FirebaseException handleHttpResponseException(
         HttpResponseException e, IncomingHttpResponse response) {
       return new FirebaseException(
-          ErrorCode.INTERNAL, "Example error message: " + e.getContent(), response, e);
+          ErrorCode.INTERNAL, "Example error message: " + e.getContent(), e, response);
     }
 
     @Override
     public FirebaseException handleParseException(IOException e, IncomingHttpResponse response) {
-      return new FirebaseException(ErrorCode.UNKNOWN, "Parse error", response, e);
+      return new FirebaseException(ErrorCode.UNKNOWN, "Parse error", e, response);
     }
   }
 }

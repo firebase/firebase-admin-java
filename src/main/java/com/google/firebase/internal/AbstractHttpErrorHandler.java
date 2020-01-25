@@ -26,7 +26,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.IncomingHttpResponse;
-import java.io.IOException;
 import java.util.Map;
 
 /**

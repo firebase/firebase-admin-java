@@ -29,15 +29,20 @@ public final class FirebaseMessagingException extends FirebaseException {
   FirebaseMessagingException(
       @NonNull ErrorCode code,
       @NonNull String message,
-      @Nullable MessagingErrorCode errorCode,
       @Nullable Throwable cause,
-      @Nullable IncomingHttpResponse response) {
-    super(code, message, response, cause);
+      @Nullable IncomingHttpResponse response,
+      @Nullable MessagingErrorCode errorCode) {
+    super(code, message, cause, response);
     this.errorCode = errorCode;
   }
 
   FirebaseMessagingException(@NonNull ErrorCode code, @NonNull String message) {
-    this(code, message, null, null, null);
+    this(code, message, null);
+  }
+
+  FirebaseMessagingException(
+      @NonNull ErrorCode code, @NonNull String message, @Nullable Throwable cause) {
+    this(code, message, cause, null, null);
   }
 
   /** Returns an error code that may provide more information about the error. */

@@ -224,18 +224,21 @@ public class AbstractPlatformErrorHandlerTest {
 
     @Override
     protected FirebaseException createException(ErrorParams params) {
-      return new FirebaseException(params.getErrorCode(), params.getMessage(),
-          params.getResponse(), params.getException());
+      return new FirebaseException(
+          params.getErrorCode(),
+          params.getMessage(),
+          params.getException(),
+          params.getResponse());
     }
 
     @Override
     public FirebaseException handleIOException(IOException e) {
-      return new FirebaseException(ErrorCode.UNKNOWN, "IO error", null, e);
+      return new FirebaseException(ErrorCode.UNKNOWN, "IO error", e);
     }
 
     @Override
     public FirebaseException handleParseException(IOException e, IncomingHttpResponse response) {
-      return new FirebaseException(ErrorCode.UNKNOWN, "Parse error", response, e);
+      return new FirebaseException(ErrorCode.UNKNOWN, "Parse error", e, response);
     }
   }
 }

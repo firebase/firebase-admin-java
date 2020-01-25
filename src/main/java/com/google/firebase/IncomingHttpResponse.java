@@ -61,6 +61,12 @@ public final class IncomingHttpResponse {
     this(e, new OutgoingHttpRequest(request));
   }
 
+  /**
+   * Creates an IncomingHttpResponse from an HTTP error response.
+   *
+   * @param e HttpResponseException representing the HTTP error response.
+   * @param request The OutgoingHttpRequest that resulted in the error.
+   */
   public IncomingHttpResponse(HttpResponseException e, OutgoingHttpRequest request) {
     checkNotNull(e, "exception must not be null");
     this.statusCode = e.getStatusCode();

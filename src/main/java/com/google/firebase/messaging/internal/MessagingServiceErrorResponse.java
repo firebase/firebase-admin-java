@@ -52,6 +52,7 @@ public class MessagingServiceErrorResponse extends GenericJson {
     if (error != null) {
       return (String) error.get("message");
     }
+
     return null;
   }
 }

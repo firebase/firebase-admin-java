@@ -17,7 +17,6 @@
 package com.google.firebase.internal;
 
 import com.google.api.client.http.HttpResponseException;
-import com.google.api.client.json.JsonFactory;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.IncomingHttpResponse;
 import java.io.IOException;

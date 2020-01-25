@@ -83,6 +83,15 @@ public class ApiClientUtils {
     }
   }
 
+  /**
+   * Creates a FirebaseException from the given IOException. If IOException resulted from a socket
+   * timeout sets the error code DEADLINE_EXCEEDED. If the IOException resulted from a network
+   * outage or other connectivity issue sets the error code to UNAVAILABLE. In all other cases sets
+   * the error code to UNKNOWN.
+   *
+   * @param e IOException to create the new exception from.
+   * @return A FirebaseException instance.
+   */
   public static FirebaseException newFirebaseException(IOException e) {
     ErrorCode code = ErrorCode.UNKNOWN;
     String message = "Unknown error while making a remote service call" ;
@@ -96,7 +105,7 @@ public class ApiClientUtils {
       message = "Failed to establish a connection";
     }
 
-    return new FirebaseException(code, message + ": " + e.getMessage(), null, e);
+    return new FirebaseException(code, message + ": " + e.getMessage(), e);
   }
 
   /**

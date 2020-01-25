@@ -243,17 +243,6 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     }
   }
 
-  private static FirebaseMessagingException newException(MessagingServiceErrorResponse response) {
-    ErrorCode errorCode = Enum.valueOf(ErrorCode.class, response.getStatus());
-
-    String msg = response.getErrorMessage();
-    if (Strings.isNullOrEmpty(msg)) {
-      msg = String.format("Unexpected HTTP response: %s", response.toString());
-    }
-
-    return new FirebaseMessagingException(errorCode, msg);
-  }
-
   private static class MessagingBatchCallback
       implements BatchCallback<MessagingServiceResponse, MessagingServiceErrorResponse> {
 
@@ -268,7 +257,18 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     @Override
     public void onFailure(
         MessagingServiceErrorResponse error, HttpHeaders responseHeaders) {
-      responses.add(SendResponse.fromException(newException(error)));
+
+      String status = error.getStatus();
+      ErrorCode errorCode = Strings.isNullOrEmpty(status)
+          ? ErrorCode.UNKNOWN : Enum.valueOf(ErrorCode.class, status);
+
+      String msg = error.getErrorMessage();
+      if (Strings.isNullOrEmpty(msg)) {
+        msg = String.format("Unexpected HTTP response: %s", error.toString());
+      }
+
+      FirebaseMessagingException exception = new FirebaseMessagingException(errorCode, msg);
+      responses.add(SendResponse.fromException(exception));
     }
 
     List<SendResponse> getResponses() {
@@ -300,20 +300,15 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
       return new FirebaseMessagingException(
           params.getErrorCode(),
           params.getMessage(),
-          getMessagingErrorCode(params.getResponse().getContent()),
           params.getException(),
-          params.getResponse());
+          params.getResponse(),
+          getMessagingErrorCode(params.getResponse()));
     }
 
     @Override
     public FirebaseMessagingException handleIOException(IOException e) {
       FirebaseException error = ApiClientUtils.newFirebaseException(e);
-      return new FirebaseMessagingException(
-          error.getErrorCodeNew(),
-          error.getMessage(),
-          null,
-          e,
-          null);
+      return new FirebaseMessagingException(error.getErrorCodeNew(), error.getMessage(), e);
     }
 
     @Override
@@ -322,20 +317,21 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
       return new FirebaseMessagingException(
           ErrorCode.UNKNOWN,
           "Error parsing response from the FCM service: " + e.getMessage(),
-          null,
           e,
-          response);
+          response,
+          null);
     }
 
-    private MessagingErrorCode getMessagingErrorCode(String content) {
+    private MessagingErrorCode getMessagingErrorCode(IncomingHttpResponse response) {
+      String content = response.getContent();
       if (Strings.isNullOrEmpty(content)) {
         return null;
       }
 
       try {
-        MessagingServiceErrorResponse response = jsonFactory.createJsonParser(content)
+        MessagingServiceErrorResponse parsed = jsonFactory.createJsonParser(content)
             .parseAndClose(MessagingServiceErrorResponse.class);
-        return MESSAGING_ERROR_CODES.get(response.getMessagingErrorCode());
+        return MESSAGING_ERROR_CODES.get(parsed.getMessagingErrorCode());
       } catch (IOException ignore) {
         // Ignore any error that may occur while parsing the error response. The server
         // may have responded with a non-json payload.
