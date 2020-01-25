@@ -16,26 +16,33 @@
 
 package com.google.firebase.messaging;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import com.google.common.base.Strings;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseException;
+import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.Nullable;
 
-public class FirebaseMessagingException extends FirebaseException {
+public final class FirebaseMessagingException extends FirebaseException {
 
-  private final String errorCode;
+  private final MessagingErrorCode errorCode;
 
-  FirebaseMessagingException(String errorCode, String message, Throwable cause) {
-    super(message, cause);
-    checkArgument(!Strings.isNullOrEmpty(errorCode));
+  FirebaseMessagingException(
+      @NonNull ErrorCode code,
+      @NonNull String message,
+      @Nullable MessagingErrorCode errorCode,
+      @Nullable Throwable cause,
+      @Nullable IncomingHttpResponse response) {
+    super(code, message, response, cause);
     this.errorCode = errorCode;
   }
 
+  FirebaseMessagingException(@NonNull ErrorCode code, @NonNull String message) {
+    this(code, message, null, null, null);
+  }
 
   /** Returns an error code that may provide more information about the error. */
-  @NonNull
-  public String getErrorCode() {
+  @Nullable
+  public MessagingErrorCode getMessagingErrorCode() {
     return errorCode;
   }
 }

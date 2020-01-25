@@ -26,10 +26,10 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.JsonParser;
 import com.google.common.io.CharStreams;
-import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.IncomingHttpResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 
 /**
@@ -41,14 +41,6 @@ public final class ErrorHandlingHttpClient<T extends FirebaseException> {
   private final HttpRequestFactory requestFactory;
   private final JsonFactory jsonFactory;
   private final HttpErrorHandler<T> errorHandler;
-
-  public ErrorHandlingHttpClient(
-      FirebaseApp app, HttpErrorHandler<T> errorHandler, RetryConfig retryConfig) {
-    this(
-        ApiClientUtils.newAuthorizedRequestFactory(app, retryConfig),
-        app.getOptions().getJsonFactory(),
-        errorHandler);
-  }
 
   public ErrorHandlingHttpClient(
       HttpRequestFactory requestFactory,
@@ -74,7 +66,12 @@ public final class ErrorHandlingHttpClient<T extends FirebaseException> {
     return parse(response, responseType);
   }
 
-  private IncomingHttpResponse send(HttpRequestInfo requestInfo) throws T {
+  public void sendAndParse(HttpRequestInfo requestInfo, Object destination) throws T {
+    IncomingHttpResponse response = send(requestInfo);
+    parse(response, destination);
+  }
+
+  public IncomingHttpResponse send(HttpRequestInfo requestInfo) throws T {
     HttpRequest request = createHttpRequest(requestInfo);
 
     HttpResponse response = null;
@@ -82,8 +79,13 @@ public final class ErrorHandlingHttpClient<T extends FirebaseException> {
       response = request.execute();
       // Read and buffer the content. Otherwise if a parse error occurs later,
       // we lose the content stream.
-      String content = CharStreams.toString(
-          new InputStreamReader(response.getContent(), response.getContentCharset()));
+      String content = null;
+      InputStream stream = response.getContent();
+      if (stream != null) {
+        // Stream is null when the response body is empty (e.g. 204 No Content responses).
+        content = CharStreams.toString(new InputStreamReader(stream, response.getContentCharset()));
+      }
+
       return new IncomingHttpResponse(response, content);
     } catch (HttpResponseException e) {
       throw errorHandler.handleHttpResponseException(e, new IncomingHttpResponse(e, request));
@@ -98,6 +100,15 @@ public final class ErrorHandlingHttpClient<T extends FirebaseException> {
     try {
       JsonParser parser = jsonFactory.createJsonParser(response.getContent());
       return parser.parseAndClose(responseType);
+    } catch (IOException e) {
+      throw errorHandler.handleParseException(e, response);
+    }
+  }
+
+  private void parse(IncomingHttpResponse response, Object destination) throws T {
+    try {
+      JsonParser parser = jsonFactory.createJsonParser(response.getContent());
+      parser.parse(destination);
     } catch (IOException e) {
       throw errorHandler.handleParseException(e, response);
     }

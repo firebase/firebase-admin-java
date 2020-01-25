@@ -22,10 +22,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.google.api.client.http.HttpResponseException;
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -73,6 +76,27 @@ public class FirebaseMessagingIT {
   }
 
   @Test
+  public void testSendError() throws InterruptedException {
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    Message message = Message.builder()
+        .setNotification(Notification.builder()
+            .setTitle("Title")
+            .setBody("Body")
+            .build())
+        .setToken("not-a-token")
+        .build();
+    try {
+      messaging.sendAsync(message, true).get();
+    } catch (ExecutionException e) {
+      FirebaseMessagingException cause = (FirebaseMessagingException) e.getCause();
+      assertEquals(ErrorCode.INVALID_ARGUMENT, cause.getErrorCodeNew());
+      assertEquals(MessagingErrorCode.INVALID_ARGUMENT, cause.getMessagingErrorCode());
+      assertNotNull(cause.getHttpResponse());
+      assertTrue(cause.getCause() instanceof HttpResponseException);
+    }
+  }
+
+  @Test
   public void testSendAll() throws Exception {
     List<Message> messages = new ArrayList<>();
     messages.add(
@@ -110,7 +134,7 @@ public class FirebaseMessagingIT {
     assertNull(responses.get(2).getMessageId());
     FirebaseMessagingException exception = responses.get(2).getException();
     assertNotNull(exception);
-    assertEquals("invalid-argument", exception.getErrorCode());
+    assertEquals(ErrorCode.INVALID_ARGUMENT, exception.getErrorCodeNew());
   }
 
   @Test

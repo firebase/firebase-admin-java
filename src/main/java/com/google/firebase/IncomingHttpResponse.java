@@ -61,7 +61,7 @@ public final class IncomingHttpResponse {
     this(e, new OutgoingHttpRequest(request));
   }
 
-  IncomingHttpResponse(HttpResponseException e, OutgoingHttpRequest request) {
+  public IncomingHttpResponse(HttpResponseException e, OutgoingHttpRequest request) {
     checkNotNull(e, "exception must not be null");
     this.statusCode = e.getStatusCode();
     this.content = e.getContent();

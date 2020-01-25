@@ -36,7 +36,7 @@ public final class OutgoingHttpRequest {
   private final HttpContent content;
   private final Map<String, Object> headers;
 
-  OutgoingHttpRequest(String method, String url) {
+  public OutgoingHttpRequest(String method, String url) {
     checkArgument(!Strings.isNullOrEmpty(method), "method must not be null or empty");
     checkArgument(!Strings.isNullOrEmpty(url), "url must not be empty");
     this.method = method;

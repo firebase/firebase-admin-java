@@ -17,13 +17,23 @@ public class MessagingServiceErrorResponse extends GenericJson {
   @Key("error")
   private Map<String, Object> error;
 
-  @Nullable
-  public String getErrorCode() {
+  public String getStatus() {
     if (error == null) {
       return null;
     }
+
+    return (String) error.get("status");
+  }
+
+
+  @Nullable
+  public String getMessagingErrorCode() {
+    if (error == null) {
+      return null;
+    }
+
     Object details = error.get("details");
-    if (details != null && details instanceof List) {
+    if (details instanceof List) {
       for (Object detail : (List<?>) details) {
         if (detail instanceof Map) {
           Map<?,?> detailMap = (Map<?,?>) detail;
@@ -33,7 +43,8 @@ public class MessagingServiceErrorResponse extends GenericJson {
         }
       }
     }
-    return (String) error.get("status");
+
+    return null;
   }
 
   @Nullable

@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.http.LowLevelHttpRequest;
@@ -89,6 +90,18 @@ public class ErrorHandlingHttpClientTest {
 
     assertEquals(1, body.size());
     assertEquals("bar", body.get("foo"));
+  }
+
+  @Test
+  public void testSuccessfulRequestWithoutContent() throws FirebaseException {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setZeroContent();
+    ErrorHandlingHttpClient<FirebaseException> client = createHttpClient(response);
+
+    IncomingHttpResponse responseInfo = client.send(TEST_REQUEST);
+
+    assertEquals(HttpStatusCodes.STATUS_CODE_OK, responseInfo.getStatusCode());
+    assertNull(responseInfo.getContent());
   }
 
   @Test
@@ -200,8 +213,10 @@ public class ErrorHandlingHttpClientTest {
         .setRetryStatusCodes(ImmutableList.of(503))
         .setSleeper(new MockSleeper())
         .build();
+    HttpRequestFactory requestFactory = ApiClientUtils.newAuthorizedRequestFactory(
+        app, retryConfig);
     ErrorHandlingHttpClient<FirebaseException> client = new ErrorHandlingHttpClient<>(
-        app, new TestHttpErrorHandler(), retryConfig);
+        requestFactory, Utils.getDefaultJsonFactory(), new TestHttpErrorHandler());
 
     try {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
@@ -234,8 +249,9 @@ public class ErrorHandlingHttpClientTest {
         })
         .setHttpTransport(transport)
         .build());
+    HttpRequestFactory requestFactory = ApiClientUtils.newAuthorizedRequestFactory(app);
     ErrorHandlingHttpClient<FirebaseException> client = new ErrorHandlingHttpClient<>(
-        app, new TestHttpErrorHandler(), null);
+        requestFactory, Utils.getDefaultJsonFactory(), new TestHttpErrorHandler());
 
     try {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
