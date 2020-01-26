@@ -27,6 +27,7 @@ import static org.junit.Assert.fail;
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponseException;
@@ -40,6 +41,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+import com.google.firebase.OutgoingHttpRequest;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.messaging.WebpushNotification.Action;
@@ -171,6 +173,7 @@ public class FirebaseMessagingClientImplTest {
       } catch (FirebaseMessagingException error) {
         assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
         assertTrue(error.getMessage().startsWith("Error while parsing HTTP response: "));
+        assertNotNull(error.getCause());
         assertNotNull(error.getHttpResponse());
         assertNull(error.getMessagingErrorCode());
       }
@@ -406,6 +409,8 @@ public class FirebaseMessagingClientImplTest {
       assertEquals(
           "Unknown error while making a remote service call: transport error", error.getMessage());
       assertTrue(error.getCause() instanceof IOException);
+      assertNull(error.getHttpResponse());
+      assertNull(error.getMessagingErrorCode());
     }
   }
 
@@ -621,6 +626,7 @@ public class FirebaseMessagingClientImplTest {
       FirebaseMessagingException exception = sendResponse.getException();
       assertNotNull(exception);
       assertEquals(ErrorCode.INVALID_ARGUMENT, exception.getErrorCodeNew());
+      assertNull(exception.getCause());
       assertNull(exception.getHttpResponse());
       assertEquals(MessagingErrorCode.INVALID_ARGUMENT, exception.getMessagingErrorCode());
     }
@@ -676,8 +682,13 @@ public class FirebaseMessagingClientImplTest {
       String expectedMessage) {
     assertEquals(expectedCode, error.getErrorCodeNew());
     assertEquals(expectedMessage, error.getMessage());
-    assertEquals(expectedMessagingCode, error.getMessagingErrorCode());
     assertTrue(error.getCause() instanceof HttpResponseException);
+    assertEquals(expectedMessagingCode, error.getMessagingErrorCode());
+
+    assertNotNull(error.getHttpResponse());
+    OutgoingHttpRequest request = error.getHttpResponse().getRequest();
+    assertEquals(HttpMethods.POST, request.getMethod());
+    assertTrue(request.getUrl().startsWith("https://fcm.googleapis.com"));
   }
 
   private static Map<Message, Map<String, Object>> buildTestMessages() {
