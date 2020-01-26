@@ -16,6 +16,7 @@
 
 package com.google.firebase.messaging;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.IncomingHttpResponse;
@@ -26,7 +27,12 @@ public final class FirebaseMessagingException extends FirebaseException {
 
   private final MessagingErrorCode errorCode;
 
-  FirebaseMessagingException(
+  @VisibleForTesting
+  FirebaseMessagingException(@NonNull ErrorCode code, @NonNull String message) {
+    this(code, message, null, null, null);
+  }
+
+  private FirebaseMessagingException(
       @NonNull ErrorCode code,
       @NonNull String message,
       @Nullable Throwable cause,
@@ -36,13 +42,23 @@ public final class FirebaseMessagingException extends FirebaseException {
     this.errorCode = errorCode;
   }
 
-  FirebaseMessagingException(@NonNull ErrorCode code, @NonNull String message) {
-    this(code, message, null);
+  static FirebaseMessagingException withMessagingErrorCode(
+      FirebaseException base, @Nullable MessagingErrorCode errorCode) {
+    return new FirebaseMessagingException(
+        base.getErrorCodeNew(),
+        base.getMessage(),
+        base.getCause(),
+        base.getHttpResponse(),
+        errorCode);
   }
 
-  FirebaseMessagingException(
-      @NonNull ErrorCode code, @NonNull String message, @Nullable Throwable cause) {
-    this(code, message, cause, null, null);
+  static FirebaseMessagingException withCustomMessage(FirebaseException base, String message) {
+    return new FirebaseMessagingException(
+        base.getErrorCodeNew(),
+        message,
+        base.getCause(),
+        base.getHttpResponse(),
+        null);
   }
 
   /** Returns an error code that may provide more information about the error. */

@@ -201,8 +201,7 @@ public class InstanceIdClientImplTest {
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
-      assertTrue(error.getMessage().startsWith(
-          "Error parsing response from the topic management service: "));
+      assertTrue(error.getMessage().startsWith("Error while parsing HTTP response: "));
       assertTrue(error.getCause() instanceof IOException);
     }
   }
@@ -340,8 +339,7 @@ public class InstanceIdClientImplTest {
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
-      assertTrue(error.getMessage().startsWith(
-          "Error parsing response from the topic management service: "));
+      assertTrue(error.getMessage().startsWith("Error while parsing HTTP response: "));
       assertTrue(error.getCause() instanceof IOException);
     }
   }

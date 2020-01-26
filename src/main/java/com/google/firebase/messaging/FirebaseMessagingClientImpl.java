@@ -255,9 +255,20 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     }
 
     @Override
-    public void onFailure(
-        MessagingServiceErrorResponse error, HttpHeaders responseHeaders) {
+    public void onFailure(MessagingServiceErrorResponse error, HttpHeaders responseHeaders) {
+      // We only specify error codes and message for these partial failures. Recall that these
+      // exceptions are never actually thrown, but only made accessible via SendResponse.
+      FirebaseException base = createFirebaseException(error);
+      FirebaseMessagingException exception = FirebaseMessagingException.withMessagingErrorCode(
+          base, error.getMessagingErrorCode());
+      responses.add(SendResponse.fromException(exception));
+    }
 
+    List<SendResponse> getResponses() {
+      return this.responses.build();
+    }
+
+    private FirebaseException createFirebaseException(MessagingServiceErrorResponse error) {
       String status = error.getStatus();
       ErrorCode errorCode = Strings.isNullOrEmpty(status)
           ? ErrorCode.UNKNOWN : Enum.valueOf(ErrorCode.class, status);
@@ -267,77 +278,45 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
         msg = String.format("Unexpected HTTP response: %s", error.toString());
       }
 
-      FirebaseMessagingException exception = new FirebaseMessagingException(errorCode, msg);
-      responses.add(SendResponse.fromException(exception));
-    }
-
-    List<SendResponse> getResponses() {
-      return this.responses.build();
+      return new FirebaseException(errorCode, msg, null);
     }
   }
 
   private static class MessagingErrorHandler
       extends AbstractPlatformErrorHandler<FirebaseMessagingException> {
 
-    private static final Map<String, MessagingErrorCode> MESSAGING_ERROR_CODES =
-        ImmutableMap.<String, MessagingErrorCode>builder()
-            .put("APNS_AUTH_ERROR", MessagingErrorCode.THIRD_PARTY_AUTH_ERROR)
-            .put("INTERNAL", MessagingErrorCode.INTERNAL)
-            .put("INVALID_ARGUMENT", MessagingErrorCode.INVALID_ARGUMENT)
-            .put("QUOTA_EXCEEDED", MessagingErrorCode.QUOTA_EXCEEDED)
-            .put("SENDER_ID_MISMATCH", MessagingErrorCode.SENDER_ID_MISMATCH)
-            .put("THIRD_PARTY_AUTH_ERROR", MessagingErrorCode.THIRD_PARTY_AUTH_ERROR)
-            .put("UNAVAILABLE", MessagingErrorCode.UNAVAILABLE)
-            .put("UNREGISTERED", MessagingErrorCode.UNREGISTERED)
-            .build();
-
     private MessagingErrorHandler(JsonFactory jsonFactory) {
       super(jsonFactory);
     }
 
     @Override
-    protected FirebaseMessagingException createException(ErrorParams params) {
-      return new FirebaseMessagingException(
-          params.getErrorCode(),
-          params.getMessage(),
-          params.getException(),
-          params.getResponse(),
-          getMessagingErrorCode(params.getResponse()));
+    protected FirebaseMessagingException createException(FirebaseException base) {
+      String response = getResponse(base);
+      MessagingServiceErrorResponse parsed = safeParse(response);
+      return FirebaseMessagingException.withMessagingErrorCode(
+          base, parsed.getMessagingErrorCode());
     }
 
-    @Override
-    public FirebaseMessagingException handleIOException(IOException e) {
-      FirebaseException error = ApiClientUtils.newFirebaseException(e);
-      return new FirebaseMessagingException(error.getErrorCodeNew(), error.getMessage(), e);
-    }
-
-    @Override
-    public FirebaseMessagingException handleParseException(
-        IOException e, IncomingHttpResponse response) {
-      return new FirebaseMessagingException(
-          ErrorCode.UNKNOWN,
-          "Error parsing response from the FCM service: " + e.getMessage(),
-          e,
-          response,
-          null);
-    }
-
-    private MessagingErrorCode getMessagingErrorCode(IncomingHttpResponse response) {
-      String content = response.getContent();
-      if (Strings.isNullOrEmpty(content)) {
+    private String getResponse(FirebaseException base) {
+      if (base.getHttpResponse() == null) {
         return null;
       }
 
-      try {
-        MessagingServiceErrorResponse parsed = jsonFactory.createJsonParser(content)
-            .parseAndClose(MessagingServiceErrorResponse.class);
-        return MESSAGING_ERROR_CODES.get(parsed.getMessagingErrorCode());
-      } catch (IOException ignore) {
-        // Ignore any error that may occur while parsing the error response. The server
-        // may have responded with a non-json payload.
+      return base.getHttpResponse().getContent();
+    }
+
+    private MessagingServiceErrorResponse safeParse(String response) {
+      if (!Strings.isNullOrEmpty(response)) {
+        try {
+          return jsonFactory.createJsonParser(response)
+              .parseAndClose(MessagingServiceErrorResponse.class);
+        } catch (IOException ignore) {
+          // Ignore any error that may occur while parsing the error response. The server
+          // may have responded with a non-json payload.
+        }
       }
 
-      return null;
+      return new MessagingServiceErrorResponse();
     }
   }
 }

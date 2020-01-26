@@ -20,16 +20,9 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 
-import com.google.firebase.FirebaseException;
 import java.io.IOException;
-import java.net.NoRouteToHostException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * A set of shared utilities for using the Google API client.
@@ -41,6 +34,8 @@ public class ApiClientUtils {
       .setRetryStatusCodes(ImmutableList.of(500, 503))
       .setMaxIntervalMillis(60 * 1000)
       .build();
+
+  private ApiClientUtils() { }
 
   /**
    * Creates a new {@code HttpRequestFactory} which provides authorization (OAuth2), timeouts and
@@ -81,51 +76,5 @@ public class ApiClientUtils {
         // ignored
       }
     }
-  }
-
-  /**
-   * Creates a FirebaseException from the given IOException. If IOException resulted from a socket
-   * timeout sets the error code DEADLINE_EXCEEDED. If the IOException resulted from a network
-   * outage or other connectivity issue sets the error code to UNAVAILABLE. In all other cases sets
-   * the error code to UNKNOWN.
-   *
-   * @param e IOException to create the new exception from.
-   * @return A FirebaseException instance.
-   */
-  public static FirebaseException newFirebaseException(IOException e) {
-    ErrorCode code = ErrorCode.UNKNOWN;
-    String message = "Unknown error while making a remote service call" ;
-    if (isInstance(e, SocketTimeoutException.class)) {
-      code = ErrorCode.DEADLINE_EXCEEDED;
-      message = "Timed out while making an API call";
-    }
-
-    if (isInstance(e, UnknownHostException.class) || isInstance(e, NoRouteToHostException.class)) {
-      code = ErrorCode.UNAVAILABLE;
-      message = "Failed to establish a connection";
-    }
-
-    return new FirebaseException(code, message + ": " + e.getMessage(), e);
-  }
-
-  /**
-   * Checks if the given exception stack t contains an instance of type.
-   */
-  private static <T> boolean isInstance(IOException t, Class<T> type) {
-    Throwable current = t;
-    Set<Throwable> chain = new HashSet<>();
-    while (current != null) {
-      if (!chain.add(current)) {
-        break;
-      }
-
-      if (type.isInstance(current)) {
-        return true;
-      }
-
-      current = current.getCause();
-    }
-
-    return false;
   }
 }

@@ -153,6 +153,8 @@ public class FirebaseMessagingClientImplTest {
       assertEquals("Unknown error while making a remote service call: transport error",
           error.getMessage());
       assertTrue(error.getCause() instanceof IOException);
+      assertNull(error.getHttpResponse());
+      assertNull(error.getMessagingErrorCode());
     }
   }
 
@@ -168,7 +170,9 @@ public class FirebaseMessagingClientImplTest {
         fail("No error thrown for malformed response");
       } catch (FirebaseMessagingException error) {
         assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
-        assertTrue(error.getMessage().startsWith("Error parsing response from the FCM service: "));
+        assertTrue(error.getMessage().startsWith("Error while parsing HTTP response: "));
+        assertNotNull(error.getHttpResponse());
+        assertNull(error.getMessagingErrorCode());
       }
       checkRequestHeader(interceptor.getLastRequest());
     }
@@ -283,6 +287,24 @@ public class FirebaseMessagingClientImplTest {
           "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\", "
               + "\"details\":[{\"@type\": \"type.googleapis.com/google.firebase.fcm"
               + ".v1.FcmError\", \"errorCode\": \"UNKNOWN_FCM_ERROR\"}]}}");
+
+      try {
+        client.send(EMPTY_MESSAGE, DRY_RUN_DISABLED);
+        fail("No error thrown for HTTP error");
+      } catch (FirebaseMessagingException error) {
+        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT, null);
+      }
+      checkRequestHeader(interceptor.getLastRequest());
+    }
+  }
+
+  @Test
+  public void testSendErrorWithDetailsAndNoCode() {
+    for (int code : HTTP_ERRORS) {
+      response.setStatusCode(code).setContent(
+          "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\", "
+              + "\"details\":[{\"@type\": \"type.googleapis.com/google.firebase.fcm"
+              + ".v1.FcmError\"}]}}");
 
       try {
         client.send(EMPTY_MESSAGE, DRY_RUN_DISABLED);
@@ -599,6 +621,8 @@ public class FirebaseMessagingClientImplTest {
       FirebaseMessagingException exception = sendResponse.getException();
       assertNotNull(exception);
       assertEquals(ErrorCode.INVALID_ARGUMENT, exception.getErrorCodeNew());
+      assertNull(exception.getHttpResponse());
+      assertEquals(MessagingErrorCode.INVALID_ARGUMENT, exception.getMessagingErrorCode());
     }
 
     checkBatchRequestHeader(interceptor.getLastRequest());

@@ -27,10 +27,8 @@ import com.google.api.client.util.Key;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseException;
-import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.internal.AbstractHttpErrorHandler;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.ErrorHandlingHttpClient;
@@ -140,48 +138,43 @@ final class InstanceIdClientImpl implements InstanceIdClient {
     }
 
     @Override
-    protected FirebaseMessagingException createException(ErrorParams params) {
-      return new FirebaseMessagingException(
-          params.getErrorCode(),
-          this.getErrorMessage(params),
-          params.getException(),
-          params.getResponse(),
-          null);
+    protected FirebaseMessagingException createException(FirebaseException base) {
+      String message = getCustomMessage(base);
+      return FirebaseMessagingException.withCustomMessage(base, message);
     }
 
-    @Override
-    public FirebaseMessagingException handleIOException(IOException e) {
-      FirebaseException error = ApiClientUtils.newFirebaseException(e);
-      return new FirebaseMessagingException(error.getErrorCodeNew(), error.getMessage(), e);
+    private String getCustomMessage(FirebaseException base) {
+      String response = getResponse(base);
+      InstanceIdServiceErrorResponse parsed = safeParse(response);
+      if (!Strings.isNullOrEmpty(parsed.error)) {
+        return parsed.error;
+      }
+
+      return base.getMessage();
     }
 
-    @Override
-    public FirebaseMessagingException handleParseException(
-        IOException e, IncomingHttpResponse response) {
-      return new FirebaseMessagingException(
-          ErrorCode.UNKNOWN,
-          "Error parsing response from the topic management service: " + e.getMessage(),
-          e,
-          response,
-          null);
+    private String getResponse(FirebaseException base) {
+      if (base.getHttpResponse() == null) {
+        return null;
+      }
+
+      return base.getHttpResponse().getContent();
     }
 
-    private String getErrorMessage(ErrorParams params) {
-      String content = params.getResponse().getContent();
-      if (!Strings.isNullOrEmpty(content)) {
+    private InstanceIdServiceErrorResponse safeParse(String response) {
+      InstanceIdServiceErrorResponse parsed = new InstanceIdServiceErrorResponse();
+      if (!Strings.isNullOrEmpty(response)) {
+        // Parse the error response from the IID service.
+        // Sample response: {"error": "error message text"}
         try {
-          InstanceIdServiceErrorResponse response = new InstanceIdServiceErrorResponse();
-          jsonFactory.createJsonParser(content).parse(response);
-          if (!Strings.isNullOrEmpty(response.error)) {
-            return response.error;
-          }
+          jsonFactory.createJsonParser(response).parse(parsed);
         } catch (IOException ignore) {
           // Ignore any error that may occur while parsing the error response. The server
           // may have responded with a non-json payload.
         }
       }
 
-      return params.getMessage();
+      return parsed;
     }
   }
 }
