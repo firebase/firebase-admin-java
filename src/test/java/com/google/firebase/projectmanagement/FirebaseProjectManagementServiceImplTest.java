@@ -264,9 +264,8 @@ public class FirebaseProjectManagementServiceImplTest {
 
   @Test
   public void getIosAppHttpError() {
-    firstRpcResponse.setStatusCode(500);
-    firstRpcResponse.setContent("{}");
-    serviceImpl = initServiceImpl(firstRpcResponse, interceptor);
+    List<MockLowLevelHttpResponse> mockResponses = errorResponseSequence(500, "{}");
+    serviceImpl = initServiceImpl(mockResponses, interceptor);
 
     try {
       serviceImpl.getIosApp(IOS_APP_ID);
@@ -546,9 +545,8 @@ public class FirebaseProjectManagementServiceImplTest {
 
   @Test
   public void getAndroidAppHttpError() {
-    firstRpcResponse.setStatusCode(500);
-    firstRpcResponse.setContent("{}");
-    serviceImpl = initServiceImpl(firstRpcResponse, interceptor);
+    List<MockLowLevelHttpResponse> mockResponses = errorResponseSequence(500, "{}");
+    serviceImpl = initServiceImpl(mockResponses, interceptor);
 
     try {
       serviceImpl.getAndroidApp(ANDROID_APP_ID);
@@ -922,17 +920,7 @@ public class FirebaseProjectManagementServiceImplTest {
     List<MockLowLevelHttpResponse> mockResponses = ImmutableList.of(
         firstRpcResponse.setStatusCode(503).setContent("{}"),
         new MockLowLevelHttpResponse().setContent("{}"));
-    MockHttpTransport transport = new MultiRequestMockHttpTransport(mockResponses);
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredentials(new MockGoogleCredentials("test-token"))
-        .setProjectId(PROJECT_ID)
-        .setHttpTransport(transport)
-        .build();
-    FirebaseApp app = FirebaseApp.initializeApp(options);
-    // Initialize client with the default HTTP configuration, which enables retries.
-    FirebaseProjectManagementServiceImpl serviceImpl =
-        new FirebaseProjectManagementServiceImpl(app);
-    serviceImpl.setInterceptor(interceptor);
+    FirebaseProjectManagementServiceImpl serviceImpl = initServiceImpl(mockResponses, interceptor);
 
     serviceImpl.deleteShaCertificate(SHA1_RESOURCE_NAME);
 
@@ -957,12 +945,20 @@ public class FirebaseProjectManagementServiceImplTest {
         .setHttpTransport(transport)
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
-    // Explicitly disable retries for unit tests.
-    HttpRequestFactory requestFactory = ApiClientUtils.newAuthorizedRequestFactory(app, null);
+    HttpRequestFactory requestFactory = ApiClientUtils.newAuthorizedRequestFactoryForTests(app);
     FirebaseProjectManagementServiceImpl serviceImpl = new FirebaseProjectManagementServiceImpl(
         app, new MockSleeper(), new MockScheduler(), requestFactory);
     serviceImpl.setInterceptor(interceptor);
     return serviceImpl;
+  }
+
+  private static List<MockLowLevelHttpResponse> errorResponseSequence(int status, String content) {
+    ImmutableList.Builder<MockLowLevelHttpResponse> responses = ImmutableList.builder();
+    for (int i = 0; i < 5; i++) {
+      responses.add(new MockLowLevelHttpResponse().setStatusCode(status).setContent(content));
+    }
+
+    return responses.build();
   }
 
   private void checkRequestHeader(String expectedUrl, HttpMethod httpMethod) {
