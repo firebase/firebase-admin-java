@@ -917,6 +917,30 @@ public class FirebaseProjectManagementServiceImplTest {
     checkRequestHeader(expectedUrl, HttpMethod.DELETE);
   }
 
+  @Test
+  public void testHttpRetries() throws Exception {
+    List<MockLowLevelHttpResponse> mockResponses = ImmutableList.of(
+        firstRpcResponse.setStatusCode(503).setContent("{}"),
+        new MockLowLevelHttpResponse().setContent("{}"));
+    MockHttpTransport transport = new MultiRequestMockHttpTransport(mockResponses);
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId(PROJECT_ID)
+        .setHttpTransport(transport)
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
+    // Initialize client with the default HTTP configuration, which enables retries.
+    FirebaseProjectManagementServiceImpl serviceImpl =
+        new FirebaseProjectManagementServiceImpl(app);
+    serviceImpl.setInterceptor(interceptor);
+
+    serviceImpl.deleteShaCertificate(SHA1_RESOURCE_NAME);
+
+    String expectedUrl = String.format(
+        "%s/v1beta1/%s", FIREBASE_PROJECT_MANAGEMENT_URL, SHA1_RESOURCE_NAME);
+    checkRequestHeader(expectedUrl, HttpMethod.DELETE);
+  }
+
   private static FirebaseProjectManagementServiceImpl initServiceImpl(
       MockLowLevelHttpResponse mockResponse,
       MultiRequestTestResponseInterceptor interceptor) {
@@ -933,6 +957,7 @@ public class FirebaseProjectManagementServiceImplTest {
         .setHttpTransport(transport)
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
+    // Explicitly disable retries for unit tests.
     HttpRequestFactory requestFactory = ApiClientUtils.newAuthorizedRequestFactory(app, null);
     FirebaseProjectManagementServiceImpl serviceImpl = new FirebaseProjectManagementServiceImpl(
         app, new MockSleeper(), new MockScheduler(), requestFactory);
