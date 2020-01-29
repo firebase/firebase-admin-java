@@ -264,8 +264,9 @@ public class FirebaseProjectManagementServiceImplTest {
 
   @Test
   public void getIosAppHttpError() {
-    List<MockLowLevelHttpResponse> mockResponses = errorResponseSequence(500, "{}");
-    serviceImpl = initServiceImpl(mockResponses, interceptor);
+    firstRpcResponse.setStatusCode(500);
+    firstRpcResponse.setContent("{}");
+    serviceImpl = initServiceImpl(firstRpcResponse, interceptor);
 
     try {
       serviceImpl.getIosApp(IOS_APP_ID);
@@ -545,8 +546,9 @@ public class FirebaseProjectManagementServiceImplTest {
 
   @Test
   public void getAndroidAppHttpError() {
-    List<MockLowLevelHttpResponse> mockResponses = errorResponseSequence(500, "{}");
-    serviceImpl = initServiceImpl(mockResponses, interceptor);
+    firstRpcResponse.setStatusCode(500);
+    firstRpcResponse.setContent("{}");
+    serviceImpl = initServiceImpl(firstRpcResponse, interceptor);
 
     try {
       serviceImpl.getAndroidApp(ANDROID_APP_ID);
@@ -934,7 +936,17 @@ public class FirebaseProjectManagementServiceImplTest {
     List<MockLowLevelHttpResponse> mockResponses = ImmutableList.of(
         firstRpcResponse.setStatusCode(503).setContent("{}"),
         new MockLowLevelHttpResponse().setContent("{}"));
-    FirebaseProjectManagementServiceImpl serviceImpl = initServiceImpl(mockResponses, interceptor);
+    MockHttpTransport transport = new MultiRequestMockHttpTransport(mockResponses);
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId(PROJECT_ID)
+        .setHttpTransport(transport)
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
+    HttpRequestFactory requestFactory = TestApiClientUtils.delayBypassedRequestFactory(app);
+    FirebaseProjectManagementServiceImpl serviceImpl = new FirebaseProjectManagementServiceImpl(
+        app, new MockSleeper(), new MockScheduler(), requestFactory);
+    serviceImpl.setInterceptor(interceptor);
 
     serviceImpl.deleteShaCertificate(SHA1_RESOURCE_NAME);
 
@@ -959,7 +971,7 @@ public class FirebaseProjectManagementServiceImplTest {
         .setHttpTransport(transport)
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
-    HttpRequestFactory requestFactory = TestApiClientUtils.delayBypassedRequestFactory(app);
+    HttpRequestFactory requestFactory = TestApiClientUtils.retryDisabledRequestFactory(app);
     FirebaseProjectManagementServiceImpl serviceImpl = new FirebaseProjectManagementServiceImpl(
         app, new MockSleeper(), new MockScheduler(), requestFactory);
     serviceImpl.setInterceptor(interceptor);
