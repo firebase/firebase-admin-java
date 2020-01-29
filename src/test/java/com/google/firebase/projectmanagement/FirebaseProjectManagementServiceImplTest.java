@@ -44,7 +44,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
-import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.TestApiClientUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -916,6 +916,20 @@ public class FirebaseProjectManagementServiceImplTest {
   }
 
   @Test
+  public void testAuthAndRetriesSupport() {
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId(PROJECT_ID)
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
+
+    FirebaseProjectManagementServiceImpl serviceImpl =
+        new FirebaseProjectManagementServiceImpl(app);
+
+    TestApiClientUtils.assertAuthAndRetrySupport(serviceImpl.getRequestFactory());
+  }
+
+  @Test
   public void testHttpRetries() throws Exception {
     List<MockLowLevelHttpResponse> mockResponses = ImmutableList.of(
         firstRpcResponse.setStatusCode(503).setContent("{}"),
@@ -945,7 +959,7 @@ public class FirebaseProjectManagementServiceImplTest {
         .setHttpTransport(transport)
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
-    HttpRequestFactory requestFactory = ApiClientUtils.newAuthorizedRequestFactoryForTests(app);
+    HttpRequestFactory requestFactory = TestApiClientUtils.delayBypassedRequestFactory(app);
     FirebaseProjectManagementServiceImpl serviceImpl = new FirebaseProjectManagementServiceImpl(
         app, new MockSleeper(), new MockScheduler(), requestFactory);
     serviceImpl.setInterceptor(interceptor);

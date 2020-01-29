@@ -19,7 +19,6 @@ package com.google.firebase.internal;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpTransport;
-import com.google.api.client.testing.util.MockSleeper;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
 
@@ -30,17 +29,10 @@ import java.io.IOException;
  */
 public class ApiClientUtils {
 
-  private static final RetryConfig DEFAULT_RETRY_CONFIG = RetryConfig.builder()
+  static final RetryConfig DEFAULT_RETRY_CONFIG = RetryConfig.builder()
       .setMaxRetries(4)
       .setRetryStatusCodes(ImmutableList.of(500, 503))
       .setMaxIntervalMillis(60 * 1000)
-      .build();
-
-  private static final RetryConfig TEST_RETRY_CONFIG = RetryConfig.builder()
-      .setMaxRetries(4)
-      .setRetryStatusCodes(ImmutableList.of(500, 503))
-      .setMaxIntervalMillis(60 * 1000)
-      .setSleeper(new MockSleeper())
       .build();
 
   /**
@@ -71,18 +63,6 @@ public class ApiClientUtils {
   public static HttpRequestFactory newUnauthorizedRequestFactory(FirebaseApp app) {
     HttpTransport transport = app.getOptions().getHttpTransport();
     return transport.createRequestFactory();
-  }
-
-  /**
-   * Creates a new {@code HttpRequestFactory} which provides authorization (OAuth2), timeouts and
-   * automatic retries. Bypasses exponential backoff between consecutive retries for faster
-   * execution during tests.
-   *
-   * @param app {@link FirebaseApp} from which to obtain authorization credentials.
-   * @return A new {@code HttpRequestFactory} instance.
-   */
-  public static HttpRequestFactory newAuthorizedRequestFactoryForTests(FirebaseApp app) {
-    return newAuthorizedRequestFactory(app, TEST_RETRY_CONFIG);
   }
 
   public static void disconnectQuietly(HttpResponse response) {

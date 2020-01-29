@@ -56,6 +56,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
   private final FirebaseApp app;
   private final Sleeper sleeper;
   private final Scheduler scheduler;
+  private final HttpRequestFactory requestFactory;
   private final HttpHelper httpHelper;
 
   private final CreateAndroidAppFromAppIdFunction createAndroidAppFromAppIdFunction =
@@ -77,8 +78,13 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
     this.app = checkNotNull(app);
     this.sleeper = checkNotNull(sleeper);
     this.scheduler = checkNotNull(scheduler);
-    this.httpHelper = new HttpHelper(
-        app.getOptions().getJsonFactory(), checkNotNull(requestFactory));
+    this.requestFactory = checkNotNull(requestFactory);
+    this.httpHelper = new HttpHelper(app.getOptions().getJsonFactory(), requestFactory);
+  }
+
+  @VisibleForTesting
+  HttpRequestFactory getRequestFactory() {
+    return requestFactory;
   }
 
   @VisibleForTesting
