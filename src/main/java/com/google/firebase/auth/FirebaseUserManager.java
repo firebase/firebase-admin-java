@@ -26,7 +26,6 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
@@ -45,7 +44,7 @@ import com.google.firebase.auth.internal.GetAccountInfoResponse;
 
 import com.google.firebase.auth.internal.HttpErrorResponse;
 import com.google.firebase.auth.internal.UploadAccountResponse;
-import com.google.firebase.internal.FirebaseRequestInitializer;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.SdkUtils;
@@ -111,6 +110,10 @@ class FirebaseUserManager {
    * @param app A non-null {@link FirebaseApp}.
    */
   FirebaseUserManager(@NonNull FirebaseApp app) {
+    this(app, null);
+  }
+
+  FirebaseUserManager(@NonNull FirebaseApp app, @Nullable HttpRequestFactory requestFactory) {
     checkNotNull(app, "FirebaseApp must not be null");
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkArgument(!Strings.isNullOrEmpty(projectId),
@@ -119,8 +122,12 @@ class FirebaseUserManager {
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
     this.baseUrl = String.format(ID_TOOLKIT_URL, projectId);
     this.jsonFactory = app.getOptions().getJsonFactory();
-    HttpTransport transport = app.getOptions().getHttpTransport();
-    this.requestFactory = transport.createRequestFactory(new FirebaseRequestInitializer(app));
+
+    if (requestFactory == null) {
+      requestFactory = ApiClientUtils.newAuthorizedRequestFactory(app);
+    }
+
+    this.requestFactory = requestFactory;
   }
 
   @VisibleForTesting

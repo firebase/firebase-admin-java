@@ -75,12 +75,7 @@ public class FirebaseAuth {
     this.tokenFactory = threadSafeMemoize(builder.tokenFactory);
     this.idTokenVerifier = threadSafeMemoize(builder.idTokenVerifier);
     this.cookieVerifier = threadSafeMemoize(builder.cookieVerifier);
-    this.userManager = threadSafeMemoize(new Supplier<FirebaseUserManager>() {
-      @Override
-      public FirebaseUserManager get() {
-        return new FirebaseUserManager(firebaseApp);
-      }
-    });
+    this.userManager = threadSafeMemoize(builder.userManager);
     this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
   }
 
@@ -1109,10 +1104,10 @@ public class FirebaseAuth {
   }
 
   private <T> Supplier<T> threadSafeMemoize(final Supplier<T> supplier) {
-    checkNotNull(supplier);
     return Suppliers.memoize(new Supplier<T>() {
       @Override
       public T get() {
+        checkNotNull(supplier);
         synchronized (lock) {
           checkNotDestroyed();
           return supplier.get();
@@ -1155,6 +1150,12 @@ public class FirebaseAuth {
             return FirebaseTokenUtils.createSessionCookieVerifier(app, Clock.SYSTEM);
           }
         })
+        .setUserManager(new Supplier<FirebaseUserManager>() {
+          @Override
+          public FirebaseUserManager get() {
+            return new FirebaseUserManager(app);
+          }
+        })
         .build();
   }
 
@@ -1168,6 +1169,7 @@ public class FirebaseAuth {
     private Supplier<FirebaseTokenFactory> tokenFactory;
     private Supplier<? extends FirebaseTokenVerifier> idTokenVerifier;
     private Supplier<? extends FirebaseTokenVerifier> cookieVerifier;
+    private Supplier<FirebaseUserManager> userManager;
 
     private Builder() { }
 
@@ -1188,6 +1190,11 @@ public class FirebaseAuth {
 
     Builder setCookieVerifier(Supplier<? extends FirebaseTokenVerifier> cookieVerifier) {
       this.cookieVerifier = cookieVerifier;
+      return this;
+    }
+
+    Builder setUserManager(Supplier<FirebaseUserManager> userManager) {
+      this.userManager = userManager;
       return this;
     }
 
