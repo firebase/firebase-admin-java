@@ -978,15 +978,6 @@ public class FirebaseProjectManagementServiceImplTest {
     return serviceImpl;
   }
 
-  private static List<MockLowLevelHttpResponse> errorResponseSequence(int status, String content) {
-    ImmutableList.Builder<MockLowLevelHttpResponse> responses = ImmutableList.builder();
-    for (int i = 0; i < 5; i++) {
-      responses.add(new MockLowLevelHttpResponse().setStatusCode(status).setContent(content));
-    }
-
-    return responses.build();
-  }
-
   private void checkRequestHeader(String expectedUrl, HttpMethod httpMethod) {
     assertEquals(
         "The number of HttpResponses is not equal to 1.", 1, interceptor.getNumberOfResponses());
