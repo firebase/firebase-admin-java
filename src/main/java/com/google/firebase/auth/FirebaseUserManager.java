@@ -42,8 +42,8 @@ import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
-
 import com.google.firebase.auth.internal.HttpErrorResponse;
+import com.google.firebase.auth.internal.ListTenantsResponse;
 import com.google.firebase.auth.internal.UploadAccountResponse;
 import com.google.firebase.internal.FirebaseRequestInitializer;
 import com.google.firebase.internal.NonNull;
@@ -57,6 +57,9 @@ import java.util.Map;
 /**
  * FirebaseUserManager provides methods for interacting with the Google Identity Toolkit via its
  * REST API. This class does not hold any mutable state, and is thread safe.
+ * 
+ * <p>TODO(micahstairs): Consider renaming this to FirebaseAuthManager since this also supports
+ * tenants.
  *
  * @see <a href="https://developers.google.com/identity/toolkit/web/reference/relyingparty">
  *   Google Identity Toolkit</a>
@@ -87,6 +90,7 @@ class FirebaseUserManager {
       .put("INVALID_DYNAMIC_LINK_DOMAIN", "invalid-dynamic-link-domain")
       .build();
 
+  static final int MAX_LIST_TENANTS_RESULTS = 1000;
   static final int MAX_LIST_USERS_RESULTS = 1000;
   static final int MAX_IMPORT_USERS = 1000;
 
@@ -95,10 +99,11 @@ class FirebaseUserManager {
       "iss", "jti", "nbf", "nonce", "sub", "firebase");
 
   private static final String ID_TOOLKIT_URL =
-      "https://identitytoolkit.googleapis.com/v1/projects/%s";
+      "https://identitytoolkit.googleapis.com/%s/projects/%s";
   private static final String CLIENT_VERSION_HEADER = "X-Client-Version";
 
-  private final String baseUrl;
+  private final String userBaseUrl;
+  private final String tenantBaseUrl;
   private final JsonFactory jsonFactory;
   private final HttpRequestFactory requestFactory;
   private final String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
@@ -117,7 +122,8 @@ class FirebaseUserManager {
         "Project ID is required to access the auth service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
-    this.baseUrl = String.format(ID_TOOLKIT_URL, projectId);
+    this.userBaseUrl = String.format(ID_TOOLKIT_URL, "v1", projectId);
+    this.tenantBaseUrl = String.format(ID_TOOLKIT_URL, "v2", projectId);
     this.jsonFactory = app.getOptions().getJsonFactory();
     HttpTransport transport = app.getOptions().getHttpTransport();
     this.requestFactory = transport.createRequestFactory(new FirebaseRequestInitializer(app));
@@ -201,7 +207,7 @@ class FirebaseUserManager {
       builder.put("nextPageToken", pageToken);
     }
 
-    GenericUrl url = new GenericUrl(baseUrl + "/accounts:batchGet");
+    GenericUrl url = new GenericUrl(userBaseUrl + "/accounts:batchGet");
     url.putAll(builder.build());
     DownloadAccountResponse response = sendRequest(
             "GET", url, null, DownloadAccountResponse.class);
@@ -219,6 +225,24 @@ class FirebaseUserManager {
       throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to import users.");
     }
     return new UserImportResult(request.getUsersCount(), response);
+  }
+
+  ListTenantsResponse listTenants(int maxResults, String pageToken) throws FirebaseAuthException {
+    ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
+        .put("maxResults", maxResults);
+    if (pageToken != null) {
+      checkArgument(!pageToken.equals(
+          ListTenantsPage.END_OF_LIST), "invalid end of list page token");
+      builder.put("nextPageToken", pageToken);
+    }
+
+    GenericUrl url = new GenericUrl(tenantBaseUrl + "/tenants:tenants");
+    url.putAll(builder.build());
+    ListTenantsResponse response = sendRequest("GET", url, null, ListTenantsResponse.class);
+    if (response == null) {
+      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to retrieve tenants.");
+    }
+    return response;
   }
 
   String createSessionCookie(String idToken,
@@ -257,7 +281,7 @@ class FirebaseUserManager {
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {
     checkArgument(!Strings.isNullOrEmpty(path), "path must not be null or empty");
     checkNotNull(content, "content must not be null for POST requests");
-    GenericUrl url = new GenericUrl(baseUrl + path);
+    GenericUrl url = new GenericUrl(userBaseUrl + path);
     return sendRequest("POST", url, content, clazz);
   }
 

@@ -33,10 +33,26 @@ public final class Tenant {
   private String displayName;
 
   @Key("allowPasswordSignup")
-  private String passwordSignInAllowed;
+  private boolean passwordSignInAllowed;
 
   @Key("enableEmailLinkSignin")
-  private String emailLinkSignInEnabled;
+  private boolean emailLinkSignInEnabled;
+
+  public String getTenantId() {
+    return tenantId;
+  }
+
+  public String getDisplayName() {
+    return displayName;
+  }
+
+  public boolean isPasswordSignInAllowed() {
+    return passwordSignInAllowed;
+  }
+
+  public boolean isEmailLinkSignInEnabled() {
+    return emailLinkSignInEnabled;
+  }
 
   /**
    * Class used to hold the information needs to make a tenant create request.
@@ -73,8 +89,8 @@ public final class Tenant {
     }
 
     /**
-   * Builder class used to construct a create request.
-   */
+    * Builder class used to construct a create request.
+    */
     @AutoValue.Builder
     abstract static class Builder {
       public abstract Builder setDisplayName(String displayName);
@@ -122,8 +138,8 @@ public final class Tenant {
     }
 
     /**
-   * Builder class used to construct a update request.
-   */
+    * Builder class used to construct a update request.
+    */
     @AutoValue.Builder
     abstract static class Builder {
       public abstract Builder setDisplayName(String displayName);
