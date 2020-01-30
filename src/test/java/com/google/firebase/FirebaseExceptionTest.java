@@ -67,7 +67,7 @@ public class FirebaseExceptionTest {
         null,
         null);
 
-    assertEquals(ErrorCode.INTERNAL, exception.getErrorCode());
+    assertEquals(ErrorCode.INTERNAL, exception.getErrorCodeNew());
     assertEquals("Test error", exception.getMessage());
     assertNull(exception.getHttpResponse());
     assertNull(exception.getCause());
@@ -86,7 +86,7 @@ public class FirebaseExceptionTest {
         response,
         null);
 
-    assertEquals(ErrorCode.INTERNAL, exception.getErrorCode());
+    assertEquals(ErrorCode.INTERNAL, exception.getErrorCodeNew());
     assertEquals("Test error", exception.getMessage());
     assertSame(response, exception.getHttpResponse());
     assertNull(exception.getCause());
@@ -102,7 +102,7 @@ public class FirebaseExceptionTest {
         null,
         cause);
 
-    assertEquals(ErrorCode.INTERNAL, exception.getErrorCode());
+    assertEquals(ErrorCode.INTERNAL, exception.getErrorCodeNew());
     assertEquals("Test error", exception.getMessage());
     assertNull(exception.getHttpResponse());
     assertSame(cause, exception.getCause());
@@ -112,7 +112,7 @@ public class FirebaseExceptionTest {
   public void testFirebaseExceptionLegacyConstructor() {
     FirebaseException exception = new FirebaseException("Test error");
 
-    assertEquals(ErrorCode.UNKNOWN, exception.getErrorCode());
+    assertEquals(ErrorCode.UNKNOWN, exception.getErrorCodeNew());
     assertEquals("Test error", exception.getMessage());
     assertNull(exception.getHttpResponse());
     assertNull(exception.getCause());

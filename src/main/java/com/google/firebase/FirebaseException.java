@@ -57,8 +57,8 @@ public class FirebaseException extends Exception {
    *
    * @return A Firebase error code.
    */
-  // TODO: Expose this method publicly
-  ErrorCode getErrorCode() {
+  // TODO: Rename this method to getErrorCode when the child classes are refactored.
+  public ErrorCode getErrorCodeNew() {
     return errorCode;
   }
 
