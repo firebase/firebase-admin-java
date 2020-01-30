@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -456,8 +457,9 @@ public class AndroidNotification {
      * @return This builder.
      */
     public Builder setEventTimeInMillis(long eventTimeInMillis) {
-      this.eventTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS'Z'")
-          .format(new Date(eventTimeInMillis));
+      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS000000'Z'");
+      dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+      this.eventTime = dateFormat.format(new Date(eventTimeInMillis));
       return this;
     }
 
