@@ -39,11 +39,15 @@ import java.util.List;
 import org.junit.Test;
 
 public class FirebaseDatabaseTest {
-  
-  private static FirebaseOptions firebaseOptions =
+
+  private static final FirebaseOptions firebaseOptions =
       new FirebaseOptions.Builder()
           .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .setDatabaseUrl("https://firebase-db-test.firebaseio.com")
+          .build();
+  private static final FirebaseOptions firebaseOptionsWithoutDatabaseUrl =
+      new FirebaseOptions.Builder()
+          .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .build();
 
   @Test
@@ -213,13 +217,9 @@ public class FirebaseDatabaseTest {
             "http://localhost:90", "valid-namespace")
     );
 
-    GoogleCredentials credentials = GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream());
-    FirebaseOptions options = FirebaseOptions.builder()
-        .setCredentials(credentials)
-        .build();
     for (CustomTestCase tc : testCases) {
       try {
-        FirebaseApp app = FirebaseApp.initializeApp(options);
+        FirebaseApp app = FirebaseApp.initializeApp(firebaseOptionsWithoutDatabaseUrl);
         TestUtils.setEnvironmentVariables(
             ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
                 Strings.nullToEmpty(tc.envVariableUrl)));
@@ -254,13 +254,9 @@ public class FirebaseDatabaseTest {
             "http://localhost:8080", "valid-namespace", "/a/b/c/d")
     );
 
-    GoogleCredentials credentials = GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream());
-    FirebaseOptions options = FirebaseOptions.builder()
-        .setCredentials(credentials)
-        .build();
     for (CustomTestCase tc : testCases) {
       try {
-        FirebaseApp app = FirebaseApp.initializeApp(options);
+        FirebaseApp app = FirebaseApp.initializeApp(firebaseOptionsWithoutDatabaseUrl);
         TestUtils.setEnvironmentVariables(
             ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
                 Strings.nullToEmpty(tc.envVariableUrl)));
