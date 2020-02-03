@@ -36,7 +36,13 @@ public final class OutgoingHttpRequest {
   private final HttpContent content;
   private final Map<String, Object> headers;
 
-  OutgoingHttpRequest(String method, String url) {
+  /**
+   * Creates an OutgoingHttpRequest from the HTTP method and URL.
+   *
+   * @param method HTTP method name.
+   * @param url Target HTTP URL of the request.
+   */
+  public OutgoingHttpRequest(String method, String url) {
     checkArgument(!Strings.isNullOrEmpty(method), "method must not be null or empty");
     checkArgument(!Strings.isNullOrEmpty(url), "url must not be empty");
     this.method = method;

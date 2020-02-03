@@ -35,6 +35,8 @@ public class ApiClientUtils {
       .setMaxIntervalMillis(60 * 1000)
       .build();
 
+  private ApiClientUtils() { }
+
   /**
    * Creates a new {@code HttpRequestFactory} which provides authorization (OAuth2), timeouts and
    * automatic retries.

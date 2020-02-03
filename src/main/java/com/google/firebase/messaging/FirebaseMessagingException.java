@@ -16,26 +16,54 @@
 
 package com.google.firebase.messaging;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import com.google.common.base.Strings;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseException;
+import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.Nullable;
 
-public class FirebaseMessagingException extends FirebaseException {
+public final class FirebaseMessagingException extends FirebaseException {
 
-  private final String errorCode;
+  private final MessagingErrorCode errorCode;
 
-  FirebaseMessagingException(String errorCode, String message, Throwable cause) {
-    super(message, cause);
-    checkArgument(!Strings.isNullOrEmpty(errorCode));
+  @VisibleForTesting
+  FirebaseMessagingException(@NonNull ErrorCode code, @NonNull String message) {
+    this(code, message, null, null, null);
+  }
+
+  private FirebaseMessagingException(
+      @NonNull ErrorCode code,
+      @NonNull String message,
+      @Nullable Throwable cause,
+      @Nullable IncomingHttpResponse response,
+      @Nullable MessagingErrorCode errorCode) {
+    super(code, message, cause, response);
     this.errorCode = errorCode;
   }
 
+  static FirebaseMessagingException withMessagingErrorCode(
+      FirebaseException base, @Nullable MessagingErrorCode errorCode) {
+    return new FirebaseMessagingException(
+        base.getErrorCodeNew(),
+        base.getMessage(),
+        base.getCause(),
+        base.getHttpResponse(),
+        errorCode);
+  }
+
+  static FirebaseMessagingException withCustomMessage(FirebaseException base, String message) {
+    return new FirebaseMessagingException(
+        base.getErrorCodeNew(),
+        message,
+        base.getCause(),
+        base.getHttpResponse(),
+        null);
+  }
 
   /** Returns an error code that may provide more information about the error. */
-  @NonNull
-  public String getErrorCode() {
+  @Nullable
+  public MessagingErrorCode getMessagingErrorCode() {
     return errorCode;
   }
 }

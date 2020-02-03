@@ -38,18 +38,25 @@ public class FirebaseException extends Exception {
 
   @Deprecated
   public FirebaseException(@NonNull String detailMessage, Throwable cause) {
-    this(ErrorCode.UNKNOWN, detailMessage, null, cause);
+    this(ErrorCode.UNKNOWN, detailMessage, cause, null);
   }
 
   public FirebaseException(
       @NonNull ErrorCode errorCode,
       @NonNull String message,
-      @Nullable IncomingHttpResponse httpResponse,
-      @Nullable Throwable cause) {
+      @Nullable Throwable cause,
+      @Nullable IncomingHttpResponse httpResponse) {
     super(message, cause);
     checkArgument(!Strings.isNullOrEmpty(message), "Message must not be null or empty");
     this.errorCode = checkNotNull(errorCode, "ErrorCode must not be null");
     this.httpResponse = httpResponse;
+  }
+
+  public FirebaseException(
+      @NonNull ErrorCode errorCode,
+      @NonNull String message,
+      @Nullable Throwable cause) {
+    this(errorCode, message, cause, null);
   }
 
   /**

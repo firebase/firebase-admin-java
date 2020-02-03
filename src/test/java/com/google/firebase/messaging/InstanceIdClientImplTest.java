@@ -17,12 +17,14 @@
 package com.google.firebase.messaging;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
-import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
@@ -31,8 +33,12 @@ import com.google.api.client.json.JsonParser;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+import com.google.firebase.IncomingHttpResponse;
+import com.google.firebase.OutgoingHttpRequest;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.testing.TestResponseInterceptor;
@@ -54,6 +60,11 @@ public class InstanceIdClientImplTest {
       "https://iid.googleapis.com/iid/v1:batchRemove";
 
   private static final List<Integer> HTTP_ERRORS = ImmutableList.of(401, 404, 500);
+
+  private static final Map<Integer, ErrorCode> HTTP_2_ERROR = ImmutableMap.of(
+      401, ErrorCode.UNAUTHENTICATED,
+      404, ErrorCode.NOT_FOUND,
+      500, ErrorCode.INTERNAL);
 
   @After
   public void tearDown() {
@@ -124,7 +135,7 @@ public class InstanceIdClientImplTest {
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       checkExceptionFromHttpResponse(error, 500,
-          "Unexpected HTTP response with status: 500; body: {}");
+          "Unexpected HTTP response with status: 500\n{}");
     }
 
     checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_SUBSCRIBE_URL);
@@ -142,7 +153,7 @@ public class InstanceIdClientImplTest {
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       checkExceptionFromHttpResponse(error, 500,
-          "Unexpected HTTP response with status: 500; body: not json");
+          "Unexpected HTTP response with status: 500\nnot json");
     }
 
     checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_SUBSCRIBE_URL);
@@ -160,7 +171,7 @@ public class InstanceIdClientImplTest {
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       checkExceptionFromHttpResponse(error, 500,
-          "Unexpected HTTP response with status: 500; body: null");
+          "Unexpected HTTP response with status: 500\nnull");
     }
 
     checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_SUBSCRIBE_URL);
@@ -174,8 +185,26 @@ public class InstanceIdClientImplTest {
       client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals("internal-error", error.getErrorCode());
-      assertEquals("Error while calling IID backend service", error.getMessage());
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
+      assertEquals(
+          "Unknown error while making a remote service call: transport error", error.getMessage());
+      assertTrue(error.getCause() instanceof IOException);
+    }
+  }
+
+  @Test
+  public void testSubscribeParseError() {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent("not json");
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    InstanceIdClient client = initInstanceIdClient(response, interceptor);
+
+    try {
+      client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
+      fail("No error thrown for HTTP error");
+    } catch (FirebaseMessagingException error) {
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
+      assertTrue(error.getMessage().startsWith("Error while parsing HTTP response: "));
       assertTrue(error.getCause() instanceof IOException);
     }
   }
@@ -244,7 +273,7 @@ public class InstanceIdClientImplTest {
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       checkExceptionFromHttpResponse(error, 500,
-          "Unexpected HTTP response with status: 500; body: {}");
+          "Unexpected HTTP response with status: 500\n{}");
     }
 
     checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_UNSUBSCRIBE_URL);
@@ -262,7 +291,7 @@ public class InstanceIdClientImplTest {
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       checkExceptionFromHttpResponse(error, 500,
-          "Unexpected HTTP response with status: 500; body: not json");
+          "Unexpected HTTP response with status: 500\nnot json");
     }
 
     checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_UNSUBSCRIBE_URL);
@@ -280,7 +309,7 @@ public class InstanceIdClientImplTest {
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
       checkExceptionFromHttpResponse(error, 500,
-          "Unexpected HTTP response with status: 500; body: null");
+          "Unexpected HTTP response with status: 500\nnull");
     }
 
     checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_UNSUBSCRIBE_URL);
@@ -294,8 +323,26 @@ public class InstanceIdClientImplTest {
       client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals("internal-error", error.getErrorCode());
-      assertEquals("Error while calling IID backend service", error.getMessage());
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
+      assertEquals(
+          "Unknown error while making a remote service call: transport error", error.getMessage());
+      assertTrue(error.getCause() instanceof IOException);
+    }
+  }
+
+  @Test
+  public void testUnsubscribeParseError() {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent("not json");
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    InstanceIdClient client = initInstanceIdClient(response, interceptor);
+
+    try {
+      client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
+      fail("No error thrown for HTTP error");
+    } catch (FirebaseMessagingException error) {
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
+      assertTrue(error.getMessage().startsWith("Error while parsing HTTP response: "));
       assertTrue(error.getCause() instanceof IOException);
     }
   }
@@ -311,9 +358,15 @@ public class InstanceIdClientImplTest {
   }
 
   @Test
-  public void testFromApp() throws IOException {
+  public void testFromApp() {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setStatusCode(400).setZeroContent();
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
     FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
+        .setHttpTransport(transport)
         .setProjectId("test-project")
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
@@ -322,9 +375,14 @@ public class InstanceIdClientImplTest {
       InstanceIdClientImpl client = InstanceIdClientImpl.fromApp(app);
 
       assertSame(options.getJsonFactory(), client.getJsonFactory());
-      HttpRequest request = client.getRequestFactory().buildGetRequest(
-          new GenericUrl("https://example.com"));
-      assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+      client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
+      fail("No error thrown for error response");
+    } catch (FirebaseMessagingException e) {
+      assertNotNull(e.getHttpResponse());
+
+      List<String> auth = ImmutableList.of("Bearer test-token");
+      OutgoingHttpRequest request = e.getHttpResponse().getRequest();
+      assertEquals(auth, request.getHeaders().get("authorization"));
     } finally {
       app.delete();
     }
@@ -377,24 +435,25 @@ public class InstanceIdClientImplTest {
     assertEquals(expectedUrl, request.getUrl().toString());
   }
 
-  private void checkExceptionFromHttpResponse(FirebaseMessagingException error,
-      int expectedCode, String expectedMessage) {
-    assertEquals(getTopicManagementErrorCode(expectedCode), error.getErrorCode());
+  private void checkExceptionFromHttpResponse(
+      FirebaseMessagingException error, int statusCode, String expectedMessage) {
+    assertEquals(HTTP_2_ERROR.get(statusCode), error.getErrorCodeNew());
     assertEquals(expectedMessage, error.getMessage());
     assertTrue(error.getCause() instanceof HttpResponseException);
+    assertNull(error.getMessagingErrorCode());
+
+    IncomingHttpResponse httpResponse = error.getHttpResponse();
+    assertNotNull(httpResponse);
+    assertEquals(statusCode, httpResponse.getStatusCode());
+
+    OutgoingHttpRequest request = httpResponse.getRequest();
+    assertEquals(HttpMethods.POST, request.getMethod());
+    assertTrue(request.getUrl().startsWith("https://iid.googleapis.com"));
   }
 
   private InstanceIdClient initClientWithFaultyTransport() {
     return new InstanceIdClientImpl(
         TestUtils.createFaultyHttpTransport().createRequestFactory(),
         Utils.getDefaultJsonFactory());
-  }
-
-  private String getTopicManagementErrorCode(int statusCode) {
-    String code = InstanceIdClientImpl.IID_ERROR_CODES.get(statusCode);
-    if (code == null) {
-      code = "unknown-error";
-    }
-    return code;
   }
 }

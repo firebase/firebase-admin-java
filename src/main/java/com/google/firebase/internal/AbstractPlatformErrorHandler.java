@@ -41,12 +41,12 @@ public abstract class AbstractPlatformErrorHandler<T extends FirebaseException>
   }
 
   @Override
-  protected final ErrorParams getErrorParams(
+  protected final FirebaseException httpResponseErrorToBaseException(
       HttpResponseException e, IncomingHttpResponse response) {
-    ErrorParams defaults = super.getErrorParams(e, response);
+    FirebaseException base = super.httpResponseErrorToBaseException(e, response);
     PlatformErrorResponse parsedError = this.parseErrorResponse(e.getContent());
 
-    ErrorCode code = defaults.getErrorCode();
+    ErrorCode code = base.getErrorCodeNew();
     String status = parsedError.getStatus();
     if (!Strings.isNullOrEmpty(status)) {
       code = Enum.valueOf(ErrorCode.class, parsedError.getStatus());
@@ -54,10 +54,10 @@ public abstract class AbstractPlatformErrorHandler<T extends FirebaseException>
 
     String message = parsedError.getMessage();
     if (Strings.isNullOrEmpty(message)) {
-      message = defaults.getMessage();
+      message = base.getMessage();
     }
 
-    return new ErrorParams(code, message, e, response);
+    return new FirebaseException(code, message, e, response);
   }
 
   private PlatformErrorResponse parseErrorResponse(String content) {

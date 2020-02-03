@@ -20,9 +20,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.http.LowLevelHttpRequest;
 import com.google.api.client.testing.http.MockHttpTransport;
@@ -32,6 +34,9 @@ import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.IncomingHttpResponse;
 import java.io.IOException;
+import java.net.NoRouteToHostException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import org.junit.Test;
 
 public class AbstractPlatformErrorHandlerTest {
@@ -45,12 +50,12 @@ public class AbstractPlatformErrorHandlerTest {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
         .setContent(payload);
-    ErrorHandlingHttpClient<FirebaseException> client = createHttpClient(response);
+    ErrorHandlingHttpClient<MockFirebaseException> client = createHttpClient(response);
 
     try {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
-    } catch (FirebaseException e) {
+    } catch (MockFirebaseException e) {
       assertEquals(ErrorCode.UNAVAILABLE, e.getErrorCodeNew());
       assertEquals("Test error", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, payload);
@@ -64,12 +69,12 @@ public class AbstractPlatformErrorHandlerTest {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
         .setContent(payload);
-    ErrorHandlingHttpClient<FirebaseException> client = createHttpClient(response);
+    ErrorHandlingHttpClient<MockFirebaseException> client = createHttpClient(response);
 
     try {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
-    } catch (FirebaseException e) {
+    } catch (MockFirebaseException e) {
       assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
       assertEquals("Unexpected HTTP response with status: 500\nnot json", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, payload);
@@ -83,12 +88,12 @@ public class AbstractPlatformErrorHandlerTest {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
         .setContent(payload);
-    ErrorHandlingHttpClient<FirebaseException> client = createHttpClient(response);
+    ErrorHandlingHttpClient<MockFirebaseException> client = createHttpClient(response);
 
     try {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
-    } catch (FirebaseException e) {
+    } catch (MockFirebaseException e) {
       assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
       assertEquals("Test error", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, payload);
@@ -102,12 +107,12 @@ public class AbstractPlatformErrorHandlerTest {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
         .setContent(payload);
-    ErrorHandlingHttpClient<FirebaseException> client = createHttpClient(response);
+    ErrorHandlingHttpClient<MockFirebaseException> client = createHttpClient(response);
 
     try {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
-    } catch (FirebaseException e) {
+    } catch (MockFirebaseException e) {
       assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCodeNew());
       assertEquals("Unexpected HTTP response with status: 500\n" + payload, e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, payload);
@@ -121,12 +126,12 @@ public class AbstractPlatformErrorHandlerTest {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
         .setContent(payload);
-    ErrorHandlingHttpClient<FirebaseException> client = createHttpClient(response);
+    ErrorHandlingHttpClient<MockFirebaseException> client = createHttpClient(response);
 
     try {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
-    } catch (FirebaseException e) {
+    } catch (MockFirebaseException e) {
       assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
       assertEquals("Unexpected HTTP response with status: 500\n" + payload, e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, payload);
@@ -135,25 +140,68 @@ public class AbstractPlatformErrorHandlerTest {
   }
 
   @Test
-  public void testNetworkError() {
-    final IOException exception = new IOException("Test");
-    MockHttpTransport transport = new MockHttpTransport(){
-      @Override
-      public LowLevelHttpRequest buildRequest(String method, String url) throws IOException {
-        throw exception;
-      }
-    };
-    ErrorHandlingHttpClient<FirebaseException> client = new ErrorHandlingHttpClient<>(
-        transport.createRequestFactory(),
-        Utils.getDefaultJsonFactory(),
-        new TestPlatformErrorHandler());
+  public void testGenericIOException() {
+    IOException exception = new IOException("Test");
+    ErrorHandlingHttpClient<MockFirebaseException> client = createHttpClient(exception);
 
     try {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
-    } catch (FirebaseException e) {
+    } catch (MockFirebaseException e) {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
-      assertEquals("IO error", e.getMessage());
+      assertEquals(
+          "Unknown error while making a remote service call: Test", e.getMessage());
+      assertNull(e.getHttpResponse());
+      assertSame(exception, e.getCause());
+    }
+  }
+
+  @Test
+  public void testTimeoutError() {
+    IOException exception = new IOException("Test", new SocketTimeoutException());
+    ErrorHandlingHttpClient<MockFirebaseException> client = createHttpClient(exception);
+
+    try {
+      client.sendAndParse(TEST_REQUEST, GenericData.class);
+      fail("No exception thrown for HTTP error response");
+    } catch (MockFirebaseException e) {
+      assertEquals(ErrorCode.DEADLINE_EXCEEDED, e.getErrorCodeNew());
+      assertEquals(
+          "Timed out while making an API call: Test", e.getMessage());
+      assertNull(e.getHttpResponse());
+      assertSame(exception, e.getCause());
+    }
+  }
+
+  @Test
+  public void testNoRouteToHostError() {
+    IOException exception = new IOException("Test", new NoRouteToHostException());
+    ErrorHandlingHttpClient<MockFirebaseException> client = createHttpClient(exception);
+
+    try {
+      client.sendAndParse(TEST_REQUEST, GenericData.class);
+      fail("No exception thrown for HTTP error response");
+    } catch (MockFirebaseException e) {
+      assertEquals(ErrorCode.UNAVAILABLE, e.getErrorCodeNew());
+      assertEquals(
+          "Failed to establish a connection: Test", e.getMessage());
+      assertNull(e.getHttpResponse());
+      assertSame(exception, e.getCause());
+    }
+  }
+
+  @Test
+  public void testUnknownHostError() {
+    IOException exception = new IOException("Test", new UnknownHostException());
+    ErrorHandlingHttpClient<MockFirebaseException> client = createHttpClient(exception);
+
+    try {
+      client.sendAndParse(TEST_REQUEST, GenericData.class);
+      fail("No exception thrown for HTTP error response");
+    } catch (MockFirebaseException e) {
+      assertEquals(ErrorCode.UNAVAILABLE, e.getErrorCodeNew());
+      assertEquals(
+          "Failed to establish a connection: Test", e.getMessage());
       assertNull(e.getHttpResponse());
       assertSame(exception, e.getCause());
     }
@@ -164,14 +212,14 @@ public class AbstractPlatformErrorHandlerTest {
     String payload = "not json";
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setContent(payload);
-    ErrorHandlingHttpClient<FirebaseException> client = createHttpClient(response);
+    ErrorHandlingHttpClient<MockFirebaseException> client = createHttpClient(response);
 
     try {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
-    } catch (FirebaseException e) {
+    } catch (MockFirebaseException e) {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
-      assertEquals("Parse error", e.getMessage());
+      assertTrue(e.getMessage().startsWith("Error while parsing HTTP response: "));
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_OK, payload);
       assertNotNull(e.getCause());
     }
@@ -183,12 +231,12 @@ public class AbstractPlatformErrorHandlerTest {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setStatusCode(512)
         .setContent(payload);
-    ErrorHandlingHttpClient<FirebaseException> client = createHttpClient(response);
+    ErrorHandlingHttpClient<MockFirebaseException> client = createHttpClient(response);
 
     try {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
-    } catch (FirebaseException e) {
+    } catch (MockFirebaseException e) {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
       assertEquals("Test error", e.getMessage());
       assertHttpResponse(e, 512, payload);
@@ -196,11 +244,25 @@ public class AbstractPlatformErrorHandlerTest {
     }
   }
 
-  private ErrorHandlingHttpClient<FirebaseException> createHttpClient(
+  private ErrorHandlingHttpClient<MockFirebaseException> createHttpClient(
       MockLowLevelHttpResponse response) {
     MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(response)
         .build();
+    return new ErrorHandlingHttpClient<>(
+        transport.createRequestFactory(),
+        Utils.getDefaultJsonFactory(),
+        new TestPlatformErrorHandler());
+  }
+
+  private ErrorHandlingHttpClient<MockFirebaseException> createHttpClient(
+      final IOException exception) {
+    MockHttpTransport transport = new MockHttpTransport(){
+      @Override
+      public LowLevelHttpRequest buildRequest(String method, String url) throws IOException {
+        throw exception;
+      }
+    };
     return new ErrorHandlingHttpClient<>(
         transport.createRequestFactory(),
         Utils.getDefaultJsonFactory(),
@@ -212,30 +274,25 @@ public class AbstractPlatformErrorHandlerTest {
     assertNotNull(httpResponse);
     assertEquals(statusCode, httpResponse.getStatusCode());
     assertEquals(content, httpResponse.getContent());
-    assertEquals("GET", httpResponse.getRequest().getMethod());
+    assertEquals(HttpMethods.GET, httpResponse.getRequest().getMethod());
   }
 
   private static class TestPlatformErrorHandler extends
-      AbstractPlatformErrorHandler<FirebaseException> {
+      AbstractPlatformErrorHandler<MockFirebaseException> {
 
     TestPlatformErrorHandler() {
       super(Utils.getDefaultJsonFactory());
     }
 
     @Override
-    protected FirebaseException createException(ErrorParams params) {
-      return new FirebaseException(params.getErrorCode(), params.getMessage(),
-          params.getResponse(), params.getException());
+    protected MockFirebaseException createException(FirebaseException base) {
+      return new MockFirebaseException(base);
     }
+  }
 
-    @Override
-    public FirebaseException handleIOException(IOException e) {
-      return new FirebaseException(ErrorCode.UNKNOWN, "IO error", null, e);
-    }
-
-    @Override
-    public FirebaseException handleParseException(IOException e, IncomingHttpResponse response) {
-      return new FirebaseException(ErrorCode.UNKNOWN, "Parse error", response, e);
+  private static class MockFirebaseException extends FirebaseException {
+    MockFirebaseException(FirebaseException base) {
+      super(base.getErrorCodeNew(), base.getMessage(), base.getCause(), base.getHttpResponse());
     }
   }
 }

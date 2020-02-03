@@ -41,10 +41,6 @@ import java.util.List;
  */
 public class FirebaseMessaging {
 
-  static final String INTERNAL_ERROR = "internal-error";
-
-  static final String UNKNOWN_ERROR = "unknown-error";
-
   private final FirebaseApp app;
   private final Supplier<? extends FirebaseMessagingClient> messagingClient;
   private final Supplier<? extends InstanceIdClient> instanceIdClient;

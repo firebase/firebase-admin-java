@@ -83,8 +83,8 @@ public class FirebaseExceptionTest {
     FirebaseException exception = new FirebaseException(
         ErrorCode.INTERNAL,
         "Test error",
-        response,
-        null);
+        null,
+        response);
 
     assertEquals(ErrorCode.INTERNAL, exception.getErrorCodeNew());
     assertEquals("Test error", exception.getMessage());
@@ -99,7 +99,6 @@ public class FirebaseExceptionTest {
     FirebaseException exception = new FirebaseException(
         ErrorCode.INTERNAL,
         "Test error",
-        null,
         cause);
 
     assertEquals(ErrorCode.INTERNAL, exception.getErrorCodeNew());

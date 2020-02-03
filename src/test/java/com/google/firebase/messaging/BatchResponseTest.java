@@ -21,6 +21,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.ErrorCode;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
@@ -43,8 +44,8 @@ public class BatchResponseTest {
     ImmutableList<SendResponse> responses = ImmutableList.of(
         SendResponse.fromMessageId("message1"),
         SendResponse.fromMessageId("message2"),
-        SendResponse.fromException(new FirebaseMessagingException("error-code",
-            "error-message", null))
+        SendResponse.fromException(
+            new FirebaseMessagingException(ErrorCode.INTERNAL, "error-message"))
     );
 
     BatchResponse batchResponse = new BatchResponse(responses);

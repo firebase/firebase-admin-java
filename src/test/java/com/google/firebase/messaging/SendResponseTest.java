@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import com.google.firebase.ErrorCode;
 import org.junit.Test;
 
 public class SendResponseTest {
@@ -37,8 +38,8 @@ public class SendResponseTest {
 
   @Test
   public void testFailureResponse() {
-    FirebaseMessagingException exception = new FirebaseMessagingException("error-code",
-        "error-message", null);
+    FirebaseMessagingException exception = new FirebaseMessagingException(
+        ErrorCode.INTERNAL, "error-message");
     SendResponse response = SendResponse.fromException(exception);
 
     assertNull(response.getMessageId());

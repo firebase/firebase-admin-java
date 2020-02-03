@@ -18,23 +18,21 @@ package com.google.firebase.messaging;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.JsonObjectParser;
-import com.google.api.client.json.JsonParser;
 import com.google.api.client.util.Key;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseException;
+import com.google.firebase.internal.AbstractHttpErrorHandler;
 import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.ErrorHandlingHttpClient;
+import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.Nullable;
 
 import java.io.IOException;
@@ -53,16 +51,7 @@ final class InstanceIdClientImpl implements InstanceIdClient {
 
   private static final String IID_UNSUBSCRIBE_PATH = "iid/v1:batchRemove";
 
-  static final Map<Integer, String> IID_ERROR_CODES =
-      ImmutableMap.<Integer, String>builder()
-          .put(400, "invalid-argument")
-          .put(401, "authentication-error")
-          .put(403, "authentication-error")
-          .put(500, FirebaseMessaging.INTERNAL_ERROR)
-          .put(503, "server-unavailable")
-          .build();
-
-  private final HttpRequestFactory requestFactory;
+  private final ErrorHandlingHttpClient<FirebaseMessagingException> requestFactory;
   private final JsonFactory jsonFactory;
   private final HttpResponseInterceptor responseInterceptor;
 
@@ -74,7 +63,8 @@ final class InstanceIdClientImpl implements InstanceIdClient {
       HttpRequestFactory requestFactory,
       JsonFactory jsonFactory,
       @Nullable HttpResponseInterceptor responseInterceptor) {
-    this.requestFactory = checkNotNull(requestFactory);
+    this.requestFactory = new ErrorHandlingHttpClient<>(
+        requestFactory, jsonFactory, new InstanceIdErrorHandler(jsonFactory));
     this.jsonFactory = checkNotNull(jsonFactory);
     this.responseInterceptor = responseInterceptor;
   }
@@ -86,75 +76,38 @@ final class InstanceIdClientImpl implements InstanceIdClient {
   }
 
   @VisibleForTesting
-  HttpRequestFactory getRequestFactory() {
-    return requestFactory;
-  }
-
-  @VisibleForTesting
   JsonFactory getJsonFactory() {
     return jsonFactory;
   }
 
   public TopicManagementResponse subscribeToTopic(
       String topic, List<String> registrationTokens) throws FirebaseMessagingException {
-    try {
-      return sendInstanceIdRequest(topic, registrationTokens, IID_SUBSCRIBE_PATH);
-    } catch (HttpResponseException e) {
-      throw createExceptionFromResponse(e);
-    } catch (IOException e) {
-      throw new FirebaseMessagingException(
-          FirebaseMessaging.INTERNAL_ERROR, "Error while calling IID backend service", e);
-    }
+    return sendInstanceIdRequest(topic, registrationTokens, IID_SUBSCRIBE_PATH);
   }
 
   public TopicManagementResponse unsubscribeFromTopic(
       String topic, List<String> registrationTokens) throws FirebaseMessagingException {
-    try {
-      return sendInstanceIdRequest(topic, registrationTokens, IID_UNSUBSCRIBE_PATH);
-    } catch (HttpResponseException e) {
-      throw createExceptionFromResponse(e);
-    } catch (IOException e) {
-      throw new FirebaseMessagingException(
-          FirebaseMessaging.INTERNAL_ERROR, "Error while calling IID backend service", e);
-    }
+    return sendInstanceIdRequest(topic, registrationTokens, IID_UNSUBSCRIBE_PATH);
   }
 
   private TopicManagementResponse sendInstanceIdRequest(
-      String topic, List<String> registrationTokens, String path) throws IOException {
+      String topic,
+      List<String> registrationTokens,
+      String path) throws FirebaseMessagingException {
+
     String url = String.format("%s/%s", IID_HOST, path);
     Map<String, Object> payload = ImmutableMap.of(
         "to", getPrefixedTopic(topic),
         "registration_tokens", registrationTokens
     );
-    HttpResponse response = null;
-    try {
-      HttpRequest request = requestFactory.buildPostRequest(
-          new GenericUrl(url), new JsonHttpContent(jsonFactory, payload));
-      request.getHeaders().set("access_token_auth", "true");
-      request.setParser(new JsonObjectParser(jsonFactory));
-      request.setResponseInterceptor(responseInterceptor);
-      response = request.execute();
 
-      JsonParser parser = jsonFactory.createJsonParser(response.getContent());
-      InstanceIdServiceResponse parsedResponse = new InstanceIdServiceResponse();
-      parser.parse(parsedResponse);
-      return new TopicManagementResponse(parsedResponse.results);
-    } finally {
-      ApiClientUtils.disconnectQuietly(response);
-    }
-  }
-
-  private FirebaseMessagingException createExceptionFromResponse(HttpResponseException e) {
-    InstanceIdServiceErrorResponse response = new InstanceIdServiceErrorResponse();
-    if (e.getContent() != null) {
-      try {
-        JsonParser parser = jsonFactory.createJsonParser(e.getContent());
-        parser.parseAndClose(response);
-      } catch (IOException ignored) {
-        // ignored
-      }
-    }
-    return newException(response, e);
+    HttpRequestInfo request =
+        HttpRequestInfo.buildPostRequest(url, new JsonHttpContent(jsonFactory, payload))
+            .addHeader("access_token_auth", "true")
+            .setResponseInterceptor(responseInterceptor);
+    InstanceIdServiceResponse response = new InstanceIdServiceResponse();
+    requestFactory.sendAndParse(request, response);
+    return new TopicManagementResponse(response.results);
   }
 
   private String getPrefixedTopic(String topic) {
@@ -165,21 +118,6 @@ final class InstanceIdClientImpl implements InstanceIdClient {
     }
   }
 
-  private static FirebaseMessagingException newException(
-      InstanceIdServiceErrorResponse response, HttpResponseException e) {
-    // Infer error code from HTTP status
-    String code = IID_ERROR_CODES.get(e.getStatusCode());
-    if (code == null) {
-      code = FirebaseMessaging.UNKNOWN_ERROR;
-    }
-    String msg = response.error;
-    if (Strings.isNullOrEmpty(msg)) {
-      msg = String.format("Unexpected HTTP response with status: %d; body: %s",
-          e.getStatusCode(), e.getContent());
-    }
-    return new FirebaseMessagingException(code, msg, e);
-  }
-
   private static class InstanceIdServiceResponse {
     @Key("results")
     private List<GenericJson> results;
@@ -188,5 +126,55 @@ final class InstanceIdClientImpl implements InstanceIdClient {
   private static class InstanceIdServiceErrorResponse {
     @Key("error")
     private String error;
+  }
+
+  private static class InstanceIdErrorHandler
+      extends AbstractHttpErrorHandler<FirebaseMessagingException> {
+
+    private final JsonFactory jsonFactory;
+
+    InstanceIdErrorHandler(JsonFactory jsonFactory) {
+      this.jsonFactory = jsonFactory;
+    }
+
+    @Override
+    protected FirebaseMessagingException createException(FirebaseException base) {
+      String message = getCustomMessage(base);
+      return FirebaseMessagingException.withCustomMessage(base, message);
+    }
+
+    private String getCustomMessage(FirebaseException base) {
+      String response = getResponse(base);
+      InstanceIdServiceErrorResponse parsed = safeParse(response);
+      if (!Strings.isNullOrEmpty(parsed.error)) {
+        return parsed.error;
+      }
+
+      return base.getMessage();
+    }
+
+    private String getResponse(FirebaseException base) {
+      if (base.getHttpResponse() == null) {
+        return null;
+      }
+
+      return base.getHttpResponse().getContent();
+    }
+
+    private InstanceIdServiceErrorResponse safeParse(String response) {
+      InstanceIdServiceErrorResponse parsed = new InstanceIdServiceErrorResponse();
+      if (!Strings.isNullOrEmpty(response)) {
+        // Parse the error response from the IID service.
+        // Sample response: {"error": "error message text"}
+        try {
+          jsonFactory.createJsonParser(response).parse(parsed);
+        } catch (IOException ignore) {
+          // Ignore any error that may occur while parsing the error response. The server
+          // may have responded with a non-json payload.
+        }
+      }
+
+      return parsed;
+    }
   }
 }
