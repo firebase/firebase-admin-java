@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.collect.ImmutableList;
@@ -39,6 +40,8 @@ import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.testing.GenericFunction;
 import com.google.firebase.testing.TestResponseInterceptor;
+import com.google.firebase.testing.TestUtils;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -197,6 +200,57 @@ public class FirebaseInstanceIdTest {
     } finally {
       app.delete();
     }
+  }
+
+  @Test
+  public void testDeleteInstanceIdTransportError() throws Exception {
+    HttpTransport transport = TestUtils.createFaultyHttpTransport();
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId("test-project")
+        .setHttpTransport(transport)
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
+    // Disable retries by passing a regular HttpRequestFactory.
+    FirebaseInstanceId instanceId = new FirebaseInstanceId(app, transport.createRequestFactory());
+
+    try {
+      instanceId.deleteInstanceIdAsync("test-iid").get();
+      fail("No error thrown for HTTP error");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseInstanceIdException);
+      FirebaseInstanceIdException error = (FirebaseInstanceIdException) e.getCause();
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
+      assertEquals(
+          "Unknown error while making a remote service call: transport error",
+          error.getMessage());
+      assertTrue(error.getCause() instanceof IOException);
+      assertNull(error.getHttpResponse());
+    }
+  }
+
+  @Test
+  public void testDeleteInstanceIdInvalidJsonIgnored() throws Exception {
+    final MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId("test-project")
+        .setHttpTransport(transport)
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
+
+    // Disable retries by passing a regular HttpRequestFactory.
+    FirebaseInstanceId instanceId = new FirebaseInstanceId(app, transport.createRequestFactory());
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    instanceId.setInterceptor(interceptor);
+    response.setContent("not json");
+
+    instanceId.deleteInstanceIdAsync("test-iid").get();
+
+    assertNotNull(interceptor.getResponse());
   }
 
   private void checkFirebaseInstanceIdException(FirebaseInstanceIdException error, int statusCode) {
