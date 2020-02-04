@@ -106,7 +106,8 @@ public final class ErrorHandlingHttpClient<T extends FirebaseException> {
     }
   }
 
-  private <V> V parse(IncomingHttpResponse response, Class<V> responseType) throws T {
+  public <V> V parse(IncomingHttpResponse response, Class<V> responseType) throws T {
+    checkNotNull(responseType, "responseType must not be null");
     try {
       JsonParser parser = jsonFactory.createJsonParser(response.getContent());
       return parser.parseAndClose(responseType);

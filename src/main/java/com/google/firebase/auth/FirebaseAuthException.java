@@ -25,8 +25,11 @@ package com.google.firebase.auth;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.base.Strings;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseException;
+import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.Nullable;
 
 /**
  * Generic exception related to Firebase Authentication. Check the error code and message for more
@@ -34,22 +37,42 @@ import com.google.firebase.internal.NonNull;
  */
 public class FirebaseAuthException extends FirebaseException {
 
-  private final String errorCode;
+  private final AuthErrorCode errorCode;
+  private final String deprecatedErrorCode;
 
+  FirebaseAuthException(
+      @NonNull ErrorCode errorCode,
+      @NonNull String message,
+      Throwable cause,
+      IncomingHttpResponse response,
+      AuthErrorCode authErrorCode) {
+    super(errorCode, message, cause, response);
+    this.errorCode = authErrorCode;
+    this.deprecatedErrorCode = null;
+  }
+
+  @Deprecated
   public FirebaseAuthException(@NonNull String errorCode, @NonNull String detailMessage) {
     this(errorCode, detailMessage, null);
   }
 
-  public FirebaseAuthException(@NonNull String errorCode, @NonNull String detailMessage,
-                               Throwable throwable) {
+  @Deprecated
+  public FirebaseAuthException(
+      @NonNull String errorCode, @NonNull String detailMessage, Throwable throwable) {
     super(detailMessage, throwable);
     checkArgument(!Strings.isNullOrEmpty(errorCode));
-    this.errorCode = errorCode;
+    this.errorCode = null;
+    this.deprecatedErrorCode = errorCode;
+  }
+
+  @Nullable
+  public AuthErrorCode getAuthErrorCode() {
+    return errorCode;
   }
 
   /** Returns an error code that may provide more information about the error. */
-  @NonNull
-  public String getErrorCode() {
-    return errorCode;
+  @Deprecated
+  public String getDeprecatedErrorCode() {
+    return deprecatedErrorCode;
   }
 }

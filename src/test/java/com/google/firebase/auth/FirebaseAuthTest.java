@@ -32,7 +32,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
-import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.lang.reflect.InvocationTargetException;
@@ -235,7 +234,7 @@ public class FirebaseAuthTest {
       auth.verifyIdToken("idtoken");
       fail("No error thrown for invalid token");
     } catch (FirebaseAuthException authException) {
-      assertEquals("TEST_CODE", authException.getErrorCode());
+      assertEquals("TEST_CODE", authException.getDeprecatedErrorCode());
       assertEquals("Test error message", authException.getMessage());
       assertEquals("idtoken", tokenVerifier.getLastTokenString());
     }
@@ -264,7 +263,7 @@ public class FirebaseAuthTest {
       fail("No error thrown for invalid token");
     } catch (ExecutionException e) {
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals("TEST_CODE", authException.getErrorCode());
+      assertEquals("TEST_CODE", authException.getDeprecatedErrorCode());
       assertEquals("Test error message", authException.getMessage());
       assertEquals("idtoken", tokenVerifier.getLastTokenString());
     }
@@ -281,7 +280,7 @@ public class FirebaseAuthTest {
       fail("No error thrown for invalid token");
     } catch (ExecutionException e) {
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals("TEST_CODE", authException.getErrorCode());
+      assertEquals("TEST_CODE", authException.getDeprecatedErrorCode());
       assertEquals("Test error message", authException.getMessage());
       assertEquals("idtoken", tokenVerifier.getLastTokenString());
     }
@@ -366,7 +365,7 @@ public class FirebaseAuthTest {
       auth.verifySessionCookie("idtoken");
       fail("No error thrown for invalid token");
     } catch (FirebaseAuthException authException) {
-      assertEquals("TEST_CODE", authException.getErrorCode());
+      assertEquals("TEST_CODE", authException.getDeprecatedErrorCode());
       assertEquals("Test error message", authException.getMessage());
       assertEquals("idtoken", tokenVerifier.getLastTokenString());
     }
@@ -395,7 +394,7 @@ public class FirebaseAuthTest {
       fail("No error thrown for invalid token");
     } catch (ExecutionException e) {
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals("TEST_CODE", authException.getErrorCode());
+      assertEquals("TEST_CODE", authException.getDeprecatedErrorCode());
       assertEquals("Test error message", authException.getMessage());
       assertEquals("idtoken", tokenVerifier.getLastTokenString());
     }
@@ -412,7 +411,7 @@ public class FirebaseAuthTest {
       fail("No error thrown for invalid token");
     } catch (ExecutionException e) {
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals("TEST_CODE", authException.getErrorCode());
+      assertEquals("TEST_CODE", authException.getDeprecatedErrorCode());
       assertEquals("Test error message", authException.getMessage());
       assertEquals("idtoken", tokenVerifier.getLastTokenString());
     }

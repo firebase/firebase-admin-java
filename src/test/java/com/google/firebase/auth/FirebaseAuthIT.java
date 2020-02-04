@@ -97,7 +97,7 @@ public class FirebaseAuthIT {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+          ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
     }
   }
 
@@ -109,7 +109,7 @@ public class FirebaseAuthIT {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+          ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
     }
   }
 
@@ -121,7 +121,7 @@ public class FirebaseAuthIT {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+          ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
     }
   }
 
@@ -133,7 +133,7 @@ public class FirebaseAuthIT {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+          ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
     }
   }
 
@@ -244,7 +244,7 @@ public class FirebaseAuthIT {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+          ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
     }
   }
 
@@ -409,7 +409,7 @@ public class FirebaseAuthIT {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       assertEquals(RevocationCheckDecorator.ID_TOKEN_REVOKED_ERROR,
-                   ((FirebaseAuthException) e.getCause()).getErrorCode());
+                   ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
     }
     idToken = signInWithCustomToken(customToken);
     decoded = auth.verifyIdTokenAsync(idToken, true).get();
@@ -443,7 +443,7 @@ public class FirebaseAuthIT {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       assertEquals(RevocationCheckDecorator.SESSION_COOKIE_REVOKED_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+          ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
     }
 
     idToken = signInWithCustomToken(customToken);
@@ -692,7 +692,8 @@ public class FirebaseAuthIT {
       fail("No error thrown for creating user with existing ID");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals("uid-already-exists", ((FirebaseAuthException) e.getCause()).getErrorCode());
+      assertEquals(
+          "uid-already-exists", ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
     }
   }
 

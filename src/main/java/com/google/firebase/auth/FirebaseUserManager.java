@@ -21,30 +21,32 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
-import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.util.Key;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseException;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
+import com.google.firebase.auth.internal.AuthServiceErrorResponse;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
-
-import com.google.firebase.auth.internal.HttpErrorResponse;
 import com.google.firebase.auth.internal.UploadAccountResponse;
+import com.google.firebase.internal.AbstractHttpErrorHandler;
 import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.ErrorHandlingHttpClient;
+import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.SdkUtils;
@@ -63,28 +65,6 @@ import java.util.Map;
 class FirebaseUserManager {
 
   static final String USER_NOT_FOUND_ERROR = "user-not-found";
-  static final String INTERNAL_ERROR = "internal-error";
-
-  // Map of server-side error codes to SDK error codes.
-  // SDK error codes defined at: https://firebase.google.com/docs/auth/admin/errors
-  private static final Map<String, String> ERROR_CODES = ImmutableMap.<String, String>builder()
-      .put("CLAIMS_TOO_LARGE", "claims-too-large")
-      .put("CONFIGURATION_NOT_FOUND", "project-not-found")
-      .put("INSUFFICIENT_PERMISSION", "insufficient-permission")
-      .put("DUPLICATE_EMAIL", "email-already-exists")
-      .put("DUPLICATE_LOCAL_ID", "uid-already-exists")
-      .put("EMAIL_EXISTS", "email-already-exists")
-      .put("INVALID_CLAIMS", "invalid-claims")
-      .put("INVALID_EMAIL", "invalid-email")
-      .put("INVALID_PAGE_SELECTION", "invalid-page-token")
-      .put("INVALID_PHONE_NUMBER", "invalid-phone-number")
-      .put("PHONE_NUMBER_EXISTS", "phone-number-already-exists")
-      .put("PROJECT_NOT_FOUND", "project-not-found")
-      .put("USER_NOT_FOUND", USER_NOT_FOUND_ERROR)
-      .put("WEAK_PASSWORD", "invalid-password")
-      .put("UNAUTHORIZED_DOMAIN", "unauthorized-continue-uri")
-      .put("INVALID_DYNAMIC_LINK_DOMAIN", "invalid-dynamic-link-domain")
-      .build();
 
   static final int MAX_LIST_USERS_RESULTS = 1000;
   static final int MAX_IMPORT_USERS = 1000;
@@ -99,7 +79,7 @@ class FirebaseUserManager {
 
   private final String baseUrl;
   private final JsonFactory jsonFactory;
-  private final HttpRequestFactory requestFactory;
+  private final ErrorHandlingHttpClient<FirebaseAuthException> httpClient;
   private final String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
 
   private HttpResponseInterceptor interceptor;
@@ -127,7 +107,8 @@ class FirebaseUserManager {
       requestFactory = ApiClientUtils.newAuthorizedRequestFactory(app);
     }
 
-    this.requestFactory = requestFactory;
+    AuthErrorHandler authErrorHandler = new AuthErrorHandler(jsonFactory);
+    this.httpClient = new ErrorHandlingHttpClient<>(requestFactory, jsonFactory, authErrorHandler);
   }
 
   @VisibleForTesting
@@ -138,66 +119,34 @@ class FirebaseUserManager {
   UserRecord getUserById(String uid) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "localId", ImmutableList.of(uid));
-    GetAccountInfoResponse response = post(
-        "/accounts:lookup", payload, GetAccountInfoResponse.class);
-    if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
-      throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
-          "No user record found for the provided user ID: " + uid);
-    }
-    return new UserRecord(response.getUsers().get(0), jsonFactory);
+    return lookupUserAccount(payload, "user ID: " + uid);
   }
 
   UserRecord getUserByEmail(String email) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "email", ImmutableList.of(email));
-    GetAccountInfoResponse response = post(
-        "/accounts:lookup", payload, GetAccountInfoResponse.class);
-    if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
-      throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
-          "No user record found for the provided email: " + email);
-    }
-    return new UserRecord(response.getUsers().get(0), jsonFactory);
+    return lookupUserAccount(payload, "email: " + email);
   }
 
   UserRecord getUserByPhoneNumber(String phoneNumber) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "phoneNumber", ImmutableList.of(phoneNumber));
-    GetAccountInfoResponse response = post(
-        "/accounts:lookup", payload, GetAccountInfoResponse.class);
-    if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
-      throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
-          "No user record found for the provided phone number: " + phoneNumber);
-    }
-    return new UserRecord(response.getUsers().get(0), jsonFactory);
+    return lookupUserAccount(payload, "phone number: " + phoneNumber);
   }
 
   String createUser(CreateRequest request) throws FirebaseAuthException {
     GenericJson response = post(
         "/accounts", request.getProperties(), GenericJson.class);
-    if (response != null) {
-      String uid = (String) response.get("localId");
-      if (!Strings.isNullOrEmpty(uid)) {
-        return uid;
-      }
-    }
-    throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create new user");
+    return (String) response.get("localId");
   }
 
   void updateUser(UpdateRequest request, JsonFactory jsonFactory) throws FirebaseAuthException {
-    GenericJson response = post(
-        "/accounts:update", request.getProperties(jsonFactory), GenericJson.class);
-    if (response == null || !request.getUid().equals(response.get("localId"))) {
-      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to update user: " + request.getUid());
-    }
+    post("/accounts:update", request.getProperties(jsonFactory), GenericJson.class);
   }
 
   void deleteUser(String uid) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of("localId", uid);
-    GenericJson response = post(
-        "/accounts:delete", payload, GenericJson.class);
-    if (response == null || !response.containsKey("kind")) {
-      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to delete user: " + uid);
-    }
+    post("/accounts:delete", payload, GenericJson.class);
   }
 
   DownloadAccountResponse listUsers(int maxResults, String pageToken) throws FirebaseAuthException {
@@ -210,21 +159,14 @@ class FirebaseUserManager {
 
     GenericUrl url = new GenericUrl(baseUrl + "/accounts:batchGet");
     url.putAll(builder.build());
-    DownloadAccountResponse response = sendRequest(
-            "GET", url, null, DownloadAccountResponse.class);
-    if (response == null) {
-      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to retrieve users.");
-    }
-    return response;
+    return sendRequest(
+        HttpMethods.GET, url.toString(), null, DownloadAccountResponse.class);
   }
 
   UserImportResult importUsers(UserImportRequest request) throws FirebaseAuthException {
     checkNotNull(request);
     UploadAccountResponse response = post(
-            "/accounts:batchCreate", request, UploadAccountResponse.class);
-    if (response == null) {
-      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to import users.");
-    }
+        "/accounts:batchCreate", request, UploadAccountResponse.class);
     return new UserImportResult(request.getUsersCount(), response);
   }
 
@@ -233,13 +175,7 @@ class FirebaseUserManager {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "idToken", idToken, "validDuration", options.getExpiresInSeconds());
     GenericJson response = post(":createSessionCookie", payload, GenericJson.class);
-    if (response != null) {
-      String cookie = (String) response.get("sessionCookie");
-      if (!Strings.isNullOrEmpty(cookie)) {
-        return cookie;
-      }
-    }
-    throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create session cookie");
+    return (String) response.get("sessionCookie");
   }
 
   String getEmailActionLink(EmailLinkType type, String email,
@@ -251,71 +187,49 @@ class FirebaseUserManager {
     if (settings != null) {
       payload.putAll(settings.getProperties());
     }
+
     GenericJson response = post("/accounts:sendOobCode", payload.build(), GenericJson.class);
-    if (response != null) {
-      String link = (String) response.get("oobLink");
-      if (!Strings.isNullOrEmpty(link)) {
-        return link;
-      }
+    return (String) response.get("oobLink");
+  }
+
+  private UserRecord lookupUserAccount(
+      Map<String, Object> payload, String identifier) throws FirebaseAuthException {
+    IncomingHttpResponse response = sendRequest(
+        HttpMethods.POST, baseUrl + "/accounts:lookup", payload);
+    GetAccountInfoResponse parsed = httpClient.parse(response, GetAccountInfoResponse.class);
+    if (parsed.getUsers() == null || parsed.getUsers().isEmpty()) {
+      throw new FirebaseAuthException(ErrorCode.NOT_FOUND,
+          "No user record found for the provided " + identifier,
+          null,
+          response,
+          AuthErrorCode.USER_NOT_FOUND);
     }
-    throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create email action link");
+
+    return new UserRecord(parsed.getUsers().get(0), jsonFactory);
   }
 
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {
     checkArgument(!Strings.isNullOrEmpty(path), "path must not be null or empty");
     checkNotNull(content, "content must not be null for POST requests");
-    GenericUrl url = new GenericUrl(baseUrl + path);
-    return sendRequest("POST", url, content, clazz);
+    return sendRequest(HttpMethods.POST, baseUrl + path, content, clazz);
   }
 
   private <T> T sendRequest(
-          String method, GenericUrl url,
-          @Nullable Object content, Class<T> clazz) throws FirebaseAuthException {
+      String method, String url, @Nullable Object content, Class<T> clazz)
+      throws FirebaseAuthException {
 
-    checkArgument(!Strings.isNullOrEmpty(method), "method must not be null or empty");
-    checkNotNull(url, "url must not be null");
-    checkNotNull(clazz, "response class must not be null");
-    HttpResponse response = null;
-    try {
-      HttpContent httpContent = content != null ? new JsonHttpContent(jsonFactory, content) : null;
-      HttpRequest request = requestFactory.buildRequest(method, url, httpContent);
-      request.setParser(new JsonObjectParser(jsonFactory));
-      request.getHeaders().set(CLIENT_VERSION_HEADER, clientVersion);
-      request.setResponseInterceptor(interceptor);
-      response = request.execute();
-      return response.parseAs(clazz);
-    } catch (HttpResponseException e) {
-      // Server responded with an HTTP error
-      handleHttpError(e);
-      return null;
-    } catch (IOException e) {
-      // All other IO errors (Connection refused, reset, parse error etc.)
-      throw new FirebaseAuthException(
-          INTERNAL_ERROR, "Error while calling user management backend service", e);
-    } finally {
-      if (response != null) {
-        try {
-          response.disconnect();
-        } catch (IOException ignored) {
-          // Ignored
-        }
-      }
-    }
+    IncomingHttpResponse response = sendRequest(method, url, content);
+    return httpClient.parse(response, clazz);
   }
 
-  private void handleHttpError(HttpResponseException e) throws FirebaseAuthException {
-    try {
-      HttpErrorResponse response = jsonFactory.fromString(e.getContent(), HttpErrorResponse.class);
-      String code = ERROR_CODES.get(response.getErrorCode());
-      if (code != null) {
-        throw new FirebaseAuthException(code, "User management service responded with an error", e);
-      }
-    } catch (IOException ignored) {
-      // Ignored
-    }
-    String msg = String.format(
-        "Unexpected HTTP response with status: %d; body: %s", e.getStatusCode(), e.getContent());
-    throw new FirebaseAuthException(INTERNAL_ERROR, msg, e);
+  private IncomingHttpResponse sendRequest(
+      String method, String url, @Nullable Object content) throws FirebaseAuthException {
+
+    HttpContent httpContent = content != null ? new JsonHttpContent(jsonFactory, content) : null;
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildRequest(method, url, httpContent)
+        .addHeader(CLIENT_VERSION_HEADER, clientVersion)
+        .setResponseInterceptor(interceptor);
+    return httpClient.send(requestInfo);
   }
 
   static class UserImportRequest extends GenericJson {
@@ -356,5 +270,53 @@ class FirebaseUserManager {
     VERIFY_EMAIL,
     EMAIL_SIGNIN,
     PASSWORD_RESET,
+  }
+
+  private static class AuthErrorHandler extends AbstractHttpErrorHandler<FirebaseAuthException> {
+
+    private final JsonFactory jsonFactory;
+
+    AuthErrorHandler(JsonFactory jsonFactory) {
+      this.jsonFactory = jsonFactory;
+    }
+
+    @Override
+    protected FirebaseAuthException createException(FirebaseException base) {
+      String response = getResponse(base);
+      AuthServiceErrorResponse parsed = safeParse(response);
+      String message = parsed.getErrorMessage();
+      if (Strings.isNullOrEmpty(message)) {
+        message = base.getMessage();
+      }
+
+      return new FirebaseAuthException(
+          base.getErrorCodeNew(),
+          message,
+          base.getCause(),
+          base.getHttpResponse(),
+          parsed.getAuthErrorCode());
+    }
+
+    private String getResponse(FirebaseException base) {
+      if (base.getHttpResponse() == null) {
+        return null;
+      }
+
+      return base.getHttpResponse().getContent();
+    }
+
+    private AuthServiceErrorResponse safeParse(String response) {
+      if (!Strings.isNullOrEmpty(response)) {
+        try {
+          return jsonFactory.createJsonParser(response)
+              .parseAndClose(AuthServiceErrorResponse.class);
+        } catch (IOException ignore) {
+          // Ignore any error that may occur while parsing the error response. The server
+          // may have responded with a non-json payload.
+        }
+      }
+
+      return new AuthServiceErrorResponse();
+    }
   }
 }

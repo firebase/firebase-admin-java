@@ -37,6 +37,7 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -117,7 +118,12 @@ public class FirebaseUserManagerTest {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, authException.getErrorCode());
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCodeNew());
+      assertEquals(
+          "No user record found for the provided user ID: testuser", authException.getMessage());
+      assertNull(authException.getCause());
+      assertNotNull(authException.getHttpResponse());
+      assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 
@@ -140,7 +146,13 @@ public class FirebaseUserManagerTest {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, authException.getErrorCode());
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCodeNew());
+      assertEquals(
+          "No user record found for the provided email: testuser@example.com",
+          authException.getMessage());
+      assertNull(authException.getCause());
+      assertNotNull(authException.getHttpResponse());
+      assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 
@@ -163,7 +175,13 @@ public class FirebaseUserManagerTest {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, authException.getErrorCode());
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCodeNew());
+      assertEquals(
+          "No user record found for the provided phone number: +1234567890",
+          authException.getMessage());
+      assertNull(authException.getCause());
+      assertNotNull(authException.getHttpResponse());
+      assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 
@@ -182,7 +200,7 @@ public class FirebaseUserManagerTest {
     checkRequestHeaders(interceptor);
 
     GenericUrl url = interceptor.getResponse().getRequest().getUrl();
-    assertEquals(999, url.getFirst("maxResults"));
+    assertEquals("999", url.getFirst("maxResults"));
     assertNull(url.getFirst("nextPageToken"));
   }
 
@@ -201,7 +219,7 @@ public class FirebaseUserManagerTest {
     checkRequestHeaders(interceptor);
 
     GenericUrl url = interceptor.getResponse().getRequest().getUrl();
-    assertEquals(999, url.getFirst("maxResults"));
+    assertEquals("999", url.getFirst("maxResults"));
     assertEquals("token", url.getFirst("nextPageToken"));
   }
 
@@ -552,9 +570,15 @@ public class FirebaseUserManagerTest {
 
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     FirebaseAuth auth = getRetryDisabledAuth(response);
+    Map<Integer, ErrorCode> codes = ImmutableMap.of(
+        302, ErrorCode.UNKNOWN,
+        400, ErrorCode.INVALID_ARGUMENT,
+        401, ErrorCode.UNAUTHENTICATED,
+        404, ErrorCode.NOT_FOUND,
+        500, ErrorCode.INTERNAL);
 
     // Test for common HTTP error codes
-    for (int code : ImmutableList.of(302, 400, 401, 404, 500)) {
+    for (int code : codes.keySet()) {
       for (UserManagerOp operation : operations) {
         // Need to reset these every iteration
         response.setContent("{}");
@@ -565,15 +589,17 @@ public class FirebaseUserManagerTest {
         } catch (ExecutionException e) {
           assertTrue(e.getCause() instanceof FirebaseAuthException);
           FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-          String msg = String.format("Unexpected HTTP response with status: %d; body: {}", code);
+          assertEquals(codes.get(code), authException.getErrorCodeNew());
+          String msg = String.format("Unexpected HTTP response with status: %d\n{}", code);
           assertEquals(msg, authException.getMessage());
           assertTrue(authException.getCause() instanceof HttpResponseException);
-          assertEquals(FirebaseUserManager.INTERNAL_ERROR, authException.getErrorCode());
+          assertNotNull(authException.getHttpResponse());
+          assertNull(authException.getAuthErrorCode());
         }
       }
     }
 
-    // Test error payload parsing
+    // Test error payload with code
     for (UserManagerOp operation : operations) {
       response.setContent("{\"error\": {\"message\": \"USER_NOT_FOUND\"}}");
       response.setStatusCode(500);
@@ -583,9 +609,33 @@ public class FirebaseUserManagerTest {
       }  catch (ExecutionException e) {
         assertTrue(e.getCause().toString(), e.getCause() instanceof FirebaseAuthException);
         FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-        assertEquals("User management service responded with an error", authException.getMessage());
+        assertEquals(ErrorCode.INTERNAL, authException.getErrorCodeNew());
+        assertEquals(
+            "No user record found for the given identifier (USER_NOT_FOUND).",
+            authException.getMessage());
         assertTrue(authException.getCause() instanceof HttpResponseException);
-        assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, authException.getErrorCode());
+        assertNotNull(authException.getHttpResponse());
+        assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
+      }
+    }
+
+    // Test error payload with code and details
+    for (UserManagerOp operation : operations) {
+      response.setContent("{\"error\": {\"message\": \"USER_NOT_FOUND: Extra details\"}}");
+      response.setStatusCode(500);
+      try {
+        operation.call(auth);
+        fail("No error thrown for HTTP error");
+      }  catch (ExecutionException e) {
+        assertTrue(e.getCause().toString(), e.getCause() instanceof FirebaseAuthException);
+        FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+        assertEquals(ErrorCode.INTERNAL, authException.getErrorCodeNew());
+        assertEquals(
+            "No user record found for the given identifier (USER_NOT_FOUND): Extra details",
+            authException.getMessage());
+        assertTrue(authException.getCause() instanceof HttpResponseException);
+        assertNotNull(authException.getHttpResponse());
+        assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
       }
     }
   }
@@ -599,8 +649,12 @@ public class FirebaseUserManagerTest {
     }  catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(ErrorCode.UNKNOWN, authException.getErrorCodeNew());
+      assertTrue(
+          authException.getMessage().startsWith("Error while parsing HTTP response: "));
       assertTrue(authException.getCause() instanceof IOException);
-      assertEquals(FirebaseUserManager.INTERNAL_ERROR, authException.getErrorCode());
+      assertNotNull(authException.getHttpResponse());
+      assertNull(authException.getAuthErrorCode());
     }
   }
 
@@ -616,10 +670,12 @@ public class FirebaseUserManagerTest {
     }  catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertTrue(authException.getCause() instanceof HttpResponseException);
-      assertEquals("Unexpected HTTP response with status: 500; body: {\"not\" json}",
+      assertEquals(ErrorCode.INTERNAL, authException.getErrorCodeNew());
+      assertEquals("Unexpected HTTP response with status: 500\n{\"not\" json}",
           authException.getMessage());
-      assertEquals(FirebaseUserManager.INTERNAL_ERROR, authException.getErrorCode());
+      assertTrue(authException.getCause() instanceof HttpResponseException);
+      assertNotNull(authException.getHttpResponse());
+      assertNull(authException.getAuthErrorCode());
     }
   }
 
@@ -1169,7 +1225,7 @@ public class FirebaseUserManagerTest {
       userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseAuthException e) {
-      assertEquals("unauthorized-continue-uri", e.getErrorCode());
+      assertEquals(AuthErrorCode.UNAUTHORIZED_CONTINUE_URL, e.getAuthErrorCode());
       assertTrue(e.getCause() instanceof HttpResponseException);
     }
   }
@@ -1185,8 +1241,11 @@ public class FirebaseUserManagerTest {
       userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseAuthException e) {
-      assertEquals("internal-error", e.getErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
+      assertEquals("Unexpected HTTP response with status: 500\n{}", e.getMessage());
       assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+      assertNull(e.getAuthErrorCode());
     }
   }
 
