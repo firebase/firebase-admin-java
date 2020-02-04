@@ -137,7 +137,7 @@ public class FirebaseAuthIT {
       assertEquals(
           "No user record found for the given identifier (USER_NOT_FOUND).",
           authException.getMessage());
-      assertEquals(ErrorCode.INVALID_ARGUMENT, authException.getErrorCodeNew());
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCodeNew());
       assertNotNull(authException.getCause());
       assertNotNull(authException.getHttpResponse());
       assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
@@ -155,7 +155,7 @@ public class FirebaseAuthIT {
       assertEquals(
           "No user record found for the given identifier (USER_NOT_FOUND).",
           authException.getMessage());
-      assertEquals(ErrorCode.INVALID_ARGUMENT, authException.getErrorCodeNew());
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCodeNew());
       assertNotNull(authException.getCause());
       assertNotNull(authException.getHttpResponse());
       assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
@@ -270,9 +270,9 @@ public class FirebaseAuthIT {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
       assertEquals(
-          "No user record found for the given identifier (USER_NOT_FOUND).",
+          "No user record found for the provided user ID: " + userRecord.getUid(),
           authException.getMessage());
-      assertEquals(ErrorCode.INVALID_ARGUMENT, authException.getErrorCodeNew());
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCodeNew());
       assertNull(authException.getCause());
       assertNotNull(authException.getHttpResponse());
       assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
@@ -723,8 +723,14 @@ public class FirebaseAuthIT {
       fail("No error thrown for creating user with existing ID");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(ErrorCode.ALREADY_EXISTS, authException.getErrorCodeNew());
       assertEquals(
-          "uid-already-exists", ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
+          "The user with the provided uid already exists (DUPLICATE_LOCAL_ID).",
+          authException.getMessage());
+      assertNotNull(authException.getCause());
+      assertNotNull(authException.getHttpResponse());
+      assertEquals(AuthErrorCode.UID_ALREADY_EXISTS, authException.getAuthErrorCode());
     }
   }
 

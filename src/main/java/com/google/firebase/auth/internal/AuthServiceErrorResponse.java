@@ -16,104 +16,55 @@
 
 package com.google.firebase.auth.internal;
 
+import com.google.api.client.json.GenericJson;
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
-import com.google.firebase.FirebaseException;
-import com.google.firebase.auth.AuthErrorCode;
 import com.google.firebase.internal.Nullable;
-import java.util.Map;
 
 /**
- * JSON data binding for JSON error messages sent by Google identity toolkit service. Message
- * format for these errors take the form `{"message": "code: optional details"}`.
+ * JSON data binding for JSON error messages sent by Google identity toolkit service. These
+ * error messages take the form `{"error": {"message": "CODE: OPTIONAL DETAILS"}}`.
  */
 public final class AuthServiceErrorResponse {
 
-  private static final Map<String, AuthErrorCode> ERROR_CODES =
-      ImmutableMap.<String, AuthErrorCode>builder()
-        .put("DUPLICATE_EMAIL", AuthErrorCode.EMAIL_ALREADY_EXISTS)
-        .put("DUPLICATE_LOCAL_ID", AuthErrorCode.UID_ALREADY_EXISTS)
-        .put("EMAIL_EXISTS", AuthErrorCode.EMAIL_ALREADY_EXISTS)
-        .put("INVALID_DYNAMIC_LINK_DOMAIN", AuthErrorCode.INVALID_DYNAMIC_LINK_DOMAIN)
-        .put("PHONE_NUMBER_EXISTS", AuthErrorCode.PHONE_NUMBER_ALREADY_EXISTS)
-        .put("UNAUTHORIZED_DOMAIN", AuthErrorCode.UNAUTHORIZED_CONTINUE_URL)
-        .put("USER_NOT_FOUND", AuthErrorCode.USER_NOT_FOUND)
-        .build();
-
-  private static final Map<String, String> ERROR_MESSAGES =
-      ImmutableMap.<String, String>builder()
-          .put("DUPLICATE_EMAIL", "The user with the provided email already exists")
-          .put("DUPLICATE_LOCAL_ID", "The user with the provided uid already exists")
-          .put("EMAIL_EXISTS", "The user with the provided email already exists")
-          .put("INVALID_DYNAMIC_LINK_DOMAIN", "The provided dynamic link domain is not "
-              + "configured or authorized for the current project.")
-          .put("PHONE_NUMBER_EXISTS", "The user with the provided phone number already exists")
-          .put("UNAUTHORIZED_DOMAIN", "The domain of the continue URL is not whitelisted. "
-              + "Whitelist the domain in the Firebase console.")
-          .put("USER_NOT_FOUND", "No user record found for the given identifier")
-          .build();
-
   @Key("error")
-  private Error error;
+  private GenericJson error;
 
   @Nullable
-  public AuthErrorCode getAuthErrorCode() {
-    if (error != null) {
-      return ERROR_CODES.get(error.getCode());
+  public String getCode() {
+    String message = getMessage();
+    if (Strings.isNullOrEmpty(message)) {
+      return null;
+    }
+
+    int separator = message.indexOf(':');
+    if (separator != -1) {
+      return message.substring(0, separator);
+    }
+
+    return message;
+  }
+
+  @Nullable
+  public String getDetail() {
+    String message = getMessage();
+    if (Strings.isNullOrEmpty(message)) {
+      return null;
+    }
+
+    int separator = message.indexOf(':');
+    if (separator != -1) {
+      return message.substring(separator + 1).trim();
     }
 
     return null;
   }
 
-  @Nullable
-  public String getErrorMessage() {
+  private String getMessage() {
     if (error == null) {
       return null;
     }
 
-    String code = error.getCode();
-    String message = ERROR_MESSAGES.get(code);
-    if (Strings.isNullOrEmpty(message)) {
-      return null;
-    }
-
-    String detail = error.getDetail();
-    if (Strings.isNullOrEmpty(detail)) {
-      return String.format("%s (%s).", message, code);
-    }
-
-    return String.format("%s (%s): %s", message, code, detail);
-  }
-
-  public static class Error {
-    @Key("message")
-    private String message;
-
-    String getCode() {
-      if (Strings.isNullOrEmpty(message)) {
-        return null;
-      }
-
-      int separator = message.indexOf(':');
-      if (separator != -1) {
-        return message.substring(0, separator);
-      }
-
-      return message;
-    }
-
-    String getDetail() {
-      if (Strings.isNullOrEmpty(message)) {
-        return null;
-      }
-
-      int separator = message.indexOf(':');
-      if (separator != -1) {
-        return message.substring(separator + 1).trim();
-      }
-
-      return null;
-    }
+    return (String) error.get("message");
   }
 }

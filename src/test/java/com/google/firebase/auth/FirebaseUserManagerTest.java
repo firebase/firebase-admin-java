@@ -609,7 +609,7 @@ public class FirebaseUserManagerTest {
       }  catch (ExecutionException e) {
         assertTrue(e.getCause().toString(), e.getCause() instanceof FirebaseAuthException);
         FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-        assertEquals(ErrorCode.INTERNAL, authException.getErrorCodeNew());
+        assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCodeNew());
         assertEquals(
             "No user record found for the given identifier (USER_NOT_FOUND).",
             authException.getMessage());
@@ -629,7 +629,7 @@ public class FirebaseUserManagerTest {
       }  catch (ExecutionException e) {
         assertTrue(e.getCause().toString(), e.getCause() instanceof FirebaseAuthException);
         FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-        assertEquals(ErrorCode.INTERNAL, authException.getErrorCodeNew());
+        assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCodeNew());
         assertEquals(
             "No user record found for the given identifier (USER_NOT_FOUND): Extra details",
             authException.getMessage());
@@ -1225,8 +1225,33 @@ public class FirebaseUserManagerTest {
       userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseAuthException e) {
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCodeNew());
+      assertEquals(
+          "The domain of the continue URL is not whitelisted (UNAUTHORIZED_DOMAIN).",
+          e.getMessage());
       assertEquals(AuthErrorCode.UNAUTHORIZED_CONTINUE_URL, e.getAuthErrorCode());
       assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+    }
+  }
+
+  @Test
+  public void testHttpErrorWithUnknownCode() {
+    String content = "{\"error\": {\"message\": \"SOMETHING_NEW\"}}";
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent(content)
+        .setStatusCode(500);
+    FirebaseAuth auth = getRetryDisabledAuth(response);
+    FirebaseUserManager userManager = auth.getUserManager();
+    try {
+      userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
+      fail("No exception thrown for HTTP error");
+    } catch (FirebaseAuthException e) {
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
+      assertEquals("Unexpected HTTP response with status: 500\n" + content, e.getMessage());
+      assertNull(e.getAuthErrorCode());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
     }
   }
 
