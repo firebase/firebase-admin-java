@@ -34,16 +34,13 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseException;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
-import com.google.firebase.auth.internal.AuthServiceErrorResponse;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 import com.google.firebase.auth.internal.UploadAccountResponse;
-import com.google.firebase.internal.AbstractHttpErrorHandler;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.ErrorHandlingHttpClient;
 import com.google.firebase.internal.HttpRequestInfo;
@@ -51,7 +48,6 @@ import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.SdkUtils;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -267,139 +263,5 @@ class FirebaseUserManager {
     VERIFY_EMAIL,
     EMAIL_SIGNIN,
     PASSWORD_RESET,
-  }
-
-  private static final Map<String, ErrorInfo> ERROR_CODES =
-      ImmutableMap.<String, ErrorInfo>builder()
-          .put(
-              "DUPLICATE_EMAIL",
-              new ErrorInfo(
-                  ErrorCode.ALREADY_EXISTS,
-                  "The user with the provided email already exists",
-                  AuthErrorCode.EMAIL_ALREADY_EXISTS))
-          .put(
-              "DUPLICATE_LOCAL_ID",
-              new ErrorInfo(
-                  ErrorCode.ALREADY_EXISTS,
-                  "The user with the provided uid already exists",
-                  AuthErrorCode.UID_ALREADY_EXISTS))
-          .put(
-              "EMAIL_EXISTS",
-              new ErrorInfo(
-                  ErrorCode.ALREADY_EXISTS,
-                  "The user with the provided email already exists",
-                  AuthErrorCode.EMAIL_ALREADY_EXISTS))
-          .put(
-              "INVALID_DYNAMIC_LINK_DOMAIN",
-              new ErrorInfo(
-                  ErrorCode.INVALID_ARGUMENT,
-                  "The provided dynamic link domain is not "
-                      + "configured or authorized for the current project",
-                  AuthErrorCode.INVALID_DYNAMIC_LINK_DOMAIN))
-          .put(
-              "PHONE_NUMBER_EXISTS",
-              new ErrorInfo(
-                  ErrorCode.ALREADY_EXISTS,
-                  "The user with the provided phone number already exists",
-                  AuthErrorCode.PHONE_NUMBER_ALREADY_EXISTS))
-          .put(
-              "UNAUTHORIZED_DOMAIN",
-              new ErrorInfo(
-                  ErrorCode.INVALID_ARGUMENT,
-                  "The domain of the continue URL is not whitelisted",
-                  AuthErrorCode.UNAUTHORIZED_CONTINUE_URL))
-          .put(
-              "USER_NOT_FOUND",
-              new ErrorInfo(
-                  ErrorCode.NOT_FOUND,
-                  "No user record found for the given identifier",
-                  AuthErrorCode.USER_NOT_FOUND))
-          .build();
-
-  private static class AuthErrorHandler extends AbstractHttpErrorHandler<FirebaseAuthException> {
-
-    private final JsonFactory jsonFactory;
-
-    AuthErrorHandler(JsonFactory jsonFactory) {
-      this.jsonFactory = jsonFactory;
-    }
-
-    @Override
-    protected FirebaseAuthException createException(FirebaseException base) {
-      String response = getResponse(base);
-      AuthServiceErrorResponse parsed = safeParse(response);
-      ErrorInfo errorInfo = ERROR_CODES.get(parsed.getCode());
-      if (errorInfo != null) {
-        return new FirebaseAuthException(
-            errorInfo.getErrorCode(),
-            errorInfo.buildMessage(parsed),
-            base.getCause(),
-            base.getHttpResponse(),
-            errorInfo.getAuthErrorCode());
-      }
-
-      return new FirebaseAuthException(
-          base.getErrorCodeNew(),
-          base.getMessage(),
-          base.getCause(),
-          base.getHttpResponse(),
-          null);
-    }
-
-    private String getResponse(FirebaseException base) {
-      if (base.getHttpResponse() == null) {
-        return null;
-      }
-
-      return base.getHttpResponse().getContent();
-    }
-
-    private AuthServiceErrorResponse safeParse(String response) {
-      if (!Strings.isNullOrEmpty(response)) {
-        try {
-          return jsonFactory.createJsonParser(response)
-              .parseAndClose(AuthServiceErrorResponse.class);
-        } catch (IOException ignore) {
-          // Ignore any error that may occur while parsing the error response. The server
-          // may have responded with a non-json payload.
-        }
-      }
-
-      return new AuthServiceErrorResponse();
-    }
-  }
-
-  private static class ErrorInfo {
-
-    private final ErrorCode errorCode;
-    private final String message;
-    private final AuthErrorCode authErrorCode;
-
-    ErrorInfo(ErrorCode errorCode, String message, AuthErrorCode authErrorCode) {
-      this.errorCode = errorCode;
-      this.message = message;
-      this.authErrorCode = authErrorCode;
-    }
-
-    ErrorCode getErrorCode() {
-      return errorCode;
-    }
-
-    AuthErrorCode getAuthErrorCode() {
-      return authErrorCode;
-    }
-
-    String buildMessage(AuthServiceErrorResponse response) {
-      StringBuilder builder = new StringBuilder(this.message)
-          .append(" (").append(response.getCode()).append(")");
-      String detail = response.getDetail();
-      if (!Strings.isNullOrEmpty(detail)) {
-        builder.append(": ").append(detail);
-      } else {
-        builder.append(".");
-      }
-
-      return builder.toString();
-    }
   }
 }
