@@ -16,18 +16,39 @@
 
 package com.google.firebase.auth;
 
+/**
+ * Error codes that can be raised by the Firebase Auth APIs.
+ */
 public enum AuthErrorCode {
 
+  /**
+   * A user already exists with the provided email.
+   */
   EMAIL_ALREADY_EXISTS,
 
+  /**
+   * The provided dynamic link domain is not configured or authorized for the current project.
+   */
   INVALID_DYNAMIC_LINK_DOMAIN,
 
+  /**
+   * A user already exists with the provided phone number.
+   */
   PHONE_NUMBER_ALREADY_EXISTS,
 
+  /**
+   * A user already exists with the provided UID.
+   */
   UID_ALREADY_EXISTS,
 
+  /**
+   * The domain of the continue URL is not whitelisted. Whitelist the domain in the Firebase
+   * console.
+   */
   UNAUTHORIZED_CONTINUE_URL,
 
+  /**
+   * No user record found for the given identifier.
+   */
   USER_NOT_FOUND,
-
 }

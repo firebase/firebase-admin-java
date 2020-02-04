@@ -43,6 +43,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -96,8 +97,14 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(
+          "No user record found for the provided user ID: non.existing",
+          authException.getMessage());
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCodeNew());
+      assertNull(authException.getCause());
+      assertNotNull(authException.getHttpResponse());
+      assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 
@@ -108,8 +115,14 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing email");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(
+          "No user record found for the provided email: non.existing@definitely.non.existing",
+          authException.getMessage());
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCodeNew());
+      assertNull(authException.getCause());
+      assertNotNull(authException.getHttpResponse());
+      assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 
@@ -120,8 +133,14 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(
+          "No user record found for the given identifier (USER_NOT_FOUND).",
+          authException.getMessage());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, authException.getErrorCodeNew());
+      assertNotNull(authException.getCause());
+      assertNotNull(authException.getHttpResponse());
+      assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 
@@ -132,8 +151,14 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(
+          "No user record found for the given identifier (USER_NOT_FOUND).",
+          authException.getMessage());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, authException.getErrorCodeNew());
+      assertNotNull(authException.getCause());
+      assertNotNull(authException.getHttpResponse());
+      assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 
@@ -243,8 +268,14 @@ public class FirebaseAuthIT {
       fail("No error thrown for deleted user");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(
+          "No user record found for the given identifier (USER_NOT_FOUND).",
+          authException.getMessage());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, authException.getErrorCodeNew());
+      assertNull(authException.getCause());
+      assertNotNull(authException.getHttpResponse());
+      assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 

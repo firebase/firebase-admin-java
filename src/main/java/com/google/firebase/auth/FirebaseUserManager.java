@@ -64,8 +64,6 @@ import java.util.Map;
  */
 class FirebaseUserManager {
 
-  static final String USER_NOT_FOUND_ERROR = "user-not-found";
-
   static final int MAX_LIST_USERS_RESULTS = 1000;
   static final int MAX_IMPORT_USERS = 1000;
 
@@ -76,11 +74,11 @@ class FirebaseUserManager {
   private static final String ID_TOOLKIT_URL =
       "https://identitytoolkit.googleapis.com/v1/projects/%s";
   private static final String CLIENT_VERSION_HEADER = "X-Client-Version";
+  private static final String CLIENT_VERSION = "Java/Admin/" + SdkUtils.getVersion();
 
   private final String baseUrl;
   private final JsonFactory jsonFactory;
   private final ErrorHandlingHttpClient<FirebaseAuthException> httpClient;
-  private final String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
 
   private HttpResponseInterceptor interceptor;
 
@@ -102,7 +100,6 @@ class FirebaseUserManager {
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
     this.baseUrl = String.format(ID_TOOLKIT_URL, projectId);
     this.jsonFactory = app.getOptions().getJsonFactory();
-
     if (requestFactory == null) {
       requestFactory = ApiClientUtils.newAuthorizedRequestFactory(app);
     }
@@ -227,7 +224,7 @@ class FirebaseUserManager {
 
     HttpContent httpContent = content != null ? new JsonHttpContent(jsonFactory, content) : null;
     HttpRequestInfo requestInfo = HttpRequestInfo.buildRequest(method, url, httpContent)
-        .addHeader(CLIENT_VERSION_HEADER, clientVersion)
+        .addHeader(CLIENT_VERSION_HEADER, CLIENT_VERSION)
         .setResponseInterceptor(interceptor);
     return httpClient.send(requestInfo);
   }
