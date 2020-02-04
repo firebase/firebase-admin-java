@@ -229,14 +229,14 @@ class FirebaseUserManager {
 
   ListTenantsResponse listTenants(int maxResults, String pageToken) throws FirebaseAuthException {
     ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
-        .put("maxResults", maxResults);
+        .put("pageSize", maxResults);
     if (pageToken != null) {
       checkArgument(!pageToken.equals(
           ListTenantsPage.END_OF_LIST), "invalid end of list page token");
-      builder.put("nextPageToken", pageToken);
+      builder.put("pageToken", pageToken);
     }
 
-    GenericUrl url = new GenericUrl(tenantBaseUrl + "/tenants:tenants");
+    GenericUrl url = new GenericUrl(tenantBaseUrl + "/tenants:list");
     url.putAll(builder.build());
     ListTenantsResponse response = sendRequest("GET", url, null, ListTenantsResponse.class);
     if (response == null) {

@@ -27,7 +27,6 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
-import com.google.firebase.auth.ListTenantsPage.ListTenantsResult;
 import com.google.firebase.auth.internal.ListTenantsResponse;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,10 +57,10 @@ public class ListTenantsPageTest {
 
   @Test
   public void testMultiplePages() throws FirebaseAuthException, IOException {
-    ListTenantsResult result = new ListTenantsResult(
+    ListTenantsResponse response = new ListTenantsResponse(
         ImmutableList.of(newTenant("tenant0"), newTenant("tenant1"), newTenant("tenant2")),
         "token");
-    TestTenantSource source = new TestTenantSource(result);
+    TestTenantSource source = new TestTenantSource(response);
     ListTenantsPage page1 = new ListTenantsPage.PageFactory(source).create();
     assertTrue(page1.hasNextPage());
     assertEquals("token", page1.getNextPageToken());
@@ -71,10 +70,10 @@ public class ListTenantsPageTest {
       assertEquals("tenant" + i, tenants.get(i).getTenantId());
     }
 
-    result = new ListTenantsResult(
+    response = new ListTenantsResponse(
         ImmutableList.of(newTenant("tenant3"), newTenant("tenant4"), newTenant("tenant5")),
         ListTenantsPage.END_OF_LIST);
-    source.result = result;
+    source.response = response;
     ListTenantsPage page2 = page1.getNextPage();
     assertFalse(page2.hasNextPage());
     assertEquals(ListTenantsPage.END_OF_LIST, page2.getNextPageToken());
@@ -161,10 +160,10 @@ public class ListTenantsPageTest {
 
   @Test
   public void testListTenantsPagedIterable() throws FirebaseAuthException, IOException {
-    ListTenantsResult result = new ListTenantsResult(
+    ListTenantsResponse response = new ListTenantsResponse(
         ImmutableList.of(newTenant("tenant0"), newTenant("tenant1"), newTenant("tenant2")),
         "token");
-    TestTenantSource source = new TestTenantSource(result);
+    TestTenantSource source = new TestTenantSource(response);
     ListTenantsPage page = new ListTenantsPage.PageFactory(source).create();
     int iterations = 0;
     for (Tenant tenant : page.iterateAll()) {
@@ -173,10 +172,10 @@ public class ListTenantsPageTest {
       if (iterations == 3) {
         assertEquals(1, source.calls.size());
         assertNull(source.calls.get(0));
-        result = new ListTenantsResult(
+        response = new ListTenantsResponse(
             ImmutableList.of(newTenant("tenant3"), newTenant("tenant4"), newTenant("tenant5")),
             ListTenantsPage.END_OF_LIST);
-        source.result = result;
+        source.response = response;
       }
     }
 
@@ -187,10 +186,10 @@ public class ListTenantsPageTest {
 
   @Test
   public void testListTenantsPagedIterator() throws FirebaseAuthException, IOException {
-    ListTenantsResult result = new ListTenantsResult(
+    ListTenantsResponse response = new ListTenantsResponse(
         ImmutableList.of(newTenant("tenant0"), newTenant("tenant1"), newTenant("tenant2")),
         "token");
-    TestTenantSource source = new TestTenantSource(result);
+    TestTenantSource source = new TestTenantSource(response);
     ListTenantsPage page = new ListTenantsPage.PageFactory(source).create();
     Iterator<Tenant> tenants = page.iterateAll().iterator();
     int iterations = 0;
@@ -200,10 +199,10 @@ public class ListTenantsPageTest {
       if (iterations == 3) {
         assertEquals(1, source.calls.size());
         assertNull(source.calls.get(0));
-        result = new ListTenantsResult(
+        response = new ListTenantsResponse(
             ImmutableList.of(newTenant("tenant3"), newTenant("tenant4"), newTenant("tenant5")),
             ListTenantsPage.END_OF_LIST);
-        source.result = result;
+        source.response = response;
       }
     }
 
@@ -220,10 +219,10 @@ public class ListTenantsPageTest {
 
   @Test
   public void testPageWithNoTenants() throws FirebaseAuthException {
-    ListTenantsResult result = new ListTenantsResult(
+    ListTenantsResponse response = new ListTenantsResponse(
         ImmutableList.<Tenant>of(),
         ListTenantsPage.END_OF_LIST);
-    TestTenantSource source = new TestTenantSource(result);
+    TestTenantSource source = new TestTenantSource(response);
     ListTenantsPage page = new ListTenantsPage.PageFactory(source).create();
     assertFalse(page.hasNextPage());
     assertEquals(ListTenantsPage.END_OF_LIST, page.getNextPageToken());
@@ -234,10 +233,10 @@ public class ListTenantsPageTest {
 
   @Test
   public void testIterableWithNoTenants() throws FirebaseAuthException {
-    ListTenantsResult result = new ListTenantsResult(
+    ListTenantsResponse response = new ListTenantsResponse(
         ImmutableList.<Tenant>of(),
         ListTenantsPage.END_OF_LIST);
-    TestTenantSource source = new TestTenantSource(result);
+    TestTenantSource source = new TestTenantSource(response);
     ListTenantsPage page = new ListTenantsPage.PageFactory(source).create();
     for (Tenant tenant : page.iterateAll()) {
       fail("Should not be able to iterate, but got: " + tenant);
@@ -247,10 +246,10 @@ public class ListTenantsPageTest {
 
   @Test
   public void testIteratorWithNoTenants() throws FirebaseAuthException {
-    ListTenantsResult result = new ListTenantsResult(
+    ListTenantsResponse response = new ListTenantsResponse(
         ImmutableList.<Tenant>of(),
         ListTenantsPage.END_OF_LIST);
-    TestTenantSource source = new TestTenantSource(result);
+    TestTenantSource source = new TestTenantSource(response);
 
     ListTenantsPage page = new ListTenantsPage.PageFactory(source).create();
     Iterator<Tenant> iterator = page.iterateAll().iterator();
@@ -262,10 +261,10 @@ public class ListTenantsPageTest {
 
   @Test
   public void testRemove() throws FirebaseAuthException, IOException {
-    ListTenantsResult result = new ListTenantsResult(
+    ListTenantsResponse response = new ListTenantsResponse(
         ImmutableList.of(newTenant("tenant1")),
         ListTenantsPage.END_OF_LIST);
-    TestTenantSource source = new TestTenantSource(result);
+    TestTenantSource source = new TestTenantSource(response);
 
     ListTenantsPage page = new ListTenantsPage.PageFactory(source).create();
     Iterator<Tenant> iterator = page.iterateAll().iterator();
@@ -327,7 +326,7 @@ public class ListTenantsPageTest {
 
   private static class TestTenantSource implements ListTenantsPage.TenantSource {
 
-    private ListTenantsResult result;
+    private ListTenantsResponse response;
     private List<String> calls = new ArrayList<>();
 
     TestTenantSource(int tenantCount) throws IOException {
@@ -335,17 +334,17 @@ public class ListTenantsPageTest {
       for (int i = 0; i < tenantCount; i++) {
         tenants.add(newTenant("tenant" + i));
       }
-      this.result = new ListTenantsResult(tenants.build(), ListTenantsPage.END_OF_LIST);
+      this.response = new ListTenantsResponse(tenants.build(), ListTenantsPage.END_OF_LIST);
     }
 
-    TestTenantSource(ListTenantsResult result) {
-      this.result = result;
+    TestTenantSource(ListTenantsResponse response) {
+      this.response = response;
     }
 
     @Override
-    public ListTenantsResult fetch(int maxResults, String pageToken) {
+    public ListTenantsResponse fetch(int maxResults, String pageToken) {
       calls.add(pageToken);
-      return result;
+      return response;
     }
   }
 }

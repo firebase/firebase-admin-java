@@ -42,12 +42,12 @@ public class ListTenantsPage implements Page<Tenant> {
 
   static final String END_OF_LIST = "";
 
-  private final ListTenantsResult currentBatch;
+  private final ListTenantsResponse currentBatch;
   private final TenantSource source;
   private final int maxResults;
 
   private ListTenantsPage(
-      @NonNull ListTenantsResult currentBatch, @NonNull TenantSource source, int maxResults) {
+      @NonNull ListTenantsResponse currentBatch, @NonNull TenantSource source, int maxResults) {
     this.currentBatch = checkNotNull(currentBatch);
     this.source = checkNotNull(source);
     this.maxResults = maxResults;
@@ -60,7 +60,7 @@ public class ListTenantsPage implements Page<Tenant> {
    */
   @Override
   public boolean hasNextPage() {
-    return !END_OF_LIST.equals(currentBatch.getNextPageToken());
+    return !END_OF_LIST.equals(currentBatch.getPageToken());
   }
 
   /**
@@ -74,7 +74,7 @@ public class ListTenantsPage implements Page<Tenant> {
   @NonNull
   @Override
   public String getNextPageToken() {
-    return currentBatch.getNextPageToken();
+    return currentBatch.getPageToken();
   }
 
   /**
@@ -86,7 +86,7 @@ public class ListTenantsPage implements Page<Tenant> {
   @Override
   public ListTenantsPage getNextPage() {
     if (hasNextPage()) {
-      PageFactory factory = new PageFactory(source, maxResults, currentBatch.getNextPageToken());
+      PageFactory factory = new PageFactory(source, maxResults, currentBatch.getPageToken());
       try {
         return factory.create();
       } catch (FirebaseAuthException e) {
@@ -192,7 +192,8 @@ public class ListTenantsPage implements Page<Tenant> {
    */
   interface TenantSource {
     @NonNull
-    ListTenantsResult fetch(int maxResults, String pageToken) throws FirebaseAuthException;
+    ListTenantsResponse fetch(int maxResults, String pageToken)
+      throws FirebaseAuthException;
   }
 
   static class DefaultTenantSource implements TenantSource {
@@ -206,36 +207,9 @@ public class ListTenantsPage implements Page<Tenant> {
     }
 
     @Override
-    public ListTenantsResult fetch(int maxResults, String pageToken) throws FirebaseAuthException {
-      ListTenantsResponse response = userManager.listTenants(maxResults, pageToken);
-      ImmutableList.Builder<Tenant> builder = ImmutableList.builder();
-      if (response.hasTenants()) {
-        builder.addAll(response.getTenants());
-      }
-      String nextPageToken = response.getPageToken() != null
-          ? response.getPageToken() : END_OF_LIST;
-      return new ListTenantsResult(builder.build(), nextPageToken);
-    }
-  }
-
-  static final class ListTenantsResult {
-
-    private final List<Tenant> tenants;
-    private final String nextPageToken;
-
-    ListTenantsResult(@NonNull List<Tenant> tenants, @NonNull String nextPageToken) {
-      this.tenants = checkNotNull(tenants);
-      this.nextPageToken = checkNotNull(nextPageToken); // Can be empty
-    }
-
-    @NonNull
-    List<Tenant> getTenants() {
-      return tenants;
-    }
-
-    @NonNull
-    String getNextPageToken() {
-      return nextPageToken;
+    public ListTenantsResponse fetch(int maxResults, String pageToken)
+        throws FirebaseAuthException {
+      return userManager.listTenants(maxResults, pageToken);
     }
   }
 
@@ -266,8 +240,9 @@ public class ListTenantsPage implements Page<Tenant> {
     }
 
     ListTenantsPage create() throws FirebaseAuthException {
-      ListTenantsResult batch = source.fetch(maxResults, pageToken);
+      ListTenantsResponse batch = source.fetch(maxResults, pageToken);
       return new ListTenantsPage(batch, source, maxResults);
     }
   }
 }
+

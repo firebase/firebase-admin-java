@@ -28,8 +28,13 @@ public class ListTenantsResponse {
   @Key("tenants")
   private List<Tenant> tenants;
 
-  @Key("nextPageToken")
+  @Key("pageToken")
   private String pageToken;
+
+  public ListTenantsResponse(List<Tenant> tenants, String pageToken) {
+    this.tenants = tenants;
+    this.pageToken = pageToken;
+  }
 
   public List<Tenant> getTenants() {
     return tenants;
