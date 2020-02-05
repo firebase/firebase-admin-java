@@ -102,8 +102,8 @@ class FirebaseUserManager {
       "https://identitytoolkit.googleapis.com/%s/projects/%s";
   private static final String CLIENT_VERSION_HEADER = "X-Client-Version";
 
-  private final String userBaseUrl;
-  private final String tenantBaseUrl;
+  private final String userMgtBaseUrl;
+  private final String tenantMgtBaseUrl;
   private final JsonFactory jsonFactory;
   private final HttpRequestFactory requestFactory;
   private final String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
@@ -122,8 +122,8 @@ class FirebaseUserManager {
         "Project ID is required to access the auth service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
-    this.userBaseUrl = String.format(ID_TOOLKIT_URL, "v1", projectId);
-    this.tenantBaseUrl = String.format(ID_TOOLKIT_URL, "v2", projectId);
+    this.userMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v1", projectId);
+    this.tenantMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v2", projectId);
     this.jsonFactory = app.getOptions().getJsonFactory();
     HttpTransport transport = app.getOptions().getHttpTransport();
     this.requestFactory = transport.createRequestFactory(new FirebaseRequestInitializer(app));
@@ -207,7 +207,7 @@ class FirebaseUserManager {
       builder.put("nextPageToken", pageToken);
     }
 
-    GenericUrl url = new GenericUrl(userBaseUrl + "/accounts:batchGet");
+    GenericUrl url = new GenericUrl(userMgtBaseUrl + "/accounts:batchGet");
     url.putAll(builder.build());
     DownloadAccountResponse response = sendRequest(
             "GET", url, null, DownloadAccountResponse.class);
@@ -236,7 +236,7 @@ class FirebaseUserManager {
       builder.put("pageToken", pageToken);
     }
 
-    GenericUrl url = new GenericUrl(tenantBaseUrl + "/tenants:list");
+    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants:list");
     url.putAll(builder.build());
     ListTenantsResponse response = sendRequest("GET", url, null, ListTenantsResponse.class);
     if (response == null) {
@@ -281,7 +281,7 @@ class FirebaseUserManager {
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {
     checkArgument(!Strings.isNullOrEmpty(path), "path must not be null or empty");
     checkNotNull(content, "content must not be null for POST requests");
-    GenericUrl url = new GenericUrl(userBaseUrl + path);
+    GenericUrl url = new GenericUrl(userMgtBaseUrl + path);
     return sendRequest("POST", url, content, clazz);
   }
 
