@@ -36,6 +36,8 @@ public class ListTenantsResponse {
     this.pageToken = pageToken;
   }
 
+  public ListTenantsResponse() { }
+
   public List<Tenant> getTenants() {
     return tenants;
   }
