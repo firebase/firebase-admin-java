@@ -21,20 +21,34 @@ package com.google.firebase.auth;
  */
 public enum AuthErrorCode {
 
+  CERTIFICATE_FETCH_FAILED,
+
   /**
    * A user already exists with the provided email.
    */
   EMAIL_ALREADY_EXISTS,
+
+  EXPIRED_ID_TOKEN,
+
+  EXPIRED_SESSION_COOKIE,
 
   /**
    * The provided dynamic link domain is not configured or authorized for the current project.
    */
   INVALID_DYNAMIC_LINK_DOMAIN,
 
+  INVALID_ID_TOKEN,
+
+  INVALID_SESSION_COOKIE,
+
   /**
    * A user already exists with the provided phone number.
    */
   PHONE_NUMBER_ALREADY_EXISTS,
+
+  REVOKED_ID_TOKEN,
+
+  REVOKED_SESSION_COOKIE,
 
   /**
    * A user already exists with the provided UID.

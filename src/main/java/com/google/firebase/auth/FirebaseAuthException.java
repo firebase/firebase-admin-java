@@ -32,7 +32,6 @@ import com.google.firebase.internal.Nullable;
 public class FirebaseAuthException extends FirebaseException {
 
   private final AuthErrorCode errorCode;
-  private final String deprecatedErrorCode;
 
   FirebaseAuthException(
       @NonNull ErrorCode errorCode,
@@ -42,12 +41,6 @@ public class FirebaseAuthException extends FirebaseException {
       AuthErrorCode authErrorCode) {
     super(errorCode, message, cause, response);
     this.errorCode = authErrorCode;
-    this.deprecatedErrorCode = null;
-  }
-
-  @Deprecated
-  public FirebaseAuthException(@NonNull String errorCode, @NonNull String detailMessage) {
-    this(errorCode, detailMessage, null);
   }
 
   @Deprecated
@@ -56,17 +49,10 @@ public class FirebaseAuthException extends FirebaseException {
     super(detailMessage, throwable);
     checkArgument(!Strings.isNullOrEmpty(errorCode));
     this.errorCode = null;
-    this.deprecatedErrorCode = errorCode;
   }
 
   @Nullable
   public AuthErrorCode getAuthErrorCode() {
     return errorCode;
-  }
-
-  /** Returns an error code that may provide more information about the error. */
-  @Deprecated
-  public String getDeprecatedErrorCode() {
-    return deprecatedErrorCode;
   }
 }

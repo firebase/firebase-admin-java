@@ -28,10 +28,12 @@ import com.google.api.client.json.webtoken.JsonWebSignature.Header;
 import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import com.google.firebase.ErrorCode;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
+import java.util.List;
 
 /**
  * The default implementation of the {@link FirebaseTokenVerifier} interface. Uses the Google API
@@ -43,8 +45,6 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
   private static final String RS256 = "RS256";
   private static final String FIREBASE_AUDIENCE =
       "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit";
-  private static final String ERROR_INVALID_CREDENTIAL = "ERROR_INVALID_CREDENTIAL";
-  private static final String ERROR_RUNTIME_EXCEPTION = "ERROR_RUNTIME_EXCEPTION";
 
   private final JsonFactory jsonFactory;
   private final GooglePublicKeysManager publicKeysManager;
@@ -53,6 +53,8 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
   private final String shortName;
   private final String articledShortName;
   private final String docUrl;
+  private final AuthErrorCode invalidTokenErrorCode;
+  private final AuthErrorCode expiredTokenErrorCode;
 
   private FirebaseTokenVerifierImpl(Builder builder) {
     this.jsonFactory = checkNotNull(builder.jsonFactory);
@@ -65,6 +67,8 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     this.shortName = builder.shortName;
     this.articledShortName = prefixWithIndefiniteArticle(this.shortName);
     this.docUrl = builder.docUrl;
+    this.invalidTokenErrorCode = checkNotNull(builder.invalidTokenErrorCode);
+    this.expiredTokenErrorCode = checkNotNull(builder.expiredTokenErrorCode);
   }
 
   /**
@@ -137,38 +141,28 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
           shortName,
           docUrl,
           articledShortName);
-      throw new FirebaseAuthException(ERROR_INVALID_CREDENTIAL, detailedError, e);
-    }
-  }
-
-  private void checkContents(final IdToken token) throws FirebaseAuthException {
-    String errorMessage = getErrorIfContentInvalid(token);
-    if (errorMessage != null) {
-      String detailedError = String.format("%s %s", errorMessage, getVerifyTokenMessage());
-      throw new FirebaseAuthException(ERROR_INVALID_CREDENTIAL, detailedError);
+      throw newException(detailedError, invalidTokenErrorCode, e);
     }
   }
 
   private void checkSignature(IdToken token) throws FirebaseAuthException {
-    try {
-      if (!isSignatureValid(token)) {
-        throw new FirebaseAuthException(ERROR_INVALID_CREDENTIAL,
-            String.format(
-                "Failed to verify the signature of Firebase %s. %s",
-                shortName,
-                getVerifyTokenMessage()));
-      }
-    } catch (GeneralSecurityException | IOException e) {
-      throw new FirebaseAuthException(
-          ERROR_RUNTIME_EXCEPTION, "Error while verifying signature.", e);
+    if (!isSignatureValid(token)) {
+      String message = String.format(
+          "Failed to verify the signature of Firebase %s. %s",
+          shortName,
+          getVerifyTokenMessage());
+      throw newException(message, invalidTokenErrorCode);
     }
   }
 
-  private String getErrorIfContentInvalid(final IdToken idToken) {
+  private void checkContents(final IdToken idToken) throws FirebaseAuthException {
     final Header header = idToken.getHeader();
     final Payload payload = idToken.getPayload();
 
+    final long currentTimeMillis = idTokenVerifier.getClock().currentTimeMillis();
     String errorMessage = null;
+    AuthErrorCode errorCode = invalidTokenErrorCode;
+
     if (header.getKeyId() == null) {
       errorMessage = getErrorForTokenWithoutKid(header, payload);
     } else if (!RS256.equals(header.getAlgorithm())) {
@@ -203,14 +197,35 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
       errorMessage = String.format(
           "Firebase %s has \"sub\" (subject) claim longer than 128 characters.",
           shortName);
-    } else if (!verifyTimestamps(idToken)) {
+    } else if (!idToken.verifyExpirationTime(
+        currentTimeMillis, idTokenVerifier.getAcceptableTimeSkewSeconds())) {
       errorMessage = String.format(
-          "Firebase %s has expired or is not yet valid. Get a fresh %s and try again.",
+          "Firebase %s has expired. Get a fresh %s and try again.",
           shortName,
+          shortName);
+      errorCode = expiredTokenErrorCode;
+    } else if (!idToken.verifyIssuedAtTime(
+        currentTimeMillis, idTokenVerifier.getAcceptableTimeSkewSeconds())) {
+      errorMessage = String.format(
+          "Firebase %s is not yet valid.",
           shortName);
     }
 
-    return errorMessage;
+    if (errorMessage != null) {
+      String detailedError = String.format("%s %s", errorMessage, getVerifyTokenMessage());
+      throw newException(detailedError, errorCode);
+    }
+  }
+
+  private FirebaseAuthException newException(String message, AuthErrorCode errorCode) {
+    return new FirebaseAuthException(
+        ErrorCode.INVALID_ARGUMENT, message, null, null, errorCode);
+  }
+
+  private FirebaseAuthException newException(
+      String message, AuthErrorCode errorCode, Throwable cause) {
+    return new FirebaseAuthException(
+        ErrorCode.INVALID_ARGUMENT, message, cause, null, errorCode);
   }
 
   private String getVerifyTokenMessage() {
@@ -224,13 +239,42 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
    * Verifies the cryptographic signature on the FirebaseToken. Can block on a web request to fetch
    * the keys if they have expired.
    */
-  private boolean isSignatureValid(IdToken token) throws GeneralSecurityException, IOException {
-    for (PublicKey key : publicKeysManager.getPublicKeys()) {
-      if (token.verifySignature(key)) {
+  private boolean isSignatureValid(IdToken token) throws FirebaseAuthException {
+    for (PublicKey key : fetchPublicKeys()) {
+      if (isSignatureValid(token, key)) {
         return true;
       }
     }
+
     return false;
+  }
+
+  private boolean isSignatureValid(IdToken token, PublicKey key) throws FirebaseAuthException {
+    try {
+      return token.verifySignature(key);
+    } catch (GeneralSecurityException e) {
+      // This doesn't happen under usual circumstances. Seems to only happen if the crypto
+      // setup of the runtime is incorrect in some way.
+      throw new FirebaseAuthException(
+          ErrorCode.UNKNOWN,
+          String.format("Unexpected error while verifying %s: %s", shortName, e.getMessage()),
+          e,
+          null,
+          invalidTokenErrorCode);
+    }
+  }
+
+  private List<PublicKey> fetchPublicKeys() throws FirebaseAuthException {
+    try {
+      return publicKeysManager.getPublicKeys();
+    } catch (GeneralSecurityException | IOException e) {
+      throw new FirebaseAuthException(
+          ErrorCode.UNKNOWN,
+          "Error while fetching public key certificates: " + e.getMessage(),
+          e,
+          null,
+          AuthErrorCode.CERTIFICATE_FETCH_FAILED);
+    }
   }
 
   private String getErrorForTokenWithoutKid(IdToken.Header header, IdToken.Payload payload) {
@@ -253,11 +297,6 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
         "Make sure the %s comes from the same Firebase project as the service account used to "
             + "authenticate this SDK.",
         shortName);
-  }
-
-  private boolean verifyTimestamps(IdToken token) {
-    long currentTimeMillis = idTokenVerifier.getClock().currentTimeMillis();
-    return token.verifyTime(currentTimeMillis, idTokenVerifier.getAcceptableTimeSkewSeconds());
   }
 
   private boolean isCustomToken(IdToken.Payload payload) {
@@ -290,6 +329,8 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     private String shortName;
     private IdTokenVerifier idTokenVerifier;
     private String docUrl;
+    private AuthErrorCode invalidTokenErrorCode;
+    private AuthErrorCode expiredTokenErrorCode;
 
     private Builder() { }
 
@@ -320,6 +361,16 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
 
     Builder setDocUrl(String docUrl) {
       this.docUrl = docUrl;
+      return this;
+    }
+
+    public Builder setInvalidTokenErrorCode(AuthErrorCode invalidTokenErrorCode) {
+      this.invalidTokenErrorCode = invalidTokenErrorCode;
+      return this;
+    }
+
+    public Builder setExpiredTokenErrorCode(AuthErrorCode expiredTokenErrorCode) {
+      this.expiredTokenErrorCode = expiredTokenErrorCode;
       return this;
     }
 
