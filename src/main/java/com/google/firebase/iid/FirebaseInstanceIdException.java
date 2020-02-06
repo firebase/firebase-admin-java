@@ -21,9 +21,9 @@ import com.google.firebase.FirebaseException;
 /**
  * Represents an exception encountered while interacting with the Firebase instance ID service.
  */
-public class FirebaseInstanceIdException extends FirebaseException {
+public final class FirebaseInstanceIdException extends FirebaseException {
 
-  FirebaseInstanceIdException(String detailMessage, Throwable cause) {
-    super(detailMessage, cause);
+  FirebaseInstanceIdException(FirebaseException base, String message) {
+    super(base.getErrorCodeNew(), message, base.getCause(), base.getHttpResponse());
   }
 }

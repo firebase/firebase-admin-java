@@ -63,6 +63,10 @@ public final class HttpRequestInfo {
     return new HttpRequestInfo(HttpMethods.GET, url, null);
   }
 
+  public static HttpRequestInfo buildDeleteRequest(String url) {
+    return new HttpRequestInfo(HttpMethods.DELETE, url, null);
+  }
+
   public static HttpRequestInfo buildPostRequest(String url, HttpContent content) {
     return new HttpRequestInfo(HttpMethods.POST, url, content);
   }
