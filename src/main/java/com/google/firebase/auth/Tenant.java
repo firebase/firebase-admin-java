@@ -55,6 +55,22 @@ public final class Tenant {
   }
 
   /**
+   * Returns a new {@link UpdateRequest}, which can be used to update the attributes
+   * of this tenant.
+   *
+   * @return a non-null Tenant.UpdateRequest instance.
+   */
+  public UpdateRequest updateRequest() {
+    return UpdateRequest
+      .newBuilder()
+      .setTenantId(getTenantId())
+      .setDisplayName(getDisplayName())
+      .setPasswordSignInAllowed(isPasswordSignInAllowed())
+      .setEmailLinkSignInEnabled(isEmailLinkSignInEnabled())
+      .build();
+  }
+
+  /**
    * Class used to hold the information needs to make a tenant create request.
    */
   @AutoValue
@@ -85,12 +101,16 @@ public final class Tenant {
      * Returns a builder for a tenant create request.
      */
     public static Builder newBuilder() {
+      // TOOD(micahstairs): Figure out if any of the CreateRequest fields should default to anything
+      // particular. If any fields do not have a reasonable default, then the
+      // fields should be made nullable, otherwise AutoValue will throw an
+      // exception if those fields are left unset.
       return new AutoValue_Tenant_CreateRequest.Builder();
     }
 
     /**
-    * Builder class used to construct a create request.
-    */
+     * Builder class used to construct a create request.
+     */
     @AutoValue.Builder
     abstract static class Builder {
       public abstract Builder setDisplayName(String displayName);
@@ -107,7 +127,14 @@ public final class Tenant {
    * Class used to hold the information needs to make a tenant update request. 
    */
   @AutoValue
-  public abstract static class UpdateRequest {
+  public abstract static class UpdateRequest { 
+
+    /**
+     * Returns the id of this tenant.
+     *
+     * @return a non-empty tenant id string.
+     */
+    public abstract String getTenantId();
 
     /**
      * Returns the display name of this tenant.
@@ -134,14 +161,20 @@ public final class Tenant {
      * Returns a builder for a tenant update request.
      */
     public static Builder newBuilder() {
+      // TOOD(micahstairs): Figure out if any of the UpdateRequest fields should default to anything
+      // particular. If any fields do not have a reasonable default, then the
+      // fields should be made nullable, otherwise AutoValue will throw an
+      // exception if those fields are left unset.
       return new AutoValue_Tenant_UpdateRequest.Builder();
     }
 
     /**
-    * Builder class used to construct a update request.
-    */
+     * Builder class used to construct a update request.
+     */
     @AutoValue.Builder
     abstract static class Builder {
+      public abstract Builder setTenantId(String tenantId);
+
       public abstract Builder setDisplayName(String displayName);
 
       public abstract Builder setPasswordSignInAllowed(boolean allowPasswordSignIn);
