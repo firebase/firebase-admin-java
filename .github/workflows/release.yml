@@ -55,16 +55,23 @@ jobs:
       - name: Run integration tests
         run: echo Running integration tests
 
-      - name: Package release artifacts
-        run: mvn package -Dcheckstyle.skip -DskipTests
+      # Package the binary and source artifacts. Skip all tests and other validations since we
+      # have already completed them in the previous steps.
+      # Maven target directory can consist of way too many files. Just copy the jar artifacts
+      # into a new directory for upload.
+      - name: Package artifacts
+        run: |
+          mvn package -Dcheckstyle.skip -DskipTests
+          mkdir -p dist
+          cp target/*.jar dist/
 
       # Attach the packaged artifacts to the workflow output. These can be manually
       # downloaded for later inspection if necessary.
       - name: Archive artifacts
         uses: actions/upload-artifact@v1
         with:
-          name: target
-          path: target
+          name: dist
+          path: dist
 
   publish_release:
     needs: stage_release
