@@ -203,6 +203,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
           "Firebase %s has expired. Get a fresh %s and try again.",
           shortName,
           shortName);
+      // Also set the expired error code.
       errorCode = expiredTokenErrorCode;
     } else if (!idToken.verifyIssuedAtTime(
         currentTimeMillis, idTokenVerifier.getAcceptableTimeSkewSeconds())) {
@@ -218,8 +219,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
   }
 
   private FirebaseAuthException newException(String message, AuthErrorCode errorCode) {
-    return new FirebaseAuthException(
-        ErrorCode.INVALID_ARGUMENT, message, null, null, errorCode);
+    return newException(message, errorCode, null);
   }
 
   private FirebaseAuthException newException(
