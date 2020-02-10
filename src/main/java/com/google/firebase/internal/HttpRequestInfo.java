@@ -16,12 +16,15 @@
 
 package com.google.firebase.internal;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseInterceptor;
+import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,6 +42,8 @@ public final class HttpRequestInfo {
   private HttpResponseInterceptor interceptor;
 
   private HttpRequestInfo(String method, String url, HttpContent content) {
+    checkArgument(!Strings.isNullOrEmpty(method), "method must not be null");
+    checkArgument(!Strings.isNullOrEmpty(url), "url must not be null");
     this.method = method;
     this.url = new GenericUrl(url);
     this.content = content;
@@ -60,7 +65,7 @@ public final class HttpRequestInfo {
   }
 
   public static HttpRequestInfo buildGetRequest(String url) {
-    return new HttpRequestInfo(HttpMethods.GET, url, null);
+    return buildRequest(HttpMethods.GET, url, null);
   }
 
   public static HttpRequestInfo buildDeleteRequest(String url) {
@@ -68,7 +73,11 @@ public final class HttpRequestInfo {
   }
 
   public static HttpRequestInfo buildPostRequest(String url, HttpContent content) {
-    return new HttpRequestInfo(HttpMethods.POST, url, content);
+    return buildRequest(HttpMethods.POST, url, content);
+  }
+
+  public static HttpRequestInfo buildRequest(String method, String url, HttpContent content) {
+    return new HttpRequestInfo(method, url, content);
   }
 
   HttpRequest newHttpRequest(HttpRequestFactory factory) throws IOException {
