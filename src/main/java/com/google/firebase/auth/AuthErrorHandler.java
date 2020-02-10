@@ -99,12 +99,7 @@ final class AuthErrorHandler extends AbstractHttpErrorHandler<FirebaseAuthExcept
           errorInfo.getAuthErrorCode());
     }
 
-    return new FirebaseAuthException(
-        base.getErrorCodeNew(),
-        base.getMessage(),
-        base.getCause(),
-        base.getHttpResponse(),
-        null);
+    return new FirebaseAuthException(base);
   }
 
   private String getResponse(FirebaseException base) {

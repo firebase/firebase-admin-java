@@ -9,9 +9,8 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.json.JsonHttpContent;
+import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.JsonObjectParser;
-import com.google.api.client.util.Key;
 import com.google.api.client.util.StringUtils;
 import com.google.auth.ServiceAccountSigner;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -21,9 +20,13 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
 import com.google.common.io.ByteStreams;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
+import com.google.firebase.FirebaseException;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.internal.FirebaseRequestInitializer;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.internal.AbstractPlatformErrorHandler;
+import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.ErrorHandlingHttpClient;
+import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.NonNull;
 import java.io.IOException;
 import java.util.Map;
@@ -34,7 +37,9 @@ import java.util.Map;
 public class CryptoSigners {
 
   private static final String METADATA_SERVICE_URL =
-      "http://metadata/computeMetadata/v1/instance/service-accounts/default/email";
+      "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/email";
+
+  private CryptoSigners() { }
 
   /**
    * A {@link CryptoSigner} implementation that uses service account credentials or equivalent
@@ -69,19 +74,22 @@ public class CryptoSigners {
     private static final String IAM_SIGN_BLOB_URL =
         "https://iam.googleapis.com/v1/projects/-/serviceAccounts/%s:signBlob";
 
-    private final HttpRequestFactory requestFactory;
-    private final JsonFactory jsonFactory;
     private final String serviceAccount;
+    private final JsonFactory jsonFactory;
+    private final ErrorHandlingHttpClient<FirebaseAuthException> httpClient;
     private HttpResponseInterceptor interceptor;
 
     IAMCryptoSigner(
         @NonNull HttpRequestFactory requestFactory,
         @NonNull JsonFactory jsonFactory,
         @NonNull String serviceAccount) {
-      this.requestFactory = checkNotNull(requestFactory);
-      this.jsonFactory = checkNotNull(jsonFactory);
       checkArgument(!Strings.isNullOrEmpty(serviceAccount));
       this.serviceAccount = serviceAccount;
+      this.jsonFactory = checkNotNull(jsonFactory);
+      this.httpClient = new ErrorHandlingHttpClient<>(
+          requestFactory,
+          jsonFactory,
+          new IAMErrorHandler(jsonFactory));
     }
 
     void setInterceptor(HttpResponseInterceptor interceptor) {
@@ -89,28 +97,15 @@ public class CryptoSigners {
     }
 
     @Override
-    public byte[] sign(byte[] payload) throws IOException {
-      String encodedUrl = String.format(IAM_SIGN_BLOB_URL, serviceAccount);
-      HttpResponse response = null;
+    public byte[] sign(byte[] payload) throws FirebaseAuthException {
       String encodedPayload = BaseEncoding.base64().encode(payload);
       Map<String, String> content = ImmutableMap.of("bytesToSign", encodedPayload);
-      try {
-        HttpRequest request = requestFactory.buildPostRequest(new GenericUrl(encodedUrl),
-            new JsonHttpContent(jsonFactory, content));
-        request.setParser(new JsonObjectParser(jsonFactory));
-        request.setResponseInterceptor(interceptor);
-        response = request.execute();
-        SignBlobResponse parsed = response.parseAs(SignBlobResponse.class);
-        return BaseEncoding.base64().decode(parsed.signature);
-      } finally {
-        if (response != null) {
-          try {
-            response.disconnect();
-          } catch (IOException ignored) {
-            // Ignored
-          }
-        }
-      }
+      String encodedUrl = String.format(IAM_SIGN_BLOB_URL, serviceAccount);
+      HttpRequestInfo requestInfo = HttpRequestInfo
+          .buildPostRequest(encodedUrl, new JsonHttpContent(jsonFactory, content))
+          .setResponseInterceptor(interceptor);
+      GenericJson parsed = httpClient.sendAndParse(requestInfo, GenericJson.class);
+      return BaseEncoding.base64().decode((String) parsed.get("signature"));
     }
 
     @Override
@@ -119,9 +114,17 @@ public class CryptoSigners {
     }
   }
 
-  public static class SignBlobResponse {
-    @Key("signature")
-    private String signature;
+  private static class IAMErrorHandler
+      extends AbstractPlatformErrorHandler<FirebaseAuthException> {
+
+    IAMErrorHandler(JsonFactory jsonFactory) {
+      super(jsonFactory);
+    }
+
+    @Override
+    protected FirebaseAuthException createException(FirebaseException base) {
+      return new FirebaseAuthException(base);
+    }
   }
 
   /**
@@ -136,14 +139,12 @@ public class CryptoSigners {
       return new ServiceAccountCryptoSigner((ServiceAccountCredentials) credentials);
     }
 
-    FirebaseOptions options = firebaseApp.getOptions();
-    HttpRequestFactory requestFactory = options.getHttpTransport().createRequestFactory(
-        new FirebaseRequestInitializer(firebaseApp));
-    JsonFactory jsonFactory = options.getJsonFactory();
+    HttpRequestFactory requestFactory = ApiClientUtils.newUnauthorizedRequestFactory(firebaseApp);
+    JsonFactory jsonFactory = firebaseApp.getOptions().getJsonFactory();
 
     // If the SDK was initialized with a service account email, use it with the IAM service
     // to sign bytes.
-    String serviceAccountId = options.getServiceAccountId();
+    String serviceAccountId = firebaseApp.getOptions().getServiceAccountId();
     if (!Strings.isNullOrEmpty(serviceAccountId)) {
       return new IAMCryptoSigner(requestFactory, jsonFactory, serviceAccountId);
     }
@@ -156,15 +157,22 @@ public class CryptoSigners {
 
     // Attempt to discover a service account email from the local Metadata service. Use it
     // with the IAM service to sign bytes.
-    HttpRequest request = requestFactory.buildGetRequest(new GenericUrl(METADATA_SERVICE_URL));
+    serviceAccountId = discoverServiceAccountId(firebaseApp);
+    return new IAMCryptoSigner(requestFactory, jsonFactory, serviceAccountId);
+  }
+
+  private static String discoverServiceAccountId(FirebaseApp firebaseApp) throws IOException {
+    HttpRequestFactory metadataRequestFactory =
+        ApiClientUtils.newUnauthorizedRequestFactory(firebaseApp);
+    HttpRequest request = metadataRequestFactory.buildGetRequest(
+        new GenericUrl(METADATA_SERVICE_URL));
     request.getHeaders().set("Metadata-Flavor", "Google");
     HttpResponse response = request.execute();
     try {
       byte[] output = ByteStreams.toByteArray(response.getContent());
-      serviceAccountId = StringUtils.newStringUtf8(output).trim();
-      return new IAMCryptoSigner(requestFactory, jsonFactory, serviceAccountId);
+      return StringUtils.newStringUtf8(output).trim();
     } finally {
-      response.disconnect();
+      ApiClientUtils.disconnectQuietly(response);
     }
   }
 }
