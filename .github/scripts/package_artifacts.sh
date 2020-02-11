@@ -22,4 +22,15 @@ gpg --quiet --batch --yes --decrypt --passphrase="${FIREBASE_SERVICE_ACCT_KEY}" 
 
 echo "${FIREBASE_API_KEY}" > integration_apikey.txt
 
-mvn -B verify -Dcheckstyle.skip -DskipUTs
+# Does the following:
+#  1. Runs the Checkstyle plugin (validate phase)
+#  2. Compiles the source (compile phase)
+#  3. Runs the unit tests (test phase)
+#  4. Packages the artifacts - src, bin, javadocs (package phase)
+#  5. Runs the integration tests (verify phase)
+mvn -B clean verify
+
+# Maven target directory can consist of many files. Just copy the jar artifacts
+# into a new directory for upload.
+mkdir -p dist
+cp target/*.jar dist/

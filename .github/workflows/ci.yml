@@ -27,5 +27,9 @@ jobs:
       with:
         java-version: 1.7
 
+    # Does the following:
+    #  1. Runs the Checkstyle plugin (validate phase)
+    #  2. Compiles the source (compile phase)
+    #  3. Runs the unit tests (test phase)
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      run: mvn -B clean test

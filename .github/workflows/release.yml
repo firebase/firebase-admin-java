@@ -52,21 +52,11 @@ jobs:
       - name: Run unit tests
         run: mvn -B test
 
-      - name: Run integration tests
-        run: ./.github/scripts/run_integration_tests.sh
+      - name: Compile, test and package
+        run: ./.github/scripts/package_artifacts.sh
         env:
           FIREBASE_SERVICE_ACCT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCT_KEY }}
           FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
-
-      # Package the binary and source artifacts. Skip all tests and other validations since we
-      # have already completed them in the previous steps.
-      # Maven target directory can consist of way too many files. Just copy the jar artifacts
-      # into a new directory for upload.
-      - name: Package artifacts
-        run: |
-          mvn -B package -Dcheckstyle.skip -DskipTests
-          mkdir -p dist
-          cp target/*.jar dist/
 
       # Attach the packaged artifacts to the workflow output. These can be manually
       # downloaded for later inspection if necessary.
