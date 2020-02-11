@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright 2020 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,21 +13,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-name: Continuous Integration
 
-on: push
+set -e
+set -u
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+gpg --quiet --batch --yes --decrypt --passphrase="${FIREBASE_SERVICE_ACCT_KEY}" \
+  --output integration_cert.json .github/resources/integ-service-account.json.gpg
 
-    steps:
-    - uses: actions/checkout@v1
+echo "${FIREBASE_API_KEY}" > integration_apikey.txt
 
-    - name: Set up JDK 1.7
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.7
-
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
+mvn -B verify -Dcheckstyle.skip -DskipUTs
