@@ -33,6 +33,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -41,6 +42,8 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
+import com.google.firebase.auth.UidIdentifier;
+import com.google.firebase.auth.UserIdentifier;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.internal.SdkUtils;
@@ -52,6 +55,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -164,6 +169,149 @@ public class FirebaseUserManagerTest {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
       assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, authException.getErrorCode());
+    }
+  }
+
+  @Test
+  public void testGetUsersExceeds100() throws Exception {
+    FirebaseApp.initializeApp();
+    List<UserIdentifier> identifiers = new ArrayList<>();
+    for (int i = 0; i < 101; i++) {
+      identifiers.add(new UidIdentifier("uid_" + i));
+    }
+
+    try {
+      FirebaseAuth.getInstance().getUsers(identifiers);
+      fail("No error thrown for too many supplied identifiers");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testGetUsersNull() throws Exception {
+    FirebaseApp.initializeApp();
+    try {
+      FirebaseAuth.getInstance().getUsers(null);
+      fail("No error thrown for null identifiers");
+    } catch (NullPointerException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testGetUsersEmpty() throws Exception {
+    initializeAppForUserManagement();
+    GetUsersResult result = FirebaseAuth.getInstance().getUsers(new ArrayList<UserIdentifier>());
+    assertTrue(result.getUsers().isEmpty());
+    assertTrue(result.getNotFound().isEmpty());
+  }
+
+  @Test
+  public void testGetUsersAllNonExisting() throws Exception {
+    initializeAppForUserManagement("{ \"users\": [] }");
+    List<UserIdentifier> ids = ImmutableList.<UserIdentifier>of(
+        new UidIdentifier("id-that-doesnt-exist"));
+    GetUsersResult result = FirebaseAuth.getInstance().getUsers(ids);
+    assertTrue(result.getUsers().isEmpty());
+    assertEquals(ids.size(), result.getNotFound().size());
+    assertTrue(result.getNotFound().containsAll(ids));
+  }
+
+  @Test
+  public void testGetUsersMultipleIdentifierTypes() throws Exception {
+    initializeAppForUserManagement((""
+        + "{ "
+        + "    'users': [{ "
+        + "        'localId': 'uid1', "
+        + "        'email': 'user1@example.com', "
+        + "        'phoneNumber': '+15555550001' "
+        + "    }, { "
+        + "        'localId': 'uid2', "
+        + "        'email': 'user2@example.com', "
+        + "        'phoneNumber': '+15555550002' "
+        + "    }, { "
+        + "        'localId': 'uid3', "
+        + "        'email': 'user3@example.com', "
+        + "        'phoneNumber': '+15555550003' "
+        + "    }, { "
+        + "        'localId': 'uid4', "
+        + "        'email': 'user4@example.com', "
+        + "        'phoneNumber': '+15555550004', "
+        + "        'providerUserInfo': [{ "
+        + "            'providerId': 'google.com', "
+        + "            'rawId': 'google_uid4' "
+        + "        }] "
+        + "    }] "
+        + "} "
+        ).replace("'", "\""));
+
+    UidIdentifier doesntExist = new UidIdentifier("this-uid-doesnt-exist");
+    List<UserIdentifier> ids = ImmutableList.<UserIdentifier>of(
+        new UidIdentifier("uid1"),
+        new EmailIdentifier("user2@example.com"),
+        new PhoneIdentifier("+15555550003"),
+        new ProviderIdentifier("google.com", "google_uid4"),
+        doesntExist);
+    GetUsersResult result = FirebaseAuth.getInstance().getUsers(ids);
+    Collection<String> uids = userRecordsToUids(result.getUsers());
+    assertTrue(uids.containsAll(ImmutableList.of("uid1", "uid2", "uid3", "uid4")));
+    assertEquals(1, result.getNotFound().size());
+    assertTrue(result.getNotFound().contains(doesntExist));
+  }
+
+  private Collection<String> userRecordsToUids(Collection<UserRecord> userRecords) {
+    Collection<String> uids = new HashSet<>();
+    for (UserRecord userRecord : userRecords) {
+      uids.add(userRecord.getUid());
+    }
+    return uids;
+  }
+
+  @Test
+  public void testInvalidUidIdentifier() throws Exception {
+    try {
+      new UidIdentifier("too long " + Strings.repeat(".", 128));
+      fail("No error thrown for invalid uid");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testInvalidEmailIdentifier() throws Exception {
+    try {
+      new EmailIdentifier("invalid email addr");
+      fail("No error thrown for invalid email");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testInvalidPhoneIdentifier() throws Exception {
+    try {
+      new PhoneIdentifier("invalid phone number");
+      fail("No error thrown for invalid phone number");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testInvalidProviderIdentifier() throws Exception {
+    try {
+      new ProviderIdentifier("", "valid-uid");
+      fail("No error thrown for invalid provider id");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+
+    try {
+      new ProviderIdentifier("valid-id", "");
+      fail("No error thrown for invalid provider uid");
+    } catch (IllegalArgumentException expected) {
+      // expected
     }
   }
 

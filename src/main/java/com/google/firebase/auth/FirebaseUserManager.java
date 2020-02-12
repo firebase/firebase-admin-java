@@ -40,6 +40,7 @@ import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
+import com.google.firebase.auth.internal.GetAccountInfoRequest;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 
 import com.google.firebase.auth.internal.HttpErrorResponse;
@@ -50,8 +51,12 @@ import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.SdkUtils;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * FirebaseUserManager provides methods for interacting with the Google Identity Toolkit via its
@@ -86,6 +91,7 @@ class FirebaseUserManager {
       .put("INVALID_DYNAMIC_LINK_DOMAIN", "invalid-dynamic-link-domain")
       .build();
 
+  static final int MAX_GET_ACCOUNTS_BATCH_SIZE = 100;
   static final int MAX_LIST_USERS_RESULTS = 1000;
   static final int MAX_IMPORT_USERS = 1000;
 
@@ -169,6 +175,37 @@ class FirebaseUserManager {
           "No user record found for the provided phone number: " + phoneNumber);
     }
     return new UserRecord(response.getUsers().get(0), jsonFactory);
+  }
+
+  /**
+   * @pre identifiers != null
+   * @pre identifiers.size() <= MAX_GET_ACCOUNTS_BATCH_SIZE
+   */
+  Set<UserRecord> getAccountInfo(@NonNull Collection<UserIdentifier> identifiers)
+      throws FirebaseAuthException {
+    if (identifiers.isEmpty()) {
+      return new HashSet<UserRecord>();
+    }
+
+    GetAccountInfoRequest payload = new GetAccountInfoRequest();
+    for (UserIdentifier id : identifiers) {
+      id.populate(payload);
+    }
+
+    GetAccountInfoResponse response = post(
+        "/accounts:lookup", payload, GetAccountInfoResponse.class);
+
+    if (response == null) {
+      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to parse server response");
+    }
+
+    Set<UserRecord> results = new HashSet<>();
+    if (response.getUsers() != null) {
+      for (GetAccountInfoResponse.User user : response.getUsers()) {
+        results.add(new UserRecord(user, jsonFactory));
+      }
+    }
+    return results;
   }
 
   String createUser(CreateRequest request) throws FirebaseAuthException {

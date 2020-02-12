@@ -247,6 +247,11 @@ public class UserRecord implements UserInfo {
         "phone number must be a valid, E.164 compliant identifier starting with a '+' sign");
   }
 
+  static void checkProvider(String providerId, String providerUid) {
+    checkArgument(!Strings.isNullOrEmpty(providerId), "providerId must be a non-empty string");
+    checkArgument(!Strings.isNullOrEmpty(providerUid), "providerUid must be a non-empty string");
+  }
+
   static void checkUrl(String photoUrl) {
     checkArgument(!Strings.isNullOrEmpty(photoUrl), "url cannot be null or empty");
     try {

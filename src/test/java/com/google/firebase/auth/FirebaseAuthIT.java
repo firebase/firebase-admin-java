@@ -607,7 +607,7 @@ public class FirebaseAuthIT {
     return result;
   }
 
-  private String randomPhoneNumber() {
+  static String randomPhoneNumber() {
     Random random = new Random();
     StringBuilder builder = new StringBuilder("+1");
     for (int i = 0; i < 10; i++) {
@@ -696,9 +696,9 @@ public class FirebaseAuthIT {
     }
   }
 
-  private static class RandomUser {
-    private final String uid;
-    private final String email;
+  static class RandomUser {
+    final String uid;
+    final String email;
 
     private RandomUser(String uid, String email) {
       this.uid = uid;
@@ -712,4 +712,18 @@ public class FirebaseAuthIT {
       return new RandomUser(uid, email);
     }
   }
+
+  static UserRecord newUserWithParams(FirebaseAuth auth) throws Exception {
+    // TODO(rsgowman): This function could be used throughout this file (similar to the other
+    // ports).
+    RandomUser randomUser = RandomUser.create();
+    return auth.createUser(new CreateRequest()
+        .setUid(randomUser.uid)
+        .setEmail(randomUser.email)
+        .setPhoneNumber(randomPhoneNumber())
+        .setDisplayName("Random User")
+        .setPhotoUrl("https://example.com/photo.png")
+        .setPassword("password"));
+  }
+
 }
