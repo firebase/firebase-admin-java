@@ -139,7 +139,7 @@ public class CryptoSigners {
       return new ServiceAccountCryptoSigner((ServiceAccountCredentials) credentials);
     }
 
-    HttpRequestFactory requestFactory = ApiClientUtils.newUnauthorizedRequestFactory(firebaseApp);
+    HttpRequestFactory requestFactory = ApiClientUtils.newAuthorizedRequestFactory(firebaseApp);
     JsonFactory jsonFactory = firebaseApp.getOptions().getJsonFactory();
 
     // If the SDK was initialized with a service account email, use it with the IAM service

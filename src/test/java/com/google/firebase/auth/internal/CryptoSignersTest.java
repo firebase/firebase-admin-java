@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
@@ -169,7 +170,9 @@ public class CryptoSignersTest {
     assertArrayEquals("signed-bytes".getBytes(), data);
     final String url = "https://iam.googleapis.com/v1/projects/-/serviceAccounts/"
         + "metadata-server@iam.gserviceaccount.com:signBlob";
-    assertEquals(url, interceptor.getResponse().getRequest().getUrl().toString());
+    HttpRequest request = interceptor.getResponse().getRequest();
+    assertEquals(url, request.getUrl().toString());
+    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
   }
 
   @Test
@@ -197,7 +200,9 @@ public class CryptoSignersTest {
     assertArrayEquals("signed-bytes".getBytes(), data);
     final String url = "https://iam.googleapis.com/v1/projects/-/serviceAccounts/"
         + "explicit-service-account@iam.gserviceaccount.com:signBlob";
-    assertEquals(url, interceptor.getResponse().getRequest().getUrl().toString());
+    HttpRequest request = interceptor.getResponse().getRequest();
+    assertEquals(url, request.getUrl().toString());
+    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
   }
 
   @Test
