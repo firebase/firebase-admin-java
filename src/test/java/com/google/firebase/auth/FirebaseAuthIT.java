@@ -439,8 +439,8 @@ public class FirebaseAuthIT {
       fail("expecting exception");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(RevocationCheckDecorator.ID_TOKEN_REVOKED_ERROR,
-                   ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
+      assertEquals(AuthErrorCode.REVOKED_ID_TOKEN,
+          ((FirebaseAuthException) e.getCause()).getAuthErrorCode());
     }
     idToken = signInWithCustomToken(customToken);
     decoded = auth.verifyIdTokenAsync(idToken, true).get();
@@ -473,8 +473,8 @@ public class FirebaseAuthIT {
       fail("expecting exception");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(RevocationCheckDecorator.SESSION_COOKIE_REVOKED_ERROR,
-          ((FirebaseAuthException) e.getCause()).getDeprecatedErrorCode());
+      assertEquals(AuthErrorCode.REVOKED_SESSION_COOKIE,
+          ((FirebaseAuthException) e.getCause()).getAuthErrorCode());
     }
 
     idToken = signInWithCustomToken(customToken);

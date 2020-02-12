@@ -22,9 +22,24 @@ package com.google.firebase.auth;
 public enum AuthErrorCode {
 
   /**
+   * Failed to retrieve public key certificates required to verify JWTs.
+   */
+  CERTIFICATE_FETCH_FAILED,
+
+  /**
    * A user already exists with the provided email.
    */
   EMAIL_ALREADY_EXISTS,
+
+  /**
+   * The specified ID token is expired.
+   */
+  EXPIRED_ID_TOKEN,
+
+  /**
+   * The specified session cookie is expired.
+   */
+  EXPIRED_SESSION_COOKIE,
 
   /**
    * The provided dynamic link domain is not configured or authorized for the current project.
@@ -32,9 +47,29 @@ public enum AuthErrorCode {
   INVALID_DYNAMIC_LINK_DOMAIN,
 
   /**
+   * The specified ID token is invalid.
+   */
+  INVALID_ID_TOKEN,
+
+  /**
+   * The specified session cookie is invalid.
+   */
+  INVALID_SESSION_COOKIE,
+
+  /**
    * A user already exists with the provided phone number.
    */
   PHONE_NUMBER_ALREADY_EXISTS,
+
+  /**
+   * The specified ID token has been revoked.
+   */
+  REVOKED_ID_TOKEN,
+
+  /**
+   * The specified session cookie has been revoked.
+   */
+  REVOKED_SESSION_COOKIE,
 
   /**
    * A user already exists with the provided UID.

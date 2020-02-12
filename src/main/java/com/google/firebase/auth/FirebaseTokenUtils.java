@@ -82,6 +82,8 @@ final class FirebaseTokenUtils {
         .setJsonFactory(app.getOptions().getJsonFactory())
         .setPublicKeysManager(publicKeysManager)
         .setIdTokenVerifier(idTokenVerifier)
+        .setInvalidTokenErrorCode(AuthErrorCode.INVALID_ID_TOKEN)
+        .setExpiredTokenErrorCode(AuthErrorCode.EXPIRED_ID_TOKEN)
         .build();
   }
 
@@ -100,6 +102,8 @@ final class FirebaseTokenUtils {
         .setShortName("session cookie")
         .setMethod("verifySessionCookie()")
         .setDocUrl("https://firebase.google.com/docs/auth/admin/manage-cookies")
+        .setInvalidTokenErrorCode(AuthErrorCode.INVALID_SESSION_COOKIE)
+        .setExpiredTokenErrorCode(AuthErrorCode.EXPIRED_SESSION_COOKIE)
         .build();
   }
 
