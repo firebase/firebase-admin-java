@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.json.JsonFactory;
+import com.google.api.client.util.DateTime;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -80,7 +81,15 @@ public class UserRecord implements UserInfo {
       }
     }
     this.tokensValidAfterTimestamp = response.getValidSince() * 1000;
-    this.userMetadata = new UserMetadata(response.getCreatedAt(), response.getLastLoginAt());
+
+    String lastRefreshAtRfc3339 = response.getLastRefreshAt();
+    long lastRefreshAtMillis = 0;
+    if (lastRefreshAtRfc3339 != null && !lastRefreshAtRfc3339.isEmpty()) {
+      lastRefreshAtMillis = DateTime.parseRfc3339(lastRefreshAtRfc3339).getValue();
+    }
+
+    this.userMetadata = new UserMetadata(
+        response.getCreatedAt(), response.getLastLoginAt(), lastRefreshAtMillis);
     this.customClaims = parseCustomClaims(response.getCustomClaims(), jsonFactory);
   }
 

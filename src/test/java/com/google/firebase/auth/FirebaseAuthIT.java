@@ -249,6 +249,35 @@ public class FirebaseAuthIT {
   }
 
   @Test
+  public void testLastRefreshTime() throws Exception {
+    RandomUser user = RandomUser.create();
+    UserRecord newUserRecord = auth.createUser(new CreateRequest()
+        .setUid(user.uid)
+        .setEmail(user.email)
+        .setEmailVerified(false)
+        .setPassword("password"));
+
+    try {
+      // New users should not have a lastRefreshTimestamp set.
+      assertEquals(0, newUserRecord.getUserMetadata().getLastRefreshTimestamp());
+
+      // Login to cause the lastRefreshTimestamp to be set.
+      signInWithPassword(newUserRecord.getEmail(), "password");
+
+      UserRecord userRecord = auth.getUser(newUserRecord.getUid());
+
+      // Ensure the lastRefreshTimestamp is approximately "now" (with a tollerance of 30 minutes).
+      long now = System.currentTimeMillis();
+      long tollerance = TimeUnit.MINUTES.toMillis(30);
+      long lastRefreshTimestamp = userRecord.getUserMetadata().getLastRefreshTimestamp();
+      assertTrue(now - tollerance <= lastRefreshTimestamp);
+      assertTrue(lastRefreshTimestamp <= now + tollerance);
+    } finally {
+      auth.deleteUser(newUserRecord.getUid());
+    }
+  }
+
+  @Test
   public void testListUsers() throws Exception {
     final List<String> uids = new ArrayList<>();
 
@@ -637,7 +666,7 @@ public class FirebaseAuthIT {
     GenericUrl url = new GenericUrl(VERIFY_PASSWORD_URL + "?key="
         + IntegrationTestUtils.getApiKey());
     Map<String, Object> content = ImmutableMap.<String, Object>of(
-        "email", email, "password", password);
+        "email", email, "password", password, "returnSecureToken", true);
     HttpRequest request = transport.createRequestFactory().buildPostRequest(url,
         new JsonHttpContent(jsonFactory, content));
     request.setParser(new JsonObjectParser(jsonFactory));
