@@ -963,6 +963,9 @@ public class FirebaseAuth {
       final List<String> uids) {
     checkNotDestroyed();
     checkNotNull(uids, "uids must not be null");
+    for (String uid : uids) {
+      UserRecord.checkUid(uid);
+    }
     checkArgument(uids.size() <= FirebaseUserManager.MAX_DELETE_ACCOUNTS_BATCH_SIZE,
         "uids parameter must have <= " + FirebaseUserManager.MAX_DELETE_ACCOUNTS_BATCH_SIZE
         + " entries.");
