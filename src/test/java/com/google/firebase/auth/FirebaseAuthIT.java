@@ -138,6 +138,83 @@ public class FirebaseAuthIT {
   }
 
   @Test
+  public void testDeleteUsers() throws Exception {
+    UserRecord user1 = newUserWithParams();
+    UserRecord user2 = newUserWithParams();
+    UserRecord user3 = newUserWithParams();
+
+    DeleteUsersResult deleteUsersResult = slowDeleteUsersAsync(
+        ImmutableList.of(user1.getUid(), user2.getUid(), user3.getUid())
+        ).get();
+
+    assertEquals(3, deleteUsersResult.getSuccessCount());
+    assertEquals(0, deleteUsersResult.getFailureCount());
+    assertTrue(deleteUsersResult.getErrors().isEmpty());
+
+    GetUsersResult getUsersResult = auth.getUsersAsync(ImmutableList.<UserIdentifier>of(
+          new UidIdentifier(user1.getUid()),
+          new UidIdentifier(user2.getUid()),
+          new UidIdentifier(user3.getUid())
+          )).get();
+
+    assertTrue(getUsersResult.getUsers().isEmpty());
+    assertEquals(3, getUsersResult.getNotFound().size());
+  }
+
+  @Test
+  public void testDeleteExistingAndNonExistingUsers() throws Exception {
+    UserRecord user1 = newUserWithParams();
+
+    DeleteUsersResult deleteUsersResult = slowDeleteUsersAsync(
+        ImmutableList.of(user1.getUid(), "uid-that-doesnt-exist")
+        ).get();
+
+    assertEquals(2, deleteUsersResult.getSuccessCount());
+    assertEquals(0, deleteUsersResult.getFailureCount());
+    assertTrue(deleteUsersResult.getErrors().isEmpty());
+
+    GetUsersResult getUsersResult = auth.getUsersAsync(ImmutableList.<UserIdentifier>of(
+          new UidIdentifier(user1.getUid()),
+          new UidIdentifier("uid-that-doesnt-exist")
+          )).get();
+
+    assertTrue(getUsersResult.getUsers().isEmpty());
+    assertEquals(2, getUsersResult.getNotFound().size());
+  }
+
+  @Test
+  public void testDeleteUsersIsIdempotent() throws Exception {
+    UserRecord user1 = newUserWithParams();
+
+    DeleteUsersResult result = slowDeleteUsersAsync(
+        ImmutableList.of(user1.getUid())
+        ).get();
+
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+    assertTrue(result.getErrors().isEmpty());
+
+    // Delete the user again, ensuring that everything still counts as a success.
+    result = slowDeleteUsersAsync(
+        ImmutableList.of(user1.getUid())
+        ).get();
+
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+    assertTrue(result.getErrors().isEmpty());
+  }
+
+  /**
+   * The batchDelete endpoint is currently rate limited to 1qps. Use this test helper to ensure we
+   * don't run into quota exceeded errors.
+   */
+  // TODO(rsgowman): When/if the rate limit is relaxed, eliminate this helper.
+  private ApiFuture<DeleteUsersResult> slowDeleteUsersAsync(List<String> uids) throws Exception {
+    TimeUnit.SECONDS.sleep(1);
+    return auth.deleteUsersAsync(uids);
+  }
+
+  @Test
   public void testCreateUserWithParams() throws Exception {
     RandomUser randomUser = RandomUser.create();
     String phone = randomPhoneNumber();
@@ -740,6 +817,10 @@ public class FirebaseAuthIT {
           + uid.substring(12) + ".com").toLowerCase();
       return new RandomUser(uid, email);
     }
+  }
+
+  static UserRecord newUserWithParams() throws Exception {
+    return newUserWithParams(auth);
   }
 
   static UserRecord newUserWithParams(FirebaseAuth auth) throws Exception {

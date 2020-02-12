@@ -427,6 +427,77 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testDeleteUsersExceeds1000() throws Exception {
+    FirebaseApp.initializeApp();
+    List<String> ids = new ArrayList<>();
+    for (int i = 0; i < 1001; i++) {
+      ids.add("id" + i);
+    }
+    try {
+      FirebaseAuth.getInstance().deleteUsersAsync(ids);
+      fail("No error thrown for too many uids");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testDeleteUsersInvalidId() throws Exception {
+    FirebaseApp.initializeApp();
+    try {
+      FirebaseAuth.getInstance().deleteUsersAsync(
+          ImmutableList.of("too long " + Strings.repeat(".", 128)));
+      fail("No error thrown for too long uid");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testDeleteUsersIndexesErrorsCorrectly() throws Exception {
+    initializeAppForUserManagement((""
+        + "{ "
+        + "    'errors': [{ "
+        + "        'index': 0, "
+        + "        'localId': 'uid1', "
+        + "        'message': 'NOT_DISABLED : Disable the account before batch deletion.' "
+        + "    }, { "
+        + "        'index': 2, "
+        + "        'localId': 'uid3', "
+        + "        'message': 'something awful' "
+        + "    }] "
+        + "} "
+        ).replace("'", "\""));
+
+    DeleteUsersResult result = FirebaseAuth.getInstance().deleteUsersAsync(ImmutableList.of(
+          "uid1", "uid2", "uid3", "uid4"
+          )).get();
+
+    assertEquals(2, result.getSuccessCount());
+    assertEquals(2, result.getFailureCount());
+    assertEquals(2, result.getErrors().size());
+    assertEquals(0, result.getErrors().get(0).getIndex());
+    assertEquals(
+        "NOT_DISABLED : Disable the account before batch deletion.",
+        result.getErrors().get(0).getReason());
+    assertEquals(2, result.getErrors().get(1).getIndex());
+    assertEquals("something awful", result.getErrors().get(1).getReason());
+  }
+
+  @Test
+  public void testDeleteUsersSuccess() throws Exception {
+    initializeAppForUserManagement("{}");
+
+    DeleteUsersResult result = FirebaseAuth.getInstance().deleteUsersAsync(ImmutableList.of(
+          "uid1", "uid2", "uid3"
+          )).get();
+
+    assertEquals(3, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+    assertTrue(result.getErrors().isEmpty());
+  }
+
+  @Test
   public void testImportUsers() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
     ImportUserRecord user1 = ImportUserRecord.builder().setUid("user1").build();

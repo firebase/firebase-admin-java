@@ -39,10 +39,10 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
+import com.google.firebase.auth.internal.BatchDeleteResponse;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoRequest;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
-
 import com.google.firebase.auth.internal.HttpErrorResponse;
 import com.google.firebase.auth.internal.UploadAccountResponse;
 import com.google.firebase.internal.ApiClientUtils;
@@ -92,6 +92,7 @@ class FirebaseUserManager {
       .build();
 
   static final int MAX_GET_ACCOUNTS_BATCH_SIZE = 100;
+  static final int MAX_DELETE_ACCOUNTS_BATCH_SIZE = 1000;
   static final int MAX_LIST_USERS_RESULTS = 1000;
   static final int MAX_IMPORT_USERS = 1000;
 
@@ -235,6 +236,23 @@ class FirebaseUserManager {
     if (response == null || !response.containsKey("kind")) {
       throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to delete user: " + uid);
     }
+  }
+
+  /**
+   * @pre uids != null
+   * @pre uids.size() <= MAX_DELETE_ACCOUNTS_BATCH_SIZE
+   */
+  DeleteUsersResult deleteUsers(@NonNull List<String> uids) throws FirebaseAuthException {
+    final Map<String, Object> payload = ImmutableMap.<String, Object>of(
+        "localIds", uids,
+        "force", true);
+    BatchDeleteResponse response = post(
+        "/accounts:batchDelete", payload, BatchDeleteResponse.class);
+    if (response == null) {
+      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to delete users");
+    }
+
+    return new DeleteUsersResult(uids.size(), response);
   }
 
   DownloadAccountResponse listUsers(int maxResults, String pageToken) throws FirebaseAuthException {

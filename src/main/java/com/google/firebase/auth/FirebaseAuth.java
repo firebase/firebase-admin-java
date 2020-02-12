@@ -920,6 +920,62 @@ public class FirebaseAuth {
   }
 
   /**
+   * Deletes the users specified by the given identifiers.
+   *
+   * <p>Deleting a non-existing user won't generate an error. (i.e. this method is idempotent.)
+   * Non-existing users will be considered to be successfully deleted, and will therefore be counted
+   * in the DeleteUsersResult.getSuccessCount() value.
+   *
+   * <p>Only a maximum of 1000 identifiers may be supplied. If more than 1000 identifiers are
+   * supplied, this method will immediately throw an IllegalArgumentException.
+   *
+   * <p>This API is currently rate limited at the server to 1 QPS. If you exceed this, you may get a
+   * quota exceeded error. Therefore, if you want to delete more than 1000 users, you may need to
+   * add a delay to ensure you don't go over this limit.
+   *
+   * @param uids The uids of the users to be deleted. Must have <= 1000 entries.
+   * @return The total number of successful/failed deletions, as well as the array of errors that
+   *     correspond to the failed deletions.
+   * @throw IllegalArgumentException If any of the identifiers are invalid or if more than 1000
+   *     identifiers are specified.
+   * @throws FirebaseAuthException If an error occurs while deleting users.
+   */
+  public DeleteUsersResult deleteUsers(List<String> uids) throws FirebaseAuthException {
+    return deleteUsersOp(uids).call();
+  }
+
+  /**
+   * Similar to {@link #deleteUsers(List)} but performs the operation asynchronously.
+   *
+   * @param uids The uids of the users to be deleted. Must have <= 1000 entries.
+   * @return An {@code ApiFuture} that resolves to the total number of successful/failed
+   *     deletions, as well as the array of errors that correspond to the failed deletions. If an
+   *     error occurs while deleting the user account, the future throws a
+   *     {@link FirebaseAuthException}.
+   * @throw IllegalArgumentException If any of the identifiers are invalid or if more than 1000
+   *     identifiers are specified.
+   */
+  public ApiFuture<DeleteUsersResult> deleteUsersAsync(List<String> uids) {
+    return deleteUsersOp(uids).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<DeleteUsersResult, FirebaseAuthException> deleteUsersOp(
+      final List<String> uids) {
+    checkNotDestroyed();
+    checkNotNull(uids, "uids must not be null");
+    checkArgument(uids.size() <= FirebaseUserManager.MAX_DELETE_ACCOUNTS_BATCH_SIZE,
+        "uids parameter must have <= " + FirebaseUserManager.MAX_DELETE_ACCOUNTS_BATCH_SIZE
+        + " entries.");
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<DeleteUsersResult, FirebaseAuthException>() {
+      @Override
+      protected DeleteUsersResult execute() throws FirebaseAuthException {
+        return userManager.deleteUsers(uids);
+      }
+    };
+  }
+
+  /**
    * Imports the provided list of users into Firebase Auth. At most 1000 users can be imported at a
    * time. This operation is optimized for bulk imports and will ignore checks on identifier
    * uniqueness which could result in duplications.
