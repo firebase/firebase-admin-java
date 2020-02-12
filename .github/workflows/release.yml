@@ -39,32 +39,32 @@ jobs:
     # When manually triggering the build, the requester can specify a target branch or a tag
     # via the 'ref' client parameter.
     steps:
-      - name: Checkout source for staging
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.client_payload.ref || github.ref }}
+    - name: Checkout source for staging
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.client_payload.ref || github.ref }}
 
-      - name: Set up JDK 1.7
-        uses: actions/setup-java@v1
-        with:
-          java-version: 1.7
+    - name: Set up JDK 1.7
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.7
 
-      - name: Run unit tests
-        run: mvn -B test
+    - name: Run unit tests
+      run: mvn -B test
 
-      - name: Compile, test and package
-        run: ./.github/scripts/package_artifacts.sh
-        env:
-          FIREBASE_SERVICE_ACCT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCT_KEY }}
-          FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+    - name: Compile, test and package
+      run: ./.github/scripts/package_artifacts.sh
+      env:
+        FIREBASE_SERVICE_ACCT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCT_KEY }}
+        FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
 
-      # Attach the packaged artifacts to the workflow output. These can be manually
-      # downloaded for later inspection if necessary.
-      - name: Archive artifacts
-        uses: actions/upload-artifact@v1
-        with:
-          name: dist
-          path: dist
+    # Attach the packaged artifacts to the workflow output. These can be manually
+    # downloaded for later inspection if necessary.
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v1
+      with:
+        name: dist
+        path: dist
 
   publish_release:
     needs: stage_release
@@ -82,38 +82,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source for publish
-        uses: actions/checkout@v2
+    - name: Checkout source for publish
+      uses: actions/checkout@v2
 
-      - name: Set up JDK 1.7
-        uses: actions/setup-java@v1
-        with:
-          java-version: 1.7
+    - name: Set up JDK 1.7
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.7
 
-      - name: Publish preflight check
-        id: preflight
-        run: ./.github/scripts/publish_preflight_check.sh
+    - name: Publish preflight check
+      id: preflight
+      run: ./.github/scripts/publish_preflight_check.sh
 
-      # We pull this action from a custom fork of a contributor until
-      # https://github.com/actions/create-release/pull/32 is merged. Also note that v1 of
-      # this action does not support the "body" parameter.
-      - name: Create release tag
-        uses: fleskesvor/create-release@1a72e235c178bf2ae6c51a8ae36febc24568c5fe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.preflight.outputs.version }}
-          release_name: Firebase Admin Java SDK ${{ steps.preflight.outputs.version }}
-          body: ${{ steps.preflight.outputs.changelog }}
-          draft: false
-          prerelease: false
+    # We pull this action from a custom fork of a contributor until
+    # https://github.com/actions/create-release/pull/32 is merged. Also note that v1 of
+    # this action does not support the "body" parameter.
+    - name: Create release tag
+      uses: fleskesvor/create-release@1a72e235c178bf2ae6c51a8ae36febc24568c5fe
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.preflight.outputs.version }}
+        release_name: Firebase Admin Java SDK ${{ steps.preflight.outputs.version }}
+        body: ${{ steps.preflight.outputs.changelog }}
+        draft: false
+        prerelease: false
 
-      - name: Publish to Maven Central
-        run: echo Publishing to Maven Central
+    - name: Publish to Maven Central
+      run: echo Publishing to Maven Central
 
-      # Post to Twitter if explicitly opted-in by adding the label 'release:tweet'.
-      - name: Post to Twitter
-        if: success() &&
-          contains(github.event.pull_request.labels.*.name, 'release:tweet')
-        run: echo Posting Tweet
-        continue-on-error: true
+    # Post to Twitter if explicitly opted-in by adding the label 'release:tweet'.
+    - name: Post to Twitter
+      if: success() &&
+        contains(github.event.pull_request.labels.*.name, 'release:tweet')
+      run: echo Posting Tweet
+      continue-on-error: true
