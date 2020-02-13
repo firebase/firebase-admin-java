@@ -28,8 +28,9 @@ import com.google.api.client.util.SecurityUtils;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.ErrorCode;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.testing.TestUtils;
-import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -138,12 +139,12 @@ public class FirebaseTokenFactoryTest {
     }
 
     @Override
-    public byte[] sign(byte[] payload) throws IOException {
+    public byte[] sign(byte[] payload) throws FirebaseAuthException {
       try {
         return SecurityUtils.sign(SecurityUtils.getSha256WithRsaSignatureAlgorithm(),
             privateKey, payload);
       } catch (GeneralSecurityException e) {
-        throw new IOException(e);
+        throw new FirebaseAuthException(ErrorCode.UNKNOWN, "Failed to sign token", e, null, null);
       }
     }
 

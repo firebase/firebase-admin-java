@@ -41,7 +41,6 @@ import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -57,8 +56,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class FirebaseAuth {
 
   private static final String SERVICE_ID = FirebaseAuth.class.getName();
-
-  private static final String ERROR_CUSTOM_TOKEN = "ERROR_CUSTOM_TOKEN";
 
   private final Object lock = new Object();
   private final AtomicBoolean destroyed = new AtomicBoolean(false);
@@ -331,12 +328,7 @@ public class FirebaseAuth {
     return new CallableOperation<String, FirebaseAuthException>() {
       @Override
       public String execute() throws FirebaseAuthException {
-        try {
-          return tokenFactory.createSignedCustomAuthTokenForUser(uid, developerClaims);
-        } catch (IOException e) {
-          throw new FirebaseAuthException(ERROR_CUSTOM_TOKEN,
-              "Failed to generate a custom token", e);
-        }
+        return tokenFactory.createSignedCustomAuthTokenForUser(uid, developerClaims);
       }
     };
   }

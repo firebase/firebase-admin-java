@@ -16,9 +16,6 @@
 
 package com.google.firebase.auth;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
-import com.google.common.base.Strings;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.IncomingHttpResponse;
@@ -33,7 +30,7 @@ public class FirebaseAuthException extends FirebaseException {
 
   private final AuthErrorCode errorCode;
 
-  FirebaseAuthException(
+  public FirebaseAuthException(
       @NonNull ErrorCode errorCode,
       @NonNull String message,
       Throwable cause,
@@ -43,12 +40,13 @@ public class FirebaseAuthException extends FirebaseException {
     this.errorCode = authErrorCode;
   }
 
-  @Deprecated
   public FirebaseAuthException(
-      @NonNull String errorCode, @NonNull String detailMessage, Throwable throwable) {
-    super(detailMessage, throwable);
-    checkArgument(!Strings.isNullOrEmpty(errorCode));
-    this.errorCode = null;
+      @NonNull ErrorCode errorCode, @NonNull String message, Throwable throwable) {
+    this(errorCode, message, throwable, null, null);
+  }
+
+  public FirebaseAuthException(FirebaseException base) {
+    this(base.getErrorCodeNew(), base.getMessage(), base.getCause(), base.getHttpResponse(), null);
   }
 
   @Nullable
