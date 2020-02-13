@@ -116,7 +116,7 @@ public final class ErrorHandlingHttpClient<T extends FirebaseException> {
     }
   }
 
-  private void parse(IncomingHttpResponse response, Object destination) throws T {
+  public void parse(IncomingHttpResponse response, Object destination) throws T {
     try {
       JsonParser parser = jsonFactory.createJsonParser(response.getContent());
       parser.parse(destination);
