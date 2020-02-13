@@ -47,6 +47,7 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.TestApiClientUtils;
+import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayOutputStream;
@@ -72,6 +73,7 @@ public class FirebaseProjectManagementServiceImplTest {
   private static final String IOS_APP_ID = "test-ios-app-id";
   private static final String IOS_APP_RESOURCE_NAME = "ios/11111";
   private static final String ANDROID_APP_RESOURCE_NAME = "android/11111";
+  private static final String CLIENT_VERSION = "Java/Admin/" + SdkUtils.getVersion();
   private static final IosAppMetadata IOS_APP_METADATA =
       new IosAppMetadata(IOS_APP_RESOURCE_NAME, IOS_APP_ID, DISPLAY_NAME, PROJECT_ID, BUNDLE_ID);
   private static final AndroidAppMetadata ANDROID_APP_METADATA =
@@ -1104,7 +1106,7 @@ public class FirebaseProjectManagementServiceImplTest {
         .setHttpTransport(TestUtils.createFaultyHttpTransport())
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
-    return new FirebaseProjectManagementServiceImpl(app, new MockSleeper(), new MockScheduler());
+    return new FirebaseProjectManagementServiceImpl(app);
   }
 
   private void checkRequestHeader(String expectedUrl, HttpMethod httpMethod) {
@@ -1119,6 +1121,7 @@ public class FirebaseProjectManagementServiceImplTest {
     assertEquals(httpMethod.name(), request.getRequestMethod());
     assertEquals(expectedUrl, request.getUrl().toString());
     assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+    assertEquals(CLIENT_VERSION, request.getHeaders().get("X-Client-Version"));
   }
 
   private void checkRequestPayload(Map<String, String> expected) throws IOException {

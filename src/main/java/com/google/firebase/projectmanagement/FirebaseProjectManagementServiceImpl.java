@@ -334,10 +334,6 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
     };
   }
 
-  private String buildMessage(String resourceId, String resourceIdName, String description) {
-    return String.format("%s \"%s\": %s", resourceIdName, resourceId, description);
-  }
-
   private String pollOperation(String projectId, String operationName)
       throws FirebaseProjectManagementException {
     String url = String.format("%s/v1/%s", FIREBASE_PROJECT_MANAGEMENT_URL, operationName);
@@ -782,6 +778,10 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
           "Unable to create App: exponential backoff interrupted.");
       throw new FirebaseProjectManagementException(ErrorCode.ABORTED, message, null);
     }
+  }
+
+  private String buildMessage(String resourceId, String resourceIdName, String description) {
+    return String.format("%s \"%s\": %s", resourceIdName, resourceId, description);
   }
 
   /* Helper types. */
