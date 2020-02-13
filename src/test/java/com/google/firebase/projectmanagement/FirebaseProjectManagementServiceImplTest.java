@@ -48,6 +48,7 @@ import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.internal.TestApiClientUtils;
+import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayOutputStream;
