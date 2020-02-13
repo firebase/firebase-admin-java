@@ -19,11 +19,13 @@ package com.google.firebase.auth;
 import static com.google.firebase.auth.Tenant.UpdateRequest;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import java.io.IOException;
+import java.util.Map;
 import org.junit.Test;
 
 public class TenantTest {
@@ -47,7 +49,7 @@ public class TenantTest {
   }
 
   @Test
-  public void testUpdateRequest() throws IOException {
+  public void testCreateUpdateRequestFromTenant() throws IOException {
     Tenant tenant = jsonFactory.fromString(
         "{"
           + "\"tenantId\":\"TENANT_ID\","
@@ -58,10 +60,30 @@ public class TenantTest {
 
     Tenant.UpdateRequest updateRequest = tenant.updateRequest();
 
-    assertEquals(updateRequest.getTenantId(), "TENANT_ID");
-    assertEquals(updateRequest.getDisplayName(), "DISPLAY_NAME");
-    assertTrue(updateRequest.isPasswordSignInAllowed());
-    assertFalse(updateRequest.isEmailLinkSignInEnabled());
+    assertEquals("TENANT_ID", updateRequest.getTenantId());
+    Map<String,Object> properties = updateRequest.getProperties();
+    assertEquals(properties.size(), 1);
+    assertEquals("TENANT_ID", (String) properties.get("tenantId"));
+    assertNull(properties.get("displayName"));
+    assertNull(properties.get("allowPasswordSignup"));
+    assertNull(properties.get("enableEmailLinkSignin"));
+  }
+
+  @Test
+  public void testCreateUpdateRequestFromTenantId() throws IOException {
+    Tenant.UpdateRequest updateRequest = new Tenant.UpdateRequest("TENANT_ID");
+    updateRequest
+      .setDisplayName("DISPLAY_NAME")
+      .setPasswordSignInAllowed(false)
+      .setEmailLinkSignInEnabled(true);
+
+    assertEquals("TENANT_ID", updateRequest.getTenantId());
+    Map<String,Object> properties = updateRequest.getProperties();
+    assertEquals(properties.size(), 4);
+    assertEquals("TENANT_ID", (String) properties.get("tenantId"));
+    assertEquals("DISPLAY_NAME", (String) properties.get("displayName"));
+    assertFalse((boolean) properties.get("allowPasswordSignup"));
+    assertTrue((boolean) properties.get("enableEmailLinkSignin"));
   }
 }
 
