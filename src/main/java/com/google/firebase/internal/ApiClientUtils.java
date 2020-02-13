@@ -29,7 +29,7 @@ import java.io.IOException;
  */
 public class ApiClientUtils {
 
-  private static final RetryConfig DEFAULT_RETRY_CONFIG = RetryConfig.builder()
+  static final RetryConfig DEFAULT_RETRY_CONFIG = RetryConfig.builder()
       .setMaxRetries(4)
       .setRetryStatusCodes(ImmutableList.of(500, 503))
       .setMaxIntervalMillis(60 * 1000)
@@ -53,14 +53,13 @@ public class ApiClientUtils {
    * automatic retries.
    *
    * @param app {@link FirebaseApp} from which to obtain authorization credentials.
-   * @param retryConfig {@link RetryConfig} which specifies how and when to retry errors.
+   * @param retryConfig {@link RetryConfig} instance or null to disable retries.
    * @return A new {@code HttpRequestFactory} instance.
    */
   public static HttpRequestFactory newAuthorizedRequestFactory(
       FirebaseApp app, @Nullable RetryConfig retryConfig) {
     HttpTransport transport = app.getOptions().getHttpTransport();
-    return transport.createRequestFactory(
-        new FirebaseRequestInitializer(app, retryConfig));
+    return transport.createRequestFactory(new FirebaseRequestInitializer(app, retryConfig));
   }
 
   public static HttpRequestFactory newUnauthorizedRequestFactory(FirebaseApp app) {

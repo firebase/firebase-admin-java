@@ -29,6 +29,7 @@ import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.json.JsonParser;
@@ -43,6 +44,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.internal.TestApiClientUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -370,7 +372,7 @@ public class FirebaseProjectManagementServiceImplTest {
     MockLowLevelHttpResponse secondRpcResponse = new MockLowLevelHttpResponse();
     secondRpcResponse.setContent(LIST_IOS_APPS_PAGE_2_RESPONSE);
     serviceImpl = initServiceImpl(
-        ImmutableList.<MockLowLevelHttpResponse>of(firstRpcResponse, secondRpcResponse),
+        ImmutableList.of(firstRpcResponse, secondRpcResponse),
         interceptor);
 
     List<IosApp> iosAppList = serviceImpl.listIosAppsAsync(PROJECT_ID).get();
@@ -400,7 +402,7 @@ public class FirebaseProjectManagementServiceImplTest {
     MockLowLevelHttpResponse thirdRpcResponse = new MockLowLevelHttpResponse();
     thirdRpcResponse.setContent(CREATE_IOS_GET_OPERATION_ATTEMPT_2_RESPONSE);
     serviceImpl = initServiceImpl(
-        ImmutableList.<MockLowLevelHttpResponse>of(
+        ImmutableList.of(
             firstRpcResponse, secondRpcResponse, thirdRpcResponse),
         interceptor);
 
@@ -624,7 +626,7 @@ public class FirebaseProjectManagementServiceImplTest {
     MockLowLevelHttpResponse secondRpcResponse = new MockLowLevelHttpResponse();
     secondRpcResponse.setContent(LIST_ANDROID_APPS_PAGE_2_RESPONSE);
     serviceImpl = initServiceImpl(
-        ImmutableList.<MockLowLevelHttpResponse>of(firstRpcResponse, secondRpcResponse),
+        ImmutableList.of(firstRpcResponse, secondRpcResponse),
         interceptor);
 
     List<AndroidApp> androidAppList = serviceImpl.listAndroidApps(PROJECT_ID);
@@ -652,7 +654,7 @@ public class FirebaseProjectManagementServiceImplTest {
     MockLowLevelHttpResponse secondRpcResponse = new MockLowLevelHttpResponse();
     secondRpcResponse.setContent(LIST_ANDROID_APPS_PAGE_2_RESPONSE);
     serviceImpl = initServiceImpl(
-        ImmutableList.<MockLowLevelHttpResponse>of(firstRpcResponse, secondRpcResponse),
+        ImmutableList.of(firstRpcResponse, secondRpcResponse),
         interceptor);
 
     List<AndroidApp> androidAppList = serviceImpl.listAndroidAppsAsync(PROJECT_ID).get();
@@ -682,7 +684,7 @@ public class FirebaseProjectManagementServiceImplTest {
     MockLowLevelHttpResponse thirdRpcResponse = new MockLowLevelHttpResponse();
     thirdRpcResponse.setContent(CREATE_ANDROID_GET_OPERATION_ATTEMPT_2_RESPONSE);
     serviceImpl = initServiceImpl(
-        ImmutableList.<MockLowLevelHttpResponse>of(
+        ImmutableList.of(
             firstRpcResponse, secondRpcResponse, thirdRpcResponse),
         interceptor);
 
@@ -714,7 +716,7 @@ public class FirebaseProjectManagementServiceImplTest {
     MockLowLevelHttpResponse thirdRpcResponse = new MockLowLevelHttpResponse();
     thirdRpcResponse.setContent(CREATE_ANDROID_GET_OPERATION_ATTEMPT_2_RESPONSE);
     serviceImpl = initServiceImpl(
-        ImmutableList.<MockLowLevelHttpResponse>of(
+        ImmutableList.of(
             firstRpcResponse, secondRpcResponse, thirdRpcResponse),
         interceptor);
 
@@ -915,10 +917,48 @@ public class FirebaseProjectManagementServiceImplTest {
     checkRequestHeader(expectedUrl, HttpMethod.DELETE);
   }
 
+  @Test
+  public void testAuthAndRetriesSupport() {
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId(PROJECT_ID)
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
+
+    FirebaseProjectManagementServiceImpl serviceImpl =
+        new FirebaseProjectManagementServiceImpl(app);
+
+    TestApiClientUtils.assertAuthAndRetrySupport(serviceImpl.getRequestFactory());
+  }
+
+  @Test
+  public void testHttpRetries() throws Exception {
+    List<MockLowLevelHttpResponse> mockResponses = ImmutableList.of(
+        firstRpcResponse.setStatusCode(503).setContent("{}"),
+        new MockLowLevelHttpResponse().setContent("{}"));
+    MockHttpTransport transport = new MultiRequestMockHttpTransport(mockResponses);
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId(PROJECT_ID)
+        .setHttpTransport(transport)
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
+    HttpRequestFactory requestFactory = TestApiClientUtils.delayBypassedRequestFactory(app);
+    FirebaseProjectManagementServiceImpl serviceImpl = new FirebaseProjectManagementServiceImpl(
+        app, new MockSleeper(), new MockScheduler(), requestFactory);
+    serviceImpl.setInterceptor(interceptor);
+
+    serviceImpl.deleteShaCertificate(SHA1_RESOURCE_NAME);
+
+    String expectedUrl = String.format(
+        "%s/v1beta1/%s", FIREBASE_PROJECT_MANAGEMENT_URL, SHA1_RESOURCE_NAME);
+    checkRequestHeader(expectedUrl, HttpMethod.DELETE);
+  }
+
   private static FirebaseProjectManagementServiceImpl initServiceImpl(
       MockLowLevelHttpResponse mockResponse,
       MultiRequestTestResponseInterceptor interceptor) {
-    return initServiceImpl(ImmutableList.<MockLowLevelHttpResponse>of(mockResponse), interceptor);
+    return initServiceImpl(ImmutableList.of(mockResponse), interceptor);
   }
 
   private static FirebaseProjectManagementServiceImpl initServiceImpl(
@@ -931,8 +971,9 @@ public class FirebaseProjectManagementServiceImplTest {
         .setHttpTransport(transport)
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
-    FirebaseProjectManagementServiceImpl serviceImpl =
-        new FirebaseProjectManagementServiceImpl(app, new MockSleeper(), new MockScheduler());
+    HttpRequestFactory requestFactory = TestApiClientUtils.retryDisabledRequestFactory(app);
+    FirebaseProjectManagementServiceImpl serviceImpl = new FirebaseProjectManagementServiceImpl(
+        app, new MockSleeper(), new MockScheduler(), requestFactory);
     serviceImpl.setInterceptor(interceptor);
     return serviceImpl;
   }
