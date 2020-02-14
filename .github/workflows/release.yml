@@ -115,7 +115,7 @@ jobs:
     - name: Post to Twitter
       if: success() &&
         contains(github.event.pull_request.labels.*.name, 'release:tweet')
-      uses: firebase/firebase-admin-node/.github/actions/send-tweet
+      uses: firebase/firebase-admin-node/.github/actions/send-tweet@master
       with:
         status: >
           ${{ steps.preflight.outputs.version }} of @Firebase Admin Java SDK is available.
