@@ -80,13 +80,13 @@ echo_info ""
 
 readonly MAVEN_CENTRAL_URL="https://repo1.maven.org/maven2/com/google/firebase/firebase-admin/${RELEASE_VERSION}"
 readonly MAVEN_STATUS=`curl -s -o /dev/null -L -w "%{http_code}" ${MAVEN_CENTRAL_URL}`
-if [[ $PYPI_STATUS -eq 404 ]]; then
+if [[ $MAVEN_STATUS -eq 404 ]]; then
   echo_info "Release version ${RELEASE_VERSION} not found in Maven Central."
-elif [[ $PYPI_STATUS -eq 200 ]]; then
+elif [[ $MAVEN_STATUS -eq 200 ]]; then
   echo_warn "Release version ${RELEASE_VERSION} already present in Maven Central."
   terminate
 else
-  echo_warn "Unexpected ${PYPI_STATUS} response from Maven Central. Exiting."
+  echo_warn "Unexpected ${MAVEN_STATUS} response from Maven Central. Exiting."
   terminate
 fi
 

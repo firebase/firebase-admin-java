@@ -49,9 +49,6 @@ jobs:
       with:
         java-version: 1.7
 
-    - name: Run unit tests
-      run: mvn -B test
-
     - name: Compile, test and package
       run: ./.github/scripts/package_artifacts.sh
       env:
@@ -109,11 +106,22 @@ jobs:
         prerelease: false
 
     - name: Publish to Maven Central
-      run: echo Publishing to Maven Central
+      run: ./.github/scripts/publish_artifacts.sh
+      env:
+        MAVEN_SETTINGS_XML: ${{ secrets.MAVEN_SETTINGS_XML }}
+        GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
 
     # Post to Twitter if explicitly opted-in by adding the label 'release:tweet'.
     - name: Post to Twitter
       if: success() &&
         contains(github.event.pull_request.labels.*.name, 'release:tweet')
-      run: echo Posting Tweet
+      uses: firebase/firebase-admin-node/.github/actions/send-tweet
+      with:
+        status: >
+          ${{ steps.preflight.outputs.version }} of @Firebase Admin Java SDK is available.
+          https://github.com/firebase/firebase-admin-python/releases/tag/${{ steps.preflight.outputs.version }}
+        consumer-key: ${{ secrets.TWITTER_CONSUMER_KEY }}
+        consumer-secret: ${{ secrets.TWITTER_CONSUMER_SECRET }}
+        access-token: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+        access-token-secret: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
       continue-on-error: true
