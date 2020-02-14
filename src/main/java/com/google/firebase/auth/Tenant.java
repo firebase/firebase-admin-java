@@ -110,7 +110,7 @@ public final class Tenant {
     }
 
     /**
-     * Sets whether to/Users/micahstairs/firebase-admin-java  enable email link user authentication.
+     * Sets whether to  enable email link user authentication.
      *
      * @param emailLinkSignInEnabled a boolean indicating whether users can be authenticated using
      *     an email link, and false otherwise.
