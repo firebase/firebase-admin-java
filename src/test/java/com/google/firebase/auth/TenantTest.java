@@ -32,15 +32,17 @@ public class TenantTest {
 
   private static final JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
 
+  private static final String TENANT_JSON_STRING = 
+      "{"
+        + "\"tenantId\":\"TENANT_ID\","
+        + "\"displayName\":\"DISPLAY_NAME\","
+        + "\"allowPasswordSignup\":true,"
+        + "\"enableEmailLinkSignin\":false"
+        + "}";
+
   @Test
   public void testJsonSerialization() throws IOException {
-    Tenant tenant = jsonFactory.fromString(
-        "{"
-          + "\"tenantId\":\"TENANT_ID\","
-          + "\"displayName\":\"DISPLAY_NAME\","
-          + "\"allowPasswordSignup\":true,"
-          + "\"enableEmailLinkSignin\":false"
-          + "}", Tenant.class);
+    Tenant tenant = jsonFactory.fromString(TENANT_JSON_STRING, Tenant.class);
 
     assertEquals(tenant.getTenantId(), "TENANT_ID");
     assertEquals(tenant.getDisplayName(), "DISPLAY_NAME");
@@ -50,13 +52,7 @@ public class TenantTest {
 
   @Test
   public void testCreateUpdateRequestFromTenant() throws IOException {
-    Tenant tenant = jsonFactory.fromString(
-        "{"
-          + "\"tenantId\":\"TENANT_ID\","
-          + "\"displayName\":\"DISPLAY_NAME\","
-          + "\"allowPasswordSignup\":true,"
-          + "\"enableEmailLinkSignin\":false"
-          + "}", Tenant.class);
+    Tenant tenant = jsonFactory.fromString(TENANT_JSON_STRING, Tenant.class);
 
     Tenant.UpdateRequest updateRequest = tenant.updateRequest();
 
@@ -64,9 +60,6 @@ public class TenantTest {
     Map<String,Object> properties = updateRequest.getProperties();
     assertEquals(properties.size(), 1);
     assertEquals("TENANT_ID", (String) properties.get("tenantId"));
-    assertNull(properties.get("displayName"));
-    assertNull(properties.get("allowPasswordSignup"));
-    assertNull(properties.get("enableEmailLinkSignin"));
   }
 
   @Test

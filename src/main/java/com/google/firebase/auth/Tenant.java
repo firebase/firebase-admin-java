@@ -75,7 +75,7 @@ public final class Tenant {
    * <p>Set the initial attributes of the new tenant by calling various setter methods available in
    * this class. None of the attributes are required.
    */
-  public static class CreateRequest {
+  public static final class CreateRequest {
 
     private final Map<String,Object> properties = new HashMap<>();
 
@@ -110,7 +110,7 @@ public final class Tenant {
     }
 
     /**
-     * Sets whether to enable email link user authentication.
+     * Sets whether to/Users/micahstairs/firebase-admin-java  enable email link user authentication.
      *
      * @param emailLinkSignInEnabled a boolean indicating whether users can be authenticated using
      *     an email link, and false otherwise.
@@ -132,7 +132,7 @@ public final class Tenant {
    * string. Specify the changes to be made to the tenant by calling the various setter methods
    * available in this class.
    */
-  public static class UpdateRequest {
+  public static final class UpdateRequest {
 
     private final Map<String,Object> properties = new HashMap<>();
 
