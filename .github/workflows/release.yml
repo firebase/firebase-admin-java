@@ -108,8 +108,10 @@ jobs:
     - name: Publish to Maven Central
       run: ./.github/scripts/publish_artifacts.sh
       env:
-        MAVEN_SETTINGS_XML: ${{ secrets.MAVEN_SETTINGS_XML }}
+        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        NEXUS_OSSRH_USERNAME: ${{ secrets.NEXUS_OSSRH_USERNAME }}
+        NEXUS_OSSRH_PASSWORD: ${{ secrets.NEXUS_OSSRH_PASSWORD }}
 
     # Post to Twitter if explicitly opted-in by adding the label 'release:tweet'.
     - name: Post to Twitter

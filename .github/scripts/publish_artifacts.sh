@@ -17,13 +17,19 @@
 set -e
 set -u
 
-gpg --quiet --batch --yes --decrypt --passphrase="${MAVEN_SETTINGS_XML}" \
-  --output settings.xml .github/resources/settings.xml.gpg
-
 gpg --quiet --batch --yes --decrypt --passphrase="${GPG_PRIVATE_KEY}" \
   --output firebase.asc .github/resources/firebase.asc.gpg
 
 gpg --import firebase.asc
 
-mvn -B clean deploy -Dcheckstyle.skip -DskipTests -Prelease --settings settings.xml
+# Does the following:
+#  1. Compiles the source (compile phase)
+#  2. Packages the artifacts - src, bin, javadocs (package phase)
+#  3. Signs the artifacts (verify phase)
+#  4. Publishes artifacts via Nexus (deploy phase)
+mvn -B clean deploy \
+  -Dcheckstyle.skip \
+  -DskipTests \
+  -Prelease \
+  --settings .github/resources/settings.xml
 
