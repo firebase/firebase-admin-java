@@ -34,8 +34,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.IncomingHttpResponse;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.CallableOperation;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -58,7 +58,6 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
   private final FirebaseApp app;
   private final Sleeper sleeper;
   private final Scheduler scheduler;
-  private final HttpRequestFactory requestFactory;
   private final HttpHelper httpHelper;
 
   private final CreateAndroidAppFromAppIdFunction createAndroidAppFromAppIdFunction =
@@ -80,13 +79,7 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
     this.app = checkNotNull(app);
     this.sleeper = checkNotNull(sleeper);
     this.scheduler = checkNotNull(scheduler);
-    this.requestFactory = checkNotNull(requestFactory);
     this.httpHelper = new HttpHelper(app.getOptions().getJsonFactory(), requestFactory);
-  }
-
-  @VisibleForTesting
-  HttpRequestFactory getRequestFactory() {
-    return requestFactory;
   }
 
   @VisibleForTesting

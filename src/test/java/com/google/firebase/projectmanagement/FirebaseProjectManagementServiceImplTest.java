@@ -46,8 +46,8 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
-import com.google.firebase.internal.TestApiClientUtils;
 import com.google.firebase.internal.SdkUtils;
+import com.google.firebase.internal.TestApiClientUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayOutputStream;
@@ -1039,17 +1039,25 @@ public class FirebaseProjectManagementServiceImplTest {
   }
 
   @Test
-  public void testAuthAndRetriesSupport() {
+  public void testAuthAndRetriesSupport() throws Exception {
+    List<MockLowLevelHttpResponse> mockResponses = ImmutableList.of(
+        new MockLowLevelHttpResponse().setContent("{}"));
+    MockHttpTransport transport = new MultiRequestMockHttpTransport(mockResponses);
     FirebaseOptions options = new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId(PROJECT_ID)
+        .setHttpTransport(transport)
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
 
     FirebaseProjectManagementServiceImpl serviceImpl =
         new FirebaseProjectManagementServiceImpl(app);
+    serviceImpl.setInterceptor(interceptor);
 
-    TestApiClientUtils.assertAuthAndRetrySupport(serviceImpl.getRequestFactory());
+    serviceImpl.deleteShaCertificate(SHA1_RESOURCE_NAME);
+
+    assertEquals(1, interceptor.getNumberOfResponses());
+    TestApiClientUtils.assertAuthAndRetrySupport(interceptor.getResponse(0).getRequest());
   }
 
   @Test
