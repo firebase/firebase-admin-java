@@ -51,7 +51,7 @@ public class TenantTest {
   }
 
   @Test
-  public void testCreateUpdateRequestFromTenant() throws IOException {
+  public void testUpdateRequestFromTenant() throws IOException {
     Tenant tenant = jsonFactory.fromString(TENANT_JSON_STRING, Tenant.class);
 
     Tenant.UpdateRequest updateRequest = tenant.updateRequest();
@@ -63,7 +63,7 @@ public class TenantTest {
   }
 
   @Test
-  public void testCreateUpdateRequestFromTenantId() throws IOException {
+  public void testUpdateRequestFromTenantId() throws IOException {
     Tenant.UpdateRequest updateRequest = new Tenant.UpdateRequest("TENANT_ID");
     updateRequest
       .setDisplayName("DISPLAY_NAME")
@@ -74,6 +74,21 @@ public class TenantTest {
     Map<String,Object> properties = updateRequest.getProperties();
     assertEquals(properties.size(), 4);
     assertEquals("TENANT_ID", (String) properties.get("tenantId"));
+    assertEquals("DISPLAY_NAME", (String) properties.get("displayName"));
+    assertFalse((boolean) properties.get("allowPasswordSignup"));
+    assertTrue((boolean) properties.get("enableEmailLinkSignin"));
+  }
+
+  @Test
+  public void testCreateRequest() throws IOException {
+    Tenant.CreateRequest createRequest = new Tenant.CreateRequest();
+    createRequest
+      .setDisplayName("DISPLAY_NAME")
+      .setPasswordSignInAllowed(false)
+      .setEmailLinkSignInEnabled(true);
+
+    Map<String,Object> properties = createRequest.getProperties();
+    assertEquals(properties.size(), 3);
     assertEquals("DISPLAY_NAME", (String) properties.get("displayName"));
     assertFalse((boolean) properties.get("allowPasswordSignup"));
     assertTrue((boolean) properties.get("enableEmailLinkSignin"));

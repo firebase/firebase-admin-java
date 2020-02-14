@@ -94,7 +94,7 @@ public final class Tenant {
      */
     public CreateRequest setDisplayName(String displayName) {
       checkArgument(!Strings.isNullOrEmpty(displayName), "display name must not be null or empty");
-      properties.put("dislayName", displayName);
+      properties.put("displayName", displayName);
       return this;
     }
 
