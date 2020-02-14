@@ -357,10 +357,10 @@ public class UserRecord implements UserInfo {
     /**
      * Sets the display name for the new user.
      *
-     * @param displayName a non-null, non-empty display name string.
+     * @param displayName a non-null display name string.
      */
     public CreateRequest setDisplayName(String displayName) {
-      checkNotNull(displayName, "displayName cannot be null or empty");
+      checkNotNull(displayName, "displayName cannot be null");
       properties.put("displayName", displayName);
       return this;
     }
