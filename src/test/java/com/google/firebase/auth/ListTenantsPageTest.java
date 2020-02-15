@@ -321,7 +321,7 @@ public class ListTenantsPageTest {
 
   private static Tenant newTenant(String tenantId) throws IOException {
     return Utils.getDefaultJsonFactory().fromString(
-        String.format("{\"tenantId\":\"%s\"}", tenantId), Tenant.class);
+        String.format("{\"name\":\"%s\"}", tenantId), Tenant.class);
   }
 
   private static class TestTenantSource implements ListTenantsPage.TenantSource {

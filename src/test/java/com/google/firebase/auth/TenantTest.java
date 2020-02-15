@@ -34,7 +34,7 @@ public class TenantTest {
 
   private static final String TENANT_JSON_STRING = 
       "{"
-        + "\"tenantId\":\"TENANT_ID\","
+        + "\"name\":\"TENANT_ID\","
         + "\"displayName\":\"DISPLAY_NAME\","
         + "\"allowPasswordSignup\":true,"
         + "\"enableEmailLinkSignin\":false"
@@ -59,7 +59,7 @@ public class TenantTest {
     assertEquals("TENANT_ID", updateRequest.getTenantId());
     Map<String,Object> properties = updateRequest.getProperties();
     assertEquals(properties.size(), 1);
-    assertEquals("TENANT_ID", (String) properties.get("tenantId"));
+    assertEquals("TENANT_ID", (String) properties.get("name"));
   }
 
   @Test
@@ -73,7 +73,7 @@ public class TenantTest {
     assertEquals("TENANT_ID", updateRequest.getTenantId());
     Map<String,Object> properties = updateRequest.getProperties();
     assertEquals(properties.size(), 4);
-    assertEquals("TENANT_ID", (String) properties.get("tenantId"));
+    assertEquals("TENANT_ID", (String) properties.get("name"));
     assertEquals("DISPLAY_NAME", (String) properties.get("displayName"));
     assertFalse((boolean) properties.get("allowPasswordSignup"));
     assertTrue((boolean) properties.get("enableEmailLinkSignin"));

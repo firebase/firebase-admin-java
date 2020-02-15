@@ -31,7 +31,7 @@ import java.util.Map;
  */
 public final class Tenant {
 
-  @Key("tenantId")
+  @Key("name")
   private String tenantId;
 
   @Key("displayName")
@@ -148,11 +148,11 @@ public final class Tenant {
      */
     public UpdateRequest(String tenantId) {
       checkArgument(!Strings.isNullOrEmpty(tenantId), "tenant ID must not be null or empty");
-      properties.put("tenantId", tenantId);
+      properties.put("name", tenantId);
     }
 
     String getTenantId() {
-      return (String) properties.get("tenantId");
+      return (String) properties.get("name");
     }
 
     /**
