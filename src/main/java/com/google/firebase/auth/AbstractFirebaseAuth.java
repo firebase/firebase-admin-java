@@ -690,8 +690,7 @@ public abstract class AbstractFirebaseAuth {
    * UpdateRequest}.
    *
    * @param request A non-null {@link UpdateRequest} instance.
-   * @return A {@link UserRecord} instance corresponding to the updated user account. account, the
-   *     task fails with a {@link FirebaseAuthException}.
+   * @return A {@link UserRecord} instance corresponding to the updated user account.
    * @throws NullPointerException if the provided update request is null.
    * @throws FirebaseAuthException if an error occurs while updating the user account.
    */
@@ -1053,7 +1052,6 @@ public abstract class AbstractFirebaseAuth {
         .callAsync(firebaseApp);
   }
 
-  @VisibleForTesting
   FirebaseUserManager getUserManager() {
     return this.userManager.get();
   }
@@ -1074,7 +1072,7 @@ public abstract class AbstractFirebaseAuth {
     };
   }
 
-  private <T> Supplier<T> threadSafeMemoize(final Supplier<T> supplier) {
+  <T> Supplier<T> threadSafeMemoize(final Supplier<T> supplier) {
     checkNotNull(supplier);
     return Suppliers.memoize(
         new Supplier<T>() {

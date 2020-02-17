@@ -57,9 +57,8 @@ import java.util.Map;
 /**
  * FirebaseUserManager provides methods for interacting with the Google Identity Toolkit via its
  * REST API. This class does not hold any mutable state, and is thread safe.
- * 
- * <p>TODO(micahstairs): Consider renaming this to FirebaseAuthManager since this also supports
- * tenants.
+ *
+ * <p>TODO(micahstairs): Rename this class to IdentityToolkitClient.
  *
  * @see <a href="https://developers.google.com/identity/toolkit/web/reference/relyingparty">
  *   Google Identity Toolkit</a>
@@ -227,7 +226,8 @@ class FirebaseUserManager {
     return new UserImportResult(request.getUsersCount(), response);
   }
 
-  ListTenantsResponse listTenants(int maxResults, String pageToken) throws FirebaseAuthException {
+  ListTenantsResponse listTenants(int maxResults, String pageToken)
+      throws FirebaseAuthException {
     ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
         .put("pageSize", maxResults);
     if (pageToken != null) {

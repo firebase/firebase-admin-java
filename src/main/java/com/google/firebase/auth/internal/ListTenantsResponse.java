@@ -17,20 +17,24 @@
 package com.google.firebase.auth.internal;
 
 import com.google.api.client.util.Key;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
+import com.google.firebase.auth.ListTenantsPage;
 import com.google.firebase.auth.Tenant;
 import java.util.List;
 
 /**
  * JSON data binding for ListTenantsResponse messages sent by Google identity toolkit service.
  */
-public class ListTenantsResponse {
+public final class ListTenantsResponse {
 
   @Key("tenants")
-  private List<Tenant> tenants;
+  private List<Tenant> tenants = ImmutableList.of(); // Default to empty list.
 
   @Key("pageToken")
-  private String pageToken;
+  private String pageToken = ""; // Default to ListTenantsPage.END_OF_LIST.
 
+  @VisibleForTesting
   public ListTenantsResponse(List<Tenant> tenants, String pageToken) {
     this.tenants = tenants;
     this.pageToken = pageToken;
