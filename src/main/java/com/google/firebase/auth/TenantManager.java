@@ -34,7 +34,7 @@ import com.google.firebase.internal.Nullable;
  * This class can be used to perform a variety of tenant-related operations, including creating,
  * updating, and listing tenants.
  *
- * TODO(micahstairs): Implement the following methods: getAuthForTenant(), getTenant(),
+ * <p>TODO(micahstairs): Implement the following methods: getAuthForTenant(), getTenant(),
  * deleteTenant(), createTenant(), and updateTenant().
  */
 public class TenantManager {
