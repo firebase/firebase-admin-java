@@ -431,6 +431,52 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testListTenants() throws Exception {
+    final TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("listTenants.json"));
+    ListTenantsPage page =
+        FirebaseAuth.getInstance().getTenantManager().listTenantsAsync(null, 999).get();
+    assertEquals(2, Iterables.size(page.getValues()));
+    for (Tenant tenant : page.getValues()) {
+      checkTenant(tenant);
+    }
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(999, url.getFirst("pageSize"));
+    assertNull(url.getFirst("pageToken"));
+  }
+
+  @Test
+  public void testListTenantsWithPageToken() throws Exception {
+    final TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("listTenants.json"));
+    ListTenantsPage page =
+        FirebaseAuth.getInstance().getTenantManager().listTenantsAsync("token", 999).get();
+    assertEquals(2, Iterables.size(page.getValues()));
+    for (Tenant tenant : page.getValues()) {
+      checkTenant(tenant);
+    }
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(999, url.getFirst("pageSize"));
+    assertEquals("token", url.getFirst("pageToken"));
+  }
+
+  @Test
+  public void testListZeroTenants() throws Exception {
+    final TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    ListTenantsPage page =
+        FirebaseAuth.getInstance().getTenantManager().listTenantsAsync(null).get();
+    assertTrue(Iterables.isEmpty(page.getValues()));
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+  }
+
+  @Test
   public void testCreateSessionCookie() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("createSessionCookie.json"));
@@ -1264,6 +1310,13 @@ public class FirebaseUserManagerTest {
     assertEquals("gold", claims.get("package"));
   }
 
+  private static void checkTenant(Tenant tenant) {
+    assertEquals("TENANT_ID", tenant.getTenantId());
+    assertEquals("DISPLAY_NAME", tenant.getDisplayName());
+    assertTrue(tenant.isPasswordSignInAllowed());
+    assertFalse(tenant.isEmailLinkSignInEnabled());
+  }
+
   private static void checkRequestHeaders(TestResponseInterceptor interceptor) {
     HttpHeaders headers = interceptor.getResponse().getRequest().getHeaders();
     String auth = "Bearer " + TEST_TOKEN;
@@ -1276,5 +1329,5 @@ public class FirebaseUserManagerTest {
   private interface UserManagerOp {
     void call(FirebaseAuth auth) throws Exception;
   }
-  
+
 }
