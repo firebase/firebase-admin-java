@@ -16,8 +16,13 @@
 
 package com.google.firebase.auth;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.api.client.util.Key;
-import com.google.auto.value.AutoValue;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Contains metadata associated with a Firebase tenant.
@@ -26,7 +31,7 @@ import com.google.auto.value.AutoValue;
  */
 public final class Tenant {
 
-  @Key("tenantId")
+  @Key("name")
   private String tenantId;
 
   @Key("displayName")
@@ -55,100 +60,136 @@ public final class Tenant {
   }
 
   /**
-   * Class used to hold the information needs to make a tenant create request.
+   * Returns a new {@link UpdateRequest}, which can be used to update the attributes
+   * of this tenant.
+   *
+   * @return a non-null Tenant.UpdateRequest instance.
    */
-  @AutoValue
-  public abstract static class CreateRequest {
+  public UpdateRequest updateRequest() {
+    return new UpdateRequest(getTenantId());
+  }
+
+  /**
+   * A specification class for creating new user accounts.
+   *
+   * <p>Set the initial attributes of the new tenant by calling various setter methods available in
+   * this class. None of the attributes are required.
+   */
+  public static final class CreateRequest {
+
+    private final Map<String,Object> properties = new HashMap<>();
 
     /**
-     * Returns the display name of this tenant.
+     * Creates a new {@link CreateRequest}, which can be used to create a new tenant.
      *
-     * @return a non-empty display name string.
+     * <p>The returned object should be passed to {@link TenantManager#createTenant(CreateRequest)}
+     * to register the tenant information persistently.
      */
-    public abstract String getDisplayName();
+    public CreateRequest() { }
 
     /**
-     * Returns whether to allow email/password user authentication.
+     * Sets the display name for the new tenant.
      *
-     * @return true if a user can be authenticated using an email and password, and false otherwise.
+     * @param displayName a non-null, non-empty display name string.
      */
-    public abstract boolean isPasswordSignInAllowed();
-
-    /**
-     * Returns whether to enable email link user authentication.
-     *
-     * @return true if a user can be authenticated using an email link, and false otherwise.
-     */
-    public abstract boolean isEmailLinkSignInEnabled();
-
-    /**
-     * Returns a builder for a tenant create request.
-     */
-    public static Builder newBuilder() {
-      return new AutoValue_Tenant_CreateRequest.Builder();
+    public CreateRequest setDisplayName(String displayName) {
+      checkArgument(!Strings.isNullOrEmpty(displayName), "display name must not be null or empty");
+      properties.put("displayName", displayName);
+      return this;
     }
 
     /**
-    * Builder class used to construct a create request.
-    */
-    @AutoValue.Builder
-    abstract static class Builder {
-      public abstract Builder setDisplayName(String displayName);
+     * Sets whether to allow email/password user authentication.
+     *
+     * @param passwordSignInAllowed a boolean indicating whether users can be authenticated using
+     *     an email and password, and false otherwise.
+     */
+    public CreateRequest setPasswordSignInAllowed(boolean passwordSignInAllowed) {
+      properties.put("allowPasswordSignup", passwordSignInAllowed);
+      return this;
+    }
 
-      public abstract Builder setPasswordSignInAllowed(boolean allowPasswordSignIn);
+    /**
+     * Sets whether to  enable email link user authentication.
+     *
+     * @param emailLinkSignInEnabled a boolean indicating whether users can be authenticated using
+     *     an email link, and false otherwise.
+     */
+    public CreateRequest setEmailLinkSignInEnabled(boolean emailLinkSignInEnabled) {
+      properties.put("enableEmailLinkSignin", emailLinkSignInEnabled);
+      return this;
+    }
 
-      public abstract Builder setEmailLinkSignInEnabled(boolean enableEmailLinkSignIn);
-
-      public abstract CreateRequest build();
+    Map<String, Object> getProperties() {
+      return ImmutableMap.copyOf(properties);
     }
   }
 
   /**
-   * Class used to hold the information needs to make a tenant update request. 
+   * A class for updating the attributes of an existing tenant.
+   *
+   * <p>An instance of this class can be obtained via a {@link Tenant} object, or from a tenant ID
+   * string. Specify the changes to be made to the tenant by calling the various setter methods
+   * available in this class.
    */
-  @AutoValue
-  public abstract static class UpdateRequest {
+  public static final class UpdateRequest {
+
+    private final Map<String,Object> properties = new HashMap<>();
 
     /**
-     * Returns the display name of this tenant.
+     * Creates a new {@link UpdateRequest}, which can be used to update the attributes of the
+     * of the tenant identified by the specified tenant ID.
      *
-     * @return a non-empty display name string.
-     */
-    public abstract String getDisplayName();
-
-    /**
-     * Returns whether to allow email/password user authentication.
+     * <p>This method allows updating attributes of a tenant account, without first having to call
+     * {@link TenantManager#getTenant(String)}.
      *
-     * @return true if a user can be authenticated using an email and password, and false otherwise.
+     * @param tenantId a non-null, non-empty tenant ID string.
+     * @throws IllegalArgumentException If the tenant ID is null or empty.
      */
-    public abstract boolean isPasswordSignInAllowed();
+    public UpdateRequest(String tenantId) {
+      checkArgument(!Strings.isNullOrEmpty(tenantId), "tenant ID must not be null or empty");
+      properties.put("name", tenantId);
+    }
 
-    /**
-     * Returns whether to enable email link user authentication.
-     *
-     * @return true if a user can be authenticated using an email link, and false otherwise.
-     */
-    public abstract boolean isEmailLinkSignInEnabled();
-
-    /**
-     * Returns a builder for a tenant update request.
-     */
-    public static Builder newBuilder() {
-      return new AutoValue_Tenant_UpdateRequest.Builder();
+    String getTenantId() {
+      return (String) properties.get("name");
     }
 
     /**
-    * Builder class used to construct a update request.
-    */
-    @AutoValue.Builder
-    abstract static class Builder {
-      public abstract Builder setDisplayName(String displayName);
+     * Sets the display name of the existingtenant.
+     *
+     * @param displayName a non-null, non-empty display name string.
+     */
+    public UpdateRequest setDisplayName(String displayName) {
+      checkArgument(!Strings.isNullOrEmpty(displayName), "display name must not be null or empty");
+      properties.put("displayName", displayName);
+      return this;
+    }
 
-      public abstract Builder setPasswordSignInAllowed(boolean allowPasswordSignIn);
+    /**
+     * Sets whether to allow email/password user authentication.
+     *
+     * @param passwordSignInAllowed a boolean indicating whether users can be authenticated using
+     *     an email and password, and false otherwise.
+     */
+    public UpdateRequest setPasswordSignInAllowed(boolean passwordSignInAllowed) {
+      properties.put("allowPasswordSignup", passwordSignInAllowed);
+      return this;
+    }
 
-      public abstract Builder setEmailLinkSignInEnabled(boolean enableEmailLinkSignIn);
+    /**
+     * Sets whether to enable email link user authentication.
+     *
+     * @param emailLinkSignInEnabled a boolean indicating whether users can be authenticated using
+     *     an email link, and false otherwise.
+     */
+    public UpdateRequest setEmailLinkSignInEnabled(boolean emailLinkSignInEnabled) {
+      properties.put("enableEmailLinkSignin", emailLinkSignInEnabled);
+      return this;
+    }
 
-      public abstract UpdateRequest build();
+    Map<String, Object> getProperties() {
+      return ImmutableMap.copyOf(properties);
     }
   }
 }
