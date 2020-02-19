@@ -249,7 +249,7 @@ public class FirebaseTokenVerifierImplTest {
       tokenVerifier.verifyToken(token);
     } catch (FirebaseAuthException e) {
       String message = "Error while fetching public key certificates: Could not parse certificate";
-      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertTrue(e.getMessage().startsWith(message));
       assertTrue(e.getCause() instanceof GeneralSecurityException);
       assertNull(e.getHttpResponse());
@@ -274,7 +274,7 @@ public class FirebaseTokenVerifierImplTest {
       Assert.fail("No exception thrown");
     } catch (FirebaseAuthException e) {
       String message = "Error while fetching public key certificates: Expected error";
-      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertEquals(message, e.getMessage());
       assertTrue(e.getCause() instanceof IOException);
       assertNull(e.getHttpResponse());
@@ -317,7 +317,7 @@ public class FirebaseTokenVerifierImplTest {
       String message = "Failed to parse Firebase test token. "
           + "Make sure you passed a string that represents a complete and valid JWT. "
           + "See https://test.doc.url for details on how to retrieve a test token.";
-      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCodeNew());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
       assertEquals(message, e.getMessage());
       assertTrue(e.getCause() instanceof IllegalArgumentException);
       assertNull(e.getHttpResponse());
@@ -454,7 +454,7 @@ public class FirebaseTokenVerifierImplTest {
   }
 
   private void checkException(FirebaseAuthException e, String message, AuthErrorCode errorCode) {
-    assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCodeNew());
+    assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
     assertEquals(message, e.getMessage());
     assertNull(e.getCause());
     assertNull(e.getHttpResponse());

@@ -117,7 +117,7 @@ public class FirebaseUserManagerTest {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCodeNew());
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCode());
       assertEquals(
           "No user record found for the provided user ID: testuser", authException.getMessage());
       assertNull(authException.getCause());
@@ -145,7 +145,7 @@ public class FirebaseUserManagerTest {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCodeNew());
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCode());
       assertEquals(
           "No user record found for the provided email: testuser@example.com",
           authException.getMessage());
@@ -174,7 +174,7 @@ public class FirebaseUserManagerTest {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCodeNew());
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCode());
       assertEquals(
           "No user record found for the provided phone number: +1234567890",
           authException.getMessage());
@@ -588,7 +588,7 @@ public class FirebaseUserManagerTest {
         } catch (ExecutionException e) {
           assertTrue(e.getCause() instanceof FirebaseAuthException);
           FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-          assertEquals(codes.get(code), authException.getErrorCodeNew());
+          assertEquals(codes.get(code), authException.getErrorCode());
           String msg = String.format("Unexpected HTTP response with status: %d\n{}", code);
           assertEquals(msg, authException.getMessage());
           assertTrue(authException.getCause() instanceof HttpResponseException);
@@ -608,7 +608,7 @@ public class FirebaseUserManagerTest {
       }  catch (ExecutionException e) {
         assertTrue(e.getCause().toString(), e.getCause() instanceof FirebaseAuthException);
         FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-        assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCodeNew());
+        assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCode());
         assertEquals(
             "No user record found for the given identifier (USER_NOT_FOUND).",
             authException.getMessage());
@@ -628,7 +628,7 @@ public class FirebaseUserManagerTest {
       }  catch (ExecutionException e) {
         assertTrue(e.getCause().toString(), e.getCause() instanceof FirebaseAuthException);
         FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-        assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCodeNew());
+        assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCode());
         assertEquals(
             "No user record found for the given identifier (USER_NOT_FOUND): Extra details",
             authException.getMessage());
@@ -648,7 +648,7 @@ public class FirebaseUserManagerTest {
     }  catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals(ErrorCode.UNKNOWN, authException.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, authException.getErrorCode());
       assertTrue(
           authException.getMessage().startsWith("Error while parsing HTTP response: "));
       assertTrue(authException.getCause() instanceof IOException);
@@ -669,7 +669,7 @@ public class FirebaseUserManagerTest {
     }  catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals(ErrorCode.INTERNAL, authException.getErrorCodeNew());
+      assertEquals(ErrorCode.INTERNAL, authException.getErrorCode());
       assertEquals("Unexpected HTTP response with status: 500\n{\"not\" json}",
           authException.getMessage());
       assertTrue(authException.getCause() instanceof HttpResponseException);
@@ -1224,7 +1224,7 @@ public class FirebaseUserManagerTest {
       userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseAuthException e) {
-      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCodeNew());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
       assertEquals(
           "The domain of the continue URL is not whitelisted (UNAUTHORIZED_DOMAIN).",
           e.getMessage());
@@ -1246,7 +1246,7 @@ public class FirebaseUserManagerTest {
       userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseAuthException e) {
-      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
       assertEquals("Unexpected HTTP response with status: 500\n" + content, e.getMessage());
       assertNull(e.getAuthErrorCode());
       assertTrue(e.getCause() instanceof HttpResponseException);
@@ -1265,7 +1265,7 @@ public class FirebaseUserManagerTest {
       userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseAuthException e) {
-      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
       assertEquals("Unexpected HTTP response with status: 500\n{}", e.getMessage());
       assertTrue(e.getCause() instanceof HttpResponseException);
       assertNotNull(e.getHttpResponse());

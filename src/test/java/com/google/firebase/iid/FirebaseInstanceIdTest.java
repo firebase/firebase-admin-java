@@ -220,7 +220,7 @@ public class FirebaseInstanceIdTest {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseInstanceIdException);
       FirebaseInstanceIdException error = (FirebaseInstanceIdException) e.getCause();
-      assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
       assertEquals(
           "Unknown error while making a remote service call: transport error",
           error.getMessage());
@@ -254,7 +254,7 @@ public class FirebaseInstanceIdTest {
   }
 
   private void checkFirebaseInstanceIdException(FirebaseInstanceIdException error, int statusCode) {
-    assertEquals(ERROR_CODES.get(statusCode), error.getErrorCodeNew());
+    assertEquals(ERROR_CODES.get(statusCode), error.getErrorCode());
     assertEquals(ERROR_MESSAGES.get(statusCode), error.getMessage());
     assertTrue(error.getCause() instanceof HttpResponseException);
 

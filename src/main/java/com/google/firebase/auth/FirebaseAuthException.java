@@ -40,13 +40,8 @@ public class FirebaseAuthException extends FirebaseException {
     this.errorCode = authErrorCode;
   }
 
-  public FirebaseAuthException(
-      @NonNull ErrorCode errorCode, @NonNull String message, Throwable throwable) {
-    this(errorCode, message, throwable, null, null);
-  }
-
   public FirebaseAuthException(FirebaseException base) {
-    this(base.getErrorCodeNew(), base.getMessage(), base.getCause(), base.getHttpResponse(), null);
+    this(base.getErrorCode(), base.getMessage(), base.getCause(), base.getHttpResponse(), null);
   }
 
   @Nullable

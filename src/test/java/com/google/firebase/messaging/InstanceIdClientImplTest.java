@@ -185,7 +185,7 @@ public class InstanceIdClientImplTest {
       client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
       assertEquals(
           "Unknown error while making a remote service call: transport error", error.getMessage());
       assertTrue(error.getCause() instanceof IOException);
@@ -203,7 +203,7 @@ public class InstanceIdClientImplTest {
       client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
       assertTrue(error.getMessage().startsWith("Error while parsing HTTP response: "));
       assertTrue(error.getCause() instanceof IOException);
     }
@@ -323,7 +323,7 @@ public class InstanceIdClientImplTest {
       client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
       assertEquals(
           "Unknown error while making a remote service call: transport error", error.getMessage());
       assertTrue(error.getCause() instanceof IOException);
@@ -341,7 +341,7 @@ public class InstanceIdClientImplTest {
       client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
       assertTrue(error.getMessage().startsWith("Error while parsing HTTP response: "));
       assertTrue(error.getCause() instanceof IOException);
     }
@@ -437,7 +437,7 @@ public class InstanceIdClientImplTest {
 
   private void checkExceptionFromHttpResponse(
       FirebaseMessagingException error, int statusCode, String expectedMessage) {
-    assertEquals(HTTP_2_ERROR.get(statusCode), error.getErrorCodeNew());
+    assertEquals(HTTP_2_ERROR.get(statusCode), error.getErrorCode());
     assertEquals(expectedMessage, error.getMessage());
     assertTrue(error.getCause() instanceof HttpResponseException);
     assertNull(error.getMessagingErrorCode());

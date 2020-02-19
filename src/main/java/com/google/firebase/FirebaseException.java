@@ -31,16 +31,6 @@ public class FirebaseException extends Exception {
   private final ErrorCode errorCode;
   private final IncomingHttpResponse httpResponse;
 
-  @Deprecated
-  public FirebaseException(@NonNull String detailMessage) {
-    this(detailMessage, null);
-  }
-
-  @Deprecated
-  public FirebaseException(@NonNull String detailMessage, Throwable cause) {
-    this(ErrorCode.UNKNOWN, detailMessage, cause, null);
-  }
-
   public FirebaseException(
       @NonNull ErrorCode errorCode,
       @NonNull String message,
@@ -64,8 +54,7 @@ public class FirebaseException extends Exception {
    *
    * @return A Firebase error code.
    */
-  // TODO: Rename this method to getErrorCode when the child classes are refactored.
-  public ErrorCode getErrorCodeNew() {
+  public final ErrorCode getErrorCode() {
     return errorCode;
   }
 
@@ -76,7 +65,7 @@ public class FirebaseException extends Exception {
    * @return An HTTP response or null.
    */
   @Nullable
-  public IncomingHttpResponse getHttpResponse() {
+  public final IncomingHttpResponse getHttpResponse() {
     return httpResponse;
   }
 }

@@ -45,7 +45,7 @@ public final class FirebaseMessagingException extends FirebaseException {
   static FirebaseMessagingException withMessagingErrorCode(
       FirebaseException base, @Nullable MessagingErrorCode errorCode) {
     return new FirebaseMessagingException(
-        base.getErrorCodeNew(),
+        base.getErrorCode(),
         base.getMessage(),
         base.getCause(),
         base.getHttpResponse(),
@@ -54,7 +54,7 @@ public final class FirebaseMessagingException extends FirebaseException {
 
   static FirebaseMessagingException withCustomMessage(FirebaseException base, String message) {
     return new FirebaseMessagingException(
-        base.getErrorCodeNew(),
+        base.getErrorCode(),
         message,
         base.getCause(),
         base.getHttpResponse(),

@@ -278,7 +278,7 @@ public class FirebaseProjectManagementServiceImplTest {
       serviceImpl.getIosApp(IOS_APP_ID);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseProjectManagementException e) {
-      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
       assertEquals(
           "App ID \"test-ios-app-id\": Unexpected HTTP response with status: 500\n{}",
           e.getMessage());
@@ -298,7 +298,7 @@ public class FirebaseProjectManagementServiceImplTest {
       serviceImpl.getIosApp(IOS_APP_ID);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseProjectManagementException e) {
-      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCodeNew());
+      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
       assertEquals("App ID \"test-ios-app-id\": Test error", e.getMessage());
       assertNotNull(e.getCause());
       assertNotNull(e.getHttpResponse());
@@ -314,7 +314,7 @@ public class FirebaseProjectManagementServiceImplTest {
       serviceImpl.getIosApp(IOS_APP_ID);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseProjectManagementException e) {
-      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertTrue(e.getMessage().startsWith(
           "App ID \"test-ios-app-id\": Error while parsing HTTP response"));
       assertNotNull(e.getCause());
@@ -330,7 +330,7 @@ public class FirebaseProjectManagementServiceImplTest {
       serviceImpl.getIosApp(IOS_APP_ID);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseProjectManagementException e) {
-      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertEquals(
           "App ID \"test-ios-app-id\": Unknown error while making a remote service call: "
               + "transport error",
@@ -618,7 +618,7 @@ public class FirebaseProjectManagementServiceImplTest {
       serviceImpl.getAndroidApp(ANDROID_APP_ID);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseProjectManagementException e) {
-      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
       assertEquals(
           "App ID \"test-android-app-id\": Unexpected HTTP response with status: 500\n{}",
           e.getMessage());
@@ -638,7 +638,7 @@ public class FirebaseProjectManagementServiceImplTest {
       serviceImpl.getAndroidApp(ANDROID_APP_ID);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseProjectManagementException e) {
-      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCodeNew());
+      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
       assertEquals("App ID \"test-android-app-id\": Test error", e.getMessage());
       assertNotNull(e.getCause());
       assertNotNull(e.getHttpResponse());
@@ -654,7 +654,7 @@ public class FirebaseProjectManagementServiceImplTest {
       serviceImpl.getAndroidApp(ANDROID_APP_ID);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseProjectManagementException e) {
-      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertTrue(e.getMessage().startsWith(
           "App ID \"test-android-app-id\": Error while parsing HTTP response"));
       assertNotNull(e.getCause());
@@ -670,7 +670,7 @@ public class FirebaseProjectManagementServiceImplTest {
       serviceImpl.getAndroidApp(ANDROID_APP_ID);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseProjectManagementException e) {
-      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertEquals(
           "App ID \"test-android-app-id\": Unknown error while making a remote service call: "
               + "transport error",

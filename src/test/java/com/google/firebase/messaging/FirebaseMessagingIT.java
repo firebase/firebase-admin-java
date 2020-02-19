@@ -89,7 +89,7 @@ public class FirebaseMessagingIT {
       messaging.sendAsync(message, true).get();
     } catch (ExecutionException e) {
       FirebaseMessagingException cause = (FirebaseMessagingException) e.getCause();
-      assertEquals(ErrorCode.INVALID_ARGUMENT, cause.getErrorCodeNew());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, cause.getErrorCode());
       assertEquals(MessagingErrorCode.INVALID_ARGUMENT, cause.getMessagingErrorCode());
       assertNotNull(cause.getHttpResponse());
       assertTrue(cause.getCause() instanceof HttpResponseException);
@@ -134,7 +134,7 @@ public class FirebaseMessagingIT {
     assertNull(responses.get(2).getMessageId());
     FirebaseMessagingException exception = responses.get(2).getException();
     assertNotNull(exception);
-    assertEquals(ErrorCode.INVALID_ARGUMENT, exception.getErrorCodeNew());
+    assertEquals(ErrorCode.INVALID_ARGUMENT, exception.getErrorCode());
   }
 
   @Test

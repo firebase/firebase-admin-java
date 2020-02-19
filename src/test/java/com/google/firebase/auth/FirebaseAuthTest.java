@@ -255,7 +255,7 @@ public class FirebaseAuthTest {
       auth.verifyIdToken("idtoken", true);
       fail("No error thrown for revoked ID token");
     } catch (FirebaseAuthException e) {
-      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCodeNew());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
       assertEquals("Firebase id token is revoked.", e.getMessage());
       assertNull(e.getCause());
       assertNull(e.getHttpResponse());
@@ -422,7 +422,7 @@ public class FirebaseAuthTest {
       auth.verifySessionCookie("cookie", true);
       fail("No error thrown for revoked session cookie");
     } catch (FirebaseAuthException e) {
-      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCodeNew());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
       assertEquals("Firebase session cookie is revoked.", e.getMessage());
       assertNull(e.getCause());
       assertNull(e.getHttpResponse());

@@ -24,6 +24,6 @@ import com.google.firebase.FirebaseException;
 public final class FirebaseInstanceIdException extends FirebaseException {
 
   FirebaseInstanceIdException(FirebaseException base, String message) {
-    super(base.getErrorCodeNew(), message, base.getCause(), base.getHttpResponse());
+    super(base.getErrorCode(), message, base.getCause(), base.getHttpResponse());
   }
 }
