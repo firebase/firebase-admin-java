@@ -436,10 +436,10 @@ public class FirebaseUserManagerTest {
         TestUtils.loadResource("listTenants.json"));
     ListTenantsPage page =
         FirebaseAuth.getInstance().getTenantManager().listTenantsAsync(null, 999).get();
-    assertEquals(2, Iterables.size(page.getValues()));
-    for (Tenant tenant : page.getValues()) {
-      checkTenant(tenant);
-    }
+    ImmutableList<Tenant> tenants = ImmutableList.copyOf(page.getValues());
+    assertEquals(2, tenants.size());
+    checkTenant(tenants.get(0), "TENANT_1");
+    checkTenant(tenants.get(1), "TENANT_2");
     assertEquals("", page.getNextPageToken());
     checkRequestHeaders(interceptor);
 
@@ -454,10 +454,10 @@ public class FirebaseUserManagerTest {
         TestUtils.loadResource("listTenants.json"));
     ListTenantsPage page =
         FirebaseAuth.getInstance().getTenantManager().listTenantsAsync("token", 999).get();
-    assertEquals(2, Iterables.size(page.getValues()));
-    for (Tenant tenant : page.getValues()) {
-      checkTenant(tenant);
-    }
+    ImmutableList<Tenant> tenants = ImmutableList.copyOf(page.getValues());
+    assertEquals(2, tenants.size());
+    checkTenant(tenants.get(0), "TENANT_1");
+    checkTenant(tenants.get(1), "TENANT_2");
     assertEquals("", page.getNextPageToken());
     checkRequestHeaders(interceptor);
 
@@ -1310,8 +1310,8 @@ public class FirebaseUserManagerTest {
     assertEquals("gold", claims.get("package"));
   }
 
-  private static void checkTenant(Tenant tenant) {
-    assertEquals("TENANT_ID", tenant.getTenantId());
+  private static void checkTenant(Tenant tenant, String tenantId) {
+    assertEquals(tenantId, tenant.getTenantId());
     assertEquals("DISPLAY_NAME", tenant.getDisplayName());
     assertTrue(tenant.isPasswordSignInAllowed());
     assertFalse(tenant.isEmailLinkSignInEnabled());

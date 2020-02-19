@@ -1072,7 +1072,7 @@ public abstract class AbstractFirebaseAuth {
     };
   }
 
-  <T> Supplier<T> threadSafeMemoize(final Supplier<T> supplier) {
+  protected <T> Supplier<T> threadSafeMemoize(final Supplier<T> supplier) {
     checkNotNull(supplier);
     return Suppliers.memoize(
         new Supplier<T>() {

@@ -37,12 +37,12 @@ import com.google.firebase.internal.Nullable;
  * <p>TODO(micahstairs): Implement the following methods: getAuthForTenant(), getTenant(),
  * deleteTenant(), createTenant(), and updateTenant().
  */
-public class TenantManager {
+public final class TenantManager {
 
   private final FirebaseApp firebaseApp;
   private final FirebaseUserManager userManager;
 
-  public TenantManager(FirebaseApp firebaseApp, FirebaseUserManager userManager) {
+  TenantManager(FirebaseApp firebaseApp, FirebaseUserManager userManager) {
     this.firebaseApp = firebaseApp;
     this.userManager = userManager;
   }
