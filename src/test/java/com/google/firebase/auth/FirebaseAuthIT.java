@@ -205,8 +205,8 @@ public class FirebaseAuthIT {
   }
 
   /**
-   * The batchDelete endpoint is currently rate limited to 1qps. Use this test helper to ensure we
-   * don't run into quota exceeded errors.
+   * The {@code batchDelete} endpoint is currently rate limited to 1qps. Use this test helper to
+   * ensure you don't run into quota exceeded errors.
    */
   // TODO(rsgowman): When/if the rate limit is relaxed, eliminate this helper.
   private ApiFuture<DeleteUsersResult> slowDeleteUsersAsync(List<String> uids) throws Exception {
@@ -343,9 +343,9 @@ public class FirebaseAuthIT {
 
       UserRecord userRecord = auth.getUser(newUserRecord.getUid());
 
-      // Ensure the lastRefreshTimestamp is approximately "now" (with a tollerance of 30 minutes).
+      // Ensure the lastRefreshTimestamp is approximately "now" (with a tollerance of 10 minutes).
       long now = System.currentTimeMillis();
-      long tollerance = TimeUnit.MINUTES.toMillis(30);
+      long tollerance = TimeUnit.MINUTES.toMillis(10);
       long lastRefreshTimestamp = userRecord.getUserMetadata().getLastRefreshTimestamp();
       assertTrue(now - tollerance <= lastRefreshTimestamp);
       assertTrue(lastRefreshTimestamp <= now + tollerance);

@@ -20,7 +20,7 @@ import com.google.api.client.util.Key;
 import java.util.List;
 
 /**
- * Represents the response from identity toolkit for a batch delete request.
+ * Represents the response from Google identity Toolkit for a batch delete request.
  */
 public class BatchDeleteResponse {
 
@@ -38,7 +38,7 @@ public class BatchDeleteResponse {
     @Key("message")
     private String message;
 
-    // A 'localId' field also exists here, but is not currently exposed in the admin sdk.
+    // A 'localId' field also exists here, but is not currently exposed in the Admin SDK.
 
     public int getIndex() {
       return index;

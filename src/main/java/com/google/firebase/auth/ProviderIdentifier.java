@@ -24,7 +24,7 @@ import com.google.firebase.internal.NonNull;
  *
  * @see {FirebaseAuth#getUsers}
  */
-public class ProviderIdentifier extends UserIdentifier {
+public final class ProviderIdentifier extends UserIdentifier {
   private final String providerId;
   private final String providerUid;
 

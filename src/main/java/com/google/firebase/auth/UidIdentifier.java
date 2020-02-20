@@ -24,7 +24,7 @@ import com.google.firebase.internal.NonNull;
  *
  * @see {FirebaseAuth#getUsers}
  */
-public class UidIdentifier extends UserIdentifier {
+public final class UidIdentifier extends UserIdentifier {
   private final String uid;
 
   public UidIdentifier(@NonNull String uid) {

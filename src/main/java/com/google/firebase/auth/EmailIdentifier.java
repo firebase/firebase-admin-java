@@ -18,16 +18,13 @@ package com.google.firebase.auth;
 
 import com.google.firebase.auth.internal.GetAccountInfoRequest;
 import com.google.firebase.internal.NonNull;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Used for looking up an account by email.
  *
  * @see {FirebaseAuth#getUsers}
  */
-public class EmailIdentifier extends UserIdentifier {
+public final class EmailIdentifier extends UserIdentifier {
   private final String email;
 
   public EmailIdentifier(@NonNull String email) {

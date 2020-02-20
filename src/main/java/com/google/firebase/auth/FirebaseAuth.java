@@ -609,8 +609,8 @@ public class FirebaseAuth {
    * <p>There are no ordering guarantees; in particular, the nth entry in the users result list is
    * not guaranteed to correspond to the nth entry in the input parameters list.
    *
-   * <p>Only a maximum of 100 identifiers may be supplied. If more than 100 identifiers are
-   * supplied, this method will immediately throw an IllegalArgumentException.
+   * <p>A maximum of 100 identifiers may be specified. If more than 100 identifiers are
+   * supplied, this method throws an {@link IllegalArgumentException}.
    *
    * @param identifiers The identifiers used to indicate which user records should be returned. Must
    *     have 100 or fewer entries.
@@ -631,8 +631,8 @@ public class FirebaseAuth {
    * <p>There are no ordering guarantees; in particular, the nth entry in the users result list is
    * not guaranteed to correspond to the nth entry in the input parameters list.
    *
-   * <p>Only a maximum of 100 identifiers may be supplied. If more than 100 identifiers are
-   * supplied, this method will immediately throw an IllegalArgumentException.
+   * <p>A maximum of 100 identifiers may be specified. If more than 100 identifiers are
+   * supplied, this method throws an {@link IllegalArgumentException}.
    *
    * @param identifiers The identifiers used to indicate which user records should be returned.
    *     Must have 100 or fewer entries.
@@ -926,8 +926,8 @@ public class FirebaseAuth {
    * Non-existing users will be considered to be successfully deleted, and will therefore be counted
    * in the DeleteUsersResult.getSuccessCount() value.
    *
-   * <p>Only a maximum of 1000 identifiers may be supplied. If more than 1000 identifiers are
-   * supplied, this method will immediately throw an IllegalArgumentException.
+   * <p>A maximum of 1000 identifiers may be supplied. If more than 1000 identifiers are
+   * supplied, this method throws an {@link IllegalArgumentException}.
    *
    * <p>This API is currently rate limited at the server to 1 QPS. If you exceed this, you may get a
    * quota exceeded error. Therefore, if you want to delete more than 1000 users, you may need to

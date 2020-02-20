@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Represents the request to lookup account information.
  */
-public class GetAccountInfoRequest {
+public final class GetAccountInfoRequest {
 
   @Key("localId")
   private List<String> uids = null;
@@ -37,7 +37,7 @@ public class GetAccountInfoRequest {
   @Key("federatedUserId")
   private List<FederatedUserId> federatedUserIds = null;
 
-  private static class FederatedUserId {
+  private static final class FederatedUserId {
     @Key("providerId")
     private String providerId = null;
 

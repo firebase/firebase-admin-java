@@ -24,7 +24,7 @@ import com.google.firebase.internal.NonNull;
  *
  * @see {FirebaseAuth#getUsers}
  */
-public class PhoneIdentifier extends UserIdentifier {
+public final class PhoneIdentifier extends UserIdentifier {
   private final String phoneNumber;
 
   public PhoneIdentifier(@NonNull String phoneNumber) {

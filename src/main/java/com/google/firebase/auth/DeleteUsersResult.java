@@ -17,7 +17,6 @@
 package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.internal.BatchDeleteResponse;
@@ -29,9 +28,8 @@ import java.util.List;
  */
 public final class DeleteUsersResult {
 
-  private int successCount;
-  private int failureCount;
-  private List<ErrorInfo> errors;
+  private final int successCount;
+  private final List<ErrorInfo> errors;
 
   DeleteUsersResult(int users, BatchDeleteResponse response) {
     ImmutableList.Builder<ErrorInfo> errorsBuilder = ImmutableList.builder();
@@ -43,14 +41,13 @@ public final class DeleteUsersResult {
       }
     }
     errors = errorsBuilder.build();
-    failureCount = errors.size();
     successCount = users - errors.size();
   }
 
   /**
-   * Returns the number of users that were deleted successfully (possibly zero). Users that did
-   * not exist prior to calling deleteUsersAsync() will be considered to be successfully
-   * deleted.
+   * Returns the number of users that were deleted successfully (possibly zero). Users that did not
+   * exist prior to calling {@link FirebaseAuth#deleteUsersAsync(List)} are considered to be
+   * successfully deleted.
    */ 
   public int getSuccessCount() {
     return successCount;
@@ -60,7 +57,7 @@ public final class DeleteUsersResult {
    * Returns the number of users that failed to be deleted (possibly zero).
    */
   public int getFailureCount() {
-    return failureCount;
+    return errors.size();
   }
 
   /**

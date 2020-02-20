@@ -25,8 +25,8 @@ import java.util.Set;
  * Represents the result of the {@link FirebaseAuth#getUsersAsync(Collection)} API.
  */
 public final class GetUsersResult {
-  private Set<UserRecord> users;
-  private Set<UserIdentifier> notFound;
+  private final Set<UserRecord> users;
+  private final Set<UserIdentifier> notFound;
 
   GetUsersResult(@NonNull Set<UserRecord> users, @NonNull Set<UserIdentifier> notFound) {
     this.users = checkNotNull(users);
@@ -34,7 +34,7 @@ public final class GetUsersResult {
   }
 
   /**
-   * Set of user records, corresponding to the set of users that were requested. Only users
+   * Set of user records corresponding to the set of users that were requested. Only users
    * that were found are listed here. The result set is unordered.
    */
   @NonNull
@@ -46,7 +46,7 @@ public final class GetUsersResult {
    * Set of identifiers that were requested, but not found.
    */
   @NonNull
-  Set<UserIdentifier> getNotFound() {
+  public Set<UserIdentifier> getNotFound() {
     return this.notFound;
   }
 }

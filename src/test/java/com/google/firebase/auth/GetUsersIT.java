@@ -33,7 +33,7 @@ public class GetUsersIT {
   private static UserRecord testUser1;
   private static UserRecord testUser2;
   private static UserRecord testUser3;
-  private static String importUser1Uid;
+  private static String importUserUid;
 
   @BeforeClass
   public static void setUpClass() throws Exception {
@@ -45,7 +45,7 @@ public class GetUsersIT {
     testUser3 = FirebaseAuthIT.newUserWithParams(auth);
 
     FirebaseAuthIT.RandomUser randomUser = FirebaseAuthIT.RandomUser.create();
-    importUser1Uid = randomUser.uid;
+    importUserUid = randomUser.uid;
     String phone = FirebaseAuthIT.randomPhoneNumber();
     UserImportResult result = auth.importUsers(ImmutableList.of(
           ImportUserRecord.builder()
@@ -70,7 +70,7 @@ public class GetUsersIT {
     auth.deleteUser(testUser1.getUid());
     auth.deleteUser(testUser2.getUid());
     auth.deleteUser(testUser3.getUid());
-    auth.deleteUser(importUser1Uid);
+    auth.deleteUser(importUserUid);
   }
 
   @Test
@@ -79,11 +79,11 @@ public class GetUsersIT {
           new UidIdentifier(testUser1.getUid()),
           new EmailIdentifier(testUser2.getEmail()),
           new PhoneIdentifier(testUser3.getPhoneNumber()),
-          new ProviderIdentifier("google.com", "google_" + importUser1Uid)
+          new ProviderIdentifier("google.com", "google_" + importUserUid)
           )).get();
 
     Collection<String> expectedUids = ImmutableList.of(
-        testUser1.getUid(), testUser2.getUid(), testUser3.getUid(), importUser1Uid);
+        testUser1.getUid(), testUser2.getUid(), testUser3.getUid(), importUserUid);
 
     assertTrue(sameUsers(result.getUsers(), expectedUids));
     assertEquals(0, result.getNotFound().size());

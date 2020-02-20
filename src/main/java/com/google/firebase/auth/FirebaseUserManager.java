@@ -52,7 +52,6 @@ import com.google.firebase.internal.SdkUtils;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -178,10 +177,6 @@ class FirebaseUserManager {
     return new UserRecord(response.getUsers().get(0), jsonFactory);
   }
 
-  /**
-   * @pre identifiers != null
-   * @pre identifiers.size() <= MAX_GET_ACCOUNTS_BATCH_SIZE
-   */
   Set<UserRecord> getAccountInfo(@NonNull Collection<UserIdentifier> identifiers)
       throws FirebaseAuthException {
     if (identifiers.isEmpty()) {

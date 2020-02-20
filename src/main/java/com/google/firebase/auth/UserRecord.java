@@ -84,7 +84,7 @@ public class UserRecord implements UserInfo {
 
     String lastRefreshAtRfc3339 = response.getLastRefreshAt();
     long lastRefreshAtMillis = 0;
-    if (lastRefreshAtRfc3339 != null && !lastRefreshAtRfc3339.isEmpty()) {
+    if (!Strings.isNullOrEmpty(lastRefreshAtRfc3339)) {
       lastRefreshAtMillis = DateTime.parseRfc3339(lastRefreshAtRfc3339).getValue();
     }
 
