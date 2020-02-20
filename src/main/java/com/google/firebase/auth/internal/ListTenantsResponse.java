@@ -29,10 +29,10 @@ import java.util.List;
 public final class ListTenantsResponse {
 
   @Key("tenants")
-  private List<Tenant> tenants = ImmutableList.of(); // Default to empty list.
+  private List<Tenant> tenants;
 
   @Key("pageToken")
-  private String pageToken = ""; // Default to ListTenantsPage.END_OF_LIST.
+  private String pageToken;
 
   @VisibleForTesting
   public ListTenantsResponse(List<Tenant> tenants, String pageToken) {
@@ -43,7 +43,7 @@ public final class ListTenantsResponse {
   public ListTenantsResponse() { }
 
   public List<Tenant> getTenants() {
-    return tenants;
+    return tenants == null ? ImmutableList.<Tenant>of() : tenants;
   }
 
   public boolean hasTenants() {
@@ -51,6 +51,6 @@ public final class ListTenantsResponse {
   }
 
   public String getPageToken() {
-    return pageToken;
+    return pageToken == null ? "" : pageToken;
   }
 }
