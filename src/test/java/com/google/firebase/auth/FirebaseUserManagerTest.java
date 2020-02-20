@@ -174,7 +174,9 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetUsersExceeds100() throws Exception {
-    FirebaseApp.initializeApp();
+    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+            .setCredentials(credentials)
+            .build());
     List<UserIdentifier> identifiers = new ArrayList<>();
     for (int i = 0; i < 101; i++) {
       identifiers.add(new UidIdentifier("uid_" + i));
@@ -190,7 +192,9 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetUsersNull() throws Exception {
-    FirebaseApp.initializeApp();
+    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+            .setCredentials(credentials)
+            .build());
     try {
       FirebaseAuth.getInstance().getUsers(null);
       fail("No error thrown for null identifiers");
@@ -428,7 +432,9 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeleteUsersExceeds1000() throws Exception {
-    FirebaseApp.initializeApp();
+    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+            .setCredentials(credentials)
+            .build());
     List<String> ids = new ArrayList<>();
     for (int i = 0; i < 1001; i++) {
       ids.add("id" + i);
@@ -443,7 +449,9 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeleteUsersInvalidId() throws Exception {
-    FirebaseApp.initializeApp();
+    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+            .setCredentials(credentials)
+            .build());
     try {
       FirebaseAuth.getInstance().deleteUsersAsync(
           ImmutableList.of("too long " + Strings.repeat(".", 128)));
