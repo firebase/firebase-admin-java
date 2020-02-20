@@ -477,6 +477,14 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testDeleteTenant() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    // should not throw
+    FirebaseAuth.getInstance().getTenantManager().deleteTenantAsync("TENANT_1").get();
+    checkRequestHeaders(interceptor);
+  }
+
+  @Test
   public void testCreateSessionCookie() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("createSessionCookie.json"));

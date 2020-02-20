@@ -226,6 +226,15 @@ class FirebaseUserManager {
     return new UserImportResult(request.getUsersCount(), response);
   }
 
+  void deleteTenant(String tenantId) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants:delete");
+    url.put("name", tenantId);
+    GenericJson response = sendRequest("DELETE", url, null, GenericJson.class);
+    if (response == null) {
+      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to delete tenant: " + tenantId);
+    }
+  }
+
   ListTenantsResponse listTenants(int maxResults, String pageToken)
       throws FirebaseAuthException {
     ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
@@ -287,7 +296,7 @@ class FirebaseUserManager {
 
   private <T> T sendRequest(
           String method, GenericUrl url,
-          @Nullable Object content, Class<T> clazz) throws FirebaseAuthException {
+          Object content, Class<T> clazz) throws FirebaseAuthException {
 
     checkArgument(!Strings.isNullOrEmpty(method), "method must not be null or empty");
     checkNotNull(url, "url must not be null");
