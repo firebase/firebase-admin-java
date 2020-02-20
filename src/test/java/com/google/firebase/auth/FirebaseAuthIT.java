@@ -143,19 +143,19 @@ public class FirebaseAuthIT {
     UserRecord user2 = newUserWithParams();
     UserRecord user3 = newUserWithParams();
 
-    DeleteUsersResult deleteUsersResult = slowDeleteUsersAsync(
-        ImmutableList.of(user1.getUid(), user2.getUid(), user3.getUid())
-        ).get();
+    DeleteUsersResult deleteUsersResult =
+        slowDeleteUsersAsync(ImmutableList.of(user1.getUid(), user2.getUid(), user3.getUid()))
+            .get();
 
     assertEquals(3, deleteUsersResult.getSuccessCount());
     assertEquals(0, deleteUsersResult.getFailureCount());
     assertTrue(deleteUsersResult.getErrors().isEmpty());
 
-    GetUsersResult getUsersResult = auth.getUsersAsync(ImmutableList.<UserIdentifier>of(
-          new UidIdentifier(user1.getUid()),
-          new UidIdentifier(user2.getUid()),
-          new UidIdentifier(user3.getUid())
-          )).get();
+    GetUsersResult getUsersResult =
+        auth.getUsersAsync(
+                ImmutableList.<UserIdentifier>of(new UidIdentifier(user1.getUid()),
+                    new UidIdentifier(user2.getUid()), new UidIdentifier(user3.getUid())))
+            .get();
 
     assertTrue(getUsersResult.getUsers().isEmpty());
     assertEquals(3, getUsersResult.getNotFound().size());
@@ -165,18 +165,17 @@ public class FirebaseAuthIT {
   public void testDeleteExistingAndNonExistingUsers() throws Exception {
     UserRecord user1 = newUserWithParams();
 
-    DeleteUsersResult deleteUsersResult = slowDeleteUsersAsync(
-        ImmutableList.of(user1.getUid(), "uid-that-doesnt-exist")
-        ).get();
+    DeleteUsersResult deleteUsersResult =
+        slowDeleteUsersAsync(ImmutableList.of(user1.getUid(), "uid-that-doesnt-exist")).get();
 
     assertEquals(2, deleteUsersResult.getSuccessCount());
     assertEquals(0, deleteUsersResult.getFailureCount());
     assertTrue(deleteUsersResult.getErrors().isEmpty());
 
-    GetUsersResult getUsersResult = auth.getUsersAsync(ImmutableList.<UserIdentifier>of(
-          new UidIdentifier(user1.getUid()),
-          new UidIdentifier("uid-that-doesnt-exist")
-          )).get();
+    GetUsersResult getUsersResult =
+        auth.getUsersAsync(ImmutableList.<UserIdentifier>of(new UidIdentifier(user1.getUid()),
+                               new UidIdentifier("uid-that-doesnt-exist")))
+            .get();
 
     assertTrue(getUsersResult.getUsers().isEmpty());
     assertEquals(2, getUsersResult.getNotFound().size());
@@ -186,18 +185,14 @@ public class FirebaseAuthIT {
   public void testDeleteUsersIsIdempotent() throws Exception {
     UserRecord user1 = newUserWithParams();
 
-    DeleteUsersResult result = slowDeleteUsersAsync(
-        ImmutableList.of(user1.getUid())
-        ).get();
+    DeleteUsersResult result = slowDeleteUsersAsync(ImmutableList.of(user1.getUid())).get();
 
     assertEquals(1, result.getSuccessCount());
     assertEquals(0, result.getFailureCount());
     assertTrue(result.getErrors().isEmpty());
 
     // Delete the user again, ensuring that everything still counts as a success.
-    result = slowDeleteUsersAsync(
-        ImmutableList.of(user1.getUid())
-        ).get();
+    result = slowDeleteUsersAsync(ImmutableList.of(user1.getUid())).get();
 
     assertEquals(1, result.getSuccessCount());
     assertEquals(0, result.getFailureCount());
@@ -329,10 +324,10 @@ public class FirebaseAuthIT {
   public void testLastRefreshTime() throws Exception {
     RandomUser user = RandomUser.create();
     UserRecord newUserRecord = auth.createUser(new CreateRequest()
-        .setUid(user.uid)
-        .setEmail(user.email)
-        .setEmailVerified(false)
-        .setPassword("password"));
+                                                   .setUid(user.uid)
+                                                   .setEmail(user.email)
+                                                   .setEmailVerified(false)
+                                                   .setPassword("password"));
 
     try {
       // New users should not have a lastRefreshTimestamp set.
@@ -828,12 +823,11 @@ public class FirebaseAuthIT {
     // ports).
     RandomUser randomUser = RandomUser.create();
     return auth.createUser(new CreateRequest()
-        .setUid(randomUser.uid)
-        .setEmail(randomUser.email)
-        .setPhoneNumber(randomPhoneNumber())
-        .setDisplayName("Random User")
-        .setPhotoUrl("https://example.com/photo.png")
-        .setPassword("password"));
+                               .setUid(randomUser.uid)
+                               .setEmail(randomUser.email)
+                               .setPhoneNumber(randomPhoneNumber())
+                               .setDisplayName("Random User")
+                               .setPhotoUrl("https://example.com/photo.png")
+                               .setPassword("password"));
   }
-
 }
