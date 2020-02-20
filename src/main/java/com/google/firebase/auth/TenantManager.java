@@ -34,8 +34,8 @@ import com.google.firebase.internal.Nullable;
  * This class can be used to perform a variety of tenant-related operations, including creating,
  * updating, and listing tenants.
  *
- * <p>TODO(micahstairs): Implement the following methods: getAuthForTenant(), getTenant(),
- * deleteTenant(), createTenant(), and updateTenant().
+ * <p>TODO(micahstairs): Implement the following methods: getAuthForTenant(), deleteTenant(),
+ * createTenant(), and updateTenant().
  */
 public final class TenantManager {
 
@@ -45,6 +45,42 @@ public final class TenantManager {
   TenantManager(FirebaseApp firebaseApp, FirebaseUserManager userManager) {
     this.firebaseApp = firebaseApp;
     this.userManager = userManager;
+  }
+
+  /**
+   * Gets the tenant corresponding to the specified tenant ID.
+   *
+   * @param tenantId A tenant ID string.
+   * @return A {@link Tenant} instance.
+   * @throws IllegalArgumentException If the tenant ID string is null or empty.
+   * @throws FirebaseAuthException If an error occurs while retrieving user data.
+   */
+  public Tenant getTenant(@NonNull String tenantId) throws FirebaseAuthException {
+    return getTenantOp(tenantId).call();
+  }
+
+  /**
+   * Similar to {@link #getTenant(String)} but performs the operation asynchronously.
+   *
+   * @param tenantId A tenantId string.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link Tenant} instance
+   *     If an error occurs while retrieving tenant data or if the specified tenant ID does not
+   *     exist, the future throws a {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the tenant ID string is null or empty.
+   */
+  public ApiFuture<Tenant> getTenantAsync(@NonNull String tenantId) {
+    return getTenantOp(tenantId).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<Tenant, FirebaseAuthException> getTenantOp(final String tenantId) {
+    // TODO(micahstairs): Add a check to make sure the app has not been destroyed yet.
+    checkArgument(!Strings.isNullOrEmpty(tenantId), "tenantId must not be null or empty");
+    return new CallableOperation<Tenant, FirebaseAuthException>() {
+      @Override
+      protected Tenant execute() throws FirebaseAuthException {
+        return userManager.getTenant(tenantId);
+      }
+    };
   }
 
   /**

@@ -83,6 +83,7 @@ class FirebaseUserManager {
       .put("INVALID_PHONE_NUMBER", "invalid-phone-number")
       .put("PHONE_NUMBER_EXISTS", "phone-number-already-exists")
       .put("PROJECT_NOT_FOUND", "project-not-found")
+      .put("TENANT_NOT_FOUND", TENANT_NOT_FOUND_ERROR)
       .put("USER_NOT_FOUND", USER_NOT_FOUND_ERROR)
       .put("WEAK_PASSWORD", "invalid-password")
       .put("UNAUTHORIZED_DOMAIN", "unauthorized-continue-uri")
@@ -224,6 +225,34 @@ class FirebaseUserManager {
       throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to import users.");
     }
     return new UserImportResult(request.getUsersCount(), response);
+  }
+
+<<<<<<< HEAD
+  Tenant getTenantById(String tenantId) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants:get");
+    url.put("name", tenantId);
+=======
+  void deleteTenant(String tenantId) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants/" + tenantId);
+    GenericJson response = sendRequest("DELETE", url, null, GenericJson.class);
+    if (response == null) {
+      throw new FirebaseAuthException(TENANT_NOT_FOUND_ERROR,
+          "Failed to delete tenant: " + tenantId);
+    }
+  }
+
+  Tenant getTenant(String tenantId) throws FirebaseAuthException {
+<<<<<<< HEAD
+    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants:" + tenantId);
+>>>>>>> 4b78b4e... Address pull request feedback.
+=======
+    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants/" + tenantId);
+>>>>>>> 82ee04c... Assert that the requests are sent to the correct URL.
+    Tenant response = sendRequest("GET", url, null, Tenant.class);
+    if (Strings.isNullOrEmpty(response.getTenantId())) {
+      throw new FirebaseAuthException(TENANT_NOT_FOUND_ERROR, "Failed to get tenant.");
+    }
+    return response;
   }
 
   ListTenantsResponse listTenants(int maxResults, String pageToken)
