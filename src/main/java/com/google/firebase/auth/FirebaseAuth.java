@@ -31,19 +31,29 @@ import com.google.firebase.internal.FirebaseService;
  * then use it to perform a variety of authentication-related operations, including generating
  * custom tokens for use by client-side code, verifying Firebase ID Tokens received from clients, or
  * creating new FirebaseApp instances that are scoped to a particular authentication UID.
- * 
- * <p>TODO(micahstairs): Add getTenantManager() method.
  */
 public class FirebaseAuth extends AbstractFirebaseAuth {
 
   private static final String SERVICE_ID = FirebaseAuth.class.getName();
 
-  private FirebaseAuth(Builder builder) {
+  private final Supplier<TenantManager> tenantManager;
+
+  private FirebaseAuth(final Builder builder) {
     super(
         builder.firebaseApp,
         builder.tokenFactory,
         builder.idTokenVerifier,
         builder.cookieVerifier);
+    tenantManager = threadSafeMemoize(new Supplier<TenantManager>() {
+      @Override
+      public TenantManager get() {
+        return new TenantManager(builder.firebaseApp, getUserManager());
+      }
+    });
+  }
+
+  public TenantManager getTenantManager() {
+    return tenantManager.get();
   }
 
   /**

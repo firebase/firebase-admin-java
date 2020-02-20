@@ -32,10 +32,10 @@ import java.util.NoSuchElementException;
 
 /**
  * Represents a page of {@link Tenant} instances.
- * 
+ *
  * <p>Provides methods for iterating over the tenants in the current page, and calling up
  * subsequent pages of tenants.
- * 
+ *
  * <p>Instances of this class are thread-safe and immutable.
  */
 public class ListTenantsPage implements Page<Tenant> {
@@ -65,7 +65,7 @@ public class ListTenantsPage implements Page<Tenant> {
 
   /**
    * Returns the string token that identifies the next page.
-   * 
+   *
    * <p>Never returns null. Returns empty string if there are no more pages available to be
    * retrieved.
    *
@@ -99,7 +99,7 @@ public class ListTenantsPage implements Page<Tenant> {
   /**
    * Returns an {@link Iterable} that facilitates transparently iterating over all the tenants in
    * the current Firebase project, starting from this page.
-   * 
+   *
    * <p>The {@link Iterator} instances produced by the returned {@link Iterable} never buffers more
    * than one page of tenants at a time. It is safe to abandon the iterators (i.e. break the loops)
    * at any time.
@@ -139,7 +139,7 @@ public class ListTenantsPage implements Page<Tenant> {
 
     /**
      * An {@link Iterator} that cycles through tenants, one at a time.
-     * 
+     *
      * <p>It buffers the last retrieved batch of tenants in memory. The {@code maxResults} parameter
      * is an upper bound on the batch size.
      */
@@ -199,11 +199,9 @@ public class ListTenantsPage implements Page<Tenant> {
   static class DefaultTenantSource implements TenantSource {
 
     private final FirebaseUserManager userManager;
-    private final JsonFactory jsonFactory;
 
-    DefaultTenantSource(FirebaseUserManager userManager, JsonFactory jsonFactory) {
+    DefaultTenantSource(FirebaseUserManager userManager) {
       this.userManager = checkNotNull(userManager, "user manager must not be null");
-      this.jsonFactory = checkNotNull(jsonFactory, "json factory must not be null");
     }
 
     @Override
@@ -215,7 +213,7 @@ public class ListTenantsPage implements Page<Tenant> {
 
   /**
    * A simple factory class for {@link ListTenantsPage} instances.
-   * 
+   *
    * <p>Performs argument validation before attempting to load any tenant data (which is expensive,
    * and hence may be performed asynchronously on a separate thread).
    */
