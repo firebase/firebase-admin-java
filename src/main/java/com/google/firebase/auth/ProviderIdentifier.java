@@ -20,7 +20,7 @@ import com.google.firebase.auth.internal.GetAccountInfoRequest;
 import com.google.firebase.internal.NonNull;
 
 /**
- * Used for looking up an account by phone number.
+ * Used for looking up an account by provider.
  *
  * @see {FirebaseAuth#getUsers}
  */
