@@ -227,8 +227,7 @@ class FirebaseUserManager {
   }
 
   void deleteTenant(String tenantId) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants:delete");
-    url.put("name", tenantId);
+    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants/" + tenantId);
     GenericJson response = sendRequest("DELETE", url, null, GenericJson.class);
     if (response == null) {
       throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to delete tenant: " + tenantId);

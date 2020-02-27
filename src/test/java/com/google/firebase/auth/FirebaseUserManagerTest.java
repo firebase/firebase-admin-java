@@ -482,6 +482,8 @@ public class FirebaseUserManagerTest {
     // should not throw
     FirebaseAuth.getInstance().getTenantManager().deleteTenantAsync("TENANT_1").get();
     checkRequestHeaders(interceptor);
+    checkUrl(interceptor,
+        "https://identitytoolkit.googleapis.com/v2/projects/test-project-id/tenants/TENANT_1");
   }
 
   @Test
@@ -1332,6 +1334,10 @@ public class FirebaseUserManagerTest {
 
     String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
     assertEquals(clientVersion, headers.getFirstHeaderStringValue("X-Client-Version"));
+  }
+
+  private static void checkUrl(TestResponseInterceptor interceptor, String expectedUrl) {
+    assertEquals(expectedUrl, interceptor.getResponse().getRequest().getUrl().toString());
   }
 
   private interface UserManagerOp {
