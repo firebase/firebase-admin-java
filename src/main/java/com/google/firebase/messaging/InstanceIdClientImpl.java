@@ -147,7 +147,7 @@ final class InstanceIdClientImpl implements InstanceIdClient {
       String response = getResponse(base);
       InstanceIdServiceErrorResponse parsed = safeParse(response);
       if (!Strings.isNullOrEmpty(parsed.error)) {
-        return parsed.error;
+        return "Error while calling the IID service: " + parsed.error;
       }
 
       return base.getMessage();

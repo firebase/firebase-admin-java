@@ -109,14 +109,16 @@ public class InstanceIdClientImplTest {
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     InstanceIdClient client = initInstanceIdClient(response, interceptor);
 
+    String content = "{\"error\": \"ErrorCode\"}";
     for (int statusCode : HTTP_ERRORS) {
-      response.setStatusCode(statusCode).setContent("{\"error\": \"test error\"}");
+      response.setStatusCode(statusCode).setContent(content);
 
       try {
         client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, statusCode, "test error");
+        String expectedMessage = "Error while calling the IID service: ErrorCode";
+        checkExceptionFromHttpResponse(error, statusCode, expectedMessage);
       }
 
       checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_SUBSCRIBE_URL);
@@ -247,14 +249,16 @@ public class InstanceIdClientImplTest {
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     InstanceIdClient client = initInstanceIdClient(response, interceptor);
 
+    String content = "{\"error\": \"ErrorCode\"}";
     for (int statusCode : HTTP_ERRORS) {
-      response.setStatusCode(statusCode).setContent("{\"error\": \"test error\"}");
+      response.setStatusCode(statusCode).setContent(content);
 
       try {
         client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, statusCode, "test error");
+        String expectedMessage = "Error while calling the IID service: ErrorCode";
+        checkExceptionFromHttpResponse(error, statusCode, expectedMessage);
       }
 
       checkTopicManagementRequestHeader(interceptor.getLastRequest(), TEST_IID_UNSUBSCRIBE_URL);
