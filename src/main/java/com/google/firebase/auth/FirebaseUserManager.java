@@ -65,6 +65,7 @@ import java.util.Map;
  */
 class FirebaseUserManager {
 
+  static final String TENANT_NOT_FOUND_ERROR = "tenant-not-found";
   static final String USER_NOT_FOUND_ERROR = "user-not-found";
   static final String INTERNAL_ERROR = "internal-error";
 
@@ -82,6 +83,7 @@ class FirebaseUserManager {
       .put("INVALID_PAGE_SELECTION", "invalid-page-token")
       .put("INVALID_PHONE_NUMBER", "invalid-phone-number")
       .put("PHONE_NUMBER_EXISTS", "phone-number-already-exists")
+      .put("TENANT_NOT_FOUND", TENANT_NOT_FOUND_ERROR)
       .put("PROJECT_NOT_FOUND", "project-not-found")
       .put("USER_NOT_FOUND", USER_NOT_FOUND_ERROR)
       .put("WEAK_PASSWORD", "invalid-password")
@@ -224,6 +226,15 @@ class FirebaseUserManager {
       throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to import users.");
     }
     return new UserImportResult(request.getUsersCount(), response);
+  }
+
+  void deleteTenant(String tenantId) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants/" + tenantId);
+    GenericJson response = sendRequest("DELETE", url, null, GenericJson.class);
+    if (response == null) {
+      throw new FirebaseAuthException(TENANT_NOT_FOUND_ERROR,
+          "Failed to delete tenant: " + tenantId);
+    }
   }
 
   ListTenantsResponse listTenants(int maxResults, String pageToken)
