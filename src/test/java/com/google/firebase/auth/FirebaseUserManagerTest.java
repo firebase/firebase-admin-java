@@ -74,6 +74,8 @@ public class FirebaseUserManagerTest {
           .build();
   private static final Map<String, Object> ACTION_CODE_SETTINGS_MAP =
           ACTION_CODE_SETTINGS.getProperties();
+  private static final String TENANTS_BASE_URL =
+          "https://identitytoolkit.googleapis.com/v2/projects/test-project-id/tenants";
 
   @After
   public void tearDown() {
@@ -479,11 +481,36 @@ public class FirebaseUserManagerTest {
   @Test
   public void testDeleteTenant() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
-    // should not throw
+
     FirebaseAuth.getInstance().getTenantManager().deleteTenantAsync("TENANT_1").get();
+
     checkRequestHeaders(interceptor);
-    checkUrl(interceptor,
-        "https://identitytoolkit.googleapis.com/v2/projects/test-project-id/tenants/TENANT_1");
+    checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/TENANT_1");
+  }
+
+  @Test
+  public void testDeleteTenantWithNotFoundError() throws Exception {
+    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(credentials)
+        .setHttpTransport(new MultiRequestMockHttpTransport(ImmutableList.of(
+            new MockLowLevelHttpResponse()
+                .setContent("{}")
+                .setStatusCode(404))))
+        .setProjectId("test-project-id")
+        .build());
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    FirebaseAuth auth = FirebaseAuth.getInstance();
+    auth.getUserManager().setInterceptor(interceptor);
+
+    try {
+      auth.getTenantManager().deleteTenantAsync("UNKNOWN").get();
+      fail("No error thrown for invalid response");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR, authException.getErrorCode());
+    }
+    checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/UNKNOWN");
   }
 
   @Test
@@ -1269,7 +1296,7 @@ public class FirebaseUserManagerTest {
     }
   }
 
-  private static TestResponseInterceptor initializeAppForUserManagement(String ...responses) {
+  private static TestResponseInterceptor initializeAppForUserManagement(String... responses) {
     List<MockLowLevelHttpResponse> mocks = new ArrayList<>();
     for (String response : responses) {
       mocks.add(new MockLowLevelHttpResponse().setContent(response));
@@ -1280,10 +1307,8 @@ public class FirebaseUserManagerTest {
         .setHttpTransport(transport)
         .setProjectId("test-project-id")
         .build());
-    FirebaseAuth auth = FirebaseAuth.getInstance();
-    FirebaseUserManager userManager = auth.getUserManager();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    userManager.setInterceptor(interceptor);
+    FirebaseAuth.getInstance().getUserManager().setInterceptor(interceptor);
     return interceptor;
   }
 
@@ -1336,8 +1361,9 @@ public class FirebaseUserManagerTest {
     assertEquals(clientVersion, headers.getFirstHeaderStringValue("X-Client-Version"));
   }
 
-  private static void checkUrl(TestResponseInterceptor interceptor, String expectedUrl) {
-    assertEquals(expectedUrl, interceptor.getResponse().getRequest().getUrl().toString());
+  private static void checkUrl(TestResponseInterceptor interceptor, String method, String url) {
+    assertEquals(method, interceptor.getResponse().getRequest().getRequestMethod());
+    assertEquals(url, interceptor.getResponse().getRequest().getUrl().toString());
   }
 
   private interface UserManagerOp {
