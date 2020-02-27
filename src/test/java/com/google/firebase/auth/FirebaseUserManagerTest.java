@@ -1344,8 +1344,9 @@ public class FirebaseUserManagerTest {
   }
 
   private static void checkUrl(TestResponseInterceptor interceptor, String method, String url) {
-    assertEquals(method, interceptor.getResponse().getRequest().getRequestMethod());
-    assertEquals(url, interceptor.getResponse().getRequest().getUrl().toString());
+    HttpRequest request = interceptor.getResponse().getRequest();
+    assertEquals(method, request.getRequestMethod());
+    assertEquals(url, request.getUrl().toString());
   }
 
   private interface UserManagerOp {
