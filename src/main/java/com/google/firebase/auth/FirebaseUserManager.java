@@ -298,7 +298,7 @@ class FirebaseUserManager {
 
   private <T> T sendRequest(
           String method, GenericUrl url,
-          Object content, Class<T> clazz) throws FirebaseAuthException {
+          @Nullable Object content, Class<T> clazz) throws FirebaseAuthException {
 
     checkArgument(!Strings.isNullOrEmpty(method), "method must not be null or empty");
     checkNotNull(url, "url must not be null");
