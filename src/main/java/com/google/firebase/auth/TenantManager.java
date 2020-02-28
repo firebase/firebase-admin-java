@@ -153,4 +153,40 @@ public final class TenantManager {
       }
     };
   }
+
+  /**
+   * Deletes the tenant identified by the specified tenant ID.
+   *
+   * @param tenantId A tenant ID string.
+   * @throws IllegalArgumentException If the tenant ID string is null or empty.
+   * @throws FirebaseAuthException If an error occurs while deleting the tenant.
+   */
+  public void deleteTenant(@NonNull String tenantId) throws FirebaseAuthException {
+    deleteTenantOp(tenantId).call();
+  }
+
+  /**
+   * Similar to {@link #deleteTenant(String)} but performs the operation asynchronously.
+   *
+   * @param tenantId A tenant ID string.
+   * @return An {@code ApiFuture} which will complete successfully when the specified tenant account
+   *     has been deleted. If an error occurs while deleting the tenant account, the future throws a
+   *     {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the tenant ID string is null or empty.
+   */
+  public ApiFuture<Void> deleteTenantAsync(String tenantId) {
+    return deleteTenantOp(tenantId).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<Void, FirebaseAuthException> deleteTenantOp(final String tenantId) {
+    // TODO(micahstairs): Add a check to make sure the app has not been destroyed yet.
+    checkArgument(!Strings.isNullOrEmpty(tenantId), "tenantId must not be null or empty");
+    return new CallableOperation<Void, FirebaseAuthException>() {
+      @Override
+      protected Void execute() throws FirebaseAuthException {
+        userManager.deleteTenant(tenantId);
+        return null;
+      }
+    };
+  }
 }

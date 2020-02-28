@@ -118,7 +118,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().getUserAsync("testuser").get();
       fail("No error thrown for invalid response");
     } catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
       assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, authException.getErrorCode());
     }
@@ -141,7 +141,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().getUserByEmailAsync("testuser@example.com").get();
       fail("No error thrown for invalid response");
     } catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
       assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, authException.getErrorCode());
     }
@@ -164,7 +164,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().getUserByPhoneNumberAsync("+1234567890").get();
       fail("No error thrown for invalid response");
     } catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
       assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, authException.getErrorCode());
     }
@@ -507,6 +507,32 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testDeleteTenant() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+
+    FirebaseAuth.getInstance().getTenantManager().deleteTenantAsync("TENANT_1").get();
+
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/TENANT_1");
+  }
+
+  @Test
+  public void testDeleteTenantWithNotFoundError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"TENANT_NOT_FOUND\"}}");
+    try {
+      FirebaseAuth.getInstance().getTenantManager().deleteTenantAsync("UNKNOWN").get();
+      fail("No error thrown for invalid response");
+    } catch (ExecutionException e) {
+      assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR, authException.getErrorCode());
+    }
+    checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/UNKNOWN");
+  }
+
+  @Test
   public void testCreateSessionCookie() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("createSessionCookie.json"));
@@ -645,11 +671,11 @@ public class FirebaseUserManagerTest {
           operation.call(FirebaseAuth.getInstance());
           fail("No error thrown for HTTP error: " + code);
         } catch (ExecutionException e) {
-          assertTrue(e.getCause() instanceof FirebaseAuthException);
+          assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
           FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
           String msg = String.format("Unexpected HTTP response with status: %d; body: {}", code);
           assertEquals(msg, authException.getMessage());
-          assertTrue(authException.getCause() instanceof HttpResponseException);
+          assertThat(authException.getCause(), instanceOf(HttpResponseException.class));
           assertEquals(FirebaseUserManager.INTERNAL_ERROR, authException.getErrorCode());
         }
       }
@@ -663,10 +689,10 @@ public class FirebaseUserManagerTest {
         operation.call(FirebaseAuth.getInstance());
         fail("No error thrown for HTTP error");
       }  catch (ExecutionException e) {
-        assertTrue(e.getCause().toString(), e.getCause() instanceof FirebaseAuthException);
+        assertThat(e.getCause().toString(), e.getCause(), instanceOf(FirebaseAuthException.class));
         FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
         assertEquals("User management service responded with an error", authException.getMessage());
-        assertTrue(authException.getCause() instanceof HttpResponseException);
+        assertThat(authException.getCause(), instanceOf(HttpResponseException.class));
         assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, authException.getErrorCode());
       }
     }
@@ -679,33 +705,23 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().getUserAsync("testuser").get();
       fail("No error thrown for JSON error");
     }  catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertTrue(authException.getCause() instanceof IOException);
+      assertThat(authException.getCause(), instanceOf(IOException.class));
       assertEquals(FirebaseUserManager.INTERNAL_ERROR, authException.getErrorCode());
     }
   }
 
   @Test
   public void testGetUserUnexpectedHttpError() throws Exception {
-    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    response.setContent("{\"not\" json}");
-    response.setStatusCode(500);
-    MockHttpTransport transport = new MockHttpTransport.Builder()
-        .setLowLevelHttpResponse(response)
-        .build();
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
-        .setCredentials(credentials)
-        .setProjectId("test-project-id")
-        .setHttpTransport(transport)
-        .build());
+    initializeAppForUserManagementWithStatusCode(500, "{\"not\" json}");
     try {
       FirebaseAuth.getInstance().getUserAsync("testuser").get();
       fail("No error thrown for JSON error");
     }  catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertTrue(authException.getCause() instanceof HttpResponseException);
+      assertThat(authException.getCause(), instanceOf(HttpResponseException.class));
       assertEquals("Unexpected HTTP response with status: 500; body: {\"not\" json}",
           authException.getMessage());
       assertEquals(FirebaseUserManager.INTERNAL_ERROR, authException.getErrorCode());
@@ -1249,43 +1265,28 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testHttpErrorWithCode() {
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
-        .setCredentials(credentials)
-        .setHttpTransport(new MultiRequestMockHttpTransport(ImmutableList.of(
-            new MockLowLevelHttpResponse()
-                .setContent("{\"error\": {\"message\": \"UNAUTHORIZED_DOMAIN\"}}")
-                .setStatusCode(500))))
-        .setProjectId("test-project-id")
-        .build());
-    FirebaseAuth auth = FirebaseAuth.getInstance();
-    FirebaseUserManager userManager = auth.getUserManager();
+    initializeAppForUserManagementWithStatusCode(500,
+        "{\"error\": {\"message\": \"UNAUTHORIZED_DOMAIN\"}}");
+    FirebaseUserManager userManager = FirebaseAuth.getInstance().getUserManager();
     try {
       userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseAuthException e) {
       assertEquals("unauthorized-continue-uri", e.getErrorCode());
-      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertThat(e.getCause(), instanceOf(HttpResponseException.class));
     }
   }
 
   @Test
   public void testUnexpectedHttpError() {
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
-        .setCredentials(credentials)
-        .setHttpTransport(new MultiRequestMockHttpTransport(ImmutableList.of(
-            new MockLowLevelHttpResponse()
-                .setContent("{}")
-                .setStatusCode(500))))
-        .setProjectId("test-project-id")
-        .build());
-    FirebaseAuth auth = FirebaseAuth.getInstance();
-    FirebaseUserManager userManager = auth.getUserManager();
+    initializeAppForUserManagementWithStatusCode(500, "{}");
+    FirebaseUserManager userManager = FirebaseAuth.getInstance().getUserManager();
     try {
       userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
       fail("No exception thrown for HTTP error");
     } catch (FirebaseAuthException e) {
       assertEquals("internal-error", e.getErrorCode());
-      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertThat(e.getCause(), instanceOf(HttpResponseException.class));
     }
   }
 
@@ -1303,7 +1304,7 @@ public class FirebaseUserManagerTest {
     return interceptor;
   }
 
-  private static TestResponseInterceptor initializeAppForUserManagement(String ...responses) {
+  private static TestResponseInterceptor initializeAppForUserManagement(String... responses) {
     List<MockLowLevelHttpResponse> mocks = new ArrayList<>();
     for (String response : responses) {
       mocks.add(new MockLowLevelHttpResponse().setContent(response));
@@ -1314,10 +1315,8 @@ public class FirebaseUserManagerTest {
         .setHttpTransport(transport)
         .setProjectId("test-project-id")
         .build());
-    FirebaseAuth auth = FirebaseAuth.getInstance();
-    FirebaseUserManager userManager = auth.getUserManager();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    userManager.setInterceptor(interceptor);
+    FirebaseAuth.getInstance().getUserManager().setInterceptor(interceptor);
     return interceptor;
   }
 
