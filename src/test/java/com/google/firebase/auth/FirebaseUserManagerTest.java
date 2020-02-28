@@ -437,8 +437,7 @@ public class FirebaseUserManagerTest {
     Tenant tenant = FirebaseAuth.getInstance().getTenantManager().getTenantAsync("TENANT_1").get();
     checkTenant(tenant, "TENANT_1");
     checkRequestHeaders(interceptor);
-    checkUrl(interceptor,
-        "https://identitytoolkit.googleapis.com/v2/projects/test-project-id/tenants/TENANT_1");
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/TENANT_1");
   }
 
   @Test
@@ -452,8 +451,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
       assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR, authException.getErrorCode());
     }
-    checkUrl(interceptor,
-        "https://identitytoolkit.googleapis.com/v2/projects/test-project-id/tenants/UNKNOWN");
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/UNKNOWN");
   }
 
   @Test
@@ -1350,6 +1348,12 @@ public class FirebaseUserManagerTest {
 
     String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
     assertEquals(clientVersion, headers.getFirstHeaderStringValue("X-Client-Version"));
+  }
+
+  private static void checkUrl(TestResponseInterceptor interceptor, String method, String url) {
+    HttpRequest request = interceptor.getResponse().getRequest();
+    assertEquals(method, request.getRequestMethod());
+    assertEquals(url, request.getUrl().toString());
   }
 
   private interface UserManagerOp {
