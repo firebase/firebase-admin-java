@@ -435,6 +435,32 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testGetTenant() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("getTenant.json"));
+    Tenant tenant = FirebaseAuth.getInstance().getTenantManager().getTenantAsync("TENANT_1").get();
+    checkTenant(tenant, "TENANT_1");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/TENANT_1");
+  }
+
+  @Test
+  public void testGetTenantWithNotFoundError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"TENANT_NOT_FOUND\"}}");
+    try {
+      FirebaseAuth.getInstance().getTenantManager().getTenantAsync("UNKNOWN").get();
+      fail("No error thrown for invalid response");
+    } catch (ExecutionException e) {
+      assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR, authException.getErrorCode());
+    }
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/UNKNOWN");
+  }
+
+  @Test
   public void testListTenants() throws Exception {
     final TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("listTenants.json"));

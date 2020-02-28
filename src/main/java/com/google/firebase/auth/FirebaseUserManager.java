@@ -83,8 +83,8 @@ class FirebaseUserManager {
       .put("INVALID_PAGE_SELECTION", "invalid-page-token")
       .put("INVALID_PHONE_NUMBER", "invalid-phone-number")
       .put("PHONE_NUMBER_EXISTS", "phone-number-already-exists")
-      .put("TENANT_NOT_FOUND", TENANT_NOT_FOUND_ERROR)
       .put("PROJECT_NOT_FOUND", "project-not-found")
+      .put("TENANT_NOT_FOUND", TENANT_NOT_FOUND_ERROR)
       .put("USER_NOT_FOUND", USER_NOT_FOUND_ERROR)
       .put("WEAK_PASSWORD", "invalid-password")
       .put("UNAUTHORIZED_DOMAIN", "unauthorized-continue-uri")
@@ -226,6 +226,15 @@ class FirebaseUserManager {
       throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to import users.");
     }
     return new UserImportResult(request.getUsersCount(), response);
+  }
+
+  Tenant getTenant(String tenantId) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants/" + tenantId);
+    Tenant response = sendRequest("GET", url, null, Tenant.class);
+    if (Strings.isNullOrEmpty(response.getTenantId())) {
+      throw new FirebaseAuthException(TENANT_NOT_FOUND_ERROR, "Failed to get tenant.");
+    }
+    return response;
   }
 
   void deleteTenant(String tenantId) throws FirebaseAuthException {
