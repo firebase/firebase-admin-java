@@ -16,10 +16,12 @@
 
 package com.google.firebase.auth;
 
+import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -74,6 +76,8 @@ public class FirebaseUserManagerTest {
           .build();
   private static final Map<String, Object> ACTION_CODE_SETTINGS_MAP =
           ACTION_CODE_SETTINGS.getProperties();
+  private static final String TENANTS_BASE_URL =
+          "https://identitytoolkit.googleapis.com/v2/projects/test-project-id/tenants";
 
   @After
   public void tearDown() {
@@ -1283,6 +1287,20 @@ public class FirebaseUserManagerTest {
       assertEquals("internal-error", e.getErrorCode());
       assertTrue(e.getCause() instanceof HttpResponseException);
     }
+  }
+
+  private static TestResponseInterceptor initializeAppForUserManagementWithStatusCode(
+      int statusCode, String response) {
+    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(credentials)
+        .setHttpTransport(
+          MockHttpTransport.builder().setLowLevelHttpResponse(
+            new MockLowLevelHttpResponse().setContent(response).setStatusCode(statusCode)).build())
+        .setProjectId("test-project-id")
+        .build());
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    FirebaseAuth.getInstance().getUserManager().setInterceptor(interceptor);
+    return interceptor;
   }
 
   private static TestResponseInterceptor initializeAppForUserManagement(String ...responses) {

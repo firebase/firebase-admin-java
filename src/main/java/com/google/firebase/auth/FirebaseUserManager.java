@@ -65,6 +65,7 @@ import java.util.Map;
  */
 class FirebaseUserManager {
 
+  static final String TENANT_NOT_FOUND_ERROR = "tenant-not-found";
   static final String USER_NOT_FOUND_ERROR = "user-not-found";
   static final String INTERNAL_ERROR = "internal-error";
 
