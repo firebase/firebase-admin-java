@@ -442,12 +442,14 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetTenantWithNotFoundError() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"TENANT_NOT_FOUND\"}}");
     try {
       FirebaseAuth.getInstance().getTenantManager().getTenantAsync("UNKNOWN").get();
       fail("No error thrown for invalid response");
     } catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
       assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR, authException.getErrorCode());
     }
