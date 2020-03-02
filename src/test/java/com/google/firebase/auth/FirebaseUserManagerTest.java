@@ -42,8 +42,6 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
-import com.google.firebase.auth.UserRecord.CreateRequest;
-import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestResponseInterceptor;
@@ -222,7 +220,8 @@ public class FirebaseUserManagerTest {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("createUser.json"),
         TestUtils.loadResource("getUser.json"));
-    UserRecord user = FirebaseAuth.getInstance().createUserAsync(new CreateRequest()).get();
+    UserRecord user =
+        FirebaseAuth.getInstance().createUserAsync(new UserRecord.CreateRequest()).get();
     checkUserRecord(user);
     checkRequestHeaders(interceptor);
   }
@@ -233,7 +232,7 @@ public class FirebaseUserManagerTest {
         TestUtils.loadResource("createUser.json"),
         TestUtils.loadResource("getUser.json"));
     UserRecord user = FirebaseAuth.getInstance()
-        .updateUserAsync(new UpdateRequest("testuser")).get();
+        .updateUserAsync(new UserRecord.UpdateRequest("testuser")).get();
     checkUserRecord(user);
     checkRequestHeaders(interceptor);
   }
@@ -437,8 +436,10 @@ public class FirebaseUserManagerTest {
   @Test
   public void testGetTenant() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("getTenant.json"));
-    Tenant tenant = FirebaseAuth.getInstance().getTenantManager().getTenantAsync("TENANT_1").get();
+        TestUtils.loadResource("tenant.json"));
+
+    Tenant tenant = FirebaseAuth.getInstance().getTenantManager().getTenant("TENANT_1");
+
     checkTenant(tenant, "TENANT_1");
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/TENANT_1");
@@ -450,12 +451,10 @@ public class FirebaseUserManagerTest {
         initializeAppForUserManagementWithStatusCode(404,
             "{\"error\": {\"message\": \"TENANT_NOT_FOUND\"}}");
     try {
-      FirebaseAuth.getInstance().getTenantManager().getTenantAsync("UNKNOWN").get();
+      FirebaseAuth.getInstance().getTenantManager().getTenant("UNKNOWN");
       fail("No error thrown for invalid response");
-    } catch (ExecutionException e) {
-      assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
-      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR, authException.getErrorCode());
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/UNKNOWN");
   }
@@ -464,15 +463,16 @@ public class FirebaseUserManagerTest {
   public void testListTenants() throws Exception {
     final TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("listTenants.json"));
-    ListTenantsPage page =
-        FirebaseAuth.getInstance().getTenantManager().listTenantsAsync(null, 999).get();
+
+    ListTenantsPage page = FirebaseAuth.getInstance().getTenantManager().listTenants(null, 999);
+
     ImmutableList<Tenant> tenants = ImmutableList.copyOf(page.getValues());
     assertEquals(2, tenants.size());
     checkTenant(tenants.get(0), "TENANT_1");
     checkTenant(tenants.get(1), "TENANT_2");
     assertEquals("", page.getNextPageToken());
     checkRequestHeaders(interceptor);
-
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL + ":list");
     GenericUrl url = interceptor.getResponse().getRequest().getUrl();
     assertEquals(999, url.getFirst("pageSize"));
     assertNull(url.getFirst("pageToken"));
@@ -482,15 +482,16 @@ public class FirebaseUserManagerTest {
   public void testListTenantsWithPageToken() throws Exception {
     final TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("listTenants.json"));
-    ListTenantsPage page =
-        FirebaseAuth.getInstance().getTenantManager().listTenantsAsync("token", 999).get();
+
+    ListTenantsPage page = FirebaseAuth.getInstance().getTenantManager().listTenants("token", 999);
+
     ImmutableList<Tenant> tenants = ImmutableList.copyOf(page.getValues());
     assertEquals(2, tenants.size());
     checkTenant(tenants.get(0), "TENANT_1");
     checkTenant(tenants.get(1), "TENANT_2");
     assertEquals("", page.getNextPageToken());
     checkRequestHeaders(interceptor);
-
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL + ":list");
     GenericUrl url = interceptor.getResponse().getRequest().getUrl();
     assertEquals(999, url.getFirst("pageSize"));
     assertEquals("token", url.getFirst("pageToken"));
@@ -499,18 +500,137 @@ public class FirebaseUserManagerTest {
   @Test
   public void testListZeroTenants() throws Exception {
     final TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
-    ListTenantsPage page =
-        FirebaseAuth.getInstance().getTenantManager().listTenantsAsync(null).get();
+
+    ListTenantsPage page = FirebaseAuth.getInstance().getTenantManager().listTenants(null);
+
     assertTrue(Iterables.isEmpty(page.getValues()));
     assertEquals("", page.getNextPageToken());
     checkRequestHeaders(interceptor);
   }
 
   @Test
+  public void testCreateTenant() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("tenant.json"));
+    Tenant.CreateRequest request = new Tenant.CreateRequest()
+        .setDisplayName("DISPLAY_NAME")
+        .setPasswordSignInAllowed(true)
+        .setEmailLinkSignInEnabled(false);
+
+    Tenant tenant = FirebaseAuth.getInstance().getTenantManager().createTenant(request);
+
+    checkTenant(tenant, "TENANT_1");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "POST", TENANTS_BASE_URL);
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("DISPLAY_NAME", url.getFirst("displayName"));
+    assertEquals(true, url.getFirst("allowPasswordSignup"));
+    assertEquals(false, url.getFirst("enableEmailLinkSignin"));
+  }
+
+  @Test
+  public void testCreateTenantMinimal() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("tenant.json"));
+    Tenant.CreateRequest request = new Tenant.CreateRequest();
+
+    Tenant tenant = FirebaseAuth.getInstance().getTenantManager().createTenant(request);
+
+    checkTenant(tenant, "TENANT_1");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "POST", TENANTS_BASE_URL);
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertNull(url.getFirst("displayName"));
+    assertNull(url.getFirst("allowPasswordSignup"));
+    assertNull(url.getFirst("enableEmailLinkSignin"));
+  }
+
+  @Test
+  public void testCreateTenantError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+    try {
+      FirebaseAuth.getInstance().getTenantManager().createTenant(new Tenant.CreateRequest());
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "POST", TENANTS_BASE_URL);
+  }
+
+  @Test
+  public void testUpdateTenant() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("tenant.json"));
+    Tenant.UpdateRequest request = new Tenant.UpdateRequest("TENANT_1")
+        .setDisplayName("DISPLAY_NAME")
+        .setPasswordSignInAllowed(true)
+        .setEmailLinkSignInEnabled(false);
+
+    Tenant tenant = FirebaseAuth.getInstance().getTenantManager().updateTenant(request);
+
+    checkTenant(tenant, "TENANT_1");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "PATCH", TENANTS_BASE_URL + "/TENANT_1");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("DISPLAY_NAME", url.getFirst("displayName"));
+    assertEquals(true, url.getFirst("allowPasswordSignup"));
+    assertEquals(false, url.getFirst("enableEmailLinkSignin"));
+  }
+
+  @Test
+  public void testUpdateTenantMinimal() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("tenant.json"));
+    Tenant.UpdateRequest request =
+        new Tenant.UpdateRequest("TENANT_1").setDisplayName("DISPLAY_NAME");
+
+    Tenant tenant = FirebaseAuth.getInstance().getTenantManager().updateTenant(request);
+
+    checkTenant(tenant, "TENANT_1");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "PATCH", TENANTS_BASE_URL + "/TENANT_1");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("DISPLAY_NAME", url.getFirst("displayName"));
+    assertNull(url.getFirst("allowPasswordSignup"));
+    assertNull(url.getFirst("enableEmailLinkSignin"));
+  }
+
+  @Test
+  public void testUpdateTenantNoValues() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("tenant.json"));
+    TenantManager tenantManager = FirebaseAuth.getInstance().getTenantManager();
+    try {
+      tenantManager.updateTenant(new Tenant.UpdateRequest("TENANT_1"));
+      fail("No error thrown for empty tenant update");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testUpdateTenantError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+    Tenant.UpdateRequest request =
+        new Tenant.UpdateRequest("TENANT_1").setDisplayName("DISPLAY_NAME");
+    try {
+      FirebaseAuth.getInstance().getTenantManager().updateTenant(request);
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "PATCH", TENANTS_BASE_URL + "/TENANT_1");
+  }
+
+  @Test
   public void testDeleteTenant() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
 
-    FirebaseAuth.getInstance().getTenantManager().deleteTenantAsync("TENANT_1").get();
+    FirebaseAuth.getInstance().getTenantManager().deleteTenant("TENANT_1");
 
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/TENANT_1");
@@ -522,12 +642,10 @@ public class FirebaseUserManagerTest {
         initializeAppForUserManagementWithStatusCode(404,
             "{\"error\": {\"message\": \"TENANT_NOT_FOUND\"}}");
     try {
-      FirebaseAuth.getInstance().getTenantManager().deleteTenantAsync("UNKNOWN").get();
+      FirebaseAuth.getInstance().getTenantManager().deleteTenant("UNKNOWN");
       fail("No error thrown for invalid response");
-    } catch (ExecutionException e) {
-      assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
-      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR, authException.getErrorCode());
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/UNKNOWN");
   }
@@ -628,13 +746,13 @@ public class FirebaseUserManagerTest {
         .add(new UserManagerOp() {
           @Override
           public void call(FirebaseAuth auth) throws Exception {
-            auth.createUserAsync(new CreateRequest()).get();
+            auth.createUserAsync(new UserRecord.CreateRequest()).get();
           }
         })
         .add(new UserManagerOp() {
           @Override
           public void call(FirebaseAuth auth) throws Exception {
-            auth.updateUserAsync(new UpdateRequest("test")).get();
+            auth.updateUserAsync(new UserRecord.UpdateRequest("test")).get();
           }
         })
         .add(new UserManagerOp() {
@@ -752,13 +870,13 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUserBuilder() {
-    Map<String, Object> map = new CreateRequest().getProperties();
+    Map<String, Object> map = new UserRecord.CreateRequest().getProperties();
     assertTrue(map.isEmpty());
   }
 
   @Test
   public void testUserBuilderWithParams() {
-    Map<String, Object> map = new CreateRequest()
+    Map<String, Object> map = new UserRecord.CreateRequest()
         .setUid("TestUid")
         .setDisplayName("Display Name")
         .setPhotoUrl("http://test.com/example.png")
@@ -779,7 +897,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUid() {
-    CreateRequest user = new CreateRequest();
+    UserRecord.CreateRequest user = new UserRecord.CreateRequest();
     try {
       user.setUid(null);
       fail("No error thrown for null uid");
@@ -804,7 +922,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidDisplayName() {
-    CreateRequest user = new CreateRequest();
+    UserRecord.CreateRequest user = new UserRecord.CreateRequest();
     try {
       user.setDisplayName(null);
       fail("No error thrown for null display name");
@@ -815,7 +933,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidPhotoUrl() {
-    CreateRequest user = new CreateRequest();
+    UserRecord.CreateRequest user = new UserRecord.CreateRequest();
     try {
       user.setPhotoUrl(null);
       fail("No error thrown for null photo url");
@@ -840,7 +958,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidEmail() {
-    CreateRequest user = new CreateRequest();
+    UserRecord.CreateRequest user = new UserRecord.CreateRequest();
     try {
       user.setEmail(null);
       fail("No error thrown for null email");
@@ -865,7 +983,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidPhoneNumber() {
-    CreateRequest user = new CreateRequest();
+    UserRecord.CreateRequest user = new UserRecord.CreateRequest();
     try {
       user.setPhoneNumber(null);
       fail("No error thrown for null phone number");
@@ -890,7 +1008,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidPassword() {
-    CreateRequest user = new CreateRequest();
+    UserRecord.CreateRequest user = new UserRecord.CreateRequest();
     try {
       user.setPassword(null);
       fail("No error thrown for null password");
@@ -908,7 +1026,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUserUpdater() throws IOException {
-    UpdateRequest update = new UpdateRequest("test");
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     Map<String, Object> claims = ImmutableMap.<String, Object>of("admin", true, "package", "gold");
     Map<String, Object> map = update
         .setDisplayName("Display Name")
@@ -932,7 +1050,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testNullJsonFactory() {
-    UpdateRequest update = new UpdateRequest("test");
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     Map<String, Object> claims = ImmutableMap.<String, Object>of("admin", true, "package", "gold");
     update.setCustomClaims(claims);
     try {
@@ -945,7 +1063,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testNullCustomClaims() {
-    UpdateRequest update = new UpdateRequest("test");
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     Map<String, Object> map = update
         .setCustomClaims(null)
         .getProperties(Utils.getDefaultJsonFactory());
@@ -956,7 +1074,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testEmptyCustomClaims() {
-    UpdateRequest update = new UpdateRequest("test");
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     Map<String, Object> map = update
         .setCustomClaims(ImmutableMap.<String, Object>of())
         .getProperties(Utils.getDefaultJsonFactory());
@@ -967,7 +1085,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeleteDisplayName() {
-    Map<String, Object> map = new UpdateRequest("test")
+    Map<String, Object> map = new UserRecord.UpdateRequest("test")
         .setDisplayName(null)
         .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(ImmutableList.of("DISPLAY_NAME"), map.get("deleteAttribute"));
@@ -975,7 +1093,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeletePhotoUrl() {
-    Map<String, Object> map = new UpdateRequest("test")
+    Map<String, Object> map = new UserRecord.UpdateRequest("test")
         .setPhotoUrl(null)
         .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(ImmutableList.of("PHOTO_URL"), map.get("deleteAttribute"));
@@ -983,7 +1101,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeletePhoneNumber() {
-    Map<String, Object> map = new UpdateRequest("test")
+    Map<String, Object> map = new UserRecord.UpdateRequest("test")
         .setPhoneNumber(null)
         .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(ImmutableList.of("phone"), map.get("deleteProvider"));
@@ -991,7 +1109,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUpdatePhotoUrl() {
-    UpdateRequest update = new UpdateRequest("test");
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     try {
       update.setPhotoUrl("");
       fail("No error thrown for invalid photo url");
@@ -1009,7 +1127,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUpdateEmail() {
-    UpdateRequest update = new UpdateRequest("test");
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     try {
       update.setEmail(null);
       fail("No error thrown for null email");
@@ -1034,7 +1152,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUpdatePhoneNumber() {
-    UpdateRequest update = new UpdateRequest("test");
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
 
     try {
       update.setPhoneNumber("");
@@ -1053,7 +1171,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidUpdatePassword() {
-    UpdateRequest update = new UpdateRequest("test");
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     try {
       update.setPassword(null);
       fail("No error thrown for null password");
@@ -1071,7 +1189,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testInvalidCustomClaims() {
-    UpdateRequest update = new UpdateRequest("test");
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     for (String claim : FirebaseUserManager.RESERVED_CLAIMS) {
       try {
         update.setCustomClaims(ImmutableMap.<String, Object>of(claim, "value"));
@@ -1088,7 +1206,7 @@ public class FirebaseUserManagerTest {
     for (int i = 0; i < 1001; i++) {
       builder.append("a");
     }
-    UpdateRequest update = new UpdateRequest("test");
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     update.setCustomClaims(ImmutableMap.<String, Object>of("key", builder.toString()));
     try {
       update.getProperties(Utils.getDefaultJsonFactory());
@@ -1372,7 +1490,7 @@ public class FirebaseUserManagerTest {
   private static void checkUrl(TestResponseInterceptor interceptor, String method, String url) {
     HttpRequest request = interceptor.getResponse().getRequest();
     assertEquals(method, request.getRequestMethod());
-    assertEquals(url, request.getUrl().toString());
+    assertEquals(url, request.getUrl().toString().split("\\?")[0]);
   }
 
   private interface UserManagerOp {
