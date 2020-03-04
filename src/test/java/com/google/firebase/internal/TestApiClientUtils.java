@@ -18,17 +18,14 @@ package com.google.firebase.internal;
 
 import static com.google.firebase.internal.ApiClientUtils.DEFAULT_RETRY_CONFIG;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import com.google.api.client.testing.util.MockSleeper;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.internal.RetryInitializer.RetryHandlerDecorator;
-import java.io.IOException;
 
 public class TestApiClientUtils {
 
@@ -38,8 +35,6 @@ public class TestApiClientUtils {
       .setMaxIntervalMillis(DEFAULT_RETRY_CONFIG.getMaxIntervalMillis())
       .setSleeper(new MockSleeper())
       .build();
-
-  private static final GenericUrl TEST_URL = new GenericUrl("https://firebase.google.com");
 
   /**
    * Creates a new {@code HttpRequestFactory} which provides authorization (OAuth2), timeouts and
@@ -65,20 +60,12 @@ public class TestApiClientUtils {
   }
 
   /**
-   * Checks whther the given HttpRequestFactory has been configured for authorization and
+   * Checks whether the given HttpRequest has been configured for authorization and
    * automatic retries.
    *
-   * @param requestFactory The HttpRequestFactory to check.
+   * @param request The HttpRequest to check.
    */
-  public static void assertAuthAndRetrySupport(HttpRequestFactory requestFactory) {
-    assertTrue(requestFactory.getInitializer() instanceof FirebaseRequestInitializer);
-    HttpRequest request;
-    try {
-      request = requestFactory.buildGetRequest(TEST_URL);
-    } catch (IOException e) {
-      throw new RuntimeException("Failed to initialize request", e);
-    }
-
+  public static void assertAuthAndRetrySupport(HttpRequest request) {
     // Verify authorization
     assertTrue(request.getHeaders().getAuthorization().startsWith("Bearer "));
 
@@ -89,7 +76,7 @@ public class TestApiClientUtils {
         .getRetryConfig();
     assertEquals(DEFAULT_RETRY_CONFIG.getMaxRetries(), retryConfig.getMaxRetries());
     assertEquals(DEFAULT_RETRY_CONFIG.getMaxIntervalMillis(), retryConfig.getMaxIntervalMillis());
-    assertFalse(retryConfig.isRetryOnIOExceptions());
+    assertEquals(DEFAULT_RETRY_CONFIG.isRetryOnIOExceptions(), retryConfig.isRetryOnIOExceptions());
     assertEquals(DEFAULT_RETRY_CONFIG.getRetryStatusCodes(), retryConfig.getRetryStatusCodes());
   }
 }
