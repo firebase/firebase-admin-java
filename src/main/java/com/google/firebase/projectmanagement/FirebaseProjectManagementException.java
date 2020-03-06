@@ -31,7 +31,7 @@ public final class FirebaseProjectManagementException extends FirebaseException 
   }
 
   FirebaseProjectManagementException(@NonNull FirebaseException base, @NonNull String message) {
-    super(base.getErrorCodeNew(), message, base.getCause(), base.getHttpResponse());
+    super(base.getErrorCode(), message, base.getCause(), base.getHttpResponse());
   }
 
   FirebaseProjectManagementException(

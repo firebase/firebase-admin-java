@@ -46,7 +46,7 @@ public abstract class AbstractPlatformErrorHandler<T extends FirebaseException>
     FirebaseException base = super.httpResponseErrorToBaseException(e, response);
     PlatformErrorResponse parsedError = this.parseErrorResponse(e.getContent());
 
-    ErrorCode code = base.getErrorCodeNew();
+    ErrorCode code = base.getErrorCode();
     String status = parsedError.getStatus();
     if (!Strings.isNullOrEmpty(status)) {
       code = Enum.valueOf(ErrorCode.class, parsedError.getStatus());

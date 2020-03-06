@@ -150,7 +150,7 @@ public class ErrorHandlingHttpClientTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertEquals("IO error: Test", e.getMessage());
       assertNull(e.getHttpResponse());
       assertSame(exception, e.getCause());
@@ -169,7 +169,7 @@ public class ErrorHandlingHttpClientTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
       assertEquals("Example error message: {}", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, "{}");
       IncomingHttpResponse httpResponse = e.getHttpResponse();
@@ -190,7 +190,7 @@ public class ErrorHandlingHttpClientTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertEquals("Parse error", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_OK, payload);
       assertNotNull(e.getCause());
@@ -222,7 +222,7 @@ public class ErrorHandlingHttpClientTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
       assertEquals("Example error message: null", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE, null);
       assertNotNull(e.getCause());
@@ -257,7 +257,7 @@ public class ErrorHandlingHttpClientTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
-      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertEquals("IO error: Failed to fetch credentials", e.getMessage());
       assertNull(e.getHttpResponse());
       assertNotNull(e.getCause());

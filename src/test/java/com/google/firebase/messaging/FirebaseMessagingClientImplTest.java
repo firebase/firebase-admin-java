@@ -151,7 +151,7 @@ public class FirebaseMessagingClientImplTest {
       client.send(EMPTY_MESSAGE, DRY_RUN_DISABLED);
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
       assertEquals("Unknown error while making a remote service call: transport error",
           error.getMessage());
       assertTrue(error.getCause() instanceof IOException);
@@ -171,7 +171,7 @@ public class FirebaseMessagingClientImplTest {
         client.send(entry.getKey(), DRY_RUN_DISABLED);
         fail("No error thrown for malformed response");
       } catch (FirebaseMessagingException error) {
-        assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
+        assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
         assertTrue(error.getMessage().startsWith("Error while parsing HTTP response: "));
         assertNotNull(error.getCause());
         assertNotNull(error.getHttpResponse());
@@ -405,7 +405,7 @@ public class FirebaseMessagingClientImplTest {
       client.sendAll(MESSAGE_LIST, DRY_RUN_DISABLED);
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
-      assertEquals(ErrorCode.UNKNOWN, error.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
       assertEquals(
           "Unknown error while making a remote service call: transport error", error.getMessage());
       assertTrue(error.getCause() instanceof IOException);
@@ -625,7 +625,7 @@ public class FirebaseMessagingClientImplTest {
 
       FirebaseMessagingException exception = sendResponse.getException();
       assertNotNull(exception);
-      assertEquals(ErrorCode.INVALID_ARGUMENT, exception.getErrorCodeNew());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, exception.getErrorCode());
       assertNull(exception.getCause());
       assertNull(exception.getHttpResponse());
       assertEquals(MessagingErrorCode.INVALID_ARGUMENT, exception.getMessagingErrorCode());
@@ -680,7 +680,7 @@ public class FirebaseMessagingClientImplTest {
       ErrorCode expectedCode,
       MessagingErrorCode expectedMessagingCode,
       String expectedMessage) {
-    assertEquals(expectedCode, error.getErrorCodeNew());
+    assertEquals(expectedCode, error.getErrorCode());
     assertEquals(expectedMessage, error.getMessage());
     assertTrue(error.getCause() instanceof HttpResponseException);
     assertEquals(expectedMessagingCode, error.getMessagingErrorCode());

@@ -67,7 +67,7 @@ public class FirebaseExceptionTest {
         null,
         null);
 
-    assertEquals(ErrorCode.INTERNAL, exception.getErrorCodeNew());
+    assertEquals(ErrorCode.INTERNAL, exception.getErrorCode());
     assertEquals("Test error", exception.getMessage());
     assertNull(exception.getHttpResponse());
     assertNull(exception.getCause());
@@ -86,7 +86,7 @@ public class FirebaseExceptionTest {
         null,
         response);
 
-    assertEquals(ErrorCode.INTERNAL, exception.getErrorCodeNew());
+    assertEquals(ErrorCode.INTERNAL, exception.getErrorCode());
     assertEquals("Test error", exception.getMessage());
     assertSame(response, exception.getHttpResponse());
     assertNull(exception.getCause());
@@ -101,30 +101,10 @@ public class FirebaseExceptionTest {
         "Test error",
         cause);
 
-    assertEquals(ErrorCode.INTERNAL, exception.getErrorCodeNew());
+    assertEquals(ErrorCode.INTERNAL, exception.getErrorCode());
     assertEquals("Test error", exception.getMessage());
     assertNull(exception.getHttpResponse());
     assertSame(cause, exception.getCause());
-  }
-
-  @Test
-  public void testFirebaseExceptionLegacyConstructor() {
-    FirebaseException exception = new FirebaseException("Test error");
-
-    assertEquals(ErrorCode.UNKNOWN, exception.getErrorCodeNew());
-    assertEquals("Test error", exception.getMessage());
-    assertNull(exception.getHttpResponse());
-    assertNull(exception.getCause());
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testFirebaseExceptionNullDetail() {
-    new FirebaseException(null);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testFirebaseExceptionEmptyDetail() {
-    new FirebaseException("");
   }
 
   private HttpResponseException createHttpResponseException() throws IOException {

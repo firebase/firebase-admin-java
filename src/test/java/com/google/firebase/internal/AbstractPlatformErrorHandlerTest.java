@@ -56,7 +56,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (MockFirebaseException e) {
-      assertEquals(ErrorCode.UNAVAILABLE, e.getErrorCodeNew());
+      assertEquals(ErrorCode.UNAVAILABLE, e.getErrorCode());
       assertEquals("Test error", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, payload);
       assertNotNull(e.getCause());
@@ -75,7 +75,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (MockFirebaseException e) {
-      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
       assertEquals("Unexpected HTTP response with status: 500\nnot json", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, payload);
       assertNotNull(e.getCause());
@@ -94,7 +94,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (MockFirebaseException e) {
-      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
       assertEquals("Test error", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, payload);
       assertNotNull(e.getCause());
@@ -113,7 +113,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (MockFirebaseException e) {
-      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCodeNew());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
       assertEquals("Unexpected HTTP response with status: 500\n" + payload, e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, payload);
       assertNotNull(e.getCause());
@@ -132,7 +132,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (MockFirebaseException e) {
-      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
       assertEquals("Unexpected HTTP response with status: 500\n" + payload, e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVER_ERROR, payload);
       assertNotNull(e.getCause());
@@ -148,7 +148,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (MockFirebaseException e) {
-      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertEquals(
           "Unknown error while making a remote service call: Test", e.getMessage());
       assertNull(e.getHttpResponse());
@@ -165,7 +165,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (MockFirebaseException e) {
-      assertEquals(ErrorCode.DEADLINE_EXCEEDED, e.getErrorCodeNew());
+      assertEquals(ErrorCode.DEADLINE_EXCEEDED, e.getErrorCode());
       assertEquals(
           "Timed out while making an API call: Test", e.getMessage());
       assertNull(e.getHttpResponse());
@@ -182,7 +182,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (MockFirebaseException e) {
-      assertEquals(ErrorCode.UNAVAILABLE, e.getErrorCodeNew());
+      assertEquals(ErrorCode.UNAVAILABLE, e.getErrorCode());
       assertEquals(
           "Failed to establish a connection: Test", e.getMessage());
       assertNull(e.getHttpResponse());
@@ -199,7 +199,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (MockFirebaseException e) {
-      assertEquals(ErrorCode.UNAVAILABLE, e.getErrorCodeNew());
+      assertEquals(ErrorCode.UNAVAILABLE, e.getErrorCode());
       assertEquals(
           "Failed to establish a connection: Test", e.getMessage());
       assertNull(e.getHttpResponse());
@@ -218,7 +218,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (MockFirebaseException e) {
-      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertTrue(e.getMessage().startsWith("Error while parsing HTTP response: "));
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_OK, payload);
       assertNotNull(e.getCause());
@@ -237,7 +237,7 @@ public class AbstractPlatformErrorHandlerTest {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
       fail("No exception thrown for HTTP error response");
     } catch (MockFirebaseException e) {
-      assertEquals(ErrorCode.UNKNOWN, e.getErrorCodeNew());
+      assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertEquals("Test error", e.getMessage());
       assertHttpResponse(e, 512, payload);
       assertNotNull(e.getCause());
@@ -292,7 +292,7 @@ public class AbstractPlatformErrorHandlerTest {
 
   private static class MockFirebaseException extends FirebaseException {
     MockFirebaseException(FirebaseException base) {
-      super(base.getErrorCodeNew(), base.getMessage(), base.getCause(), base.getHttpResponse());
+      super(base.getErrorCode(), base.getMessage(), base.getCause(), base.getHttpResponse());
     }
   }
 }

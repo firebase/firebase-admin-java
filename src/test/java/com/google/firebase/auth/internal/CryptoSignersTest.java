@@ -104,7 +104,7 @@ public class CryptoSignersTest {
     try {
       signer.sign("foo".getBytes());
     } catch (FirebaseAuthException e) {
-      assertEquals(ErrorCode.INTERNAL, e.getErrorCodeNew());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
       assertEquals("Test error", e.getMessage());
       assertNotNull(e.getCause());
       assertNotNull(e.getHttpResponse());
