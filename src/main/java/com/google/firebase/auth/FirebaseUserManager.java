@@ -235,8 +235,7 @@ class FirebaseUserManager {
 
   Tenant createTenant(Tenant.CreateRequest request) throws FirebaseAuthException {
     GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants");
-    url.putAll(request.getProperties());
-    return sendRequest("POST", url, null, Tenant.class);
+    return sendRequest("POST", url, request.getProperties(), Tenant.class);
   }
 
   Tenant updateTenant(Tenant.UpdateRequest request) throws FirebaseAuthException {
@@ -244,9 +243,7 @@ class FirebaseUserManager {
     checkArgument(properties.size() > 1,
         "tenant update must have at least one property other than tenantId set");
     GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants/" + request.getTenantId());
-    url.putAll(properties);
-    url.putAll(request.getProperties());
-    return sendRequest("PATCH", url, null, Tenant.class);
+    return sendRequest("PATCH", url, properties, Tenant.class);
   }
 
   void deleteTenant(String tenantId) throws FirebaseAuthException {

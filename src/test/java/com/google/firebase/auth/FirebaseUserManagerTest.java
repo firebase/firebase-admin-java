@@ -61,6 +61,7 @@ import org.junit.Test;
 
 public class FirebaseUserManagerTest {
 
+  private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
   private static final String TEST_TOKEN = "token";
   private static final GoogleCredentials credentials = new MockGoogleCredentials(TEST_TOKEN);
   private static final ActionCodeSettings ACTION_CODE_SETTINGS = ActionCodeSettings.builder()
@@ -247,12 +248,9 @@ public class FirebaseUserManagerTest {
     FirebaseAuth.getInstance().setCustomUserClaimsAsync("testuser", claims).get();
     checkRequestHeaders(interceptor);
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.getResponse().getRequest().getContent().writeTo(out);
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    GenericJson parsed = parseRequestContent(interceptor);
     assertEquals("testuser", parsed.get("localId"));
-    assertEquals(jsonFactory.toString(claims), parsed.get("customAttributes"));
+    assertEquals(JSON_FACTORY.toString(claims), parsed.get("customAttributes"));
   }
 
   @Test
@@ -263,10 +261,7 @@ public class FirebaseUserManagerTest {
     FirebaseAuth.getInstance().revokeRefreshTokensAsync("testuser").get();
     checkRequestHeaders(interceptor);
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.getResponse().getRequest().getContent().writeTo(out);
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    GenericJson parsed = parseRequestContent(interceptor);
     assertEquals("testuser", parsed.get("localId"));
     assertNotNull(parsed.get("validSince"));
   }
@@ -293,14 +288,11 @@ public class FirebaseUserManagerTest {
     assertEquals(0, result.getFailureCount());
     assertTrue(result.getErrors().isEmpty());
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.getResponse().getRequest().getContent().writeTo(out);
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    GenericJson parsed = parseRequestContent(interceptor);
     assertEquals(1, parsed.size());
     List<Map<String, Object>> expected = ImmutableList.of(
-        user1.getProperties(jsonFactory),
-        user2.getProperties(jsonFactory)
+        user1.getProperties(JSON_FACTORY),
+        user2.getProperties(JSON_FACTORY)
     );
     assertEquals(expected, parsed.get("users"));
   }
@@ -333,15 +325,12 @@ public class FirebaseUserManagerTest {
     assertEquals(2, error.getIndex());
     assertEquals("Another error occurred in user3", error.getReason());
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.getResponse().getRequest().getContent().writeTo(out);
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    GenericJson parsed = parseRequestContent(interceptor);
     assertEquals(1, parsed.size());
     List<Map<String, Object>> expected = ImmutableList.of(
-        user1.getProperties(jsonFactory),
-        user2.getProperties(jsonFactory),
-        user3.getProperties(jsonFactory)
+        user1.getProperties(JSON_FACTORY),
+        user2.getProperties(JSON_FACTORY),
+        user3.getProperties(JSON_FACTORY)
     );
     assertEquals(expected, parsed.get("users"));
   }
@@ -371,14 +360,11 @@ public class FirebaseUserManagerTest {
     assertEquals(0, result.getFailureCount());
     assertTrue(result.getErrors().isEmpty());
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.getResponse().getRequest().getContent().writeTo(out);
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    GenericJson parsed = parseRequestContent(interceptor);
     assertEquals(4, parsed.size());
     List<Map<String, Object>> expected = ImmutableList.of(
-        user1.getProperties(jsonFactory),
-        user2.getProperties(jsonFactory)
+        user1.getProperties(JSON_FACTORY),
+        user2.getProperties(JSON_FACTORY)
     );
     assertEquals(expected, parsed.get("users"));
     assertEquals("MOCK_HASH", parsed.get("hashAlgorithm"));
@@ -522,10 +508,10 @@ public class FirebaseUserManagerTest {
     checkTenant(tenant, "TENANT_1");
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "POST", TENANTS_BASE_URL);
-    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
-    assertEquals("DISPLAY_NAME", url.getFirst("displayName"));
-    assertEquals(true, url.getFirst("allowPasswordSignup"));
-    assertEquals(false, url.getFirst("enableEmailLinkSignin"));
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertEquals(true, parsed.get("allowPasswordSignup"));
+    assertEquals(false, parsed.get("enableEmailLinkSignin"));
   }
 
   @Test
@@ -539,10 +525,10 @@ public class FirebaseUserManagerTest {
     checkTenant(tenant, "TENANT_1");
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "POST", TENANTS_BASE_URL);
-    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
-    assertNull(url.getFirst("displayName"));
-    assertNull(url.getFirst("allowPasswordSignup"));
-    assertNull(url.getFirst("enableEmailLinkSignin"));
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertNull(parsed.get("displayName"));
+    assertNull(parsed.get("allowPasswordSignup"));
+    assertNull(parsed.get("enableEmailLinkSignin"));
   }
 
   @Test
@@ -573,10 +559,10 @@ public class FirebaseUserManagerTest {
     checkTenant(tenant, "TENANT_1");
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "PATCH", TENANTS_BASE_URL + "/TENANT_1");
-    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
-    assertEquals("DISPLAY_NAME", url.getFirst("displayName"));
-    assertEquals(true, url.getFirst("allowPasswordSignup"));
-    assertEquals(false, url.getFirst("enableEmailLinkSignin"));
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertEquals(true, parsed.get("allowPasswordSignup"));
+    assertEquals(false, parsed.get("enableEmailLinkSignin"));
   }
 
   @Test
@@ -591,10 +577,10 @@ public class FirebaseUserManagerTest {
     checkTenant(tenant, "TENANT_1");
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "PATCH", TENANTS_BASE_URL + "/TENANT_1");
-    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
-    assertEquals("DISPLAY_NAME", url.getFirst("displayName"));
-    assertNull(url.getFirst("allowPasswordSignup"));
-    assertNull(url.getFirst("enableEmailLinkSignin"));
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertNull(parsed.get("allowPasswordSignup"));
+    assertNull(parsed.get("enableEmailLinkSignin"));
   }
 
   @Test
@@ -661,10 +647,7 @@ public class FirebaseUserManagerTest {
     assertEquals("MockCookieString", cookie);
     checkRequestHeaders(interceptor);
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.getResponse().getRequest().getContent().writeTo(out);
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    GenericJson parsed = parseRequestContent(interceptor);
     assertEquals(2, parsed.size());
     assertEquals("testToken", parsed.get("idToken"));
     assertEquals(new BigDecimal(3600), parsed.get("validDuration"));
@@ -1036,7 +1019,7 @@ public class FirebaseUserManagerTest {
         .setEmailVerified(true)
         .setPassword("secret")
         .setCustomClaims(claims)
-        .getProperties(Utils.getDefaultJsonFactory());
+        .getProperties(JSON_FACTORY);
     assertEquals(8, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals("Display Name", map.get("displayName"));
@@ -1045,7 +1028,7 @@ public class FirebaseUserManagerTest {
     assertEquals("+1234567890", map.get("phoneNumber"));
     assertTrue((Boolean) map.get("emailVerified"));
     assertEquals("secret", map.get("password"));
-    assertEquals(Utils.getDefaultJsonFactory().toString(claims), map.get("customAttributes"));
+    assertEquals(JSON_FACTORY.toString(claims), map.get("customAttributes"));
   }
 
   @Test
@@ -1066,7 +1049,7 @@ public class FirebaseUserManagerTest {
     UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     Map<String, Object> map = update
         .setCustomClaims(null)
-        .getProperties(Utils.getDefaultJsonFactory());
+        .getProperties(JSON_FACTORY);
     assertEquals(2, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals("{}", map.get("customAttributes"));
@@ -1077,7 +1060,7 @@ public class FirebaseUserManagerTest {
     UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     Map<String, Object> map = update
         .setCustomClaims(ImmutableMap.<String, Object>of())
-        .getProperties(Utils.getDefaultJsonFactory());
+        .getProperties(JSON_FACTORY);
     assertEquals(2, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals("{}", map.get("customAttributes"));
@@ -1087,7 +1070,7 @@ public class FirebaseUserManagerTest {
   public void testDeleteDisplayName() {
     Map<String, Object> map = new UserRecord.UpdateRequest("test")
         .setDisplayName(null)
-        .getProperties(Utils.getDefaultJsonFactory());
+        .getProperties(JSON_FACTORY);
     assertEquals(ImmutableList.of("DISPLAY_NAME"), map.get("deleteAttribute"));
   }
 
@@ -1095,7 +1078,7 @@ public class FirebaseUserManagerTest {
   public void testDeletePhotoUrl() {
     Map<String, Object> map = new UserRecord.UpdateRequest("test")
         .setPhotoUrl(null)
-        .getProperties(Utils.getDefaultJsonFactory());
+        .getProperties(JSON_FACTORY);
     assertEquals(ImmutableList.of("PHOTO_URL"), map.get("deleteAttribute"));
   }
 
@@ -1103,7 +1086,7 @@ public class FirebaseUserManagerTest {
   public void testDeletePhoneNumber() {
     Map<String, Object> map = new UserRecord.UpdateRequest("test")
         .setPhoneNumber(null)
-        .getProperties(Utils.getDefaultJsonFactory());
+        .getProperties(JSON_FACTORY);
     assertEquals(ImmutableList.of("phone"), map.get("deleteProvider"));
   }
 
@@ -1209,7 +1192,7 @@ public class FirebaseUserManagerTest {
     UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     update.setCustomClaims(ImmutableMap.<String, Object>of("key", builder.toString()));
     try {
-      update.getProperties(Utils.getDefaultJsonFactory());
+      update.getProperties(JSON_FACTORY);
       fail("No error thrown for large claims payload");
     } catch (Exception ignore) {
       // expected
@@ -1241,10 +1224,7 @@ public class FirebaseUserManagerTest {
     assertEquals("https://mock-oob-link.for.auth.tests", link);
     checkRequestHeaders(interceptor);
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.getResponse().getRequest().getContent().writeTo(out);
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    GenericJson parsed = parseRequestContent(interceptor);
     assertEquals(3 + ACTION_CODE_SETTINGS_MAP.size(), parsed.size());
     assertEquals("test@example.com", parsed.get("email"));
     assertEquals("PASSWORD_RESET", parsed.get("requestType"));
@@ -1263,10 +1243,7 @@ public class FirebaseUserManagerTest {
     assertEquals("https://mock-oob-link.for.auth.tests", link);
     checkRequestHeaders(interceptor);
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.getResponse().getRequest().getContent().writeTo(out);
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    GenericJson parsed = parseRequestContent(interceptor);
     assertEquals(3, parsed.size());
     assertEquals("test@example.com", parsed.get("email"));
     assertEquals("PASSWORD_RESET", parsed.get("requestType"));
@@ -1298,10 +1275,7 @@ public class FirebaseUserManagerTest {
     assertEquals("https://mock-oob-link.for.auth.tests", link);
     checkRequestHeaders(interceptor);
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.getResponse().getRequest().getContent().writeTo(out);
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    GenericJson parsed = parseRequestContent(interceptor);
     assertEquals(3 + ACTION_CODE_SETTINGS_MAP.size(), parsed.size());
     assertEquals("test@example.com", parsed.get("email"));
     assertEquals("VERIFY_EMAIL", parsed.get("requestType"));
@@ -1320,10 +1294,7 @@ public class FirebaseUserManagerTest {
     assertEquals("https://mock-oob-link.for.auth.tests", link);
     checkRequestHeaders(interceptor);
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.getResponse().getRequest().getContent().writeTo(out);
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    GenericJson parsed = parseRequestContent(interceptor);
     assertEquals(3, parsed.size());
     assertEquals("test@example.com", parsed.get("email"));
     assertEquals("VERIFY_EMAIL", parsed.get("requestType"));
@@ -1368,10 +1339,7 @@ public class FirebaseUserManagerTest {
     assertEquals("https://mock-oob-link.for.auth.tests", link);
     checkRequestHeaders(interceptor);
 
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    interceptor.getResponse().getRequest().getContent().writeTo(out);
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    GenericJson parsed = jsonFactory.fromString(new String(out.toByteArray()), GenericJson.class);
+    GenericJson parsed = parseRequestContent(interceptor);
     assertEquals(3 + ACTION_CODE_SETTINGS_MAP.size(), parsed.size());
     assertEquals("test@example.com", parsed.get("email"));
     assertEquals("EMAIL_SIGNIN", parsed.get("requestType"));
@@ -1436,6 +1404,13 @@ public class FirebaseUserManagerTest {
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     FirebaseAuth.getInstance().getUserManager().setInterceptor(interceptor);
     return interceptor;
+  }
+
+  private static GenericJson parseRequestContent(TestResponseInterceptor interceptor)
+      throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    interceptor.getResponse().getRequest().getContent().writeTo(out);
+    return JSON_FACTORY.fromString(new String(out.toByteArray()), GenericJson.class);
   }
 
   private static void checkUserRecord(UserRecord userRecord) {
