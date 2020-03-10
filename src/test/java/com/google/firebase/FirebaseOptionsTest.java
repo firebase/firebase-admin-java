@@ -17,14 +17,13 @@
 package com.google.firebase;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.auth.oauth2.AccessToken;
@@ -76,9 +75,7 @@ public class FirebaseOptionsTest {
   public void createOptionsWithAllValuesSet() throws IOException {
     GsonFactory jsonFactory = new GsonFactory();
     NetHttpTransport httpTransport = new NetHttpTransport();
-    FirestoreOptions firestoreOptions = FirestoreOptions.newBuilder()
-        .setTimestampsInSnapshotsEnabled(true)
-        .build();
+    FirestoreOptions firestoreOptions = FirestoreOptions.newBuilder().build();
     FirebaseOptions firebaseOptions =
         new FirebaseOptions.Builder()
             .setDatabaseUrl(FIREBASE_DB_URL)
@@ -106,7 +103,7 @@ public class FirebaseOptionsTest {
     assertNotNull(credentials);
     assertTrue(credentials instanceof ServiceAccountCredentials);
     assertEquals(
-        GoogleCredential.fromStream(ServiceAccount.EDITOR.asStream()).getServiceAccountId(),
+        ServiceAccount.EDITOR.getEmail(),
         ((ServiceAccountCredentials) credentials).getClientEmail());
   }
 
@@ -128,7 +125,7 @@ public class FirebaseOptionsTest {
     assertNotNull(credentials);
     assertTrue(credentials instanceof ServiceAccountCredentials);
     assertEquals(
-        GoogleCredential.fromStream(ServiceAccount.EDITOR.asStream()).getServiceAccountId(),
+        ServiceAccount.EDITOR.getEmail(),
         ((ServiceAccountCredentials) credentials).getClientEmail());
     assertNull(firebaseOptions.getFirestoreOptions());
   }
@@ -224,6 +221,6 @@ public class FirebaseOptionsTest {
             .setCredentials(credentials)
             .setDatabaseUrl("https://test.firebaseio.com")
             .build();
-    assertFalse(options1.equals(options2));
+    assertNotEquals(options1, options2);
   }
 }
