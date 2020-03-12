@@ -242,10 +242,17 @@ class FirebaseUserManager {
   Tenant updateTenant(Tenant.UpdateRequest request) throws FirebaseAuthException {
     Map<String, Object> properties = request.getProperties();
     checkArgument(!properties.isEmpty(), "tenant update must have at least one property set");
-    String updateMask = String.join(",", ImmutableSortedSet.copyOf(properties.keySet()));
     GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants/" + request.getTenantId());
-    url.put("updateMask", updateMask);
+    url.put("updateMask", generateMask(properties));
     return sendRequest("PATCH", url, properties, Tenant.class);
+  }
+
+  private static String generateMask(Map<String, Object> properties) {
+    // This implementation does not currently handle the case of nested properties. This is fine
+    // since we do not currently generate masks for any properties with nested values. When it
+    // comes time to implement this, we can check if a property has nested properties by checking
+    // if it is an instance of the Map class.
+    return String.join(",", ImmutableSortedSet.copyOf(properties.keySet()));
   }
 
   void deleteTenant(String tenantId) throws FirebaseAuthException {
