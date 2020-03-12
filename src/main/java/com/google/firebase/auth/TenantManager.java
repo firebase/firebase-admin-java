@@ -36,8 +36,7 @@ import com.google.firebase.internal.Nullable;
  * This class can be used to perform a variety of tenant-related operations, including creating,
  * updating, and listing tenants.
  *
- * <p>TODO(micahstairs): Implement the following methods: getAuthForTenant(), createTenant(), and
- * updateTenant().
+ * <p>TODO(micahstairs): Implement getAuthForTenant().
  */
 public final class TenantManager {
 
@@ -150,6 +149,80 @@ public final class TenantManager {
       @Override
       protected ListTenantsPage execute() throws FirebaseAuthException {
         return factory.create();
+      }
+    };
+  }
+
+  /**
+   * Creates a new tenant with the attributes contained in the specified {@link CreateRequest}.
+   *
+   * @param request A non-null {@link CreateRequest} instance.
+   * @return A {@link Tenant} instance corresponding to the newly created tenant.
+   * @throws NullPointerException if the provided request is null.
+   * @throws FirebaseAuthException if an error occurs while creating the tenant.
+   */
+  public Tenant createTenant(@NonNull CreateRequest request) throws FirebaseAuthException {
+    return createTenantOp(request).call();
+  }
+
+  /**
+   * Similar to {@link #createTenant(CreateRequest)} but performs the operation asynchronously.
+   *
+   * @param request A non-null {@link CreateRequest} instance.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link Tenant}
+   *     instance corresponding to the newly created tenant. If an error occurs while creating the
+   *     tenant, the future throws a {@link FirebaseAuthException}.
+   * @throws NullPointerException if the provided request is null.
+   */
+  public ApiFuture<Tenant> createTenantAsync(@NonNull CreateRequest request) {
+    return createTenantOp(request).callAsync(firebaseApp);
+  }
+
+  /**
+   * Updates an existing user account with the attributes contained in the specified {@link
+   * UpdateRequest}.
+   *
+   * @param request A non-null {@link UpdateRequest} instance.
+   * @return A {@link Tenant} instance corresponding to the updated user account.
+   * @throws NullPointerException if the provided update request is null.
+   * @throws FirebaseAuthException if an error occurs while updating the user account.
+   */
+  public Tenant updateTenant(@NonNull UpdateRequest request) throws FirebaseAuthException {
+    return updateTenantOp(request).call();
+  }
+
+  /**
+   * Similar to {@link #updateTenant(UpdateRequest)} but performs the operation asynchronously.
+   *
+   * @param request A non-null {@link UpdateRequest} instance.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link Tenant}
+   *     instance corresponding to the updated user account. If an error occurs while updating the
+   *     user account, the future throws a {@link FirebaseAuthException}.
+   */
+  public ApiFuture<Tenant> updateTenantAsync(@NonNull UpdateRequest request) {
+    return updateTenantOp(request).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<Tenant, FirebaseAuthException> updateTenantOp(
+      final UpdateRequest request) {
+    // TODO(micahstairs): Add a check to make sure the app has not been destroyed yet.
+    checkNotNull(request, "update request must not be null");
+    return new CallableOperation<Tenant, FirebaseAuthException>() {
+      @Override
+      protected Tenant execute() throws FirebaseAuthException {
+        return userManager.updateTenant(request);
+      }
+    };
+  }
+
+  private CallableOperation<Tenant, FirebaseAuthException> createTenantOp(
+      final CreateRequest request) {
+    // TODO(micahstairs): Add a check to make sure the app has not been destroyed yet.
+    checkNotNull(request, "create request must not be null");
+    return new CallableOperation<Tenant, FirebaseAuthException>() {
+      @Override
+      protected Tenant execute() throws FirebaseAuthException {
+        return userManager.createTenant(request);
       }
     };
   }

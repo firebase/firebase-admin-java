@@ -57,9 +57,7 @@ public class TenantTest {
     Tenant.UpdateRequest updateRequest = tenant.updateRequest();
 
     assertEquals("TENANT_ID", updateRequest.getTenantId());
-    Map<String,Object> properties = updateRequest.getProperties();
-    assertEquals(properties.size(), 1);
-    assertEquals("TENANT_ID", (String) properties.get("name"));
+    assertTrue(updateRequest.getProperties().isEmpty());
   }
 
   @Test
@@ -72,8 +70,7 @@ public class TenantTest {
 
     assertEquals("TENANT_ID", updateRequest.getTenantId());
     Map<String,Object> properties = updateRequest.getProperties();
-    assertEquals(properties.size(), 4);
-    assertEquals("TENANT_ID", (String) properties.get("name"));
+    assertEquals(properties.size(), 3);
     assertEquals("DISPLAY_NAME", (String) properties.get("displayName"));
     assertFalse((boolean) properties.get("allowPasswordSignup"));
     assertTrue((boolean) properties.get("enableEmailLinkSignin"));

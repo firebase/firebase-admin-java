@@ -36,10 +36,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.auth.UserRecord.CreateRequest;
-import com.google.firebase.auth.UserRecord.UpdateRequest;
+import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 import com.google.firebase.auth.internal.HttpErrorResponse;
@@ -171,7 +171,7 @@ class FirebaseUserManager {
     return new UserRecord(response.getUsers().get(0), jsonFactory);
   }
 
-  String createUser(CreateRequest request) throws FirebaseAuthException {
+  String createUser(UserRecord.CreateRequest request) throws FirebaseAuthException {
     GenericJson response = post(
         "/accounts", request.getProperties(), GenericJson.class);
     if (response != null) {
@@ -183,7 +183,8 @@ class FirebaseUserManager {
     throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create new user");
   }
 
-  void updateUser(UpdateRequest request, JsonFactory jsonFactory) throws FirebaseAuthException {
+  void updateUser(UserRecord.UpdateRequest request, JsonFactory jsonFactory)
+      throws FirebaseAuthException {
     GenericJson response = post(
         "/accounts:update", request.getProperties(jsonFactory), GenericJson.class);
     if (response == null || !request.getUid().equals(response.get("localId"))) {
@@ -230,20 +231,33 @@ class FirebaseUserManager {
 
   Tenant getTenant(String tenantId) throws FirebaseAuthException {
     GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants/" + tenantId);
-    Tenant response = sendRequest("GET", url, null, Tenant.class);
-    if (Strings.isNullOrEmpty(response.getTenantId())) {
-      throw new FirebaseAuthException(TENANT_NOT_FOUND_ERROR, "Failed to get tenant.");
-    }
-    return response;
+    return sendRequest("GET", url, null, Tenant.class);
+  }
+
+  Tenant createTenant(Tenant.CreateRequest request) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants");
+    return sendRequest("POST", url, request.getProperties(), Tenant.class);
+  }
+
+  Tenant updateTenant(Tenant.UpdateRequest request) throws FirebaseAuthException {
+    Map<String, Object> properties = request.getProperties();
+    checkArgument(!properties.isEmpty(), "tenant update must have at least one property set");
+    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants/" + request.getTenantId());
+    url.put("updateMask", generateMask(properties));
+    return sendRequest("PATCH", url, properties, Tenant.class);
+  }
+
+  private static String generateMask(Map<String, Object> properties) {
+    // This implementation does not currently handle the case of nested properties. This is fine
+    // since we do not currently generate masks for any properties with nested values. When it
+    // comes time to implement this, we can check if a property has nested properties by checking
+    // if it is an instance of the Map class.
+    return String.join(",", ImmutableSortedSet.copyOf(properties.keySet()));
   }
 
   void deleteTenant(String tenantId) throws FirebaseAuthException {
     GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants/" + tenantId);
-    GenericJson response = sendRequest("DELETE", url, null, GenericJson.class);
-    if (response == null) {
-      throw new FirebaseAuthException(TENANT_NOT_FOUND_ERROR,
-          "Failed to delete tenant: " + tenantId);
-    }
+    sendRequest("DELETE", url, null, GenericJson.class);
   }
 
   ListTenantsResponse listTenants(int maxResults, String pageToken)
