@@ -559,6 +559,9 @@ public class FirebaseUserManagerTest {
     checkTenant(tenant, "TENANT_1");
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "PATCH", TENANTS_BASE_URL + "/TENANT_1");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("allowPasswordSignup,displayName,enableEmailLinkSignin",
+        url.getFirst("updateMask"));
     GenericJson parsed = parseRequestContent(interceptor);
     assertEquals("DISPLAY_NAME", parsed.get("displayName"));
     assertEquals(true, parsed.get("allowPasswordSignup"));
@@ -577,6 +580,8 @@ public class FirebaseUserManagerTest {
     checkTenant(tenant, "TENANT_1");
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "PATCH", TENANTS_BASE_URL + "/TENANT_1");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("displayName", url.getFirst("updateMask"));
     GenericJson parsed = parseRequestContent(interceptor);
     assertEquals("DISPLAY_NAME", parsed.get("displayName"));
     assertNull(parsed.get("allowPasswordSignup"));

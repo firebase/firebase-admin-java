@@ -134,6 +134,7 @@ public final class Tenant {
    */
   public static final class UpdateRequest {
 
+    private final String tenantId;
     private final Map<String,Object> properties = new HashMap<>();
 
     /**
@@ -148,11 +149,11 @@ public final class Tenant {
      */
     public UpdateRequest(String tenantId) {
       checkArgument(!Strings.isNullOrEmpty(tenantId), "tenant ID must not be null or empty");
-      properties.put("name", tenantId);
+      this.tenantId = tenantId;
     }
 
     String getTenantId() {
-      return (String) properties.get("name");
+      return tenantId;
     }
 
     /**

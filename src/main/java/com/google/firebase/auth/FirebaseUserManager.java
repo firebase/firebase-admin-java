@@ -36,6 +36,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.UserRecord;
@@ -240,9 +241,10 @@ class FirebaseUserManager {
 
   Tenant updateTenant(Tenant.UpdateRequest request) throws FirebaseAuthException {
     Map<String, Object> properties = request.getProperties();
-    checkArgument(properties.size() > 1,
-        "tenant update must have at least one property other than tenantId set");
+    checkArgument(!properties.isEmpty(), "tenant update must have at least one property set");
+    String updateMask = String.join(",", ImmutableSortedSet.copyOf(properties.keySet()));
     GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants/" + request.getTenantId());
+    url.put("updateMask", updateMask);
     return sendRequest("PATCH", url, properties, Tenant.class);
   }
 
