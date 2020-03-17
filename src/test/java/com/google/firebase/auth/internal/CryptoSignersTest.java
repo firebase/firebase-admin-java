@@ -155,7 +155,7 @@ public class CryptoSignersTest {
         ImmutableList.of(
             new MockLowLevelHttpResponse().setContent("metadata-server@iam.gserviceaccount.com"),
             new MockLowLevelHttpResponse().setContent(response)));
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setHttpTransport(transport)
         .build();
@@ -185,7 +185,7 @@ public class CryptoSignersTest {
     MockHttpTransport transport = new MultiRequestMockHttpTransport(
         ImmutableList.of(
             new MockLowLevelHttpResponse().setContent(response)));
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setServiceAccountId("explicit-service-account@iam.gserviceaccount.com")
         .setCredentials(new MockGoogleCredentialsWithSigner("test-token"))
         .setHttpTransport(transport)
@@ -208,7 +208,7 @@ public class CryptoSignersTest {
   @Test
   public void testCredentialsWithSigner() throws Exception {
     // Should fall back to signing-enabled credential
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentialsWithSigner("test-token"))
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options, "customApp");

@@ -73,7 +73,7 @@ public class RandomPersistenceTest {
   @BeforeClass
   public static void setUpClass() throws IOException {
     testApp = FirebaseApp.initializeApp(
-        new FirebaseOptions.Builder()
+        FirebaseOptions.builder()
             .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
             .setDatabaseUrl("https://admin-java-sdk.firebaseio.com")
             .build());

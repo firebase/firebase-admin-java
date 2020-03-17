@@ -405,7 +405,7 @@ public class FirebaseAuthIT {
     if (token == null) {
       token = credentials.refreshAccessToken();
     }
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.create(token))
         .setServiceAccountId(((ServiceAccountSigner) credentials).getAccount())
         .setProjectId(IntegrationTestUtils.getProjectId())

@@ -523,7 +523,7 @@ public class FirebaseMessagingClientImplTest {
 
   @Test
   public void testFromApp() throws IOException {
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId("test-project")
         .build();

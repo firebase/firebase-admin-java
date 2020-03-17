@@ -204,7 +204,7 @@ public class ErrorHandlingHttpClientTest {
         .setLowLevelHttpRequest(request)
         .build();
 
-    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("token"))
         .setHttpTransport(transport)
         .build());
@@ -240,7 +240,7 @@ public class ErrorHandlingHttpClientTest {
         .setLowLevelHttpRequest(request)
         .build();
 
-    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials() {
           @Override
           public AccessToken refreshAccessToken() throws IOException {

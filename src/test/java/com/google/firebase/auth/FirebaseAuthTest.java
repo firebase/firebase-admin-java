@@ -60,7 +60,7 @@ public class FirebaseAuthTest {
   private static final FirebaseAuthException testException = new FirebaseAuthException(
       ErrorCode.INVALID_ARGUMENT, "Test error message", null, null, null);
   private static final long VALID_SINCE = 1494364393;
-  public static final String TEST_USER = "testUser";
+  private static final String TEST_USER = "testUser";
 
   @After
   public void cleanup() {
@@ -539,7 +539,7 @@ public class FirebaseAuthTest {
     MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(new MockLowLevelHttpResponse().setContent(getUserResponse))
         .build();
-    return FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    return FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setHttpTransport(transport)
         .setProjectId("test-project-id")

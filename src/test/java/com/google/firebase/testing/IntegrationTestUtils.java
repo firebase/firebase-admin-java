@@ -121,7 +121,7 @@ public class IntegrationTestUtils {
 
   public static FirebaseApp initApp(String name) {
     FirebaseOptions options =
-        new FirebaseOptions.Builder()
+        FirebaseOptions.builder()
             .setDatabaseUrl(getDatabaseUrl())
             .setCredentials(TestUtils.getCertCredential(getServiceAccountCertificate()))
             .build();

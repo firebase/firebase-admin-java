@@ -29,11 +29,8 @@ import com.google.firebase.messaging.AndroidConfig.Priority;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
@@ -94,7 +91,10 @@ public class MessageTest {
   @Test
   public void testNotificationMessageDeprecatedConstructor() throws IOException {
     Message message = Message.builder()
-        .setNotification(new Notification("title", "body"))
+        .setNotification(Notification.builder()
+            .setTitle("title")
+            .setBody("body")
+            .build())
         .setTopic("test-topic")
         .build();
     Map<String, String> data = ImmutableMap.of("title", "title", "body", "body");
@@ -729,7 +729,11 @@ public class MessageTest {
   @Test
   public void testImageInNotificationDeprecatedConstructor() throws IOException {
     Message message = Message.builder()
-        .setNotification(new Notification("title", "body", TEST_IMAGE_URL))
+        .setNotification(Notification.builder()
+            .setTitle("title")
+            .setBody("body")
+            .setImage(TEST_IMAGE_URL)
+            .build())
         .setTopic("test-topic")
         .build();
     Map<String, String> data = ImmutableMap.of(
@@ -755,7 +759,11 @@ public class MessageTest {
   @Test
   public void testImageInAndroidNotification() throws IOException {
     Message message = Message.builder()
-        .setNotification(new Notification("title", "body", TEST_IMAGE_URL))
+        .setNotification(Notification.builder()
+            .setTitle("title")
+            .setBody("body")
+            .setImage(TEST_IMAGE_URL)
+            .build())
         .setAndroidConfig(AndroidConfig.builder()
             .setNotification(AndroidNotification.builder()
                 .setTitle("android-title")
@@ -785,7 +793,11 @@ public class MessageTest {
   public void testImageInApnsNotification() throws IOException {
     Message message = Message.builder()
         .setTopic("test-topic")
-        .setNotification(new Notification("title", "body", TEST_IMAGE_URL))
+        .setNotification(Notification.builder()
+            .setTitle("title")
+            .setBody("body")
+            .setImage(TEST_IMAGE_URL)
+            .build())
         .setApnsConfig(
             ApnsConfig.builder().setAps(Aps.builder().build())
                 .setFcmOptions(ApnsFcmOptions.builder().setImage(TEST_IMAGE_URL_APNS).build())
@@ -812,7 +824,7 @@ public class MessageTest {
   }
 
   @Test
-  public void testInvalidColorInAndroidNotificationLightSettings() throws IOException {
+  public void testInvalidColorInAndroidNotificationLightSettings() {
     try {
       LightSettings.Builder lightSettingsBuilder = LightSettings.builder()
                       .setColorFromString("#01020K")
@@ -830,7 +842,10 @@ public class MessageTest {
   public void testExtendedAndroidNotificationParameters() throws IOException {
     long[] vibrateTimings = {1000L, 1001L};
     Message message = Message.builder()
-        .setNotification(new Notification("title", "body"))
+        .setNotification(Notification.builder()
+            .setTitle("title")
+            .setBody("body")
+            .build())
         .setAndroidConfig(AndroidConfig.builder()
             .setNotification(AndroidNotification.builder()
                 .setTitle("android-title")

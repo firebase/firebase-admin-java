@@ -101,17 +101,26 @@ public class FirebaseMessagingIT {
     List<Message> messages = new ArrayList<>();
     messages.add(
         Message.builder()
-          .setNotification(new Notification("Title", "Body"))
+          .setNotification(Notification.builder()
+              .setTitle("Title")
+              .setBody("Body")
+              .build())
           .setTopic("foo-bar")
           .build());
     messages.add(
         Message.builder()
-          .setNotification(new Notification("Title", "Body"))
+          .setNotification(Notification.builder()
+              .setTitle("Title")
+              .setBody("Body")
+              .build())
           .setTopic("foo-bar")
           .build());
     messages.add(
         Message.builder()
-          .setNotification(new Notification("Title", "Body"))
+          .setNotification(Notification.builder()
+              .setTitle("Title")
+              .setBody("Body")
+              .build())
           .setToken("not-a-token")
           .build());
 
@@ -163,7 +172,10 @@ public class FirebaseMessagingIT {
   @Test
   public void testSendMulticast() throws Exception {
     MulticastMessage multicastMessage = MulticastMessage.builder()
-        .setNotification(new Notification("Title", "Body"))
+        .setNotification(Notification.builder()
+            .setTitle("Title")
+            .setBody("Body")
+            .build())
         .addToken("not-a-token")
         .addToken("also-not-a-token")
         .build();

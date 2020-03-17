@@ -41,7 +41,7 @@ public class StorageClientTest {
 
   @Test
   public void testInvalidConfiguration() throws IOException {
-    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .build());
     try {
@@ -54,7 +54,7 @@ public class StorageClientTest {
 
   @Test
   public void testInvalidBucketName() throws IOException {
-    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setStorageBucket("mock-bucket-name")
         .build());
@@ -75,7 +75,7 @@ public class StorageClientTest {
 
   @Test
   public void testAppDelete() throws IOException {
-    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setStorageBucket("mock-bucket-name")
         .build());
@@ -93,7 +93,7 @@ public class StorageClientTest {
 
   @Test
   public void testNonExistingBucket() throws IOException {
-    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setStorageBucket("mock-bucket-name")
         .build());
@@ -115,7 +115,7 @@ public class StorageClientTest {
 
   @Test
   public void testBucket() throws IOException {
-    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setStorageBucket("mock-bucket-name")
         .build());

@@ -64,7 +64,7 @@ public class DatabaseReferenceTest {
   @BeforeClass
   public static void setUpClass() throws IOException {
     testApp = FirebaseApp.initializeApp(
-        new FirebaseOptions.Builder()
+        FirebaseOptions.builder()
             .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
             .setDatabaseUrl(DB_URL)
             .build());

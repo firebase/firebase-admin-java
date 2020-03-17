@@ -39,12 +39,12 @@ import org.junit.Test;
 public class FirebaseDatabaseTest {
   
   private static final FirebaseOptions firebaseOptions =
-      new FirebaseOptions.Builder()
+      FirebaseOptions.builder()
           .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .setDatabaseUrl("https://firebase-db-test.firebaseio.com")
           .build();
   private static final FirebaseOptions firebaseOptionsWithoutDatabaseUrl =
-      new FirebaseOptions.Builder()
+      FirebaseOptions.builder()
           .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .build();
 

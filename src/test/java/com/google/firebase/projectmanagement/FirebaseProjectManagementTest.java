@@ -68,7 +68,7 @@ public class FirebaseProjectManagementTest {
 
   @BeforeClass
   public static void setUpClass() {
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId(TEST_PROJECT_ID)
         .build();
