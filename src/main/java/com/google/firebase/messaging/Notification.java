@@ -33,33 +33,6 @@ public class Notification {
   @Key("image")
   private final String image;
 
-  /**
-   * Creates a new {@code Notification} using the given title and body.
-   *
-   * @param title Title of the notification.
-   * @param body Body of the notification.
-   *
-   * @deprecated Use {@link #Notification(Builder)} instead.
-   */
-  public Notification(String title, String body) {
-    this(title, body, null);
-  }
-
-  /**
-   * Creates a new {@code Notification} using the given title, body, and image.
-   *
-   * @param title Title of the notification.
-   * @param body Body of the notification.
-   * @param imageUrl URL of the image that is going to be displayed in the notification.
-   *
-   * @deprecated Use {@link #Notification(Builder)} instead.
-   */
-  public Notification(String title, String body, String imageUrl) {
-    this.title = title;
-    this.body = body;
-    this.image = imageUrl;
-  }
-
   private Notification(Builder builder) {
     this.title = builder.title;
     this.body = builder.body;

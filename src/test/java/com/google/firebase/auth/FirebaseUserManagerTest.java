@@ -83,7 +83,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testProjectIdRequired() {
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp.initializeApp(FirebaseOptions.builder()
             .setCredentials(credentials)
             .build());
     FirebaseAuth auth = FirebaseAuth.getInstance();
@@ -682,7 +682,7 @@ public class FirebaseUserManagerTest {
   public void testTimeout() throws Exception {
     MockHttpTransport transport = new MultiRequestMockHttpTransport(ImmutableList.of(
         new MockLowLevelHttpResponse().setContent(TestUtils.loadResource("getUser.json"))));
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(credentials)
         .setProjectId("test-project-id")
         .setHttpTransport(transport)
@@ -1279,7 +1279,7 @@ public class FirebaseUserManagerTest {
       mocks.add(new MockLowLevelHttpResponse().setContent(response));
     }
     MockHttpTransport transport = new MultiRequestMockHttpTransport(mocks);
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(credentials)
         .setHttpTransport(transport)
         .setProjectId("test-project-id")
@@ -1295,7 +1295,7 @@ public class FirebaseUserManagerTest {
     final MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(response)
         .build();
-    final FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    final FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(credentials)
         .setProjectId("test-project-id")
         .setHttpTransport(transport)

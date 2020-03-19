@@ -759,14 +759,6 @@ public class FirebaseAuth {
   }
 
   /**
-   * @deprecated Use {@link #setCustomUserClaims(String, Map)} instead.
-   */
-  public void setCustomClaims(@NonNull String uid,
-      @Nullable Map<String, Object> claims) throws FirebaseAuthException {
-    setCustomUserClaims(uid, claims);
-  }
-
-  /**
    * Similar to {@link #setCustomUserClaims(String, Map)} but performs the operation asynchronously.
    *
    * @param uid A user ID string.

@@ -677,7 +677,7 @@ public class FirebaseDatabaseSnippets {
     FileInputStream serviceAccount = new FileInputStream("path/to/serviceAccount.json");
 
     // Initialize the app with a service account, granting admin privileges
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
         .setDatabaseUrl("https://<databaseName>.firebaseio.com")
         .build();

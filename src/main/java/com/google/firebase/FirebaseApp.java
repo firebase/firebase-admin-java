@@ -34,7 +34,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseScheduledExecutor;
@@ -121,7 +120,6 @@ public class FirebaseApp {
 
   /** Returns a list of all FirebaseApps. */
   public static List<FirebaseApp> getApps() {
-    // TODO: reenable persistence. See b/28158809.
     synchronized (appsLock) {
       return ImmutableList.copyOf(instances.values());
     }
@@ -582,18 +580,17 @@ public class FirebaseApp {
   private static FirebaseOptions getOptionsFromEnvironment() throws IOException {
     String defaultConfig = System.getenv(FIREBASE_CONFIG_ENV_VAR);
     if (Strings.isNullOrEmpty(defaultConfig)) {
-      return new FirebaseOptions.Builder()
+      return FirebaseOptions.builder()
           .setCredentials(APPLICATION_DEFAULT_CREDENTIALS)
           .build();
     }
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    FirebaseOptions.Builder builder = new FirebaseOptions.Builder();
+    FirebaseOptions.Builder builder = FirebaseOptions.builder();
     JsonParser parser;
     if (defaultConfig.startsWith("{")) {
       parser = jsonFactory.createJsonParser(defaultConfig);
     } else {
-      FileReader reader;
-      reader = new FileReader(defaultConfig);
+      FileReader reader = new FileReader(defaultConfig);
       parser = jsonFactory.createJsonParser(reader);
     }
     parser.parseAndClose(builder);

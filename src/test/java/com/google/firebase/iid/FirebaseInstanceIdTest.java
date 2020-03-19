@@ -76,7 +76,7 @@ public class FirebaseInstanceIdTest {
 
   @Test
   public void testNoProjectId() {
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .build();
     FirebaseApp.initializeApp(options);
@@ -90,7 +90,7 @@ public class FirebaseInstanceIdTest {
 
   @Test
   public void testInvalidInstanceId() {
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId("test-project")
         .build();
@@ -122,7 +122,7 @@ public class FirebaseInstanceIdTest {
     MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(response)
         .build();
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId("test-project")
         .setHttpTransport(transport)
@@ -168,7 +168,7 @@ public class FirebaseInstanceIdTest {
     MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(response)
         .build();
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId("test-project")
         .setHttpTransport(transport)
@@ -205,7 +205,7 @@ public class FirebaseInstanceIdTest {
   @Test
   public void testDeleteInstanceIdTransportError() throws Exception {
     HttpTransport transport = TestUtils.createFaultyHttpTransport();
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId("test-project")
         .setHttpTransport(transport)
@@ -235,7 +235,7 @@ public class FirebaseInstanceIdTest {
     MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(response)
         .build();
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId("test-project")
         .setHttpTransport(transport)

@@ -224,6 +224,16 @@ public final class FirebaseOptions {
   }
 
   /**
+   * Creates a new Builder from the options object.
+   *
+   * <p>The new builder is not backed by this object's values, that is changes made to the new
+   * builder don't change the values of the origin object.
+   */
+  public Builder toBuilder() {
+    return new Builder(this);
+  }
+
+  /**
    * Builder for constructing {@link FirebaseOptions}. 
    */
   public static final class Builder {
@@ -249,7 +259,12 @@ public final class FirebaseOptions {
     private int connectTimeout;
     private int readTimeout;
 
-    /** Constructs an empty builder. */
+    /**
+     * Constructs an empty builder.
+     *
+     * @deprecated Use {@link FirebaseOptions#builder()} instead.
+     */
+    @Deprecated
     public Builder() {}
 
     /**
@@ -257,7 +272,10 @@ public final class FirebaseOptions {
      *
      * <p>The new builder is not backed by this object's values, that is changes made to the new
      * builder don't change the values of the origin object.
+     *
+     * @deprecated Use {@link FirebaseOptions#toBuilder()} instead.
      */
+    @Deprecated
     public Builder(FirebaseOptions options) {
       databaseUrl = options.databaseUrl;
       storageBucket = options.storageBucket;

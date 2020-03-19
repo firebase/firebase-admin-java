@@ -1043,7 +1043,7 @@ public class FirebaseProjectManagementServiceImplTest {
     List<MockLowLevelHttpResponse> mockResponses = ImmutableList.of(
         new MockLowLevelHttpResponse().setContent("{}"));
     MockHttpTransport transport = new MultiRequestMockHttpTransport(mockResponses);
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId(PROJECT_ID)
         .setHttpTransport(transport)
@@ -1066,7 +1066,7 @@ public class FirebaseProjectManagementServiceImplTest {
         firstRpcResponse.setStatusCode(503).setContent("{}"),
         new MockLowLevelHttpResponse().setContent("{}"));
     MockHttpTransport transport = new MultiRequestMockHttpTransport(mockResponses);
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId(PROJECT_ID)
         .setHttpTransport(transport)
@@ -1094,7 +1094,7 @@ public class FirebaseProjectManagementServiceImplTest {
       List<MockLowLevelHttpResponse> mockResponses,
       MultiRequestTestResponseInterceptor interceptor) {
     MockHttpTransport transport = new MultiRequestMockHttpTransport(mockResponses);
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId(PROJECT_ID)
         .setHttpTransport(transport)
@@ -1108,7 +1108,7 @@ public class FirebaseProjectManagementServiceImplTest {
   }
 
   private static FirebaseProjectManagementServiceImpl initServiceImplWithFaultyTransport() {
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId(PROJECT_ID)
         .setHttpTransport(TestUtils.createFaultyHttpTransport())

@@ -38,7 +38,10 @@ public class MulticastMessageTest {
   private static final WebpushConfig WEBPUSH = WebpushConfig.builder()
       .putData("key", "value")
       .build();
-  private static final Notification NOTIFICATION = new Notification("title", "body");
+  private static final Notification NOTIFICATION = Notification.builder()
+      .setTitle("title")
+      .setBody("body")
+      .build();
 
   @Test
   public void testMulticastMessage() {

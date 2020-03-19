@@ -32,7 +32,7 @@ public class ShutdownExample {
 
     FirebaseApp app =
         FirebaseApp.initializeApp(
-            new FirebaseOptions.Builder()
+            FirebaseOptions.builder()
                 .setDatabaseUrl("https://admin-java-sdk.firebaseio.com")
                 .build());
 

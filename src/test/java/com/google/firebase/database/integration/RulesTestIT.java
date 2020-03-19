@@ -103,7 +103,7 @@ public class RulesTestIT {
   public static void setUpClass() throws IOException {
     // Init app with non-admin privileges
     Map<String, Object> auth = MapBuilder.of("uid", "my-service-worker");
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(
             IntegrationTestUtils.getServiceAccountCertificate()))
         .setDatabaseUrl(IntegrationTestUtils.getDatabaseUrl())

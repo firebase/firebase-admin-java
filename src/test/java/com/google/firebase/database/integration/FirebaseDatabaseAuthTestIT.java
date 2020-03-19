@@ -78,7 +78,7 @@ public class FirebaseDatabaseAuthTestIT {
   @Test
   public void testAuthWithInvalidCertificateCredential() throws InterruptedException, IOException {
     FirebaseOptions options =
-        new FirebaseOptions.Builder()
+        FirebaseOptions.builder()
             .setDatabaseUrl(IntegrationTestUtils.getDatabaseUrl())
             .setCredentials(GoogleCredentials.fromStream(ServiceAccount.NONE.asStream()))
             .build();
@@ -94,10 +94,9 @@ public class FirebaseDatabaseAuthTestIT {
         "uid", "test",
         "custom", "secret"
     );
-    FirebaseOptions options =
-        new FirebaseOptions.Builder(masterApp.getOptions())
-            .setDatabaseAuthVariableOverride(authVariableOverrides)
-            .build();
+    FirebaseOptions options = masterApp.getOptions().toBuilder()
+        .setDatabaseAuthVariableOverride(authVariableOverrides)
+        .build();
     FirebaseApp testUidApp = FirebaseApp.initializeApp(options, "testGetAppWithUid");
     FirebaseDatabase masterDb = FirebaseDatabase.getInstance(masterApp);
     FirebaseDatabase testAuthOverridesDb = FirebaseDatabase.getInstance(testUidApp);
@@ -114,10 +113,9 @@ public class FirebaseDatabaseAuthTestIT {
   
   @Test
   public void testDatabaseAuthVariablesNoAuthorization() throws InterruptedException {
-    FirebaseOptions options =
-        new FirebaseOptions.Builder(masterApp.getOptions())
-            .setDatabaseAuthVariableOverride(null)
-            .build();
+    FirebaseOptions options = masterApp.getOptions().toBuilder()
+        .setDatabaseAuthVariableOverride(null)
+        .build();
     FirebaseApp testUidApp =
         FirebaseApp.initializeApp(options, "testServiceAccountDatabaseWithNoAuth");
 
