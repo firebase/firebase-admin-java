@@ -46,8 +46,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.auth.UserRecord.CreateRequest;
-import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.hash.Scrypt;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
@@ -116,7 +114,7 @@ public class FirebaseAuthIT {
   @Test
   public void testUpdateNonExistingUser() throws Exception {
     try {
-      auth.updateUserAsync(new UpdateRequest("non.existing")).get();
+      auth.updateUserAsync(new UserRecord.UpdateRequest("non.existing")).get();
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -141,7 +139,7 @@ public class FirebaseAuthIT {
   public void testCreateUserWithParams() throws Exception {
     RandomUser randomUser = RandomUser.create();
     String phone = randomPhoneNumber();
-    CreateRequest user = new CreateRequest()
+    UserRecord.CreateRequest user = new UserRecord.CreateRequest()
         .setUid(randomUser.uid)
         .setEmail(randomUser.email)
         .setPhoneNumber(phone)
@@ -168,7 +166,7 @@ public class FirebaseAuthIT {
       assertTrue(providers.contains("password"));
       assertTrue(providers.contains("phone"));
 
-      checkRecreate(randomUser.uid);
+      checkRecreateUser(randomUser.uid);
     } finally {
       auth.deleteUserAsync(userRecord.getUid()).get();
     }
@@ -177,7 +175,7 @@ public class FirebaseAuthIT {
   @Test
   public void testUserLifecycle() throws Exception {
     // Create user
-    UserRecord userRecord = auth.createUserAsync(new CreateRequest()).get();
+    UserRecord userRecord = auth.createUserAsync(new UserRecord.CreateRequest()).get();
     String uid = userRecord.getUid();
 
     // Get user
@@ -197,7 +195,7 @@ public class FirebaseAuthIT {
     // Update user
     RandomUser randomUser = RandomUser.create();
     String phone = randomPhoneNumber();
-    UpdateRequest request = userRecord.updateRequest()
+    UserRecord.UpdateRequest request = userRecord.updateRequest()
         .setDisplayName("Updated Name")
         .setEmail(randomUser.email)
         .setPhoneNumber(phone)
@@ -240,7 +238,7 @@ public class FirebaseAuthIT {
     auth.deleteUserAsync(userRecord.getUid()).get();
     try {
       auth.getUserAsync(userRecord.getUid()).get();
-      fail("No error thrown for deleted user");
+      fail("No error thrown for getting a deleted user");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
@@ -253,9 +251,11 @@ public class FirebaseAuthIT {
     final List<String> uids = new ArrayList<>();
 
     try {
-      uids.add(auth.createUserAsync(new CreateRequest().setPassword("password")).get().getUid());
-      uids.add(auth.createUserAsync(new CreateRequest().setPassword("password")).get().getUid());
-      uids.add(auth.createUserAsync(new CreateRequest().setPassword("password")).get().getUid());
+      for (int i = 0; i < 3; i++) {
+        UserRecord.CreateRequest createRequest =
+            new UserRecord.CreateRequest().setPassword("password");
+        uids.add(auth.createUserAsync(createRequest).get().getUid());
+      }
 
       // Test list by batches
       final AtomicInteger collected = new AtomicInteger(0);
@@ -321,8 +321,117 @@ public class FirebaseAuthIT {
   }
 
   @Test
+  public void testTenantLifecycle() throws Exception {
+    TenantManager tenantManager = auth.getTenantManager();
+
+    // Create tenant
+    Tenant.CreateRequest createRequest = new Tenant.CreateRequest().setDisplayName("DisplayName");
+    Tenant tenant = tenantManager.createTenantAsync(createRequest).get();
+    String tenantId = tenant.getTenantId();
+
+    // Get tenant
+    tenant = tenantManager.getTenantAsync(tenantId).get();
+    assertEquals(tenantId, tenant.getTenantId());
+    assertEquals("DisplayName", tenant.getDisplayName());
+    assertFalse(tenant.isPasswordSignInAllowed());
+    assertFalse(tenant.isEmailLinkSignInEnabled());
+
+    // Update tenant
+    Tenant.UpdateRequest updateRequest = tenant.updateRequest()
+        .setDisplayName("UpdatedName")
+        .setPasswordSignInAllowed(true)
+        .setEmailLinkSignInEnabled(true);
+    tenant = tenantManager.updateTenantAsync(updateRequest).get();
+    assertEquals(tenantId, tenant.getTenantId());
+    assertEquals("UpdatedName", tenant.getDisplayName());
+    assertTrue(tenant.isPasswordSignInAllowed());
+    assertTrue(tenant.isEmailLinkSignInEnabled());
+
+    // Delete tenant
+    tenantManager.deleteTenantAsync(tenant.getTenantId()).get();
+    try {
+      tenantManager.getTenantAsync(tenant.getTenantId()).get();
+      fail("No error thrown for getting a deleted tenant");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR,
+          ((FirebaseAuthException) e.getCause()).getErrorCode());
+    }
+  }
+
+  @Test
+  public void testListTenants() throws Exception {
+    TenantManager tenantManager = auth.getTenantManager();
+    final List<String> tenantIds = new ArrayList<>();
+
+    try {
+      for (int i = 0; i < 3; i++) {
+        Tenant.CreateRequest createRequest =
+            new Tenant.CreateRequest().setDisplayName("DisplayName" + i);
+        tenantIds.add(tenantManager.createTenantAsync(createRequest).get().getTenantId());
+      }
+
+      // Test list by batches
+      final AtomicInteger collected = new AtomicInteger(0);
+      ListTenantsPage page = tenantManager.listTenantsAsync(null).get();
+      while (page != null) {
+        for (Tenant tenant : page.getValues()) {
+          if (tenantIds.contains(tenant.getTenantId())) {
+            collected.incrementAndGet();
+            assertNotNull(tenant.getDisplayName());
+          }
+        }
+        page = page.getNextPage();
+      }
+      assertEquals(tenantIds.size(), collected.get());
+
+      // Test iterate all
+      collected.set(0);
+      page = tenantManager.listTenantsAsync(null).get();
+      for (Tenant tenant : page.iterateAll()) {
+        if (tenantIds.contains(tenant.getTenantId())) {
+          collected.incrementAndGet();
+          assertNotNull(tenant.getDisplayName());
+        }
+      }
+      assertEquals(tenantIds.size(), collected.get());
+
+      // Test iterate async
+      collected.set(0);
+      final Semaphore semaphore = new Semaphore(0);
+      final AtomicReference<Throwable> error = new AtomicReference<>();
+      ApiFuture<ListTenantsPage> pageFuture = tenantManager.listTenantsAsync(null);
+      ApiFutures.addCallback(pageFuture, new ApiFutureCallback<ListTenantsPage>() {
+        @Override
+        public void onFailure(Throwable t) {
+          error.set(t);
+          semaphore.release();
+        }
+
+        @Override
+        public void onSuccess(ListTenantsPage result) {
+          for (Tenant tenant : result.iterateAll()) {
+            if (tenantIds.contains(tenant.getTenantId())) {
+              collected.incrementAndGet();
+              assertNotNull(tenant.getDisplayName());
+            }
+          }
+          semaphore.release();
+        }
+      }, MoreExecutors.directExecutor());
+      semaphore.acquire();
+      assertEquals(tenantIds.size(), collected.get());
+      assertNull(error.get());
+    } finally {
+      for (String tenantId : tenantIds) {
+        tenantManager.deleteTenantAsync(tenantId).get();
+      }
+    }
+  }
+
+  @Test
   public void testCustomClaims() throws Exception {
-    UserRecord userRecord = auth.createUserAsync(new CreateRequest()).get();
+    UserRecord userRecord = auth.createUserAsync(new UserRecord.CreateRequest()).get();
     String uid = userRecord.getUid();
 
     try {
@@ -413,7 +522,7 @@ public class FirebaseAuthIT {
     }
     idToken = signInWithCustomToken(customToken);
     decoded = auth.verifyIdTokenAsync(idToken, true).get();
-    assertEquals("user2", decoded.getUid());    
+    assertEquals("user2", decoded.getUid());
     auth.deleteUserAsync("user2");
   }
 
@@ -524,7 +633,7 @@ public class FirebaseAuthIT {
   @Test
   public void testGeneratePasswordResetLink() throws Exception {
     RandomUser user = RandomUser.create();
-    auth.createUser(new CreateRequest()
+    auth.createUser(new UserRecord.CreateRequest()
         .setUid(user.uid)
         .setEmail(user.email)
         .setEmailVerified(false)
@@ -549,7 +658,7 @@ public class FirebaseAuthIT {
   @Test
   public void testGenerateEmailVerificationResetLink() throws Exception {
     RandomUser user = RandomUser.create();
-    auth.createUser(new CreateRequest()
+    auth.createUser(new UserRecord.CreateRequest()
         .setUid(user.uid)
         .setEmail(user.email)
         .setEmailVerified(false)
@@ -572,7 +681,7 @@ public class FirebaseAuthIT {
   @Test
   public void testGenerateSignInWithEmailLink() throws Exception {
     RandomUser user = RandomUser.create();
-    auth.createUser(new CreateRequest()
+    auth.createUser(new UserRecord.CreateRequest()
         .setUid(user.uid)
         .setEmail(user.email)
         .setEmailVerified(false)
@@ -686,9 +795,9 @@ public class FirebaseAuthIT {
     }
   }
 
-  private void checkRecreate(String uid) throws Exception {
+  private void checkRecreateUser(String uid) throws Exception {
     try {
-      auth.createUserAsync(new CreateRequest().setUid(uid)).get();
+      auth.createUserAsync(new UserRecord.CreateRequest().setUid(uid)).get();
       fail("No error thrown for creating user with existing ID");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);

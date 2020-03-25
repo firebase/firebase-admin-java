@@ -34,7 +34,7 @@ public class TenantTest {
 
   private static final String TENANT_JSON_STRING = 
       "{"
-        + "\"name\":\"TENANT_ID\","
+        + "\"name\":\"projects/project-id/resource/TENANT_ID\","
         + "\"displayName\":\"DISPLAY_NAME\","
         + "\"allowPasswordSignup\":true,"
         + "\"enableEmailLinkSignin\":false"

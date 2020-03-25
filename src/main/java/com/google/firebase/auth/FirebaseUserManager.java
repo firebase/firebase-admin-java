@@ -262,15 +262,15 @@ class FirebaseUserManager {
 
   ListTenantsResponse listTenants(int maxResults, String pageToken)
       throws FirebaseAuthException {
-    ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
-        .put("pageSize", maxResults);
+    ImmutableMap.Builder<String, Object> builder =
+        ImmutableMap.<String, Object>builder().put("pageSize", maxResults);
     if (pageToken != null) {
       checkArgument(!pageToken.equals(
           ListTenantsPage.END_OF_LIST), "invalid end of list page token");
       builder.put("pageToken", pageToken);
     }
 
-    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants:list");
+    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants");
     url.putAll(builder.build());
     ListTenantsResponse response = sendRequest("GET", url, null, ListTenantsResponse.class);
     if (response == null) {
@@ -329,9 +329,13 @@ class FirebaseUserManager {
     HttpResponse response = null;
     try {
       HttpContent httpContent = content != null ? new JsonHttpContent(jsonFactory, content) : null;
-      HttpRequest request = requestFactory.buildRequest(method, url, httpContent);
+      HttpRequest request =
+          requestFactory.buildRequest(method.equals("PATCH") ? "POST" : method, url, httpContent);
       request.setParser(new JsonObjectParser(jsonFactory));
       request.getHeaders().set(CLIENT_VERSION_HEADER, clientVersion);
+      if (method.equals("PATCH")) {
+        request.getHeaders().set("X-HTTP-Method-Override", "PATCH");
+      }
       request.setResponseInterceptor(interceptor);
       response = request.execute();
       return response.parseAs(clazz);

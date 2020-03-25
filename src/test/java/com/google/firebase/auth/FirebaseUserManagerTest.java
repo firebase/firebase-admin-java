@@ -458,7 +458,7 @@ public class FirebaseUserManagerTest {
     checkTenant(tenants.get(1), "TENANT_2");
     assertEquals("", page.getNextPageToken());
     checkRequestHeaders(interceptor);
-    checkUrl(interceptor, "GET", TENANTS_BASE_URL + ":list");
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL);
     GenericUrl url = interceptor.getResponse().getRequest().getUrl();
     assertEquals(999, url.getFirst("pageSize"));
     assertNull(url.getFirst("pageToken"));
@@ -477,7 +477,7 @@ public class FirebaseUserManagerTest {
     checkTenant(tenants.get(1), "TENANT_2");
     assertEquals("", page.getNextPageToken());
     checkRequestHeaders(interceptor);
-    checkUrl(interceptor, "GET", TENANTS_BASE_URL + ":list");
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL);
     GenericUrl url = interceptor.getResponse().getRequest().getUrl();
     assertEquals(999, url.getFirst("pageSize"));
     assertEquals("token", url.getFirst("pageToken"));
@@ -1469,7 +1469,13 @@ public class FirebaseUserManagerTest {
 
   private static void checkUrl(TestResponseInterceptor interceptor, String method, String url) {
     HttpRequest request = interceptor.getResponse().getRequest();
-    assertEquals(method, request.getRequestMethod());
+    if (method.equals("PATCH")) {
+      assertEquals("PATCH",
+          request.getHeaders().getFirstHeaderStringValue("X-HTTP-Method-Override"));
+      assertEquals("POST", request.getRequestMethod());
+    } else {
+      assertEquals(method, request.getRequestMethod());
+    }
     assertEquals(url, request.getUrl().toString().split("\\?")[0]);
   }
 
