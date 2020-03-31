@@ -327,6 +327,9 @@ public class FirebaseAuthIT {
     // Create tenant
     Tenant.CreateRequest createRequest = new Tenant.CreateRequest().setDisplayName("DisplayName");
     Tenant tenant = tenantManager.createTenantAsync(createRequest).get();
+    assertEquals("DisplayName", tenant.getDisplayName());
+    assertFalse(tenant.isPasswordSignInAllowed());
+    assertFalse(tenant.isEmailLinkSignInEnabled());
     String tenantId = tenant.getTenantId();
 
     // Get tenant
