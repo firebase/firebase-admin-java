@@ -178,6 +178,19 @@ public final class TenantManager {
     return createTenantOp(request).callAsync(firebaseApp);
   }
 
+  private CallableOperation<Tenant, FirebaseAuthException> createTenantOp(
+      final CreateRequest request) {
+    // TODO(micahstairs): Add a check to make sure the app has not been destroyed yet.
+    checkNotNull(request, "create request must not be null");
+    return new CallableOperation<Tenant, FirebaseAuthException>() {
+      @Override
+      protected Tenant execute() throws FirebaseAuthException {
+        return userManager.createTenant(request);
+      }
+    };
+  }
+
+
   /**
    * Updates an existing user account with the attributes contained in the specified {@link
    * UpdateRequest}.
@@ -211,18 +224,6 @@ public final class TenantManager {
       @Override
       protected Tenant execute() throws FirebaseAuthException {
         return userManager.updateTenant(request);
-      }
-    };
-  }
-
-  private CallableOperation<Tenant, FirebaseAuthException> createTenantOp(
-      final CreateRequest request) {
-    // TODO(micahstairs): Add a check to make sure the app has not been destroyed yet.
-    checkNotNull(request, "create request must not be null");
-    return new CallableOperation<Tenant, FirebaseAuthException>() {
-      @Override
-      protected Tenant execute() throws FirebaseAuthException {
-        return userManager.createTenant(request);
       }
     };
   }
