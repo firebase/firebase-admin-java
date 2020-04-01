@@ -47,7 +47,7 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
     tenantManager = threadSafeMemoize(new Supplier<TenantManager>() {
       @Override
       public TenantManager get() {
-        return new TenantManager(builder.firebaseApp, getUserManager());
+        return new TenantManager(builder.firebaseApp, getUserManager(), FirebaseAuth.this);
       }
     });
   }

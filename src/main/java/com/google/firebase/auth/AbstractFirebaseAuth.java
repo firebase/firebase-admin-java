@@ -1086,7 +1086,7 @@ public abstract class AbstractFirebaseAuth {
         });
   }
 
-  private void checkNotDestroyed() {
+  void checkNotDestroyed() {
     synchronized (lock) {
       checkState(
           !destroyed.get(),
@@ -1095,7 +1095,7 @@ public abstract class AbstractFirebaseAuth {
     }
   }
 
-  void destroy() {
+  protected void destroy() {
     synchronized (lock) {
       destroyed.set(true);
     }
