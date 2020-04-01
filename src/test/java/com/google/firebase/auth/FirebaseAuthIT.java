@@ -239,14 +239,7 @@ public class FirebaseAuthIT {
 
     // Delete user
     auth.deleteUserAsync(userRecord.getUid()).get();
-    try {
-      auth.getUserAsync(userRecord.getUid()).get();
-      fail("No error thrown for getting a deleted user");
-    } catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
-    }
+    assertUserDoesNotExist(auth, userRecord.getUid());
   }
 
   @Test
@@ -271,6 +264,7 @@ public class FirebaseAuthIT {
                 + "forgetting to add the \"Firebase Authentication Admin\" permission. See "
                 + "instructions in CONTRIBUTING.md", user.getPasswordHash());
             assertNotNull(user.getPasswordSalt());
+            assertNull(user.getTenantId());
           }
         }
         page = page.getNextPage();
@@ -285,6 +279,7 @@ public class FirebaseAuthIT {
           collected.incrementAndGet();
           assertNotNull(user.getPasswordHash());
           assertNotNull(user.getPasswordSalt());
+          assertNull(user.getTenantId());
         }
       }
       assertEquals(uids.size(), collected.get());
@@ -308,6 +303,7 @@ public class FirebaseAuthIT {
               collected.incrementAndGet();
               assertNotNull(user.getPasswordHash());
               assertNotNull(user.getPasswordSalt());
+              assertNull(user.getTenantId());
             }
           }
           semaphore.release();
@@ -321,6 +317,184 @@ public class FirebaseAuthIT {
         auth.deleteUserAsync(uid).get();
       }
     }
+  }
+
+  @Test
+  public void testTenantAwareUserLifecycle() throws Exception {
+    final String tenantId = "TENANT_ID";
+    TenantAwareFirebaseAuth tenantAwareAuth = auth.getTenantManager().getAuthForTenant(tenantId);
+
+    // Create user
+    UserRecord userRecord = tenantAwareAuth.createUserAsync(new UserRecord.CreateRequest()).get();
+    String uid = userRecord.getUid();
+
+    // Get user
+    userRecord = tenantAwareAuth.getUserAsync(userRecord.getUid()).get();
+    assertEquals(uid, userRecord.getUid());
+    assertEquals(tenantId, userRecord.getTenantId());
+    assertNull(userRecord.getDisplayName());
+    assertNull(userRecord.getEmail());
+    assertNull(userRecord.getPhoneNumber());
+    assertNull(userRecord.getPhotoUrl());
+    assertFalse(userRecord.isEmailVerified());
+    assertFalse(userRecord.isDisabled());
+    assertTrue(userRecord.getUserMetadata().getCreationTimestamp() > 0);
+    assertEquals(0, userRecord.getUserMetadata().getLastSignInTimestamp());
+    assertEquals(0, userRecord.getProviderData().length);
+    assertTrue(userRecord.getCustomClaims().isEmpty());
+
+    // Update user
+    RandomUser randomUser = RandomUser.create();
+    String phone = randomPhoneNumber();
+    UserRecord.UpdateRequest request = userRecord.updateRequest()
+        .setDisplayName("Updated Name")
+        .setEmail(randomUser.email)
+        .setPhoneNumber(phone)
+        .setPhotoUrl("https://example.com/photo.png")
+        .setEmailVerified(true)
+        .setPassword("secret");
+    userRecord = tenantAwareAuth.updateUserAsync(request).get();
+    assertEquals(uid, userRecord.getUid());
+    assertEquals(tenantId, userRecord.getTenantId());
+    assertEquals("Updated Name", userRecord.getDisplayName());
+    assertEquals(randomUser.email, userRecord.getEmail());
+    assertEquals(phone, userRecord.getPhoneNumber());
+    assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
+    assertTrue(userRecord.isEmailVerified());
+    assertFalse(userRecord.isDisabled());
+    assertEquals(2, userRecord.getProviderData().length);
+    assertTrue(userRecord.getCustomClaims().isEmpty());
+
+    // Get user by email
+    userRecord = tenantAwareAuth.getUserByEmailAsync(userRecord.getEmail()).get();
+    assertEquals(uid, userRecord.getUid());
+
+    // Disable user and remove properties
+    request = userRecord.updateRequest()
+        .setPhotoUrl(null)
+        .setDisplayName(null)
+        .setPhoneNumber(null)
+        .setDisabled(true);
+    userRecord = tenantAwareAuth.updateUserAsync(request).get();
+    assertEquals(uid, userRecord.getUid());
+    assertEquals(tenantId, userRecord.getTenantId());
+    assertNull(userRecord.getDisplayName());
+    assertEquals(randomUser.email, userRecord.getEmail());
+    assertNull(userRecord.getPhoneNumber());
+    assertNull(userRecord.getPhotoUrl());
+    assertTrue(userRecord.isEmailVerified());
+    assertTrue(userRecord.isDisabled());
+    assertEquals(1, userRecord.getProviderData().length);
+    assertTrue(userRecord.getCustomClaims().isEmpty());
+
+    // Delete user
+    tenantAwareAuth.deleteUserAsync(userRecord.getUid()).get();
+    assertUserDoesNotExist(tenantAwareAuth, userRecord.getUid());
+  }
+
+  @Test
+  public void testTenantAwareListUsers() throws Exception {
+    final String tenantId = "TENANT_ID";
+    TenantAwareFirebaseAuth tenantAwareAuth = auth.getTenantManager().getAuthForTenant(tenantId);
+    final List<String> uids = new ArrayList<>();
+
+    try {
+      for (int i = 0; i < 3; i++) {
+        UserRecord.CreateRequest createRequest =
+            new UserRecord.CreateRequest().setPassword("password");
+        uids.add(tenantAwareAuth.createUserAsync(createRequest).get().getUid());
+      }
+
+      // Test list by batches
+      final AtomicInteger collected = new AtomicInteger(0);
+      ListUsersPage page = tenantAwareAuth.listUsersAsync(null).get();
+      while (page != null) {
+        for (ExportedUserRecord user : page.getValues()) {
+          if (uids.contains(user.getUid())) {
+            collected.incrementAndGet();
+            assertNotNull("Missing passwordHash field. A common cause would be "
+                + "forgetting to add the \"Firebase Authentication Admin\" permission. See "
+                + "instructions in CONTRIBUTING.md", user.getPasswordHash());
+            assertNotNull(user.getPasswordSalt());
+            assertEquals(tenantId, user.getTenantId());
+          }
+        }
+        page = page.getNextPage();
+      }
+      assertEquals(uids.size(), collected.get());
+
+      // Test iterate all
+      collected.set(0);
+      page = tenantAwareAuth.listUsersAsync(null).get();
+      for (ExportedUserRecord user : page.iterateAll()) {
+        if (uids.contains(user.getUid())) {
+          collected.incrementAndGet();
+          assertNotNull(user.getPasswordHash());
+          assertNotNull(user.getPasswordSalt());
+          assertEquals(tenantId, user.getTenantId());
+        }
+      }
+      assertEquals(uids.size(), collected.get());
+
+      // Test iterate async
+      collected.set(0);
+      final Semaphore semaphore = new Semaphore(0);
+      final AtomicReference<Throwable> error = new AtomicReference<>();
+      ApiFuture<ListUsersPage> pageFuture = tenantAwareAuth.listUsersAsync(null);
+      ApiFutures.addCallback(pageFuture, new ApiFutureCallback<ListUsersPage>() {
+        @Override
+        public void onFailure(Throwable t) {
+          error.set(t);
+          semaphore.release();
+        }
+
+        @Override
+        public void onSuccess(ListUsersPage result) {
+          for (ExportedUserRecord user : result.iterateAll()) {
+            if (uids.contains(user.getUid())) {
+              collected.incrementAndGet();
+              assertNotNull(user.getPasswordHash());
+              assertNotNull(user.getPasswordSalt());
+              assertEquals(tenantId, user.getTenantId());
+            }
+          }
+          semaphore.release();
+        }
+      }, MoreExecutors.directExecutor());
+      semaphore.acquire();
+      assertEquals(uids.size(), collected.get());
+      assertNull(error.get());
+    } finally {
+      for (String uid : uids) {
+        tenantAwareAuth.deleteUserAsync(uid).get();
+      }
+    }
+  }
+
+  @Test
+  public void testTenantAwareGetUserWithMultipleTenantIds() throws Exception {
+    // Create three users (one without a tenant ID, and two with different tenant IDs).
+    UserRecord.CreateRequest createRequest = new UserRecord.CreateRequest();
+    UserRecord nonTenantUserRecord = auth.createUserAsync(createRequest).get();
+    TenantAwareFirebaseAuth tenantAwareAuth1 = auth.getTenantManager().getAuthForTenant("TENANT_1");
+    UserRecord tenantUserRecord1 = tenantAwareAuth1.createUserAsync(createRequest).get();
+    TenantAwareFirebaseAuth tenantAwareAuth2 = auth.getTenantManager().getAuthForTenant("TENANT_2");
+    UserRecord tenantUserRecord2 = tenantAwareAuth2.createUserAsync(createRequest).get();
+
+    // Make sure all users can be fetched using the client that is not tenant aware.
+    assertNotNull(tenantAwareAuth1.getUserAsync(nonTenantUserRecord.getUid()).get());
+    assertNotNull(tenantAwareAuth1.getUserAsync(tenantUserRecord1.getUid()).get());
+    assertNotNull(tenantAwareAuth1.getUserAsync(tenantUserRecord2.getUid()).get());
+
+    // Make sure tenant-aware client cannot fetch users outside that tenant.
+    assertUserDoesNotExist(tenantAwareAuth1, nonTenantUserRecord.getUid());
+    assertUserDoesNotExist(tenantAwareAuth1, tenantUserRecord2.getUid());
+    assertUserDoesNotExist(tenantAwareAuth2, nonTenantUserRecord.getUid());
+    assertUserDoesNotExist(tenantAwareAuth2, tenantUserRecord1.getUid());
+
+    // Make sure tenant-aware client can fetch users under that tenant.
+    assertNotNull(tenantAwareAuth1.getUserAsync(tenantUserRecord1.getUid()).get());
+    assertNotNull(tenantAwareAuth2.getUserAsync(tenantUserRecord2.getUid()).get());
   }
 
   @Test
@@ -825,6 +999,18 @@ public class FirebaseAuthIT {
       final String email = ("test" + uid.substring(0, 12) + "@example."
           + uid.substring(12) + ".com").toLowerCase();
       return new RandomUser(uid, email);
+    }
+  }
+
+  private static void assertUserDoesNotExist(AbstractFirebaseAuth firebaseAuth, String uid)
+      throws Exception {
+    try {
+      firebaseAuth.getUserAsync(uid).get();
+      fail("No error thrown for getting a user which was expected to be absent");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
+          ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
 }
