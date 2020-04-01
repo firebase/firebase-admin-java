@@ -181,6 +181,7 @@ public class FirebaseAuthIT {
     // Get user
     userRecord = auth.getUserAsync(userRecord.getUid()).get();
     assertEquals(uid, userRecord.getUid());
+    assertNull(userRecord.getTenantId());
     assertNull(userRecord.getDisplayName());
     assertNull(userRecord.getEmail());
     assertNull(userRecord.getPhoneNumber());
@@ -204,6 +205,7 @@ public class FirebaseAuthIT {
         .setPassword("secret");
     userRecord = auth.updateUserAsync(request).get();
     assertEquals(uid, userRecord.getUid());
+    assertNull(userRecord.getTenantId());
     assertEquals("Updated Name", userRecord.getDisplayName());
     assertEquals(randomUser.email, userRecord.getEmail());
     assertEquals(phone, userRecord.getPhoneNumber());
@@ -225,6 +227,7 @@ public class FirebaseAuthIT {
         .setDisabled(true);
     userRecord = auth.updateUserAsync(request).get();
     assertEquals(uid, userRecord.getUid());
+    assertNull(userRecord.getTenantId());
     assertNull(userRecord.getDisplayName());
     assertEquals(randomUser.email, userRecord.getEmail());
     assertNull(userRecord.getPhoneNumber());

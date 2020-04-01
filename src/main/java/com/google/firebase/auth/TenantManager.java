@@ -31,21 +31,23 @@ import com.google.firebase.auth.Tenant.UpdateRequest;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class can be used to perform a variety of tenant-related operations, including creating,
  * updating, and listing tenants.
- *
- * <p>TODO(micahstairs): Implement getAuthForTenant().
  */
 public final class TenantManager {
 
   private final FirebaseApp firebaseApp;
   private final FirebaseUserManager userManager;
+  private final Map<String, TenantAwareFirebaseAuth> tenantAwareAuths;
 
   TenantManager(FirebaseApp firebaseApp, FirebaseUserManager userManager) {
     this.firebaseApp = firebaseApp;
     this.userManager = userManager;
+    tenantAwareAuths = new HashMap<String, TenantAwareFirebaseAuth>();
   }
 
   /**
@@ -58,6 +60,14 @@ public final class TenantManager {
    */
   public Tenant getTenant(@NonNull String tenantId) throws FirebaseAuthException {
     return getTenantOp(tenantId).call();
+  }
+
+  public synchronized TenantAwareFirebaseAuth getAuthForTenant(@NonNull String tenantId) {
+    checkArgument(!Strings.isNullOrEmpty(tenantId), "tenantId must not be null or empty");
+    if (!tenantAwareAuths.containsKey(tenantId)) {
+      tenantAwareAuths.put(tenantId, new TenantAwareFirebaseAuth(firebaseApp, tenantId));
+    }
+    return tenantAwareAuths.get(tenantId);
   }
 
   /**
