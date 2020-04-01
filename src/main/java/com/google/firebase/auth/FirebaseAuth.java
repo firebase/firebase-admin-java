@@ -23,6 +23,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.internal.FirebaseService;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class is the entry point for all server-side Firebase Authentication actions.
@@ -36,6 +37,9 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
 
   private static final String SERVICE_ID = FirebaseAuth.class.getName();
 
+  private final Object lock = new Object();
+  private final AtomicBoolean tenantManagerCreated = new AtomicBoolean(false);
+
   private final Supplier<TenantManager> tenantManager;
 
   private FirebaseAuth(final Builder builder) {
@@ -47,13 +51,18 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
     tenantManager = threadSafeMemoize(new Supplier<TenantManager>() {
       @Override
       public TenantManager get() {
-        return new TenantManager(builder.firebaseApp, getUserManager(), FirebaseAuth.this);
+        return new TenantManager(builder.firebaseApp, getUserManager());
       }
     });
   }
 
   public TenantManager getTenantManager() {
-    return tenantManager.get();
+    TenantManager suppliedTenantManager;
+    synchronized (lock) {
+      suppliedTenantManager = tenantManager.get();
+      tenantManagerCreated.set(true);
+    }
+    return suppliedTenantManager;
   }
 
   /**
@@ -78,6 +87,16 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
       service = ImplFirebaseTrampolines.addService(app, new FirebaseAuthService(app));
     }
     return service.getInstance();
+  }
+
+  @Override
+  protected void doDestroy() {
+    synchronized (lock) {
+      // Only destroy the tenant manager if it has been created.
+      if (tenantManagerCreated.get()) {
+        getTenantManager().destroy();
+      }
+    }
   }
 
   private static FirebaseAuth fromApp(final FirebaseApp app) {
