@@ -37,10 +37,8 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
 
   private static final String SERVICE_ID = FirebaseAuth.class.getName();
 
-  private final Object lock = new Object();
-  private final AtomicBoolean tenantManagerCreated = new AtomicBoolean(false);
-
   private final Supplier<TenantManager> tenantManager;
+  private final AtomicBoolean tenantManagerCreated = new AtomicBoolean(false);
 
   private FirebaseAuth(final Builder builder) {
     super(
@@ -51,18 +49,14 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
     tenantManager = threadSafeMemoize(new Supplier<TenantManager>() {
       @Override
       public TenantManager get() {
+        tenantManagerCreated.set(true);
         return new TenantManager(builder.firebaseApp, getUserManager());
       }
     });
   }
 
   public TenantManager getTenantManager() {
-    TenantManager suppliedTenantManager;
-    synchronized (lock) {
-      suppliedTenantManager = tenantManager.get();
-      tenantManagerCreated.set(true);
-    }
-    return suppliedTenantManager;
+    return tenantManager.get();
   }
 
   /**
@@ -91,11 +85,9 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
 
   @Override
   protected void doDestroy() {
-    synchronized (lock) {
-      // Only destroy the tenant manager if it has been created.
-      if (tenantManagerCreated.get()) {
-        getTenantManager().destroy();
-      }
+    // Only destroy the tenant manager if it has been created.
+    if (tenantManagerCreated.get()) {
+      getTenantManager().destroy();
     }
   }
 
