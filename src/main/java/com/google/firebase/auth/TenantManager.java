@@ -18,6 +18,7 @@ package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import com.google.api.client.json.JsonFactory;
 import com.google.api.core.ApiFuture;
@@ -31,6 +32,7 @@ import com.google.firebase.auth.Tenant.UpdateRequest;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class can be used to perform a variety of tenant-related operations, including creating,
@@ -39,6 +41,9 @@ import com.google.firebase.internal.Nullable;
  * <p>TODO(micahstairs): Implement getAuthForTenant().
  */
 public final class TenantManager {
+
+  private final Object lock = new Object();
+  private final AtomicBoolean destroyed = new AtomicBoolean(false);
 
   private final FirebaseApp firebaseApp;
   private final FirebaseUserManager userManager;
@@ -74,7 +79,7 @@ public final class TenantManager {
   }
 
   private CallableOperation<Tenant, FirebaseAuthException> getTenantOp(final String tenantId) {
-    // TODO(micahstairs): Add a check to make sure the app has not been destroyed yet.
+    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(tenantId), "tenantId must not be null or empty");
     return new CallableOperation<Tenant, FirebaseAuthException>() {
       @Override
@@ -142,7 +147,7 @@ public final class TenantManager {
 
   private CallableOperation<ListTenantsPage, FirebaseAuthException> listTenantsOp(
       @Nullable final String pageToken, final int maxResults) {
-    // TODO(micahstairs): Add a check to make sure the app has not been destroyed yet.
+    checkNotDestroyed();
     final TenantSource tenantSource = new DefaultTenantSource(userManager);
     final PageFactory factory = new PageFactory(tenantSource, maxResults, pageToken);
     return new CallableOperation<ListTenantsPage, FirebaseAuthException>() {
@@ -180,7 +185,7 @@ public final class TenantManager {
 
   private CallableOperation<Tenant, FirebaseAuthException> createTenantOp(
       final CreateRequest request) {
-    // TODO(micahstairs): Add a check to make sure the app has not been destroyed yet.
+    checkNotDestroyed();
     checkNotNull(request, "create request must not be null");
     return new CallableOperation<Tenant, FirebaseAuthException>() {
       @Override
@@ -218,7 +223,7 @@ public final class TenantManager {
 
   private CallableOperation<Tenant, FirebaseAuthException> updateTenantOp(
       final UpdateRequest request) {
-    // TODO(micahstairs): Add a check to make sure the app has not been destroyed yet.
+    checkNotDestroyed();
     checkNotNull(request, "update request must not be null");
     return new CallableOperation<Tenant, FirebaseAuthException>() {
       @Override
@@ -253,7 +258,7 @@ public final class TenantManager {
   }
 
   private CallableOperation<Void, FirebaseAuthException> deleteTenantOp(final String tenantId) {
-    // TODO(micahstairs): Add a check to make sure the app has not been destroyed yet.
+    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(tenantId), "tenantId must not be null or empty");
     return new CallableOperation<Void, FirebaseAuthException>() {
       @Override
@@ -262,5 +267,18 @@ public final class TenantManager {
         return null;
       }
     };
+  }
+
+  void checkNotDestroyed() {
+    synchronized (lock) {
+      checkState(
+          !destroyed.get(),
+          "TenantManager instance is no longer alive. This happens when "
+              + "the parent FirebaseApp instance has been deleted.");
+    }
+  }
+
+  protected void destroy() {
+    destroyed.set(true);
   }
 }
