@@ -115,15 +115,18 @@ class FirebaseUserManager {
    * Creates a new FirebaseUserManager instance.
    *
    * @param app A non-null {@link FirebaseApp}.
+   * @param tenantId The associated tenant ID if the user operations should be tenant-aware,
+   *     otherwise {@code null}
    */
-  FirebaseUserManager(@NonNull FirebaseApp app) {
+  FirebaseUserManager(@NonNull FirebaseApp app, @Nullable String tenantId) {
     checkNotNull(app, "FirebaseApp must not be null");
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkArgument(!Strings.isNullOrEmpty(projectId),
         "Project ID is required to access the auth service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
-    this.userMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v1", projectId);
+    this.userMgtBaseUrl =
+        String.format(ID_TOOLKIT_URL, "v1", projectId) + getTenantUrlSuffix(tenantId);
     this.tenantMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v2", projectId);
     this.jsonFactory = app.getOptions().getJsonFactory();
     HttpTransport transport = app.getOptions().getHttpTransport();
@@ -230,7 +233,7 @@ class FirebaseUserManager {
   }
 
   Tenant getTenant(String tenantId) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants/" + tenantId);
+    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + getTenantUrlSuffix(tenantId));
     return sendRequest("GET", url, null, Tenant.class);
   }
 
@@ -242,7 +245,7 @@ class FirebaseUserManager {
   Tenant updateTenant(Tenant.UpdateRequest request) throws FirebaseAuthException {
     Map<String, Object> properties = request.getProperties();
     checkArgument(!properties.isEmpty(), "tenant update must have at least one property set");
-    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants/" + request.getTenantId());
+    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + getTenantUrlSuffix(request.getTenantId()));
     url.put("updateMask", generateMask(properties));
     return sendRequest("PATCH", url, properties, Tenant.class);
   }
@@ -256,7 +259,7 @@ class FirebaseUserManager {
   }
 
   void deleteTenant(String tenantId) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants/" + tenantId);
+    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + getTenantUrlSuffix(tenantId));
     sendRequest("DELETE", url, null, GenericJson.class);
   }
 
@@ -310,6 +313,10 @@ class FirebaseUserManager {
       }
     }
     throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create email action link");
+  }
+
+  private static String getTenantUrlSuffix(@Nullable String tenantId) {
+    return tenantId == null ? "" : "/tenants/" + tenantId;
   }
 
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {

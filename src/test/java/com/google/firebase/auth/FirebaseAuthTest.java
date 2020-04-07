@@ -434,6 +434,8 @@ public class FirebaseAuthTest {
         .setTokenFactory(Suppliers.<FirebaseTokenFactory>ofInstance(null))
         .setIdTokenVerifier(tokenVerifierSupplier)
         .setCookieVerifier(Suppliers.<FirebaseTokenVerifier>ofInstance(null))
+        .setUserManager(
+            Suppliers.<FirebaseUserManager>ofInstance(new FirebaseUserManager(app, null)))
         .build();
   }
 
@@ -449,6 +451,8 @@ public class FirebaseAuthTest {
         .setTokenFactory(Suppliers.<FirebaseTokenFactory>ofInstance(null))
         .setIdTokenVerifier(Suppliers.<FirebaseTokenVerifier>ofInstance(null))
         .setCookieVerifier(tokenVerifierSupplier)
+        .setUserManager(
+            Suppliers.<FirebaseUserManager>ofInstance(new FirebaseUserManager(app, null)))
         .build();
   }
 

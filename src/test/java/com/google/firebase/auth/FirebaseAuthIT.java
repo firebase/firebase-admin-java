@@ -321,7 +321,12 @@ public class FirebaseAuthIT {
 
   @Test
   public void testTenantAwareUserLifecycle() throws Exception {
-    final String tenantId = "TENANT_ID";
+    // Create tenant to use.
+    TenantManager tenantManager = auth.getTenantManager();
+    Tenant.CreateRequest tenantCreateRequest =
+        new Tenant.CreateRequest().setDisplayName("DisplayName");
+    final String tenantId = tenantManager.createTenant(tenantCreateRequest).getTenantId();
+
     TenantAwareFirebaseAuth tenantAwareAuth = auth.getTenantManager().getAuthForTenant(tenantId);
 
     // Create user
@@ -394,8 +399,13 @@ public class FirebaseAuthIT {
 
   @Test
   public void testTenantAwareListUsers() throws Exception {
-    final String tenantId = "TENANT_ID";
-    TenantAwareFirebaseAuth tenantAwareAuth = auth.getTenantManager().getAuthForTenant(tenantId);
+    // Create tenant to use.
+    TenantManager tenantManager = auth.getTenantManager();
+    Tenant.CreateRequest tenantCreateRequest =
+        new Tenant.CreateRequest().setDisplayName("DisplayName");
+    final String tenantId = tenantManager.createTenant(tenantCreateRequest).getTenantId();
+
+    TenantAwareFirebaseAuth tenantAwareAuth = tenantManager.getAuthForTenant(tenantId);
     final List<String> uids = new ArrayList<>();
 
     try {
@@ -473,18 +483,27 @@ public class FirebaseAuthIT {
 
   @Test
   public void testTenantAwareGetUserWithMultipleTenantIds() throws Exception {
+    // Create tenants to use.
+    TenantManager tenantManager = auth.getTenantManager();
+    Tenant.CreateRequest tenantCreateRequest1 =
+        new Tenant.CreateRequest().setDisplayName("DisplayName1");
+    String tenantId1 = tenantManager.createTenant(tenantCreateRequest1).getTenantId();
+    Tenant.CreateRequest tenantCreateRequest2 =
+        new Tenant.CreateRequest().setDisplayName("DisplayName2");
+    String tenantId2 = tenantManager.createTenant(tenantCreateRequest2).getTenantId();
+
     // Create three users (one without a tenant ID, and two with different tenant IDs).
     UserRecord.CreateRequest createRequest = new UserRecord.CreateRequest();
-    UserRecord nonTenantUserRecord = auth.createUserAsync(createRequest).get();
-    TenantAwareFirebaseAuth tenantAwareAuth1 = auth.getTenantManager().getAuthForTenant("TENANT_1");
-    UserRecord tenantUserRecord1 = tenantAwareAuth1.createUserAsync(createRequest).get();
-    TenantAwareFirebaseAuth tenantAwareAuth2 = auth.getTenantManager().getAuthForTenant("TENANT_2");
-    UserRecord tenantUserRecord2 = tenantAwareAuth2.createUserAsync(createRequest).get();
+    UserRecord nonTenantUserRecord = auth.createUser(createRequest);
+    TenantAwareFirebaseAuth tenantAwareAuth1 = auth.getTenantManager().getAuthForTenant(tenantId1);
+    UserRecord tenantUserRecord1 = tenantAwareAuth1.createUser(createRequest);
+    TenantAwareFirebaseAuth tenantAwareAuth2 = auth.getTenantManager().getAuthForTenant(tenantId2);
+    UserRecord tenantUserRecord2 = tenantAwareAuth2.createUser(createRequest);
 
     // Make sure all users can be fetched using the client that is not tenant aware.
-    assertNotNull(tenantAwareAuth1.getUserAsync(nonTenantUserRecord.getUid()).get());
-    assertNotNull(tenantAwareAuth1.getUserAsync(tenantUserRecord1.getUid()).get());
-    assertNotNull(tenantAwareAuth1.getUserAsync(tenantUserRecord2.getUid()).get());
+    assertNotNull(auth.getUser(nonTenantUserRecord.getUid()));
+    assertNotNull(auth.getUser(tenantUserRecord1.getUid()));
+    assertNotNull(auth.getUser(tenantUserRecord2.getUid()));
 
     // Make sure tenant-aware client cannot fetch users outside that tenant.
     assertUserDoesNotExist(tenantAwareAuth1, nonTenantUserRecord.getUid());
@@ -493,8 +512,8 @@ public class FirebaseAuthIT {
     assertUserDoesNotExist(tenantAwareAuth2, tenantUserRecord1.getUid());
 
     // Make sure tenant-aware client can fetch users under that tenant.
-    assertNotNull(tenantAwareAuth1.getUserAsync(tenantUserRecord1.getUid()).get());
-    assertNotNull(tenantAwareAuth2.getUserAsync(tenantUserRecord2.getUid()).get());
+    assertNotNull(tenantAwareAuth1.getUser(tenantUserRecord1.getUid()));
+    assertNotNull(tenantAwareAuth2.getUser(tenantUserRecord2.getUid()));
   }
 
   @Test

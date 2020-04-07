@@ -43,7 +43,8 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
         builder.firebaseApp,
         builder.tokenFactory,
         builder.idTokenVerifier,
-        builder.cookieVerifier);
+        builder.cookieVerifier,
+        builder.userManager);
     tenantManager = threadSafeMemoize(new Supplier<TenantManager>() {
       @Override
       public TenantManager get() {
@@ -104,6 +105,13 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
                 return FirebaseTokenUtils.createSessionCookieVerifier(app, Clock.SYSTEM);
               }
             })
+        .setUserManager(
+            new Supplier<FirebaseUserManager>() {
+              @Override
+              public FirebaseUserManager get() {
+                return new FirebaseUserManager(app, null);
+              }
+            })
         .build();
   }
 
@@ -117,6 +125,7 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
     private Supplier<FirebaseTokenFactory> tokenFactory;
     private Supplier<? extends FirebaseTokenVerifier> idTokenVerifier;
     private Supplier<? extends FirebaseTokenVerifier> cookieVerifier;
+    private Supplier<FirebaseUserManager> userManager;
 
     private Builder() {}
 
@@ -137,6 +146,11 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
 
     Builder setCookieVerifier(Supplier<? extends FirebaseTokenVerifier> cookieVerifier) {
       this.cookieVerifier = cookieVerifier;
+      return this;
+    }
+
+    Builder setUserManager(Supplier<FirebaseUserManager> userManager) {
+      this.userManager = userManager;
       return this;
     }
 

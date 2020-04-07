@@ -63,17 +63,13 @@ public abstract class AbstractFirebaseAuth {
       final FirebaseApp firebaseApp,
       Supplier<FirebaseTokenFactory> tokenFactory,
       Supplier<? extends FirebaseTokenVerifier> idTokenVerifier,
-      Supplier<? extends FirebaseTokenVerifier> cookieVerifier) {
+      Supplier<? extends FirebaseTokenVerifier> cookieVerifier,
+      Supplier<FirebaseUserManager> userManager) {
     this.firebaseApp = checkNotNull(firebaseApp);
     this.tokenFactory = threadSafeMemoize(tokenFactory);
     this.idTokenVerifier = threadSafeMemoize(idTokenVerifier);
     this.cookieVerifier = threadSafeMemoize(cookieVerifier);
-    this.userManager = threadSafeMemoize(new Supplier<FirebaseUserManager>() {
-      @Override
-      public FirebaseUserManager get() {
-        return new FirebaseUserManager(firebaseApp);
-      }
-    });
+    this.userManager = threadSafeMemoize(userManager);
     this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
   }
 
