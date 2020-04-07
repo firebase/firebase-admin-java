@@ -500,10 +500,10 @@ public class FirebaseAuthIT {
     TenantAwareFirebaseAuth tenantAwareAuth2 = auth.getTenantManager().getAuthForTenant(tenantId2);
     UserRecord tenantUserRecord2 = tenantAwareAuth2.createUser(createRequest);
 
-    // Make sure all users can be fetched using the client that is not tenant aware.
+    // Make sure only non-tenant users can be fetched using the standard client.
     assertNotNull(auth.getUser(nonTenantUserRecord.getUid()));
-    assertNotNull(auth.getUser(tenantUserRecord1.getUid()));
-    assertNotNull(auth.getUser(tenantUserRecord2.getUid()));
+    assertUserDoesNotExist(auth, tenantUserRecord1.getUid());
+    assertUserDoesNotExist(auth, tenantUserRecord2.getUid());
 
     // Make sure tenant-aware client cannot fetch users outside that tenant.
     assertUserDoesNotExist(tenantAwareAuth1, nonTenantUserRecord.getUid());

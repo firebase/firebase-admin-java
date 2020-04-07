@@ -32,6 +32,8 @@ public class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
   private final String tenantId;
 
   TenantAwareFirebaseAuth(final FirebaseApp firebaseApp, final String tenantId) {
+    // TODO(micahstairs): Incorporate tenant ID into token generation as well as ID token and
+    // session cookie verification.
     super(
         firebaseApp,
         new Supplier<FirebaseTokenFactory>() {
