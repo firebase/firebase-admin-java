@@ -79,4 +79,9 @@ public class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
   public String getTenantId() {
     return tenantId;
   }
+
+  @Override
+  protected void doDestroy() {
+    // Nothing extra needs to be destroyed.
+  }
 }
