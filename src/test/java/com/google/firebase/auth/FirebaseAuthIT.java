@@ -478,6 +478,7 @@ public class FirebaseAuthIT {
       for (String uid : uids) {
         tenantAwareAuth.deleteUserAsync(uid).get();
       }
+      tenantManager.deleteTenant(tenantId);
     }
   }
 
@@ -514,6 +515,10 @@ public class FirebaseAuthIT {
     // Make sure tenant-aware client can fetch users under that tenant.
     assertNotNull(tenantAwareAuth1.getUser(tenantUserRecord1.getUid()));
     assertNotNull(tenantAwareAuth2.getUser(tenantUserRecord2.getUid()));
+
+    // Delete tenants.
+    tenantManager.deleteTenant(tenantId1);
+    tenantManager.deleteTenant(tenantId2);
   }
 
   @Test

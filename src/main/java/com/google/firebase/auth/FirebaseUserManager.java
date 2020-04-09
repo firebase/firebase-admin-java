@@ -125,12 +125,27 @@ class FirebaseUserManager {
         "Project ID is required to access the auth service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
-    this.userMgtBaseUrl =
-        String.format(ID_TOOLKIT_URL, "v1", projectId) + getTenantUrlSuffix(tenantId);
+    if (tenantId == null) {
+      this.userMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v1", projectId);
+    } else {
+      this.userMgtBaseUrl =
+          String.format(ID_TOOLKIT_URL, "v1", projectId) + getTenantUrlSuffix(tenantId);
+    }
     this.tenantMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v2", projectId);
     this.jsonFactory = app.getOptions().getJsonFactory();
     HttpTransport transport = app.getOptions().getHttpTransport();
     this.requestFactory = transport.createRequestFactory(new FirebaseRequestInitializer(app));
+  }
+
+  /**
+   * Creates a new FirebaseUserManager instance.
+   *
+   * <p>This convenience constructor is for when user operations should not be tenant-aware.
+   *
+   * @param app A non-null {@link FirebaseApp}.
+   */
+  FirebaseUserManager(@NonNull FirebaseApp app) {
+    this(app, null);
   }
 
   @VisibleForTesting
@@ -315,8 +330,9 @@ class FirebaseUserManager {
     throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create email action link");
   }
 
-  private static String getTenantUrlSuffix(@Nullable String tenantId) {
-    return tenantId == null ? "" : "/tenants/" + tenantId;
+  private static String getTenantUrlSuffix(String tenantId) {
+    checkArgument(!Strings.isNullOrEmpty(tenantId));
+    return "/tenants/" + tenantId;
   }
 
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {

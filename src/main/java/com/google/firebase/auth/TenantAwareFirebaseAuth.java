@@ -16,7 +16,10 @@
 
 package com.google.firebase.auth;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.api.client.util.Clock;
+import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
@@ -32,35 +35,44 @@ public class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
   private final String tenantId;
 
   TenantAwareFirebaseAuth(final FirebaseApp firebaseApp, final String tenantId) {
+    super(builderFromAppAndTenantId(firebaseApp, tenantId));
+    checkArgument(!Strings.isNullOrEmpty(tenantId));
+    this.tenantId = tenantId;
+  }
+
+  private static Builder builderFromAppAndTenantId(final FirebaseApp app, final String tenantId) {
     // TODO(micahstairs): Incorporate tenant ID into token generation as well as ID token and
     // session cookie verification.
-    super(
-        firebaseApp,
-        new Supplier<FirebaseTokenFactory>() {
-          @Override
-          public FirebaseTokenFactory get() {
-            return FirebaseTokenUtils.createTokenFactory(firebaseApp, Clock.SYSTEM);
-          }
-        },
-        new Supplier<FirebaseTokenVerifier>() {
-          @Override
-          public FirebaseTokenVerifier get() {
-            return FirebaseTokenUtils.createIdTokenVerifier(firebaseApp, Clock.SYSTEM);
-          }
-        },
-        new Supplier<FirebaseTokenVerifier>() {
-          @Override
-          public FirebaseTokenVerifier get() {
-            return FirebaseTokenUtils.createSessionCookieVerifier(firebaseApp, Clock.SYSTEM);
-          }
-        },
-        new Supplier<FirebaseUserManager>() {
-          @Override
-          public FirebaseUserManager get() {
-            return new FirebaseUserManager(firebaseApp, tenantId);
-          }
-        });
-    this.tenantId = tenantId;
+    return AbstractFirebaseAuth.builder()
+        .setFirebaseApp(app)
+        .setTokenFactory(
+            new Supplier<FirebaseTokenFactory>() {
+              @Override
+              public FirebaseTokenFactory get() {
+                return FirebaseTokenUtils.createTokenFactory(app, Clock.SYSTEM);
+              }
+            })
+        .setIdTokenVerifier(
+            new Supplier<FirebaseTokenVerifier>() {
+              @Override
+              public FirebaseTokenVerifier get() {
+                return FirebaseTokenUtils.createIdTokenVerifier(app, Clock.SYSTEM);
+              }
+            })
+        .setCookieVerifier(
+            new Supplier<FirebaseTokenVerifier>() {
+              @Override
+              public FirebaseTokenVerifier get() {
+                return FirebaseTokenUtils.createSessionCookieVerifier(app, Clock.SYSTEM);
+              }
+            })
+        .setUserManager(
+            new Supplier<FirebaseUserManager>() {
+              @Override
+              public FirebaseUserManager get() {
+                return new FirebaseUserManager(app, tenantId);
+              }
+            });
   }
 
   /** Returns the corresponding tenant ID. */

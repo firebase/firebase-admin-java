@@ -17,10 +17,10 @@
 package com.google.firebase.auth;
 
 import com.google.api.client.util.Clock;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Supplier;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.auth.AbstractFirebaseAuth.Builder;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.internal.FirebaseService;
 
@@ -38,13 +38,8 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
 
   private final Supplier<TenantManager> tenantManager;
 
-  private FirebaseAuth(final Builder builder) {
-    super(
-        builder.firebaseApp,
-        builder.tokenFactory,
-        builder.idTokenVerifier,
-        builder.cookieVerifier,
-        builder.userManager);
+  FirebaseAuth(final Builder builder) {
+    super(builder);
     tenantManager = threadSafeMemoize(new Supplier<TenantManager>() {
       @Override
       public TenantManager get() {
@@ -82,81 +77,37 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
   }
 
   private static FirebaseAuth fromApp(final FirebaseApp app) {
-    return FirebaseAuth.builder()
-        .setFirebaseApp(app)
-        .setTokenFactory(
-            new Supplier<FirebaseTokenFactory>() {
-              @Override
-              public FirebaseTokenFactory get() {
-                return FirebaseTokenUtils.createTokenFactory(app, Clock.SYSTEM);
-              }
+    return new FirebaseAuth(
+        AbstractFirebaseAuth.builder()
+          .setFirebaseApp(app)
+          .setTokenFactory(
+              new Supplier<FirebaseTokenFactory>() {
+                @Override
+                public FirebaseTokenFactory get() {
+                  return FirebaseTokenUtils.createTokenFactory(app, Clock.SYSTEM);
+                }
+              })
+          .setIdTokenVerifier(
+              new Supplier<FirebaseTokenVerifier>() {
+                @Override
+                public FirebaseTokenVerifier get() {
+                  return FirebaseTokenUtils.createIdTokenVerifier(app, Clock.SYSTEM);
+                }
+              })
+          .setCookieVerifier(
+              new Supplier<FirebaseTokenVerifier>() {
+                @Override
+                public FirebaseTokenVerifier get() {
+                  return FirebaseTokenUtils.createSessionCookieVerifier(app, Clock.SYSTEM);
+                }
             })
-        .setIdTokenVerifier(
-            new Supplier<FirebaseTokenVerifier>() {
-              @Override
-              public FirebaseTokenVerifier get() {
-                return FirebaseTokenUtils.createIdTokenVerifier(app, Clock.SYSTEM);
-              }
-            })
-        .setCookieVerifier(
-            new Supplier<FirebaseTokenVerifier>() {
-              @Override
-              public FirebaseTokenVerifier get() {
-                return FirebaseTokenUtils.createSessionCookieVerifier(app, Clock.SYSTEM);
-              }
-            })
-        .setUserManager(
-            new Supplier<FirebaseUserManager>() {
-              @Override
-              public FirebaseUserManager get() {
-                return new FirebaseUserManager(app, null);
-              }
-            })
-        .build();
-  }
-
-  @VisibleForTesting
-  static Builder builder() {
-    return new Builder();
-  }
-
-  static class Builder {
-    private FirebaseApp firebaseApp;
-    private Supplier<FirebaseTokenFactory> tokenFactory;
-    private Supplier<? extends FirebaseTokenVerifier> idTokenVerifier;
-    private Supplier<? extends FirebaseTokenVerifier> cookieVerifier;
-    private Supplier<FirebaseUserManager> userManager;
-
-    private Builder() {}
-
-    Builder setFirebaseApp(FirebaseApp firebaseApp) {
-      this.firebaseApp = firebaseApp;
-      return this;
-    }
-
-    Builder setTokenFactory(Supplier<FirebaseTokenFactory> tokenFactory) {
-      this.tokenFactory = tokenFactory;
-      return this;
-    }
-
-    Builder setIdTokenVerifier(Supplier<? extends FirebaseTokenVerifier> idTokenVerifier) {
-      this.idTokenVerifier = idTokenVerifier;
-      return this;
-    }
-
-    Builder setCookieVerifier(Supplier<? extends FirebaseTokenVerifier> cookieVerifier) {
-      this.cookieVerifier = cookieVerifier;
-      return this;
-    }
-
-    Builder setUserManager(Supplier<FirebaseUserManager> userManager) {
-      this.userManager = userManager;
-      return this;
-    }
-
-    FirebaseAuth build() {
-      return new FirebaseAuth(this);
-    }
+          .setUserManager(
+              new Supplier<FirebaseUserManager>() {
+                @Override
+                public FirebaseUserManager get() {
+                  return new FirebaseUserManager(app);
+                }
+              }));
   }
 
   private static class FirebaseAuthService extends FirebaseService<FirebaseAuth> {

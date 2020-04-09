@@ -59,18 +59,13 @@ public abstract class AbstractFirebaseAuth {
   private final Supplier<? extends FirebaseUserManager> userManager;
   private final JsonFactory jsonFactory;
 
-  AbstractFirebaseAuth(
-      final FirebaseApp firebaseApp,
-      Supplier<FirebaseTokenFactory> tokenFactory,
-      Supplier<? extends FirebaseTokenVerifier> idTokenVerifier,
-      Supplier<? extends FirebaseTokenVerifier> cookieVerifier,
-      Supplier<FirebaseUserManager> userManager) {
-    this.firebaseApp = checkNotNull(firebaseApp);
-    this.tokenFactory = threadSafeMemoize(tokenFactory);
-    this.idTokenVerifier = threadSafeMemoize(idTokenVerifier);
-    this.cookieVerifier = threadSafeMemoize(cookieVerifier);
-    this.userManager = threadSafeMemoize(userManager);
-    this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
+  AbstractFirebaseAuth(Builder builder) {
+    this.firebaseApp = checkNotNull(builder.firebaseApp);
+    this.tokenFactory = threadSafeMemoize(builder.tokenFactory);
+    this.idTokenVerifier = threadSafeMemoize(builder.idTokenVerifier);
+    this.cookieVerifier = threadSafeMemoize(builder.cookieVerifier);
+    this.userManager = threadSafeMemoize(builder.userManager);
+    this.jsonFactory = builder.firebaseApp.getOptions().getJsonFactory();
   }
 
   /**
@@ -1094,6 +1089,45 @@ public abstract class AbstractFirebaseAuth {
   void destroy() {
     synchronized (lock) {
       destroyed.set(true);
+    }
+  }
+
+  static Builder builder() {
+    return new Builder();
+  }
+
+  static class Builder {
+    protected FirebaseApp firebaseApp;
+    private Supplier<FirebaseTokenFactory> tokenFactory;
+    private Supplier<? extends FirebaseTokenVerifier> idTokenVerifier;
+    private Supplier<? extends FirebaseTokenVerifier> cookieVerifier;
+    private Supplier<FirebaseUserManager> userManager;
+
+    private Builder() {}
+
+    Builder setFirebaseApp(FirebaseApp firebaseApp) {
+      this.firebaseApp = firebaseApp;
+      return this;
+    }
+
+    Builder setTokenFactory(Supplier<FirebaseTokenFactory> tokenFactory) {
+      this.tokenFactory = tokenFactory;
+      return this;
+    }
+
+    Builder setIdTokenVerifier(Supplier<? extends FirebaseTokenVerifier> idTokenVerifier) {
+      this.idTokenVerifier = idTokenVerifier;
+      return this;
+    }
+
+    Builder setCookieVerifier(Supplier<? extends FirebaseTokenVerifier> cookieVerifier) {
+      this.cookieVerifier = cookieVerifier;
+      return this;
+    }
+
+    Builder setUserManager(Supplier<FirebaseUserManager> userManager) {
+      this.userManager = userManager;
+      return this;
     }
   }
 }
