@@ -26,7 +26,7 @@ import java.util.List;
  * See {@link FirebaseMessaging#sendAll(List)} and {@link
  * FirebaseMessaging#sendMulticast(MulticastMessage)}.
  */
-public class BatchResponseImpl implements BatchResponse {
+class BatchResponseImpl implements BatchResponse {
 
   private final List<SendResponse> responses;
   private final int successCount;
