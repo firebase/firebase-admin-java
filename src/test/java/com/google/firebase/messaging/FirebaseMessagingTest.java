@@ -668,7 +668,7 @@ public class FirebaseMessagingTest {
     for (String messageId : messageIds) {
       listBuilder.add(SendResponse.fromMessageId(messageId));
     }
-    return new BatchResponse(listBuilder.build());
+    return new BatchResponseImpl(listBuilder.build());
   }
 
   private static class MockFirebaseMessagingClient implements FirebaseMessagingClient {
