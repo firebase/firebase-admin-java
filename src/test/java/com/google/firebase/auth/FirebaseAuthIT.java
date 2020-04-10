@@ -392,9 +392,10 @@ public class FirebaseAuthIT {
     assertEquals(1, userRecord.getProviderData().length);
     assertTrue(userRecord.getCustomClaims().isEmpty());
 
-    // Delete user
+    // Delete user and tenant
     tenantAwareAuth.deleteUserAsync(userRecord.getUid()).get();
     assertUserDoesNotExist(tenantAwareAuth, userRecord.getUid());
+    tenantManager.deleteTenant(tenantId);
   }
 
   @Test

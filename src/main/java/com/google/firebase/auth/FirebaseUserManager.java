@@ -128,6 +128,7 @@ class FirebaseUserManager {
     if (tenantId == null) {
       this.userMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v1", projectId);
     } else {
+      checkArgument(!tenantId.isEmpty(), "tenant ID must not be empty");
       this.userMgtBaseUrl =
           String.format(ID_TOOLKIT_URL, "v1", projectId) + getTenantUrlSuffix(tenantId);
     }
