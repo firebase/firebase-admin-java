@@ -24,7 +24,8 @@
     "validSince" : "1494364393",
     "disabled" : false,
     "createdAt" : "1234567890",
-    "customAttributes" : "{\"admin\": true, \"package\": \"gold\"}"
+    "customAttributes" : "{\"admin\": true, \"package\": \"gold\"}",
+    "tenantId": "testTenant"
   }, {
     "localId" : "testuser",
     "email" : "testuser@example.com",
@@ -50,6 +51,7 @@
     "validSince" : "1494364393",
     "disabled" : false,
     "createdAt" : "1234567890",
-    "customAttributes" : "{\"admin\": true, \"package\": \"gold\"}"
+    "customAttributes" : "{\"admin\": true, \"package\": \"gold\"}",
+    "tenantId": "testTenant"
   } ]
 }
