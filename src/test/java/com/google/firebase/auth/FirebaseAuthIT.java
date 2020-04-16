@@ -727,7 +727,7 @@ public class FirebaseAuthIT {
   }
 
   @Test
-  public void testVerifyTenant() throws Exception {
+  public void testVerifyTokenWithWrongTenantAwareClient() throws Exception {
     // Create tenants to use.
     TenantManager tenantManager = auth.getTenantManager();
     Tenant.CreateRequest tenantCreateRequest1 =
