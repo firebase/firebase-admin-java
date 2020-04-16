@@ -47,6 +47,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.hash.Scrypt;
+import com.google.firebase.internal.Nullable;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
 import java.net.URLDecoder;
@@ -716,13 +717,45 @@ public class FirebaseAuthIT {
     // Create and decode a token with a tenant-aware client.
     TenantAwareFirebaseAuth tenantAwareAuth = auth.getTenantManager().getAuthForTenant(tenantId);
     String customToken = tenantAwareAuth.createCustomTokenAsync("user1").get();
-    String idToken = signInWithCustomToken(customToken);
+    String idToken = signInWithCustomToken(customToken, tenantId);
     FirebaseToken decoded = tenantAwareAuth.verifyIdTokenAsync(idToken).get();
     assertEquals("user1", decoded.getUid());
     assertEquals(tenantId, decoded.getTenantId());
 
     // Delete tenant.
     tenantManager.deleteTenantAsync(tenantId).get();
+  }
+
+  @Test
+  public void testVerifyTenant() throws Exception {
+    // Create tenants to use.
+    TenantManager tenantManager = auth.getTenantManager();
+    Tenant.CreateRequest tenantCreateRequest1 =
+        new Tenant.CreateRequest().setDisplayName("DisplayName1");
+    String tenantId1 = tenantManager.createTenant(tenantCreateRequest1).getTenantId();
+    Tenant.CreateRequest tenantCreateRequest2 =
+        new Tenant.CreateRequest().setDisplayName("DisplayName2");
+    String tenantId2 = tenantManager.createTenant(tenantCreateRequest2).getTenantId();
+
+    // Create tenant-aware clients.
+    TenantAwareFirebaseAuth tenantAwareAuth1 = auth.getTenantManager().getAuthForTenant(tenantId1);
+    TenantAwareFirebaseAuth tenantAwareAuth2 = auth.getTenantManager().getAuthForTenant(tenantId2);
+
+    // Create a token with one client and decode with the other.
+    String customToken = tenantAwareAuth1.createCustomTokenAsync("user1").get();
+    String idToken = signInWithCustomToken(customToken, tenantId1);
+    try {
+      tenantAwareAuth2.verifyIdTokenAsync(idToken).get();
+      fail("No error thrown for verifying a token with the wrong tenant-aware client");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH,
+          ((FirebaseAuthException) e.getCause()).getErrorCode());
+    }
+
+    // Delete tenants.
+    tenantManager.deleteTenantAsync(tenantId1).get();
+    tenantManager.deleteTenantAsync(tenantId2).get();
   }
 
   @Test
@@ -951,12 +984,21 @@ public class FirebaseAuthIT {
   }
 
   private String signInWithCustomToken(String customToken) throws IOException {
-    GenericUrl url = new GenericUrl(VERIFY_CUSTOM_TOKEN_URL + "?key="
+    return signInWithCustomToken(customToken, null);
+  }
+
+  private String signInWithCustomToken(
+      String customToken, @Nullable String tenantId) throws IOException {
+    final GenericUrl url = new GenericUrl(VERIFY_CUSTOM_TOKEN_URL + "?key="
         + IntegrationTestUtils.getApiKey());
-    Map<String, Object> content = ImmutableMap.<String, Object>of(
-        "token", customToken, "returnSecureToken", true);
+    ImmutableMap.Builder<String, Object> content = ImmutableMap.<String, Object>builder();
+    content.put("token", customToken);
+    content.put("returnSecureToken", true);
+    if (tenantId != null) {
+      content.put("tenantId", tenantId);
+    }
     HttpRequest request = transport.createRequestFactory().buildPostRequest(url,
-        new JsonHttpContent(jsonFactory, content));
+        new JsonHttpContent(jsonFactory, content.build()));
     request.setParser(new JsonObjectParser(jsonFactory));
     HttpResponse response = request.execute();
     try {

@@ -44,7 +44,11 @@ public final class FirebaseToken {
 
   /** Returns the tenant ID for the this token. */
   public String getTenantId() {
-    return (String) claims.get("tenant_id");
+    Map<String, Object> firebase = (Map<String, Object>) claims.get("firebase");
+    if (firebase == null) {
+      return null;
+    }
+    return (String) firebase.get("tenant");
   }
 
   /** Returns the Issuer for the this token. */

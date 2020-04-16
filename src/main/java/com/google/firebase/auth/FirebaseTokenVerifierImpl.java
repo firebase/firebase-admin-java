@@ -28,6 +28,7 @@ import com.google.api.client.json.webtoken.JsonWebSignature.Header;
 import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import com.google.firebase.internal.Nullable;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.security.GeneralSecurityException;
@@ -53,6 +54,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
   private final String shortName;
   private final String articledShortName;
   private final String docUrl;
+  private final String tenantId;
 
   private FirebaseTokenVerifierImpl(Builder builder) {
     this.jsonFactory = checkNotNull(builder.jsonFactory);
@@ -65,6 +67,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     this.shortName = builder.shortName;
     this.articledShortName = prefixWithIndefiniteArticle(this.shortName);
     this.docUrl = builder.docUrl;
+    this.tenantId = builder.tenantId;
   }
 
   /**
@@ -90,7 +93,9 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     IdToken idToken = parse(token);
     checkContents(idToken);
     checkSignature(idToken);
-    return new FirebaseToken(idToken.getPayload());
+    FirebaseToken firebaseToken = new FirebaseToken(idToken.getPayload());
+    checkTenantId(firebaseToken);
+    return firebaseToken;
   }
 
   GooglePublicKeysManager getPublicKeysManager() {
@@ -278,6 +283,18 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     return false;
   }
 
+  private void checkTenantId(final FirebaseToken firebaseToken) throws FirebaseAuthException {
+    String tokenTenantId = firebaseToken.getTenantId();
+    if (!Strings.nullToEmpty(tokenTenantId).equals(Strings.nullToEmpty(tenantId))) {
+      throw new FirebaseAuthException(
+          FirebaseUserManager.TENANT_ID_MISMATCH,
+          String.format(
+            "The tenant ID ('%s') of the token did not match the expected ('%s') value",
+            tokenTenantId,
+            tenantId));
+    }
+  }
+
   static Builder builder() {
     return new Builder();
   }
@@ -290,6 +307,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     private String shortName;
     private IdTokenVerifier idTokenVerifier;
     private String docUrl;
+    private String tenantId;
 
     private Builder() { }
 
@@ -320,6 +338,11 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
 
     Builder setDocUrl(String docUrl) {
       this.docUrl = docUrl;
+      return this;
+    }
+
+    Builder setTenantId(@Nullable String tenantId) {
+      this.tenantId = tenantId;
       return this;
     }
 

@@ -75,6 +75,11 @@ final class FirebaseTokenUtils {
   }
 
   static FirebaseTokenVerifierImpl createIdTokenVerifier(FirebaseApp app, Clock clock) {
+    return createIdTokenVerifier(app, clock, null);
+  }
+
+  static FirebaseTokenVerifierImpl createIdTokenVerifier(
+      FirebaseApp app, Clock clock, @Nullable String tenantId) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkState(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifyIdToken()");
@@ -89,10 +94,16 @@ final class FirebaseTokenUtils {
         .setJsonFactory(app.getOptions().getJsonFactory())
         .setPublicKeysManager(publicKeysManager)
         .setIdTokenVerifier(idTokenVerifier)
+        .setTenantId(tenantId)
         .build();
   }
 
   static FirebaseTokenVerifierImpl createSessionCookieVerifier(FirebaseApp app, Clock clock) {
+    return createSessionCookieVerifier(app, clock, null);
+  }
+
+  static FirebaseTokenVerifierImpl createSessionCookieVerifier(
+      FirebaseApp app, Clock clock, @Nullable String tenantId) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkState(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifySessionCookie()");
@@ -107,6 +118,7 @@ final class FirebaseTokenUtils {
         .setShortName("session cookie")
         .setMethod("verifySessionCookie()")
         .setDocUrl("https://firebase.google.com/docs/auth/admin/manage-cookies")
+        .setTenantId(tenantId)
         .build();
   }
 
