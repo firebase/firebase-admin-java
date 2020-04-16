@@ -41,15 +41,13 @@ public class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
   }
 
   private static Builder builderFromAppAndTenantId(final FirebaseApp app, final String tenantId) {
-    // TODO(micahstairs): Incorporate tenant ID into token generation as well as ID token and
-    // session cookie verification.
     return AbstractFirebaseAuth.builder()
         .setFirebaseApp(app)
         .setTokenFactory(
             new Supplier<FirebaseTokenFactory>() {
               @Override
               public FirebaseTokenFactory get() {
-                return FirebaseTokenUtils.createTokenFactory(app, Clock.SYSTEM);
+                return FirebaseTokenUtils.createTokenFactory(app, Clock.SYSTEM, tenantId);
               }
             })
         .setIdTokenVerifier(

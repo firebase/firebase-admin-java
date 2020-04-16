@@ -706,6 +706,26 @@ public class FirebaseAuthIT {
   }
 
   @Test
+  public void testTenantAwareCustomToken() throws Exception {
+    // Create tenant to use.
+    TenantManager tenantManager = auth.getTenantManager();
+    Tenant.CreateRequest tenantCreateRequest =
+        new Tenant.CreateRequest().setDisplayName("DisplayName");
+    String tenantId = tenantManager.createTenant(tenantCreateRequest).getTenantId();
+
+    // Create and decode a token with a tenant-aware client.
+    TenantAwareFirebaseAuth tenantAwareAuth = auth.getTenantManager().getAuthForTenant(tenantId);
+    String customToken = tenantAwareAuth.createCustomTokenAsync("user1").get();
+    String idToken = signInWithCustomToken(customToken);
+    FirebaseToken decoded = tenantAwareAuth.verifyIdTokenAsync(idToken).get();
+    assertEquals("user1", decoded.getUid());
+    assertEquals(tenantId, decoded.getTenantId());
+
+    // Delete tenant.
+    tenantManager.deleteTenantAsync(tenantId).get();
+  }
+
+  @Test
   public void testVerifyIdToken() throws Exception {
     String customToken = auth.createCustomTokenAsync("user2").get();
     String idToken = signInWithCustomToken(customToken);
