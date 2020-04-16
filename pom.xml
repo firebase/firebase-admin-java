@@ -321,13 +321,6 @@
                 <configuration>
                     <source>1.7</source>
                     <target>1.7</target>
-                    <annotationProcessorPaths>
-                        <path>
-                            <groupId>com.google.auto.value</groupId>
-                            <artifactId>auto-value</artifactId>
-                            <version>1.7</version>
-                        </path>
-                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
             <plugin>
@@ -433,11 +426,6 @@
         </dependency>
 
         <!-- Utilities -->
-        <dependency>
-            <groupId>com.google.auto.value</groupId>
-            <artifactId>auto-value-annotations</artifactId>
-            <version>1.7</version>
-        </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
