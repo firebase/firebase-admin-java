@@ -33,6 +33,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.util.Key;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -271,7 +272,7 @@ class FirebaseUserManager {
     // since we do not currently generate masks for any properties with nested values. When it
     // comes time to implement this, we can check if a property has nested properties by checking
     // if it is an instance of the Map class.
-    return String.join(",", ImmutableSortedSet.copyOf(properties.keySet()));
+    return Joiner.on(",").join(ImmutableSortedSet.copyOf(properties.keySet()));
   }
 
   void deleteTenant(String tenantId) throws FirebaseAuthException {
