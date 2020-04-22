@@ -730,33 +730,31 @@ public class FirebaseAuthIT {
 
   @Test
   public void testVerifyTokenWithWrongTenantAwareClient() throws Exception {
-    // Create tenants to use.
+    // Create tenant to use.
     TenantManager tenantManager = auth.getTenantManager();
-    Tenant.CreateRequest tenantCreateRequest1 =
-        new Tenant.CreateRequest().setDisplayName("DisplayName1");
-    String tenantId1 = tenantManager.createTenant(tenantCreateRequest1).getTenantId();
-    Tenant.CreateRequest tenantCreateRequest2 =
-        new Tenant.CreateRequest().setDisplayName("DisplayName2");
-    String tenantId2 = tenantManager.createTenant(tenantCreateRequest2).getTenantId();
+    Tenant.CreateRequest tenantCreateRequest =
+        new Tenant.CreateRequest().setDisplayName("DisplayName");
+    String tenantId = tenantManager.createTenant(tenantCreateRequest).getTenantId();
 
     // Create tenant-aware clients.
-    TenantAwareFirebaseAuth tenantAwareAuth1 = auth.getTenantManager().getAuthForTenant(tenantId1);
-    TenantAwareFirebaseAuth tenantAwareAuth2 = auth.getTenantManager().getAuthForTenant(tenantId2);
+    TenantAwareFirebaseAuth tenantAwareAuth1 = auth.getTenantManager().getAuthForTenant(tenantId);
+    TenantAwareFirebaseAuth tenantAwareAuth2 = auth.getTenantManager().getAuthForTenant("OTHER");
 
-    // Create a token with one client and decode with the other.
-    String customToken = tenantAwareAuth1.createCustomTokenAsync("user1").get();
-    String idToken = signInWithCustomToken(customToken, tenantId1);
     try {
-      tenantAwareAuth2.verifyIdTokenAsync(idToken).get();
-      fail("No error thrown for verifying a token with the wrong tenant-aware client");
-    } catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+      // Create a token with one client and decode with the other.
+      String customToken = tenantAwareAuth1.createCustomTokenAsync("user").get();
+      String idToken = signInWithCustomToken(customToken, tenantId);
+      try {
+        tenantAwareAuth2.verifyIdTokenAsync(idToken).get();
+        fail("No error thrown for verifying a token with the wrong tenant-aware client");
+      } catch (ExecutionException e) {
+        assertTrue(e.getCause() instanceof FirebaseAuthException);
+        assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR,
+            ((FirebaseAuthException) e.getCause()).getErrorCode());
+      }
     } finally {
-      // Delete tenants.
-      tenantManager.deleteTenantAsync(tenantId1).get();
-      tenantManager.deleteTenantAsync(tenantId2).get();
+      // Delete tenant.
+      tenantManager.deleteTenantAsync(tenantId).get();
     }
   }
 
