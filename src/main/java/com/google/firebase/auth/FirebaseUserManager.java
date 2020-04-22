@@ -66,6 +66,7 @@ import java.util.Map;
  */
 class FirebaseUserManager {
 
+  static final String TENANT_ID_MISMATCH_ERROR = "tenant-id-mismatch";
   static final String TENANT_NOT_FOUND_ERROR = "tenant-not-found";
   static final String USER_NOT_FOUND_ERROR = "user-not-found";
   static final String INTERNAL_ERROR = "internal-error";
@@ -85,6 +86,7 @@ class FirebaseUserManager {
       .put("INVALID_PHONE_NUMBER", "invalid-phone-number")
       .put("PHONE_NUMBER_EXISTS", "phone-number-already-exists")
       .put("PROJECT_NOT_FOUND", "project-not-found")
+      .put("TENANT_ID_MISMATCH", TENANT_ID_MISMATCH_ERROR)
       .put("TENANT_NOT_FOUND", TENANT_NOT_FOUND_ERROR)
       .put("USER_NOT_FOUND", USER_NOT_FOUND_ERROR)
       .put("WEAK_PASSWORD", "invalid-password")

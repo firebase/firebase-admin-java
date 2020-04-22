@@ -1092,7 +1092,7 @@ public abstract class AbstractFirebaseAuth {
       destroyed.set(true);
     }
   }
-  
+
   /** Performs any additional required clean up. */
   protected abstract void doDestroy();
 

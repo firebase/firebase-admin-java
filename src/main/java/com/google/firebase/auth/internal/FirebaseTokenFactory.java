@@ -25,8 +25,9 @@ import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.util.Base64;
 import com.google.api.client.util.Clock;
 import com.google.api.client.util.StringUtils;
-
 import com.google.common.base.Strings;
+import com.google.firebase.internal.Nullable;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -41,11 +42,18 @@ public class FirebaseTokenFactory {
   private final JsonFactory jsonFactory;
   private final Clock clock;
   private final CryptoSigner signer;
+  private final String tenantId;
 
   public FirebaseTokenFactory(JsonFactory jsonFactory, Clock clock, CryptoSigner signer) {
+    this(jsonFactory, clock, signer, null);
+  }
+
+  public FirebaseTokenFactory(
+      JsonFactory jsonFactory, Clock clock, CryptoSigner signer, @Nullable String tenantId) {
     this.jsonFactory = checkNotNull(jsonFactory);
     this.clock = checkNotNull(clock);
     this.signer = checkNotNull(signer);
+    this.tenantId = tenantId;
   }
 
   String createSignedCustomAuthTokenForUser(String uid) throws IOException {
@@ -68,6 +76,9 @@ public class FirebaseTokenFactory {
             .setAudience(FirebaseCustomAuthToken.FIREBASE_AUDIENCE)
             .setIssuedAtTimeSeconds(issuedAt)
             .setExpirationTimeSeconds(issuedAt + FirebaseCustomAuthToken.TOKEN_DURATION_SECONDS);
+    if (!Strings.isNullOrEmpty(tenantId)) {
+      payload.setTenantId(tenantId);
+    }
 
     if (developerClaims != null) {
       Collection<String> reservedNames = payload.getClassInfo().getNames();

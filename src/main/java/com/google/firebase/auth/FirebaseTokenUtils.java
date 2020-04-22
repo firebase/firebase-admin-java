@@ -30,6 +30,7 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.CryptoSigners;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
+import com.google.firebase.internal.Nullable;
 
 import java.io.IOException;
 
@@ -52,11 +53,17 @@ final class FirebaseTokenUtils {
   private FirebaseTokenUtils() { }
 
   static FirebaseTokenFactory createTokenFactory(FirebaseApp firebaseApp, Clock clock) {
+    return createTokenFactory(firebaseApp, clock, null);
+  }
+
+  static FirebaseTokenFactory createTokenFactory(
+      FirebaseApp firebaseApp, Clock clock, @Nullable String tenantId) {
     try {
       return new FirebaseTokenFactory(
           firebaseApp.getOptions().getJsonFactory(),
           clock,
-          CryptoSigners.getCryptoSigner(firebaseApp));
+          CryptoSigners.getCryptoSigner(firebaseApp),
+          tenantId);
     } catch (IOException e) {
       throw new IllegalStateException(
           "Failed to initialize FirebaseTokenFactory. Make sure to initialize the SDK "
@@ -68,6 +75,11 @@ final class FirebaseTokenUtils {
   }
 
   static FirebaseTokenVerifierImpl createIdTokenVerifier(FirebaseApp app, Clock clock) {
+    return createIdTokenVerifier(app, clock, null);
+  }
+
+  static FirebaseTokenVerifierImpl createIdTokenVerifier(
+      FirebaseApp app, Clock clock, @Nullable String tenantId) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkState(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifyIdToken()");
@@ -82,6 +94,7 @@ final class FirebaseTokenUtils {
         .setJsonFactory(app.getOptions().getJsonFactory())
         .setPublicKeysManager(publicKeysManager)
         .setIdTokenVerifier(idTokenVerifier)
+        .setTenantId(tenantId)
         .build();
   }
 

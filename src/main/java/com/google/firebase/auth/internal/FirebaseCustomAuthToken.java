@@ -22,6 +22,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.util.Key;
 import com.google.firebase.auth.FirebaseToken;
+import com.google.firebase.internal.Nullable;
 
 import java.io.IOException;
 
@@ -77,6 +78,9 @@ public final class FirebaseCustomAuthToken extends IdToken {
     @Key("claims")
     private GenericJson developerClaims;
 
+    @Key("tenant_id")
+    private String tenantId;
+
     public final String getUid() {
       return uid;
     }
@@ -92,6 +96,15 @@ public final class FirebaseCustomAuthToken extends IdToken {
 
     public Payload setDeveloperClaims(GenericJson developerClaims) {
       this.developerClaims = developerClaims;
+      return this;
+    }
+
+    public final String getTenantId() {
+      return tenantId;
+    }
+
+    public Payload setTenantId(String tenantId) {
+      this.tenantId = tenantId;
       return this;
     }
 
