@@ -749,13 +749,13 @@ public class FirebaseAuthIT {
       fail("No error thrown for verifying a token with the wrong tenant-aware client");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH,
+      assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
+    } finally {
+      // Delete tenants.
+      tenantManager.deleteTenantAsync(tenantId1).get();
+      tenantManager.deleteTenantAsync(tenantId2).get();
     }
-
-    // Delete tenants.
-    tenantManager.deleteTenantAsync(tenantId1).get();
-    tenantManager.deleteTenantAsync(tenantId2).get();
   }
 
   @Test

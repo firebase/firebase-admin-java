@@ -61,7 +61,7 @@ public class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
             new Supplier<FirebaseTokenVerifier>() {
               @Override
               public FirebaseTokenVerifier get() {
-                return FirebaseTokenUtils.createSessionCookieVerifier(app, Clock.SYSTEM, tenantId);
+                return FirebaseTokenUtils.createSessionCookieVerifier(app, Clock.SYSTEM);
               }
             })
         .setUserManager(

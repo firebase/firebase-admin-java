@@ -29,6 +29,8 @@ import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.firebase.auth.internal.FirebaseCustomAuthToken;
 import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -216,6 +218,50 @@ public class FirebaseTokenVerifierImplTest {
     tokenVerifier.verifyToken("not.a.jwt");
   }
 
+  @Test
+  public void testVerifyTokenDifferentTenantIds() throws Exception {
+    try {
+      fullyPopulatedBuilder()
+        .setTenantId("TENANT_1")
+        .build()
+        .verifyToken(createTokenWithTenantId("TENANT_2"));
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
+      assertEquals(
+          "The tenant ID ('TENANT_2') of the token did not match the expected ('TENANT_1') value",
+          e.getMessage());
+    }
+  }
+
+  @Test
+  public void testVerifyTokenMissingTenantId() throws Exception {
+    try {
+      fullyPopulatedBuilder()
+        .setTenantId("TENANT_ID")
+        .build()
+        .verifyToken(tokenFactory.createToken());
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
+      assertEquals(
+          "The tenant ID ('null') of the token did not match the expected ('TENANT_ID') value",
+          e.getMessage());
+    }
+  }
+
+  @Test
+  public void testVerifyTokenUnexpectedTenantId() throws Exception {
+    try {
+      fullyPopulatedBuilder()
+        .build()
+        .verifyToken(createTokenWithTenantId("TENANT_ID"));
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
+      assertEquals(
+          "The tenant ID ('TENANT_ID') of the token did not match the expected ('null') value",
+          e.getMessage());
+    }
+  }
+
   @Test(expected = NullPointerException.class)
   public void testBuilderNoPublicKeysManager() {
     fullyPopulatedBuilder().setPublicKeysManager(null).build();
@@ -335,6 +381,12 @@ public class FirebaseTokenVerifierImplTest {
     Payload payload = tokenFactory.createTokenPayload();
     payload.setIssuedAtTimeSeconds(issuedAtSeconds);
     payload.setExpirationTimeSeconds(expirationSeconds);
+    return tokenFactory.createToken(payload);
+  }
+
+  private String createTokenWithTenantId(String tenantId) {
+    Payload payload = tokenFactory.createTokenPayload();
+    payload.set("firebase", ImmutableMap.of("tenant", tenantId));
     return tokenFactory.createToken(payload);
   }
 }
