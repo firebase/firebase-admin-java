@@ -68,7 +68,11 @@ public class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
             new Supplier<FirebaseUserManager>() {
               @Override
               public FirebaseUserManager get() {
-                return new FirebaseUserManager(app, tenantId);
+                return FirebaseUserManager
+                  .builder()
+                  .setFirebaseApp(app)
+                  .setTenantId(tenantId)
+                  .build();
               }
             });
   }

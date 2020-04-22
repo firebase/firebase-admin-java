@@ -35,6 +35,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -758,14 +759,7 @@ public class FirebaseUserManagerTest {
         .build();
 
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    MockHttpTransport transport = new MockHttpTransport.Builder()
-        .setLowLevelHttpResponse(response)
-        .build();
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
-        .setCredentials(credentials)
-        .setProjectId("test-project-id")
-        .setHttpTransport(transport)
-        .build());
+    FirebaseAuth auth = getRetryDisabledAuth(response);
 
     // Test for common HTTP error codes
     for (int code : ImmutableList.of(302, 400, 401, 404, 500)) {
@@ -774,7 +768,7 @@ public class FirebaseUserManagerTest {
         response.setContent("{}");
         response.setStatusCode(code);
         try {
-          operation.call(FirebaseAuth.getInstance());
+          operation.call(auth);
           fail("No error thrown for HTTP error: " + code);
         } catch (ExecutionException e) {
           assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
@@ -792,7 +786,7 @@ public class FirebaseUserManagerTest {
       response.setContent("{\"error\": {\"message\": \"USER_NOT_FOUND\"}}");
       response.setStatusCode(500);
       try {
-        operation.call(FirebaseAuth.getInstance());
+        operation.call(auth);
         fail("No error thrown for HTTP error");
       }  catch (ExecutionException e) {
         assertThat(e.getCause().toString(), e.getCause(), instanceOf(FirebaseAuthException.class));
@@ -820,9 +814,12 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetUserUnexpectedHttpError() throws Exception {
-    initializeAppForUserManagementWithStatusCode(500, "{\"not\" json}");
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
+    response.setContent("{\"not\" json}");
+    response.setStatusCode(500);
+    FirebaseAuth auth = getRetryDisabledAuth(response);
     try {
-      FirebaseAuth.getInstance().getUserAsync("testuser").get();
+      auth.getUserAsync("testuser").get();
       fail("No error thrown for JSON error");
     }  catch (ExecutionException e) {
       assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
@@ -1356,9 +1353,11 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testHttpErrorWithCode() {
-    initializeAppForUserManagementWithStatusCode(500,
-        "{\"error\": {\"message\": \"UNAUTHORIZED_DOMAIN\"}}");
-    FirebaseUserManager userManager = FirebaseAuth.getInstance().getUserManager();
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent("{\"error\": {\"message\": \"UNAUTHORIZED_DOMAIN\"}}")
+        .setStatusCode(500);
+    FirebaseAuth auth = getRetryDisabledAuth(response);
+    FirebaseUserManager userManager = auth.getUserManager();
     try {
       userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
       fail("No exception thrown for HTTP error");
@@ -1370,8 +1369,11 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUnexpectedHttpError() {
-    initializeAppForUserManagementWithStatusCode(500, "{}");
-    FirebaseUserManager userManager = FirebaseAuth.getInstance().getUserManager();
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent("{}")
+        .setStatusCode(500);
+    FirebaseAuth auth = getRetryDisabledAuth(response);
+    FirebaseUserManager userManager = auth.getUserManager();
     try {
       userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
       fail("No exception thrown for HTTP error");
@@ -1416,6 +1418,30 @@ public class FirebaseUserManagerTest {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     interceptor.getResponse().getRequest().getContent().writeTo(out);
     return JSON_FACTORY.fromString(new String(out.toByteArray()), GenericJson.class);
+  }
+
+  private static FirebaseAuth getRetryDisabledAuth(MockLowLevelHttpResponse response) {
+    final MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    final FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(credentials)
+        .setProjectId("test-project-id")
+        .setHttpTransport(transport)
+        .build());
+    return new FirebaseAuth(
+        AbstractFirebaseAuth.builder()
+          .setFirebaseApp(app)
+          .setUserManager(new Supplier<FirebaseUserManager>() {
+            @Override
+            public FirebaseUserManager get() {
+              return FirebaseUserManager
+                .builder()
+                .setFirebaseApp(app)
+                .setHttpRequestFactory(transport.createRequestFactory())
+                .build();
+            }
+          }));
   }
 
   private static void checkUserRecord(UserRecord userRecord) {

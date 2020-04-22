@@ -26,7 +26,6 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
@@ -46,7 +45,7 @@ import com.google.firebase.auth.internal.GetAccountInfoResponse;
 import com.google.firebase.auth.internal.HttpErrorResponse;
 import com.google.firebase.auth.internal.ListTenantsResponse;
 import com.google.firebase.auth.internal.UploadAccountResponse;
-import com.google.firebase.internal.FirebaseRequestInitializer;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.SdkUtils;
@@ -114,21 +113,15 @@ class FirebaseUserManager {
 
   private HttpResponseInterceptor interceptor;
 
-  /**
-   * Creates a new FirebaseUserManager instance.
-   *
-   * @param app A non-null {@link FirebaseApp}.
-   * @param tenantId The associated tenant ID if the user operations should be tenant-aware,
-   *     otherwise {@code null}
-   */
-  FirebaseUserManager(@NonNull FirebaseApp app, @Nullable String tenantId) {
-    checkNotNull(app, "FirebaseApp must not be null");
+  FirebaseUserManager(Builder builder) {
+    FirebaseApp app = checkNotNull(builder.app, "FirebaseApp must not be null");
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkArgument(!Strings.isNullOrEmpty(projectId),
         "Project ID is required to access the auth service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
-    if (tenantId == null) {
+    String tenantId = builder.tenantId;
+    if (builder.tenantId == null) {
       this.userMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v1", projectId);
     } else {
       checkArgument(!tenantId.isEmpty(), "tenant ID must not be empty");
@@ -137,19 +130,8 @@ class FirebaseUserManager {
     }
     this.tenantMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v2", projectId);
     this.jsonFactory = app.getOptions().getJsonFactory();
-    HttpTransport transport = app.getOptions().getHttpTransport();
-    this.requestFactory = transport.createRequestFactory(new FirebaseRequestInitializer(app));
-  }
-
-  /**
-   * Creates a new FirebaseUserManager instance.
-   *
-   * <p>This convenience constructor is for when user operations should not be tenant-aware.
-   *
-   * @param app A non-null {@link FirebaseApp}.
-   */
-  FirebaseUserManager(@NonNull FirebaseApp app) {
-    this(app, null);
+    this.requestFactory = builder.requestFactory == null
+      ? ApiClientUtils.newAuthorizedRequestFactory(app) : builder.requestFactory;
   }
 
   @VisibleForTesting
@@ -438,5 +420,35 @@ class FirebaseUserManager {
     VERIFY_EMAIL,
     EMAIL_SIGNIN,
     PASSWORD_RESET,
+  }
+
+  static Builder builder() {
+    return new Builder();
+  }
+
+  static class Builder {
+
+    private FirebaseApp app;
+    private String tenantId;
+    private HttpRequestFactory requestFactory;
+
+    Builder setFirebaseApp(FirebaseApp app) {
+      this.app = app;
+      return this;
+    }
+
+    Builder setTenantId(String tenantId) {
+      this.tenantId = tenantId;
+      return this;
+    }
+
+    Builder setHttpRequestFactory(HttpRequestFactory requestFactory) {
+      this.requestFactory = requestFactory;
+      return this;
+    }
+
+    FirebaseUserManager build() {
+      return new FirebaseUserManager(this);
+    }
   }
 }

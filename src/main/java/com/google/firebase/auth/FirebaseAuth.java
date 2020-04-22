@@ -116,7 +116,7 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
               new Supplier<FirebaseUserManager>() {
                 @Override
                 public FirebaseUserManager get() {
-                  return new FirebaseUserManager(app);
+                  return FirebaseUserManager.builder().setFirebaseApp(app).build();
                 }
               }));
   }

@@ -1064,11 +1064,11 @@ public abstract class AbstractFirebaseAuth {
   }
 
   protected <T> Supplier<T> threadSafeMemoize(final Supplier<T> supplier) {
-    checkNotNull(supplier);
     return Suppliers.memoize(
         new Supplier<T>() {
           @Override
           public T get() {
+            checkNotNull(supplier);
             synchronized (lock) {
               checkNotDestroyed();
               return supplier.get();

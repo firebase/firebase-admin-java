@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Copyright 2020 Google Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,25 +13,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-name: Continuous Integration
 
-on: pull_request
+set -e
+set -u
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+gpg --quiet --batch --yes --decrypt --passphrase="${GPG_PRIVATE_KEY}" \
+  --output firebase.asc .github/resources/firebase.asc.gpg
 
-    steps:
-    - uses: actions/checkout@v1
+gpg --import firebase.asc
 
-    - name: Set up JDK 1.7
-      uses: actions/setup-java@v1
-      with:
-        java-version: 1.7
+# Does the following:
+#  1. Compiles the source (compile phase)
+#  2. Packages the artifacts - src, bin, javadocs (package phase)
+#  3. Signs the artifacts (verify phase)
+#  4. Publishes artifacts via Nexus (deploy phase)
+mvn -B clean deploy \
+  -Dcheckstyle.skip \
+  -DskipTests \
+  -Prelease \
+  --settings .github/resources/settings.xml
 
-    # Does the following:
-    #  1. Runs the Checkstyle plugin (validate phase)
-    #  2. Compiles the source (compile phase)
-    #  3. Runs the unit tests (test phase)
-    - name: Build with Maven
-      run: mvn -B clean test

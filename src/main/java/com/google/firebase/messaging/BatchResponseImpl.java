@@ -1,5 +1,5 @@
 /*
- * Copyright  2019 Google Inc.
+ * Copyright  2020 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 package com.google.firebase.messaging;
 
+import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
+
 import java.util.List;
 
 /**
@@ -24,12 +26,33 @@ import java.util.List;
  * See {@link FirebaseMessaging#sendAll(List)} and {@link
  * FirebaseMessaging#sendMulticast(MulticastMessage)}.
  */
-public interface BatchResponse {
+class BatchResponseImpl implements BatchResponse {
+
+  private final List<SendResponse> responses;
+  private final int successCount;
+
+  BatchResponseImpl(List<SendResponse> responses) {
+    this.responses = ImmutableList.copyOf(responses);
+    int successCount = 0;
+    for (SendResponse response : this.responses) {
+      if (response.isSuccessful()) {
+        successCount++;
+      }
+    }
+    this.successCount = successCount;
+  }
 
   @NonNull
-  List<SendResponse> getResponses();
+  public List<SendResponse> getResponses() {
+    return responses;
+  }
 
-  int getSuccessCount();
+  public int getSuccessCount() {
+    return successCount;
+  }
 
-  int getFailureCount();
+  public int getFailureCount() {
+    return responses.size() - successCount;
+  }
+
 }
