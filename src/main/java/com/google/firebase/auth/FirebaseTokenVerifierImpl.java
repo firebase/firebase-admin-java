@@ -67,7 +67,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     this.shortName = builder.shortName;
     this.articledShortName = prefixWithIndefiniteArticle(this.shortName);
     this.docUrl = builder.docUrl;
-    this.tenantId = builder.tenantId;
+    this.tenantId = Strings.nullToEmpty(builder.tenantId);
   }
 
   /**
@@ -284,8 +284,8 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
   }
 
   private void checkTenantId(final FirebaseToken firebaseToken) throws FirebaseAuthException {
-    String tokenTenantId = firebaseToken.getTenantId();
-    if (!Strings.nullToEmpty(tokenTenantId).equals(Strings.nullToEmpty(tenantId))) {
+    String tokenTenantId = Strings.nullToEmpty(firebaseToken.getTenantId());
+    if (!this.tenantId.equals(tokenTenantId)) {
       throw new FirebaseAuthException(
           FirebaseUserManager.TENANT_ID_MISMATCH_ERROR,
           String.format(
