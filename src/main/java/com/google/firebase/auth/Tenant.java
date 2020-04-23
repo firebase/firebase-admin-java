@@ -76,7 +76,7 @@ public final class Tenant {
   }
 
   /**
-   * A specification class for creating new user accounts.
+   * A specification class for creating a new tenant.
    *
    * <p>Set the initial attributes of the new tenant by calling various setter methods available in
    * this class. None of the attributes are required.
@@ -116,7 +116,7 @@ public final class Tenant {
     }
 
     /**
-     * Sets whether to  enable email link user authentication.
+     * Sets whether to enable email link user authentication.
      *
      * @param emailLinkSignInEnabled a boolean indicating whether users can be authenticated using
      *     an email link, and false otherwise.
@@ -163,7 +163,7 @@ public final class Tenant {
     }
 
     /**
-     * Sets the display name of the existingtenant.
+     * Sets the display name of the existing tenant.
      *
      * @param displayName a non-null, non-empty display name string.
      */
