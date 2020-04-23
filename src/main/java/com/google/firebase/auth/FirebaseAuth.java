@@ -190,7 +190,7 @@ public class FirebaseAuth extends AbstractFirebaseAuth {
     return verifySessionCookieOp(cookie, checkRevoked).callAsync(getFirebaseApp());
   }
 
-  protected CallableOperation<FirebaseToken, FirebaseAuthException> verifySessionCookieOp(
+  private CallableOperation<FirebaseToken, FirebaseAuthException> verifySessionCookieOp(
       final String cookie, final boolean checkRevoked) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(cookie), "Session cookie must not be null or empty");
