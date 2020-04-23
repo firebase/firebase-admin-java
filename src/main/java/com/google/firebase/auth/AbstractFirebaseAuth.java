@@ -162,7 +162,7 @@ public abstract class AbstractFirebaseAuth {
     return createCustomTokenOp(uid, developerClaims).callAsync(firebaseApp);
   }
 
-  protected CallableOperation<String, FirebaseAuthException> createCustomTokenOp(
+  private CallableOperation<String, FirebaseAuthException> createCustomTokenOp(
       final String uid, final Map<String, Object> developerClaims) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
@@ -211,7 +211,7 @@ public abstract class AbstractFirebaseAuth {
     return createSessionCookieOp(idToken, options).callAsync(firebaseApp);
   }
 
-  protected CallableOperation<String, FirebaseAuthException> createSessionCookieOp(
+  private CallableOperation<String, FirebaseAuthException> createSessionCookieOp(
       final String idToken, final SessionCookieOptions options) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(idToken), "idToken must not be null or empty");
@@ -283,7 +283,7 @@ public abstract class AbstractFirebaseAuth {
     return verifySessionCookieOp(cookie, checkRevoked).callAsync(firebaseApp);
   }
 
-  protected CallableOperation<FirebaseToken, FirebaseAuthException> verifySessionCookieOp(
+  private CallableOperation<FirebaseToken, FirebaseAuthException> verifySessionCookieOp(
       final String cookie, final boolean checkRevoked) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(cookie), "Session cookie must not be null or empty");
@@ -383,7 +383,7 @@ public abstract class AbstractFirebaseAuth {
     return verifyIdTokenOp(idToken, checkRevoked).callAsync(firebaseApp);
   }
 
-  protected CallableOperation<FirebaseToken, FirebaseAuthException> verifyIdTokenOp(
+  private CallableOperation<FirebaseToken, FirebaseAuthException> verifyIdTokenOp(
       final String idToken, final boolean checkRevoked) {
     checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(idToken), "ID token must not be null or empty");
