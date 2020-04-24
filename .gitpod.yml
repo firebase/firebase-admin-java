@@ -1,0 +1,3 @@
+tasks:
+  - init: mvn install -DskipTests=false
+image: gitpod/workspace-full

@@ -1,3 +1,5 @@
+[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/firebase/firebase-admin-java) 
+
 [![Build Status](https://github.com/firebase/firebase-admin-java/workflows/Continuous%20Integration/badge.svg)](https://github.com/firebase/firebase-admin-java/actions)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.firebase/firebase-admin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.firebase/firebase-admin)
 [![Javadoc](https://javadoc-badge.appspot.com/com.google.firebase/firebase-admin.svg)](https://firebase.google.com/docs/reference/admin/java/reference/packages)
