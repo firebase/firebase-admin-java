@@ -84,7 +84,7 @@ public abstract class AuthProviderConfig {
     }
 
     /**
-     * Sets whether to allow the user to sign in with the provider..
+     * Sets whether to allow the user to sign in with the provider.
      *
      * @param enabled a boolean indicating whether the user can sign in with the provider
      */

@@ -21,6 +21,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -80,6 +82,11 @@ public final class OidcProviderConfig extends AuthProviderConfig {
      */
     public CreateRequest setIssuer(String issuer) {
       checkArgument(!Strings.isNullOrEmpty(issuer), "issuer must not be null or empty");
+      try {
+        new URL(issuer);
+      } catch (MalformedURLException e) {
+        throw new IllegalArgumentException(issuer + " is a malformed URL", e);
+      }
       properties.put("issuer", issuer);
       return this;
     }
