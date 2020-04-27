@@ -68,7 +68,7 @@ public abstract class AuthProviderConfig {
     String providerId;
 
     /**
-     * Sets the display name for the new provider.
+     * Sets the ID for the new provider.
      *
      * @param providerId a non-null, non-empty provider ID string.
      */
