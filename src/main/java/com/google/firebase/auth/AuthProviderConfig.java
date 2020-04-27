@@ -29,8 +29,11 @@ import java.util.Map;
  */
 public abstract class AuthProviderConfig {
 
-  @Key("name")
+  // Lazily initialized from 'resourceName'.
   private String providerId;
+
+  @Key("name")
+  private String resourceName;
 
   @Key("displayName")
   private String displayName;
@@ -39,6 +42,9 @@ public abstract class AuthProviderConfig {
   private boolean enabled;
 
   public String getProviderId() {
+    if (providerId == null) {
+      providerId = resourceName.substring(resourceName.lastIndexOf("/") + 1);
+    }
     return providerId;
   }
 
@@ -56,20 +62,25 @@ public abstract class AuthProviderConfig {
    * <p>Set the initial attributes of the new provider by calling various setter methods available
    * in this class.
    */
-  public abstract static class CreateRequest {
+  public abstract static class CreateRequest<T extends CreateRequest<T>> {
 
     final Map<String,Object> properties = new HashMap<>();
+    String providerId;
 
     /**
-     * Sets the ID for the new provider.
+     * Sets the display name for the new provider.
      *
      * @param providerId a non-null, non-empty provider ID string.
      */
-    public CreateRequest setProviderId(String providerId) {
+    public T setProviderId(String providerId) {
       checkArgument(
           !Strings.isNullOrEmpty(providerId), "provider ID name must not be null or empty");
-      properties.put("name", providerId);
-      return this;
+      this.providerId = providerId;
+      return getThis();
+    }
+
+    String getProviderId() {
+      return providerId;
     }
 
     /**
@@ -77,10 +88,10 @@ public abstract class AuthProviderConfig {
      *
      * @param displayName a non-null, non-empty display name string.
      */
-    public CreateRequest setDisplayName(String displayName) {
+    public T setDisplayName(String displayName) {
       checkArgument(!Strings.isNullOrEmpty(displayName), "display name must not be null or empty");
       properties.put("displayName", displayName);
-      return this;
+      return getThis();
     }
 
     /**
@@ -88,13 +99,15 @@ public abstract class AuthProviderConfig {
      *
      * @param enabled a boolean indicating whether the user can sign in with the provider
      */
-    public CreateRequest setEnabled(boolean enabled) {
+    public T setEnabled(boolean enabled) {
       properties.put("enabled", enabled);
-      return this;
+      return getThis();
     }
 
     Map<String, Object> getProperties() {
       return ImmutableMap.copyOf(properties);
     }
+
+    abstract T getThis();
   }
 }
