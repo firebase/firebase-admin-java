@@ -107,7 +107,7 @@ class FirebaseUserManager {
   private static final String CLIENT_VERSION_HEADER = "X-Client-Version";
 
   private final String userMgtBaseUrl;
-  private final String oidpMgtBaseUrl;
+  private final String idpConfigMgtBaseUrl;
   private final String tenantMgtBaseUrl;
   private final JsonFactory jsonFactory;
   private final HttpRequestFactory requestFactory;
@@ -127,11 +127,11 @@ class FirebaseUserManager {
     final String tenantId = builder.tenantId;
     if (tenantId == null) {
       this.userMgtBaseUrl = idToolkitUrlV1;
-      this.oidpMgtBaseUrl = idToolkitUrlV2 + "/oauthIdpConfigs";
+      this.idpConfigMgtBaseUrl = idToolkitUrlV2 + "/oauthIdpConfigs";
     } else {
       checkArgument(!tenantId.isEmpty(), "tenant ID must not be empty");
       this.userMgtBaseUrl = idToolkitUrlV1 + getTenantUrlSuffix(tenantId);
-      this.oidpMgtBaseUrl = idToolkitUrlV2 + getTenantUrlSuffix(tenantId) + "/oauthIdpConfigs";
+      this.idpConfigMgtBaseUrl = idToolkitUrlV2 + getTenantUrlSuffix(tenantId) + "/oauthIdpConfigs";
     }
     this.tenantMgtBaseUrl = idToolkitUrlV2;
     this.jsonFactory = app.getOptions().getJsonFactory();
@@ -323,7 +323,7 @@ class FirebaseUserManager {
 
   OidcProviderConfig createOidcProviderConfig(
       OidcProviderConfig.CreateRequest request) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(oidpMgtBaseUrl);
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl);
     String providerId = request.getProviderId();
     checkArgument(!Strings.isNullOrEmpty(providerId), "provider ID must not be null or empty");
     url.set("oauthIdpConfigId", providerId);
@@ -331,7 +331,7 @@ class FirebaseUserManager {
   }
 
   void deleteProviderConfig(String providerId) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(oidpMgtBaseUrl + "/" + providerId);
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/" + providerId);
     sendRequest("DELETE", url, null, GenericJson.class);
   }
 

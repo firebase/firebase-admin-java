@@ -1425,6 +1425,10 @@ public class FirebaseUserManagerTest {
             .setIssuer("https://oidc.com/issuer");
 
     FirebaseAuth.getInstance().createOidcProviderConfig(createRequest);
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/oauthIdpConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("oidc.provider-id", url.getFirst("oauthIdpConfigId"));
   }
 
   @Test
