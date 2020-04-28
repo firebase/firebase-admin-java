@@ -65,6 +65,7 @@ import java.util.Map;
  */
 class FirebaseUserManager {
 
+  static final String CONFIGURATION_NOT_FOUND = "project-not-found";
   static final String TENANT_ID_MISMATCH_ERROR = "tenant-id-mismatch";
   static final String TENANT_NOT_FOUND_ERROR = "tenant-not-found";
   static final String USER_NOT_FOUND_ERROR = "user-not-found";
@@ -74,7 +75,7 @@ class FirebaseUserManager {
   // SDK error codes defined at: https://firebase.google.com/docs/auth/admin/errors
   private static final Map<String, String> ERROR_CODES = ImmutableMap.<String, String>builder()
       .put("CLAIMS_TOO_LARGE", "claims-too-large")
-      .put("CONFIGURATION_NOT_FOUND", "project-not-found")
+      .put("CONFIGURATION_NOT_FOUND", CONFIGURATION_NOT_FOUND)
       .put("INSUFFICIENT_PERMISSION", "insufficient-permission")
       .put("DUPLICATE_EMAIL", "email-already-exists")
       .put("DUPLICATE_LOCAL_ID", "uid-already-exists")
@@ -106,6 +107,7 @@ class FirebaseUserManager {
   private static final String CLIENT_VERSION_HEADER = "X-Client-Version";
 
   private final String userMgtBaseUrl;
+  private final String oidpMgtBaseUrl;
   private final String tenantMgtBaseUrl;
   private final JsonFactory jsonFactory;
   private final HttpRequestFactory requestFactory;
@@ -120,15 +122,18 @@ class FirebaseUserManager {
         "Project ID is required to access the auth service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
-    String tenantId = builder.tenantId;
-    if (builder.tenantId == null) {
-      this.userMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v1", projectId);
+    final String idToolkitUrlV1 = String.format(ID_TOOLKIT_URL, "v1", projectId);
+    final String idToolkitUrlV2 = String.format(ID_TOOLKIT_URL, "v2", projectId);
+    final String tenantId = builder.tenantId;
+    if (tenantId == null) {
+      this.userMgtBaseUrl = idToolkitUrlV1;
+      this.oidpMgtBaseUrl = idToolkitUrlV2 + "/oauthIdpConfigs";
     } else {
       checkArgument(!tenantId.isEmpty(), "tenant ID must not be empty");
-      this.userMgtBaseUrl =
-          String.format(ID_TOOLKIT_URL, "v1", projectId) + getTenantUrlSuffix(tenantId);
+      this.userMgtBaseUrl = idToolkitUrlV1 + getTenantUrlSuffix(tenantId);
+      this.oidpMgtBaseUrl = idToolkitUrlV2 + getTenantUrlSuffix(tenantId) + "/oauthIdpConfigs";
     }
-    this.tenantMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v2", projectId);
+    this.tenantMgtBaseUrl = idToolkitUrlV2;
     this.jsonFactory = app.getOptions().getJsonFactory();
     this.requestFactory = builder.requestFactory == null
       ? ApiClientUtils.newAuthorizedRequestFactory(app) : builder.requestFactory;
@@ -314,6 +319,20 @@ class FirebaseUserManager {
       }
     }
     throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create email action link");
+  }
+
+  OidcProviderConfig createOidcProviderConfig(
+      OidcProviderConfig.CreateRequest request) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(oidpMgtBaseUrl);
+    String providerId = request.getProviderId();
+    checkArgument(!Strings.isNullOrEmpty(providerId), "provider ID must not be null or empty");
+    url.set("oauthIdpConfigId", providerId);
+    return sendRequest("POST", url, request.getProperties(), OidcProviderConfig.class);
+  }
+
+  void deleteProviderConfig(String providerId) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(oidpMgtBaseUrl + "/" + providerId);
+    sendRequest("DELETE", url, null, GenericJson.class);
   }
 
   private static String getTenantUrlSuffix(String tenantId) {
