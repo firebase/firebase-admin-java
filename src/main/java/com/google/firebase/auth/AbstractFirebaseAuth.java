@@ -31,8 +31,7 @@ import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
 import com.google.firebase.auth.FirebaseUserManager.UserImportRequest;
 import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
 import com.google.firebase.auth.ListUsersPage.PageFactory;
-import com.google.firebase.auth.UserRecord.CreateRequest;
-import com.google.firebase.auth.UserRecord.UpdateRequest;
+import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.NonNull;
@@ -320,7 +319,8 @@ public abstract class AbstractFirebaseAuth {
       @Override
       protected Void execute() throws FirebaseAuthException {
         int currentTimeSeconds = (int) (System.currentTimeMillis() / 1000);
-        UpdateRequest request = new UpdateRequest(uid).setValidSince(currentTimeSeconds);
+        UserRecord.UpdateRequest request =
+            new UserRecord.UpdateRequest(uid).setValidSince(currentTimeSeconds);
         userManager.updateUser(request, jsonFactory);
         return null;
       }
@@ -512,32 +512,33 @@ public abstract class AbstractFirebaseAuth {
 
   /**
    * Creates a new user account with the attributes contained in the specified {@link
-   * CreateRequest}.
+   * UserRecord.CreateRequest}.
    *
-   * @param request A non-null {@link CreateRequest} instance.
+   * @param request A non-null {@link UserRecord.CreateRequest} instance.
    * @return A {@link UserRecord} instance corresponding to the newly created account.
    * @throws NullPointerException if the provided request is null.
    * @throws FirebaseAuthException if an error occurs while creating the user account.
    */
-  public UserRecord createUser(@NonNull CreateRequest request) throws FirebaseAuthException {
+  public UserRecord createUser(@NonNull UserRecord.CreateRequest request)
+      throws FirebaseAuthException {
     return createUserOp(request).call();
   }
 
   /**
-   * Similar to {@link #createUser(CreateRequest)} but performs the operation asynchronously.
+   * Similar to {@link #createUser} but performs the operation asynchronously.
    *
-   * @param request A non-null {@link CreateRequest} instance.
+   * @param request A non-null {@link UserRecord.CreateRequest} instance.
    * @return An {@code ApiFuture} which will complete successfully with a {@link UserRecord}
    *     instance corresponding to the newly created account. If an error occurs while creating the
    *     user account, the future throws a {@link FirebaseAuthException}.
    * @throws NullPointerException if the provided request is null.
    */
-  public ApiFuture<UserRecord> createUserAsync(@NonNull CreateRequest request) {
+  public ApiFuture<UserRecord> createUserAsync(@NonNull UserRecord.CreateRequest request) {
     return createUserOp(request).callAsync(firebaseApp);
   }
 
   private CallableOperation<UserRecord, FirebaseAuthException> createUserOp(
-      final CreateRequest request) {
+      final UserRecord.CreateRequest request) {
     checkNotDestroyed();
     checkNotNull(request, "create request must not be null");
     final FirebaseUserManager userManager = getUserManager();
@@ -552,31 +553,32 @@ public abstract class AbstractFirebaseAuth {
 
   /**
    * Updates an existing user account with the attributes contained in the specified {@link
-   * UpdateRequest}.
+   * UserRecord.UpdateRequest}.
    *
-   * @param request A non-null {@link UpdateRequest} instance.
+   * @param request A non-null {@link UserRecord.UpdateRequest} instance.
    * @return A {@link UserRecord} instance corresponding to the updated user account.
    * @throws NullPointerException if the provided update request is null.
    * @throws FirebaseAuthException if an error occurs while updating the user account.
    */
-  public UserRecord updateUser(@NonNull UpdateRequest request) throws FirebaseAuthException {
+  public UserRecord updateUser(@NonNull UserRecord.UpdateRequest request)
+      throws FirebaseAuthException {
     return updateUserOp(request).call();
   }
 
   /**
-   * Similar to {@link #updateUser(UpdateRequest)} but performs the operation asynchronously.
+   * Similar to {@link #updateUser} but performs the operation asynchronously.
    *
-   * @param request A non-null {@link UpdateRequest} instance.
+   * @param request A non-null {@link UserRecord.UpdateRequest} instance.
    * @return An {@code ApiFuture} which will complete successfully with a {@link UserRecord}
    *     instance corresponding to the updated user account. If an error occurs while updating the
    *     user account, the future throws a {@link FirebaseAuthException}.
    */
-  public ApiFuture<UserRecord> updateUserAsync(@NonNull UpdateRequest request) {
+  public ApiFuture<UserRecord> updateUserAsync(@NonNull UserRecord.UpdateRequest request) {
     return updateUserOp(request).callAsync(firebaseApp);
   }
 
   private CallableOperation<UserRecord, FirebaseAuthException> updateUserOp(
-      final UpdateRequest request) {
+      final UserRecord.UpdateRequest request) {
     checkNotDestroyed();
     checkNotNull(request, "update request must not be null");
     final FirebaseUserManager userManager = getUserManager();
@@ -636,7 +638,8 @@ public abstract class AbstractFirebaseAuth {
     return new CallableOperation<Void, FirebaseAuthException>() {
       @Override
       protected Void execute() throws FirebaseAuthException {
-        final UpdateRequest request = new UpdateRequest(uid).setCustomClaims(claims);
+        final UserRecord.UpdateRequest request =
+            new UserRecord.UpdateRequest(uid).setCustomClaims(claims);
         userManager.updateUser(request, jsonFactory);
         return null;
       }
@@ -917,18 +920,6 @@ public abstract class AbstractFirebaseAuth {
         .callAsync(firebaseApp);
   }
 
-  FirebaseApp getFirebaseApp() {
-    return this.firebaseApp;
-  }
-
-  FirebaseTokenVerifier getCookieVerifier() {
-    return this.cookieVerifier.get();
-  }
-
-  FirebaseUserManager getUserManager() {
-    return this.userManager.get();
-  }
-
   private CallableOperation<String, FirebaseAuthException> generateEmailActionLinkOp(
       final EmailLinkType type, final String email, final ActionCodeSettings settings) {
     checkNotDestroyed();
@@ -943,6 +934,98 @@ public abstract class AbstractFirebaseAuth {
         return userManager.getEmailActionLink(type, email, settings);
       }
     };
+  }
+
+  /**
+   * Creates a new provider OIDC Auth config with the attributes contained in the specified {@link
+   * OidcProviderConfig.CreateRequest}.
+   *
+   * @param request A non-null {@link OidcProviderConfig.CreateRequest} instance.
+   * @return An {@link OidcProviderConfig} instance corresponding to the newly created provider
+   *     config.
+   * @throws NullPointerException if the provided request is null.
+   * @throws FirebaseAuthException if an error occurs while creating the provider config.
+   */
+  public OidcProviderConfig createOidcProviderConfig(
+      @NonNull OidcProviderConfig.CreateRequest request) throws FirebaseAuthException {
+    return createOidcProviderConfigOp(request).call();
+  }
+
+  /**
+   * Similar to {@link #createOidcProviderConfig} but performs the operation asynchronously.
+   *
+   * @param request A non-null {@link OidcProviderConfig.CreateRequest} instance.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link OidcProviderConfig}
+   *     instance corresponding to the newly created provider config. If an error occurs while
+   *     creating the provider config, the future throws a {@link FirebaseAuthException}.
+   * @throws NullPointerException if the provided request is null.
+   */
+  public ApiFuture<OidcProviderConfig> createOidcProviderConfigAsync(
+      @NonNull OidcProviderConfig.CreateRequest request) {
+    return createOidcProviderConfigOp(request).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<OidcProviderConfig, FirebaseAuthException>
+      createOidcProviderConfigOp(final OidcProviderConfig.CreateRequest request) {
+    checkNotDestroyed();
+    checkNotNull(request, "create request must not be null");
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<OidcProviderConfig, FirebaseAuthException>() {
+      @Override
+      protected OidcProviderConfig execute() throws FirebaseAuthException {
+        return userManager.createOidcProviderConfig(request);
+      }
+    };
+  }
+
+  /**
+   * Deletes the provider config identified by the specified provider ID.
+   *
+   * @param providerId A provider ID string.
+   * @throws IllegalArgumentException If the provider ID string is null or empty.
+   * @throws FirebaseAuthException If an error occurs while deleting the provider config.
+   */
+  public void deleteProviderConfig(@NonNull String providerId) throws FirebaseAuthException {
+    deleteProviderConfigOp(providerId).call();
+  }
+
+  /**
+   * Similar to {@link #deleteProviderConfig} but performs the operation asynchronously.
+   *
+   * @param providerId A provider ID string.
+   * @return An {@code ApiFuture} which will complete successfully when the specified provider
+   *     config has been deleted. If an error occurs while deleting the provider config, the future
+   *     throws a {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the provider ID string is null or empty.
+   */
+  public ApiFuture<Void> deleteProviderConfigAsync(String providerId) {
+    return deleteProviderConfigOp(providerId).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<Void, FirebaseAuthException> deleteProviderConfigOp(
+      final String providerId) {
+    checkNotDestroyed();
+    checkArgument(!Strings.isNullOrEmpty(providerId), "provider ID must not be null or empty");
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<Void, FirebaseAuthException>() {
+      @Override
+      protected Void execute() throws FirebaseAuthException {
+        userManager.deleteProviderConfig(providerId);
+        return null;
+      }
+    };
+  }
+
+  FirebaseApp getFirebaseApp() {
+    return this.firebaseApp;
+  }
+
+  FirebaseTokenVerifier getCookieVerifier() {
+    return this.cookieVerifier.get();
+  }
+
+  FirebaseUserManager getUserManager() {
+    return this.userManager.get();
   }
 
   protected <T> Supplier<T> threadSafeMemoize(final Supplier<T> supplier) {

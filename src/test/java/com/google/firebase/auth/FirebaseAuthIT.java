@@ -959,6 +959,69 @@ public class FirebaseAuthIT {
     }
   }
 
+  @Test
+  public void testOidcProviderConfigLifecycle() throws Exception {
+    // Create config provider
+    String providerId = "oidc.provider-id";
+    OidcProviderConfig.CreateRequest createRequest =
+        new OidcProviderConfig.CreateRequest()
+            .setProviderId(providerId)
+            .setDisplayName("DisplayName")
+            .setEnabled(true)
+            .setClientId("ClientId")
+            .setIssuer("https://oidc.com/issuer");
+    OidcProviderConfig config = auth.createOidcProviderConfigAsync(createRequest).get();
+    assertEquals(providerId, config.getProviderId());
+    assertEquals("DisplayName", config.getDisplayName());
+    assertEquals("ClientId", config.getClientId());
+    assertEquals("https://oidc.com/issuer", config.getIssuer());
+
+    // TODO(micahstairs): Test getOidcProviderConfig and updateProviderConfig operations.
+
+    // Delete config provider
+    auth.deleteProviderConfigAsync(providerId).get();
+    // TODO(micahstairs): Once getOidcProviderConfig operation is implemented, add a check here to
+    // double-check that the config provider was deleted.
+  }
+
+  @Test
+  public void testTenantAwareOidcProviderConfigLifecycle() throws Exception {
+    // Create tenant to use.
+    TenantManager tenantManager = auth.getTenantManager();
+    Tenant.CreateRequest tenantCreateRequest =
+        new Tenant.CreateRequest().setDisplayName("DisplayName");
+    String tenantId = tenantManager.createTenant(tenantCreateRequest).getTenantId();
+
+    try {
+      // Create config provider
+      TenantAwareFirebaseAuth tenantAwareAuth = auth.getTenantManager().getAuthForTenant(tenantId);
+      String providerId = "oidc.provider-id";
+      OidcProviderConfig.CreateRequest createRequest =
+          new OidcProviderConfig.CreateRequest()
+              .setProviderId(providerId)
+              .setDisplayName("DisplayName")
+              .setEnabled(true)
+              .setClientId("ClientId")
+              .setIssuer("https://oidc.com/issuer");
+      OidcProviderConfig config =
+          tenantAwareAuth.createOidcProviderConfigAsync(createRequest).get();
+      assertEquals(providerId, config.getProviderId());
+      assertEquals("DisplayName", config.getDisplayName());
+      assertEquals("ClientId", config.getClientId());
+      assertEquals("https://oidc.com/issuer", config.getIssuer());
+
+      // TODO(micahstairs): Test getOidcProviderConfig and updateProviderConfig operations.
+
+      // Delete config provider
+      tenantAwareAuth.deleteProviderConfigAsync(providerId).get();
+      // TODO(micahstairs): Once getOidcProviderConfig operation is implemented, add a check here to
+      // double-check that the config provider was deleted.
+    } finally {
+      // Delete tenant.
+      tenantManager.deleteTenantAsync(tenantId).get();
+    }
+  }
+
   private Map<String, String> parseLinkParameters(String link) throws Exception {
     Map<String, String> result = new HashMap<>();
     int queryBegin = link.indexOf('?');

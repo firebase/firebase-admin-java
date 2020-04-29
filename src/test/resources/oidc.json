@@ -1,0 +1,7 @@
+{
+  "name": "projects/projectId/oauthIdpConfigs/oidc.provider-id",
+  "displayName" : "DISPLAY_NAME",
+  "enabled" : true,
+  "clientId" : "CLIENT_ID",
+  "issuer" : "https://oidc.com/issuer"
+}
