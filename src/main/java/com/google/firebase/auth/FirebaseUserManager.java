@@ -65,7 +65,7 @@ import java.util.Map;
  */
 class FirebaseUserManager {
 
-  static final String CONFIGURATION_NOT_FOUND = "project-not-found";
+  static final String CONFIGURATION_NOT_FOUND = "configuration-not-found";
   static final String TENANT_ID_MISMATCH_ERROR = "tenant-id-mismatch";
   static final String TENANT_NOT_FOUND_ERROR = "tenant-not-found";
   static final String USER_NOT_FOUND_ERROR = "user-not-found";
