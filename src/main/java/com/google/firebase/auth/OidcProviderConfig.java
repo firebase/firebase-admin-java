@@ -53,7 +53,8 @@ public final class OidcProviderConfig extends AuthProviderConfig {
    * <p>Set the initial attributes of the new provider by calling various setter methods available
    * in this class.
    */
-  public static final class CreateRequest extends AuthProviderConfig.CreateRequest<CreateRequest> {
+  public static final class CreateRequest
+      extends AuthProviderConfig.AbstractCreateRequest<CreateRequest> {
 
     /**
      * Creates a new {@link CreateRequest}, which can be used to create a new OIDC Auth provider.

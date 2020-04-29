@@ -56,7 +56,7 @@ public abstract class AuthProviderConfig {
    * <p>Set the initial attributes of the new provider by calling various setter methods available
    * in this class.
    */
-  public abstract static class CreateRequest<T extends CreateRequest<T>> {
+  public abstract static class AbstractCreateRequest<T extends AbstractCreateRequest<T>> {
 
     final Map<String,Object> properties = new HashMap<>();
     String providerId;
