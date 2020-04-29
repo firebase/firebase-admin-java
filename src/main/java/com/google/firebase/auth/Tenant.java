@@ -31,9 +31,6 @@ import java.util.Map;
  */
 public final class Tenant {
 
-  // Lazily initialized from 'resourceName'.
-  private String tenantId;
-
   @Key("name")
   private String resourceName;
 
@@ -47,10 +44,7 @@ public final class Tenant {
   private boolean emailLinkSignInEnabled;
 
   public String getTenantId() {
-    if (tenantId == null) {
-      tenantId = resourceName.substring(resourceName.lastIndexOf("/") + 1);
-    }
-    return tenantId;
+    return resourceName.substring(resourceName.lastIndexOf("/") + 1);
   }
 
   public String getDisplayName() {
