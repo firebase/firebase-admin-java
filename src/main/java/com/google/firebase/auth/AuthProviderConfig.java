@@ -29,9 +29,6 @@ import java.util.Map;
  */
 public abstract class AuthProviderConfig {
 
-  // Lazily initialized from 'resourceName'.
-  private String providerId;
-
   @Key("name")
   private String resourceName;
 
@@ -42,10 +39,7 @@ public abstract class AuthProviderConfig {
   private boolean enabled;
 
   public String getProviderId() {
-    if (providerId == null) {
-      providerId = resourceName.substring(resourceName.lastIndexOf("/") + 1);
-    }
-    return providerId;
+    return resourceName.substring(resourceName.lastIndexOf("/") + 1);
   }
 
   public String getDisplayName() {
