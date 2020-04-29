@@ -27,10 +27,7 @@ import java.util.Map;
 /**
  * The base class for Auth providers.
  */
-public abstract class AuthProviderConfig {
-
-  // Lazily initialized from 'resourceName'.
-  private String providerId;
+public abstract class ProviderConfig {
 
   @Key("name")
   private String resourceName;
@@ -42,10 +39,7 @@ public abstract class AuthProviderConfig {
   private boolean enabled;
 
   public String getProviderId() {
-    if (providerId == null) {
-      providerId = resourceName.substring(resourceName.lastIndexOf("/") + 1);
-    }
-    return providerId;
+    return resourceName.substring(resourceName.lastIndexOf("/") + 1);
   }
 
   public String getDisplayName() {
@@ -62,7 +56,7 @@ public abstract class AuthProviderConfig {
    * <p>Set the initial attributes of the new provider by calling various setter methods available
    * in this class.
    */
-  public abstract static class CreateRequest<T extends CreateRequest<T>> {
+  public abstract static class AbstractCreateRequest<T extends AbstractCreateRequest<T>> {
 
     final Map<String,Object> properties = new HashMap<>();
     String providerId;

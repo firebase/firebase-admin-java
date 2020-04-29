@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.auth.ProviderConfig.AbstractCreateRequest;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -31,7 +32,7 @@ import java.util.Map;
  *
  * <p>Instances of this class are immutable and thread safe.
  */
-public final class OidcProviderConfig extends AuthProviderConfig {
+public final class OidcProviderConfig extends ProviderConfig {
 
   @Key("clientId")
   private String clientId;
@@ -53,13 +54,13 @@ public final class OidcProviderConfig extends AuthProviderConfig {
    * <p>Set the initial attributes of the new provider by calling various setter methods available
    * in this class.
    */
-  public static final class CreateRequest extends AuthProviderConfig.CreateRequest<CreateRequest> {
+  public static final class CreateRequest extends AbstractCreateRequest<CreateRequest> {
 
     /**
      * Creates a new {@link CreateRequest}, which can be used to create a new OIDC Auth provider.
      *
      * <p>The returned object should be passed to
-     * {@link AbstractFirebaseAuth#createProviderConfig(CreateRequest)} to register the provider
+     * {@link AbstractFirebaseAuth#createOidcProviderConfig(CreateRequest)} to register the provider
      * information persistently.
      */
     public CreateRequest() { }
