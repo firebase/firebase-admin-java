@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * The base class for Auth providers.
  */
-public abstract class AuthProviderConfig {
+public abstract class ProviderConfig {
 
   @Key("name")
   private String resourceName;
