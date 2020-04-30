@@ -976,17 +976,27 @@ public class FirebaseAuthIT {
     assertEquals("ClientId", config.getClientId());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
 
-    // TODO(micahstairs): Test getOidcProviderConfig and updateProviderConfig operations.
+    try {
+      // Get config provider
+      config = auth.getOidcProviderConfigAsync(providerId).get();
+      assertEquals(providerId, config.getProviderId());
+      assertEquals("DisplayName", config.getDisplayName());
+      assertEquals("ClientId", config.getClientId());
+      assertEquals("https://oidc.com/issuer", config.getIssuer());
 
-    // Delete config provider
-    auth.deleteProviderConfigAsync(providerId).get();
-    // TODO(micahstairs): Once getOidcProviderConfig operation is implemented, add a check here to
-    // double-check that the config provider was deleted.
+      // TODO(micahstairs): Test updateProviderConfig operation
+
+    } finally {
+      // Delete config provider
+      auth.deleteProviderConfigAsync(providerId).get();
+    }
+
+    assertOidcProviderConfigDoesNotExist(auth, providerId);
   }
 
   @Test
   public void testTenantAwareOidcProviderConfigLifecycle() throws Exception {
-    // Create tenant to use.
+    // Create tenant to use
     TenantManager tenantManager = auth.getTenantManager();
     Tenant.CreateRequest tenantCreateRequest =
         new Tenant.CreateRequest().setDisplayName("DisplayName");
@@ -1010,12 +1020,22 @@ public class FirebaseAuthIT {
       assertEquals("ClientId", config.getClientId());
       assertEquals("https://oidc.com/issuer", config.getIssuer());
 
-      // TODO(micahstairs): Test getOidcProviderConfig and updateProviderConfig operations.
+      try {
+        // Get config provider
+        config = tenantAwareAuth.getOidcProviderConfigAsync(providerId).get();
+        assertEquals(providerId, config.getProviderId());
+        assertEquals("DisplayName", config.getDisplayName());
+        assertEquals("ClientId", config.getClientId());
+        assertEquals("https://oidc.com/issuer", config.getIssuer());
 
-      // Delete config provider
-      tenantAwareAuth.deleteProviderConfigAsync(providerId).get();
-      // TODO(micahstairs): Once getOidcProviderConfig operation is implemented, add a check here to
-      // double-check that the config provider was deleted.
+        // TODO(micahstairs): Test updateProviderConfig operation
+
+      } finally {
+        // Delete config provider
+        tenantAwareAuth.deleteProviderConfigAsync(providerId).get();
+      }
+
+      assertOidcProviderConfigDoesNotExist(tenantAwareAuth, providerId);
     } finally {
       // Delete tenant.
       tenantManager.deleteTenantAsync(tenantId).get();
@@ -1149,6 +1169,19 @@ public class FirebaseAuthIT {
       final String email = ("test" + uid.substring(0, 12) + "@example."
           + uid.substring(12) + ".com").toLowerCase();
       return new RandomUser(uid, email);
+    }
+  }
+
+
+  private static void assertOidcProviderConfigDoesNotExist(
+      AbstractFirebaseAuth firebaseAuth, String providerId) throws Exception {
+    try {
+      firebaseAuth.getOidcProviderConfigAsync(providerId).get();
+      fail("No error thrown for getting a deleted provider config");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR,
+          ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
 
