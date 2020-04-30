@@ -1116,6 +1116,46 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
+   * Gets the provider OIDC Auth config corresponding to the specified provider ID.
+   *
+   * @param providerId A provider ID string.
+   * @return An {@link OidcProviderConfig} instance.
+   * @throws IllegalArgumentException If the provider ID string is null or empty.
+   * @throws FirebaseAuthException If an error occurs while retrieving the provider config.
+   */
+  public OidcProviderConfig getOidcProviderConfig(@NonNull String providerId)
+      throws FirebaseAuthException {
+    return getOidcProviderConfigOp(providerId).call();
+  }
+
+  /**
+   * Similar to {@link #getOidcProviderConfig(String)} but performs the operation asynchronously.
+   *
+   * @param providerId A provider ID string.
+   * @return An {@code ApiFuture} which will complete successfully with an
+   *     {@link OidcProviderConfig} instance. If an error occurs while retrieving the provider
+   *     config or if the specified provider ID does not exist, the future throws a
+   *     {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the provider ID string is null or empty.
+   */
+  public ApiFuture<OidcProviderConfig> getOidcProviderConfigAsync(@NonNull String providerId) {
+    return getOidcProviderConfigOp(providerId).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<OidcProviderConfig, FirebaseAuthException>
+      getOidcProviderConfigOp(final String providerId) {
+    checkNotDestroyed();
+    checkArgument(!Strings.isNullOrEmpty(providerId), "provider ID must not be null or empty");
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<OidcProviderConfig, FirebaseAuthException>() {
+      @Override
+      protected OidcProviderConfig execute() throws FirebaseAuthException {
+        return userManager.getOidcProviderConfig(providerId);
+      }
+    };
+  }
+
+  /**
    * Deletes the provider config identified by the specified provider ID.
    *
    * @param providerId A provider ID string.

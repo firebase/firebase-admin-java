@@ -1717,6 +1717,49 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testGetOidcProviderConfig() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+
+    OidcProviderConfig config =
+        FirebaseAuth.getInstance().getOidcProviderConfig("oidc.provider-id");
+
+    checkOidcProviderConfig(config);
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
+  }
+
+  @Test
+  public void testGetOidcProviderConfigWithNotFoundError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"CONFIGURATION_NOT_FOUND\"}}");
+    try {
+      FirebaseAuth.getInstance().getOidcProviderConfig("oidc.provider-id");
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
+  }
+
+  @Test
+  public void testGetTenantAwareOidcProviderConfig() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        TestUtils.loadResource("oidc.json"));
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+
+    OidcProviderConfig config = tenantAwareAuth.getOidcProviderConfig("oidc.provider-id");
+
+    checkOidcProviderConfig(config);
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/TENANT_ID/oauthIdpConfigs/oidc.provider-id");
+  }
+
+
+  @Test
   public void testDeleteProviderConfig() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
 
@@ -1735,7 +1778,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().deleteProviderConfig("UNKNOWN");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND, e.getErrorCode());
+      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/oauthIdpConfigs/UNKNOWN");
   }

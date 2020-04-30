@@ -69,7 +69,7 @@ import java.util.Set;
  */
 class FirebaseUserManager {
 
-  static final String CONFIGURATION_NOT_FOUND = "configuration-not-found";
+  static final String CONFIGURATION_NOT_FOUND_ERROR = "configuration-not-found";
   static final String TENANT_ID_MISMATCH_ERROR = "tenant-id-mismatch";
   static final String TENANT_NOT_FOUND_ERROR = "tenant-not-found";
   static final String USER_NOT_FOUND_ERROR = "user-not-found";
@@ -79,7 +79,7 @@ class FirebaseUserManager {
   // SDK error codes defined at: https://firebase.google.com/docs/auth/admin/errors
   private static final Map<String, String> ERROR_CODES = ImmutableMap.<String, String>builder()
       .put("CLAIMS_TOO_LARGE", "claims-too-large")
-      .put("CONFIGURATION_NOT_FOUND", CONFIGURATION_NOT_FOUND)
+      .put("CONFIGURATION_NOT_FOUND", CONFIGURATION_NOT_FOUND_ERROR)
       .put("INSUFFICIENT_PERMISSION", "insufficient-permission")
       .put("DUPLICATE_EMAIL", "email-already-exists")
       .put("DUPLICATE_LOCAL_ID", "uid-already-exists")
@@ -378,6 +378,11 @@ class FirebaseUserManager {
     checkArgument(!Strings.isNullOrEmpty(providerId), "provider ID must not be null or empty");
     url.set("oauthIdpConfigId", providerId);
     return sendRequest("POST", url, request.getProperties(), OidcProviderConfig.class);
+  }
+
+  OidcProviderConfig getOidcProviderConfig(String providerId) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/oauthIdpConfigs/" + providerId);
+    return sendRequest("GET", url, null, OidcProviderConfig.class);
   }
 
   void deleteProviderConfig(String providerId) throws FirebaseAuthException {
