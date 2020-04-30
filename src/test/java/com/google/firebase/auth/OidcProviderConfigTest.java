@@ -71,7 +71,41 @@ public class OidcProviderConfigTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testInvalidIssuerUrl() {
+  public void testCreateRequestInvalidIssuerUrl() {
     new OidcProviderConfig.CreateRequest().setIssuer("not a valid url");
+  }
+
+  @Test
+  public void testUpdateRequestFromOidcProviderConfig() throws IOException {
+    OidcProviderConfig config = jsonFactory.fromString(OIDC_JSON_STRING, OidcProviderConfig.class);
+
+    OidcProviderConfig.UpdateRequest updateRequest = config.updateRequest();
+
+    assertEquals("oidc.provider-id", updateRequest.getProviderId());
+    assertTrue(updateRequest.getProperties().isEmpty());
+  }
+
+  @Test
+  public void testUpdateRequest() throws IOException {
+    OidcProviderConfig.UpdateRequest updateRequest =
+        new OidcProviderConfig.UpdateRequest("oidc.provider-id");
+    updateRequest
+      .setDisplayName("DISPLAY_NAME")
+      .setEnabled(false)
+      .setClientId("CLIENT_ID")
+      .setIssuer("https://oidc.com/issuer");
+
+    assertEquals("oidc.provider-id", updateRequest.getProviderId());
+    Map<String,Object> properties = updateRequest.getProperties();
+    assertEquals(properties.size(), 4);
+    assertEquals("DISPLAY_NAME", (String) properties.get("displayName"));
+    assertFalse((boolean) properties.get("enabled"));
+    assertEquals("CLIENT_ID", (String) properties.get("clientId"));
+    assertEquals("https://oidc.com/issuer", (String) properties.get("issuer"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testUpdateRequestInvalidIssuerUrl() {
+    new OidcProviderConfig.UpdateRequest("oidc.provider-id").setIssuer("not a valid url");
   }
 }

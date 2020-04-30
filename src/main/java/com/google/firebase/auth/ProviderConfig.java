@@ -104,4 +104,48 @@ public abstract class ProviderConfig {
 
     abstract T getThis();
   }
+
+  /**
+   * A base class for updating the attributes of an existing provider.
+   */
+  public abstract static class AbstractUpdateRequest<T extends AbstractUpdateRequest<T>> {
+
+    final String providerId;
+    final Map<String,Object> properties = new HashMap<>();
+
+    AbstractUpdateRequest(String providerId) {
+      this.providerId = providerId;
+    }
+
+    String getProviderId() {
+      return providerId;
+    }
+
+    /**
+     * Sets the display name for the existing provider.
+     *
+     * @param displayName a non-null, non-empty display name string.
+     */
+    public T setDisplayName(String displayName) {
+      checkArgument(!Strings.isNullOrEmpty(displayName), "display name must not be null or empty");
+      properties.put("displayName", displayName);
+      return getThis();
+    }
+
+    /**
+     * Sets whether to allow the user to sign in with the provider.
+     *
+     * @param enabled a boolean indicating whether the user can sign in with the provider
+     */
+    public T setEnabled(boolean enabled) {
+      properties.put("enabled", enabled);
+      return getThis();
+    }
+
+    Map<String, Object> getProperties() {
+      return ImmutableMap.copyOf(properties);
+    }
+
+    abstract T getThis();
+  }
 }
