@@ -134,7 +134,6 @@ public final class OidcProviderConfig extends ProviderConfig {
      */
     public UpdateRequest(String providerId) {
       super(providerId);
-      checkArgument(!Strings.isNullOrEmpty(providerId), "provider ID must not be null or empty");
     }
 
     /**

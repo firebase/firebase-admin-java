@@ -105,6 +105,11 @@ public class OidcProviderConfigTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
+  public void testUpdateRequestMissingProviderId() {
+    new OidcProviderConfig.UpdateRequest(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
   public void testUpdateRequestInvalidIssuerUrl() {
     new OidcProviderConfig.UpdateRequest("oidc.provider-id").setIssuer("not a valid url");
   }

@@ -114,6 +114,7 @@ public abstract class ProviderConfig {
     final Map<String,Object> properties = new HashMap<>();
 
     AbstractUpdateRequest(String providerId) {
+      checkArgument(!Strings.isNullOrEmpty(providerId), "provider ID must not be null or empty");
       this.providerId = providerId;
     }
 

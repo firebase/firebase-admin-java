@@ -1531,10 +1531,8 @@ public class FirebaseUserManagerTest {
     GenericUrl url = interceptor.getResponse().getRequest().getUrl();
     assertEquals("displayName", url.getFirst("updateMask"));
     GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals(1, parsed.size());
     assertEquals("DISPLAY_NAME", parsed.get("displayName"));
-    assertNull(parsed.get("enabled"));
-    assertNull(parsed.get("clientId"));
-    assertNull(parsed.get("issuer"));
   }
 
   @Test
