@@ -71,6 +71,11 @@ public class OidcProviderConfigTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
+  public void testCreateRequestMissingClientId() {
+    new OidcProviderConfig.CreateRequest().setClientId(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
   public void testCreateRequestInvalidIssuerUrl() {
     new OidcProviderConfig.CreateRequest().setIssuer("not a valid url");
   }
@@ -107,6 +112,11 @@ public class OidcProviderConfigTest {
   @Test(expected = IllegalArgumentException.class)
   public void testUpdateRequestMissingProviderId() {
     new OidcProviderConfig.UpdateRequest(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testUpdateRequestMissingClientId() {
+    new OidcProviderConfig.UpdateRequest("oidc.provider-id").setClientId(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
