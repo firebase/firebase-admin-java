@@ -256,14 +256,6 @@ class FirebaseUserManager {
     return sendRequest("PATCH", url, properties, Tenant.class);
   }
 
-  private static String generateMask(Map<String, Object> properties) {
-    // This implementation does not currently handle the case of nested properties. This is fine
-    // since we do not currently generate masks for any properties with nested values. When it
-    // comes time to implement this, we can check if a property has nested properties by checking
-    // if it is an instance of the Map class.
-    return Joiner.on(",").join(ImmutableSortedSet.copyOf(properties.keySet()));
-  }
-
   void deleteTenant(String tenantId) throws FirebaseAuthException {
     GenericUrl url = new GenericUrl(tenantMgtBaseUrl + getTenantUrlSuffix(tenantId));
     sendRequest("DELETE", url, null, GenericJson.class);
@@ -330,19 +322,43 @@ class FirebaseUserManager {
     return sendRequest("POST", url, request.getProperties(), OidcProviderConfig.class);
   }
 
+  OidcProviderConfig updateOidcProviderConfig(OidcProviderConfig.UpdateRequest request)
+      throws FirebaseAuthException {
+    Map<String, Object> properties = request.getProperties();
+    checkArgument(!properties.isEmpty(),
+        "provider config update must have at least one property set");
+    GenericUrl url =
+        new GenericUrl(idpConfigMgtBaseUrl + getOidcUrlSuffix(request.getProviderId()));
+    url.put("updateMask", generateMask(properties));
+    return sendRequest("PATCH", url, properties, OidcProviderConfig.class);
+  }
+
   OidcProviderConfig getOidcProviderConfig(String providerId) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/oauthIdpConfigs/" + providerId);
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + getOidcUrlSuffix(providerId));
     return sendRequest("GET", url, null, OidcProviderConfig.class);
   }
 
   void deleteProviderConfig(String providerId) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/oauthIdpConfigs/" + providerId);
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + getOidcUrlSuffix(providerId));
     sendRequest("DELETE", url, null, GenericJson.class);
   }
 
+  private static String generateMask(Map<String, Object> properties) {
+    // This implementation does not currently handle the case of nested properties. This is fine
+    // since we do not currently generate masks for any properties with nested values. When it
+    // comes time to implement this, we can check if a property has nested properties by checking
+    // if it is an instance of the Map class.
+    return Joiner.on(",").join(ImmutableSortedSet.copyOf(properties.keySet()));
+  }
+
   private static String getTenantUrlSuffix(String tenantId) {
-    checkArgument(!Strings.isNullOrEmpty(tenantId));
+    checkArgument(!Strings.isNullOrEmpty(tenantId), "tenant ID must not be null or empty");
     return "/tenants/" + tenantId;
+  }
+
+  private static String getOidcUrlSuffix(String providerId) {
+    checkArgument(!Strings.isNullOrEmpty(providerId), "provider ID must not be null or empty");
+    return "/oauthIdpConfigs/" + providerId;
   }
 
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {
