@@ -22,6 +22,7 @@ import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.ProviderConfig.AbstractCreateRequest;
+import com.google.firebase.auth.ProviderConfig.AbstractUpdateRequest;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -46,6 +47,24 @@ public final class OidcProviderConfig extends ProviderConfig {
 
   public String getIssuer() {
     return issuer;
+  }
+
+  /**
+   * Returns a new {@link UpdateRequest}, which can be used to update the attributes of this
+   * provider config.
+   *
+   * @return a non-null {@link UpdateRequest} instance.
+   */
+  public UpdateRequest updateRequest() {
+    return new UpdateRequest(getProviderId());
+  }
+
+  private static void assertValidUrl(String url) throws IllegalArgumentException {
+    try {
+      new URL(url);
+    } catch (MalformedURLException e) {
+      throw new IllegalArgumentException(url + " is a malformed URL", e);
+    }
   }
 
   /**
@@ -83,16 +102,64 @@ public final class OidcProviderConfig extends ProviderConfig {
      */
     public CreateRequest setIssuer(String issuer) {
       checkArgument(!Strings.isNullOrEmpty(issuer), "issuer must not be null or empty");
-      try {
-        new URL(issuer);
-      } catch (MalformedURLException e) {
-        throw new IllegalArgumentException(issuer + " is a malformed URL", e);
-      }
+      assertValidUrl(issuer);
       properties.put("issuer", issuer);
       return this;
     }
 
     CreateRequest getThis() {
+      return this;
+    }
+  }
+
+  /**
+   * A specification class for updating an existing OIDC Auth provider.
+   *
+   * <p>An instance of this class can be obtained via a {@link OidcProviderConfig} object, or from
+   * a provider ID string. Specify the changes to be made to the provider config by calling the
+   * various setter methods available in this class.
+   */
+  public static final class UpdateRequest extends AbstractUpdateRequest<UpdateRequest> {
+
+    /**
+     * Creates a new {@link UpdateRequest}, which can be used to updates an existing OIDC Auth
+     * provider.
+     *
+     * <p>The returned object should be passed to
+     * {@link AbstractFirebaseAuth#updateOidcProviderConfig(CreateRequest)} to update the provider
+     * information persistently.
+     *
+     * @param tenantId a non-null, non-empty provider ID string.
+     * @throws IllegalArgumentException If the provider ID is null or empty.
+     */
+    public UpdateRequest(String providerId) {
+      super(providerId);
+    }
+
+    /**
+     * Sets the client ID for the exsting provider.
+     *
+     * @param clientId a non-null, non-empty client ID string.
+     */
+    public UpdateRequest setClientId(String clientId) {
+      checkArgument(!Strings.isNullOrEmpty(clientId), "client ID must not be null or empty");
+      properties.put("clientId", clientId);
+      return this;
+    }
+
+    /**
+     * Sets the issuer for the existing provider.
+     *
+     * @param issuer a non-null, non-empty issuer string.
+     */
+    public UpdateRequest setIssuer(String issuer) {
+      checkArgument(!Strings.isNullOrEmpty(issuer), "issuer must not be null or empty");
+      assertValidUrl(issuer);
+      properties.put("issuer", issuer);
+      return this;
+    }
+
+    UpdateRequest getThis() {
       return this;
     }
   }

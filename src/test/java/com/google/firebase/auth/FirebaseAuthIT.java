@@ -1074,6 +1074,7 @@ public class FirebaseAuthIT {
     OidcProviderConfig config = auth.createOidcProviderConfigAsync(createRequest).get();
     assertEquals(providerId, config.getProviderId());
     assertEquals("DisplayName", config.getDisplayName());
+    assertTrue(config.isEnabled());
     assertEquals("ClientId", config.getClientId());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
 
@@ -1082,11 +1083,23 @@ public class FirebaseAuthIT {
       config = auth.getOidcProviderConfigAsync(providerId).get();
       assertEquals(providerId, config.getProviderId());
       assertEquals("DisplayName", config.getDisplayName());
+      assertTrue(config.isEnabled());
       assertEquals("ClientId", config.getClientId());
       assertEquals("https://oidc.com/issuer", config.getIssuer());
 
-      // TODO(micahstairs): Test updateProviderConfig operation
-
+      // Update config provider
+      OidcProviderConfig.UpdateRequest updateRequest =
+          new OidcProviderConfig.UpdateRequest(providerId)
+              .setDisplayName("NewDisplayName")
+              .setEnabled(false)
+              .setClientId("NewClientId")
+              .setIssuer("https://oidc.com/new-issuer");
+      config = auth.updateOidcProviderConfigAsync(updateRequest).get();
+      assertEquals(providerId, config.getProviderId());
+      assertEquals("NewDisplayName", config.getDisplayName());
+      assertFalse(config.isEnabled());
+      assertEquals("NewClientId", config.getClientId());
+      assertEquals("https://oidc.com/new-issuer", config.getIssuer());
     } finally {
       // Delete config provider
       auth.deleteProviderConfigAsync(providerId).get();
@@ -1129,8 +1142,19 @@ public class FirebaseAuthIT {
         assertEquals("ClientId", config.getClientId());
         assertEquals("https://oidc.com/issuer", config.getIssuer());
 
-        // TODO(micahstairs): Test updateProviderConfig operation
-
+        // Update config provider
+        OidcProviderConfig.UpdateRequest updateRequest =
+            new OidcProviderConfig.UpdateRequest(providerId)
+                .setDisplayName("NewDisplayName")
+                .setEnabled(false)
+                .setClientId("NewClientId")
+                .setIssuer("https://oidc.com/new-issuer");
+        config = tenantAwareAuth.updateOidcProviderConfigAsync(updateRequest).get();
+        assertEquals(providerId, config.getProviderId());
+        assertEquals("NewDisplayName", config.getDisplayName());
+        assertFalse(config.isEnabled());
+        assertEquals("NewClientId", config.getClientId());
+        assertEquals("https://oidc.com/new-issuer", config.getIssuer());
       } finally {
         // Delete config provider
         tenantAwareAuth.deleteProviderConfigAsync(providerId).get();

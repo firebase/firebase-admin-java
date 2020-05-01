@@ -1116,6 +1116,46 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
+   * Updates an existing OIDC Auth provider config with the attributes contained in the specified
+   * {@link OidcProviderConfig.UpdateRequest}.
+   *
+   * @param request A non-null {@link OidcProviderConfig.UpdateRequest} instance.
+   * @return A {@link OidcProviderConfig} instance corresponding to the updated provider config.
+   * @throws NullPointerException if the provided update request is null.
+   * @throws FirebaseAuthException if an error occurs while updating the provider config.
+   */
+  public OidcProviderConfig updateOidcProviderConfig(
+      @NonNull OidcProviderConfig.UpdateRequest request) throws FirebaseAuthException {
+    return updateOidcProviderConfigOp(request).call();
+  }
+
+  /**
+   * Similar to {@link #updateOidcProviderConfig} but performs the operation asynchronously.
+   *
+   * @param request A non-null {@link OidcProviderConfig.UpdateRequest} instance.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link OidcProviderConfig}
+   *     instance corresponding to the updated provider config. If an error occurs while updating
+   *     the provider config, the future throws a {@link FirebaseAuthException}.
+   */
+  public ApiFuture<OidcProviderConfig> updateOidcProviderConfigAsync(
+      @NonNull OidcProviderConfig.UpdateRequest request) {
+    return updateOidcProviderConfigOp(request).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<OidcProviderConfig, FirebaseAuthException> updateOidcProviderConfigOp(
+      final OidcProviderConfig.UpdateRequest request) {
+    checkNotDestroyed();
+    checkNotNull(request, "update request must not be null");
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<OidcProviderConfig, FirebaseAuthException>() {
+      @Override
+      protected OidcProviderConfig execute() throws FirebaseAuthException {
+        return userManager.updateOidcProviderConfig(request);
+      }
+    };
+  }
+
+  /**
    * Gets the provider OIDC Auth config corresponding to the specified provider ID.
    *
    * @param providerId A provider ID string.

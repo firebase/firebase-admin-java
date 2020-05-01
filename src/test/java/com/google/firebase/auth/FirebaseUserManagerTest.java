@@ -1717,6 +1717,108 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testUpdateOidcProvider() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+    OidcProviderConfig.UpdateRequest request =
+        new OidcProviderConfig.UpdateRequest("oidc.provider-id")
+            .setDisplayName("DISPLAY_NAME")
+            .setEnabled(true)
+            .setClientId("CLIENT_ID")
+            .setIssuer("https://oidc.com/issuer");
+
+    OidcProviderConfig config = FirebaseAuth.getInstance().updateOidcProviderConfig(request);
+
+    checkOidcProviderConfig(config);
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("clientId,displayName,enabled,issuer", url.getFirst("updateMask"));
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertTrue((boolean) parsed.get("enabled"));
+    assertEquals("CLIENT_ID", parsed.get("clientId"));
+    assertEquals("https://oidc.com/issuer", parsed.get("issuer"));
+  }
+
+  @Test
+  public void testUpdateOidcProviderMinimal() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+    OidcProviderConfig.UpdateRequest request =
+        new OidcProviderConfig.UpdateRequest("oidc.provider-id").setDisplayName("DISPLAY_NAME");
+
+    OidcProviderConfig config = FirebaseAuth.getInstance().updateOidcProviderConfig(request);
+
+    checkOidcProviderConfig(config);
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("displayName", url.getFirst("updateMask"));
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals(1, parsed.size());
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+  }
+
+  @Test
+  public void testUpdateOidcProviderConfigNoValues() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+    try {
+      FirebaseAuth.getInstance().updateOidcProviderConfig(
+          new OidcProviderConfig.UpdateRequest("oidc.provider-id"));
+      fail("No error thrown for empty provider config update");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testUpdateOidcProviderConfigError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+    OidcProviderConfig.UpdateRequest request =
+        new OidcProviderConfig.UpdateRequest("oidc.provider-id").setDisplayName("DISPLAY_NAME");
+    try {
+      FirebaseAuth.getInstance().updateOidcProviderConfig(request);
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
+  }
+
+  @Test
+  public void testTenantAwareUpdateOidcProvider() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        TestUtils.loadResource("oidc.json"));
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+    OidcProviderConfig.UpdateRequest request =
+        new OidcProviderConfig.UpdateRequest("oidc.provider-id")
+            .setDisplayName("DISPLAY_NAME")
+            .setEnabled(true)
+            .setClientId("CLIENT_ID")
+            .setIssuer("https://oidc.com/issuer");
+
+    OidcProviderConfig config = tenantAwareAuth.updateOidcProviderConfig(request);
+
+    checkOidcProviderConfig(config);
+    checkRequestHeaders(interceptor);
+    String expectedUrl = TENANTS_BASE_URL + "/TENANT_ID/oauthIdpConfigs/oidc.provider-id";
+    checkUrl(interceptor, "PATCH", expectedUrl);
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("clientId,displayName,enabled,issuer", url.getFirst("updateMask"));
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertTrue((boolean) parsed.get("enabled"));
+    assertEquals("CLIENT_ID", parsed.get("clientId"));
+    assertEquals("https://oidc.com/issuer", parsed.get("issuer"));
+  }
+
+  @Test
   public void testGetOidcProviderConfig() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("oidc.json"));

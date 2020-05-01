@@ -60,10 +60,9 @@ public final class Tenant {
   }
 
   /**
-   * Returns a new {@link UpdateRequest}, which can be used to update the attributes
-   * of this tenant.
+   * Returns a new {@link UpdateRequest}, which can be used to update the attributes of this tenant.
    *
-   * @return a non-null Tenant.UpdateRequest instance.
+   * @return a non-null {@link UpdateRequest} instance.
    */
   public UpdateRequest updateRequest() {
     return new UpdateRequest(getTenantId());
