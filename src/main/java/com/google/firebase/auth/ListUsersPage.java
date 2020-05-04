@@ -80,7 +80,8 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
   @Override
   public ListUsersPage getNextPage() {
     if (hasNextPage()) {
-      PageFactory factory = new PageFactory(source, maxResults, currentBatch.getNextPageToken());
+      UserPageFactory factory =
+          new UserPageFactory(source, maxResults, currentBatch.getNextPageToken());
       try {
         return factory.create();
       } catch (FirebaseAuthException e) {
@@ -237,17 +238,17 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
    * before attempting to load any user data (which is expensive, and hence may be performed
    * asynchronously on a separate thread).
    */
-  static class PageFactory {
+  static class UserPageFactory {
 
     private final UserSource source;
     private final int maxResults;
     private final String pageToken;
 
-    PageFactory(@NonNull UserSource source) {
+    UserPageFactory(@NonNull UserSource source) {
       this(source, FirebaseUserManager.MAX_LIST_USERS_RESULTS, null);
     }
 
-    PageFactory(@NonNull UserSource source, int maxResults, @Nullable String pageToken) {
+    UserPageFactory(@NonNull UserSource source, int maxResults, @Nullable String pageToken) {
       checkArgument(maxResults > 0 && maxResults <= FirebaseUserManager.MAX_LIST_USERS_RESULTS,
           "maxResults must be a positive integer that does not exceed %s",
           FirebaseUserManager.MAX_LIST_USERS_RESULTS);
