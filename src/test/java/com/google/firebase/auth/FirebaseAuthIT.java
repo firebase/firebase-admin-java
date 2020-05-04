@@ -66,6 +66,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+// TODO(micahstairs): Move tenant-aware tests into a seperate class, so that we only need to
+// create and destroy the tenant once.
 public class FirebaseAuthIT {
 
   private static final String VERIFY_CUSTOM_TOKEN_URL =
@@ -1088,10 +1090,8 @@ public class FirebaseAuthIT {
           auth.listOidcProviderConfigsAsync(null).get();
       while (page != null) {
         for (OidcProviderConfig providerConfig : page.getValues()) {
-          if (providerIds.contains(providerConfig.getProviderId())) {
+          if (checkProviderConfig(providerIds, providerConfig)) {
             collected.incrementAndGet();
-            assertEquals("CLIENT_ID", providerConfig.getClientId());
-            assertEquals("https://oidc.com/issuer", providerConfig.getIssuer());
           }
         }
         page = page.getNextPage();
@@ -1102,10 +1102,8 @@ public class FirebaseAuthIT {
       collected.set(0);
       page = auth.listOidcProviderConfigsAsync(null).get();
       for (OidcProviderConfig providerConfig : page.iterateAll()) {
-        if (providerIds.contains(providerConfig.getProviderId())) {
+        if (checkProviderConfig(providerIds, providerConfig)) {
           collected.incrementAndGet();
-          assertEquals("CLIENT_ID", providerConfig.getClientId());
-          assertEquals("https://oidc.com/issuer", providerConfig.getIssuer());
         }
       }
       assertEquals(providerIds.size(), collected.get());
@@ -1128,10 +1126,8 @@ public class FirebaseAuthIT {
             @Override
             public void onSuccess(ListProviderConfigsPage<OidcProviderConfig> result) {
               for (OidcProviderConfig providerConfig : result.iterateAll()) {
-                if (providerIds.contains(providerConfig.getProviderId())) {
+                if (checkProviderConfig(providerIds, providerConfig)) {
                   collected.incrementAndGet();
-                  assertEquals("CLIENT_ID", providerConfig.getClientId());
-                  assertEquals("https://oidc.com/issuer", providerConfig.getIssuer());
                 }
               }
               semaphore.release();
@@ -1177,10 +1173,8 @@ public class FirebaseAuthIT {
         ListProviderConfigsPage<OidcProviderConfig> page =
             tenantAwareAuth.listOidcProviderConfigsAsync(null).get();
         for (OidcProviderConfig providerConfig : page.iterateAll()) {
-          if (providerIds.contains(providerConfig.getProviderId())) {
+          if (checkProviderConfig(providerIds, providerConfig)) {
             collected.incrementAndGet();
-            assertEquals("CLIENT_ID", providerConfig.getClientId());
-            assertEquals("https://oidc.com/issuer", providerConfig.getIssuer());
           }
         }
         assertEquals(providerIds.size(), collected.get());
@@ -1325,6 +1319,15 @@ public class FirebaseAuthIT {
           + uid.substring(12) + ".com").toLowerCase();
       return new RandomUser(uid, email);
     }
+  }
+
+  private boolean checkProviderConfig(List<String> providerIds, OidcProviderConfig config) {
+    if (providerIds.contains(config.getProviderId())) {
+      assertEquals("CLIENT_ID", config.getClientId());
+      assertEquals("https://oidc.com/issuer", config.getIssuer());
+      return true;
+    }
+    return false;
   }
 
 

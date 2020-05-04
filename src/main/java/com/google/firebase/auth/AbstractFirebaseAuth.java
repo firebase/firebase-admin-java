@@ -29,10 +29,10 @@ import com.google.common.base.Suppliers;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
 import com.google.firebase.auth.FirebaseUserManager.UserImportRequest;
+import com.google.firebase.auth.ListProviderConfigsPage;
 import com.google.firebase.auth.ListProviderConfigsPage.DefaultOidcProviderConfigSource;
-import com.google.firebase.auth.ListProviderConfigsPage.ProviderConfigPageFactory;
+import com.google.firebase.auth.ListUsersPage;
 import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
-import com.google.firebase.auth.ListUsersPage.UserPageFactory;
 import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.internal.CallableOperation;
@@ -503,7 +503,7 @@ public abstract class AbstractFirebaseAuth {
     checkNotDestroyed();
     final FirebaseUserManager userManager = getUserManager();
     final DefaultUserSource source = new DefaultUserSource(userManager, jsonFactory);
-    final UserPageFactory factory = new UserPageFactory(source, maxResults, pageToken);
+    final ListUsersPage.Factory factory = new ListUsersPage.Factory(source, maxResults, pageToken);
     return new CallableOperation<ListUsersPage, FirebaseAuthException>() {
       @Override
       protected ListUsersPage execute() throws FirebaseAuthException {
@@ -1035,6 +1035,7 @@ public abstract class AbstractFirebaseAuth {
 
   /**
    * Similar to {@link #getOidcProviderConfig(String)} but performs the operation asynchronously.
+   * Page size will be limited to 100 provider configs.
    *
    * @param providerId A provider ID string.
    * @return An {@code ApiFuture} which will complete successfully with an
@@ -1079,7 +1080,7 @@ public abstract class AbstractFirebaseAuth {
 
   /**
    * Similar to {@link #listlistOidcProviderConfigs(String)} but performs the operation
-   * asynchronously.
+   * asynchronously. Page size will be limited to 100 provider configs.
    *
    * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
    *     configs.
@@ -1120,8 +1121,8 @@ public abstract class AbstractFirebaseAuth {
     checkNotDestroyed();
     final FirebaseUserManager userManager = getUserManager();
     final DefaultOidcProviderConfigSource source = new DefaultOidcProviderConfigSource(userManager);
-    final ProviderConfigPageFactory<OidcProviderConfig> factory =
-        new ProviderConfigPageFactory<OidcProviderConfig>(source, maxResults, pageToken);
+    final ListProviderConfigsPage.Factory<OidcProviderConfig> factory =
+        new ListProviderConfigsPage.Factory<OidcProviderConfig>(source, maxResults, pageToken);
     return
       new CallableOperation<ListProviderConfigsPage<OidcProviderConfig>, FirebaseAuthException>() {
         @Override

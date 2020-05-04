@@ -89,8 +89,7 @@ public class ListProviderConfigsPage<T extends ProviderConfig> implements Page<T
   @Override
   public ListProviderConfigsPage<T> getNextPage() {
     if (hasNextPage()) {
-      ProviderConfigPageFactory<T> factory =
-          new ProviderConfigPageFactory<T>(source, maxResults, currentBatch.getPageToken());
+      Factory<T> factory = new Factory<T>(source, maxResults, currentBatch.getPageToken());
       try {
         return factory.create();
       } catch (FirebaseAuthException e) {
@@ -224,17 +223,17 @@ public class ListProviderConfigsPage<T extends ProviderConfig> implements Page<T
    * <p>Performs argument validation before attempting to load any provider config data (which is
    * expensive, and hence may be performed asynchronously on a separate thread).
    */
-  static class ProviderConfigPageFactory<T extends ProviderConfig> {
+  static class Factory<T extends ProviderConfig> {
 
     private final ProviderConfigSource<T> source;
     private final int maxResults;
     private final String pageToken;
 
-    ProviderConfigPageFactory(@NonNull ProviderConfigSource<T> source) {
+    Factory(@NonNull ProviderConfigSource<T> source) {
       this(source, FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS, null);
     }
 
-    ProviderConfigPageFactory(
+    Factory(
         @NonNull ProviderConfigSource source,
         int maxResults,
         @Nullable String pageToken) {
