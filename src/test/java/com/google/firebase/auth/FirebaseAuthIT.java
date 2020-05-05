@@ -66,6 +66,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+// TODO(micahstairs): Move tenant-aware tests into a seperate class, so that we only need to
+// create and destroy the tenant once.
 public class FirebaseAuthIT {
 
   private static final String VERIFY_CUSTOM_TOKEN_URL =
@@ -1167,6 +1169,129 @@ public class FirebaseAuthIT {
     }
   }
 
+  @Test
+  public void testListOidcProviderConfigs() throws Exception {
+    final List<String> providerIds = new ArrayList<>();
+
+    try {
+      // Create provider configs
+      for (int i = 0; i < 3; i++) {
+        String providerId = "oidc.provider-id" + i;
+        providerIds.add(providerId);
+        OidcProviderConfig.CreateRequest createRequest = new OidcProviderConfig.CreateRequest()
+            .setProviderId(providerId)
+            .setClientId("CLIENT_ID")
+            .setIssuer("https://oidc.com/issuer");
+        auth.createOidcProviderConfig(createRequest);
+      }
+
+      // Test list by batches
+      final AtomicInteger collected = new AtomicInteger(0);
+      ListProviderConfigsPage<OidcProviderConfig> page =
+          auth.listOidcProviderConfigsAsync(null).get();
+      while (page != null) {
+        for (OidcProviderConfig providerConfig : page.getValues()) {
+          if (checkProviderConfig(providerIds, providerConfig)) {
+            collected.incrementAndGet();
+          }
+        }
+        page = page.getNextPage();
+      }
+      assertEquals(providerIds.size(), collected.get());
+
+      // Test iterate all
+      collected.set(0);
+      page = auth.listOidcProviderConfigsAsync(null).get();
+      for (OidcProviderConfig providerConfig : page.iterateAll()) {
+        if (checkProviderConfig(providerIds, providerConfig)) {
+          collected.incrementAndGet();
+        }
+      }
+      assertEquals(providerIds.size(), collected.get());
+
+      // Test iterate async
+      collected.set(0);
+      final Semaphore semaphore = new Semaphore(0);
+      final AtomicReference<Throwable> error = new AtomicReference<>();
+      ApiFuture<ListProviderConfigsPage<OidcProviderConfig>> pageFuture =
+          auth.listOidcProviderConfigsAsync(null);
+      ApiFutures.addCallback(
+          pageFuture,
+          new ApiFutureCallback<ListProviderConfigsPage<OidcProviderConfig>>() {
+            @Override
+            public void onFailure(Throwable t) {
+              error.set(t);
+              semaphore.release();
+            }
+
+            @Override
+            public void onSuccess(ListProviderConfigsPage<OidcProviderConfig> result) {
+              for (OidcProviderConfig providerConfig : result.iterateAll()) {
+                if (checkProviderConfig(providerIds, providerConfig)) {
+                  collected.incrementAndGet();
+                }
+              }
+              semaphore.release();
+            }
+          }, MoreExecutors.directExecutor());
+      semaphore.acquire();
+      assertEquals(providerIds.size(), collected.get());
+      assertNull(error.get());
+    } finally {
+      // Delete provider configs
+      for (String providerId : providerIds) {
+        auth.deleteProviderConfigAsync(providerId).get();
+      }
+    }
+  }
+
+  @Test
+  public void testTenantAwareListOidcProviderConfigs() throws Exception {
+    // Create tenant to use
+    TenantManager tenantManager = auth.getTenantManager();
+    Tenant.CreateRequest tenantCreateRequest =
+        new Tenant.CreateRequest().setDisplayName("DisplayName");
+    String tenantId = tenantManager.createTenant(tenantCreateRequest).getTenantId();
+    TenantAwareFirebaseAuth tenantAwareAuth = auth.getTenantManager().getAuthForTenant(tenantId);
+
+    try {
+      final List<String> providerIds = new ArrayList<>();
+      try {
+
+        // Create provider configs
+        for (int i = 0; i < 3; i++) {
+          String providerId = "oidc.provider-id" + i;
+          providerIds.add(providerId);
+          OidcProviderConfig.CreateRequest createRequest = new OidcProviderConfig.CreateRequest()
+              .setProviderId(providerId)
+              .setClientId("CLIENT_ID")
+              .setIssuer("https://oidc.com/issuer");
+          tenantAwareAuth.createOidcProviderConfig(createRequest);
+        }
+
+        // List provider configs
+        final AtomicInteger collected = new AtomicInteger(0);
+        ListProviderConfigsPage<OidcProviderConfig> page =
+            tenantAwareAuth.listOidcProviderConfigsAsync(null).get();
+        for (OidcProviderConfig providerConfig : page.iterateAll()) {
+          if (checkProviderConfig(providerIds, providerConfig)) {
+            collected.incrementAndGet();
+          }
+        }
+        assertEquals(providerIds.size(), collected.get());
+
+      } finally {
+        // Delete provider configs
+        for (String providerId : providerIds) {
+          tenantAwareAuth.deleteProviderConfigAsync(providerId).get();
+        }
+      }
+    } finally {
+      // Delete tenant
+      tenantManager.deleteTenantAsync(tenantId).get();
+    }
+  }
+
   private Map<String, String> parseLinkParameters(String link) throws Exception {
     Map<String, String> result = new HashMap<>();
     int queryBegin = link.indexOf('?');
@@ -1295,6 +1420,15 @@ public class FirebaseAuthIT {
           + uid.substring(12) + ".com").toLowerCase();
       return new RandomUser(uid, email);
     }
+  }
+
+  private boolean checkProviderConfig(List<String> providerIds, OidcProviderConfig config) {
+    if (providerIds.contains(config.getProviderId())) {
+      assertEquals("CLIENT_ID", config.getClientId());
+      assertEquals("https://oidc.com/issuer", config.getIssuer());
+      return true;
+    }
+    return false;
   }
 
 

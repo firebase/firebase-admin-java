@@ -29,8 +29,10 @@ import com.google.common.base.Suppliers;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
 import com.google.firebase.auth.FirebaseUserManager.UserImportRequest;
+import com.google.firebase.auth.ListProviderConfigsPage;
+import com.google.firebase.auth.ListProviderConfigsPage.DefaultOidcProviderConfigSource;
+import com.google.firebase.auth.ListUsersPage;
 import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
-import com.google.firebase.auth.ListUsersPage.PageFactory;
 import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.internal.CallableOperation;
@@ -503,8 +505,8 @@ public abstract class AbstractFirebaseAuth {
       @Nullable final String pageToken, final int maxResults) {
     checkNotDestroyed();
     final FirebaseUserManager userManager = getUserManager();
-    final PageFactory factory =
-        new PageFactory(new DefaultUserSource(userManager, jsonFactory), maxResults, pageToken);
+    final DefaultUserSource source = new DefaultUserSource(userManager, jsonFactory);
+    final ListUsersPage.Factory factory = new ListUsersPage.Factory(source, maxResults, pageToken);
     return new CallableOperation<ListUsersPage, FirebaseAuthException>() {
       @Override
       protected ListUsersPage execute() throws FirebaseAuthException {
@@ -1170,6 +1172,7 @@ public abstract class AbstractFirebaseAuth {
 
   /**
    * Similar to {@link #getOidcProviderConfig(String)} but performs the operation asynchronously.
+   * Page size will be limited to 100 provider configs.
    *
    * @param providerId A provider ID string.
    * @return An {@code ApiFuture} which will complete successfully with an
@@ -1192,6 +1195,78 @@ public abstract class AbstractFirebaseAuth {
       protected OidcProviderConfig execute() throws FirebaseAuthException {
         return userManager.getOidcProviderConfig(providerId);
       }
+    };
+  }
+
+  /**
+   * Gets a page of OIDC Auth provider configs starting from the specified {@code pageToken}.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @param maxResults Maximum number of provider configs to include in the returned page. This may
+   *     not exceed 100.
+   * @return A {@link ListProviderConfigsPage} instance.
+   * @throws IllegalArgumentException If the specified page token is empty, or max results value is
+   *     invalid.
+   * @throws FirebaseAuthException If an error occurs while retrieving user data.
+   */
+  public ListProviderConfigsPage<OidcProviderConfig> listOidcProviderConfigs(
+        @Nullable String pageToken, int maxResults) throws FirebaseAuthException {
+    return listOidcProviderConfigsOp(pageToken, maxResults).call();
+  }
+
+  /**
+   * Similar to {@link #listlistOidcProviderConfigs(String)} but performs the operation
+   * asynchronously. Page size will be limited to 100 provider configs.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @return An {@code ApiFuture} which will complete successfully with a
+   *     {@link ListProviderConfigsPage} instance. If an error occurs while retrieving provider
+   *     config data, the future throws an exception.
+   * @throws IllegalArgumentException If the specified page token is empty.
+   */
+  public ApiFuture<ListProviderConfigsPage<OidcProviderConfig>> listOidcProviderConfigsAsync(
+      @Nullable String pageToken) {
+    return listOidcProviderConfigsAsync(
+        pageToken,
+        FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS);
+  }
+
+  /**
+   * Similar to {@link #listOidcProviderConfigs(String, int)} but performs the operation
+   * asynchronously.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @param maxResults Maximum number of provider configs to include in the returned page. This may
+   *     not exceed 100.
+   * @return An {@code ApiFuture} which will complete successfully with a
+   *     {@link ListProviderConfigsPage} instance. If an error occurs while retrieving provider
+   *     config data, the future throws an exception.
+   * @throws IllegalArgumentException If the specified page token is empty, or max results value is
+   *     invalid.
+   */
+  public ApiFuture<ListProviderConfigsPage<OidcProviderConfig>> listOidcProviderConfigsAsync(
+      @Nullable String pageToken,
+      int maxResults) {
+    return listOidcProviderConfigsOp(pageToken, maxResults).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<ListProviderConfigsPage<OidcProviderConfig>, FirebaseAuthException>
+      listOidcProviderConfigsOp(@Nullable final String pageToken, final int maxResults) {
+    checkNotDestroyed();
+    final FirebaseUserManager userManager = getUserManager();
+    final DefaultOidcProviderConfigSource source = new DefaultOidcProviderConfigSource(userManager);
+    final ListProviderConfigsPage.Factory<OidcProviderConfig> factory =
+        new ListProviderConfigsPage.Factory<OidcProviderConfig>(source, maxResults, pageToken);
+    return
+      new CallableOperation<ListProviderConfigsPage<OidcProviderConfig>, FirebaseAuthException>() {
+        @Override
+        protected ListProviderConfigsPage<OidcProviderConfig> execute()
+            throws FirebaseAuthException {
+          return factory.create();
+        }
     };
   }
 
