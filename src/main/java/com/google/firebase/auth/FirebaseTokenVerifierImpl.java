@@ -289,7 +289,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
       throw new FirebaseAuthException(
           FirebaseUserManager.TENANT_ID_MISMATCH_ERROR,
           String.format(
-            "The tenant ID ('%s') of the token did not match the expected ('%s') value",
+            "The tenant ID ('%s') of the token did not match the expected value ('%s')",
             tokenTenantId,
             tenantId));
     }

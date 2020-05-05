@@ -201,7 +201,7 @@ public class ListTenantsPage implements Page<Tenant> {
     private final FirebaseUserManager userManager;
 
     DefaultTenantSource(FirebaseUserManager userManager) {
-      this.userManager = checkNotNull(userManager, "user manager must not be null");
+      this.userManager = checkNotNull(userManager, "User manager must not be null.");
     }
 
     @Override
@@ -231,8 +231,8 @@ public class ListTenantsPage implements Page<Tenant> {
       checkArgument(maxResults > 0 && maxResults <= FirebaseUserManager.MAX_LIST_TENANTS_RESULTS,
           "maxResults must be a positive integer that does not exceed %s",
           FirebaseUserManager.MAX_LIST_TENANTS_RESULTS);
-      checkArgument(!END_OF_LIST.equals(pageToken), "invalid end of list page token");
-      this.source = checkNotNull(source, "source must not be null");
+      checkArgument(!END_OF_LIST.equals(pageToken), "Invalid end of list page token.");
+      this.source = checkNotNull(source, "Source must not be null.");
       this.maxResults = maxResults;
       this.pageToken = pageToken;
     }

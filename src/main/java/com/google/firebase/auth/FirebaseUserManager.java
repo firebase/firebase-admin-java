@@ -124,7 +124,7 @@ class FirebaseUserManager {
     if (builder.tenantId == null) {
       this.userMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v1", projectId);
     } else {
-      checkArgument(!tenantId.isEmpty(), "tenant ID must not be empty");
+      checkArgument(!tenantId.isEmpty(), "Tenant ID must not be empty");
       this.userMgtBaseUrl =
           String.format(ID_TOOLKIT_URL, "v1", projectId) + getTenantUrlSuffix(tenantId);
     }
@@ -245,7 +245,7 @@ class FirebaseUserManager {
 
   Tenant updateTenant(Tenant.UpdateRequest request) throws FirebaseAuthException {
     Map<String, Object> properties = request.getProperties();
-    checkArgument(!properties.isEmpty(), "tenant update must have at least one property set");
+    checkArgument(!properties.isEmpty(), "Tenant update must have at least one property set");
     GenericUrl url = new GenericUrl(tenantMgtBaseUrl + getTenantUrlSuffix(request.getTenantId()));
     url.put("updateMask", generateMask(properties));
     return sendRequest("PATCH", url, properties, Tenant.class);
@@ -270,7 +270,7 @@ class FirebaseUserManager {
         ImmutableMap.<String, Object>builder().put("pageSize", maxResults);
     if (pageToken != null) {
       checkArgument(!pageToken.equals(
-          ListTenantsPage.END_OF_LIST), "invalid end of list page token");
+          ListTenantsPage.END_OF_LIST), "Invalid end of list page token");
       builder.put("pageToken", pageToken);
     }
 

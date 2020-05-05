@@ -77,7 +77,7 @@ public class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
             });
   }
 
-  /** Returns the corresponding tenant ID. */
+  /** Returns the client's tenant ID. */
   public String getTenantId() {
     return tenantId;
   }

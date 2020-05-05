@@ -228,7 +228,7 @@ public class FirebaseTokenVerifierImplTest {
     } catch (FirebaseAuthException e) {
       assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
       assertEquals(
-          "The tenant ID ('TENANT_2') of the token did not match the expected ('TENANT_1') value",
+          "The tenant ID ('TENANT_2') of the token did not match the expected value ('TENANT_1')",
           e.getMessage());
     }
   }
@@ -243,7 +243,7 @@ public class FirebaseTokenVerifierImplTest {
     } catch (FirebaseAuthException e) {
       assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
       assertEquals(
-          "The tenant ID ('') of the token did not match the expected ('TENANT_ID') value",
+          "The tenant ID ('') of the token did not match the expected value ('TENANT_ID')",
           e.getMessage());
     }
   }
@@ -257,7 +257,7 @@ public class FirebaseTokenVerifierImplTest {
     } catch (FirebaseAuthException e) {
       assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
       assertEquals(
-          "The tenant ID ('TENANT_ID') of the token did not match the expected ('') value",
+          "The tenant ID ('TENANT_ID') of the token did not match the expected value ('')",
           e.getMessage());
     }
   }
