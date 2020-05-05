@@ -1400,7 +1400,7 @@ public class FirebaseUserManagerTest {
 
     OidcProviderConfig config = FirebaseAuth.getInstance().createOidcProviderConfig(createRequest);
 
-    checkOidcProviderConfig(config);
+    checkOidcProviderConfig(config, "oidc.provider-id");
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/oauthIdpConfigs");
     GenericJson parsed = parseRequestContent(interceptor);
@@ -1416,11 +1416,11 @@ public class FirebaseUserManagerTest {
   public void testCreateOidcProviderMinimal() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("oidc.json"));
-    // Only the 'enabled' field can be omitted from an OIDC provider config creation request.
+    // Only the 'enabled' and 'displayName' fields can be omitted from an OIDC provider config
+    // creation request.
     OidcProviderConfig.CreateRequest createRequest =
         new OidcProviderConfig.CreateRequest()
             .setProviderId("oidc.provider-id")
-            .setDisplayName("DISPLAY_NAME")
             .setClientId("CLIENT_ID")
             .setIssuer("https://oidc.com/issuer");
 
@@ -1428,7 +1428,7 @@ public class FirebaseUserManagerTest {
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/oauthIdpConfigs");
     GenericJson parsed = parseRequestContent(interceptor);
-    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertNull(parsed.get("displayName"));
     assertNull(parsed.get("enabled"));
     assertEquals("CLIENT_ID", parsed.get("clientId"));
     assertEquals("https://oidc.com/issuer", parsed.get("issuer"));
@@ -1504,7 +1504,7 @@ public class FirebaseUserManagerTest {
 
     OidcProviderConfig config = FirebaseAuth.getInstance().updateOidcProviderConfig(request);
 
-    checkOidcProviderConfig(config);
+    checkOidcProviderConfig(config, "oidc.provider-id");
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
     GenericUrl url = interceptor.getResponse().getRequest().getUrl();
@@ -1525,7 +1525,7 @@ public class FirebaseUserManagerTest {
 
     OidcProviderConfig config = FirebaseAuth.getInstance().updateOidcProviderConfig(request);
 
-    checkOidcProviderConfig(config);
+    checkOidcProviderConfig(config, "oidc.provider-id");
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
     GenericUrl url = interceptor.getResponse().getRequest().getUrl();
@@ -1580,7 +1580,7 @@ public class FirebaseUserManagerTest {
 
     OidcProviderConfig config = tenantAwareAuth.updateOidcProviderConfig(request);
 
-    checkOidcProviderConfig(config);
+    checkOidcProviderConfig(config, "oidc.provider-id");
     checkRequestHeaders(interceptor);
     String expectedUrl = TENANTS_BASE_URL + "/TENANT_ID/oauthIdpConfigs/oidc.provider-id";
     checkUrl(interceptor, "PATCH", expectedUrl);
@@ -1601,7 +1601,7 @@ public class FirebaseUserManagerTest {
     OidcProviderConfig config =
         FirebaseAuth.getInstance().getOidcProviderConfig("oidc.provider-id");
 
-    checkOidcProviderConfig(config);
+    checkOidcProviderConfig(config, "oidc.provider-id");
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
   }
@@ -1630,11 +1630,80 @@ public class FirebaseUserManagerTest {
 
     OidcProviderConfig config = tenantAwareAuth.getOidcProviderConfig("oidc.provider-id");
 
-    checkOidcProviderConfig(config);
+    checkOidcProviderConfig(config, "oidc.provider-id");
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/TENANT_ID/oauthIdpConfigs/oidc.provider-id");
   }
 
+  @Test
+  public void testListOidcProviderConfigs() throws Exception {
+    final TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("listOidc.json"));
+    ListProviderConfigsPage<OidcProviderConfig> page =
+        FirebaseAuth.getInstance().listOidcProviderConfigsAsync(null, 99).get();
+
+    ImmutableList<OidcProviderConfig> providerConfigs = ImmutableList.copyOf(page.getValues());
+    assertEquals(2, providerConfigs.size());
+    checkOidcProviderConfig(providerConfigs.get(0), "oidc.provider-id1");
+    checkOidcProviderConfig(providerConfigs.get(1), "oidc.provider-id2");
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/oauthIdpConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(99, url.getFirst("pageSize"));
+    assertNull(url.getFirst("nextPageToken"));
+  }
+
+  @Test
+  public void testListOidcProviderConfigsWithPageToken() throws Exception {
+    final TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("listOidc.json"));
+    ListProviderConfigsPage<OidcProviderConfig> page =
+        FirebaseAuth.getInstance().listOidcProviderConfigsAsync("token", 99).get();
+
+    ImmutableList<OidcProviderConfig> providerConfigs = ImmutableList.copyOf(page.getValues());
+    assertEquals(2, providerConfigs.size());
+    checkOidcProviderConfig(providerConfigs.get(0), "oidc.provider-id1");
+    checkOidcProviderConfig(providerConfigs.get(1), "oidc.provider-id2");
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/oauthIdpConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(99, url.getFirst("pageSize"));
+    assertEquals("token", url.getFirst("nextPageToken"));
+  }
+
+  @Test
+  public void testListZeroOidcProviderConfigs() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    ListProviderConfigsPage<OidcProviderConfig> page =
+        FirebaseAuth.getInstance().listOidcProviderConfigsAsync(null).get();
+    assertTrue(Iterables.isEmpty(page.getValues()));
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+  }
+
+  @Test
+  public void testTenantAwareListOidcProviderConfigs() throws Exception {
+    final TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        TestUtils.loadResource("listOidc.json"));
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+    ListProviderConfigsPage<OidcProviderConfig> page =
+        tenantAwareAuth.listOidcProviderConfigsAsync(null, 99).get();
+
+    ImmutableList<OidcProviderConfig> providerConfigs = ImmutableList.copyOf(page.getValues());
+    assertEquals(2, providerConfigs.size());
+    checkOidcProviderConfig(providerConfigs.get(0), "oidc.provider-id1");
+    checkOidcProviderConfig(providerConfigs.get(1), "oidc.provider-id2");
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/TENANT_ID/oauthIdpConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(99, url.getFirst("pageSize"));
+    assertNull(url.getFirst("nextPageToken"));
+  }
 
   @Test
   public void testDeleteProviderConfig() throws Exception {
@@ -1790,8 +1859,8 @@ public class FirebaseUserManagerTest {
     assertFalse(tenant.isEmailLinkSignInEnabled());
   }
 
-  private static void checkOidcProviderConfig(OidcProviderConfig config) {
-    assertEquals("oidc.provider-id", config.getProviderId());
+  private static void checkOidcProviderConfig(OidcProviderConfig config, String providerId) {
+    assertEquals(providerId, config.getProviderId());
     assertEquals("DISPLAY_NAME", config.getDisplayName());
     assertTrue(config.isEnabled());
     assertEquals("CLIENT_ID", config.getClientId());

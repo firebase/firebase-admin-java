@@ -113,7 +113,7 @@ public class ListTenantsPage implements Page<Tenant> {
   }
 
   /**
-   * Returns an {@link Iterable} over the users in this page.
+   * Returns an {@link Iterable} over the tenants in this page.
    *
    * @return a {@link Iterable} instance.
    */

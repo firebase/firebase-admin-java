@@ -19,37 +19,19 @@ package com.google.firebase.auth.internal;
 import com.google.api.client.util.Key;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.auth.ListProviderConfigsPage;
+import com.google.firebase.auth.ProviderConfig;
 import com.google.firebase.auth.Tenant;
 import java.util.List;
 
 /**
- * JSON data binding for ListTenantsResponse messages sent by Google identity toolkit service.
+ * Interface for config list response messages sent by Google identity toolkit service.
  */
-public final class ListTenantsResponse {
+public interface ListProviderConfigsResponse<T extends ProviderConfig> {
 
-  @Key("tenants")
-  private List<Tenant> tenants;
+  public List<T> getProviderConfigs();
 
-  @Key("pageToken")
-  private String pageToken;
+  public boolean hasProviderConfigs();
 
-  @VisibleForTesting
-  public ListTenantsResponse(List<Tenant> tenants, String pageToken) {
-    this.tenants = tenants;
-    this.pageToken = pageToken;
-  }
-
-  public ListTenantsResponse() { }
-
-  public List<Tenant> getTenants() {
-    return tenants == null ? ImmutableList.<Tenant>of() : tenants;
-  }
-
-  public boolean hasTenants() {
-    return tenants != null && !tenants.isEmpty();
-  }
-
-  public String getPageToken() {
-    return pageToken == null ? "" : pageToken;
-  }
+  public String getPageToken();
 }

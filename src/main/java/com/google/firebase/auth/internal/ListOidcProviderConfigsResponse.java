@@ -19,36 +19,44 @@ package com.google.firebase.auth.internal;
 import com.google.api.client.util.Key;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.auth.OidcProviderConfig;
 import com.google.firebase.auth.Tenant;
 import java.util.List;
 
 /**
- * JSON data binding for ListTenantsResponse messages sent by Google identity toolkit service.
+ * JSON data binding for ListOAuthIdpConfigsResponse messages sent by Google identity toolkit
+ * service.
  */
-public final class ListTenantsResponse {
+public final class ListOidcProviderConfigsResponse
+    implements ListProviderConfigsResponse<OidcProviderConfig> {
 
-  @Key("tenants")
-  private List<Tenant> tenants;
+  @Key("oauthIdpConfigs")
+  private List<OidcProviderConfig> providerConfigs;
 
-  @Key("pageToken")
+  @Key("nextPageToken")
   private String pageToken;
 
   @VisibleForTesting
-  public ListTenantsResponse(List<Tenant> tenants, String pageToken) {
-    this.tenants = tenants;
+  public ListOidcProviderConfigsResponse(
+      List<OidcProviderConfig> providerConfigs,
+      String pageToken) {
+    this.providerConfigs = providerConfigs;
     this.pageToken = pageToken;
   }
 
-  public ListTenantsResponse() { }
+  public ListOidcProviderConfigsResponse() { }
 
-  public List<Tenant> getTenants() {
-    return tenants == null ? ImmutableList.<Tenant>of() : tenants;
+  @Override
+  public List<OidcProviderConfig> getProviderConfigs() {
+    return providerConfigs == null ? ImmutableList.<OidcProviderConfig>of() : providerConfigs;
   }
 
-  public boolean hasTenants() {
-    return tenants != null && !tenants.isEmpty();
+  @Override
+  public boolean hasProviderConfigs() {
+    return providerConfigs != null && !providerConfigs.isEmpty();
   }
 
+  @Override
   public String getPageToken() {
     return pageToken == null ? "" : pageToken;
   }

@@ -43,6 +43,7 @@ import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 import com.google.firebase.auth.internal.HttpErrorResponse;
+import com.google.firebase.auth.internal.ListOidcProviderConfigsResponse;
 import com.google.firebase.auth.internal.ListTenantsResponse;
 import com.google.firebase.auth.internal.UploadAccountResponse;
 import com.google.firebase.internal.ApiClientUtils;
@@ -94,6 +95,7 @@ class FirebaseUserManager {
       .put("INVALID_DYNAMIC_LINK_DOMAIN", "invalid-dynamic-link-domain")
       .build();
 
+  static final int MAX_LIST_PROVIDER_CONFIGS_RESULTS = 100;
   static final int MAX_LIST_TENANTS_RESULTS = 1000;
   static final int MAX_LIST_USERS_RESULTS = 1000;
   static final int MAX_IMPORT_USERS = 1000;
@@ -336,6 +338,26 @@ class FirebaseUserManager {
   OidcProviderConfig getOidcProviderConfig(String providerId) throws FirebaseAuthException {
     GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + getOidcUrlSuffix(providerId));
     return sendRequest("GET", url, null, OidcProviderConfig.class);
+  }
+
+  ListOidcProviderConfigsResponse listOidcProviderConfigs(int maxResults, String pageToken)
+      throws FirebaseAuthException {
+    ImmutableMap.Builder<String, Object> builder =
+        ImmutableMap.<String, Object>builder().put("pageSize", maxResults);
+    if (pageToken != null) {
+      checkArgument(!pageToken.equals(
+          ListTenantsPage.END_OF_LIST), "invalid end of list page token");
+      builder.put("nextPageToken", pageToken);
+    }
+
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/oauthIdpConfigs");
+    url.putAll(builder.build());
+    ListOidcProviderConfigsResponse response =
+        sendRequest("GET", url, null, ListOidcProviderConfigsResponse.class);
+    if (response == null) {
+      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to retrieve provider configs.");
+    }
+    return response;
   }
 
   void deleteProviderConfig(String providerId) throws FirebaseAuthException {
