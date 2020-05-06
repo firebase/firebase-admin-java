@@ -1062,6 +1062,22 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
+   * Gets a page of OIDC Auth provider configs starting from the specified {@code pageToken}. Page
+   * size will be limited to 100 provider configs.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @return A {@link ListProviderConfigsPage} instance.
+   * @throws IllegalArgumentException If the specified page token is empty
+   * @throws FirebaseAuthException If an error occurs while retrieving provider config data.
+   */
+  public ListProviderConfigsPage<OidcProviderConfig> listOidcProviderConfigs(
+        @Nullable String pageToken) throws FirebaseAuthException {
+    int maxResults = FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS;
+    return listOidcProviderConfigsOp(pageToken, maxResults).call();
+  }
+
+  /**
    * Gets a page of OIDC Auth provider configs starting from the specified {@code pageToken}.
    *
    * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
@@ -1071,7 +1087,7 @@ public abstract class AbstractFirebaseAuth {
    * @return A {@link ListProviderConfigsPage} instance.
    * @throws IllegalArgumentException If the specified page token is empty, or max results value is
    *     invalid.
-   * @throws FirebaseAuthException If an error occurs while retrieving user data.
+   * @throws FirebaseAuthException If an error occurs while retrieving provider config data.
    */
   public ListProviderConfigsPage<OidcProviderConfig> listOidcProviderConfigs(
         @Nullable String pageToken, int maxResults) throws FirebaseAuthException {
@@ -1091,9 +1107,8 @@ public abstract class AbstractFirebaseAuth {
    */
   public ApiFuture<ListProviderConfigsPage<OidcProviderConfig>> listOidcProviderConfigsAsync(
       @Nullable String pageToken) {
-    return listOidcProviderConfigsAsync(
-        pageToken,
-        FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS);
+    int maxResults = FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS;
+    return listOidcProviderConfigsAsync(pageToken, maxResults);
   }
 
   /**
