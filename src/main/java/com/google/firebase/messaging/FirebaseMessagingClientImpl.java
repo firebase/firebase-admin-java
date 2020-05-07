@@ -167,7 +167,7 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     MessagingBatchCallback callback = new MessagingBatchCallback();
     BatchRequest batch = newBatchRequest(messages, dryRun, callback);
     batch.execute();
-    return new BatchResponse(callback.getResponses());
+    return new BatchResponseImpl(callback.getResponses());
   }
 
   private BatchRequest newBatchRequest(
