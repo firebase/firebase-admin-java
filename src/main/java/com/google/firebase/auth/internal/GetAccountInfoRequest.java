@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents the request to lookup account information.
+ * Represents the request to look up account information.
  */
 public final class GetAccountInfoRequest {
 

@@ -191,7 +191,7 @@ public class FirebaseAuthIT {
     assertEquals(0, result.getFailureCount());
     assertTrue(result.getErrors().isEmpty());
 
-    // Delete the user again, ensuring that everything still counts as a success.
+    // Delete the user again to ensure that everything still counts as a success.
     result = slowDeleteUsersAsync(ImmutableList.of(user1.getUid())).get();
 
     assertEquals(1, result.getSuccessCount());
@@ -200,8 +200,8 @@ public class FirebaseAuthIT {
   }
 
   /**
-   * The {@code batchDelete} endpoint is currently rate limited to 1qps. Use this test helper to
-   * ensure you don't run into quota exceeded errors.
+   * The {@code batchDelete} endpoint has a rate limit of 1 QPS. Use this test
+   * helper to ensure you don't exceed the quota.
    */
   // TODO(rsgowman): When/if the rate limit is relaxed, eliminate this helper.
   private ApiFuture<DeleteUsersResult> slowDeleteUsersAsync(List<String> uids) throws Exception {

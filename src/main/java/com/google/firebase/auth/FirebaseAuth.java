@@ -679,7 +679,7 @@ public class FirebaseAuth {
   }
 
   /**
-   * Gets a page of users starting from the specified {@code pageToken}. Page size will be
+   * Gets a page of users starting from the specified {@code pageToken}. Page size is
    * limited to 1000 users.
    *
    * @param pageToken A non-empty page token string, or null to retrieve the first page of users.
@@ -922,16 +922,16 @@ public class FirebaseAuth {
   /**
    * Deletes the users specified by the given identifiers.
    *
-   * <p>Deleting a non-existing user won't generate an error. (i.e. this method is idempotent.)
-   * Non-existing users will be considered to be successfully deleted, and will therefore be counted
-   * in the DeleteUsersResult.getSuccessCount() value.
+   * <p>Deleting a non-existing user does not generate an error (the method is idempotent).
+   * Non-existing users are considered to be successfully deleted and are therefore included in the
+   * DeleteUsersResult.getSuccessCount() value.
    *
    * <p>A maximum of 1000 identifiers may be supplied. If more than 1000 identifiers are
    * supplied, this method throws an {@link IllegalArgumentException}.
    *
-   * <p>This API is currently rate limited at the server to 1 QPS. If you exceed this, you may get a
-   * quota exceeded error. Therefore, if you want to delete more than 1000 users, you may need to
-   * add a delay to ensure you don't go over this limit.
+   * <p>This API has a rate limit of 1 QPS. Exceeding the limit may result in a quota exceeded
+   * error. If you want to delete more than 1000 users, we suggest adding a delay to ensure you
+   * don't exceed this limit.
    *
    * @param uids The uids of the users to be deleted. Must have <= 1000 entries.
    * @return The total number of successful/failed deletions, as well as the array of errors that
@@ -979,8 +979,8 @@ public class FirebaseAuth {
   }
 
   /**
-   * Imports the provided list of users into Firebase Auth. At most 1000 users can be imported at a
-   * time. This operation is optimized for bulk imports and will ignore checks on identifier
+   * Imports the provided list of users into Firebase Auth. You can import a maximum of 1000 users
+   * at a time.  This operation is optimized for bulk imports and does not check identifier
    * uniqueness which could result in duplications.
    *
    * <p>{@link UserImportOptions} is required to import users with passwords. See
