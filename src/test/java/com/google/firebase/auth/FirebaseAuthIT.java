@@ -63,8 +63,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
 
 public class FirebaseAuthIT {
 
@@ -80,13 +81,11 @@ public class FirebaseAuthIT {
   private static final HttpTransport transport = Utils.getDefaultTransport();
   private static final String ACTION_LINK_CONTINUE_URL = "http://localhost/?a=1&b=2#c=3";
 
-  private static FirebaseAuth auth;
+  private static final FirebaseAuth auth = FirebaseAuth.getInstance(
+      IntegrationTestUtils.ensureDefaultApp());
 
-  @BeforeClass
-  public static void setUpClass() {
-    FirebaseApp masterApp = IntegrationTestUtils.ensureDefaultApp();
-    auth = FirebaseAuth.getInstance(masterApp);
-  }
+  @Rule
+  public final TemporaryUser temporaryUser = new TemporaryUser();
 
   @Test
   public void testGetNonExistingUser() throws Exception {
@@ -221,28 +220,24 @@ public class FirebaseAuthIT {
         .setEmailVerified(true)
         .setPassword("password");
 
-    UserRecord userRecord = auth.createUserAsync(user).get();
-    try {
-      assertEquals(randomUser.uid, userRecord.getUid());
-      assertEquals("Random User", userRecord.getDisplayName());
-      assertEquals(randomUser.email, userRecord.getEmail());
-      assertEquals(phone, userRecord.getPhoneNumber());
-      assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
-      assertTrue(userRecord.isEmailVerified());
-      assertFalse(userRecord.isDisabled());
+    UserRecord userRecord = temporaryUser.create(user);
+    assertEquals(randomUser.uid, userRecord.getUid());
+    assertEquals("Random User", userRecord.getDisplayName());
+    assertEquals(randomUser.email, userRecord.getEmail());
+    assertEquals(phone, userRecord.getPhoneNumber());
+    assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
+    assertTrue(userRecord.isEmailVerified());
+    assertFalse(userRecord.isDisabled());
 
-      assertEquals(2, userRecord.getProviderData().length);
-      List<String> providers = new ArrayList<>();
-      for (UserInfo provider : userRecord.getProviderData()) {
-        providers.add(provider.getProviderId());
-      }
-      assertTrue(providers.contains("password"));
-      assertTrue(providers.contains("phone"));
-
-      checkRecreateUser(randomUser.uid);
-    } finally {
-      auth.deleteUserAsync(userRecord.getUid()).get();
+    assertEquals(2, userRecord.getProviderData().length);
+    List<String> providers = new ArrayList<>();
+    for (UserInfo provider : userRecord.getProviderData()) {
+      providers.add(provider.getProviderId());
     }
+    assertTrue(providers.contains("password"));
+    assertTrue(providers.contains("phone"));
+
+    checkRecreateUser(randomUser.uid);
   }
 
   @Test
@@ -348,227 +343,105 @@ public class FirebaseAuthIT {
   public void testListUsers() throws Exception {
     final List<String> uids = new ArrayList<>();
 
-    try {
-      for (int i = 0; i < 3; i++) {
-        UserRecord.CreateRequest createRequest =
-            new UserRecord.CreateRequest().setPassword("password");
-        uids.add(auth.createUserAsync(createRequest).get().getUid());
-      }
+    for (int i = 0; i < 3; i++) {
+      UserRecord.CreateRequest createRequest =
+          new UserRecord.CreateRequest().setPassword("password");
+      uids.add(temporaryUser.create(createRequest).getUid());
+    }
 
-      // Test list by batches
-      final AtomicInteger collected = new AtomicInteger(0);
-      ListUsersPage page = auth.listUsersAsync(null).get();
-      while (page != null) {
-        for (ExportedUserRecord user : page.getValues()) {
-          if (uids.contains(user.getUid())) {
-            collected.incrementAndGet();
-            assertNotNull("Missing passwordHash field. A common cause would be "
-                + "forgetting to add the \"Firebase Authentication Admin\" permission. See "
-                + "instructions in CONTRIBUTING.md", user.getPasswordHash());
-            assertNotNull(user.getPasswordSalt());
-            assertNull(user.getTenantId());
-          }
-        }
-        page = page.getNextPage();
-      }
-      assertEquals(uids.size(), collected.get());
-
-      // Test iterate all
-      collected.set(0);
-      page = auth.listUsersAsync(null).get();
-      for (ExportedUserRecord user : page.iterateAll()) {
+    // Test list by batches
+    final AtomicInteger collected = new AtomicInteger(0);
+    ListUsersPage page = auth.listUsersAsync(null).get();
+    while (page != null) {
+      for (ExportedUserRecord user : page.getValues()) {
         if (uids.contains(user.getUid())) {
           collected.incrementAndGet();
-          assertNotNull(user.getPasswordHash());
+          assertNotNull("Missing passwordHash field. A common cause would be "
+              + "forgetting to add the \"Firebase Authentication Admin\" permission. See "
+              + "instructions in CONTRIBUTING.md", user.getPasswordHash());
           assertNotNull(user.getPasswordSalt());
           assertNull(user.getTenantId());
         }
       }
-      assertEquals(uids.size(), collected.get());
+      page = page.getNextPage();
+    }
+    assertEquals(uids.size(), collected.get());
 
-      // Test iterate async
-      collected.set(0);
-      final Semaphore semaphore = new Semaphore(0);
-      final AtomicReference<Throwable> error = new AtomicReference<>();
-      ApiFuture<ListUsersPage> pageFuture = auth.listUsersAsync(null);
-      ApiFutures.addCallback(pageFuture, new ApiFutureCallback<ListUsersPage>() {
-        @Override
-        public void onFailure(Throwable t) {
-          error.set(t);
-          semaphore.release();
-        }
-
-        @Override
-        public void onSuccess(ListUsersPage result) {
-          for (ExportedUserRecord user : result.iterateAll()) {
-            if (uids.contains(user.getUid())) {
-              collected.incrementAndGet();
-              assertNotNull(user.getPasswordHash());
-              assertNotNull(user.getPasswordSalt());
-              assertNull(user.getTenantId());
-            }
-          }
-          semaphore.release();
-        }
-      }, MoreExecutors.directExecutor());
-      semaphore.acquire();
-      assertEquals(uids.size(), collected.get());
-      assertNull(error.get());
-    } finally {
-      for (String uid : uids) {
-        auth.deleteUserAsync(uid).get();
+    // Test iterate all
+    collected.set(0);
+    page = auth.listUsersAsync(null).get();
+    for (ExportedUserRecord user : page.iterateAll()) {
+      if (uids.contains(user.getUid())) {
+        collected.incrementAndGet();
+        assertNotNull(user.getPasswordHash());
+        assertNotNull(user.getPasswordSalt());
+        assertNull(user.getTenantId());
       }
     }
-  }
+    assertEquals(uids.size(), collected.get());
 
-  @Test
-  public void testTenantLifecycle() throws Exception {
-    TenantManager tenantManager = auth.getTenantManager();
-
-    // Create tenant
-    Tenant.CreateRequest createRequest = new Tenant.CreateRequest().setDisplayName("DisplayName");
-    Tenant tenant = tenantManager.createTenantAsync(createRequest).get();
-    assertEquals("DisplayName", tenant.getDisplayName());
-    assertFalse(tenant.isPasswordSignInAllowed());
-    assertFalse(tenant.isEmailLinkSignInEnabled());
-    String tenantId = tenant.getTenantId();
-
-    // Get tenant
-    tenant = tenantManager.getTenantAsync(tenantId).get();
-    assertEquals(tenantId, tenant.getTenantId());
-    assertEquals("DisplayName", tenant.getDisplayName());
-    assertFalse(tenant.isPasswordSignInAllowed());
-    assertFalse(tenant.isEmailLinkSignInEnabled());
-
-    // Update tenant
-    Tenant.UpdateRequest updateRequest = tenant.updateRequest()
-        .setDisplayName("UpdatedName")
-        .setPasswordSignInAllowed(true)
-        .setEmailLinkSignInEnabled(true);
-    tenant = tenantManager.updateTenantAsync(updateRequest).get();
-    assertEquals(tenantId, tenant.getTenantId());
-    assertEquals("UpdatedName", tenant.getDisplayName());
-    assertTrue(tenant.isPasswordSignInAllowed());
-    assertTrue(tenant.isEmailLinkSignInEnabled());
-
-    // Delete tenant
-    tenantManager.deleteTenantAsync(tenant.getTenantId()).get();
-    try {
-      tenantManager.getTenantAsync(tenant.getTenantId()).get();
-      fail("No error thrown for getting a deleted tenant");
-    } catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
-    }
-  }
-
-  @Test
-  public void testListTenants() throws Exception {
-    TenantManager tenantManager = auth.getTenantManager();
-    final List<String> tenantIds = new ArrayList<>();
-
-    try {
-      for (int i = 0; i < 3; i++) {
-        Tenant.CreateRequest createRequest =
-            new Tenant.CreateRequest().setDisplayName("DisplayName" + i);
-        tenantIds.add(tenantManager.createTenantAsync(createRequest).get().getTenantId());
+    // Test iterate async
+    collected.set(0);
+    final Semaphore semaphore = new Semaphore(0);
+    final AtomicReference<Throwable> error = new AtomicReference<>();
+    ApiFuture<ListUsersPage> pageFuture = auth.listUsersAsync(null);
+    ApiFutures.addCallback(pageFuture, new ApiFutureCallback<ListUsersPage>() {
+      @Override
+      public void onFailure(Throwable t) {
+        error.set(t);
+        semaphore.release();
       }
 
-      // Test list by batches
-      final AtomicInteger collected = new AtomicInteger(0);
-      ListTenantsPage page = tenantManager.listTenantsAsync(null).get();
-      while (page != null) {
-        for (Tenant tenant : page.getValues()) {
-          if (tenantIds.contains(tenant.getTenantId())) {
+      @Override
+      public void onSuccess(ListUsersPage result) {
+        for (ExportedUserRecord user : result.iterateAll()) {
+          if (uids.contains(user.getUid())) {
             collected.incrementAndGet();
-            assertNotNull(tenant.getDisplayName());
+            assertNotNull(user.getPasswordHash());
+            assertNotNull(user.getPasswordSalt());
+            assertNull(user.getTenantId());
           }
         }
-        page = page.getNextPage();
+        semaphore.release();
       }
-      assertEquals(tenantIds.size(), collected.get());
-
-      // Test iterate all
-      collected.set(0);
-      page = tenantManager.listTenantsAsync(null).get();
-      for (Tenant tenant : page.iterateAll()) {
-        if (tenantIds.contains(tenant.getTenantId())) {
-          collected.incrementAndGet();
-          assertNotNull(tenant.getDisplayName());
-        }
-      }
-      assertEquals(tenantIds.size(), collected.get());
-
-      // Test iterate async
-      collected.set(0);
-      final Semaphore semaphore = new Semaphore(0);
-      final AtomicReference<Throwable> error = new AtomicReference<>();
-      ApiFuture<ListTenantsPage> pageFuture = tenantManager.listTenantsAsync(null);
-      ApiFutures.addCallback(pageFuture, new ApiFutureCallback<ListTenantsPage>() {
-        @Override
-        public void onFailure(Throwable t) {
-          error.set(t);
-          semaphore.release();
-        }
-
-        @Override
-        public void onSuccess(ListTenantsPage result) {
-          for (Tenant tenant : result.iterateAll()) {
-            if (tenantIds.contains(tenant.getTenantId())) {
-              collected.incrementAndGet();
-              assertNotNull(tenant.getDisplayName());
-            }
-          }
-          semaphore.release();
-        }
-      }, MoreExecutors.directExecutor());
-      semaphore.acquire();
-      assertEquals(tenantIds.size(), collected.get());
-      assertNull(error.get());
-    } finally {
-      for (String tenantId : tenantIds) {
-        tenantManager.deleteTenantAsync(tenantId).get();
-      }
-    }
+    }, MoreExecutors.directExecutor());
+    semaphore.acquire();
+    assertEquals(uids.size(), collected.get());
+    assertNull(error.get());
   }
 
   @Test
   public void testCustomClaims() throws Exception {
-    UserRecord userRecord = auth.createUserAsync(new UserRecord.CreateRequest()).get();
+    UserRecord userRecord = temporaryUser.create(new UserRecord.CreateRequest());
     String uid = userRecord.getUid();
 
-    try {
-      // New user should not have any claims
-      assertTrue(userRecord.getCustomClaims().isEmpty());
+    // New user should not have any claims
+    assertTrue(userRecord.getCustomClaims().isEmpty());
 
-      Map<String, Object> expected = ImmutableMap.<String, Object>of(
-          "admin", true, "package", "gold");
-      auth.setCustomUserClaimsAsync(uid, expected).get();
+    Map<String, Object> expected = ImmutableMap.<String, Object>of(
+        "admin", true, "package", "gold");
+    auth.setCustomUserClaimsAsync(uid, expected).get();
 
-      // Should have 2 claims
-      UserRecord updatedUser = auth.getUserAsync(uid).get();
-      assertEquals(2, updatedUser.getCustomClaims().size());
-      for (Map.Entry<String, Object> entry : expected.entrySet()) {
-        assertEquals(entry.getValue(), updatedUser.getCustomClaims().get(entry.getKey()));
-      }
-
-      // User's ID token should have the custom claims
-      String customToken = auth.createCustomTokenAsync(uid).get();
-      String idToken = signInWithCustomToken(customToken);
-      FirebaseToken decoded = auth.verifyIdTokenAsync(idToken).get();
-      Map<String, Object> result = decoded.getClaims();
-      for (Map.Entry<String, Object> entry : expected.entrySet()) {
-        assertEquals(entry.getValue(), result.get(entry.getKey()));
-      }
-
-      // Should be able to remove custom claims
-      auth.setCustomUserClaimsAsync(uid, null).get();
-      updatedUser = auth.getUserAsync(uid).get();
-      assertTrue(updatedUser.getCustomClaims().isEmpty());
-    } finally {
-      auth.deleteUserAsync(uid).get();
+    // Should have 2 claims
+    UserRecord updatedUser = auth.getUserAsync(uid).get();
+    assertEquals(2, updatedUser.getCustomClaims().size());
+    for (Map.Entry<String, Object> entry : expected.entrySet()) {
+      assertEquals(entry.getValue(), updatedUser.getCustomClaims().get(entry.getKey()));
     }
+
+    // User's ID token should have the custom claims
+    String customToken = auth.createCustomTokenAsync(uid).get();
+    String idToken = signInWithCustomToken(customToken);
+    FirebaseToken decoded = auth.verifyIdTokenAsync(idToken).get();
+    Map<String, Object> result = decoded.getClaims();
+    for (Map.Entry<String, Object> entry : expected.entrySet()) {
+      assertEquals(entry.getValue(), result.get(entry.getKey()));
+    }
+
+    // Should be able to remove custom claims
+    auth.setCustomUserClaimsAsync(uid, null).get();
+    updatedUser = auth.getUserAsync(uid).get();
+    assertTrue(updatedUser.getCustomClaims().isEmpty());
   }
 
   @Test
@@ -687,15 +560,12 @@ public class FirebaseAuthIT {
         .build();
 
     UserImportResult result = auth.importUsersAsync(ImmutableList.of(user)).get();
+    temporaryUser.registerUid(randomUser.uid);
     assertEquals(1, result.getSuccessCount());
     assertEquals(0, result.getFailureCount());
 
-    try {
-      UserRecord savedUser = auth.getUserAsync(randomUser.uid).get();
-      assertEquals(randomUser.email, savedUser.getEmail());
-    } finally {
-      auth.deleteUserAsync(randomUser.uid).get();
-    }
+    UserRecord savedUser = auth.getUserAsync(randomUser.uid).get();
+    assertEquals(randomUser.email, savedUser.getEmail());
   }
 
   @Test
@@ -721,88 +591,73 @@ public class FirebaseAuthIT {
             .setRounds(8)
             .setMemoryCost(14)
             .build())).get();
+    temporaryUser.registerUid(randomUser.uid);
     assertEquals(1, result.getSuccessCount());
     assertEquals(0, result.getFailureCount());
 
-    try {
-      UserRecord savedUser = auth.getUserAsync(randomUser.uid).get();
-      assertEquals(randomUser.email, savedUser.getEmail());
-      String idToken = signInWithPassword(randomUser.email, "password");
-      assertFalse(Strings.isNullOrEmpty(idToken));
-    } finally {
-      auth.deleteUserAsync(randomUser.uid).get();
-    }
+    UserRecord savedUser = auth.getUserAsync(randomUser.uid).get();
+    assertEquals(randomUser.email, savedUser.getEmail());
+    String idToken = signInWithPassword(randomUser.email, "password");
+    assertFalse(Strings.isNullOrEmpty(idToken));
   }
 
   @Test
   public void testGeneratePasswordResetLink() throws Exception {
     RandomUser user = RandomUser.create();
-    auth.createUser(new UserRecord.CreateRequest()
+    temporaryUser.create(new UserRecord.CreateRequest()
         .setUid(user.uid)
         .setEmail(user.email)
         .setEmailVerified(false)
         .setPassword("password"));
-    try {
-      String link = auth.generatePasswordResetLink(user.email, ActionCodeSettings.builder()
-          .setUrl(ACTION_LINK_CONTINUE_URL)
-          .setHandleCodeInApp(false)
-          .build());
-      Map<String, String> linkParams = parseLinkParameters(link);
-      assertEquals(ACTION_LINK_CONTINUE_URL, linkParams.get("continueUrl"));
-      String email = resetPassword(user.email, "password", "newpassword",
-          linkParams.get("oobCode"));
-      assertEquals(user.email, email);
-      // Password reset also verifies the user's email
-      assertTrue(auth.getUser(user.uid).isEmailVerified());
-    } finally {
-      auth.deleteUser(user.uid);
-    }
+    String link = auth.generatePasswordResetLink(user.email, ActionCodeSettings.builder()
+        .setUrl(ACTION_LINK_CONTINUE_URL)
+        .setHandleCodeInApp(false)
+        .build());
+    Map<String, String> linkParams = parseLinkParameters(link);
+    assertEquals(ACTION_LINK_CONTINUE_URL, linkParams.get("continueUrl"));
+    String email = resetPassword(user.email, "password", "newpassword",
+        linkParams.get("oobCode"));
+    assertEquals(user.email, email);
+    // Password reset also verifies the user's email
+    assertTrue(auth.getUser(user.uid).isEmailVerified());
   }
 
   @Test
   public void testGenerateEmailVerificationResetLink() throws Exception {
     RandomUser user = RandomUser.create();
-    auth.createUser(new UserRecord.CreateRequest()
+    temporaryUser.create(new UserRecord.CreateRequest()
         .setUid(user.uid)
         .setEmail(user.email)
         .setEmailVerified(false)
         .setPassword("password"));
-    try {
-      String link = auth.generateEmailVerificationLink(user.email, ActionCodeSettings.builder()
-          .setUrl(ACTION_LINK_CONTINUE_URL)
-          .setHandleCodeInApp(false)
-          .build());
-      Map<String, String> linkParams = parseLinkParameters(link);
-      assertEquals(ACTION_LINK_CONTINUE_URL, linkParams.get("continueUrl"));
-      // There doesn't seem to be a public API for verifying an email, so we cannot do a more
-      // thorough test here.
-      assertEquals("verifyEmail", linkParams.get("mode"));
-    } finally {
-      auth.deleteUser(user.uid);
-    }
+    String link = auth.generateEmailVerificationLink(user.email, ActionCodeSettings.builder()
+        .setUrl(ACTION_LINK_CONTINUE_URL)
+        .setHandleCodeInApp(false)
+        .build());
+    Map<String, String> linkParams = parseLinkParameters(link);
+    assertEquals(ACTION_LINK_CONTINUE_URL, linkParams.get("continueUrl"));
+    // There doesn't seem to be a public API for verifying an email, so we cannot do a more
+    // thorough test here.
+    assertEquals("verifyEmail", linkParams.get("mode"));
   }
 
   @Test
   public void testGenerateSignInWithEmailLink() throws Exception {
     RandomUser user = RandomUser.create();
-    auth.createUser(new UserRecord.CreateRequest()
+    temporaryUser.create(new UserRecord.CreateRequest()
         .setUid(user.uid)
         .setEmail(user.email)
         .setEmailVerified(false)
         .setPassword("password"));
-    try {
-      String link = auth.generateSignInWithEmailLink(user.email, ActionCodeSettings.builder()
-          .setUrl(ACTION_LINK_CONTINUE_URL)
-          .setHandleCodeInApp(false)
-          .build());
-      Map<String, String> linkParams = parseLinkParameters(link);
-      assertEquals(ACTION_LINK_CONTINUE_URL, linkParams.get("continueUrl"));
-      String idToken = signInWithEmailLink(user.email, linkParams.get("oobCode"));
-      assertFalse(Strings.isNullOrEmpty(idToken));
-      assertTrue(auth.getUser(user.uid).isEmailVerified());
-    } finally {
-      auth.deleteUser(user.uid);
-    }
+    String link = auth.generateSignInWithEmailLink(user.email, ActionCodeSettings.builder()
+        .setUrl(ACTION_LINK_CONTINUE_URL)
+        .setHandleCodeInApp(false)
+        .build());
+    Map<String, String> linkParams = parseLinkParameters(link);
+    assertEquals(ACTION_LINK_CONTINUE_URL, linkParams.get("continueUrl"));
+    String idToken = signInWithEmailLink(user.email, linkParams.get("oobCode"));
+    assertFalse(Strings.isNullOrEmpty(idToken));
+    assertTrue(auth.getUser(user.uid).isEmailVerified());
   }
 
   @Test
@@ -1108,5 +963,37 @@ public class FirebaseAuthIT {
                                .setDisplayName("Random User")
                                .setPhotoUrl("https://example.com/photo.png")
                                .setPassword("password"));
+  }
+
+  /**
+   * Creates temporary Firebase user accounts for testing, and deletes them at the end of each
+   * test case.
+   */
+  private static final class TemporaryUser extends ExternalResource {
+
+    private final List<String> users = new ArrayList<>();
+
+    public UserRecord create(UserRecord.CreateRequest request) throws FirebaseAuthException {
+      UserRecord user = auth.createUser(request);
+      registerUid(user.getUid());
+      return user;
+    }
+
+    public synchronized void registerUid(String uid) {
+      users.add(uid);
+    }
+
+    @Override
+    protected synchronized void after() {
+      for (String uid : users) {
+        try {
+          auth.deleteUser(uid);
+        } catch (Exception ignore) {
+          // Ignore
+        }
+      }
+
+      users.clear();
+    }
   }
 }
