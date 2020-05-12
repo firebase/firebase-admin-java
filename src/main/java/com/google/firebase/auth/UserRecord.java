@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.json.JsonFactory;
+import com.google.api.client.util.DateTime;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -80,7 +81,15 @@ public class UserRecord implements UserInfo {
       }
     }
     this.tokensValidAfterTimestamp = response.getValidSince() * 1000;
-    this.userMetadata = new UserMetadata(response.getCreatedAt(), response.getLastLoginAt());
+
+    String lastRefreshAtRfc3339 = response.getLastRefreshAt();
+    long lastRefreshAtMillis = 0;
+    if (!Strings.isNullOrEmpty(lastRefreshAtRfc3339)) {
+      lastRefreshAtMillis = DateTime.parseRfc3339(lastRefreshAtRfc3339).getValue();
+    }
+
+    this.userMetadata = new UserMetadata(
+        response.getCreatedAt(), response.getLastLoginAt(), lastRefreshAtMillis);
     this.customClaims = parseCustomClaims(response.getCustomClaims(), jsonFactory);
   }
 
@@ -245,6 +254,11 @@ public class UserRecord implements UserInfo {
     checkArgument(!Strings.isNullOrEmpty(phoneNumber), "phone number cannot be null or empty");
     checkArgument(phoneNumber.startsWith("+"),
         "phone number must be a valid, E.164 compliant identifier starting with a '+' sign");
+  }
+
+  static void checkProvider(String providerId, String providerUid) {
+    checkArgument(!Strings.isNullOrEmpty(providerId), "providerId must be a non-empty string");
+    checkArgument(!Strings.isNullOrEmpty(providerUid), "providerUid must be a non-empty string");
   }
 
   static void checkUrl(String photoUrl) {
