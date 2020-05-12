@@ -1709,7 +1709,7 @@ public class FirebaseUserManagerTest {
   public void testDeleteProviderConfig() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
 
-    FirebaseAuth.getInstance().deleteProviderConfig("PROVIDER_ID");
+    FirebaseAuth.getInstance().deleteOidcProviderConfig("PROVIDER_ID");
 
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/oauthIdpConfigs/PROVIDER_ID");
@@ -1721,7 +1721,7 @@ public class FirebaseUserManagerTest {
         initializeAppForUserManagementWithStatusCode(404,
             "{\"error\": {\"message\": \"CONFIGURATION_NOT_FOUND\"}}");
     try {
-      FirebaseAuth.getInstance().deleteProviderConfig("UNKNOWN");
+      FirebaseAuth.getInstance().deleteOidcProviderConfig("UNKNOWN");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
       assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
@@ -1737,7 +1737,7 @@ public class FirebaseUserManagerTest {
     TenantAwareFirebaseAuth tenantAwareAuth =
         FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
 
-    tenantAwareAuth.deleteProviderConfig("PROVIDER_ID");
+    tenantAwareAuth.deleteOidcProviderConfig("PROVIDER_ID");
 
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/TENANT_ID/oauthIdpConfigs/PROVIDER_ID");
