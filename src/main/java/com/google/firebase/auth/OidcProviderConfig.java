@@ -20,13 +20,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.ProviderConfig.AbstractCreateRequest;
 import com.google.firebase.auth.ProviderConfig.AbstractUpdateRequest;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Contains metadata associated with an OIDC Auth provider.
@@ -59,14 +54,6 @@ public final class OidcProviderConfig extends ProviderConfig {
     return new UpdateRequest(getProviderId());
   }
 
-  private static void assertValidUrl(String url) throws IllegalArgumentException {
-    try {
-      new URL(url);
-    } catch (MalformedURLException e) {
-      throw new IllegalArgumentException(url + " is a malformed URL", e);
-    }
-  }
-
   /**
    * A specification class for creating a new OIDC Auth provider.
    *
@@ -90,7 +77,7 @@ public final class OidcProviderConfig extends ProviderConfig {
      * @param clientId a non-null, non-empty client ID string.
      */
     public CreateRequest setClientId(String clientId) {
-      checkArgument(!Strings.isNullOrEmpty(clientId), "client ID must not be null or empty");
+      checkArgument(!Strings.isNullOrEmpty(clientId), "Client ID must not be null or empty.");
       properties.put("clientId", clientId);
       return this;
     }
@@ -98,10 +85,10 @@ public final class OidcProviderConfig extends ProviderConfig {
     /**
      * Sets the issuer for the new provider.
      *
-     * @param issuer a non-null, non-empty issuer string.
+     * @param issuer a non-null, non-empty issuer URL string.
      */
     public CreateRequest setIssuer(String issuer) {
-      checkArgument(!Strings.isNullOrEmpty(issuer), "issuer must not be null or empty");
+      checkArgument(!Strings.isNullOrEmpty(issuer), "Issuer must not be null or empty.");
       assertValidUrl(issuer);
       properties.put("issuer", issuer);
       return this;
@@ -130,10 +117,12 @@ public final class OidcProviderConfig extends ProviderConfig {
      * information persistently.
      *
      * @param tenantId a non-null, non-empty provider ID string.
-     * @throws IllegalArgumentException If the provider ID is null or empty.
+     * @throws IllegalArgumentException If the provider ID is null or empty, or if it's an invalid
+     *     format
      */
     public UpdateRequest(String providerId) {
       super(providerId);
+      checkArgument(providerId.startsWith("oidc."), "Invalid OIDC provider ID: " + providerId);
     }
 
     /**
@@ -142,7 +131,7 @@ public final class OidcProviderConfig extends ProviderConfig {
      * @param clientId a non-null, non-empty client ID string.
      */
     public UpdateRequest setClientId(String clientId) {
-      checkArgument(!Strings.isNullOrEmpty(clientId), "client ID must not be null or empty");
+      checkArgument(!Strings.isNullOrEmpty(clientId), "Client ID must not be null or empty.");
       properties.put("clientId", clientId);
       return this;
     }
@@ -150,10 +139,10 @@ public final class OidcProviderConfig extends ProviderConfig {
     /**
      * Sets the issuer for the existing provider.
      *
-     * @param issuer a non-null, non-empty issuer string.
+     * @param issuer a non-null, non-empty issuer URL string.
      */
     public UpdateRequest setIssuer(String issuer) {
-      checkArgument(!Strings.isNullOrEmpty(issuer), "issuer must not be null or empty");
+      checkArgument(!Strings.isNullOrEmpty(issuer), "Issuer must not be null or empty.");
       assertValidUrl(issuer);
       properties.put("issuer", issuer);
       return this;
