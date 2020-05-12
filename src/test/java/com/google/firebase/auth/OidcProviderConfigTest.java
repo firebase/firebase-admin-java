@@ -115,6 +115,11 @@ public class OidcProviderConfigTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
+  public void testUpdateRequestInvalidProviderId() {
+    new OidcProviderConfig.UpdateRequest("saml.provider-id");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
   public void testUpdateRequestMissingClientId() {
     new OidcProviderConfig.UpdateRequest("oidc.provider-id").setClientId(null);
   }

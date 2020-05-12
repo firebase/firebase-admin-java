@@ -21,6 +21,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,6 +52,14 @@ public abstract class ProviderConfig {
     return enabled;
   }
 
+  static void assertValidUrl(String url) throws IllegalArgumentException {
+    try {
+      new URL(url);
+    } catch (MalformedURLException e) {
+      throw new IllegalArgumentException(url + " is a malformed URL.", e);
+    }
+  }
+
   /**
    * A base specification class for creating a new provider.
    *
@@ -68,7 +78,7 @@ public abstract class ProviderConfig {
      */
     public T setProviderId(String providerId) {
       checkArgument(
-          !Strings.isNullOrEmpty(providerId), "provider ID name must not be null or empty");
+          !Strings.isNullOrEmpty(providerId), "Provider ID name must not be null or empty.");
       this.providerId = providerId;
       return getThis();
     }
@@ -83,7 +93,7 @@ public abstract class ProviderConfig {
      * @param displayName a non-null, non-empty display name string.
      */
     public T setDisplayName(String displayName) {
-      checkArgument(!Strings.isNullOrEmpty(displayName), "display name must not be null or empty");
+      checkArgument(!Strings.isNullOrEmpty(displayName), "Display name must not be null or empty.");
       properties.put("displayName", displayName);
       return getThis();
     }
@@ -114,7 +124,7 @@ public abstract class ProviderConfig {
     final Map<String,Object> properties = new HashMap<>();
 
     AbstractUpdateRequest(String providerId) {
-      checkArgument(!Strings.isNullOrEmpty(providerId), "provider ID must not be null or empty");
+      checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
       this.providerId = providerId;
     }
 
@@ -128,7 +138,7 @@ public abstract class ProviderConfig {
      * @param displayName a non-null, non-empty display name string.
      */
     public T setDisplayName(String displayName) {
-      checkArgument(!Strings.isNullOrEmpty(displayName), "display name must not be null or empty");
+      checkArgument(!Strings.isNullOrEmpty(displayName), "Display name must not be null or empty.");
       properties.put("displayName", displayName);
       return getThis();
     }
