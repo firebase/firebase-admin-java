@@ -38,6 +38,7 @@ import com.google.api.core.ApiFutures;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.ProviderConfigTestUtils.TemporaryProviderConfig;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
@@ -52,7 +53,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
 
 public class TenantAwareFirebaseAuthIT {
 
@@ -61,16 +64,17 @@ public class TenantAwareFirebaseAuthIT {
   private static final JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
   private static final HttpTransport transport = Utils.getDefaultTransport();
 
-  private static FirebaseAuth auth;
   private static TenantManager tenantManager;
   private static TenantAwareFirebaseAuth tenantAwareAuth;
   private static String tenantId;
 
+  @Rule public final TemporaryProviderConfig temporaryProviderConfig =
+      new TemporaryProviderConfig(tenantAwareAuth);
+
   @BeforeClass
   public static void setUpClass() throws Exception {
     FirebaseApp masterApp = IntegrationTestUtils.ensureDefaultApp();
-    auth = FirebaseAuth.getInstance(masterApp);
-    tenantManager = auth.getTenantManager();
+    tenantManager = FirebaseAuth.getInstance(masterApp).getTenantManager();
     Tenant.CreateRequest tenantCreateRequest =
         new Tenant.CreateRequest().setDisplayName("DisplayName");
     tenantId = tenantManager.createTenant(tenantCreateRequest).getTenantId();
@@ -85,6 +89,7 @@ public class TenantAwareFirebaseAuthIT {
   @Test
   public void testUserLifecycle() throws Exception {
     // Create user
+    // TODO(micahstairs): Use a temporary user here.
     UserRecord userRecord = tenantAwareAuth.createUserAsync(new UserRecord.CreateRequest()).get();
     String uid = userRecord.getUid();
 
@@ -158,6 +163,7 @@ public class TenantAwareFirebaseAuthIT {
 
     try {
       for (int i = 0; i < 3; i++) {
+        // TODO(micahstairs): Use a temporary user here.
         UserRecord.CreateRequest createRequest =
             new UserRecord.CreateRequest().setPassword("password");
         uids.add(tenantAwareAuth.createUserAsync(createRequest).get().getUid());
@@ -230,39 +236,6 @@ public class TenantAwareFirebaseAuthIT {
   }
 
   @Test
-  public void testGetUserWithMultipleTenantIds() throws Exception {
-    // Create second tenant.
-    Tenant.CreateRequest tenantCreateRequest =
-        new Tenant.CreateRequest().setDisplayName("DisplayName2");
-    String tenantId2 = tenantManager.createTenant(tenantCreateRequest).getTenantId();
-
-    // Create three users (one without a tenant ID, and two with different tenant IDs).
-    UserRecord.CreateRequest createRequest = new UserRecord.CreateRequest();
-    UserRecord nonTenantUserRecord = auth.createUser(createRequest);
-    UserRecord tenantUserRecord1 = tenantAwareAuth.createUser(createRequest);
-    TenantAwareFirebaseAuth tenantAwareAuth2 = auth.getTenantManager().getAuthForTenant(tenantId2);
-    UserRecord tenantUserRecord2 = tenantAwareAuth2.createUser(createRequest);
-
-    // Make sure only non-tenant users can be fetched using the standard client.
-    assertNotNull(auth.getUser(nonTenantUserRecord.getUid()));
-    assertUserDoesNotExist(auth, tenantUserRecord1.getUid());
-    assertUserDoesNotExist(auth, tenantUserRecord2.getUid());
-
-    // Make sure tenant-aware client cannot fetch users outside that tenant.
-    assertUserDoesNotExist(tenantAwareAuth, nonTenantUserRecord.getUid());
-    assertUserDoesNotExist(tenantAwareAuth, tenantUserRecord2.getUid());
-    assertUserDoesNotExist(tenantAwareAuth2, nonTenantUserRecord.getUid());
-    assertUserDoesNotExist(tenantAwareAuth2, tenantUserRecord1.getUid());
-
-    // Make sure tenant-aware client can fetch users under that tenant.
-    assertNotNull(tenantAwareAuth.getUser(tenantUserRecord1.getUid()));
-    assertNotNull(tenantAwareAuth2.getUser(tenantUserRecord2.getUid()));
-
-    // Delete second tenant.
-    tenantManager.deleteTenant(tenantId2);
-  }
-
-  @Test
   public void testCustomToken() throws Exception {
     String customToken = tenantAwareAuth.createCustomTokenAsync("user1").get();
     String idToken = signInWithCustomToken(customToken, tenantId);
@@ -277,7 +250,7 @@ public class TenantAwareFirebaseAuthIT {
     String idToken = signInWithCustomToken(customToken, tenantId);
 
     try {
-      auth.getTenantManager().getAuthForTenant("OTHER").verifyIdTokenAsync(idToken).get();
+      tenantManager.getAuthForTenant("OTHER").verifyIdTokenAsync(idToken).get();
       fail("No error thrown for verifying a token with the wrong tenant-aware client");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
@@ -290,81 +263,75 @@ public class TenantAwareFirebaseAuthIT {
   public void testOidcProviderConfigLifecycle() throws Exception {
     // Create config provider
     String providerId = "oidc.provider-id";
-    OidcProviderConfig.CreateRequest createRequest =
-        new OidcProviderConfig.CreateRequest()
-            .setProviderId(providerId)
-            .setDisplayName("DisplayName")
-            .setEnabled(true)
-            .setClientId("ClientId")
-            .setIssuer("https://oidc.com/issuer");
-    OidcProviderConfig config = tenantAwareAuth.createOidcProviderConfigAsync(createRequest).get();
+    OidcProviderConfig config =
+        temporaryProviderConfig.createOidcProviderConfig(
+          new OidcProviderConfig.CreateRequest()
+              .setProviderId(providerId)
+              .setDisplayName("DisplayName")
+              .setEnabled(true)
+              .setClientId("ClientId")
+              .setIssuer("https://oidc.com/issuer"));
     assertEquals(providerId, config.getProviderId());
     assertEquals("DisplayName", config.getDisplayName());
     assertEquals("ClientId", config.getClientId());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
 
-    try {
-      // Get config provider
-      config = tenantAwareAuth.getOidcProviderConfigAsync(providerId).get();
-      assertEquals(providerId, config.getProviderId());
-      assertEquals("DisplayName", config.getDisplayName());
-      assertEquals("ClientId", config.getClientId());
-      assertEquals("https://oidc.com/issuer", config.getIssuer());
+    // Get config provider
+    config = tenantAwareAuth.getOidcProviderConfigAsync(providerId).get();
+    assertEquals(providerId, config.getProviderId());
+    assertEquals("DisplayName", config.getDisplayName());
+    assertEquals("ClientId", config.getClientId());
+    assertEquals("https://oidc.com/issuer", config.getIssuer());
 
-      // Update config provider
-      OidcProviderConfig.UpdateRequest updateRequest =
-          new OidcProviderConfig.UpdateRequest(providerId)
-              .setDisplayName("NewDisplayName")
-              .setEnabled(false)
-              .setClientId("NewClientId")
-              .setIssuer("https://oidc.com/new-issuer");
-      config = tenantAwareAuth.updateOidcProviderConfigAsync(updateRequest).get();
-      assertEquals(providerId, config.getProviderId());
-      assertEquals("NewDisplayName", config.getDisplayName());
-      assertFalse(config.isEnabled());
-      assertEquals("NewClientId", config.getClientId());
-      assertEquals("https://oidc.com/new-issuer", config.getIssuer());
-    } finally {
-      // Delete config provider
-      tenantAwareAuth.deleteProviderConfigAsync(providerId).get();
-      assertOidcProviderConfigDoesNotExist(tenantAwareAuth, providerId);
-    }
+    // Update config provider
+    OidcProviderConfig.UpdateRequest updateRequest =
+        new OidcProviderConfig.UpdateRequest(providerId)
+            .setDisplayName("NewDisplayName")
+            .setEnabled(false)
+            .setClientId("NewClientId")
+            .setIssuer("https://oidc.com/new-issuer");
+    config = tenantAwareAuth.updateOidcProviderConfigAsync(updateRequest).get();
+    assertEquals(providerId, config.getProviderId());
+    assertEquals("NewDisplayName", config.getDisplayName());
+    assertFalse(config.isEnabled());
+    assertEquals("NewClientId", config.getClientId());
+    assertEquals("https://oidc.com/new-issuer", config.getIssuer());
+
+    // Delete config provider
+    temporaryProviderConfig.deleteOidcProviderConfig(providerId);
+    ProviderConfigTestUtils.assertOidcProviderConfigDoesNotExist(tenantAwareAuth, providerId);
   }
 
   @Test
   public void testListOidcProviderConfigs() throws Exception {
     final List<String> providerIds = new ArrayList<>();
-    try {
-      // Create provider configs
-      for (int i = 0; i < 3; i++) {
-        String providerId = "oidc.provider-id" + i;
-        providerIds.add(providerId);
-        OidcProviderConfig.CreateRequest createRequest = new OidcProviderConfig.CreateRequest()
+
+    // Create provider configs
+    for (int i = 0; i < 3; i++) {
+      String providerId = "oidc.provider-id" + i;
+      providerIds.add(providerId);
+      temporaryProviderConfig.createOidcProviderConfig(
+          new OidcProviderConfig.CreateRequest()
             .setProviderId(providerId)
             .setClientId("CLIENT_ID")
-            .setIssuer("https://oidc.com/issuer");
-        tenantAwareAuth.createOidcProviderConfig(createRequest);
-      }
+            .setIssuer("https://oidc.com/issuer"));
+    }
 
-      // List provider configs
-      final AtomicInteger collected = new AtomicInteger(0);
-      ListProviderConfigsPage<OidcProviderConfig> page =
-          tenantAwareAuth.listOidcProviderConfigsAsync(null).get();
-      for (OidcProviderConfig providerConfig : page.iterateAll()) {
-        if (providerIds.contains(providerConfig.getProviderId())) {
-          collected.incrementAndGet();
-          assertEquals("CLIENT_ID", providerConfig.getClientId());
-          assertEquals("https://oidc.com/issuer", providerConfig.getIssuer());
-        }
-      }
-      assertEquals(providerIds.size(), collected.get());
-
-    } finally {
-      // Delete provider configs
-      for (String providerId : providerIds) {
-        tenantAwareAuth.deleteProviderConfigAsync(providerId).get();
+    // List provider configs
+    // NOTE: We do not need to test all of the different ways we can iterate over the provider
+    // configs, since this testing is already performed in FirebaseAuthIT with the tenant-agnostic
+    // tests.
+    final AtomicInteger collected = new AtomicInteger(0);
+    ListProviderConfigsPage<OidcProviderConfig> page =
+        tenantAwareAuth.listOidcProviderConfigsAsync(null).get();
+    for (OidcProviderConfig providerConfig : page.iterateAll()) {
+      if (providerIds.contains(providerConfig.getProviderId())) {
+        collected.incrementAndGet();
+        assertEquals("CLIENT_ID", providerConfig.getClientId());
+        assertEquals("https://oidc.com/issuer", providerConfig.getIssuer());
       }
     }
+    assertEquals(providerIds.size(), collected.get());
   }
 
   private String randomPhoneNumber() {
@@ -415,23 +382,11 @@ public class TenantAwareFirebaseAuthIT {
     }
   }
 
-  private static void assertOidcProviderConfigDoesNotExist(
-      AbstractFirebaseAuth firebaseAuth, String providerId) throws Exception {
-    try {
-      firebaseAuth.getOidcProviderConfigAsync(providerId).get();
-      fail("No error thrown for getting a deleted provider config");
-    } catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
-    }
-  }
-
   private static void assertUserDoesNotExist(AbstractFirebaseAuth firebaseAuth, String uid)
       throws Exception {
     try {
       firebaseAuth.getUserAsync(uid).get();
-      fail("No error thrown for getting a user which was expected to be absent");
+      fail("No error thrown for getting a user which was expected to be absent.");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,

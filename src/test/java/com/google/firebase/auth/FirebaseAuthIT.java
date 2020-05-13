@@ -46,6 +46,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.auth.ProviderConfigTestUtils.TemporaryProviderConfig;
 import com.google.firebase.auth.hash.Scrypt;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.testing.IntegrationTestUtils;
@@ -84,8 +85,9 @@ public class FirebaseAuthIT {
   private static final FirebaseAuth auth = FirebaseAuth.getInstance(
       IntegrationTestUtils.ensureDefaultApp());
 
-  @Rule
-  public final TemporaryUser temporaryUser = new TemporaryUser();
+  @Rule public final TemporaryUser temporaryUser = new TemporaryUser();
+  @Rule public final TemporaryProviderConfig temporaryProviderConfig =
+      new TemporaryProviderConfig(auth);
 
   @Test
   public void testGetNonExistingUser() throws Exception {
@@ -664,124 +666,113 @@ public class FirebaseAuthIT {
   public void testOidcProviderConfigLifecycle() throws Exception {
     // Create config provider
     String providerId = "oidc.provider-id";
-    OidcProviderConfig.CreateRequest createRequest =
+    OidcProviderConfig config = temporaryProviderConfig.createOidcProviderConfig(
         new OidcProviderConfig.CreateRequest()
             .setProviderId(providerId)
             .setDisplayName("DisplayName")
             .setEnabled(true)
             .setClientId("ClientId")
-            .setIssuer("https://oidc.com/issuer");
-    OidcProviderConfig config = auth.createOidcProviderConfigAsync(createRequest).get();
+            .setIssuer("https://oidc.com/issuer"));
     assertEquals(providerId, config.getProviderId());
     assertEquals("DisplayName", config.getDisplayName());
     assertTrue(config.isEnabled());
     assertEquals("ClientId", config.getClientId());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
 
-    try {
-      // Get config provider
-      config = auth.getOidcProviderConfigAsync(providerId).get();
-      assertEquals(providerId, config.getProviderId());
-      assertEquals("DisplayName", config.getDisplayName());
-      assertTrue(config.isEnabled());
-      assertEquals("ClientId", config.getClientId());
-      assertEquals("https://oidc.com/issuer", config.getIssuer());
+    // Get config provider
+    config = auth.getOidcProviderConfigAsync(providerId).get();
+    assertEquals(providerId, config.getProviderId());
+    assertEquals("DisplayName", config.getDisplayName());
+    assertTrue(config.isEnabled());
+    assertEquals("ClientId", config.getClientId());
+    assertEquals("https://oidc.com/issuer", config.getIssuer());
 
-      // Update config provider
-      OidcProviderConfig.UpdateRequest updateRequest =
-          new OidcProviderConfig.UpdateRequest(providerId)
-              .setDisplayName("NewDisplayName")
-              .setEnabled(false)
-              .setClientId("NewClientId")
-              .setIssuer("https://oidc.com/new-issuer");
-      config = auth.updateOidcProviderConfigAsync(updateRequest).get();
-      assertEquals(providerId, config.getProviderId());
-      assertEquals("NewDisplayName", config.getDisplayName());
-      assertFalse(config.isEnabled());
-      assertEquals("NewClientId", config.getClientId());
-      assertEquals("https://oidc.com/new-issuer", config.getIssuer());
-    } finally {
-      // Delete config provider
-      auth.deleteProviderConfigAsync(providerId).get();
-    }
+    // Update config provider
+    OidcProviderConfig.UpdateRequest updateRequest =
+        new OidcProviderConfig.UpdateRequest(providerId)
+            .setDisplayName("NewDisplayName")
+            .setEnabled(false)
+            .setClientId("NewClientId")
+            .setIssuer("https://oidc.com/new-issuer");
+    config = auth.updateOidcProviderConfigAsync(updateRequest).get();
+    assertEquals(providerId, config.getProviderId());
+    assertEquals("NewDisplayName", config.getDisplayName());
+    assertFalse(config.isEnabled());
+    assertEquals("NewClientId", config.getClientId());
+    assertEquals("https://oidc.com/new-issuer", config.getIssuer());
 
-    assertOidcProviderConfigDoesNotExist(auth, providerId);
+    // Delete config provider
+    auth.deleteOidcProviderConfigAsync(providerId).get();
+    ProviderConfigTestUtils.assertOidcProviderConfigDoesNotExist(auth, providerId);
   }
 
   @Test
   public void testListOidcProviderConfigs() throws Exception {
     final List<String> providerIds = new ArrayList<>();
 
-    try {
-      // Create provider configs
-      for (int i = 0; i < 3; i++) {
-        String providerId = "oidc.provider-id" + i;
-        providerIds.add(providerId);
-        OidcProviderConfig.CreateRequest createRequest = new OidcProviderConfig.CreateRequest()
+    // Create provider configs
+    for (int i = 0; i < 3; i++) {
+      String providerId = "oidc.provider-id" + i;
+      providerIds.add(providerId);
+      OidcProviderConfig config = temporaryProviderConfig.createOidcProviderConfig(
+          new OidcProviderConfig.CreateRequest()
             .setProviderId(providerId)
             .setClientId("CLIENT_ID")
-            .setIssuer("https://oidc.com/issuer");
-        auth.createOidcProviderConfig(createRequest);
-      }
+            .setIssuer("https://oidc.com/issuer"));
+    }
 
-      // Test list by batches
-      final AtomicInteger collected = new AtomicInteger(0);
-      ListProviderConfigsPage<OidcProviderConfig> page =
-          auth.listOidcProviderConfigsAsync(null).get();
-      while (page != null) {
-        for (OidcProviderConfig providerConfig : page.getValues()) {
-          if (checkProviderConfig(providerIds, providerConfig)) {
-            collected.incrementAndGet();
-          }
-        }
-        page = page.getNextPage();
-      }
-      assertEquals(providerIds.size(), collected.get());
-
-      // Test iterate all
-      collected.set(0);
-      page = auth.listOidcProviderConfigsAsync(null).get();
-      for (OidcProviderConfig providerConfig : page.iterateAll()) {
+    // Test list by batches
+    final AtomicInteger collected = new AtomicInteger(0);
+    ListProviderConfigsPage<OidcProviderConfig> page =
+        auth.listOidcProviderConfigsAsync(null).get();
+    while (page != null) {
+      for (OidcProviderConfig providerConfig : page.getValues()) {
         if (checkProviderConfig(providerIds, providerConfig)) {
           collected.incrementAndGet();
         }
       }
-      assertEquals(providerIds.size(), collected.get());
+      page = page.getNextPage();
+    }
+    assertEquals(providerIds.size(), collected.get());
 
-      // Test iterate async
-      collected.set(0);
-      final Semaphore semaphore = new Semaphore(0);
-      final AtomicReference<Throwable> error = new AtomicReference<>();
-      ApiFuture<ListProviderConfigsPage<OidcProviderConfig>> pageFuture =
-          auth.listOidcProviderConfigsAsync(null);
-      ApiFutures.addCallback(
-          pageFuture,
-          new ApiFutureCallback<ListProviderConfigsPage<OidcProviderConfig>>() {
-            @Override
-            public void onFailure(Throwable t) {
-              error.set(t);
-              semaphore.release();
-            }
-
-            @Override
-            public void onSuccess(ListProviderConfigsPage<OidcProviderConfig> result) {
-              for (OidcProviderConfig providerConfig : result.iterateAll()) {
-                if (checkProviderConfig(providerIds, providerConfig)) {
-                  collected.incrementAndGet();
-                }
-              }
-              semaphore.release();
-            }
-          }, MoreExecutors.directExecutor());
-      semaphore.acquire();
-      assertEquals(providerIds.size(), collected.get());
-      assertNull(error.get());
-    } finally {
-      // Delete provider configs
-      for (String providerId : providerIds) {
-        auth.deleteProviderConfigAsync(providerId).get();
+    // Test iterate all
+    collected.set(0);
+    page = auth.listOidcProviderConfigsAsync(null).get();
+    for (OidcProviderConfig providerConfig : page.iterateAll()) {
+      if (checkProviderConfig(providerIds, providerConfig)) {
+        collected.incrementAndGet();
       }
     }
+    assertEquals(providerIds.size(), collected.get());
+
+    // Test iterate async
+    collected.set(0);
+    final Semaphore semaphore = new Semaphore(0);
+    final AtomicReference<Throwable> error = new AtomicReference<>();
+    ApiFuture<ListProviderConfigsPage<OidcProviderConfig>> pageFuture =
+        auth.listOidcProviderConfigsAsync(null);
+    ApiFutures.addCallback(
+        pageFuture,
+        new ApiFutureCallback<ListProviderConfigsPage<OidcProviderConfig>>() {
+          @Override
+          public void onFailure(Throwable t) {
+            error.set(t);
+            semaphore.release();
+          }
+
+          @Override
+          public void onSuccess(ListProviderConfigsPage<OidcProviderConfig> result) {
+            for (OidcProviderConfig providerConfig : result.iterateAll()) {
+              if (checkProviderConfig(providerIds, providerConfig)) {
+                collected.incrementAndGet();
+              }
+            }
+            semaphore.release();
+          }
+        }, MoreExecutors.directExecutor());
+    semaphore.acquire();
+    assertEquals(providerIds.size(), collected.get());
+    assertNull(error.get());
   }
 
   private Map<String, String> parseLinkParameters(String link) throws Exception {
@@ -924,23 +915,11 @@ public class FirebaseAuthIT {
   }
 
 
-  private static void assertOidcProviderConfigDoesNotExist(
-      AbstractFirebaseAuth firebaseAuth, String providerId) throws Exception {
-    try {
-      firebaseAuth.getOidcProviderConfigAsync(providerId).get();
-      fail("No error thrown for getting a deleted provider config");
-    } catch (ExecutionException e) {
-      assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
-    }
-  }
-
   private static void assertUserDoesNotExist(AbstractFirebaseAuth firebaseAuth, String uid)
       throws Exception {
     try {
       firebaseAuth.getUserAsync(uid).get();
-      fail("No error thrown for getting a user which was expected to be absent");
+      fail("No error thrown for getting a user which was expected to be absent.");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,

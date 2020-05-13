@@ -1107,7 +1107,7 @@ public abstract class AbstractFirebaseAuth {
   private CallableOperation<OidcProviderConfig, FirebaseAuthException>
       createOidcProviderConfigOp(final OidcProviderConfig.CreateRequest request) {
     checkNotDestroyed();
-    checkNotNull(request, "create request must not be null");
+    checkNotNull(request, "Create request must not be null.");
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<OidcProviderConfig, FirebaseAuthException>() {
       @Override
@@ -1147,7 +1147,7 @@ public abstract class AbstractFirebaseAuth {
   private CallableOperation<OidcProviderConfig, FirebaseAuthException> updateOidcProviderConfigOp(
       final OidcProviderConfig.UpdateRequest request) {
     checkNotDestroyed();
-    checkNotNull(request, "update request must not be null");
+    checkNotNull(request, "Update request must not be null.");
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<OidcProviderConfig, FirebaseAuthException>() {
       @Override
@@ -1188,7 +1188,7 @@ public abstract class AbstractFirebaseAuth {
   private CallableOperation<OidcProviderConfig, FirebaseAuthException>
       getOidcProviderConfigOp(final String providerId) {
     checkNotDestroyed();
-    checkArgument(!Strings.isNullOrEmpty(providerId), "provider ID must not be null or empty");
+    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<OidcProviderConfig, FirebaseAuthException>() {
       @Override
@@ -1286,18 +1286,18 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Deletes the provider config identified by the specified provider ID.
+   * Deletes the OIDC Auth provider config identified by the specified provider ID.
    *
    * @param providerId A provider ID string.
    * @throws IllegalArgumentException If the provider ID string is null or empty.
    * @throws FirebaseAuthException If an error occurs while deleting the provider config.
    */
-  public void deleteProviderConfig(@NonNull String providerId) throws FirebaseAuthException {
-    deleteProviderConfigOp(providerId).call();
+  public void deleteOidcProviderConfig(@NonNull String providerId) throws FirebaseAuthException {
+    deleteOidcProviderConfigOp(providerId).call();
   }
 
   /**
-   * Similar to {@link #deleteProviderConfig} but performs the operation asynchronously.
+   * Similar to {@link #deleteOidcProviderConfig} but performs the operation asynchronously.
    *
    * @param providerId A provider ID string.
    * @return An {@code ApiFuture} which will complete successfully when the specified provider
@@ -1305,19 +1305,19 @@ public abstract class AbstractFirebaseAuth {
    *     throws a {@link FirebaseAuthException}.
    * @throws IllegalArgumentException If the provider ID string is null or empty.
    */
-  public ApiFuture<Void> deleteProviderConfigAsync(String providerId) {
-    return deleteProviderConfigOp(providerId).callAsync(firebaseApp);
+  public ApiFuture<Void> deleteOidcProviderConfigAsync(String providerId) {
+    return deleteOidcProviderConfigOp(providerId).callAsync(firebaseApp);
   }
 
-  private CallableOperation<Void, FirebaseAuthException> deleteProviderConfigOp(
+  private CallableOperation<Void, FirebaseAuthException> deleteOidcProviderConfigOp(
       final String providerId) {
     checkNotDestroyed();
-    checkArgument(!Strings.isNullOrEmpty(providerId), "provider ID must not be null or empty");
+    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<Void, FirebaseAuthException>() {
       @Override
       protected Void execute() throws FirebaseAuthException {
-        userManager.deleteProviderConfig(providerId);
+        userManager.deleteOidcProviderConfig(providerId);
         return null;
       }
     };
