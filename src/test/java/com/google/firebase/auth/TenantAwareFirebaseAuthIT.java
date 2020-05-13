@@ -65,11 +65,11 @@ public class TenantAwareFirebaseAuthIT {
   private static final HttpTransport transport = Utils.getDefaultTransport();
 
   private static TenantManager tenantManager;
-  private static TenantAwareFirebaseAuth auth;
+  private static TenantAwareFirebaseAuth tenantAwareAuth;
   private static String tenantId;
 
   @Rule public final TemporaryProviderConfig temporaryProviderConfig =
-      new TemporaryProviderConfig(auth);
+      new TemporaryProviderConfig(tenantAwareAuth);
 
   @BeforeClass
   public static void setUpClass() throws Exception {
@@ -78,7 +78,7 @@ public class TenantAwareFirebaseAuthIT {
     Tenant.CreateRequest tenantCreateRequest =
         new Tenant.CreateRequest().setDisplayName("DisplayName");
     tenantId = tenantManager.createTenant(tenantCreateRequest).getTenantId();
-    auth = tenantManager.getAuthForTenant(tenantId);
+    tenantAwareAuth = tenantManager.getAuthForTenant(tenantId);
   }
 
   @AfterClass
@@ -90,11 +90,11 @@ public class TenantAwareFirebaseAuthIT {
   public void testUserLifecycle() throws Exception {
     // Create user
     // TODO(micahstairs): Use a temporary user here.
-    UserRecord userRecord = auth.createUserAsync(new UserRecord.CreateRequest()).get();
+    UserRecord userRecord = tenantAwareAuth.createUserAsync(new UserRecord.CreateRequest()).get();
     String uid = userRecord.getUid();
 
     // Get user
-    userRecord = auth.getUserAsync(userRecord.getUid()).get();
+    userRecord = tenantAwareAuth.getUserAsync(userRecord.getUid()).get();
     assertEquals(uid, userRecord.getUid());
     assertEquals(tenantId, userRecord.getTenantId());
     assertNull(userRecord.getDisplayName());
@@ -118,7 +118,7 @@ public class TenantAwareFirebaseAuthIT {
         .setPhotoUrl("https://example.com/photo.png")
         .setEmailVerified(true)
         .setPassword("secret");
-    userRecord = auth.updateUserAsync(request).get();
+    userRecord = tenantAwareAuth.updateUserAsync(request).get();
     assertEquals(uid, userRecord.getUid());
     assertEquals(tenantId, userRecord.getTenantId());
     assertEquals("Updated Name", userRecord.getDisplayName());
@@ -131,7 +131,7 @@ public class TenantAwareFirebaseAuthIT {
     assertTrue(userRecord.getCustomClaims().isEmpty());
 
     // Get user by email
-    userRecord = auth.getUserByEmailAsync(userRecord.getEmail()).get();
+    userRecord = tenantAwareAuth.getUserByEmailAsync(userRecord.getEmail()).get();
     assertEquals(uid, userRecord.getUid());
 
     // Disable user and remove properties
@@ -140,7 +140,7 @@ public class TenantAwareFirebaseAuthIT {
         .setDisplayName(null)
         .setPhoneNumber(null)
         .setDisabled(true);
-    userRecord = auth.updateUserAsync(request).get();
+    userRecord = tenantAwareAuth.updateUserAsync(request).get();
     assertEquals(uid, userRecord.getUid());
     assertEquals(tenantId, userRecord.getTenantId());
     assertNull(userRecord.getDisplayName());
@@ -153,8 +153,8 @@ public class TenantAwareFirebaseAuthIT {
     assertTrue(userRecord.getCustomClaims().isEmpty());
 
     // Delete user
-    auth.deleteUserAsync(userRecord.getUid()).get();
-    assertUserDoesNotExist(auth, userRecord.getUid());
+    tenantAwareAuth.deleteUserAsync(userRecord.getUid()).get();
+    assertUserDoesNotExist(tenantAwareAuth, userRecord.getUid());
   }
 
   @Test
@@ -166,12 +166,12 @@ public class TenantAwareFirebaseAuthIT {
         // TODO(micahstairs): Use a temporary user here.
         UserRecord.CreateRequest createRequest =
             new UserRecord.CreateRequest().setPassword("password");
-        uids.add(auth.createUserAsync(createRequest).get().getUid());
+        uids.add(tenantAwareAuth.createUserAsync(createRequest).get().getUid());
       }
 
       // Test list by batches
       final AtomicInteger collected = new AtomicInteger(0);
-      ListUsersPage page = auth.listUsersAsync(null).get();
+      ListUsersPage page = tenantAwareAuth.listUsersAsync(null).get();
       while (page != null) {
         for (ExportedUserRecord user : page.getValues()) {
           if (uids.contains(user.getUid())) {
@@ -189,7 +189,7 @@ public class TenantAwareFirebaseAuthIT {
 
       // Test iterate all
       collected.set(0);
-      page = auth.listUsersAsync(null).get();
+      page = tenantAwareAuth.listUsersAsync(null).get();
       for (ExportedUserRecord user : page.iterateAll()) {
         if (uids.contains(user.getUid())) {
           collected.incrementAndGet();
@@ -204,7 +204,7 @@ public class TenantAwareFirebaseAuthIT {
       collected.set(0);
       final Semaphore semaphore = new Semaphore(0);
       final AtomicReference<Throwable> error = new AtomicReference<>();
-      ApiFuture<ListUsersPage> pageFuture = auth.listUsersAsync(null);
+      ApiFuture<ListUsersPage> pageFuture = tenantAwareAuth.listUsersAsync(null);
       ApiFutures.addCallback(pageFuture, new ApiFutureCallback<ListUsersPage>() {
         @Override
         public void onFailure(Throwable t) {
@@ -230,23 +230,23 @@ public class TenantAwareFirebaseAuthIT {
       assertNull(error.get());
     } finally {
       for (String uid : uids) {
-        auth.deleteUserAsync(uid).get();
+        tenantAwareAuth.deleteUserAsync(uid).get();
       }
     }
   }
 
   @Test
   public void testCustomToken() throws Exception {
-    String customToken = auth.createCustomTokenAsync("user1").get();
+    String customToken = tenantAwareAuth.createCustomTokenAsync("user1").get();
     String idToken = signInWithCustomToken(customToken, tenantId);
-    FirebaseToken decoded = auth.verifyIdTokenAsync(idToken).get();
+    FirebaseToken decoded = tenantAwareAuth.verifyIdTokenAsync(idToken).get();
     assertEquals("user1", decoded.getUid());
     assertEquals(tenantId, decoded.getTenantId());
   }
 
   @Test
   public void testVerifyTokenWithWrongTenantAwareClient() throws Exception {
-    String customToken = auth.createCustomTokenAsync("user").get();
+    String customToken = tenantAwareAuth.createCustomTokenAsync("user").get();
     String idToken = signInWithCustomToken(customToken, tenantId);
 
     try {
@@ -263,45 +263,43 @@ public class TenantAwareFirebaseAuthIT {
   public void testOidcProviderConfigLifecycle() throws Exception {
     // Create config provider
     String providerId = "oidc.provider-id";
-    OidcProviderConfig.CreateRequest createRequest =
-        new OidcProviderConfig.CreateRequest()
-            .setProviderId(providerId)
-            .setDisplayName("DisplayName")
-            .setEnabled(true)
-            .setClientId("ClientId")
-            .setIssuer("https://oidc.com/issuer");
-    OidcProviderConfig config = auth.createOidcProviderConfigAsync(createRequest).get();
+    OidcProviderConfig config =
+        temporaryProviderConfig.createOidcProviderConfig(
+          new OidcProviderConfig.CreateRequest()
+              .setProviderId(providerId)
+              .setDisplayName("DisplayName")
+              .setEnabled(true)
+              .setClientId("ClientId")
+              .setIssuer("https://oidc.com/issuer"));
     assertEquals(providerId, config.getProviderId());
     assertEquals("DisplayName", config.getDisplayName());
     assertEquals("ClientId", config.getClientId());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
 
-    try {
-      // Get config provider
-      config = auth.getOidcProviderConfigAsync(providerId).get();
-      assertEquals(providerId, config.getProviderId());
-      assertEquals("DisplayName", config.getDisplayName());
-      assertEquals("ClientId", config.getClientId());
-      assertEquals("https://oidc.com/issuer", config.getIssuer());
+    // Get config provider
+    config = tenantAwareAuth.getOidcProviderConfigAsync(providerId).get();
+    assertEquals(providerId, config.getProviderId());
+    assertEquals("DisplayName", config.getDisplayName());
+    assertEquals("ClientId", config.getClientId());
+    assertEquals("https://oidc.com/issuer", config.getIssuer());
 
-      // Update config provider
-      OidcProviderConfig.UpdateRequest updateRequest =
-          new OidcProviderConfig.UpdateRequest(providerId)
-              .setDisplayName("NewDisplayName")
-              .setEnabled(false)
-              .setClientId("NewClientId")
-              .setIssuer("https://oidc.com/new-issuer");
-      config = auth.updateOidcProviderConfigAsync(updateRequest).get();
-      assertEquals(providerId, config.getProviderId());
-      assertEquals("NewDisplayName", config.getDisplayName());
-      assertFalse(config.isEnabled());
-      assertEquals("NewClientId", config.getClientId());
-      assertEquals("https://oidc.com/new-issuer", config.getIssuer());
-    } finally {
-      // Delete config provider
-      auth.deleteOidcProviderConfigAsync(providerId).get();
-      ProviderConfigTestUtils.assertOidcProviderConfigDoesNotExist(auth, providerId);
-    }
+    // Update config provider
+    OidcProviderConfig.UpdateRequest updateRequest =
+        new OidcProviderConfig.UpdateRequest(providerId)
+            .setDisplayName("NewDisplayName")
+            .setEnabled(false)
+            .setClientId("NewClientId")
+            .setIssuer("https://oidc.com/new-issuer");
+    config = tenantAwareAuth.updateOidcProviderConfigAsync(updateRequest).get();
+    assertEquals(providerId, config.getProviderId());
+    assertEquals("NewDisplayName", config.getDisplayName());
+    assertFalse(config.isEnabled());
+    assertEquals("NewClientId", config.getClientId());
+    assertEquals("https://oidc.com/new-issuer", config.getIssuer());
+
+    // Delete config provider
+    temporaryProviderConfig.deleteOidcProviderConfig(providerId);
+    ProviderConfigTestUtils.assertOidcProviderConfigDoesNotExist(tenantAwareAuth, providerId);
   }
 
   @Test
@@ -325,7 +323,7 @@ public class TenantAwareFirebaseAuthIT {
     // tests.
     final AtomicInteger collected = new AtomicInteger(0);
     ListProviderConfigsPage<OidcProviderConfig> page =
-        auth.listOidcProviderConfigsAsync(null).get();
+        tenantAwareAuth.listOidcProviderConfigsAsync(null).get();
     for (OidcProviderConfig providerConfig : page.iterateAll()) {
       if (providerIds.contains(providerConfig.getProviderId())) {
         collected.incrementAndGet();

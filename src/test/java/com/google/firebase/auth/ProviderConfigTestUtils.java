@@ -16,6 +16,7 @@
 
 package com.google.firebase.auth;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -51,23 +52,37 @@ class ProviderConfigTestUtils {
       this.auth = auth;
     }
 
-    OidcProviderConfig createOidcProviderConfig(OidcProviderConfig.CreateRequest request)
-        throws FirebaseAuthException {
-      OidcProviderConfig config = auth.createOidcProviderConfig(request);
-      oidcIds.add(config.getProviderId());
+    OidcProviderConfig createOidcProviderConfig(
+        OidcProviderConfig.CreateRequest request) throws FirebaseAuthException {
+      OidcProviderConfig config;
+      synchronized (oidcIds) {
+        config = auth.createOidcProviderConfig(request);
+        oidcIds.add(config.getProviderId());
+      }
       return config;
+    }
+
+    void deleteOidcProviderConfig(String providerId) throws FirebaseAuthException {
+      synchronized (oidcIds) {
+        checkArgument(oidcIds.contains(providerId),
+            "Provider ID is not currently associated with a temporary user.");
+        auth.deleteOidcProviderConfig(providerId);
+        oidcIds.remove(providerId);
+      }
     }
 
     @Override
     protected synchronized void after() {
-      for (String id : oidcIds) {
-        try {
-          auth.deleteOidcProviderConfig(id);
-        } catch (Exception ignore) {
-          // Ignore
+      synchronized (oidcIds) {
+        for (String id : oidcIds) {
+          try {
+            auth.deleteOidcProviderConfig(id);
+          } catch (Exception ignore) {
+            // Ignore
+          }
         }
+        oidcIds.clear();
       }
-      oidcIds.clear();
     }
   }
 }
