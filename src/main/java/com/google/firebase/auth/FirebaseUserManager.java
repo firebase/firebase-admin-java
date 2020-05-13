@@ -319,7 +319,7 @@ class FirebaseUserManager {
       OidcProviderConfig.CreateRequest request) throws FirebaseAuthException {
     GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/oauthIdpConfigs");
     String providerId = request.getProviderId();
-    checkArgument(!Strings.isNullOrEmpty(providerId), "provider ID must not be null or empty");
+    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
     url.set("oauthIdpConfigId", providerId);
     return sendRequest("POST", url, request.getProperties(), OidcProviderConfig.class);
   }
@@ -328,7 +328,7 @@ class FirebaseUserManager {
       throws FirebaseAuthException {
     Map<String, Object> properties = request.getProperties();
     checkArgument(!properties.isEmpty(),
-        "provider config update must have at least one property set");
+        "Provider config update must have at least one property set.");
     GenericUrl url =
         new GenericUrl(idpConfigMgtBaseUrl + getOidcUrlSuffix(request.getProviderId()));
     url.put("updateMask", generateMask(properties));
@@ -346,7 +346,7 @@ class FirebaseUserManager {
         ImmutableMap.<String, Object>builder().put("pageSize", maxResults);
     if (pageToken != null) {
       checkArgument(!pageToken.equals(
-          ListTenantsPage.END_OF_LIST), "invalid end of list page token");
+          ListTenantsPage.END_OF_LIST), "Invalid end of list page token.");
       builder.put("nextPageToken", pageToken);
     }
 
@@ -360,7 +360,7 @@ class FirebaseUserManager {
     return response;
   }
 
-  void deleteProviderConfig(String providerId) throws FirebaseAuthException {
+  void deleteOidcProviderConfig(String providerId) throws FirebaseAuthException {
     GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + getOidcUrlSuffix(providerId));
     sendRequest("DELETE", url, null, GenericJson.class);
   }
@@ -374,12 +374,12 @@ class FirebaseUserManager {
   }
 
   private static String getTenantUrlSuffix(String tenantId) {
-    checkArgument(!Strings.isNullOrEmpty(tenantId), "tenant ID must not be null or empty");
+    checkArgument(!Strings.isNullOrEmpty(tenantId), "Tenant ID must not be null or empty.");
     return "/tenants/" + tenantId;
   }
 
   private static String getOidcUrlSuffix(String providerId) {
-    checkArgument(!Strings.isNullOrEmpty(providerId), "provider ID must not be null or empty");
+    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
     return "/oauthIdpConfigs/" + providerId;
   }
 
