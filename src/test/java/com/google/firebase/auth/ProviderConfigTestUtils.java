@@ -52,37 +52,30 @@ class ProviderConfigTestUtils {
       this.auth = auth;
     }
 
-    OidcProviderConfig createOidcProviderConfig(
+    synchronized OidcProviderConfig createOidcProviderConfig(
         OidcProviderConfig.CreateRequest request) throws FirebaseAuthException {
-      OidcProviderConfig config;
-      synchronized (oidcIds) {
-        config = auth.createOidcProviderConfig(request);
-        oidcIds.add(config.getProviderId());
-      }
+      OidcProviderConfig config = auth.createOidcProviderConfig(request);
+      oidcIds.add(config.getProviderId());
       return config;
     }
 
-    void deleteOidcProviderConfig(String providerId) throws FirebaseAuthException {
-      synchronized (oidcIds) {
-        checkArgument(oidcIds.contains(providerId),
-            "Provider ID is not currently associated with a temporary user.");
-        auth.deleteOidcProviderConfig(providerId);
-        oidcIds.remove(providerId);
-      }
+    synchronized void deleteOidcProviderConfig(String providerId) throws FirebaseAuthException {
+      checkArgument(oidcIds.contains(providerId),
+          "Provider ID is not currently associated with a temporary user.");
+      auth.deleteOidcProviderConfig(providerId);
+      oidcIds.remove(providerId);
     }
 
     @Override
     protected synchronized void after() {
-      synchronized (oidcIds) {
-        for (String id : oidcIds) {
-          try {
-            auth.deleteOidcProviderConfig(id);
-          } catch (Exception ignore) {
-            // Ignore
-          }
+      for (String id : oidcIds) {
+        try {
+          auth.deleteOidcProviderConfig(id);
+        } catch (Exception ignore) {
+          // Ignore
         }
-        oidcIds.clear();
       }
+      oidcIds.clear();
     }
   }
 }
