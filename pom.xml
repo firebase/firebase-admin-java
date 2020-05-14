@@ -19,7 +19,7 @@
 
     <groupId>com.google.firebase</groupId>
     <artifactId>firebase-admin</artifactId>
-    <version>6.12.3-SNAPSHOT</version>
+    <version>6.13.0</version>
     <packaging>jar</packaging>
 
     <name>firebase-admin</name>
