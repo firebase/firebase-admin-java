@@ -27,6 +27,12 @@ jobs:
       with:
         java-version: 1.7
 
+    - name: Publish to Maven Central
+      run: ./.github/scripts/temp_verify.sh
+      env:
+        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+
     # Does the following:
     #  1. Runs the Checkstyle plugin (validate phase)
     #  2. Compiles the source (compile phase)
