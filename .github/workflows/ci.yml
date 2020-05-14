@@ -27,7 +27,7 @@ jobs:
       with:
         java-version: 1.7
 
-    - name: Publish to Maven Central
+    - name: Temp verification step
       run: ./.github/scripts/temp_verify.sh
       env:
         GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

@@ -22,7 +22,7 @@ gpg --quiet --batch --yes --decrypt --passphrase="${GPG_PRIVATE_KEY}" \
   --output firebase.asc .github/resources/firebase.asc.gpg
 
 echo "Importing GPG key"
-gpg --import firebase.asc
+gpg --import --no-tty --batch --yes firebase.asc
 
 echo "Done"
 
