@@ -23,7 +23,9 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -58,6 +60,24 @@ public abstract class ProviderConfig {
     } catch (MalformedURLException e) {
       throw new IllegalArgumentException(url + " is a malformed URL.", e);
     }
+  }
+
+  static List<Object> getNestedList(Map<String, Object> outerMap, String id) {
+    List<Object> list = (List<Object>) outerMap.get(id);
+    if (list == null) {
+      list = new ArrayList<Object>();
+      outerMap.put(id, list);
+    }
+    return list;
+  }
+
+  static Map<String, Object> getNestedMap(Map<String, Object> outerMap, String id) {
+    Map<String, Object> map = (Map<String, Object>) outerMap.get(id);
+    if (map == null) {
+      map = new HashMap<String, Object>();
+      outerMap.put(id, map);
+    }
+    return map;
   }
 
   /**
