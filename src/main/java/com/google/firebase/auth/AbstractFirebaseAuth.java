@@ -1186,6 +1186,86 @@ public abstract class AbstractFirebaseAuth {
     };
   }
 
+  /**
+   * Creates a new provider SAML Auth config with the attributes contained in the specified {@link
+   * SamlProviderConfig.CreateRequest}.
+   *
+   * @param request A non-null {@link SamlProviderConfig.CreateRequest} instance.
+   * @return An {@link SamlProviderConfig} instance corresponding to the newly created provider
+   *     config.
+   * @throws NullPointerException if the provided request is null.
+   * @throws FirebaseAuthException if an error occurs while creating the provider config.
+   */
+  public SamlProviderConfig createSamlProviderConfig(
+      @NonNull SamlProviderConfig.CreateRequest request) throws FirebaseAuthException {
+    return createSamlProviderConfigOp(request).call();
+  }
+
+  /**
+   * Similar to {@link #createSamlProviderConfig} but performs the operation asynchronously.
+   *
+   * @param request A non-null {@link SamlProviderConfig.CreateRequest} instance.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link SamlProviderConfig}
+   *     instance corresponding to the newly created provider config. If an error occurs while
+   *     creating the provider config, the future throws a {@link FirebaseAuthException}.
+   * @throws NullPointerException if the provided request is null.
+   */
+  public ApiFuture<SamlProviderConfig> createSamlProviderConfigAsync(
+      @NonNull SamlProviderConfig.CreateRequest request) {
+    return createSamlProviderConfigOp(request).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<SamlProviderConfig, FirebaseAuthException>
+      createSamlProviderConfigOp(final SamlProviderConfig.CreateRequest request) {
+    checkNotDestroyed();
+    checkNotNull(request, "Create request must not be null.");
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<SamlProviderConfig, FirebaseAuthException>() {
+      @Override
+      protected SamlProviderConfig execute() throws FirebaseAuthException {
+        return userManager.createSamlProviderConfig(request);
+      }
+    };
+  }
+
+  /**
+   * Deletes the SAML Auth provider config identified by the specified provider ID.
+   *
+   * @param providerId A provider ID string.
+   * @throws IllegalArgumentException If the provider ID string is null or empty.
+   * @throws FirebaseAuthException If an error occurs while deleting the provider config.
+   */
+  public void deleteSamlProviderConfig(@NonNull String providerId) throws FirebaseAuthException {
+    deleteSamlProviderConfigOp(providerId).call();
+  }
+
+  /**
+   * Similar to {@link #deleteSamlProviderConfig} but performs the operation asynchronously.
+   *
+   * @param providerId A provider ID string.
+   * @return An {@code ApiFuture} which will complete successfully when the specified provider
+   *     config has been deleted. If an error occurs while deleting the provider config, the future
+   *     throws a {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the provider ID string is null or empty.
+   */
+  public ApiFuture<Void> deleteSamlProviderConfigAsync(String providerId) {
+    return deleteSamlProviderConfigOp(providerId).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<Void, FirebaseAuthException> deleteSamlProviderConfigOp(
+      final String providerId) {
+    checkNotDestroyed();
+    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<Void, FirebaseAuthException>() {
+      @Override
+      protected Void execute() throws FirebaseAuthException {
+        userManager.deleteSamlProviderConfig(providerId);
+        return null;
+      }
+    };
+  }
+
   FirebaseApp getFirebaseApp() {
     return this.firebaseApp;
   }
