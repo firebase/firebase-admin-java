@@ -47,6 +47,7 @@ class ProviderConfigTestUtils {
 
     private final AbstractFirebaseAuth auth;
     private final List<String> oidcIds = new ArrayList<>();
+    private final List<String> samlIds = new ArrayList<>();
 
     TemporaryProviderConfig(AbstractFirebaseAuth auth) {
       this.auth = auth;
@@ -61,13 +62,30 @@ class ProviderConfigTestUtils {
 
     synchronized void deleteOidcProviderConfig(String providerId) throws FirebaseAuthException {
       checkArgument(oidcIds.contains(providerId),
-          "Provider ID is not currently associated with a temporary user.");
+          "Provider ID is not currently associated with a temporary OIDC provider config: "
+          + providerId);
       auth.deleteOidcProviderConfig(providerId);
       oidcIds.remove(providerId);
     }
 
+    synchronized SamlProviderConfig createSamlProviderConfig(
+        SamlProviderConfig.CreateRequest request) throws FirebaseAuthException {
+      SamlProviderConfig config = auth.createSamlProviderConfig(request);
+      samlIds.add(config.getProviderId());
+      return config;
+    }
+
+    synchronized void deleteSamlProviderConfig(String providerId) throws FirebaseAuthException {
+      checkArgument(samlIds.contains(providerId),
+          "Provider ID is not currently associated with a temporary SAML provider config: "
+          + providerId);
+      auth.deleteSamlProviderConfig(providerId);
+      samlIds.remove(providerId);
+    }
+
     @Override
     protected synchronized void after() {
+      // Delete OIDC provider configs.
       for (String id : oidcIds) {
         try {
           auth.deleteOidcProviderConfig(id);
@@ -76,6 +94,16 @@ class ProviderConfigTestUtils {
         }
       }
       oidcIds.clear();
+
+      // Delete SAML provider configs.
+      for (String id : samlIds) {
+        try {
+          auth.deleteSamlProviderConfig(id);
+        } catch (Exception ignore) {
+          // Ignore
+        }
+      }
+      samlIds.clear();
     }
   }
 }

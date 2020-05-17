@@ -1706,17 +1706,17 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testDeleteProviderConfig() throws Exception {
+  public void testDeleteOidcProviderConfig() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
 
-    FirebaseAuth.getInstance().deleteOidcProviderConfig("PROVIDER_ID");
+    FirebaseAuth.getInstance().deleteOidcProviderConfig("oidc.provider-id");
 
     checkRequestHeaders(interceptor);
-    checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/oauthIdpConfigs/PROVIDER_ID");
+    checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
   }
 
   @Test
-  public void testDeleteProviderConfigWithNotFoundError() throws Exception {
+  public void testDeleteOidcProviderConfigWithNotFoundError() throws Exception {
     TestResponseInterceptor interceptor =
         initializeAppForUserManagementWithStatusCode(404,
             "{\"error\": {\"message\": \"CONFIGURATION_NOT_FOUND\"}}");
@@ -1730,17 +1730,207 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testTenantAwareDeleteProviderConfig() throws Exception {
+  public void testTenantAwareDeleteOidcProviderConfig() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
         "TENANT_ID",
         "{}");
     TenantAwareFirebaseAuth tenantAwareAuth =
         FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
 
-    tenantAwareAuth.deleteOidcProviderConfig("PROVIDER_ID");
+    tenantAwareAuth.deleteOidcProviderConfig("oidc.provider-id");
 
     checkRequestHeaders(interceptor);
-    checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/TENANT_ID/oauthIdpConfigs/PROVIDER_ID");
+    String expectedUrl = TENANTS_BASE_URL + "/TENANT_ID/oauthIdpConfigs/oidc.provider-id";
+    checkUrl(interceptor, "DELETE", expectedUrl);
+  }
+
+  @Test
+  public void testCreateSamlProvider() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+    // TODO(micahstairs): Add 'signRequest' to the create request once that field is added to
+    // SamlProviderConfig.
+    SamlProviderConfig.CreateRequest createRequest =
+        new SamlProviderConfig.CreateRequest()
+          .setProviderId("saml.provider-id")
+          .setDisplayName("DISPLAY_NAME")
+          .setEnabled(true)
+          .setIdpEntityId("IDP_ENTITY_ID")
+          .setSsoUrl("https://example.com/login")
+          .addX509Certificate("certificate1")
+          .addX509Certificate("certificate2")
+          .setRpEntityId("RP_ENTITY_ID")
+          .setCallbackUrl("https://projectId.firebaseapp.com/__/auth/handler");
+
+    SamlProviderConfig config = FirebaseAuth.getInstance().createSamlProviderConfig(createRequest);
+
+    checkSamlProviderConfig(config, "saml.provider-id");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/inboundSamlConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("saml.provider-id", url.getFirst("inboundSamlConfigId"));
+
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertTrue((boolean) parsed.get("enabled"));
+    Map<String, Object> idpConfig = (Map<String, Object>) parsed.get("idpConfig");
+    assertNotNull(idpConfig);
+    assertEquals(3, idpConfig.size());
+    assertEquals("IDP_ENTITY_ID", idpConfig.get("idpEntityId"));
+    assertEquals("https://example.com/login", idpConfig.get("ssoUrl"));
+    List<Object> idpCertificates = (List<Object>) idpConfig.get("idpCertificates");
+    assertNotNull(idpCertificates);
+    assertEquals(2, idpCertificates.size());
+    assertEquals(ImmutableMap.of("x509Certificate", "certificate1"), idpCertificates.get(0));
+    assertEquals(ImmutableMap.of("x509Certificate", "certificate2"), idpCertificates.get(1));
+    Map<String, Object> spConfig = (Map<String, Object>) parsed.get("spConfig");
+    assertNotNull(spConfig);
+    assertEquals(2, spConfig.size());
+    assertEquals("RP_ENTITY_ID", spConfig.get("spEntityId"));
+    assertEquals("https://projectId.firebaseapp.com/__/auth/handler", spConfig.get("callbackUri"));
+  }
+
+  @Test
+  public void testCreateSamlProviderMinimal() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+    // Only the 'enabled', 'displayName', and 'signRequest' fields can be omitted from a SAML
+    // provider config creation request.
+    SamlProviderConfig.CreateRequest createRequest =
+        new SamlProviderConfig.CreateRequest()
+          .setProviderId("saml.provider-id")
+          .setIdpEntityId("IDP_ENTITY_ID")
+          .setSsoUrl("https://example.com/login")
+          .addX509Certificate("certificate")
+          .setRpEntityId("RP_ENTITY_ID")
+          .setCallbackUrl("https://projectId.firebaseapp.com/__/auth/handler");
+
+    FirebaseAuth.getInstance().createSamlProviderConfig(createRequest);
+
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/inboundSamlConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("saml.provider-id", url.getFirst("inboundSamlConfigId"));
+
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertNull(parsed.get("displayName"));
+    assertNull(parsed.get("enabled"));
+    Map<String, Object> idpConfig = (Map<String, Object>) parsed.get("idpConfig");
+    assertNotNull(idpConfig);
+    assertEquals(3, idpConfig.size());
+    assertEquals("IDP_ENTITY_ID", idpConfig.get("idpEntityId"));
+    assertEquals("https://example.com/login", idpConfig.get("ssoUrl"));
+    List<Object> idpCertificates = (List<Object>) idpConfig.get("idpCertificates");
+    assertNotNull(idpCertificates);
+    assertEquals(1, idpCertificates.size());
+    assertEquals(ImmutableMap.of("x509Certificate", "certificate"), idpCertificates.get(0));
+    Map<String, Object> spConfig = (Map<String, Object>) parsed.get("spConfig");
+    assertNotNull(spConfig);
+    assertEquals(2, spConfig.size());
+    assertEquals("RP_ENTITY_ID", spConfig.get("spEntityId"));
+    assertEquals("https://projectId.firebaseapp.com/__/auth/handler", spConfig.get("callbackUri"));
+  }
+
+  @Test
+  public void testCreateSamlProviderError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+    SamlProviderConfig.CreateRequest createRequest =
+        new SamlProviderConfig.CreateRequest().setProviderId("saml.provider-id");
+    try {
+      FirebaseAuth.getInstance().createSamlProviderConfig(createRequest);
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/inboundSamlConfigs");
+  }
+
+  @Test
+  public void testCreateSamlProviderMissingId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+    SamlProviderConfig.CreateRequest createRequest =
+        new SamlProviderConfig.CreateRequest()
+          .setDisplayName("DISPLAY_NAME")
+          .setEnabled(true)
+          .setIdpEntityId("IDP_ENTITY_ID")
+          .setSsoUrl("https://example.com/login")
+          .addX509Certificate("certificate1")
+          .addX509Certificate("certificate2")
+          .setRpEntityId("RP_ENTITY_ID")
+          .setCallbackUrl("https://projectId.firebaseapp.com/__/auth/handler");
+    try {
+      FirebaseAuth.getInstance().createSamlProviderConfig(createRequest);
+      fail("No error thrown for invalid response");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testTenantAwareCreateSamlProvider() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        TestUtils.loadResource("saml.json"));
+    SamlProviderConfig.CreateRequest createRequest =
+        new SamlProviderConfig.CreateRequest()
+          .setProviderId("saml.provider-id")
+          .setDisplayName("DISPLAY_NAME")
+          .setEnabled(true)
+          .setIdpEntityId("IDP_ENTITY_ID")
+          .setSsoUrl("https://example.com/login")
+          .addX509Certificate("certificate1")
+          .addX509Certificate("certificate2")
+          .setRpEntityId("RP_ENTITY_ID")
+          .setCallbackUrl("https://projectId.firebaseapp.com/__/auth/handler");
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+
+    SamlProviderConfig config = tenantAwareAuth.createSamlProviderConfig(createRequest);
+
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "POST", TENANTS_BASE_URL + "/TENANT_ID/inboundSamlConfigs");
+  }
+
+  @Test
+  public void testDeleteSamlProviderConfig() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+
+    FirebaseAuth.getInstance().deleteSamlProviderConfig("saml.provider-id");
+
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
+  }
+
+  @Test
+  public void testDeleteSamlProviderConfigWithNotFoundError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"CONFIGURATION_NOT_FOUND\"}}");
+    try {
+      FirebaseAuth.getInstance().deleteSamlProviderConfig("UNKNOWN");
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/inboundSamlConfigs/UNKNOWN");
+  }
+
+  @Test
+  public void testTenantAwareDeleteSamlProviderConfig() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        "{}");
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+
+    tenantAwareAuth.deleteSamlProviderConfig("saml.provider-id");
+
+    checkRequestHeaders(interceptor);
+    String expectedUrl = TENANTS_BASE_URL + "/TENANT_ID/inboundSamlConfigs/saml.provider-id";
+    checkUrl(interceptor, "DELETE", expectedUrl);
   }
 
   private static TestResponseInterceptor initializeAppForUserManagementWithStatusCode(
@@ -1865,6 +2055,17 @@ public class FirebaseUserManagerTest {
     assertTrue(config.isEnabled());
     assertEquals("CLIENT_ID", config.getClientId());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
+  }
+
+  private static void checkSamlProviderConfig(SamlProviderConfig config, String providerId) {
+    assertEquals(providerId, config.getProviderId());
+    assertEquals("DISPLAY_NAME", config.getDisplayName());
+    assertTrue(config.isEnabled());
+    assertEquals("IDP_ENTITY_ID", config.getIdpEntityId());
+    assertEquals("https://example.com/login", config.getSsoUrl());
+    assertEquals(ImmutableList.of("certificate1", "certificate2"), config.getX509Certificates());
+    assertEquals("RP_ENTITY_ID", config.getRpEntityId());
+    assertEquals("https://projectId.firebaseapp.com/__/auth/handler", config.getCallbackUrl());
   }
 
   private static void checkRequestHeaders(TestResponseInterceptor interceptor) {

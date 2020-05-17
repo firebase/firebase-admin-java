@@ -324,6 +324,15 @@ class FirebaseUserManager {
     return sendRequest("POST", url, request.getProperties(), OidcProviderConfig.class);
   }
 
+  SamlProviderConfig createSamlProviderConfig(
+      SamlProviderConfig.CreateRequest request) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/inboundSamlConfigs");
+    String providerId = request.getProviderId();
+    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
+    url.set("inboundSamlConfigId", providerId);
+    return sendRequest("POST", url, request.getProperties(), SamlProviderConfig.class);
+  }
+
   OidcProviderConfig updateOidcProviderConfig(OidcProviderConfig.UpdateRequest request)
       throws FirebaseAuthException {
     Map<String, Object> properties = request.getProperties();
@@ -365,6 +374,11 @@ class FirebaseUserManager {
     sendRequest("DELETE", url, null, GenericJson.class);
   }
 
+  void deleteSamlProviderConfig(String providerId) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + getSamlUrlSuffix(providerId));
+    sendRequest("DELETE", url, null, GenericJson.class);
+  }
+
   private static String generateMask(Map<String, Object> properties) {
     // This implementation does not currently handle the case of nested properties. This is fine
     // since we do not currently generate masks for any properties with nested values. When it
@@ -381,6 +395,11 @@ class FirebaseUserManager {
   private static String getOidcUrlSuffix(String providerId) {
     checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
     return "/oauthIdpConfigs/" + providerId;
+  }
+
+  private static String getSamlUrlSuffix(String providerId) {
+    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
+    return "/inboundSamlConfigs/" + providerId;
   }
 
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {
