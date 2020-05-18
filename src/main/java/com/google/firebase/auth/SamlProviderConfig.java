@@ -64,6 +64,24 @@ public final class SamlProviderConfig extends ProviderConfig {
     return spConfig.getCallbackUrl();
   }
 
+  static List<Object> ensureNestedList(Map<String, Object> outerMap, String id) {
+    List<Object> list = (List<Object>) outerMap.get(id);
+    if (list == null) {
+      list = new ArrayList<Object>();
+      outerMap.put(id, list);
+    }
+    return list;
+  }
+
+  static Map<String, Object> ensureNestedMap(Map<String, Object> outerMap, String id) {
+    Map<String, Object> map = (Map<String, Object>) outerMap.get(id);
+    if (map == null) {
+      map = new HashMap<String, Object>();
+      outerMap.put(id, map);
+    }
+    return map;
+  }
+
   /**
    * A specification class for creating a new SAML Auth provider.
    *
@@ -90,7 +108,7 @@ public final class SamlProviderConfig extends ProviderConfig {
     public CreateRequest setIdpEntityId(String idpEntityId) {
       checkArgument(!Strings.isNullOrEmpty(idpEntityId),
           "IDP entity ID must not be null or empty.");
-      getNestedMap(properties, "idpConfig").put("idpEntityId", idpEntityId);
+      ensureNestedMap(properties, "idpConfig").put("idpEntityId", idpEntityId);
       return this;
     }
 
@@ -104,19 +122,7 @@ public final class SamlProviderConfig extends ProviderConfig {
     public CreateRequest setSsoUrl(String ssoUrl) {
       checkArgument(!Strings.isNullOrEmpty(ssoUrl), "SSO URL must not be null or empty.");
       assertValidUrl(ssoUrl);
-      getNestedMap(properties, "idpConfig").put("ssoUrl", ssoUrl);
-      return this;
-    }
-
-    /**
-     * Sets the RP entity ID for the new provider.
-     *
-     * @param rpEntityId A non-null, non-empty RP entity ID string.
-     * @throws IllegalArgumentException If the RP entity ID is null or empty.
-     */
-    public CreateRequest setRpEntityId(String rpEntityId) {
-      checkArgument(!Strings.isNullOrEmpty(rpEntityId), "RP entity ID must not be null or empty.");
-      getNestedMap(properties, "spConfig").put("spEntityId", rpEntityId);
+      ensureNestedMap(properties, "idpConfig").put("ssoUrl", ssoUrl);
       return this;
     }
 
@@ -129,13 +135,25 @@ public final class SamlProviderConfig extends ProviderConfig {
     public CreateRequest addX509Certificate(String x509Certificate) {
       checkArgument(!Strings.isNullOrEmpty(x509Certificate),
           "The x509 certificate must not be null or empty.");
-      Map<String, Object> idpConfigProperties = getNestedMap(properties, "idpConfig");
-      List<Object> x509Certificates = getNestedList(idpConfigProperties, "idpCertificates");
+      Map<String, Object> idpConfigProperties = ensureNestedMap(properties, "idpConfig");
+      List<Object> x509Certificates = ensureNestedList(idpConfigProperties, "idpCertificates");
       x509Certificates.add(ImmutableMap.<String, Object>of("x509Certificate", x509Certificate));
       return this;
     }
 
     // TODO(micahstairs): Add 'addAllX509Certificates' method.
+
+    /**
+     * Sets the RP entity ID for the new provider.
+     *
+     * @param rpEntityId A non-null, non-empty RP entity ID string.
+     * @throws IllegalArgumentException If the RP entity ID is null or empty.
+     */
+    public CreateRequest setRpEntityId(String rpEntityId) {
+      checkArgument(!Strings.isNullOrEmpty(rpEntityId), "RP entity ID must not be null or empty.");
+      ensureNestedMap(properties, "spConfig").put("spEntityId", rpEntityId);
+      return this;
+    }
 
     /**
      * Sets the callback URL for the new provider.
@@ -147,7 +165,7 @@ public final class SamlProviderConfig extends ProviderConfig {
     public CreateRequest setCallbackUrl(String callbackUrl) {
       checkArgument(!Strings.isNullOrEmpty(callbackUrl), "Callback URL must not be null or empty.");
       assertValidUrl(callbackUrl);
-      getNestedMap(properties, "spConfig").put("callbackUri", callbackUrl);
+      ensureNestedMap(properties, "spConfig").put("callbackUri", callbackUrl);
       return this;
     }
 
@@ -162,7 +180,7 @@ public final class SamlProviderConfig extends ProviderConfig {
     }
   }
 
-  public static class IdpCertificate {
+  static class IdpCertificate {
     @Key("x509Certificate")
     private String x509Certificate;
 
@@ -171,7 +189,7 @@ public final class SamlProviderConfig extends ProviderConfig {
     }
   }
 
-  public static class IdpConfig {
+  static class IdpConfig {
     @Key("idpEntityId")
     private String idpEntityId;
 
@@ -194,7 +212,7 @@ public final class SamlProviderConfig extends ProviderConfig {
     }
   }
 
-  public static class SpConfig {
+  static class SpConfig {
     @Key("spEntityId")
     private String rpEntityId;
 

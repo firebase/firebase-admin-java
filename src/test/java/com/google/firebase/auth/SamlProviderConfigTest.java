@@ -55,7 +55,7 @@ public class SamlProviderConfigTest {
         + "}").replace("'", "\"");
 
   @Test
-  public void testJsonSerialization() throws IOException {
+  public void testJsonDeserialization() throws IOException {
     SamlProviderConfig config = jsonFactory.fromString(SAML_JSON_STRING, SamlProviderConfig.class);
 
     assertEquals("saml.provider-id", config.getProviderId());
