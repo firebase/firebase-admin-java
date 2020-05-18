@@ -124,8 +124,8 @@ public final class OidcProviderConfig extends ProviderConfig {
      * information persistently.
      *
      * @param tenantId A non-null, non-empty provider ID string.
-     * @throws IllegalArgumentException If the provider ID is null or empty, or if the format is
-     *     invalid.
+     * @throws IllegalArgumentException If the provider ID is null or empty, or is not prefixed with
+     *     "oidc.".
      */
     public UpdateRequest(String providerId) {
       super(providerId);
