@@ -17,16 +17,15 @@
 package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.client.json.GenericJson;
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.ProviderConfig.AbstractCreateRequest;
 import com.google.firebase.auth.ProviderConfig.AbstractUpdateRequest;
-import com.google.firebase.auth.internal.SamlProviderConfigResponse.IdpCertificate;
-import com.google.firebase.auth.internal.SamlProviderConfigResponse.IdpConfig;
-import com.google.firebase.auth.internal.SamlProviderConfigResponse.SpConfig;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,33 +39,36 @@ import java.util.Map;
 public final class SamlProviderConfig extends ProviderConfig {
 
   @Key("idpConfig")
-  private IdpConfig idpConfig;
+  private GenericJson idpConfig;
 
   @Key("spConfig")
-  private SpConfig spConfig;
+  private GenericJson spConfig;
 
   public String getIdpEntityId() {
-    return idpConfig.getIdpEntityId();
+    return (String) idpConfig.get("idpEntityId");
   }
 
   public String getSsoUrl() {
-    return idpConfig.getSsoUrl();
+    return (String) idpConfig.get("ssoUrl");
   }
 
   public List<String> getX509Certificates() {
+    List<Map<String, String>> idpCertificates =
+        (List<Map<String, String>>) idpConfig.get("idpCertificates");
+    checkNotNull(idpCertificates);
     ImmutableList.Builder<String> certificates = ImmutableList.<String>builder();
-    for (IdpCertificate idpCertificate : idpConfig.getIdpCertificates()) {
-      certificates.add(idpCertificate.getX509Certificate());
+    for (Map<String, String> idpCertificate : idpCertificates) {
+      certificates.add(idpCertificate.get("x509Certificate"));
     }
     return certificates.build();
   }
 
   public String getRpEntityId() {
-    return spConfig.getRpEntityId();
+    return (String) spConfig.get("spEntityId");
   }
 
   public String getCallbackUrl() {
-    return spConfig.getCallbackUrl();
+    return (String) spConfig.get("callbackUri");
   }
 
   private static List<Object> ensureNestedList(Map<String, Object> outerMap, String id) {
