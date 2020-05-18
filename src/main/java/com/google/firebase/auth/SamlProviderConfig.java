@@ -69,7 +69,7 @@ public final class SamlProviderConfig extends ProviderConfig {
     return spConfig.getCallbackUrl();
   }
 
-  static List<Object> ensureNestedList(Map<String, Object> outerMap, String id) {
+  private static List<Object> ensureNestedList(Map<String, Object> outerMap, String id) {
     List<Object> list = (List<Object>) outerMap.get(id);
     if (list == null) {
       list = new ArrayList<Object>();
@@ -78,7 +78,7 @@ public final class SamlProviderConfig extends ProviderConfig {
     return list;
   }
 
-  static Map<String, Object> ensureNestedMap(Map<String, Object> outerMap, String id) {
+  private static Map<String, Object> ensureNestedMap(Map<String, Object> outerMap, String id) {
     Map<String, Object> map = (Map<String, Object>) outerMap.get(id);
     if (map == null) {
       map = new HashMap<String, Object>();
