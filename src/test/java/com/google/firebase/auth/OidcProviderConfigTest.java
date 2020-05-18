@@ -32,23 +32,23 @@ public class OidcProviderConfigTest {
   private static final JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
 
   private static final String OIDC_JSON_STRING =
-      "{"
-        + "\"name\":\"projects/projectId/oauthIdpConfigs/oidc.provider-id\","
-        + "\"displayName\":\"DISPLAY_NAME\","
-        + "\"enabled\":true,"
-        + "\"clientId\":\"CLIENT_ID\","
-        + "\"issuer\":\"https://oidc.com/issuer\""
-        + "}";
+      ("{"
+        + "  'name':        'projects/projectId/oauthIdpConfigs/oidc.provider-id',"
+        + "  'displayName': 'DISPLAY_NAME',"
+        + "  'enabled':      true,"
+        + "  'clientId':    'CLIENT_ID',"
+        + "  'issuer':      'https://oidc.com/issuer'"
+        + "}").replace("'", "\"");
 
   @Test
   public void testJsonSerialization() throws IOException {
     OidcProviderConfig config = jsonFactory.fromString(OIDC_JSON_STRING, OidcProviderConfig.class);
 
-    assertEquals(config.getProviderId(), "oidc.provider-id");
-    assertEquals(config.getDisplayName(), "DISPLAY_NAME");
+    assertEquals("oidc.provider-id", config.getProviderId());
+    assertEquals("DISPLAY_NAME", config.getDisplayName());
     assertTrue(config.isEnabled());
-    assertEquals(config.getClientId(), "CLIENT_ID");
-    assertEquals(config.getIssuer(), "https://oidc.com/issuer");
+    assertEquals("CLIENT_ID", config.getClientId());
+    assertEquals("https://oidc.com/issuer", config.getIssuer());
   }
 
   @Test
@@ -71,8 +71,28 @@ public class OidcProviderConfigTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
+  public void testCreateRequestMissingProviderId() {
+    new OidcProviderConfig.CreateRequest().setProviderId(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateRequestInvalidProviderId() {
+    new OidcProviderConfig.CreateRequest().setProviderId("saml.provider-id");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateRequestMissingDisplayName() {
+    new OidcProviderConfig.CreateRequest().setDisplayName(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
   public void testCreateRequestMissingClientId() {
     new OidcProviderConfig.CreateRequest().setClientId(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateRequestMissingIssuer() {
+    new OidcProviderConfig.CreateRequest().setIssuer(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -120,8 +140,18 @@ public class OidcProviderConfigTest {
   }
 
   @Test(expected = IllegalArgumentException.class)
+  public void testUpdateRequestMissingDisplayName() {
+    new OidcProviderConfig.UpdateRequest("oidc.provider-id").setDisplayName(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
   public void testUpdateRequestMissingClientId() {
     new OidcProviderConfig.UpdateRequest("oidc.provider-id").setClientId(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testUpdateRequestMissingIssuer() {
+    new OidcProviderConfig.UpdateRequest("oidc.provider-id").setIssuer(null);
   }
 
   @Test(expected = IllegalArgumentException.class)

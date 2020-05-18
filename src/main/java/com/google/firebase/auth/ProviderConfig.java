@@ -74,11 +74,14 @@ public abstract class ProviderConfig {
     /**
      * Sets the ID for the new provider.
      *
-     * @param providerId a non-null, non-empty provider ID string.
+     * @param providerId A non-null, non-empty provider ID string.
+     * @throws IllegalArgumentException If the provider ID is null or empty, or if the format is
+     *     invalid.
      */
     public T setProviderId(String providerId) {
       checkArgument(
           !Strings.isNullOrEmpty(providerId), "Provider ID name must not be null or empty.");
+      assertValidProviderIdFormat(providerId);
       this.providerId = providerId;
       return getThis();
     }
@@ -90,7 +93,8 @@ public abstract class ProviderConfig {
     /**
      * Sets the display name for the new provider.
      *
-     * @param displayName a non-null, non-empty display name string.
+     * @param displayName A non-null, non-empty display name string.
+     * @throws IllegalArgumentException If the display name is null or empty.
      */
     public T setDisplayName(String displayName) {
       checkArgument(!Strings.isNullOrEmpty(displayName), "Display name must not be null or empty.");
@@ -101,7 +105,7 @@ public abstract class ProviderConfig {
     /**
      * Sets whether to allow the user to sign in with the provider.
      *
-     * @param enabled a boolean indicating whether the user can sign in with the provider
+     * @param enabled A boolean indicating whether the user can sign in with the provider.
      */
     public T setEnabled(boolean enabled) {
       properties.put("enabled", enabled);
@@ -113,6 +117,8 @@ public abstract class ProviderConfig {
     }
 
     abstract T getThis();
+
+    abstract void assertValidProviderIdFormat(String providerId);
   }
 
   /**
@@ -135,7 +141,8 @@ public abstract class ProviderConfig {
     /**
      * Sets the display name for the existing provider.
      *
-     * @param displayName a non-null, non-empty display name string.
+     * @param displayName A non-null, non-empty display name string.
+     * @throws IllegalArgumentException If the display name is null or empty.
      */
     public T setDisplayName(String displayName) {
       checkArgument(!Strings.isNullOrEmpty(displayName), "Display name must not be null or empty.");
@@ -146,7 +153,7 @@ public abstract class ProviderConfig {
     /**
      * Sets whether to allow the user to sign in with the provider.
      *
-     * @param enabled a boolean indicating whether the user can sign in with the provider
+     * @param enabled A boolean indicating whether the user can sign in with the provider.
      */
     public T setEnabled(boolean enabled) {
       properties.put("enabled", enabled);
