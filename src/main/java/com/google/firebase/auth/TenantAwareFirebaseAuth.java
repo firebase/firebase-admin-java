@@ -30,7 +30,7 @@ import com.google.firebase.auth.internal.FirebaseTokenFactory;
  * <p>This can be used to perform a variety of authentication-related operations, scoped to a
  * particular tenant.
  */
-public class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
+public final class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
 
   private final String tenantId;
 
