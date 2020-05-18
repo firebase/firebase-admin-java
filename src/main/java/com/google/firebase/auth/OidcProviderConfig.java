@@ -48,7 +48,7 @@ public final class OidcProviderConfig extends ProviderConfig {
    * Returns a new {@link UpdateRequest}, which can be used to update the attributes of this
    * provider config.
    *
-   * @return a non-null {@link UpdateRequest} instance.
+   * @return A non-null {@link UpdateRequest} instance.
    */
   public UpdateRequest updateRequest() {
     return new UpdateRequest(getProviderId());
@@ -74,7 +74,8 @@ public final class OidcProviderConfig extends ProviderConfig {
     /**
      * Sets the client ID for the new provider.
      *
-     * @param clientId a non-null, non-empty client ID string.
+     * @param clientId A non-null, non-empty client ID string.
+     * @throws IllegalArgumentException If the client ID is null or empty.
      */
     public CreateRequest setClientId(String clientId) {
       checkArgument(!Strings.isNullOrEmpty(clientId), "Client ID must not be null or empty.");
@@ -85,7 +86,9 @@ public final class OidcProviderConfig extends ProviderConfig {
     /**
      * Sets the issuer for the new provider.
      *
-     * @param issuer a non-null, non-empty issuer URL string.
+     * @param issuer A non-null, non-empty issuer URL string.
+     * @throws IllegalArgumentException If the issuer URL is null or empty, or if the format is
+     *     invalid.
      */
     public CreateRequest setIssuer(String issuer) {
       checkArgument(!Strings.isNullOrEmpty(issuer), "Issuer must not be null or empty.");
@@ -96,6 +99,10 @@ public final class OidcProviderConfig extends ProviderConfig {
 
     CreateRequest getThis() {
       return this;
+    }
+
+    void assertValidProviderIdFormat(String providerId) {
+      checkArgument(providerId.startsWith("oidc."), "Invalid OIDC provider ID: " + providerId);
     }
   }
 
@@ -116,9 +123,9 @@ public final class OidcProviderConfig extends ProviderConfig {
      * {@link AbstractFirebaseAuth#updateOidcProviderConfig(CreateRequest)} to update the provider
      * information persistently.
      *
-     * @param tenantId a non-null, non-empty provider ID string.
-     * @throws IllegalArgumentException If the provider ID is null or empty, or if it's an invalid
-     *     format
+     * @param tenantId A non-null, non-empty provider ID string.
+     * @throws IllegalArgumentException If the provider ID is null or empty, or is not prefixed with
+     *     "oidc.".
      */
     public UpdateRequest(String providerId) {
       super(providerId);
@@ -128,7 +135,8 @@ public final class OidcProviderConfig extends ProviderConfig {
     /**
      * Sets the client ID for the exsting provider.
      *
-     * @param clientId a non-null, non-empty client ID string.
+     * @param clientId A non-null, non-empty client ID string.
+     * @throws IllegalArgumentException If the client ID is null or empty.
      */
     public UpdateRequest setClientId(String clientId) {
       checkArgument(!Strings.isNullOrEmpty(clientId), "Client ID must not be null or empty.");
@@ -139,7 +147,9 @@ public final class OidcProviderConfig extends ProviderConfig {
     /**
      * Sets the issuer for the existing provider.
      *
-     * @param issuer a non-null, non-empty issuer URL string.
+     * @param issuer A non-null, non-empty issuer URL string.
+     * @throws IllegalArgumentException If the issuer URL is null or empty, or if the format is
+     *     invalid.
      */
     public UpdateRequest setIssuer(String issuer) {
       checkArgument(!Strings.isNullOrEmpty(issuer), "Issuer must not be null or empty.");
