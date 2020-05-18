@@ -24,6 +24,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.ProviderConfig.AbstractCreateRequest;
 import com.google.firebase.auth.ProviderConfig.AbstractUpdateRequest;
+import com.google.firebase.auth.internal.SamlProviderConfigResponse.IdpCertificate;
+import com.google.firebase.auth.internal.SamlProviderConfigResponse.IdpConfig;
+import com.google.firebase.auth.internal.SamlProviderConfigResponse.SpConfig;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -177,54 +182,6 @@ public final class SamlProviderConfig extends ProviderConfig {
 
     void assertValidProviderIdFormat(String providerId) {
       checkArgument(providerId.startsWith("saml."), "Invalid SAML provider ID: " + providerId);
-    }
-  }
-
-  static class IdpCertificate {
-    @Key("x509Certificate")
-    private String x509Certificate;
-
-    public String getX509Certificate() {
-      return x509Certificate;
-    }
-  }
-
-  static class IdpConfig {
-    @Key("idpEntityId")
-    private String idpEntityId;
-
-    @Key("ssoUrl")
-    private String ssoUrl;
-
-    @Key("idpCertificates")
-    private List<IdpCertificate> idpCertificates;
-
-    public String getIdpEntityId() {
-      return idpEntityId;
-    }
-
-    public String getSsoUrl() {
-      return ssoUrl;
-    }
-
-    public List<IdpCertificate> getIdpCertificates() {
-      return idpCertificates;
-    }
-  }
-
-  static class SpConfig {
-    @Key("spEntityId")
-    private String rpEntityId;
-
-    @Key("callbackUri")
-    private String callbackUrl;
-
-    public String getRpEntityId() {
-      return rpEntityId;
-    }
-
-    public String getCallbackUrl() {
-      return callbackUrl;
     }
   }
 }
