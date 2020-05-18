@@ -41,7 +41,7 @@ public class OidcProviderConfigTest {
         + "}").replace("'", "\"");
 
   @Test
-  public void testJsonSerialization() throws IOException {
+  public void testJsonDeserialization() throws IOException {
     OidcProviderConfig config = jsonFactory.fromString(OIDC_JSON_STRING, OidcProviderConfig.class);
 
     assertEquals("oidc.provider-id", config.getProviderId());
