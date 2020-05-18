@@ -76,6 +76,9 @@ public final class GetAccountInfoResponse {
     @Key("lastLoginAt")
     private long lastLoginAt;
 
+    @Key("lastRefreshAt")
+    private String lastRefreshAt;
+
     @Key("validSince")
     private long validSince;
 
@@ -124,6 +127,10 @@ public final class GetAccountInfoResponse {
 
     public long getLastLoginAt() {
       return lastLoginAt;
+    }
+
+    public String getLastRefreshAt() {
+      return lastRefreshAt;
     }
 
     public long getValidSince() {

@@ -91,6 +91,14 @@ jobs:
       id: preflight
       run: ./.github/scripts/publish_preflight_check.sh
 
+    - name: Publish to Maven Central
+      run: ./.github/scripts/publish_artifacts.sh
+      env:
+        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        NEXUS_OSSRH_USERNAME: ${{ secrets.NEXUS_OSSRH_USERNAME }}
+        NEXUS_OSSRH_PASSWORD: ${{ secrets.NEXUS_OSSRH_PASSWORD }}
+
     # We pull this action from a custom fork of a contributor until
     # https://github.com/actions/create-release/pull/32 is merged. Also note that v1 of
     # this action does not support the "body" parameter.
@@ -104,14 +112,6 @@ jobs:
         body: ${{ steps.preflight.outputs.changelog }}
         draft: false
         prerelease: false
-
-    - name: Publish to Maven Central
-      run: ./.github/scripts/publish_artifacts.sh
-      env:
-        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-        NEXUS_OSSRH_USERNAME: ${{ secrets.NEXUS_OSSRH_USERNAME }}
-        NEXUS_OSSRH_PASSWORD: ${{ secrets.NEXUS_OSSRH_PASSWORD }}
 
     # Post to Twitter if explicitly opted-in by adding the label 'release:tweet'.
     - name: Post to Twitter

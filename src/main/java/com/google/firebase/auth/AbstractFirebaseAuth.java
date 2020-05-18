@@ -38,8 +38,11 @@ import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -758,6 +761,140 @@ public abstract class AbstractFirebaseAuth {
       @Override
       protected UserImportResult execute() throws FirebaseAuthException {
         return userManager.importUsers(request);
+      }
+    };
+  }
+
+  /**
+   * Gets the user data corresponding to the specified identifiers.
+   *
+   * <p>There are no ordering guarantees; in particular, the nth entry in the users result list is
+   * not guaranteed to correspond to the nth entry in the input parameters list.
+   *
+   * <p>A maximum of 100 identifiers may be specified. If more than 100 identifiers are
+   * supplied, this method throws an {@link IllegalArgumentException}.
+   *
+   * @param identifiers The identifiers used to indicate which user records should be returned. Must
+   *     have 100 or fewer entries.
+   * @return The corresponding user records.
+   * @throws IllegalArgumentException If any of the identifiers are invalid or if more than 100
+   *     identifiers are specified.
+   * @throws NullPointerException If the identifiers parameter is null.
+   * @throws FirebaseAuthException If an error occurs while retrieving user data.
+   */
+  public GetUsersResult getUsers(@NonNull Collection<UserIdentifier> identifiers)
+      throws FirebaseAuthException {
+    return getUsersOp(identifiers).call();
+  }
+
+  /**
+   * Gets the user data corresponding to the specified identifiers.
+   *
+   * <p>There are no ordering guarantees; in particular, the nth entry in the users result list is
+   * not guaranteed to correspond to the nth entry in the input parameters list.
+   *
+   * <p>A maximum of 100 identifiers may be specified. If more than 100 identifiers are
+   * supplied, this method throws an {@link IllegalArgumentException}.
+   *
+   * @param identifiers The identifiers used to indicate which user records should be returned.
+   *     Must have 100 or fewer entries.
+   * @return An {@code ApiFuture} that resolves to the corresponding user records.
+   * @throws IllegalArgumentException If any of the identifiers are invalid or if more than 100
+   *     identifiers are specified.
+   * @throws NullPointerException If the identifiers parameter is null.
+   */
+  public ApiFuture<GetUsersResult> getUsersAsync(@NonNull Collection<UserIdentifier> identifiers) {
+    return getUsersOp(identifiers).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<GetUsersResult, FirebaseAuthException> getUsersOp(
+      @NonNull final Collection<UserIdentifier> identifiers) {
+    checkNotDestroyed();
+    checkNotNull(identifiers, "identifiers must not be null");
+    checkArgument(identifiers.size() <= FirebaseUserManager.MAX_GET_ACCOUNTS_BATCH_SIZE,
+        "identifiers parameter must have <= " + FirebaseUserManager.MAX_GET_ACCOUNTS_BATCH_SIZE
+            + " entries.");
+
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<GetUsersResult, FirebaseAuthException>() {
+      @Override
+      protected GetUsersResult execute() throws FirebaseAuthException {
+        Set<UserRecord> users = userManager.getAccountInfo(identifiers);
+        Set<UserIdentifier> notFound = new HashSet<>();
+        for (UserIdentifier id : identifiers) {
+          if (!isUserFound(id, users)) {
+            notFound.add(id);
+          }
+        }
+        return new GetUsersResult(users, notFound);
+      }
+    };
+  }
+
+  private boolean isUserFound(UserIdentifier id, Collection<UserRecord> userRecords) {
+    for (UserRecord userRecord : userRecords) {
+      if (id.matches(userRecord)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Deletes the users specified by the given identifiers.
+   *
+   * <p>Deleting a non-existing user does not generate an error (the method is idempotent).
+   * Non-existing users are considered to be successfully deleted and are therefore included in the
+   * DeleteUsersResult.getSuccessCount() value.
+   *
+   * <p>A maximum of 1000 identifiers may be supplied. If more than 1000 identifiers are
+   * supplied, this method throws an {@link IllegalArgumentException}.
+   *
+   * <p>This API has a rate limit of 1 QPS. Exceeding the limit may result in a quota exceeded
+   * error. If you want to delete more than 1000 users, we suggest adding a delay to ensure you
+   * don't exceed this limit.
+   *
+   * @param uids The uids of the users to be deleted. Must have <= 1000 entries.
+   * @return The total number of successful/failed deletions, as well as the array of errors that
+   *     correspond to the failed deletions.
+   * @throw IllegalArgumentException If any of the identifiers are invalid or if more than 1000
+   *     identifiers are specified.
+   * @throws FirebaseAuthException If an error occurs while deleting users.
+   */
+  public DeleteUsersResult deleteUsers(List<String> uids) throws FirebaseAuthException {
+    return deleteUsersOp(uids).call();
+  }
+
+  /**
+   * Similar to {@link #deleteUsers(List)} but performs the operation asynchronously.
+   *
+   * @param uids The uids of the users to be deleted. Must have <= 1000 entries.
+   * @return An {@code ApiFuture} that resolves to the total number of successful/failed
+   *     deletions, as well as the array of errors that correspond to the failed deletions. If an
+   *     error occurs while deleting the user account, the future throws a
+   *     {@link FirebaseAuthException}.
+   * @throw IllegalArgumentException If any of the identifiers are invalid or if more than 1000
+   *     identifiers are specified.
+   */
+  public ApiFuture<DeleteUsersResult> deleteUsersAsync(List<String> uids) {
+    return deleteUsersOp(uids).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<DeleteUsersResult, FirebaseAuthException> deleteUsersOp(
+      final List<String> uids) {
+    checkNotDestroyed();
+    checkNotNull(uids, "uids must not be null");
+    for (String uid : uids) {
+      UserRecord.checkUid(uid);
+    }
+    checkArgument(uids.size() <= FirebaseUserManager.MAX_DELETE_ACCOUNTS_BATCH_SIZE,
+        "uids parameter must have <= " + FirebaseUserManager.MAX_DELETE_ACCOUNTS_BATCH_SIZE
+            + " entries.");
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<DeleteUsersResult, FirebaseAuthException>() {
+      @Override
+      protected DeleteUsersResult execute() throws FirebaseAuthException {
+        return userManager.deleteUsers(uids);
       }
     };
   }
