@@ -23,14 +23,16 @@ public class UserMetadata {
 
   private final long creationTimestamp;
   private final long lastSignInTimestamp;
+  private final long lastRefreshTimestamp;
 
   public UserMetadata(long creationTimestamp) {
-    this(creationTimestamp, 0L);
+    this(creationTimestamp, 0L, 0L);
   }
 
-  public UserMetadata(long creationTimestamp, long lastSignInTimestamp) {
+  public UserMetadata(long creationTimestamp, long lastSignInTimestamp, long lastRefreshTimestamp) {
     this.creationTimestamp = creationTimestamp;
     this.lastSignInTimestamp = lastSignInTimestamp;
+    this.lastRefreshTimestamp = lastRefreshTimestamp;
   }
 
   /**
@@ -49,5 +51,14 @@ public class UserMetadata {
    */
   public long getLastSignInTimestamp() {
     return lastSignInTimestamp;
+  }
+
+  /**
+   * Returns the time at which the user was last active (ID token refreshed).
+   * 
+   * @return Milliseconds since epoch timestamp, or 0 if the user was never active.
+   */
+  public long getLastRefreshTimestamp() {
+    return lastRefreshTimestamp;
   }
 }

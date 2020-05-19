@@ -39,8 +39,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.auth.UserRecord;
+import com.google.firebase.auth.internal.BatchDeleteResponse;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
+import com.google.firebase.auth.internal.GetAccountInfoRequest;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 import com.google.firebase.auth.internal.HttpErrorResponse;
 import com.google.firebase.auth.internal.ListTenantsResponse;
@@ -51,8 +52,11 @@ import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.SdkUtils;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * FirebaseUserManager provides methods for interacting with the Google Identity Toolkit via its
@@ -94,6 +98,8 @@ class FirebaseUserManager {
       .build();
 
   static final int MAX_LIST_TENANTS_RESULTS = 1000;
+  static final int MAX_GET_ACCOUNTS_BATCH_SIZE = 100;
+  static final int MAX_DELETE_ACCOUNTS_BATCH_SIZE = 1000;
   static final int MAX_LIST_USERS_RESULTS = 1000;
   static final int MAX_IMPORT_USERS = 1000;
 
@@ -175,6 +181,33 @@ class FirebaseUserManager {
     return new UserRecord(response.getUsers().get(0), jsonFactory);
   }
 
+  Set<UserRecord> getAccountInfo(@NonNull Collection<UserIdentifier> identifiers)
+      throws FirebaseAuthException {
+    if (identifiers.isEmpty()) {
+      return new HashSet<>();
+    }
+
+    GetAccountInfoRequest payload = new GetAccountInfoRequest();
+    for (UserIdentifier id : identifiers) {
+      id.populate(payload);
+    }
+
+    GetAccountInfoResponse response = post(
+        "/accounts:lookup", payload, GetAccountInfoResponse.class);
+
+    if (response == null) {
+      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to parse server response");
+    }
+
+    Set<UserRecord> results = new HashSet<>();
+    if (response.getUsers() != null) {
+      for (GetAccountInfoResponse.User user : response.getUsers()) {
+        results.add(new UserRecord(user, jsonFactory));
+      }
+    }
+    return results;
+  }
+
   String createUser(UserRecord.CreateRequest request) throws FirebaseAuthException {
     GenericJson response = post(
         "/accounts", request.getProperties(), GenericJson.class);
@@ -203,6 +236,23 @@ class FirebaseUserManager {
     if (response == null || !response.containsKey("kind")) {
       throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to delete user: " + uid);
     }
+  }
+
+  /**
+   * @pre uids != null
+   * @pre uids.size() <= MAX_DELETE_ACCOUNTS_BATCH_SIZE
+   */
+  DeleteUsersResult deleteUsers(@NonNull List<String> uids) throws FirebaseAuthException {
+    final Map<String, Object> payload = ImmutableMap.of(
+        "localIds", uids,
+        "force", true);
+    BatchDeleteResponse response = post(
+        "/accounts:batchDelete", payload, BatchDeleteResponse.class);
+    if (response == null) {
+      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to delete users");
+    }
+
+    return new DeleteUsersResult(uids.size(), response);
   }
 
   DownloadAccountResponse listUsers(int maxResults, String pageToken) throws FirebaseAuthException {
