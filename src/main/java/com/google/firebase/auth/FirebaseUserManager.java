@@ -252,6 +252,8 @@ class FirebaseUserManager {
 
   Tenant updateTenant(Tenant.UpdateRequest request) throws FirebaseAuthException {
     Map<String, Object> properties = request.getProperties();
+    // TODO(micahstairs): Move this check so that argument validation happens outside the
+    // CallableOperation.
     checkArgument(!properties.isEmpty(), "tenant update must have at least one property set");
     GenericUrl url = new GenericUrl(tenantMgtBaseUrl + getTenantUrlSuffix(request.getTenantId()));
     url.put("updateMask", generateMask(properties));
@@ -318,24 +320,22 @@ class FirebaseUserManager {
   OidcProviderConfig createOidcProviderConfig(
       OidcProviderConfig.CreateRequest request) throws FirebaseAuthException {
     GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/oauthIdpConfigs");
-    String providerId = request.getProviderId();
-    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
-    url.set("oauthIdpConfigId", providerId);
+    url.set("oauthIdpConfigId", request.getProviderId());
     return sendRequest("POST", url, request.getProperties(), OidcProviderConfig.class);
   }
 
   SamlProviderConfig createSamlProviderConfig(
       SamlProviderConfig.CreateRequest request) throws FirebaseAuthException {
     GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/inboundSamlConfigs");
-    String providerId = request.getProviderId();
-    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
-    url.set("inboundSamlConfigId", providerId);
+    url.set("inboundSamlConfigId", request.getProviderId());
     return sendRequest("POST", url, request.getProperties(), SamlProviderConfig.class);
   }
 
   OidcProviderConfig updateOidcProviderConfig(OidcProviderConfig.UpdateRequest request)
       throws FirebaseAuthException {
     Map<String, Object> properties = request.getProperties();
+    // TODO(micahstairs): Move this check so that argument validation happens outside the
+    // CallableOperation.
     checkArgument(!properties.isEmpty(),
         "Provider config update must have at least one property set.");
     GenericUrl url =
