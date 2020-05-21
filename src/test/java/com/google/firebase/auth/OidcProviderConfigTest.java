@@ -52,6 +52,26 @@ public class OidcProviderConfigTest {
   }
 
   @Test
+  public void testCheckSamlProviderId() {
+    SamlProviderConfig.checkSamlProviderId("saml.valid-id");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateSamlProviderIdNull() {
+    SamlProviderConfig.checkSamlProviderId(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateSamlProviderIdEmpty() {
+    SamlProviderConfig.checkSamlProviderId("");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testCreateSamlProviderIdInvalidPrefix() {
+    SamlProviderConfig.checkSamlProviderId("not prefixed with saml.");
+  }
+
+  @Test
   public void testCreateRequest() throws IOException {
     OidcProviderConfig.CreateRequest createRequest = new OidcProviderConfig.CreateRequest();
     createRequest

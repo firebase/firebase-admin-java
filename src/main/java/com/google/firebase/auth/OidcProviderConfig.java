@@ -54,6 +54,12 @@ public final class OidcProviderConfig extends ProviderConfig {
     return new UpdateRequest(getProviderId());
   }
 
+  static void checkOidcProviderId(String providerId) {
+    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
+    checkArgument(providerId.startsWith("oidc."),
+        "Invalid OIDC provider ID (must be prefixed with 'oidc.'): " + providerId);
+  }
+
   /**
    * A specification class for creating a new OIDC Auth provider.
    *
@@ -102,7 +108,7 @@ public final class OidcProviderConfig extends ProviderConfig {
     }
 
     void assertValidProviderIdFormat(String providerId) {
-      checkArgument(providerId.startsWith("oidc."), "Invalid OIDC provider ID: " + providerId);
+      checkOidcProviderId(providerId);
     }
   }
 
@@ -129,7 +135,7 @@ public final class OidcProviderConfig extends ProviderConfig {
      */
     public UpdateRequest(String providerId) {
       super(providerId);
-      checkArgument(providerId.startsWith("oidc."), "Invalid OIDC provider ID: " + providerId);
+      checkOidcProviderId(providerId);
     }
 
     /**

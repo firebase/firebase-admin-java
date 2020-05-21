@@ -1721,12 +1721,12 @@ public class FirebaseUserManagerTest {
         initializeAppForUserManagementWithStatusCode(404,
             "{\"error\": {\"message\": \"CONFIGURATION_NOT_FOUND\"}}");
     try {
-      FirebaseAuth.getInstance().deleteOidcProviderConfig("UNKNOWN");
+      FirebaseAuth.getInstance().deleteOidcProviderConfig("oidc.UNKNOWN");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
       assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
     }
-    checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/oauthIdpConfigs/UNKNOWN");
+    checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.UNKNOWN");
   }
 
   @Test
@@ -1910,12 +1910,12 @@ public class FirebaseUserManagerTest {
         initializeAppForUserManagementWithStatusCode(404,
             "{\"error\": {\"message\": \"CONFIGURATION_NOT_FOUND\"}}");
     try {
-      FirebaseAuth.getInstance().deleteSamlProviderConfig("UNKNOWN");
+      FirebaseAuth.getInstance().deleteSamlProviderConfig("saml.UNKNOWN");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
       assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
     }
-    checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/inboundSamlConfigs/UNKNOWN");
+    checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.UNKNOWN");
   }
 
   @Test
