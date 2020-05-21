@@ -1076,13 +1076,15 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Creates a new provider OIDC Auth config with the attributes contained in the specified {@link
-   * OidcProviderConfig.CreateRequest}.
+   * Creates a new OIDC Auth provider config with the attributes contained in the specified
+   * {@link OidcProviderConfig.CreateRequest}.
    *
    * @param request A non-null {@link OidcProviderConfig.CreateRequest} instance.
    * @return An {@link OidcProviderConfig} instance corresponding to the newly created provider
    *     config.
    * @throws NullPointerException if the provided request is null.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not
+   *     prefixed with 'oidc.'.
    * @throws FirebaseAuthException if an error occurs while creating the provider config.
    */
   public OidcProviderConfig createOidcProviderConfig(
@@ -1098,6 +1100,8 @@ public abstract class AbstractFirebaseAuth {
    *     instance corresponding to the newly created provider config. If an error occurs while
    *     creating the provider config, the future throws a {@link FirebaseAuthException}.
    * @throws NullPointerException if the provided request is null.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not
+   *     prefixed with 'oidc.'.
    */
   public ApiFuture<OidcProviderConfig> createOidcProviderConfigAsync(
       @NonNull OidcProviderConfig.CreateRequest request) {
@@ -1108,6 +1112,7 @@ public abstract class AbstractFirebaseAuth {
       createOidcProviderConfigOp(final OidcProviderConfig.CreateRequest request) {
     checkNotDestroyed();
     checkNotNull(request, "Create request must not be null.");
+    OidcProviderConfig.checkOidcProviderId(request.getProviderId());
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<OidcProviderConfig, FirebaseAuthException>() {
       @Override
@@ -1162,7 +1167,8 @@ public abstract class AbstractFirebaseAuth {
    *
    * @param providerId A provider ID string.
    * @return An {@link OidcProviderConfig} instance.
-   * @throws IllegalArgumentException If the provider ID string is null or empty.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with 'oidc'.
    * @throws FirebaseAuthException If an error occurs while retrieving the provider config.
    */
   public OidcProviderConfig getOidcProviderConfig(@NonNull String providerId)
@@ -1179,7 +1185,8 @@ public abstract class AbstractFirebaseAuth {
    *     {@link OidcProviderConfig} instance. If an error occurs while retrieving the provider
    *     config or if the specified provider ID does not exist, the future throws a
    *     {@link FirebaseAuthException}.
-   * @throws IllegalArgumentException If the provider ID string is null or empty.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not
+   *     prefixed with 'oidc.'.
    */
   public ApiFuture<OidcProviderConfig> getOidcProviderConfigAsync(@NonNull String providerId) {
     return getOidcProviderConfigOp(providerId).callAsync(firebaseApp);
@@ -1188,7 +1195,7 @@ public abstract class AbstractFirebaseAuth {
   private CallableOperation<OidcProviderConfig, FirebaseAuthException>
       getOidcProviderConfigOp(final String providerId) {
     checkNotDestroyed();
-    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
+    OidcProviderConfig.checkOidcProviderId(providerId);
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<OidcProviderConfig, FirebaseAuthException>() {
       @Override
@@ -1289,7 +1296,8 @@ public abstract class AbstractFirebaseAuth {
    * Deletes the OIDC Auth provider config identified by the specified provider ID.
    *
    * @param providerId A provider ID string.
-   * @throws IllegalArgumentException If the provider ID string is null or empty.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with 'oidc'.
    * @throws FirebaseAuthException If an error occurs while deleting the provider config.
    */
   public void deleteOidcProviderConfig(@NonNull String providerId) throws FirebaseAuthException {
@@ -1303,7 +1311,8 @@ public abstract class AbstractFirebaseAuth {
    * @return An {@code ApiFuture} which will complete successfully when the specified provider
    *     config has been deleted. If an error occurs while deleting the provider config, the future
    *     throws a {@link FirebaseAuthException}.
-   * @throws IllegalArgumentException If the provider ID string is null or empty.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with "oidc.".
    */
   public ApiFuture<Void> deleteOidcProviderConfigAsync(String providerId) {
     return deleteOidcProviderConfigOp(providerId).callAsync(firebaseApp);
@@ -1312,12 +1321,99 @@ public abstract class AbstractFirebaseAuth {
   private CallableOperation<Void, FirebaseAuthException> deleteOidcProviderConfigOp(
       final String providerId) {
     checkNotDestroyed();
-    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
+    OidcProviderConfig.checkOidcProviderId(providerId);
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<Void, FirebaseAuthException>() {
       @Override
       protected Void execute() throws FirebaseAuthException {
         userManager.deleteOidcProviderConfig(providerId);
+        return null;
+      }
+    };
+  }
+
+  /**
+   * Creates a new SAML Auth provider config with the attributes contained in the specified
+   * {@link SamlProviderConfig.CreateRequest}.
+   *
+   * @param request A non-null {@link SamlProviderConfig.CreateRequest} instance.
+   * @return An {@link SamlProviderConfig} instance corresponding to the newly created provider
+   *     config.
+   * @throws NullPointerException if the provided request is null.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with 'saml'.
+   * @throws FirebaseAuthException if an error occurs while creating the provider config.
+   */
+  public SamlProviderConfig createSamlProviderConfig(
+      @NonNull SamlProviderConfig.CreateRequest request) throws FirebaseAuthException {
+    return createSamlProviderConfigOp(request).call();
+  }
+
+  /**
+   * Similar to {@link #createSamlProviderConfig} but performs the operation asynchronously.
+   *
+   * @param request A non-null {@link SamlProviderConfig.CreateRequest} instance.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link SamlProviderConfig}
+   *     instance corresponding to the newly created provider config. If an error occurs while
+   *     creating the provider config, the future throws a {@link FirebaseAuthException}.
+   * @throws NullPointerException if the provided request is null.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with 'saml'.
+   */
+  public ApiFuture<SamlProviderConfig> createSamlProviderConfigAsync(
+      @NonNull SamlProviderConfig.CreateRequest request) {
+    return createSamlProviderConfigOp(request).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<SamlProviderConfig, FirebaseAuthException>
+      createSamlProviderConfigOp(final SamlProviderConfig.CreateRequest request) {
+    checkNotDestroyed();
+    checkNotNull(request, "Create request must not be null.");
+    SamlProviderConfig.checkSamlProviderId(request.getProviderId());
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<SamlProviderConfig, FirebaseAuthException>() {
+      @Override
+      protected SamlProviderConfig execute() throws FirebaseAuthException {
+        return userManager.createSamlProviderConfig(request);
+      }
+    };
+  }
+
+  /**
+   * Deletes the SAML Auth provider config identified by the specified provider ID.
+   *
+   * @param providerId A provider ID string.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with "saml.".
+   * @throws FirebaseAuthException If an error occurs while deleting the provider config.
+   */
+  public void deleteSamlProviderConfig(@NonNull String providerId) throws FirebaseAuthException {
+    deleteSamlProviderConfigOp(providerId).call();
+  }
+
+  /**
+   * Similar to {@link #deleteSamlProviderConfig} but performs the operation asynchronously.
+   *
+   * @param providerId A provider ID string.
+   * @return An {@code ApiFuture} which will complete successfully when the specified provider
+   *     config has been deleted. If an error occurs while deleting the provider config, the future
+   *     throws a {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with "saml.".
+   */
+  public ApiFuture<Void> deleteSamlProviderConfigAsync(String providerId) {
+    return deleteSamlProviderConfigOp(providerId).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<Void, FirebaseAuthException> deleteSamlProviderConfigOp(
+      final String providerId) {
+    checkNotDestroyed();
+    SamlProviderConfig.checkSamlProviderId(providerId);
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<Void, FirebaseAuthException>() {
+      @Override
+      protected Void execute() throws FirebaseAuthException {
+        userManager.deleteSamlProviderConfig(providerId);
         return null;
       }
     };

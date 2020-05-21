@@ -71,6 +71,12 @@ public final class SamlProviderConfig extends ProviderConfig {
     return (String) spConfig.get("callbackUri");
   }
 
+  static void checkSamlProviderId(String providerId) {
+    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
+    checkArgument(providerId.startsWith("saml."),
+        "Invalid SAML provider ID (must be prefixed with 'saml.'): " + providerId);
+  }
+
   private static List<Object> ensureNestedList(Map<String, Object> outerMap, String id) {
     List<Object> list = (List<Object>) outerMap.get(id);
     if (list == null) {
@@ -105,6 +111,19 @@ public final class SamlProviderConfig extends ProviderConfig {
      * information persistently.
      */
     public CreateRequest() { }
+
+    /**
+     * Sets the ID for the new provider.
+     *
+     * @param providerId A non-null, non-empty provider ID string.
+     * @throws IllegalArgumentException If the provider ID is null or empty, or is not prefixed with
+     *     'saml.'.
+     */
+    @Override
+    public CreateRequest setProviderId(String providerId) {
+      checkSamlProviderId(providerId);
+      return super.setProviderId(providerId);
+    }
 
     /**
      * Sets the IDP entity ID for the new provider.
@@ -180,10 +199,6 @@ public final class SamlProviderConfig extends ProviderConfig {
 
     CreateRequest getThis() {
       return this;
-    }
-
-    void assertValidProviderIdFormat(String providerId) {
-      checkArgument(providerId.startsWith("saml."), "Invalid SAML provider ID: " + providerId);
     }
   }
 }

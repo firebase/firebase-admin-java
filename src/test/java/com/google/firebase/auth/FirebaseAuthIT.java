@@ -702,7 +702,7 @@ public class FirebaseAuthIT {
     assertEquals("https://oidc.com/new-issuer", config.getIssuer());
 
     // Delete config provider
-    auth.deleteOidcProviderConfigAsync(providerId).get();
+    temporaryProviderConfig.deleteOidcProviderConfig(providerId);
     ProviderConfigTestUtils.assertOidcProviderConfigDoesNotExist(auth, providerId);
   }
 
@@ -714,7 +714,7 @@ public class FirebaseAuthIT {
     for (int i = 0; i < 3; i++) {
       String providerId = "oidc.provider-id" + i;
       providerIds.add(providerId);
-      OidcProviderConfig config = temporaryProviderConfig.createOidcProviderConfig(
+      temporaryProviderConfig.createOidcProviderConfig(
           new OidcProviderConfig.CreateRequest()
             .setProviderId(providerId)
             .setClientId("CLIENT_ID")
@@ -773,6 +773,40 @@ public class FirebaseAuthIT {
     semaphore.acquire();
     assertEquals(providerIds.size(), collected.get());
     assertNull(error.get());
+  }
+
+  @Test
+  public void testSamlProviderConfigLifecycle() throws Exception {
+    // Create config provider
+    String providerId = "saml.provider-id";
+    SamlProviderConfig config = temporaryProviderConfig.createSamlProviderConfig(
+        new SamlProviderConfig.CreateRequest()
+            .setProviderId(providerId)
+            .setDisplayName("DisplayName")
+            .setEnabled(true)
+            .setIdpEntityId("IDP_ENTITY_ID")
+            .setSsoUrl("https://example.com/login")
+            .addX509Certificate("certificate1")
+            .addX509Certificate("certificate2")
+            .setRpEntityId("RP_ENTITY_ID")
+            .setCallbackUrl("https://projectId.firebaseapp.com/__/auth/handler"));
+    assertEquals(providerId, config.getProviderId());
+    assertEquals("DisplayName", config.getDisplayName());
+    assertTrue(config.isEnabled());
+    assertEquals("IDP_ENTITY_ID", config.getIdpEntityId());
+    assertEquals("https://example.com/login", config.getSsoUrl());
+    assertEquals(ImmutableList.of("certificate1", "certificate2"), config.getX509Certificates());
+    assertEquals("RP_ENTITY_ID", config.getRpEntityId());
+    assertEquals("https://projectId.firebaseapp.com/__/auth/handler", config.getCallbackUrl());
+
+    // TODO(micahstairs): Once implemented, add tests for getting and updating the SAML provider
+    // config.
+
+    // Delete config provider
+    temporaryProviderConfig.deleteSamlProviderConfig(providerId);
+
+    // TODO(micahstairs): Once the operation to get a SAML config is implemented, add an assertion
+    // that the SAML provider does not exist.
   }
 
   private Map<String, String> parseLinkParameters(String link) throws Exception {
@@ -913,7 +947,6 @@ public class FirebaseAuthIT {
     }
     return false;
   }
-
 
   private static void assertUserDoesNotExist(AbstractFirebaseAuth firebaseAuth, String uid)
       throws Exception {
