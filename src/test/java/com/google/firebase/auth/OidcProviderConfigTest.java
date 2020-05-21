@@ -52,23 +52,23 @@ public class OidcProviderConfigTest {
   }
 
   @Test
-  public void testCheckSamlProviderId() {
-    SamlProviderConfig.checkSamlProviderId("saml.valid-id");
+  public void testCheckOidcProviderId() {
+    OidcProviderConfig.checkOidcProviderId("oidc.valid-id");
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testCreateSamlProviderIdNull() {
-    SamlProviderConfig.checkSamlProviderId(null);
+  public void testCreateOidcProviderIdNull() {
+    OidcProviderConfig.checkOidcProviderId(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testCreateSamlProviderIdEmpty() {
-    SamlProviderConfig.checkSamlProviderId("");
+  public void testCreateOidcProviderIdEmpty() {
+    OidcProviderConfig.checkOidcProviderId("");
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testCreateSamlProviderIdInvalidPrefix() {
-    SamlProviderConfig.checkSamlProviderId("not prefixed with saml.");
+  public void testCreateOidcProviderIdInvalidPrefix() {
+    OidcProviderConfig.checkOidcProviderId("not prefixed with oidc.");
   }
 
   @Test

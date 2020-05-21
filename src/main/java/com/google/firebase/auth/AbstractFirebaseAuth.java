@@ -939,7 +939,7 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Creates a new provider OIDC Auth provider config with the attributes contained in the specified
+   * Creates a new OIDC Auth provider config with the attributes contained in the specified
    * {@link OidcProviderConfig.CreateRequest}.
    *
    * @param request A non-null {@link OidcProviderConfig.CreateRequest} instance.
@@ -1196,7 +1196,7 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Creates a new provider SAML Auth provider config with the attributes contained in the specified
+   * Creates a new SAML Auth provider config with the attributes contained in the specified
    * {@link SamlProviderConfig.CreateRequest}.
    *
    * @param request A non-null {@link SamlProviderConfig.CreateRequest} instance.
