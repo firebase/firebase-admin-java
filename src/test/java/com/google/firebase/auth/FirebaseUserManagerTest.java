@@ -1625,7 +1625,7 @@ public class FirebaseUserManagerTest {
         TestUtils.loadResource("oidc.json"));
 
     try {
-      FirebaseAuth.getInstance().getOidcProviderConfig("not a valid provider ID");
+      FirebaseAuth.getInstance().getOidcProviderConfig("saml.invalid-oidc-provider-id");
       fail("No error thrown for invalid provider ID.");
     } catch (IllegalArgumentException e) {
       // Expected.
@@ -1758,7 +1758,7 @@ public class FirebaseUserManagerTest {
     TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
 
     try {
-      FirebaseAuth.getInstance().deleteOidcProviderConfig("not a valid provider ID");
+      FirebaseAuth.getInstance().deleteOidcProviderConfig("saml.invalid-oidc-provider-id");
       fail("No error thrown for invalid provider ID.");
     } catch (IllegalArgumentException e) {
       // Expected.
@@ -1971,7 +1971,7 @@ public class FirebaseUserManagerTest {
     TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
 
     try {
-      FirebaseAuth.getInstance().deleteSamlProviderConfig("not a valid provider ID");
+      FirebaseAuth.getInstance().deleteSamlProviderConfig("oidc.invalid-saml-provider-id");
       fail("No error thrown for invalid provider ID.");
     } catch (IllegalArgumentException e) {
       // Expected.
