@@ -52,26 +52,6 @@ public class OidcProviderConfigTest {
   }
 
   @Test
-  public void testCheckOidcProviderId() {
-    OidcProviderConfig.checkOidcProviderId("oidc.valid-id");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testCreateOidcProviderIdNull() {
-    OidcProviderConfig.checkOidcProviderId(null);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testCreateOidcProviderIdEmpty() {
-    OidcProviderConfig.checkOidcProviderId("");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testCreateOidcProviderIdInvalidPrefix() {
-    OidcProviderConfig.checkOidcProviderId("not prefixed with oidc.");
-  }
-
-  @Test
   public void testCreateRequest() throws IOException {
     OidcProviderConfig.CreateRequest createRequest = new OidcProviderConfig.CreateRequest();
     createRequest

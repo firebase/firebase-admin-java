@@ -78,6 +78,19 @@ public final class OidcProviderConfig extends ProviderConfig {
     public CreateRequest() { }
 
     /**
+     * Sets the ID for the new provider.
+     *
+     * @param providerId A non-null, non-empty provider ID string.
+     * @throws IllegalArgumentException If the provider ID is null or empty, or is not prefixed with
+     *     'oidc.'.
+     */
+    @Override
+    public CreateRequest setProviderId(String providerId) {
+      checkOidcProviderId(providerId);
+      return super.setProviderId(providerId);
+    }
+
+    /**
      * Sets the client ID for the new provider.
      *
      * @param clientId A non-null, non-empty client ID string.
@@ -105,10 +118,6 @@ public final class OidcProviderConfig extends ProviderConfig {
 
     CreateRequest getThis() {
       return this;
-    }
-
-    void assertValidProviderIdFormat(String providerId) {
-      checkOidcProviderId(providerId);
     }
   }
 

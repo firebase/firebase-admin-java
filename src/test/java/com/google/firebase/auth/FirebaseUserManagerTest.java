@@ -1607,6 +1607,32 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testGetOidcProviderConfigMissingId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+
+    try {
+      FirebaseAuth.getInstance().getOidcProviderConfig(null);
+      fail("No error thrown for missing provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testGetOidcProviderConfigInvalidId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+
+    try {
+      FirebaseAuth.getInstance().getOidcProviderConfig("not a valid provider ID");
+      fail("No error thrown for invalid provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
   public void testGetOidcProviderConfigWithNotFoundError() throws Exception {
     TestResponseInterceptor interceptor =
         initializeAppForUserManagementWithStatusCode(404,
@@ -1713,6 +1739,30 @@ public class FirebaseUserManagerTest {
 
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
+  }
+
+  @Test
+  public void testDeleteOidcProviderMissingId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+
+    try {
+      FirebaseAuth.getInstance().deleteOidcProviderConfig(null);
+      fail("No error thrown for missing provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testDeleteOidcProviderInvalidId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+
+    try {
+      FirebaseAuth.getInstance().deleteOidcProviderConfig("not a valid provider ID");
+      fail("No error thrown for invalid provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
   }
 
   @Test
@@ -1902,6 +1952,30 @@ public class FirebaseUserManagerTest {
 
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
+  }
+
+  @Test
+  public void testDeleteSamlProviderMissingId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+
+    try {
+      FirebaseAuth.getInstance().deleteSamlProviderConfig(null);
+      fail("No error thrown for missing provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testDeleteSamlProviderInvalidId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+
+    try {
+      FirebaseAuth.getInstance().deleteSamlProviderConfig("not a valid provider ID");
+      fail("No error thrown for invalid provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
   }
 
   @Test

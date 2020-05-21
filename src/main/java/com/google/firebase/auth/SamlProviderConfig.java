@@ -113,6 +113,19 @@ public final class SamlProviderConfig extends ProviderConfig {
     public CreateRequest() { }
 
     /**
+     * Sets the ID for the new provider.
+     *
+     * @param providerId A non-null, non-empty provider ID string.
+     * @throws IllegalArgumentException If the provider ID is null or empty, or is not prefixed with
+     *     'saml.'.
+     */
+    @Override
+    public CreateRequest setProviderId(String providerId) {
+      checkSamlProviderId(providerId);
+      return super.setProviderId(providerId);
+    }
+
+    /**
      * Sets the IDP entity ID for the new provider.
      *
      * @param idpEntityId A non-null, non-empty IDP entity ID string.
@@ -186,10 +199,6 @@ public final class SamlProviderConfig extends ProviderConfig {
 
     CreateRequest getThis() {
       return this;
-    }
-
-    void assertValidProviderIdFormat(String providerId) {
-      checkSamlProviderId(providerId);
     }
   }
 }

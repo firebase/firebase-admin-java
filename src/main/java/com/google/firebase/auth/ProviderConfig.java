@@ -71,17 +71,7 @@ public abstract class ProviderConfig {
     final Map<String,Object> properties = new HashMap<>();
     String providerId;
 
-    /**
-     * Sets the ID for the new provider.
-     *
-     * @param providerId A non-null, non-empty provider ID string.
-     * @throws IllegalArgumentException If the provider ID is null or empty, or if the format is
-     *     invalid.
-     */
-    public T setProviderId(String providerId) {
-      checkArgument(
-          !Strings.isNullOrEmpty(providerId), "Provider ID name must not be null or empty.");
-      assertValidProviderIdFormat(providerId);
+    T setProviderId(String providerId) {
       this.providerId = providerId;
       return getThis();
     }
@@ -117,8 +107,6 @@ public abstract class ProviderConfig {
     }
 
     abstract T getThis();
-
-    abstract void assertValidProviderIdFormat(String providerId);
   }
 
   /**
