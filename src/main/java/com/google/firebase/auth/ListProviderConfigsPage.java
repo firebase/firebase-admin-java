@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.ListOidcProviderConfigsResponse;
 import com.google.firebase.auth.internal.ListProviderConfigsResponse;
+import com.google.firebase.auth.internal.ListSamlProviderConfigsResponse;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import java.util.Iterator;
@@ -205,7 +206,7 @@ public class ListProviderConfigsPage<T extends ProviderConfig> implements Page<T
     private final FirebaseUserManager userManager;
 
     DefaultOidcProviderConfigSource(FirebaseUserManager userManager) {
-      this.userManager = checkNotNull(userManager, "user manager must not be null");
+      this.userManager = checkNotNull(userManager, "User manager must not be null.");
     }
 
     @Override
@@ -215,7 +216,20 @@ public class ListProviderConfigsPage<T extends ProviderConfig> implements Page<T
     }
   }
 
-  // TODO(micahstairs): Add DefaultSamlProviderConfigSource class.
+  static class DefaultSamlProviderConfigSource implements ProviderConfigSource<SamlProviderConfig> {
+
+    private final FirebaseUserManager userManager;
+
+    DefaultSamlProviderConfigSource(FirebaseUserManager userManager) {
+      this.userManager = checkNotNull(userManager, "User manager must not be null.");
+    }
+
+    @Override
+    public ListSamlProviderConfigsResponse fetch(int maxResults, String pageToken)
+        throws FirebaseAuthException {
+      return userManager.listSamlProviderConfigs(maxResults, pageToken);
+    }
+  }
 
   /**
    * A simple factory class for {@link ProviderConfigsPage} instances.

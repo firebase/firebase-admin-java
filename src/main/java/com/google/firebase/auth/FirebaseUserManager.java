@@ -44,6 +44,7 @@ import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 import com.google.firebase.auth.internal.HttpErrorResponse;
 import com.google.firebase.auth.internal.ListOidcProviderConfigsResponse;
+import com.google.firebase.auth.internal.ListSamlProviderConfigsResponse;
 import com.google.firebase.auth.internal.ListTenantsResponse;
 import com.google.firebase.auth.internal.UploadAccountResponse;
 import com.google.firebase.internal.ApiClientUtils;
@@ -366,7 +367,7 @@ class FirebaseUserManager {
         ImmutableMap.<String, Object>builder().put("pageSize", maxResults);
     if (pageToken != null) {
       checkArgument(!pageToken.equals(
-          ListTenantsPage.END_OF_LIST), "Invalid end of list page token.");
+          ListProviderConfigsPage.END_OF_LIST), "Invalid end of list page token.");
       builder.put("nextPageToken", pageToken);
     }
 
@@ -374,6 +375,26 @@ class FirebaseUserManager {
     url.putAll(builder.build());
     ListOidcProviderConfigsResponse response =
         sendRequest("GET", url, null, ListOidcProviderConfigsResponse.class);
+    if (response == null) {
+      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to retrieve provider configs.");
+    }
+    return response;
+  }
+
+  ListSamlProviderConfigsResponse listSamlProviderConfigs(int maxResults, String pageToken)
+      throws FirebaseAuthException {
+    ImmutableMap.Builder<String, Object> builder =
+        ImmutableMap.<String, Object>builder().put("pageSize", maxResults);
+    if (pageToken != null) {
+      checkArgument(!pageToken.equals(
+          ListProviderConfigsPage.END_OF_LIST), "Invalid end of list page token.");
+      builder.put("nextPageToken", pageToken);
+    }
+
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/inboundSamlConfigs");
+    url.putAll(builder.build());
+    ListSamlProviderConfigsResponse response =
+        sendRequest("GET", url, null, ListSamlProviderConfigsResponse.class);
     if (response == null) {
       throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to retrieve provider configs.");
     }

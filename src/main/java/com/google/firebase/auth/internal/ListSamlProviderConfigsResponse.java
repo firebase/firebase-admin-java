@@ -18,27 +18,27 @@ package com.google.firebase.auth.internal;
 
 import com.google.api.client.util.Key;
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.auth.OidcProviderConfig;
+import com.google.firebase.auth.SamlProviderConfig;
 import java.util.List;
 
 /**
- * JSON data binding for ListOAuthIdpConfigsResponse messages sent by Google identity toolkit
+ * JSON data binding for ListInboundSamlConfigsResponse messages sent by Google identity toolkit
  * service.
  */
-public final class ListOidcProviderConfigsResponse
-    implements ListProviderConfigsResponse<OidcProviderConfig> {
+public final class ListSamlProviderConfigsResponse
+    implements ListProviderConfigsResponse<SamlProviderConfig> {
 
-  @Key("oauthIdpConfigs")
-  private List<OidcProviderConfig> providerConfigs;
+  @Key("inboundSamlConfigs")
+  private List<SamlProviderConfig> providerConfigs;
 
   @Key("nextPageToken")
   private String pageToken;
 
-  public ListOidcProviderConfigsResponse() { }
+  public ListSamlProviderConfigsResponse() { }
 
   @Override
-  public List<OidcProviderConfig> getProviderConfigs() {
-    return providerConfigs == null ? ImmutableList.<OidcProviderConfig>of() : providerConfigs;
+  public List<SamlProviderConfig> getProviderConfigs() {
+    return providerConfigs == null ? ImmutableList.<SamlProviderConfig>of() : providerConfigs;
   }
 
   @Override
