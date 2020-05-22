@@ -1843,7 +1843,7 @@ public class FirebaseUserManagerTest {
   @Test
   public void testCreateSamlProviderMinimal() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("oidc.json"));
+        TestUtils.loadResource("saml.json"));
     // Only the 'enabled', 'displayName', and 'signRequest' fields can be omitted from a SAML
     // provider config creation request.
     SamlProviderConfig.CreateRequest createRequest =
@@ -1942,6 +1942,136 @@ public class FirebaseUserManagerTest {
 
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "POST", TENANTS_BASE_URL + "/TENANT_ID/inboundSamlConfigs");
+  }
+
+  @Test
+  public void testUpdateSamlProvider() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+    // TODO(micahstairs): Add 'signRequest' to the create request once that field is added to
+    // SamlProviderConfig.
+    SamlProviderConfig.UpdateRequest updateRequest =
+        new SamlProviderConfig.UpdateRequest("saml.provider-id")
+          .setDisplayName("DISPLAY_NAME")
+          .setEnabled(true)
+          .setIdpEntityId("IDP_ENTITY_ID")
+          .setSsoUrl("https://example.com/login")
+          .addX509Certificate("certificate1")
+          .addX509Certificate("certificate2")
+          .setRpEntityId("RP_ENTITY_ID")
+          .setCallbackUrl("https://projectId.firebaseapp.com/__/auth/handler");
+
+    SamlProviderConfig config = FirebaseAuth.getInstance().updateSamlProviderConfig(updateRequest);
+
+    checkSamlProviderConfig(config, "saml.provider-id");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(
+        "displayName,enabled,idpConfig.idpCertificates,idpConfig.idpEntityId,idpConfig.ssoUrl,"
+          + "spConfig.callbackUri,spConfig.spEntityId",
+        url.getFirst("updateMask"));
+
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertTrue((boolean) parsed.get("enabled"));
+    Map<String, Object> idpConfig = (Map<String, Object>) parsed.get("idpConfig");
+    assertNotNull(idpConfig);
+    assertEquals(3, idpConfig.size());
+    assertEquals("IDP_ENTITY_ID", idpConfig.get("idpEntityId"));
+    assertEquals("https://example.com/login", idpConfig.get("ssoUrl"));
+    List<Object> idpCertificates = (List<Object>) idpConfig.get("idpCertificates");
+    assertNotNull(idpCertificates);
+    assertEquals(2, idpCertificates.size());
+    assertEquals(ImmutableMap.of("x509Certificate", "certificate1"), idpCertificates.get(0));
+    assertEquals(ImmutableMap.of("x509Certificate", "certificate2"), idpCertificates.get(1));
+    Map<String, Object> spConfig = (Map<String, Object>) parsed.get("spConfig");
+    assertNotNull(spConfig);
+    assertEquals(2, spConfig.size());
+    assertEquals("RP_ENTITY_ID", spConfig.get("spEntityId"));
+    assertEquals("https://projectId.firebaseapp.com/__/auth/handler", spConfig.get("callbackUri"));
+  }
+
+  @Test
+  public void testUpdateSamlProviderMinimal() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+    SamlProviderConfig.UpdateRequest request =
+        new SamlProviderConfig.UpdateRequest("saml.provider-id").setDisplayName("DISPLAY_NAME");
+
+    SamlProviderConfig config = FirebaseAuth.getInstance().updateSamlProviderConfig(request);
+
+    checkSamlProviderConfig(config, "saml.provider-id");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("displayName", url.getFirst("updateMask"));
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals(1, parsed.size());
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+  }
+
+  @Test
+  public void testUpdateSamlProviderConfigNoValues() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+    try {
+      FirebaseAuth.getInstance().updateSamlProviderConfig(
+          new SamlProviderConfig.UpdateRequest("saml.provider-id"));
+      fail("No error thrown for empty provider config update");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testUpdateSamlProviderConfigError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+    SamlProviderConfig.UpdateRequest request =
+        new SamlProviderConfig.UpdateRequest("saml.provider-id").setDisplayName("DISPLAY_NAME");
+    try {
+      FirebaseAuth.getInstance().updateSamlProviderConfig(request);
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
+  }
+
+  @Test
+  public void testTenantAwareUpdateSamlProvider() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        TestUtils.loadResource("saml.json"));
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+    SamlProviderConfig.UpdateRequest updateRequest =
+        new SamlProviderConfig.UpdateRequest("saml.provider-id")
+          .setDisplayName("DISPLAY_NAME")
+          .setEnabled(true)
+          .setIdpEntityId("IDP_ENTITY_ID")
+          .setSsoUrl("https://example.com/login");
+
+    SamlProviderConfig config = tenantAwareAuth.updateSamlProviderConfig(updateRequest);
+
+    checkSamlProviderConfig(config, "saml.provider-id");
+    checkRequestHeaders(interceptor);
+    String expectedUrl = TENANTS_BASE_URL + "/TENANT_ID/inboundSamlConfigs/saml.provider-id";
+    checkUrl(interceptor, "PATCH", expectedUrl);
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("displayName,enabled,idpConfig.idpEntityId,idpConfig.ssoUrl",
+        url.getFirst("updateMask"));
+
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertTrue((boolean) parsed.get("enabled"));
+    Map<String, Object> idpConfig = (Map<String, Object>) parsed.get("idpConfig");
+    assertNotNull(idpConfig);
+    assertEquals(2, idpConfig.size());
+    assertEquals("IDP_ENTITY_ID", idpConfig.get("idpEntityId"));
+    assertEquals("https://example.com/login", idpConfig.get("ssoUrl"));
   }
 
   @Test

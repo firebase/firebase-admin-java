@@ -992,6 +992,7 @@ public abstract class AbstractFirebaseAuth {
    * @param request A non-null {@link OidcProviderConfig.UpdateRequest} instance.
    * @return A {@link OidcProviderConfig} instance corresponding to the updated provider config.
    * @throws NullPointerException if the provided update request is null.
+   * @throws IllegalArgumentException If the provided update request is invalid.
    * @throws FirebaseAuthException if an error occurs while updating the provider config.
    */
   public OidcProviderConfig updateOidcProviderConfig(
@@ -1006,6 +1007,8 @@ public abstract class AbstractFirebaseAuth {
    * @return An {@code ApiFuture} which will complete successfully with a {@link OidcProviderConfig}
    *     instance corresponding to the updated provider config. If an error occurs while updating
    *     the provider config, the future throws a {@link FirebaseAuthException}.
+   * @throws NullPointerException if the provided update request is null.
+   * @throws IllegalArgumentException If the provided update request is invalid.
    */
   public ApiFuture<OidcProviderConfig> updateOidcProviderConfigAsync(
       @NonNull OidcProviderConfig.UpdateRequest request) {
@@ -1016,6 +1019,8 @@ public abstract class AbstractFirebaseAuth {
       final OidcProviderConfig.UpdateRequest request) {
     checkNotDestroyed();
     checkNotNull(request, "Update request must not be null.");
+    checkArgument(!request.getProperties().isEmpty(),
+        "Update request must have at least one property set.");
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<OidcProviderConfig, FirebaseAuthException>() {
       @Override
@@ -1238,6 +1243,51 @@ public abstract class AbstractFirebaseAuth {
       @Override
       protected SamlProviderConfig execute() throws FirebaseAuthException {
         return userManager.createSamlProviderConfig(request);
+      }
+    };
+  }
+
+  /**
+   * Updates an existing SAML Auth provider config with the attributes contained in the specified
+   * {@link OidcProviderConfig.UpdateRequest}.
+   *
+   * @param request A non-null {@link SamlProviderConfig.UpdateRequest} instance.
+   * @return A {@link SamlProviderConfig} instance corresponding to the updated provider config.
+   * @throws NullPointerException if the provided update request is null.
+   * @throws IllegalArgumentException If the provided update request is invalid.
+   * @throws FirebaseAuthException if an error occurs while updating the provider config.
+   */
+  public SamlProviderConfig updateSamlProviderConfig(
+      @NonNull SamlProviderConfig.UpdateRequest request) throws FirebaseAuthException {
+    return updateSamlProviderConfigOp(request).call();
+  }
+
+  /**
+   * Similar to {@link #updateSamlProviderConfig} but performs the operation asynchronously.
+   *
+   * @param request A non-null {@link SamlProviderConfig.UpdateRequest} instance.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link SamlProviderConfig}
+   *     instance corresponding to the updated provider config. If an error occurs while updating
+   *     the provider config, the future throws a {@link FirebaseAuthException}.
+   * @throws NullPointerException if the provided update request is null.
+   * @throws IllegalArgumentException If the provided update request is invalid.
+   */
+  public ApiFuture<SamlProviderConfig> updateSamlProviderConfigAsync(
+      @NonNull SamlProviderConfig.UpdateRequest request) {
+    return updateSamlProviderConfigOp(request).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<SamlProviderConfig, FirebaseAuthException> updateSamlProviderConfigOp(
+      final SamlProviderConfig.UpdateRequest request) {
+    checkNotDestroyed();
+    checkNotNull(request, "Update request must not be null.");
+    checkArgument(!request.getProperties().isEmpty(),
+        "Update request must have at least one property set.");
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<SamlProviderConfig, FirebaseAuthException>() {
+      @Override
+      protected SamlProviderConfig execute() throws FirebaseAuthException {
+        return userManager.updateSamlProviderConfig(request);
       }
     };
   }

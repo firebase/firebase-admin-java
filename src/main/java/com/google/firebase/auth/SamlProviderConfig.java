@@ -71,6 +71,16 @@ public final class SamlProviderConfig extends ProviderConfig {
     return (String) spConfig.get("callbackUri");
   }
 
+  /**
+   * Returns a new {@link UpdateRequest}, which can be used to update the attributes of this
+   * provider config.
+   *
+   * @return a non-null {@link UpdateRequest} instance.
+   */
+  public UpdateRequest updateRequest() {
+    return new UpdateRequest(getProviderId());
+  }
+
   static void checkSamlProviderId(String providerId) {
     checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
     checkArgument(providerId.startsWith("saml."),
@@ -198,6 +208,108 @@ public final class SamlProviderConfig extends ProviderConfig {
     // TODO(micahstairs): Add 'setRequestSigningEnabled' method.
 
     CreateRequest getThis() {
+      return this;
+    }
+  }
+
+  /**
+   * A specification class for updating an existing SAML Auth provider.
+   *
+   * <p>An instance of this class can be obtained via a {@link SamlProviderConfig} object, or from
+   * a provider ID string. Specify the changes to be made to the provider config by calling the
+   * various setter methods available in this class.
+   */
+  public static final class UpdateRequest extends AbstractUpdateRequest<UpdateRequest> {
+    /**
+     * Creates a new {@link UpdateRequest}, which can be used to updates an existing SAML Auth
+     * provider.
+     *
+     * <p>The returned object should be passed to
+     * {@link AbstractFirebaseAuth#updateSamlProviderConfig(UpdateRequest)} to update the provider
+     * information persistently.
+     *
+     * @param providerId a non-null, non-empty provider ID string.
+     * @throws IllegalArgumentException If the provider ID is null or empty, or is not prefixed with
+     *     'saml.'.
+     */
+    public UpdateRequest(String providerId) {
+      super(providerId);
+      checkSamlProviderId(providerId);
+    }
+
+    /**
+     * Sets the IDP entity ID for the existing provider.
+     *
+     * @param idpEntityId A non-null, non-empty IDP entity ID string.
+     * @throws IllegalArgumentException If the IDP entity ID is null or empty.
+     */
+    public UpdateRequest setIdpEntityId(String idpEntityId) {
+      checkArgument(!Strings.isNullOrEmpty(idpEntityId),
+          "IDP entity ID must not be null or empty.");
+      ensureNestedMap(properties, "idpConfig").put("idpEntityId", idpEntityId);
+      return this;
+    }
+
+    /**
+     * Sets the SSO URL for the existing provider.
+     *
+     * @param ssoUrl A non-null, non-empty SSO URL string.
+     * @throws IllegalArgumentException If the SSO URL is null or empty, or if the format is
+     *     invalid.
+     */
+    public UpdateRequest setSsoUrl(String ssoUrl) {
+      checkArgument(!Strings.isNullOrEmpty(ssoUrl), "SSO URL must not be null or empty.");
+      assertValidUrl(ssoUrl);
+      ensureNestedMap(properties, "idpConfig").put("ssoUrl", ssoUrl);
+      return this;
+    }
+
+    /**
+     * Adds a x509 certificate to the existing provider.
+     *
+     * @param x509Certificate A non-null, non-empty x509 certificate string.
+     * @throws IllegalArgumentException If the x509 certificate is null or empty.
+     */
+    public UpdateRequest addX509Certificate(String x509Certificate) {
+      checkArgument(!Strings.isNullOrEmpty(x509Certificate),
+          "The x509 certificate must not be null or empty.");
+      Map<String, Object> idpConfigProperties = ensureNestedMap(properties, "idpConfig");
+      List<Object> x509Certificates = ensureNestedList(idpConfigProperties, "idpCertificates");
+      x509Certificates.add(ImmutableMap.<String, Object>of("x509Certificate", x509Certificate));
+      return this;
+    }
+
+    // TODO(micahstairs): Add 'addAllX509Certificates' method.
+
+    /**
+     * Sets the RP entity ID for the existing provider.
+     *
+     * @param rpEntityId A non-null, non-empty RP entity ID string.
+     * @throws IllegalArgumentException If the RP entity ID is null or empty.
+     */
+    public UpdateRequest setRpEntityId(String rpEntityId) {
+      checkArgument(!Strings.isNullOrEmpty(rpEntityId), "RP entity ID must not be null or empty.");
+      ensureNestedMap(properties, "spConfig").put("spEntityId", rpEntityId);
+      return this;
+    }
+
+    /**
+     * Sets the callback URL for the exising provider.
+     *
+     * @param callbackUrl A non-null, non-empty callback URL string.
+     * @throws IllegalArgumentException If the callback URL is null or empty, or if the format is
+     *     invalid.
+     */
+    public UpdateRequest setCallbackUrl(String callbackUrl) {
+      checkArgument(!Strings.isNullOrEmpty(callbackUrl), "Callback URL must not be null or empty.");
+      assertValidUrl(callbackUrl);
+      ensureNestedMap(properties, "spConfig").put("callbackUri", callbackUrl);
+      return this;
+    }
+
+    // TODO(micahstairs): Add 'setRequestSigningEnabled' method.
+
+    UpdateRequest getThis() {
       return this;
     }
   }

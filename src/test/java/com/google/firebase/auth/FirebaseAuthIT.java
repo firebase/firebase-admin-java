@@ -708,7 +708,17 @@ public class FirebaseAuthIT {
     assertEquals("RP_ENTITY_ID", config.getRpEntityId());
     assertEquals("https://projectId.firebaseapp.com/__/auth/handler", config.getCallbackUrl());
 
-    // TODO(micahstairs): Once implemented, add tests for updating the SAML provider config.
+    // Update provider config
+    SamlProviderConfig.UpdateRequest updateRequest =
+        new SamlProviderConfig.UpdateRequest(providerId)
+            .setDisplayName("NewDisplayName")
+            .setEnabled(false)
+            .addX509Certificate("certificate");
+    config = auth.updateSamlProviderConfigAsync(updateRequest).get();
+    assertEquals(providerId, config.getProviderId());
+    assertEquals("NewDisplayName", config.getDisplayName());
+    assertFalse(config.isEnabled());
+    assertEquals(ImmutableList.of("certificate"), config.getX509Certificates());
 
     // Delete provider config
     temporaryProviderConfig.deleteSamlProviderConfig(providerId);
