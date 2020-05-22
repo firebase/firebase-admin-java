@@ -40,6 +40,18 @@ class ProviderConfigTestUtils {
     }
   }
 
+  static void assertSamlProviderConfigDoesNotExist(
+      AbstractFirebaseAuth firebaseAuth, String providerId) throws Exception {
+    try {
+      firebaseAuth.getSamlProviderConfigAsync(providerId).get();
+      fail("No error thrown for getting a deleted SAML provider config.");
+    } catch (ExecutionException e) {
+      assertTrue(e.getCause() instanceof FirebaseAuthException);
+      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR,
+          ((FirebaseAuthException) e.getCause()).getErrorCode());
+    }
+  }
+
   /**
    * Creates temporary provider configs for testing, and deletes them at the end of each test case.
    */

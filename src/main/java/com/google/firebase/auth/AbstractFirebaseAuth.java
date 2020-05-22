@@ -1243,6 +1243,49 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
+   * Gets the SAML provider Auth config corresponding to the specified provider ID.
+   *
+   * @param providerId A provider ID string.
+   * @return An {@link OidcProviderConfig} instance.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with 'saml'.
+   * @throws FirebaseAuthException If an error occurs while retrieving the provider config.
+   */
+  public SamlProviderConfig getSamlProviderConfig(@NonNull String providerId)
+      throws FirebaseAuthException {
+    return getSamlProviderConfigOp(providerId).call();
+  }
+
+  /**
+   * Similar to {@link #getSamlProviderConfig(String)} but performs the operation asynchronously.
+   * Page size will be limited to 100 provider configs.
+   *
+   * @param providerId A provider ID string.
+   * @return An {@code ApiFuture} which will complete successfully with an
+   *     {@link SamlProviderConfig} instance. If an error occurs while retrieving the provider
+   *     config or if the specified provider ID does not exist, the future throws a
+   *     {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with 'saml'.
+   */
+  public ApiFuture<SamlProviderConfig> getSamlProviderConfigAsync(@NonNull String providerId) {
+    return getSamlProviderConfigOp(providerId).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<SamlProviderConfig, FirebaseAuthException>
+      getSamlProviderConfigOp(final String providerId) {
+    checkNotDestroyed();
+    SamlProviderConfig.checkSamlProviderId(providerId);
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<SamlProviderConfig, FirebaseAuthException>() {
+      @Override
+      protected SamlProviderConfig execute() throws FirebaseAuthException {
+        return userManager.getSamlProviderConfig(providerId);
+      }
+    };
+  }
+
+  /**
    * Deletes the SAML Auth provider config identified by the specified provider ID.
    *
    * @param providerId A provider ID string.
