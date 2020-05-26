@@ -2170,6 +2170,75 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testGetSamlProviderConfig() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+
+    SamlProviderConfig config =
+        FirebaseAuth.getInstance().getSamlProviderConfig("saml.provider-id");
+
+    checkSamlProviderConfig(config, "saml.provider-id");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
+  }
+
+  @Test
+  public void testGetSamlProviderConfigMissingId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+
+    try {
+      FirebaseAuth.getInstance().getSamlProviderConfig(null);
+      fail("No error thrown for missing provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testGetSamlProviderConfigInvalidId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+
+    try {
+      FirebaseAuth.getInstance().getSamlProviderConfig("oidc.invalid-saml-provider-id");
+      fail("No error thrown for invalid provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testGetSamlProviderConfigWithNotFoundError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"CONFIGURATION_NOT_FOUND\"}}");
+    try {
+      FirebaseAuth.getInstance().getSamlProviderConfig("saml.provider-id");
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
+  }
+
+  @Test
+  public void testGetTenantAwareSamlProviderConfig() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        TestUtils.loadResource("saml.json"));
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+
+    SamlProviderConfig config = tenantAwareAuth.getSamlProviderConfig("saml.provider-id");
+
+    checkSamlProviderConfig(config, "saml.provider-id");
+    checkRequestHeaders(interceptor);
+    String expectedUrl = TENANTS_BASE_URL + "/TENANT_ID/inboundSamlConfigs/saml.provider-id";
+    checkUrl(interceptor, "GET", expectedUrl);
+  }
+
+  @Test
   public void testDeleteSamlProviderConfig() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
 

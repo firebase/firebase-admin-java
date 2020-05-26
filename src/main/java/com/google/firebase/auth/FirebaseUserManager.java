@@ -399,6 +399,11 @@ class FirebaseUserManager {
     return sendRequest("GET", url, null, OidcProviderConfig.class);
   }
 
+  SamlProviderConfig getSamlProviderConfig(String providerId) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + getSamlUrlSuffix(providerId));
+    return sendRequest("GET", url, null, SamlProviderConfig.class);
+  }
+
   ListOidcProviderConfigsResponse listOidcProviderConfigs(int maxResults, String pageToken)
       throws FirebaseAuthException {
     ImmutableMap.Builder<String, Object> builder =
