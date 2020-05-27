@@ -306,7 +306,7 @@ class FirebaseUserManager {
     // CallableOperation.
     checkArgument(!properties.isEmpty(), "Tenant update must have at least one property set");
     GenericUrl url = new GenericUrl(tenantMgtBaseUrl + getTenantUrlSuffix(request.getTenantId()));
-    url.put("updateMask", generateMask(properties));
+    url.put("updateMask", Joiner.on(",").join(generateMask(properties)));
     return sendRequest("PATCH", url, properties, Tenant.class);
   }
 
@@ -384,14 +384,19 @@ class FirebaseUserManager {
   OidcProviderConfig updateOidcProviderConfig(OidcProviderConfig.UpdateRequest request)
       throws FirebaseAuthException {
     Map<String, Object> properties = request.getProperties();
-    // TODO(micahstairs): Move this check so that argument validation happens outside the
-    // CallableOperation.
-    checkArgument(!properties.isEmpty(),
-        "Provider config update must have at least one property set.");
     GenericUrl url =
         new GenericUrl(idpConfigMgtBaseUrl + getOidcUrlSuffix(request.getProviderId()));
-    url.put("updateMask", generateMask(properties));
+    url.put("updateMask", Joiner.on(",").join(generateMask(properties)));
     return sendRequest("PATCH", url, properties, OidcProviderConfig.class);
+  }
+
+  SamlProviderConfig updateSamlProviderConfig(SamlProviderConfig.UpdateRequest request)
+      throws FirebaseAuthException {
+    Map<String, Object> properties = request.getProperties();
+    GenericUrl url =
+        new GenericUrl(idpConfigMgtBaseUrl + getSamlUrlSuffix(request.getProviderId()));
+    url.put("updateMask", Joiner.on(",").join(generateMask(properties)));
+    return sendRequest("PATCH", url, properties, SamlProviderConfig.class);
   }
 
   OidcProviderConfig getOidcProviderConfig(String providerId) throws FirebaseAuthException {
@@ -434,12 +439,19 @@ class FirebaseUserManager {
     sendRequest("DELETE", url, null, GenericJson.class);
   }
 
-  private static String generateMask(Map<String, Object> properties) {
-    // This implementation does not currently handle the case of nested properties. This is fine
-    // since we do not currently generate masks for any properties with nested values. When it
-    // comes time to implement this, we can check if a property has nested properties by checking
-    // if it is an instance of the Map class.
-    return Joiner.on(",").join(ImmutableSortedSet.copyOf(properties.keySet()));
+  private static Set<String> generateMask(Map<String, Object> properties) {
+    ImmutableSortedSet.Builder<String> maskBuilder = ImmutableSortedSet.naturalOrder();
+    for (Map.Entry<String, Object> entry : properties.entrySet()) {
+      if (entry.getValue() instanceof Map) {
+        Set<String> childMask = generateMask((Map<String, Object>) entry.getValue());
+        for (String childProperty : childMask) {
+          maskBuilder.add(entry.getKey() + "." + childProperty);
+        }
+      } else {
+        maskBuilder.add(entry.getKey());
+      }
+    }
+    return maskBuilder.build();
   }
 
   private static String getTenantUrlSuffix(String tenantId) {
