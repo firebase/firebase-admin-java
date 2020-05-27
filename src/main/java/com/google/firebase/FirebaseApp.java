@@ -241,11 +241,9 @@ public class FirebaseApp {
   }
 
   private static List<String> getAllAppNames() {
-    List<String> allAppNames = new ArrayList<>();
+    List<String> allAppNames;
     synchronized (appsLock) {
-      for (FirebaseApp app : instances.values()) {
-        allAppNames.add(app.getName());
-      }
+      allAppNames = new ArrayList<>(instances.keySet());
     }
 
     Collections.sort(allAppNames);
