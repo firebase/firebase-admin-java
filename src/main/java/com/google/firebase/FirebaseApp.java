@@ -35,7 +35,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.internal.FirebaseAppStore;
 import com.google.firebase.internal.FirebaseScheduledExecutor;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.ListenableFuture2ApiFuture;
@@ -47,10 +46,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -219,21 +216,16 @@ public class FirebaseApp {
 
   static FirebaseApp initializeApp(FirebaseOptions options, String name,
       TokenRefresher.Factory tokenRefresherFactory) {
-    FirebaseAppStore appStore = FirebaseAppStore.initialize();
     String normalizedName = normalize(name);
-    final FirebaseApp firebaseApp;
     synchronized (appsLock) {
       checkState(
           !instances.containsKey(normalizedName),
           "FirebaseApp name " + normalizedName + " already exists!");
 
-      firebaseApp = new FirebaseApp(normalizedName, options, tokenRefresherFactory);
+      FirebaseApp firebaseApp = new FirebaseApp(normalizedName, options, tokenRefresherFactory);
       instances.put(normalizedName, firebaseApp);
+      return firebaseApp;
     }
-
-    appStore.persistApp(firebaseApp);
-
-    return firebaseApp;
   }
 
   @VisibleForTesting
@@ -249,19 +241,13 @@ public class FirebaseApp {
   }
 
   private static List<String> getAllAppNames() {
-    Set<String> allAppNames = new HashSet<>();
+    List<String> allAppNames;
     synchronized (appsLock) {
-      for (FirebaseApp app : instances.values()) {
-        allAppNames.add(app.getName());
-      }
-      FirebaseAppStore appStore = FirebaseAppStore.getInstance();
-      if (appStore != null) {
-        allAppNames.addAll(appStore.getAllPersistedAppNames());
-      }
+      allAppNames = new ArrayList<>(instances.keySet());
     }
-    List<String> sortedNameList = new ArrayList<>(allAppNames);
-    Collections.sort(sortedNameList);
-    return sortedNameList;
+
+    Collections.sort(allAppNames);
+    return ImmutableList.copyOf(allAppNames);
   }
 
   /** Normalizes the app name. */
@@ -356,11 +342,6 @@ public class FirebaseApp {
 
     synchronized (appsLock) {
       instances.remove(name);
-    }
-
-    FirebaseAppStore appStore = FirebaseAppStore.getInstance();
-    if (appStore != null) {
-      appStore.removeApp(name);
     }
   }
 
