@@ -1975,6 +1975,7 @@ public class FirebaseUserManagerTest {
     GenericJson parsed = parseRequestContent(interceptor);
     assertEquals("DISPLAY_NAME", parsed.get("displayName"));
     assertTrue((boolean) parsed.get("enabled"));
+
     Map<String, Object> idpConfig = (Map<String, Object>) parsed.get("idpConfig");
     assertNotNull(idpConfig);
     assertEquals(3, idpConfig.size());
@@ -1985,6 +1986,7 @@ public class FirebaseUserManagerTest {
     assertEquals(2, idpCertificates.size());
     assertEquals(ImmutableMap.of("x509Certificate", "certificate1"), idpCertificates.get(0));
     assertEquals(ImmutableMap.of("x509Certificate", "certificate2"), idpCertificates.get(1));
+
     Map<String, Object> spConfig = (Map<String, Object>) parsed.get("spConfig");
     assertNotNull(spConfig);
     assertEquals(2, spConfig.size());
