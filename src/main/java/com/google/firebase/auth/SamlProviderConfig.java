@@ -27,6 +27,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.ProviderConfig.AbstractCreateRequest;
 import com.google.firebase.auth.ProviderConfig.AbstractUpdateRequest;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,13 @@ public final class SamlProviderConfig extends ProviderConfig {
 
   public String getSsoUrl() {
     return (String) idpConfig.get("ssoUrl");
+  }
+
+  public boolean isRequestSigningEnabled() {
+    if (!idpConfig.containsKey("signRequest")) {
+      return false;
+    }
+    return (boolean) idpConfig.get("signRequest");
   }
 
   public List<String> getX509Certificates() {
@@ -163,6 +171,16 @@ public final class SamlProviderConfig extends ProviderConfig {
     }
 
     /**
+     * Sets whether the request should be signed.
+     *
+     * @param enabled A boolean indicating whether the request should be signed.
+     */
+    public CreateRequest setRequestSigningEnabled(boolean requestSigningEnabled) {
+      ensureNestedMap(properties, "idpConfig").put("signRequest", requestSigningEnabled);
+      return this;
+    }
+
+    /**
      * Adds a x509 certificate to the new provider.
      *
      * @param x509Certificate A non-null, non-empty x509 certificate string.
@@ -177,7 +195,23 @@ public final class SamlProviderConfig extends ProviderConfig {
       return this;
     }
 
-    // TODO(micahstairs): Add 'addAllX509Certificates' method.
+    /**
+     * Adds a collection of x509 certificates to the new provider.
+     *
+     * @param x509Certificates A non-null, non-empty collection of x509 certificate strings.
+     * @throws IllegalArgumentException If the collection is null or empty, or if any x509
+     *     certificates are null or empty.
+     */
+    public CreateRequest addAllX509Certificates(Collection<String> x509Certificates) {
+      checkArgument(x509Certificates != null,
+          "The collection of x509 certificates must not be null.");
+      checkArgument(!x509Certificates.isEmpty(),
+          "The collection of x509 certificates must not be empty.");
+      for (String certificate : x509Certificates) {
+        addX509Certificate(certificate);
+      }
+      return this;
+    }
 
     /**
      * Sets the RP entity ID for the new provider.
@@ -204,8 +238,6 @@ public final class SamlProviderConfig extends ProviderConfig {
       ensureNestedMap(properties, "spConfig").put("callbackUri", callbackUrl);
       return this;
     }
-
-    // TODO(micahstairs): Add 'setRequestSigningEnabled' method.
 
     CreateRequest getThis() {
       return this;
@@ -265,6 +297,16 @@ public final class SamlProviderConfig extends ProviderConfig {
     }
 
     /**
+     * Sets whether the request should be signed.
+     *
+     * @param enabled A boolean indicating whether the request should be signed.
+     */
+    public UpdateRequest setRequestSigningEnabled(boolean requestSigningEnabled) {
+      ensureNestedMap(properties, "idpConfig").put("signRequest", requestSigningEnabled);
+      return this;
+    }
+
+    /**
      * Adds a x509 certificate to the existing provider.
      *
      * @param x509Certificate A non-null, non-empty x509 certificate string.
@@ -279,7 +321,23 @@ public final class SamlProviderConfig extends ProviderConfig {
       return this;
     }
 
-    // TODO(micahstairs): Add 'addAllX509Certificates' method.
+    /**
+     * Adds a collection of x509 certificates to the existing provider.
+     *
+     * @param x509Certificates A non-null, non-empty collection of x509 certificate strings.
+     * @throws IllegalArgumentException If the collection is null or empty, or if any x509
+     *     certificates are null or empty.
+     */
+    public UpdateRequest addAllX509Certificates(Collection<String> x509Certificates) {
+      checkArgument(x509Certificates != null,
+          "The collection of x509 certificates must not be null.");
+      checkArgument(!x509Certificates.isEmpty(),
+          "The collection of x509 certificates must not be empty.");
+      for (String certificate : x509Certificates) {
+        addX509Certificate(certificate);
+      }
+      return this;
+    }
 
     /**
      * Sets the RP entity ID for the existing provider.
@@ -306,8 +364,6 @@ public final class SamlProviderConfig extends ProviderConfig {
       ensureNestedMap(properties, "spConfig").put("callbackUri", callbackUrl);
       return this;
     }
-
-    // TODO(micahstairs): Add 'setRequestSigningEnabled' method.
 
     UpdateRequest getThis() {
       return this;

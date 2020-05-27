@@ -6,6 +6,7 @@
     "idpConfig": {
       "idpEntityId": "IDP_ENTITY_ID",
       "ssoUrl": "https://example.com/login",
+      "signRequest": false,
       "idpCertificates": [
         { "x509Certificate": "certificate1" },
         { "x509Certificate": "certificate2" }
@@ -22,6 +23,7 @@
     "idpConfig": {
       "idpEntityId": "IDP_ENTITY_ID",
       "ssoUrl": "https://example.com/login",
+      "signRequest": false,
       "idpCertificates": [
         { "x509Certificate": "certificate1" },
         { "x509Certificate": "certificate2" }

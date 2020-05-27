@@ -346,6 +346,7 @@ public class TenantAwareFirebaseAuthIT {
             .setEnabled(true)
             .setIdpEntityId("IDP_ENTITY_ID")
             .setSsoUrl("https://example.com/login")
+            .setRequestSigningEnabled(false)
             .addX509Certificate("certificate1")
             .addX509Certificate("certificate2")
             .setRpEntityId("RP_ENTITY_ID")
@@ -355,6 +356,7 @@ public class TenantAwareFirebaseAuthIT {
     assertTrue(config.isEnabled());
     assertEquals("IDP_ENTITY_ID", config.getIdpEntityId());
     assertEquals("https://example.com/login", config.getSsoUrl());
+    assertFalse(config.isRequestSigningEnabled());
     assertEquals(ImmutableList.of("certificate1", "certificate2"), config.getX509Certificates());
     assertEquals("RP_ENTITY_ID", config.getRpEntityId());
     assertEquals("https://projectId.firebaseapp.com/__/auth/handler", config.getCallbackUrl());

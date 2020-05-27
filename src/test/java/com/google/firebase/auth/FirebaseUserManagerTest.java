@@ -1798,8 +1798,6 @@ public class FirebaseUserManagerTest {
   public void testCreateSamlProvider() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("saml.json"));
-    // TODO(micahstairs): Add 'signRequest' to the create request once that field is added to
-    // SamlProviderConfig.
     SamlProviderConfig.CreateRequest createRequest =
         new SamlProviderConfig.CreateRequest()
           .setProviderId("saml.provider-id")
@@ -1807,6 +1805,7 @@ public class FirebaseUserManagerTest {
           .setEnabled(true)
           .setIdpEntityId("IDP_ENTITY_ID")
           .setSsoUrl("https://example.com/login")
+          .setRequestSigningEnabled(false)
           .addX509Certificate("certificate1")
           .addX509Certificate("certificate2")
           .setRpEntityId("RP_ENTITY_ID")
@@ -1823,16 +1822,19 @@ public class FirebaseUserManagerTest {
     GenericJson parsed = parseRequestContent(interceptor);
     assertEquals("DISPLAY_NAME", parsed.get("displayName"));
     assertTrue((boolean) parsed.get("enabled"));
+
     Map<String, Object> idpConfig = (Map<String, Object>) parsed.get("idpConfig");
     assertNotNull(idpConfig);
-    assertEquals(3, idpConfig.size());
+    assertEquals(4, idpConfig.size());
     assertEquals("IDP_ENTITY_ID", idpConfig.get("idpEntityId"));
     assertEquals("https://example.com/login", idpConfig.get("ssoUrl"));
+    assertFalse((boolean) idpConfig.get("signRequest"));
     List<Object> idpCertificates = (List<Object>) idpConfig.get("idpCertificates");
     assertNotNull(idpCertificates);
     assertEquals(2, idpCertificates.size());
     assertEquals(ImmutableMap.of("x509Certificate", "certificate1"), idpCertificates.get(0));
     assertEquals(ImmutableMap.of("x509Certificate", "certificate2"), idpCertificates.get(1));
+
     Map<String, Object> spConfig = (Map<String, Object>) parsed.get("spConfig");
     assertNotNull(spConfig);
     assertEquals(2, spConfig.size());
@@ -1907,6 +1909,7 @@ public class FirebaseUserManagerTest {
           .setEnabled(true)
           .setIdpEntityId("IDP_ENTITY_ID")
           .setSsoUrl("https://example.com/login")
+          .setRequestSigningEnabled(false)
           .addX509Certificate("certificate1")
           .addX509Certificate("certificate2")
           .setRpEntityId("RP_ENTITY_ID")
@@ -1931,6 +1934,7 @@ public class FirebaseUserManagerTest {
           .setEnabled(true)
           .setIdpEntityId("IDP_ENTITY_ID")
           .setSsoUrl("https://example.com/login")
+          .setRequestSigningEnabled(false)
           .addX509Certificate("certificate1")
           .addX509Certificate("certificate2")
           .setRpEntityId("RP_ENTITY_ID")
@@ -1938,7 +1942,7 @@ public class FirebaseUserManagerTest {
     TenantAwareFirebaseAuth tenantAwareAuth =
         FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
 
-    SamlProviderConfig config = tenantAwareAuth.createSamlProviderConfig(createRequest);
+    tenantAwareAuth.createSamlProviderConfig(createRequest);
 
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "POST", TENANTS_BASE_URL + "/TENANT_ID/inboundSamlConfigs");
@@ -1948,14 +1952,13 @@ public class FirebaseUserManagerTest {
   public void testUpdateSamlProvider() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("saml.json"));
-    // TODO(micahstairs): Add 'signRequest' to the create request once that field is added to
-    // SamlProviderConfig.
     SamlProviderConfig.UpdateRequest updateRequest =
         new SamlProviderConfig.UpdateRequest("saml.provider-id")
           .setDisplayName("DISPLAY_NAME")
           .setEnabled(true)
           .setIdpEntityId("IDP_ENTITY_ID")
           .setSsoUrl("https://example.com/login")
+          .setRequestSigningEnabled(false)
           .addX509Certificate("certificate1")
           .addX509Certificate("certificate2")
           .setRpEntityId("RP_ENTITY_ID")
@@ -1968,8 +1971,8 @@ public class FirebaseUserManagerTest {
     checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
     GenericUrl url = interceptor.getResponse().getRequest().getUrl();
     assertEquals(
-        "displayName,enabled,idpConfig.idpCertificates,idpConfig.idpEntityId,idpConfig.ssoUrl,"
-          + "spConfig.callbackUri,spConfig.spEntityId",
+        "displayName,enabled,idpConfig.idpCertificates,idpConfig.idpEntityId,idpConfig.signRequest,"
+          + "idpConfig.ssoUrl,spConfig.callbackUri,spConfig.spEntityId",
         url.getFirst("updateMask"));
 
     GenericJson parsed = parseRequestContent(interceptor);
@@ -1978,9 +1981,10 @@ public class FirebaseUserManagerTest {
 
     Map<String, Object> idpConfig = (Map<String, Object>) parsed.get("idpConfig");
     assertNotNull(idpConfig);
-    assertEquals(3, idpConfig.size());
+    assertEquals(4, idpConfig.size());
     assertEquals("IDP_ENTITY_ID", idpConfig.get("idpEntityId"));
     assertEquals("https://example.com/login", idpConfig.get("ssoUrl"));
+    assertFalse((boolean) idpConfig.get("signRequest"));
     List<Object> idpCertificates = (List<Object>) idpConfig.get("idpCertificates");
     assertNotNull(idpCertificates);
     assertEquals(2, idpCertificates.size());
@@ -2408,6 +2412,7 @@ public class FirebaseUserManagerTest {
     assertTrue(config.isEnabled());
     assertEquals("IDP_ENTITY_ID", config.getIdpEntityId());
     assertEquals("https://example.com/login", config.getSsoUrl());
+    assertFalse(config.isRequestSigningEnabled());
     assertEquals(ImmutableList.of("certificate1", "certificate2"), config.getX509Certificates());
     assertEquals("RP_ENTITY_ID", config.getRpEntityId());
     assertEquals("https://projectId.firebaseapp.com/__/auth/handler", config.getCallbackUrl());
