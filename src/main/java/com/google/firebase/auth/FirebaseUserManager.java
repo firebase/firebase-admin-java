@@ -54,6 +54,7 @@ import com.google.firebase.internal.SdkUtils;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * FirebaseUserManager provides methods for interacting with the Google Identity Toolkit via its
@@ -389,11 +390,11 @@ class FirebaseUserManager {
     sendRequest("DELETE", url, null, GenericJson.class);
   }
 
-  private static ImmutableSortedSet<String> generateMask(Map<String, Object> properties) {
+  private static Set<String> generateMask(Map<String, Object> properties) {
     ImmutableSortedSet.Builder<String> maskBuilder = ImmutableSortedSet.naturalOrder();
     for (Map.Entry<String, Object> entry : properties.entrySet()) {
       if (entry.getValue() instanceof Map) {
-        ImmutableSortedSet<String> childMask = generateMask((Map<String, Object>) entry.getValue());
+        Set<String> childMask = generateMask((Map<String, Object>) entry.getValue());
         for (String childProperty : childMask) {
           maskBuilder.add(entry.getKey() + "." + childProperty);
         }
