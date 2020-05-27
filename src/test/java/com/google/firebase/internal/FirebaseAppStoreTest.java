@@ -16,8 +16,6 @@
 
 package com.google.firebase.internal;
 
-import static org.junit.Assert.assertFalse;
-
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -70,14 +68,5 @@ public class FirebaseAppStoreTest {
             .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
             .build();
     FirebaseApp.initializeApp(options);
-  }
-
-  @Test
-  public void persistenceDisabled() {
-    String name = "myApp";
-    FirebaseApp.initializeApp(ALL_VALUES_OPTIONS, name);
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
-    FirebaseAppStore appStore = FirebaseAppStore.getInstance();
-    assertFalse(appStore.getAllPersistedAppNames().contains(name));
   }
 }
