@@ -1343,7 +1343,7 @@ public abstract class AbstractFirebaseAuth {
    * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
    *     configs.
    * @return A {@link ListProviderConfigsPage} instance.
-   * @throws IllegalArgumentException If the specified page token is empty
+   * @throws IllegalArgumentException If the specified page token is empty.
    * @throws FirebaseAuthException If an error occurs while retrieving provider config data.
    */
   public ListProviderConfigsPage<SamlProviderConfig> listSamlProviderConfigs(
