@@ -17,6 +17,7 @@
 package com.google.firebase.auth.internal;
 
 import com.google.api.client.util.Key;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.SamlProviderConfig;
 import java.util.List;
@@ -34,8 +35,6 @@ public final class ListSamlProviderConfigsResponse
   @Key("nextPageToken")
   private String pageToken;
 
-  public ListSamlProviderConfigsResponse() { }
-
   @Override
   public List<SamlProviderConfig> getProviderConfigs() {
     return providerConfigs == null ? ImmutableList.<SamlProviderConfig>of() : providerConfigs;
@@ -48,6 +47,6 @@ public final class ListSamlProviderConfigsResponse
 
   @Override
   public String getPageToken() {
-    return pageToken == null ? "" : pageToken;
+    return Strings.nullToEmpty(pageToken);
   }
 }

@@ -1348,8 +1348,9 @@ public abstract class AbstractFirebaseAuth {
    */
   public ListProviderConfigsPage<SamlProviderConfig> listSamlProviderConfigs(
         @Nullable String pageToken) throws FirebaseAuthException {
-    int maxResults = FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS;
-    return listSamlProviderConfigsOp(pageToken, maxResults).call();
+    return listSamlProviderConfigs(
+        pageToken,
+        FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS);
   }
 
   /**

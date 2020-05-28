@@ -17,6 +17,7 @@
 package com.google.firebase.auth.internal;
 
 import com.google.api.client.util.Key;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.OidcProviderConfig;
 import java.util.List;
@@ -34,8 +35,6 @@ public final class ListOidcProviderConfigsResponse
   @Key("nextPageToken")
   private String pageToken;
 
-  public ListOidcProviderConfigsResponse() { }
-
   @Override
   public List<OidcProviderConfig> getProviderConfigs() {
     return providerConfigs == null ? ImmutableList.<OidcProviderConfig>of() : providerConfigs;
@@ -48,6 +47,6 @@ public final class ListOidcProviderConfigsResponse
 
   @Override
   public String getPageToken() {
-    return pageToken == null ? "" : pageToken;
+    return Strings.nullToEmpty(pageToken);
   }
 }
