@@ -2371,6 +2371,76 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testListSamlProviderConfigs() throws Exception {
+    final TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("listSaml.json"));
+    ListProviderConfigsPage<SamlProviderConfig> page =
+        FirebaseAuth.getInstance().listSamlProviderConfigsAsync(null, 99).get();
+
+    ImmutableList<SamlProviderConfig> providerConfigs = ImmutableList.copyOf(page.getValues());
+    assertEquals(2, providerConfigs.size());
+    checkSamlProviderConfig(providerConfigs.get(0), "saml.provider-id1");
+    checkSamlProviderConfig(providerConfigs.get(1), "saml.provider-id2");
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/inboundSamlConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(99, url.getFirst("pageSize"));
+    assertNull(url.getFirst("nextPageToken"));
+  }
+
+  @Test
+  public void testListSamlProviderConfigsWithPageToken() throws Exception {
+    final TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("listSaml.json"));
+    ListProviderConfigsPage<SamlProviderConfig> page =
+        FirebaseAuth.getInstance().listSamlProviderConfigsAsync("token", 99).get();
+
+    ImmutableList<SamlProviderConfig> providerConfigs = ImmutableList.copyOf(page.getValues());
+    assertEquals(2, providerConfigs.size());
+    checkSamlProviderConfig(providerConfigs.get(0), "saml.provider-id1");
+    checkSamlProviderConfig(providerConfigs.get(1), "saml.provider-id2");
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/inboundSamlConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(99, url.getFirst("pageSize"));
+    assertEquals("token", url.getFirst("nextPageToken"));
+  }
+
+  @Test
+  public void testListZeroSamlProviderConfigs() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    ListProviderConfigsPage<SamlProviderConfig> page =
+        FirebaseAuth.getInstance().listSamlProviderConfigsAsync(null).get();
+    assertTrue(Iterables.isEmpty(page.getValues()));
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+  }
+
+  @Test
+  public void testTenantAwareListSamlProviderConfigs() throws Exception {
+    final TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        TestUtils.loadResource("listSaml.json"));
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+    ListProviderConfigsPage<SamlProviderConfig> page =
+        tenantAwareAuth.listSamlProviderConfigsAsync(null, 99).get();
+
+    ImmutableList<SamlProviderConfig> providerConfigs = ImmutableList.copyOf(page.getValues());
+    assertEquals(2, providerConfigs.size());
+    checkSamlProviderConfig(providerConfigs.get(0), "saml.provider-id1");
+    checkSamlProviderConfig(providerConfigs.get(1), "saml.provider-id2");
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/TENANT_ID/inboundSamlConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(99, url.getFirst("pageSize"));
+    assertNull(url.getFirst("nextPageToken"));
+  }
+
+  @Test
   public void testDeleteSamlProviderConfig() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
 

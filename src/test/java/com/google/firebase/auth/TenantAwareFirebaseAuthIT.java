@@ -386,6 +386,44 @@ public class TenantAwareFirebaseAuthIT {
     ProviderConfigTestUtils.assertSamlProviderConfigDoesNotExist(tenantAwareAuth, providerId);
   }
 
+  @Test
+  public void testListSamlProviderConfigs() throws Exception {
+    final List<String> providerIds = new ArrayList<>();
+
+    // Create provider configs
+    for (int i = 0; i < 3; i++) {
+      String providerId = "saml.provider-id" + i;
+      providerIds.add(providerId);
+      temporaryProviderConfig.createSamlProviderConfig(
+          new SamlProviderConfig.CreateRequest()
+            .setProviderId(providerId)
+            .setIdpEntityId("IDP_ENTITY_ID")
+            .setSsoUrl("https://example.com/login")
+            .addX509Certificate("certificate")
+            .setRpEntityId("RP_ENTITY_ID")
+            .setCallbackUrl("https://projectId.firebaseapp.com/__/auth/handler"));
+    }
+
+    // List provider configs
+    // NOTE: We do not need to test all of the different ways we can iterate over the provider
+    // configs, since this testing is already performed in FirebaseAuthIT with the tenant-agnostic
+    // tests.
+    final AtomicInteger collected = new AtomicInteger(0);
+    ListProviderConfigsPage<SamlProviderConfig> page =
+        tenantAwareAuth.listSamlProviderConfigsAsync(null).get();
+    for (SamlProviderConfig config : page.iterateAll()) {
+      if (providerIds.contains(config.getProviderId())) {
+        collected.incrementAndGet();
+        assertEquals("IDP_ENTITY_ID", config.getIdpEntityId());
+        assertEquals("https://example.com/login", config.getSsoUrl());
+        assertEquals(ImmutableList.of("certificate"), config.getX509Certificates());
+        assertEquals("RP_ENTITY_ID", config.getRpEntityId());
+        assertEquals("https://projectId.firebaseapp.com/__/auth/handler", config.getCallbackUrl());
+      }
+    }
+    assertEquals(providerIds.size(), collected.get());
+  }
+
   private String randomPhoneNumber() {
     Random random = new Random();
     StringBuilder builder = new StringBuilder("+1");
