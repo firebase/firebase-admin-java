@@ -229,6 +229,8 @@
             <property name="allowedAnnotations" value="Override, Test"/>
             <property name="allowThrowsTagsForSubclasses" value="true"/>
             <property name="allowMissingJavadoc" value="true"/>
+            <!-- Setting this property helps avoid some strange errors. For more information, see -->
+            <!-- https://stackoverflow.com/questions/27938039/unable-to-get-class-information-for-checkstyle. -->
             <property name="suppressLoadErrors" value="true"/>
         </module>
         <module name="MethodName">
