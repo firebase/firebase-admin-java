@@ -20,7 +20,7 @@ package com.google.firebase.auth.hash;
  * Represents the HMAC MD5 password hashing algorithm. Can be used as an instance of
  * {@link com.google.firebase.auth.UserImportHash} when importing users.
  */
-public class HmacMd5 extends Hmac {
+public final class HmacMd5 extends Hmac {
 
   private HmacMd5(Builder builder) {
     super("HMAC_MD5", builder);
