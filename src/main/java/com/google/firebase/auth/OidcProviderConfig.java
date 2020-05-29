@@ -138,7 +138,7 @@ public final class OidcProviderConfig extends ProviderConfig {
      * {@link AbstractFirebaseAuth#updateOidcProviderConfig(CreateRequest)} to update the provider
      * information persistently.
      *
-     * @param tenantId A non-null, non-empty provider ID string.
+     * @param providerId A non-null, non-empty provider ID string.
      * @throws IllegalArgumentException If the provider ID is null or empty, or is not prefixed with
      *     "oidc.".
      */
