@@ -42,15 +42,15 @@
     <module name="FileTabCharacter">
         <property name="eachLine" value="true"/>
     </module>
-    
+
     <module name="SuppressionCommentFilter">
       <property name="offCommentFormat" value="CSOFF\: ([\w\|]+)"/>
       <property name="onCommentFormat" value="CSON\: ([\w\|]+)"/>
       <property name="checkFormat" value="$1"/>
     </module>
 
-    <module name="TreeWalker">   
-        <module name="FileContentsHolder"/>     
+    <module name="TreeWalker">
+        <module name="FileContentsHolder"/>
         <module name="OuterTypeFilename"/>
         <module name="IllegalTokenText">
             <property name="tokens" value="STRING_LITERAL, CHAR_LITERAL"/>
@@ -229,6 +229,7 @@
             <property name="allowedAnnotations" value="Override, Test"/>
             <property name="allowThrowsTagsForSubclasses" value="true"/>
             <property name="allowMissingJavadoc" value="true"/>
+            <property name="suppressLoadErrors" value="true"/>
         </module>
         <module name="MethodName">
             <property name="format" value="^[a-z][a-z0-9][a-zA-Z0-9_]*$"/>
