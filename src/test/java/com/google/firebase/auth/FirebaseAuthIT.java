@@ -626,7 +626,7 @@ public class FirebaseAuthIT {
         auth.listOidcProviderConfigsAsync(null).get();
     while (page != null) {
       for (OidcProviderConfig providerConfig : page.getValues()) {
-        if (checkProviderConfig(providerIds, providerConfig)) {
+        if (checkOidcProviderConfig(providerIds, providerConfig)) {
           collected.incrementAndGet();
         }
       }
@@ -638,7 +638,7 @@ public class FirebaseAuthIT {
     collected.set(0);
     page = auth.listOidcProviderConfigsAsync(null).get();
     for (OidcProviderConfig providerConfig : page.iterateAll()) {
-      if (checkProviderConfig(providerIds, providerConfig)) {
+      if (checkOidcProviderConfig(providerIds, providerConfig)) {
         collected.incrementAndGet();
       }
     }
@@ -662,7 +662,7 @@ public class FirebaseAuthIT {
           @Override
           public void onSuccess(ListProviderConfigsPage<OidcProviderConfig> result) {
             for (OidcProviderConfig providerConfig : result.iterateAll()) {
-              if (checkProviderConfig(providerIds, providerConfig)) {
+              if (checkOidcProviderConfig(providerIds, providerConfig)) {
                 collected.incrementAndGet();
               }
             }
@@ -723,6 +723,78 @@ public class FirebaseAuthIT {
     // Delete provider config
     temporaryProviderConfig.deleteSamlProviderConfig(providerId);
     ProviderConfigTestUtils.assertSamlProviderConfigDoesNotExist(auth, providerId);
+  }
+
+  @Test
+  public void testListSamlProviderConfigs() throws Exception {
+    final List<String> providerIds = new ArrayList<>();
+
+    // Create provider configs
+    for (int i = 0; i < 3; i++) {
+      String providerId = "saml.provider-id" + i;
+      providerIds.add(providerId);
+      temporaryProviderConfig.createSamlProviderConfig(
+          new SamlProviderConfig.CreateRequest()
+            .setProviderId(providerId)
+            .setIdpEntityId("IDP_ENTITY_ID")
+            .setSsoUrl("https://example.com/login")
+            .addX509Certificate("certificate")
+            .setRpEntityId("RP_ENTITY_ID")
+            .setCallbackUrl("https://projectId.firebaseapp.com/__/auth/handler"));
+    }
+
+    // Test list by batches
+    final AtomicInteger collected = new AtomicInteger(0);
+    ListProviderConfigsPage<SamlProviderConfig> page =
+        auth.listSamlProviderConfigsAsync(null).get();
+    while (page != null) {
+      for (SamlProviderConfig providerConfig : page.getValues()) {
+        if (checkSamlProviderConfig(providerIds, providerConfig)) {
+          collected.incrementAndGet();
+        }
+      }
+      page = page.getNextPage();
+    }
+    assertEquals(providerIds.size(), collected.get());
+
+    // Test iterate all
+    collected.set(0);
+    page = auth.listSamlProviderConfigsAsync(null).get();
+    for (SamlProviderConfig providerConfig : page.iterateAll()) {
+      if (checkSamlProviderConfig(providerIds, providerConfig)) {
+        collected.incrementAndGet();
+      }
+    }
+    assertEquals(providerIds.size(), collected.get());
+
+    // Test iterate async
+    collected.set(0);
+    final Semaphore semaphore = new Semaphore(0);
+    final AtomicReference<Throwable> error = new AtomicReference<>();
+    ApiFuture<ListProviderConfigsPage<SamlProviderConfig>> pageFuture =
+        auth.listSamlProviderConfigsAsync(null);
+    ApiFutures.addCallback(
+        pageFuture,
+        new ApiFutureCallback<ListProviderConfigsPage<SamlProviderConfig>>() {
+          @Override
+          public void onFailure(Throwable t) {
+            error.set(t);
+            semaphore.release();
+          }
+
+          @Override
+          public void onSuccess(ListProviderConfigsPage<SamlProviderConfig> result) {
+            for (SamlProviderConfig providerConfig : result.iterateAll()) {
+              if (checkSamlProviderConfig(providerIds, providerConfig)) {
+                collected.incrementAndGet();
+              }
+            }
+            semaphore.release();
+          }
+        }, MoreExecutors.directExecutor());
+    semaphore.acquire();
+    assertEquals(providerIds.size(), collected.get());
+    assertNull(error.get());
   }
 
   private Map<String, String> parseLinkParameters(String link) throws Exception {
@@ -855,10 +927,22 @@ public class FirebaseAuthIT {
     }
   }
 
-  private boolean checkProviderConfig(List<String> providerIds, OidcProviderConfig config) {
+  private boolean checkOidcProviderConfig(List<String> providerIds, OidcProviderConfig config) {
     if (providerIds.contains(config.getProviderId())) {
       assertEquals("CLIENT_ID", config.getClientId());
       assertEquals("https://oidc.com/issuer", config.getIssuer());
+      return true;
+    }
+    return false;
+  }
+
+  private boolean checkSamlProviderConfig(List<String> providerIds, SamlProviderConfig config) {
+    if (providerIds.contains(config.getProviderId())) {
+      assertEquals("IDP_ENTITY_ID", config.getIdpEntityId());
+      assertEquals("https://example.com/login", config.getSsoUrl());
+      assertEquals(ImmutableList.of("certificate"), config.getX509Certificates());
+      assertEquals("RP_ENTITY_ID", config.getRpEntityId());
+      assertEquals("https://projectId.firebaseapp.com/__/auth/handler", config.getCallbackUrl());
       return true;
     }
     return false;

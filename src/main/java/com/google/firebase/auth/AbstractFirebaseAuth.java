@@ -31,6 +31,7 @@ import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
 import com.google.firebase.auth.FirebaseUserManager.UserImportRequest;
 import com.google.firebase.auth.ListProviderConfigsPage;
 import com.google.firebase.auth.ListProviderConfigsPage.DefaultOidcProviderConfigSource;
+import com.google.firebase.auth.ListProviderConfigsPage.DefaultSamlProviderConfigSource;
 import com.google.firebase.auth.ListUsersPage;
 import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
 import com.google.firebase.auth.UserRecord;
@@ -1107,8 +1108,8 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Similar to {@link #listlistOidcProviderConfigs(String)} but performs the operation
-   * asynchronously. Page size will be limited to 100 provider configs.
+   * Similar to {@link #listOidcProviderConfigs(String)} but performs the operation asynchronously.
+   * Page size will be limited to 100 provider configs.
    *
    * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
    *     configs.
@@ -1249,7 +1250,7 @@ public abstract class AbstractFirebaseAuth {
 
   /**
    * Updates an existing SAML Auth provider config with the attributes contained in the specified
-   * {@link OidcProviderConfig.UpdateRequest}.
+   * {@link SamlProviderConfig.UpdateRequest}.
    *
    * @param request A non-null {@link SamlProviderConfig.UpdateRequest} instance.
    * @return A {@link SamlProviderConfig} instance corresponding to the updated provider config.
@@ -1296,7 +1297,7 @@ public abstract class AbstractFirebaseAuth {
    * Gets the SAML provider Auth config corresponding to the specified provider ID.
    *
    * @param providerId A provider ID string.
-   * @return An {@link OidcProviderConfig} instance.
+   * @return An {@link SamlProviderConfig} instance.
    * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
    *     with 'saml'.
    * @throws FirebaseAuthException If an error occurs while retrieving the provider config.
@@ -1332,6 +1333,94 @@ public abstract class AbstractFirebaseAuth {
       protected SamlProviderConfig execute() throws FirebaseAuthException {
         return userManager.getSamlProviderConfig(providerId);
       }
+    };
+  }
+
+  /**
+   * Gets a page of SAML Auth provider configs starting from the specified {@code pageToken}. Page
+   * size will be limited to 100 provider configs.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @return A {@link ListProviderConfigsPage} instance.
+   * @throws IllegalArgumentException If the specified page token is empty.
+   * @throws FirebaseAuthException If an error occurs while retrieving provider config data.
+   */
+  public ListProviderConfigsPage<SamlProviderConfig> listSamlProviderConfigs(
+        @Nullable String pageToken) throws FirebaseAuthException {
+    return listSamlProviderConfigs(
+        pageToken,
+        FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS);
+  }
+
+  /**
+   * Gets a page of SAML Auth provider configs starting from the specified {@code pageToken}.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @param maxResults Maximum number of provider configs to include in the returned page. This may
+   *     not exceed 100.
+   * @return A {@link ListProviderConfigsPage} instance.
+   * @throws IllegalArgumentException If the specified page token is empty, or max results value is
+   *     invalid.
+   * @throws FirebaseAuthException If an error occurs while retrieving provider config data.
+   */
+  public ListProviderConfigsPage<SamlProviderConfig> listSamlProviderConfigs(
+        @Nullable String pageToken, int maxResults) throws FirebaseAuthException {
+    return listSamlProviderConfigsOp(pageToken, maxResults).call();
+  }
+
+  /**
+   * Similar to {@link #listSamlProviderConfigs(String)} but performs the operation asynchronously.
+   * Page size will be limited to 100 provider configs.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @return An {@code ApiFuture} which will complete successfully with a
+   *     {@link ListProviderConfigsPage} instance. If an error occurs while retrieving provider
+   *     config data, the future throws an exception.
+   * @throws IllegalArgumentException If the specified page token is empty.
+   */
+  public ApiFuture<ListProviderConfigsPage<SamlProviderConfig>> listSamlProviderConfigsAsync(
+      @Nullable String pageToken) {
+    int maxResults = FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS;
+    return listSamlProviderConfigsAsync(pageToken, maxResults);
+  }
+
+  /**
+   * Similar to {@link #listSamlProviderConfigs(String, int)} but performs the operation
+   * asynchronously.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @param maxResults Maximum number of provider configs to include in the returned page. This may
+   *     not exceed 100.
+   * @return An {@code ApiFuture} which will complete successfully with a
+   *     {@link ListProviderConfigsPage} instance. If an error occurs while retrieving provider
+   *     config data, the future throws an exception.
+   * @throws IllegalArgumentException If the specified page token is empty, or max results value is
+   *     invalid.
+   */
+  public ApiFuture<ListProviderConfigsPage<SamlProviderConfig>> listSamlProviderConfigsAsync(
+      @Nullable String pageToken,
+      int maxResults) {
+    return listSamlProviderConfigsOp(pageToken, maxResults).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<ListProviderConfigsPage<SamlProviderConfig>, FirebaseAuthException>
+      listSamlProviderConfigsOp(@Nullable final String pageToken, final int maxResults) {
+    checkNotDestroyed();
+    final FirebaseUserManager userManager = getUserManager();
+    final DefaultSamlProviderConfigSource source = new DefaultSamlProviderConfigSource(userManager);
+    final ListProviderConfigsPage.Factory<SamlProviderConfig> factory =
+        new ListProviderConfigsPage.Factory<SamlProviderConfig>(source, maxResults, pageToken);
+    return
+      new CallableOperation<ListProviderConfigsPage<SamlProviderConfig>, FirebaseAuthException>() {
+        @Override
+        protected ListProviderConfigsPage<SamlProviderConfig> execute()
+            throws FirebaseAuthException {
+          return factory.create();
+        }
     };
   }
 
