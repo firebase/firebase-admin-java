@@ -53,13 +53,6 @@ public final class SamlProviderConfig extends ProviderConfig {
     return (String) idpConfig.get("ssoUrl");
   }
 
-  public boolean isRequestSigningEnabled() {
-    if (!idpConfig.containsKey("signRequest")) {
-      return false;
-    }
-    return (boolean) idpConfig.get("signRequest");
-  }
-
   public List<String> getX509Certificates() {
     List<Map<String, String>> idpCertificates =
         (List<Map<String, String>>) idpConfig.get("idpCertificates");
@@ -167,16 +160,6 @@ public final class SamlProviderConfig extends ProviderConfig {
       checkArgument(!Strings.isNullOrEmpty(ssoUrl), "SSO URL must not be null or empty.");
       assertValidUrl(ssoUrl);
       ensureNestedMap(properties, "idpConfig").put("ssoUrl", ssoUrl);
-      return this;
-    }
-
-    /**
-     * Sets whether the request should be signed.
-     *
-     * @param enabled A boolean indicating whether the request should be signed.
-     */
-    public CreateRequest setRequestSigningEnabled(boolean requestSigningEnabled) {
-      ensureNestedMap(properties, "idpConfig").put("signRequest", requestSigningEnabled);
       return this;
     }
 
@@ -293,16 +276,6 @@ public final class SamlProviderConfig extends ProviderConfig {
       checkArgument(!Strings.isNullOrEmpty(ssoUrl), "SSO URL must not be null or empty.");
       assertValidUrl(ssoUrl);
       ensureNestedMap(properties, "idpConfig").put("ssoUrl", ssoUrl);
-      return this;
-    }
-
-    /**
-     * Sets whether the request should be signed.
-     *
-     * @param enabled A boolean indicating whether the request should be signed.
-     */
-    public UpdateRequest setRequestSigningEnabled(boolean requestSigningEnabled) {
-      ensureNestedMap(properties, "idpConfig").put("signRequest", requestSigningEnabled);
       return this;
     }
 

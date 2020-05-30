@@ -1805,7 +1805,6 @@ public class FirebaseUserManagerTest {
           .setEnabled(true)
           .setIdpEntityId("IDP_ENTITY_ID")
           .setSsoUrl("https://example.com/login")
-          .setRequestSigningEnabled(false)
           .addX509Certificate("certificate1")
           .addX509Certificate("certificate2")
           .setRpEntityId("RP_ENTITY_ID")
@@ -1825,10 +1824,9 @@ public class FirebaseUserManagerTest {
 
     Map<String, Object> idpConfig = (Map<String, Object>) parsed.get("idpConfig");
     assertNotNull(idpConfig);
-    assertEquals(4, idpConfig.size());
+    assertEquals(3, idpConfig.size());
     assertEquals("IDP_ENTITY_ID", idpConfig.get("idpEntityId"));
     assertEquals("https://example.com/login", idpConfig.get("ssoUrl"));
-    assertFalse((boolean) idpConfig.get("signRequest"));
     List<Object> idpCertificates = (List<Object>) idpConfig.get("idpCertificates");
     assertNotNull(idpCertificates);
     assertEquals(2, idpCertificates.size());
@@ -1909,7 +1907,6 @@ public class FirebaseUserManagerTest {
           .setEnabled(true)
           .setIdpEntityId("IDP_ENTITY_ID")
           .setSsoUrl("https://example.com/login")
-          .setRequestSigningEnabled(false)
           .addX509Certificate("certificate1")
           .addX509Certificate("certificate2")
           .setRpEntityId("RP_ENTITY_ID")
@@ -1934,7 +1931,6 @@ public class FirebaseUserManagerTest {
           .setEnabled(true)
           .setIdpEntityId("IDP_ENTITY_ID")
           .setSsoUrl("https://example.com/login")
-          .setRequestSigningEnabled(false)
           .addX509Certificate("certificate1")
           .addX509Certificate("certificate2")
           .setRpEntityId("RP_ENTITY_ID")
@@ -1958,7 +1954,6 @@ public class FirebaseUserManagerTest {
           .setEnabled(true)
           .setIdpEntityId("IDP_ENTITY_ID")
           .setSsoUrl("https://example.com/login")
-          .setRequestSigningEnabled(false)
           .addX509Certificate("certificate1")
           .addX509Certificate("certificate2")
           .setRpEntityId("RP_ENTITY_ID")
@@ -1971,8 +1966,8 @@ public class FirebaseUserManagerTest {
     checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
     GenericUrl url = interceptor.getResponse().getRequest().getUrl();
     assertEquals(
-        "displayName,enabled,idpConfig.idpCertificates,idpConfig.idpEntityId,idpConfig.signRequest,"
-          + "idpConfig.ssoUrl,spConfig.callbackUri,spConfig.spEntityId",
+        "displayName,enabled,idpConfig.idpCertificates,idpConfig.idpEntityId,idpConfig.ssoUrl,"
+          + "spConfig.callbackUri,spConfig.spEntityId",
         url.getFirst("updateMask"));
 
     GenericJson parsed = parseRequestContent(interceptor);
@@ -1981,10 +1976,9 @@ public class FirebaseUserManagerTest {
 
     Map<String, Object> idpConfig = (Map<String, Object>) parsed.get("idpConfig");
     assertNotNull(idpConfig);
-    assertEquals(4, idpConfig.size());
+    assertEquals(3, idpConfig.size());
     assertEquals("IDP_ENTITY_ID", idpConfig.get("idpEntityId"));
     assertEquals("https://example.com/login", idpConfig.get("ssoUrl"));
-    assertFalse((boolean) idpConfig.get("signRequest"));
     List<Object> idpCertificates = (List<Object>) idpConfig.get("idpCertificates");
     assertNotNull(idpCertificates);
     assertEquals(2, idpCertificates.size());
@@ -2412,7 +2406,6 @@ public class FirebaseUserManagerTest {
     assertTrue(config.isEnabled());
     assertEquals("IDP_ENTITY_ID", config.getIdpEntityId());
     assertEquals("https://example.com/login", config.getSsoUrl());
-    assertFalse(config.isRequestSigningEnabled());
     assertEquals(ImmutableList.of("certificate1", "certificate2"), config.getX509Certificates());
     assertEquals("RP_ENTITY_ID", config.getRpEntityId());
     assertEquals("https://projectId.firebaseapp.com/__/auth/handler", config.getCallbackUrl());

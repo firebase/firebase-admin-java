@@ -43,7 +43,6 @@ public class SamlProviderConfigTest {
         + "  'idpConfig': {"
         + "    'idpEntityId': 'IDP_ENTITY_ID',"
         + "    'ssoUrl':      'https://example.com/login',"
-        + "    'signRequest':  false,"
         + "    'idpCertificates': ["
         + "      { 'x509Certificate': 'certificate1' },"
         + "      { 'x509Certificate': 'certificate2' }"
@@ -64,7 +63,6 @@ public class SamlProviderConfigTest {
     assertTrue(config.isEnabled());
     assertEquals("IDP_ENTITY_ID", config.getIdpEntityId());
     assertEquals("https://example.com/login", config.getSsoUrl());
-    assertFalse(config.isRequestSigningEnabled());
     assertEquals(ImmutableList.of("certificate1", "certificate2"), config.getX509Certificates());
     assertEquals("RP_ENTITY_ID", config.getRpEntityId());
     assertEquals("https://projectId.firebaseapp.com/__/auth/handler", config.getCallbackUrl());
@@ -79,7 +77,6 @@ public class SamlProviderConfigTest {
           .setEnabled(false)
           .setIdpEntityId("IDP_ENTITY_ID")
           .setSsoUrl("https://example.com/login")
-          .setRequestSigningEnabled(true)
           .addX509Certificate("certificate1")
           .addX509Certificate("certificate2")
           .setRpEntityId("RP_ENTITY_ID")
@@ -93,10 +90,9 @@ public class SamlProviderConfigTest {
 
     Map<String, Object> idpConfig = (Map<String, Object>) properties.get("idpConfig");
     assertNotNull(idpConfig);
-    assertEquals(4, idpConfig.size());
+    assertEquals(3, idpConfig.size());
     assertEquals("IDP_ENTITY_ID", idpConfig.get("idpEntityId"));
     assertEquals("https://example.com/login", idpConfig.get("ssoUrl"));
-    assertTrue((boolean) idpConfig.get("signRequest"));
     List<Object> idpCertificates = (List<Object>) idpConfig.get("idpCertificates");
     assertNotNull(idpCertificates);
     assertEquals(2, idpCertificates.size());
@@ -212,7 +208,6 @@ public class SamlProviderConfigTest {
       .setEnabled(false)
       .setIdpEntityId("IDP_ENTITY_ID")
       .setSsoUrl("https://example.com/login")
-      .setRequestSigningEnabled(true)
       .addX509Certificate("certificate1")
       .addX509Certificate("certificate2")
       .setRpEntityId("RP_ENTITY_ID")
@@ -225,10 +220,9 @@ public class SamlProviderConfigTest {
 
     Map<String, Object> idpConfig = (Map<String, Object>) properties.get("idpConfig");
     assertNotNull(idpConfig);
-    assertEquals(4, idpConfig.size());
+    assertEquals(3, idpConfig.size());
     assertEquals("IDP_ENTITY_ID", idpConfig.get("idpEntityId"));
     assertEquals("https://example.com/login", idpConfig.get("ssoUrl"));
-    assertTrue((boolean) idpConfig.get("signRequest"));
     List<Object> idpCertificates = (List<Object>) idpConfig.get("idpCertificates");
     assertNotNull(idpCertificates);
     assertEquals(2, idpCertificates.size());
