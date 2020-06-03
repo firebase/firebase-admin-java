@@ -68,7 +68,7 @@ public final class TenantManager {
   }
 
   public synchronized TenantAwareFirebaseAuth getAuthForTenant(@NonNull String tenantId) {
-    checkArgument(!Strings.isNullOrEmpty(tenantId), "tenantId must not be null or empty");
+    checkArgument(!Strings.isNullOrEmpty(tenantId), "Tenant ID must not be null or empty.");
     if (!tenantAwareAuths.containsKey(tenantId)) {
       tenantAwareAuths.put(tenantId, new TenantAwareFirebaseAuth(firebaseApp, tenantId));
     }
@@ -90,7 +90,7 @@ public final class TenantManager {
 
   private CallableOperation<Tenant, FirebaseAuthException> getTenantOp(final String tenantId) {
     checkNotDestroyed();
-    checkArgument(!Strings.isNullOrEmpty(tenantId), "tenantId must not be null or empty");
+    checkArgument(!Strings.isNullOrEmpty(tenantId), "Tenant ID must not be null or empty.");
     return new CallableOperation<Tenant, FirebaseAuthException>() {
       @Override
       protected Tenant execute() throws FirebaseAuthException {
@@ -196,7 +196,7 @@ public final class TenantManager {
   private CallableOperation<Tenant, FirebaseAuthException> createTenantOp(
       final CreateRequest request) {
     checkNotDestroyed();
-    checkNotNull(request, "create request must not be null");
+    checkNotNull(request, "Create request must not be null.");
     return new CallableOperation<Tenant, FirebaseAuthException>() {
       @Override
       protected Tenant execute() throws FirebaseAuthException {
@@ -234,7 +234,9 @@ public final class TenantManager {
   private CallableOperation<Tenant, FirebaseAuthException> updateTenantOp(
       final UpdateRequest request) {
     checkNotDestroyed();
-    checkNotNull(request, "update request must not be null");
+    checkNotNull(request, "Update request must not be null.");
+    checkArgument(!request.getProperties().isEmpty(),
+        "Tenant update must have at least one property set.");
     return new CallableOperation<Tenant, FirebaseAuthException>() {
       @Override
       protected Tenant execute() throws FirebaseAuthException {
@@ -269,7 +271,7 @@ public final class TenantManager {
 
   private CallableOperation<Void, FirebaseAuthException> deleteTenantOp(final String tenantId) {
     checkNotDestroyed();
-    checkArgument(!Strings.isNullOrEmpty(tenantId), "tenantId must not be null or empty");
+    checkArgument(!Strings.isNullOrEmpty(tenantId), "Tenant ID must not be null or empty.");
     return new CallableOperation<Void, FirebaseAuthException>() {
       @Override
       protected Void execute() throws FirebaseAuthException {
