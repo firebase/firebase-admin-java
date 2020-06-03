@@ -2023,8 +2023,6 @@ public class FirebaseUserManagerTest {
   public void testCreateSamlProvider() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("saml.json"));
-    // TODO(micahstairs): Add 'signRequest' to the create request once that field is added to
-    // SamlProviderConfig.
     SamlProviderConfig.CreateRequest createRequest =
         new SamlProviderConfig.CreateRequest()
           .setProviderId("saml.provider-id")
@@ -2048,6 +2046,7 @@ public class FirebaseUserManagerTest {
     GenericJson parsed = parseRequestContent(interceptor);
     assertEquals("DISPLAY_NAME", parsed.get("displayName"));
     assertTrue((boolean) parsed.get("enabled"));
+
     Map<String, Object> idpConfig = (Map<String, Object>) parsed.get("idpConfig");
     assertNotNull(idpConfig);
     assertEquals(3, idpConfig.size());
@@ -2058,6 +2057,7 @@ public class FirebaseUserManagerTest {
     assertEquals(2, idpCertificates.size());
     assertEquals(ImmutableMap.of("x509Certificate", "certificate1"), idpCertificates.get(0));
     assertEquals(ImmutableMap.of("x509Certificate", "certificate2"), idpCertificates.get(1));
+
     Map<String, Object> spConfig = (Map<String, Object>) parsed.get("spConfig");
     assertNotNull(spConfig);
     assertEquals(2, spConfig.size());
@@ -2163,7 +2163,7 @@ public class FirebaseUserManagerTest {
     TenantAwareFirebaseAuth tenantAwareAuth =
         FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
 
-    SamlProviderConfig config = tenantAwareAuth.createSamlProviderConfig(createRequest);
+    tenantAwareAuth.createSamlProviderConfig(createRequest);
 
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "POST", TENANTS_BASE_URL + "/TENANT_ID/inboundSamlConfigs");
@@ -2173,8 +2173,6 @@ public class FirebaseUserManagerTest {
   public void testUpdateSamlProvider() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("saml.json"));
-    // TODO(micahstairs): Add 'signRequest' to the create request once that field is added to
-    // SamlProviderConfig.
     SamlProviderConfig.UpdateRequest updateRequest =
         new SamlProviderConfig.UpdateRequest("saml.provider-id")
           .setDisplayName("DISPLAY_NAME")
