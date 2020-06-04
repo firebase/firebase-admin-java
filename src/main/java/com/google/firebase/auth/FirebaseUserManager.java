@@ -303,9 +303,6 @@ class FirebaseUserManager {
 
   Tenant updateTenant(Tenant.UpdateRequest request) throws FirebaseAuthException {
     Map<String, Object> properties = request.getProperties();
-    // TODO(micahstairs): Move this check so that argument validation happens outside the
-    // CallableOperation.
-    checkArgument(!properties.isEmpty(), "Tenant update must have at least one property set");
     GenericUrl url = new GenericUrl(tenantMgtBaseUrl + getTenantUrlSuffix(request.getTenantId()));
     url.put("updateMask", Joiner.on(",").join(generateMask(properties)));
     return sendRequest("PATCH", url, properties, Tenant.class);
