@@ -47,6 +47,8 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.ProviderConfigTestUtils.TemporaryProviderConfig;
+import com.google.firebase.auth.UserTestUtils.RandomUser;
+import com.google.firebase.auth.UserTestUtils.TemporaryUser;
 import com.google.firebase.auth.hash.Scrypt;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.testing.IntegrationTestUtils;
@@ -56,8 +58,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -85,7 +85,7 @@ public class FirebaseAuthIT {
   private static final FirebaseAuth auth = FirebaseAuth.getInstance(
       IntegrationTestUtils.ensureDefaultApp());
 
-  @Rule public final TemporaryUser temporaryUser = new TemporaryUser();
+  @Rule public final TemporaryUser temporaryUser = new TemporaryUser(auth);
   @Rule public final TemporaryProviderConfig temporaryProviderConfig =
       new TemporaryProviderConfig(auth);
 
@@ -211,22 +211,21 @@ public class FirebaseAuthIT {
 
   @Test
   public void testCreateUserWithParams() throws Exception {
-    RandomUser randomUser = RandomUser.create();
-    String phone = randomPhoneNumber();
+    RandomUser randomUser = UserTestUtils.generateRandomUserInfo();
     UserRecord.CreateRequest user = new UserRecord.CreateRequest()
-        .setUid(randomUser.uid)
-        .setEmail(randomUser.email)
-        .setPhoneNumber(phone)
+        .setUid(randomUser.getUid())
+        .setEmail(randomUser.getEmail())
+        .setPhoneNumber(randomUser.getPhoneNumber())
         .setDisplayName("Random User")
         .setPhotoUrl("https://example.com/photo.png")
         .setEmailVerified(true)
         .setPassword("password");
 
     UserRecord userRecord = temporaryUser.create(user);
-    assertEquals(randomUser.uid, userRecord.getUid());
+    assertEquals(randomUser.getUid(), userRecord.getUid());
     assertEquals("Random User", userRecord.getDisplayName());
-    assertEquals(randomUser.email, userRecord.getEmail());
-    assertEquals(phone, userRecord.getPhoneNumber());
+    assertEquals(randomUser.getEmail(), userRecord.getEmail());
+    assertEquals(randomUser.getPhoneNumber(), userRecord.getPhoneNumber());
     assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
     assertTrue(userRecord.isEmailVerified());
     assertFalse(userRecord.isDisabled());
@@ -239,7 +238,7 @@ public class FirebaseAuthIT {
     assertTrue(providers.contains("password"));
     assertTrue(providers.contains("phone"));
 
-    checkRecreateUser(randomUser.uid);
+    checkRecreateUser(randomUser.getUid());
   }
 
   @Test
@@ -264,12 +263,11 @@ public class FirebaseAuthIT {
     assertTrue(userRecord.getCustomClaims().isEmpty());
 
     // Update user
-    RandomUser randomUser = RandomUser.create();
-    String phone = randomPhoneNumber();
+    RandomUser randomUser = UserTestUtils.generateRandomUserInfo();
     UserRecord.UpdateRequest request = userRecord.updateRequest()
         .setDisplayName("Updated Name")
-        .setEmail(randomUser.email)
-        .setPhoneNumber(phone)
+        .setEmail(randomUser.getEmail())
+        .setPhoneNumber(randomUser.getPhoneNumber())
         .setPhotoUrl("https://example.com/photo.png")
         .setEmailVerified(true)
         .setPassword("secret");
@@ -277,8 +275,8 @@ public class FirebaseAuthIT {
     assertEquals(uid, userRecord.getUid());
     assertNull(userRecord.getTenantId());
     assertEquals("Updated Name", userRecord.getDisplayName());
-    assertEquals(randomUser.email, userRecord.getEmail());
-    assertEquals(phone, userRecord.getPhoneNumber());
+    assertEquals(randomUser.getEmail(), userRecord.getEmail());
+    assertEquals(randomUser.getPhoneNumber(), userRecord.getPhoneNumber());
     assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
     assertTrue(userRecord.isEmailVerified());
     assertFalse(userRecord.isDisabled());
@@ -299,7 +297,7 @@ public class FirebaseAuthIT {
     assertEquals(uid, userRecord.getUid());
     assertNull(userRecord.getTenantId());
     assertNull(userRecord.getDisplayName());
-    assertEquals(randomUser.email, userRecord.getEmail());
+    assertEquals(randomUser.getEmail(), userRecord.getEmail());
     assertNull(userRecord.getPhoneNumber());
     assertNull(userRecord.getPhotoUrl());
     assertTrue(userRecord.isEmailVerified());
@@ -309,15 +307,15 @@ public class FirebaseAuthIT {
 
     // Delete user
     auth.deleteUserAsync(userRecord.getUid()).get();
-    assertUserDoesNotExist(auth, userRecord.getUid());
+    UserTestUtils.assertUserDoesNotExist(auth, userRecord.getUid());
   }
 
   @Test
   public void testLastRefreshTime() throws Exception {
-    RandomUser user = RandomUser.create();
+    RandomUser user = UserTestUtils.generateRandomUserInfo();
     UserRecord newUserRecord = auth.createUser(new UserRecord.CreateRequest()
-                                                   .setUid(user.uid)
-                                                   .setEmail(user.email)
+                                                   .setUid(user.getUid())
+                                                   .setEmail(user.getEmail())
                                                    .setEmailVerified(false)
                                                    .setPassword("password"));
 
@@ -555,29 +553,29 @@ public class FirebaseAuthIT {
 
   @Test
   public void testImportUsers() throws Exception {
-    RandomUser randomUser = RandomUser.create();
+    RandomUser randomUser = UserTestUtils.generateRandomUserInfo();
     ImportUserRecord user = ImportUserRecord.builder()
-        .setUid(randomUser.uid)
-        .setEmail(randomUser.email)
+        .setUid(randomUser.getUid())
+        .setEmail(randomUser.getEmail())
         .build();
 
     UserImportResult result = auth.importUsersAsync(ImmutableList.of(user)).get();
-    temporaryUser.registerUid(randomUser.uid);
+    temporaryUser.registerUid(randomUser.getUid());
     assertEquals(1, result.getSuccessCount());
     assertEquals(0, result.getFailureCount());
 
-    UserRecord savedUser = auth.getUserAsync(randomUser.uid).get();
-    assertEquals(randomUser.email, savedUser.getEmail());
+    UserRecord savedUser = auth.getUserAsync(randomUser.getUid()).get();
+    assertEquals(randomUser.getEmail(), savedUser.getEmail());
   }
 
   @Test
   public void testImportUsersWithPassword() throws Exception {
-    RandomUser randomUser = RandomUser.create();
+    RandomUser randomUser = UserTestUtils.generateRandomUserInfo();
     final byte[] passwordHash = BaseEncoding.base64().decode(
         "V358E8LdWJXAO7muq0CufVpEOXaj8aFiC7T/rcaGieN04q/ZPJ08WhJEHGjj9lz/2TT+/86N5VjVoc5DdBhBiw==");
     ImportUserRecord user = ImportUserRecord.builder()
-        .setUid(randomUser.uid)
-        .setEmail(randomUser.email)
+        .setUid(randomUser.getUid())
+        .setEmail(randomUser.getEmail())
         .setPasswordHash(passwordHash)
         .setPasswordSalt("NaCl".getBytes())
         .build();
@@ -593,46 +591,46 @@ public class FirebaseAuthIT {
             .setRounds(8)
             .setMemoryCost(14)
             .build())).get();
-    temporaryUser.registerUid(randomUser.uid);
+    temporaryUser.registerUid(randomUser.getUid());
     assertEquals(1, result.getSuccessCount());
     assertEquals(0, result.getFailureCount());
 
-    UserRecord savedUser = auth.getUserAsync(randomUser.uid).get();
-    assertEquals(randomUser.email, savedUser.getEmail());
-    String idToken = signInWithPassword(randomUser.email, "password");
+    UserRecord savedUser = auth.getUserAsync(randomUser.getUid()).get();
+    assertEquals(randomUser.getEmail(), savedUser.getEmail());
+    String idToken = signInWithPassword(randomUser.getEmail(), "password");
     assertFalse(Strings.isNullOrEmpty(idToken));
   }
 
   @Test
   public void testGeneratePasswordResetLink() throws Exception {
-    RandomUser user = RandomUser.create();
+    RandomUser user = UserTestUtils.generateRandomUserInfo();
     temporaryUser.create(new UserRecord.CreateRequest()
-        .setUid(user.uid)
-        .setEmail(user.email)
+        .setUid(user.getUid())
+        .setEmail(user.getEmail())
         .setEmailVerified(false)
         .setPassword("password"));
-    String link = auth.generatePasswordResetLink(user.email, ActionCodeSettings.builder()
+    String link = auth.generatePasswordResetLink(user.getEmail(), ActionCodeSettings.builder()
         .setUrl(ACTION_LINK_CONTINUE_URL)
         .setHandleCodeInApp(false)
         .build());
     Map<String, String> linkParams = parseLinkParameters(link);
     assertEquals(ACTION_LINK_CONTINUE_URL, linkParams.get("continueUrl"));
-    String email = resetPassword(user.email, "password", "newpassword",
+    String email = resetPassword(user.getEmail(), "password", "newpassword",
         linkParams.get("oobCode"));
-    assertEquals(user.email, email);
+    assertEquals(user.getEmail(), email);
     // Password reset also verifies the user's email
-    assertTrue(auth.getUser(user.uid).isEmailVerified());
+    assertTrue(auth.getUser(user.getUid()).isEmailVerified());
   }
 
   @Test
   public void testGenerateEmailVerificationResetLink() throws Exception {
-    RandomUser user = RandomUser.create();
+    RandomUser user = UserTestUtils.generateRandomUserInfo();
     temporaryUser.create(new UserRecord.CreateRequest()
-        .setUid(user.uid)
-        .setEmail(user.email)
+        .setUid(user.getUid())
+        .setEmail(user.getEmail())
         .setEmailVerified(false)
         .setPassword("password"));
-    String link = auth.generateEmailVerificationLink(user.email, ActionCodeSettings.builder()
+    String link = auth.generateEmailVerificationLink(user.getEmail(), ActionCodeSettings.builder()
         .setUrl(ACTION_LINK_CONTINUE_URL)
         .setHandleCodeInApp(false)
         .build());
@@ -645,21 +643,21 @@ public class FirebaseAuthIT {
 
   @Test
   public void testGenerateSignInWithEmailLink() throws Exception {
-    RandomUser user = RandomUser.create();
+    RandomUser user = UserTestUtils.generateRandomUserInfo();
     temporaryUser.create(new UserRecord.CreateRequest()
-        .setUid(user.uid)
-        .setEmail(user.email)
+        .setUid(user.getUid())
+        .setEmail(user.getEmail())
         .setEmailVerified(false)
         .setPassword("password"));
-    String link = auth.generateSignInWithEmailLink(user.email, ActionCodeSettings.builder()
+    String link = auth.generateSignInWithEmailLink(user.getEmail(), ActionCodeSettings.builder()
         .setUrl(ACTION_LINK_CONTINUE_URL)
         .setHandleCodeInApp(false)
         .build());
     Map<String, String> linkParams = parseLinkParameters(link);
     assertEquals(ACTION_LINK_CONTINUE_URL, linkParams.get("continueUrl"));
-    String idToken = signInWithEmailLink(user.email, linkParams.get("oobCode"));
+    String idToken = signInWithEmailLink(user.getEmail(), linkParams.get("oobCode"));
     assertFalse(Strings.isNullOrEmpty(idToken));
-    assertTrue(auth.getUser(user.uid).isEmailVerified());
+    assertTrue(auth.getUser(user.getUid()).isEmailVerified());
   }
 
   @Test
@@ -913,15 +911,6 @@ public class FirebaseAuthIT {
     return result;
   }
 
-  static String randomPhoneNumber() {
-    Random random = new Random();
-    StringBuilder builder = new StringBuilder("+1");
-    for (int i = 0; i < 10; i++) {
-      builder.append(random.nextInt(10));
-    }
-    return builder.toString();
-  }
-
   private String signInWithCustomToken(String customToken) throws IOException {
     return signInWithCustomToken(customToken, null);
   }
@@ -1011,23 +1000,6 @@ public class FirebaseAuthIT {
     }
   }
 
-  static class RandomUser {
-    final String uid;
-    final String email;
-
-    private RandomUser(String uid, String email) {
-      this.uid = uid;
-      this.email = email;
-    }
-
-    static RandomUser create() {
-      final String uid = UUID.randomUUID().toString().replaceAll("-", "");
-      final String email = ("test" + uid.substring(0, 12) + "@example."
-          + uid.substring(12) + ".com").toLowerCase();
-      return new RandomUser(uid, email);
-    }
-  }
-
   private boolean checkOidcProviderConfig(List<String> providerIds, OidcProviderConfig config) {
     if (providerIds.contains(config.getProviderId())) {
       assertEquals("CLIENT_ID", config.getClientId());
@@ -1068,45 +1040,14 @@ public class FirebaseAuthIT {
   static UserRecord newUserWithParams(FirebaseAuth auth) throws Exception {
     // TODO(rsgowman): This function could be used throughout this file (similar to the other
     // ports).
-    RandomUser randomUser = RandomUser.create();
+    RandomUser randomUser = UserTestUtils.generateRandomUserInfo();
     return auth.createUser(new UserRecord.CreateRequest()
-                               .setUid(randomUser.uid)
-                               .setEmail(randomUser.email)
-                               .setPhoneNumber(randomPhoneNumber())
+                               .setUid(randomUser.getUid())
+                               .setEmail(randomUser.getEmail())
+                               .setPhoneNumber(randomUser.getPhoneNumber())
                                .setDisplayName("Random User")
                                .setPhotoUrl("https://example.com/photo.png")
                                .setPassword("password"));
   }
-
-  /**
-   * Creates temporary Firebase user accounts for testing, and deletes them at the end of each
-   * test case.
-   */
-  private static final class TemporaryUser extends ExternalResource {
-
-    private final List<String> users = new ArrayList<>();
-
-    public UserRecord create(UserRecord.CreateRequest request) throws FirebaseAuthException {
-      UserRecord user = auth.createUser(request);
-      registerUid(user.getUid());
-      return user;
-    }
-
-    public synchronized void registerUid(String uid) {
-      users.add(uid);
-    }
-
-    @Override
-    protected synchronized void after() {
-      for (String uid : users) {
-        try {
-          auth.deleteUser(uid);
-        } catch (Exception ignore) {
-          // Ignore
-        }
-      }
-
-      users.clear();
-    }
-  }
 }
+
