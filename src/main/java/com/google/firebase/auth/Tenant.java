@@ -69,7 +69,7 @@ public final class Tenant {
   }
 
   /**
-   * A specification class for creating new user accounts.
+   * A specification class for creating a new tenant.
    *
    * <p>Set the initial attributes of the new tenant by calling various setter methods available in
    * this class. None of the attributes are required.
@@ -101,7 +101,7 @@ public final class Tenant {
      * Sets whether to allow email/password user authentication.
      *
      * @param passwordSignInAllowed a boolean indicating whether users can be authenticated using
-     *     an email and password, and false otherwise.
+     *     an email and password.
      */
     public CreateRequest setPasswordSignInAllowed(boolean passwordSignInAllowed) {
       properties.put("allowPasswordSignup", passwordSignInAllowed);
@@ -109,10 +109,10 @@ public final class Tenant {
     }
 
     /**
-     * Sets whether to  enable email link user authentication.
+     * Sets whether to enable email link user authentication.
      *
      * @param emailLinkSignInEnabled a boolean indicating whether users can be authenticated using
-     *     an email link, and false otherwise.
+     *     an email link.
      */
     public CreateRequest setEmailLinkSignInEnabled(boolean emailLinkSignInEnabled) {
       properties.put("enableEmailLinkSignin", emailLinkSignInEnabled);
@@ -170,7 +170,7 @@ public final class Tenant {
      * Sets whether to allow email/password user authentication.
      *
      * @param passwordSignInAllowed a boolean indicating whether users can be authenticated using
-     *     an email and password, and false otherwise.
+     *     an email and password.
      */
     public UpdateRequest setPasswordSignInAllowed(boolean passwordSignInAllowed) {
       properties.put("allowPasswordSignup", passwordSignInAllowed);
@@ -181,7 +181,7 @@ public final class Tenant {
      * Sets whether to enable email link user authentication.
      *
      * @param emailLinkSignInEnabled a boolean indicating whether users can be authenticated using
-     *     an email link, and false otherwise.
+     *     an email link.
      */
     public UpdateRequest setEmailLinkSignInEnabled(boolean emailLinkSignInEnabled) {
       properties.put("enableEmailLinkSignin", emailLinkSignInEnabled);

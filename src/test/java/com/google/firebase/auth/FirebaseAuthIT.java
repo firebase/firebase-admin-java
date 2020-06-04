@@ -138,6 +138,78 @@ public class FirebaseAuthIT {
   }
 
   @Test
+  public void testDeleteUsers() throws Exception {
+    UserRecord user1 = newUserWithParams();
+    UserRecord user2 = newUserWithParams();
+    UserRecord user3 = newUserWithParams();
+
+    DeleteUsersResult deleteUsersResult =
+        slowDeleteUsersAsync(ImmutableList.of(user1.getUid(), user2.getUid(), user3.getUid()))
+            .get();
+
+    assertEquals(3, deleteUsersResult.getSuccessCount());
+    assertEquals(0, deleteUsersResult.getFailureCount());
+    assertTrue(deleteUsersResult.getErrors().isEmpty());
+
+    GetUsersResult getUsersResult =
+        auth.getUsersAsync(
+                ImmutableList.<UserIdentifier>of(new UidIdentifier(user1.getUid()),
+                    new UidIdentifier(user2.getUid()), new UidIdentifier(user3.getUid())))
+            .get();
+
+    assertTrue(getUsersResult.getUsers().isEmpty());
+    assertEquals(3, getUsersResult.getNotFound().size());
+  }
+
+  @Test
+  public void testDeleteExistingAndNonExistingUsers() throws Exception {
+    UserRecord user1 = newUserWithParams();
+
+    DeleteUsersResult deleteUsersResult =
+        slowDeleteUsersAsync(ImmutableList.of(user1.getUid(), "uid-that-doesnt-exist")).get();
+
+    assertEquals(2, deleteUsersResult.getSuccessCount());
+    assertEquals(0, deleteUsersResult.getFailureCount());
+    assertTrue(deleteUsersResult.getErrors().isEmpty());
+
+    GetUsersResult getUsersResult =
+        auth.getUsersAsync(ImmutableList.<UserIdentifier>of(new UidIdentifier(user1.getUid()),
+                               new UidIdentifier("uid-that-doesnt-exist")))
+            .get();
+
+    assertTrue(getUsersResult.getUsers().isEmpty());
+    assertEquals(2, getUsersResult.getNotFound().size());
+  }
+
+  @Test
+  public void testDeleteUsersIsIdempotent() throws Exception {
+    UserRecord user1 = newUserWithParams();
+
+    DeleteUsersResult result = slowDeleteUsersAsync(ImmutableList.of(user1.getUid())).get();
+
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+    assertTrue(result.getErrors().isEmpty());
+
+    // Delete the user again to ensure that everything still counts as a success.
+    result = slowDeleteUsersAsync(ImmutableList.of(user1.getUid())).get();
+
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+    assertTrue(result.getErrors().isEmpty());
+  }
+
+  /**
+   * The {@code batchDelete} endpoint has a rate limit of 1 QPS. Use this test
+   * helper to ensure you don't exceed the quota.
+   */
+  // TODO(rsgowman): When/if the rate limit is relaxed, eliminate this helper.
+  private ApiFuture<DeleteUsersResult> slowDeleteUsersAsync(List<String> uids) throws Exception {
+    TimeUnit.SECONDS.sleep(1);
+    return auth.deleteUsersAsync(uids);
+  }
+
+  @Test
   public void testCreateUserWithParams() throws Exception {
     RandomUser randomUser = UserTestUtils.generateRandomUserInfo();
     UserRecord.CreateRequest user = new UserRecord.CreateRequest()
@@ -236,6 +308,35 @@ public class FirebaseAuthIT {
     // Delete user
     auth.deleteUserAsync(userRecord.getUid()).get();
     UserTestUtils.assertUserDoesNotExist(auth, userRecord.getUid());
+  }
+
+  @Test
+  public void testLastRefreshTime() throws Exception {
+    RandomUser user = UserTestUtils.generateRandomUserInfo();
+    UserRecord newUserRecord = auth.createUser(new UserRecord.CreateRequest()
+                                                   .setUid(user.getUid())
+                                                   .setEmail(user.getEmail())
+                                                   .setEmailVerified(false)
+                                                   .setPassword("password"));
+
+    try {
+      // New users should not have a lastRefreshTimestamp set.
+      assertEquals(0, newUserRecord.getUserMetadata().getLastRefreshTimestamp());
+
+      // Login to cause the lastRefreshTimestamp to be set.
+      signInWithPassword(newUserRecord.getEmail(), "password");
+
+      UserRecord userRecord = auth.getUser(newUserRecord.getUid());
+
+      // Ensure the lastRefreshTimestamp is approximately "now" (with a tollerance of 10 minutes).
+      long now = System.currentTimeMillis();
+      long tollerance = TimeUnit.MINUTES.toMillis(10);
+      long lastRefreshTimestamp = userRecord.getUserMetadata().getLastRefreshTimestamp();
+      assertTrue(now - tollerance <= lastRefreshTimestamp);
+      assertTrue(lastRefreshTimestamp <= now + tollerance);
+    } finally {
+      auth.deleteUser(newUserRecord.getUid());
+    }
   }
 
   @Test
@@ -840,7 +941,7 @@ public class FirebaseAuthIT {
     GenericUrl url = new GenericUrl(VERIFY_PASSWORD_URL + "?key="
         + IntegrationTestUtils.getApiKey());
     Map<String, Object> content = ImmutableMap.<String, Object>of(
-        "email", email, "password", password);
+        "email", email, "password", password, "returnSecureToken", true);
     HttpRequest request = transport.createRequestFactory().buildPostRequest(url,
         new JsonHttpContent(jsonFactory, content));
     request.setParser(new JsonObjectParser(jsonFactory));
@@ -918,6 +1019,23 @@ public class FirebaseAuthIT {
       return true;
     }
     return false;
+  }
+
+  static UserRecord newUserWithParams() throws Exception {
+    return newUserWithParams(auth);
+  }
+
+  static UserRecord newUserWithParams(FirebaseAuth auth) throws Exception {
+    // TODO(rsgowman): This function could be used throughout this file (similar to the other
+    // ports).
+    RandomUser randomUser = UserTestUtils.generateRandomUserInfo();
+    return auth.createUser(new UserRecord.CreateRequest()
+                               .setUid(randomUser.getUid())
+                               .setEmail(randomUser.getEmail())
+                               .setPhoneNumber(randomUser.getPhoneNumber())
+                               .setDisplayName("Random User")
+                               .setPhotoUrl("https://example.com/photo.png")
+                               .setPassword("password"));
   }
 }
 

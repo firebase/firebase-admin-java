@@ -62,7 +62,7 @@ public class ImportUserRecordTest {
         .setDisplayName("Test User")
         .setPhotoUrl("https://test.com/user.png")
         .setPhoneNumber("+1234567890")
-        .setUserMetadata(new UserMetadata(date.getTime(), date.getTime()))
+        .setUserMetadata(new UserMetadata(date.getTime(), date.getTime(), date.getTime()))
         .setDisabled(false)
         .setEmailVerified(true)
         .setPasswordHash("password".getBytes())

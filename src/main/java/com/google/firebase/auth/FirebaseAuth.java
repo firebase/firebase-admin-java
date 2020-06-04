@@ -26,7 +26,6 @@ import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.auth.AbstractFirebaseAuth.Builder;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseService;
@@ -41,7 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * custom tokens for use by client-side code, verifying Firebase ID Tokens received from clients, or
  * creating new FirebaseApp instances that are scoped to a particular authentication UID.
  */
-public class FirebaseAuth extends AbstractFirebaseAuth {
+public final class FirebaseAuth extends AbstractFirebaseAuth {
 
   private static final String SERVICE_ID = FirebaseAuth.class.getName();
 
