@@ -18,7 +18,6 @@ package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Clock;
@@ -47,7 +46,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class is the entry point for all server-side Firebase Authentication actions.
@@ -64,7 +62,6 @@ public class FirebaseAuth {
   private static final String ERROR_CUSTOM_TOKEN = "ERROR_CUSTOM_TOKEN";
 
   private final Object lock = new Object();
-  private final AtomicBoolean destroyed = new AtomicBoolean(false);
 
   private final FirebaseApp firebaseApp;
   private final Supplier<FirebaseTokenFactory> tokenFactory;
@@ -139,7 +136,6 @@ public class FirebaseAuth {
 
   private CallableOperation<String, FirebaseAuthException> createSessionCookieOp(
       final String idToken, final SessionCookieOptions options) {
-    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(idToken), "idToken must not be null or empty");
     checkNotNull(options, "options must not be null");
     final FirebaseUserManager userManager = getUserManager();
@@ -214,7 +210,6 @@ public class FirebaseAuth {
 
   private CallableOperation<FirebaseToken, FirebaseAuthException> verifySessionCookieOp(
       final String cookie, final boolean checkRevoked) {
-    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(cookie), "Session cookie must not be null or empty");
     final FirebaseTokenVerifier sessionCookieVerifier = getSessionCookieVerifier(checkRevoked);
     return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
@@ -328,7 +323,6 @@ public class FirebaseAuth {
 
   private CallableOperation<String, FirebaseAuthException> createCustomTokenOp(
       final String uid, final Map<String, Object> developerClaims) {
-    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
     final FirebaseTokenFactory tokenFactory = this.tokenFactory.get();
     return new CallableOperation<String, FirebaseAuthException>() {
@@ -422,7 +416,6 @@ public class FirebaseAuth {
 
   private CallableOperation<FirebaseToken, FirebaseAuthException> verifyIdTokenOp(
       final String token, final boolean checkRevoked) {
-    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(token), "ID token must not be null or empty");
     final FirebaseTokenVerifier verifier = getIdTokenVerifier(checkRevoked);
     return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
@@ -476,7 +469,6 @@ public class FirebaseAuth {
   }
 
   private CallableOperation<Void, FirebaseAuthException> revokeRefreshTokensOp(final String uid) {
-    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<Void, FirebaseAuthException>() {
@@ -516,7 +508,6 @@ public class FirebaseAuth {
   }
 
   private CallableOperation<UserRecord, FirebaseAuthException> getUserOp(final String uid) {
-    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<UserRecord, FirebaseAuthException>() {
@@ -554,7 +545,6 @@ public class FirebaseAuth {
 
   private CallableOperation<UserRecord, FirebaseAuthException> getUserByEmailOp(
       final String email) {
-    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(email), "email must not be null or empty");
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<UserRecord, FirebaseAuthException>() {
@@ -592,7 +582,6 @@ public class FirebaseAuth {
 
   private CallableOperation<UserRecord, FirebaseAuthException> getUserByPhoneNumberOp(
       final String phoneNumber) {
-    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(phoneNumber), "phone number must not be null or empty");
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<UserRecord, FirebaseAuthException>() {
@@ -647,7 +636,6 @@ public class FirebaseAuth {
 
   private CallableOperation<GetUsersResult, FirebaseAuthException> getUsersOp(
       @NonNull final Collection<UserIdentifier> identifiers) {
-    checkNotDestroyed();
     checkNotNull(identifiers, "identifiers must not be null");
     checkArgument(identifiers.size() <= FirebaseUserManager.MAX_GET_ACCOUNTS_BATCH_SIZE,
         "identifiers parameter must have <= " + FirebaseUserManager.MAX_GET_ACCOUNTS_BATCH_SIZE
@@ -736,7 +724,6 @@ public class FirebaseAuth {
 
   private CallableOperation<ListUsersPage, FirebaseAuthException> listUsersOp(
       @Nullable final String pageToken, final int maxResults) {
-    checkNotDestroyed();
     final FirebaseUserManager userManager = getUserManager();
     final PageFactory factory = new PageFactory(
         new DefaultUserSource(userManager, jsonFactory), maxResults, pageToken);
@@ -776,7 +763,6 @@ public class FirebaseAuth {
 
   private CallableOperation<UserRecord, FirebaseAuthException> createUserOp(
       final CreateRequest request) {
-    checkNotDestroyed();
     checkNotNull(request, "create request must not be null");
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<UserRecord, FirebaseAuthException>() {
@@ -816,7 +802,6 @@ public class FirebaseAuth {
 
   private CallableOperation<UserRecord, FirebaseAuthException> updateUserOp(
       final UpdateRequest request) {
-    checkNotDestroyed();
     checkNotNull(request, "update request must not be null");
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<UserRecord, FirebaseAuthException>() {
@@ -869,7 +854,6 @@ public class FirebaseAuth {
 
   private CallableOperation<Void, FirebaseAuthException> setCustomUserClaimsOp(
       final String uid, final Map<String, Object> claims) {
-    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<Void, FirebaseAuthException>() {
@@ -907,7 +891,6 @@ public class FirebaseAuth {
   }
 
   private CallableOperation<Void, FirebaseAuthException> deleteUserOp(final String uid) {
-    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<Void, FirebaseAuthException>() {
@@ -961,7 +944,6 @@ public class FirebaseAuth {
 
   private CallableOperation<DeleteUsersResult, FirebaseAuthException> deleteUsersOp(
       final List<String> uids) {
-    checkNotDestroyed();
     checkNotNull(uids, "uids must not be null");
     for (String uid : uids) {
       UserRecord.checkUid(uid);
@@ -1048,7 +1030,6 @@ public class FirebaseAuth {
 
   private CallableOperation<UserImportResult, FirebaseAuthException> importUsersOp(
       final List<ImportUserRecord> users, final UserImportOptions options) {
-    checkNotDestroyed();
     final UserImportRequest request = new UserImportRequest(users, options, jsonFactory);
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<UserImportResult, FirebaseAuthException>() {
@@ -1226,7 +1207,6 @@ public class FirebaseAuth {
 
   private CallableOperation<String, FirebaseAuthException> generateEmailActionLinkOp(
           final EmailLinkType type, final String email, final ActionCodeSettings settings) {
-    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(email), "email must not be null or empty");
     if (type == EmailLinkType.EMAIL_SIGNIN) {
       checkNotNull(settings, "ActionCodeSettings must not be null when generating sign-in links");
@@ -1246,24 +1226,10 @@ public class FirebaseAuth {
       public T get() {
         checkNotNull(supplier);
         synchronized (lock) {
-          checkNotDestroyed();
           return supplier.get();
         }
       }
     });
-  }
-
-  private void checkNotDestroyed() {
-    synchronized (lock) {
-      checkState(!destroyed.get(), "FirebaseAuth instance is no longer alive. This happens when "
-          + "the parent FirebaseApp instance has been deleted.");
-    }
-  }
-
-  private void destroy() {
-    synchronized (lock) {
-      destroyed.set(true);
-    }
   }
 
   private static FirebaseAuth fromApp(final FirebaseApp app) {
@@ -1344,11 +1310,6 @@ public class FirebaseAuth {
 
     FirebaseAuthService(FirebaseApp app) {
       super(SERVICE_ID, FirebaseAuth.fromApp(app));
-    }
-
-    @Override
-    public void destroy() {
-      instance.destroy();
     }
   }
 }

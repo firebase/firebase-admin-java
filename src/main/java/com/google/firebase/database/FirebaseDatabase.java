@@ -358,6 +358,10 @@ public class FirebaseDatabase {
     return this.config;
   }
 
+  /**
+   * Tears down the WebSocket connections and background threads started by this {@code
+   * FirebaseDatabase} instance thus disconnecting from the remote database.
+   */
   void destroy() {
     synchronized (lock) {
       if (destroyed.get()) {

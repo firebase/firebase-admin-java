@@ -43,6 +43,11 @@ import org.junit.Test;
 
 public class FirebaseInstanceIdTest {
 
+  private static final FirebaseOptions APP_OPTIONS = new FirebaseOptions.Builder()
+      .setCredentials(new MockGoogleCredentials("test-token"))
+      .setProjectId("test-project")
+      .build();
+
   @After
   public void tearDown() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
@@ -63,12 +68,24 @@ public class FirebaseInstanceIdTest {
   }
 
   @Test
+  public void testInvokeAfterAppDelete() {
+    FirebaseApp app = FirebaseApp.initializeApp(APP_OPTIONS, "testInvokeAfterAppDelete");
+    FirebaseInstanceId instanceId = FirebaseInstanceId.getInstance(app);
+    assertNotNull(instanceId);
+    app.delete();
+
+    try {
+      FirebaseInstanceId.getInstance(app);
+      fail("No error thrown when invoking instanceId after deleting app");
+    } catch (IllegalStateException ex) {
+      String message = "FirebaseApp 'testInvokeAfterAppDelete' was deleted";
+      assertEquals(message, ex.getMessage());
+    }
+  }
+
+  @Test
   public void testInvalidInstanceId() {
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredentials(new MockGoogleCredentials("test-token"))
-        .setProjectId("test-project")
-        .build();
-    FirebaseApp.initializeApp(options);
+    FirebaseApp.initializeApp(APP_OPTIONS);
 
     FirebaseInstanceId instanceId = FirebaseInstanceId.getInstance();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
@@ -96,9 +113,7 @@ public class FirebaseInstanceIdTest {
     MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(response)
         .build();
-    FirebaseOptions options = new FirebaseOptions.Builder()
-        .setCredentials(new MockGoogleCredentials("test-token"))
-        .setProjectId("test-project")
+    FirebaseOptions options = new FirebaseOptions.Builder(APP_OPTIONS)
         .setHttpTransport(transport)
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
@@ -154,9 +169,7 @@ public class FirebaseInstanceIdTest {
       MockHttpTransport transport = new MockHttpTransport.Builder()
           .setLowLevelHttpResponse(response)
           .build();
-      FirebaseOptions options = new FirebaseOptions.Builder()
-          .setCredentials(new MockGoogleCredentials("test-token"))
-          .setProjectId("test-project")
+      FirebaseOptions options = new FirebaseOptions.Builder(APP_OPTIONS)
           .setHttpTransport(transport)
           .build();
       final FirebaseApp app = FirebaseApp.initializeApp(options);

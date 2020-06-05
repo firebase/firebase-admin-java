@@ -35,7 +35,6 @@ import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.auth.oauth2.OAuth2Credentials.CredentialsChangedListener;
 import com.google.common.base.Defaults;
 import com.google.common.base.Strings;
-import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -43,6 +42,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.FirebaseOptions.Builder;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.testing.FirebaseAppRule;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
@@ -172,7 +172,6 @@ public class FirebaseAppTest {
     final String name = "myApp";
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS, name);
     firebaseApp.delete();
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
     FirebaseApp.getInstance(name);
   }
 
@@ -212,6 +211,33 @@ public class FirebaseAppTest {
       assertNotSame(firebaseApp, firebaseApp2);
     } finally {
       TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    }
+  }
+
+  @Test
+  public void testUseAfterDelete() {
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS);
+    firebaseApp.delete();
+
+    try {
+      firebaseApp.getOptions();
+      fail();
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+
+    try {
+      firebaseApp.getProjectId();
+      fail();
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+
+    try {
+      ImplFirebaseTrampolines.addService(firebaseApp, new MockFirebaseService());
+      fail();
+    } catch (IllegalStateException expected) {
+      // ignore
     }
   }
 
@@ -468,7 +494,7 @@ public class FirebaseAppTest {
     FirebaseApp app = FirebaseApp.initializeApp(options, "testGetAppWithUid");
     assertEquals("uid1", app.getOptions().getDatabaseAuthVariableOverride().get("uid"));
     String token = TestOnlyImplFirebaseTrampolines.getToken(app, false);
-    Assert.assertTrue(!token.isEmpty());
+    Assert.assertFalse(token.isEmpty());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -695,6 +721,12 @@ public class FirebaseAppTest {
     public AccessToken refreshAccessToken() {
       Date expiry = new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1));
       return new AccessToken(UUID.randomUUID().toString(), expiry);
+    }
+  }
+
+  private static class MockFirebaseService extends FirebaseService<Object> {
+    MockFirebaseService() {
+      super("MockFirebaseService", new Object());
     }
   }
 }

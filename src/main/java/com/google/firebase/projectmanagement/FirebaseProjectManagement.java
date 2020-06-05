@@ -36,6 +36,7 @@ import java.util.List;
  * modify, or retrieve information about the Android or iOS Apps in your Firebase project.
  */
 public class FirebaseProjectManagement {
+
   private static final String SERVICE_ID = FirebaseProjectManagement.class.getName();
 
   private static final Object GET_INSTANCE_LOCK = new Object();
@@ -285,11 +286,6 @@ public class FirebaseProjectManagement {
       FirebaseProjectManagement serviceInstance = getInstance();
       serviceInstance.setAndroidAppService(serviceImpl);
       serviceInstance.setIosAppService(serviceImpl);
-    }
-
-    @Override
-    public void destroy() {
-      serviceImpl.destroy();
     }
   }
 }
