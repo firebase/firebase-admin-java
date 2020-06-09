@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.cedarsoftware.util.DeepEquals;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.common.collect.ImmutableMap;
@@ -38,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -235,7 +235,7 @@ public class JvmAuthTokenProviderTest {
     assertEquals(expectedToken, map.get("token"));
 
     Map auth = (Map) map.get("auth");
-    DeepEquals.deepEquals(expectedAuth, auth);
+    assertTrue(Objects.deepEquals(expectedAuth, auth));
   }
 
   private static class TestGetTokenListener
