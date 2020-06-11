@@ -40,9 +40,9 @@ public class Notification {
   }
 
   /**
-   * Creates a new {@link Notification.Builder}.
+   * Creates a new {@link Builder}.
    *
-   * @return A {@link Notification.Builder} instance.
+   * @return A {@link Builder} instance.
    */
   public static Builder builder() {
     return new Builder();

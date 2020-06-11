@@ -110,7 +110,6 @@ public class IntegrationTestUtils {
               .setStorageBucket(getStorageBucket())
               .setCredentials(TestUtils.getCertCredential(getServiceAccountCertificate()))
               .setFirestoreOptions(FirestoreOptions.newBuilder()
-                  .setTimestampsInSnapshotsEnabled(true)
                   .setCredentials(TestUtils.getCertCredential(getServiceAccountCertificate()))
                   .build())
               .build();
