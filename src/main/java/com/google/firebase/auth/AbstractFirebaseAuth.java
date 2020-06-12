@@ -447,8 +447,8 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Gets a page of users starting from the specified {@code pageToken}. Page size will be limited
-   * to 1000 users.
+   * Gets a page of users starting from the specified {@code pageToken}. Page size is limited to
+   * 1000 users.
    *
    * @param pageToken A non-empty page token string, or null to retrieve the first page of users.
    * @return A {@link ListUsersPage} instance.
@@ -1077,8 +1077,8 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Creates a new OIDC Auth provider config with the attributes contained in the specified
-   * {@link OidcProviderConfig.CreateRequest}.
+   * Creates a new OpenID Connect auth provider config with the attributes contained in the
+   * specified {@link OidcProviderConfig.CreateRequest}.
    *
    * @param request A non-null {@link OidcProviderConfig.CreateRequest} instance.
    * @return An {@link OidcProviderConfig} instance corresponding to the newly created provider
@@ -1124,8 +1124,8 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Updates an existing OIDC Auth provider config with the attributes contained in the specified
-   * {@link OidcProviderConfig.UpdateRequest}.
+   * Updates an existing OpenID Connect auth provider config with the attributes contained in the
+   * specified {@link OidcProviderConfig.UpdateRequest}.
    *
    * @param request A non-null {@link OidcProviderConfig.UpdateRequest} instance.
    * @return A {@link OidcProviderConfig} instance corresponding to the updated provider config.
@@ -1169,7 +1169,7 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Gets the provider OIDC Auth config corresponding to the specified provider ID.
+   * Gets the OpenID Connect auth provider corresponding to the specified provider ID.
    *
    * @param providerId A provider ID string.
    * @return An {@link OidcProviderConfig} instance.
@@ -1184,7 +1184,7 @@ public abstract class AbstractFirebaseAuth {
 
   /**
    * Similar to {@link #getOidcProviderConfig(String)} but performs the operation asynchronously.
-   * Page size will be limited to 100 provider configs.
+   * Page size is limited to 100 provider configs.
    *
    * @param providerId A provider ID string.
    * @return An {@code ApiFuture} which will complete successfully with an
@@ -1212,8 +1212,8 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Gets a page of OIDC Auth provider configs starting from the specified {@code pageToken}. Page
-   * size will be limited to 100 provider configs.
+   * Gets a page of OpenID Connect auth provider configs starting from the specified
+   * {@code pageToken}. Page size is limited to 100 provider configs.
    *
    * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
    *     configs.
@@ -1228,7 +1228,8 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Gets a page of OIDC Auth provider configs starting from the specified {@code pageToken}.
+   * Gets a page of OpenID Connect auth provider configs starting from the specified
+   * {@code pageToken}.
    *
    * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
    *     configs.
@@ -1246,7 +1247,7 @@ public abstract class AbstractFirebaseAuth {
 
   /**
    * Similar to {@link #listOidcProviderConfigs(String)} but performs the operation asynchronously.
-   * Page size will be limited to 100 provider configs.
+   * Page size is limited to 100 provider configs.
    *
    * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
    *     configs.
@@ -1299,7 +1300,7 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Deletes the OIDC Auth provider config identified by the specified provider ID.
+   * Deletes the OpenID Connect auth provider config identified by the specified provider ID.
    *
    * @param providerId A provider ID string.
    * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
@@ -1431,7 +1432,7 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Gets the SAML provider Auth config corresponding to the specified provider ID.
+   * Gets the SAML Auth provider config corresponding to the specified provider ID.
    *
    * @param providerId A provider ID string.
    * @return An {@link SamlProviderConfig} instance.
@@ -1446,7 +1447,7 @@ public abstract class AbstractFirebaseAuth {
 
   /**
    * Similar to {@link #getSamlProviderConfig(String)} but performs the operation asynchronously.
-   * Page size will be limited to 100 provider configs.
+   * Page size is limited to 100 provider configs.
    *
    * @param providerId A provider ID string.
    * @return An {@code ApiFuture} which will complete successfully with an
@@ -1475,7 +1476,7 @@ public abstract class AbstractFirebaseAuth {
 
   /**
    * Gets a page of SAML Auth provider configs starting from the specified {@code pageToken}. Page
-   * size will be limited to 100 provider configs.
+   * size is limited to 100 provider configs.
    *
    * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
    *     configs.
@@ -1509,7 +1510,7 @@ public abstract class AbstractFirebaseAuth {
 
   /**
    * Similar to {@link #listSamlProviderConfigs(String)} but performs the operation asynchronously.
-   * Page size will be limited to 100 provider configs.
+   * Page size is limited to 100 provider configs.
    *
    * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
    *     configs.

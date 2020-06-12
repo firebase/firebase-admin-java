@@ -72,8 +72,7 @@ public final class OidcProviderConfig extends ProviderConfig {
      * Creates a new {@link CreateRequest}, which can be used to create a new OIDC Auth provider.
      *
      * <p>The returned object should be passed to
-     * {@link AbstractFirebaseAuth#createOidcProviderConfig(CreateRequest)} to register the provider
-     * information persistently.
+     * {@link AbstractFirebaseAuth#createOidcProviderConfig(CreateRequest)} to save the config.
      */
     public CreateRequest() { }
 
@@ -135,8 +134,8 @@ public final class OidcProviderConfig extends ProviderConfig {
      * provider.
      *
      * <p>The returned object should be passed to
-     * {@link AbstractFirebaseAuth#updateOidcProviderConfig(CreateRequest)} to update the provider
-     * information persistently.
+     * {@link AbstractFirebaseAuth#updateOidcProviderConfig(CreateRequest)} to save the updated
+     * config.
      *
      * @param providerId A non-null, non-empty provider ID string.
      * @throws IllegalArgumentException If the provider ID is null or empty, or is not prefixed with
