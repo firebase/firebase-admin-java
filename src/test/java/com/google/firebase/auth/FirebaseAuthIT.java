@@ -336,7 +336,20 @@ public class FirebaseAuthIT {
       // Login to cause the lastRefreshTimestamp to be set.
       signInWithPassword(newUserRecord.getEmail(), "password");
 
-      UserRecord userRecord = auth.getUser(newUserRecord.getUid());
+      // Attempt to retrieve the user 3 times (with a small delay between each
+      // attempt). Occassionally, this call retrieves the user data without the
+      // lastLoginTime/lastRefreshTime set; possibly because it's hitting a
+      // different server than the login request uses.
+      UserRecord userRecord = null;
+      for (int i = 0; i < 3; i++) {
+        userRecord = auth.getUser(newUserRecord.getUid());
+
+        if (userRecord.getUserMetadata().getLastRefreshTimestamp() != 0) {
+          break;
+        }
+
+        TimeUnit.SECONDS.sleep((long)Math.pow(2, i));
+      }
 
       // Ensure the lastRefreshTimestamp is approximately "now" (with a tollerance of 10 minutes).
       long now = System.currentTimeMillis();
