@@ -198,7 +198,7 @@ public class AndroidConfig {
     }
 
     /**
-     * Sets the {@link AndroidFcmOptions}, which will override values set in the {@link FcmOptions}
+     * Sets the {@link AndroidFcmOptions}, which overrides values set in the {@link FcmOptions}
      * for Android messages.
      */
     public Builder setFcmOptions(AndroidFcmOptions androidFcmOptions) {
@@ -207,7 +207,7 @@ public class AndroidConfig {
     }
 
     /**
-     * Sets the direct_boot_ok flag, If set to true, messages will be allowed to be delivered to 
+     * Sets the direct_boot_ok flag, If set to true, messages are allowed to be delivered to 
      * the app while the device is in direct boot mode.
      */
     public Builder setDirectBootOk(boolean directBootOk) {
