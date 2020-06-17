@@ -31,9 +31,6 @@ import java.util.Map;
  */
 public final class Tenant {
 
-  // Lazily initialized from 'resourceName'.
-  private String tenantId;
-
   @Key("name")
   private String resourceName;
 
@@ -47,10 +44,7 @@ public final class Tenant {
   private boolean emailLinkSignInEnabled;
 
   public String getTenantId() {
-    if (tenantId == null) {
-      tenantId = resourceName.substring(resourceName.lastIndexOf("/") + 1);
-    }
-    return tenantId;
+    return resourceName.substring(resourceName.lastIndexOf("/") + 1);
   }
 
   public String getDisplayName() {
@@ -66,10 +60,9 @@ public final class Tenant {
   }
 
   /**
-   * Returns a new {@link UpdateRequest}, which can be used to update the attributes
-   * of this tenant.
+   * Returns a new {@link UpdateRequest}, which can be used to update the attributes of this tenant.
    *
-   * @return a non-null Tenant.UpdateRequest instance.
+   * @return a non-null {@link UpdateRequest} instance.
    */
   public UpdateRequest updateRequest() {
     return new UpdateRequest(getTenantId());

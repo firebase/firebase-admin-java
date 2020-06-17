@@ -17,39 +17,36 @@
 package com.google.firebase.auth.internal;
 
 import com.google.api.client.util.Key;
-import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.auth.Tenant;
+import com.google.firebase.auth.SamlProviderConfig;
 import java.util.List;
 
 /**
- * JSON data binding for ListTenantsResponse messages sent by Google identity toolkit service.
+ * JSON data binding for ListInboundSamlConfigsResponse messages sent by Google identity toolkit
+ * service.
  */
-public final class ListTenantsResponse {
+public final class ListSamlProviderConfigsResponse
+    implements ListProviderConfigsResponse<SamlProviderConfig> {
 
-  @Key("tenants")
-  private List<Tenant> tenants;
+  @Key("inboundSamlConfigs")
+  private List<SamlProviderConfig> providerConfigs;
 
-  @Key("pageToken")
+  @Key("nextPageToken")
   private String pageToken;
 
-  @VisibleForTesting
-  public ListTenantsResponse(List<Tenant> tenants, String pageToken) {
-    this.tenants = tenants;
-    this.pageToken = pageToken;
+  @Override
+  public List<SamlProviderConfig> getProviderConfigs() {
+    return providerConfigs == null ? ImmutableList.<SamlProviderConfig>of() : providerConfigs;
   }
 
-  public ListTenantsResponse() { }
-
-  public List<Tenant> getTenants() {
-    return tenants == null ? ImmutableList.<Tenant>of() : tenants;
+  @Override
+  public boolean hasProviderConfigs() {
+    return providerConfigs != null && !providerConfigs.isEmpty();
   }
 
-  public boolean hasTenants() {
-    return tenants != null && !tenants.isEmpty();
-  }
-
+  @Override
   public String getPageToken() {
-    return pageToken == null ? "" : pageToken;
+    return Strings.nullToEmpty(pageToken);
   }
 }

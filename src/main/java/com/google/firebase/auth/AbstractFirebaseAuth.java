@@ -29,10 +29,12 @@ import com.google.common.base.Suppliers;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
 import com.google.firebase.auth.FirebaseUserManager.UserImportRequest;
+import com.google.firebase.auth.ListProviderConfigsPage;
+import com.google.firebase.auth.ListProviderConfigsPage.DefaultOidcProviderConfigSource;
+import com.google.firebase.auth.ListProviderConfigsPage.DefaultSamlProviderConfigSource;
+import com.google.firebase.auth.ListUsersPage;
 import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
-import com.google.firebase.auth.ListUsersPage.PageFactory;
-import com.google.firebase.auth.UserRecord.CreateRequest;
-import com.google.firebase.auth.UserRecord.UpdateRequest;
+import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.NonNull;
@@ -323,7 +325,8 @@ public abstract class AbstractFirebaseAuth {
       @Override
       protected Void execute() throws FirebaseAuthException {
         int currentTimeSeconds = (int) (System.currentTimeMillis() / 1000);
-        UpdateRequest request = new UpdateRequest(uid).setValidSince(currentTimeSeconds);
+        UserRecord.UpdateRequest request =
+            new UserRecord.UpdateRequest(uid).setValidSince(currentTimeSeconds);
         userManager.updateUser(request, jsonFactory);
         return null;
       }
@@ -444,8 +447,8 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Gets a page of users starting from the specified {@code pageToken}. Page size will be limited
-   * to 1000 users.
+   * Gets a page of users starting from the specified {@code pageToken}. Page size is limited to
+   * 1000 users.
    *
    * @param pageToken A non-empty page token string, or null to retrieve the first page of users.
    * @return A {@link ListUsersPage} instance.
@@ -503,8 +506,8 @@ public abstract class AbstractFirebaseAuth {
       @Nullable final String pageToken, final int maxResults) {
     checkNotDestroyed();
     final FirebaseUserManager userManager = getUserManager();
-    final PageFactory factory =
-        new PageFactory(new DefaultUserSource(userManager, jsonFactory), maxResults, pageToken);
+    final DefaultUserSource source = new DefaultUserSource(userManager, jsonFactory);
+    final ListUsersPage.Factory factory = new ListUsersPage.Factory(source, maxResults, pageToken);
     return new CallableOperation<ListUsersPage, FirebaseAuthException>() {
       @Override
       protected ListUsersPage execute() throws FirebaseAuthException {
@@ -515,32 +518,33 @@ public abstract class AbstractFirebaseAuth {
 
   /**
    * Creates a new user account with the attributes contained in the specified {@link
-   * CreateRequest}.
+   * UserRecord.CreateRequest}.
    *
-   * @param request A non-null {@link CreateRequest} instance.
+   * @param request A non-null {@link UserRecord.CreateRequest} instance.
    * @return A {@link UserRecord} instance corresponding to the newly created account.
    * @throws NullPointerException if the provided request is null.
    * @throws FirebaseAuthException if an error occurs while creating the user account.
    */
-  public UserRecord createUser(@NonNull CreateRequest request) throws FirebaseAuthException {
+  public UserRecord createUser(@NonNull UserRecord.CreateRequest request)
+      throws FirebaseAuthException {
     return createUserOp(request).call();
   }
 
   /**
-   * Similar to {@link #createUser(CreateRequest)} but performs the operation asynchronously.
+   * Similar to {@link #createUser} but performs the operation asynchronously.
    *
-   * @param request A non-null {@link CreateRequest} instance.
+   * @param request A non-null {@link UserRecord.CreateRequest} instance.
    * @return An {@code ApiFuture} which will complete successfully with a {@link UserRecord}
    *     instance corresponding to the newly created account. If an error occurs while creating the
    *     user account, the future throws a {@link FirebaseAuthException}.
    * @throws NullPointerException if the provided request is null.
    */
-  public ApiFuture<UserRecord> createUserAsync(@NonNull CreateRequest request) {
+  public ApiFuture<UserRecord> createUserAsync(@NonNull UserRecord.CreateRequest request) {
     return createUserOp(request).callAsync(firebaseApp);
   }
 
   private CallableOperation<UserRecord, FirebaseAuthException> createUserOp(
-      final CreateRequest request) {
+      final UserRecord.CreateRequest request) {
     checkNotDestroyed();
     checkNotNull(request, "create request must not be null");
     final FirebaseUserManager userManager = getUserManager();
@@ -555,31 +559,32 @@ public abstract class AbstractFirebaseAuth {
 
   /**
    * Updates an existing user account with the attributes contained in the specified {@link
-   * UpdateRequest}.
+   * UserRecord.UpdateRequest}.
    *
-   * @param request A non-null {@link UpdateRequest} instance.
+   * @param request A non-null {@link UserRecord.UpdateRequest} instance.
    * @return A {@link UserRecord} instance corresponding to the updated user account.
    * @throws NullPointerException if the provided update request is null.
    * @throws FirebaseAuthException if an error occurs while updating the user account.
    */
-  public UserRecord updateUser(@NonNull UpdateRequest request) throws FirebaseAuthException {
+  public UserRecord updateUser(@NonNull UserRecord.UpdateRequest request)
+      throws FirebaseAuthException {
     return updateUserOp(request).call();
   }
 
   /**
-   * Similar to {@link #updateUser(UpdateRequest)} but performs the operation asynchronously.
+   * Similar to {@link #updateUser} but performs the operation asynchronously.
    *
-   * @param request A non-null {@link UpdateRequest} instance.
+   * @param request A non-null {@link UserRecord.UpdateRequest} instance.
    * @return An {@code ApiFuture} which will complete successfully with a {@link UserRecord}
    *     instance corresponding to the updated user account. If an error occurs while updating the
    *     user account, the future throws a {@link FirebaseAuthException}.
    */
-  public ApiFuture<UserRecord> updateUserAsync(@NonNull UpdateRequest request) {
+  public ApiFuture<UserRecord> updateUserAsync(@NonNull UserRecord.UpdateRequest request) {
     return updateUserOp(request).callAsync(firebaseApp);
   }
 
   private CallableOperation<UserRecord, FirebaseAuthException> updateUserOp(
-      final UpdateRequest request) {
+      final UserRecord.UpdateRequest request) {
     checkNotDestroyed();
     checkNotNull(request, "update request must not be null");
     final FirebaseUserManager userManager = getUserManager();
@@ -639,7 +644,8 @@ public abstract class AbstractFirebaseAuth {
     return new CallableOperation<Void, FirebaseAuthException>() {
       @Override
       protected Void execute() throws FirebaseAuthException {
-        final UpdateRequest request = new UpdateRequest(uid).setCustomClaims(claims);
+        final UserRecord.UpdateRequest request =
+            new UserRecord.UpdateRequest(uid).setCustomClaims(claims);
         userManager.updateUser(request, jsonFactory);
         return null;
       }
@@ -1054,18 +1060,6 @@ public abstract class AbstractFirebaseAuth {
         .callAsync(firebaseApp);
   }
 
-  FirebaseApp getFirebaseApp() {
-    return this.firebaseApp;
-  }
-
-  FirebaseTokenVerifier getCookieVerifier() {
-    return this.cookieVerifier.get();
-  }
-
-  FirebaseUserManager getUserManager() {
-    return this.userManager.get();
-  }
-
   private CallableOperation<String, FirebaseAuthException> generateEmailActionLinkOp(
       final EmailLinkType type, final String email, final ActionCodeSettings settings) {
     checkNotDestroyed();
@@ -1080,6 +1074,544 @@ public abstract class AbstractFirebaseAuth {
         return userManager.getEmailActionLink(type, email, settings);
       }
     };
+  }
+
+  /**
+   * Creates a new OpenID Connect auth provider config with the attributes contained in the
+   * specified {@link OidcProviderConfig.CreateRequest}.
+   *
+   * @param request A non-null {@link OidcProviderConfig.CreateRequest} instance.
+   * @return An {@link OidcProviderConfig} instance corresponding to the newly created provider
+   *     config.
+   * @throws NullPointerException if the provided request is null.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not
+   *     prefixed with 'oidc.'.
+   * @throws FirebaseAuthException if an error occurs while creating the provider config.
+   */
+  public OidcProviderConfig createOidcProviderConfig(
+      @NonNull OidcProviderConfig.CreateRequest request) throws FirebaseAuthException {
+    return createOidcProviderConfigOp(request).call();
+  }
+
+  /**
+   * Similar to {@link #createOidcProviderConfig} but performs the operation asynchronously.
+   *
+   * @param request A non-null {@link OidcProviderConfig.CreateRequest} instance.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link OidcProviderConfig}
+   *     instance corresponding to the newly created provider config. If an error occurs while
+   *     creating the provider config, the future throws a {@link FirebaseAuthException}.
+   * @throws NullPointerException if the provided request is null.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not
+   *     prefixed with 'oidc.'.
+   */
+  public ApiFuture<OidcProviderConfig> createOidcProviderConfigAsync(
+      @NonNull OidcProviderConfig.CreateRequest request) {
+    return createOidcProviderConfigOp(request).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<OidcProviderConfig, FirebaseAuthException>
+      createOidcProviderConfigOp(final OidcProviderConfig.CreateRequest request) {
+    checkNotDestroyed();
+    checkNotNull(request, "Create request must not be null.");
+    OidcProviderConfig.checkOidcProviderId(request.getProviderId());
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<OidcProviderConfig, FirebaseAuthException>() {
+      @Override
+      protected OidcProviderConfig execute() throws FirebaseAuthException {
+        return userManager.createOidcProviderConfig(request);
+      }
+    };
+  }
+
+  /**
+   * Updates an existing OpenID Connect auth provider config with the attributes contained in the
+   * specified {@link OidcProviderConfig.UpdateRequest}.
+   *
+   * @param request A non-null {@link OidcProviderConfig.UpdateRequest} instance.
+   * @return A {@link OidcProviderConfig} instance corresponding to the updated provider config.
+   * @throws NullPointerException if the provided update request is null.
+   * @throws IllegalArgumentException If the provided update request is invalid.
+   * @throws FirebaseAuthException if an error occurs while updating the provider config.
+   */
+  public OidcProviderConfig updateOidcProviderConfig(
+      @NonNull OidcProviderConfig.UpdateRequest request) throws FirebaseAuthException {
+    return updateOidcProviderConfigOp(request).call();
+  }
+
+  /**
+   * Similar to {@link #updateOidcProviderConfig} but performs the operation asynchronously.
+   *
+   * @param request A non-null {@link OidcProviderConfig.UpdateRequest} instance.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link OidcProviderConfig}
+   *     instance corresponding to the updated provider config. If an error occurs while updating
+   *     the provider config, the future throws a {@link FirebaseAuthException}.
+   * @throws NullPointerException if the provided update request is null.
+   * @throws IllegalArgumentException If the provided update request is invalid.
+   */
+  public ApiFuture<OidcProviderConfig> updateOidcProviderConfigAsync(
+      @NonNull OidcProviderConfig.UpdateRequest request) {
+    return updateOidcProviderConfigOp(request).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<OidcProviderConfig, FirebaseAuthException> updateOidcProviderConfigOp(
+      final OidcProviderConfig.UpdateRequest request) {
+    checkNotDestroyed();
+    checkNotNull(request, "Update request must not be null.");
+    checkArgument(!request.getProperties().isEmpty(),
+        "Update request must have at least one property set.");
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<OidcProviderConfig, FirebaseAuthException>() {
+      @Override
+      protected OidcProviderConfig execute() throws FirebaseAuthException {
+        return userManager.updateOidcProviderConfig(request);
+      }
+    };
+  }
+
+  /**
+   * Gets the OpenID Connect auth provider corresponding to the specified provider ID.
+   *
+   * @param providerId A provider ID string.
+   * @return An {@link OidcProviderConfig} instance.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with 'oidc'.
+   * @throws FirebaseAuthException If an error occurs while retrieving the provider config.
+   */
+  public OidcProviderConfig getOidcProviderConfig(@NonNull String providerId)
+      throws FirebaseAuthException {
+    return getOidcProviderConfigOp(providerId).call();
+  }
+
+  /**
+   * Similar to {@link #getOidcProviderConfig(String)} but performs the operation asynchronously.
+   * Page size is limited to 100 provider configs.
+   *
+   * @param providerId A provider ID string.
+   * @return An {@code ApiFuture} which will complete successfully with an
+   *     {@link OidcProviderConfig} instance. If an error occurs while retrieving the provider
+   *     config or if the specified provider ID does not exist, the future throws a
+   *     {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not
+   *     prefixed with 'oidc.'.
+   */
+  public ApiFuture<OidcProviderConfig> getOidcProviderConfigAsync(@NonNull String providerId) {
+    return getOidcProviderConfigOp(providerId).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<OidcProviderConfig, FirebaseAuthException>
+      getOidcProviderConfigOp(final String providerId) {
+    checkNotDestroyed();
+    OidcProviderConfig.checkOidcProviderId(providerId);
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<OidcProviderConfig, FirebaseAuthException>() {
+      @Override
+      protected OidcProviderConfig execute() throws FirebaseAuthException {
+        return userManager.getOidcProviderConfig(providerId);
+      }
+    };
+  }
+
+  /**
+   * Gets a page of OpenID Connect auth provider configs starting from the specified
+   * {@code pageToken}. Page size is limited to 100 provider configs.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @return A {@link ListProviderConfigsPage} instance.
+   * @throws IllegalArgumentException If the specified page token is empty
+   * @throws FirebaseAuthException If an error occurs while retrieving provider config data.
+   */
+  public ListProviderConfigsPage<OidcProviderConfig> listOidcProviderConfigs(
+        @Nullable String pageToken) throws FirebaseAuthException {
+    int maxResults = FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS;
+    return listOidcProviderConfigsOp(pageToken, maxResults).call();
+  }
+
+  /**
+   * Gets a page of OpenID Connect auth provider configs starting from the specified
+   * {@code pageToken}.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @param maxResults Maximum number of provider configs to include in the returned page. This may
+   *     not exceed 100.
+   * @return A {@link ListProviderConfigsPage} instance.
+   * @throws IllegalArgumentException If the specified page token is empty, or max results value is
+   *     invalid.
+   * @throws FirebaseAuthException If an error occurs while retrieving provider config data.
+   */
+  public ListProviderConfigsPage<OidcProviderConfig> listOidcProviderConfigs(
+        @Nullable String pageToken, int maxResults) throws FirebaseAuthException {
+    return listOidcProviderConfigsOp(pageToken, maxResults).call();
+  }
+
+  /**
+   * Similar to {@link #listOidcProviderConfigs(String)} but performs the operation asynchronously.
+   * Page size is limited to 100 provider configs.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @return An {@code ApiFuture} which will complete successfully with a
+   *     {@link ListProviderConfigsPage} instance. If an error occurs while retrieving provider
+   *     config data, the future throws an exception.
+   * @throws IllegalArgumentException If the specified page token is empty.
+   */
+  public ApiFuture<ListProviderConfigsPage<OidcProviderConfig>> listOidcProviderConfigsAsync(
+      @Nullable String pageToken) {
+    int maxResults = FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS;
+    return listOidcProviderConfigsAsync(pageToken, maxResults);
+  }
+
+  /**
+   * Similar to {@link #listOidcProviderConfigs(String, int)} but performs the operation
+   * asynchronously.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @param maxResults Maximum number of provider configs to include in the returned page. This may
+   *     not exceed 100.
+   * @return An {@code ApiFuture} which will complete successfully with a
+   *     {@link ListProviderConfigsPage} instance. If an error occurs while retrieving provider
+   *     config data, the future throws an exception.
+   * @throws IllegalArgumentException If the specified page token is empty, or max results value is
+   *     invalid.
+   */
+  public ApiFuture<ListProviderConfigsPage<OidcProviderConfig>> listOidcProviderConfigsAsync(
+      @Nullable String pageToken,
+      int maxResults) {
+    return listOidcProviderConfigsOp(pageToken, maxResults).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<ListProviderConfigsPage<OidcProviderConfig>, FirebaseAuthException>
+      listOidcProviderConfigsOp(@Nullable final String pageToken, final int maxResults) {
+    checkNotDestroyed();
+    final FirebaseUserManager userManager = getUserManager();
+    final DefaultOidcProviderConfigSource source = new DefaultOidcProviderConfigSource(userManager);
+    final ListProviderConfigsPage.Factory<OidcProviderConfig> factory =
+        new ListProviderConfigsPage.Factory<OidcProviderConfig>(source, maxResults, pageToken);
+    return
+      new CallableOperation<ListProviderConfigsPage<OidcProviderConfig>, FirebaseAuthException>() {
+        @Override
+        protected ListProviderConfigsPage<OidcProviderConfig> execute()
+            throws FirebaseAuthException {
+          return factory.create();
+        }
+    };
+  }
+
+  /**
+   * Deletes the OpenID Connect auth provider config identified by the specified provider ID.
+   *
+   * @param providerId A provider ID string.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with 'oidc'.
+   * @throws FirebaseAuthException If an error occurs while deleting the provider config.
+   */
+  public void deleteOidcProviderConfig(@NonNull String providerId) throws FirebaseAuthException {
+    deleteOidcProviderConfigOp(providerId).call();
+  }
+
+  /**
+   * Similar to {@link #deleteOidcProviderConfig} but performs the operation asynchronously.
+   *
+   * @param providerId A provider ID string.
+   * @return An {@code ApiFuture} which will complete successfully when the specified provider
+   *     config has been deleted. If an error occurs while deleting the provider config, the future
+   *     throws a {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with "oidc.".
+   */
+  public ApiFuture<Void> deleteOidcProviderConfigAsync(String providerId) {
+    return deleteOidcProviderConfigOp(providerId).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<Void, FirebaseAuthException> deleteOidcProviderConfigOp(
+      final String providerId) {
+    checkNotDestroyed();
+    OidcProviderConfig.checkOidcProviderId(providerId);
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<Void, FirebaseAuthException>() {
+      @Override
+      protected Void execute() throws FirebaseAuthException {
+        userManager.deleteOidcProviderConfig(providerId);
+        return null;
+      }
+    };
+  }
+
+  /**
+   * Creates a new SAML Auth provider config with the attributes contained in the specified
+   * {@link SamlProviderConfig.CreateRequest}.
+   *
+   * @param request A non-null {@link SamlProviderConfig.CreateRequest} instance.
+   * @return An {@link SamlProviderConfig} instance corresponding to the newly created provider
+   *     config.
+   * @throws NullPointerException if the provided request is null.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with 'saml'.
+   * @throws FirebaseAuthException if an error occurs while creating the provider config.
+   */
+  public SamlProviderConfig createSamlProviderConfig(
+      @NonNull SamlProviderConfig.CreateRequest request) throws FirebaseAuthException {
+    return createSamlProviderConfigOp(request).call();
+  }
+
+  /**
+   * Similar to {@link #createSamlProviderConfig} but performs the operation asynchronously.
+   *
+   * @param request A non-null {@link SamlProviderConfig.CreateRequest} instance.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link SamlProviderConfig}
+   *     instance corresponding to the newly created provider config. If an error occurs while
+   *     creating the provider config, the future throws a {@link FirebaseAuthException}.
+   * @throws NullPointerException if the provided request is null.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with 'saml'.
+   */
+  public ApiFuture<SamlProviderConfig> createSamlProviderConfigAsync(
+      @NonNull SamlProviderConfig.CreateRequest request) {
+    return createSamlProviderConfigOp(request).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<SamlProviderConfig, FirebaseAuthException>
+      createSamlProviderConfigOp(final SamlProviderConfig.CreateRequest request) {
+    checkNotDestroyed();
+    checkNotNull(request, "Create request must not be null.");
+    SamlProviderConfig.checkSamlProviderId(request.getProviderId());
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<SamlProviderConfig, FirebaseAuthException>() {
+      @Override
+      protected SamlProviderConfig execute() throws FirebaseAuthException {
+        return userManager.createSamlProviderConfig(request);
+      }
+    };
+  }
+
+  /**
+   * Updates an existing SAML Auth provider config with the attributes contained in the specified
+   * {@link SamlProviderConfig.UpdateRequest}.
+   *
+   * @param request A non-null {@link SamlProviderConfig.UpdateRequest} instance.
+   * @return A {@link SamlProviderConfig} instance corresponding to the updated provider config.
+   * @throws NullPointerException if the provided update request is null.
+   * @throws IllegalArgumentException If the provided update request is invalid.
+   * @throws FirebaseAuthException if an error occurs while updating the provider config.
+   */
+  public SamlProviderConfig updateSamlProviderConfig(
+      @NonNull SamlProviderConfig.UpdateRequest request) throws FirebaseAuthException {
+    return updateSamlProviderConfigOp(request).call();
+  }
+
+  /**
+   * Similar to {@link #updateSamlProviderConfig} but performs the operation asynchronously.
+   *
+   * @param request A non-null {@link SamlProviderConfig.UpdateRequest} instance.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link SamlProviderConfig}
+   *     instance corresponding to the updated provider config. If an error occurs while updating
+   *     the provider config, the future throws a {@link FirebaseAuthException}.
+   * @throws NullPointerException if the provided update request is null.
+   * @throws IllegalArgumentException If the provided update request is invalid.
+   */
+  public ApiFuture<SamlProviderConfig> updateSamlProviderConfigAsync(
+      @NonNull SamlProviderConfig.UpdateRequest request) {
+    return updateSamlProviderConfigOp(request).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<SamlProviderConfig, FirebaseAuthException> updateSamlProviderConfigOp(
+      final SamlProviderConfig.UpdateRequest request) {
+    checkNotDestroyed();
+    checkNotNull(request, "Update request must not be null.");
+    checkArgument(!request.getProperties().isEmpty(),
+        "Update request must have at least one property set.");
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<SamlProviderConfig, FirebaseAuthException>() {
+      @Override
+      protected SamlProviderConfig execute() throws FirebaseAuthException {
+        return userManager.updateSamlProviderConfig(request);
+      }
+    };
+  }
+
+  /**
+   * Gets the SAML Auth provider config corresponding to the specified provider ID.
+   *
+   * @param providerId A provider ID string.
+   * @return An {@link SamlProviderConfig} instance.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with 'saml'.
+   * @throws FirebaseAuthException If an error occurs while retrieving the provider config.
+   */
+  public SamlProviderConfig getSamlProviderConfig(@NonNull String providerId)
+      throws FirebaseAuthException {
+    return getSamlProviderConfigOp(providerId).call();
+  }
+
+  /**
+   * Similar to {@link #getSamlProviderConfig(String)} but performs the operation asynchronously.
+   * Page size is limited to 100 provider configs.
+   *
+   * @param providerId A provider ID string.
+   * @return An {@code ApiFuture} which will complete successfully with an
+   *     {@link SamlProviderConfig} instance. If an error occurs while retrieving the provider
+   *     config or if the specified provider ID does not exist, the future throws a
+   *     {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with 'saml'.
+   */
+  public ApiFuture<SamlProviderConfig> getSamlProviderConfigAsync(@NonNull String providerId) {
+    return getSamlProviderConfigOp(providerId).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<SamlProviderConfig, FirebaseAuthException>
+      getSamlProviderConfigOp(final String providerId) {
+    checkNotDestroyed();
+    SamlProviderConfig.checkSamlProviderId(providerId);
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<SamlProviderConfig, FirebaseAuthException>() {
+      @Override
+      protected SamlProviderConfig execute() throws FirebaseAuthException {
+        return userManager.getSamlProviderConfig(providerId);
+      }
+    };
+  }
+
+  /**
+   * Gets a page of SAML Auth provider configs starting from the specified {@code pageToken}. Page
+   * size is limited to 100 provider configs.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @return A {@link ListProviderConfigsPage} instance.
+   * @throws IllegalArgumentException If the specified page token is empty.
+   * @throws FirebaseAuthException If an error occurs while retrieving provider config data.
+   */
+  public ListProviderConfigsPage<SamlProviderConfig> listSamlProviderConfigs(
+        @Nullable String pageToken) throws FirebaseAuthException {
+    return listSamlProviderConfigs(
+        pageToken,
+        FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS);
+  }
+
+  /**
+   * Gets a page of SAML Auth provider configs starting from the specified {@code pageToken}.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @param maxResults Maximum number of provider configs to include in the returned page. This may
+   *     not exceed 100.
+   * @return A {@link ListProviderConfigsPage} instance.
+   * @throws IllegalArgumentException If the specified page token is empty, or max results value is
+   *     invalid.
+   * @throws FirebaseAuthException If an error occurs while retrieving provider config data.
+   */
+  public ListProviderConfigsPage<SamlProviderConfig> listSamlProviderConfigs(
+        @Nullable String pageToken, int maxResults) throws FirebaseAuthException {
+    return listSamlProviderConfigsOp(pageToken, maxResults).call();
+  }
+
+  /**
+   * Similar to {@link #listSamlProviderConfigs(String)} but performs the operation asynchronously.
+   * Page size is limited to 100 provider configs.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @return An {@code ApiFuture} which will complete successfully with a
+   *     {@link ListProviderConfigsPage} instance. If an error occurs while retrieving provider
+   *     config data, the future throws an exception.
+   * @throws IllegalArgumentException If the specified page token is empty.
+   */
+  public ApiFuture<ListProviderConfigsPage<SamlProviderConfig>> listSamlProviderConfigsAsync(
+      @Nullable String pageToken) {
+    int maxResults = FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS;
+    return listSamlProviderConfigsAsync(pageToken, maxResults);
+  }
+
+  /**
+   * Similar to {@link #listSamlProviderConfigs(String, int)} but performs the operation
+   * asynchronously.
+   *
+   * @param pageToken A non-empty page token string, or null to retrieve the first page of provider
+   *     configs.
+   * @param maxResults Maximum number of provider configs to include in the returned page. This may
+   *     not exceed 100.
+   * @return An {@code ApiFuture} which will complete successfully with a
+   *     {@link ListProviderConfigsPage} instance. If an error occurs while retrieving provider
+   *     config data, the future throws an exception.
+   * @throws IllegalArgumentException If the specified page token is empty, or max results value is
+   *     invalid.
+   */
+  public ApiFuture<ListProviderConfigsPage<SamlProviderConfig>> listSamlProviderConfigsAsync(
+      @Nullable String pageToken,
+      int maxResults) {
+    return listSamlProviderConfigsOp(pageToken, maxResults).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<ListProviderConfigsPage<SamlProviderConfig>, FirebaseAuthException>
+      listSamlProviderConfigsOp(@Nullable final String pageToken, final int maxResults) {
+    checkNotDestroyed();
+    final FirebaseUserManager userManager = getUserManager();
+    final DefaultSamlProviderConfigSource source = new DefaultSamlProviderConfigSource(userManager);
+    final ListProviderConfigsPage.Factory<SamlProviderConfig> factory =
+        new ListProviderConfigsPage.Factory<SamlProviderConfig>(source, maxResults, pageToken);
+    return
+      new CallableOperation<ListProviderConfigsPage<SamlProviderConfig>, FirebaseAuthException>() {
+        @Override
+        protected ListProviderConfigsPage<SamlProviderConfig> execute()
+            throws FirebaseAuthException {
+          return factory.create();
+        }
+    };
+  }
+
+  /**
+   * Deletes the SAML Auth provider config identified by the specified provider ID.
+   *
+   * @param providerId A provider ID string.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with "saml.".
+   * @throws FirebaseAuthException If an error occurs while deleting the provider config.
+   */
+  public void deleteSamlProviderConfig(@NonNull String providerId) throws FirebaseAuthException {
+    deleteSamlProviderConfigOp(providerId).call();
+  }
+
+  /**
+   * Similar to {@link #deleteSamlProviderConfig} but performs the operation asynchronously.
+   *
+   * @param providerId A provider ID string.
+   * @return An {@code ApiFuture} which will complete successfully when the specified provider
+   *     config has been deleted. If an error occurs while deleting the provider config, the future
+   *     throws a {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the provider ID string is null or empty, or is not prefixed
+   *     with "saml.".
+   */
+  public ApiFuture<Void> deleteSamlProviderConfigAsync(String providerId) {
+    return deleteSamlProviderConfigOp(providerId).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<Void, FirebaseAuthException> deleteSamlProviderConfigOp(
+      final String providerId) {
+    checkNotDestroyed();
+    SamlProviderConfig.checkSamlProviderId(providerId);
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<Void, FirebaseAuthException>() {
+      @Override
+      protected Void execute() throws FirebaseAuthException {
+        userManager.deleteSamlProviderConfig(providerId);
+        return null;
+      }
+    };
+  }
+
+  FirebaseApp getFirebaseApp() {
+    return this.firebaseApp;
+  }
+
+  FirebaseTokenVerifier getCookieVerifier() {
+    return this.cookieVerifier.get();
+  }
+
+  FirebaseUserManager getUserManager() {
+    return this.userManager.get();
   }
 
   protected <T> Supplier<T> threadSafeMemoize(final Supplier<T> supplier) {

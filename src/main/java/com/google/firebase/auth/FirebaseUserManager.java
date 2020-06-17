@@ -44,6 +44,8 @@ import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoRequest;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
 import com.google.firebase.auth.internal.HttpErrorResponse;
+import com.google.firebase.auth.internal.ListOidcProviderConfigsResponse;
+import com.google.firebase.auth.internal.ListSamlProviderConfigsResponse;
 import com.google.firebase.auth.internal.ListTenantsResponse;
 import com.google.firebase.auth.internal.UploadAccountResponse;
 import com.google.firebase.internal.ApiClientUtils;
@@ -69,6 +71,7 @@ import java.util.Set;
  */
 class FirebaseUserManager {
 
+  static final String CONFIGURATION_NOT_FOUND_ERROR = "configuration-not-found";
   static final String TENANT_ID_MISMATCH_ERROR = "tenant-id-mismatch";
   static final String TENANT_NOT_FOUND_ERROR = "tenant-not-found";
   static final String USER_NOT_FOUND_ERROR = "user-not-found";
@@ -78,7 +81,7 @@ class FirebaseUserManager {
   // SDK error codes defined at: https://firebase.google.com/docs/auth/admin/errors
   private static final Map<String, String> ERROR_CODES = ImmutableMap.<String, String>builder()
       .put("CLAIMS_TOO_LARGE", "claims-too-large")
-      .put("CONFIGURATION_NOT_FOUND", "project-not-found")
+      .put("CONFIGURATION_NOT_FOUND", CONFIGURATION_NOT_FOUND_ERROR)
       .put("INSUFFICIENT_PERMISSION", "insufficient-permission")
       .put("DUPLICATE_EMAIL", "email-already-exists")
       .put("DUPLICATE_LOCAL_ID", "uid-already-exists")
@@ -97,6 +100,7 @@ class FirebaseUserManager {
       .put("INVALID_DYNAMIC_LINK_DOMAIN", "invalid-dynamic-link-domain")
       .build();
 
+  static final int MAX_LIST_PROVIDER_CONFIGS_RESULTS = 100;
   static final int MAX_LIST_TENANTS_RESULTS = 1000;
   static final int MAX_GET_ACCOUNTS_BATCH_SIZE = 100;
   static final int MAX_DELETE_ACCOUNTS_BATCH_SIZE = 1000;
@@ -112,6 +116,7 @@ class FirebaseUserManager {
   private static final String CLIENT_VERSION_HEADER = "X-Client-Version";
 
   private final String userMgtBaseUrl;
+  private final String idpConfigMgtBaseUrl;
   private final String tenantMgtBaseUrl;
   private final JsonFactory jsonFactory;
   private final HttpRequestFactory requestFactory;
@@ -126,15 +131,18 @@ class FirebaseUserManager {
         "Project ID is required to access the auth service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
-    String tenantId = builder.tenantId;
-    if (builder.tenantId == null) {
-      this.userMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v1", projectId);
+    final String idToolkitUrlV1 = String.format(ID_TOOLKIT_URL, "v1", projectId);
+    final String idToolkitUrlV2 = String.format(ID_TOOLKIT_URL, "v2", projectId);
+    final String tenantId = builder.tenantId;
+    if (tenantId == null) {
+      this.userMgtBaseUrl = idToolkitUrlV1;
+      this.idpConfigMgtBaseUrl = idToolkitUrlV2;
     } else {
-      checkArgument(!tenantId.isEmpty(), "Tenant ID must not be empty");
-      this.userMgtBaseUrl =
-          String.format(ID_TOOLKIT_URL, "v1", projectId) + getTenantUrlSuffix(tenantId);
+      checkArgument(!tenantId.isEmpty(), "Tenant ID must not be empty.");
+      this.userMgtBaseUrl = idToolkitUrlV1 + getTenantUrlSuffix(tenantId);
+      this.idpConfigMgtBaseUrl = idToolkitUrlV2 + getTenantUrlSuffix(tenantId);
     }
-    this.tenantMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v2", projectId);
+    this.tenantMgtBaseUrl = idToolkitUrlV2;
     this.jsonFactory = app.getOptions().getJsonFactory();
     this.requestFactory = builder.requestFactory == null
       ? ApiClientUtils.newAuthorizedRequestFactory(app) : builder.requestFactory;
@@ -295,18 +303,9 @@ class FirebaseUserManager {
 
   Tenant updateTenant(Tenant.UpdateRequest request) throws FirebaseAuthException {
     Map<String, Object> properties = request.getProperties();
-    checkArgument(!properties.isEmpty(), "Tenant update must have at least one property set");
     GenericUrl url = new GenericUrl(tenantMgtBaseUrl + getTenantUrlSuffix(request.getTenantId()));
-    url.put("updateMask", generateMask(properties));
+    url.put("updateMask", Joiner.on(",").join(generateMask(properties)));
     return sendRequest("PATCH", url, properties, Tenant.class);
-  }
-
-  private static String generateMask(Map<String, Object> properties) {
-    // This implementation does not currently handle the case of nested properties. This is fine
-    // since we do not currently generate masks for any properties with nested values. When it
-    // comes time to implement this, we can check if a property has nested properties by checking
-    // if it is an instance of the Map class.
-    return Joiner.on(",").join(ImmutableSortedSet.copyOf(properties.keySet()));
   }
 
   void deleteTenant(String tenantId) throws FirebaseAuthException {
@@ -366,9 +365,126 @@ class FirebaseUserManager {
     throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create email action link");
   }
 
+  OidcProviderConfig createOidcProviderConfig(
+      OidcProviderConfig.CreateRequest request) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/oauthIdpConfigs");
+    url.set("oauthIdpConfigId", request.getProviderId());
+    return sendRequest("POST", url, request.getProperties(), OidcProviderConfig.class);
+  }
+
+  SamlProviderConfig createSamlProviderConfig(
+      SamlProviderConfig.CreateRequest request) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/inboundSamlConfigs");
+    url.set("inboundSamlConfigId", request.getProviderId());
+    return sendRequest("POST", url, request.getProperties(), SamlProviderConfig.class);
+  }
+
+  OidcProviderConfig updateOidcProviderConfig(OidcProviderConfig.UpdateRequest request)
+      throws FirebaseAuthException {
+    Map<String, Object> properties = request.getProperties();
+    GenericUrl url =
+        new GenericUrl(idpConfigMgtBaseUrl + getOidcUrlSuffix(request.getProviderId()));
+    url.put("updateMask", Joiner.on(",").join(generateMask(properties)));
+    return sendRequest("PATCH", url, properties, OidcProviderConfig.class);
+  }
+
+  SamlProviderConfig updateSamlProviderConfig(SamlProviderConfig.UpdateRequest request)
+      throws FirebaseAuthException {
+    Map<String, Object> properties = request.getProperties();
+    GenericUrl url =
+        new GenericUrl(idpConfigMgtBaseUrl + getSamlUrlSuffix(request.getProviderId()));
+    url.put("updateMask", Joiner.on(",").join(generateMask(properties)));
+    return sendRequest("PATCH", url, properties, SamlProviderConfig.class);
+  }
+
+  OidcProviderConfig getOidcProviderConfig(String providerId) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + getOidcUrlSuffix(providerId));
+    return sendRequest("GET", url, null, OidcProviderConfig.class);
+  }
+
+  SamlProviderConfig getSamlProviderConfig(String providerId) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + getSamlUrlSuffix(providerId));
+    return sendRequest("GET", url, null, SamlProviderConfig.class);
+  }
+
+  ListOidcProviderConfigsResponse listOidcProviderConfigs(int maxResults, String pageToken)
+      throws FirebaseAuthException {
+    ImmutableMap.Builder<String, Object> builder =
+        ImmutableMap.<String, Object>builder().put("pageSize", maxResults);
+    if (pageToken != null) {
+      checkArgument(!pageToken.equals(
+          ListProviderConfigsPage.END_OF_LIST), "Invalid end of list page token.");
+      builder.put("nextPageToken", pageToken);
+    }
+
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/oauthIdpConfigs");
+    url.putAll(builder.build());
+    ListOidcProviderConfigsResponse response =
+        sendRequest("GET", url, null, ListOidcProviderConfigsResponse.class);
+    if (response == null) {
+      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to retrieve provider configs.");
+    }
+    return response;
+  }
+
+  ListSamlProviderConfigsResponse listSamlProviderConfigs(int maxResults, String pageToken)
+      throws FirebaseAuthException {
+    ImmutableMap.Builder<String, Object> builder =
+        ImmutableMap.<String, Object>builder().put("pageSize", maxResults);
+    if (pageToken != null) {
+      checkArgument(!pageToken.equals(
+          ListProviderConfigsPage.END_OF_LIST), "Invalid end of list page token.");
+      builder.put("nextPageToken", pageToken);
+    }
+
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/inboundSamlConfigs");
+    url.putAll(builder.build());
+    ListSamlProviderConfigsResponse response =
+        sendRequest("GET", url, null, ListSamlProviderConfigsResponse.class);
+    if (response == null) {
+      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to retrieve provider configs.");
+    }
+    return response;
+  }
+
+  void deleteOidcProviderConfig(String providerId) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + getOidcUrlSuffix(providerId));
+    sendRequest("DELETE", url, null, GenericJson.class);
+  }
+
+  void deleteSamlProviderConfig(String providerId) throws FirebaseAuthException {
+    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + getSamlUrlSuffix(providerId));
+    sendRequest("DELETE", url, null, GenericJson.class);
+  }
+
+  private static Set<String> generateMask(Map<String, Object> properties) {
+    ImmutableSortedSet.Builder<String> maskBuilder = ImmutableSortedSet.naturalOrder();
+    for (Map.Entry<String, Object> entry : properties.entrySet()) {
+      if (entry.getValue() instanceof Map) {
+        Set<String> childMask = generateMask((Map<String, Object>) entry.getValue());
+        for (String childProperty : childMask) {
+          maskBuilder.add(entry.getKey() + "." + childProperty);
+        }
+      } else {
+        maskBuilder.add(entry.getKey());
+      }
+    }
+    return maskBuilder.build();
+  }
+
   private static String getTenantUrlSuffix(String tenantId) {
-    checkArgument(!Strings.isNullOrEmpty(tenantId));
+    checkArgument(!Strings.isNullOrEmpty(tenantId), "Tenant ID must not be null or empty.");
     return "/tenants/" + tenantId;
+  }
+
+  private static String getOidcUrlSuffix(String providerId) {
+    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
+    return "/oauthIdpConfigs/" + providerId;
+  }
+
+  private static String getSamlUrlSuffix(String providerId) {
+    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
+    return "/inboundSamlConfigs/" + providerId;
   }
 
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {

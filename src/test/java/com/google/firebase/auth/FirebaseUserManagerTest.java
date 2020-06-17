@@ -68,6 +68,7 @@ public class FirebaseUserManagerTest {
   private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
   private static final String TEST_TOKEN = "token";
   private static final GoogleCredentials credentials = new MockGoogleCredentials(TEST_TOKEN);
+
   private static final ActionCodeSettings ACTION_CODE_SETTINGS = ActionCodeSettings.builder()
           .setUrl("https://example.dynamic.link")
           .setHandleCodeInApp(true)
@@ -79,8 +80,10 @@ public class FirebaseUserManagerTest {
           .build();
   private static final Map<String, Object> ACTION_CODE_SETTINGS_MAP =
           ACTION_CODE_SETTINGS.getProperties();
-  private static final String TENANTS_BASE_URL =
-          "https://identitytoolkit.googleapis.com/v2/projects/test-project-id/tenants";
+
+  private static final String PROJECT_BASE_URL =
+      "https://identitytoolkit.googleapis.com/v2/projects/test-project-id";
+  private static final String TENANTS_BASE_URL = PROJECT_BASE_URL + "/tenants";
 
   @After
   public void tearDown() {
@@ -1608,6 +1611,896 @@ public class FirebaseUserManagerTest {
     }
   }
 
+  @Test
+  public void testCreateOidcProvider() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+    OidcProviderConfig.CreateRequest createRequest =
+        new OidcProviderConfig.CreateRequest()
+            .setProviderId("oidc.provider-id")
+            .setDisplayName("DISPLAY_NAME")
+            .setEnabled(true)
+            .setClientId("CLIENT_ID")
+            .setIssuer("https://oidc.com/issuer");
+
+    OidcProviderConfig config = FirebaseAuth.getInstance().createOidcProviderConfig(createRequest);
+
+    checkOidcProviderConfig(config, "oidc.provider-id");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/oauthIdpConfigs");
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertTrue((boolean) parsed.get("enabled"));
+    assertEquals("CLIENT_ID", parsed.get("clientId"));
+    assertEquals("https://oidc.com/issuer", parsed.get("issuer"));
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("oidc.provider-id", url.getFirst("oauthIdpConfigId"));
+  }
+
+  @Test
+  public void testCreateOidcProviderMinimal() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+    // Only the 'enabled' and 'displayName' fields can be omitted from an OIDC provider config
+    // creation request.
+    OidcProviderConfig.CreateRequest createRequest =
+        new OidcProviderConfig.CreateRequest()
+            .setProviderId("oidc.provider-id")
+            .setClientId("CLIENT_ID")
+            .setIssuer("https://oidc.com/issuer");
+
+    FirebaseAuth.getInstance().createOidcProviderConfig(createRequest);
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/oauthIdpConfigs");
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertNull(parsed.get("displayName"));
+    assertNull(parsed.get("enabled"));
+    assertEquals("CLIENT_ID", parsed.get("clientId"));
+    assertEquals("https://oidc.com/issuer", parsed.get("issuer"));
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("oidc.provider-id", url.getFirst("oauthIdpConfigId"));
+  }
+
+  @Test
+  public void testCreateOidcProviderError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+    OidcProviderConfig.CreateRequest createRequest =
+        new OidcProviderConfig.CreateRequest().setProviderId("oidc.provider-id");
+    try {
+      FirebaseAuth.getInstance().createOidcProviderConfig(createRequest);
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/oauthIdpConfigs");
+  }
+
+  @Test
+  public void testCreateOidcProviderMissingId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+    OidcProviderConfig.CreateRequest createRequest =
+        new OidcProviderConfig.CreateRequest()
+            .setDisplayName("DISPLAY_NAME")
+            .setEnabled(true)
+            .setClientId("CLIENT_ID")
+            .setIssuer("https://oidc.com/issuer");
+    try {
+      FirebaseAuth.getInstance().createOidcProviderConfig(createRequest);
+      fail("No error thrown for invalid response");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testTenantAwareCreateOidcProvider() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        TestUtils.loadResource("oidc.json"));
+    OidcProviderConfig.CreateRequest createRequest =
+        new OidcProviderConfig.CreateRequest()
+            .setProviderId("oidc.provider-id")
+            .setDisplayName("DISPLAY_NAME")
+            .setEnabled(true)
+            .setClientId("CLIENT_ID")
+            .setIssuer("https://oidc.com/issuer");
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+
+    OidcProviderConfig config = tenantAwareAuth.createOidcProviderConfig(createRequest);
+
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "POST", TENANTS_BASE_URL + "/TENANT_ID/oauthIdpConfigs");
+  }
+
+  @Test
+  public void testUpdateOidcProvider() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+    OidcProviderConfig.UpdateRequest request =
+        new OidcProviderConfig.UpdateRequest("oidc.provider-id")
+            .setDisplayName("DISPLAY_NAME")
+            .setEnabled(true)
+            .setClientId("CLIENT_ID")
+            .setIssuer("https://oidc.com/issuer");
+
+    OidcProviderConfig config = FirebaseAuth.getInstance().updateOidcProviderConfig(request);
+
+    checkOidcProviderConfig(config, "oidc.provider-id");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("clientId,displayName,enabled,issuer", url.getFirst("updateMask"));
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertTrue((boolean) parsed.get("enabled"));
+    assertEquals("CLIENT_ID", parsed.get("clientId"));
+    assertEquals("https://oidc.com/issuer", parsed.get("issuer"));
+  }
+
+  @Test
+  public void testUpdateOidcProviderMinimal() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+    OidcProviderConfig.UpdateRequest request =
+        new OidcProviderConfig.UpdateRequest("oidc.provider-id").setDisplayName("DISPLAY_NAME");
+
+    OidcProviderConfig config = FirebaseAuth.getInstance().updateOidcProviderConfig(request);
+
+    checkOidcProviderConfig(config, "oidc.provider-id");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("displayName", url.getFirst("updateMask"));
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals(1, parsed.size());
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+  }
+
+  @Test
+  public void testUpdateOidcProviderConfigNoValues() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+    try {
+      FirebaseAuth.getInstance().updateOidcProviderConfig(
+          new OidcProviderConfig.UpdateRequest("oidc.provider-id"));
+      fail("No error thrown for empty provider config update");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testUpdateOidcProviderConfigError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+    OidcProviderConfig.UpdateRequest request =
+        new OidcProviderConfig.UpdateRequest("oidc.provider-id").setDisplayName("DISPLAY_NAME");
+    try {
+      FirebaseAuth.getInstance().updateOidcProviderConfig(request);
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
+  }
+
+  @Test
+  public void testTenantAwareUpdateOidcProvider() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        TestUtils.loadResource("oidc.json"));
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+    OidcProviderConfig.UpdateRequest request =
+        new OidcProviderConfig.UpdateRequest("oidc.provider-id")
+            .setDisplayName("DISPLAY_NAME")
+            .setEnabled(true)
+            .setClientId("CLIENT_ID")
+            .setIssuer("https://oidc.com/issuer");
+
+    OidcProviderConfig config = tenantAwareAuth.updateOidcProviderConfig(request);
+
+    checkOidcProviderConfig(config, "oidc.provider-id");
+    checkRequestHeaders(interceptor);
+    String expectedUrl = TENANTS_BASE_URL + "/TENANT_ID/oauthIdpConfigs/oidc.provider-id";
+    checkUrl(interceptor, "PATCH", expectedUrl);
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("clientId,displayName,enabled,issuer", url.getFirst("updateMask"));
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertTrue((boolean) parsed.get("enabled"));
+    assertEquals("CLIENT_ID", parsed.get("clientId"));
+    assertEquals("https://oidc.com/issuer", parsed.get("issuer"));
+  }
+
+  @Test
+  public void testGetOidcProviderConfig() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+
+    OidcProviderConfig config =
+        FirebaseAuth.getInstance().getOidcProviderConfig("oidc.provider-id");
+
+    checkOidcProviderConfig(config, "oidc.provider-id");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
+  }
+
+  @Test
+  public void testGetOidcProviderConfigMissingId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+
+    try {
+      FirebaseAuth.getInstance().getOidcProviderConfig(null);
+      fail("No error thrown for missing provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testGetOidcProviderConfigInvalidId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("oidc.json"));
+
+    try {
+      FirebaseAuth.getInstance().getOidcProviderConfig("saml.invalid-oidc-provider-id");
+      fail("No error thrown for invalid provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testGetOidcProviderConfigWithNotFoundError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"CONFIGURATION_NOT_FOUND\"}}");
+    try {
+      FirebaseAuth.getInstance().getOidcProviderConfig("oidc.provider-id");
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
+  }
+
+  @Test
+  public void testGetTenantAwareOidcProviderConfig() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        TestUtils.loadResource("oidc.json"));
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+
+    OidcProviderConfig config = tenantAwareAuth.getOidcProviderConfig("oidc.provider-id");
+
+    checkOidcProviderConfig(config, "oidc.provider-id");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/TENANT_ID/oauthIdpConfigs/oidc.provider-id");
+  }
+
+  @Test
+  public void testListOidcProviderConfigs() throws Exception {
+    final TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("listOidc.json"));
+    ListProviderConfigsPage<OidcProviderConfig> page =
+        FirebaseAuth.getInstance().listOidcProviderConfigsAsync(null, 99).get();
+
+    ImmutableList<OidcProviderConfig> providerConfigs = ImmutableList.copyOf(page.getValues());
+    assertEquals(2, providerConfigs.size());
+    checkOidcProviderConfig(providerConfigs.get(0), "oidc.provider-id1");
+    checkOidcProviderConfig(providerConfigs.get(1), "oidc.provider-id2");
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/oauthIdpConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(99, url.getFirst("pageSize"));
+    assertNull(url.getFirst("nextPageToken"));
+  }
+
+  @Test
+  public void testListOidcProviderConfigsWithPageToken() throws Exception {
+    final TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("listOidc.json"));
+    ListProviderConfigsPage<OidcProviderConfig> page =
+        FirebaseAuth.getInstance().listOidcProviderConfigsAsync("token", 99).get();
+
+    ImmutableList<OidcProviderConfig> providerConfigs = ImmutableList.copyOf(page.getValues());
+    assertEquals(2, providerConfigs.size());
+    checkOidcProviderConfig(providerConfigs.get(0), "oidc.provider-id1");
+    checkOidcProviderConfig(providerConfigs.get(1), "oidc.provider-id2");
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/oauthIdpConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(99, url.getFirst("pageSize"));
+    assertEquals("token", url.getFirst("nextPageToken"));
+  }
+
+  @Test
+  public void testListZeroOidcProviderConfigs() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    ListProviderConfigsPage<OidcProviderConfig> page =
+        FirebaseAuth.getInstance().listOidcProviderConfigsAsync(null).get();
+    assertTrue(Iterables.isEmpty(page.getValues()));
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+  }
+
+  @Test
+  public void testTenantAwareListOidcProviderConfigs() throws Exception {
+    final TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        TestUtils.loadResource("listOidc.json"));
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+    ListProviderConfigsPage<OidcProviderConfig> page =
+        tenantAwareAuth.listOidcProviderConfigsAsync(null, 99).get();
+
+    ImmutableList<OidcProviderConfig> providerConfigs = ImmutableList.copyOf(page.getValues());
+    assertEquals(2, providerConfigs.size());
+    checkOidcProviderConfig(providerConfigs.get(0), "oidc.provider-id1");
+    checkOidcProviderConfig(providerConfigs.get(1), "oidc.provider-id2");
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/TENANT_ID/oauthIdpConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(99, url.getFirst("pageSize"));
+    assertNull(url.getFirst("nextPageToken"));
+  }
+
+  @Test
+  public void testDeleteOidcProviderConfig() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+
+    FirebaseAuth.getInstance().deleteOidcProviderConfig("oidc.provider-id");
+
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
+  }
+
+  @Test
+  public void testDeleteOidcProviderMissingId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+
+    try {
+      FirebaseAuth.getInstance().deleteOidcProviderConfig(null);
+      fail("No error thrown for missing provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testDeleteOidcProviderInvalidId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+
+    try {
+      FirebaseAuth.getInstance().deleteOidcProviderConfig("saml.invalid-oidc-provider-id");
+      fail("No error thrown for invalid provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testDeleteOidcProviderConfigWithNotFoundError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"CONFIGURATION_NOT_FOUND\"}}");
+    try {
+      FirebaseAuth.getInstance().deleteOidcProviderConfig("oidc.UNKNOWN");
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.UNKNOWN");
+  }
+
+  @Test
+  public void testTenantAwareDeleteOidcProviderConfig() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        "{}");
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+
+    tenantAwareAuth.deleteOidcProviderConfig("oidc.provider-id");
+
+    checkRequestHeaders(interceptor);
+    String expectedUrl = TENANTS_BASE_URL + "/TENANT_ID/oauthIdpConfigs/oidc.provider-id";
+    checkUrl(interceptor, "DELETE", expectedUrl);
+  }
+
+  @Test
+  public void testCreateSamlProvider() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+    SamlProviderConfig.CreateRequest createRequest =
+        new SamlProviderConfig.CreateRequest()
+          .setProviderId("saml.provider-id")
+          .setDisplayName("DISPLAY_NAME")
+          .setEnabled(true)
+          .setIdpEntityId("IDP_ENTITY_ID")
+          .setSsoUrl("https://example.com/login")
+          .addX509Certificate("certificate1")
+          .addX509Certificate("certificate2")
+          .setRpEntityId("RP_ENTITY_ID")
+          .setCallbackUrl("https://projectId.firebaseapp.com/__/auth/handler");
+
+    SamlProviderConfig config = FirebaseAuth.getInstance().createSamlProviderConfig(createRequest);
+
+    checkSamlProviderConfig(config, "saml.provider-id");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/inboundSamlConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("saml.provider-id", url.getFirst("inboundSamlConfigId"));
+
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertTrue((boolean) parsed.get("enabled"));
+
+    Map<String, Object> idpConfig = (Map<String, Object>) parsed.get("idpConfig");
+    assertNotNull(idpConfig);
+    assertEquals(3, idpConfig.size());
+    assertEquals("IDP_ENTITY_ID", idpConfig.get("idpEntityId"));
+    assertEquals("https://example.com/login", idpConfig.get("ssoUrl"));
+    List<Object> idpCertificates = (List<Object>) idpConfig.get("idpCertificates");
+    assertNotNull(idpCertificates);
+    assertEquals(2, idpCertificates.size());
+    assertEquals(ImmutableMap.of("x509Certificate", "certificate1"), idpCertificates.get(0));
+    assertEquals(ImmutableMap.of("x509Certificate", "certificate2"), idpCertificates.get(1));
+
+    Map<String, Object> spConfig = (Map<String, Object>) parsed.get("spConfig");
+    assertNotNull(spConfig);
+    assertEquals(2, spConfig.size());
+    assertEquals("RP_ENTITY_ID", spConfig.get("spEntityId"));
+    assertEquals("https://projectId.firebaseapp.com/__/auth/handler", spConfig.get("callbackUri"));
+  }
+
+  @Test
+  public void testCreateSamlProviderMinimal() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+    // Only the 'enabled', 'displayName', and 'signRequest' fields can be omitted from a SAML
+    // provider config creation request.
+    SamlProviderConfig.CreateRequest createRequest =
+        new SamlProviderConfig.CreateRequest()
+          .setProviderId("saml.provider-id")
+          .setIdpEntityId("IDP_ENTITY_ID")
+          .setSsoUrl("https://example.com/login")
+          .addX509Certificate("certificate")
+          .setRpEntityId("RP_ENTITY_ID")
+          .setCallbackUrl("https://projectId.firebaseapp.com/__/auth/handler");
+
+    FirebaseAuth.getInstance().createSamlProviderConfig(createRequest);
+
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/inboundSamlConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("saml.provider-id", url.getFirst("inboundSamlConfigId"));
+
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertNull(parsed.get("displayName"));
+    assertNull(parsed.get("enabled"));
+    Map<String, Object> idpConfig = (Map<String, Object>) parsed.get("idpConfig");
+    assertNotNull(idpConfig);
+    assertEquals(3, idpConfig.size());
+    assertEquals("IDP_ENTITY_ID", idpConfig.get("idpEntityId"));
+    assertEquals("https://example.com/login", idpConfig.get("ssoUrl"));
+    List<Object> idpCertificates = (List<Object>) idpConfig.get("idpCertificates");
+    assertNotNull(idpCertificates);
+    assertEquals(1, idpCertificates.size());
+    assertEquals(ImmutableMap.of("x509Certificate", "certificate"), idpCertificates.get(0));
+    Map<String, Object> spConfig = (Map<String, Object>) parsed.get("spConfig");
+    assertNotNull(spConfig);
+    assertEquals(2, spConfig.size());
+    assertEquals("RP_ENTITY_ID", spConfig.get("spEntityId"));
+    assertEquals("https://projectId.firebaseapp.com/__/auth/handler", spConfig.get("callbackUri"));
+  }
+
+  @Test
+  public void testCreateSamlProviderError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+    SamlProviderConfig.CreateRequest createRequest =
+        new SamlProviderConfig.CreateRequest().setProviderId("saml.provider-id");
+    try {
+      FirebaseAuth.getInstance().createSamlProviderConfig(createRequest);
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/inboundSamlConfigs");
+  }
+
+  @Test
+  public void testCreateSamlProviderMissingId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+    SamlProviderConfig.CreateRequest createRequest =
+        new SamlProviderConfig.CreateRequest()
+          .setDisplayName("DISPLAY_NAME")
+          .setEnabled(true)
+          .setIdpEntityId("IDP_ENTITY_ID")
+          .setSsoUrl("https://example.com/login")
+          .addX509Certificate("certificate1")
+          .addX509Certificate("certificate2")
+          .setRpEntityId("RP_ENTITY_ID")
+          .setCallbackUrl("https://projectId.firebaseapp.com/__/auth/handler");
+    try {
+      FirebaseAuth.getInstance().createSamlProviderConfig(createRequest);
+      fail("No error thrown for invalid response");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testTenantAwareCreateSamlProvider() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        TestUtils.loadResource("saml.json"));
+    SamlProviderConfig.CreateRequest createRequest =
+        new SamlProviderConfig.CreateRequest()
+          .setProviderId("saml.provider-id")
+          .setDisplayName("DISPLAY_NAME")
+          .setEnabled(true)
+          .setIdpEntityId("IDP_ENTITY_ID")
+          .setSsoUrl("https://example.com/login")
+          .addX509Certificate("certificate1")
+          .addX509Certificate("certificate2")
+          .setRpEntityId("RP_ENTITY_ID")
+          .setCallbackUrl("https://projectId.firebaseapp.com/__/auth/handler");
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+
+    tenantAwareAuth.createSamlProviderConfig(createRequest);
+
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "POST", TENANTS_BASE_URL + "/TENANT_ID/inboundSamlConfigs");
+  }
+
+  @Test
+  public void testUpdateSamlProvider() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+    SamlProviderConfig.UpdateRequest updateRequest =
+        new SamlProviderConfig.UpdateRequest("saml.provider-id")
+          .setDisplayName("DISPLAY_NAME")
+          .setEnabled(true)
+          .setIdpEntityId("IDP_ENTITY_ID")
+          .setSsoUrl("https://example.com/login")
+          .addX509Certificate("certificate1")
+          .addX509Certificate("certificate2")
+          .setRpEntityId("RP_ENTITY_ID")
+          .setCallbackUrl("https://projectId.firebaseapp.com/__/auth/handler");
+
+    SamlProviderConfig config = FirebaseAuth.getInstance().updateSamlProviderConfig(updateRequest);
+
+    checkSamlProviderConfig(config, "saml.provider-id");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(
+        "displayName,enabled,idpConfig.idpCertificates,idpConfig.idpEntityId,idpConfig.ssoUrl,"
+          + "spConfig.callbackUri,spConfig.spEntityId",
+        url.getFirst("updateMask"));
+
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertTrue((boolean) parsed.get("enabled"));
+
+    Map<String, Object> idpConfig = (Map<String, Object>) parsed.get("idpConfig");
+    assertNotNull(idpConfig);
+    assertEquals(3, idpConfig.size());
+    assertEquals("IDP_ENTITY_ID", idpConfig.get("idpEntityId"));
+    assertEquals("https://example.com/login", idpConfig.get("ssoUrl"));
+    List<Object> idpCertificates = (List<Object>) idpConfig.get("idpCertificates");
+    assertNotNull(idpCertificates);
+    assertEquals(2, idpCertificates.size());
+    assertEquals(ImmutableMap.of("x509Certificate", "certificate1"), idpCertificates.get(0));
+    assertEquals(ImmutableMap.of("x509Certificate", "certificate2"), idpCertificates.get(1));
+
+    Map<String, Object> spConfig = (Map<String, Object>) parsed.get("spConfig");
+    assertNotNull(spConfig);
+    assertEquals(2, spConfig.size());
+    assertEquals("RP_ENTITY_ID", spConfig.get("spEntityId"));
+    assertEquals("https://projectId.firebaseapp.com/__/auth/handler", spConfig.get("callbackUri"));
+  }
+
+  @Test
+  public void testUpdateSamlProviderMinimal() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+    SamlProviderConfig.UpdateRequest request =
+        new SamlProviderConfig.UpdateRequest("saml.provider-id").setDisplayName("DISPLAY_NAME");
+
+    SamlProviderConfig config = FirebaseAuth.getInstance().updateSamlProviderConfig(request);
+
+    checkSamlProviderConfig(config, "saml.provider-id");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("displayName", url.getFirst("updateMask"));
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals(1, parsed.size());
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+  }
+
+  @Test
+  public void testUpdateSamlProviderConfigNoValues() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+    try {
+      FirebaseAuth.getInstance().updateSamlProviderConfig(
+          new SamlProviderConfig.UpdateRequest("saml.provider-id"));
+      fail("No error thrown for empty provider config update");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testUpdateSamlProviderConfigError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+    SamlProviderConfig.UpdateRequest request =
+        new SamlProviderConfig.UpdateRequest("saml.provider-id").setDisplayName("DISPLAY_NAME");
+    try {
+      FirebaseAuth.getInstance().updateSamlProviderConfig(request);
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
+  }
+
+  @Test
+  public void testTenantAwareUpdateSamlProvider() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        TestUtils.loadResource("saml.json"));
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+    SamlProviderConfig.UpdateRequest updateRequest =
+        new SamlProviderConfig.UpdateRequest("saml.provider-id")
+          .setDisplayName("DISPLAY_NAME")
+          .setEnabled(true)
+          .setIdpEntityId("IDP_ENTITY_ID")
+          .setSsoUrl("https://example.com/login");
+
+    SamlProviderConfig config = tenantAwareAuth.updateSamlProviderConfig(updateRequest);
+
+    checkSamlProviderConfig(config, "saml.provider-id");
+    checkRequestHeaders(interceptor);
+    String expectedUrl = TENANTS_BASE_URL + "/TENANT_ID/inboundSamlConfigs/saml.provider-id";
+    checkUrl(interceptor, "PATCH", expectedUrl);
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("displayName,enabled,idpConfig.idpEntityId,idpConfig.ssoUrl",
+        url.getFirst("updateMask"));
+
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertTrue((boolean) parsed.get("enabled"));
+    Map<String, Object> idpConfig = (Map<String, Object>) parsed.get("idpConfig");
+    assertNotNull(idpConfig);
+    assertEquals(2, idpConfig.size());
+    assertEquals("IDP_ENTITY_ID", idpConfig.get("idpEntityId"));
+    assertEquals("https://example.com/login", idpConfig.get("ssoUrl"));
+  }
+
+  @Test
+  public void testGetSamlProviderConfig() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+
+    SamlProviderConfig config =
+        FirebaseAuth.getInstance().getSamlProviderConfig("saml.provider-id");
+
+    checkSamlProviderConfig(config, "saml.provider-id");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
+  }
+
+  @Test
+  public void testGetSamlProviderConfigMissingId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+
+    try {
+      FirebaseAuth.getInstance().getSamlProviderConfig(null);
+      fail("No error thrown for missing provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testGetSamlProviderConfigInvalidId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("saml.json"));
+
+    try {
+      FirebaseAuth.getInstance().getSamlProviderConfig("oidc.invalid-saml-provider-id");
+      fail("No error thrown for invalid provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testGetSamlProviderConfigWithNotFoundError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"CONFIGURATION_NOT_FOUND\"}}");
+    try {
+      FirebaseAuth.getInstance().getSamlProviderConfig("saml.provider-id");
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
+  }
+
+  @Test
+  public void testGetTenantAwareSamlProviderConfig() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        TestUtils.loadResource("saml.json"));
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+
+    SamlProviderConfig config = tenantAwareAuth.getSamlProviderConfig("saml.provider-id");
+
+    checkSamlProviderConfig(config, "saml.provider-id");
+    checkRequestHeaders(interceptor);
+    String expectedUrl = TENANTS_BASE_URL + "/TENANT_ID/inboundSamlConfigs/saml.provider-id";
+    checkUrl(interceptor, "GET", expectedUrl);
+  }
+
+  @Test
+  public void testListSamlProviderConfigs() throws Exception {
+    final TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("listSaml.json"));
+    ListProviderConfigsPage<SamlProviderConfig> page =
+        FirebaseAuth.getInstance().listSamlProviderConfigsAsync(null, 99).get();
+
+    ImmutableList<SamlProviderConfig> providerConfigs = ImmutableList.copyOf(page.getValues());
+    assertEquals(2, providerConfigs.size());
+    checkSamlProviderConfig(providerConfigs.get(0), "saml.provider-id1");
+    checkSamlProviderConfig(providerConfigs.get(1), "saml.provider-id2");
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/inboundSamlConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(99, url.getFirst("pageSize"));
+    assertNull(url.getFirst("nextPageToken"));
+  }
+
+  @Test
+  public void testListSamlProviderConfigsWithPageToken() throws Exception {
+    final TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("listSaml.json"));
+    ListProviderConfigsPage<SamlProviderConfig> page =
+        FirebaseAuth.getInstance().listSamlProviderConfigsAsync("token", 99).get();
+
+    ImmutableList<SamlProviderConfig> providerConfigs = ImmutableList.copyOf(page.getValues());
+    assertEquals(2, providerConfigs.size());
+    checkSamlProviderConfig(providerConfigs.get(0), "saml.provider-id1");
+    checkSamlProviderConfig(providerConfigs.get(1), "saml.provider-id2");
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/inboundSamlConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(99, url.getFirst("pageSize"));
+    assertEquals("token", url.getFirst("nextPageToken"));
+  }
+
+  @Test
+  public void testListZeroSamlProviderConfigs() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    ListProviderConfigsPage<SamlProviderConfig> page =
+        FirebaseAuth.getInstance().listSamlProviderConfigsAsync(null).get();
+    assertTrue(Iterables.isEmpty(page.getValues()));
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+  }
+
+  @Test
+  public void testTenantAwareListSamlProviderConfigs() throws Exception {
+    final TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        TestUtils.loadResource("listSaml.json"));
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+    ListProviderConfigsPage<SamlProviderConfig> page =
+        tenantAwareAuth.listSamlProviderConfigsAsync(null, 99).get();
+
+    ImmutableList<SamlProviderConfig> providerConfigs = ImmutableList.copyOf(page.getValues());
+    assertEquals(2, providerConfigs.size());
+    checkSamlProviderConfig(providerConfigs.get(0), "saml.provider-id1");
+    checkSamlProviderConfig(providerConfigs.get(1), "saml.provider-id2");
+    assertEquals("", page.getNextPageToken());
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/TENANT_ID/inboundSamlConfigs");
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals(99, url.getFirst("pageSize"));
+    assertNull(url.getFirst("nextPageToken"));
+  }
+
+  @Test
+  public void testDeleteSamlProviderConfig() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+
+    FirebaseAuth.getInstance().deleteSamlProviderConfig("saml.provider-id");
+
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
+  }
+
+  @Test
+  public void testDeleteSamlProviderMissingId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+
+    try {
+      FirebaseAuth.getInstance().deleteSamlProviderConfig(null);
+      fail("No error thrown for missing provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testDeleteSamlProviderInvalidId() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+
+    try {
+      FirebaseAuth.getInstance().deleteSamlProviderConfig("oidc.invalid-saml-provider-id");
+      fail("No error thrown for invalid provider ID.");
+    } catch (IllegalArgumentException e) {
+      // Expected.
+    }
+  }
+
+  @Test
+  public void testDeleteSamlProviderConfigWithNotFoundError() throws Exception {
+    TestResponseInterceptor interceptor =
+        initializeAppForUserManagementWithStatusCode(404,
+            "{\"error\": {\"message\": \"CONFIGURATION_NOT_FOUND\"}}");
+    try {
+      FirebaseAuth.getInstance().deleteSamlProviderConfig("saml.UNKNOWN");
+      fail("No error thrown for invalid response");
+    } catch (FirebaseAuthException e) {
+      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
+    }
+    checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.UNKNOWN");
+  }
+
+  @Test
+  public void testTenantAwareDeleteSamlProviderConfig() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
+        "TENANT_ID",
+        "{}");
+    TenantAwareFirebaseAuth tenantAwareAuth =
+        FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
+
+    tenantAwareAuth.deleteSamlProviderConfig("saml.provider-id");
+
+    checkRequestHeaders(interceptor);
+    String expectedUrl = TENANTS_BASE_URL + "/TENANT_ID/inboundSamlConfigs/saml.provider-id";
+    checkUrl(interceptor, "DELETE", expectedUrl);
+  }
+
   private static TestResponseInterceptor initializeAppForUserManagementWithStatusCode(
       int statusCode, String response) {
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
@@ -1622,7 +2515,24 @@ public class FirebaseUserManagerTest {
     return interceptor;
   }
 
+  private static TestResponseInterceptor initializeAppForTenantAwareUserManagement(
+      String tenantId,
+      String... responses) {
+    initializeAppWithResponses(responses);
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    TenantManager tenantManager =  FirebaseAuth.getInstance().getTenantManager();
+    tenantManager.getAuthForTenant(tenantId).getUserManager().setInterceptor(interceptor);
+    return interceptor;
+  }
+
   private static TestResponseInterceptor initializeAppForUserManagement(String... responses) {
+    initializeAppWithResponses(responses);
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    FirebaseAuth.getInstance().getUserManager().setInterceptor(interceptor);
+    return interceptor;
+  }
+
+  private static void initializeAppWithResponses(String... responses) {
     List<MockLowLevelHttpResponse> mocks = new ArrayList<>();
     for (String response : responses) {
       mocks.add(new MockLowLevelHttpResponse().setContent(response));
@@ -1633,9 +2543,6 @@ public class FirebaseUserManagerTest {
         .setHttpTransport(transport)
         .setProjectId("test-project-id")
         .build());
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseAuth.getInstance().getUserManager().setInterceptor(interceptor);
-    return interceptor;
   }
 
   private static GenericJson parseRequestContent(TestResponseInterceptor interceptor)
@@ -1708,6 +2615,25 @@ public class FirebaseUserManagerTest {
     assertEquals("DISPLAY_NAME", tenant.getDisplayName());
     assertTrue(tenant.isPasswordSignInAllowed());
     assertFalse(tenant.isEmailLinkSignInEnabled());
+  }
+
+  private static void checkOidcProviderConfig(OidcProviderConfig config, String providerId) {
+    assertEquals(providerId, config.getProviderId());
+    assertEquals("DISPLAY_NAME", config.getDisplayName());
+    assertTrue(config.isEnabled());
+    assertEquals("CLIENT_ID", config.getClientId());
+    assertEquals("https://oidc.com/issuer", config.getIssuer());
+  }
+
+  private static void checkSamlProviderConfig(SamlProviderConfig config, String providerId) {
+    assertEquals(providerId, config.getProviderId());
+    assertEquals("DISPLAY_NAME", config.getDisplayName());
+    assertTrue(config.isEnabled());
+    assertEquals("IDP_ENTITY_ID", config.getIdpEntityId());
+    assertEquals("https://example.com/login", config.getSsoUrl());
+    assertEquals(ImmutableList.of("certificate1", "certificate2"), config.getX509Certificates());
+    assertEquals("RP_ENTITY_ID", config.getRpEntityId());
+    assertEquals("https://projectId.firebaseapp.com/__/auth/handler", config.getCallbackUrl());
   }
 
   private static void checkRequestHeaders(TestResponseInterceptor interceptor) {
