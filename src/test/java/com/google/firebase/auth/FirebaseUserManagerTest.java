@@ -2506,7 +2506,7 @@ public class FirebaseUserManagerTest {
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(credentials)
         .setHttpTransport(
-          MockHttpTransport.builder().setLowLevelHttpResponse(
+          new MockHttpTransport.Builder().setLowLevelHttpResponse(
             new MockLowLevelHttpResponse().setContent(response).setStatusCode(statusCode)).build())
         .setProjectId("test-project-id")
         .build());
