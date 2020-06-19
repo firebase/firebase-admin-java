@@ -207,7 +207,7 @@ public class AndroidConfig {
     }
 
     /**
-     * Sets the {@code direct_boot_ok} flag, If set to true, messages are delivered to 
+     * Sets the {@code direct_boot_ok} flag. If set to true, messages are delivered to 
      * the app while the device is in direct boot mode.
      */
     public Builder setDirectBootOk(boolean directBootOk) {
