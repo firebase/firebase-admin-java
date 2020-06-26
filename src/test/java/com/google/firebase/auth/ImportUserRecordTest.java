@@ -25,6 +25,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
+import com.google.firebase.auth.internal.ManagementClientUtils;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -184,7 +186,7 @@ public class ImportUserRecordTest {
 
   @Test
   public void testReservedClaims() {
-    for (String key : FirebaseUserManager.RESERVED_CLAIMS) {
+    for (String key : ManagementClientUtils.RESERVED_CLAIMS) {
       try {
         ImportUserRecord.builder()
             .setUid("test")

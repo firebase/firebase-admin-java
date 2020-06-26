@@ -33,7 +33,6 @@ import com.google.api.client.json.JsonObjectParser;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.firebase.FirebaseApp;
@@ -47,7 +46,6 @@ import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.SdkUtils;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -59,17 +57,6 @@ import java.util.Set;
  *   Google Identity Toolkit</a>
  */
 class TenantManagementClient {
-
-  static final int MAX_LIST_PROVIDER_CONFIGS_RESULTS = 100;
-  static final int MAX_LIST_TENANTS_RESULTS = 1000;
-  static final int MAX_GET_ACCOUNTS_BATCH_SIZE = 100;
-  static final int MAX_DELETE_ACCOUNTS_BATCH_SIZE = 1000;
-  static final int MAX_LIST_USERS_RESULTS = 1000;
-  static final int MAX_IMPORT_USERS = 1000;
-
-  static final List<String> RESERVED_CLAIMS = ImmutableList.of(
-      "amr", "at_hash", "aud", "auth_time", "azp", "cnf", "c_hash", "exp", "iat",
-      "iss", "jti", "nbf", "nonce", "sub", "firebase");
 
   private static final String ID_TOOLKIT_URL =
       "https://identitytoolkit.googleapis.com/v2/projects/%s";
@@ -208,7 +195,7 @@ class TenantManagementClient {
   private void handleHttpError(HttpResponseException e) throws FirebaseAuthException {
     try {
       HttpErrorResponse response = jsonFactory.fromString(e.getContent(), HttpErrorResponse.class);
-      String code = ERROR_CODES.get(response.getErrorCode());
+      String code = ManagementClientUtils.ERROR_CODES.get(response.getErrorCode());
       if (code != null) {
         throw new FirebaseAuthException(
             code,

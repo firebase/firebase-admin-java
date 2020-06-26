@@ -44,6 +44,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
+import com.google.firebase.auth.internal.ManagementClientUtils;
 import com.google.firebase.auth.multitenancy.ListTenantsPage;
 import com.google.firebase.auth.multitenancy.Tenant;
 import com.google.firebase.auth.multitenancy.TenantAwareFirebaseAuth;
@@ -130,7 +131,7 @@ public class FirebaseUserManagerTest {
     } catch (ExecutionException e) {
       assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, authException.getErrorCode());
+      assertEquals(ManagementClientUtils.USER_NOT_FOUND_ERROR, authException.getErrorCode());
     }
   }
 
@@ -153,7 +154,7 @@ public class FirebaseUserManagerTest {
     } catch (ExecutionException e) {
       assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, authException.getErrorCode());
+      assertEquals(ManagementClientUtils.USER_NOT_FOUND_ERROR, authException.getErrorCode());
     }
   }
 
@@ -176,7 +177,7 @@ public class FirebaseUserManagerTest {
     } catch (ExecutionException e) {
       assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, authException.getErrorCode());
+      assertEquals(ManagementClientUtils.USER_NOT_FOUND_ERROR, authException.getErrorCode());
     }
   }
 
@@ -673,7 +674,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().getTenantManager().getTenant("UNKNOWN");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR, e.getErrorCode());
+      assertEquals(ManagementClientUtils.TENANT_NOT_FOUND_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/UNKNOWN");
   }
@@ -773,7 +774,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().getTenantManager().createTenant(new Tenant.CreateRequest());
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+      assertEquals(ManagementClientUtils.INTERNAL_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "POST", TENANTS_BASE_URL);
   }
@@ -845,7 +846,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().getTenantManager().updateTenant(request);
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+      assertEquals(ManagementClientUtils.INTERNAL_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "PATCH", TENANTS_BASE_URL + "/TENANT_1");
   }
@@ -869,7 +870,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().getTenantManager().deleteTenant("UNKNOWN");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR, e.getErrorCode());
+      assertEquals(ManagementClientUtils.TENANT_NOT_FOUND_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/UNKNOWN");
   }
@@ -1008,7 +1009,7 @@ public class FirebaseUserManagerTest {
           String msg = String.format("Unexpected HTTP response with status: %d; body: {}", code);
           assertEquals(msg, authException.getMessage());
           assertThat(authException.getCause(), instanceOf(HttpResponseException.class));
-          assertEquals(FirebaseUserManager.INTERNAL_ERROR, authException.getErrorCode());
+          assertEquals(ManagementClientUtils.INTERNAL_ERROR, authException.getErrorCode());
         }
       }
     }
@@ -1025,7 +1026,7 @@ public class FirebaseUserManagerTest {
         FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
         assertEquals("User management service responded with an error", authException.getMessage());
         assertThat(authException.getCause(), instanceOf(HttpResponseException.class));
-        assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR, authException.getErrorCode());
+        assertEquals(ManagementClientUtils.USER_NOT_FOUND_ERROR, authException.getErrorCode());
       }
     }
   }
@@ -1040,7 +1041,7 @@ public class FirebaseUserManagerTest {
       assertThat(e.getCause(), instanceOf(FirebaseAuthException.class));
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
       assertThat(authException.getCause(), instanceOf(IOException.class));
-      assertEquals(FirebaseUserManager.INTERNAL_ERROR, authException.getErrorCode());
+      assertEquals(ManagementClientUtils.INTERNAL_ERROR, authException.getErrorCode());
     }
   }
 
@@ -1059,7 +1060,7 @@ public class FirebaseUserManagerTest {
       assertThat(authException.getCause(), instanceOf(HttpResponseException.class));
       assertEquals("Unexpected HTTP response with status: 500; body: {\"not\" json}",
           authException.getMessage());
-      assertEquals(FirebaseUserManager.INTERNAL_ERROR, authException.getErrorCode());
+      assertEquals(ManagementClientUtils.INTERNAL_ERROR, authException.getErrorCode());
     }
   }
 
@@ -1407,7 +1408,7 @@ public class FirebaseUserManagerTest {
   @Test
   public void testInvalidCustomClaims() {
     UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
-    for (String claim : FirebaseUserManager.RESERVED_CLAIMS) {
+    for (String claim : ManagementClientUtils.RESERVED_CLAIMS) {
       try {
         update.setCustomClaims(ImmutableMap.<String, Object>of(claim, "value"));
         fail("No error thrown for reserved claim");
@@ -1676,7 +1677,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().createOidcProviderConfig(createRequest);
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+      assertEquals(ManagementClientUtils.INTERNAL_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/oauthIdpConfigs");
   }
@@ -1788,7 +1789,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().updateOidcProviderConfig(request);
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+      assertEquals(ManagementClientUtils.INTERNAL_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
   }
@@ -1870,7 +1871,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().getOidcProviderConfig("oidc.provider-id");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
+      assertEquals(ManagementClientUtils.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
   }
@@ -2003,7 +2004,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().deleteOidcProviderConfig("oidc.UNKNOWN");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
+      assertEquals(ManagementClientUtils.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.UNKNOWN");
   }
@@ -2121,7 +2122,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().createSamlProviderConfig(createRequest);
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+      assertEquals(ManagementClientUtils.INTERNAL_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/inboundSamlConfigs");
   }
@@ -2264,7 +2265,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().updateSamlProviderConfig(request);
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
+      assertEquals(ManagementClientUtils.INTERNAL_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
   }
@@ -2351,7 +2352,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().getSamlProviderConfig("saml.provider-id");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
+      assertEquals(ManagementClientUtils.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
   }
@@ -2485,7 +2486,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().deleteSamlProviderConfig("saml.UNKNOWN");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
+      assertEquals(ManagementClientUtils.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.UNKNOWN");
   }

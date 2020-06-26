@@ -42,6 +42,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.ProviderConfigTestUtils.TemporaryProviderConfig;
 import com.google.firebase.auth.UserTestUtils.RandomUser;
 import com.google.firebase.auth.UserTestUtils.TemporaryUser;
+import com.google.firebase.auth.internal.ManagementClientUtils;
 import com.google.firebase.auth.multitenancy.Tenant;
 import com.google.firebase.auth.multitenancy.TenantAwareFirebaseAuth;
 import com.google.firebase.auth.multitenancy.TenantManager;
@@ -250,7 +251,7 @@ public class TenantAwareFirebaseAuthIT {
       fail("No error thrown for verifying a token with the wrong tenant-aware client");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR,
+      assertEquals(ManagementClientUtils.TENANT_ID_MISMATCH_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }

@@ -34,6 +34,7 @@ import com.google.firebase.auth.ListProviderConfigsPage.DefaultSamlProviderConfi
 import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
+import com.google.firebase.auth.internal.ManagementClientUtils;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
@@ -457,7 +458,7 @@ public abstract class AbstractFirebaseAuth {
    * @throws FirebaseAuthException If an error occurs while retrieving user data.
    */
   public ListUsersPage listUsers(@Nullable String pageToken) throws FirebaseAuthException {
-    return listUsers(pageToken, FirebaseUserManager.MAX_LIST_USERS_RESULTS);
+    return listUsers(pageToken, ManagementClientUtils.MAX_LIST_USERS_RESULTS);
   }
 
   /**
@@ -485,7 +486,7 @@ public abstract class AbstractFirebaseAuth {
    * @throws IllegalArgumentException If the specified page token is empty.
    */
   public ApiFuture<ListUsersPage> listUsersAsync(@Nullable String pageToken) {
-    return listUsersAsync(pageToken, FirebaseUserManager.MAX_LIST_USERS_RESULTS);
+    return listUsersAsync(pageToken, ManagementClientUtils.MAX_LIST_USERS_RESULTS);
   }
 
   /**
@@ -818,8 +819,8 @@ public abstract class AbstractFirebaseAuth {
       @NonNull final Collection<UserIdentifier> identifiers) {
     checkNotDestroyed();
     checkNotNull(identifiers, "identifiers must not be null");
-    checkArgument(identifiers.size() <= FirebaseUserManager.MAX_GET_ACCOUNTS_BATCH_SIZE,
-        "identifiers parameter must have <= " + FirebaseUserManager.MAX_GET_ACCOUNTS_BATCH_SIZE
+    checkArgument(identifiers.size() <= ManagementClientUtils.MAX_GET_ACCOUNTS_BATCH_SIZE,
+        "identifiers parameter must have <= " + ManagementClientUtils.MAX_GET_ACCOUNTS_BATCH_SIZE
             + " entries.");
 
     final FirebaseUserManager userManager = getUserManager();
@@ -894,8 +895,8 @@ public abstract class AbstractFirebaseAuth {
     for (String uid : uids) {
       UserRecord.checkUid(uid);
     }
-    checkArgument(uids.size() <= FirebaseUserManager.MAX_DELETE_ACCOUNTS_BATCH_SIZE,
-        "uids parameter must have <= " + FirebaseUserManager.MAX_DELETE_ACCOUNTS_BATCH_SIZE
+    checkArgument(uids.size() <= ManagementClientUtils.MAX_DELETE_ACCOUNTS_BATCH_SIZE,
+        "uids parameter must have <= " + ManagementClientUtils.MAX_DELETE_ACCOUNTS_BATCH_SIZE
             + " entries.");
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<DeleteUsersResult, FirebaseAuthException>() {
@@ -1224,7 +1225,7 @@ public abstract class AbstractFirebaseAuth {
    */
   public ListProviderConfigsPage<OidcProviderConfig> listOidcProviderConfigs(
         @Nullable String pageToken) throws FirebaseAuthException {
-    int maxResults = FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS;
+    int maxResults = ManagementClientUtils.MAX_LIST_PROVIDER_CONFIGS_RESULTS;
     return listOidcProviderConfigsOp(pageToken, maxResults).call();
   }
 
@@ -1259,7 +1260,7 @@ public abstract class AbstractFirebaseAuth {
    */
   public ApiFuture<ListProviderConfigsPage<OidcProviderConfig>> listOidcProviderConfigsAsync(
       @Nullable String pageToken) {
-    int maxResults = FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS;
+    int maxResults = ManagementClientUtils.MAX_LIST_PROVIDER_CONFIGS_RESULTS;
     return listOidcProviderConfigsAsync(pageToken, maxResults);
   }
 
@@ -1489,7 +1490,7 @@ public abstract class AbstractFirebaseAuth {
         @Nullable String pageToken) throws FirebaseAuthException {
     return listSamlProviderConfigs(
         pageToken,
-        FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS);
+        ManagementClientUtils.MAX_LIST_PROVIDER_CONFIGS_RESULTS);
   }
 
   /**
@@ -1522,7 +1523,7 @@ public abstract class AbstractFirebaseAuth {
    */
   public ApiFuture<ListProviderConfigsPage<SamlProviderConfig>> listSamlProviderConfigsAsync(
       @Nullable String pageToken) {
-    int maxResults = FirebaseUserManager.MAX_LIST_PROVIDER_CONFIGS_RESULTS;
+    int maxResults = ManagementClientUtils.MAX_LIST_PROVIDER_CONFIGS_RESULTS;
     return listSamlProviderConfigsAsync(pageToken, maxResults);
   }
 

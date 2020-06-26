@@ -27,6 +27,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.firebase.auth.internal.ManagementClientUtils;
 import com.google.firebase.auth.multitenancy.ListTenantsPage;
 import com.google.firebase.auth.multitenancy.Tenant;
 import com.google.firebase.auth.multitenancy.TenantManager;
@@ -81,7 +82,7 @@ public class TenantManagerIT {
       fail("No error thrown for getting a deleted tenant");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR,
+      assertEquals(ManagementClientUtils.TENANT_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }

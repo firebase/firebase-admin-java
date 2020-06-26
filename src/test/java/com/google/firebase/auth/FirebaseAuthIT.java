@@ -50,6 +50,7 @@ import com.google.firebase.auth.ProviderConfigTestUtils.TemporaryProviderConfig;
 import com.google.firebase.auth.UserTestUtils.RandomUser;
 import com.google.firebase.auth.UserTestUtils.TemporaryUser;
 import com.google.firebase.auth.hash.Scrypt;
+import com.google.firebase.auth.internal.ManagementClientUtils;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
@@ -96,7 +97,7 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
+      assertEquals(ManagementClientUtils.USER_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
@@ -108,7 +109,7 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing email");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
+      assertEquals(ManagementClientUtils.USER_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
@@ -120,7 +121,7 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
+      assertEquals(ManagementClientUtils.USER_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
@@ -132,7 +133,7 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
+      assertEquals(ManagementClientUtils.USER_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
@@ -1028,7 +1029,7 @@ public class FirebaseAuthIT {
       fail("No error thrown for getting a user which was expected to be absent.");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
+      assertEquals(ManagementClientUtils.USER_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }

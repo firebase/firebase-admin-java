@@ -46,11 +46,8 @@ import com.google.firebase.auth.internal.GetAccountInfoResponse;
 import com.google.firebase.auth.internal.HttpErrorResponse;
 import com.google.firebase.auth.internal.ListOidcProviderConfigsResponse;
 import com.google.firebase.auth.internal.ListSamlProviderConfigsResponse;
-import com.google.firebase.auth.internal.ListTenantsResponse;
 import com.google.firebase.auth.internal.ManagementClientUtils;
 import com.google.firebase.auth.internal.UploadAccountResponse;
-import com.google.firebase.auth.multitenancy.ListTenantsPage;
-import com.google.firebase.auth.multitenancy.Tenant;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
@@ -72,17 +69,6 @@ import java.util.Set;
  *   Google Identity Toolkit</a>
  */
 public class FirebaseUserManager {
-
-  static final int MAX_LIST_PROVIDER_CONFIGS_RESULTS = 100;
-  static final int MAX_LIST_TENANTS_RESULTS = 1000;
-  static final int MAX_GET_ACCOUNTS_BATCH_SIZE = 100;
-  static final int MAX_DELETE_ACCOUNTS_BATCH_SIZE = 1000;
-  static final int MAX_LIST_USERS_RESULTS = 1000;
-  static final int MAX_IMPORT_USERS = 1000;
-
-  static final List<String> RESERVED_CLAIMS = ImmutableList.of(
-      "amr", "at_hash", "aud", "auth_time", "azp", "cnf", "c_hash", "exp", "iat",
-      "iss", "jti", "nbf", "nonce", "sub", "firebase");
 
   private static final String ID_TOOLKIT_URL =
       "https://identitytoolkit.googleapis.com/%s/projects/%s";
@@ -499,8 +485,8 @@ public class FirebaseUserManager {
     UserImportRequest(List<ImportUserRecord> users, UserImportOptions options,
         JsonFactory jsonFactory) {
       checkArgument(users != null && !users.isEmpty(), "users must not be null or empty");
-      checkArgument(users.size() <= FirebaseUserManager.MAX_IMPORT_USERS,
-          "users list must not contain more than %s items", FirebaseUserManager.MAX_IMPORT_USERS);
+      checkArgument(users.size() <= ManagementClientUtils.MAX_IMPORT_USERS,
+          "users list must not contain more than %s items", ManagementClientUtils.MAX_IMPORT_USERS);
 
       boolean hasPassword = false;
       ImmutableList.Builder<Map<String, Object>> usersBuilder = ImmutableList.builder();
@@ -531,32 +517,32 @@ public class FirebaseUserManager {
     PASSWORD_RESET,
   }
 
-  static Builder builder() {
+  public static Builder builder() {
     return new Builder();
   }
 
-  static class Builder {
+  public static class Builder {
 
     private FirebaseApp app;
     private String tenantId;
     private HttpRequestFactory requestFactory;
 
-    Builder setFirebaseApp(FirebaseApp app) {
+    public Builder setFirebaseApp(FirebaseApp app) {
       this.app = app;
       return this;
     }
 
-    Builder setTenantId(String tenantId) {
+    public Builder setTenantId(String tenantId) {
       this.tenantId = tenantId;
       return this;
     }
 
-    Builder setHttpRequestFactory(HttpRequestFactory requestFactory) {
+    public Builder setHttpRequestFactory(HttpRequestFactory requestFactory) {
       this.requestFactory = requestFactory;
       return this;
     }
 
-    FirebaseUserManager build() {
+    public FirebaseUserManager build() {
       return new FirebaseUserManager(this);
     }
   }

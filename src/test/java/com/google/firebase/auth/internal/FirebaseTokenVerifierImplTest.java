@@ -32,7 +32,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.auth.FirebaseUserManager;
 import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -228,7 +227,7 @@ public class FirebaseTokenVerifierImplTest {
         .build()
         .verifyToken(createTokenWithTenantId("TENANT_2"));
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
+      assertEquals(ManagementClientUtils.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
       assertEquals(
           "The tenant ID ('TENANT_2') of the token did not match the expected value ('TENANT_1')",
           e.getMessage());
@@ -243,7 +242,7 @@ public class FirebaseTokenVerifierImplTest {
         .build()
         .verifyToken(tokenFactory.createToken());
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
+      assertEquals(ManagementClientUtils.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
       assertEquals(
           "The tenant ID ('') of the token did not match the expected value ('TENANT_ID')",
           e.getMessage());
@@ -257,7 +256,7 @@ public class FirebaseTokenVerifierImplTest {
         .build()
         .verifyToken(createTokenWithTenantId("TENANT_ID"));
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
+      assertEquals(ManagementClientUtils.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
       assertEquals(
           "The tenant ID ('TENANT_ID') of the token did not match the expected value ('')",
           e.getMessage());

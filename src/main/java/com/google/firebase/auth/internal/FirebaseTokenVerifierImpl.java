@@ -30,7 +30,6 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
-import com.google.firebase.auth.FirebaseUserManager;
 import com.google.firebase.internal.Nullable;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -290,7 +289,7 @@ public final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     String tokenTenantId = Strings.nullToEmpty(firebaseToken.getTenantId());
     if (!this.tenantId.equals(tokenTenantId)) {
       throw new FirebaseAuthException(
-          FirebaseUserManager.TENANT_ID_MISMATCH_ERROR,
+          ManagementClientUtils.TENANT_ID_MISMATCH_ERROR,
           String.format(
             "The tenant ID ('%s') of the token did not match the expected value ('%s')",
             tokenTenantId,

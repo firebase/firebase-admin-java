@@ -24,6 +24,7 @@ import com.google.common.base.Supplier;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AbstractFirebaseAuth;
 import com.google.firebase.auth.AbstractFirebaseAuth.Builder;
+import com.google.firebase.auth.FirebaseUserManager;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.internal.FirebaseTokenUtils;
 import com.google.firebase.auth.internal.FirebaseTokenVerifier;
@@ -69,10 +70,10 @@ public final class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
               }
             })
         .setUserManager(
-            new Supplier<TenantManagementClient>() {
+            new Supplier<FirebaseUserManager>() {
               @Override
-              public TenantManagementClient get() {
-                return TenantManagementClient
+              public FirebaseUserManager get() {
+                return FirebaseUserManager
                   .builder()
                   .setFirebaseApp(app)
                   .setTenantId(tenantId)

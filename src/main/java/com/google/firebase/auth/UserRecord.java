@@ -25,8 +25,10 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.internal.GetAccountInfoResponse.User;
+import com.google.firebase.auth.internal.ManagementClientUtils;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
+
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -293,7 +295,7 @@ public class UserRecord implements UserInfo {
     }
     for (String key : customClaims.keySet()) {
       checkArgument(!Strings.isNullOrEmpty(key), "Claim names must not be null or empty");
-      checkArgument(!FirebaseUserManager.RESERVED_CLAIMS.contains(key),
+      checkArgument(!ManagementClientUtils.RESERVED_CLAIMS.contains(key),
           "Claim '" + key + "' is reserved and cannot be set");
     }
   }

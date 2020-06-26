@@ -24,6 +24,7 @@ import com.google.api.core.ApiFuture;
 import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.internal.ManagementClientUtils;
 import com.google.firebase.auth.multitenancy.ListTenantsPage.DefaultTenantSource;
 import com.google.firebase.auth.multitenancy.ListTenantsPage.PageFactory;
 import com.google.firebase.auth.multitenancy.ListTenantsPage.TenantSource;
@@ -109,7 +110,7 @@ public final class TenantManager {
    * @throws FirebaseAuthException If an error occurs while retrieving tenant data.
    */
   public ListTenantsPage listTenants(@Nullable String pageToken) throws FirebaseAuthException {
-    return listTenants(pageToken, TenantManagementClient.MAX_LIST_TENANTS_RESULTS);
+    return listTenants(pageToken, ManagementClientUtils.MAX_LIST_TENANTS_RESULTS);
   }
 
   /**
@@ -137,7 +138,7 @@ public final class TenantManager {
    * @throws IllegalArgumentException If the specified page token is empty.
    */
   public ApiFuture<ListTenantsPage> listTenantsAsync(@Nullable String pageToken) {
-    return listTenantsAsync(pageToken, TenantManagementClient.MAX_LIST_TENANTS_RESULTS);
+    return listTenantsAsync(pageToken, ManagementClientUtils.MAX_LIST_TENANTS_RESULTS);
   }
 
   /**
@@ -293,7 +294,7 @@ public final class TenantManager {
   /**
    * @hide
    */
-  void destroy() {
+  public void destroy() {
     destroyed.set(true);
   }
 }

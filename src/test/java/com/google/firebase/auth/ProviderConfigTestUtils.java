@@ -21,9 +21,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.firebase.auth.internal.ManagementClientUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+
 import org.junit.rules.ExternalResource;
 
 class ProviderConfigTestUtils {
@@ -35,7 +38,7 @@ class ProviderConfigTestUtils {
       fail("No error thrown for getting a deleted OIDC provider config.");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR,
+      assertEquals(ManagementClientUtils.CONFIGURATION_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
@@ -47,7 +50,7 @@ class ProviderConfigTestUtils {
       fail("No error thrown for getting a deleted SAML provider config.");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR,
+      assertEquals(ManagementClientUtils.CONFIGURATION_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }

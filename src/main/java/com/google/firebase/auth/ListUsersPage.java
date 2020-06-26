@@ -23,6 +23,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.gax.paging.Page;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
+import com.google.firebase.auth.internal.ManagementClientUtils;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import java.util.Iterator;
@@ -244,13 +245,13 @@ public class ListUsersPage implements Page<ExportedUserRecord> {
     private final String pageToken;
 
     Factory(@NonNull UserSource source) {
-      this(source, FirebaseUserManager.MAX_LIST_USERS_RESULTS, null);
+      this(source, ManagementClientUtils.MAX_LIST_USERS_RESULTS, null);
     }
 
     Factory(@NonNull UserSource source, int maxResults, @Nullable String pageToken) {
-      checkArgument(maxResults > 0 && maxResults <= FirebaseUserManager.MAX_LIST_USERS_RESULTS,
+      checkArgument(maxResults > 0 && maxResults <= ManagementClientUtils.MAX_LIST_USERS_RESULTS,
           "maxResults must be a positive integer that does not exceed %s",
-          FirebaseUserManager.MAX_LIST_USERS_RESULTS);
+          ManagementClientUtils.MAX_LIST_USERS_RESULTS);
       checkArgument(!END_OF_LIST.equals(pageToken), "invalid end of list page token");
       this.source = checkNotNull(source, "source must not be null");
       this.maxResults = maxResults;

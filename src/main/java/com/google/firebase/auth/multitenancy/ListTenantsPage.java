@@ -23,6 +23,7 @@ import com.google.api.gax.paging.Page;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.internal.ListTenantsResponse;
+import com.google.firebase.auth.internal.ManagementClientUtils;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import java.util.Iterator;
@@ -223,13 +224,13 @@ public class ListTenantsPage implements Page<Tenant> {
     private final String pageToken;
 
     PageFactory(@NonNull TenantSource source) {
-      this(source, TenantManagementClient.MAX_LIST_TENANTS_RESULTS, null);
+      this(source, ManagementClientUtils.MAX_LIST_TENANTS_RESULTS, null);
     }
 
     PageFactory(@NonNull TenantSource source, int maxResults, @Nullable String pageToken) {
-      checkArgument(maxResults > 0 && maxResults <= TenantManagementClient.MAX_LIST_TENANTS_RESULTS,
+      checkArgument(maxResults > 0 && maxResults <= ManagementClientUtils.MAX_LIST_TENANTS_RESULTS,
           "maxResults must be a positive integer that does not exceed %s",
-          TenantManagementClient.MAX_LIST_TENANTS_RESULTS);
+          ManagementClientUtils.MAX_LIST_TENANTS_RESULTS);
       checkArgument(!END_OF_LIST.equals(pageToken), "Invalid end of list page token.");
       this.source = checkNotNull(source, "Source must not be null.");
       this.maxResults = maxResults;

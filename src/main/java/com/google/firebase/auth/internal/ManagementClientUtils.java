@@ -1,10 +1,23 @@
 package com.google.firebase.auth.internal;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.List;
 import java.util.Map;
 
 public final class ManagementClientUtils {
+
+  public static final int MAX_LIST_PROVIDER_CONFIGS_RESULTS = 100;
+  public static final int MAX_LIST_TENANTS_RESULTS = 1000;
+  public static final int MAX_GET_ACCOUNTS_BATCH_SIZE = 100;
+  public static final int MAX_DELETE_ACCOUNTS_BATCH_SIZE = 1000;
+  public static final int MAX_LIST_USERS_RESULTS = 1000;
+  public static final int MAX_IMPORT_USERS = 1000;
+
+  public static final List<String> RESERVED_CLAIMS = ImmutableList.of(
+      "amr", "at_hash", "aud", "auth_time", "azp", "cnf", "c_hash",
+      "exp", "iat", "iss", "jti", "nbf", "nonce", "sub", "firebase");
     
   public static final String CONFIGURATION_NOT_FOUND_ERROR = "configuration-not-found";
   public static final String TENANT_ID_MISMATCH_ERROR = "tenant-id-mismatch";
