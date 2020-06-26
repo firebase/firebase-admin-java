@@ -29,13 +29,11 @@ import com.google.common.base.Suppliers;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
 import com.google.firebase.auth.FirebaseUserManager.UserImportRequest;
-import com.google.firebase.auth.ListProviderConfigsPage;
 import com.google.firebase.auth.ListProviderConfigsPage.DefaultOidcProviderConfigSource;
 import com.google.firebase.auth.ListProviderConfigsPage.DefaultSamlProviderConfigSource;
-import com.google.firebase.auth.ListUsersPage;
 import com.google.firebase.auth.ListUsersPage.DefaultUserSource;
-import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
+import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
@@ -64,7 +62,10 @@ public abstract class AbstractFirebaseAuth {
   private final Supplier<? extends FirebaseUserManager> userManager;
   private final JsonFactory jsonFactory;
 
-  AbstractFirebaseAuth(Builder builder) {
+  /**
+   * @hide
+   */
+  public AbstractFirebaseAuth(Builder builder) {
     this.firebaseApp = checkNotNull(builder.firebaseApp);
     this.tokenFactory = threadSafeMemoize(builder.tokenFactory);
     this.idTokenVerifier = threadSafeMemoize(builder.idTokenVerifier);
@@ -1610,7 +1611,10 @@ public abstract class AbstractFirebaseAuth {
     return this.cookieVerifier.get();
   }
 
-  FirebaseUserManager getUserManager() {
+  /**
+   * @hide
+   */
+  public FirebaseUserManager getUserManager() {
     return this.userManager.get();
   }
 
@@ -1647,11 +1651,17 @@ public abstract class AbstractFirebaseAuth {
   /** Performs any additional required clean up. */
   protected abstract void doDestroy();
 
-  static Builder builder() {
+  /**
+   * @hide
+   */
+  public static Builder builder() {
     return new Builder();
   }
 
-  static class Builder {
+  /**
+   * @hide
+   */
+  public static class Builder {
     protected FirebaseApp firebaseApp;
     private Supplier<FirebaseTokenFactory> tokenFactory;
     private Supplier<? extends FirebaseTokenVerifier> idTokenVerifier;
@@ -1660,27 +1670,27 @@ public abstract class AbstractFirebaseAuth {
 
     private Builder() {}
 
-    Builder setFirebaseApp(FirebaseApp firebaseApp) {
+    public Builder setFirebaseApp(FirebaseApp firebaseApp) {
       this.firebaseApp = firebaseApp;
       return this;
     }
 
-    Builder setTokenFactory(Supplier<FirebaseTokenFactory> tokenFactory) {
+    public Builder setTokenFactory(Supplier<FirebaseTokenFactory> tokenFactory) {
       this.tokenFactory = tokenFactory;
       return this;
     }
 
-    Builder setIdTokenVerifier(Supplier<? extends FirebaseTokenVerifier> idTokenVerifier) {
+    public Builder setIdTokenVerifier(Supplier<? extends FirebaseTokenVerifier> idTokenVerifier) {
       this.idTokenVerifier = idTokenVerifier;
       return this;
     }
 
-    Builder setCookieVerifier(Supplier<? extends FirebaseTokenVerifier> cookieVerifier) {
+    public Builder setCookieVerifier(Supplier<? extends FirebaseTokenVerifier> cookieVerifier) {
       this.cookieVerifier = cookieVerifier;
       return this;
     }
 
-    Builder setUserManager(Supplier<FirebaseUserManager> userManager) {
+    public Builder setUserManager(Supplier<FirebaseUserManager> userManager) {
       this.userManager = userManager;
       return this;
     }

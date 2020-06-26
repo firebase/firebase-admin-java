@@ -33,6 +33,8 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
+import com.google.firebase.auth.internal.FirebaseTokenVerifier;
+import com.google.firebase.auth.internal.FirebaseTokenVerifierImpl;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.lang.reflect.InvocationTargetException;

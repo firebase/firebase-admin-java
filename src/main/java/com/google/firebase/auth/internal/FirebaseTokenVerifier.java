@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth;
+package com.google.firebase.auth.internal;
+
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
 
 /**
  * An interface for verifying Firebase token strings.  Exists mainly to facilitate easy testing
  * and extension/decoration of the token verification functionality.
  */
-interface FirebaseTokenVerifier {
+public interface FirebaseTokenVerifier {
 
   /**
    * Verifies that the given token string is a valid Firebase JWT.
@@ -29,6 +32,6 @@ interface FirebaseTokenVerifier {
    * @return A decoded representation of the input token string.
    * @throws FirebaseAuthException If the input token string fails to verify due to any reason.
    */
-  FirebaseToken verifyToken(String token) throws FirebaseAuthException;
+  public FirebaseToken verifyToken(String token) throws FirebaseAuthException;
 
 }

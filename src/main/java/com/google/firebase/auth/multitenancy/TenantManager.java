@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth;
+package com.google.firebase.auth.multitenancy;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
-import com.google.api.client.json.JsonFactory;
 import com.google.api.core.ApiFuture;
 import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.auth.ListTenantsPage.DefaultTenantSource;
-import com.google.firebase.auth.ListTenantsPage.PageFactory;
-import com.google.firebase.auth.ListTenantsPage.TenantSource;
-import com.google.firebase.auth.Tenant.CreateRequest;
-import com.google.firebase.auth.Tenant.UpdateRequest;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.multitenancy.ListTenantsPage.DefaultTenantSource;
+import com.google.firebase.auth.multitenancy.ListTenantsPage.PageFactory;
+import com.google.firebase.auth.multitenancy.ListTenantsPage.TenantSource;
+import com.google.firebase.auth.multitenancy.Tenant.CreateRequest;
+import com.google.firebase.auth.multitenancy.Tenant.UpdateRequest;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
@@ -46,12 +46,12 @@ public final class TenantManager {
   private final AtomicBoolean destroyed = new AtomicBoolean(false);
 
   private final FirebaseApp firebaseApp;
-  private final FirebaseUserManager userManager;
+  private final TenantManagementClient client;
   private final Map<String, TenantAwareFirebaseAuth> tenantAwareAuths;
 
-  TenantManager(FirebaseApp firebaseApp, FirebaseUserManager userManager) {
+  TenantManager(FirebaseApp firebaseApp, TenantManagementClient client) {
     this.firebaseApp = firebaseApp;
-    this.userManager = userManager;
+    this.client = client;
     tenantAwareAuths = new HashMap<String, TenantAwareFirebaseAuth>();
   }
 
@@ -94,7 +94,7 @@ public final class TenantManager {
     return new CallableOperation<Tenant, FirebaseAuthException>() {
       @Override
       protected Tenant execute() throws FirebaseAuthException {
-        return userManager.getTenant(tenantId);
+        return client.getTenant(tenantId);
       }
     };
   }
@@ -109,7 +109,7 @@ public final class TenantManager {
    * @throws FirebaseAuthException If an error occurs while retrieving tenant data.
    */
   public ListTenantsPage listTenants(@Nullable String pageToken) throws FirebaseAuthException {
-    return listTenants(pageToken, FirebaseUserManager.MAX_LIST_TENANTS_RESULTS);
+    return listTenants(pageToken, TenantManagementClient.MAX_LIST_TENANTS_RESULTS);
   }
 
   /**
@@ -137,7 +137,7 @@ public final class TenantManager {
    * @throws IllegalArgumentException If the specified page token is empty.
    */
   public ApiFuture<ListTenantsPage> listTenantsAsync(@Nullable String pageToken) {
-    return listTenantsAsync(pageToken, FirebaseUserManager.MAX_LIST_TENANTS_RESULTS);
+    return listTenantsAsync(pageToken, TenantManagementClient.MAX_LIST_TENANTS_RESULTS);
   }
 
   /**
@@ -158,7 +158,7 @@ public final class TenantManager {
   private CallableOperation<ListTenantsPage, FirebaseAuthException> listTenantsOp(
       @Nullable final String pageToken, final int maxResults) {
     checkNotDestroyed();
-    final TenantSource tenantSource = new DefaultTenantSource(userManager);
+    final TenantSource tenantSource = new DefaultTenantSource(client);
     final PageFactory factory = new PageFactory(tenantSource, maxResults, pageToken);
     return new CallableOperation<ListTenantsPage, FirebaseAuthException>() {
       @Override
@@ -200,7 +200,7 @@ public final class TenantManager {
     return new CallableOperation<Tenant, FirebaseAuthException>() {
       @Override
       protected Tenant execute() throws FirebaseAuthException {
-        return userManager.createTenant(request);
+        return client.createTenant(request);
       }
     };
   }
@@ -240,7 +240,7 @@ public final class TenantManager {
     return new CallableOperation<Tenant, FirebaseAuthException>() {
       @Override
       protected Tenant execute() throws FirebaseAuthException {
-        return userManager.updateTenant(request);
+        return client.updateTenant(request);
       }
     };
   }
@@ -275,7 +275,7 @@ public final class TenantManager {
     return new CallableOperation<Void, FirebaseAuthException>() {
       @Override
       protected Void execute() throws FirebaseAuthException {
-        userManager.deleteTenant(tenantId);
+        client.deleteTenant(tenantId);
         return null;
       }
     };
@@ -290,7 +290,10 @@ public final class TenantManager {
     }
   }
 
-  protected void destroy() {
+  /**
+   * @hide
+   */
+  void destroy() {
     destroyed.set(true);
   }
 }

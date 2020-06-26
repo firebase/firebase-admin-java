@@ -21,7 +21,8 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.ListProviderConfigsPage;
 import com.google.firebase.auth.ProviderConfig;
-import com.google.firebase.auth.Tenant;
+import com.google.firebase.auth.multitenancy.Tenant;
+
 import java.util.List;
 
 /**

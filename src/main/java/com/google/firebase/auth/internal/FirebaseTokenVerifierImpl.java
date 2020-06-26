@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth;
+package com.google.firebase.auth.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -28,6 +28,9 @@ import com.google.api.client.json.webtoken.JsonWebSignature.Header;
 import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+import com.google.firebase.auth.FirebaseUserManager;
 import com.google.firebase.internal.Nullable;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -39,7 +42,7 @@ import java.security.PublicKey;
  * client's {@code IdToken} API to decode and verify token strings. Can be customized to verify
  * both Firebase ID tokens and session cookies.
  */
-final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
+public final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
 
   private static final String RS256 = "RS256";
   private static final String FIREBASE_AUDIENCE =
@@ -98,27 +101,27 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     return firebaseToken;
   }
 
-  GooglePublicKeysManager getPublicKeysManager() {
+  public GooglePublicKeysManager getPublicKeysManager() {
     return publicKeysManager;
   }
 
-  IdTokenVerifier getIdTokenVerifier() {
+  public IdTokenVerifier getIdTokenVerifier() {
     return idTokenVerifier;
   }
 
-  String getMethod() {
+  public String getMethod() {
     return method;
   }
 
-  String getShortName() {
+  public String getShortName() {
     return shortName;
   }
 
-  String getArticledShortName() {
+  public String getArticledShortName() {
     return articledShortName;
   }
 
-  String getDocUrl() {
+  public String getDocUrl() {
     return docUrl;
   }
 
@@ -295,11 +298,11 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     }
   }
 
-  static Builder builder() {
+  public static Builder builder() {
     return new Builder();
   }
 
-  static final class Builder {
+  public static final class Builder {
 
     private JsonFactory jsonFactory;
     private GooglePublicKeysManager publicKeysManager;
@@ -311,42 +314,42 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
 
     private Builder() { }
 
-    Builder setJsonFactory(JsonFactory jsonFactory) {
+    public Builder setJsonFactory(JsonFactory jsonFactory) {
       this.jsonFactory = jsonFactory;
       return this;
     }
 
-    Builder setPublicKeysManager(GooglePublicKeysManager publicKeysManager) {
+    public Builder setPublicKeysManager(GooglePublicKeysManager publicKeysManager) {
       this.publicKeysManager = publicKeysManager;
       return this;
     }
 
-    Builder setMethod(String method) {
+    public Builder setMethod(String method) {
       this.method = method;
       return this;
     }
 
-    Builder setShortName(String shortName) {
+    public Builder setShortName(String shortName) {
       this.shortName = shortName;
       return this;
     }
 
-    Builder setIdTokenVerifier(IdTokenVerifier idTokenVerifier) {
+    public Builder setIdTokenVerifier(IdTokenVerifier idTokenVerifier) {
       this.idTokenVerifier = idTokenVerifier;
       return this;
     }
 
-    Builder setDocUrl(String docUrl) {
+    public Builder setDocUrl(String docUrl) {
       this.docUrl = docUrl;
       return this;
     }
 
-    Builder setTenantId(@Nullable String tenantId) {
+    public Builder setTenantId(@Nullable String tenantId) {
       this.tenantId = tenantId;
       return this;
     }
 
-    FirebaseTokenVerifierImpl build() {
+    public FirebaseTokenVerifierImpl build() {
       return new FirebaseTokenVerifierImpl(this);
     }
   }

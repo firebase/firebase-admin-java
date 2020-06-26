@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth;
+package com.google.firebase.auth.multitenancy;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -22,7 +22,11 @@ import com.google.api.client.util.Clock;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.AbstractFirebaseAuth;
+import com.google.firebase.auth.AbstractFirebaseAuth.Builder;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
+import com.google.firebase.auth.internal.FirebaseTokenUtils;
+import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 
 /**
  * The tenant-aware Firebase client.
@@ -65,10 +69,10 @@ public final class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
               }
             })
         .setUserManager(
-            new Supplier<FirebaseUserManager>() {
+            new Supplier<TenantManagementClient>() {
               @Override
-              public FirebaseUserManager get() {
-                return FirebaseUserManager
+              public TenantManagementClient get() {
+                return TenantManagementClient
                   .builder()
                   .setFirebaseApp(app)
                   .setTenantId(tenantId)

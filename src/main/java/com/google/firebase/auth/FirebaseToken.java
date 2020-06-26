@@ -31,7 +31,10 @@ public final class FirebaseToken {
 
   private final Map<String, Object> claims;
 
-  FirebaseToken(Map<String, Object> claims) {
+  /**
+   * @hide
+   */
+  public FirebaseToken(Map<String, Object> claims) {
     checkArgument(claims != null && claims.containsKey("sub"),
         "Claims map must at least contain sub");
     this.claims = ImmutableMap.copyOf(claims);

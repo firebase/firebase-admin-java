@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth;
+package com.google.firebase.auth.internal;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;

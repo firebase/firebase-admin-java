@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
+import com.google.firebase.auth.internal.FirebaseTokenVerifier;
 
 /**
  * A decorator for adding token revocation checks to an existing {@link FirebaseTokenVerifier}.

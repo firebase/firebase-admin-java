@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth;
+package com.google.firebase.auth.internal;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -28,13 +28,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.auth.internal.CryptoSigners;
-import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.internal.Nullable;
 
 import java.io.IOException;
 
-final class FirebaseTokenUtils {
+public final class FirebaseTokenUtils {
 
   private static final String ID_TOKEN_CERT_URL =
       "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
@@ -52,11 +50,11 @@ final class FirebaseTokenUtils {
 
   private FirebaseTokenUtils() { }
 
-  static FirebaseTokenFactory createTokenFactory(FirebaseApp firebaseApp, Clock clock) {
+  public static FirebaseTokenFactory createTokenFactory(FirebaseApp firebaseApp, Clock clock) {
     return createTokenFactory(firebaseApp, clock, null);
   }
 
-  static FirebaseTokenFactory createTokenFactory(
+  public static FirebaseTokenFactory createTokenFactory(
       FirebaseApp firebaseApp, Clock clock, @Nullable String tenantId) {
     try {
       return new FirebaseTokenFactory(
@@ -74,11 +72,11 @@ final class FirebaseTokenUtils {
     }
   }
 
-  static FirebaseTokenVerifierImpl createIdTokenVerifier(FirebaseApp app, Clock clock) {
+  public static FirebaseTokenVerifierImpl createIdTokenVerifier(FirebaseApp app, Clock clock) {
     return createIdTokenVerifier(app, clock, null);
   }
 
-  static FirebaseTokenVerifierImpl createIdTokenVerifier(
+  public static FirebaseTokenVerifierImpl createIdTokenVerifier(
       FirebaseApp app, Clock clock, @Nullable String tenantId) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkState(!Strings.isNullOrEmpty(projectId),
@@ -98,7 +96,8 @@ final class FirebaseTokenUtils {
         .build();
   }
 
-  static FirebaseTokenVerifierImpl createSessionCookieVerifier(FirebaseApp app, Clock clock) {
+  public static FirebaseTokenVerifierImpl createSessionCookieVerifier(
+      FirebaseApp app, Clock clock) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkState(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifySessionCookie()");

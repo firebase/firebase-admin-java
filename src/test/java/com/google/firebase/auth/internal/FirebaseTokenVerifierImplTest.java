@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth;
+package com.google.firebase.auth.internal;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -30,7 +30,9 @@ import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.firebase.auth.internal.FirebaseCustomAuthToken;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+import com.google.firebase.auth.FirebaseUserManager;
 import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;

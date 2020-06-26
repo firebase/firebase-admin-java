@@ -47,7 +47,10 @@ import com.google.firebase.auth.internal.HttpErrorResponse;
 import com.google.firebase.auth.internal.ListOidcProviderConfigsResponse;
 import com.google.firebase.auth.internal.ListSamlProviderConfigsResponse;
 import com.google.firebase.auth.internal.ListTenantsResponse;
+import com.google.firebase.auth.internal.ManagementClientUtils;
 import com.google.firebase.auth.internal.UploadAccountResponse;
+import com.google.firebase.auth.multitenancy.ListTenantsPage;
+import com.google.firebase.auth.multitenancy.Tenant;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
@@ -64,41 +67,11 @@ import java.util.Set;
  * FirebaseUserManager provides methods for interacting with the Google Identity Toolkit via its
  * REST API. This class does not hold any mutable state, and is thread safe.
  *
- * <p>TODO(micahstairs): Rename this class to IdentityToolkitClient.
- *
+ * @hide
  * @see <a href="https://developers.google.com/identity/toolkit/web/reference/relyingparty">
  *   Google Identity Toolkit</a>
  */
-class FirebaseUserManager {
-
-  static final String CONFIGURATION_NOT_FOUND_ERROR = "configuration-not-found";
-  static final String TENANT_ID_MISMATCH_ERROR = "tenant-id-mismatch";
-  static final String TENANT_NOT_FOUND_ERROR = "tenant-not-found";
-  static final String USER_NOT_FOUND_ERROR = "user-not-found";
-  static final String INTERNAL_ERROR = "internal-error";
-
-  // Map of server-side error codes to SDK error codes.
-  // SDK error codes defined at: https://firebase.google.com/docs/auth/admin/errors
-  private static final Map<String, String> ERROR_CODES = ImmutableMap.<String, String>builder()
-      .put("CLAIMS_TOO_LARGE", "claims-too-large")
-      .put("CONFIGURATION_NOT_FOUND", CONFIGURATION_NOT_FOUND_ERROR)
-      .put("INSUFFICIENT_PERMISSION", "insufficient-permission")
-      .put("DUPLICATE_EMAIL", "email-already-exists")
-      .put("DUPLICATE_LOCAL_ID", "uid-already-exists")
-      .put("EMAIL_EXISTS", "email-already-exists")
-      .put("INVALID_CLAIMS", "invalid-claims")
-      .put("INVALID_EMAIL", "invalid-email")
-      .put("INVALID_PAGE_SELECTION", "invalid-page-token")
-      .put("INVALID_PHONE_NUMBER", "invalid-phone-number")
-      .put("PHONE_NUMBER_EXISTS", "phone-number-already-exists")
-      .put("PROJECT_NOT_FOUND", "project-not-found")
-      .put("TENANT_ID_MISMATCH", TENANT_ID_MISMATCH_ERROR)
-      .put("TENANT_NOT_FOUND", TENANT_NOT_FOUND_ERROR)
-      .put("USER_NOT_FOUND", USER_NOT_FOUND_ERROR)
-      .put("WEAK_PASSWORD", "invalid-password")
-      .put("UNAUTHORIZED_DOMAIN", "unauthorized-continue-uri")
-      .put("INVALID_DYNAMIC_LINK_DOMAIN", "invalid-dynamic-link-domain")
-      .build();
+public class FirebaseUserManager {
 
   static final int MAX_LIST_PROVIDER_CONFIGS_RESULTS = 100;
   static final int MAX_LIST_TENANTS_RESULTS = 1000;
@@ -117,7 +90,6 @@ class FirebaseUserManager {
 
   private final String userMgtBaseUrl;
   private final String idpConfigMgtBaseUrl;
-  private final String tenantMgtBaseUrl;
   private final JsonFactory jsonFactory;
   private final HttpRequestFactory requestFactory;
   private final String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
@@ -142,7 +114,6 @@ class FirebaseUserManager {
       this.userMgtBaseUrl = idToolkitUrlV1 + getTenantUrlSuffix(tenantId);
       this.idpConfigMgtBaseUrl = idToolkitUrlV2 + getTenantUrlSuffix(tenantId);
     }
-    this.tenantMgtBaseUrl = idToolkitUrlV2;
     this.jsonFactory = app.getOptions().getJsonFactory();
     this.requestFactory = builder.requestFactory == null
       ? ApiClientUtils.newAuthorizedRequestFactory(app) : builder.requestFactory;
@@ -159,7 +130,7 @@ class FirebaseUserManager {
     GetAccountInfoResponse response = post(
         "/accounts:lookup", payload, GetAccountInfoResponse.class);
     if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
-      throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
+      throw new FirebaseAuthException(ManagementClientUtils.USER_NOT_FOUND_ERROR,
           "No user record found for the provided user ID: " + uid);
     }
     return new UserRecord(response.getUsers().get(0), jsonFactory);
@@ -171,7 +142,7 @@ class FirebaseUserManager {
     GetAccountInfoResponse response = post(
         "/accounts:lookup", payload, GetAccountInfoResponse.class);
     if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
-      throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
+      throw new FirebaseAuthException(ManagementClientUtils.USER_NOT_FOUND_ERROR,
           "No user record found for the provided email: " + email);
     }
     return new UserRecord(response.getUsers().get(0), jsonFactory);
@@ -183,7 +154,7 @@ class FirebaseUserManager {
     GetAccountInfoResponse response = post(
         "/accounts:lookup", payload, GetAccountInfoResponse.class);
     if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
-      throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
+      throw new FirebaseAuthException(ManagementClientUtils.USER_NOT_FOUND_ERROR,
           "No user record found for the provided phone number: " + phoneNumber);
     }
     return new UserRecord(response.getUsers().get(0), jsonFactory);
@@ -204,7 +175,8 @@ class FirebaseUserManager {
         "/accounts:lookup", payload, GetAccountInfoResponse.class);
 
     if (response == null) {
-      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to parse server response");
+      throw new FirebaseAuthException(
+        ManagementClientUtils.INTERNAL_ERROR, "Failed to parse server response");
     }
 
     Set<UserRecord> results = new HashSet<>();
@@ -225,7 +197,8 @@ class FirebaseUserManager {
         return uid;
       }
     }
-    throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create new user");
+    throw new FirebaseAuthException(
+      ManagementClientUtils.INTERNAL_ERROR, "Failed to create new user");
   }
 
   void updateUser(UserRecord.UpdateRequest request, JsonFactory jsonFactory)
@@ -233,7 +206,8 @@ class FirebaseUserManager {
     GenericJson response = post(
         "/accounts:update", request.getProperties(jsonFactory), GenericJson.class);
     if (response == null || !request.getUid().equals(response.get("localId"))) {
-      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to update user: " + request.getUid());
+      throw new FirebaseAuthException(
+        ManagementClientUtils.INTERNAL_ERROR, "Failed to update user: " + request.getUid());
     }
   }
 
@@ -242,7 +216,8 @@ class FirebaseUserManager {
     GenericJson response = post(
         "/accounts:delete", payload, GenericJson.class);
     if (response == null || !response.containsKey("kind")) {
-      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to delete user: " + uid);
+      throw new FirebaseAuthException(
+        ManagementClientUtils.INTERNAL_ERROR, "Failed to delete user: " + uid);
     }
   }
 
@@ -257,7 +232,8 @@ class FirebaseUserManager {
     BatchDeleteResponse response = post(
         "/accounts:batchDelete", payload, BatchDeleteResponse.class);
     if (response == null) {
-      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to delete users");
+      throw new FirebaseAuthException(
+        ManagementClientUtils.INTERNAL_ERROR, "Failed to delete users");
     }
 
     return new DeleteUsersResult(uids.size(), response);
@@ -276,7 +252,8 @@ class FirebaseUserManager {
     DownloadAccountResponse response = sendRequest(
             "GET", url, null, DownloadAccountResponse.class);
     if (response == null) {
-      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to retrieve users.");
+      throw new FirebaseAuthException(
+        ManagementClientUtils.INTERNAL_ERROR, "Failed to retrieve users.");
     }
     return response;
   }
@@ -286,50 +263,10 @@ class FirebaseUserManager {
     UploadAccountResponse response = post(
             "/accounts:batchCreate", request, UploadAccountResponse.class);
     if (response == null) {
-      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to import users.");
+      throw new FirebaseAuthException(
+        ManagementClientUtils.INTERNAL_ERROR, "Failed to import users.");
     }
     return new UserImportResult(request.getUsersCount(), response);
-  }
-
-  Tenant getTenant(String tenantId) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + getTenantUrlSuffix(tenantId));
-    return sendRequest("GET", url, null, Tenant.class);
-  }
-
-  Tenant createTenant(Tenant.CreateRequest request) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants");
-    return sendRequest("POST", url, request.getProperties(), Tenant.class);
-  }
-
-  Tenant updateTenant(Tenant.UpdateRequest request) throws FirebaseAuthException {
-    Map<String, Object> properties = request.getProperties();
-    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + getTenantUrlSuffix(request.getTenantId()));
-    url.put("updateMask", Joiner.on(",").join(generateMask(properties)));
-    return sendRequest("PATCH", url, properties, Tenant.class);
-  }
-
-  void deleteTenant(String tenantId) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + getTenantUrlSuffix(tenantId));
-    sendRequest("DELETE", url, null, GenericJson.class);
-  }
-
-  ListTenantsResponse listTenants(int maxResults, String pageToken)
-      throws FirebaseAuthException {
-    ImmutableMap.Builder<String, Object> builder =
-        ImmutableMap.<String, Object>builder().put("pageSize", maxResults);
-    if (pageToken != null) {
-      checkArgument(!pageToken.equals(
-          ListTenantsPage.END_OF_LIST), "Invalid end of list page token");
-      builder.put("pageToken", pageToken);
-    }
-
-    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants");
-    url.putAll(builder.build());
-    ListTenantsResponse response = sendRequest("GET", url, null, ListTenantsResponse.class);
-    if (response == null) {
-      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to retrieve tenants.");
-    }
-    return response;
   }
 
   String createSessionCookie(String idToken,
@@ -343,7 +280,8 @@ class FirebaseUserManager {
         return cookie;
       }
     }
-    throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create session cookie");
+    throw new FirebaseAuthException(
+      ManagementClientUtils.INTERNAL_ERROR, "Failed to create session cookie");
   }
 
   String getEmailActionLink(EmailLinkType type, String email,
@@ -362,7 +300,8 @@ class FirebaseUserManager {
         return link;
       }
     }
-    throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create email action link");
+    throw new FirebaseAuthException(
+      ManagementClientUtils.INTERNAL_ERROR, "Failed to create email action link");
   }
 
   OidcProviderConfig createOidcProviderConfig(
@@ -422,7 +361,8 @@ class FirebaseUserManager {
     ListOidcProviderConfigsResponse response =
         sendRequest("GET", url, null, ListOidcProviderConfigsResponse.class);
     if (response == null) {
-      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to retrieve provider configs.");
+      throw new FirebaseAuthException(
+        ManagementClientUtils.INTERNAL_ERROR, "Failed to retrieve provider configs.");
     }
     return response;
   }
@@ -442,7 +382,8 @@ class FirebaseUserManager {
     ListSamlProviderConfigsResponse response =
         sendRequest("GET", url, null, ListSamlProviderConfigsResponse.class);
     if (response == null) {
-      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to retrieve provider configs.");
+      throw new FirebaseAuthException(
+        ManagementClientUtils.INTERNAL_ERROR, "Failed to retrieve provider configs.");
     }
     return response;
   }
@@ -521,7 +462,9 @@ class FirebaseUserManager {
     } catch (IOException e) {
       // All other IO errors (Connection refused, reset, parse error etc.)
       throw new FirebaseAuthException(
-          INTERNAL_ERROR, "Error while calling user management backend service", e);
+          ManagementClientUtils.INTERNAL_ERROR,
+          "Error while calling user management backend service",
+          e);
     } finally {
       if (response != null) {
         try {
@@ -536,7 +479,7 @@ class FirebaseUserManager {
   private void handleHttpError(HttpResponseException e) throws FirebaseAuthException {
     try {
       HttpErrorResponse response = jsonFactory.fromString(e.getContent(), HttpErrorResponse.class);
-      String code = ERROR_CODES.get(response.getErrorCode());
+      String code = ManagementClientUtils.ERROR_CODES.get(response.getErrorCode());
       if (code != null) {
         throw new FirebaseAuthException(code, "User management service responded with an error", e);
       }
@@ -545,7 +488,7 @@ class FirebaseUserManager {
     }
     String msg = String.format(
         "Unexpected HTTP response with status: %d; body: %s", e.getStatusCode(), e.getContent());
-    throw new FirebaseAuthException(INTERNAL_ERROR, msg, e);
+    throw new FirebaseAuthException(ManagementClientUtils.INTERNAL_ERROR, msg, e);
   }
 
   static class UserImportRequest extends GenericJson {
