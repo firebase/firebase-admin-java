@@ -27,6 +27,7 @@ import com.google.common.base.Supplier;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
+import com.google.firebase.auth.multitenancy.TenantManager;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
@@ -53,7 +54,7 @@ public final class FirebaseAuth extends AbstractFirebaseAuth {
       @Override
       public TenantManager get() {
         tenantManagerCreated.set(true);
-        return new TenantManager(builder.firebaseApp, getUserManager());
+        return new TenantManager(builder.firebaseApp);
       }
     });
   }
