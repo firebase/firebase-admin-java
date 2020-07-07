@@ -46,6 +46,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
       "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit";
   private static final String ERROR_INVALID_CREDENTIAL = "ERROR_INVALID_CREDENTIAL";
   private static final String ERROR_RUNTIME_EXCEPTION = "ERROR_RUNTIME_EXCEPTION";
+  static final String TENANT_ID_MISMATCH_ERROR = "tenant-id-mismatch";
 
   private final JsonFactory jsonFactory;
   private final GooglePublicKeysManager publicKeysManager;
@@ -287,7 +288,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     String tokenTenantId = Strings.nullToEmpty(firebaseToken.getTenantId());
     if (!this.tenantId.equals(tokenTenantId)) {
       throw new FirebaseAuthException(
-          FirebaseUserManager.TENANT_ID_MISMATCH_ERROR,
+          TENANT_ID_MISMATCH_ERROR,
           String.format(
             "The tenant ID ('%s') of the token did not match the expected value ('%s')",
             tokenTenantId,

@@ -214,12 +214,7 @@ public final class FirebaseAuth extends AbstractFirebaseAuth {
   }
 
   @Override
-  protected void doDestroy() {
-    // Only destroy the tenant manager if it has been created.
-    if (tenantManagerCreated.get()) {
-      getTenantManager().destroy();
-    }
-  }
+  protected void doDestroy() { }
 
   private static FirebaseAuth fromApp(final FirebaseApp app) {
     return new FirebaseAuth(

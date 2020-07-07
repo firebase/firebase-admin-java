@@ -44,6 +44,8 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
+import com.google.firebase.auth.multitenancy.TenantAwareFirebaseAuth;
+import com.google.firebase.auth.multitenancy.TenantManager;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestResponseInterceptor;
@@ -66,7 +68,9 @@ import org.junit.Test;
 public class FirebaseUserManagerTest {
 
   private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
+
   private static final String TEST_TOKEN = "token";
+
   private static final GoogleCredentials credentials = new MockGoogleCredentials(TEST_TOKEN);
 
   private static final ActionCodeSettings ACTION_CODE_SETTINGS = ActionCodeSettings.builder()
@@ -78,11 +82,13 @@ public class FirebaseUserManagerTest {
           .setAndroidInstallApp(true)
           .setAndroidMinimumVersion("6")
           .build();
+
   private static final Map<String, Object> ACTION_CODE_SETTINGS_MAP =
           ACTION_CODE_SETTINGS.getProperties();
 
   private static final String PROJECT_BASE_URL =
       "https://identitytoolkit.googleapis.com/v2/projects/test-project-id";
+
   private static final String TENANTS_BASE_URL = PROJECT_BASE_URL + "/tenants";
 
   @After
@@ -646,228 +652,6 @@ public class FirebaseUserManagerTest {
     } catch (IllegalArgumentException expected) {
       // expected
     }
-  }
-
-  @Test
-  public void testGetTenant() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("tenant.json"));
-
-    Tenant tenant = FirebaseAuth.getInstance().getTenantManager().getTenant("TENANT_1");
-
-    checkTenant(tenant, "TENANT_1");
-    checkRequestHeaders(interceptor);
-    checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/TENANT_1");
-  }
-
-  @Test
-  public void testGetTenantWithNotFoundError() throws Exception {
-    TestResponseInterceptor interceptor =
-        initializeAppForUserManagementWithStatusCode(404,
-            "{\"error\": {\"message\": \"TENANT_NOT_FOUND\"}}");
-    try {
-      FirebaseAuth.getInstance().getTenantManager().getTenant("UNKNOWN");
-      fail("No error thrown for invalid response");
-    } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR, e.getErrorCode());
-    }
-    checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/UNKNOWN");
-  }
-
-  @Test
-  public void testListTenants() throws Exception {
-    final TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("listTenants.json"));
-
-    ListTenantsPage page = FirebaseAuth.getInstance().getTenantManager().listTenants(null, 999);
-
-    ImmutableList<Tenant> tenants = ImmutableList.copyOf(page.getValues());
-    assertEquals(2, tenants.size());
-    checkTenant(tenants.get(0), "TENANT_1");
-    checkTenant(tenants.get(1), "TENANT_2");
-    assertEquals("", page.getNextPageToken());
-    checkRequestHeaders(interceptor);
-    checkUrl(interceptor, "GET", TENANTS_BASE_URL);
-    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
-    assertEquals(999, url.getFirst("pageSize"));
-    assertNull(url.getFirst("pageToken"));
-  }
-
-  @Test
-  public void testListTenantsWithPageToken() throws Exception {
-    final TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("listTenants.json"));
-
-    ListTenantsPage page = FirebaseAuth.getInstance().getTenantManager().listTenants("token", 999);
-
-    ImmutableList<Tenant> tenants = ImmutableList.copyOf(page.getValues());
-    assertEquals(2, tenants.size());
-    checkTenant(tenants.get(0), "TENANT_1");
-    checkTenant(tenants.get(1), "TENANT_2");
-    assertEquals("", page.getNextPageToken());
-    checkRequestHeaders(interceptor);
-    checkUrl(interceptor, "GET", TENANTS_BASE_URL);
-    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
-    assertEquals(999, url.getFirst("pageSize"));
-    assertEquals("token", url.getFirst("pageToken"));
-  }
-
-  @Test
-  public void testListZeroTenants() throws Exception {
-    final TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
-
-    ListTenantsPage page = FirebaseAuth.getInstance().getTenantManager().listTenants(null);
-
-    assertTrue(Iterables.isEmpty(page.getValues()));
-    assertEquals("", page.getNextPageToken());
-    checkRequestHeaders(interceptor);
-  }
-
-  @Test
-  public void testCreateTenant() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("tenant.json"));
-    Tenant.CreateRequest request = new Tenant.CreateRequest()
-        .setDisplayName("DISPLAY_NAME")
-        .setPasswordSignInAllowed(true)
-        .setEmailLinkSignInEnabled(false);
-
-    Tenant tenant = FirebaseAuth.getInstance().getTenantManager().createTenant(request);
-
-    checkTenant(tenant, "TENANT_1");
-    checkRequestHeaders(interceptor);
-    checkUrl(interceptor, "POST", TENANTS_BASE_URL);
-    GenericJson parsed = parseRequestContent(interceptor);
-    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
-    assertEquals(true, parsed.get("allowPasswordSignup"));
-    assertEquals(false, parsed.get("enableEmailLinkSignin"));
-  }
-
-  @Test
-  public void testCreateTenantMinimal() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("tenant.json"));
-    Tenant.CreateRequest request = new Tenant.CreateRequest();
-
-    Tenant tenant = FirebaseAuth.getInstance().getTenantManager().createTenant(request);
-
-    checkTenant(tenant, "TENANT_1");
-    checkRequestHeaders(interceptor);
-    checkUrl(interceptor, "POST", TENANTS_BASE_URL);
-    GenericJson parsed = parseRequestContent(interceptor);
-    assertNull(parsed.get("displayName"));
-    assertNull(parsed.get("allowPasswordSignup"));
-    assertNull(parsed.get("enableEmailLinkSignin"));
-  }
-
-  @Test
-  public void testCreateTenantError() throws Exception {
-    TestResponseInterceptor interceptor =
-        initializeAppForUserManagementWithStatusCode(404,
-            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
-    try {
-      FirebaseAuth.getInstance().getTenantManager().createTenant(new Tenant.CreateRequest());
-      fail("No error thrown for invalid response");
-    } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
-    }
-    checkUrl(interceptor, "POST", TENANTS_BASE_URL);
-  }
-
-  @Test
-  public void testUpdateTenant() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("tenant.json"));
-    Tenant.UpdateRequest request = new Tenant.UpdateRequest("TENANT_1")
-        .setDisplayName("DISPLAY_NAME")
-        .setPasswordSignInAllowed(true)
-        .setEmailLinkSignInEnabled(false);
-
-    Tenant tenant = FirebaseAuth.getInstance().getTenantManager().updateTenant(request);
-
-    checkTenant(tenant, "TENANT_1");
-    checkRequestHeaders(interceptor);
-    checkUrl(interceptor, "PATCH", TENANTS_BASE_URL + "/TENANT_1");
-    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
-    assertEquals("allowPasswordSignup,displayName,enableEmailLinkSignin",
-        url.getFirst("updateMask"));
-    GenericJson parsed = parseRequestContent(interceptor);
-    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
-    assertEquals(true, parsed.get("allowPasswordSignup"));
-    assertEquals(false, parsed.get("enableEmailLinkSignin"));
-  }
-
-  @Test
-  public void testUpdateTenantMinimal() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("tenant.json"));
-    Tenant.UpdateRequest request =
-        new Tenant.UpdateRequest("TENANT_1").setDisplayName("DISPLAY_NAME");
-
-    Tenant tenant = FirebaseAuth.getInstance().getTenantManager().updateTenant(request);
-
-    checkTenant(tenant, "TENANT_1");
-    checkRequestHeaders(interceptor);
-    checkUrl(interceptor, "PATCH", TENANTS_BASE_URL + "/TENANT_1");
-    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
-    assertEquals("displayName", url.getFirst("updateMask"));
-    GenericJson parsed = parseRequestContent(interceptor);
-    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
-    assertNull(parsed.get("allowPasswordSignup"));
-    assertNull(parsed.get("enableEmailLinkSignin"));
-  }
-
-  @Test
-  public void testUpdateTenantNoValues() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("tenant.json"));
-    TenantManager tenantManager = FirebaseAuth.getInstance().getTenantManager();
-    try {
-      tenantManager.updateTenant(new Tenant.UpdateRequest("TENANT_1"));
-      fail("No error thrown for empty tenant update");
-    } catch (IllegalArgumentException e) {
-      // expected
-    }
-  }
-
-  @Test
-  public void testUpdateTenantError() throws Exception {
-    TestResponseInterceptor interceptor =
-        initializeAppForUserManagementWithStatusCode(404,
-            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
-    Tenant.UpdateRequest request =
-        new Tenant.UpdateRequest("TENANT_1").setDisplayName("DISPLAY_NAME");
-    try {
-      FirebaseAuth.getInstance().getTenantManager().updateTenant(request);
-      fail("No error thrown for invalid response");
-    } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.INTERNAL_ERROR, e.getErrorCode());
-    }
-    checkUrl(interceptor, "PATCH", TENANTS_BASE_URL + "/TENANT_1");
-  }
-
-  @Test
-  public void testDeleteTenant() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
-
-    FirebaseAuth.getInstance().getTenantManager().deleteTenant("TENANT_1");
-
-    checkRequestHeaders(interceptor);
-    checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/TENANT_1");
-  }
-
-  @Test
-  public void testDeleteTenantWithNotFoundError() throws Exception {
-    TestResponseInterceptor interceptor =
-        initializeAppForUserManagementWithStatusCode(404,
-            "{\"error\": {\"message\": \"TENANT_NOT_FOUND\"}}");
-    try {
-      FirebaseAuth.getInstance().getTenantManager().deleteTenant("UNKNOWN");
-      fail("No error thrown for invalid response");
-    } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.TENANT_NOT_FOUND_ERROR, e.getErrorCode());
-    }
-    checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/UNKNOWN");
   }
 
   @Test
@@ -1866,7 +1650,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().getOidcProviderConfig("oidc.provider-id");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
+      assertEquals(ProviderConfigTestUtils.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
   }
@@ -1968,7 +1752,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeleteOidcProviderMissingId() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    initializeAppForUserManagement("{}");
 
     try {
       FirebaseAuth.getInstance().deleteOidcProviderConfig(null);
@@ -1980,7 +1764,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeleteOidcProviderInvalidId() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    initializeAppForUserManagement("{}");
 
     try {
       FirebaseAuth.getInstance().deleteOidcProviderConfig("saml.invalid-oidc-provider-id");
@@ -1991,7 +1775,7 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testDeleteOidcProviderConfigWithNotFoundError() throws Exception {
+  public void testDeleteOidcProviderConfigWithNotFoundError() {
     TestResponseInterceptor interceptor =
         initializeAppForUserManagementWithStatusCode(404,
             "{\"error\": {\"message\": \"CONFIGURATION_NOT_FOUND\"}}");
@@ -1999,7 +1783,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().deleteOidcProviderConfig("oidc.UNKNOWN");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
+      assertEquals(ProviderConfigTestUtils.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.UNKNOWN");
   }
@@ -2339,7 +2123,7 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testGetSamlProviderConfigWithNotFoundError() throws Exception {
+  public void testGetSamlProviderConfigWithNotFoundError() {
     TestResponseInterceptor interceptor =
         initializeAppForUserManagementWithStatusCode(404,
             "{\"error\": {\"message\": \"CONFIGURATION_NOT_FOUND\"}}");
@@ -2347,7 +2131,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().getSamlProviderConfig("saml.provider-id");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
+      assertEquals(ProviderConfigTestUtils.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
   }
@@ -2450,7 +2234,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeleteSamlProviderMissingId() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    initializeAppForUserManagement("{}");
 
     try {
       FirebaseAuth.getInstance().deleteSamlProviderConfig(null);
@@ -2462,7 +2246,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeleteSamlProviderInvalidId() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement("{}");
+    initializeAppForUserManagement("{}");
 
     try {
       FirebaseAuth.getInstance().deleteSamlProviderConfig("oidc.invalid-saml-provider-id");
@@ -2473,7 +2257,7 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testDeleteSamlProviderConfigWithNotFoundError() throws Exception {
+  public void testDeleteSamlProviderConfigWithNotFoundError() {
     TestResponseInterceptor interceptor =
         initializeAppForUserManagementWithStatusCode(404,
             "{\"error\": {\"message\": \"CONFIGURATION_NOT_FOUND\"}}");
@@ -2481,7 +2265,7 @@ public class FirebaseUserManagerTest {
       FirebaseAuth.getInstance().deleteSamlProviderConfig("saml.UNKNOWN");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
+      assertEquals(ProviderConfigTestUtils.CONFIGURATION_NOT_FOUND_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.UNKNOWN");
   }
@@ -2521,7 +2305,8 @@ public class FirebaseUserManagerTest {
     initializeAppWithResponses(responses);
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     TenantManager tenantManager =  FirebaseAuth.getInstance().getTenantManager();
-    tenantManager.getAuthForTenant(tenantId).getUserManager().setInterceptor(interceptor);
+    AbstractFirebaseAuth auth = tenantManager.getAuthForTenant(tenantId);
+    auth.getUserManager().setInterceptor(interceptor);
     return interceptor;
   }
 
@@ -2608,13 +2393,6 @@ public class FirebaseUserManagerTest {
     assertEquals(2, claims.size());
     assertTrue((boolean) claims.get("admin"));
     assertEquals("gold", claims.get("package"));
-  }
-
-  private static void checkTenant(Tenant tenant, String tenantId) {
-    assertEquals(tenantId, tenant.getTenantId());
-    assertEquals("DISPLAY_NAME", tenant.getDisplayName());
-    assertTrue(tenant.isPasswordSignInAllowed());
-    assertFalse(tenant.isEmailLinkSignInEnabled());
   }
 
   private static void checkOidcProviderConfig(OidcProviderConfig config, String providerId) {

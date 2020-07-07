@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth;
+package com.google.firebase.auth.multitenancy;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -24,10 +24,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
-import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.BaseEncoding;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.internal.ListTenantsResponse;
+import com.google.firebase.auth.multitenancy.ListTenantsPage;
+import com.google.firebase.auth.multitenancy.Tenant;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;

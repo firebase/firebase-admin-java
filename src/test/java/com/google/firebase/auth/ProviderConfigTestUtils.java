@@ -26,28 +26,30 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import org.junit.rules.ExternalResource;
 
-class ProviderConfigTestUtils {
+public class ProviderConfigTestUtils {
 
-  static void assertOidcProviderConfigDoesNotExist(
+  static final String CONFIGURATION_NOT_FOUND_ERROR = "configuration-not-found";
+
+  public static void assertOidcProviderConfigDoesNotExist(
       AbstractFirebaseAuth firebaseAuth, String providerId) throws Exception {
     try {
       firebaseAuth.getOidcProviderConfigAsync(providerId).get();
       fail("No error thrown for getting a deleted OIDC provider config.");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR,
+      assertEquals(CONFIGURATION_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
 
-  static void assertSamlProviderConfigDoesNotExist(
+  public static void assertSamlProviderConfigDoesNotExist(
       AbstractFirebaseAuth firebaseAuth, String providerId) throws Exception {
     try {
       firebaseAuth.getSamlProviderConfigAsync(providerId).get();
       fail("No error thrown for getting a deleted SAML provider config.");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.CONFIGURATION_NOT_FOUND_ERROR,
+      assertEquals(CONFIGURATION_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
@@ -55,24 +57,25 @@ class ProviderConfigTestUtils {
   /**
    * Creates temporary provider configs for testing, and deletes them at the end of each test case.
    */
-  static final class TemporaryProviderConfig extends ExternalResource {
+  public static final class TemporaryProviderConfig extends ExternalResource {
 
     private final AbstractFirebaseAuth auth;
     private final List<String> oidcIds = new ArrayList<>();
     private final List<String> samlIds = new ArrayList<>();
 
-    TemporaryProviderConfig(AbstractFirebaseAuth auth) {
+    public TemporaryProviderConfig(AbstractFirebaseAuth auth) {
       this.auth = auth;
     }
 
-    synchronized OidcProviderConfig createOidcProviderConfig(
+    public synchronized OidcProviderConfig createOidcProviderConfig(
         OidcProviderConfig.CreateRequest request) throws FirebaseAuthException {
       OidcProviderConfig config = auth.createOidcProviderConfig(request);
       oidcIds.add(config.getProviderId());
       return config;
     }
 
-    synchronized void deleteOidcProviderConfig(String providerId) throws FirebaseAuthException {
+    public synchronized void deleteOidcProviderConfig(
+        String providerId) throws FirebaseAuthException {
       checkArgument(oidcIds.contains(providerId),
           "Provider ID is not currently associated with a temporary OIDC provider config: "
           + providerId);
@@ -80,14 +83,15 @@ class ProviderConfigTestUtils {
       oidcIds.remove(providerId);
     }
 
-    synchronized SamlProviderConfig createSamlProviderConfig(
+    public synchronized SamlProviderConfig createSamlProviderConfig(
         SamlProviderConfig.CreateRequest request) throws FirebaseAuthException {
       SamlProviderConfig config = auth.createSamlProviderConfig(request);
       samlIds.add(config.getProviderId());
       return config;
     }
 
-    synchronized void deleteSamlProviderConfig(String providerId) throws FirebaseAuthException {
+    public synchronized void deleteSamlProviderConfig(
+        String providerId) throws FirebaseAuthException {
       checkArgument(samlIds.contains(providerId),
           "Provider ID is not currently associated with a temporary SAML provider config: "
           + providerId);
