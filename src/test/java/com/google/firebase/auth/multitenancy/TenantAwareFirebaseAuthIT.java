@@ -64,7 +64,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -258,7 +257,7 @@ public class TenantAwareFirebaseAuthIT {
       fail("No error thrown for verifying a token with the wrong tenant-aware client");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      Assert.assertEquals("tenant-id-mismatch",
+      assertEquals("tenant-id-mismatch",
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }

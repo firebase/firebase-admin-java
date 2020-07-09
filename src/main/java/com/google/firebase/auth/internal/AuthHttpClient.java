@@ -44,17 +44,20 @@ import java.util.Set;
  */
 public final class AuthHttpClient {
 
+  public static final String CONFIGURATION_NOT_FOUND_ERROR = "configuration-not-found";
+  public static final String INTERNAL_ERROR = "internal-error";
+  public static final String TENANT_NOT_FOUND_ERROR = "tenant-not-found";
+  public static final String USER_NOT_FOUND_ERROR = "user-not-found";
+
   private static final String CLIENT_VERSION_HEADER = "X-Client-Version";
 
   private static final String CLIENT_VERSION = "Java/Admin/" + SdkUtils.getVersion();
-
-  private static final String INTERNAL_ERROR = "internal-error";
 
   // Map of server-side error codes to SDK error codes.
   // SDK error codes defined at: https://firebase.google.com/docs/auth/admin/errors
   private static final Map<String, String> ERROR_CODES = ImmutableMap.<String, String>builder()
       .put("CLAIMS_TOO_LARGE", "claims-too-large")
-      .put("CONFIGURATION_NOT_FOUND", "configuration-not-found")
+      .put("CONFIGURATION_NOT_FOUND", CONFIGURATION_NOT_FOUND_ERROR)
       .put("INSUFFICIENT_PERMISSION", "insufficient-permission")
       .put("DUPLICATE_EMAIL", "email-already-exists")
       .put("DUPLICATE_LOCAL_ID", "uid-already-exists")
@@ -65,11 +68,11 @@ public final class AuthHttpClient {
       .put("INVALID_PHONE_NUMBER", "invalid-phone-number")
       .put("PHONE_NUMBER_EXISTS", "phone-number-already-exists")
       .put("PROJECT_NOT_FOUND", "project-not-found")
-      .put("USER_NOT_FOUND", "user-not-found")
+      .put("USER_NOT_FOUND", USER_NOT_FOUND_ERROR)
       .put("WEAK_PASSWORD", "invalid-password")
       .put("UNAUTHORIZED_DOMAIN", "unauthorized-continue-uri")
       .put("INVALID_DYNAMIC_LINK_DOMAIN", "invalid-dynamic-link-domain")
-      .put("TENANT_NOT_FOUND", "tenant-not-found")
+      .put("TENANT_NOT_FOUND", TENANT_NOT_FOUND_ERROR)
       .build();
 
   private final JsonFactory jsonFactory;
@@ -128,7 +131,7 @@ public final class AuthHttpClient {
     } catch (IOException e) {
       // All other IO errors (Connection refused, reset, parse error etc.)
       throw new FirebaseAuthException(
-          INTERNAL_ERROR, "Error while calling user management backend service", e);
+          INTERNAL_ERROR, "Error while calling the Firebase Auth backend service", e);
     } finally {
       if (response != null) {
         try {
@@ -145,7 +148,7 @@ public final class AuthHttpClient {
       HttpErrorResponse response = jsonFactory.fromString(e.getContent(), HttpErrorResponse.class);
       String code = ERROR_CODES.get(response.getErrorCode());
       if (code != null) {
-        throw new FirebaseAuthException(code, "User management service responded with an error", e);
+        throw new FirebaseAuthException(code, "Firebase Auth service responded with an error", e);
       }
     } catch (IOException ignored) {
       // Ignored

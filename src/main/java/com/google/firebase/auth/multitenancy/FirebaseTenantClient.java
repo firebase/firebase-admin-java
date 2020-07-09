@@ -39,10 +39,6 @@ final class FirebaseTenantClient {
 
   static final int MAX_LIST_TENANTS_RESULTS = 100;
 
-  static final String TENANT_NOT_FOUND_ERROR = "tenant-not-found";
-
-  static final String INTERNAL_ERROR = "internal-error";
-
   private static final String ID_TOOLKIT_URL =
       "https://identitytoolkit.googleapis.com/%s/projects/%s";
 
@@ -94,7 +90,7 @@ final class FirebaseTenantClient {
         ImmutableMap.<String, Object>builder().put("pageSize", maxResults);
     if (pageToken != null) {
       checkArgument(!pageToken.equals(
-          ListTenantsPage.END_OF_LIST), "Invalid end of list page token");
+          ListTenantsPage.END_OF_LIST), "Invalid end of list page token.");
       builder.put("pageToken", pageToken);
     }
 
@@ -103,7 +99,7 @@ final class FirebaseTenantClient {
     ListTenantsResponse response = httpClient.sendRequest(
         "GET", url, null, ListTenantsResponse.class);
     if (response == null) {
-      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to retrieve tenants.");
+      throw new FirebaseAuthException(AuthHttpClient.INTERNAL_ERROR, "Failed to retrieve tenants.");
     }
     return response;
   }

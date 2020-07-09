@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google Inc.
+ * Copyright 2020 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.auth.internal.AuthHttpClient;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestResponseInterceptor;
@@ -89,7 +90,7 @@ public class FirebaseTenantClientTest {
       FirebaseAuth.getInstance().getTenantManager().getTenant("UNKNOWN");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseTenantClient.TENANT_NOT_FOUND_ERROR, e.getErrorCode());
+      assertEquals(AuthHttpClient.TENANT_NOT_FOUND_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/UNKNOWN");
   }
@@ -189,7 +190,7 @@ public class FirebaseTenantClientTest {
       FirebaseAuth.getInstance().getTenantManager().createTenant(new Tenant.CreateRequest());
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseTenantClient.INTERNAL_ERROR, e.getErrorCode());
+      assertEquals(AuthHttpClient.INTERNAL_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "POST", TENANTS_BASE_URL);
   }
@@ -260,7 +261,7 @@ public class FirebaseTenantClientTest {
       FirebaseAuth.getInstance().getTenantManager().updateTenant(request);
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseTenantClient.INTERNAL_ERROR, e.getErrorCode());
+      assertEquals(AuthHttpClient.INTERNAL_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "PATCH", TENANTS_BASE_URL + "/TENANT_1");
   }
@@ -284,7 +285,7 @@ public class FirebaseTenantClientTest {
       FirebaseAuth.getInstance().getTenantManager().deleteTenant("UNKNOWN");
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseTenantClient.TENANT_NOT_FOUND_ERROR, e.getErrorCode());
+      assertEquals(AuthHttpClient.TENANT_NOT_FOUND_ERROR, e.getErrorCode());
     }
     checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/UNKNOWN");
   }

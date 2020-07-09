@@ -197,16 +197,16 @@ public class ListTenantsPage implements Page<Tenant> {
 
   static class DefaultTenantSource implements TenantSource {
 
-    private final FirebaseTenantClient userManager;
+    private final FirebaseTenantClient tenantClient;
 
-    DefaultTenantSource(FirebaseTenantClient userManager) {
-      this.userManager = checkNotNull(userManager, "User manager must not be null.");
+    DefaultTenantSource(FirebaseTenantClient tenantClient) {
+      this.tenantClient = checkNotNull(tenantClient, "Tenant client must not be null.");
     }
 
     @Override
     public ListTenantsResponse fetch(int maxResults, String pageToken)
         throws FirebaseAuthException {
-      return userManager.listTenants(maxResults, pageToken);
+      return tenantClient.listTenants(maxResults, pageToken);
     }
   }
 

@@ -48,7 +48,7 @@ public final class TenantManager {
   private final Map<String, TenantAwareFirebaseAuth> tenantAwareAuths;
 
   /**
-   * Creates a new <code>TenantManager</code> instance. For internal use only. Use
+   * Creates a new {@link TenantManager} instance. For internal use only. Use
    * {@link FirebaseAuth#getTenantManager()} to obtain an instance for regular use.
    *
    * @hide
