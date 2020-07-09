@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.api.client.json.JsonFactory;
+import com.google.api.client.util.Clock;
 import com.google.api.core.ApiFuture;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -64,13 +65,50 @@ public abstract class AbstractFirebaseAuth {
   private final Supplier<? extends FirebaseUserManager> userManager;
   private final JsonFactory jsonFactory;
 
-  AbstractFirebaseAuth(Builder builder) {
+  protected AbstractFirebaseAuth(Builder builder) {
     this.firebaseApp = checkNotNull(builder.firebaseApp);
     this.tokenFactory = threadSafeMemoize(builder.tokenFactory);
     this.idTokenVerifier = threadSafeMemoize(builder.idTokenVerifier);
     this.cookieVerifier = threadSafeMemoize(builder.cookieVerifier);
     this.userManager = threadSafeMemoize(builder.userManager);
     this.jsonFactory = builder.firebaseApp.getOptions().getJsonFactory();
+  }
+
+  protected static Builder builderFromAppAndTenantId(final FirebaseApp app, final String tenantId) {
+    return AbstractFirebaseAuth.builder()
+        .setFirebaseApp(app)
+        .setTokenFactory(
+            new Supplier<FirebaseTokenFactory>() {
+              @Override
+              public FirebaseTokenFactory get() {
+                return FirebaseTokenUtils.createTokenFactory(app, Clock.SYSTEM, tenantId);
+              }
+            })
+        .setIdTokenVerifier(
+            new Supplier<FirebaseTokenVerifier>() {
+              @Override
+              public FirebaseTokenVerifier get() {
+                return FirebaseTokenUtils.createIdTokenVerifier(app, Clock.SYSTEM, tenantId);
+              }
+            })
+        .setCookieVerifier(
+            new Supplier<FirebaseTokenVerifier>() {
+              @Override
+              public FirebaseTokenVerifier get() {
+                return FirebaseTokenUtils.createSessionCookieVerifier(app, Clock.SYSTEM);
+              }
+            })
+        .setUserManager(
+            new Supplier<FirebaseUserManager>() {
+              @Override
+              public FirebaseUserManager get() {
+                return FirebaseUserManager
+                    .builder()
+                    .setFirebaseApp(app)
+                    .setTenantId(tenantId)
+                    .build();
+              }
+            });
   }
 
   /**

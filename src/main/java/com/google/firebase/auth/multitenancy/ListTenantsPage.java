@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth;
+package com.google.firebase.auth.multitenancy;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.json.JsonFactory;
 import com.google.api.gax.paging.Page;
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.auth.internal.DownloadAccountResponse;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.internal.ListTenantsResponse;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
@@ -198,16 +197,16 @@ public class ListTenantsPage implements Page<Tenant> {
 
   static class DefaultTenantSource implements TenantSource {
 
-    private final FirebaseUserManager userManager;
+    private final FirebaseTenantClient tenantClient;
 
-    DefaultTenantSource(FirebaseUserManager userManager) {
-      this.userManager = checkNotNull(userManager, "User manager must not be null.");
+    DefaultTenantSource(FirebaseTenantClient tenantClient) {
+      this.tenantClient = checkNotNull(tenantClient, "Tenant client must not be null.");
     }
 
     @Override
     public ListTenantsResponse fetch(int maxResults, String pageToken)
         throws FirebaseAuthException {
-      return userManager.listTenants(maxResults, pageToken);
+      return tenantClient.listTenants(maxResults, pageToken);
     }
   }
 
@@ -224,13 +223,13 @@ public class ListTenantsPage implements Page<Tenant> {
     private final String pageToken;
 
     PageFactory(@NonNull TenantSource source) {
-      this(source, FirebaseUserManager.MAX_LIST_TENANTS_RESULTS, null);
+      this(source, FirebaseTenantClient.MAX_LIST_TENANTS_RESULTS, null);
     }
 
     PageFactory(@NonNull TenantSource source, int maxResults, @Nullable String pageToken) {
-      checkArgument(maxResults > 0 && maxResults <= FirebaseUserManager.MAX_LIST_TENANTS_RESULTS,
+      checkArgument(maxResults > 0 && maxResults <= FirebaseTenantClient.MAX_LIST_TENANTS_RESULTS,
           "maxResults must be a positive integer that does not exceed %s",
-          FirebaseUserManager.MAX_LIST_TENANTS_RESULTS);
+          FirebaseTenantClient.MAX_LIST_TENANTS_RESULTS);
       checkArgument(!END_OF_LIST.equals(pageToken), "Invalid end of list page token.");
       this.source = checkNotNull(source, "Source must not be null.");
       this.maxResults = maxResults;

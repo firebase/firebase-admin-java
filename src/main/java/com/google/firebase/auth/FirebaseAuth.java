@@ -27,10 +27,10 @@ import com.google.common.base.Supplier;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
+import com.google.firebase.auth.multitenancy.TenantManager;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class is the entry point for all server-side Firebase Authentication actions.
@@ -45,15 +45,13 @@ public final class FirebaseAuth extends AbstractFirebaseAuth {
   private static final String SERVICE_ID = FirebaseAuth.class.getName();
 
   private final Supplier<TenantManager> tenantManager;
-  private final AtomicBoolean tenantManagerCreated = new AtomicBoolean(false);
 
   FirebaseAuth(final Builder builder) {
     super(builder);
     tenantManager = threadSafeMemoize(new Supplier<TenantManager>() {
       @Override
       public TenantManager get() {
-        tenantManagerCreated.set(true);
-        return new TenantManager(builder.firebaseApp, getUserManager());
+        return new TenantManager(builder.firebaseApp);
       }
     });
   }
@@ -213,12 +211,7 @@ public final class FirebaseAuth extends AbstractFirebaseAuth {
   }
 
   @Override
-  protected void doDestroy() {
-    // Only destroy the tenant manager if it has been created.
-    if (tenantManagerCreated.get()) {
-      getTenantManager().destroy();
-    }
-  }
+  protected void doDestroy() { }
 
   private static FirebaseAuth fromApp(final FirebaseApp app) {
     return new FirebaseAuth(

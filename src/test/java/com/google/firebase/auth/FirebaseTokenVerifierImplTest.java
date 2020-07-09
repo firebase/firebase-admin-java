@@ -30,7 +30,6 @@ import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.firebase.auth.internal.FirebaseCustomAuthToken;
 import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -219,14 +218,14 @@ public class FirebaseTokenVerifierImplTest {
   }
 
   @Test
-  public void testVerifyTokenDifferentTenantIds() throws Exception {
+  public void testVerifyTokenDifferentTenantIds() {
     try {
       fullyPopulatedBuilder()
         .setTenantId("TENANT_1")
         .build()
         .verifyToken(createTokenWithTenantId("TENANT_2"));
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
+      assertEquals(FirebaseTokenVerifierImpl.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
       assertEquals(
           "The tenant ID ('TENANT_2') of the token did not match the expected value ('TENANT_1')",
           e.getMessage());
@@ -234,14 +233,14 @@ public class FirebaseTokenVerifierImplTest {
   }
 
   @Test
-  public void testVerifyTokenMissingTenantId() throws Exception {
+  public void testVerifyTokenMissingTenantId() {
     try {
       fullyPopulatedBuilder()
         .setTenantId("TENANT_ID")
         .build()
         .verifyToken(tokenFactory.createToken());
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
+      assertEquals(FirebaseTokenVerifierImpl.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
       assertEquals(
           "The tenant ID ('') of the token did not match the expected value ('TENANT_ID')",
           e.getMessage());
@@ -249,13 +248,13 @@ public class FirebaseTokenVerifierImplTest {
   }
 
   @Test
-  public void testVerifyTokenUnexpectedTenantId() throws Exception {
+  public void testVerifyTokenUnexpectedTenantId() {
     try {
       fullyPopulatedBuilder()
         .build()
         .verifyToken(createTokenWithTenantId("TENANT_ID"));
     } catch (FirebaseAuthException e) {
-      assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
+      assertEquals(FirebaseTokenVerifierImpl.TENANT_ID_MISMATCH_ERROR, e.getErrorCode());
       assertEquals(
           "The tenant ID ('TENANT_ID') of the token did not match the expected value ('')",
           e.getMessage());

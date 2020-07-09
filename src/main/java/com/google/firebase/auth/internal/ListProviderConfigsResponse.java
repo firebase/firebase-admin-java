@@ -16,12 +16,7 @@
 
 package com.google.firebase.auth.internal;
 
-import com.google.api.client.util.Key;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.ImmutableList;
-import com.google.firebase.auth.ListProviderConfigsPage;
 import com.google.firebase.auth.ProviderConfig;
-import com.google.firebase.auth.Tenant;
 import java.util.List;
 
 /**

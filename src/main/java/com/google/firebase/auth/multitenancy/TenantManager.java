@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth;
+package com.google.firebase.auth.multitenancy;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 
-import com.google.api.client.json.JsonFactory;
+import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.core.ApiFuture;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.auth.ListTenantsPage.DefaultTenantSource;
-import com.google.firebase.auth.ListTenantsPage.PageFactory;
-import com.google.firebase.auth.ListTenantsPage.TenantSource;
-import com.google.firebase.auth.Tenant.CreateRequest;
-import com.google.firebase.auth.Tenant.UpdateRequest;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.multitenancy.ListTenantsPage.DefaultTenantSource;
+import com.google.firebase.auth.multitenancy.ListTenantsPage.PageFactory;
+import com.google.firebase.auth.multitenancy.ListTenantsPage.TenantSource;
+import com.google.firebase.auth.multitenancy.Tenant.CreateRequest;
+import com.google.firebase.auth.multitenancy.Tenant.UpdateRequest;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class can be used to perform a variety of tenant-related operations, including creating,
@@ -42,17 +43,25 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public final class TenantManager {
 
-  private final Object lock = new Object();
-  private final AtomicBoolean destroyed = new AtomicBoolean(false);
-
   private final FirebaseApp firebaseApp;
-  private final FirebaseUserManager userManager;
+  private final FirebaseTenantClient tenantClient;
   private final Map<String, TenantAwareFirebaseAuth> tenantAwareAuths;
 
-  TenantManager(FirebaseApp firebaseApp, FirebaseUserManager userManager) {
+  /**
+   * Creates a new {@link TenantManager} instance. For internal use only. Use
+   * {@link FirebaseAuth#getTenantManager()} to obtain an instance for regular use.
+   *
+   * @hide
+   */
+  public TenantManager(FirebaseApp firebaseApp) {
     this.firebaseApp = firebaseApp;
-    this.userManager = userManager;
-    tenantAwareAuths = new HashMap<String, TenantAwareFirebaseAuth>();
+    this.tenantClient = new FirebaseTenantClient(firebaseApp);
+    this.tenantAwareAuths = new HashMap<>();
+  }
+
+  @VisibleForTesting
+  void setInterceptor(HttpResponseInterceptor interceptor) {
+    this.tenantClient.setInterceptor(interceptor);
   }
 
   /**
@@ -89,12 +98,11 @@ public final class TenantManager {
   }
 
   private CallableOperation<Tenant, FirebaseAuthException> getTenantOp(final String tenantId) {
-    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(tenantId), "Tenant ID must not be null or empty.");
     return new CallableOperation<Tenant, FirebaseAuthException>() {
       @Override
       protected Tenant execute() throws FirebaseAuthException {
-        return userManager.getTenant(tenantId);
+        return tenantClient.getTenant(tenantId);
       }
     };
   }
@@ -109,7 +117,7 @@ public final class TenantManager {
    * @throws FirebaseAuthException If an error occurs while retrieving tenant data.
    */
   public ListTenantsPage listTenants(@Nullable String pageToken) throws FirebaseAuthException {
-    return listTenants(pageToken, FirebaseUserManager.MAX_LIST_TENANTS_RESULTS);
+    return listTenants(pageToken, FirebaseTenantClient.MAX_LIST_TENANTS_RESULTS);
   }
 
   /**
@@ -137,7 +145,7 @@ public final class TenantManager {
    * @throws IllegalArgumentException If the specified page token is empty.
    */
   public ApiFuture<ListTenantsPage> listTenantsAsync(@Nullable String pageToken) {
-    return listTenantsAsync(pageToken, FirebaseUserManager.MAX_LIST_TENANTS_RESULTS);
+    return listTenantsAsync(pageToken, FirebaseTenantClient.MAX_LIST_TENANTS_RESULTS);
   }
 
   /**
@@ -157,8 +165,7 @@ public final class TenantManager {
 
   private CallableOperation<ListTenantsPage, FirebaseAuthException> listTenantsOp(
       @Nullable final String pageToken, final int maxResults) {
-    checkNotDestroyed();
-    final TenantSource tenantSource = new DefaultTenantSource(userManager);
+    final TenantSource tenantSource = new DefaultTenantSource(tenantClient);
     final PageFactory factory = new PageFactory(tenantSource, maxResults, pageToken);
     return new CallableOperation<ListTenantsPage, FirebaseAuthException>() {
       @Override
@@ -195,12 +202,11 @@ public final class TenantManager {
 
   private CallableOperation<Tenant, FirebaseAuthException> createTenantOp(
       final CreateRequest request) {
-    checkNotDestroyed();
     checkNotNull(request, "Create request must not be null.");
     return new CallableOperation<Tenant, FirebaseAuthException>() {
       @Override
       protected Tenant execute() throws FirebaseAuthException {
-        return userManager.createTenant(request);
+        return tenantClient.createTenant(request);
       }
     };
   }
@@ -233,14 +239,13 @@ public final class TenantManager {
 
   private CallableOperation<Tenant, FirebaseAuthException> updateTenantOp(
       final UpdateRequest request) {
-    checkNotDestroyed();
     checkNotNull(request, "Update request must not be null.");
     checkArgument(!request.getProperties().isEmpty(),
         "Tenant update must have at least one property set.");
     return new CallableOperation<Tenant, FirebaseAuthException>() {
       @Override
       protected Tenant execute() throws FirebaseAuthException {
-        return userManager.updateTenant(request);
+        return tenantClient.updateTenant(request);
       }
     };
   }
@@ -270,27 +275,13 @@ public final class TenantManager {
   }
 
   private CallableOperation<Void, FirebaseAuthException> deleteTenantOp(final String tenantId) {
-    checkNotDestroyed();
     checkArgument(!Strings.isNullOrEmpty(tenantId), "Tenant ID must not be null or empty.");
     return new CallableOperation<Void, FirebaseAuthException>() {
       @Override
       protected Void execute() throws FirebaseAuthException {
-        userManager.deleteTenant(tenantId);
+        tenantClient.deleteTenant(tenantId);
         return null;
       }
     };
-  }
-
-  void checkNotDestroyed() {
-    synchronized (lock) {
-      checkState(
-          !destroyed.get(),
-          "TenantManager instance is no longer alive. This happens when "
-              + "the parent FirebaseApp instance has been deleted.");
-    }
-  }
-
-  protected void destroy() {
-    destroyed.set(true);
   }
 }

@@ -19,7 +19,7 @@ package com.google.firebase.auth.internal;
 import com.google.api.client.util.Key;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.auth.Tenant;
+import com.google.firebase.auth.multitenancy.Tenant;
 import java.util.List;
 
 /**

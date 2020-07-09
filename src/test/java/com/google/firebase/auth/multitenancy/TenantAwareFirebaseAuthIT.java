@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.auth;
+package com.google.firebase.auth.multitenancy;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -39,7 +39,18 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.ExportedUserRecord;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+import com.google.firebase.auth.ListProviderConfigsPage;
+import com.google.firebase.auth.ListUsersPage;
+import com.google.firebase.auth.OidcProviderConfig;
+import com.google.firebase.auth.ProviderConfigTestUtils;
 import com.google.firebase.auth.ProviderConfigTestUtils.TemporaryProviderConfig;
+import com.google.firebase.auth.SamlProviderConfig;
+import com.google.firebase.auth.UserRecord;
+import com.google.firebase.auth.UserTestUtils;
 import com.google.firebase.auth.UserTestUtils.RandomUser;
 import com.google.firebase.auth.UserTestUtils.TemporaryUser;
 import com.google.firebase.internal.Nullable;
@@ -56,7 +67,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExternalResource;
 
 public class TenantAwareFirebaseAuthIT {
 
@@ -247,7 +257,7 @@ public class TenantAwareFirebaseAuthIT {
       fail("No error thrown for verifying a token with the wrong tenant-aware client");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.TENANT_ID_MISMATCH_ERROR,
+      assertEquals("tenant-id-mismatch",
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
@@ -420,7 +430,7 @@ public class TenantAwareFirebaseAuthIT {
       String customToken, @Nullable String tenantId) throws IOException {
     final GenericUrl url = new GenericUrl(VERIFY_CUSTOM_TOKEN_URL + "?key="
         + IntegrationTestUtils.getApiKey());
-    ImmutableMap.Builder<String, Object> content = ImmutableMap.<String, Object>builder();
+    ImmutableMap.Builder<String, Object> content = ImmutableMap.builder();
     content.put("token", customToken);
     content.put("returnSecureToken", true);
     if (tenantId != null) {

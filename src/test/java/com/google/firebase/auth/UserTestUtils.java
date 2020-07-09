@@ -16,11 +16,11 @@
 
 package com.google.firebase.auth;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.firebase.auth.internal.AuthHttpClient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -28,21 +28,21 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import org.junit.rules.ExternalResource;
 
-final class UserTestUtils {
+public final class UserTestUtils {
 
-  static void assertUserDoesNotExist(AbstractFirebaseAuth firebaseAuth, String uid)
+  public static void assertUserDoesNotExist(AbstractFirebaseAuth firebaseAuth, String uid)
       throws Exception {
     try {
       firebaseAuth.getUserAsync(uid).get();
       fail("No error thrown for getting a user which was expected to be absent.");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(FirebaseUserManager.USER_NOT_FOUND_ERROR,
+      assertEquals(AuthHttpClient.USER_NOT_FOUND_ERROR,
           ((FirebaseAuthException) e.getCause()).getErrorCode());
     }
   }
 
-  static RandomUser generateRandomUserInfo() {
+  public static RandomUser generateRandomUserInfo() {
     String uid = UUID.randomUUID().toString().replaceAll("-", "");
     String email = String.format(
         "test%s@example.%s.com",
@@ -60,7 +60,7 @@ final class UserTestUtils {
     return builder.toString();
   }
 
-  static class RandomUser {
+  public static class RandomUser {
     private final String uid;
     private final String email;
     private final String phoneNumber;
@@ -71,15 +71,15 @@ final class UserTestUtils {
       this.phoneNumber = phoneNumber;
     }
 
-    String getUid() {
+    public String getUid() {
       return uid;
     }
 
-    String getEmail() {
+    public String getEmail() {
       return email;
     }
 
-    String getPhoneNumber() {
+    public String getPhoneNumber() {
       return phoneNumber;
     }
   }
@@ -88,12 +88,12 @@ final class UserTestUtils {
    * Creates temporary Firebase user accounts for testing, and deletes them at the end of each
    * test case.
    */
-  static final class TemporaryUser extends ExternalResource {
+  public static final class TemporaryUser extends ExternalResource {
 
     private final AbstractFirebaseAuth auth;
     private final List<String> users = new ArrayList<>();
 
-    TemporaryUser(AbstractFirebaseAuth auth) {
+    public TemporaryUser(AbstractFirebaseAuth auth) {
       this.auth = auth;
     }
 
