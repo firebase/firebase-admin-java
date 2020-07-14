@@ -19,10 +19,8 @@ package com.google.firebase.auth;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.json.JsonFactory;
 import com.google.api.gax.paging.Page;
 import com.google.common.collect.ImmutableList;
-import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.ListOidcProviderConfigsResponse;
 import com.google.firebase.auth.internal.ListProviderConfigsResponse;
 import com.google.firebase.auth.internal.ListSamlProviderConfigsResponse;
@@ -113,7 +111,7 @@ public class ListProviderConfigsPage<T extends ProviderConfig> implements Page<T
   @NonNull
   @Override
   public Iterable<T> iterateAll() {
-    return new ProviderConfigIterable(this);
+    return new ProviderConfigIterable<T>(this);
   }
 
   /**
@@ -248,7 +246,7 @@ public class ListProviderConfigsPage<T extends ProviderConfig> implements Page<T
     }
 
     Factory(
-        @NonNull ProviderConfigSource source,
+        @NonNull ProviderConfigSource<T> source,
         int maxResults,
         @Nullable String pageToken) {
       checkArgument(

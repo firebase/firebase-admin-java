@@ -17,6 +17,7 @@
 package com.google.firebase.auth.internal;
 
 import com.google.api.client.util.Key;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.SamlProviderConfig;
@@ -34,6 +35,15 @@ public final class ListSamlProviderConfigsResponse
 
   @Key("nextPageToken")
   private String pageToken;
+
+  @VisibleForTesting
+  public ListSamlProviderConfigsResponse(
+      List<SamlProviderConfig> providerConfigs, String pageToken) {
+    this.providerConfigs = providerConfigs;
+    this.pageToken = pageToken;
+  }
+
+  public ListSamlProviderConfigsResponse() { }
 
   @Override
   public List<SamlProviderConfig> getProviderConfigs() {

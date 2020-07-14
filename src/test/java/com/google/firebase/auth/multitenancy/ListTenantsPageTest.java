@@ -27,8 +27,6 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.internal.ListTenantsResponse;
-import com.google.firebase.auth.multitenancy.ListTenantsPage;
-import com.google.firebase.auth.multitenancy.Tenant;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;

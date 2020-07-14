@@ -18,12 +18,10 @@ package com.google.firebase.auth.multitenancy;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
-import com.google.firebase.auth.multitenancy.Tenant;
 import java.io.IOException;
 import java.util.Map;
 import org.junit.Test;
