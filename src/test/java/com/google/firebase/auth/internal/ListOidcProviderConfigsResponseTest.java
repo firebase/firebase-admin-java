@@ -21,12 +21,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.OidcProviderConfig;
 
 import org.junit.Test;
 
 public class ListOidcProviderConfigsResponseTest {
+
+  private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
 
   @Test
   public void testDefaultValues() throws Exception {
@@ -48,29 +52,19 @@ public class ListOidcProviderConfigsResponseTest {
 
   @Test
   public void testDeserialization() throws Exception {
-    String singleQuotedJson = "{"
-        + "  'oauthIdpConfigs': ["
-        + "    {"   
-        + "      'name': 'projects/projectId/oauthIdpConfigs/oidc.provider-id-1'"
-        + "    },"
-        + "    {"
-        + "      'name': 'projects/projectId/oauthIdpConfigs/oidc.provider-id-2'"
-        + "    }"
-        + "  ],"
-        + "  'nextPageToken': 'PAGE_TOKEN'"
-        + "}";
-    String doubleQuotedJson = replaceSingleQuotesWithDoubleQuotes(singleQuotedJson);
-    ListOidcProviderConfigsResponse response = Utils.getDefaultJsonFactory().fromString(
-          doubleQuotedJson, ListOidcProviderConfigsResponse.class);
+    String json = JSON_FACTORY.toString(
+        ImmutableMap.of(
+          "oauthIdpConfigs", ImmutableList.of(
+            ImmutableMap.of("name", "projects/projectId/oauthIdpConfigs/oidc.provider-id-1"),
+            ImmutableMap.of("name", "projects/projectId/oauthIdpConfigs/oidc.provider-id-2")),
+          "nextPageToken", "PAGE_TOKEN"));
+    ListOidcProviderConfigsResponse response =
+        JSON_FACTORY.fromString(json, ListOidcProviderConfigsResponse.class);
 
     assertEquals(2, response.getProviderConfigs().size());
     assertEquals("oidc.provider-id-1", response.getProviderConfigs().get(0).getProviderId());
     assertEquals("oidc.provider-id-2", response.getProviderConfigs().get(1).getProviderId());
     assertTrue(response.hasProviderConfigs());
     assertEquals("PAGE_TOKEN", response.getPageToken());
-  }
-
-  private static String replaceSingleQuotesWithDoubleQuotes(String str) {
-    return str.replace("'", "\"");
   }
 }

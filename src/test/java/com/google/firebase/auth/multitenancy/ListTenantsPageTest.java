@@ -326,7 +326,7 @@ public class ListTenantsPageTest {
   private static class TestTenantSource implements ListTenantsPage.TenantSource {
 
     private ListTenantsResponse response;
-    private List<String> calls = new ArrayList<>();
+    private final List<String> calls = new ArrayList<>();
 
     TestTenantSource(int tenantCount) throws IOException {
       ImmutableList.Builder<Tenant> tenants = ImmutableList.builder();

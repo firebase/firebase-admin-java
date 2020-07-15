@@ -352,7 +352,7 @@ public class ListProviderConfigsPageTest {
       implements ListProviderConfigsPage.ProviderConfigSource<OidcProviderConfig> {
 
     private ListOidcProviderConfigsResponse response;
-    private List<String> calls = new ArrayList<>();
+    private final List<String> calls = new ArrayList<>();
 
     TestProviderConfigSource(int providerConfigCount) throws IOException {
       ImmutableList.Builder<OidcProviderConfig> providerConfigs = ImmutableList.builder();

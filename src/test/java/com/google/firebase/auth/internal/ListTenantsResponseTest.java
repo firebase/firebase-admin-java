@@ -21,12 +21,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.multitenancy.Tenant;
 
 import org.junit.Test;
 
 public class ListTenantsResponseTest {
+
+  private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
 
   @Test
   public void testDefaultValues() throws Exception {
@@ -48,29 +52,18 @@ public class ListTenantsResponseTest {
 
   @Test
   public void testDeserialization() throws Exception {
-    String singleQuotedJson = "{"
-        + "  'tenants': ["
-        + "    {"   
-        + "      'name': 'projects/project-id/resource/TENANT_1'"
-        + "    },"
-        + "    {"
-        + "      'name': 'projects/project-id/resource/TENANT_2'"
-        + "    }"
-        + "  ],"
-        + "  'pageToken': 'PAGE_TOKEN'"
-        + "}";
-    String doubleQuotedJson = replaceSingleQuotesWithDoubleQuotes(singleQuotedJson);
-    ListTenantsResponse response =
-        Utils.getDefaultJsonFactory().fromString(doubleQuotedJson, ListTenantsResponse.class);
+    String json = JSON_FACTORY.toString(
+        ImmutableMap.of(
+          "tenants", ImmutableList.of(
+            ImmutableMap.of("name", "projects/project-id/resource/TENANT_1"),
+            ImmutableMap.of("name", "projects/project-id/resource/TENANT_2")),
+          "pageToken", "PAGE_TOKEN"));
+    ListTenantsResponse response = JSON_FACTORY.fromString(json, ListTenantsResponse.class);
 
     assertEquals(2, response.getTenants().size());
     assertEquals("TENANT_1", response.getTenants().get(0).getTenantId());
     assertEquals("TENANT_2", response.getTenants().get(1).getTenantId());
     assertTrue(response.hasTenants());
     assertEquals("PAGE_TOKEN", response.getPageToken());
-  }
-
-  private static String replaceSingleQuotesWithDoubleQuotes(String str) {
-    return str.replace("'", "\"");
   }
 }

@@ -28,9 +28,9 @@ import org.junit.Test;
 
 public class TenantTest {
 
-  private static final JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+  private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
 
-  private static final String TENANT_JSON_STRING =
+  private static final String TENANT_JSON_STRING = 
       "{"
         + "\"name\":\"projects/project-id/resource/TENANT_ID\","
         + "\"displayName\":\"DISPLAY_NAME\","
@@ -40,7 +40,7 @@ public class TenantTest {
 
   @Test
   public void testJsonDeserialization() throws IOException {
-    Tenant tenant = jsonFactory.fromString(TENANT_JSON_STRING, Tenant.class);
+    Tenant tenant = JSON_FACTORY.fromString(TENANT_JSON_STRING, Tenant.class);
 
     assertEquals(tenant.getTenantId(), "TENANT_ID");
     assertEquals(tenant.getDisplayName(), "DISPLAY_NAME");
@@ -50,7 +50,7 @@ public class TenantTest {
 
   @Test
   public void testUpdateRequestFromTenant() throws IOException {
-    Tenant tenant = jsonFactory.fromString(TENANT_JSON_STRING, Tenant.class);
+    Tenant tenant = JSON_FACTORY.fromString(TENANT_JSON_STRING, Tenant.class);
 
     Tenant.UpdateRequest updateRequest = tenant.updateRequest();
 
