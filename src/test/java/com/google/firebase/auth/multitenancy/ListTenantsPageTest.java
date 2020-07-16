@@ -27,8 +27,6 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.internal.ListTenantsResponse;
-import com.google.firebase.auth.multitenancy.ListTenantsPage;
-import com.google.firebase.auth.multitenancy.Tenant;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -328,7 +326,7 @@ public class ListTenantsPageTest {
   private static class TestTenantSource implements ListTenantsPage.TenantSource {
 
     private ListTenantsResponse response;
-    private List<String> calls = new ArrayList<>();
+    private final List<String> calls = new ArrayList<>();
 
     TestTenantSource(int tenantCount) throws IOException {
       ImmutableList.Builder<Tenant> tenants = ImmutableList.builder();

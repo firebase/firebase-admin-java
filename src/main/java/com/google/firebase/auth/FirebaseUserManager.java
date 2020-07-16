@@ -54,8 +54,6 @@ import java.util.Set;
  * FirebaseUserManager provides methods for interacting with the Google Identity Toolkit via its
  * REST API. This class does not hold any mutable state, and is thread safe.
  *
- * <p>TODO(micahstairs): Rename this class to IdentityToolkitClient.
- *
  * @see <a href="https://developers.google.com/identity/toolkit/web/reference/relyingparty">
  *   Google Identity Toolkit</a>
  */

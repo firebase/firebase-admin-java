@@ -17,6 +17,7 @@
 package com.google.firebase.auth.internal;
 
 import com.google.api.client.util.Key;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.OidcProviderConfig;
@@ -34,6 +35,15 @@ public final class ListOidcProviderConfigsResponse
 
   @Key("nextPageToken")
   private String pageToken;
+
+  @VisibleForTesting
+  public ListOidcProviderConfigsResponse(
+      List<OidcProviderConfig> providerConfigs, String pageToken) {
+    this.providerConfigs = providerConfigs;
+    this.pageToken = pageToken;
+  }
+
+  public ListOidcProviderConfigsResponse() { }
 
   @Override
   public List<OidcProviderConfig> getProviderConfigs() {

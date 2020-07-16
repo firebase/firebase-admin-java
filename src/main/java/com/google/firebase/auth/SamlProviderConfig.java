@@ -24,8 +24,6 @@ import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.firebase.auth.ProviderConfig.AbstractCreateRequest;
-import com.google.firebase.auth.ProviderConfig.AbstractUpdateRequest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;

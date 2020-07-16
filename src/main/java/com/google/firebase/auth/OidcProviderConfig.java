@@ -20,8 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
-import com.google.firebase.auth.ProviderConfig.AbstractCreateRequest;
-import com.google.firebase.auth.ProviderConfig.AbstractUpdateRequest;
 
 /**
  * Contains metadata associated with an OIDC Auth provider.
