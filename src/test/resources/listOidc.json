@@ -1,0 +1,15 @@
+{
+  "oauthIdpConfigs" : [ {
+    "name": "projects/projectId/oauthIdpConfigs/oidc.provider-id1",
+    "displayName" : "DISPLAY_NAME",
+    "enabled" : true,
+    "clientId" : "CLIENT_ID",
+    "issuer" : "https://oidc.com/issuer"
+  }, {
+    "name": "projects/projectId/oauthIdpConfigs/oidc.provider-id2",
+    "displayName" : "DISPLAY_NAME",
+    "enabled" : true,
+    "clientId" : "CLIENT_ID",
+    "issuer" : "https://oidc.com/issuer"
+  } ]
+}

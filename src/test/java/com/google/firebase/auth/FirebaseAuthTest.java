@@ -32,7 +32,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
-import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.lang.reflect.InvocationTargetException;
@@ -429,12 +428,12 @@ public class FirebaseAuthTest {
   private FirebaseAuth getAuthForIdTokenVerification(
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions);
-    FirebaseUserManager userManager = new FirebaseUserManager(app);
-    return FirebaseAuth.builder()
-        .setFirebaseApp(app)
-        .setIdTokenVerifier(tokenVerifierSupplier)
-        .setUserManager(Suppliers.ofInstance(userManager))
-        .build();
+    FirebaseUserManager userManager = FirebaseUserManager.builder().setFirebaseApp(app).build();
+    return new FirebaseAuth(
+        AbstractFirebaseAuth.builder()
+          .setFirebaseApp(app)
+          .setIdTokenVerifier(tokenVerifierSupplier)
+          .setUserManager(Suppliers.ofInstance(userManager)));
   }
 
   private FirebaseAuth getAuthForSessionCookieVerification(FirebaseTokenVerifier tokenVerifier) {
@@ -444,12 +443,12 @@ public class FirebaseAuthTest {
   private FirebaseAuth getAuthForSessionCookieVerification(
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions);
-    FirebaseUserManager userManager = new FirebaseUserManager(app);
-    return FirebaseAuth.builder()
-        .setFirebaseApp(app)
-        .setCookieVerifier(tokenVerifierSupplier)
-        .setUserManager(Suppliers.ofInstance(userManager))
-        .build();
+    FirebaseUserManager userManager = FirebaseUserManager.builder().setFirebaseApp(app).build();
+    return new FirebaseAuth(
+          AbstractFirebaseAuth.builder()
+          .setFirebaseApp(app)
+          .setCookieVerifier(tokenVerifierSupplier)
+          .setUserManager(Suppliers.ofInstance(userManager)));
   }
 
   private static class MockTokenVerifier implements FirebaseTokenVerifier {

@@ -50,6 +50,7 @@ public class UserRecord implements UserInfo {
   private static final int MAX_CLAIMS_PAYLOAD_SIZE = 1000;
 
   private final String uid;
+  private final String tenantId;
   private final String email;
   private final String phoneNumber;
   private final boolean emailVerified;
@@ -66,6 +67,7 @@ public class UserRecord implements UserInfo {
     checkNotNull(jsonFactory, "jsonFactory must not be null");
     checkArgument(!Strings.isNullOrEmpty(response.getUid()), "uid must not be null or empty");
     this.uid = response.getUid();
+    this.tenantId = response.getTenantId();
     this.email = response.getEmail();
     this.phoneNumber = response.getPhoneNumber();
     this.emailVerified = response.isEmailVerified();
@@ -114,6 +116,16 @@ public class UserRecord implements UserInfo {
   @Override
   public String getUid() {
     return uid;
+  }
+
+  /**
+   * Returns the tenant ID associated with this user, if one exists.
+   *
+   * @return a tenant ID string or null.
+   */
+  @Nullable
+  public String getTenantId() {
+    return this.tenantId;
   }
 
   /**
@@ -199,9 +211,9 @@ public class UserRecord implements UserInfo {
   }
 
   /**
-   * Returns a timestamp in milliseconds since epoch, truncated down to the closest second. 
+   * Returns a timestamp in milliseconds since epoch, truncated down to the closest second.
    * Tokens minted before this timestamp are considered invalid.
-   * 
+   *
    * @return Timestamp in milliseconds since the epoch. Tokens minted before this timestamp are
    *     considered invalid.
    */
@@ -371,10 +383,10 @@ public class UserRecord implements UserInfo {
     /**
      * Sets the display name for the new user.
      *
-     * @param displayName a non-null, non-empty display name string.
+     * @param displayName a non-null display name string.
      */
     public CreateRequest setDisplayName(String displayName) {
-      checkNotNull(displayName, "displayName cannot be null or empty");
+      checkNotNull(displayName, "displayName cannot be null");
       properties.put("displayName", displayName);
       return this;
     }
