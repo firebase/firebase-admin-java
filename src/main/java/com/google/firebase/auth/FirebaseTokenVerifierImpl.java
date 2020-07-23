@@ -29,6 +29,7 @@ import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.firebase.ErrorCode;
+import com.google.firebase.internal.Nullable;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.security.GeneralSecurityException;
@@ -55,6 +56,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
   private final String docUrl;
   private final AuthErrorCode invalidTokenErrorCode;
   private final AuthErrorCode expiredTokenErrorCode;
+  private final String tenantId;
 
   private FirebaseTokenVerifierImpl(Builder builder) {
     this.jsonFactory = checkNotNull(builder.jsonFactory);
@@ -69,6 +71,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     this.docUrl = builder.docUrl;
     this.invalidTokenErrorCode = checkNotNull(builder.invalidTokenErrorCode);
     this.expiredTokenErrorCode = checkNotNull(builder.expiredTokenErrorCode);
+    this.tenantId = Strings.nullToEmpty(builder.tenantId);
   }
 
   /**
@@ -94,7 +97,9 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     IdToken idToken = parse(token);
     checkContents(idToken);
     checkSignature(idToken);
-    return new FirebaseToken(idToken.getPayload());
+    FirebaseToken firebaseToken = new FirebaseToken(idToken.getPayload());
+    checkTenantId(firebaseToken);
+    return firebaseToken;
   }
 
   GooglePublicKeysManager getPublicKeysManager() {
@@ -317,6 +322,17 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     return false;
   }
 
+  private void checkTenantId(final FirebaseToken firebaseToken) throws FirebaseAuthException {
+    String tokenTenantId = Strings.nullToEmpty(firebaseToken.getTenantId());
+    if (!this.tenantId.equals(tokenTenantId)) {
+      String message = String.format(
+          "The tenant ID ('%s') of the token did not match the expected value ('%s')",
+          tokenTenantId,
+          tenantId);
+      throw newException(message, AuthErrorCode.TENANT_ID_MISMATCH);
+    }
+  }
+
   static Builder builder() {
     return new Builder();
   }
@@ -331,6 +347,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     private String docUrl;
     private AuthErrorCode invalidTokenErrorCode;
     private AuthErrorCode expiredTokenErrorCode;
+    private String tenantId;
 
     private Builder() { }
 
@@ -364,13 +381,18 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
       return this;
     }
 
-    public Builder setInvalidTokenErrorCode(AuthErrorCode invalidTokenErrorCode) {
+    Builder setInvalidTokenErrorCode(AuthErrorCode invalidTokenErrorCode) {
       this.invalidTokenErrorCode = invalidTokenErrorCode;
       return this;
     }
 
-    public Builder setExpiredTokenErrorCode(AuthErrorCode expiredTokenErrorCode) {
+    Builder setExpiredTokenErrorCode(AuthErrorCode expiredTokenErrorCode) {
       this.expiredTokenErrorCode = expiredTokenErrorCode;
+      return this;
+    }
+
+    Builder setTenantId(@Nullable String tenantId) {
+      this.tenantId = tenantId;
       return this;
     }
 

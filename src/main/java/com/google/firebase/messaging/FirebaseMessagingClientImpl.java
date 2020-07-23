@@ -139,7 +139,7 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     try {
       BatchRequest batch = newBatchRequest(messages, dryRun, callback);
       batch.execute();
-      return new BatchResponse(callback.getResponses());
+      return new BatchResponseImpl(callback.getResponses());
     } catch (HttpResponseException e) {
       OutgoingHttpRequest req = new OutgoingHttpRequest(HttpMethods.POST, FCM_BATCH_URL);
       IncomingHttpResponse resp = new IncomingHttpResponse(e, req);

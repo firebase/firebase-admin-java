@@ -51,6 +51,7 @@ public class MulticastMessage {
   private final AndroidConfig androidConfig;
   private final WebpushConfig webpushConfig;
   private final ApnsConfig apnsConfig;
+  private final FcmOptions fcmOptions;
 
   private MulticastMessage(Builder builder) {
     this.tokens = builder.tokens.build();
@@ -64,6 +65,7 @@ public class MulticastMessage {
     this.androidConfig = builder.androidConfig;
     this.webpushConfig = builder.webpushConfig;
     this.apnsConfig = builder.apnsConfig;
+    this.fcmOptions = builder.fcmOptions;
   }
 
   List<Message> getMessageList() {
@@ -71,7 +73,8 @@ public class MulticastMessage {
         .setNotification(this.notification)
         .setAndroidConfig(this.androidConfig)
         .setApnsConfig(this.apnsConfig)
-        .setWebpushConfig(this.webpushConfig);
+        .setWebpushConfig(this.webpushConfig)
+        .setFcmOptions(this.fcmOptions);
     if (this.data != null) {
       builder.putAllData(this.data);
     }
@@ -99,6 +102,7 @@ public class MulticastMessage {
     private AndroidConfig androidConfig;
     private WebpushConfig webpushConfig;
     private ApnsConfig apnsConfig;
+    private FcmOptions fcmOptions;
 
     private Builder() {}
 
@@ -167,6 +171,15 @@ public class MulticastMessage {
      */
     public Builder setApnsConfig(ApnsConfig apnsConfig) {
       this.apnsConfig = apnsConfig;
+      return this;
+    }
+
+    /**
+     * Sets the {@link FcmOptions}, which can be overridden by the platform-specific {@code
+     * fcm_options} fields.
+     */
+    public Builder setFcmOptions(FcmOptions fcmOptions) {
+      this.fcmOptions = fcmOptions;
       return this;
     }
 

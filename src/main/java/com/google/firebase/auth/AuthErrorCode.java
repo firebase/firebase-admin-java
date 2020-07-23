@@ -71,6 +71,8 @@ public enum AuthErrorCode {
    */
   REVOKED_SESSION_COOKIE,
 
+  TENANT_ID_MISMATCH,
+
   /**
    * A user already exists with the provided UID.
    */

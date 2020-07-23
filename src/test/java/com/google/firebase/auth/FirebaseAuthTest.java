@@ -499,12 +499,12 @@ public class FirebaseAuthTest {
   private FirebaseAuth getAuthForIdTokenVerification(
       FirebaseApp app,
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
-    FirebaseUserManager userManager = new FirebaseUserManager(app);
-    return FirebaseAuth.builder()
-        .setFirebaseApp(app)
-        .setIdTokenVerifier(tokenVerifierSupplier)
-        .setUserManager(Suppliers.ofInstance(userManager))
-        .build();
+    FirebaseUserManager userManager = FirebaseUserManager.builder().setFirebaseApp(app).build();
+    return new FirebaseAuth(
+        AbstractFirebaseAuth.builder()
+          .setFirebaseApp(app)
+          .setIdTokenVerifier(tokenVerifierSupplier)
+          .setUserManager(Suppliers.ofInstance(userManager)));
   }
 
   FirebaseAuth getAuthForSessionCookieVerificationWithRevocationCheck(
@@ -526,12 +526,12 @@ public class FirebaseAuthTest {
   private FirebaseAuth getAuthForSessionCookieVerification(
       FirebaseApp app,
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
-    FirebaseUserManager userManager = new FirebaseUserManager(app);
-    return FirebaseAuth.builder()
-        .setFirebaseApp(app)
-        .setCookieVerifier(tokenVerifierSupplier)
-        .setUserManager(Suppliers.ofInstance(userManager))
-        .build();
+    FirebaseUserManager userManager = FirebaseUserManager.builder().setFirebaseApp(app).build();
+    return new FirebaseAuth(
+          AbstractFirebaseAuth.builder()
+          .setFirebaseApp(app)
+          .setCookieVerifier(tokenVerifierSupplier)
+          .setUserManager(Suppliers.ofInstance(userManager)));
   }
 
   private FirebaseApp getFirebaseAppForUserRetrieval() {
