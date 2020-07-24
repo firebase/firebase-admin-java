@@ -37,6 +37,12 @@ final class AuthErrorHandler extends AbstractHttpErrorHandler<FirebaseAuthExcept
   private static final Map<String, AuthError> ERROR_CODES =
       ImmutableMap.<String, AuthError>builder()
           .put(
+              "CONFIGURATION_NOT_FOUND",
+              new AuthError(
+                  ErrorCode.NOT_FOUND,
+                  "No IdP configuration found corresponding to the provided identifier",
+                  AuthErrorCode.CONFIGURATION_NOT_FOUND))
+          .put(
               "DUPLICATE_EMAIL",
               new AuthError(
                   ErrorCode.ALREADY_EXISTS,
@@ -67,6 +73,12 @@ final class AuthErrorHandler extends AbstractHttpErrorHandler<FirebaseAuthExcept
                   ErrorCode.ALREADY_EXISTS,
                   "The user with the provided phone number already exists",
                   AuthErrorCode.PHONE_NUMBER_ALREADY_EXISTS))
+          .put(
+              "TENANT_NOT_FOUND",
+              new AuthError(
+                  ErrorCode.NOT_FOUND,
+                  "No tenant found for the given identifier",
+                  AuthErrorCode.TENANT_NOT_FOUND))
           .put(
               "UNAUTHORIZED_DOMAIN",
               new AuthError(

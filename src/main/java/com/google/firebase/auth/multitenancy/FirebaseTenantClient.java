@@ -46,15 +46,19 @@ final class FirebaseTenantClient {
   private final AuthHttpClient httpClient;
 
   FirebaseTenantClient(FirebaseApp app) {
-    checkNotNull(app, "FirebaseApp must not be null");
-    String projectId = ImplFirebaseTrampolines.getProjectId(app);
+    this(
+        ImplFirebaseTrampolines.getProjectId(checkNotNull(app)),
+        app.getOptions().getJsonFactory(),
+        ApiClientUtils.newAuthorizedRequestFactory(app));
+  }
+
+  FirebaseTenantClient(
+      String projectId, JsonFactory jsonFactory, HttpRequestFactory requestFactory) {
     checkArgument(!Strings.isNullOrEmpty(projectId),
         "Project ID is required to access the auth service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
     this.tenantMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v2", projectId);
-    JsonFactory jsonFactory = app.getOptions().getJsonFactory();
-    HttpRequestFactory requestFactory = ApiClientUtils.newAuthorizedRequestFactory(app);
     this.httpClient = new AuthHttpClient(jsonFactory, requestFactory);
   }
 

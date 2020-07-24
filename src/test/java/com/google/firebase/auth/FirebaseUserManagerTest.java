@@ -45,7 +45,6 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
-import com.google.firebase.auth.internal.AuthHttpClient;
 import com.google.firebase.auth.multitenancy.TenantAwareFirebaseAuth;
 import com.google.firebase.auth.multitenancy.TenantManager;
 import com.google.firebase.internal.SdkUtils;
@@ -91,6 +90,10 @@ public class FirebaseUserManagerTest {
       "https://identitytoolkit.googleapis.com/v2/projects/test-project-id";
 
   private static final String TENANTS_BASE_URL = PROJECT_BASE_URL + "/tenants";
+
+  private static final String SAML_RESPONSE = TestUtils.loadResource("saml.json");
+
+  private static final String OIDC_RESPONSE = TestUtils.loadResource("oidc.json");
 
   @After
   public void tearDown() {
@@ -279,7 +282,7 @@ public class FirebaseUserManagerTest {
         ).replace("'", "\""));
 
     UidIdentifier doesntExist = new UidIdentifier("this-uid-doesnt-exist");
-    List<UserIdentifier> ids = ImmutableList.<UserIdentifier>of(
+    List<UserIdentifier> ids = ImmutableList.of(
         new UidIdentifier("uid1"),
         new EmailIdentifier("user2@example.com"),
         new PhoneIdentifier("+15555550003"),
@@ -301,7 +304,7 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testInvalidUidIdentifier() throws Exception {
+  public void testInvalidUidIdentifier() {
     try {
       new UidIdentifier("too long " + Strings.repeat(".", 128));
       fail("No error thrown for invalid uid");
@@ -311,7 +314,7 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testInvalidEmailIdentifier() throws Exception {
+  public void testInvalidEmailIdentifier() {
     try {
       new EmailIdentifier("invalid email addr");
       fail("No error thrown for invalid email");
@@ -321,7 +324,7 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testInvalidPhoneIdentifier() throws Exception {
+  public void testInvalidPhoneIdentifier() {
     try {
       new PhoneIdentifier("invalid phone number");
       fail("No error thrown for invalid phone number");
@@ -331,7 +334,7 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testInvalidProviderIdentifier() throws Exception {
+  public void testInvalidProviderIdentifier() {
     try {
       new ProviderIdentifier("", "valid-uid");
       fail("No error thrown for invalid provider id");
@@ -454,7 +457,7 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testDeleteUsersExceeds1000() throws Exception {
+  public void testDeleteUsersExceeds1000() {
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
             .setCredentials(credentials)
             .build());
@@ -471,7 +474,7 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testDeleteUsersInvalidId() throws Exception {
+  public void testDeleteUsersInvalidId() {
     FirebaseApp.initializeApp(new FirebaseOptions.Builder()
             .setCredentials(credentials)
             .build());
@@ -1481,8 +1484,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testCreateOidcProvider() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("oidc.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(OIDC_RESPONSE);
     OidcProviderConfig.CreateRequest createRequest =
         new OidcProviderConfig.CreateRequest()
             .setProviderId("oidc.provider-id")
@@ -1507,8 +1509,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testCreateOidcProviderAsync() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("oidc.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(OIDC_RESPONSE);
     OidcProviderConfig.CreateRequest createRequest =
         new OidcProviderConfig.CreateRequest()
             .setProviderId("oidc.provider-id")
@@ -1534,8 +1535,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testCreateOidcProviderMinimal() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("oidc.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(OIDC_RESPONSE);
     // Only the 'enabled' and 'displayName' fields can be omitted from an OIDC provider config
     // creation request.
     OidcProviderConfig.CreateRequest createRequest =
@@ -1557,25 +1557,32 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testCreateOidcProviderError() throws Exception {
-    TestResponseInterceptor interceptor =
-        initializeAppForUserManagementWithStatusCode(404,
-            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+  public void testCreateOidcProviderError() {
+    String message = "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}";
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent(message)
+        .setStatusCode(500);
+    FirebaseAuth auth = getRetryDisabledAuth(response);
     OidcProviderConfig.CreateRequest createRequest =
         new OidcProviderConfig.CreateRequest().setProviderId("oidc.provider-id");
+
     try {
-      FirebaseAuth.getInstance().createOidcProviderConfig(createRequest);
+      auth.createOidcProviderConfig(createRequest);
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
+      assertEquals(
+          "Unexpected HTTP response with status: 500\n" + message,
+          e.getMessage());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+      assertNull(e.getAuthErrorCode());
     }
-
-    checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/oauthIdpConfigs");
   }
 
   @Test
   public void testCreateOidcProviderMissingId() throws Exception {
-    initializeAppForUserManagement(TestUtils.loadResource("oidc.json"));
+    initializeAppForUserManagement(OIDC_RESPONSE);
     OidcProviderConfig.CreateRequest createRequest =
         new OidcProviderConfig.CreateRequest()
             .setDisplayName("DISPLAY_NAME")
@@ -1593,8 +1600,7 @@ public class FirebaseUserManagerTest {
   @Test
   public void testTenantAwareCreateOidcProvider() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
-        "TENANT_ID",
-        TestUtils.loadResource("oidc.json"));
+        "TENANT_ID", OIDC_RESPONSE);
     OidcProviderConfig.CreateRequest createRequest =
         new OidcProviderConfig.CreateRequest()
             .setProviderId("oidc.provider-id")
@@ -1613,8 +1619,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUpdateOidcProvider() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("oidc.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(OIDC_RESPONSE);
     OidcProviderConfig.UpdateRequest request =
         new OidcProviderConfig.UpdateRequest("oidc.provider-id")
             .setDisplayName("DISPLAY_NAME")
@@ -1638,8 +1643,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUpdateOidcProviderAsync() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("oidc.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(OIDC_RESPONSE);
     OidcProviderConfig.UpdateRequest request =
         new OidcProviderConfig.UpdateRequest("oidc.provider-id")
             .setDisplayName("DISPLAY_NAME")
@@ -1664,8 +1668,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUpdateOidcProviderMinimal() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("oidc.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(OIDC_RESPONSE);
     OidcProviderConfig.UpdateRequest request =
         new OidcProviderConfig.UpdateRequest("oidc.provider-id").setDisplayName("DISPLAY_NAME");
 
@@ -1683,7 +1686,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUpdateOidcProviderConfigNoValues() throws Exception {
-    initializeAppForUserManagement(TestUtils.loadResource("oidc.json"));
+    initializeAppForUserManagement(OIDC_RESPONSE);
     try {
       FirebaseAuth.getInstance().updateOidcProviderConfig(
           new OidcProviderConfig.UpdateRequest("oidc.provider-id"));
@@ -1695,25 +1698,32 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUpdateOidcProviderConfigError() {
-    TestResponseInterceptor interceptor =
-        initializeAppForUserManagementWithStatusCode(404,
-            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+    String message = "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}";
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent(message)
+        .setStatusCode(500);
+    FirebaseAuth auth = getRetryDisabledAuth(response);
     OidcProviderConfig.UpdateRequest request =
         new OidcProviderConfig.UpdateRequest("oidc.provider-id").setDisplayName("DISPLAY_NAME");
+
     try {
-      FirebaseAuth.getInstance().updateOidcProviderConfig(request);
+      auth.updateOidcProviderConfig(request);
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
+      assertEquals(
+          "Unexpected HTTP response with status: 500\n" + message,
+          e.getMessage());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+      assertNull(e.getAuthErrorCode());
     }
-    checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
   }
 
   @Test
   public void testTenantAwareUpdateOidcProvider() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
-        "TENANT_ID",
-        TestUtils.loadResource("oidc.json"));
+        "TENANT_ID", OIDC_RESPONSE);
     TenantAwareFirebaseAuth tenantAwareAuth =
         FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
     OidcProviderConfig.UpdateRequest request =
@@ -1740,8 +1750,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetOidcProviderConfig() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("oidc.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(OIDC_RESPONSE);
 
     OidcProviderConfig config =
         FirebaseAuth.getInstance().getOidcProviderConfig("oidc.provider-id");
@@ -1753,8 +1762,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetOidcProviderConfigAsync() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("oidc.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(OIDC_RESPONSE);
 
     OidcProviderConfig config =
         FirebaseAuth.getInstance().getOidcProviderConfigAsync("oidc.provider-id").get();
@@ -1766,7 +1774,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetOidcProviderConfigMissingId() throws Exception {
-    initializeAppForUserManagement(TestUtils.loadResource("oidc.json"));
+    initializeAppForUserManagement(OIDC_RESPONSE);
 
     try {
       FirebaseAuth.getInstance().getOidcProviderConfig(null);
@@ -1778,7 +1786,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetOidcProviderConfigInvalidId() throws Exception {
-    initializeAppForUserManagement(TestUtils.loadResource("oidc.json"));
+    initializeAppForUserManagement(OIDC_RESPONSE);
 
     try {
       FirebaseAuth.getInstance().getOidcProviderConfig("saml.invalid-oidc-provider-id");
@@ -1789,7 +1797,7 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testGetOidcProviderConfigWithNotFoundError() throws Exception {
+  public void testGetOidcProviderConfigWithNotFoundError() {
     TestResponseInterceptor interceptor =
         initializeAppForUserManagementWithStatusCode(404,
             "{\"error\": {\"message\": \"CONFIGURATION_NOT_FOUND\"}}");
@@ -1798,6 +1806,13 @@ public class FirebaseUserManagerTest {
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
       assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals(
+          "No IdP configuration found corresponding to the provided identifier "
+              + "(CONFIGURATION_NOT_FOUND).",
+          e.getMessage());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+      assertEquals(AuthErrorCode.CONFIGURATION_NOT_FOUND, e.getAuthErrorCode());
     }
     checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.provider-id");
   }
@@ -1805,8 +1820,7 @@ public class FirebaseUserManagerTest {
   @Test
   public void testGetTenantAwareOidcProviderConfig() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
-        "TENANT_ID",
-        TestUtils.loadResource("oidc.json"));
+        "TENANT_ID", OIDC_RESPONSE);
     TenantAwareFirebaseAuth tenantAwareAuth =
         FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
 
@@ -1856,18 +1870,25 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testListOidcProviderConfigsError() throws Exception {
-    TestResponseInterceptor interceptor =
-        initializeAppForUserManagementWithStatusCode(404,
-            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+  public void testListOidcProviderConfigsError() {
+    String message = "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}";
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent(message)
+        .setStatusCode(500);
+    FirebaseAuth auth = getRetryDisabledAuth(response);
 
     try {
-      FirebaseAuth.getInstance().listOidcProviderConfigs(null, 99);
+      auth.listOidcProviderConfigs(null, 99);
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
+      assertEquals(
+          "Unexpected HTTP response with status: 500\n" + message,
+          e.getMessage());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+      assertNull(e.getAuthErrorCode());
     }
-    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/oauthIdpConfigs");
   }
 
   @Test
@@ -1975,6 +1996,13 @@ public class FirebaseUserManagerTest {
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
       assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals(
+          "No IdP configuration found corresponding to the provided identifier "
+              + "(CONFIGURATION_NOT_FOUND).",
+          e.getMessage());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+      assertEquals(AuthErrorCode.CONFIGURATION_NOT_FOUND, e.getAuthErrorCode());
     }
     checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/oauthIdpConfigs/oidc.UNKNOWN");
   }
@@ -1996,8 +2024,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testCreateSamlProvider() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("saml.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(SAML_RESPONSE);
     SamlProviderConfig.CreateRequest createRequest =
         new SamlProviderConfig.CreateRequest()
           .setProviderId("saml.provider-id")
@@ -2042,8 +2069,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testCreateSamlProviderAsync() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("saml.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(SAML_RESPONSE);
     SamlProviderConfig.CreateRequest createRequest =
         new SamlProviderConfig.CreateRequest()
           .setProviderId("saml.provider-id")
@@ -2089,8 +2115,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testCreateSamlProviderMinimal() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("saml.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(SAML_RESPONSE);
     // Only the 'enabled', 'displayName', and 'signRequest' fields can be omitted from a SAML
     // provider config creation request.
     SamlProviderConfig.CreateRequest createRequest =
@@ -2130,23 +2155,31 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testCreateSamlProviderError() {
-    TestResponseInterceptor interceptor =
-        initializeAppForUserManagementWithStatusCode(404,
-            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+    String message = "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}";
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent(message)
+        .setStatusCode(500);
+    FirebaseAuth auth = getRetryDisabledAuth(response);
     SamlProviderConfig.CreateRequest createRequest =
         new SamlProviderConfig.CreateRequest().setProviderId("saml.provider-id");
+
     try {
-      FirebaseAuth.getInstance().createSamlProviderConfig(createRequest);
+      auth.createSamlProviderConfig(createRequest);
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
+      assertEquals(
+          "Unexpected HTTP response with status: 500\n" + message,
+          e.getMessage());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+      assertNull(e.getAuthErrorCode());
     }
-    checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/inboundSamlConfigs");
   }
 
   @Test
   public void testCreateSamlProviderMissingId() throws Exception {
-    initializeAppForUserManagement(TestUtils.loadResource("saml.json"));
+    initializeAppForUserManagement(SAML_RESPONSE);
     SamlProviderConfig.CreateRequest createRequest =
         new SamlProviderConfig.CreateRequest()
           .setDisplayName("DISPLAY_NAME")
@@ -2168,8 +2201,7 @@ public class FirebaseUserManagerTest {
   @Test
   public void testTenantAwareCreateSamlProvider() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
-        "TENANT_ID",
-        TestUtils.loadResource("saml.json"));
+        "TENANT_ID", SAML_RESPONSE);
     SamlProviderConfig.CreateRequest createRequest =
         new SamlProviderConfig.CreateRequest()
           .setProviderId("saml.provider-id")
@@ -2192,8 +2224,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUpdateSamlProvider() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("saml.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(SAML_RESPONSE);
     SamlProviderConfig.UpdateRequest updateRequest =
         new SamlProviderConfig.UpdateRequest("saml.provider-id")
           .setDisplayName("DISPLAY_NAME")
@@ -2240,8 +2271,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUpdateSamlProviderAsync() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("saml.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(SAML_RESPONSE);
     SamlProviderConfig.UpdateRequest updateRequest =
         new SamlProviderConfig.UpdateRequest("saml.provider-id")
           .setDisplayName("DISPLAY_NAME")
@@ -2289,8 +2319,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUpdateSamlProviderMinimal() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("saml.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(SAML_RESPONSE);
     SamlProviderConfig.UpdateRequest request =
         new SamlProviderConfig.UpdateRequest("saml.provider-id").setDisplayName("DISPLAY_NAME");
 
@@ -2308,7 +2337,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testUpdateSamlProviderConfigNoValues() throws Exception {
-    initializeAppForUserManagement(TestUtils.loadResource("saml.json"));
+    initializeAppForUserManagement(SAML_RESPONSE);
     try {
       FirebaseAuth.getInstance().updateSamlProviderConfig(
           new SamlProviderConfig.UpdateRequest("saml.provider-id"));
@@ -2319,26 +2348,33 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testUpdateSamlProviderConfigError() throws Exception {
-    TestResponseInterceptor interceptor =
-        initializeAppForUserManagementWithStatusCode(404,
-            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+  public void testUpdateSamlProviderConfigError() {
+    String message = "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}";
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent(message)
+        .setStatusCode(500);
+    FirebaseAuth auth = getRetryDisabledAuth(response);
     SamlProviderConfig.UpdateRequest request =
         new SamlProviderConfig.UpdateRequest("saml.provider-id").setDisplayName("DISPLAY_NAME");
+
     try {
-      FirebaseAuth.getInstance().updateSamlProviderConfig(request);
+      auth.updateSamlProviderConfig(request);
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
+      assertEquals(
+          "Unexpected HTTP response with status: 500\n" + message,
+          e.getMessage());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+      assertNull(e.getAuthErrorCode());
     }
-    checkUrl(interceptor, "PATCH", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
   }
 
   @Test
   public void testTenantAwareUpdateSamlProvider() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
-        "TENANT_ID",
-        TestUtils.loadResource("saml.json"));
+        "TENANT_ID", SAML_RESPONSE);
     TenantAwareFirebaseAuth tenantAwareAuth =
         FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
     SamlProviderConfig.UpdateRequest updateRequest =
@@ -2370,8 +2406,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetSamlProviderConfig() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("saml.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(SAML_RESPONSE);
 
     SamlProviderConfig config =
         FirebaseAuth.getInstance().getSamlProviderConfig("saml.provider-id");
@@ -2383,8 +2418,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetSamlProviderConfigAsync() throws Exception {
-    TestResponseInterceptor interceptor = initializeAppForUserManagement(
-        TestUtils.loadResource("saml.json"));
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(SAML_RESPONSE);
 
     SamlProviderConfig config =
         FirebaseAuth.getInstance().getSamlProviderConfigAsync("saml.provider-id").get();
@@ -2408,7 +2442,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetSamlProviderConfigInvalidId() throws Exception {
-    initializeAppForUserManagement(TestUtils.loadResource("saml.json"));
+    initializeAppForUserManagement(SAML_RESPONSE);
 
     try {
       FirebaseAuth.getInstance().getSamlProviderConfig("oidc.invalid-saml-provider-id");
@@ -2428,6 +2462,13 @@ public class FirebaseUserManagerTest {
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
       assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals(
+          "No IdP configuration found corresponding to the provided identifier "
+              + "(CONFIGURATION_NOT_FOUND).",
+          e.getMessage());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+      assertEquals(AuthErrorCode.CONFIGURATION_NOT_FOUND, e.getAuthErrorCode());
     }
     checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.provider-id");
   }
@@ -2435,8 +2476,7 @@ public class FirebaseUserManagerTest {
   @Test
   public void testGetTenantAwareSamlProviderConfig() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForTenantAwareUserManagement(
-        "TENANT_ID",
-        TestUtils.loadResource("saml.json"));
+        "TENANT_ID", SAML_RESPONSE);
     TenantAwareFirebaseAuth tenantAwareAuth =
         FirebaseAuth.getInstance().getTenantManager().getAuthForTenant("TENANT_ID");
 
@@ -2487,18 +2527,25 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testListSamlProviderConfigsError() throws Exception {
-    TestResponseInterceptor interceptor =
-        initializeAppForUserManagementWithStatusCode(404,
-            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+  public void testListSamlProviderConfigsError() {
+    String message = "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}";
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent(message)
+        .setStatusCode(500);
+    FirebaseAuth auth = getRetryDisabledAuth(response);
 
     try {
-      FirebaseAuth.getInstance().listSamlProviderConfigs(null, 99);
+      auth.listSamlProviderConfigs(null, 99);
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
+      assertEquals(
+          "Unexpected HTTP response with status: 500\n" + message,
+          e.getMessage());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+      assertNull(e.getAuthErrorCode());
     }
-    checkUrl(interceptor, "GET", PROJECT_BASE_URL + "/inboundSamlConfigs");
   }
 
   @Test
@@ -2606,6 +2653,13 @@ public class FirebaseUserManagerTest {
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
       assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals(
+          "No IdP configuration found corresponding to the provided identifier "
+              + "(CONFIGURATION_NOT_FOUND).",
+          e.getMessage());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+      assertEquals(AuthErrorCode.CONFIGURATION_NOT_FOUND, e.getAuthErrorCode());
     }
     checkUrl(interceptor, "DELETE", PROJECT_BASE_URL + "/inboundSamlConfigs/saml.UNKNOWN");
   }
