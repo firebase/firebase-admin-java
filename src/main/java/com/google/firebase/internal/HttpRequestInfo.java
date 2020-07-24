@@ -17,6 +17,7 @@
 package com.google.firebase.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
@@ -41,11 +42,11 @@ public final class HttpRequestInfo {
   private final Map<String, String> headers = new HashMap<>();
   private HttpResponseInterceptor interceptor;
 
-  private HttpRequestInfo(String method, String url, HttpContent content) {
+  private HttpRequestInfo(String method, GenericUrl url, HttpContent content) {
     checkArgument(!Strings.isNullOrEmpty(method), "method must not be null");
-    checkArgument(!Strings.isNullOrEmpty(url), "url must not be null");
+    checkNotNull(url, "url must not be null");
     this.method = method;
-    this.url = new GenericUrl(url);
+    this.url = url;
     this.content = content;
   }
 
@@ -69,7 +70,7 @@ public final class HttpRequestInfo {
   }
 
   public static HttpRequestInfo buildDeleteRequest(String url) {
-    return new HttpRequestInfo(HttpMethods.DELETE, url, null);
+    return buildRequest(HttpMethods.DELETE, url, null);
   }
 
   public static HttpRequestInfo buildPostRequest(String url, HttpContent content) {
@@ -77,6 +78,10 @@ public final class HttpRequestInfo {
   }
 
   public static HttpRequestInfo buildRequest(String method, String url, HttpContent content) {
+    return buildRequest(method, new GenericUrl(url), content);
+  }
+
+  public static HttpRequestInfo buildRequest(String method, GenericUrl url, HttpContent content) {
     return new HttpRequestInfo(method, url, content);
   }
 

@@ -30,6 +30,7 @@ import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
@@ -325,6 +326,50 @@ public class FirebaseTokenVerifierImplTest {
     }
   }
 
+  @Test
+  public void testVerifyTokenDifferentTenantIds() {
+    try {
+      fullyPopulatedBuilder()
+        .setTenantId("TENANT_1")
+        .build()
+        .verifyToken(createTokenWithTenantId("TENANT_2"));
+    } catch (FirebaseAuthException e) {
+      assertEquals(AuthErrorCode.TENANT_ID_MISMATCH, e.getAuthErrorCode());
+      assertEquals(
+          "The tenant ID ('TENANT_2') of the token did not match the expected value ('TENANT_1')",
+          e.getMessage());
+    }
+  }
+
+  @Test
+  public void testVerifyTokenMissingTenantId() {
+    try {
+      fullyPopulatedBuilder()
+        .setTenantId("TENANT_ID")
+        .build()
+        .verifyToken(tokenFactory.createToken());
+    } catch (FirebaseAuthException e) {
+      assertEquals(AuthErrorCode.TENANT_ID_MISMATCH, e.getAuthErrorCode());
+      assertEquals(
+          "The tenant ID ('') of the token did not match the expected value ('TENANT_ID')",
+          e.getMessage());
+    }
+  }
+
+  @Test
+  public void testVerifyTokenUnexpectedTenantId() {
+    try {
+      fullyPopulatedBuilder()
+        .build()
+        .verifyToken(createTokenWithTenantId("TENANT_ID"));
+    } catch (FirebaseAuthException e) {
+      assertEquals(AuthErrorCode.TENANT_ID_MISMATCH, e.getAuthErrorCode());
+      assertEquals(
+          "The tenant ID ('TENANT_ID') of the token did not match the expected value ('')",
+          e.getMessage());
+    }
+  }
+
   @Test(expected = NullPointerException.class)
   public void testBuilderNoPublicKeysManager() {
     fullyPopulatedBuilder().setPublicKeysManager(null).build();
@@ -374,15 +419,8 @@ public class FirebaseTokenVerifierImplTest {
   }
 
   private FirebaseTokenVerifier newTestTokenVerifier(GooglePublicKeysManager publicKeysManager) {
-    return FirebaseTokenVerifierImpl.builder()
-        .setShortName("test token")
-        .setMethod("verifyTestToken()")
-        .setDocUrl("https://test.doc.url")
-        .setJsonFactory(TestTokenFactory.JSON_FACTORY)
+    return fullyPopulatedBuilder()
         .setPublicKeysManager(publicKeysManager)
-        .setIdTokenVerifier(newIdTokenVerifier())
-        .setInvalidTokenErrorCode(AuthErrorCode.INVALID_ID_TOKEN)
-        .setExpiredTokenErrorCode(AuthErrorCode.EXPIRED_ID_TOKEN)
         .build();
   }
 
@@ -393,6 +431,8 @@ public class FirebaseTokenVerifierImplTest {
         .setDocUrl("https://test.doc.url")
         .setJsonFactory(TestTokenFactory.JSON_FACTORY)
         .setPublicKeysManager(newPublicKeysManager(ServiceAccount.EDITOR.getCert()))
+        .setInvalidTokenErrorCode(AuthErrorCode.INVALID_ID_TOKEN)
+        .setExpiredTokenErrorCode(AuthErrorCode.EXPIRED_ID_TOKEN)
         .setIdTokenVerifier(newIdTokenVerifier());
   }
 
@@ -459,5 +499,11 @@ public class FirebaseTokenVerifierImplTest {
     assertNull(e.getCause());
     assertNull(e.getHttpResponse());
     assertEquals(errorCode, e.getAuthErrorCode());
+  }
+
+  private String createTokenWithTenantId(String tenantId) {
+    Payload payload = tokenFactory.createTokenPayload();
+    payload.set("firebase", ImmutableMap.of("tenant", tenantId));
+    return tokenFactory.createToken(payload);
   }
 }

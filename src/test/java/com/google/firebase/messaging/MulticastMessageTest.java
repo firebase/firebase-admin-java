@@ -42,6 +42,7 @@ public class MulticastMessageTest {
       .setTitle("title")
       .setBody("body")
       .build();
+  private static final FcmOptions FCM_OPTIONS = FcmOptions.withAnalyticsLabel("analytics_label");
 
   @Test
   public void testMulticastMessage() {
@@ -50,6 +51,7 @@ public class MulticastMessageTest {
         .setApnsConfig(APNS)
         .setWebpushConfig(WEBPUSH)
         .setNotification(NOTIFICATION)
+        .setFcmOptions(FCM_OPTIONS)
         .putData("key1", "value1")
         .putAllData(ImmutableMap.of("key2", "value2"))
         .addToken("token1")
@@ -99,6 +101,7 @@ public class MulticastMessageTest {
     assertSame(APNS, message.getApnsConfig());
     assertSame(WEBPUSH, message.getWebpushConfig());
     assertSame(NOTIFICATION, message.getNotification());
+    assertSame(FCM_OPTIONS, message.getFcmOptions());
     assertEquals(ImmutableMap.of("key1", "value1", "key2", "value2"), message.getData());
     assertEquals(expectedToken, message.getToken());
   }
