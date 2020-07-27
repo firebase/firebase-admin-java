@@ -16,11 +16,11 @@
 
 package com.google.firebase.projectmanagement;
 
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.internal.AbstractPlatformErrorHandler;
@@ -30,8 +30,6 @@ import com.google.firebase.internal.SdkUtils;
 
 final class HttpHelper {
 
-  @VisibleForTesting static final String PATCH_OVERRIDE_KEY = "X-HTTP-Method-Override";
-  @VisibleForTesting static final String PATCH_OVERRIDE_VALUE = "PATCH";
   private static final String CLIENT_VERSION_HEADER = "X-Client-Version";
 
   private final String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
@@ -81,9 +79,8 @@ final class HttpHelper {
       T parsedResponseInstance,
       String requestIdentifier,
       String requestIdentifierDescription) throws FirebaseProjectManagementException {
-    HttpRequestInfo baseRequest = HttpRequestInfo.buildPostRequest(
-        url, new JsonHttpContent(jsonFactory, payload));
-    baseRequest.addHeader(PATCH_OVERRIDE_KEY, PATCH_OVERRIDE_VALUE);
+    HttpRequestInfo baseRequest = HttpRequestInfo.buildRequest(
+        HttpMethods.PATCH, url, new JsonHttpContent(jsonFactory, payload));
     makeRequest(
         baseRequest, parsedResponseInstance, requestIdentifier, requestIdentifierDescription);
   }
