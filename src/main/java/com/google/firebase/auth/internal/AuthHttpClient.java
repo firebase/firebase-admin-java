@@ -69,10 +69,6 @@ public final class AuthHttpClient {
       String method, GenericUrl url, @Nullable Object content) throws FirebaseAuthException {
     HttpRequestInfo request = HttpRequestInfo.buildJsonRequest(method, url, content)
         .addHeader(CLIENT_VERSION_HEADER, CLIENT_VERSION);
-    if (method.equals("PATCH")) {
-      request.addHeader("X-HTTP-Method-Override", "PATCH");
-    }
-
     return httpClient.send(request);
   }
 
