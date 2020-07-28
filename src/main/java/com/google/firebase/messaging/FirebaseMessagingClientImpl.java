@@ -84,8 +84,8 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     this.jsonFactory = checkNotNull(builder.jsonFactory);
     this.responseInterceptor = builder.responseInterceptor;
     this.errorHandler = new MessagingErrorHandler(this.jsonFactory);
-    this.httpClient = new ErrorHandlingHttpClient<>(
-        this.requestFactory, this.jsonFactory, this.errorHandler);
+    this.httpClient = new ErrorHandlingHttpClient<>(requestFactory, jsonFactory, errorHandler)
+      .setInterceptor(responseInterceptor);
     this.batchClient = new MessagingBatchClient(requestFactory.getTransport(), jsonFactory);
   }
 
@@ -121,10 +121,9 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   private String sendSingleRequest(
       Message message, boolean dryRun) throws FirebaseMessagingException {
     HttpRequestInfo request =
-        HttpRequestInfo.buildPostRequest(
-            fcmSendUrl, new JsonHttpContent(jsonFactory, message.wrapForTransport(dryRun)))
-            .addAllHeaders(COMMON_HEADERS)
-            .setResponseInterceptor(responseInterceptor);
+        HttpRequestInfo.buildJsonPostRequest(
+            fcmSendUrl, message.wrapForTransport(dryRun))
+            .addAllHeaders(COMMON_HEADERS);
     MessagingServiceResponse parsed = httpClient.sendAndParse(
         request, MessagingServiceResponse.class);
     return parsed.getMessageId();
@@ -172,6 +171,8 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     return new HttpRequestInitializer() {
       @Override
       public void initialize(HttpRequest request) throws IOException {
+        // Batch requests are not executed on the ErrorHandlingHttpClient. Therefore, they
+        // require some special handling at initialization.
         HttpRequestInitializer initializer = requestFactory.getInitializer();
         if (initializer != null) {
           initializer.initialize(request);

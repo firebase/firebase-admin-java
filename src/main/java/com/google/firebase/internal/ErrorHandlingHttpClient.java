@@ -22,6 +22,7 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.JsonParser;
@@ -41,6 +42,9 @@ public final class ErrorHandlingHttpClient<T extends FirebaseException> {
   private final HttpRequestFactory requestFactory;
   private final JsonFactory jsonFactory;
   private final HttpErrorHandler<T> errorHandler;
+  private final JsonObjectParser jsonParser;
+
+  private HttpResponseInterceptor interceptor;
 
   public ErrorHandlingHttpClient(
       HttpRequestFactory requestFactory,
@@ -49,6 +53,12 @@ public final class ErrorHandlingHttpClient<T extends FirebaseException> {
     this.requestFactory = checkNotNull(requestFactory, "requestFactory must not be null");
     this.jsonFactory = checkNotNull(jsonFactory, "jsonFactory must not be null");
     this.errorHandler = checkNotNull(errorHandler, "errorHandler must not be null");
+    this.jsonParser = new JsonObjectParser(jsonFactory);
+  }
+
+  public ErrorHandlingHttpClient<T> setInterceptor(HttpResponseInterceptor interceptor) {
+    this.interceptor = interceptor;
+    return this;
   }
 
   /**
@@ -127,8 +137,9 @@ public final class ErrorHandlingHttpClient<T extends FirebaseException> {
 
   private HttpRequest createHttpRequest(HttpRequestInfo requestInfo) throws T {
     try {
-      return requestInfo.newHttpRequest(requestFactory)
-          .setParser(new JsonObjectParser(jsonFactory));
+      return requestInfo.newHttpRequest(requestFactory, jsonFactory)
+          .setParser(jsonParser)
+          .setResponseInterceptor(interceptor);
     } catch (IOException e) {
       // Handle request initialization errors (credential loading and other config errors)
       throw errorHandler.handleIOException(e);

@@ -65,8 +65,6 @@ public class FirebaseInstanceId {
   private final String projectId;
   private final ErrorHandlingHttpClient<FirebaseInstanceIdException> httpClient;
 
-  private HttpResponseInterceptor interceptor;
-
   private FirebaseInstanceId(FirebaseApp app) {
     this(app, null);
   }
@@ -115,7 +113,7 @@ public class FirebaseInstanceId {
 
   @VisibleForTesting
   void setInterceptor(HttpResponseInterceptor interceptor) {
-    this.interceptor = interceptor;
+    httpClient.setInterceptor(interceptor);
   }
 
   /**
@@ -154,8 +152,7 @@ public class FirebaseInstanceId {
       protected Void execute() throws FirebaseInstanceIdException {
         String url = String.format(
             "%s/project/%s/instanceId/%s", IID_SERVICE_URL, projectId, instanceId);
-        HttpRequestInfo request = HttpRequestInfo.buildDeleteRequest(url)
-            .setResponseInterceptor(interceptor);
+        HttpRequestInfo request = HttpRequestInfo.buildDeleteRequest(url);
         httpClient.send(request);
         return null;
       }

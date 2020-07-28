@@ -80,7 +80,7 @@ class FirebaseUserManager {
   private final JsonFactory jsonFactory;
   private final AuthHttpClient httpClient;
 
-  FirebaseUserManager(Builder builder) {
+  private FirebaseUserManager(Builder builder) {
     FirebaseApp app = checkNotNull(builder.app, "FirebaseApp must not be null");
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkArgument(!Strings.isNullOrEmpty(projectId),

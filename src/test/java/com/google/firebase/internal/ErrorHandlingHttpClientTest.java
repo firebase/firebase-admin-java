@@ -23,13 +23,14 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.http.ByteArrayContent;
+import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.http.LowLevelHttpRequest;
-import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
@@ -109,15 +110,15 @@ public class ErrorHandlingHttpClientTest {
   public void testSuccessfulRequestWithHeadersAndBody() throws FirebaseException, IOException {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setContent("{\"foo\": \"bar\"}");
-    ErrorHandlingHttpClient<FirebaseException> client = createHttpClient(response);
-
-    HttpRequestInfo request = HttpRequestInfo.buildPostRequest(
-        "https://firebase.google.com",
-        new JsonHttpContent(DEFAULT_JSON_FACTORY, ImmutableMap.of("key", "value")));
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    ErrorHandlingHttpClient<FirebaseException> client = createHttpClient(response)
+        .setInterceptor(interceptor);
+
+    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(
+        "https://firebase.google.com", ImmutableMap.of("key", "value"));
+
     request.addHeader("h1", "v1")
-        .addAllHeaders(ImmutableMap.of("h2", "v2", "h3", "v3"))
-        .setResponseInterceptor(interceptor);
+        .addAllHeaders(ImmutableMap.of("h2", "v2", "h3", "v3"));
     GenericData body = client.sendAndParse(request, GenericData.class);
 
     assertEquals(1, body.size());
@@ -134,19 +135,42 @@ public class ErrorHandlingHttpClientTest {
   }
 
   @Test
+  public void testSuccessfulRequestWithNonJsonBody() throws FirebaseException, IOException {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent("{\"foo\": \"bar\"}");
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    ErrorHandlingHttpClient<FirebaseException> client = createHttpClient(response)
+        .setInterceptor(interceptor);
+    HttpContent content = new ByteArrayContent("text/plain", "Test".getBytes());
+
+    HttpRequestInfo request = HttpRequestInfo.buildRequest(
+        HttpMethods.POST, "https://firebase.google.com", content);
+
+    GenericData body = client.sendAndParse(request, GenericData.class);
+
+    assertEquals(1, body.size());
+    assertEquals("bar", body.get("foo"));
+    HttpRequest last = interceptor.getLastRequest();
+    assertEquals(HttpMethods.POST, last.getRequestMethod());
+    assertEquals("text/plain", last.getContent().getType());
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    last.getContent().writeTo(out);
+    assertEquals("Test", out.toString());
+  }
+
+  @Test
   public void testUnsupportedMethod() throws FirebaseException, IOException {
     MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(new MockLowLevelHttpResponse().setContent("{}"))
         .setSupportedMethods(ImmutableSet.of(HttpMethods.GET, HttpMethods.POST))
         .build();
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
     ErrorHandlingHttpClient<FirebaseException> client = new ErrorHandlingHttpClient<>(
         transport.createRequestFactory(), DEFAULT_JSON_FACTORY, new TestHttpErrorHandler());
-    HttpRequestInfo patchRequest = HttpRequestInfo.buildRequest(
-        HttpMethods.PATCH,
-        "https://firebase.google.com",
-        new JsonHttpContent(DEFAULT_JSON_FACTORY, ImmutableMap.of("key", "value")));
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    patchRequest.setResponseInterceptor(interceptor);
+    client.setInterceptor(interceptor);
+    HttpRequestInfo patchRequest = HttpRequestInfo.buildJsonRequest(
+        HttpMethods.PATCH, "https://firebase.google.com", ImmutableMap.of("key", "value"));
 
     client.sendAndParse(patchRequest, GenericData.class);
 

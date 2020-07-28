@@ -17,10 +17,8 @@
 package com.google.firebase.auth.internal;
 
 import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseInterceptor;
-import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.firebase.IncomingHttpResponse;
@@ -41,13 +39,9 @@ public final class AuthHttpClient {
 
   private static final String CLIENT_VERSION = "Java/Admin/" + SdkUtils.getVersion();
 
-  private final JsonFactory jsonFactory;
   private final ErrorHandlingHttpClient<FirebaseAuthException> httpClient;
 
-  private HttpResponseInterceptor interceptor;
-
   public AuthHttpClient(JsonFactory jsonFactory, HttpRequestFactory requestFactory) {
-    this.jsonFactory = jsonFactory;
     AuthErrorHandler authErrorHandler = new AuthErrorHandler(jsonFactory);
     this.httpClient = new ErrorHandlingHttpClient<>(requestFactory, jsonFactory, authErrorHandler);
   }
@@ -68,15 +62,13 @@ public final class AuthHttpClient {
   }
 
   public void setInterceptor(HttpResponseInterceptor interceptor) {
-    this.interceptor = interceptor;
+    this.httpClient.setInterceptor(interceptor);
   }
 
   public IncomingHttpResponse sendRequest(
       String method, GenericUrl url, @Nullable Object content) throws FirebaseAuthException {
-    HttpContent httpContent = content != null ? new JsonHttpContent(jsonFactory, content) : null;
-    HttpRequestInfo request = HttpRequestInfo.buildRequest(method, url, httpContent)
-        .addHeader(CLIENT_VERSION_HEADER, CLIENT_VERSION)
-        .setResponseInterceptor(interceptor);
+    HttpRequestInfo request = HttpRequestInfo.buildJsonRequest(method, url, content)
+        .addHeader(CLIENT_VERSION_HEADER, CLIENT_VERSION);
     if (method.equals("PATCH")) {
       request.addHeader("X-HTTP-Method-Override", "PATCH");
     }
@@ -85,8 +77,10 @@ public final class AuthHttpClient {
   }
 
   public <T> T sendRequest(
-      String method, GenericUrl url,
-      @Nullable Object content, Class<T> clazz) throws FirebaseAuthException {
+      String method,
+      GenericUrl url,
+      @Nullable Object content,
+      Class<T> clazz) throws FirebaseAuthException {
 
     IncomingHttpResponse response = this.sendRequest(method, url, content);
     return this.parse(response, clazz);
