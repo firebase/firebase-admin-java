@@ -730,7 +730,7 @@ public class FirebaseAuthSnippets {
   public void createOidcProviderConfig() throws FirebaseAuthException {
     // [START create_oidc_provider]
     OidcProviderConfig.CreateRequest request = new OidcProviderConfig.CreateRequest()
-        .setDisplayName("SAML provider name")
+        .setDisplayName("OIDC provider name")
         .setEnabled(true)
         .setProviderId("oidc.myProvider")
         .setClientId("CLIENT_ID2")
@@ -1035,7 +1035,8 @@ public class FirebaseAuthSnippets {
     try {
       // idToken comes from the client app
       FirebaseToken token = tenantAuth.verifyIdToken(idToken);
-      // This should be set to TENANT-ID. Otherwise TenantIdMismatch error thrown.
+      // TenantId on the FirebaseToken should be set to TENANT-ID.
+      // Otherwise "tenant-id-mismatch" error thrown.
       System.out.println("Verified ID token from tenant: " + token.getTenantId());
     } catch (FirebaseAuthException e) {
       System.out.println("error verifying ID token: " + e.getMessage());
