@@ -757,7 +757,7 @@ public class FirebaseAuthSnippets {
     // [START get_oidc_provider]
     OidcProviderConfig oidc = FirebaseAuth.getInstance().getOidcProviderConfig("oidc.myProvider");
     System.out.println(oidc.getDisplayName() + ": " + oidc.isEnabled());
-    // [END get_saml_provider]
+    // [END get_oidc_provider]
   }
 
   public void deleteOidcProviderConfig() throws FirebaseAuthException {
@@ -825,12 +825,12 @@ public class FirebaseAuthSnippets {
   }
 
   public void listTenants() throws FirebaseAuthException {
-    // [START delete_tenant]
+    // [START list_tenants]
     ListTenantsPage page = FirebaseAuth.getInstance().getTenantManager().listTenants(null);
     for (Tenant tenant : page.iterateAll()) {
       System.out.println("Retrieved tenant: " + tenant.getTenantId());
     }
-    // [END delete_tenant]
+    // [END list_tenants]
   }
 
   public void createProviderTenant() throws FirebaseAuthException {
