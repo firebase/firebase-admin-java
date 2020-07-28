@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.googleapis.batch.BatchCallback;
 import com.google.api.client.googleapis.batch.BatchRequest;
+import com.google.api.client.googleapis.services.json.AbstractGoogleJsonClient;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpMethods;
@@ -29,6 +30,7 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonObjectParser;
@@ -60,16 +62,10 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
 
   private static final String FCM_URL = "https://fcm.googleapis.com/v1/projects/%s/messages:send";
 
-  private static final String FCM_BATCH_URL = "https://fcm.googleapis.com/batch";
-
-  private static final String API_FORMAT_VERSION_HEADER = "X-GOOG-API-FORMAT-VERSION";
-
-  private static final String CLIENT_VERSION_HEADER = "X-Firebase-Client";
-
   private static final Map<String, String> COMMON_HEADERS =
       ImmutableMap.of(
-          API_FORMAT_VERSION_HEADER, "2",
-          CLIENT_VERSION_HEADER, "fire-admin-java/" + SdkUtils.getVersion());
+          "X-GOOG-API-FORMAT-VERSION", "2",
+          "X-Firebase-Client", "fire-admin-java/" + SdkUtils.getVersion());
 
   private final String fcmSendUrl;
   private final HttpRequestFactory requestFactory;
@@ -78,6 +74,7 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   private final HttpResponseInterceptor responseInterceptor;
   private final MessagingErrorHandler errorHandler;
   private final ErrorHandlingHttpClient<FirebaseMessagingException> httpClient;
+  private final MessagingBatchClient batchClient;
 
   private FirebaseMessagingClientImpl(Builder builder) {
     checkArgument(!Strings.isNullOrEmpty(builder.projectId));
@@ -89,6 +86,7 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     this.errorHandler = new MessagingErrorHandler(this.jsonFactory);
     this.httpClient = new ErrorHandlingHttpClient<>(
         this.requestFactory, this.jsonFactory, this.errorHandler);
+    this.batchClient = new MessagingBatchClient(requestFactory.getTransport(), jsonFactory);
   }
 
   @VisibleForTesting
@@ -141,7 +139,8 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
       batch.execute();
       return new BatchResponseImpl(callback.getResponses());
     } catch (HttpResponseException e) {
-      OutgoingHttpRequest req = new OutgoingHttpRequest(HttpMethods.POST, FCM_BATCH_URL);
+      OutgoingHttpRequest req = new OutgoingHttpRequest(
+          HttpMethods.POST, MessagingBatchClient.FCM_BATCH_URL);
       IncomingHttpResponse resp = new IncomingHttpResponse(e, req);
       throw errorHandler.handleHttpResponseException(e, resp);
     } catch (IOException e) {
@@ -152,10 +151,7 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   private BatchRequest newBatchRequest(
       List<Message> messages, boolean dryRun, MessagingBatchCallback callback) throws IOException {
 
-    BatchRequest batch = new BatchRequest(
-        requestFactory.getTransport(), getBatchRequestInitializer());
-    batch.setBatchUrl(new GenericUrl(FCM_BATCH_URL));
-
+    BatchRequest batch = batchClient.batch(getBatchRequestInitializer());
     final JsonObjectParser jsonParser = new JsonObjectParser(this.jsonFactory);
     final GenericUrl sendUrl = new GenericUrl(fcmSendUrl);
     for (Message message : messages) {
@@ -317,6 +313,35 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
       }
 
       return new MessagingServiceErrorResponse();
+    }
+  }
+
+  private static class MessagingBatchClient extends AbstractGoogleJsonClient {
+
+    private static final String FCM_ROOT_URL = "https://fcm.googleapis.com";
+    private static final String FCM_BATCH_PATH = "batch";
+    private static final String FCM_BATCH_URL = String.format(
+        "%s/%s", FCM_ROOT_URL, FCM_BATCH_PATH);
+
+    MessagingBatchClient(HttpTransport transport, JsonFactory jsonFactory) {
+      super(new Builder(transport, jsonFactory));
+    }
+
+    private MessagingBatchClient(Builder builder) {
+      super(builder);
+    }
+
+    private static class Builder extends AbstractGoogleJsonClient.Builder {
+      Builder(HttpTransport transport, JsonFactory jsonFactory) {
+        super(transport, jsonFactory, FCM_ROOT_URL, "", null, false);
+        setBatchPath(FCM_BATCH_PATH);
+        setApplicationName("fire-admin-java");
+      }
+
+      @Override
+      public AbstractGoogleJsonClient build() {
+        return new MessagingBatchClient(this);
+      }
     }
   }
 }
