@@ -38,6 +38,7 @@ import com.google.api.client.util.GenericData;
 import com.google.auth.oauth2.AccessToken;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseException;
@@ -126,6 +127,32 @@ public class ErrorHandlingHttpClientTest {
     assertEquals("v1", last.getHeaders().get("h1"));
     assertEquals("v2", last.getHeaders().get("h2"));
     assertEquals("v3", last.getHeaders().get("h3"));
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    last.getContent().writeTo(out);
+    assertEquals("{\"key\":\"value\"}", out.toString());
+  }
+
+  @Test
+  public void testUnsupportedMethod() throws FirebaseException, IOException {
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(new MockLowLevelHttpResponse().setContent("{}"))
+        .setSupportedMethods(ImmutableSet.of(HttpMethods.GET, HttpMethods.POST))
+        .build();
+    ErrorHandlingHttpClient<FirebaseException> client = new ErrorHandlingHttpClient<>(
+        transport.createRequestFactory(), DEFAULT_JSON_FACTORY, new TestHttpErrorHandler());
+    HttpRequestInfo patchRequest = HttpRequestInfo.buildRequest(
+        HttpMethods.PATCH,
+        "https://firebase.google.com",
+        new JsonHttpContent(DEFAULT_JSON_FACTORY, ImmutableMap.of("key", "value")));
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    patchRequest.setResponseInterceptor(interceptor);
+
+    client.sendAndParse(patchRequest, GenericData.class);
+
+    HttpRequest last = interceptor.getLastRequest();
+    assertEquals(HttpMethods.POST, last.getRequestMethod());
+    assertEquals(HttpMethods.PATCH, last.getHeaders().get("X-HTTP-Method-Override"));
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     last.getContent().writeTo(out);

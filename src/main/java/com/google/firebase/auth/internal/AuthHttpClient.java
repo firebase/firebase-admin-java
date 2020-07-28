@@ -16,16 +16,12 @@
 
 package com.google.firebase.auth.internal;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSortedSet;
 import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -77,11 +73,8 @@ public final class AuthHttpClient {
 
   public IncomingHttpResponse sendRequest(
       String method, GenericUrl url, @Nullable Object content) throws FirebaseAuthException {
-    checkArgument(!Strings.isNullOrEmpty(method), "method must not be null or empty");
-    checkNotNull(url, "url must not be null");
-    String httpMethod = method.equals("PATCH") ? "POST" : method;
     HttpContent httpContent = content != null ? new JsonHttpContent(jsonFactory, content) : null;
-    HttpRequestInfo request = HttpRequestInfo.buildRequest(httpMethod, url, httpContent)
+    HttpRequestInfo request = HttpRequestInfo.buildRequest(method, url, httpContent)
         .addHeader(CLIENT_VERSION_HEADER, CLIENT_VERSION)
         .setResponseInterceptor(interceptor);
     if (method.equals("PATCH")) {

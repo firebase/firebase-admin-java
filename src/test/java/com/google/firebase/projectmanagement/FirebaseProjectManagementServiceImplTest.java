@@ -18,8 +18,6 @@ package com.google.firebase.projectmanagement;
 
 import static com.google.firebase.projectmanagement.FirebaseProjectManagementServiceImpl.FIREBASE_PROJECT_MANAGEMENT_URL;
 import static com.google.firebase.projectmanagement.FirebaseProjectManagementServiceImpl.MAXIMUM_LIST_APPS_PAGE_SIZE;
-import static com.google.firebase.projectmanagement.HttpHelper.PATCH_OVERRIDE_KEY;
-import static com.google.firebase.projectmanagement.HttpHelper.PATCH_OVERRIDE_VALUE;
 import static com.google.firebase.projectmanagement.ShaCertificateType.SHA_1;
 import static com.google.firebase.projectmanagement.ShaCertificateType.SHA_256;
 import static org.junit.Assert.assertEquals;
@@ -530,11 +528,10 @@ public class FirebaseProjectManagementServiceImplTest {
         "%s/v1beta1/projects/-/iosApps/%s?update_mask=display_name",
         FIREBASE_PROJECT_MANAGEMENT_URL,
         IOS_APP_ID);
-    checkRequestHeader(expectedUrl, HttpMethod.POST);
+    checkRequestHeader(expectedUrl, HttpMethod.PATCH);
     ImmutableMap<String, String> payload =
         ImmutableMap.<String, String>builder().put("display_name", DISPLAY_NAME).build();
     checkRequestPayload(payload);
-    checkPatchRequest();
   }
 
   @Test
@@ -548,11 +545,10 @@ public class FirebaseProjectManagementServiceImplTest {
         "%s/v1beta1/projects/-/iosApps/%s?update_mask=display_name",
         FIREBASE_PROJECT_MANAGEMENT_URL,
         IOS_APP_ID);
-    checkRequestHeader(expectedUrl, HttpMethod.POST);
+    checkRequestHeader(expectedUrl, HttpMethod.PATCH);
     ImmutableMap<String, String> payload =
         ImmutableMap.<String, String>builder().put("display_name", DISPLAY_NAME).build();
     checkRequestPayload(payload);
-    checkPatchRequest();
   }
 
   @Test
@@ -872,11 +868,10 @@ public class FirebaseProjectManagementServiceImplTest {
         "%s/v1beta1/projects/-/androidApps/%s?update_mask=display_name",
         FIREBASE_PROJECT_MANAGEMENT_URL,
         ANDROID_APP_ID);
-    checkRequestHeader(expectedUrl, HttpMethod.POST);
+    checkRequestHeader(expectedUrl, HttpMethod.PATCH);
     ImmutableMap<String, String> payload =
         ImmutableMap.<String, String>builder().put("display_name", DISPLAY_NAME).build();
     checkRequestPayload(payload);
-    checkPatchRequest();
   }
 
   @Test
@@ -890,11 +885,10 @@ public class FirebaseProjectManagementServiceImplTest {
         "%s/v1beta1/projects/-/androidApps/%s?update_mask=display_name",
         FIREBASE_PROJECT_MANAGEMENT_URL,
         ANDROID_APP_ID);
-    checkRequestHeader(expectedUrl, HttpMethod.POST);
+    checkRequestHeader(expectedUrl, HttpMethod.PATCH);
     ImmutableMap<String, String> payload =
         ImmutableMap.<String, String>builder().put("display_name", DISPLAY_NAME).build();
     checkRequestPayload(payload);
-    checkPatchRequest();
   }
 
   @Test
@@ -1147,21 +1141,11 @@ public class FirebaseProjectManagementServiceImplTest {
     assertEquals(expected, parsed);
   }
 
-  private void checkPatchRequest() {
-    assertEquals(
-        "The number of HttpResponses is not equal to 1.", 1, interceptor.getNumberOfResponses());
-    checkPatchRequest(0);
-  }
-
-  private void checkPatchRequest(int index) {
-    assertTrue(interceptor.getResponse(index).getRequest().getHeaders()
-        .getHeaderStringValues(PATCH_OVERRIDE_KEY).contains(PATCH_OVERRIDE_VALUE));
-  }
-
   private enum HttpMethod {
     GET,
     POST,
-    DELETE
+    DELETE,
+    PATCH,
   }
 
   /**

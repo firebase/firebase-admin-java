@@ -44,9 +44,8 @@ public final class HttpRequestInfo {
 
   private HttpRequestInfo(String method, GenericUrl url, HttpContent content) {
     checkArgument(!Strings.isNullOrEmpty(method), "method must not be null");
-    checkNotNull(url, "url must not be null");
     this.method = method;
-    this.url = url;
+    this.url = checkNotNull(url, "url must not be null");
     this.content = content;
   }
 
@@ -77,16 +76,28 @@ public final class HttpRequestInfo {
     return buildRequest(HttpMethods.POST, url, content);
   }
 
-  public static HttpRequestInfo buildRequest(String method, String url, HttpContent content) {
+  public static HttpRequestInfo buildRequest(
+      String method, String url, @Nullable HttpContent content) {
     return buildRequest(method, new GenericUrl(url), content);
   }
 
-  public static HttpRequestInfo buildRequest(String method, GenericUrl url, HttpContent content) {
+  public static HttpRequestInfo buildRequest(
+      String method, GenericUrl url, @Nullable HttpContent content) {
     return new HttpRequestInfo(method, url, content);
   }
 
   HttpRequest newHttpRequest(HttpRequestFactory factory) throws IOException {
-    HttpRequest request = factory.buildRequest(method, url, content);
+    HttpRequest request;
+    if (factory.getTransport().supportsMethod(method)) {
+      request = factory.buildRequest(method, url, content);
+    } else {
+      // Some HttpTransport implementations (notably NetHttpTransport) don't support new methods
+      // like PATCH. We try to emulate such requests over POST by setting the method override
+      // header, which is recognized by most Google backend APIs.
+      request = factory.buildPostRequest(url, content);
+      request.getHeaders().set("X-HTTP-Method-Override", method);
+    }
+
     for (Map.Entry<String, String> entry : headers.entrySet()) {
       request.getHeaders().set(entry.getKey(), entry.getValue());
     }

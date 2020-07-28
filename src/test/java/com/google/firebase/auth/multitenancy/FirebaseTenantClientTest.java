@@ -308,13 +308,7 @@ public class FirebaseTenantClientTest {
 
   private static void checkUrl(TestResponseInterceptor interceptor, String method, String url) {
     HttpRequest request = interceptor.getResponse().getRequest();
-    if (method.equals("PATCH")) {
-      assertEquals("PATCH",
-          request.getHeaders().getFirstHeaderStringValue("X-HTTP-Method-Override"));
-      assertEquals("POST", request.getRequestMethod());
-    } else {
-      assertEquals(method, request.getRequestMethod());
-    }
+    assertEquals(method, request.getRequestMethod());
     assertEquals(url, request.getUrl().toString().split("\\?")[0]);
   }
 
