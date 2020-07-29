@@ -378,7 +378,6 @@ public class InstanceIdClientImplTest {
     try {
       InstanceIdClientImpl client = InstanceIdClientImpl.fromApp(app);
 
-      assertSame(options.getJsonFactory(), client.getJsonFactory());
       client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for error response");
     } catch (FirebaseMessagingException e) {

@@ -24,7 +24,8 @@ import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponseInterceptor;
+import com.google.api.client.http.json.JsonHttpContent;
+import com.google.api.client.json.JsonFactory;
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.HashMap;
@@ -39,14 +40,15 @@ public final class HttpRequestInfo {
   private final String method;
   private final GenericUrl url;
   private final HttpContent content;
+  private final Object jsonContent;
   private final Map<String, String> headers = new HashMap<>();
-  private HttpResponseInterceptor interceptor;
 
-  private HttpRequestInfo(String method, GenericUrl url, HttpContent content) {
+  private HttpRequestInfo(String method, GenericUrl url, HttpContent content, Object jsonContent) {
     checkArgument(!Strings.isNullOrEmpty(method), "method must not be null");
     this.method = method;
     this.url = checkNotNull(url, "url must not be null");
     this.content = content;
+    this.jsonContent = jsonContent;
   }
 
   public HttpRequestInfo addHeader(String name, String value) {
@@ -59,21 +61,12 @@ public final class HttpRequestInfo {
     return this;
   }
 
-  public HttpRequestInfo setResponseInterceptor(HttpResponseInterceptor interceptor) {
-    this.interceptor = interceptor;
-    return this;
-  }
-
   public static HttpRequestInfo buildGetRequest(String url) {
     return buildRequest(HttpMethods.GET, url, null);
   }
 
   public static HttpRequestInfo buildDeleteRequest(String url) {
     return buildRequest(HttpMethods.DELETE, url, null);
-  }
-
-  public static HttpRequestInfo buildPostRequest(String url, HttpContent content) {
-    return buildRequest(HttpMethods.POST, url, content);
   }
 
   public static HttpRequestInfo buildRequest(
@@ -83,26 +76,53 @@ public final class HttpRequestInfo {
 
   public static HttpRequestInfo buildRequest(
       String method, GenericUrl url, @Nullable HttpContent content) {
-    return new HttpRequestInfo(method, url, content);
+    return new HttpRequestInfo(method, url, content, null);
   }
 
-  HttpRequest newHttpRequest(HttpRequestFactory factory) throws IOException {
+  public static HttpRequestInfo buildJsonPostRequest(String url, @Nullable Object content) {
+    return buildJsonRequest(HttpMethods.POST, url, content);
+  }
+
+  public static HttpRequestInfo buildJsonRequest(
+      String method, String url, @Nullable Object content) {
+    return buildJsonRequest(method, new GenericUrl(url), content);
+  }
+
+  public static HttpRequestInfo buildJsonRequest(
+      String method, GenericUrl url, @Nullable Object content) {
+    return new HttpRequestInfo(method, url, null, content);
+  }
+
+  HttpRequest newHttpRequest(
+      HttpRequestFactory factory, JsonFactory jsonFactory) throws IOException {
     HttpRequest request;
+    HttpContent httpContent = getContent(jsonFactory);
     if (factory.getTransport().supportsMethod(method)) {
-      request = factory.buildRequest(method, url, content);
+      request = factory.buildRequest(method, url, httpContent);
     } else {
       // Some HttpTransport implementations (notably NetHttpTransport) don't support new methods
       // like PATCH. We try to emulate such requests over POST by setting the method override
       // header, which is recognized by most Google backend APIs.
-      request = factory.buildPostRequest(url, content);
+      request = factory.buildPostRequest(url, httpContent);
       request.getHeaders().set("X-HTTP-Method-Override", method);
     }
 
     for (Map.Entry<String, String> entry : headers.entrySet()) {
       request.getHeaders().set(entry.getKey(), entry.getValue());
     }
-    request.setResponseInterceptor(interceptor);
 
     return request;
+  }
+
+  private HttpContent getContent(JsonFactory jsonFactory) {
+    if (content != null) {
+      return content;
+    }
+
+    if (jsonContent != null) {
+      return new JsonHttpContent(jsonFactory, jsonContent);
+    }
+
+    return null;
   }
 }

@@ -19,7 +19,6 @@ package com.google.firebase.projectmanagement;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseInterceptor;
-import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.IncomingHttpResponse;
@@ -32,20 +31,17 @@ final class HttpHelper {
 
   private static final String CLIENT_VERSION_HEADER = "X-Client-Version";
 
-  private final String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
-  private final JsonFactory jsonFactory;
+  private static final String CLIENT_VERSION = "Java/Admin/" + SdkUtils.getVersion();
+
   private final ErrorHandlingHttpClient<FirebaseProjectManagementException> httpClient;
 
-  private HttpResponseInterceptor interceptor;
-
   HttpHelper(JsonFactory jsonFactory, HttpRequestFactory requestFactory) {
-    this.jsonFactory = jsonFactory;
     ProjectManagementErrorHandler errorHandler = new ProjectManagementErrorHandler(jsonFactory);
     this.httpClient = new ErrorHandlingHttpClient<>(requestFactory, jsonFactory, errorHandler);
   }
 
   void setInterceptor(HttpResponseInterceptor interceptor) {
-    this.interceptor = interceptor;
+    httpClient.setInterceptor(interceptor);
   }
 
   <T> IncomingHttpResponse makeGetRequest(
@@ -67,7 +63,7 @@ final class HttpHelper {
       String requestIdentifier,
       String requestIdentifierDescription) throws FirebaseProjectManagementException {
     return makeRequest(
-        HttpRequestInfo.buildPostRequest(url, new JsonHttpContent(jsonFactory, payload)),
+        HttpRequestInfo.buildJsonPostRequest(url, payload),
         parsedResponseInstance,
         requestIdentifier,
         requestIdentifierDescription);
@@ -79,10 +75,11 @@ final class HttpHelper {
       T parsedResponseInstance,
       String requestIdentifier,
       String requestIdentifierDescription) throws FirebaseProjectManagementException {
-    HttpRequestInfo baseRequest = HttpRequestInfo.buildRequest(
-        HttpMethods.PATCH, url, new JsonHttpContent(jsonFactory, payload));
     makeRequest(
-        baseRequest, parsedResponseInstance, requestIdentifier, requestIdentifierDescription);
+        HttpRequestInfo.buildJsonRequest(HttpMethods.PATCH, url, payload),
+        parsedResponseInstance,
+        requestIdentifier,
+        requestIdentifierDescription);
   }
 
   <T> void makeDeleteRequest(
@@ -103,8 +100,7 @@ final class HttpHelper {
       String requestIdentifier,
       String requestIdentifierDescription) throws FirebaseProjectManagementException {
     try {
-      baseRequest.addHeader(CLIENT_VERSION_HEADER, clientVersion);
-      baseRequest.setResponseInterceptor(interceptor);
+      baseRequest.addHeader(CLIENT_VERSION_HEADER, CLIENT_VERSION);
       IncomingHttpResponse response = httpClient.send(baseRequest);
       httpClient.parse(response, parsedResponseInstance);
       return response;

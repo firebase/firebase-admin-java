@@ -8,7 +8,6 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseInterceptor;
-import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.StringUtils;
@@ -75,9 +74,7 @@ public class CryptoSigners {
         "https://iam.googleapis.com/v1/projects/-/serviceAccounts/%s:signBlob";
 
     private final String serviceAccount;
-    private final JsonFactory jsonFactory;
     private final ErrorHandlingHttpClient<FirebaseAuthException> httpClient;
-    private HttpResponseInterceptor interceptor;
 
     IAMCryptoSigner(
         @NonNull HttpRequestFactory requestFactory,
@@ -85,7 +82,6 @@ public class CryptoSigners {
         @NonNull String serviceAccount) {
       checkArgument(!Strings.isNullOrEmpty(serviceAccount));
       this.serviceAccount = serviceAccount;
-      this.jsonFactory = checkNotNull(jsonFactory);
       this.httpClient = new ErrorHandlingHttpClient<>(
           requestFactory,
           jsonFactory,
@@ -93,7 +89,7 @@ public class CryptoSigners {
     }
 
     void setInterceptor(HttpResponseInterceptor interceptor) {
-      this.interceptor = interceptor;
+      httpClient.setInterceptor(interceptor);
     }
 
     @Override
@@ -101,9 +97,7 @@ public class CryptoSigners {
       String encodedPayload = BaseEncoding.base64().encode(payload);
       Map<String, String> content = ImmutableMap.of("bytesToSign", encodedPayload);
       String encodedUrl = String.format(IAM_SIGN_BLOB_URL, serviceAccount);
-      HttpRequestInfo requestInfo = HttpRequestInfo
-          .buildPostRequest(encodedUrl, new JsonHttpContent(jsonFactory, content))
-          .setResponseInterceptor(interceptor);
+      HttpRequestInfo requestInfo = HttpRequestInfo.buildJsonPostRequest(encodedUrl, content);
       GenericJson parsed = httpClient.sendAndParse(requestInfo, GenericJson.class);
       return BaseEncoding.base64().decode((String) parsed.get("signature"));
     }

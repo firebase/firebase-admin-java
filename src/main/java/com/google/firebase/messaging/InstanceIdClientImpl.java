@@ -16,15 +16,11 @@
 
 package com.google.firebase.messaging;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseInterceptor;
-import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Key;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
@@ -34,7 +30,6 @@ import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.ErrorHandlingHttpClient;
 import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.Nullable;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +47,6 @@ final class InstanceIdClientImpl implements InstanceIdClient {
   private static final String IID_UNSUBSCRIBE_PATH = "iid/v1:batchRemove";
 
   private final ErrorHandlingHttpClient<FirebaseMessagingException> requestFactory;
-  private final JsonFactory jsonFactory;
-  private final HttpResponseInterceptor responseInterceptor;
 
   InstanceIdClientImpl(HttpRequestFactory requestFactory, JsonFactory jsonFactory) {
     this(requestFactory, jsonFactory, null);
@@ -63,21 +56,15 @@ final class InstanceIdClientImpl implements InstanceIdClient {
       HttpRequestFactory requestFactory,
       JsonFactory jsonFactory,
       @Nullable HttpResponseInterceptor responseInterceptor) {
-    this.requestFactory = new ErrorHandlingHttpClient<>(
-        requestFactory, jsonFactory, new InstanceIdErrorHandler(jsonFactory));
-    this.jsonFactory = checkNotNull(jsonFactory);
-    this.responseInterceptor = responseInterceptor;
+    InstanceIdErrorHandler errorHandler = new InstanceIdErrorHandler(jsonFactory);
+    this.requestFactory = new ErrorHandlingHttpClient<>(requestFactory, jsonFactory, errorHandler)
+      .setInterceptor(responseInterceptor);
   }
 
   static InstanceIdClientImpl fromApp(FirebaseApp app) {
     return new InstanceIdClientImpl(
         ApiClientUtils.newAuthorizedRequestFactory(app),
         app.getOptions().getJsonFactory());
-  }
-
-  @VisibleForTesting
-  JsonFactory getJsonFactory() {
-    return jsonFactory;
   }
 
   public TopicManagementResponse subscribeToTopic(
@@ -101,10 +88,8 @@ final class InstanceIdClientImpl implements InstanceIdClient {
         "registration_tokens", registrationTokens
     );
 
-    HttpRequestInfo request =
-        HttpRequestInfo.buildPostRequest(url, new JsonHttpContent(jsonFactory, payload))
-            .addHeader("access_token_auth", "true")
-            .setResponseInterceptor(responseInterceptor);
+    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(url, payload)
+        .addHeader("access_token_auth", "true");
     InstanceIdServiceResponse response = new InstanceIdServiceResponse();
     requestFactory.sendAndParse(request, response);
     return new TopicManagementResponse(response.results);
