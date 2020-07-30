@@ -192,7 +192,7 @@ public class FirebaseTenantClientTest {
   @Test
   public void testCreateTenantError() {
     String message = "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}";
-    TenantManager tenantManager = getRetryDisabledTenantManager(new MockLowLevelHttpResponse()
+    TenantManager tenantManager = createRetryDisabledTenantManager(new MockLowLevelHttpResponse()
         .setStatusCode(500)
         .setContent(message));
 
@@ -266,7 +266,7 @@ public class FirebaseTenantClientTest {
   @Test
   public void testUpdateTenantError() {
     String message = "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}";
-    TenantManager tenantManager = getRetryDisabledTenantManager(new MockLowLevelHttpResponse()
+    TenantManager tenantManager = createRetryDisabledTenantManager(new MockLowLevelHttpResponse()
         .setStatusCode(500)
         .setContent(message));
     Tenant.UpdateRequest request =
@@ -373,7 +373,7 @@ public class FirebaseTenantClientTest {
     return interceptor;
   }
 
-  private static TenantManager getRetryDisabledTenantManager(MockLowLevelHttpResponse response) {
+  private static TenantManager createRetryDisabledTenantManager(MockLowLevelHttpResponse response) {
     MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(response)
         .build();
