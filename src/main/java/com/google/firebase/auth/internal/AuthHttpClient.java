@@ -40,10 +40,12 @@ public final class AuthHttpClient {
   private static final String CLIENT_VERSION = "Java/Admin/" + SdkUtils.getVersion();
 
   private final ErrorHandlingHttpClient<FirebaseAuthException> httpClient;
+  private final JsonFactory jsonFactory;
 
   public AuthHttpClient(JsonFactory jsonFactory, HttpRequestFactory requestFactory) {
     AuthErrorHandler authErrorHandler = new AuthErrorHandler(jsonFactory);
     this.httpClient = new ErrorHandlingHttpClient<>(requestFactory, jsonFactory, authErrorHandler);
+    this.jsonFactory = jsonFactory;
   }
 
   public static Set<String> generateMask(Map<String, Object> properties) {

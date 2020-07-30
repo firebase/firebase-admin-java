@@ -27,6 +27,11 @@ public enum AuthErrorCode {
   CERTIFICATE_FETCH_FAILED,
 
   /**
+   * No IdP configuration found for the given identifier.
+   */
+  CONFIGURATION_NOT_FOUND,
+
+  /**
    * A user already exists with the provided email.
    */
   EMAIL_ALREADY_EXISTS,
@@ -71,7 +76,15 @@ public enum AuthErrorCode {
    */
   REVOKED_SESSION_COOKIE,
 
+  /**
+   * Tenant ID in the JWT does not match.
+   */
   TENANT_ID_MISMATCH,
+
+  /**
+   * No tenant found for the given identifier.
+   */
+  TENANT_NOT_FOUND,
 
   /**
    * A user already exists with the provided UID.

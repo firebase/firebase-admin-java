@@ -36,8 +36,9 @@ public class ProviderConfigTestUtils {
       fail("No error thrown for getting a deleted OIDC provider config.");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(ErrorCode.NOT_FOUND,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCode());
+      assertEquals(AuthErrorCode.CONFIGURATION_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 
@@ -48,8 +49,9 @@ public class ProviderConfigTestUtils {
       fail("No error thrown for getting a deleted SAML provider config.");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(ErrorCode.NOT_FOUND,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCode());
+      assertEquals(AuthErrorCode.CONFIGURATION_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 

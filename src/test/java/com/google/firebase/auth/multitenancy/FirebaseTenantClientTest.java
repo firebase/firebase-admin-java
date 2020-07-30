@@ -18,6 +18,7 @@ package com.google.firebase.auth.multitenancy;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -26,6 +27,7 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
@@ -37,6 +39,7 @@ import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.auth.AuthErrorCode;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.MockGoogleCredentials;
@@ -91,6 +94,11 @@ public class FirebaseTenantClientTest {
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
       assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals(
+          "No tenant found for the given identifier (TENANT_NOT_FOUND).", e.getMessage());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+      assertEquals(AuthErrorCode.TENANT_NOT_FOUND, e.getAuthErrorCode());
     }
     checkUrl(interceptor, "GET", TENANTS_BASE_URL + "/UNKNOWN");
   }
@@ -183,16 +191,21 @@ public class FirebaseTenantClientTest {
 
   @Test
   public void testCreateTenantError() {
-    TestResponseInterceptor interceptor =
-        initializeAppForTenantManagementWithStatusCode(404,
-            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+    String message = "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}";
+    TenantManager tenantManager = createRetryDisabledTenantManager(new MockLowLevelHttpResponse()
+        .setStatusCode(500)
+        .setContent(message));
+
     try {
-      FirebaseAuth.getInstance().getTenantManager().createTenant(new Tenant.CreateRequest());
+      tenantManager.createTenant(new Tenant.CreateRequest());
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
+      assertEquals("Unexpected HTTP response with status: 500\n" + message, e.getMessage());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+      assertNull(e.getAuthErrorCode());
     }
-    checkUrl(interceptor, "POST", TENANTS_BASE_URL);
   }
 
   @Test
@@ -252,18 +265,23 @@ public class FirebaseTenantClientTest {
 
   @Test
   public void testUpdateTenantError() {
-    TestResponseInterceptor interceptor =
-        initializeAppForTenantManagementWithStatusCode(404,
-            "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}");
+    String message = "{\"error\": {\"message\": \"INTERNAL_ERROR\"}}";
+    TenantManager tenantManager = createRetryDisabledTenantManager(new MockLowLevelHttpResponse()
+        .setStatusCode(500)
+        .setContent(message));
     Tenant.UpdateRequest request =
         new Tenant.UpdateRequest("TENANT_1").setDisplayName("DISPLAY_NAME");
+
     try {
-      FirebaseAuth.getInstance().getTenantManager().updateTenant(request);
+      tenantManager.updateTenant(request);
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
-      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
+      assertEquals("Unexpected HTTP response with status: 500\n" + message, e.getMessage());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+      assertNull(e.getAuthErrorCode());
     }
-    checkUrl(interceptor, "PATCH", TENANTS_BASE_URL + "/TENANT_1");
   }
 
   @Test
@@ -286,6 +304,10 @@ public class FirebaseTenantClientTest {
       fail("No error thrown for invalid response");
     } catch (FirebaseAuthException e) {
       assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals("No tenant found for the given identifier (TENANT_NOT_FOUND).", e.getMessage());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+      assertEquals(AuthErrorCode.TENANT_NOT_FOUND, e.getAuthErrorCode());
     }
     checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/UNKNOWN");
   }
@@ -313,7 +335,17 @@ public class FirebaseTenantClientTest {
   }
 
   private static TestResponseInterceptor initializeAppForTenantManagement(String... responses) {
-    initializeAppWithResponses(responses);
+    List<MockLowLevelHttpResponse> mocks = new ArrayList<>();
+    for (String response : responses) {
+      mocks.add(new MockLowLevelHttpResponse().setContent(response));
+    }
+    MockHttpTransport transport = new MultiRequestMockHttpTransport(mocks);
+    FirebaseApp.initializeApp(FirebaseOptions.builder()
+        .setCredentials(credentials)
+        .setHttpTransport(transport)
+        .setProjectId("test-project-id")
+        .build());
+
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     FirebaseAuth.getInstance().getTenantManager().setInterceptor(interceptor);
     return interceptor;
@@ -321,7 +353,7 @@ public class FirebaseTenantClientTest {
 
   private static TestResponseInterceptor initializeAppForTenantManagementWithStatusCode(
       int statusCode, String response) {
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(credentials)
         .setHttpTransport(
             new MockHttpTransport.Builder()
@@ -335,17 +367,16 @@ public class FirebaseTenantClientTest {
     return interceptor;
   }
 
-  private static void initializeAppWithResponses(String... responses) {
-    List<MockLowLevelHttpResponse> mocks = new ArrayList<>();
-    for (String response : responses) {
-      mocks.add(new MockLowLevelHttpResponse().setContent(response));
-    }
-    MockHttpTransport transport = new MultiRequestMockHttpTransport(mocks);
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+  private static TenantManager createRetryDisabledTenantManager(MockLowLevelHttpResponse response) {
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(credentials)
-        .setHttpTransport(transport)
-        .setProjectId("test-project-id")
         .build());
+    FirebaseTenantClient tenantClient = new FirebaseTenantClient(
+        "test-project-id", Utils.getDefaultJsonFactory(), transport.createRequestFactory());
+    return new TenantManager(app, tenantClient);
   }
 
   private static GenericJson parseRequestContent(TestResponseInterceptor interceptor)
