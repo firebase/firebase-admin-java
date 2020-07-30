@@ -499,7 +499,7 @@ public class FirebaseAuthTest {
   private FirebaseAuth getAuthForIdTokenVerification(
       FirebaseApp app,
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
-    FirebaseUserManager userManager = FirebaseUserManager.builder().setFirebaseApp(app).build();
+    FirebaseUserManager userManager = FirebaseUserManager.createUserManager(app, null);
     return new FirebaseAuth(
         AbstractFirebaseAuth.builder()
           .setFirebaseApp(app)
@@ -526,7 +526,7 @@ public class FirebaseAuthTest {
   private FirebaseAuth getAuthForSessionCookieVerification(
       FirebaseApp app,
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
-    FirebaseUserManager userManager = FirebaseUserManager.builder().setFirebaseApp(app).build();
+    FirebaseUserManager userManager = FirebaseUserManager.createUserManager(app, null);
     return new FirebaseAuth(
           AbstractFirebaseAuth.builder()
           .setFirebaseApp(app)

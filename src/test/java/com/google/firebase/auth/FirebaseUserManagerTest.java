@@ -45,14 +45,12 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
-import com.google.firebase.auth.internal.AuthHttpClient;
 import com.google.firebase.auth.multitenancy.TenantAwareFirebaseAuth;
 import com.google.firebase.auth.multitenancy.TenantManager;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -2683,7 +2681,6 @@ public class FirebaseUserManagerTest {
         .build();
     final FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(credentials)
-        .setProjectId("test-project-id")
         .setHttpTransport(transport)
         .build());
     return new FirebaseAuth(
@@ -2694,8 +2691,9 @@ public class FirebaseUserManagerTest {
             public FirebaseUserManager get() {
               return FirebaseUserManager
                 .builder()
-                .setFirebaseApp(app)
+                .setProjectId("test-project-id")
                 .setHttpRequestFactory(transport.createRequestFactory())
+                .setJsonFactory(JSON_FACTORY)
                 .build();
             }
           }));

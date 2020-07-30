@@ -16,7 +16,6 @@
 
 package com.google.firebase.auth.internal;
 
-import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.json.JsonFactory;
@@ -25,7 +24,6 @@ import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.internal.ErrorHandlingHttpClient;
 import com.google.firebase.internal.HttpRequestInfo;
-import com.google.firebase.internal.Nullable;
 import com.google.firebase.internal.SdkUtils;
 import java.util.Map;
 import java.util.Set;
@@ -65,21 +63,14 @@ public final class AuthHttpClient {
     this.httpClient.setInterceptor(interceptor);
   }
 
-  public IncomingHttpResponse sendRequest(
-      String method, GenericUrl url, @Nullable Object content) throws FirebaseAuthException {
-    HttpRequestInfo request = HttpRequestInfo.buildJsonRequest(method, url, content)
-        .addHeader(CLIENT_VERSION_HEADER, CLIENT_VERSION);
-    return httpClient.send(request);
+  public <T> T sendRequest(HttpRequestInfo request, Class<T> clazz) throws FirebaseAuthException {
+    IncomingHttpResponse response = this.sendRequest(request);
+    return this.parse(response, clazz);
   }
 
-  public <T> T sendRequest(
-      String method,
-      GenericUrl url,
-      @Nullable Object content,
-      Class<T> clazz) throws FirebaseAuthException {
-
-    IncomingHttpResponse response = this.sendRequest(method, url, content);
-    return this.parse(response, clazz);
+  public IncomingHttpResponse sendRequest(HttpRequestInfo request) throws FirebaseAuthException {
+    request.addHeader(CLIENT_VERSION_HEADER, CLIENT_VERSION);
+    return httpClient.send(request);
   }
 
   public <T> T parse(IncomingHttpResponse response, Class<T> clazz) throws FirebaseAuthException {

@@ -96,11 +96,7 @@ public abstract class AbstractFirebaseAuth {
             new Supplier<FirebaseUserManager>() {
               @Override
               public FirebaseUserManager get() {
-                return FirebaseUserManager
-                    .builder()
-                    .setFirebaseApp(app)
-                    .setTenantId(tenantId)
-                    .build();
+                return FirebaseUserManager.createUserManager(app, tenantId);
               }
             });
   }
