@@ -19,14 +19,12 @@ package com.google.firebase.auth;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.util.Clock;
 import com.google.api.core.ApiFuture;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.auth.multitenancy.TenantManager;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseService;
@@ -214,37 +212,7 @@ public final class FirebaseAuth extends AbstractFirebaseAuth {
   protected void doDestroy() { }
 
   private static FirebaseAuth fromApp(final FirebaseApp app) {
-    return new FirebaseAuth(
-        AbstractFirebaseAuth.builder()
-          .setFirebaseApp(app)
-          .setTokenFactory(
-              new Supplier<FirebaseTokenFactory>() {
-                @Override
-                public FirebaseTokenFactory get() {
-                  return FirebaseTokenUtils.createTokenFactory(app, Clock.SYSTEM);
-                }
-              })
-          .setIdTokenVerifier(
-              new Supplier<FirebaseTokenVerifier>() {
-                @Override
-                public FirebaseTokenVerifier get() {
-                  return FirebaseTokenUtils.createIdTokenVerifier(app, Clock.SYSTEM);
-                }
-              })
-          .setCookieVerifier(
-              new Supplier<FirebaseTokenVerifier>() {
-                @Override
-                public FirebaseTokenVerifier get() {
-                  return FirebaseTokenUtils.createSessionCookieVerifier(app, Clock.SYSTEM);
-                }
-            })
-          .setUserManager(
-              new Supplier<FirebaseUserManager>() {
-                @Override
-                public FirebaseUserManager get() {
-                  return FirebaseUserManager.builder().setFirebaseApp(app).build();
-                }
-              }));
+    return new FirebaseAuth(AbstractFirebaseAuth.builderFromAppAndTenantId(app, null));
   }
 
   private static class FirebaseAuthService extends FirebaseService<FirebaseAuth> {

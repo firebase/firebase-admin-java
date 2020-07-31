@@ -94,7 +94,7 @@ final class HttpHelper {
         requestIdentifierDescription);
   }
 
-  <T> IncomingHttpResponse makeRequest(
+  private <T> IncomingHttpResponse makeRequest(
       HttpRequestInfo baseRequest,
       T parsedResponseInstance,
       String requestIdentifier,

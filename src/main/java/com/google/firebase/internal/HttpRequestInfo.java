@@ -61,6 +61,16 @@ public final class HttpRequestInfo {
     return this;
   }
 
+  public HttpRequestInfo addParameter(String name, Object value) {
+    this.url.put(name, value);
+    return this;
+  }
+
+  public HttpRequestInfo addAllParameters(Map<String, Object> params) {
+    this.url.putAll(params);
+    return this;
+  }
+
   public static HttpRequestInfo buildGetRequest(String url) {
     return buildRequest(HttpMethods.GET, url, null);
   }
@@ -71,26 +81,20 @@ public final class HttpRequestInfo {
 
   public static HttpRequestInfo buildRequest(
       String method, String url, @Nullable HttpContent content) {
-    return buildRequest(method, new GenericUrl(url), content);
-  }
-
-  public static HttpRequestInfo buildRequest(
-      String method, GenericUrl url, @Nullable HttpContent content) {
-    return new HttpRequestInfo(method, url, content, null);
+    return new HttpRequestInfo(method, new GenericUrl(url), content, null);
   }
 
   public static HttpRequestInfo buildJsonPostRequest(String url, @Nullable Object content) {
     return buildJsonRequest(HttpMethods.POST, url, content);
   }
 
-  public static HttpRequestInfo buildJsonRequest(
-      String method, String url, @Nullable Object content) {
-    return buildJsonRequest(method, new GenericUrl(url), content);
+  public static HttpRequestInfo buildJsonPatchRequest(String url, @Nullable Object content) {
+    return buildJsonRequest(HttpMethods.PATCH, url, content);
   }
 
   public static HttpRequestInfo buildJsonRequest(
-      String method, GenericUrl url, @Nullable Object content) {
-    return new HttpRequestInfo(method, url, null, content);
+      String method, String url, @Nullable Object content) {
+    return new HttpRequestInfo(method, new GenericUrl(url), null, content);
   }
 
   HttpRequest newHttpRequest(
