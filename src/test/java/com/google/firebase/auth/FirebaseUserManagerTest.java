@@ -205,7 +205,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetUsersExceeds100() throws Exception {
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp.initializeApp(FirebaseOptions.builder()
             .setCredentials(credentials)
             .build());
     List<UserIdentifier> identifiers = new ArrayList<>();
@@ -223,7 +223,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testGetUsersNull() throws Exception {
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp.initializeApp(FirebaseOptions.builder()
             .setCredentials(credentials)
             .build());
     try {
@@ -458,7 +458,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeleteUsersExceeds1000() {
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp.initializeApp(FirebaseOptions.builder()
             .setCredentials(credentials)
             .build());
     List<String> ids = new ArrayList<>();
@@ -475,7 +475,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDeleteUsersInvalidId() {
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp.initializeApp(FirebaseOptions.builder()
             .setCredentials(credentials)
             .build());
     try {
@@ -2681,7 +2681,7 @@ public class FirebaseUserManagerTest {
 
   private static TestResponseInterceptor initializeAppForUserManagementWithStatusCode(
       int statusCode, String response) {
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(credentials)
         .setHttpTransport(
           new MockHttpTransport.Builder().setLowLevelHttpResponse(
@@ -2717,7 +2717,7 @@ public class FirebaseUserManagerTest {
       mocks.add(new MockLowLevelHttpResponse().setContent(response));
     }
     MockHttpTransport transport = new MultiRequestMockHttpTransport(mocks);
-    FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(credentials)
         .setHttpTransport(transport)
         .setProjectId("test-project-id")
@@ -2735,7 +2735,7 @@ public class FirebaseUserManagerTest {
     final MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(response)
         .build();
-    final FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    final FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(credentials)
         .setProjectId("test-project-id")
         .setHttpTransport(transport)
