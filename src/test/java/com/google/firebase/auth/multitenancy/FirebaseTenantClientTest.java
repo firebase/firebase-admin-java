@@ -19,6 +19,7 @@ package com.google.firebase.auth.multitenancy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -307,7 +308,6 @@ public class FirebaseTenantClientTest {
       assertEquals("No tenant found for the given identifier (TENANT_NOT_FOUND).", e.getMessage());
       assertTrue(e.getCause() instanceof HttpResponseException);
       assertNotNull(e.getHttpResponse());
-      assertEquals(AuthErrorCode.TENANT_NOT_FOUND, e.getAuthErrorCode());
     }
     checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/UNKNOWN");
   }
