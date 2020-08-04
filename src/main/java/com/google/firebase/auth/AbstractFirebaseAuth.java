@@ -801,7 +801,7 @@ public abstract class AbstractFirebaseAuth {
    * not guaranteed to correspond to the nth entry in the input parameters list.
    *
    * <p>A maximum of 100 identifiers may be specified. If more than 100 identifiers are
-   * supplied, this method throws an {@link IllegalArgumentException}.
+   * supplied, this method throws an {@code IllegalArgumentException}.
    *
    * @param identifiers The identifiers used to indicate which user records should be returned. Must
    *     have 100 or fewer entries.
@@ -823,7 +823,7 @@ public abstract class AbstractFirebaseAuth {
    * not guaranteed to correspond to the nth entry in the input parameters list.
    *
    * <p>A maximum of 100 identifiers may be specified. If more than 100 identifiers are
-   * supplied, this method throws an {@link IllegalArgumentException}.
+   * supplied, this method throws an {@code IllegalArgumentException}.
    *
    * @param identifiers The identifiers used to indicate which user records should be returned.
    *     Must have 100 or fewer entries.
@@ -877,7 +877,7 @@ public abstract class AbstractFirebaseAuth {
    * DeleteUsersResult.getSuccessCount() value.
    *
    * <p>A maximum of 1000 identifiers may be supplied. If more than 1000 identifiers are
-   * supplied, this method throws an {@link IllegalArgumentException}.
+   * supplied, this method throws an {@code IllegalArgumentException}.
    *
    * <p>This API has a rate limit of 1 QPS. Exceeding the limit may result in a quota exceeded
    * error. If you want to delete more than 1000 users, we suggest adding a delay to ensure you
@@ -886,7 +886,7 @@ public abstract class AbstractFirebaseAuth {
    * @param uids The uids of the users to be deleted. Must have <= 1000 entries.
    * @return The total number of successful/failed deletions, as well as the array of errors that
    *     correspond to the failed deletions.
-   * @throw IllegalArgumentException If any of the identifiers are invalid or if more than 1000
+   * @throws IllegalArgumentException If any of the identifiers are invalid or if more than 1000
    *     identifiers are specified.
    * @throws FirebaseAuthException If an error occurs while deleting users.
    */
@@ -902,7 +902,7 @@ public abstract class AbstractFirebaseAuth {
    *     deletions, as well as the array of errors that correspond to the failed deletions. If an
    *     error occurs while deleting the user account, the future throws a
    *     {@link FirebaseAuthException}.
-   * @throw IllegalArgumentException If any of the identifiers are invalid or if more than 1000
+   * @throws IllegalArgumentException If any of the identifiers are invalid or if more than 1000
    *     identifiers are specified.
    */
   public ApiFuture<DeleteUsersResult> deleteUsersAsync(List<String> uids) {

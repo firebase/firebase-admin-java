@@ -96,14 +96,14 @@ public class ListTenantsPage implements Page<Tenant> {
   }
 
   /**
-   * Returns an {@link Iterable} that facilitates transparently iterating over all the tenants in
+   * Returns an {@code Iterable} that facilitates transparently iterating over all the tenants in
    * the current Firebase project, starting from this page.
    *
-   * <p>The {@link Iterator} instances produced by the returned {@link Iterable} never buffers more
+   * <p>The {@code Iterator} instances produced by the returned {@code Iterable} never buffers more
    * than one page of tenants at a time. It is safe to abandon the iterators (i.e. break the loops)
    * at any time.
    *
-   * @return a new {@link Iterable} instance.
+   * @return a new {@code Iterable} instance.
    */
   @NonNull
   @Override
@@ -112,9 +112,9 @@ public class ListTenantsPage implements Page<Tenant> {
   }
 
   /**
-   * Returns an {@link Iterable} over the tenants in this page.
+   * Returns an {@code Iterable} over the tenants in this page.
    *
-   * @return a {@link Iterable} instance.
+   * @return a {@code Iterable} instance.
    */
   @NonNull
   @Override
@@ -137,7 +137,7 @@ public class ListTenantsPage implements Page<Tenant> {
     }
 
     /**
-     * An {@link Iterator} that cycles through tenants, one at a time.
+     * An {@code Iterator} that cycles through tenants, one at a time.
      *
      * <p>It buffers the last retrieved batch of tenants in memory. The {@code maxResults} parameter
      * is an upper bound on the batch size.
