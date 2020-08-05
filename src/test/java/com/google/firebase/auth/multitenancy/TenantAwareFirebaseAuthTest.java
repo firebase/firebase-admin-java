@@ -37,14 +37,11 @@ import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.auth.MockTokenVerifier;
 import com.google.firebase.auth.SessionCookieOptions;
-import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
@@ -52,7 +49,9 @@ import org.junit.Test;
 
 public class TenantAwareFirebaseAuthTest {
 
-  private static final String AUTH_BASE_URL = "/v1/projects/test-project-id/tenants/test-tenant";
+  private static final String TENANT_ID = "test-tenant";
+
+  private static final String AUTH_BASE_URL = "/v1/projects/test-project-id/tenants/" + TENANT_ID;
 
   private static final SessionCookieOptions COOKIE_OPTIONS = SessionCookieOptions.builder()
       .setExpiresIn(TimeUnit.HOURS.toMillis(1))
@@ -60,6 +59,9 @@ public class TenantAwareFirebaseAuthTest {
 
   private static final FirebaseAuthException AUTH_EXCEPTION = new FirebaseAuthException(
       "code", "reason");
+
+  private static final String CREATE_COOKIE_RESPONSE = TestUtils.loadResource(
+      "createSessionCookie.json");
 
   @After
   public void tearDown() {
@@ -70,7 +72,7 @@ public class TenantAwareFirebaseAuthTest {
   public void testCreateSessionCookieAsync() throws Exception {
     MockTokenVerifier verifier = MockTokenVerifier.fromUid("uid");
     TenantAwareFirebaseAuth.Builder builder = builderForTokenVerification(verifier);
-    TestResponseInterceptor interceptor = setUserManager(builder);
+    TestResponseInterceptor interceptor = setUserManager(builder, CREATE_COOKIE_RESPONSE);
     TenantAwareFirebaseAuth auth = builder.build();
 
     String cookie = auth.createSessionCookieAsync("testToken", COOKIE_OPTIONS).get();
@@ -88,7 +90,7 @@ public class TenantAwareFirebaseAuthTest {
   public void testCreateSessionCookieAsyncError() throws Exception {
     TenantAwareFirebaseAuth.Builder builder = builderForTokenVerification(
         MockTokenVerifier.fromException(AUTH_EXCEPTION));
-    TestResponseInterceptor interceptor = setUserManager(builder);
+    TestResponseInterceptor interceptor = setUserManager(builder, CREATE_COOKIE_RESPONSE);
     TenantAwareFirebaseAuth auth = builder.build();
 
     try {
@@ -107,7 +109,7 @@ public class TenantAwareFirebaseAuthTest {
   public void testCreateSessionCookie() throws Exception {
     TenantAwareFirebaseAuth.Builder builder = builderForTokenVerification(
         MockTokenVerifier.fromUid("uid"));
-    TestResponseInterceptor interceptor = setUserManager(builder);
+    TestResponseInterceptor interceptor = setUserManager(builder, CREATE_COOKIE_RESPONSE);
     TenantAwareFirebaseAuth auth = builder.build();
 
     String cookie = auth.createSessionCookie("testToken", COOKIE_OPTIONS);
@@ -124,7 +126,7 @@ public class TenantAwareFirebaseAuthTest {
   public void testCreateSessionCookieError() {
     TenantAwareFirebaseAuth.Builder builder = builderForTokenVerification(
         MockTokenVerifier.fromException(AUTH_EXCEPTION));
-    TestResponseInterceptor interceptor = setUserManager(builder);
+    TestResponseInterceptor interceptor = setUserManager(builder, CREATE_COOKIE_RESPONSE);
     TenantAwareFirebaseAuth auth = builder.build();
 
     try {
@@ -154,7 +156,7 @@ public class TenantAwareFirebaseAuthTest {
   public void testVerifySessionCookieFailure() {
     MockTokenVerifier tokenVerifier = MockTokenVerifier.fromException(AUTH_EXCEPTION);
     TenantAwareFirebaseAuth.Builder builder = builderForTokenVerification(tokenVerifier);
-    initUserManagerForGetUser(builder);
+    setUserManager(builder);
     TenantAwareFirebaseAuth auth = builder.build();
 
     try {
@@ -200,7 +202,8 @@ public class TenantAwareFirebaseAuthTest {
   public void testVerifySessionCookieWithCheckRevoked() throws FirebaseAuthException {
     MockTokenVerifier tokenVerifier = MockTokenVerifier.fromUid("uid");
     TenantAwareFirebaseAuth.Builder builder = builderForTokenVerification(tokenVerifier);
-    TestResponseInterceptor interceptor = initUserManagerForGetUser(builder);
+    TestResponseInterceptor interceptor = setUserManager(
+        builder, TestUtils.loadResource("getUser.json"));
     TenantAwareFirebaseAuth auth = builder.build();
 
     FirebaseToken token = auth.verifySessionCookie("cookie", true);
@@ -246,34 +249,26 @@ public class TenantAwareFirebaseAuthTest {
   private static TenantAwareFirebaseAuth.Builder builderForTokenVerification(
       MockTokenVerifier verifier) {
     return TenantAwareFirebaseAuth.builder()
+        .setTenantId(TENANT_ID)
         .setIdTokenVerifier(Suppliers.ofInstance(verifier))
         .setCookieVerifier(Suppliers.ofInstance(verifier));
   }
 
   private static TestResponseInterceptor setUserManager(TenantAwareFirebaseAuth.Builder builder) {
-    FirebaseApp app = initializeAppWithResponses(
-        TestUtils.loadResource("createSessionCookie.json"));
-    builder.setFirebaseApp(app);
-    builder.setTenantId("test-tenant");
-    return FirebaseAuthTest.setUserManager(builder, app, "test-tenant");
+    return setUserManager(builder, "{}");
   }
 
-  private static TestResponseInterceptor initUserManagerForGetUser(
-      TenantAwareFirebaseAuth.Builder builder) {
-    FirebaseApp app = initializeAppWithResponses(
-        TestUtils.loadResource("getUser.json"));
+  private static TestResponseInterceptor setUserManager(
+      TenantAwareFirebaseAuth.Builder builder, String response) {
+    FirebaseApp app = initializeAppWithResponse(response);
     builder.setFirebaseApp(app);
-    builder.setTenantId("test-tenant");
-    return FirebaseAuthTest.setUserManager(builder, app, "test-tenant");
+    return FirebaseAuthTest.setUserManager(builder, app, TENANT_ID);
   }
 
-  private static FirebaseApp initializeAppWithResponses(String... responses) {
-    List<MockLowLevelHttpResponse> mocks = new ArrayList<>();
-    for (String response : responses) {
-      mocks.add(new MockLowLevelHttpResponse().setContent(response));
-    }
-
-    MockHttpTransport transport = new MultiRequestMockHttpTransport(mocks);
+  private static FirebaseApp initializeAppWithResponse(String response) {
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(new MockLowLevelHttpResponse().setContent(response))
+        .build();
     return FirebaseApp.initializeApp(new FirebaseOptions.Builder()
         .setCredentials(new MockGoogleCredentials("token"))
         .setHttpTransport(transport)
