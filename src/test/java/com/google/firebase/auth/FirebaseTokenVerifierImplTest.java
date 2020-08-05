@@ -218,6 +218,19 @@ public class FirebaseTokenVerifierImplTest {
   }
 
   @Test
+  public void testVerifyTokenWithTenantId() throws FirebaseAuthException {
+    FirebaseTokenVerifierImpl verifier = fullyPopulatedBuilder()
+        .setTenantId("TENANT_1")
+        .build();
+
+    FirebaseToken firebaseToken = verifier.verifyToken(createTokenWithTenantId("TENANT_1"));
+
+    assertEquals(TEST_TOKEN_ISSUER, firebaseToken.getIssuer());
+    assertEquals(TestTokenFactory.UID, firebaseToken.getUid());
+    assertEquals("TENANT_1", firebaseToken.getTenantId());
+  }
+
+  @Test
   public void testVerifyTokenDifferentTenantIds() {
     try {
       fullyPopulatedBuilder()

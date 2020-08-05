@@ -2602,19 +2602,18 @@ public class FirebaseUserManagerTest {
         .setProjectId("test-project-id")
         .setHttpTransport(transport)
         .build());
-    return new FirebaseAuth(
-        AbstractFirebaseAuth.builder()
-          .setFirebaseApp(app)
-          .setUserManager(new Supplier<FirebaseUserManager>() {
-            @Override
-            public FirebaseUserManager get() {
-              return FirebaseUserManager
-                .builder()
-                .setFirebaseApp(app)
-                .setHttpRequestFactory(transport.createRequestFactory())
-                .build();
-            }
-          }));
+    return FirebaseAuth.builder()
+        .setFirebaseApp(app)
+        .setUserManager(new Supplier<FirebaseUserManager>() {
+          @Override
+          public FirebaseUserManager get() {
+            return FirebaseUserManager.builder()
+              .setFirebaseApp(app)
+              .setHttpRequestFactory(transport.createRequestFactory())
+              .build();
+          }
+          })
+        .build();
   }
 
   private static void checkUserRecord(UserRecord userRecord) {
