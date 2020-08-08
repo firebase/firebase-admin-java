@@ -122,5 +122,10 @@ public class TopicManagementResponse {
     public String getReason() {
       return reason;
     }
+
+    @Override
+    public String toString() {
+      return "Error{" + "index=" + index + ", reason='" + reason + '\'' + '}';
+    }
   }
 }
