@@ -342,9 +342,13 @@ public class InstanceIdClientImplTest {
 
   @Test
   public void testTopicManagementResponseErrorToString() {
-    ImmutableList<GenericJson> jsonList = ImmutableList.of(new GenericJson().set("error", "test error"));
+    GenericJson json = new GenericJson().set("error", "test error");
+    ImmutableList<GenericJson> jsonList = ImmutableList.of(json);
+
     TopicManagementResponse topicManagementResponse = new TopicManagementResponse(jsonList);
-    assertEquals("[Error{index=0, reason=unknown-error}]", topicManagementResponse.getErrors().toString());
+
+    String expected = "[Error{index=0, reason=unknown-error}]";
+    assertEquals(expected, topicManagementResponse.getErrors().toString());
   }
 
   private static InstanceIdClientImpl initInstanceIdClient(
