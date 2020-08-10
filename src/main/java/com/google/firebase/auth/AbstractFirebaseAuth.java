@@ -62,50 +62,13 @@ public abstract class AbstractFirebaseAuth {
   private final Supplier<? extends FirebaseUserManager> userManager;
   private final JsonFactory jsonFactory;
 
-  protected AbstractFirebaseAuth(Builder builder) {
+  protected AbstractFirebaseAuth(Builder<?> builder) {
     this.firebaseApp = checkNotNull(builder.firebaseApp);
     this.tokenFactory = threadSafeMemoize(builder.tokenFactory);
     this.idTokenVerifier = threadSafeMemoize(builder.idTokenVerifier);
     this.cookieVerifier = threadSafeMemoize(builder.cookieVerifier);
     this.userManager = threadSafeMemoize(builder.userManager);
-    this.jsonFactory = builder.firebaseApp.getOptions().getJsonFactory();
-  }
-
-  protected static Builder builderFromAppAndTenantId(final FirebaseApp app, final String tenantId) {
-    return AbstractFirebaseAuth.builder()
-        .setFirebaseApp(app)
-        .setTokenFactory(
-            new Supplier<FirebaseTokenFactory>() {
-              @Override
-              public FirebaseTokenFactory get() {
-                return FirebaseTokenUtils.createTokenFactory(app, Clock.SYSTEM, tenantId);
-              }
-            })
-        .setIdTokenVerifier(
-            new Supplier<FirebaseTokenVerifier>() {
-              @Override
-              public FirebaseTokenVerifier get() {
-                return FirebaseTokenUtils.createIdTokenVerifier(app, Clock.SYSTEM, tenantId);
-              }
-            })
-        .setCookieVerifier(
-            new Supplier<FirebaseTokenVerifier>() {
-              @Override
-              public FirebaseTokenVerifier get() {
-                return FirebaseTokenUtils.createSessionCookieVerifier(app, Clock.SYSTEM);
-              }
-            })
-        .setUserManager(
-            new Supplier<FirebaseUserManager>() {
-              @Override
-              public FirebaseUserManager get() {
-                return FirebaseUserManager
-                    .builder()
-                    .setFirebaseApp(app)
-                    .setTenantId(tenantId)
-                    .build();
-              }
-            });
+    this.jsonFactory = firebaseApp.getOptions().getJsonFactory();
   }
 
   /**
@@ -221,6 +184,51 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
+   * Creates a new Firebase session cookie from the given ID token and options. The returned JWT can
+   * be set as a server-side session cookie with a custom cookie policy.
+   *
+   * @param idToken The Firebase ID token to exchange for a session cookie.
+   * @param options Additional options required to create the cookie.
+   * @return A Firebase session cookie string.
+   * @throws IllegalArgumentException If the ID token is null or empty, or if options is null.
+   * @throws FirebaseAuthException If an error occurs while generating the session cookie.
+   */
+  public String createSessionCookie(@NonNull String idToken, @NonNull SessionCookieOptions options)
+      throws FirebaseAuthException {
+    return createSessionCookieOp(idToken, options).call();
+  }
+
+  /**
+   * Similar to {@link #createSessionCookie(String, SessionCookieOptions)} but performs the
+   * operation asynchronously.
+   *
+   * @param idToken The Firebase ID token to exchange for a session cookie.
+   * @param options Additional options required to create the cookie.
+   * @return An {@code ApiFuture} which will complete successfully with a session cookie string. If
+   *     an error occurs while generating the cookie or if the specified ID token is invalid, the
+   *     future throws a {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the ID token is null or empty, or if options is null.
+   */
+  public ApiFuture<String> createSessionCookieAsync(
+      @NonNull String idToken, @NonNull SessionCookieOptions options) {
+    return createSessionCookieOp(idToken, options).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<String, FirebaseAuthException> createSessionCookieOp(
+      final String idToken, final SessionCookieOptions options) {
+    checkNotDestroyed();
+    checkArgument(!Strings.isNullOrEmpty(idToken), "idToken must not be null or empty");
+    checkNotNull(options, "options must not be null");
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<String, FirebaseAuthException>() {
+      @Override
+      protected String execute() throws FirebaseAuthException {
+        return userManager.createSessionCookie(idToken, options);
+      }
+    };
+  }
+
+  /**
    * Parses and verifies a Firebase ID Token.
    *
    * <p>A Firebase application can identify itself to a trusted backend server by sending its
@@ -316,6 +324,87 @@ public abstract class AbstractFirebaseAuth {
     if (checkRevoked) {
       FirebaseUserManager userManager = getUserManager();
       verifier = RevocationCheckDecorator.decorateIdTokenVerifier(verifier, userManager);
+    }
+    return verifier;
+  }
+
+  /**
+   * Parses and verifies a Firebase session cookie.
+   *
+   * <p>If verified successfully, returns a parsed version of the cookie from which the UID and the
+   * other claims can be read. If the cookie is invalid, throws a {@link FirebaseAuthException}.
+   *
+   * <p>This method does not check whether the cookie has been revoked. See {@link
+   * #verifySessionCookie(String, boolean)}.
+   *
+   * @param cookie A Firebase session cookie string to verify and parse.
+   * @return A {@link FirebaseToken} representing the verified and decoded cookie.
+   */
+  public FirebaseToken verifySessionCookie(String cookie) throws FirebaseAuthException {
+    return verifySessionCookie(cookie, false);
+  }
+
+  /**
+   * Parses and verifies a Firebase session cookie.
+   *
+   * <p>If {@code checkRevoked} is true, additionally verifies that the cookie has not been revoked.
+   *
+   * <p>If verified successfully, returns a parsed version of the cookie from which the UID and the
+   * other claims can be read. If the cookie is invalid or has been revoked while {@code
+   * checkRevoked} is true, throws a {@link FirebaseAuthException}.
+   *
+   * @param cookie A Firebase session cookie string to verify and parse.
+   * @param checkRevoked A boolean indicating whether to check if the cookie was explicitly revoked.
+   * @return A {@link FirebaseToken} representing the verified and decoded cookie.
+   */
+  public FirebaseToken verifySessionCookie(String cookie, boolean checkRevoked)
+      throws FirebaseAuthException {
+    return verifySessionCookieOp(cookie, checkRevoked).call();
+  }
+
+  /**
+   * Similar to {@link #verifySessionCookie(String)} but performs the operation asynchronously.
+   *
+   * @param cookie A Firebase session cookie string to verify and parse.
+   * @return An {@code ApiFuture} which will complete successfully with the parsed cookie, or
+   *     unsuccessfully with the failure Exception.
+   */
+  public ApiFuture<FirebaseToken> verifySessionCookieAsync(String cookie) {
+    return verifySessionCookieAsync(cookie, false);
+  }
+
+  /**
+   * Similar to {@link #verifySessionCookie(String, boolean)} but performs the operation
+   * asynchronously.
+   *
+   * @param cookie A Firebase session cookie string to verify and parse.
+   * @param checkRevoked A boolean indicating whether to check if the cookie was explicitly revoked.
+   * @return An {@code ApiFuture} which will complete successfully with the parsed cookie, or
+   *     unsuccessfully with the failure Exception.
+   */
+  public ApiFuture<FirebaseToken> verifySessionCookieAsync(String cookie, boolean checkRevoked) {
+    return verifySessionCookieOp(cookie, checkRevoked).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<FirebaseToken, FirebaseAuthException> verifySessionCookieOp(
+      final String cookie, final boolean checkRevoked) {
+    checkNotDestroyed();
+    checkArgument(!Strings.isNullOrEmpty(cookie), "Session cookie must not be null or empty");
+    final FirebaseTokenVerifier sessionCookieVerifier = getSessionCookieVerifier(checkRevoked);
+    return new CallableOperation<FirebaseToken, FirebaseAuthException>() {
+      @Override
+      public FirebaseToken execute() throws FirebaseAuthException {
+        return sessionCookieVerifier.verifyToken(cookie);
+      }
+    };
+  }
+
+  @VisibleForTesting
+  FirebaseTokenVerifier getSessionCookieVerifier(boolean checkRevoked) {
+    FirebaseTokenVerifier verifier = cookieVerifier.get();
+    if (checkRevoked) {
+      FirebaseUserManager userManager = getUserManager();
+      verifier = RevocationCheckDecorator.decorateSessionCookieVerifier(verifier, userManager);
     }
     return verifier;
   }
@@ -1637,19 +1726,11 @@ public abstract class AbstractFirebaseAuth {
     };
   }
 
-  FirebaseApp getFirebaseApp() {
-    return this.firebaseApp;
-  }
-
-  FirebaseTokenVerifier getCookieVerifier() {
-    return this.cookieVerifier.get();
-  }
-
   FirebaseUserManager getUserManager() {
     return this.userManager.get();
   }
 
-  protected <T> Supplier<T> threadSafeMemoize(final Supplier<T> supplier) {
+  <T> Supplier<T> threadSafeMemoize(final Supplier<T> supplier) {
     return Suppliers.memoize(
         new Supplier<T>() {
           @Override
@@ -1663,7 +1744,7 @@ public abstract class AbstractFirebaseAuth {
         });
   }
 
-  void checkNotDestroyed() {
+  private void checkNotDestroyed() {
     synchronized (lock) {
       checkState(
           !destroyed.get(),
@@ -1682,42 +1763,80 @@ public abstract class AbstractFirebaseAuth {
   /** Performs any additional required clean up. */
   protected abstract void doDestroy();
 
-  static Builder builder() {
-    return new Builder();
-  }
+  protected abstract static class Builder<T extends  Builder<T>> {
 
-  static class Builder {
-    protected FirebaseApp firebaseApp;
+    private FirebaseApp firebaseApp;
     private Supplier<FirebaseTokenFactory> tokenFactory;
     private Supplier<? extends FirebaseTokenVerifier> idTokenVerifier;
     private Supplier<? extends FirebaseTokenVerifier> cookieVerifier;
-    private Supplier<FirebaseUserManager> userManager;
+    private Supplier<? extends FirebaseUserManager> userManager;
 
-    private Builder() {}
+    protected abstract T getThis();
 
-    Builder setFirebaseApp(FirebaseApp firebaseApp) {
+    public FirebaseApp getFirebaseApp() {
+      return firebaseApp;
+    }
+
+    public T setFirebaseApp(FirebaseApp firebaseApp) {
       this.firebaseApp = firebaseApp;
-      return this;
+      return getThis();
     }
 
-    Builder setTokenFactory(Supplier<FirebaseTokenFactory> tokenFactory) {
+    public T setTokenFactory(Supplier<FirebaseTokenFactory> tokenFactory) {
       this.tokenFactory = tokenFactory;
-      return this;
+      return getThis();
     }
 
-    Builder setIdTokenVerifier(Supplier<? extends FirebaseTokenVerifier> idTokenVerifier) {
+    public T setIdTokenVerifier(Supplier<? extends FirebaseTokenVerifier> idTokenVerifier) {
       this.idTokenVerifier = idTokenVerifier;
-      return this;
+      return getThis();
     }
 
-    Builder setCookieVerifier(Supplier<? extends FirebaseTokenVerifier> cookieVerifier) {
+    public T setCookieVerifier(Supplier<? extends FirebaseTokenVerifier> cookieVerifier) {
       this.cookieVerifier = cookieVerifier;
-      return this;
+      return getThis();
     }
 
-    Builder setUserManager(Supplier<FirebaseUserManager> userManager) {
+    public T setUserManager(Supplier<FirebaseUserManager> userManager) {
       this.userManager = userManager;
-      return this;
+      return getThis();
     }
+  }
+
+  protected static <T extends Builder<T>> T populateBuilderFromApp(
+      Builder<T> builder, final FirebaseApp app, @Nullable final String tenantId) {
+    return builder.setFirebaseApp(app)
+        .setTokenFactory(
+            new Supplier<FirebaseTokenFactory>() {
+              @Override
+              public FirebaseTokenFactory get() {
+                return FirebaseTokenUtils.createTokenFactory(app, Clock.SYSTEM, tenantId);
+              }
+            })
+        .setIdTokenVerifier(
+            new Supplier<FirebaseTokenVerifier>() {
+              @Override
+              public FirebaseTokenVerifier get() {
+                return FirebaseTokenUtils.createIdTokenVerifier(app, Clock.SYSTEM, tenantId);
+              }
+            })
+        .setCookieVerifier(
+            new Supplier<FirebaseTokenVerifier>() {
+              @Override
+              public FirebaseTokenVerifier get() {
+                return FirebaseTokenUtils.createSessionCookieVerifier(app, Clock.SYSTEM, tenantId);
+              }
+            })
+        .setUserManager(
+            new Supplier<FirebaseUserManager>() {
+              @Override
+              public FirebaseUserManager get() {
+                return FirebaseUserManager
+                    .builder()
+                    .setFirebaseApp(app)
+                    .setTenantId(tenantId)
+                    .build();
+              }
+            });
   }
 }
