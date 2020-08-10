@@ -340,6 +340,17 @@ public class InstanceIdClientImplTest {
     new TopicManagementResponse(ImmutableList.<GenericJson>of());
   }
 
+  @Test
+  public void testTopicManagementResponseErrorToString() {
+    GenericJson json = new GenericJson().set("error", "test error");
+    ImmutableList<GenericJson> jsonList = ImmutableList.of(json);
+
+    TopicManagementResponse topicManagementResponse = new TopicManagementResponse(jsonList);
+
+    String expected = "[Error{index=0, reason=unknown-error}]";
+    assertEquals(expected, topicManagementResponse.getErrors().toString());
+  }
+
   private static InstanceIdClientImpl initInstanceIdClient(
       final MockLowLevelHttpResponse mockResponse,
       final HttpResponseInterceptor interceptor) {
