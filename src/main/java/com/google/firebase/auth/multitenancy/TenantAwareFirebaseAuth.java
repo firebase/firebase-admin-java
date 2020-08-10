@@ -18,9 +18,16 @@ package com.google.firebase.auth.multitenancy;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.api.core.ApiAsyncFunction;
+import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.common.base.Strings;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AbstractFirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
+import com.google.firebase.auth.SessionCookieOptions;
 
 /**
  * The tenant-aware Firebase client.
@@ -32,10 +39,10 @@ public final class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
 
   private final String tenantId;
 
-  TenantAwareFirebaseAuth(final FirebaseApp firebaseApp, final String tenantId) {
-    super(builderFromAppAndTenantId(firebaseApp, tenantId));
-    checkArgument(!Strings.isNullOrEmpty(tenantId));
-    this.tenantId = tenantId;
+  private TenantAwareFirebaseAuth(Builder builder) {
+    super(builder);
+    checkArgument(!Strings.isNullOrEmpty(builder.tenantId));
+    this.tenantId = builder.tenantId;
   }
 
   /** Returns the client's tenant ID. */
@@ -44,7 +51,57 @@ public final class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
   }
 
   @Override
+  public String createSessionCookie(
+      String idToken, SessionCookieOptions options) throws FirebaseAuthException {
+    verifyIdToken(idToken);
+    return super.createSessionCookie(idToken, options);
+  }
+
+  @Override
+  public ApiFuture<String> createSessionCookieAsync(
+      final String idToken, final SessionCookieOptions options) {
+    ApiFuture<FirebaseToken> future = verifyIdTokenAsync(idToken);
+    return ApiFutures.transformAsync(future, new ApiAsyncFunction<FirebaseToken, String>() {
+      @Override
+      public ApiFuture<String> apply(FirebaseToken input) {
+        return TenantAwareFirebaseAuth.super.createSessionCookieAsync(idToken, options);
+      }
+    }, MoreExecutors.directExecutor());
+  }
+
+  @Override
   protected void doDestroy() {
     // Nothing extra needs to be destroyed.
+  }
+
+  static TenantAwareFirebaseAuth fromApp(FirebaseApp app, String tenantId) {
+    return populateBuilderFromApp(builder(), app, tenantId)
+        .setTenantId(tenantId)
+        .build();
+  }
+
+  static Builder builder() {
+    return new Builder();
+  }
+
+  static class Builder extends AbstractFirebaseAuth.Builder<Builder> {
+
+    private String tenantId;
+
+    private Builder() { }
+
+    @Override
+    protected Builder getThis() {
+      return this;
+    }
+
+    public Builder setTenantId(String tenantId) {
+      this.tenantId = tenantId;
+      return this;
+    }
+
+    TenantAwareFirebaseAuth build() {
+      return new TenantAwareFirebaseAuth(this);
+    }
   }
 }

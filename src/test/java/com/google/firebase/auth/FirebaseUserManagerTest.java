@@ -2738,20 +2738,19 @@ public class FirebaseUserManagerTest {
         .setCredentials(credentials)
         .setHttpTransport(transport)
         .build());
-    return new FirebaseAuth(
-        AbstractFirebaseAuth.builder()
-          .setFirebaseApp(app)
-          .setUserManager(new Supplier<FirebaseUserManager>() {
-            @Override
-            public FirebaseUserManager get() {
-              return FirebaseUserManager
-                .builder()
+    return FirebaseAuth.builder()
+        .setFirebaseApp(app)
+        .setUserManager(new Supplier<FirebaseUserManager>() {
+          @Override
+          public FirebaseUserManager get() {
+            return FirebaseUserManager.builder()
                 .setProjectId("test-project-id")
                 .setHttpRequestFactory(transport.createRequestFactory())
-                .setJsonFactory(JSON_FACTORY)
+                .setJsonFactory(Utils.getDefaultJsonFactory())
                 .build();
-            }
-          }));
+          }
+          })
+        .build();
   }
 
   private static void checkUserRecord(UserRecord userRecord) {

@@ -33,10 +33,12 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
+
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.testing.ServiceAccount;
+import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -47,7 +49,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-
 import org.junit.After;
 import org.junit.Test;
 
@@ -178,8 +179,7 @@ public class FirebaseAuthTest {
 
   @Test
   public void testIdTokenVerifierInitializedOnDemand() throws Exception {
-    FirebaseTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
-        getFirebaseToken("idTokenUser"));
+    FirebaseTokenVerifier tokenVerifier = MockTokenVerifier.fromUid("idTokenUser");
     CountingSupplier<FirebaseTokenVerifier> countingSupplier = new CountingSupplier<>(
         Suppliers.ofInstance(tokenVerifier));
 
@@ -194,37 +194,33 @@ public class FirebaseAuthTest {
 
   @Test
   public void testVerifyIdTokenWithNull() {
-    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(null);
-    tokenVerifier.lastTokenString = "_init_";
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromUid("uid");
     FirebaseAuth auth = getAuthForIdTokenVerification(tokenVerifier);
 
     try {
       auth.verifyIdTokenAsync(null);
       fail("No error thrown for null id token");
     } catch (IllegalArgumentException expected) {
-      assertEquals("_init_", tokenVerifier.getLastTokenString());
+      assertNull(tokenVerifier.getLastTokenString());
     }
   }
 
   @Test
   public void testVerifyIdTokenWithEmptyString() {
-    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(null);
-    tokenVerifier.lastTokenString = "_init_";
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromUid("uid");
     FirebaseAuth auth = getAuthForIdTokenVerification(tokenVerifier);
 
     try {
       auth.verifyIdTokenAsync("");
       fail("No error thrown for null id token");
     } catch (IllegalArgumentException expected) {
-      assertEquals("_init_", tokenVerifier.getLastTokenString());
+      assertNull(tokenVerifier.getLastTokenString());
     }
-
   }
 
   @Test
   public void testVerifyIdToken() throws Exception {
-    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
-        getFirebaseToken("testUser"));
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromUid("testUser");
     FirebaseAuth auth = getAuthForIdTokenVerification(tokenVerifier);
 
     FirebaseToken firebaseToken = auth.verifyIdToken("idtoken");
@@ -267,7 +263,7 @@ public class FirebaseAuthTest {
 
   @Test
   public void testVerifyIdTokenFailure() {
-    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromException();
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromException(testException);
     FirebaseAuth auth = getAuthForIdTokenVerification(tokenVerifier);
 
     try {
@@ -280,8 +276,7 @@ public class FirebaseAuthTest {
 
   @Test
   public void testVerifyIdTokenAsync() throws Exception {
-    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
-        getFirebaseToken("testUser"));
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromUid("testUser");
     FirebaseAuth auth = getAuthForIdTokenVerification(tokenVerifier);
 
     FirebaseToken firebaseToken = auth.verifyIdTokenAsync("idtoken").get();
@@ -292,7 +287,7 @@ public class FirebaseAuthTest {
 
   @Test
   public void testVerifyIdTokenAsyncFailure() throws InterruptedException {
-    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromException();
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromException(testException);
     FirebaseAuth auth = getAuthForIdTokenVerification(tokenVerifier);
 
     try {
@@ -306,7 +301,7 @@ public class FirebaseAuthTest {
 
   @Test
   public void testVerifyIdTokenWithCheckRevokedAsyncFailure() throws InterruptedException {
-    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromException();
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromException(testException);
     FirebaseAuth auth = getAuthForIdTokenVerification(tokenVerifier);
 
     try {
@@ -332,8 +327,7 @@ public class FirebaseAuthTest {
 
   @Test
   public void testSessionCookieVerifierInitializedOnDemand() throws Exception {
-    FirebaseTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
-        getFirebaseToken("cookieUser"));
+    FirebaseTokenVerifier tokenVerifier = MockTokenVerifier.fromUid("cookieUser");
     CountingSupplier<FirebaseTokenVerifier> countingSupplier = new CountingSupplier<>(
         Suppliers.ofInstance(tokenVerifier));
     FirebaseAuth auth = getAuthForSessionCookieVerification(countingSupplier);
@@ -348,37 +342,33 @@ public class FirebaseAuthTest {
 
   @Test
   public void testVerifySessionCookieWithNull() {
-    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(null);
-    tokenVerifier.lastTokenString = "_init_";
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromUid("uid");
     FirebaseAuth auth = getAuthForSessionCookieVerification(tokenVerifier);
 
     try {
       auth.verifySessionCookieAsync(null);
       fail("No error thrown for null id token");
     } catch (IllegalArgumentException expected) {
-      assertEquals("_init_", tokenVerifier.getLastTokenString());
+      assertNull(tokenVerifier.getLastTokenString());
     }
   }
 
   @Test
   public void testVerifySessionCookieWithEmptyString() {
-    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(null);
-    tokenVerifier.lastTokenString = "_init_";
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromUid("uid");
     FirebaseAuth auth = getAuthForSessionCookieVerification(tokenVerifier);
 
     try {
       auth.verifySessionCookieAsync("");
       fail("No error thrown for null id token");
     } catch (IllegalArgumentException expected) {
-      assertEquals("_init_", tokenVerifier.getLastTokenString());
+      assertNull(tokenVerifier.getLastTokenString());
     }
-
   }
 
   @Test
   public void testVerifySessionCookie() throws Exception {
-    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
-        getFirebaseToken("testUser"));
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromUid("testUser");
     FirebaseAuth auth = getAuthForSessionCookieVerification(tokenVerifier);
 
     FirebaseToken firebaseToken = auth.verifySessionCookie("idtoken");
@@ -389,7 +379,7 @@ public class FirebaseAuthTest {
 
   @Test
   public void testVerifySessionCookieFailure() {
-    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromException();
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromException(testException);
     FirebaseAuth auth = getAuthForSessionCookieVerification(tokenVerifier);
 
     try {
@@ -434,8 +424,7 @@ public class FirebaseAuthTest {
 
   @Test
   public void testVerifySessionCookieAsync() throws Exception {
-    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
-        getFirebaseToken("testUser"));
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromUid("testUser");
     FirebaseAuth auth = getAuthForSessionCookieVerification(tokenVerifier);
 
     FirebaseToken firebaseToken = auth.verifySessionCookieAsync("idtoken").get();
@@ -446,7 +435,7 @@ public class FirebaseAuthTest {
 
   @Test
   public void testVerifySessionCookieAsyncFailure() throws InterruptedException {
-    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromException();
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromException(testException);
     FirebaseAuth auth = getAuthForSessionCookieVerification(tokenVerifier);
 
     try {
@@ -460,7 +449,7 @@ public class FirebaseAuthTest {
 
   @Test
   public void testVerifySessionCookieWithCheckRevokedAsyncFailure() throws InterruptedException {
-    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromException();
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromException(testException);
     FirebaseAuth auth = getAuthForSessionCookieVerification(tokenVerifier);
 
     try {
@@ -500,11 +489,11 @@ public class FirebaseAuthTest {
       FirebaseApp app,
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
     FirebaseUserManager userManager = FirebaseUserManager.createUserManager(app, null);
-    return new FirebaseAuth(
-        AbstractFirebaseAuth.builder()
-          .setFirebaseApp(app)
-          .setIdTokenVerifier(tokenVerifierSupplier)
-          .setUserManager(Suppliers.ofInstance(userManager)));
+    return FirebaseAuth.builder()
+        .setFirebaseApp(app)
+        .setIdTokenVerifier(tokenVerifierSupplier)
+        .setUserManager(Suppliers.ofInstance(userManager))
+        .build();
   }
 
   FirebaseAuth getAuthForSessionCookieVerificationWithRevocationCheck(
@@ -527,11 +516,11 @@ public class FirebaseAuthTest {
       FirebaseApp app,
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
     FirebaseUserManager userManager = FirebaseUserManager.createUserManager(app, null);
-    return new FirebaseAuth(
-          AbstractFirebaseAuth.builder()
-          .setFirebaseApp(app)
-          .setCookieVerifier(tokenVerifierSupplier)
-          .setUserManager(Suppliers.ofInstance(userManager)));
+    return FirebaseAuth.builder()
+        .setFirebaseApp(app)
+        .setCookieVerifier(tokenVerifierSupplier)
+        .setUserManager(Suppliers.ofInstance(userManager))
+        .build();
   }
 
   private FirebaseApp getFirebaseAppForUserRetrieval() {
@@ -546,38 +535,13 @@ public class FirebaseAuthTest {
         .build());
   }
 
-  private static class MockTokenVerifier implements FirebaseTokenVerifier {
-
-    private String lastTokenString;
-
-    private FirebaseToken result;
-    private FirebaseAuthException exception;
-
-    private MockTokenVerifier(FirebaseToken result, FirebaseAuthException exception) {
-      this.result = result;
-      this.exception = exception;
-    }
-
-    @Override
-    public FirebaseToken verifyToken(String token) throws FirebaseAuthException {
-      lastTokenString = token;
-      if (exception != null) {
-        throw exception;
-      }
-      return result;
-    }
-
-    String getLastTokenString() {
-      return this.lastTokenString;
-    }
-
-    static MockTokenVerifier fromResult(FirebaseToken result) {
-      return new MockTokenVerifier(result, null);
-    }
-
-    static MockTokenVerifier fromException() {
-      return new MockTokenVerifier(null, testException);
-    }
+  public static TestResponseInterceptor setUserManager(
+      AbstractFirebaseAuth.Builder<?> builder, FirebaseApp app, String tenantId) {
+    TestResponseInterceptor interceptor = new TestResponseInterceptor();
+    FirebaseUserManager userManager = FirebaseUserManager.createUserManager(app, tenantId);
+    userManager.setInterceptor(interceptor);
+    builder.setUserManager(Suppliers.ofInstance(userManager));
+    return interceptor;
   }
 
   private static class CountingSupplier<T> implements Supplier<T> {

@@ -84,7 +84,7 @@ public final class TenantManager {
   public synchronized TenantAwareFirebaseAuth getAuthForTenant(@NonNull String tenantId) {
     checkArgument(!Strings.isNullOrEmpty(tenantId), "Tenant ID must not be null or empty.");
     if (!tenantAwareAuths.containsKey(tenantId)) {
-      tenantAwareAuths.put(tenantId, new TenantAwareFirebaseAuth(firebaseApp, tenantId));
+      tenantAwareAuths.put(tenantId, TenantAwareFirebaseAuth.fromApp(firebaseApp, tenantId));
     }
     return tenantAwareAuths.get(tenantId);
   }

@@ -19,7 +19,6 @@ package com.google.firebase.messaging;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -399,6 +398,17 @@ public class InstanceIdClientImplTest {
   @Test(expected = IllegalArgumentException.class)
   public void testTopicManagementResponseWithEmptyList() {
     new TopicManagementResponse(ImmutableList.<GenericJson>of());
+  }
+
+  @Test
+  public void testTopicManagementResponseErrorToString() {
+    GenericJson json = new GenericJson().set("error", "test error");
+    ImmutableList<GenericJson> jsonList = ImmutableList.of(json);
+
+    TopicManagementResponse topicManagementResponse = new TopicManagementResponse(jsonList);
+
+    String expected = "[Error{index=0, reason=unknown-error}]";
+    assertEquals(expected, topicManagementResponse.getErrors().toString());
   }
 
   private static InstanceIdClientImpl initInstanceIdClient(

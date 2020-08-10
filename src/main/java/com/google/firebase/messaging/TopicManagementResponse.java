@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
 import com.google.api.client.json.GenericJson;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
@@ -121,6 +122,14 @@ public class TopicManagementResponse {
     @NonNull
     public String getReason() {
       return reason;
+    }
+
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(this)
+              .add("index", index)
+              .add("reason", reason)
+              .toString();
     }
   }
 }
