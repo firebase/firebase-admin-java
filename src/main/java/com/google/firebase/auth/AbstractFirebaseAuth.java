@@ -1782,11 +1782,6 @@ public abstract class AbstractFirebaseAuth {
       return getThis();
     }
 
-    public T setTokenFactory(Supplier<FirebaseTokenFactory> tokenFactory) {
-      this.tokenFactory = tokenFactory;
-      return getThis();
-    }
-
     public T setIdTokenVerifier(Supplier<? extends FirebaseTokenVerifier> idTokenVerifier) {
       this.idTokenVerifier = idTokenVerifier;
       return getThis();
@@ -1797,8 +1792,13 @@ public abstract class AbstractFirebaseAuth {
       return getThis();
     }
 
-    public T setUserManager(Supplier<FirebaseUserManager> userManager) {
+    T setUserManager(Supplier<FirebaseUserManager> userManager) {
       this.userManager = userManager;
+      return getThis();
+    }
+
+    T setTokenFactory(Supplier<FirebaseTokenFactory> tokenFactory) {
+      this.tokenFactory = tokenFactory;
       return getThis();
     }
   }
