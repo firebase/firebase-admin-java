@@ -36,7 +36,7 @@ public final class IncomingHttpResponse {
   private final OutgoingHttpRequest request;
 
   /**
-   * Creates an {@code IncomingHttpResponse} from a successful HttpResponse and the content read
+   * Creates an {@code IncomingHttpResponse} from a successful response and the content read
    * from it. The caller is expected to read the content from the response, and handle any errors
    * that may occur while reading.
    *
