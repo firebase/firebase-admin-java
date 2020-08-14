@@ -36,11 +36,11 @@ public final class IncomingHttpResponse {
   private final OutgoingHttpRequest request;
 
   /**
-   * Creates an IncomingHttpResponse from a successful HttpResponse and the content read from it.
-   * The caller is expected to read the content from the response, and handle any errors that
-   * may occur while reading.
+   * Creates an {@code IncomingHttpResponse} from a successful HttpResponse and the content read
+   * from it. The caller is expected to read the content from the response, and handle any errors
+   * that may occur while reading.
    *
-   * @param response A successful HttpResponse.
+   * @param response A successful response.
    * @param content Content read from the response.
    */
   public IncomingHttpResponse(HttpResponse response, @Nullable String content) {
@@ -52,20 +52,20 @@ public final class IncomingHttpResponse {
   }
 
   /**
-   * Creates an IncomingHttpResponse from an HTTP error response.
+   * Creates an {@code IncomingHttpResponse} from an HTTP error response.
    *
-   * @param e HttpResponseException representing the HTTP error response.
-   * @param request The HttpRequest that resulted in the error.
+   * @param e The exception representing the HTTP error response.
+   * @param request The request that resulted in the error.
    */
   public IncomingHttpResponse(HttpResponseException e, HttpRequest request) {
     this(e, new OutgoingHttpRequest(request));
   }
 
   /**
-   * Creates an IncomingHttpResponse from an HTTP error response.
+   * Creates an {@code IncomingHttpResponse} from an HTTP error response.
    *
-   * @param e HttpResponseException representing the HTTP error response.
-   * @param request The OutgoingHttpRequest that resulted in the error.
+   * @param e The exception representing the HTTP error response.
+   * @param request The request that resulted in the error.
    */
   public IncomingHttpResponse(HttpResponseException e, OutgoingHttpRequest request) {
     checkNotNull(e, "exception must not be null");

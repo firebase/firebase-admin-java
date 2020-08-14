@@ -37,7 +37,7 @@ public final class OutgoingHttpRequest {
   private final Map<String, Object> headers;
 
   /**
-   * Creates an OutgoingHttpRequest from the HTTP method and URL.
+   * Creates an {@code OutgoingHttpRequest} from the HTTP method and URL.
    *
    * @param method HTTP method name.
    * @param url Target HTTP URL of the request.
