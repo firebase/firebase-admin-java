@@ -226,7 +226,7 @@ public final class FirebaseOptions {
   /**
    * Creates a new Builder from the options object.
    *
-   * <p>The new builder is not backed by this object's values, that is changes made to the new
+   * <p>The new builder is not backed by this object's values; that is, changes made to the new
    * builder don't change the values of the origin object.
    */
   public Builder toBuilder() {

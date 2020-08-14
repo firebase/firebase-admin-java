@@ -27,7 +27,7 @@ public enum ErrorCode {
   INVALID_ARGUMENT,
 
   /**
-   * Request can not be executed in the current system state, such as deleting a non-empty
+   * Request cannot be executed in the current system state, such as deleting a non-empty
    * directory.
    */
   FAILED_PRECONDITION,
@@ -50,8 +50,8 @@ public enum ErrorCode {
   PERMISSION_DENIED,
 
   /**
-   * A specified resource is not found, or the request is rejected by undisclosed reasons,
-   * such as whitelisting.
+   * A specified resource is not found, or the request is rejected for unknown reasons,
+   * such as a blocked network address.
    */
   NOT_FOUND,
 
@@ -71,7 +71,7 @@ public enum ErrorCode {
   ALREADY_EXISTS,
 
   /**
-   * Either out of resource quota or reaching rate limiting.
+   * Either out of resource quota or rate limited.
    */
   RESOURCE_EXHAUSTED,
 
@@ -101,7 +101,7 @@ public enum ErrorCode {
   UNAVAILABLE,
 
   /**
-   * Request deadline exceeded. This will happen only if the caller sets a deadline that is
+   * Request deadline exceeded. This happens only if the caller sets a deadline that is
    * shorter than the method's default deadline (i.e. requested deadline is not enough for the
    * server to process the request) and the request did not finish within the deadline.
    */

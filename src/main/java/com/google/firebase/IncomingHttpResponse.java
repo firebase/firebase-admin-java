@@ -26,7 +26,7 @@ import com.google.firebase.database.annotations.Nullable;
 import java.util.Map;
 
 /**
- * Contains the information that describe an HTTP response received by the SDK.
+ * Contains information that describes an HTTP response received by the SDK.
  */
 public final class IncomingHttpResponse {
 

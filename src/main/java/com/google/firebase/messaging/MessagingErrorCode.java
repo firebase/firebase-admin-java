@@ -11,7 +11,7 @@ public enum MessagingErrorCode {
   THIRD_PARTY_AUTH_ERROR,
 
   /**
-   * One or more argument specified in the request was invalid.
+   * One or more arguments specified in the request were invalid.
    */
   INVALID_ARGUMENT,
 
