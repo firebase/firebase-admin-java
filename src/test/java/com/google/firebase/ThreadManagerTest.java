@@ -187,8 +187,7 @@ public class ThreadManagerTest {
   }
 
   @Test
-  public void testAppLifecycleWithMultipleServiceCalls()
-      throws ExecutionException, InterruptedException {
+  public void testAppLifecycleWithMultipleServiceCalls() {
     MockThreadManager threadManager = new MockThreadManager(executor);
 
     // Initializing an app should initialize the executor.
@@ -235,7 +234,7 @@ public class ThreadManagerTest {
   }
 
   private FirebaseOptions buildOptions(ThreadManager threadManager) {
-    return new FirebaseOptions.Builder()
+    return FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials())
         .setProjectId("mock-project-id")
         .setThreadManager(threadManager)
@@ -278,7 +277,7 @@ public class ThreadManagerTest {
     private final FirebaseApp app;
     private ExecutorService executor;
 
-    public Event(int type, @Nullable FirebaseApp app, @Nullable ExecutorService executor) {
+    Event(int type, @Nullable FirebaseApp app, @Nullable ExecutorService executor) {
       this.type = type;
       this.app = app;
       this.executor = executor;

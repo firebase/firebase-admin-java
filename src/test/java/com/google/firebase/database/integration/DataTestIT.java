@@ -24,7 +24,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.cedarsoftware.util.DeepEquals;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.ChildEventListener;
@@ -56,6 +55,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Semaphore;
@@ -1645,7 +1645,7 @@ public class DataTestIT {
     ref.addValueEventListener(new ValueEventListener() {
       @Override
       public void onDataChange(DataSnapshot snapshot) {
-        if (DeepEquals.deepEquals(snapshot.getValue(), expected)) {
+        if (Objects.deepEquals(snapshot.getValue(), expected)) {
           semaphore.release();
         }
       }

@@ -17,29 +17,27 @@
 package com.google.firebase.iid;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.JsonObjectParser;
 import com.google.api.core.ApiFuture;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.io.ByteStreams;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseException;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.IncomingHttpResponse;
+import com.google.firebase.database.annotations.Nullable;
+import com.google.firebase.internal.AbstractHttpErrorHandler;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.CallableOperation;
-import com.google.firebase.internal.FirebaseRequestInitializer;
+import com.google.firebase.internal.ErrorHandlingHttpClient;
 import com.google.firebase.internal.FirebaseService;
+import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.NonNull;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -64,22 +62,30 @@ public class FirebaseInstanceId {
       .build();
 
   private final FirebaseApp app;
-  private final HttpRequestFactory requestFactory;
-  private final JsonFactory jsonFactory;
   private final String projectId;
-
-  private HttpResponseInterceptor interceptor;
+  private final ErrorHandlingHttpClient<FirebaseInstanceIdException> httpClient;
 
   private FirebaseInstanceId(FirebaseApp app) {
-    HttpTransport httpTransport = app.getOptions().getHttpTransport();
-    this.app = app;
-    this.requestFactory = httpTransport.createRequestFactory(new FirebaseRequestInitializer(app));
-    this.jsonFactory = app.getOptions().getJsonFactory();
-    this.projectId = ImplFirebaseTrampolines.getProjectId(app);
+    this(app, null);
+  }
+
+  @VisibleForTesting
+  FirebaseInstanceId(FirebaseApp app, @Nullable HttpRequestFactory requestFactory) {
+    this.app = checkNotNull(app, "app must not be null");
+    String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkArgument(!Strings.isNullOrEmpty(projectId),
         "Project ID is required to access instance ID service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
+    this.projectId = projectId;
+    if (requestFactory == null) {
+      requestFactory = ApiClientUtils.newAuthorizedRequestFactory(app);
+    }
+
+    this.httpClient = new ErrorHandlingHttpClient<>(
+        requestFactory,
+        app.getOptions().getJsonFactory(),
+        new InstanceIdErrorHandler());
   }
 
   /**
@@ -107,7 +113,7 @@ public class FirebaseInstanceId {
 
   @VisibleForTesting
   void setInterceptor(HttpResponseInterceptor interceptor) {
-    this.interceptor = interceptor;
+    httpClient.setInterceptor(interceptor);
   }
 
   /**
@@ -146,42 +152,45 @@ public class FirebaseInstanceId {
       protected Void execute() throws FirebaseInstanceIdException {
         String url = String.format(
             "%s/project/%s/instanceId/%s", IID_SERVICE_URL, projectId, instanceId);
-        HttpResponse response = null;
-        try {
-          HttpRequest request = requestFactory.buildDeleteRequest(new GenericUrl(url));
-          request.setParser(new JsonObjectParser(jsonFactory));
-          request.setResponseInterceptor(interceptor);
-          response = request.execute();
-          ByteStreams.exhaust(response.getContent());
-        } catch (Exception e) {
-          handleError(instanceId, e);
-        } finally {
-          disconnectQuietly(response);
-        }
+        HttpRequestInfo request = HttpRequestInfo.buildDeleteRequest(url);
+        httpClient.send(request);
         return null;
       }
     };
   }
 
-  private static void disconnectQuietly(HttpResponse response) {
-    if (response != null) {
-      try {
-        response.disconnect();
-      } catch (IOException ignored) {
-        // ignored
-      }
-    }
-  }
+  private static class InstanceIdErrorHandler
+      extends AbstractHttpErrorHandler<FirebaseInstanceIdException> {
 
-  private void handleError(String instanceId, Exception e) throws FirebaseInstanceIdException {
-    String msg = "Error while invoking instance ID service.";
-    if (e instanceof HttpResponseException) {
-      int statusCode = ((HttpResponseException) e).getStatusCode();
-      if (ERROR_CODES.containsKey(statusCode)) {
-        msg = String.format("Instance ID \"%s\": %s", instanceId, ERROR_CODES.get(statusCode));
+    @Override
+    protected FirebaseInstanceIdException createException(FirebaseException base) {
+      String message = base.getMessage();
+      String customMessage = getCustomMessage(base);
+      if (!Strings.isNullOrEmpty(customMessage)) {
+        message = customMessage;
       }
+
+      return new FirebaseInstanceIdException(base, message);
     }
-    throw new FirebaseInstanceIdException(msg, e);
+
+    private String getCustomMessage(FirebaseException base) {
+      IncomingHttpResponse response = base.getHttpResponse();
+      if (response != null) {
+        String instanceId = extractInstanceId(response);
+        String description = ERROR_CODES.get(response.getStatusCode());
+        if (description != null) {
+          return String.format("Instance ID \"%s\": %s", instanceId, description);
+        }
+      }
+
+      return null;
+    }
+
+    private String extractInstanceId(IncomingHttpResponse response) {
+      String url = response.getRequest().getUrl();
+      int index = url.lastIndexOf('/');
+      return url.substring(index + 1);
+    }
   }
 
   private static final String SERVICE_ID = FirebaseInstanceId.class.getName();

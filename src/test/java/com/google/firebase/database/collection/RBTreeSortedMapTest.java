@@ -262,7 +262,7 @@ public class RBTreeSortedMapTest {
         lastKey = entry.getKey();
       }
       if (lastKey != null) {
-        assertEquals(null, map.getSuccessorKey(lastKey));
+        assertNull(map.getSuccessorKey(lastKey));
       }
     }
   }
@@ -295,13 +295,13 @@ public class RBTreeSortedMapTest {
       arraycopy = arraycopy.insert(key, value);
       copyWithDifferentComparator = copyWithDifferentComparator.insert(key, value);
     }
-    Assert.assertTrue(map.equals(copy));
-    Assert.assertTrue(map.equals(arraycopy));
-    Assert.assertTrue(arraycopy.equals(map));
+    Assert.assertEquals(map, copy);
+    Assert.assertEquals(map, arraycopy);
+    Assert.assertEquals(arraycopy, map);
 
-    Assert.assertFalse(map.equals(copyWithDifferentComparator));
-    Assert.assertFalse(map.equals(copy.remove(copy.getMaxKey())));
-    Assert.assertFalse(map.equals(copy.insert(copy.getMaxKey() + 1, 1)));
-    Assert.assertFalse(map.equals(arraycopy.remove(arraycopy.getMaxKey())));
+    Assert.assertNotEquals(map, copyWithDifferentComparator);
+    Assert.assertNotEquals(map, copy.remove(copy.getMaxKey()));
+    Assert.assertNotEquals(map, copy.insert(copy.getMaxKey() + 1, 1));
+    Assert.assertNotEquals(map, arraycopy.remove(arraycopy.getMaxKey()));
   }
 }

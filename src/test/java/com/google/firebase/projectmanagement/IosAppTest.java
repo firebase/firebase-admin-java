@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import java.util.concurrent.ExecutionException;
 import org.junit.After;
@@ -53,7 +54,7 @@ public class IosAppTest {
           + "<key>SOME_OTHER_KEY</key><string>some-other-value</string>"
           + "</dict></plist>";
   private static final FirebaseProjectManagementException FIREBASE_PROJECT_MANAGEMENT_EXCEPTION =
-      new FirebaseProjectManagementException("Error!", null);
+      new FirebaseProjectManagementException(ErrorCode.UNKNOWN, "Error!", null);
 
   private static final IosAppMetadata TEST_IOS_APP_METADATA = new IosAppMetadata(
       TEST_APP_NAME,

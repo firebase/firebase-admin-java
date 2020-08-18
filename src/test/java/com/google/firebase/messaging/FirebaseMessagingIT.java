@@ -22,10 +22,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.google.api.client.http.HttpResponseException;
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -73,21 +76,51 @@ public class FirebaseMessagingIT {
   }
 
   @Test
+  public void testSendError() throws InterruptedException {
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    Message message = Message.builder()
+        .setNotification(Notification.builder()
+            .setTitle("Title")
+            .setBody("Body")
+            .build())
+        .setToken("not-a-token")
+        .build();
+    try {
+      messaging.sendAsync(message, true).get();
+    } catch (ExecutionException e) {
+      FirebaseMessagingException cause = (FirebaseMessagingException) e.getCause();
+      assertEquals(ErrorCode.INVALID_ARGUMENT, cause.getErrorCode());
+      assertEquals(MessagingErrorCode.INVALID_ARGUMENT, cause.getMessagingErrorCode());
+      assertNotNull(cause.getHttpResponse());
+      assertTrue(cause.getCause() instanceof HttpResponseException);
+    }
+  }
+
+  @Test
   public void testSendAll() throws Exception {
     List<Message> messages = new ArrayList<>();
     messages.add(
         Message.builder()
-          .setNotification(new Notification("Title", "Body"))
+          .setNotification(Notification.builder()
+              .setTitle("Title")
+              .setBody("Body")
+              .build())
           .setTopic("foo-bar")
           .build());
     messages.add(
         Message.builder()
-          .setNotification(new Notification("Title", "Body"))
+          .setNotification(Notification.builder()
+              .setTitle("Title")
+              .setBody("Body")
+              .build())
           .setTopic("foo-bar")
           .build());
     messages.add(
         Message.builder()
-          .setNotification(new Notification("Title", "Body"))
+          .setNotification(Notification.builder()
+              .setTitle("Title")
+              .setBody("Body")
+              .build())
           .setToken("not-a-token")
           .build());
 
@@ -110,7 +143,7 @@ public class FirebaseMessagingIT {
     assertNull(responses.get(2).getMessageId());
     FirebaseMessagingException exception = responses.get(2).getException();
     assertNotNull(exception);
-    assertEquals("invalid-argument", exception.getErrorCode());
+    assertEquals(ErrorCode.INVALID_ARGUMENT, exception.getErrorCode());
   }
 
   @Test
@@ -139,7 +172,10 @@ public class FirebaseMessagingIT {
   @Test
   public void testSendMulticast() throws Exception {
     MulticastMessage multicastMessage = MulticastMessage.builder()
-        .setNotification(new Notification("Title", "Body"))
+        .setNotification(Notification.builder()
+            .setTitle("Title")
+            .setBody("Body")
+            .build())
         .addToken("not-a-token")
         .addToken("also-not-a-token")
         .build();

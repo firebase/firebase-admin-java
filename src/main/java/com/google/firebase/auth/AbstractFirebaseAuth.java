@@ -37,7 +37,6 @@ import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -49,8 +48,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * This is the abstract class for server-side Firebase Authentication actions.
  */
 public abstract class AbstractFirebaseAuth {
-
-  private static final String ERROR_CUSTOM_TOKEN = "ERROR_CUSTOM_TOKEN";
 
   private final Object lock = new Object();
   private final AtomicBoolean destroyed = new AtomicBoolean(false);
@@ -173,12 +170,7 @@ public abstract class AbstractFirebaseAuth {
     return new CallableOperation<String, FirebaseAuthException>() {
       @Override
       public String execute() throws FirebaseAuthException {
-        try {
-          return tokenFactory.createSignedCustomAuthTokenForUser(uid, developerClaims);
-        } catch (IOException e) {
-          throw new FirebaseAuthException(
-              ERROR_CUSTOM_TOKEN, "Failed to generate a custom token", e);
-        }
+        return tokenFactory.createSignedCustomAuthTokenForUser(uid, developerClaims);
       }
     };
   }
@@ -902,7 +894,7 @@ public abstract class AbstractFirebaseAuth {
    * not guaranteed to correspond to the nth entry in the input parameters list.
    *
    * <p>A maximum of 100 identifiers may be specified. If more than 100 identifiers are
-   * supplied, this method throws an {@link IllegalArgumentException}.
+   * supplied, this method throws an {@code IllegalArgumentException}.
    *
    * @param identifiers The identifiers used to indicate which user records should be returned. Must
    *     have 100 or fewer entries.
@@ -924,7 +916,7 @@ public abstract class AbstractFirebaseAuth {
    * not guaranteed to correspond to the nth entry in the input parameters list.
    *
    * <p>A maximum of 100 identifiers may be specified. If more than 100 identifiers are
-   * supplied, this method throws an {@link IllegalArgumentException}.
+   * supplied, this method throws an {@code IllegalArgumentException}.
    *
    * @param identifiers The identifiers used to indicate which user records should be returned.
    *     Must have 100 or fewer entries.
@@ -978,7 +970,7 @@ public abstract class AbstractFirebaseAuth {
    * DeleteUsersResult.getSuccessCount() value.
    *
    * <p>A maximum of 1000 identifiers may be supplied. If more than 1000 identifiers are
-   * supplied, this method throws an {@link IllegalArgumentException}.
+   * supplied, this method throws an {@code IllegalArgumentException}.
    *
    * <p>This API has a rate limit of 1 QPS. Exceeding the limit may result in a quota exceeded
    * error. If you want to delete more than 1000 users, we suggest adding a delay to ensure you
@@ -987,7 +979,7 @@ public abstract class AbstractFirebaseAuth {
    * @param uids The uids of the users to be deleted. Must have <= 1000 entries.
    * @return The total number of successful/failed deletions, as well as the array of errors that
    *     correspond to the failed deletions.
-   * @throw IllegalArgumentException If any of the identifiers are invalid or if more than 1000
+   * @throws IllegalArgumentException If any of the identifiers are invalid or if more than 1000
    *     identifiers are specified.
    * @throws FirebaseAuthException If an error occurs while deleting users.
    */
@@ -1003,7 +995,7 @@ public abstract class AbstractFirebaseAuth {
    *     deletions, as well as the array of errors that correspond to the failed deletions. If an
    *     error occurs while deleting the user account, the future throws a
    *     {@link FirebaseAuthException}.
-   * @throw IllegalArgumentException If any of the identifiers are invalid or if more than 1000
+   * @throws IllegalArgumentException If any of the identifiers are invalid or if more than 1000
    *     identifiers are specified.
    */
   public ApiFuture<DeleteUsersResult> deleteUsersAsync(List<String> uids) {
@@ -1831,11 +1823,7 @@ public abstract class AbstractFirebaseAuth {
             new Supplier<FirebaseUserManager>() {
               @Override
               public FirebaseUserManager get() {
-                return FirebaseUserManager
-                    .builder()
-                    .setFirebaseApp(app)
-                    .setTenantId(tenantId)
-                    .build();
+                return FirebaseUserManager.createUserManager(app,  tenantId);
               }
             });
   }

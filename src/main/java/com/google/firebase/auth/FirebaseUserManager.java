@@ -19,7 +19,6 @@ package com.google.firebase.auth;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.json.GenericJson;
@@ -30,8 +29,10 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.auth.internal.AuthHttpClient;
 import com.google.firebase.auth.internal.BatchDeleteResponse;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
@@ -41,9 +42,9 @@ import com.google.firebase.auth.internal.ListOidcProviderConfigsResponse;
 import com.google.firebase.auth.internal.ListSamlProviderConfigsResponse;
 import com.google.firebase.auth.internal.UploadAccountResponse;
 import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -57,7 +58,7 @@ import java.util.Set;
  * @see <a href="https://developers.google.com/identity/toolkit/web/reference/relyingparty">
  *   Google Identity Toolkit</a>
  */
-class FirebaseUserManager {
+final class FirebaseUserManager {
 
   static final int MAX_LIST_PROVIDER_CONFIGS_RESULTS = 100;
   static final int MAX_GET_ACCOUNTS_BATCH_SIZE = 100;
@@ -78,12 +79,12 @@ class FirebaseUserManager {
   private final AuthHttpClient httpClient;
 
   private FirebaseUserManager(Builder builder) {
-    FirebaseApp app = checkNotNull(builder.app, "FirebaseApp must not be null");
-    String projectId = ImplFirebaseTrampolines.getProjectId(app);
+    String projectId = builder.projectId;
     checkArgument(!Strings.isNullOrEmpty(projectId),
         "Project ID is required to access the auth service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
+    this.jsonFactory = checkNotNull(builder.jsonFactory, "JsonFactory must not be null");
     final String idToolkitUrlV1 = String.format(ID_TOOLKIT_URL, "v1", projectId);
     final String idToolkitUrlV2 = String.format(ID_TOOLKIT_URL, "v2", projectId);
     final String tenantId = builder.tenantId;
@@ -96,10 +97,7 @@ class FirebaseUserManager {
       this.idpConfigMgtBaseUrl = idToolkitUrlV2 + "/tenants/" + tenantId;
     }
 
-    this.jsonFactory = app.getOptions().getJsonFactory();
-    HttpRequestFactory requestFactory = builder.requestFactory == null
-        ? ApiClientUtils.newAuthorizedRequestFactory(app) : builder.requestFactory;
-    this.httpClient = new AuthHttpClient(jsonFactory, requestFactory);
+    this.httpClient = new AuthHttpClient(jsonFactory, builder.requestFactory);
   }
 
   @VisibleForTesting
@@ -110,40 +108,19 @@ class FirebaseUserManager {
   UserRecord getUserById(String uid) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "localId", ImmutableList.of(uid));
-    GetAccountInfoResponse response = post(
-        "/accounts:lookup", payload, GetAccountInfoResponse.class);
-    if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
-      throw new FirebaseAuthException(
-          AuthHttpClient.USER_NOT_FOUND_ERROR,
-          "No user record found for the provided user ID: " + uid);
-    }
-    return new UserRecord(response.getUsers().get(0), jsonFactory);
+    return lookupUserAccount(payload, "user ID: " + uid);
   }
 
   UserRecord getUserByEmail(String email) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "email", ImmutableList.of(email));
-    GetAccountInfoResponse response = post(
-        "/accounts:lookup", payload, GetAccountInfoResponse.class);
-    if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
-      throw new FirebaseAuthException(
-          AuthHttpClient.USER_NOT_FOUND_ERROR,
-          "No user record found for the provided email: " + email);
-    }
-    return new UserRecord(response.getUsers().get(0), jsonFactory);
+    return lookupUserAccount(payload, "email: " + email);
   }
 
   UserRecord getUserByPhoneNumber(String phoneNumber) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "phoneNumber", ImmutableList.of(phoneNumber));
-    GetAccountInfoResponse response = post(
-        "/accounts:lookup", payload, GetAccountInfoResponse.class);
-    if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
-      throw new FirebaseAuthException(
-          AuthHttpClient.USER_NOT_FOUND_ERROR,
-          "No user record found for the provided phone number: " + phoneNumber);
-    }
-    return new UserRecord(response.getUsers().get(0), jsonFactory);
+    return lookupUserAccount(payload, "phone number: " + phoneNumber);
   }
 
   Set<UserRecord> getAccountInfo(@NonNull Collection<UserIdentifier> identifiers)
@@ -159,12 +136,6 @@ class FirebaseUserManager {
 
     GetAccountInfoResponse response = post(
         "/accounts:lookup", payload, GetAccountInfoResponse.class);
-
-    if (response == null) {
-      throw new FirebaseAuthException(
-          AuthHttpClient.INTERNAL_ERROR, "Failed to parse server response");
-    }
-
     Set<UserRecord> results = new HashSet<>();
     if (response.getUsers() != null) {
       for (GetAccountInfoResponse.User user : response.getUsers()) {
@@ -175,51 +146,26 @@ class FirebaseUserManager {
   }
 
   String createUser(UserRecord.CreateRequest request) throws FirebaseAuthException {
-    GenericJson response = post(
-        "/accounts", request.getProperties(), GenericJson.class);
-    if (response != null) {
-      String uid = (String) response.get("localId");
-      if (!Strings.isNullOrEmpty(uid)) {
-        return uid;
-      }
-    }
-    throw new FirebaseAuthException(AuthHttpClient.INTERNAL_ERROR, "Failed to create new user");
+    GenericJson response = post("/accounts", request.getProperties(), GenericJson.class);
+    return (String) response.get("localId");
   }
 
   void updateUser(UserRecord.UpdateRequest request, JsonFactory jsonFactory)
       throws FirebaseAuthException {
-    GenericJson response = post(
-        "/accounts:update", request.getProperties(jsonFactory), GenericJson.class);
-    if (response == null || !request.getUid().equals(response.get("localId"))) {
-      throw new FirebaseAuthException(
-          AuthHttpClient.INTERNAL_ERROR, "Failed to update user: " + request.getUid());
-    }
+    post("/accounts:update", request.getProperties(jsonFactory), GenericJson.class);
   }
 
   void deleteUser(String uid) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of("localId", uid);
-    GenericJson response = post(
-        "/accounts:delete", payload, GenericJson.class);
-    if (response == null || !response.containsKey("kind")) {
-      throw new FirebaseAuthException(
-          AuthHttpClient.INTERNAL_ERROR, "Failed to delete user: " + uid);
-    }
+    post("/accounts:delete", payload, GenericJson.class);
   }
 
-  /**
-   * @pre uids != null
-   * @pre uids.size() <= MAX_DELETE_ACCOUNTS_BATCH_SIZE
-   */
   DeleteUsersResult deleteUsers(@NonNull List<String> uids) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.of(
         "localIds", uids,
         "force", true);
     BatchDeleteResponse response = post(
         "/accounts:batchDelete", payload, BatchDeleteResponse.class);
-    if (response == null) {
-      throw new FirebaseAuthException(AuthHttpClient.INTERNAL_ERROR, "Failed to delete users");
-    }
-
     return new DeleteUsersResult(uids.size(), response);
   }
 
@@ -231,23 +177,16 @@ class FirebaseUserManager {
       builder.put("nextPageToken", pageToken);
     }
 
-    GenericUrl url = new GenericUrl(userMgtBaseUrl + "/accounts:batchGet");
-    url.putAll(builder.build());
-    DownloadAccountResponse response = httpClient.sendRequest(
-            "GET", url, null, DownloadAccountResponse.class);
-    if (response == null) {
-      throw new FirebaseAuthException(AuthHttpClient.INTERNAL_ERROR, "Failed to retrieve users.");
-    }
-    return response;
+    String url = userMgtBaseUrl + "/accounts:batchGet";
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildGetRequest(url)
+        .addAllParameters(builder.build());
+    return httpClient.sendRequest(requestInfo, DownloadAccountResponse.class);
   }
 
   UserImportResult importUsers(UserImportRequest request) throws FirebaseAuthException {
     checkNotNull(request);
     UploadAccountResponse response = post(
             "/accounts:batchCreate", request, UploadAccountResponse.class);
-    if (response == null) {
-      throw new FirebaseAuthException(AuthHttpClient.INTERNAL_ERROR, "Failed to import users.");
-    }
     return new UserImportResult(request.getUsersCount(), response);
   }
 
@@ -256,14 +195,7 @@ class FirebaseUserManager {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "idToken", idToken, "validDuration", options.getExpiresInSeconds());
     GenericJson response = post(":createSessionCookie", payload, GenericJson.class);
-    if (response != null) {
-      String cookie = (String) response.get("sessionCookie");
-      if (!Strings.isNullOrEmpty(cookie)) {
-        return cookie;
-      }
-    }
-    throw new FirebaseAuthException(
-        AuthHttpClient.INTERNAL_ERROR, "Failed to create session cookie");
+    return (String) response.get("sessionCookie");
   }
 
   String getEmailActionLink(EmailLinkType type, String email,
@@ -275,57 +207,70 @@ class FirebaseUserManager {
     if (settings != null) {
       payload.putAll(settings.getProperties());
     }
+
     GenericJson response = post("/accounts:sendOobCode", payload.build(), GenericJson.class);
-    if (response != null) {
-      String link = (String) response.get("oobLink");
-      if (!Strings.isNullOrEmpty(link)) {
-        return link;
-      }
+    return (String) response.get("oobLink");
+  }
+
+  private UserRecord lookupUserAccount(
+      Map<String, Object> payload, String identifier) throws FirebaseAuthException {
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildJsonPostRequest(
+        userMgtBaseUrl + "/accounts:lookup", payload);
+    IncomingHttpResponse response = httpClient.sendRequest(requestInfo);
+    GetAccountInfoResponse parsed = httpClient.parse(response, GetAccountInfoResponse.class);
+    if (parsed.getUsers() == null || parsed.getUsers().isEmpty()) {
+      throw new FirebaseAuthException(ErrorCode.NOT_FOUND,
+          "No user record found for the provided " + identifier,
+          null,
+          response,
+          AuthErrorCode.USER_NOT_FOUND);
     }
-    throw new FirebaseAuthException(
-        AuthHttpClient.INTERNAL_ERROR, "Failed to create email action link");
+
+    return new UserRecord(parsed.getUsers().get(0), jsonFactory);
   }
 
   OidcProviderConfig createOidcProviderConfig(
       OidcProviderConfig.CreateRequest request) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/oauthIdpConfigs");
-    url.set("oauthIdpConfigId", request.getProviderId());
-    return httpClient.sendRequest("POST", url, request.getProperties(), OidcProviderConfig.class);
+    String url = idpConfigMgtBaseUrl + "/oauthIdpConfigs";
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildJsonPostRequest(url, request.getProperties())
+        .addParameter("oauthIdpConfigId", request.getProviderId());
+    return httpClient.sendRequest(requestInfo, OidcProviderConfig.class);
   }
 
   SamlProviderConfig createSamlProviderConfig(
       SamlProviderConfig.CreateRequest request) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/inboundSamlConfigs");
-    url.set("inboundSamlConfigId", request.getProviderId());
-    return httpClient.sendRequest("POST", url, request.getProperties(), SamlProviderConfig.class);
+    String url = idpConfigMgtBaseUrl + "/inboundSamlConfigs";
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildJsonPostRequest(url, request.getProperties())
+        .addParameter("inboundSamlConfigId", request.getProviderId());
+    return httpClient.sendRequest(requestInfo, SamlProviderConfig.class);
   }
 
   OidcProviderConfig updateOidcProviderConfig(OidcProviderConfig.UpdateRequest request)
       throws FirebaseAuthException {
     Map<String, Object> properties = request.getProperties();
-    GenericUrl url =
-        new GenericUrl(idpConfigMgtBaseUrl + getOidcUrlSuffix(request.getProviderId()));
-    url.put("updateMask", Joiner.on(",").join(AuthHttpClient.generateMask(properties)));
-    return httpClient.sendRequest("PATCH", url, properties, OidcProviderConfig.class);
+    String url = idpConfigMgtBaseUrl + getOidcUrlSuffix(request.getProviderId());
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildJsonPatchRequest(url, properties)
+        .addParameter("updateMask", Joiner.on(",").join(AuthHttpClient.generateMask(properties)));
+    return httpClient.sendRequest(requestInfo, OidcProviderConfig.class);
   }
 
   SamlProviderConfig updateSamlProviderConfig(SamlProviderConfig.UpdateRequest request)
       throws FirebaseAuthException {
     Map<String, Object> properties = request.getProperties();
-    GenericUrl url =
-        new GenericUrl(idpConfigMgtBaseUrl + getSamlUrlSuffix(request.getProviderId()));
-    url.put("updateMask", Joiner.on(",").join(AuthHttpClient.generateMask(properties)));
-    return httpClient.sendRequest("PATCH", url, properties, SamlProviderConfig.class);
+    String url = idpConfigMgtBaseUrl + getSamlUrlSuffix(request.getProviderId());
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildJsonPatchRequest(url, properties)
+        .addParameter("updateMask", Joiner.on(",").join(AuthHttpClient.generateMask(properties)));
+    return httpClient.sendRequest(requestInfo, SamlProviderConfig.class);
   }
 
   OidcProviderConfig getOidcProviderConfig(String providerId) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + getOidcUrlSuffix(providerId));
-    return httpClient.sendRequest("GET", url, null, OidcProviderConfig.class);
+    String url = idpConfigMgtBaseUrl + getOidcUrlSuffix(providerId);
+    return httpClient.sendRequest(HttpRequestInfo.buildGetRequest(url), OidcProviderConfig.class);
   }
 
   SamlProviderConfig getSamlProviderConfig(String providerId) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + getSamlUrlSuffix(providerId));
-    return httpClient.sendRequest("GET", url, null, SamlProviderConfig.class);
+    String url = idpConfigMgtBaseUrl + getSamlUrlSuffix(providerId);
+    return httpClient.sendRequest(HttpRequestInfo.buildGetRequest(url), SamlProviderConfig.class);
   }
 
   ListOidcProviderConfigsResponse listOidcProviderConfigs(int maxResults, String pageToken)
@@ -338,15 +283,10 @@ class FirebaseUserManager {
       builder.put("nextPageToken", pageToken);
     }
 
-    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/oauthIdpConfigs");
-    url.putAll(builder.build());
-    ListOidcProviderConfigsResponse response =
-        httpClient.sendRequest("GET", url, null, ListOidcProviderConfigsResponse.class);
-    if (response == null) {
-      throw new FirebaseAuthException(
-          AuthHttpClient.INTERNAL_ERROR, "Failed to retrieve provider configs.");
-    }
-    return response;
+    String url = idpConfigMgtBaseUrl + "/oauthIdpConfigs";
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildGetRequest(url)
+        .addAllParameters(builder.build());
+    return httpClient.sendRequest(requestInfo, ListOidcProviderConfigsResponse.class);
   }
 
   ListSamlProviderConfigsResponse listSamlProviderConfigs(int maxResults, String pageToken)
@@ -359,25 +299,20 @@ class FirebaseUserManager {
       builder.put("nextPageToken", pageToken);
     }
 
-    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + "/inboundSamlConfigs");
-    url.putAll(builder.build());
-    ListSamlProviderConfigsResponse response =
-        httpClient.sendRequest("GET", url, null, ListSamlProviderConfigsResponse.class);
-    if (response == null) {
-      throw new FirebaseAuthException(
-          AuthHttpClient.INTERNAL_ERROR, "Failed to retrieve provider configs.");
-    }
-    return response;
+    String url = idpConfigMgtBaseUrl + "/inboundSamlConfigs";
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildGetRequest(url)
+        .addAllParameters(builder.build());
+    return httpClient.sendRequest(requestInfo, ListSamlProviderConfigsResponse.class);
   }
 
   void deleteOidcProviderConfig(String providerId) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + getOidcUrlSuffix(providerId));
-    httpClient.sendRequest("DELETE", url, null, GenericJson.class);
+    String url = idpConfigMgtBaseUrl + getOidcUrlSuffix(providerId);
+    httpClient.sendRequest(HttpRequestInfo.buildDeleteRequest(url));
   }
 
   void deleteSamlProviderConfig(String providerId) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(idpConfigMgtBaseUrl + getSamlUrlSuffix(providerId));
-    httpClient.sendRequest("DELETE", url, null, GenericJson.class);
+    String url = idpConfigMgtBaseUrl + getSamlUrlSuffix(providerId);
+    httpClient.sendRequest(HttpRequestInfo.buildDeleteRequest(url));
   }
 
   private static String getOidcUrlSuffix(String providerId) {
@@ -393,8 +328,8 @@ class FirebaseUserManager {
   private <T> T post(String path, Object content, Class<T> clazz) throws FirebaseAuthException {
     checkArgument(!Strings.isNullOrEmpty(path), "path must not be null or empty");
     checkNotNull(content, "content must not be null for POST requests");
-    GenericUrl url = new GenericUrl(userMgtBaseUrl + path);
-    return httpClient.sendRequest("POST", url, content, clazz);
+    String url = userMgtBaseUrl + path;
+    return httpClient.sendRequest(HttpRequestInfo.buildJsonPostRequest(url, content), clazz);
   }
 
   static class UserImportRequest extends GenericJson {
@@ -437,18 +372,30 @@ class FirebaseUserManager {
     PASSWORD_RESET,
   }
 
+  static FirebaseUserManager createUserManager(FirebaseApp app, String tenantId) {
+    return FirebaseUserManager.builder()
+        .setProjectId(ImplFirebaseTrampolines.getProjectId(app))
+        .setTenantId(tenantId)
+        .setHttpRequestFactory(ApiClientUtils.newAuthorizedRequestFactory(app))
+        .setJsonFactory(app.getOptions().getJsonFactory())
+        .build();
+  }
+
   static Builder builder() {
     return new Builder();
   }
 
   static class Builder {
 
-    private FirebaseApp app;
+    private String projectId;
     private String tenantId;
     private HttpRequestFactory requestFactory;
+    private JsonFactory jsonFactory;
 
-    Builder setFirebaseApp(FirebaseApp app) {
-      this.app = app;
+    private Builder() { }
+
+    public Builder setProjectId(String projectId) {
+      this.projectId = projectId;
       return this;
     }
 
@@ -459,6 +406,11 @@ class FirebaseUserManager {
 
     Builder setHttpRequestFactory(HttpRequestFactory requestFactory) {
       this.requestFactory = requestFactory;
+      return this;
+    }
+
+    public Builder setJsonFactory(JsonFactory jsonFactory) {
+      this.jsonFactory = jsonFactory;
       return this;
     }
 

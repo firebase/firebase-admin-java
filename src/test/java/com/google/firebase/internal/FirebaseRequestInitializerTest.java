@@ -46,7 +46,7 @@ public class FirebaseRequestInitializerTest {
 
   @Test
   public void testDefaultSettings() throws Exception {
-    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("token"))
         .build());
     HttpRequest request = TestUtils.createRequest();
@@ -65,7 +65,7 @@ public class FirebaseRequestInitializerTest {
 
   @Test
   public void testExplicitTimeouts() throws Exception {
-    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("token"))
         .setConnectTimeout(CONNECT_TIMEOUT_MILLIS)
         .setReadTimeout(READ_TIMEOUT_MILLIS)
@@ -85,7 +85,7 @@ public class FirebaseRequestInitializerTest {
 
   @Test
   public void testRetryConfig() throws Exception {
-    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("token"))
         .build());
     RetryConfig retryConfig = RetryConfig.builder()
@@ -106,7 +106,7 @@ public class FirebaseRequestInitializerTest {
 
   @Test
   public void testRetryConfigWithIOExceptionHandling() throws Exception {
-    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("token"))
         .build());
     RetryConfig retryConfig = RetryConfig.builder()
@@ -128,7 +128,7 @@ public class FirebaseRequestInitializerTest {
 
   @Test
   public void testCredentialsRetryHandler() throws Exception {
-    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("token"))
         .build());
     RetryConfig retryConfig = RetryConfig.builder()

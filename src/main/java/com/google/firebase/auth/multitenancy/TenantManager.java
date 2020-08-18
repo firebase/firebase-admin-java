@@ -54,8 +54,13 @@ public final class TenantManager {
    * @hide
    */
   public TenantManager(FirebaseApp firebaseApp) {
-    this.firebaseApp = firebaseApp;
-    this.tenantClient = new FirebaseTenantClient(firebaseApp);
+    this(firebaseApp, new FirebaseTenantClient(firebaseApp));
+  }
+
+  @VisibleForTesting
+  TenantManager(FirebaseApp firebaseApp, FirebaseTenantClient tenantClient) {
+    this.firebaseApp = checkNotNull(firebaseApp);
+    this.tenantClient = checkNotNull(tenantClient);
     this.tenantAwareAuths = new HashMap<>();
   }
 

@@ -33,7 +33,7 @@ public class FirebaseStorageSnippets {
     // [START init_admin_sdk_for_storage]
     FileInputStream serviceAccount = new FileInputStream("path/to/serviceAccountKey.json");
 
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
         .setStorageBucket("<BUCKET_NAME>.appspot.com")
         .build();

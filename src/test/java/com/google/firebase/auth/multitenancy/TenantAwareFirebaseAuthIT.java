@@ -39,6 +39,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.auth.AuthErrorCode;
 import com.google.firebase.auth.ExportedUserRecord;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
@@ -257,8 +258,8 @@ public class TenantAwareFirebaseAuthIT {
       fail("No error thrown for verifying a token with the wrong tenant-aware client");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals("tenant-id-mismatch",
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+      assertEquals(AuthErrorCode.TENANT_ID_MISMATCH,
+          ((FirebaseAuthException) e.getCause()).getAuthErrorCode());
     }
   }
 

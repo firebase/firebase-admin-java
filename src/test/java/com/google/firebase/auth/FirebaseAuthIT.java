@@ -43,6 +43,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -50,7 +51,6 @@ import com.google.firebase.auth.ProviderConfigTestUtils.TemporaryProviderConfig;
 import com.google.firebase.auth.UserTestUtils.RandomUser;
 import com.google.firebase.auth.UserTestUtils.TemporaryUser;
 import com.google.firebase.auth.hash.Scrypt;
-import com.google.firebase.auth.internal.AuthHttpClient;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
@@ -96,8 +96,14 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(AuthHttpClient.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(
+          "No user record found for the provided user ID: non.existing",
+          authException.getMessage());
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCode());
+      assertNull(authException.getCause());
+      assertNotNull(authException.getHttpResponse());
+      assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 
@@ -108,8 +114,14 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing email");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(AuthHttpClient.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(
+          "No user record found for the provided email: non.existing@definitely.non.existing",
+          authException.getMessage());
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCode());
+      assertNull(authException.getCause());
+      assertNotNull(authException.getHttpResponse());
+      assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 
@@ -120,8 +132,14 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(AuthHttpClient.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(
+          "No user record found for the given identifier (USER_NOT_FOUND).",
+          authException.getMessage());
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCode());
+      assertNotNull(authException.getCause());
+      assertNotNull(authException.getHttpResponse());
+      assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 
@@ -132,8 +150,14 @@ public class FirebaseAuthIT {
       fail("No error thrown for non existing uid");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(AuthHttpClient.USER_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(
+          "No user record found for the given identifier (USER_NOT_FOUND).",
+          authException.getMessage());
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCode());
+      assertNotNull(authException.getCause());
+      assertNotNull(authException.getHttpResponse());
+      assertEquals(AuthErrorCode.USER_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 
@@ -313,43 +337,39 @@ public class FirebaseAuthIT {
   @Test
   public void testLastRefreshTime() throws Exception {
     RandomUser user = UserTestUtils.generateRandomUserInfo();
-    UserRecord newUserRecord = auth.createUser(new UserRecord.CreateRequest()
-                                                   .setUid(user.getUid())
-                                                   .setEmail(user.getEmail())
-                                                   .setEmailVerified(false)
-                                                   .setPassword("password"));
+    UserRecord newUserRecord = temporaryUser.create(new UserRecord.CreateRequest()
+        .setUid(user.getUid())
+        .setEmail(user.getEmail())
+        .setEmailVerified(false)
+        .setPassword("password"));
 
-    try {
-      // New users should not have a lastRefreshTimestamp set.
-      assertEquals(0, newUserRecord.getUserMetadata().getLastRefreshTimestamp());
+    // New users should not have a lastRefreshTimestamp set.
+    assertEquals(0, newUserRecord.getUserMetadata().getLastRefreshTimestamp());
 
-      // Login to cause the lastRefreshTimestamp to be set.
-      signInWithPassword(newUserRecord.getEmail(), "password");
+    // Login to cause the lastRefreshTimestamp to be set.
+    signInWithPassword(newUserRecord.getEmail(), "password");
 
-      // Attempt to retrieve the user 3 times (with a small delay between each
-      // attempt). Occassionally, this call retrieves the user data without the
-      // lastLoginTime/lastRefreshTime set; possibly because it's hitting a
-      // different server than the login request uses.
-      UserRecord userRecord = null;
-      for (int i = 0; i < 3; i++) {
-        userRecord = auth.getUser(newUserRecord.getUid());
+    // Attempt to retrieve the user 3 times (with a small delay between each
+    // attempt). Occasionally, this call retrieves the user data without the
+    // lastLoginTime/lastRefreshTime set; possibly because it's hitting a
+    // different server than the login request uses.
+    UserRecord userRecord = null;
+    for (int i = 0; i < 3; i++) {
+      userRecord = auth.getUser(newUserRecord.getUid());
 
-        if (userRecord.getUserMetadata().getLastRefreshTimestamp() != 0) {
-          break;
-        }
-
-        TimeUnit.SECONDS.sleep((long)Math.pow(2, i));
+      if (userRecord.getUserMetadata().getLastRefreshTimestamp() != 0) {
+        break;
       }
 
-      // Ensure the lastRefreshTimestamp is approximately "now" (with a tollerance of 10 minutes).
-      long now = System.currentTimeMillis();
-      long tollerance = TimeUnit.MINUTES.toMillis(10);
-      long lastRefreshTimestamp = userRecord.getUserMetadata().getLastRefreshTimestamp();
-      assertTrue(now - tollerance <= lastRefreshTimestamp);
-      assertTrue(lastRefreshTimestamp <= now + tollerance);
-    } finally {
-      auth.deleteUser(newUserRecord.getUid());
+      TimeUnit.SECONDS.sleep((long)Math.pow(2, i));
     }
+
+    // Ensure the lastRefreshTimestamp is approximately "now" (with a tolerance of 10 minutes).
+    long now = System.currentTimeMillis();
+    long tolerance = TimeUnit.MINUTES.toMillis(10);
+    long lastRefreshTimestamp = userRecord.getUserMetadata().getLastRefreshTimestamp();
+    assertTrue(now - tolerance <= lastRefreshTimestamp);
+    assertTrue(lastRefreshTimestamp <= now + tolerance);
   }
 
   @Test
@@ -473,7 +493,7 @@ public class FirebaseAuthIT {
     if (token == null) {
       token = credentials.refreshAccessToken();
     }
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.create(token))
         .setServiceAccountId(((ServiceAccountSigner) credentials).getAccount())
         .setProjectId(IntegrationTestUtils.getProjectId())
@@ -507,8 +527,8 @@ public class FirebaseAuthIT {
       fail("expecting exception");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(RevocationCheckDecorator.ID_TOKEN_REVOKED_ERROR,
-                   ((FirebaseAuthException) e.getCause()).getErrorCode());
+      assertEquals(AuthErrorCode.REVOKED_ID_TOKEN,
+          ((FirebaseAuthException) e.getCause()).getAuthErrorCode());
     }
     idToken = signInWithCustomToken(customToken);
     decoded = auth.verifyIdTokenAsync(idToken, true).get();
@@ -541,8 +561,8 @@ public class FirebaseAuthIT {
       fail("expecting exception");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(RevocationCheckDecorator.SESSION_COOKIE_REVOKED_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+      assertEquals(AuthErrorCode.REVOKED_SESSION_COOKIE,
+          ((FirebaseAuthException) e.getCause()).getAuthErrorCode());
     }
 
     idToken = signInWithCustomToken(customToken);
@@ -1009,7 +1029,14 @@ public class FirebaseAuthIT {
       fail("No error thrown for creating user with existing ID");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals("uid-already-exists", ((FirebaseAuthException) e.getCause()).getErrorCode());
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(ErrorCode.ALREADY_EXISTS, authException.getErrorCode());
+      assertEquals(
+          "The user with the provided uid already exists (DUPLICATE_LOCAL_ID).",
+          authException.getMessage());
+      assertNotNull(authException.getCause());
+      assertNotNull(authException.getHttpResponse());
+      assertEquals(AuthErrorCode.UID_ALREADY_EXISTS, authException.getAuthErrorCode());
     }
   }
 

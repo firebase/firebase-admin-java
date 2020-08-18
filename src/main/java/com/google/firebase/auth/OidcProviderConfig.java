@@ -132,7 +132,7 @@ public final class OidcProviderConfig extends ProviderConfig {
      * provider.
      *
      * <p>The returned object should be passed to
-     * {@link AbstractFirebaseAuth#updateOidcProviderConfig(CreateRequest)} to save the updated
+     * {@link AbstractFirebaseAuth#updateOidcProviderConfig(UpdateRequest)} to save the updated
      * config.
      *
      * @param providerId A non-null, non-empty provider ID string.

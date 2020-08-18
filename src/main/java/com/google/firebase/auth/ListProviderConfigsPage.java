@@ -88,7 +88,7 @@ public class ListProviderConfigsPage<T extends ProviderConfig> implements Page<T
   @Override
   public ListProviderConfigsPage<T> getNextPage() {
     if (hasNextPage()) {
-      Factory<T> factory = new Factory<T>(source, maxResults, currentBatch.getPageToken());
+      Factory<T> factory = new Factory<>(source, maxResults, currentBatch.getPageToken());
       try {
         return factory.create();
       } catch (FirebaseAuthException e) {
@@ -99,25 +99,25 @@ public class ListProviderConfigsPage<T extends ProviderConfig> implements Page<T
   }
 
   /**
-   * Returns an {@link Iterable} that facilitates transparently iterating over all the provider
+   * Returns an {@code Iterable} that facilitates transparently iterating over all the provider
    * configs in the current Firebase project, starting from this page.
    *
-   * <p>The {@link Iterator} instances produced by the returned {@link Iterable} never buffers more
+   * <p>The {@code Iterator} instances produced by the returned {@code Iterable} never buffers more
    * than one page of provider configs at a time. It is safe to abandon the iterators (i.e. break
    * the loops) at any time.
    *
-   * @return a new {@link Iterable} instance.
+   * @return a new {@code Iterable} instance.
    */
   @NonNull
   @Override
   public Iterable<T> iterateAll() {
-    return new ProviderConfigIterable<T>(this);
+    return new ProviderConfigIterable<>(this);
   }
 
   /**
-   * Returns an {@link Iterable} over the provider configs in this page.
+   * Returns an {@code Iterable} over the provider configs in this page.
    *
-   * @return a {@link Iterable} instance.
+   * @return a {@code Iterable} instance.
    */
   @NonNull
   @Override
@@ -136,7 +136,7 @@ public class ListProviderConfigsPage<T extends ProviderConfig> implements Page<T
     @Override
     @NonNull
     public Iterator<T> iterator() {
-      return new ProviderConfigIterator<T>(startingPage);
+      return new ProviderConfigIterator<>(startingPage);
     }
 
     /**
@@ -230,7 +230,7 @@ public class ListProviderConfigsPage<T extends ProviderConfig> implements Page<T
   }
 
   /**
-   * A simple factory class for {@link ProviderConfigsPage} instances.
+   * A simple factory class for {@link ListProviderConfigsPage} instances.
    *
    * <p>Performs argument validation before attempting to load any provider config data (which is
    * expensive, and hence may be performed asynchronously on a separate thread).
@@ -261,7 +261,7 @@ public class ListProviderConfigsPage<T extends ProviderConfig> implements Page<T
 
     ListProviderConfigsPage<T> create() throws FirebaseAuthException {
       ListProviderConfigsResponse<T> batch = source.fetch(maxResults, pageToken);
-      return new ListProviderConfigsPage<T>(batch, source, maxResults);
+      return new ListProviderConfigsPage<>(batch, source, maxResults);
     }
   }
 }

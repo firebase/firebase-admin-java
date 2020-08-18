@@ -19,7 +19,6 @@ package com.google.firebase.auth.multitenancy;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.json.GenericJson;
@@ -33,6 +32,7 @@ import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.internal.AuthHttpClient;
 import com.google.firebase.auth.internal.ListTenantsResponse;
 import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.HttpRequestInfo;
 import java.util.Map;
 
 final class FirebaseTenantClient {
@@ -46,15 +46,19 @@ final class FirebaseTenantClient {
   private final AuthHttpClient httpClient;
 
   FirebaseTenantClient(FirebaseApp app) {
-    checkNotNull(app, "FirebaseApp must not be null");
-    String projectId = ImplFirebaseTrampolines.getProjectId(app);
+    this(
+        ImplFirebaseTrampolines.getProjectId(checkNotNull(app)),
+        app.getOptions().getJsonFactory(),
+        ApiClientUtils.newAuthorizedRequestFactory(app));
+  }
+
+  FirebaseTenantClient(
+      String projectId, JsonFactory jsonFactory, HttpRequestFactory requestFactory) {
     checkArgument(!Strings.isNullOrEmpty(projectId),
         "Project ID is required to access the auth service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
     this.tenantMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v2", projectId);
-    JsonFactory jsonFactory = app.getOptions().getJsonFactory();
-    HttpRequestFactory requestFactory = ApiClientUtils.newAuthorizedRequestFactory(app);
     this.httpClient = new AuthHttpClient(jsonFactory, requestFactory);
   }
 
@@ -63,25 +67,28 @@ final class FirebaseTenantClient {
   }
 
   Tenant getTenant(String tenantId) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + getTenantUrlSuffix(tenantId));
-    return httpClient.sendRequest("GET", url, null, Tenant.class);
+    String url = tenantMgtBaseUrl + getTenantUrlSuffix(tenantId);
+    return httpClient.sendRequest(HttpRequestInfo.buildGetRequest(url), Tenant.class);
   }
 
   Tenant createTenant(Tenant.CreateRequest request) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants");
-    return httpClient.sendRequest("POST", url, request.getProperties(), Tenant.class);
+    String url = tenantMgtBaseUrl + "/tenants";
+    return httpClient.sendRequest(
+        HttpRequestInfo.buildJsonPostRequest(url, request.getProperties()),
+        Tenant.class);
   }
 
   Tenant updateTenant(Tenant.UpdateRequest request) throws FirebaseAuthException {
     Map<String, Object> properties = request.getProperties();
-    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + getTenantUrlSuffix(request.getTenantId()));
-    url.put("updateMask", Joiner.on(",").join(AuthHttpClient.generateMask(properties)));
-    return httpClient.sendRequest("PATCH", url, properties, Tenant.class);
+    String url = tenantMgtBaseUrl + getTenantUrlSuffix(request.getTenantId());
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildJsonPatchRequest(url, properties)
+        .addParameter("updateMask", Joiner.on(",").join(AuthHttpClient.generateMask(properties)));
+    return httpClient.sendRequest(requestInfo, Tenant.class);
   }
 
   void deleteTenant(String tenantId) throws FirebaseAuthException {
-    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + getTenantUrlSuffix(tenantId));
-    httpClient.sendRequest("DELETE", url, null, GenericJson.class);
+    String url = tenantMgtBaseUrl + getTenantUrlSuffix(tenantId);
+    httpClient.sendRequest(HttpRequestInfo.buildDeleteRequest(url), GenericJson.class);
   }
 
   ListTenantsResponse listTenants(int maxResults, String pageToken)
@@ -94,14 +101,9 @@ final class FirebaseTenantClient {
       builder.put("pageToken", pageToken);
     }
 
-    GenericUrl url = new GenericUrl(tenantMgtBaseUrl + "/tenants");
-    url.putAll(builder.build());
-    ListTenantsResponse response = httpClient.sendRequest(
-        "GET", url, null, ListTenantsResponse.class);
-    if (response == null) {
-      throw new FirebaseAuthException(AuthHttpClient.INTERNAL_ERROR, "Failed to retrieve tenants.");
-    }
-    return response;
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildGetRequest(tenantMgtBaseUrl + "/tenants")
+        .addAllParameters(builder.build());
+    return httpClient.sendRequest(requestInfo, ListTenantsResponse.class);
   }
 
   private static String getTenantUrlSuffix(String tenantId) {

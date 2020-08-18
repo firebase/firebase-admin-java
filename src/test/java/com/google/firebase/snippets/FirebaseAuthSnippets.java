@@ -18,6 +18,7 @@ package com.google.firebase.snippets;
 
 import com.google.common.io.BaseEncoding;
 import com.google.firebase.auth.ActionCodeSettings;
+import com.google.firebase.auth.AuthErrorCode;
 import com.google.firebase.auth.ErrorInfo;
 import com.google.firebase.auth.ExportedUserRecord;
 import com.google.firebase.auth.FirebaseAuth;
@@ -262,7 +263,7 @@ public class FirebaseAuthSnippets {
       // Token is valid and not revoked.
       String uid = decodedToken.getUid();
     } catch (FirebaseAuthException e) {
-      if (e.getErrorCode().equals("id-token-revoked")) {
+      if (e.getAuthErrorCode() == AuthErrorCode.REVOKED_ID_TOKEN) {
         // Token has been revoked. Inform the user to re-authenticate or signOut() the user.
       } else {
         // Token is invalid.

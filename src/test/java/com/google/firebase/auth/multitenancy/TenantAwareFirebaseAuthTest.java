@@ -28,6 +28,7 @@ import com.google.api.client.json.GenericJson;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.base.Suppliers;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -58,7 +59,7 @@ public class TenantAwareFirebaseAuthTest {
       .build();
 
   private static final FirebaseAuthException AUTH_EXCEPTION = new FirebaseAuthException(
-      "code", "reason");
+      ErrorCode.INVALID_ARGUMENT, "Test error message", null, null, null);
 
   private static final String CREATE_COOKIE_RESPONSE = TestUtils.loadResource(
       "createSessionCookie.json");
@@ -99,7 +100,7 @@ public class TenantAwareFirebaseAuthTest {
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
       FirebaseAuthException cause = (FirebaseAuthException) e.getCause();
-      assertEquals("code", cause.getErrorCode());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, cause.getErrorCode());
     }
 
     assertNull(interceptor.getResponse());
@@ -133,7 +134,7 @@ public class TenantAwareFirebaseAuthTest {
       auth.createSessionCookie("testToken", COOKIE_OPTIONS);
       fail("No error thrown for invalid ID token");
     } catch (FirebaseAuthException e) {
-      assertEquals("code", e.getErrorCode());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
     }
 
     assertNull(interceptor.getResponse());
@@ -163,7 +164,7 @@ public class TenantAwareFirebaseAuthTest {
       auth.verifySessionCookie("cookie");
       fail("No error thrown for invalid token");
     } catch (FirebaseAuthException authException) {
-      assertEquals("code", authException.getErrorCode());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, authException.getErrorCode());
       assertEquals("cookie", tokenVerifier.getLastTokenString());
     }
   }
@@ -193,7 +194,7 @@ public class TenantAwareFirebaseAuthTest {
       fail("No error thrown for invalid token");
     } catch (ExecutionException e) {
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals("code", authException.getErrorCode());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, authException.getErrorCode());
       assertEquals("cookie", tokenVerifier.getLastTokenString());
     }
   }
@@ -224,7 +225,7 @@ public class TenantAwareFirebaseAuthTest {
       auth.verifySessionCookie("cookie", true);
       fail("No error thrown for invalid token");
     } catch (FirebaseAuthException e) {
-      assertEquals("code", e.getErrorCode());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
       assertEquals("cookie", tokenVerifier.getLastTokenString());
     }
   }
@@ -241,7 +242,7 @@ public class TenantAwareFirebaseAuthTest {
       fail("No error thrown for invalid token");
     } catch (ExecutionException e) {
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
-      assertEquals("code", authException.getErrorCode());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, authException.getErrorCode());
       assertEquals("cookie", tokenVerifier.getLastTokenString());
     }
   }

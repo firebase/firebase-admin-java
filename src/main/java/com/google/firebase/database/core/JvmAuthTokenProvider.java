@@ -112,7 +112,7 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
     }
 
     @Override
-    public void onChanged(OAuth2Credentials credentials) throws IOException {
+    public void onChanged(OAuth2Credentials credentials) {
       // When this event fires, it is guaranteed that credentials.getAccessToken() will return a
       // valid OAuth2 token.
       final AccessToken accessToken = credentials.getAccessToken();

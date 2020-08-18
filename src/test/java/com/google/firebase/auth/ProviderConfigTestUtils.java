@@ -21,7 +21,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.firebase.auth.internal.AuthHttpClient;
+import com.google.firebase.ErrorCode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -36,8 +36,9 @@ public class ProviderConfigTestUtils {
       fail("No error thrown for getting a deleted OIDC provider config.");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(AuthHttpClient.CONFIGURATION_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCode());
+      assertEquals(AuthErrorCode.CONFIGURATION_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 
@@ -48,8 +49,9 @@ public class ProviderConfigTestUtils {
       fail("No error thrown for getting a deleted SAML provider config.");
     } catch (ExecutionException e) {
       assertTrue(e.getCause() instanceof FirebaseAuthException);
-      assertEquals(AuthHttpClient.CONFIGURATION_NOT_FOUND_ERROR,
-          ((FirebaseAuthException) e.getCause()).getErrorCode());
+      FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
+      assertEquals(ErrorCode.NOT_FOUND, authException.getErrorCode());
+      assertEquals(AuthErrorCode.CONFIGURATION_NOT_FOUND, authException.getAuthErrorCode());
     }
   }
 

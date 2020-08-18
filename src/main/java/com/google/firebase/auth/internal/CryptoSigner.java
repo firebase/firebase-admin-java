@@ -16,6 +16,7 @@
 
 package com.google.firebase.auth.internal;
 
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.internal.NonNull;
 import java.io.IOException;
 
@@ -32,10 +33,10 @@ interface CryptoSigner {
    *
    * @param payload Data to be signed
    * @return Signature as a byte array
-   * @throws IOException If an error occurs during signing
+   * @throws FirebaseAuthException If an error occurs during signing
    */
   @NonNull
-  byte[] sign(@NonNull byte[] payload) throws IOException;
+  byte[] sign(@NonNull byte[] payload) throws FirebaseAuthException;
 
   /**
    * Returns the client email of the service account used to sign payloads.

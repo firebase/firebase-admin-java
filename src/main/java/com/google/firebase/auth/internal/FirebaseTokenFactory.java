@@ -25,7 +25,9 @@ import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.util.Base64;
 import com.google.api.client.util.Clock;
 import com.google.api.client.util.StringUtils;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.internal.Nullable;
 
 import java.io.IOException;
@@ -44,10 +46,6 @@ public class FirebaseTokenFactory {
   private final CryptoSigner signer;
   private final String tenantId;
 
-  public FirebaseTokenFactory(JsonFactory jsonFactory, Clock clock, CryptoSigner signer) {
-    this(jsonFactory, clock, signer, null);
-  }
-
   public FirebaseTokenFactory(
       JsonFactory jsonFactory, Clock clock, CryptoSigner signer, @Nullable String tenantId) {
     this.jsonFactory = checkNotNull(jsonFactory);
@@ -56,12 +54,17 @@ public class FirebaseTokenFactory {
     this.tenantId = tenantId;
   }
 
-  String createSignedCustomAuthTokenForUser(String uid) throws IOException {
+  @VisibleForTesting
+  FirebaseTokenFactory(JsonFactory jsonFactory, Clock clock, CryptoSigner signer) {
+    this(jsonFactory, clock, signer, null);
+  }
+
+  String createSignedCustomAuthTokenForUser(String uid) throws FirebaseAuthException {
     return createSignedCustomAuthTokenForUser(uid, null);
   }
 
   public String createSignedCustomAuthTokenForUser(
-      String uid, Map<String, Object> developerClaims) throws IOException {
+      String uid, Map<String, Object> developerClaims) throws FirebaseAuthException {
     checkArgument(!Strings.isNullOrEmpty(uid), "Uid must be provided.");
     checkArgument(uid.length() <= 128, "Uid must be shorter than 128 characters.");
 
@@ -88,20 +91,33 @@ public class FirebaseTokenFactory {
               String.format("developerClaims must not contain a reserved key: %s", key));
         }
       }
+
       GenericJson jsonObject = new GenericJson();
       jsonObject.putAll(developerClaims);
       payload.setDeveloperClaims(jsonObject);
     }
+
     return signPayload(header, payload);
   }
 
-  private String signPayload(JsonWebSignature.Header header,
-      FirebaseCustomAuthToken.Payload payload) throws IOException {
-    String headerString = Base64.encodeBase64URLSafeString(jsonFactory.toByteArray(header));
-    String payloadString = Base64.encodeBase64URLSafeString(jsonFactory.toByteArray(payload));
-    String content = headerString + "." + payloadString;
+  private String signPayload(
+      JsonWebSignature.Header header,
+      FirebaseCustomAuthToken.Payload payload) throws FirebaseAuthException {
+    String content = encodePayload(header, payload);
     byte[] contentBytes = StringUtils.getBytesUtf8(content);
     String signature = Base64.encodeBase64URLSafeString(signer.sign(contentBytes));
     return content + "." + signature;
+  }
+
+  private String encodePayload(
+      JsonWebSignature.Header header, FirebaseCustomAuthToken.Payload payload) {
+    try {
+      String headerString = Base64.encodeBase64URLSafeString(jsonFactory.toByteArray(header));
+      String payloadString = Base64.encodeBase64URLSafeString(jsonFactory.toByteArray(payload));
+      return headerString + "." + payloadString;
+    } catch (IOException e) {
+      throw new IllegalArgumentException(
+          "Failed to encode JWT with the given claims: " + e.getMessage(), e);
+    }
   }
 }

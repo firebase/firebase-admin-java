@@ -61,7 +61,7 @@ public final class LightSettings {
     /**
      * Sets the lightSettingsColor value with a string.   
      *
-     * @param lightSettingsColor LightSettingsColor specified in the {@code #rrggbb} format.
+     * @param color LightSettingsColor specified in the {@code #rrggbb} format.
      * @return This builder.
      */
     public Builder setColorFromString(String color) {
@@ -72,7 +72,7 @@ public final class LightSettings {
     /**
      * Sets the lightSettingsColor value in the light settings.   
      *
-     * @param lightSettingsColor Color to be used in the light settings.
+     * @param color Color to be used in the light settings.
      * @return This builder.
      */
     public Builder setColor(LightSettingsColor color) {
