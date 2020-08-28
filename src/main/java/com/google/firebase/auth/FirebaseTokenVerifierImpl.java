@@ -327,7 +327,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     if (this.tenantId != null && !this.tenantId.equals(tokenTenantId)) {
       String message = String.format(
           "The tenant ID ('%s') of the token did not match the expected value ('%s')",
-          tokenTenantId,
+          Strings.nullToEmpty(tokenTenantId),
           tenantId);
       throw newException(message, AuthErrorCode.TENANT_ID_MISMATCH);
     }
