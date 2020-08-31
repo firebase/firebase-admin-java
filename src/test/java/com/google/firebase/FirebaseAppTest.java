@@ -66,7 +66,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-/** 
+/**
  * Unit tests for {@link com.google.firebase.FirebaseApp}.
  */
 public class FirebaseAppTest {
@@ -472,8 +472,8 @@ public class FirebaseAppTest {
   public void testEmptyFirebaseConfigFile() {
     setFirebaseConfigEnvironmentVariable("firebase_config_empty.json");
     FirebaseApp.initializeApp();
-  }  
-  
+  }
+
   @Test
   public void testEmptyFirebaseConfigString() {
     setFirebaseConfigEnvironmentVariable("");
@@ -481,7 +481,7 @@ public class FirebaseAppTest {
     assertNull(firebaseApp.getOptions().getProjectId());
     assertNull(firebaseApp.getOptions().getStorageBucket());
     assertNull(firebaseApp.getOptions().getDatabaseUrl());
-    assertTrue(firebaseApp.getOptions().getDatabaseAuthVariableOverride().isEmpty()); 
+    assertTrue(firebaseApp.getOptions().getDatabaseAuthVariableOverride().isEmpty());
   }
 
   @Test
@@ -542,20 +542,20 @@ public class FirebaseAppTest {
 
   @Test
   public void testValidFirebaseConfigString() {
-    setFirebaseConfigEnvironmentVariable("{" 
-        + "\"databaseAuthVariableOverride\": {" 
-        +   "\"uid\":" 
-        +   "\"testuser\"" 
-        + "}," 
-        + "\"databaseUrl\": \"https://hipster-chat.firebaseio.mock\"," 
-        + "\"projectId\": \"hipster-chat-mock\"," 
-        + "\"storageBucket\": \"hipster-chat.appspot.mock\"" 
+    setFirebaseConfigEnvironmentVariable("{"
+        + "\"databaseAuthVariableOverride\": {"
+        +   "\"uid\":"
+        +   "\"testuser\""
+        + "},"
+        + "\"databaseUrl\": \"https://hipster-chat.firebaseio.mock\","
+        + "\"projectId\": \"hipster-chat-mock\","
+        + "\"storageBucket\": \"hipster-chat.appspot.mock\""
         + "}");
     FirebaseApp firebaseApp = FirebaseApp.initializeApp();
     assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
     assertEquals("hipster-chat.appspot.mock", firebaseApp.getOptions().getStorageBucket());
     assertEquals("https://hipster-chat.firebaseio.mock", firebaseApp.getOptions().getDatabaseUrl());
-    assertEquals("testuser", 
+    assertEquals("testuser",
         firebaseApp.getOptions().getDatabaseAuthVariableOverride().get("uid"));
   }
 

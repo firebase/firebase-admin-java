@@ -261,6 +261,11 @@ public class TenantAwareFirebaseAuthIT {
       assertEquals(AuthErrorCode.TENANT_ID_MISMATCH,
           ((FirebaseAuthException) e.getCause()).getAuthErrorCode());
     }
+
+    // Verifies with FirebaseAuth
+    FirebaseToken decoded = FirebaseAuth.getInstance().verifyIdToken(idToken);
+    assertEquals("user", decoded.getUid());
+    assertEquals(tenantId, decoded.getTenantId());
   }
 
   @Test

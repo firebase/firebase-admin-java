@@ -328,6 +328,17 @@ public class FirebaseTokenVerifierImplTest {
 
   @Test
   public void testVerifyTokenWithTenantId() throws FirebaseAuthException {
+    FirebaseTokenVerifierImpl verifier = fullyPopulatedBuilder().build();
+
+    FirebaseToken firebaseToken = verifier.verifyToken(createTokenWithTenantId("TENANT_1"));
+
+    assertEquals(TEST_TOKEN_ISSUER, firebaseToken.getIssuer());
+    assertEquals(TestTokenFactory.UID, firebaseToken.getUid());
+    assertEquals("TENANT_1", firebaseToken.getTenantId());
+  }
+
+  @Test
+  public void testVerifyTokenWithMatchingTenantId() throws FirebaseAuthException {
     FirebaseTokenVerifierImpl verifier = fullyPopulatedBuilder()
         .setTenantId("TENANT_1")
         .build();
@@ -341,15 +352,34 @@ public class FirebaseTokenVerifierImplTest {
 
   @Test
   public void testVerifyTokenDifferentTenantIds() {
-    try {
-      fullyPopulatedBuilder()
+    FirebaseTokenVerifierImpl verifier = fullyPopulatedBuilder()
         .setTenantId("TENANT_1")
-        .build()
-        .verifyToken(createTokenWithTenantId("TENANT_2"));
+        .build();
+    String token = createTokenWithTenantId("TENANT_2");
+
+    try {
+      verifier.verifyToken(token);
     } catch (FirebaseAuthException e) {
       assertEquals(AuthErrorCode.TENANT_ID_MISMATCH, e.getAuthErrorCode());
       assertEquals(
           "The tenant ID ('TENANT_2') of the token did not match the expected value ('TENANT_1')",
+          e.getMessage());
+    }
+  }
+
+  @Test
+  public void testVerifyTokenNoTenantId() {
+    FirebaseTokenVerifierImpl verifier = fullyPopulatedBuilder()
+        .setTenantId("TENANT_1")
+        .build();
+    String token = tokenFactory.createToken();
+
+    try {
+      verifier.verifyToken(token);
+    } catch (FirebaseAuthException e) {
+      assertEquals(AuthErrorCode.TENANT_ID_MISMATCH, e.getAuthErrorCode());
+      assertEquals(
+          "The tenant ID ('') of the token did not match the expected value ('TENANT_1')",
           e.getMessage());
     }
   }
