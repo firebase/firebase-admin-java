@@ -28,7 +28,6 @@ import static org.junit.Assert.fail;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.api.core.ApiFuture;
-import com.google.common.base.Defaults;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
@@ -40,11 +39,6 @@ import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -105,26 +99,33 @@ public class FirebaseAuthTest {
     assertNotNull(auth);
     app.delete();
 
-    for (Method method : auth.getClass().getDeclaredMethods()) {
-      int modifiers = method.getModifiers();
-      if (!Modifier.isPublic(modifiers) || Modifier.isStatic(modifiers)) {
-        continue;
-      }
+    String message = "FirebaseApp 'testInvokeAfterAppDelete' was deleted";
+    try {
+      FirebaseAuth.getInstance(app);
+      fail("No error thrown when invoking auth after deleting app");
+    } catch (IllegalStateException ex) {
+      assertEquals(message, ex.getMessage());
+    }
 
-      List<Object> parameters = new ArrayList<>(method.getParameterTypes().length);
-      for (Class<?> parameterType : method.getParameterTypes()) {
-        parameters.add(Defaults.defaultValue(parameterType));
-      }
-      try {
-        method.invoke(auth, parameters.toArray());
-        fail("No error thrown when invoking auth after deleting app; method: " + method.getName());
-      } catch (InvocationTargetException expected) {
-        String message = "FirebaseAuth instance is no longer alive. This happens when "
-            + "the parent FirebaseApp instance has been deleted.";
-        Throwable cause = expected.getCause();
-        assertTrue(cause instanceof IllegalStateException);
-        assertEquals(message, cause.getMessage());
-      }
+    try {
+      auth.createCustomToken("uid");
+      fail("No error thrown when invoking auth after deleting app");
+    } catch (IllegalStateException ex) {
+      assertEquals(message, ex.getMessage());
+    }
+
+    try {
+      auth.verifyIdToken("idToken");
+      fail("No error thrown when invoking auth after deleting app");
+    } catch (IllegalStateException ex) {
+      assertEquals(message, ex.getMessage());
+    }
+
+    try {
+      auth.getUser("uid");
+      fail("No error thrown when invoking auth after deleting app");
+    } catch (IllegalStateException ex) {
+      assertEquals(message, ex.getMessage());
     }
   }
 
@@ -459,10 +460,6 @@ public class FirebaseAuthTest {
       FirebaseAuthException authException = (FirebaseAuthException) e.getCause();
       assertSame(testException, authException);
     }
-  }
-
-  private FirebaseToken getFirebaseToken(String subject) {
-    return new FirebaseToken(ImmutableMap.<String, Object>of("sub", subject));
   }
 
   private FirebaseToken getFirebaseToken(long issuedAt) {

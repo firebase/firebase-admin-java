@@ -277,6 +277,8 @@ public class FirebaseApp {
    */
   @Nullable
   String getProjectId() {
+    checkNotDeleted();
+
     // Try to get project ID from user-specified options.
     String projectId = options.getProjectId();
 
@@ -314,8 +316,10 @@ public class FirebaseApp {
   }
 
   /**
-   * Deletes the {@link FirebaseApp} and all its data. All calls to this {@link FirebaseApp}
-   * instance will throw once it has been called.
+   * Deletes this {@link FirebaseApp} object, and releases any local state and managed resources
+   * associated with it. All calls to this {@link FirebaseApp} instance will throw once this method
+   * has been called. This also releases any managed resources allocated by other services
+   * attached to this object instance (e.g. {@code FirebaseAuth}).
    *
    * <p>A no-op if delete was called before.
    */

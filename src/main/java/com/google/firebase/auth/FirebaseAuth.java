@@ -69,9 +69,6 @@ public final class FirebaseAuth extends AbstractFirebaseAuth {
     return service.getInstance();
   }
 
-  @Override
-  protected void doDestroy() { }
-
   private static FirebaseAuth fromApp(final FirebaseApp app) {
     return populateBuilderFromApp(builder(), app, null)
         .setTenantManager(new Supplier<TenantManager>() {
@@ -87,11 +84,6 @@ public final class FirebaseAuth extends AbstractFirebaseAuth {
 
     FirebaseAuthService(FirebaseApp app) {
       super(SERVICE_ID, FirebaseAuth.fromApp(app));
-    }
-
-    @Override
-    public void destroy() {
-      instance.destroy();
     }
   }
 

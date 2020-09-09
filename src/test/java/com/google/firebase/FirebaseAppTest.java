@@ -41,6 +41,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.testing.FirebaseAppRule;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
@@ -210,6 +211,33 @@ public class FirebaseAppTest {
       assertNotSame(firebaseApp, firebaseApp2);
     } finally {
       TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    }
+  }
+
+  @Test
+  public void testUseAfterDelete() {
+    FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS);
+    firebaseApp.delete();
+
+    try {
+      firebaseApp.getOptions();
+      fail();
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+
+    try {
+      firebaseApp.getProjectId();
+      fail();
+    } catch (IllegalStateException expected) {
+      // ignore
+    }
+
+    try {
+      ImplFirebaseTrampolines.addService(firebaseApp, new MockFirebaseService());
+      fail();
+    } catch (IllegalStateException expected) {
+      // ignore
     }
   }
 
@@ -682,6 +710,12 @@ public class FirebaseAppTest {
     public AccessToken refreshAccessToken() {
       Date expiry = new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1));
       return new AccessToken(UUID.randomUUID().toString(), expiry);
+    }
+  }
+
+  private static class MockFirebaseService extends FirebaseService<Object> {
+    MockFirebaseService() {
+      super("MockFirebaseService", new Object());
     }
   }
 }
