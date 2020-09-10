@@ -69,11 +69,6 @@ public final class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
     }, MoreExecutors.directExecutor());
   }
 
-  @Override
-  protected void doDestroy() {
-    // Nothing extra needs to be destroyed.
-  }
-
   static TenantAwareFirebaseAuth fromApp(FirebaseApp app, String tenantId) {
     return populateBuilderFromApp(builder(), app, tenantId)
         .setTenantId(tenantId)

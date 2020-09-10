@@ -87,14 +87,6 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
     httpHelper.setInterceptor(interceptor);
   }
 
-  void destroy() {
-    // NOTE: We don't explicitly tear down anything here. Any instance of IosApp, AndroidApp, or
-    // FirebaseProjectManagement that depends on this instance will no longer be able to make RPC
-    // calls. All polling or waiting iOS or Android App creations will be interrupted, even though
-    // the initial creation RPC (if made successfully) is still processed normally (asynchronously)
-    // by the server.
-  }
-
   /* getAndroidApp */
 
   @Override

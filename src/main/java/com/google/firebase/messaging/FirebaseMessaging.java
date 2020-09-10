@@ -403,13 +403,6 @@ public class FirebaseMessaging {
     FirebaseMessagingService(FirebaseApp app) {
       super(SERVICE_ID, FirebaseMessaging.fromApp(app));
     }
-
-    @Override
-    public void destroy() {
-      // NOTE: We don't explicitly tear down anything here, but public methods of FirebaseMessaging
-      // will now fail because calls to getOptions() and getToken() will hit FirebaseApp,
-      // which will throw once the app is deleted.
-    }
   }
 
   private static FirebaseMessaging fromApp(final FirebaseApp app) {
