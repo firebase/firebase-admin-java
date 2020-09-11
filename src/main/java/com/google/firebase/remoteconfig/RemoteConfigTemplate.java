@@ -18,7 +18,7 @@ package com.google.firebase.remoteconfig;
 
 import com.google.api.client.util.Key;
 
-public class RemoteConfigTemplate {
+public final class RemoteConfigTemplate {
 
   @Key("etag")
   private String etag;

@@ -30,7 +30,7 @@ import java.util.Map;
  * These error messages take the form,
  * `"error": {"code": 123, "message": "[CODE]: Message Details", "status": "ERROR_STATUS"}`
  */
-public class RemoteConfigServiceErrorResponse extends GenericJson {
+public final class RemoteConfigServiceErrorResponse extends GenericJson {
 
   private static final Map<String, RemoteConfigErrorCode> RC_ERROR_CODES =
           ImmutableMap.<String, RemoteConfigErrorCode>builder()
@@ -55,7 +55,7 @@ public class RemoteConfigServiceErrorResponse extends GenericJson {
       return null;
     }
 
-    String message = getErrorMessage();
+    String message = (String) error.get("message");
     if (Strings.isNullOrEmpty(message)) {
       return null;
     }
@@ -67,14 +67,5 @@ public class RemoteConfigServiceErrorResponse extends GenericJson {
     }
 
     return null;
-  }
-
-  @Nullable
-  public String getErrorMessage() {
-    if (error == null) {
-      return null;
-    }
-
-    return (String) error.get("message");
   }
 }

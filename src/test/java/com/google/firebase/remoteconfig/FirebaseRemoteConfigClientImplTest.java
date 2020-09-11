@@ -53,12 +53,12 @@ import org.junit.Test;
 
 public class FirebaseRemoteConfigClientImplTest {
 
-  private static final String TEST_RC_URL =
+  private static final String TEST_REMOTE_CONFIG_URL =
           "https://firebaseremoteconfig.googleapis.com/v1/projects/test-project/remoteConfig";
 
-  private static final List<Integer> HTTP_ERRORS = ImmutableList.of(401, 404, 500);
+  private static final List<Integer> HTTP_STATUS_CODES = ImmutableList.of(401, 404, 500);
 
-  private static final Map<Integer, ErrorCode> HTTP_2_ERROR = ImmutableMap.of(
+  private static final Map<Integer, ErrorCode> HTTP_STATUS_TO_ERROR_CODE = ImmutableMap.of(
           401, ErrorCode.UNAUTHENTICATED,
           404, ErrorCode.NOT_FOUND,
           500, ErrorCode.INTERNAL);
@@ -82,50 +82,37 @@ public class FirebaseRemoteConfigClientImplTest {
   public void testGetTemplate() throws Exception {
     response.addHeader("etag", TEST_ETAG);
     response.setContent(MOCK_TEMPLATE_RESPONSE);
+
     RemoteConfigTemplate template = client.getTemplate();
 
     assertEquals(TEST_ETAG, template.getETag());
     checkGetRequestHeader(interceptor.getLastRequest());
   }
 
-  @Test
-  public void testGetTemplateWithInvalidEtags() {
+  @Test(expected = IllegalArgumentException.class)
+  public void testGetTemplateWithInvalidEtags() throws FirebaseRemoteConfigException {
+    // ETag does not exist
+    response.setContent(MOCK_TEMPLATE_RESPONSE);
+
+    client.getTemplate();
+
     // Empty ETag
     response.addHeader("etag", "");
     response.setContent(MOCK_TEMPLATE_RESPONSE);
-    try {
-      client.getTemplate();
-      fail("No error thrown for invalid ETag");
-    } catch (FirebaseRemoteConfigException error) {
-      assertEquals(ErrorCode.INTERNAL, error.getErrorCode());
-      assertEquals("ETag header is not available in the server response.", error.getMessage());
-      assertEquals(RemoteConfigErrorCode.INTERNAL, error.getRemoteConfigErrorCode());
-    }
-    checkGetRequestHeader(interceptor.getLastRequest());
 
-    // ETag does not exist
-    response.setContent(MOCK_TEMPLATE_RESPONSE);
-    try {
-      client.getTemplate();
-      fail("No error thrown for invalid ETag");
-    } catch (FirebaseRemoteConfigException error) {
-      assertEquals(ErrorCode.INTERNAL, error.getErrorCode());
-      assertEquals("ETag header is not available in the server response.", error.getMessage());
-      assertEquals(RemoteConfigErrorCode.INTERNAL, error.getRemoteConfigErrorCode());
-    }
-    checkGetRequestHeader(interceptor.getLastRequest());
+    client.getTemplate();
   }
 
   @Test
   public void testGetTemplateHttpError() {
-    for (int code : HTTP_ERRORS) {
+    for (int code : HTTP_STATUS_CODES) {
       response.setStatusCode(code).setContent("{}");
 
       try {
         client.getTemplate();
         fail("No error thrown for HTTP error");
       } catch (FirebaseRemoteConfigException error) {
-        checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code), null,
+        checkExceptionFromHttpResponse(error, HTTP_STATUS_TO_ERROR_CODE.get(code), null,
                 "Unexpected HTTP response with status: " + code + "\n{}");
       }
       checkGetRequestHeader(interceptor.getLastRequest());
@@ -168,14 +155,14 @@ public class FirebaseRemoteConfigClientImplTest {
 
   @Test
   public void testGetTemplateErrorWithZeroContentResponse() {
-    for (int code : HTTP_ERRORS) {
+    for (int code : HTTP_STATUS_CODES) {
       response.setStatusCode(code).setZeroContent();
 
       try {
         client.getTemplate();
         fail("No error thrown for HTTP error");
       } catch (FirebaseRemoteConfigException error) {
-        checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code), null,
+        checkExceptionFromHttpResponse(error, HTTP_STATUS_TO_ERROR_CODE.get(code), null,
                 "Unexpected HTTP response with status: " + code + "\nnull");
       }
       checkGetRequestHeader(interceptor.getLastRequest());
@@ -184,14 +171,14 @@ public class FirebaseRemoteConfigClientImplTest {
 
   @Test
   public void testGetTemplateErrorWithMalformedResponse() {
-    for (int code : HTTP_ERRORS) {
+    for (int code : HTTP_STATUS_CODES) {
       response.setStatusCode(code).setContent("not json");
 
       try {
         client.getTemplate();
         fail("No error thrown for HTTP error");
       } catch (FirebaseRemoteConfigException error) {
-        checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code), null,
+        checkExceptionFromHttpResponse(error, HTTP_STATUS_TO_ERROR_CODE.get(code), null,
                 "Unexpected HTTP response with status: " + code + "\nnot json");
       }
       checkGetRequestHeader(interceptor.getLastRequest());
@@ -200,7 +187,7 @@ public class FirebaseRemoteConfigClientImplTest {
 
   @Test
   public void testGetTemplateErrorWithDetails() {
-    for (int code : HTTP_ERRORS) {
+    for (int code : HTTP_STATUS_CODES) {
       response.setStatusCode(code).setContent(
               "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\"}}");
 
@@ -208,23 +195,7 @@ public class FirebaseRemoteConfigClientImplTest {
         client.getTemplate();
         fail("No error thrown for HTTP error");
       } catch (FirebaseRemoteConfigException error) {
-        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT);
-      }
-      checkGetRequestHeader(interceptor.getLastRequest());
-    }
-  }
-
-  @Test
-  public void testGetTemplateErrorWithCanonicalCode() {
-    for (int code : HTTP_ERRORS) {
-      response.setStatusCode(code).setContent(
-              "{\"error\": {\"status\": \"NOT_FOUND\", \"message\": \"test error\"}}");
-
-      try {
-        client.getTemplate();
-        fail("No error thrown for HTTP error");
-      } catch (FirebaseRemoteConfigException error) {
-        checkExceptionFromHttpResponse(error, ErrorCode.NOT_FOUND);
+        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT, null, "test error");
       }
       checkGetRequestHeader(interceptor.getLastRequest());
     }
@@ -232,7 +203,7 @@ public class FirebaseRemoteConfigClientImplTest {
 
   @Test
   public void testGetTemplateErrorWithRcError() {
-    for (int code : HTTP_ERRORS) {
+    for (int code : HTTP_STATUS_CODES) {
       response.setStatusCode(code).setContent(
               "{\"error\": {\"status\": \"INVALID_ARGUMENT\", "
                       + "\"message\": \"[INVALID_ARGUMENT]: test error\"}}");
@@ -243,23 +214,6 @@ public class FirebaseRemoteConfigClientImplTest {
       } catch (FirebaseRemoteConfigException error) {
         checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT,
                 RemoteConfigErrorCode.INVALID_ARGUMENT, "[INVALID_ARGUMENT]: test error");
-      }
-      checkGetRequestHeader(interceptor.getLastRequest());
-    }
-  }
-
-  @Test
-  public void testGetTemplateErrorWithDetailsAndNoCode() {
-    for (int code : HTTP_ERRORS) {
-      response.setStatusCode(code).setContent(
-              "{\"error\": {\"status\": \"INVALID_ARGUMENT\", "
-                      + "\"message\": \"test error\"}}");
-
-      try {
-        client.getTemplate();
-        fail("No error thrown for HTTP error");
-      } catch (FirebaseRemoteConfigException error) {
-        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT);
       }
       checkGetRequestHeader(interceptor.getLastRequest());
     }
@@ -280,11 +234,6 @@ public class FirebaseRemoteConfigClientImplTest {
     fullyPopulatedBuilder().setRequestFactory(null).build();
   }
 
-  @Test(expected = NullPointerException.class)
-  public void testBuilderNullChildRequestFactory() {
-    fullyPopulatedBuilder().setChildRequestFactory(null).build();
-  }
-
   @Test
   public void testFromApp() throws IOException {
     FirebaseOptions options = FirebaseOptions.builder()
@@ -296,16 +245,12 @@ public class FirebaseRemoteConfigClientImplTest {
     try {
       FirebaseRemoteConfigClientImpl client = FirebaseRemoteConfigClientImpl.fromApp(app);
 
-      assertEquals(TEST_RC_URL, client.getRcSendUrl());
+      assertEquals(TEST_REMOTE_CONFIG_URL, client.getRemoteConfigUrl());
       assertSame(options.getJsonFactory(), client.getJsonFactory());
 
       HttpRequest request = client.getRequestFactory().buildGetRequest(
               new GenericUrl("https://example.com"));
       assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
-
-      request = client.getChildRequestFactory().buildGetRequest(
-              new GenericUrl("https://example.com"));
-      assertNull(request.getHeaders().getAuthorization());
     } finally {
       app.delete();
     }
@@ -321,7 +266,6 @@ public class FirebaseRemoteConfigClientImplTest {
             .setProjectId("test-project")
             .setJsonFactory(Utils.getDefaultJsonFactory())
             .setRequestFactory(transport.createRequestFactory())
-            .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory())
             .setResponseInterceptor(interceptor)
             .build();
   }
@@ -332,7 +276,6 @@ public class FirebaseRemoteConfigClientImplTest {
             .setProjectId("test-project")
             .setJsonFactory(Utils.getDefaultJsonFactory())
             .setRequestFactory(transport.createRequestFactory())
-            .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory())
             .build();
   }
 
@@ -340,23 +283,16 @@ public class FirebaseRemoteConfigClientImplTest {
     return FirebaseRemoteConfigClientImpl.builder()
             .setProjectId("test-project")
             .setJsonFactory(Utils.getDefaultJsonFactory())
-            .setRequestFactory(Utils.getDefaultTransport().createRequestFactory())
-            .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory());
+            .setRequestFactory(Utils.getDefaultTransport().createRequestFactory());
   }
 
   private void checkGetRequestHeader(HttpRequest request) {
     assertEquals("GET", request.getRequestMethod());
-    assertEquals(TEST_RC_URL, request.getUrl().toString());
+    assertEquals(TEST_REMOTE_CONFIG_URL, request.getUrl().toString());
     HttpHeaders headers = request.getHeaders();
     assertEquals("2", headers.get("X-GOOG-API-FORMAT-VERSION"));
     assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
-    assertEquals("gzip", headers.getFirstHeaderStringValue("Accept-Encoding"));
-  }
-
-  private void checkExceptionFromHttpResponse(
-          FirebaseRemoteConfigException error,
-          ErrorCode expectedCode) {
-    checkExceptionFromHttpResponse(error, expectedCode, null, "test error");
+    assertEquals("gzip", headers.getAcceptEncoding());
   }
 
   private void checkExceptionFromHttpResponse(
