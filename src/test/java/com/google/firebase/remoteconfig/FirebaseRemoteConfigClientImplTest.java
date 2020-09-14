@@ -89,7 +89,7 @@ public class FirebaseRemoteConfigClientImplTest {
     checkGetRequestHeader(interceptor.getLastRequest());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = IllegalStateException.class)
   public void testGetTemplateWithInvalidEtags() throws FirebaseRemoteConfigException {
     // ETag does not exist
     response.setContent(MOCK_TEMPLATE_RESPONSE);
@@ -290,7 +290,6 @@ public class FirebaseRemoteConfigClientImplTest {
     assertEquals("GET", request.getRequestMethod());
     assertEquals(TEST_REMOTE_CONFIG_URL, request.getUrl().toString());
     HttpHeaders headers = request.getHeaders();
-    assertEquals("2", headers.get("X-GOOG-API-FORMAT-VERSION"));
     assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
     assertEquals("gzip", headers.getAcceptEncoding());
   }

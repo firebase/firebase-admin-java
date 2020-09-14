@@ -24,6 +24,8 @@ import com.google.firebase.internal.Nullable;
 import com.google.firebase.remoteconfig.RemoteConfigErrorCode;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * The DTO for parsing error responses from the Remote Config service.
@@ -41,14 +43,6 @@ public final class RemoteConfigServiceErrorResponse extends GenericJson {
   @Key("error")
   private Map<String, Object> error;
 
-  public String getStatus() {
-    if (error == null) {
-      return null;
-    }
-
-    return (String) error.get("status");
-  }
-
   @Nullable
   public RemoteConfigErrorCode getRemoteConfigErrorCode() {
     if (error == null) {
@@ -60,9 +54,9 @@ public final class RemoteConfigServiceErrorResponse extends GenericJson {
       return null;
     }
 
-    int separator = message.indexOf(':');
-    if (separator != -1) {
-      String errorCode = message.substring(0, separator).replaceAll("\\[|\\]", "");
+    Matcher errorMatcher = Pattern.compile("^\\[(\\w+)\\]:.*$").matcher(message);
+    if (errorMatcher.find()) {
+      String errorCode = errorMatcher.group(1);
       return RC_ERROR_CODES.get(errorCode);
     }
 

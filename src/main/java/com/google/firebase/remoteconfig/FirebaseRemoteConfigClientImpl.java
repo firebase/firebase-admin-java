@@ -18,6 +18,7 @@ package com.google.firebase.remoteconfig;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseInterceptor;
@@ -49,7 +50,6 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
 
   private static final Map<String, String> COMMON_HEADERS =
           ImmutableMap.of(
-                  "X-GOOG-API-FORMAT-VERSION", "2",
                   "X-Firebase-Client", "fire-admin-java/" + SdkUtils.getVersion(),
                   // There is a known issue in which the ETag is not properly returned in cases
                   // where the request does not specify a compression type. Currently, it is
@@ -95,17 +95,20 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
             .addAllHeaders(COMMON_HEADERS);
     IncomingHttpResponse response = httpClient.send(request);
     RemoteConfigTemplate parsed = httpClient.parse(response, RemoteConfigTemplate.class);
+    parsed.setETag(getETag(response));
+    return parsed;
+  }
 
+  private String getETag(IncomingHttpResponse response) {
     List<String> etagList = (List<String>) response.getHeaders().get("etag");
-    checkArgument(!(etagList == null || etagList.isEmpty()),
+    checkState(etagList != null && !etagList.isEmpty(),
             "ETag header is not available in the server response.");
 
     String etag = etagList.get(0);
-    checkArgument(!Strings.isNullOrEmpty(etag),
+    checkState(!Strings.isNullOrEmpty(etag),
             "ETag header is not available in the server response.");
 
-    parsed.setETag(etag);
-    return parsed;
+    return etag;
   }
 
   static FirebaseRemoteConfigClientImpl fromApp(FirebaseApp app) {
