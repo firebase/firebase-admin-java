@@ -40,6 +40,8 @@ public final class RemoteConfigServiceErrorResponse extends GenericJson {
                   .put("INVALID_ARGUMENT", RemoteConfigErrorCode.INVALID_ARGUMENT)
                   .build();
 
+  private static final Pattern RC_ERROR_CODE_PATTERN = Pattern.compile("^\\[(\\w+)\\]:.*$");
+
   @Key("error")
   private Map<String, Object> error;
 
@@ -54,7 +56,7 @@ public final class RemoteConfigServiceErrorResponse extends GenericJson {
       return null;
     }
 
-    Matcher errorMatcher = Pattern.compile("^\\[(\\w+)\\]:.*$").matcher(message);
+    Matcher errorMatcher = RC_ERROR_CODE_PATTERN.matcher(message);
     if (errorMatcher.find()) {
       String errorCode = errorMatcher.group(1);
       return RC_ERROR_CODES.get(errorCode);
