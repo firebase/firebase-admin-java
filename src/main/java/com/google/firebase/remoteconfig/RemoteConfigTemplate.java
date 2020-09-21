@@ -27,7 +27,8 @@ public final class RemoteConfigTemplate {
     return this.etag;
   }
 
-  void setETag(String etag) {
+  RemoteConfigTemplate setETag(String etag) {
     this.etag = etag;
+    return this;
   }
 }
