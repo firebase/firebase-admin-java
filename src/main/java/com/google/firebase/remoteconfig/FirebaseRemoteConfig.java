@@ -20,8 +20,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFuture;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.CallableOperation;
@@ -37,11 +35,16 @@ public final class FirebaseRemoteConfig {
 
   private static final String SERVICE_ID = FirebaseRemoteConfig.class.getName();
   private final FirebaseApp app;
-  private final Supplier<? extends FirebaseRemoteConfigClient> remoteConfigClient;
+  private final FirebaseRemoteConfigClient remoteConfigClient;
 
-  private FirebaseRemoteConfig(Builder builder) {
-    this.app = checkNotNull(builder.firebaseApp);
-    this.remoteConfigClient = Suppliers.memoize(builder.remoteConfigClient);
+  @VisibleForTesting
+  FirebaseRemoteConfig(FirebaseApp app, FirebaseRemoteConfigClient client) {
+    this.app = checkNotNull(app);
+    this.remoteConfigClient = checkNotNull(client);
+  }
+
+  private FirebaseRemoteConfig(FirebaseApp app) {
+    this(app, FirebaseRemoteConfigClientImpl.fromApp(app));
   }
 
   /**
@@ -99,23 +102,11 @@ public final class FirebaseRemoteConfig {
 
   @VisibleForTesting
   FirebaseRemoteConfigClient getRemoteConfigClient() {
-    return remoteConfigClient.get();
+    return remoteConfigClient;
   }
 
   private static FirebaseRemoteConfig fromApp(final FirebaseApp app) {
-    return FirebaseRemoteConfig.builder()
-            .setFirebaseApp(app)
-            .setRemoteConfigClient(new Supplier<FirebaseRemoteConfigClient>() {
-              @Override
-              public FirebaseRemoteConfigClient get() {
-                return FirebaseRemoteConfigClientImpl.fromApp(app);
-              }
-            })
-            .build();
-  }
-
-  static Builder builder() {
-    return new Builder();
+    return new FirebaseRemoteConfig(app);
   }
 
   private static class FirebaseRemoteConfigService extends FirebaseService<FirebaseRemoteConfig> {
@@ -129,29 +120,6 @@ public final class FirebaseRemoteConfig {
       // NOTE: We don't explicitly tear down anything here, but public methods of
       // FirebaseRemoteConfig will now fail because calls to getOptions() and getToken()
       // will hit FirebaseApp, which will throw once the app is deleted.
-    }
-  }
-
-  static class Builder {
-
-    private FirebaseApp firebaseApp;
-    private Supplier<? extends FirebaseRemoteConfigClient> remoteConfigClient;
-
-    private Builder() { }
-
-    FirebaseRemoteConfig.Builder setFirebaseApp(FirebaseApp firebaseApp) {
-      this.firebaseApp = firebaseApp;
-      return this;
-    }
-
-    FirebaseRemoteConfig.Builder setRemoteConfigClient(
-            Supplier<? extends FirebaseRemoteConfigClient> remoteConfigClient) {
-      this.remoteConfigClient = remoteConfigClient;
-      return this;
-    }
-
-    FirebaseRemoteConfig build() {
-      return new FirebaseRemoteConfig(this);
     }
   }
 }

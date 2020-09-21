@@ -17,12 +17,11 @@
 package com.google.firebase.remoteconfig;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -33,6 +32,7 @@ import org.junit.After;
 import org.junit.Test;
 
 public class FirebaseRemoteConfigTest {
+
   private static final FirebaseOptions TEST_OPTIONS = FirebaseOptions.builder()
           .setCredentials(new MockGoogleCredentials("test-token"))
           .setProjectId("test-project")
@@ -77,14 +77,16 @@ public class FirebaseRemoteConfigTest {
   }
 
   @Test
-  public void testPostDeleteApp() {
+  public void testAppDelete() {
     FirebaseApp app = FirebaseApp.initializeApp(TEST_OPTIONS, "custom-app");
+    FirebaseRemoteConfig remoteConfig = FirebaseRemoteConfig.getInstance(app);
+    assertNotNull(remoteConfig);
 
     app.delete();
 
     try {
       FirebaseRemoteConfig.getInstance(app);
-      fail("No error thrown for deleted app");
+      fail("No error thrown when getting remote config instance after deleting app");
     } catch (IllegalStateException expected) {
       // expected
     }
@@ -96,10 +98,9 @@ public class FirebaseRemoteConfigTest {
             .setCredentials(new MockGoogleCredentials("test-token"))
             .build();
     FirebaseApp.initializeApp(options);
-    FirebaseRemoteConfig remoteConfig = FirebaseRemoteConfig.getInstance();
 
     try {
-      remoteConfig.getRemoteConfigClient();
+      FirebaseRemoteConfig.getInstance();
       fail("No error thrown for missing project ID");
     } catch (IllegalArgumentException expected) {
       String message = "Project ID is required to access Remote Config service. Use a service "
@@ -116,7 +117,7 @@ public class FirebaseRemoteConfigTest {
   public void testGetTemplate() throws FirebaseRemoteConfigException {
     MockRemoteConfigClient client = MockRemoteConfigClient.fromTemplate(
             new RemoteConfigTemplate().setETag(TEST_ETAG));
-    FirebaseRemoteConfig remoteConfig = getRemoteConfig(Suppliers.ofInstance(client));
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
 
     RemoteConfigTemplate template = remoteConfig.getTemplate();
 
@@ -126,7 +127,7 @@ public class FirebaseRemoteConfigTest {
   @Test
   public void testGetTemplateFailure() {
     MockRemoteConfigClient client = MockRemoteConfigClient.fromException(TEST_EXCEPTION);
-    FirebaseRemoteConfig remoteConfig = getRemoteConfig(Suppliers.ofInstance(client));
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
 
     try {
       remoteConfig.getTemplate();
@@ -139,7 +140,7 @@ public class FirebaseRemoteConfigTest {
   public void testGetTemplateAsync() throws Exception {
     MockRemoteConfigClient client = MockRemoteConfigClient.fromTemplate(
             new RemoteConfigTemplate().setETag(TEST_ETAG));
-    FirebaseRemoteConfig remoteConfig = getRemoteConfig(Suppliers.ofInstance(client));
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
 
     RemoteConfigTemplate template = remoteConfig.getTemplateAsync().get();
 
@@ -149,7 +150,7 @@ public class FirebaseRemoteConfigTest {
   @Test
   public void testGetTemplateAsyncFailure() throws InterruptedException {
     MockRemoteConfigClient client = MockRemoteConfigClient.fromException(TEST_EXCEPTION);
-    FirebaseRemoteConfig remoteConfig = getRemoteConfig(Suppliers.ofInstance(client));
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
 
     try {
       remoteConfig.getTemplateAsync().get();
@@ -158,12 +159,8 @@ public class FirebaseRemoteConfigTest {
     }
   }
 
-  private FirebaseRemoteConfig getRemoteConfig(
-          Supplier<? extends FirebaseRemoteConfigClient> supplier) {
+  private FirebaseRemoteConfig getRemoteConfig(FirebaseRemoteConfigClient client) {
     FirebaseApp app = FirebaseApp.initializeApp(TEST_OPTIONS);
-    return FirebaseRemoteConfig.builder()
-            .setFirebaseApp(app)
-            .setRemoteConfigClient(supplier)
-            .build();
+    return new FirebaseRemoteConfig(app, client);
   }
 }
