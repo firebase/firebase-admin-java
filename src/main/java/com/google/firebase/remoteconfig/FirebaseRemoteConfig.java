@@ -105,14 +105,10 @@ public final class FirebaseRemoteConfig {
     return remoteConfigClient;
   }
 
-  private static FirebaseRemoteConfig fromApp(final FirebaseApp app) {
-    return new FirebaseRemoteConfig(app);
-  }
-
   private static class FirebaseRemoteConfigService extends FirebaseService<FirebaseRemoteConfig> {
 
     FirebaseRemoteConfigService(FirebaseApp app) {
-      super(SERVICE_ID, FirebaseRemoteConfig.fromApp(app));
+      super(SERVICE_ID, new FirebaseRemoteConfig(app));
     }
 
     @Override
