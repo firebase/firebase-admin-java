@@ -95,8 +95,7 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
             .addAllHeaders(COMMON_HEADERS);
     IncomingHttpResponse response = httpClient.send(request);
     RemoteConfigTemplate parsed = httpClient.parse(response, RemoteConfigTemplate.class);
-    parsed.setETag(getETag(response));
-    return parsed;
+    return parsed.setETag(getETag(response));
   }
 
   private String getETag(IncomingHttpResponse response) {

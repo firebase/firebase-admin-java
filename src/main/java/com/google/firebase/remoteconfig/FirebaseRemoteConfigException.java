@@ -16,6 +16,7 @@
 
 package com.google.firebase.remoteconfig;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.IncomingHttpResponse;
@@ -29,6 +30,11 @@ import com.google.firebase.internal.Nullable;
 public final class FirebaseRemoteConfigException extends FirebaseException {
 
   private final RemoteConfigErrorCode errorCode;
+
+  @VisibleForTesting
+  FirebaseRemoteConfigException(@NonNull ErrorCode code, @NonNull String message) {
+    this(code, message, null, null, null);
+  }
 
   public FirebaseRemoteConfigException(
           @NonNull ErrorCode errorCode,
