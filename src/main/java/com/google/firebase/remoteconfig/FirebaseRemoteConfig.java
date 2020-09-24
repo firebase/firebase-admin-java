@@ -28,8 +28,8 @@ import com.google.firebase.internal.FirebaseService;
 /**
  * This class is the entry point for all server-side Firebase Remote Config actions.
  *
- * <p>You can get an instance of FirebaseRemoteConfig via {@link #getInstance(FirebaseApp)}, and
- * then use it to manage Remote Config templates.
+ * <p>You can get an instance of {@link FirebaseRemoteConfig} via {@link #getInstance(FirebaseApp)},
+ * and then use it to manage Remote Config templates.
  */
 public final class FirebaseRemoteConfig {
 
@@ -83,7 +83,7 @@ public final class FirebaseRemoteConfig {
   /**
    * Similar to {@link #getTemplate()} but performs the operation asynchronously.
    *
-   * @return An {@code ApiFuture} that will complete with a {@link RemoteConfigTemplate} when
+   * @return An {@code ApiFuture} that completes with a {@link RemoteConfigTemplate} when
    *      the template is available.
    */
   public ApiFuture<RemoteConfigTemplate> getTemplateAsync() {
