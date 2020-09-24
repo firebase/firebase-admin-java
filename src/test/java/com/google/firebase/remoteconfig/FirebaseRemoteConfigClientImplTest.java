@@ -45,6 +45,7 @@ import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -63,7 +64,33 @@ public class FirebaseRemoteConfigClientImplTest {
           404, ErrorCode.NOT_FOUND,
           500, ErrorCode.INTERNAL);
 
-  private static final String MOCK_TEMPLATE_RESPONSE = "{\"conditions\": [], \"parameters\": {}}";
+  private static final String MOCK_TEMPLATE_RESPONSE = "{"
+          + "  \"conditions\": [\n"
+          + "    {\n"
+          + "      \"name\": \"ios_en\",\n"
+          + "      \"expression\": \"device.os == 'ios' && device.country in ['us', 'uk']\",\n"
+          + "      \"tagColor\": \"INDIGO\"\n"
+          + "    }\n"
+          + "  ],\n"
+          + "  \"parameters\": {\n"
+          + "    \"welcome_message_text\": {\n"
+          + "      \"defaultValue\": {\n"
+          + "        \"value\": \"welcome to app\"\n"
+          + "      },\n"
+          + "      \"conditionalValues\": {\n"
+          + "        \"ios_en\": {\n"
+          + "          \"value\": \"welcome to app en\"\n"
+          + "        }\n"
+          + "      },\n"
+          + "      \"description\": \"Text for welcome message!\"\n"
+          + "    },\n"
+          + "    \"header_text\": {\n"
+          + "      \"defaultValue\": {\n"
+          + "        \"useInAppDefault\": true\n"
+          + "      }\n"
+          + "    }\n"
+          + "  }\n"
+          + "}";
 
   private static final String TEST_ETAG = "etag-123456789012-1";
 
@@ -86,6 +113,10 @@ public class FirebaseRemoteConfigClientImplTest {
     RemoteConfigTemplate template = client.getTemplate();
 
     assertEquals(TEST_ETAG, template.getETag());
+    Map<String, RemoteConfigParameter> parameters = template.getParameters();
+    assertEquals(2, parameters.size());
+    assertEquals(true, parameters.containsKey("welcome_message_text"));
+    assertEquals(true, parameters.containsKey("header_text"));
     checkGetRequestHeader(interceptor.getLastRequest());
   }
 

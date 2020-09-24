@@ -17,18 +17,35 @@
 package com.google.firebase.remoteconfig;
 
 import com.google.api.client.util.Key;
+import com.google.common.collect.ImmutableMap;
+import com.google.firebase.database.util.JsonMapper;
+import com.google.firebase.internal.HttpRequestInfo;
+
+import java.io.IOException;
+import java.util.Map;
 
 public final class RemoteConfigTemplate {
 
-  @Key("etag")
   private String etag;
+
+  @Key("parameters")
+  private Map<String, RemoteConfigParameter> parameters;
 
   public String getETag() {
     return this.etag;
   }
 
-  RemoteConfigTemplate setETag(String etag) {
+  public Map<String, RemoteConfigParameter> getParameters() {
+    return this.parameters;
+  }
+
+  public RemoteConfigTemplate setETag(String etag) {
     this.etag = etag;
+    return this;
+  }
+
+  public RemoteConfigTemplate setParameters(Map<String, RemoteConfigParameter> parameters) {
+    this.parameters = parameters;
     return this;
   }
 }
