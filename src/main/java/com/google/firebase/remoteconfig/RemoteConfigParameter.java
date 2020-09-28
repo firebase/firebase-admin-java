@@ -34,10 +34,12 @@ public final class RemoteConfigParameter {
   private Map<String, ParameterValueResponse> conditionalResponseValues;
 
   private Map<String, RemoteConfigParameterValue> conditionalValues;
+  private boolean conditionalValuesModified;
 
   public RemoteConfigParameter() {
     conditionalResponseValues = new HashMap<>();
     conditionalValues = null;
+    conditionalValuesModified = false;
   }
 
   public RemoteConfigParameterValue getDefaultValue() {
@@ -52,6 +54,7 @@ public final class RemoteConfigParameter {
     if (conditionalValues != null) {
       return conditionalValues;
     }
+    conditionalValuesModified = true;
     conditionalValues = new HashMap<>();
     for (Map.Entry<String, ParameterValueResponse> entry : conditionalResponseValues.entrySet()) {
       conditionalValues.put(entry.getKey(), entry.getValue().toValue());
@@ -72,10 +75,14 @@ public final class RemoteConfigParameter {
   public RemoteConfigParameter setConditionalValues(
           Map<String, RemoteConfigParameterValue> conditionalValues) {
     this.conditionalValues = conditionalValues;
+    conditionalValuesModified = true;
     return this;
   }
 
   void wrapForTransport() {
+    if (!conditionalValuesModified) {
+      return;
+    }
     conditionalResponseValues.clear();
     if (conditionalValues == null) {
       return;
