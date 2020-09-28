@@ -35,7 +35,7 @@ public final class ExplicitParameterValue extends RemoteConfigParameterValue {
   }
 
   @Override
-  public ParameterValueResponse toResponse() {
+  ParameterValueResponse toResponse() {
     return ParameterValueResponse.ofValue(this.value);
   }
 }

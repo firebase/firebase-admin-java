@@ -17,11 +17,8 @@
 package com.google.firebase.remoteconfig;
 
 import com.google.api.client.util.Key;
-import com.google.common.collect.ImmutableMap;
-import com.google.firebase.database.util.JsonMapper;
-import com.google.firebase.internal.HttpRequestInfo;
 
-import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class RemoteConfigTemplate {
@@ -30,6 +27,10 @@ public final class RemoteConfigTemplate {
 
   @Key("parameters")
   private Map<String, RemoteConfigParameter> parameters;
+
+  public RemoteConfigTemplate() {
+    parameters = new HashMap<>();
+  }
 
   public String getETag() {
     return this.etag;
@@ -46,6 +47,13 @@ public final class RemoteConfigTemplate {
 
   public RemoteConfigTemplate setParameters(Map<String, RemoteConfigParameter> parameters) {
     this.parameters = parameters;
+    return this;
+  }
+
+  RemoteConfigTemplate wrapForTransport() {
+    for (Map.Entry<String, RemoteConfigParameter> entry : parameters.entrySet()) {
+      entry.getValue().wrapForTransport();
+    }
     return this;
   }
 }

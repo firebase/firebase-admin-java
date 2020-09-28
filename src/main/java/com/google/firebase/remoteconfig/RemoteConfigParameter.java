@@ -31,26 +31,36 @@ public final class RemoteConfigParameter {
   private String description;
 
   @Key("conditionalValues")
-  private Map<String, ParameterValueResponse> conditionalValues;
+  private Map<String, ParameterValueResponse> conditionalResponseValues;
+
+  private Map<String, RemoteConfigParameterValue> conditionalValues;
+
+  public RemoteConfigParameter() {
+    conditionalResponseValues = new HashMap<>();
+    conditionalValues = null;
+  }
 
   public RemoteConfigParameterValue getDefaultValue() {
     return defaultValue.toValue();
   }
 
   public String getDescription() {
-    return this.description;
+    return description;
   }
 
   public Map<String, RemoteConfigParameterValue> getConditionalValues() {
-    Map<String, RemoteConfigParameterValue> convertedMap = new HashMap<>();
-    for (Map.Entry<String, ParameterValueResponse> entry : this.conditionalValues.entrySet()) {
-      convertedMap.put(entry.getKey(), entry.getValue().toValue());
+    if (conditionalValues != null) {
+      return conditionalValues;
     }
-    return convertedMap;
+    conditionalValues = new HashMap<>();
+    for (Map.Entry<String, ParameterValueResponse> entry : conditionalResponseValues.entrySet()) {
+      conditionalValues.put(entry.getKey(), entry.getValue().toValue());
+    }
+    return conditionalValues;
   }
 
   public RemoteConfigParameter setDefaultValue(RemoteConfigParameterValue value) {
-    this.defaultValue = value.toResponse();
+    defaultValue = value.toResponse();
     return this;
   }
 
@@ -61,11 +71,17 @@ public final class RemoteConfigParameter {
 
   public RemoteConfigParameter setConditionalValues(
           Map<String, RemoteConfigParameterValue> conditionalValues) {
-    Map<String, ParameterValueResponse> convertedMap = new HashMap<>();
-    for (Map.Entry<String, RemoteConfigParameterValue> entry : conditionalValues.entrySet()) {
-      convertedMap.put(entry.getKey(), entry.getValue().toResponse());
-    }
-    this.conditionalValues = convertedMap;
+    this.conditionalValues = conditionalValues;
     return this;
+  }
+
+  void wrapForTransport() {
+    conditionalResponseValues.clear();
+    if (conditionalValues == null) {
+      return;
+    }
+    for (Map.Entry<String, RemoteConfigParameterValue> entry : conditionalValues.entrySet()) {
+      conditionalResponseValues.put(entry.getKey(), entry.getValue().toResponse());
+    }
   }
 }

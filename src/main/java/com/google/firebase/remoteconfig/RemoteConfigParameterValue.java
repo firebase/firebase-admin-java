@@ -19,5 +19,5 @@ package com.google.firebase.remoteconfig;
 import com.google.firebase.remoteconfig.internal.ParameterValueResponse;
 
 public abstract class RemoteConfigParameterValue {
-  public abstract ParameterValueResponse toResponse();
+  abstract ParameterValueResponse toResponse();
 }

@@ -31,7 +31,7 @@ public final class InAppDefaultValue extends RemoteConfigParameterValue {
   }
 
   @Override
-  public ParameterValueResponse toResponse() {
+  ParameterValueResponse toResponse() {
     return ParameterValueResponse.ofInAppDefaultValue();
   }
 }
