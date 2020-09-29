@@ -30,6 +30,7 @@ public final class RemoteConfigParameter {
 
   public RemoteConfigParameter() {
     conditionalValues = new HashMap<>();
+    defaultValue = ExplicitParameterValue.of("");
   }
 
   public RemoteConfigParameterValue getDefaultValue() {
@@ -65,7 +66,7 @@ public final class RemoteConfigParameter {
     for (Map.Entry<String, RemoteConfigParameterValue> entry : conditionalValues.entrySet()) {
       conditionalResponseValues.put(entry.getKey(), entry.getValue().toResponseType());
     }
-    return new ParameterResponse(this.defaultValue.toResponseType(), this.description,
+    return new ParameterResponse(defaultValue.toResponseType(), description,
             conditionalResponseValues);
   }
 }
