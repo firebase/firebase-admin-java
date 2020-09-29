@@ -45,7 +45,6 @@ import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -115,8 +114,24 @@ public class FirebaseRemoteConfigClientImplTest {
     assertEquals(TEST_ETAG, template.getETag());
     Map<String, RemoteConfigParameter> parameters = template.getParameters();
     assertEquals(2, parameters.size());
-    assertEquals(true, parameters.containsKey("welcome_message_text"));
-    assertEquals(true, parameters.containsKey("header_text"));
+    assertTrue(parameters.containsKey("welcome_message_text"));
+    assertTrue(parameters.containsKey("header_text"));
+    Map<String, RemoteConfigParameterValue> conditionalValues = parameters
+            .get("welcome_message_text").getConditionalValues();
+    assertEquals(1, conditionalValues.size());
+    assertTrue(conditionalValues.containsKey("ios_en"));
+    ExplicitParameterValue value = (ExplicitParameterValue) conditionalValues.get("ios_en");
+    assertEquals("welcome to app en", value.getValue());
+    checkGetRequestHeader(interceptor.getLastRequest());
+
+    // Check empty template
+    response.addHeader("etag", TEST_ETAG);
+    response.setContent("{}");
+
+    template = client.getTemplate();
+
+    assertEquals(TEST_ETAG, template.getETag());
+    assertEquals(0, template.getParameters().size());
     checkGetRequestHeader(interceptor.getLastRequest());
   }
 

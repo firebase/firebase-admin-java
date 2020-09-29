@@ -16,7 +16,7 @@
 
 package com.google.firebase.remoteconfig;
 
-import com.google.api.client.util.Key;
+import com.google.firebase.remoteconfig.internal.TemplateResponse;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,8 +24,6 @@ import java.util.Map;
 public final class RemoteConfigTemplate {
 
   private String etag;
-
-  @Key("parameters")
   private Map<String, RemoteConfigParameter> parameters;
 
   public RemoteConfigTemplate() {
@@ -50,10 +48,11 @@ public final class RemoteConfigTemplate {
     return this;
   }
 
-  RemoteConfigTemplate wrapForTransport() {
+  TemplateResponse toResponseType() {
+    Map<String, TemplateResponse.ParameterResponse> parameterResponses = new HashMap<>();
     for (Map.Entry<String, RemoteConfigParameter> entry : parameters.entrySet()) {
-      entry.getValue().wrapForTransport();
+      parameterResponses.put(entry.getKey(), entry.getValue().toResponseType());
     }
-    return this;
+    return new TemplateResponse(parameterResponses);
   }
 }

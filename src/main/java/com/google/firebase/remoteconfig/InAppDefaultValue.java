@@ -16,7 +16,7 @@
 
 package com.google.firebase.remoteconfig;
 
-import com.google.firebase.remoteconfig.internal.ParameterValueResponse;
+import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
 
 public final class InAppDefaultValue extends RemoteConfigParameterValue {
 
@@ -31,7 +31,7 @@ public final class InAppDefaultValue extends RemoteConfigParameterValue {
   }
 
   @Override
-  ParameterValueResponse toResponse() {
+  ParameterValueResponse toResponseType() {
     return ParameterValueResponse.ofInAppDefaultValue();
   }
 }

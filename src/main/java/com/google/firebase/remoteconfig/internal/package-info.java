@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.remoteconfig;
-
-import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
-
-public abstract class RemoteConfigParameterValue {
-  abstract ParameterValueResponse toResponseType();
-}
+/**
+ * @hide
+ */
+package com.google.firebase.remoteconfig.internal;

@@ -16,7 +16,7 @@
 
 package com.google.firebase.remoteconfig;
 
-import com.google.firebase.remoteconfig.internal.ParameterValueResponse;
+import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
 
 public final class ExplicitParameterValue extends RemoteConfigParameterValue {
 
@@ -35,7 +35,7 @@ public final class ExplicitParameterValue extends RemoteConfigParameterValue {
   }
 
   @Override
-  ParameterValueResponse toResponse() {
+  ParameterValueResponse toResponseType() {
     return ParameterValueResponse.ofValue(this.value);
   }
 }

@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.json.JsonFactory;
@@ -36,6 +37,7 @@ import com.google.firebase.internal.ErrorHandlingHttpClient;
 import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.remoteconfig.internal.RemoteConfigServiceErrorResponse;
+import com.google.firebase.remoteconfig.internal.TemplateResponse;
 
 import java.io.IOException;
 import java.util.List;
@@ -94,8 +96,9 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
     HttpRequestInfo request = HttpRequestInfo.buildGetRequest(remoteConfigUrl)
             .addAllHeaders(COMMON_HEADERS);
     IncomingHttpResponse response = httpClient.send(request);
-    RemoteConfigTemplate parsed = httpClient.parse(response, RemoteConfigTemplate.class);
-    return parsed.setETag(getETag(response));
+    TemplateResponse templateResponse = httpClient.parse(response, TemplateResponse.class);
+    RemoteConfigTemplate template = templateResponse.toPublicType();
+    return template.setETag(getETag(response));
   }
 
   private String getETag(IncomingHttpResponse response) {
