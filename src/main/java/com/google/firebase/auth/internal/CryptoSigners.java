@@ -65,13 +65,13 @@ public class CryptoSigners {
 
   /**
    * @ {@link CryptoSigner} implementation that uses the
-   * <a href="https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts/signBlob">
-   * Google IAM service</a> to sign data.
+   * <a href=https://cloud.google.com/iam/docs/reference/credentials/rest/v1/projects.serviceAccounts/signBlob">
+   * Google IAMCredentials service</a> to sign data.
    */
   static class IAMCryptoSigner implements CryptoSigner {
 
     private static final String IAM_SIGN_BLOB_URL =
-        "https://iam.googleapis.com/v1/projects/-/serviceAccounts/%s:signBlob";
+        "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/%s:signBlob";
 
     private final String serviceAccount;
     private final ErrorHandlingHttpClient<FirebaseAuthException> httpClient;
@@ -95,11 +95,11 @@ public class CryptoSigners {
     @Override
     public byte[] sign(byte[] payload) throws FirebaseAuthException {
       String encodedPayload = BaseEncoding.base64().encode(payload);
-      Map<String, String> content = ImmutableMap.of("bytesToSign", encodedPayload);
+      Map<String, String> content = ImmutableMap.of("payload", encodedPayload);
       String encodedUrl = String.format(IAM_SIGN_BLOB_URL, serviceAccount);
       HttpRequestInfo requestInfo = HttpRequestInfo.buildJsonPostRequest(encodedUrl, content);
       GenericJson parsed = httpClient.sendAndParse(requestInfo, GenericJson.class);
-      return BaseEncoding.base64().decode((String) parsed.get("signature"));
+      return BaseEncoding.base64().decode((String) parsed.get("signedBlob"));
     }
 
     @Override

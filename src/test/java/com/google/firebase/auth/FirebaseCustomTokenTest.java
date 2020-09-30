@@ -92,7 +92,7 @@ public class FirebaseCustomTokenTest {
   public void testCreateCustomTokenWithoutServiceAccountCredentials() throws Exception {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
     String content = Utils.getDefaultJsonFactory().toString(
-        ImmutableMap.of("signature", BaseEncoding.base64().encode("test-signature".getBytes())));
+        ImmutableMap.of("signedBlob", BaseEncoding.base64().encode("test-signature".getBytes())));
     response.setContent(content);
     MockHttpTransport transport = new MultiRequestMockHttpTransport(ImmutableList.of(response));
 
@@ -117,7 +117,7 @@ public class FirebaseCustomTokenTest {
   @Test
   public void testCreateCustomTokenWithDiscoveredServiceAccount() throws Exception {
     String content = Utils.getDefaultJsonFactory().toString(
-        ImmutableMap.of("signature", BaseEncoding.base64().encode("test-signature".getBytes())));
+        ImmutableMap.of("signedBlob", BaseEncoding.base64().encode("test-signature".getBytes())));
     List<MockLowLevelHttpResponse> responses = ImmutableList.of(
         // Service account discovery response
         new MockLowLevelHttpResponse().setContent("test@service.account"),

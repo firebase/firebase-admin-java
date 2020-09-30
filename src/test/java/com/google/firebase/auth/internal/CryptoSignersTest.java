@@ -71,7 +71,7 @@ public class CryptoSignersTest {
   public void testIAMCryptoSigner() throws Exception {
     String signature = BaseEncoding.base64().encode("signed-bytes".getBytes());
     String response = Utils.getDefaultJsonFactory().toString(
-        ImmutableMap.of("signature", signature));
+        ImmutableMap.of("signedBlob", signature));
     MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(new MockLowLevelHttpResponse().setContent(response))
         .build();
@@ -84,7 +84,7 @@ public class CryptoSignersTest {
 
     byte[] data = signer.sign("foo".getBytes());
     assertArrayEquals("signed-bytes".getBytes(), data);
-    final String url = "https://iam.googleapis.com/v1/projects/-/serviceAccounts/"
+    final String url = "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/"
         + "test-service-account@iam.gserviceaccount.com:signBlob";
     assertEquals(url, interceptor.getResponse().getRequest().getUrl().toString());
   }
@@ -150,7 +150,7 @@ public class CryptoSignersTest {
   public void testMetadataService() throws Exception {
     String signature = BaseEncoding.base64().encode("signed-bytes".getBytes());
     String response = Utils.getDefaultJsonFactory().toString(
-        ImmutableMap.of("signature", signature));
+        ImmutableMap.of("signedBlob", signature));
     MockHttpTransport transport = new MultiRequestMockHttpTransport(
         ImmutableList.of(
             new MockLowLevelHttpResponse().setContent("metadata-server@iam.gserviceaccount.com"),
@@ -168,7 +168,7 @@ public class CryptoSignersTest {
 
     byte[] data = signer.sign("foo".getBytes());
     assertArrayEquals("signed-bytes".getBytes(), data);
-    final String url = "https://iam.googleapis.com/v1/projects/-/serviceAccounts/"
+    final String url = "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/"
         + "metadata-server@iam.gserviceaccount.com:signBlob";
     HttpRequest request = interceptor.getResponse().getRequest();
     assertEquals(url, request.getUrl().toString());
@@ -179,7 +179,7 @@ public class CryptoSignersTest {
   public void testExplicitServiceAccountEmail() throws Exception {
     String signature = BaseEncoding.base64().encode("signed-bytes".getBytes());
     String response = Utils.getDefaultJsonFactory().toString(
-        ImmutableMap.of("signature", signature));
+        ImmutableMap.of("signedBlob", signature));
 
     // Explicit service account should get precedence
     MockHttpTransport transport = new MultiRequestMockHttpTransport(
@@ -198,7 +198,7 @@ public class CryptoSignersTest {
 
     byte[] data = signer.sign("foo".getBytes());
     assertArrayEquals("signed-bytes".getBytes(), data);
-    final String url = "https://iam.googleapis.com/v1/projects/-/serviceAccounts/"
+    final String url = "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/"
         + "explicit-service-account@iam.gserviceaccount.com:signBlob";
     HttpRequest request = interceptor.getResponse().getRequest();
     assertEquals(url, request.getUrl().toString());
