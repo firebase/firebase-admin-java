@@ -17,8 +17,6 @@
 package com.google.firebase.remoteconfig.internal;
 
 import com.google.api.client.util.Key;
-import com.google.firebase.remoteconfig.ExplicitParameterValue;
-import com.google.firebase.remoteconfig.InAppDefaultValue;
 import com.google.firebase.remoteconfig.RemoteConfigParameter;
 import com.google.firebase.remoteconfig.RemoteConfigParameterValue;
 import com.google.firebase.remoteconfig.RemoteConfigTemplate;
@@ -27,6 +25,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * The DTO for parsing Remote Config template responses from the Remote Config service.
+ **/
 public final class TemplateResponse {
 
   @Key("parameters")
@@ -40,14 +41,17 @@ public final class TemplateResponse {
     this.parameters = parameters;
   }
 
-  public RemoteConfigTemplate toPublicType() {
+  public RemoteConfigTemplate toRemoteConfigTemplate() {
     Map<String, RemoteConfigParameter> parameterPublicTypes = new HashMap<>();
     for (Map.Entry<String, ParameterResponse> entry : parameters.entrySet()) {
-      parameterPublicTypes.put(entry.getKey(), entry.getValue().toPublicType());
+      parameterPublicTypes.put(entry.getKey(), entry.getValue().toRemoteConfigParameter());
     }
     return new RemoteConfigTemplate().setParameters(parameterPublicTypes);
   }
 
+  /**
+   * The DTO for parsing Remote Config parameter responses from the Remote Config service.
+   **/
   public static final class ParameterResponse {
 
     @Key("defaultValue")
@@ -70,16 +74,21 @@ public final class TemplateResponse {
       this.conditionalValues = conditionalValues;
     }
 
-    public RemoteConfigParameter toPublicType() {
+    public RemoteConfigParameter toRemoteConfigParameter() {
       Map<String, RemoteConfigParameterValue> conditionalPublicValues = new HashMap<>();
       for (Map.Entry<String, ParameterValueResponse> entry : conditionalValues.entrySet()) {
-        conditionalPublicValues.put(entry.getKey(), entry.getValue().toPublicType());
+        conditionalPublicValues
+                .put(entry.getKey(), entry.getValue().toRemoteConfigParameterValue());
       }
-      return new RemoteConfigParameter().setDefaultValue(defaultValue.toPublicType())
+      return new RemoteConfigParameter()
+              .setDefaultValue(defaultValue.toRemoteConfigParameterValue())
               .setDescription(description).setConditionalValues(conditionalPublicValues);
     }
   }
 
+  /**
+   * The DTO for parsing Remote Config parameter value responses from the Remote Config service.
+   **/
   public static final class ParameterValueResponse {
 
     @Key("value")
@@ -104,11 +113,11 @@ public final class TemplateResponse {
       return new ParameterValueResponse(null, true);
     }
 
-    public RemoteConfigParameterValue toPublicType() {
+    public RemoteConfigParameterValue toRemoteConfigParameterValue() {
       if (this.inAppDefaultValue != null && this.inAppDefaultValue) {
-        return InAppDefaultValue.getInstance();
+        return RemoteConfigParameterValue.inAppDefault();
       }
-      return ExplicitParameterValue.of(this.value);
+      return RemoteConfigParameterValue.of(this.value);
     }
   }
 }

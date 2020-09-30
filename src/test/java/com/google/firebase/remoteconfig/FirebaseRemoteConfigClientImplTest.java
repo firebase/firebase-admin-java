@@ -63,33 +63,8 @@ public class FirebaseRemoteConfigClientImplTest {
           404, ErrorCode.NOT_FOUND,
           500, ErrorCode.INTERNAL);
 
-  private static final String MOCK_TEMPLATE_RESPONSE = "{"
-          + "  \"conditions\": [\n"
-          + "    {\n"
-          + "      \"name\": \"ios_en\",\n"
-          + "      \"expression\": \"device.os == 'ios' && device.country in ['us', 'uk']\",\n"
-          + "      \"tagColor\": \"INDIGO\"\n"
-          + "    }\n"
-          + "  ],\n"
-          + "  \"parameters\": {\n"
-          + "    \"welcome_message_text\": {\n"
-          + "      \"defaultValue\": {\n"
-          + "        \"value\": \"welcome to app\"\n"
-          + "      },\n"
-          + "      \"conditionalValues\": {\n"
-          + "        \"ios_en\": {\n"
-          + "          \"value\": \"welcome to app en\"\n"
-          + "        }\n"
-          + "      },\n"
-          + "      \"description\": \"Text for welcome message!\"\n"
-          + "    },\n"
-          + "    \"header_text\": {\n"
-          + "      \"defaultValue\": {\n"
-          + "        \"useInAppDefault\": true\n"
-          + "      }\n"
-          + "    }\n"
-          + "  }\n"
-          + "}";
+  private static final String MOCK_TEMPLATE_RESPONSE = TestUtils
+          .loadResource("getRemoteConfig.json");
 
   private static final String TEST_ETAG = "etag-123456789012-1";
 
@@ -116,19 +91,26 @@ public class FirebaseRemoteConfigClientImplTest {
     assertEquals(2, parameters.size());
     assertTrue(parameters.containsKey("welcome_message_text"));
     assertTrue(parameters.containsKey("header_text"));
-    Map<String, RemoteConfigParameterValue> conditionalValues = parameters
-            .get("welcome_message_text").getConditionalValues();
+    RemoteConfigParameter parameter = parameters.get("welcome_message_text");
+    assertEquals("text for welcome message!", parameter.getDescription());
+    RemoteConfigParameterValue.Explicit defaultValue =
+            (RemoteConfigParameterValue.Explicit) parameter.getDefaultValue();
+    assertEquals("welcome to app", defaultValue.getValue());
+    Map<String, RemoteConfigParameterValue> conditionalValues = parameter.getConditionalValues();
     assertEquals(1, conditionalValues.size());
     assertTrue(conditionalValues.containsKey("ios_en"));
-    ExplicitParameterValue value = (ExplicitParameterValue) conditionalValues.get("ios_en");
+    RemoteConfigParameterValue.Explicit value =
+            (RemoteConfigParameterValue.Explicit) conditionalValues.get("ios_en");
     assertEquals("welcome to app en", value.getValue());
     checkGetRequestHeader(interceptor.getLastRequest());
+  }
 
-    // Check empty template
+  @Test
+  public void testGetTemplateWithEmptyTemplateResponse() throws Exception {
     response.addHeader("etag", TEST_ETAG);
     response.setContent("{}");
 
-    template = client.getTemplate();
+    RemoteConfigTemplate template = client.getTemplate();
 
     assertEquals(TEST_ETAG, template.getETag());
     assertEquals(0, template.getParameters().size());

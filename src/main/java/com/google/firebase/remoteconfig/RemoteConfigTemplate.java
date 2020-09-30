@@ -21,37 +21,61 @@ import com.google.firebase.remoteconfig.internal.TemplateResponse;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Represents a Remote Config template.
+ */
 public final class RemoteConfigTemplate {
 
   private String etag;
   private Map<String, RemoteConfigParameter> parameters;
 
+  /**
+   * Creates a new {@link RemoteConfigTemplate}.
+   */
   public RemoteConfigTemplate() {
     parameters = new HashMap<>();
   }
 
+  /**
+   * Gets the ETag of the template.
+   *
+   * @return The ETag of the template.
+   */
   public String getETag() {
     return this.etag;
   }
 
+  /**
+   * Gets the map of parameters of the template.
+   *
+   * @return A map of parameter keys to their optional default values and optional conditional
+   *     values.
+   */
   public Map<String, RemoteConfigParameter> getParameters() {
     return this.parameters;
   }
 
-  public RemoteConfigTemplate setETag(String etag) {
-    this.etag = etag;
-    return this;
-  }
-
+  /**
+   * Sets the map of parameters of the template.
+   *
+   * @param parameters A map of parameter keys to their optional default values and optional
+   *                   conditional values.
+   * @return This {@link RemoteConfigTemplate} instance.
+   */
   public RemoteConfigTemplate setParameters(Map<String, RemoteConfigParameter> parameters) {
     this.parameters = parameters;
     return this;
   }
 
-  TemplateResponse toResponseType() {
+  RemoteConfigTemplate setETag(String etag) {
+    this.etag = etag;
+    return this;
+  }
+
+  TemplateResponse toTemplateResponse() {
     Map<String, TemplateResponse.ParameterResponse> parameterResponses = new HashMap<>();
     for (Map.Entry<String, RemoteConfigParameter> entry : parameters.entrySet()) {
-      parameterResponses.put(entry.getKey(), entry.getValue().toResponseType());
+      parameterResponses.put(entry.getKey(), entry.getValue().toParameterResponse());
     }
     return new TemplateResponse(parameterResponses);
   }
