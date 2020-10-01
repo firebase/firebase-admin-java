@@ -16,6 +16,9 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
 
 import java.util.HashMap;
@@ -48,9 +51,10 @@ public final class RemoteConfigTemplate {
   /**
    * Gets the map of parameters of the template.
    *
-   * @return A map of parameter keys to their optional default values and optional conditional
-   *     values.
+   * @return A non-null map of parameter keys to their optional default values and optional
+   *     conditional values.
    */
+  @NonNull
   public Map<String, RemoteConfigParameter> getParameters() {
     return this.parameters;
   }
@@ -58,11 +62,13 @@ public final class RemoteConfigTemplate {
   /**
    * Sets the map of parameters of the template.
    *
-   * @param parameters A map of parameter keys to their optional default values and optional
-   *                   conditional values.
+   * @param parameters A non-null map of parameter keys to their optional default values and
+   *                   optional conditional values.
    * @return This {@link RemoteConfigTemplate} instance.
    */
-  public RemoteConfigTemplate setParameters(Map<String, RemoteConfigParameter> parameters) {
+  public RemoteConfigTemplate setParameters(
+          @NonNull Map<String, RemoteConfigParameter> parameters) {
+    checkNotNull(parameters, "parameters must not be null.");
     this.parameters = parameters;
     return this;
   }

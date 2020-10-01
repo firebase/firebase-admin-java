@@ -16,6 +16,11 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.Nullable;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterResponse;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
 
@@ -34,10 +39,18 @@ public final class RemoteConfigParameter {
   private Map<String, RemoteConfigParameterValue> conditionalValues;
 
   /**
+   * Creates a new {@link RemoteConfigParameter}.
+   */
+  public RemoteConfigParameter() {
+    conditionalValues = new HashMap<>();
+  }
+
+  /**
    * Gets the default value of the parameter.
    *
-   * @return A {@link RemoteConfigParameterValue} instance.
+   * @return A {@link RemoteConfigParameterValue} instance or null.
    */
+  @Nullable
   public RemoteConfigParameterValue getDefaultValue() {
     return defaultValue;
   }
@@ -45,8 +58,9 @@ public final class RemoteConfigParameter {
   /**
    * Gets the description of the parameter.
    *
-   * @return The {@link String} description of the parameter.
+   * @return The {@link String} description of the parameter or null.
    */
+  @Nullable
   public String getDescription() {
     return description;
   }
@@ -56,8 +70,9 @@ public final class RemoteConfigParameter {
    * The condition name of the highest priority (the one listed first in the
    * {@link RemoteConfigTemplate}'s conditions list) determines the value of this parameter.
    *
-   * @return A map of conditional values.
+   * @return A non-null map of conditional values.
    */
+  @NonNull
   public Map<String, RemoteConfigParameterValue> getConditionalValues() {
     return conditionalValues;
   }
@@ -70,7 +85,7 @@ public final class RemoteConfigParameter {
    * @param value An {@link RemoteConfigParameterValue} instance.
    * @return This {@link RemoteConfigParameter}.
    */
-  public RemoteConfigParameter setDefaultValue(RemoteConfigParameterValue value) {
+  public RemoteConfigParameter setDefaultValue(@Nullable RemoteConfigParameterValue value) {
     defaultValue = value;
     return this;
   }
@@ -82,7 +97,7 @@ public final class RemoteConfigParameter {
    * @param description The description of the parameter.
    * @return This {@link RemoteConfigParameter}.
    */
-  public RemoteConfigParameter setDescription(String description) {
+  public RemoteConfigParameter setDescription(@Nullable String description) {
     this.description = description;
     return this;
   }
@@ -92,26 +107,23 @@ public final class RemoteConfigParameter {
    * The condition name of the highest priority (the one listed first in the
    * {@link RemoteConfigTemplate}'s conditions list) determines the value of this parameter.
    *
-   * @param conditionalValues A map of conditional values.
+   * @param conditionalValues A non-null map of conditional values.
    * @return This {@link RemoteConfigParameter}.
    */
   public RemoteConfigParameter setConditionalValues(
-          Map<String, RemoteConfigParameterValue> conditionalValues) {
+          @NonNull Map<String, RemoteConfigParameterValue> conditionalValues) {
+    checkNotNull(conditionalValues, "conditional values must not be null.");
     this.conditionalValues = conditionalValues;
     return this;
   }
 
   ParameterResponse toParameterResponse() {
-    Map<String, ParameterValueResponse> conditionalResponseValues = null;
-    if (conditionalValues != null) {
-      conditionalResponseValues = new HashMap<>();
-      for (Map.Entry<String, RemoteConfigParameterValue> entry : conditionalValues.entrySet()) {
-        conditionalResponseValues.put(entry.getKey(), entry.getValue().toParameterValueResponse());
-      }
+    Map<String, ParameterValueResponse> conditionalResponseValues = new HashMap<>();
+    for (Map.Entry<String, RemoteConfigParameterValue> entry : conditionalValues.entrySet()) {
+      conditionalResponseValues.put(entry.getKey(), entry.getValue().toParameterValueResponse());
     }
     ParameterValueResponse parameterValueResponse = (defaultValue == null) ? null : defaultValue
             .toParameterValueResponse();
-
     return new ParameterResponse(parameterValueResponse, description,
             conditionalResponseValues);
   }

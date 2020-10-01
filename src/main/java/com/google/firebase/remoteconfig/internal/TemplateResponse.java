@@ -16,7 +16,12 @@
 
 package com.google.firebase.remoteconfig.internal;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.api.client.util.Key;
+import com.google.firebase.database.annotations.Nullable;
+import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.RemoteConfigParameter;
 import com.google.firebase.remoteconfig.RemoteConfigParameterValue;
 import com.google.firebase.remoteconfig.RemoteConfigTemplate;
@@ -38,7 +43,8 @@ public final class TemplateResponse {
     parameters = Collections.emptyMap();
   }
 
-  public TemplateResponse(Map<String, ParameterResponse> parameters) {
+  public TemplateResponse(@NonNull Map<String, ParameterResponse> parameters) {
+    checkNotNull(parameters, "parameters must not be null.");
     this.parameters = parameters;
   }
 
@@ -69,25 +75,23 @@ public final class TemplateResponse {
       conditionalValues = Collections.emptyMap();
     }
 
-    public ParameterResponse(ParameterValueResponse defaultValue, String description,
-                             Map<String, ParameterValueResponse> conditionalValues) {
+    public ParameterResponse(@Nullable ParameterValueResponse defaultValue,
+                             @Nullable String description,
+                             @NonNull Map<String, ParameterValueResponse> conditionalValues) {
+      checkNotNull(conditionalValues, "conditional values must not be null.");
       this.defaultValue = defaultValue;
       this.description = description;
       this.conditionalValues = conditionalValues;
     }
 
     public RemoteConfigParameter toRemoteConfigParameter() {
-      Map<String, RemoteConfigParameterValue> conditionalPublicValues = null;
-      if (conditionalValues != null) {
-        conditionalPublicValues = new HashMap<>();
-        for (Map.Entry<String, ParameterValueResponse> entry : conditionalValues.entrySet()) {
-          conditionalPublicValues
-                  .put(entry.getKey(), entry.getValue().toRemoteConfigParameterValue());
-        }
+      Map<String, RemoteConfigParameterValue> conditionalPublicValues = new HashMap<>();
+      for (Map.Entry<String, ParameterValueResponse> entry : conditionalValues.entrySet()) {
+        conditionalPublicValues
+                .put(entry.getKey(), entry.getValue().toRemoteConfigParameterValue());
       }
       RemoteConfigParameterValue remoteConfigParameterValue =
               (defaultValue == null) ? null : defaultValue.toRemoteConfigParameterValue();
-
       return new RemoteConfigParameter()
               .setDefaultValue(remoteConfigParameterValue)
               .setDescription(description).setConditionalValues(conditionalPublicValues);
