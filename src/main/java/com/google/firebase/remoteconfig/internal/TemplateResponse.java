@@ -78,10 +78,9 @@ public final class TemplateResponse {
     public ParameterResponse(@Nullable ParameterValueResponse defaultValue,
                              @Nullable String description,
                              @NonNull Map<String, ParameterValueResponse> conditionalValues) {
-      checkNotNull(conditionalValues, "conditional values must not be null.");
       this.defaultValue = defaultValue;
       this.description = description;
-      this.conditionalValues = conditionalValues;
+      this.conditionalValues = checkNotNull(conditionalValues);
     }
 
     public RemoteConfigParameter toRemoteConfigParameter() {
@@ -94,7 +93,8 @@ public final class TemplateResponse {
               (defaultValue == null) ? null : defaultValue.toRemoteConfigParameterValue();
       return new RemoteConfigParameter()
               .setDefaultValue(remoteConfigParameterValue)
-              .setDescription(description).setConditionalValues(conditionalPublicValues);
+              .setDescription(description)
+              .setConditionalValues(conditionalPublicValues);
     }
   }
 
