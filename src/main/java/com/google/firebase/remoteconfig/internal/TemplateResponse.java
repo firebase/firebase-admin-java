@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The DTO for parsing Remote Config template responses from the Remote Config service.
+ * The Data Transfer Object for parsing Remote Config template responses from the Remote Config service.
  **/
 public final class TemplateResponse {
 
@@ -50,7 +50,7 @@ public final class TemplateResponse {
   }
 
   /**
-   * The DTO for parsing Remote Config parameter responses from the Remote Config service.
+   * The Data Transfer Object for parsing Remote Config parameter responses from the Remote Config service.
    **/
   public static final class ParameterResponse {
 
@@ -87,7 +87,7 @@ public final class TemplateResponse {
   }
 
   /**
-   * The DTO for parsing Remote Config parameter value responses from the Remote Config service.
+   * The Data Transfer Object for parsing Remote Config parameter value responses from the Remote Config service.
    **/
   public static final class ParameterValueResponse {
 

@@ -72,7 +72,7 @@ public abstract class RemoteConfigParameterValue {
   }
 
   /**
-   * Represents an in-app-default parameter value.
+   * Represents an in app default parameter value.
    */
   public static final class InAppDefault extends RemoteConfigParameterValue {
 
