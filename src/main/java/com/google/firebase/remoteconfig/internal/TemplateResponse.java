@@ -26,7 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The Data Transfer Object for parsing Remote Config template responses from the Remote Config service.
+ * The Data Transfer Object for parsing Remote Config template responses from the
+ * Remote Config service.
  **/
 public final class TemplateResponse {
 
@@ -50,7 +51,8 @@ public final class TemplateResponse {
   }
 
   /**
-   * The Data Transfer Object for parsing Remote Config parameter responses from the Remote Config service.
+   * The Data Transfer Object for parsing Remote Config parameter responses from the
+   * Remote Config service.
    **/
   public static final class ParameterResponse {
 
@@ -75,19 +77,26 @@ public final class TemplateResponse {
     }
 
     public RemoteConfigParameter toRemoteConfigParameter() {
-      Map<String, RemoteConfigParameterValue> conditionalPublicValues = new HashMap<>();
-      for (Map.Entry<String, ParameterValueResponse> entry : conditionalValues.entrySet()) {
-        conditionalPublicValues
-                .put(entry.getKey(), entry.getValue().toRemoteConfigParameterValue());
+      Map<String, RemoteConfigParameterValue> conditionalPublicValues = null;
+      if (conditionalValues != null) {
+        conditionalPublicValues = new HashMap<>();
+        for (Map.Entry<String, ParameterValueResponse> entry : conditionalValues.entrySet()) {
+          conditionalPublicValues
+                  .put(entry.getKey(), entry.getValue().toRemoteConfigParameterValue());
+        }
       }
+      RemoteConfigParameterValue remoteConfigParameterValue =
+              (defaultValue == null) ? null : defaultValue.toRemoteConfigParameterValue();
+
       return new RemoteConfigParameter()
-              .setDefaultValue(defaultValue.toRemoteConfigParameterValue())
+              .setDefaultValue(remoteConfigParameterValue)
               .setDescription(description).setConditionalValues(conditionalPublicValues);
     }
   }
 
   /**
-   * The Data Transfer Object for parsing Remote Config parameter value responses from the Remote Config service.
+   * The Data Transfer Object for parsing Remote Config parameter value responses from the
+   * Remote Config service.
    **/
   public static final class ParameterValueResponse {
 

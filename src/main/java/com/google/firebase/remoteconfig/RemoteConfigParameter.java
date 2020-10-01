@@ -34,14 +34,6 @@ public final class RemoteConfigParameter {
   private Map<String, RemoteConfigParameterValue> conditionalValues;
 
   /**
-   * Creates a new {@link RemoteConfigParameter}.
-   */
-  public RemoteConfigParameter() {
-    conditionalValues = new HashMap<>();
-    defaultValue = RemoteConfigParameterValue.of("");
-  }
-
-  /**
    * Gets the default value of the parameter.
    *
    * @return A {@link RemoteConfigParameterValue} instance.
@@ -110,11 +102,17 @@ public final class RemoteConfigParameter {
   }
 
   ParameterResponse toParameterResponse() {
-    Map<String, ParameterValueResponse> conditionalResponseValues = new HashMap<>();
-    for (Map.Entry<String, RemoteConfigParameterValue> entry : conditionalValues.entrySet()) {
-      conditionalResponseValues.put(entry.getKey(), entry.getValue().toParameterValueResponse());
+    Map<String, ParameterValueResponse> conditionalResponseValues = null;
+    if (conditionalValues != null) {
+      conditionalResponseValues = new HashMap<>();
+      for (Map.Entry<String, RemoteConfigParameterValue> entry : conditionalValues.entrySet()) {
+        conditionalResponseValues.put(entry.getKey(), entry.getValue().toParameterValueResponse());
+      }
     }
-    return new ParameterResponse(defaultValue.toParameterValueResponse(), description,
+    ParameterValueResponse parameterValueResponse = (defaultValue == null) ? null : defaultValue
+            .toParameterValueResponse();
+
+    return new ParameterResponse(parameterValueResponse, description,
             conditionalResponseValues);
   }
 }
