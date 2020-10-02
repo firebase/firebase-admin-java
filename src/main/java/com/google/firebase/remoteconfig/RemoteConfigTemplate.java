@@ -16,19 +16,73 @@
 
 package com.google.firebase.remoteconfig;
 
-import com.google.api.client.util.Key;
+import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.firebase.internal.NonNull;
+import com.google.firebase.remoteconfig.internal.TemplateResponse;
+
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Represents a Remote Config template.
+ */
 public final class RemoteConfigTemplate {
 
-  @Key("etag")
   private String etag;
+  private Map<String, RemoteConfigParameter> parameters;
 
+  /**
+   * Creates a new {@link RemoteConfigTemplate}.
+   */
+  public RemoteConfigTemplate() {
+    parameters = new HashMap<>();
+  }
+
+  /**
+   * Gets the ETag of the template.
+   *
+   * @return The ETag of the template.
+   */
   public String getETag() {
     return this.etag;
+  }
+
+  /**
+   * Gets the map of parameters of the template.
+   *
+   * @return A non-null map of parameter keys to their optional default values and optional
+   *     conditional values.
+   */
+  @NonNull
+  public Map<String, RemoteConfigParameter> getParameters() {
+    return this.parameters;
+  }
+
+  /**
+   * Sets the map of parameters of the template.
+   *
+   * @param parameters A non-null map of parameter keys to their optional default values and
+   *                   optional conditional values.
+   * @return This {@link RemoteConfigTemplate} instance.
+   */
+  public RemoteConfigTemplate setParameters(
+          @NonNull Map<String, RemoteConfigParameter> parameters) {
+    checkNotNull(parameters, "parameters must not be null.");
+    this.parameters = parameters;
+    return this;
   }
 
   RemoteConfigTemplate setETag(String etag) {
     this.etag = etag;
     return this;
+  }
+
+  TemplateResponse toTemplateResponse() {
+    Map<String, TemplateResponse.ParameterResponse> parameterResponses = new HashMap<>();
+    for (Map.Entry<String, RemoteConfigParameter> entry : parameters.entrySet()) {
+      parameterResponses.put(entry.getKey(), entry.getValue().toParameterResponse());
+    }
+    return new TemplateResponse(parameterResponses);
   }
 }

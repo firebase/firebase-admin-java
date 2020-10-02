@@ -63,7 +63,8 @@ public class FirebaseRemoteConfigClientImplTest {
           404, ErrorCode.NOT_FOUND,
           500, ErrorCode.INTERNAL);
 
-  private static final String MOCK_TEMPLATE_RESPONSE = "{\"conditions\": [], \"parameters\": {}}";
+  private static final String MOCK_TEMPLATE_RESPONSE = TestUtils
+          .loadResource("getRemoteConfig.json");
 
   private static final String TEST_ETAG = "etag-123456789012-1";
 
@@ -86,6 +87,37 @@ public class FirebaseRemoteConfigClientImplTest {
     RemoteConfigTemplate template = client.getTemplate();
 
     assertEquals(TEST_ETAG, template.getETag());
+    Map<String, RemoteConfigParameter> parameters = template.getParameters();
+    assertEquals(2, parameters.size());
+    assertTrue(parameters.containsKey("welcome_message_text"));
+    RemoteConfigParameter welcomeMessageParameter = parameters.get("welcome_message_text");
+    assertEquals("text for welcome message!", welcomeMessageParameter.getDescription());
+    RemoteConfigParameterValue.Explicit explicitDefaultValue =
+            (RemoteConfigParameterValue.Explicit) welcomeMessageParameter.getDefaultValue();
+    assertEquals("welcome to app", explicitDefaultValue.getValue());
+    Map<String, RemoteConfigParameterValue> conditionalValues = welcomeMessageParameter
+            .getConditionalValues();
+    assertEquals(1, conditionalValues.size());
+    assertTrue(conditionalValues.containsKey("ios_en"));
+    RemoteConfigParameterValue.Explicit value =
+            (RemoteConfigParameterValue.Explicit) conditionalValues.get("ios_en");
+    assertEquals("welcome to app en", value.getValue());
+    assertTrue(parameters.containsKey("header_text"));
+    RemoteConfigParameter headerParameter = parameters.get("header_text");
+    assertTrue(
+            headerParameter.getDefaultValue() instanceof RemoteConfigParameterValue.InAppDefault);
+    checkGetRequestHeader(interceptor.getLastRequest());
+  }
+
+  @Test
+  public void testGetTemplateWithEmptyTemplateResponse() throws Exception {
+    response.addHeader("etag", TEST_ETAG);
+    response.setContent("{}");
+
+    RemoteConfigTemplate template = client.getTemplate();
+
+    assertEquals(TEST_ETAG, template.getETag());
+    assertEquals(0, template.getParameters().size());
     checkGetRequestHeader(interceptor.getLastRequest());
   }
 

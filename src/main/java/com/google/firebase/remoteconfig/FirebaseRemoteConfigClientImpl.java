@@ -36,6 +36,7 @@ import com.google.firebase.internal.ErrorHandlingHttpClient;
 import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.remoteconfig.internal.RemoteConfigServiceErrorResponse;
+import com.google.firebase.remoteconfig.internal.TemplateResponse;
 
 import java.io.IOException;
 import java.util.List;
@@ -94,8 +95,9 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
     HttpRequestInfo request = HttpRequestInfo.buildGetRequest(remoteConfigUrl)
             .addAllHeaders(COMMON_HEADERS);
     IncomingHttpResponse response = httpClient.send(request);
-    RemoteConfigTemplate parsed = httpClient.parse(response, RemoteConfigTemplate.class);
-    return parsed.setETag(getETag(response));
+    TemplateResponse templateResponse = httpClient.parse(response, TemplateResponse.class);
+    RemoteConfigTemplate template = templateResponse.toRemoteConfigTemplate();
+    return template.setETag(getETag(response));
   }
 
   private String getETag(IncomingHttpResponse response) {
