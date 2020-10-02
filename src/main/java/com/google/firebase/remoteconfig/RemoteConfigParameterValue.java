@@ -67,7 +67,9 @@ public abstract class RemoteConfigParameterValue {
 
     @Override
     ParameterValueResponse toParameterValueResponse() {
-      return ParameterValueResponse.ofValue(this.value);
+      return new ParameterValueResponse()
+              .setValue(this.value)
+              .setInAppDefaultValue(null);
     }
   }
 
@@ -78,7 +80,9 @@ public abstract class RemoteConfigParameterValue {
 
     @Override
     ParameterValueResponse toParameterValueResponse() {
-      return ParameterValueResponse.ofInAppDefaultValue();
+      return new ParameterValueResponse()
+              .setInAppDefaultValue(true)
+              .setValue(null);
     }
   }
 }

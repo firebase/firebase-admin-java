@@ -16,18 +16,8 @@
 
 package com.google.firebase.remoteconfig.internal;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import com.google.api.client.util.Key;
-import com.google.firebase.database.annotations.Nullable;
-import com.google.firebase.internal.NonNull;
-import com.google.firebase.remoteconfig.RemoteConfigParameter;
-import com.google.firebase.remoteconfig.RemoteConfigParameterValue;
-import com.google.firebase.remoteconfig.RemoteConfigTemplate;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -39,21 +29,14 @@ public final class TemplateResponse {
   @Key("parameters")
   private Map<String, ParameterResponse> parameters;
 
-  public TemplateResponse() {
-    parameters = Collections.emptyMap();
+  public Map<String, ParameterResponse> getParameters() {
+    return parameters;
   }
 
-  public TemplateResponse(@NonNull Map<String, ParameterResponse> parameters) {
-    checkNotNull(parameters, "parameters must not be null.");
+  public TemplateResponse setParameters(
+          Map<String, ParameterResponse> parameters) {
     this.parameters = parameters;
-  }
-
-  public RemoteConfigTemplate toRemoteConfigTemplate() {
-    Map<String, RemoteConfigParameter> parameterPublicTypes = new HashMap<>();
-    for (Map.Entry<String, ParameterResponse> entry : parameters.entrySet()) {
-      parameterPublicTypes.put(entry.getKey(), entry.getValue().toRemoteConfigParameter());
-    }
-    return new RemoteConfigTemplate().setParameters(parameterPublicTypes);
+    return this;
   }
 
   /**
@@ -71,30 +54,33 @@ public final class TemplateResponse {
     @Key("conditionalValues")
     private Map<String, ParameterValueResponse> conditionalValues;
 
-    public ParameterResponse() {
-      conditionalValues = Collections.emptyMap();
+    public ParameterValueResponse getDefaultValue() {
+      return defaultValue;
     }
 
-    public ParameterResponse(@Nullable ParameterValueResponse defaultValue,
-                             @Nullable String description,
-                             @NonNull Map<String, ParameterValueResponse> conditionalValues) {
+    public String getDescription() {
+      return description;
+    }
+
+    public Map<String, ParameterValueResponse> getConditionalValues() {
+      return conditionalValues;
+    }
+
+    public ParameterResponse setDefaultValue(
+            ParameterValueResponse defaultValue) {
       this.defaultValue = defaultValue;
-      this.description = description;
-      this.conditionalValues = checkNotNull(conditionalValues);
+      return this;
     }
 
-    public RemoteConfigParameter toRemoteConfigParameter() {
-      Map<String, RemoteConfigParameterValue> conditionalPublicValues = new HashMap<>();
-      for (Map.Entry<String, ParameterValueResponse> entry : conditionalValues.entrySet()) {
-        conditionalPublicValues
-                .put(entry.getKey(), entry.getValue().toRemoteConfigParameterValue());
-      }
-      RemoteConfigParameterValue remoteConfigParameterValue =
-              (defaultValue == null) ? null : defaultValue.toRemoteConfigParameterValue();
-      return new RemoteConfigParameter()
-              .setDefaultValue(remoteConfigParameterValue)
-              .setDescription(description)
-              .setConditionalValues(conditionalPublicValues);
+    public ParameterResponse setDescription(String description) {
+      this.description = description;
+      return this;
+    }
+
+    public ParameterResponse setConditionalValues(
+            Map<String, ParameterValueResponse> conditionalValues) {
+      this.conditionalValues = conditionalValues;
+      return this;
     }
   }
 
@@ -110,27 +96,22 @@ public final class TemplateResponse {
     @Key("useInAppDefault")
     private Boolean inAppDefaultValue;
 
-    public ParameterValueResponse() {
+    public String getValue() {
+      return value;
     }
 
-    private ParameterValueResponse(String value, Boolean inAppDefaultValue) {
+    public Boolean isInAppDefaultValue() {
+      return inAppDefaultValue;
+    }
+
+    public ParameterValueResponse setValue(String value) {
       this.value = value;
+      return this;
+    }
+
+    public ParameterValueResponse setInAppDefaultValue(Boolean inAppDefaultValue) {
       this.inAppDefaultValue = inAppDefaultValue;
-    }
-
-    public static ParameterValueResponse ofValue(String value) {
-      return new ParameterValueResponse(value, null);
-    }
-
-    public static ParameterValueResponse ofInAppDefaultValue() {
-      return new ParameterValueResponse(null, true);
-    }
-
-    public RemoteConfigParameterValue toRemoteConfigParameterValue() {
-      if (this.inAppDefaultValue != null && this.inAppDefaultValue) {
-        return RemoteConfigParameterValue.inAppDefault();
-      }
-      return RemoteConfigParameterValue.of(this.value);
+      return this;
     }
   }
 }

@@ -16,7 +16,6 @@
 
 package com.google.firebase.remoteconfig;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.firebase.internal.NonNull;
@@ -43,6 +42,21 @@ public final class RemoteConfigParameter {
    */
   public RemoteConfigParameter() {
     conditionalValues = new HashMap<>();
+  }
+
+  protected RemoteConfigParameter(@NonNull ParameterResponse parameterResponse) {
+    checkNotNull(parameterResponse);
+    conditionalValues = new HashMap<>();
+    if (parameterResponse.getConditionalValues() != null) {
+      for (Map.Entry<String, ParameterValueResponse> entry :
+              parameterResponse.getConditionalValues().entrySet()) {
+        conditionalValues.put(entry.getKey(), fromParameterValueResponse(entry.getValue()));
+      }
+    }
+    ParameterValueResponse responseDefaultValue = parameterResponse.getDefaultValue();
+    defaultValue = (responseDefaultValue == null) ? null :
+            fromParameterValueResponse(responseDefaultValue);
+    description = parameterResponse.getDescription();
   }
 
   /**
@@ -122,9 +136,21 @@ public final class RemoteConfigParameter {
     for (Map.Entry<String, RemoteConfigParameterValue> entry : conditionalValues.entrySet()) {
       conditionalResponseValues.put(entry.getKey(), entry.getValue().toParameterValueResponse());
     }
-    ParameterValueResponse parameterValueResponse = (defaultValue == null) ? null : defaultValue
-            .toParameterValueResponse();
-    return new ParameterResponse(parameterValueResponse, description,
-            conditionalResponseValues);
+    ParameterValueResponse defaultValueResponse = (defaultValue == null) ? null :
+            defaultValue.toParameterValueResponse();
+    return new ParameterResponse()
+            .setDefaultValue(defaultValueResponse)
+            .setDescription(description)
+            .setConditionalValues(conditionalResponseValues);
+  }
+
+  private RemoteConfigParameterValue fromParameterValueResponse(
+          @NonNull ParameterValueResponse parameterValueResponse) {
+    checkNotNull(parameterValueResponse);
+    if (parameterValueResponse.isInAppDefaultValue() != null
+            && parameterValueResponse.isInAppDefaultValue()) {
+      return RemoteConfigParameterValue.inAppDefault();
+    }
+    return RemoteConfigParameterValue.of(parameterValueResponse.getValue());
   }
 }

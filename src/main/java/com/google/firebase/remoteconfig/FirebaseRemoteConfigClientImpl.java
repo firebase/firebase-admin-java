@@ -96,7 +96,7 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
             .addAllHeaders(COMMON_HEADERS);
     IncomingHttpResponse response = httpClient.send(request);
     TemplateResponse templateResponse = httpClient.parse(response, TemplateResponse.class);
-    RemoteConfigTemplate template = templateResponse.toRemoteConfigTemplate();
+    RemoteConfigTemplate template = new RemoteConfigTemplate(templateResponse);
     return template.setETag(getETag(response));
   }
 

@@ -39,6 +39,17 @@ public final class RemoteConfigTemplate {
     parameters = new HashMap<>();
   }
 
+  protected RemoteConfigTemplate(@NonNull TemplateResponse templateResponse) {
+    checkNotNull(templateResponse);
+    parameters = new HashMap<>();
+    if (templateResponse.getParameters() != null) {
+      for (Map.Entry<String, TemplateResponse.ParameterResponse> entry :
+              templateResponse.getParameters().entrySet()) {
+        parameters.put(entry.getKey(), new RemoteConfigParameter(entry.getValue()));
+      }
+    }
+  }
+
   /**
    * Gets the ETag of the template.
    *
@@ -83,6 +94,6 @@ public final class RemoteConfigTemplate {
     for (Map.Entry<String, RemoteConfigParameter> entry : parameters.entrySet()) {
       parameterResponses.put(entry.getKey(), entry.getValue().toParameterResponse());
     }
-    return new TemplateResponse(parameterResponses);
+    return new TemplateResponse().setParameters(parameterResponses);
   }
 }
