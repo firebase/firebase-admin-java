@@ -43,8 +43,8 @@ public final class RemoteConfigTemplate {
     checkNotNull(templateResponse);
     parameters = new HashMap<>();
     if (templateResponse.getParameters() != null) {
-      for (Map.Entry<String, TemplateResponse.ParameterResponse> entry :
-              templateResponse.getParameters().entrySet()) {
+      for (Map.Entry<String, TemplateResponse.ParameterResponse> entry
+              : templateResponse.getParameters().entrySet()) {
         parameters.put(entry.getKey(), new RemoteConfigParameter(entry.getValue()));
       }
     }

@@ -48,14 +48,14 @@ public final class RemoteConfigParameter {
     checkNotNull(parameterResponse);
     conditionalValues = new HashMap<>();
     if (parameterResponse.getConditionalValues() != null) {
-      for (Map.Entry<String, ParameterValueResponse> entry :
-              parameterResponse.getConditionalValues().entrySet()) {
+      for (Map.Entry<String, ParameterValueResponse> entry
+              : parameterResponse.getConditionalValues().entrySet()) {
         conditionalValues.put(entry.getKey(), fromParameterValueResponse(entry.getValue()));
       }
     }
     ParameterValueResponse responseDefaultValue = parameterResponse.getDefaultValue();
-    defaultValue = (responseDefaultValue == null) ? null :
-            fromParameterValueResponse(responseDefaultValue);
+    defaultValue = (responseDefaultValue == null) ? null
+            : fromParameterValueResponse(responseDefaultValue);
     description = parameterResponse.getDescription();
   }
 
@@ -136,8 +136,8 @@ public final class RemoteConfigParameter {
     for (Map.Entry<String, RemoteConfigParameterValue> entry : conditionalValues.entrySet()) {
       conditionalResponseValues.put(entry.getKey(), entry.getValue().toParameterValueResponse());
     }
-    ParameterValueResponse defaultValueResponse = (defaultValue == null) ? null :
-            defaultValue.toParameterValueResponse();
+    ParameterValueResponse defaultValueResponse = (defaultValue == null) ? null
+            : defaultValue.toParameterValueResponse();
     return new ParameterResponse()
             .setDefaultValue(defaultValueResponse)
             .setDescription(description)
