@@ -44,19 +44,20 @@ public final class RemoteConfigParameter {
     conditionalValues = new HashMap<>();
   }
 
-  protected RemoteConfigParameter(@NonNull ParameterResponse parameterResponse) {
+  RemoteConfigParameter(@NonNull ParameterResponse parameterResponse) {
     checkNotNull(parameterResponse);
-    conditionalValues = new HashMap<>();
+    this.conditionalValues = new HashMap<>();
     if (parameterResponse.getConditionalValues() != null) {
       for (Map.Entry<String, ParameterValueResponse> entry
               : parameterResponse.getConditionalValues().entrySet()) {
-        conditionalValues.put(entry.getKey(), fromParameterValueResponse(entry.getValue()));
+        this.conditionalValues.put(entry.getKey(),
+                RemoteConfigParameterValue.fromParameterValueResponse(entry.getValue()));
       }
     }
     ParameterValueResponse responseDefaultValue = parameterResponse.getDefaultValue();
-    defaultValue = (responseDefaultValue == null) ? null
-            : fromParameterValueResponse(responseDefaultValue);
-    description = parameterResponse.getDescription();
+    this.defaultValue = (responseDefaultValue == null) ? null
+            : RemoteConfigParameterValue.fromParameterValueResponse(responseDefaultValue);
+    this.description = parameterResponse.getDescription();
   }
 
   /**
@@ -142,15 +143,5 @@ public final class RemoteConfigParameter {
             .setDefaultValue(defaultValueResponse)
             .setDescription(description)
             .setConditionalValues(conditionalResponseValues);
-  }
-
-  private RemoteConfigParameterValue fromParameterValueResponse(
-          @NonNull ParameterValueResponse parameterValueResponse) {
-    checkNotNull(parameterValueResponse);
-    if (parameterValueResponse.isInAppDefaultValue() != null
-            && parameterValueResponse.isInAppDefaultValue()) {
-      return RemoteConfigParameterValue.inAppDefault();
-    }
-    return RemoteConfigParameterValue.of(parameterValueResponse.getValue());
   }
 }

@@ -94,14 +94,18 @@ public final class TemplateResponse {
     private String value;
 
     @Key("useInAppDefault")
-    private Boolean inAppDefaultValue;
+    private Boolean useInAppDefault;
 
     public String getValue() {
       return value;
     }
 
-    public Boolean isInAppDefaultValue() {
-      return inAppDefaultValue;
+    public Boolean getUseInAppDefault() {
+      return this.useInAppDefault;
+    }
+
+    public boolean isUseInAppDefault() {
+      return Boolean.TRUE.equals(this.useInAppDefault);
     }
 
     public ParameterValueResponse setValue(String value) {
@@ -109,8 +113,8 @@ public final class TemplateResponse {
       return this;
     }
 
-    public ParameterValueResponse setInAppDefaultValue(Boolean inAppDefaultValue) {
-      this.inAppDefaultValue = inAppDefaultValue;
+    public ParameterValueResponse setUseInAppDefault(Boolean useInAppDefault) {
+      this.useInAppDefault = useInAppDefault;
       return this;
     }
   }
