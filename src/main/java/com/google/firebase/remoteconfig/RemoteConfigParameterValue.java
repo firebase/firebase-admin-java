@@ -16,6 +16,9 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
 
 /**
@@ -44,6 +47,15 @@ public abstract class RemoteConfigParameterValue {
 
   abstract ParameterValueResponse toParameterValueResponse();
 
+  static RemoteConfigParameterValue fromParameterValueResponse(
+          @NonNull ParameterValueResponse parameterValueResponse) {
+    checkNotNull(parameterValueResponse);
+    if (parameterValueResponse.isUseInAppDefault()) {
+      return RemoteConfigParameterValue.inAppDefault();
+    }
+    return RemoteConfigParameterValue.of(parameterValueResponse.getValue());
+  }
+
   /**
    * Represents an explicit Remote Config parameter value with a {@link String} value that the
    * parameter is set to.
@@ -67,7 +79,8 @@ public abstract class RemoteConfigParameterValue {
 
     @Override
     ParameterValueResponse toParameterValueResponse() {
-      return ParameterValueResponse.ofValue(this.value);
+      return new ParameterValueResponse()
+              .setValue(this.value);
     }
   }
 
@@ -78,7 +91,7 @@ public abstract class RemoteConfigParameterValue {
 
     @Override
     ParameterValueResponse toParameterValueResponse() {
-      return ParameterValueResponse.ofInAppDefaultValue();
+      return new ParameterValueResponse().setUseInAppDefault(true);
     }
   }
 }
