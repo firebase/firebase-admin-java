@@ -100,10 +100,6 @@ public final class TemplateResponse {
       return value;
     }
 
-    public Boolean getUseInAppDefault() {
-      return this.useInAppDefault;
-    }
-
     public boolean isUseInAppDefault() {
       return Boolean.TRUE.equals(this.useInAppDefault);
     }
@@ -113,7 +109,7 @@ public final class TemplateResponse {
       return this;
     }
 
-    public ParameterValueResponse setUseInAppDefault(Boolean useInAppDefault) {
+    public ParameterValueResponse setUseInAppDefault(boolean useInAppDefault) {
       this.useInAppDefault = useInAppDefault;
       return this;
     }
