@@ -116,10 +116,10 @@ public class FirebaseRemoteConfigTest {
   @Test
   public void testGetTemplate() throws FirebaseRemoteConfigException {
     MockRemoteConfigClient client = MockRemoteConfigClient.fromTemplate(
-            new RemoteConfigTemplate().setETag(TEST_ETAG));
+            new Template().setETag(TEST_ETAG));
     FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
 
-    RemoteConfigTemplate template = remoteConfig.getTemplate();
+    Template template = remoteConfig.getTemplate();
 
     assertEquals(TEST_ETAG, template.getETag());
   }
@@ -139,10 +139,10 @@ public class FirebaseRemoteConfigTest {
   @Test
   public void testGetTemplateAsync() throws Exception {
     MockRemoteConfigClient client = MockRemoteConfigClient.fromTemplate(
-            new RemoteConfigTemplate().setETag(TEST_ETAG));
+            new Template().setETag(TEST_ETAG));
     FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
 
-    RemoteConfigTemplate template = remoteConfig.getTemplateAsync().get();
+    Template template = remoteConfig.getTemplateAsync().get();
 
     assertEquals(TEST_ETAG, template.getETag());
   }

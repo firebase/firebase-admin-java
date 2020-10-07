@@ -27,25 +27,25 @@ import java.util.Map;
 /**
  * Represents a Remote Config template.
  */
-public final class RemoteConfigTemplate {
+public final class Template {
 
   private String etag;
-  private Map<String, RemoteConfigParameter> parameters;
+  private Map<String, Parameter> parameters;
 
   /**
-   * Creates a new {@link RemoteConfigTemplate}.
+   * Creates a new {@link Template}.
    */
-  public RemoteConfigTemplate() {
+  public Template() {
     parameters = new HashMap<>();
   }
 
-  RemoteConfigTemplate(@NonNull TemplateResponse templateResponse) {
+  Template(@NonNull TemplateResponse templateResponse) {
     checkNotNull(templateResponse);
     this.parameters = new HashMap<>();
     if (templateResponse.getParameters() != null) {
       for (Map.Entry<String, TemplateResponse.ParameterResponse> entry
               : templateResponse.getParameters().entrySet()) {
-        this.parameters.put(entry.getKey(), new RemoteConfigParameter(entry.getValue()));
+        this.parameters.put(entry.getKey(), new Parameter(entry.getValue()));
       }
     }
   }
@@ -66,7 +66,7 @@ public final class RemoteConfigTemplate {
    *     conditional values.
    */
   @NonNull
-  public Map<String, RemoteConfigParameter> getParameters() {
+  public Map<String, Parameter> getParameters() {
     return this.parameters;
   }
 
@@ -75,23 +75,23 @@ public final class RemoteConfigTemplate {
    *
    * @param parameters A non-null map of parameter keys to their optional default values and
    *                   optional conditional values.
-   * @return This {@link RemoteConfigTemplate} instance.
+   * @return This {@link Template} instance.
    */
-  public RemoteConfigTemplate setParameters(
-          @NonNull Map<String, RemoteConfigParameter> parameters) {
+  public Template setParameters(
+          @NonNull Map<String, Parameter> parameters) {
     checkNotNull(parameters, "parameters must not be null.");
     this.parameters = parameters;
     return this;
   }
 
-  RemoteConfigTemplate setETag(String etag) {
+  Template setETag(String etag) {
     this.etag = etag;
     return this;
   }
 
   TemplateResponse toTemplateResponse() {
     Map<String, TemplateResponse.ParameterResponse> parameterResponses = new HashMap<>();
-    for (Map.Entry<String, RemoteConfigParameter> entry : parameters.entrySet()) {
+    for (Map.Entry<String, Parameter> entry : parameters.entrySet()) {
       parameterResponses.put(entry.getKey(), entry.getValue().toParameterResponse());
     }
     return new TemplateResponse().setParameters(parameterResponses);

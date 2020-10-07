@@ -27,46 +27,46 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Represents a Remote Config parameter that can be included in a {@link RemoteConfigTemplate}.
+ * Represents a Remote Config parameter that can be included in a {@link Template}.
  * At minimum, a default value or a conditional value must be present for the
  * parameter to have any effect.
  */
-public final class RemoteConfigParameter {
+public final class Parameter {
 
-  private RemoteConfigParameterValue defaultValue;
+  private ParameterValue defaultValue;
   private String description;
-  private Map<String, RemoteConfigParameterValue> conditionalValues;
+  private Map<String, ParameterValue> conditionalValues;
 
   /**
-   * Creates a new {@link RemoteConfigParameter}.
+   * Creates a new {@link Parameter}.
    */
-  public RemoteConfigParameter() {
+  public Parameter() {
     conditionalValues = new HashMap<>();
   }
 
-  RemoteConfigParameter(@NonNull ParameterResponse parameterResponse) {
+  Parameter(@NonNull ParameterResponse parameterResponse) {
     checkNotNull(parameterResponse);
     this.conditionalValues = new HashMap<>();
     if (parameterResponse.getConditionalValues() != null) {
       for (Map.Entry<String, ParameterValueResponse> entry
               : parameterResponse.getConditionalValues().entrySet()) {
         this.conditionalValues.put(entry.getKey(),
-                RemoteConfigParameterValue.fromParameterValueResponse(entry.getValue()));
+                ParameterValue.fromParameterValueResponse(entry.getValue()));
       }
     }
     ParameterValueResponse responseDefaultValue = parameterResponse.getDefaultValue();
     this.defaultValue = (responseDefaultValue == null) ? null
-            : RemoteConfigParameterValue.fromParameterValueResponse(responseDefaultValue);
+            : ParameterValue.fromParameterValueResponse(responseDefaultValue);
     this.description = parameterResponse.getDescription();
   }
 
   /**
    * Gets the default value of the parameter.
    *
-   * @return A {@link RemoteConfigParameterValue} instance or null.
+   * @return A {@link ParameterValue} instance or null.
    */
   @Nullable
-  public RemoteConfigParameterValue getDefaultValue() {
+  public ParameterValue getDefaultValue() {
     return defaultValue;
   }
 
@@ -83,12 +83,12 @@ public final class RemoteConfigParameter {
   /**
    * Gets the conditional values of the parameter.
    * The condition name of the highest priority (the one listed first in the
-   * {@link RemoteConfigTemplate}'s conditions list) determines the value of this parameter.
+   * {@link Template}'s conditions list) determines the value of this parameter.
    *
    * @return A non-null map of conditional values.
    */
   @NonNull
-  public Map<String, RemoteConfigParameterValue> getConditionalValues() {
+  public Map<String, ParameterValue> getConditionalValues() {
     return conditionalValues;
   }
 
@@ -97,10 +97,10 @@ public final class RemoteConfigParameter {
    * This is the value to set the parameter to, when none of the named conditions
    * evaluate to true.
    *
-   * @param value An {@link RemoteConfigParameterValue} instance.
-   * @return This {@link RemoteConfigParameter}.
+   * @param value An {@link ParameterValue} instance.
+   * @return This {@link Parameter}.
    */
-  public RemoteConfigParameter setDefaultValue(@Nullable RemoteConfigParameterValue value) {
+  public Parameter setDefaultValue(@Nullable ParameterValue value) {
     defaultValue = value;
     return this;
   }
@@ -110,9 +110,9 @@ public final class RemoteConfigParameter {
    * Should not be over 100 characters and may contain any Unicode characters.
    *
    * @param description The description of the parameter.
-   * @return This {@link RemoteConfigParameter}.
+   * @return This {@link Parameter}.
    */
-  public RemoteConfigParameter setDescription(@Nullable String description) {
+  public Parameter setDescription(@Nullable String description) {
     this.description = description;
     return this;
   }
@@ -120,13 +120,13 @@ public final class RemoteConfigParameter {
   /**
    * Sets the conditional values of the parameter.
    * The condition name of the highest priority (the one listed first in the
-   * {@link RemoteConfigTemplate}'s conditions list) determines the value of this parameter.
+   * {@link Template}'s conditions list) determines the value of this parameter.
    *
    * @param conditionalValues A non-null map of conditional values.
-   * @return This {@link RemoteConfigParameter}.
+   * @return This {@link Parameter}.
    */
-  public RemoteConfigParameter setConditionalValues(
-          @NonNull Map<String, RemoteConfigParameterValue> conditionalValues) {
+  public Parameter setConditionalValues(
+          @NonNull Map<String, ParameterValue> conditionalValues) {
     checkNotNull(conditionalValues, "conditional values must not be null.");
     this.conditionalValues = conditionalValues;
     return this;
@@ -134,7 +134,7 @@ public final class RemoteConfigParameter {
 
   ParameterResponse toParameterResponse() {
     Map<String, ParameterValueResponse> conditionalResponseValues = new HashMap<>();
-    for (Map.Entry<String, RemoteConfigParameterValue> entry : conditionalValues.entrySet()) {
+    for (Map.Entry<String, ParameterValue> entry : conditionalValues.entrySet()) {
       conditionalResponseValues.put(entry.getKey(), entry.getValue().toParameterValueResponse());
     }
     ParameterValueResponse defaultValueResponse = (defaultValue == null) ? null

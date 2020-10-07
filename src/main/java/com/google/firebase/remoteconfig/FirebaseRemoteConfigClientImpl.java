@@ -91,12 +91,12 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
   }
 
   @Override
-  public RemoteConfigTemplate getTemplate() throws FirebaseRemoteConfigException {
+  public Template getTemplate() throws FirebaseRemoteConfigException {
     HttpRequestInfo request = HttpRequestInfo.buildGetRequest(remoteConfigUrl)
             .addAllHeaders(COMMON_HEADERS);
     IncomingHttpResponse response = httpClient.send(request);
     TemplateResponse templateResponse = httpClient.parse(response, TemplateResponse.class);
-    RemoteConfigTemplate template = new RemoteConfigTemplate(templateResponse);
+    Template template = new Template(templateResponse);
     return template.setETag(getETag(response));
   }
 

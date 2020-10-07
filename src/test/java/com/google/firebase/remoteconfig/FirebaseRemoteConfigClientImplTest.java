@@ -84,28 +84,28 @@ public class FirebaseRemoteConfigClientImplTest {
     response.addHeader("etag", TEST_ETAG);
     response.setContent(MOCK_TEMPLATE_RESPONSE);
 
-    RemoteConfigTemplate template = client.getTemplate();
+    Template template = client.getTemplate();
 
     assertEquals(TEST_ETAG, template.getETag());
-    Map<String, RemoteConfigParameter> parameters = template.getParameters();
+    Map<String, Parameter> parameters = template.getParameters();
     assertEquals(2, parameters.size());
     assertTrue(parameters.containsKey("welcome_message_text"));
-    RemoteConfigParameter welcomeMessageParameter = parameters.get("welcome_message_text");
+    Parameter welcomeMessageParameter = parameters.get("welcome_message_text");
     assertEquals("text for welcome message!", welcomeMessageParameter.getDescription());
-    RemoteConfigParameterValue.Explicit explicitDefaultValue =
-            (RemoteConfigParameterValue.Explicit) welcomeMessageParameter.getDefaultValue();
+    ParameterValue.Explicit explicitDefaultValue =
+            (ParameterValue.Explicit) welcomeMessageParameter.getDefaultValue();
     assertEquals("welcome to app", explicitDefaultValue.getValue());
-    Map<String, RemoteConfigParameterValue> conditionalValues = welcomeMessageParameter
+    Map<String, ParameterValue> conditionalValues = welcomeMessageParameter
             .getConditionalValues();
     assertEquals(1, conditionalValues.size());
     assertTrue(conditionalValues.containsKey("ios_en"));
-    RemoteConfigParameterValue.Explicit value =
-            (RemoteConfigParameterValue.Explicit) conditionalValues.get("ios_en");
+    ParameterValue.Explicit value =
+            (ParameterValue.Explicit) conditionalValues.get("ios_en");
     assertEquals("welcome to app en", value.getValue());
     assertTrue(parameters.containsKey("header_text"));
-    RemoteConfigParameter headerParameter = parameters.get("header_text");
+    Parameter headerParameter = parameters.get("header_text");
     assertTrue(
-            headerParameter.getDefaultValue() instanceof RemoteConfigParameterValue.InAppDefault);
+            headerParameter.getDefaultValue() instanceof ParameterValue.InAppDefault);
     checkGetRequestHeader(interceptor.getLastRequest());
   }
 
@@ -114,7 +114,7 @@ public class FirebaseRemoteConfigClientImplTest {
     response.addHeader("etag", TEST_ETAG);
     response.setContent("{}");
 
-    RemoteConfigTemplate template = client.getTemplate();
+    Template template = client.getTemplate();
 
     assertEquals(TEST_ETAG, template.getETag());
     assertEquals(0, template.getParameters().size());
