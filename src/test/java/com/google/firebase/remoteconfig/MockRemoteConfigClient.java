@@ -18,16 +18,16 @@ package com.google.firebase.remoteconfig;
 
 public class MockRemoteConfigClient implements FirebaseRemoteConfigClient{
 
-  private RemoteConfigTemplate resultTemplate;
+  private Template resultTemplate;
   private FirebaseRemoteConfigException exception;
 
-  private MockRemoteConfigClient(RemoteConfigTemplate resultTemplate,
+  private MockRemoteConfigClient(Template resultTemplate,
                                  FirebaseRemoteConfigException exception) {
     this.resultTemplate = resultTemplate;
     this.exception = exception;
   }
 
-  static MockRemoteConfigClient fromTemplate(RemoteConfigTemplate resultTemplate) {
+  static MockRemoteConfigClient fromTemplate(Template resultTemplate) {
     return new MockRemoteConfigClient(resultTemplate, null);
   }
 
@@ -36,7 +36,7 @@ public class MockRemoteConfigClient implements FirebaseRemoteConfigClient{
   }
 
   @Override
-  public RemoteConfigTemplate getTemplate() throws FirebaseRemoteConfigException {
+  public Template getTemplate() throws FirebaseRemoteConfigException {
     if (exception != null) {
       throw exception;
     }

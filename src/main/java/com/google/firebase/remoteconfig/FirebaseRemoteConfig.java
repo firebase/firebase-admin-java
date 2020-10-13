@@ -73,28 +73,28 @@ public final class FirebaseRemoteConfig {
   /**
    * Gets the current active version of the Remote Config template.
    *
-   * @return A {@link RemoteConfigTemplate}.
+   * @return A {@link Template}.
    * @throws FirebaseRemoteConfigException If an error occurs while getting the template.
    */
-  public RemoteConfigTemplate getTemplate() throws FirebaseRemoteConfigException {
+  public Template getTemplate() throws FirebaseRemoteConfigException {
     return getTemplateOp().call();
   }
 
   /**
    * Similar to {@link #getTemplate()} but performs the operation asynchronously.
    *
-   * @return An {@code ApiFuture} that completes with a {@link RemoteConfigTemplate} when
+   * @return An {@code ApiFuture} that completes with a {@link Template} when
    *      the template is available.
    */
-  public ApiFuture<RemoteConfigTemplate> getTemplateAsync() {
+  public ApiFuture<Template> getTemplateAsync() {
     return getTemplateOp().callAsync(app);
   }
 
-  private CallableOperation<RemoteConfigTemplate, FirebaseRemoteConfigException> getTemplateOp() {
+  private CallableOperation<Template, FirebaseRemoteConfigException> getTemplateOp() {
     final FirebaseRemoteConfigClient remoteConfigClient = getRemoteConfigClient();
-    return new CallableOperation<RemoteConfigTemplate, FirebaseRemoteConfigException>() {
+    return new CallableOperation<Template, FirebaseRemoteConfigException>() {
       @Override
-      protected RemoteConfigTemplate execute() throws FirebaseRemoteConfigException {
+      protected Template execute() throws FirebaseRemoteConfigException {
         return remoteConfigClient.getTemplate();
       }
     };

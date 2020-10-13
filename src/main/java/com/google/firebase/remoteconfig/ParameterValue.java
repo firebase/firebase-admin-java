@@ -22,24 +22,24 @@ import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
 
 /**
- * Represents a Remote Config parameter value that can be used in a {@link RemoteConfigTemplate}.
+ * Represents a Remote Config parameter value that can be used in a {@link Template}.
  */
-public abstract class RemoteConfigParameterValue {
+public abstract class ParameterValue {
 
   /**
-   * Creates a new {@link RemoteConfigParameterValue.Explicit} instance with the given value.
+   * Creates a new {@link ParameterValue.Explicit} instance with the given value.
    *
-   * @param value The value of the {@link RemoteConfigParameterValue.Explicit}.
-   * @return A {@link RemoteConfigParameterValue.Explicit} instance.
+   * @param value The value of the {@link ParameterValue.Explicit}.
+   * @return A {@link ParameterValue.Explicit} instance.
    */
   public static Explicit of(String value) {
     return new Explicit(value);
   }
 
   /**
-   * Creates a new {@link RemoteConfigParameterValue.InAppDefault} instance.
+   * Creates a new {@link ParameterValue.InAppDefault} instance.
    *
-   * @return A {@link RemoteConfigParameterValue.InAppDefault} instance.
+   * @return A {@link ParameterValue.InAppDefault} instance.
    */
   public static InAppDefault inAppDefault() {
     return new InAppDefault();
@@ -47,20 +47,20 @@ public abstract class RemoteConfigParameterValue {
 
   abstract ParameterValueResponse toParameterValueResponse();
 
-  static RemoteConfigParameterValue fromParameterValueResponse(
+  static ParameterValue fromParameterValueResponse(
           @NonNull ParameterValueResponse parameterValueResponse) {
     checkNotNull(parameterValueResponse);
     if (parameterValueResponse.isUseInAppDefault()) {
-      return RemoteConfigParameterValue.inAppDefault();
+      return ParameterValue.inAppDefault();
     }
-    return RemoteConfigParameterValue.of(parameterValueResponse.getValue());
+    return ParameterValue.of(parameterValueResponse.getValue());
   }
 
   /**
    * Represents an explicit Remote Config parameter value with a {@link String} value that the
    * parameter is set to.
    */
-  public static final class Explicit extends RemoteConfigParameterValue {
+  public static final class Explicit extends ParameterValue {
 
     private final String value;
 
@@ -69,7 +69,7 @@ public abstract class RemoteConfigParameterValue {
     }
 
     /**
-     * Gets the value of {@link RemoteConfigParameterValue.Explicit}.
+     * Gets the value of {@link ParameterValue.Explicit}.
      *
      * @return The {@link String} value.
      */
@@ -87,7 +87,7 @@ public abstract class RemoteConfigParameterValue {
   /**
    * Represents an in app default parameter value.
    */
-  public static final class InAppDefault extends RemoteConfigParameterValue {
+  public static final class InAppDefault extends ParameterValue {
 
     @Override
     ParameterValueResponse toParameterValueResponse() {

@@ -24,8 +24,8 @@ interface FirebaseRemoteConfigClient {
   /**
    * Gets the current active version of the Remote Config template.
    *
-   * @return A {@link RemoteConfigTemplate}.
+   * @return A {@link Template}.
    * @throws FirebaseRemoteConfigException If an error occurs while getting the template.
    */
-  RemoteConfigTemplate getTemplate() throws FirebaseRemoteConfigException;
+  Template getTemplate() throws FirebaseRemoteConfigException;
 }
