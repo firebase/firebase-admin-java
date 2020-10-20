@@ -45,7 +45,6 @@ import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -112,20 +111,16 @@ public class FirebaseRemoteConfigClientImplTest {
 
     // Check Conditions
     List<Condition> actualConditions = template.getConditions();
-    List<Condition> expectedConditions = new ArrayList<>();
-    expectedConditions
-            .add(new Condition("ios_en", "device.os == 'ios' && device.country in ['us', 'uk']")
-                    .setTagColor(TagColor.INDIGO));
-    expectedConditions
-            .add(new Condition("android_en",
+    List<Condition> expectedConditions = ImmutableList.of(
+            new Condition("ios_en", "device.os == 'ios' && device.country in ['us', 'uk']")
+                    .setTagColor(TagColor.INDIGO),
+            new Condition("android_en",
                     "device.os == 'android' && device.country in ['us', 'uk']")
-                    .setTagColor(TagColor.UNSPECIFIED));
+                    .setTagColor(TagColor.UNSPECIFIED)
+    );
     assertEquals(expectedConditions.size(), actualConditions.size());
     for (int i = 0; i < expectedConditions.size(); i++) {
-      assertEquals(expectedConditions.get(i).getName(), actualConditions.get(i).getName());
-      assertEquals(expectedConditions.get(i).getExpression(),
-              actualConditions.get(i).getExpression());
-      assertEquals(expectedConditions.get(i).getTagColor(), actualConditions.get(i).getTagColor());
+      assertEquals(expectedConditions.get(i), actualConditions.get(i));
     }
   }
 

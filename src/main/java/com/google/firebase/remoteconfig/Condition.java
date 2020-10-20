@@ -24,6 +24,8 @@ import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.ConditionResponse;
 
+import java.util.Objects;
+
 /**
  * Represents a Remote Config condition that can be included in a {@link Template}.
  * A condition targets a specific group of users. A list of these conditions make up
@@ -38,7 +40,7 @@ public final class Condition {
   /**
    * Creates a new {@link Condition}.
    *
-   * @param name A non-null, non-empty, and unique name of this condition.
+   * @param name       A non-null, non-empty, and unique name of this condition.
    * @param expression A non-null and non-empty expression of this condition.
    */
   public Condition(@NonNull String name, @NonNull String expression) {
@@ -47,7 +49,23 @@ public final class Condition {
             "condition expression must not be null or empty");
     this.name = name;
     this.expression = expression;
-    this.tagColor = TagColor.UNSPECIFIED;
+  }
+
+  /**
+   * Creates a new {@link Condition}.
+   *
+   * @param name       A non-null, non-empty, and unique name of this condition.
+   * @param expression A non-null and non-empty expression of this condition.
+   * @param tagColor   A non-null tag color of this condition.
+   */
+  public Condition(@NonNull String name, @NonNull String expression, @NonNull TagColor tagColor) {
+    checkArgument(!Strings.isNullOrEmpty(name), "condition name must not be null or empty");
+    checkArgument(!Strings.isNullOrEmpty(expression),
+            "condition expression must not be null or empty");
+    checkNotNull(tagColor, "condition tag color must not be null");
+    this.name = name;
+    this.expression = expression;
+    this.tagColor = tagColor;
   }
 
   Condition(@NonNull ConditionResponse conditionResponse) {
@@ -64,7 +82,7 @@ public final class Condition {
   /**
    * Gets the name of the condition.
    *
-   * @return The {@link String} name of the condition.
+   * @return The name of the condition.
    */
   @NonNull
   public String getName() {
@@ -74,7 +92,7 @@ public final class Condition {
   /**
    * Gets the expression of the condition.
    *
-   * @return The {@link String} expression of the condition.
+   * @return The expression of the condition.
    */
   @NonNull
   public String getExpression() {
@@ -84,7 +102,7 @@ public final class Condition {
   /**
    * Gets the tag color of the condition.
    *
-   * @return The {@link String} tag color of the condition.
+   * @return The tag color of the condition.
    */
   @NonNull
   public TagColor getTagColor() {
@@ -127,11 +145,10 @@ public final class Condition {
    * with the condition.
    *
    * @param tagColor The tag color of this condition.
-   *                 Passing null sets to {@code TagColor.UNSPECIFIED}
    * @return This {@link Condition}.
    */
   public Condition setTagColor(@Nullable TagColor tagColor) {
-    this.tagColor = tagColor == null ? TagColor.UNSPECIFIED : tagColor;
+    this.tagColor = tagColor;
     return this;
   }
 
@@ -139,6 +156,19 @@ public final class Condition {
     return new ConditionResponse()
             .setName(this.name)
             .setExpression(this.expression)
-            .setTagColor(this.tagColor.getColor());
+            .setTagColor(this.tagColor == null ? null : this.tagColor.getColor());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Condition condition = (Condition) o;
+    return Objects.equals(name, condition.name)
+            && Objects.equals(expression, condition.expression) && tagColor == condition.tagColor;
   }
 }
