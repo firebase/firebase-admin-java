@@ -40,29 +40,24 @@ public final class Condition {
   /**
    * Creates a new {@link Condition}.
    *
-   * @param name       A non-null, non-empty, and unique name of this condition.
+   * @param name A non-null, non-empty, and unique name of this condition.
    * @param expression A non-null and non-empty expression of this condition.
    */
   public Condition(@NonNull String name, @NonNull String expression) {
-    checkArgument(!Strings.isNullOrEmpty(name), "condition name must not be null or empty");
-    checkArgument(!Strings.isNullOrEmpty(expression),
-            "condition expression must not be null or empty");
-    this.name = name;
-    this.expression = expression;
+    this(name, expression, null);
   }
 
   /**
    * Creates a new {@link Condition}.
    *
-   * @param name       A non-null, non-empty, and unique name of this condition.
+   * @param name A non-null, non-empty, and unique name of this condition.
    * @param expression A non-null and non-empty expression of this condition.
-   * @param tagColor   A non-null tag color of this condition.
+   * @param tagColor A tag color of this condition.
    */
-  public Condition(@NonNull String name, @NonNull String expression, @NonNull TagColor tagColor) {
+  public Condition(@NonNull String name, @NonNull String expression, @Nullable TagColor tagColor) {
     checkArgument(!Strings.isNullOrEmpty(name), "condition name must not be null or empty");
     checkArgument(!Strings.isNullOrEmpty(expression),
             "condition expression must not be null or empty");
-    checkNotNull(tagColor, "condition tag color must not be null");
     this.name = name;
     this.expression = expression;
     this.tagColor = tagColor;
