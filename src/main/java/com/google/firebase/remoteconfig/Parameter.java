@@ -25,6 +25,7 @@ import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValue
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents a Remote Config parameter that can be included in a {@link Template}.
@@ -73,7 +74,7 @@ public final class Parameter {
   /**
    * Gets the description of the parameter.
    *
-   * @return The {@link String} description of the parameter or null.
+   * @return The description of the parameter or null.
    */
   @Nullable
   public String getDescription() {
@@ -143,5 +144,24 @@ public final class Parameter {
             .setDefaultValue(defaultValueResponse)
             .setDescription(description)
             .setConditionalValues(conditionalResponseValues);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Parameter parameter = (Parameter) o;
+    return Objects.equals(defaultValue, parameter.defaultValue)
+            && Objects.equals(description, parameter.description)
+            && Objects.equals(conditionalValues, parameter.conditionalValues);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(defaultValue, description, conditionalValues);
   }
 }

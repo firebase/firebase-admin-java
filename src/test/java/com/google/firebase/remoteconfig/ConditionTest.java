@@ -18,10 +18,58 @@ package com.google.firebase.remoteconfig;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
 public class ConditionTest {
+
+  @Test
+  public void testConstructor() {
+    Condition c1 = new Condition("ios_en_1", "expression1");
+    assertEquals("ios_en_1", c1.getName());
+    assertEquals("expression1", c1.getExpression());
+    assertNull(c1.getTagColor());
+
+    Condition c2 = new Condition("ios_en_2", "expression2", TagColor.BLUE);
+    assertEquals("ios_en_2", c2.getName());
+    assertEquals("expression2", c2.getExpression());
+    assertEquals(TagColor.BLUE, c2.getTagColor());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testIllegalConstructor() {
+    Condition c = new Condition(null, null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testConstructorWithNullConditionResponse() {
+    Condition c = new Condition(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSetNullName() {
+    Condition c = new Condition("ios", "exp");
+    c.setName(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSetEmptyName() {
+    Condition c = new Condition("ios", "exp");
+    c.setName("");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSetNullExpression() {
+    Condition c = new Condition("ios", "exp");
+    c.setExpression(null);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSetEmptyExpression() {
+    Condition c = new Condition("ios", "exp");
+    c.setExpression("");
+  }
 
   @Test
   public void testEquality() {

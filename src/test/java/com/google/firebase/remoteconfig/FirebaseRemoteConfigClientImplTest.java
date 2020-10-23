@@ -45,6 +45,7 @@ import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -122,6 +123,22 @@ public class FirebaseRemoteConfigClientImplTest {
     for (int i = 0; i < expectedConditions.size(); i++) {
       assertEquals(expectedConditions.get(i), actualConditions.get(i));
     }
+
+    // Check Parameter Groups
+    Map<String, ParameterGroup> parameterGroups = template.getParameterGroups();
+    assertEquals(1, parameterGroups.size());
+
+    Map<String, ParameterValue> cv = new HashMap<>();
+    cv.put("ios_en", ParameterValue.of("welcome to app en"));
+
+    Parameter p = new Parameter()
+            .setDefaultValue(ParameterValue.of("welcome to app"))
+            .setConditionalValues(cv)
+            .setDescription("text for welcome message!");
+    Parameter p1 = new Parameter()
+            .setDefaultValue(ParameterValue.inAppDefault());
+    assertEquals(p, welcomeMessageParameter);
+    assertEquals(p1, headerParameter);
   }
 
   @Test

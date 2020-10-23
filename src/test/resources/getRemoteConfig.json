@@ -28,7 +28,19 @@
       }
     }
   },
-  "parameterGroups": {},
+  "parameterGroups": {
+    "new menu": {
+      "description": "New Menu",
+      "parameters": {
+        "pumpkin_spice_season": {
+          "defaultValue": {
+            "value": "true"
+          },
+          "description": "Whether it's currently pumpkin spice season."
+        }
+      }
+    }
+  },
   "version": {
     "versionNumber": "17",
     "updateOrigin": "ADMIN_SDK_NODE",
