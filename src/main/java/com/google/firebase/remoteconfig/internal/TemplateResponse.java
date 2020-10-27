@@ -18,6 +18,7 @@ package com.google.firebase.remoteconfig.internal;
 
 import com.google.api.client.util.Key;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -29,13 +30,26 @@ public final class TemplateResponse {
   @Key("parameters")
   private Map<String, ParameterResponse> parameters;
 
+  @Key("conditions")
+  private List<ConditionResponse> conditions;
+
   public Map<String, ParameterResponse> getParameters() {
     return parameters;
+  }
+
+  public List<ConditionResponse> getConditions() {
+    return conditions;
   }
 
   public TemplateResponse setParameters(
           Map<String, ParameterResponse> parameters) {
     this.parameters = parameters;
+    return this;
+  }
+
+  public TemplateResponse setConditions(
+          List<ConditionResponse> conditions) {
+    this.conditions = conditions;
     return this;
   }
 
@@ -111,6 +125,49 @@ public final class TemplateResponse {
 
     public ParameterValueResponse setUseInAppDefault(boolean useInAppDefault) {
       this.useInAppDefault = useInAppDefault;
+      return this;
+    }
+  }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config condition responses from the
+   * Remote Config service.
+   **/
+  public static final class ConditionResponse {
+
+    @Key("name")
+    private String name;
+
+    @Key("expression")
+    private String expression;
+
+    @Key("tagColor")
+    private String tagColor;
+
+    public String getName() {
+      return name;
+    }
+
+    public String getExpression() {
+      return expression;
+    }
+
+    public String getTagColor() {
+      return tagColor;
+    }
+
+    public ConditionResponse setName(String name) {
+      this.name = name;
+      return this;
+    }
+
+    public ConditionResponse setExpression(String expression) {
+      this.expression = expression;
+      return this;
+    }
+
+    public ConditionResponse setTagColor(String tagColor) {
+      this.tagColor = tagColor;
       return this;
     }
   }

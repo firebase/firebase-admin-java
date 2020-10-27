@@ -86,6 +86,7 @@ public class FirebaseRemoteConfigClientImplTest {
 
     Template template = client.getTemplate();
 
+    // Check Parameters
     assertEquals(TEST_ETAG, template.getETag());
     Map<String, Parameter> parameters = template.getParameters();
     assertEquals(2, parameters.size());
@@ -107,6 +108,20 @@ public class FirebaseRemoteConfigClientImplTest {
     assertTrue(
             headerParameter.getDefaultValue() instanceof ParameterValue.InAppDefault);
     checkGetRequestHeader(interceptor.getLastRequest());
+
+    // Check Conditions
+    List<Condition> actualConditions = template.getConditions();
+    List<Condition> expectedConditions = ImmutableList.of(
+            new Condition("ios_en", "device.os == 'ios' && device.country in ['us', 'uk']")
+                    .setTagColor(TagColor.INDIGO),
+            new Condition("android_en",
+                    "device.os == 'android' && device.country in ['us', 'uk']")
+                    .setTagColor(TagColor.UNSPECIFIED)
+    );
+    assertEquals(expectedConditions.size(), actualConditions.size());
+    for (int i = 0; i < expectedConditions.size(); i++) {
+      assertEquals(expectedConditions.get(i), actualConditions.get(i));
+    }
   }
 
   @Test
