@@ -17,7 +17,7 @@
 package com.google.firebase.remoteconfig;
 
 /**
- * Colors that are associated with conditions for display purposes.
+ * Colors that are associated with conditions for display purposes in the Firebase Console.
  */
 public enum TagColor {
   BLUE("BLUE"),

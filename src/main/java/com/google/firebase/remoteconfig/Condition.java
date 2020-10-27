@@ -52,7 +52,9 @@ public final class Condition {
    *
    * @param name A non-null, non-empty, and unique name of this condition.
    * @param expression A non-null and non-empty expression of this condition.
-   * @param tagColor A tag color of this condition.
+   * @param tagColor A color associated with this condition for display purposes in the
+   *                 Firebase Console. Not specifying this value results in the console picking an
+   *                 arbitrary color to associate with the condition.
    */
   public Condition(@NonNull String name, @NonNull String expression, @Nullable TagColor tagColor) {
     checkArgument(!Strings.isNullOrEmpty(name), "condition name must not be null or empty");
@@ -95,7 +97,7 @@ public final class Condition {
   }
 
   /**
-   * Gets the tag color of the condition.
+   * Gets the tag color of the condition used for display purposes in the Firebase Console.
    *
    * @return The tag color of the condition.
    */
