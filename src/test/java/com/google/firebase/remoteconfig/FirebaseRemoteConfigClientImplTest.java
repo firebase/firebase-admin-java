@@ -85,33 +85,27 @@ public class FirebaseRemoteConfigClientImplTest {
     response.addHeader("etag", TEST_ETAG);
     response.setContent(MOCK_TEMPLATE_RESPONSE);
 
-    Template template = client.getTemplate();
-
-    // Check Parameters
-    assertEquals(TEST_ETAG, template.getETag());
-    Map<String, Parameter> parameters = template.getParameters();
-    assertEquals(2, parameters.size());
-    assertTrue(parameters.containsKey("welcome_message_text"));
-    Parameter welcomeMessageParameter = parameters.get("welcome_message_text");
-    assertEquals("text for welcome message!", welcomeMessageParameter.getDescription());
-    ParameterValue.Explicit explicitDefaultValue =
-            (ParameterValue.Explicit) welcomeMessageParameter.getDefaultValue();
-    assertEquals("welcome to app", explicitDefaultValue.getValue());
-    Map<String, ParameterValue> conditionalValues = welcomeMessageParameter
-            .getConditionalValues();
-    assertEquals(1, conditionalValues.size());
-    assertTrue(conditionalValues.containsKey("ios_en"));
-    ParameterValue.Explicit value =
-            (ParameterValue.Explicit) conditionalValues.get("ios_en");
-    assertEquals("welcome to app en", value.getValue());
-    assertTrue(parameters.containsKey("header_text"));
-    Parameter headerParameter = parameters.get("header_text");
-    assertTrue(
-            headerParameter.getDefaultValue() instanceof ParameterValue.InAppDefault);
-    checkGetRequestHeader(interceptor.getLastRequest());
-
-    // Check Conditions
-    List<Condition> actualConditions = template.getConditions();
+    Template receivedTemplate = client.getTemplate();
+    Map<String, Parameter> expectedParameters = ImmutableMap.of(
+            "welcome_message_text", new Parameter()
+                    .setDefaultValue(ParameterValue.of("welcome to app"))
+                    .setConditionalValues(ImmutableMap.<String, ParameterValue>of(
+                            "ios_en", ParameterValue.of("welcome to app en")
+                    ))
+                    .setDescription("text for welcome message!"),
+            "header_text", new Parameter()
+                    .setDefaultValue(ParameterValue.inAppDefault())
+    );
+    Map<String, ParameterGroup> expectedParameterGroups = ImmutableMap.of(
+            "new menu", new ParameterGroup()
+                    .setDescription("New Menu")
+                    .setParameters(ImmutableMap.of(
+                            "pumpkin_spice_season", new Parameter()
+                                    .setDefaultValue(ParameterValue.of("true"))
+                                    .setDescription("Whether it's currently pumpkin spice season.")
+                            )
+                    )
+    );
     List<Condition> expectedConditions = ImmutableList.of(
             new Condition("ios_en", "device.os == 'ios' && device.country in ['us', 'uk']")
                     .setTagColor(TagColor.INDIGO),
@@ -119,26 +113,15 @@ public class FirebaseRemoteConfigClientImplTest {
                     "device.os == 'android' && device.country in ['us', 'uk']")
                     .setTagColor(TagColor.UNSPECIFIED)
     );
-    assertEquals(expectedConditions.size(), actualConditions.size());
-    for (int i = 0; i < expectedConditions.size(); i++) {
-      assertEquals(expectedConditions.get(i), actualConditions.get(i));
-    }
+    Template expectedTemplate = new Template()
+            .setParameters(expectedParameters)
+            .setParameterGroups(expectedParameterGroups)
+            .setConditions(expectedConditions)
+            .setETag(TEST_ETAG);
 
-    // Check Parameter Groups
-    Map<String, ParameterGroup> parameterGroups = template.getParameterGroups();
-    assertEquals(1, parameterGroups.size());
-
-    Map<String, ParameterValue> cv = new HashMap<>();
-    cv.put("ios_en", ParameterValue.of("welcome to app en"));
-
-    Parameter p = new Parameter()
-            .setDefaultValue(ParameterValue.of("welcome to app"))
-            .setConditionalValues(cv)
-            .setDescription("text for welcome message!");
-    Parameter p1 = new Parameter()
-            .setDefaultValue(ParameterValue.inAppDefault());
-    assertEquals(p, welcomeMessageParameter);
-    assertEquals(p1, headerParameter);
+    assertEquals(TEST_ETAG, receivedTemplate.getETag());
+    assertEquals(expectedTemplate, receivedTemplate);
+    checkGetRequestHeader(interceptor.getLastRequest());
   }
 
   @Test

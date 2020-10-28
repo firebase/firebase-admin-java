@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents a Remote Config template.
@@ -145,7 +146,8 @@ public final class Template {
    * @return This {@link Template} instance.
    */
   public Template setParameterGroups(
-          Map<String, ParameterGroup> parameterGroups) {
+          @NonNull Map<String, ParameterGroup> parameterGroups) {
+    checkNotNull(parameterGroups, "parameter groups must not be null.");
     this.parameterGroups = parameterGroups;
     return this;
   }
@@ -172,5 +174,20 @@ public final class Template {
             .setParameters(parameterResponses)
             .setConditions(conditionResponses)
             .setParameterGroups(parameterGroupResponse);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Template template = (Template) o;
+    return Objects.equals(etag, template.etag)
+            && Objects.equals(parameters, template.parameters)
+            && Objects.equals(conditions, template.conditions)
+            && Objects.equals(parameterGroups, template.parameterGroups);
   }
 }

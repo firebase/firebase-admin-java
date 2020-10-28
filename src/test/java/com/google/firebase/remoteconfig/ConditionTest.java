@@ -27,11 +27,13 @@ public class ConditionTest {
   @Test
   public void testConstructor() {
     Condition c1 = new Condition("ios_en_1", "expression1");
+
     assertEquals("ios_en_1", c1.getName());
     assertEquals("expression1", c1.getExpression());
     assertNull(c1.getTagColor());
 
     Condition c2 = new Condition("ios_en_2", "expression2", TagColor.BLUE);
+
     assertEquals("ios_en_2", c2.getName());
     assertEquals("expression2", c2.getExpression());
     assertEquals(TagColor.BLUE, c2.getTagColor());

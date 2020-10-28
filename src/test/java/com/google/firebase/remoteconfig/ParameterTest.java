@@ -21,7 +21,8 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-import java.util.HashMap;
+import com.google.common.collect.ImmutableMap;
+
 import java.util.Map;
 
 import org.junit.Test;
@@ -64,10 +65,11 @@ public class ParameterTest {
             .setDescription("greeting text");
     assertEquals(p3, p4);
 
-    final Map<String, ParameterValue> conditionalValues = new HashMap();
-    conditionalValues.put("ios", ParameterValue.of("hello ios"));
-    conditionalValues.put("android", ParameterValue.of("hello android"));
-    conditionalValues.put("promo", ParameterValue.inAppDefault());
+    final Map<String, ParameterValue> conditionalValues = ImmutableMap.of(
+            "ios", ParameterValue.of("hello ios"),
+            "android", ParameterValue.of("hello android"),
+            "promo", ParameterValue.inAppDefault()
+    );
     final Parameter p5 = new Parameter()
             .setDefaultValue(ParameterValue.inAppDefault())
             .setDescription("greeting text")

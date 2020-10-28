@@ -32,6 +32,7 @@ public class ParameterGroupTest {
   @Test
   public void testConstructor() {
     final ParameterGroup pg = new ParameterGroup();
+
     assertNotNull(pg.getParameters());
     assertEquals(0, pg.getParameters().size());
     assertNull(pg.getDescription());
@@ -52,12 +53,14 @@ public class ParameterGroupTest {
   public void testEquality() {
     final ParameterGroup p1 = new ParameterGroup();
     final ParameterGroup p2 = new ParameterGroup();
+
     assertEquals(p1, p2);
 
     final ParameterGroup p3 = new ParameterGroup()
             .setDescription("description");
     final ParameterGroup p4 = new ParameterGroup()
             .setDescription("description");
+
     assertEquals(p3, p4);
 
     final Map<String, Parameter> parameters = ImmutableMap.of(
@@ -74,6 +77,7 @@ public class ParameterGroupTest {
     final ParameterGroup p6 = new ParameterGroup()
             .setDescription("description")
             .setParameters(parameters);
+
     assertEquals(p5, p6);
     assertNotEquals(p1, p3);
     assertNotEquals(p1, p5);

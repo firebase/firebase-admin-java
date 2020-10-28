@@ -26,12 +26,14 @@ public class ParameterValueTest {
   @Test
   public void testCreateExplicitValue() {
     final ParameterValue.Explicit pv = ParameterValue.of("title text");
+
     assertEquals("title text", pv.getValue());
   }
 
   @Test
   public void testCreateInAppDefault() {
     final ParameterValue.InAppDefault pv = ParameterValue.inAppDefault();
+
     assertEquals(ParameterValue.InAppDefault.class, pv.getClass());
   }
 
@@ -40,11 +42,13 @@ public class ParameterValueTest {
     ParameterValue.Explicit pv1 = ParameterValue.of("value");
     ParameterValue.Explicit pv2 = ParameterValue.of("value");
     ParameterValue.Explicit pv3 = ParameterValue.of("title");
+
     assertEquals(pv1, pv2);
     assertNotEquals(pv1, pv3);
 
     ParameterValue.InAppDefault pv4 = ParameterValue.inAppDefault();
     ParameterValue.InAppDefault pv5 = ParameterValue.inAppDefault();
+
     assertEquals(pv4, pv5);
   }
 }
