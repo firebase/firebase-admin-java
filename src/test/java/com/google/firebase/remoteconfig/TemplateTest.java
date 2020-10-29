@@ -20,11 +20,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -39,15 +39,15 @@ public class TemplateTest {
     assertNotNull(t.getParameters());
     assertNotNull(t.getConditions());
     assertNotNull(t.getParameterGroups());
-    assertEquals(0, t.getParameters().size());
-    assertEquals(0, t.getConditions().size());
-    assertEquals(0, t.getParameterGroups().size());
+    assertTrue(t.getParameters().isEmpty());
+    assertTrue(t.getConditions().isEmpty());
+    assertTrue(t.getParameterGroups().isEmpty());
     assertNull(t.getETag());
   }
 
   @Test(expected = NullPointerException.class)
   public void testConstructorWithNullTemplateResponse() {
-    Template t = new Template(null);
+    new Template(null);
   }
 
   @Test(expected = NullPointerException.class)

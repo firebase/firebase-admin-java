@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -34,13 +35,13 @@ public class ParameterGroupTest {
     final ParameterGroup pg = new ParameterGroup();
 
     assertNotNull(pg.getParameters());
-    assertEquals(0, pg.getParameters().size());
+    assertTrue(pg.getParameters().isEmpty());
     assertNull(pg.getDescription());
   }
 
   @Test(expected = NullPointerException.class)
   public void testConstructorWithNullParameterGroupResponse() {
-    ParameterGroup pg = new ParameterGroup(null);
+    new ParameterGroup(null);
   }
 
   @Test(expected = NullPointerException.class)

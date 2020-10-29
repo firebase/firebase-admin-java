@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -32,15 +33,16 @@ public class ParameterTest {
   @Test
   public void testConstructor() {
     final Parameter p = new Parameter();
+
     assertNotNull(p.getConditionalValues());
-    assertEquals(0, p.getConditionalValues().size());
+    assertTrue(p.getConditionalValues().isEmpty());
     assertNull(p.getDefaultValue());
     assertNull(p.getDescription());
   }
 
   @Test(expected = NullPointerException.class)
   public void testConstructorWithNullParameterResponse() {
-    Parameter p = new Parameter(null);
+    new Parameter(null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -55,6 +57,7 @@ public class ParameterTest {
             .setDefaultValue(ParameterValue.of("hello"));
     final Parameter p2 = new Parameter()
             .setDefaultValue(ParameterValue.of("hello"));
+
     assertEquals(p1, p2);
 
     final Parameter p3 = new Parameter()
@@ -63,6 +66,7 @@ public class ParameterTest {
     final Parameter p4 = new Parameter()
             .setDefaultValue(ParameterValue.inAppDefault())
             .setDescription("greeting text");
+
     assertEquals(p3, p4);
 
     final Map<String, ParameterValue> conditionalValues = ImmutableMap.of(
@@ -78,6 +82,7 @@ public class ParameterTest {
             .setDefaultValue(ParameterValue.inAppDefault())
             .setDescription("greeting text")
             .setConditionalValues(conditionalValues);
+
     assertEquals(p5, p6);
     assertNotEquals(p1, p3);
     assertNotEquals(p1, p5);

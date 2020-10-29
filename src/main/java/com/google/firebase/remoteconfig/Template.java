@@ -190,4 +190,9 @@ public final class Template {
             && Objects.equals(conditions, template.conditions)
             && Objects.equals(parameterGroups, template.parameterGroups);
   }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(etag, parameters, conditions, parameterGroups);
+  }
 }
