@@ -34,15 +34,15 @@ public class TemplateTest {
 
   @Test
   public void testConstructor() {
-    Template t = new Template();
+    Template template = new Template();
 
-    assertNotNull(t.getParameters());
-    assertNotNull(t.getConditions());
-    assertNotNull(t.getParameterGroups());
-    assertTrue(t.getParameters().isEmpty());
-    assertTrue(t.getConditions().isEmpty());
-    assertTrue(t.getParameterGroups().isEmpty());
-    assertNull(t.getETag());
+    assertNotNull(template.getParameters());
+    assertNotNull(template.getConditions());
+    assertNotNull(template.getParameterGroups());
+    assertTrue(template.getParameters().isEmpty());
+    assertTrue(template.getConditions().isEmpty());
+    assertTrue(template.getParameterGroups().isEmpty());
+    assertNull(template.getETag());
   }
 
   @Test(expected = NullPointerException.class)
@@ -52,28 +52,28 @@ public class TemplateTest {
 
   @Test(expected = NullPointerException.class)
   public void testSetNullParameters() {
-    Template t = new Template();
-    t.setParameters(null);
+    Template template = new Template();
+    template.setParameters(null);
   }
 
   @Test(expected = NullPointerException.class)
   public void testSetNullConditions() {
-    Template t = new Template();
-    t.setConditions(null);
+    Template template = new Template();
+    template.setConditions(null);
   }
 
   @Test(expected = NullPointerException.class)
   public void testSetNullParameterGroups() {
-    Template t = new Template();
-    t.setParameterGroups(null);
+    Template template = new Template();
+    template.setParameterGroups(null);
   }
 
   @Test
   public void testEquality() {
-    final Template t1 = new Template();
-    final Template t2 = new Template();
+    final Template templateOne = new Template();
+    final Template templateTwo = new Template();
 
-    assertEquals(t1, t2);
+    assertEquals(templateOne, templateTwo);
 
     final List<Condition> conditions = ImmutableList.<Condition>of(
             new Condition("ios_en", "exp ios")
@@ -95,42 +95,42 @@ public class TemplateTest {
                     .setDescription("greeting text")
                     .setConditionalValues(conditionalValues)
     );
-    final Template t3 = new Template()
+    final Template templateThree = new Template()
             .setConditions(conditions)
             .setParameters(parameters);
-    final Template t4 = new Template()
+    final Template templateFour = new Template()
             .setConditions(conditions)
             .setParameters(parameters);
 
-    assertEquals(t3, t4);
+    assertEquals(templateThree, templateFour);
 
     final Map<String, ParameterGroup> parameterGroups = ImmutableMap.of(
             "greetings_group", new ParameterGroup()
                     .setDescription("description")
                     .setParameters(parameters)
     );
-    final Template t5 = new Template()
+    final Template templateFive = new Template()
             .setConditions(conditions)
             .setParameters(parameters)
             .setParameterGroups(parameterGroups);
-    final Template t6 = new Template()
+    final Template templateSix = new Template()
             .setConditions(conditions)
             .setParameters(parameters)
             .setParameterGroups(parameterGroups);
 
-    assertEquals(t5, t6);
+    assertEquals(templateFive, templateSix);
 
-    final Template t7 = new Template()
+    final Template templateSeven = new Template()
             .setETag("etag-123456789097-20");
-    final Template t8 = new Template()
+    final Template templateEight = new Template()
             .setETag("etag-123456789097-20");
 
-    assertEquals(t7, t8);
-    assertNotEquals(t1, t3);
-    assertNotEquals(t1, t5);
-    assertNotEquals(t1, t7);
-    assertNotEquals(t3, t5);
-    assertNotEquals(t3, t7);
-    assertNotEquals(t5, t7);
+    assertEquals(templateSeven, templateEight);
+    assertNotEquals(templateOne, templateThree);
+    assertNotEquals(templateOne, templateFive);
+    assertNotEquals(templateOne, templateSeven);
+    assertNotEquals(templateThree, templateFive);
+    assertNotEquals(templateThree, templateSeven);
+    assertNotEquals(templateFive, templateSeven);
   }
 }

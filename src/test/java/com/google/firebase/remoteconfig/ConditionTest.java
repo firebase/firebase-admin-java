@@ -26,20 +26,20 @@ public class ConditionTest {
 
   @Test
   public void testConstructor() {
-    Condition c = new Condition("ios_en_1", "expression1");
+    Condition condition = new Condition("ios_en_1", "expression1");
 
-    assertEquals("ios_en_1", c.getName());
-    assertEquals("expression1", c.getExpression());
-    assertNull(c.getTagColor());
+    assertEquals("ios_en_1", condition.getName());
+    assertEquals("expression1", condition.getExpression());
+    assertNull(condition.getTagColor());
   }
 
   @Test
   public void testConstructorWithColor() {
-    Condition c = new Condition("ios_en_2", "expression2", TagColor.BLUE);
+    Condition condition = new Condition("ios_en_2", "expression2", TagColor.BLUE);
 
-    assertEquals("ios_en_2", c.getName());
-    assertEquals("expression2", c.getExpression());
-    assertEquals(TagColor.BLUE, c.getTagColor());
+    assertEquals("ios_en_2", condition.getName());
+    assertEquals("expression2", condition.getExpression());
+    assertEquals(TagColor.BLUE, condition.getTagColor());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -54,26 +54,26 @@ public class ConditionTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testSetNullName() {
-    Condition c = new Condition("ios", "exp");
-    c.setName(null);
+    Condition condition = new Condition("ios", "exp");
+    condition.setName(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testSetEmptyName() {
-    Condition c = new Condition("ios", "exp");
-    c.setName("");
+    Condition condition = new Condition("ios", "exp");
+    condition.setName("");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testSetNullExpression() {
-    Condition c = new Condition("ios", "exp");
-    c.setExpression(null);
+    Condition condition = new Condition("ios", "exp");
+    condition.setExpression(null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testSetEmptyExpression() {
-    Condition c = new Condition("ios", "exp");
-    c.setExpression("");
+    Condition condition = new Condition("ios", "exp");
+    condition.setExpression("");
   }
 
   @Test

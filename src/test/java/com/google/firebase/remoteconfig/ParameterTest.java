@@ -32,12 +32,12 @@ public class ParameterTest {
 
   @Test
   public void testConstructor() {
-    final Parameter p = new Parameter();
+    final Parameter parameter = new Parameter();
 
-    assertNotNull(p.getConditionalValues());
-    assertTrue(p.getConditionalValues().isEmpty());
-    assertNull(p.getDefaultValue());
-    assertNull(p.getDescription());
+    assertNotNull(parameter.getConditionalValues());
+    assertTrue(parameter.getConditionalValues().isEmpty());
+    assertNull(parameter.getDefaultValue());
+    assertNull(parameter.getDescription());
   }
 
   @Test(expected = NullPointerException.class)
@@ -47,46 +47,45 @@ public class ParameterTest {
 
   @Test(expected = NullPointerException.class)
   public void testSetNullConditionalValues() {
-    Parameter p = new Parameter();
-    p.setConditionalValues(null);
+    Parameter parameter = new Parameter();
+    parameter.setConditionalValues(null);
   }
 
   @Test
   public void testEquality() {
-    final Parameter p1 = new Parameter()
+    final Parameter parameterOne = new Parameter()
             .setDefaultValue(ParameterValue.of("hello"));
-    final Parameter p2 = new Parameter()
+    final Parameter parameterTwo = new Parameter()
             .setDefaultValue(ParameterValue.of("hello"));
 
-    assertEquals(p1, p2);
+    assertEquals(parameterOne, parameterTwo);
 
-    final Parameter p3 = new Parameter()
+    final Parameter parameterThree = new Parameter()
             .setDefaultValue(ParameterValue.inAppDefault())
             .setDescription("greeting text");
-    final Parameter p4 = new Parameter()
+    final Parameter parameterFour = new Parameter()
             .setDefaultValue(ParameterValue.inAppDefault())
             .setDescription("greeting text");
 
-    assertEquals(p3, p4);
+    assertEquals(parameterThree, parameterFour);
 
     final Map<String, ParameterValue> conditionalValues = ImmutableMap.of(
             "ios", ParameterValue.of("hello ios"),
             "android", ParameterValue.of("hello android"),
             "promo", ParameterValue.inAppDefault()
     );
-    final Parameter p5 = new Parameter()
+    final Parameter parameterFive = new Parameter()
             .setDefaultValue(ParameterValue.inAppDefault())
             .setDescription("greeting text")
             .setConditionalValues(conditionalValues);
-    final Parameter p6 = new Parameter()
+    final Parameter parameterSix = new Parameter()
             .setDefaultValue(ParameterValue.inAppDefault())
             .setDescription("greeting text")
             .setConditionalValues(conditionalValues);
 
-    assertEquals(p5, p6);
-    assertNotEquals(p1, p3);
-    assertNotEquals(p1, p5);
-    assertNotEquals(p3, p5);
+    assertEquals(parameterFive, parameterSix);
+    assertNotEquals(parameterOne, parameterThree);
+    assertNotEquals(parameterOne, parameterFive);
+    assertNotEquals(parameterThree, parameterFive);
   }
-
 }

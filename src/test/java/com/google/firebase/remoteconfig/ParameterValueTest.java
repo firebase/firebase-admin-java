@@ -25,30 +25,30 @@ public class ParameterValueTest {
 
   @Test
   public void testCreateExplicitValue() {
-    final ParameterValue.Explicit pv = ParameterValue.of("title text");
+    final ParameterValue.Explicit parameterValue = ParameterValue.of("title text");
 
-    assertEquals("title text", pv.getValue());
+    assertEquals("title text", parameterValue.getValue());
   }
 
   @Test
   public void testCreateInAppDefault() {
-    final ParameterValue.InAppDefault pv = ParameterValue.inAppDefault();
+    final ParameterValue.InAppDefault parameterValue = ParameterValue.inAppDefault();
 
-    assertEquals(ParameterValue.InAppDefault.class, pv.getClass());
+    assertEquals(ParameterValue.InAppDefault.class, parameterValue.getClass());
   }
 
   @Test
   public void testEquality() {
-    ParameterValue.Explicit pv1 = ParameterValue.of("value");
-    ParameterValue.Explicit pv2 = ParameterValue.of("value");
-    ParameterValue.Explicit pv3 = ParameterValue.of("title");
+    ParameterValue.Explicit parameterValueOne = ParameterValue.of("value");
+    ParameterValue.Explicit parameterValueTwo = ParameterValue.of("value");
+    ParameterValue.Explicit parameterValueThree = ParameterValue.of("title");
 
-    assertEquals(pv1, pv2);
-    assertNotEquals(pv1, pv3);
+    assertEquals(parameterValueOne, parameterValueTwo);
+    assertNotEquals(parameterValueOne, parameterValueThree);
 
-    ParameterValue.InAppDefault pv4 = ParameterValue.inAppDefault();
-    ParameterValue.InAppDefault pv5 = ParameterValue.inAppDefault();
+    ParameterValue.InAppDefault parameterValueFour = ParameterValue.inAppDefault();
+    ParameterValue.InAppDefault parameterValueFive = ParameterValue.inAppDefault();
 
-    assertEquals(pv4, pv5);
+    assertEquals(parameterValueFour, parameterValueFive);
   }
 }

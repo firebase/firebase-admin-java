@@ -32,11 +32,11 @@ public class ParameterGroupTest {
 
   @Test
   public void testConstructor() {
-    final ParameterGroup pg = new ParameterGroup();
+    final ParameterGroup parameterGroup = new ParameterGroup();
 
-    assertNotNull(pg.getParameters());
-    assertTrue(pg.getParameters().isEmpty());
-    assertNull(pg.getDescription());
+    assertNotNull(parameterGroup.getParameters());
+    assertTrue(parameterGroup.getParameters().isEmpty());
+    assertNull(parameterGroup.getDescription());
   }
 
   @Test(expected = NullPointerException.class)
@@ -46,23 +46,23 @@ public class ParameterGroupTest {
 
   @Test(expected = NullPointerException.class)
   public void testSetNullParameters() {
-    ParameterGroup pg = new ParameterGroup();
-    pg.setParameters(null);
+    ParameterGroup parameterGroup = new ParameterGroup();
+    parameterGroup.setParameters(null);
   }
 
   @Test
   public void testEquality() {
-    final ParameterGroup p1 = new ParameterGroup();
-    final ParameterGroup p2 = new ParameterGroup();
+    final ParameterGroup parameterGroupOne = new ParameterGroup();
+    final ParameterGroup parameterGroupTwo = new ParameterGroup();
 
-    assertEquals(p1, p2);
+    assertEquals(parameterGroupOne, parameterGroupTwo);
 
-    final ParameterGroup p3 = new ParameterGroup()
+    final ParameterGroup parameterGroupThree = new ParameterGroup()
             .setDescription("description");
-    final ParameterGroup p4 = new ParameterGroup()
+    final ParameterGroup parameterGroupFour = new ParameterGroup()
             .setDescription("description");
 
-    assertEquals(p3, p4);
+    assertEquals(parameterGroupThree, parameterGroupFour);
 
     final Map<String, Parameter> parameters = ImmutableMap.of(
             "header_text", new Parameter().setDefaultValue(ParameterValue.of("Welcome")),
@@ -72,16 +72,16 @@ public class ParameterGroupTest {
                             "ios", ParameterValue.of("ios header text")
                     ))
     );
-    final ParameterGroup p5 = new ParameterGroup()
+    final ParameterGroup parameterGroupFive = new ParameterGroup()
             .setDescription("description")
             .setParameters(parameters);
-    final ParameterGroup p6 = new ParameterGroup()
+    final ParameterGroup parameterGroupSix = new ParameterGroup()
             .setDescription("description")
             .setParameters(parameters);
 
-    assertEquals(p5, p6);
-    assertNotEquals(p1, p3);
-    assertNotEquals(p1, p5);
-    assertNotEquals(p3, p5);
+    assertEquals(parameterGroupFive, parameterGroupSix);
+    assertNotEquals(parameterGroupOne, parameterGroupThree);
+    assertNotEquals(parameterGroupOne, parameterGroupFive);
+    assertNotEquals(parameterGroupThree, parameterGroupFive);
   }
 }
