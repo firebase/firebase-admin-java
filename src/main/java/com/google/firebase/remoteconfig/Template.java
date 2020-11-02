@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents a Remote Config template.
@@ -34,6 +35,7 @@ public final class Template {
   private String etag;
   private Map<String, Parameter> parameters;
   private List<Condition> conditions;
+  private Map<String, ParameterGroup> parameterGroups;
 
   /**
    * Creates a new {@link Template}.
@@ -41,12 +43,14 @@ public final class Template {
   public Template() {
     parameters = new HashMap<>();
     conditions = new ArrayList<>();
+    parameterGroups = new HashMap<>();
   }
 
   Template(@NonNull TemplateResponse templateResponse) {
     checkNotNull(templateResponse);
     this.parameters = new HashMap<>();
     this.conditions = new ArrayList<>();
+    this.parameterGroups = new HashMap<>();
     if (templateResponse.getParameters() != null) {
       for (Map.Entry<String, TemplateResponse.ParameterResponse> entry
               : templateResponse.getParameters().entrySet()) {
@@ -57,6 +61,12 @@ public final class Template {
       for (TemplateResponse.ConditionResponse conditionResponse
               : templateResponse.getConditions()) {
         this.conditions.add(new Condition(conditionResponse));
+      }
+    }
+    if (templateResponse.getParameterGroups() != null) {
+      for (Map.Entry<String, TemplateResponse.ParameterGroupResponse> entry
+              : templateResponse.getParameterGroups().entrySet()) {
+        this.parameterGroups.put(entry.getKey(), new ParameterGroup(entry.getValue()));
       }
     }
   }
@@ -84,11 +94,21 @@ public final class Template {
   /**
    * Gets the list of conditions of the template.
    *
-   * @return A non-null list of conditions
+   * @return A non-null list of conditions.
    */
   @NonNull
   public List<Condition> getConditions() {
     return conditions;
+  }
+
+  /**
+   * Gets the map of parameter groups of the template.
+   *
+   * @return A non-null map of parameter group names to their parameter group instances.
+   */
+  @NonNull
+  public Map<String, ParameterGroup> getParameterGroups() {
+    return parameterGroups;
   }
 
   /**
@@ -118,6 +138,20 @@ public final class Template {
     return this;
   }
 
+  /**
+   * Sets the map of parameter groups of the template.
+   *
+   * @param parameterGroups A non-null map of parameter group names to their
+   *                        parameter group instances.
+   * @return This {@link Template} instance.
+   */
+  public Template setParameterGroups(
+          @NonNull Map<String, ParameterGroup> parameterGroups) {
+    checkNotNull(parameterGroups, "parameter groups must not be null.");
+    this.parameterGroups = parameterGroups;
+    return this;
+  }
+
   Template setETag(String etag) {
     this.etag = etag;
     return this;
@@ -132,8 +166,33 @@ public final class Template {
     for (Condition condition : this.conditions) {
       conditionResponses.add(condition.toConditionResponse());
     }
+    Map<String, TemplateResponse.ParameterGroupResponse> parameterGroupResponse = new HashMap<>();
+    for (Map.Entry<String, ParameterGroup> entry : this.parameterGroups.entrySet()) {
+      parameterGroupResponse.put(entry.getKey(), entry.getValue().toParameterGroupResponse());
+    }
     return new TemplateResponse()
             .setParameters(parameterResponses)
-            .setConditions(conditionResponses);
+            .setConditions(conditionResponses)
+            .setParameterGroups(parameterGroupResponse);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Template template = (Template) o;
+    return Objects.equals(etag, template.etag)
+            && Objects.equals(parameters, template.parameters)
+            && Objects.equals(conditions, template.conditions)
+            && Objects.equals(parameterGroups, template.parameterGroups);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(etag, parameters, conditions, parameterGroups);
   }
 }

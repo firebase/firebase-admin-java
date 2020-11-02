@@ -33,12 +33,19 @@ public final class TemplateResponse {
   @Key("conditions")
   private List<ConditionResponse> conditions;
 
+  @Key("parameterGroups")
+  private Map<String, ParameterGroupResponse> parameterGroups;
+
   public Map<String, ParameterResponse> getParameters() {
     return parameters;
   }
 
   public List<ConditionResponse> getConditions() {
     return conditions;
+  }
+
+  public Map<String, ParameterGroupResponse> getParameterGroups() {
+    return parameterGroups;
   }
 
   public TemplateResponse setParameters(
@@ -50,6 +57,12 @@ public final class TemplateResponse {
   public TemplateResponse setConditions(
           List<ConditionResponse> conditions) {
     this.conditions = conditions;
+    return this;
+  }
+
+  public TemplateResponse setParameterGroups(
+          Map<String, ParameterGroupResponse> parameterGroups) {
+    this.parameterGroups = parameterGroups;
     return this;
   }
 
@@ -168,6 +181,38 @@ public final class TemplateResponse {
 
     public ConditionResponse setTagColor(String tagColor) {
       this.tagColor = tagColor;
+      return this;
+    }
+  }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config parameter groups responses from the
+   * Remote Config service.
+   **/
+  public static final class ParameterGroupResponse {
+
+    @Key("description")
+    private String description;
+
+    @Key("parameters")
+    private Map<String, ParameterResponse> parameters;
+
+    public Map<String, ParameterResponse> getParameters() {
+      return parameters;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public ParameterGroupResponse setParameters(
+            Map<String, ParameterResponse> parameters) {
+      this.parameters = parameters;
+      return this;
+    }
+
+    public ParameterGroupResponse setDescription(String description) {
+      this.description = description;
       return this;
     }
   }
