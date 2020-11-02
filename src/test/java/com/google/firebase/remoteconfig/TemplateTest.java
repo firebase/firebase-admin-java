@@ -16,17 +16,9 @@
 
 package com.google.firebase.remoteconfig;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-
-import java.util.List;
-import java.util.Map;
 
 import org.junit.Test;
 
@@ -66,71 +58,5 @@ public class TemplateTest {
   public void testSetNullParameterGroups() {
     Template template = new Template();
     template.setParameterGroups(null);
-  }
-
-  @Test
-  public void testEquality() {
-    final Template templateOne = new Template();
-    final Template templateTwo = new Template();
-
-    assertEquals(templateOne, templateTwo);
-
-    final List<Condition> conditions = ImmutableList.<Condition>of(
-            new Condition("ios_en", "exp ios")
-                    .setTagColor(TagColor.INDIGO),
-            new Condition("android_en", "exp android")
-    );
-    final Map<String, ParameterValue> conditionalValues = ImmutableMap.of(
-            "ios", ParameterValue.of("hello ios"),
-            "android", ParameterValue.of("hello android"),
-            "promo", ParameterValue.inAppDefault()
-    );
-    final Map<String, Parameter> parameters = ImmutableMap.of(
-            "greeting_header", new Parameter()
-                    .setDefaultValue(ParameterValue.inAppDefault())
-                    .setDescription("greeting header text")
-                    .setConditionalValues(conditionalValues),
-            "greeting_text", new Parameter()
-                    .setDefaultValue(ParameterValue.inAppDefault())
-                    .setDescription("greeting text")
-                    .setConditionalValues(conditionalValues)
-    );
-    final Template templateThree = new Template()
-            .setConditions(conditions)
-            .setParameters(parameters);
-    final Template templateFour = new Template()
-            .setConditions(conditions)
-            .setParameters(parameters);
-
-    assertEquals(templateThree, templateFour);
-
-    final Map<String, ParameterGroup> parameterGroups = ImmutableMap.of(
-            "greetings_group", new ParameterGroup()
-                    .setDescription("description")
-                    .setParameters(parameters)
-    );
-    final Template templateFive = new Template()
-            .setConditions(conditions)
-            .setParameters(parameters)
-            .setParameterGroups(parameterGroups);
-    final Template templateSix = new Template()
-            .setConditions(conditions)
-            .setParameters(parameters)
-            .setParameterGroups(parameterGroups);
-
-    assertEquals(templateFive, templateSix);
-
-    final Template templateSeven = new Template()
-            .setETag("etag-123456789097-20");
-    final Template templateEight = new Template()
-            .setETag("etag-123456789097-20");
-
-    assertEquals(templateSeven, templateEight);
-    assertNotEquals(templateOne, templateThree);
-    assertNotEquals(templateOne, templateFive);
-    assertNotEquals(templateOne, templateSeven);
-    assertNotEquals(templateThree, templateFive);
-    assertNotEquals(templateThree, templateSeven);
-    assertNotEquals(templateFive, templateSeven);
   }
 }

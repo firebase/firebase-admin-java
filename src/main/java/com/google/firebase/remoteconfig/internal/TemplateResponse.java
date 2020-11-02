@@ -36,6 +36,9 @@ public final class TemplateResponse {
   @Key("parameterGroups")
   private Map<String, ParameterGroupResponse> parameterGroups;
 
+  @Key("version")
+  private VersionResponse version;
+
   public Map<String, ParameterResponse> getParameters() {
     return parameters;
   }
@@ -46,6 +49,10 @@ public final class TemplateResponse {
 
   public Map<String, ParameterGroupResponse> getParameterGroups() {
     return parameterGroups;
+  }
+
+  public VersionResponse getVersion() {
+    return version;
   }
 
   public TemplateResponse setParameters(
@@ -63,6 +70,11 @@ public final class TemplateResponse {
   public TemplateResponse setParameterGroups(
           Map<String, ParameterGroupResponse> parameterGroups) {
     this.parameterGroups = parameterGroups;
+    return this;
+  }
+
+  public TemplateResponse setVersion(VersionResponse version) {
+    this.version = version;
     return this;
   }
 
@@ -214,6 +226,100 @@ public final class TemplateResponse {
     public ParameterGroupResponse setDescription(String description) {
       this.description = description;
       return this;
+    }
+  }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config version responses from the
+   * Remote Config service.
+   **/
+  public static final class VersionResponse {
+    @Key("versionNumber")
+    private String versionNumber;
+
+    @Key("updateTime")
+    private String updateTime;
+
+    @Key("updateOrigin")
+    private String updateOrigin;
+
+    @Key("updateType")
+    private String updateType;
+
+    @Key("updateUser")
+    private UserResponse updateUser;
+
+    @Key("description")
+    private String description;
+
+    @Key("rollbackSource")
+    private String rollbackSource;
+
+    @Key("legacy")
+    private Boolean legacy;
+
+    public String getVersionNumber() {
+      return versionNumber;
+    }
+
+    public String getUpdateTime() {
+      return updateTime;
+    }
+
+    public String getUpdateOrigin() {
+      return updateOrigin;
+    }
+
+    public String getUpdateType() {
+      return updateType;
+    }
+
+    public UserResponse getUpdateUser() {
+      return updateUser;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public String getRollbackSource() {
+      return rollbackSource;
+    }
+
+    public boolean isLegacy() {
+      return Boolean.TRUE.equals(this.legacy);
+    }
+
+    public VersionResponse setDescription(String description) {
+      this.description = description;
+      return this;
+    }
+  }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config user responses from the
+   * Remote Config service.
+   **/
+  public static final class UserResponse {
+    @Key("email")
+    private String email;
+
+    @Key("name")
+    private String name;
+
+    @Key("imageUrl")
+    private String imageUrl;
+
+    public String getEmail() {
+      return email;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getImageUrl() {
+      return imageUrl;
     }
   }
 }

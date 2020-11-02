@@ -45,8 +45,11 @@ import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -85,7 +88,7 @@ public class FirebaseRemoteConfigClientImplTest {
     response.setContent(MOCK_TEMPLATE_RESPONSE);
 
     Template receivedTemplate = client.getTemplate();
-    Map<String, Parameter> expectedParameters = ImmutableMap.of(
+    final Map<String, Parameter> expectedParameters = ImmutableMap.of(
             "welcome_message_text", new Parameter()
                     .setDefaultValue(ParameterValue.of("welcome to app"))
                     .setConditionalValues(ImmutableMap.<String, ParameterValue>of(
@@ -95,7 +98,7 @@ public class FirebaseRemoteConfigClientImplTest {
             "header_text", new Parameter()
                     .setDefaultValue(ParameterValue.inAppDefault())
     );
-    Map<String, ParameterGroup> expectedParameterGroups = ImmutableMap.of(
+    final Map<String, ParameterGroup> expectedParameterGroups = ImmutableMap.of(
             "new menu", new ParameterGroup()
                     .setDescription("New Menu")
                     .setParameters(ImmutableMap.of(
@@ -105,21 +108,32 @@ public class FirebaseRemoteConfigClientImplTest {
                             )
                     )
     );
-    List<Condition> expectedConditions = ImmutableList.of(
+    final List<Condition> expectedConditions = ImmutableList.of(
             new Condition("ios_en", "device.os == 'ios' && device.country in ['us', 'uk']")
                     .setTagColor(TagColor.INDIGO),
             new Condition("android_en",
                     "device.os == 'android' && device.country in ['us', 'uk']")
                     .setTagColor(TagColor.UNSPECIFIED)
     );
-    Template expectedTemplate = new Template()
-            .setParameters(expectedParameters)
-            .setParameterGroups(expectedParameterGroups)
-            .setConditions(expectedConditions)
-            .setETag(TEST_ETAG);
 
     assertEquals(TEST_ETAG, receivedTemplate.getETag());
-    assertEquals(expectedTemplate, receivedTemplate);
+    assertEquals(expectedParameters, receivedTemplate.getParameters());
+    assertEquals(expectedParameterGroups, receivedTemplate.getParameterGroups());
+    assertEquals(expectedConditions, receivedTemplate.getConditions());
+
+    final Version receivedVersion = receivedTemplate.getVersion();
+    SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
+    dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+    final String updateTime = dateFormat.format(new Date(receivedVersion.getUpdateTime()));
+
+    assertEquals("17", receivedVersion.getVersionNumber());
+    assertEquals("ADMIN_SDK_NODE", receivedVersion.getUpdateOrigin());
+    assertEquals("INCREMENTAL_UPDATE", receivedVersion.getUpdateType());
+    assertEquals("firebase-user@account.com", receivedVersion.getUpdateUser().getEmail());
+    assertEquals("dev-admin", receivedVersion.getUpdateUser().getName());
+    assertEquals("http://image.jpg", receivedVersion.getUpdateUser().getImageUrl());
+    assertEquals("Wed, 30 Sep 2020 17:56:07 GMT", updateTime);
+    assertEquals("promo config", receivedVersion.getDescription());
     checkGetRequestHeader(interceptor.getLastRequest());
   }
 
