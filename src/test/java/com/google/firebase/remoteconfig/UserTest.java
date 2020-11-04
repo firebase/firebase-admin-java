@@ -16,6 +16,10 @@
 
 package com.google.firebase.remoteconfig;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
+import com.google.firebase.remoteconfig.internal.TemplateResponse;
 import org.junit.Test;
 
 public class UserTest {
@@ -23,5 +27,36 @@ public class UserTest {
   @Test(expected = NullPointerException.class)
   public void testConstructorWithNullVersionResponse() {
     new User(null);
+  }
+
+  @Test
+  public void testEquality() {
+    final User userOne = new User(new TemplateResponse.UserResponse());
+    final User userTwo = new User(new TemplateResponse.UserResponse());
+
+    assertEquals(userOne, userTwo);
+
+    final User userThree = new User(new TemplateResponse.UserResponse()
+            .setName("admin-user")
+            .setEmail("admin@email.com")
+            .setImageUrl("http://admin.jpg"));
+    final User userFour = new User(new TemplateResponse.UserResponse()
+            .setName("admin-user")
+            .setEmail("admin@email.com")
+            .setImageUrl("http://admin.jpg"));
+
+    assertEquals(userThree, userFour);
+
+    final User userFive = new User(new TemplateResponse.UserResponse()
+            .setName("admin-user")
+            .setEmail("admin@email.com"));
+    final User userSix = new User(new TemplateResponse.UserResponse()
+            .setName("admin-user")
+            .setEmail("admin@email.com"));
+
+    assertEquals(userFive, userSix);
+    assertNotEquals(userOne, userThree);
+    assertNotEquals(userOne, userFive);
+    assertNotEquals(userThree, userFive);
   }
 }

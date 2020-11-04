@@ -18,29 +18,24 @@ package com.google.firebase.remoteconfig;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 
+import com.google.firebase.remoteconfig.internal.TemplateResponse;
+import com.google.firebase.remoteconfig.internal.TemplateResponse.VersionResponse;
 import org.junit.Test;
 
 public class VersionTest {
 
-  @Test
-  public void testConstructor() {
-    final Version version = new Version();
-
-    assertNull(version.getVersionNumber());
-    assertEquals(0, version.getUpdateTime());
-    assertNull(version.getUpdateOrigin());
-    assertNull(version.getUpdateType());
-    assertNull(version.getUpdateUser());
-    assertNull(version.getDescription());
-    assertNull(version.getRollbackSource());
-    assertFalse(version.isLegacy());
-  }
-
   @Test(expected = NullPointerException.class)
   public void testConstructorWithNullVersionResponse() {
     new Version(null);
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testConstructorWithInvalidUpdateTime() {
+    new Version(new VersionResponse()
+            .setUpdateTime("sunday,26th"));
   }
 
   @Test
@@ -55,5 +50,42 @@ public class VersionTest {
     assertNull(version.getUpdateUser());
     assertNull(version.getRollbackSource());
     assertFalse(version.isLegacy());
+  }
+
+  @Test
+  public void testEquality() {
+    final Version versionOne = new Version(new VersionResponse());
+    final Version versionTwo = new Version(new VersionResponse());
+
+    assertEquals(versionOne, versionTwo);
+
+    final Version versionThree = Version.withDescription("abcd");
+    final Version versionFour = Version.withDescription("abcd");
+    final Version versionFive = new Version(new VersionResponse()).setDescription("abcd");
+
+    assertEquals(versionThree, versionFour);
+    assertEquals(versionThree, versionFive);
+
+    final Version versionSix = Version.withDescription("efgh");
+
+    assertNotEquals(versionThree, versionSix);
+    assertNotEquals(versionOne, versionSix);
+
+    final VersionResponse versionResponse = new VersionResponse()
+            .setVersionNumber("23")
+            .setUpdateTime("2014-10-02T15:01:23.045123456Z")
+            .setUpdateOrigin("ADMIN_SDK")
+            .setUpdateUser(new TemplateResponse.UserResponse()
+                    .setEmail("user@email.com")
+                    .setName("user-1234")
+                    .setImageUrl("http://user.jpg"))
+            .setUpdateType("INCREMENTAL_UPDATE");
+    final Version versionSeven = new Version(versionResponse);
+    final Version versionEight = new Version(versionResponse);
+
+    assertEquals(versionSeven, versionEight);
+    assertNotEquals(versionOne, versionSeven);
+    assertNotEquals(versionThree, versionSeven);
+    assertNotEquals(versionSix, versionSeven);
   }
 }

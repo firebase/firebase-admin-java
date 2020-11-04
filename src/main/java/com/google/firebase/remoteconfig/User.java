@@ -22,14 +22,16 @@ import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.UserResponse;
 
+import java.util.Objects;
+
 /**
  * Represents a Remote Config user. Output only.
  */
-public final class User {
+public class User {
 
-  private String email;
-  private String name;
-  private String imageUrl;
+  private final String email;
+  private final String name;
+  private final String imageUrl;
 
   User(@NonNull UserResponse userResponse) {
     checkNotNull(userResponse);
@@ -66,5 +68,24 @@ public final class User {
   @Nullable
   public String getImageUrl() {
     return imageUrl;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    User user = (User) o;
+    return Objects.equals(email, user.email)
+            && Objects.equals(name, user.name)
+            && Objects.equals(imageUrl, user.imageUrl);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(email, name, imageUrl);
   }
 }

@@ -26,7 +26,10 @@ import com.google.firebase.remoteconfig.internal.TemplateResponse.VersionRespons
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Objects;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Represents a Remote Config template version.
@@ -37,37 +40,53 @@ import java.util.TimeZone;
  */
 public final class Version {
 
-  private String versionNumber;
-  private long updateTime;
-  private String updateOrigin;
-  private String updateType;
-  private User updateUser;
+  private static final Pattern ZULU_TIME_NO_NANOSECONDS_PATTERN = Pattern
+          .compile("^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})");
+
+  private final String versionNumber;
+  private final long updateTime;
+  private final String updateOrigin;
+  private final String updateType;
+  private final User updateUser;
+  private final String rollbackSource;
+  private final boolean legacy;
   private String description;
-  private String rollbackSource;
-  private boolean legacy;
 
-  /**
-   * Creates a new {@link Version} with a description.
-   */
-  public static Version withDescription(String description) {
-    return new Version().setDescription(description);
-  }
-
-  Version() {
+  private Version() {
+    this.versionNumber = null;
+    this.updateTime = 0L;
+    this.updateOrigin = null;
+    this.updateType = null;
+    this.updateUser = null;
+    this.rollbackSource = null;
+    this.legacy = false;
   }
 
   Version(@NonNull VersionResponse versionResponse) {
     checkNotNull(versionResponse);
     this.versionNumber = versionResponse.getVersionNumber();
+
     if (!Strings.isNullOrEmpty(versionResponse.getUpdateTime())) {
-      SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z");
+      // Update Time is a timestamp in RFC3339 UTC "Zulu" format, accurate to nanoseconds.
+      // example: "2014-10-02T15:01:23.045123456Z"
+      // SimpleDateFormat cannot handle nanoseconds, therefore we drop nanoseconds from the string.
+      Matcher errorMatcher = ZULU_TIME_NO_NANOSECONDS_PATTERN
+              .matcher(versionResponse.getUpdateTime());
+      String updateTimeWithoutNanoseconds = "";
+      if (errorMatcher.find()) {
+        updateTimeWithoutNanoseconds = errorMatcher.group(1);
+      }
+      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
       dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
       try {
-        this.updateTime = dateFormat.parse(versionResponse.getUpdateTime()).getTime();
+        this.updateTime = dateFormat.parse(updateTimeWithoutNanoseconds).getTime();
       } catch (ParseException e) {
-        this.updateTime = 0;
+        throw new IllegalStateException();
       }
+    } else {
+      this.updateTime = 0L;
     }
+
     this.updateOrigin = versionResponse.getUpdateOrigin();
     this.updateType = versionResponse.getUpdateType();
     TemplateResponse.UserResponse userResponse = versionResponse.getUpdateUser();
@@ -75,6 +94,13 @@ public final class Version {
     this.description = versionResponse.getDescription();
     this.rollbackSource = versionResponse.getRollbackSource();
     this.legacy = versionResponse.isLegacy();
+  }
+
+  /**
+   * Creates a new {@link Version} with a description.
+   */
+  public static Version withDescription(String description) {
+    return new Version().setDescription(description);
   }
 
   /**
@@ -177,5 +203,31 @@ public final class Version {
   VersionResponse toVersionResponse() {
     return new VersionResponse()
             .setDescription(this.description);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Version version = (Version) o;
+    return updateTime == version.updateTime
+            && legacy == version.legacy
+            && Objects.equals(versionNumber, version.versionNumber)
+            && Objects.equals(updateOrigin, version.updateOrigin)
+            && Objects.equals(updateType, version.updateType)
+            && Objects.equals(updateUser, version.updateUser)
+            && Objects.equals(description, version.description)
+            && Objects.equals(rollbackSource, version.rollbackSource);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects
+            .hash(versionNumber, updateTime, updateOrigin, updateType, updateUser, description,
+                    rollbackSource, legacy);
   }
 }

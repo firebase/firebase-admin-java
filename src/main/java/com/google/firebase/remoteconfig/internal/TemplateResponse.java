@@ -294,6 +294,41 @@ public final class TemplateResponse {
       this.description = description;
       return this;
     }
+
+    public VersionResponse setVersionNumber(String versionNumber) {
+      this.versionNumber = versionNumber;
+      return this;
+    }
+
+    public VersionResponse setUpdateTime(String updateTime) {
+      this.updateTime = updateTime;
+      return this;
+    }
+
+    public VersionResponse setUpdateOrigin(String updateOrigin) {
+      this.updateOrigin = updateOrigin;
+      return this;
+    }
+
+    public VersionResponse setUpdateType(String updateType) {
+      this.updateType = updateType;
+      return this;
+    }
+
+    public VersionResponse setUpdateUser(UserResponse updateUser) {
+      this.updateUser = updateUser;
+      return this;
+    }
+
+    public VersionResponse setRollbackSource(String rollbackSource) {
+      this.rollbackSource = rollbackSource;
+      return this;
+    }
+
+    public VersionResponse setLegacy(Boolean legacy) {
+      this.legacy = legacy;
+      return this;
+    }
   }
 
   /**
@@ -320,6 +355,21 @@ public final class TemplateResponse {
 
     public String getImageUrl() {
       return imageUrl;
+    }
+
+    public UserResponse setEmail(String email) {
+      this.email = email;
+      return this;
+    }
+
+    public UserResponse setName(String name) {
+      this.name = name;
+      return this;
+    }
+
+    public UserResponse setImageUrl(String imageUrl) {
+      this.imageUrl = imageUrl;
+      return this;
     }
   }
 }

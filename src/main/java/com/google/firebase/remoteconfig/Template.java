@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Represents a Remote Config template.
@@ -201,5 +202,26 @@ public final class Template {
             .setConditions(conditionResponses)
             .setParameterGroups(parameterGroupResponse)
             .setVersion(versionResponse);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Template template = (Template) o;
+    return Objects.equals(etag, template.etag)
+            && Objects.equals(parameters, template.parameters)
+            && Objects.equals(conditions, template.conditions)
+            && Objects.equals(parameterGroups, template.parameterGroups)
+            && Objects.equals(version, template.version);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(etag, parameters, conditions, parameterGroups, version);
   }
 }
