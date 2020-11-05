@@ -124,7 +124,7 @@ public class FirebaseRemoteConfigClientImplTest {
                     .setEmail("firebase-user@account.com")
                     .setName("dev-admin")
                     .setImageUrl("http://image.jpg"))
-            .setUpdateTime("2020-11-03T20:24:15.203Z")
+            .setUpdateTime("2020-11-03T20:24:15.045123456Z")
             .setDescription("promo config")
     );
 

@@ -40,9 +40,6 @@ import java.util.regex.Pattern;
  */
 public final class Version {
 
-  private static final Pattern ZULU_TIME_NO_NANOSECONDS_PATTERN = Pattern
-          .compile("^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})");
-
   private final String versionNumber;
   private final long updateTime;
   private final String updateOrigin;
@@ -69,19 +66,16 @@ public final class Version {
     if (!Strings.isNullOrEmpty(versionResponse.getUpdateTime())) {
       // Update Time is a timestamp in RFC3339 UTC "Zulu" format, accurate to nanoseconds.
       // example: "2014-10-02T15:01:23.045123456Z"
-      // SimpleDateFormat cannot handle nanoseconds, therefore we drop nanoseconds from the string.
-      Matcher errorMatcher = ZULU_TIME_NO_NANOSECONDS_PATTERN
-              .matcher(versionResponse.getUpdateTime());
-      String updateTimeWithoutNanoseconds = "";
-      if (errorMatcher.find()) {
-        updateTimeWithoutNanoseconds = errorMatcher.group(1);
-      }
+      // SimpleDateFormat cannot handle nanoseconds, therefore we strip nanoseconds from the string.
+      String updateTime = versionResponse.getUpdateTime();
+      int indexOfPeriod = !updateTime.contains(".") ? 0 : updateTime.indexOf(".");
+      String updateTimeWithoutNanoseconds = updateTime.substring(0, indexOfPeriod);
       SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
       dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
       try {
         this.updateTime = dateFormat.parse(updateTimeWithoutNanoseconds).getTime();
       } catch (ParseException e) {
-        throw new IllegalStateException();
+        throw new IllegalStateException("Unable to parse update time.", e);
       }
     } else {
       this.updateTime = 0L;
