@@ -68,12 +68,14 @@ public final class Version {
       // example: "2014-10-02T15:01:23.045123456Z"
       // SimpleDateFormat cannot handle nanoseconds, therefore we strip nanoseconds from the string.
       String updateTime = versionResponse.getUpdateTime();
-      int indexOfPeriod = !updateTime.contains(".") ? 0 : updateTime.indexOf(".");
-      String updateTimeWithoutNanoseconds = updateTime.substring(0, indexOfPeriod);
+      int indexOfPeriod = updateTime.indexOf(".");
+      if (indexOfPeriod != -1) {
+        updateTime = updateTime.substring(0, indexOfPeriod);
+      }
       SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
       dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
       try {
-        this.updateTime = dateFormat.parse(updateTimeWithoutNanoseconds).getTime();
+        this.updateTime = dateFormat.parse(updateTime).getTime();
       } catch (ParseException e) {
         throw new IllegalStateException("Unable to parse update time.", e);
       }
