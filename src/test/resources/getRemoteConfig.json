@@ -46,8 +46,11 @@
     "updateOrigin": "ADMIN_SDK_NODE",
     "updateType": "INCREMENTAL_UPDATE",
     "updateUser": {
-      "email": "firebase-user@account.com"
+      "email": "firebase-user@account.com",
+      "name": "dev-admin",
+      "imageUrl": "http://image.jpg"
     },
-    "updateTime": "Wed, 30 Sep 2020 17:56:07 GMT"
+    "updateTime": "2020-11-03T20:24:15.045123456ZZ",
+    "description": "promo config"
   }
 }

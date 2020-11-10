@@ -36,6 +36,7 @@ public final class Template {
   private Map<String, Parameter> parameters;
   private List<Condition> conditions;
   private Map<String, ParameterGroup> parameterGroups;
+  private Version version;
 
   /**
    * Creates a new {@link Template}.
@@ -68,6 +69,9 @@ public final class Template {
               : templateResponse.getParameterGroups().entrySet()) {
         this.parameterGroups.put(entry.getKey(), new ParameterGroup(entry.getValue()));
       }
+    }
+    if (templateResponse.getVersion() != null) {
+      this.version = new Version(templateResponse.getVersion());
     }
   }
 
@@ -112,6 +116,15 @@ public final class Template {
   }
 
   /**
+   * Gets the version information of the template.
+   *
+   * @return The version information of the template.
+   */
+  public Version getVersion() {
+    return version;
+  }
+
+  /**
    * Sets the map of parameters of the template.
    *
    * @param parameters A non-null map of parameter keys to their optional default values and
@@ -152,6 +165,18 @@ public final class Template {
     return this;
   }
 
+  /**
+   * Sets the version information of the template.
+   * Only the version's description field can be specified here.
+   *
+   * @param version A {@link Version} instance.
+   * @return This {@link Template} instance.
+   */
+  public Template setVersion(Version version) {
+    this.version = version;
+    return this;
+  }
+
   Template setETag(String etag) {
     this.etag = etag;
     return this;
@@ -170,10 +195,13 @@ public final class Template {
     for (Map.Entry<String, ParameterGroup> entry : this.parameterGroups.entrySet()) {
       parameterGroupResponse.put(entry.getKey(), entry.getValue().toParameterGroupResponse());
     }
+    TemplateResponse.VersionResponse versionResponse = (this.version == null) ? null
+            : this.version.toVersionResponse();
     return new TemplateResponse()
             .setParameters(parameterResponses)
             .setConditions(conditionResponses)
-            .setParameterGroups(parameterGroupResponse);
+            .setParameterGroups(parameterGroupResponse)
+            .setVersion(versionResponse);
   }
 
   @Override
@@ -188,11 +216,12 @@ public final class Template {
     return Objects.equals(etag, template.etag)
             && Objects.equals(parameters, template.parameters)
             && Objects.equals(conditions, template.conditions)
-            && Objects.equals(parameterGroups, template.parameterGroups);
+            && Objects.equals(parameterGroups, template.parameterGroups)
+            && Objects.equals(version, template.version);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(etag, parameters, conditions, parameterGroups);
+    return Objects.hash(etag, parameters, conditions, parameterGroups, version);
   }
 }

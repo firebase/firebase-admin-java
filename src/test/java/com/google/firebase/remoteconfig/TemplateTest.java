@@ -32,6 +32,52 @@ import org.junit.Test;
 
 public class TemplateTest {
 
+  private static final List<Condition> CONDITIONS = ImmutableList.<Condition>of(
+          new Condition("ios_en", "exp ios")
+                  .setTagColor(TagColor.INDIGO),
+          new Condition("android_en", "exp android")
+  );
+
+  private static final Map<String, ParameterValue> CONDITIONAL_VALUES = ImmutableMap.of(
+          "ios", ParameterValue.of("hello ios"),
+          "android", ParameterValue.of("hello android"),
+          "promo", ParameterValue.inAppDefault()
+  );
+
+  private static final Map<String, Parameter> PARAMETERS = ImmutableMap.of(
+          "greeting_header", new Parameter()
+                  .setDefaultValue(ParameterValue.inAppDefault())
+                  .setDescription("greeting header text")
+                  .setConditionalValues(CONDITIONAL_VALUES),
+          "greeting_text", new Parameter()
+                  .setDefaultValue(ParameterValue.inAppDefault())
+                  .setDescription("greeting text")
+                  .setConditionalValues(CONDITIONAL_VALUES)
+  );
+
+  private static final Map<String, ParameterGroup> PARAMETER_GROUPS = ImmutableMap.of(
+          "greetings_group", new ParameterGroup()
+                  .setDescription("description")
+                  .setParameters(PARAMETERS)
+  );
+
+  private static final Template EMPTY_TEMPLATE = new Template();
+
+  private static final Template TEMPLATE_WITH_CONDITIONS_PARAMETERS = new Template()
+          .setConditions(CONDITIONS)
+          .setParameters(PARAMETERS);
+
+  private static final Template TEMPLATE_WITH_CONDITIONS_PARAMETERS_GROUPS = new Template()
+          .setConditions(CONDITIONS)
+          .setParameters(PARAMETERS)
+          .setParameterGroups(PARAMETER_GROUPS);
+
+  private static final Template TEMPLATE_WITH_ETAG = new Template()
+          .setETag("etag-123456789097-20");
+
+  private static final Template TEMPLATE_WITH_VERSION = new Template()
+          .setVersion(Version.withDescription("promo version"));
+
   @Test
   public void testConstructor() {
     Template template = new Template();
@@ -71,66 +117,40 @@ public class TemplateTest {
   @Test
   public void testEquality() {
     final Template templateOne = new Template();
-    final Template templateTwo = new Template();
 
-    assertEquals(templateOne, templateTwo);
+    assertEquals(EMPTY_TEMPLATE, templateOne);
 
-    final List<Condition> conditions = ImmutableList.<Condition>of(
-            new Condition("ios_en", "exp ios")
-                    .setTagColor(TagColor.INDIGO),
-            new Condition("android_en", "exp android")
-    );
-    final Map<String, ParameterValue> conditionalValues = ImmutableMap.of(
-            "ios", ParameterValue.of("hello ios"),
-            "android", ParameterValue.of("hello android"),
-            "promo", ParameterValue.inAppDefault()
-    );
-    final Map<String, Parameter> parameters = ImmutableMap.of(
-            "greeting_header", new Parameter()
-                    .setDefaultValue(ParameterValue.inAppDefault())
-                    .setDescription("greeting header text")
-                    .setConditionalValues(conditionalValues),
-            "greeting_text", new Parameter()
-                    .setDefaultValue(ParameterValue.inAppDefault())
-                    .setDescription("greeting text")
-                    .setConditionalValues(conditionalValues)
-    );
+    final Template templateTwo = new Template()
+            .setConditions(CONDITIONS)
+            .setParameters(PARAMETERS);
+
+    assertEquals(TEMPLATE_WITH_CONDITIONS_PARAMETERS, templateTwo);
+
     final Template templateThree = new Template()
-            .setConditions(conditions)
-            .setParameters(parameters);
+            .setConditions(CONDITIONS)
+            .setParameters(PARAMETERS)
+            .setParameterGroups(PARAMETER_GROUPS);
+
+    assertEquals(TEMPLATE_WITH_CONDITIONS_PARAMETERS_GROUPS, templateThree);
+
     final Template templateFour = new Template()
-            .setConditions(conditions)
-            .setParameters(parameters);
+            .setETag("etag-123456789097-20");
 
-    assertEquals(templateThree, templateFour);
+    assertEquals(TEMPLATE_WITH_ETAG, templateFour);
 
-    final Map<String, ParameterGroup> parameterGroups = ImmutableMap.of(
-            "greetings_group", new ParameterGroup()
-                    .setDescription("description")
-                    .setParameters(parameters)
-    );
     final Template templateFive = new Template()
-            .setConditions(conditions)
-            .setParameters(parameters)
-            .setParameterGroups(parameterGroups);
-    final Template templateSix = new Template()
-            .setConditions(conditions)
-            .setParameters(parameters)
-            .setParameterGroups(parameterGroups);
+            .setVersion(Version.withDescription("promo version"));
 
-    assertEquals(templateFive, templateSix);
-
-    final Template templateSeven = new Template()
-            .setETag("etag-123456789097-20");
-    final Template templateEight = new Template()
-            .setETag("etag-123456789097-20");
-
-    assertEquals(templateSeven, templateEight);
+    assertEquals(TEMPLATE_WITH_VERSION, templateFive);
+    assertNotEquals(templateOne, templateTwo);
     assertNotEquals(templateOne, templateThree);
+    assertNotEquals(templateOne, templateFour);
     assertNotEquals(templateOne, templateFive);
-    assertNotEquals(templateOne, templateSeven);
+    assertNotEquals(templateTwo, templateThree);
+    assertNotEquals(templateTwo, templateFour);
+    assertNotEquals(templateTwo, templateFive);
+    assertNotEquals(templateThree, templateFour);
     assertNotEquals(templateThree, templateFive);
-    assertNotEquals(templateThree, templateSeven);
-    assertNotEquals(templateFive, templateSeven);
+    assertNotEquals(templateFour, templateFive);
   }
 }
