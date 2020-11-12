@@ -28,4 +28,9 @@ interface FirebaseRemoteConfigClient {
    * @throws FirebaseRemoteConfigException If an error occurs while getting the template.
    */
   Template getTemplate() throws FirebaseRemoteConfigException;
+
+  Template getTemplateAtVersion(String versionNumber) throws FirebaseRemoteConfigException;
+
+  Template publishTemplate(Template template, boolean validateOnly,
+                                  boolean forcePublish) throws FirebaseRemoteConfigException;
 }
