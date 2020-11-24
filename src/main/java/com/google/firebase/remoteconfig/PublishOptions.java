@@ -1,14 +1,14 @@
-package com.google.firebase.remoteconfig.internal;
+package com.google.firebase.remoteconfig;
 
 /**
  * An internal class for publish template options.
  */
-public final class PublishOptions {
+final class PublishOptions {
 
   private boolean validateOnly;
   private boolean forcePublish;
 
-  public PublishOptions() {
+  PublishOptions() {
     validateOnly = false;
     forcePublish = false;
   }

@@ -25,7 +25,6 @@ import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.remoteconfig.internal.PublishOptions;
 
 /**
  * This class is the entry point for all server-side Firebase Remote Config actions.
