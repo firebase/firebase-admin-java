@@ -25,6 +25,7 @@ import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.remoteconfig.internal.PublishOptions;
 
 /**
  * This class is the entry point for all server-side Firebase Remote Config actions.
@@ -169,7 +170,7 @@ public final class FirebaseRemoteConfig {
    * @throws FirebaseRemoteConfigException If an error occurs while publishing the template.
    */
   public Template publishTemplate(@NonNull Template template) throws FirebaseRemoteConfigException {
-    return publishTemplateOp(template, false, false).call();
+    return publishTemplateOp(template).call();
   }
 
   /**
@@ -181,7 +182,7 @@ public final class FirebaseRemoteConfig {
    *     the provided template is published.
    */
   public ApiFuture<Template> publishTemplateAsync(@NonNull Template template) {
-    return publishTemplateOp(template, false, false).callAsync(app);
+    return publishTemplateOp(template).callAsync(app);
   }
 
   /**
@@ -193,7 +194,7 @@ public final class FirebaseRemoteConfig {
    */
   public Template validateTemplate(
           @NonNull Template template) throws FirebaseRemoteConfigException {
-    return publishTemplateOp(template, true, false).call();
+    return publishTemplateOp(template, new PublishOptions().setValidateOnly(true)).call();
   }
 
   /**
@@ -205,7 +206,7 @@ public final class FirebaseRemoteConfig {
    *     the provided template is validated.
    */
   public ApiFuture<Template> validateTemplateAsync(@NonNull Template template) {
-    return publishTemplateOp(template, true, false).callAsync(app);
+    return publishTemplateOp(template, new PublishOptions().setValidateOnly(true)).callAsync(app);
   }
 
   /**
@@ -223,7 +224,7 @@ public final class FirebaseRemoteConfig {
    */
   public Template forcePublishTemplate(
           @NonNull Template template) throws FirebaseRemoteConfigException {
-    return publishTemplateOp(template, false, true).call();
+    return publishTemplateOp(template, new PublishOptions().setForcePublish(true)).call();
   }
 
   /**
@@ -235,16 +236,22 @@ public final class FirebaseRemoteConfig {
    *     the provided template is published.
    */
   public ApiFuture<Template> forcePublishTemplateAsync(@NonNull Template template) {
-    return publishTemplateOp(template, false, true).callAsync(app);
+    return publishTemplateOp(template, new PublishOptions().setForcePublish(true)).callAsync(app);
   }
 
   private CallableOperation<Template, FirebaseRemoteConfigException> publishTemplateOp(
-          final Template template, final boolean validateOnly, final boolean forcePublish) {
+          final Template template) {
+    return publishTemplateOp(template, new PublishOptions());
+  }
+
+  private CallableOperation<Template, FirebaseRemoteConfigException> publishTemplateOp(
+          final Template template, final PublishOptions options) {
     final FirebaseRemoteConfigClient remoteConfigClient = getRemoteConfigClient();
     return new CallableOperation<Template, FirebaseRemoteConfigException>() {
       @Override
       protected Template execute() throws FirebaseRemoteConfigException {
-        return remoteConfigClient.publishTemplate(template, validateOnly, forcePublish);
+        return remoteConfigClient
+                .publishTemplate(template, options.isValidateOnly(), options.isForcePublish());
       }
     };
   }

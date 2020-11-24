@@ -147,12 +147,16 @@ public class FirebaseRemoteConfigClientImplTest {
 
   @Test
   public void testGetTemplateWithTimestampUpToNanosecondPrecision() throws Exception {
-    for (int i = 1; i < 10; i++) {
-      String fractionalSecs = "342763941".substring(0, i);
+    List<String> timestamps = ImmutableList.of(
+            "2020-11-15T06:57:26.342Z",
+            "2020-11-15T06:57:26.342763Z",
+            "2020-11-15T06:57:26.342763941Z"
+    );
+    for (String timestamp : timestamps) {
       response.addHeader("etag", TEST_ETAG);
       String templateResponse = "{\"version\": {"
               + "    \"versionNumber\": \"17\","
-              + "    \"updateTime\": \"2020-11-15T06:57:26." + fractionalSecs + "Z\""
+              + "    \"updateTime\": \"" + timestamp + "\""
               + "  }}";
       response.setContent(templateResponse);
 
@@ -181,12 +185,15 @@ public class FirebaseRemoteConfigClientImplTest {
   }
 
   @Test(expected = IllegalStateException.class)
-  public void testGetTemplateWithInvalidEtags() throws FirebaseRemoteConfigException {
+  public void testGetTemplateWithNoEtag() throws FirebaseRemoteConfigException {
     // ETag does not exist
     response.setContent(MOCK_TEMPLATE_RESPONSE);
 
     client.getTemplate();
+  }
 
+  @Test(expected = IllegalStateException.class)
+  public void testGetTemplateWithEmptyEtag() throws FirebaseRemoteConfigException {
     // Empty ETag
     response.addHeader("etag", "");
     response.setContent(MOCK_TEMPLATE_RESPONSE);
@@ -364,17 +371,20 @@ public class FirebaseRemoteConfigClientImplTest {
   }
 
   @Test(expected = IllegalStateException.class)
-  public void testGetTemplateAtVersionWithInvalidEtags() throws FirebaseRemoteConfigException {
+  public void testGetTemplateAtVersionWithNoEtag() throws FirebaseRemoteConfigException {
     // ETag does not exist
     response.setContent(MOCK_TEMPLATE_RESPONSE);
 
     client.getTemplateAtVersion("24");
+  }
 
+  @Test(expected = IllegalStateException.class)
+  public void testGetTemplateAtVersionWithEmptyEtag() throws FirebaseRemoteConfigException {
     // Empty ETag
     response.addHeader("etag", "");
     response.setContent(MOCK_TEMPLATE_RESPONSE);
 
-    client.getTemplate();
+    client.getTemplateAtVersion("24");
   }
 
   @Test
@@ -565,12 +575,15 @@ public class FirebaseRemoteConfigClientImplTest {
   }
 
   @Test(expected = IllegalStateException.class)
-  public void testPublishTemplateWithInvalidEtags() throws FirebaseRemoteConfigException {
+  public void testPublishTemplateWithNoEtag() throws FirebaseRemoteConfigException {
     // ETag does not exist
     response.setContent(MOCK_TEMPLATE_RESPONSE);
 
     client.publishTemplate(new Template(), false, false);
+  }
 
+  @Test(expected = IllegalStateException.class)
+  public void testPublishTemplateWithEmptyEtag() throws FirebaseRemoteConfigException {
     // Empty ETag
     response.addHeader("etag", "");
     response.setContent(MOCK_TEMPLATE_RESPONSE);
