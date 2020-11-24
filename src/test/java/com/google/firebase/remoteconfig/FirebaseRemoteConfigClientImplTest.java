@@ -32,6 +32,7 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.JsonParser;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.collect.ImmutableList;
@@ -46,7 +47,9 @@ import com.google.firebase.remoteconfig.internal.TemplateResponse;
 import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -709,6 +712,208 @@ public class FirebaseRemoteConfigClientImplTest {
     }
   }
 
+  // Test rollback
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testRollbackWithNullString() throws Exception {
+    client.rollback(null);
+  }
+
+  @Test
+  public void testRollbackWithInvalidString() throws Exception {
+    List<String> invalidVersionStrings = ImmutableList
+            .of("", " ", "abc", "t123", "123t", "t123t", "12t3", "#$*&^", "-123", "+123", "123.4");
+
+    for (String version : invalidVersionStrings) {
+      try {
+        client.rollback(version);
+        fail("No error thrown for invalid version number");
+      } catch (IllegalArgumentException expected) {
+        String message = "Version number must be a non-empty string in int64 format.";
+        assertEquals(message, expected.getMessage());
+      }
+    }
+  }
+
+  @Test
+  public void testRollbackWithValidString() throws Exception {
+    response.addHeader("etag", TEST_ETAG);
+    response.setContent(MOCK_TEMPLATE_RESPONSE);
+
+    Template rolledBackTemplate = client.rollback("24");
+
+    assertEquals(TEST_ETAG, rolledBackTemplate.getETag());
+    assertEquals(EXPECTED_TEMPLATE, rolledBackTemplate);
+    assertEquals(1605423446000L, rolledBackTemplate.getVersion().getUpdateTime());
+    checkPostRequestHeader(interceptor.getLastRequest(), ":rollback");
+    checkRequestContent(interceptor.getLastRequest(),
+            ImmutableMap.<String, Object>of("versionNumber", "24"));
+  }
+
+  @Test
+  public void testRollbackWithEmptyTemplateResponse() throws Exception {
+    response.addHeader("etag", TEST_ETAG);
+    response.setContent("{}");
+
+    Template template = client.rollback("24");
+
+    assertEquals(TEST_ETAG, template.getETag());
+    assertEquals(0, template.getParameters().size());
+    assertEquals(0, template.getConditions().size());
+    assertEquals(0, template.getParameterGroups().size());
+    assertNull(template.getVersion());
+    checkPostRequestHeader(interceptor.getLastRequest(), ":rollback");
+    checkRequestContent(interceptor.getLastRequest(),
+            ImmutableMap.<String, Object>of("versionNumber", "24"));
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testRollbackWithNoEtag() throws FirebaseRemoteConfigException {
+    // ETag does not exist
+    response.setContent(MOCK_TEMPLATE_RESPONSE);
+
+    client.rollback("24");
+  }
+
+  @Test(expected = IllegalStateException.class)
+  public void testRollbackWithEmptyEtag() throws FirebaseRemoteConfigException {
+    // Empty ETag
+    response.addHeader("etag", "");
+    response.setContent(MOCK_TEMPLATE_RESPONSE);
+
+    client.rollback("24");
+  }
+
+  @Test
+  public void testRollbackHttpError() throws IOException {
+    for (int code : HTTP_STATUS_CODES) {
+      response.setStatusCode(code).setContent("{}");
+
+      try {
+        client.rollback("24");
+        fail("No error thrown for HTTP error");
+      } catch (FirebaseRemoteConfigException error) {
+        checkExceptionFromHttpResponse(error, HTTP_STATUS_TO_ERROR_CODE.get(code), null,
+                "Unexpected HTTP response with status: " + code + "\n{}", HttpMethods.POST);
+      }
+      checkPostRequestHeader(interceptor.getLastRequest(), ":rollback");
+      checkRequestContent(interceptor.getLastRequest(),
+              ImmutableMap.<String, Object>of("versionNumber", "24"));
+    }
+  }
+
+  @Test
+  public void testRollbackTransportError() {
+    client = initClientWithFaultyTransport();
+
+    try {
+      client.rollback("24");
+      fail("No error thrown for HTTP error");
+    } catch (FirebaseRemoteConfigException error) {
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
+      assertEquals("Unknown error while making a remote service call: transport error",
+              error.getMessage());
+      assertTrue(error.getCause() instanceof IOException);
+      assertNull(error.getHttpResponse());
+      assertNull(error.getRemoteConfigErrorCode());
+    }
+  }
+
+  @Test
+  public void testRollbackSuccessResponseWithUnexpectedPayload() throws IOException {
+    response.setContent("not valid json");
+
+    try {
+      client.rollback("24");
+      fail("No error thrown for malformed response");
+    } catch (FirebaseRemoteConfigException error) {
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
+      assertTrue(error.getMessage().startsWith("Error while parsing HTTP response: "));
+      assertNotNull(error.getCause());
+      assertNotNull(error.getHttpResponse());
+      assertNull(error.getRemoteConfigErrorCode());
+    }
+    checkPostRequestHeader(interceptor.getLastRequest(), ":rollback");
+    checkRequestContent(interceptor.getLastRequest(),
+            ImmutableMap.<String, Object>of("versionNumber", "24"));
+  }
+
+  @Test
+  public void testRollbackErrorWithZeroContentResponse() throws IOException {
+    for (int code : HTTP_STATUS_CODES) {
+      response.setStatusCode(code).setZeroContent();
+
+      try {
+        client.rollback("24");
+        fail("No error thrown for HTTP error");
+      } catch (FirebaseRemoteConfigException error) {
+        checkExceptionFromHttpResponse(error, HTTP_STATUS_TO_ERROR_CODE.get(code), null,
+                "Unexpected HTTP response with status: " + code + "\nnull", HttpMethods.POST);
+      }
+      checkPostRequestHeader(interceptor.getLastRequest(), ":rollback");
+      checkRequestContent(interceptor.getLastRequest(),
+              ImmutableMap.<String, Object>of("versionNumber", "24"));
+    }
+  }
+
+  @Test
+  public void testRollbackErrorWithMalformedResponse() throws IOException {
+    for (int code : HTTP_STATUS_CODES) {
+      response.setStatusCode(code).setContent("not json");
+
+      try {
+        client.rollback("24");
+        fail("No error thrown for HTTP error");
+      } catch (FirebaseRemoteConfigException error) {
+        checkExceptionFromHttpResponse(error, HTTP_STATUS_TO_ERROR_CODE.get(code), null,
+                "Unexpected HTTP response with status: " + code + "\nnot json", HttpMethods.POST);
+      }
+      checkPostRequestHeader(interceptor.getLastRequest(), ":rollback");
+      checkRequestContent(interceptor.getLastRequest(),
+              ImmutableMap.<String, Object>of("versionNumber", "24"));
+    }
+  }
+
+  @Test
+  public void testRollbackErrorWithDetails() throws IOException {
+    for (int code : HTTP_STATUS_CODES) {
+      response.setStatusCode(code).setContent(
+              "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\"}}");
+
+      try {
+        client.rollback("24");
+        fail("No error thrown for HTTP error");
+      } catch (FirebaseRemoteConfigException error) {
+        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT, null, "test error",
+                HttpMethods.POST);
+      }
+      checkPostRequestHeader(interceptor.getLastRequest(), ":rollback");
+      checkRequestContent(interceptor.getLastRequest(),
+              ImmutableMap.<String, Object>of("versionNumber", "24"));
+    }
+  }
+
+  @Test
+  public void testRollbackErrorWithRcError() throws IOException {
+    for (int code : HTTP_STATUS_CODES) {
+      response.setStatusCode(code).setContent(
+              "{\"error\": {\"status\": \"INVALID_ARGUMENT\", "
+                      + "\"message\": \"[INVALID_ARGUMENT]: test error\"}}");
+
+      try {
+        client.rollback("24");
+        fail("No error thrown for HTTP error");
+      } catch (FirebaseRemoteConfigException error) {
+        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT,
+                RemoteConfigErrorCode.INVALID_ARGUMENT, "[INVALID_ARGUMENT]: test error",
+                HttpMethods.POST);
+      }
+      checkPostRequestHeader(interceptor.getLastRequest(), ":rollback");
+      checkRequestContent(interceptor.getLastRequest(),
+              ImmutableMap.<String, Object>of("versionNumber", "24"));
+    }
+  }
+
   // App related tests
 
   @Test(expected = IllegalArgumentException.class)
@@ -801,6 +1006,24 @@ public class FirebaseRemoteConfigClientImplTest {
     assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
     assertEquals("gzip", headers.getAcceptEncoding());
     assertEquals(ifMatch, headers.getIfMatch());
+  }
+
+  private void checkPostRequestHeader(HttpRequest request, String query) {
+    assertEquals("POST", request.getRequestMethod());
+    assertEquals(TEST_REMOTE_CONFIG_URL + query, request.getUrl().toString());
+    HttpHeaders headers = request.getHeaders();
+    assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
+    assertEquals("gzip", headers.getAcceptEncoding());
+  }
+
+  private void checkRequestContent(
+          HttpRequest request, Map<String, Object> expected) throws IOException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    request.getContent().writeTo(out);
+    JsonParser parser = Utils.getDefaultJsonFactory().createJsonParser(out.toString());
+    Map<String, Object> parsed = new HashMap<>();
+    parser.parseAndClose(parsed);
+    assertEquals(expected, parsed);
   }
 
   private void checkExceptionFromHttpResponse(

@@ -255,6 +255,82 @@ public final class FirebaseRemoteConfig {
     };
   }
 
+  /**
+   * Rolls back a project's published Remote Config template to the specified version.
+   *
+   * <p>A rollback is equivalent to getting a previously published Remote Config
+   * template and re-publishing it using a force update.
+   *
+   * @param versionNumber The version number of the Remote Config template to roll back to.
+   *                      The specified version number must be lower than the current version
+   *                      number, and not have been deleted due to staleness. Only the last 300
+   *                      versions are stored. All versions that correspond to non-active Remote
+   *                      Config templates (that is, all except the template that is being fetched
+   *                      by clients) are also deleted if they are more than 90 days old.
+   * @return The rolled back {@link Template}.
+   * @throws FirebaseRemoteConfigException If an error occurs while rolling back the template.
+   */
+  public Template rollback(long versionNumber) throws FirebaseRemoteConfigException {
+    String versionNumberString = String.valueOf(versionNumber);
+    return rollbackOp(versionNumberString).call();
+  }
+
+  /**
+   * Rolls back a project's published Remote Config template to the specified version.
+   *
+   * <p>A rollback is equivalent to getting a previously published Remote Config
+   * template and re-publishing it using a force update.
+   *
+   * @param versionNumber The version number of the Remote Config template to roll back to.
+   *                      The specified version number must be lower than the current version
+   *                      number, and not have been deleted due to staleness. Only the last 300
+   *                      versions are stored. All versions that correspond to non-active Remote
+   *                      Config templates (that is, all except the template that is being fetched
+   *                      by clients) are also deleted if they are more than 90 days old.
+   * @return The rolled back {@link Template}.
+   * @throws FirebaseRemoteConfigException If an error occurs while rolling back the template.
+   */
+  public Template rollback(@NonNull String versionNumber) throws FirebaseRemoteConfigException {
+    return rollbackOp(versionNumber).call();
+  }
+
+  /**
+   * Similar to {@link #rollback(long versionNumber)} but performs the operation
+   * asynchronously.
+   *
+   * @param versionNumber The version number of the Remote Config template to roll back to.
+   * @return An {@code ApiFuture} that completes with a {@link Template} once
+   *     the rollback operation is successful.
+   */
+  public ApiFuture<Template> rollbackAsync(long versionNumber) {
+    String versionNumberString = String.valueOf(versionNumber);
+    return rollbackOp(versionNumberString).callAsync(app);
+  }
+
+  /**
+   * Similar to {@link #rollback(String versionNumber)} but performs the operation
+   * asynchronously.
+   *
+   * @param versionNumber The version number of the Remote Config template to roll back to.
+   * @return An {@code ApiFuture} that completes with a {@link Template} once
+   *     the rollback operation is successful.
+   */
+  public ApiFuture<Template> rollbackAsync(@NonNull String versionNumber) {
+    String versionNumberString = String.valueOf(versionNumber);
+    return rollbackOp(versionNumberString).callAsync(app);
+  }
+
+  private CallableOperation<Template, FirebaseRemoteConfigException> rollbackOp(
+          final String versionNumber) {
+    final FirebaseRemoteConfigClient remoteConfigClient = getRemoteConfigClient();
+    return new CallableOperation<Template, FirebaseRemoteConfigException>() {
+      @Override
+      protected Template execute() throws FirebaseRemoteConfigException {
+        return remoteConfigClient.rollback(versionNumber);
+      }
+    };
+  }
+
   @VisibleForTesting
   FirebaseRemoteConfigClient getRemoteConfigClient() {
     return remoteConfigClient;

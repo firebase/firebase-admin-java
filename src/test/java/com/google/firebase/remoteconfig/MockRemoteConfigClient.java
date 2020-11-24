@@ -59,4 +59,12 @@ public class MockRemoteConfigClient implements FirebaseRemoteConfigClient{
     }
     return resultTemplate;
   }
+
+  @Override
+  public Template rollback(String versionNumber) throws FirebaseRemoteConfigException {
+    if (exception != null) {
+      throw exception;
+    }
+    return resultTemplate;
+  }
 }

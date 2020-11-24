@@ -33,4 +33,6 @@ interface FirebaseRemoteConfigClient {
 
   Template publishTemplate(Template template, boolean validateOnly,
                                   boolean forcePublish) throws FirebaseRemoteConfigException;
+
+  Template rollback(String versionNumber) throws FirebaseRemoteConfigException;
 }
