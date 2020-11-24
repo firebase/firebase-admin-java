@@ -28,6 +28,8 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 
+import com.google.firebase.remoteconfig.internal.TemplateResponse;
+
 import java.util.concurrent.ExecutionException;
 
 import org.junit.After;
@@ -490,6 +492,102 @@ public class FirebaseRemoteConfigTest {
 
     try {
       remoteConfig.rollbackAsync(55L).get();
+    } catch (ExecutionException e) {
+      assertSame(TEST_EXCEPTION, e.getCause());
+    }
+  }
+
+  // List versions tests
+
+  @Test
+  public void testListVersionsWithNoOptions() throws FirebaseRemoteConfigException {
+    MockRemoteConfigClient client = MockRemoteConfigClient.fromListVersionsResponse(
+            new TemplateResponse.ListVersionsResponse().setNextPageToken("token"));
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
+
+    ListVersionsResult listVersionsResult = remoteConfig.listVersions();
+
+    assertEquals("token", listVersionsResult.getNextPageToken());
+  }
+
+  @Test
+  public void testListVersionsWithNoOptionsFailure() {
+    MockRemoteConfigClient client = MockRemoteConfigClient.fromException(TEST_EXCEPTION);
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
+
+    try {
+      remoteConfig.listVersions();
+    } catch (FirebaseRemoteConfigException e) {
+      assertSame(TEST_EXCEPTION, e);
+    }
+  }
+
+  @Test
+  public void testListVersionsAsyncWithNoOptions() throws Exception {
+    MockRemoteConfigClient client = MockRemoteConfigClient.fromListVersionsResponse(
+            new TemplateResponse.ListVersionsResponse().setNextPageToken("token"));
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
+
+    ListVersionsResult listVersionsResult = remoteConfig.listVersionsAsync().get();
+
+    assertEquals("token", listVersionsResult.getNextPageToken());
+  }
+
+  @Test
+  public void testListVersionsAsyncWithNoOptionsFailure() throws InterruptedException {
+    MockRemoteConfigClient client = MockRemoteConfigClient.fromException(TEST_EXCEPTION);
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
+
+    try {
+      remoteConfig.listVersionsAsync().get();
+    } catch (ExecutionException e) {
+      assertSame(TEST_EXCEPTION, e.getCause());
+    }
+  }
+
+  @Test
+  public void testListVersionsWithOptions() throws FirebaseRemoteConfigException {
+    MockRemoteConfigClient client = MockRemoteConfigClient.fromListVersionsResponse(
+            new TemplateResponse.ListVersionsResponse().setNextPageToken("token"));
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
+
+    ListVersionsResult listVersionsResult = remoteConfig.listVersions(
+            ListVersionsOptions.builder().build());
+
+    assertEquals("token", listVersionsResult.getNextPageToken());
+  }
+
+  @Test
+  public void testListVersionsWithOptionsFailure() {
+    MockRemoteConfigClient client = MockRemoteConfigClient.fromException(TEST_EXCEPTION);
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
+
+    try {
+      remoteConfig.listVersions(ListVersionsOptions.builder().build());
+    } catch (FirebaseRemoteConfigException e) {
+      assertSame(TEST_EXCEPTION, e);
+    }
+  }
+
+  @Test
+  public void testListVersionsAsyncWithOptions() throws Exception {
+    MockRemoteConfigClient client = MockRemoteConfigClient.fromListVersionsResponse(
+            new TemplateResponse.ListVersionsResponse().setNextPageToken("token"));
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
+
+    ListVersionsResult listVersionsResult = remoteConfig.listVersionsAsync(
+            ListVersionsOptions.builder().build()).get();
+
+    assertEquals("token", listVersionsResult.getNextPageToken());
+  }
+
+  @Test
+  public void testListVersionsAsyncWithOptionsFailure() throws InterruptedException {
+    MockRemoteConfigClient client = MockRemoteConfigClient.fromException(TEST_EXCEPTION);
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
+
+    try {
+      remoteConfig.listVersionsAsync(ListVersionsOptions.builder().build()).get();
     } catch (ExecutionException e) {
       assertSame(TEST_EXCEPTION, e.getCause());
     }

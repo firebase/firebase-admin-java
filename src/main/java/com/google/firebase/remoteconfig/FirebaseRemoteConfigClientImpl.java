@@ -153,6 +153,17 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
     return template.setETag(getETag(response));
   }
 
+  @Override
+  public TemplateResponse.ListVersionsResponse listVersions(
+          ListVersionsOptions options) throws FirebaseRemoteConfigException {
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(remoteConfigUrl + ":listVersions")
+            .addAllHeaders(COMMON_HEADERS);
+    if (options != null) {
+      request.addAllParameters(options.wrapForTransport());
+    }
+    return httpClient.sendAndParse(request, TemplateResponse.ListVersionsResponse.class);
+  }
+
   private String getETag(IncomingHttpResponse response) {
     List<String> etagList = (List<String>) response.getHeaders().get("etag");
     checkState(etagList != null && !etagList.isEmpty(),

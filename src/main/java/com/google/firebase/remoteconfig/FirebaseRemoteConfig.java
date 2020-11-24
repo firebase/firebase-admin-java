@@ -331,6 +331,75 @@ public final class FirebaseRemoteConfig {
     };
   }
 
+  /**
+   * Gets a list of Remote Config template versions that have been published, sorted in reverse
+   * chronological order. Only the last 300 versions are stored.
+   *
+   * <p>All versions that correspond to non-active Remote Config templates (that is, all except the
+   * template that is being fetched by clients) are also deleted if they are more than 90 days old.
+   *
+   * @return A {@link ListVersionsResult} instance.
+   * @throws FirebaseRemoteConfigException If an error occurs while retrieving versions list.
+   */
+  public ListVersionsResult listVersions() throws FirebaseRemoteConfigException {
+    return listVersionsOp().call();
+  }
+
+  /**
+   * Gets a list of Remote Config template versions that have been published, sorted in reverse
+   * chronological order. Only the last 300 versions are stored.
+   *
+   * <p>All versions that correspond to non-active Remote Config templates (that is, all except the
+   * template that is being fetched by clients) are also deleted if they are more than 90 days old.
+   *
+   * @param options List version options.
+   * @return A {@link ListVersionsResult} instance.
+   * @throws FirebaseRemoteConfigException If an error occurs while retrieving versions list.
+   */
+  public ListVersionsResult listVersions(
+          @NonNull ListVersionsOptions options) throws FirebaseRemoteConfigException {
+    return listVersionsOp(options).call();
+  }
+
+  /**
+   * Similar to {@link #listVersions()} but performs the operation
+   * asynchronously.
+   *
+   * @return A {@link ListVersionsResult} instance.
+   */
+  public ApiFuture<ListVersionsResult> listVersionsAsync() {
+    return listVersionsOp().callAsync(app);
+  }
+
+  /**
+   * Similar to {@link #listVersions(ListVersionsOptions options)} but performs the operation
+   * asynchronously.
+   *
+   * @param options List version options.
+   * @return A {@link ListVersionsResult} instance.
+   */
+  public ApiFuture<ListVersionsResult> listVersionsAsync(@NonNull ListVersionsOptions options) {
+    return listVersionsOp(options).callAsync(app);
+  }
+
+  private CallableOperation<ListVersionsResult, FirebaseRemoteConfigException> listVersionsOp() {
+    return listVersionsOp(null);
+  }
+
+  private CallableOperation<ListVersionsResult, FirebaseRemoteConfigException> listVersionsOp(
+          final ListVersionsOptions options) {
+    final FirebaseRemoteConfigClient remoteConfigClient = getRemoteConfigClient();
+    final ListVersionsResult.DefaultVersionSource source =
+            new ListVersionsResult.DefaultVersionSource(remoteConfigClient);
+    final ListVersionsResult.Factory factory = new ListVersionsResult.Factory(source, options);
+    return new CallableOperation<ListVersionsResult, FirebaseRemoteConfigException>() {
+      @Override
+      protected ListVersionsResult execute() throws FirebaseRemoteConfigException {
+        return factory.create();
+      }
+    };
+  }
+
   @VisibleForTesting
   FirebaseRemoteConfigClient getRemoteConfigClient() {
     return remoteConfigClient;

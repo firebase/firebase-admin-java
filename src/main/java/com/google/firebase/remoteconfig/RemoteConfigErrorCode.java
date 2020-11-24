@@ -30,4 +30,31 @@ public enum RemoteConfigErrorCode {
    * Internal server error.
    */
   INTERNAL,
+
+  /**
+   * Request cannot be executed in the current system state, such as deleting a non-empty
+   * directory.
+   */
+  FAILED_PRECONDITION,
+
+  /**
+   * User is not authenticated.
+   */
+  UNAUTHENTICATED,
+
+  /**
+   * The resource that a client tried to create already exists.
+   */
+  ALREADY_EXISTS,
+
+  /**
+   * Failed to validate Remote Config data.
+   */
+  VALIDATION_ERROR,
+
+  /**
+   * The current version specified in an update request
+   * did not match the actual version in the database.
+   */
+  VERSION_MISMATCH,
 }

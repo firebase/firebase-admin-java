@@ -16,6 +16,8 @@
 
 package com.google.firebase.remoteconfig;
 
+import com.google.firebase.remoteconfig.internal.TemplateResponse.ListVersionsResponse;
+
 /**
  * An interface for managing Firebase Remote Config templates.
  */
@@ -35,4 +37,7 @@ interface FirebaseRemoteConfigClient {
                                   boolean forcePublish) throws FirebaseRemoteConfigException;
 
   Template rollback(String versionNumber) throws FirebaseRemoteConfigException;
+
+  ListVersionsResponse listVersions(
+          ListVersionsOptions options) throws FirebaseRemoteConfigException;
 }
