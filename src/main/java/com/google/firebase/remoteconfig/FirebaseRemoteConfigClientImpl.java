@@ -22,6 +22,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseInterceptor;
+import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
@@ -34,6 +35,7 @@ import com.google.firebase.internal.AbstractPlatformErrorHandler;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.ErrorHandlingHttpClient;
 import com.google.firebase.internal.HttpRequestInfo;
+import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.remoteconfig.internal.RemoteConfigServiceErrorResponse;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
@@ -100,6 +102,42 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
     return template.setETag(getETag(response));
   }
 
+  @Override
+  public Template getTemplateAtVersion(String versionNumber) throws FirebaseRemoteConfigException {
+    checkArgument(isValidVersionNumber(versionNumber),
+            "Version number must be a non-empty string in int64 format.");
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(remoteConfigUrl)
+            .addAllHeaders(COMMON_HEADERS)
+            .addParameter("versionNumber", versionNumber);
+    IncomingHttpResponse response = httpClient.send(request);
+    TemplateResponse templateResponse = httpClient.parse(response, TemplateResponse.class);
+    Template template = new Template(templateResponse);
+    return template.setETag(getETag(response));
+  }
+
+  @Override
+  public Template publishTemplate(@NonNull Template template, boolean validateOnly,
+                                  boolean forcePublish) throws FirebaseRemoteConfigException {
+    checkArgument(template != null, "Template must not be null.");
+    HttpRequestInfo request = HttpRequestInfo.buildRequest("PUT", remoteConfigUrl,
+            new JsonHttpContent(jsonFactory, template.toTemplateResponse()))
+            .addAllHeaders(COMMON_HEADERS)
+            .addHeader("If-Match", forcePublish ? "*" : template.getETag());
+    if (validateOnly) {
+      request.addParameter("validateOnly", true);
+    }
+    IncomingHttpResponse response = httpClient.send(request);
+    TemplateResponse templateResponse = httpClient.parse(response, TemplateResponse.class);
+    Template publishedTemplate = new Template(templateResponse);
+    if (validateOnly) {
+      // validating a template returns an etag with the suffix -0 means that the provided template
+      // was successfully validated. We set the etag back to the original etag of the template
+      // to allow subsequent operations.
+      return publishedTemplate.setETag(template.getETag());
+    }
+    return publishedTemplate.setETag(getETag(response));
+  }
+
   private String getETag(IncomingHttpResponse response) {
     List<String> etagList = (List<String>) response.getHeaders().get("etag");
     checkState(etagList != null && !etagList.isEmpty(),
@@ -110,6 +148,10 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
             "ETag header is not available in the server response.");
 
     return etag;
+  }
+
+  private boolean isValidVersionNumber(String versionNumber) {
+    return !Strings.isNullOrEmpty(versionNumber) && versionNumber.matches("^\\d+$");
   }
 
   static FirebaseRemoteConfigClientImpl fromApp(FirebaseApp app) {
