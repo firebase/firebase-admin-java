@@ -103,7 +103,8 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
   }
 
   @Override
-  public Template getTemplateAtVersion(String versionNumber) throws FirebaseRemoteConfigException {
+  public Template getTemplateAtVersion(
+          @NonNull String versionNumber) throws FirebaseRemoteConfigException {
     checkArgument(isValidVersionNumber(versionNumber),
             "Version number must be a non-empty string in int64 format.");
     HttpRequestInfo request = HttpRequestInfo.buildGetRequest(remoteConfigUrl)
@@ -136,6 +137,20 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
       return publishedTemplate.setETag(template.getETag());
     }
     return publishedTemplate.setETag(getETag(response));
+  }
+
+  @Override
+  public Template rollback(@NonNull String versionNumber) throws FirebaseRemoteConfigException {
+    checkArgument(isValidVersionNumber(versionNumber),
+            "Version number must be a non-empty string in int64 format.");
+    Map<String, String> content = ImmutableMap.of("versionNumber", versionNumber);
+    HttpRequestInfo request = HttpRequestInfo
+            .buildJsonPostRequest(remoteConfigUrl + ":rollback", content)
+            .addAllHeaders(COMMON_HEADERS);
+    IncomingHttpResponse response = httpClient.send(request);
+    TemplateResponse templateResponse = httpClient.parse(response, TemplateResponse.class);
+    Template template = new Template(templateResponse);
+    return template.setETag(getETag(response));
   }
 
   private String getETag(IncomingHttpResponse response) {
