@@ -987,9 +987,9 @@ public class FirebaseRemoteConfigClientImplTest {
     checkGetRequestHeader(request, "");
   }
 
-  private void checkGetRequestHeader(HttpRequest request, String query) {
+  private void checkGetRequestHeader(HttpRequest request, String urlSuffix) {
     assertEquals("GET", request.getRequestMethod());
-    assertEquals(TEST_REMOTE_CONFIG_URL + query, request.getUrl().toString());
+    assertEquals(TEST_REMOTE_CONFIG_URL + urlSuffix, request.getUrl().toString());
     HttpHeaders headers = request.getHeaders();
     assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
     assertEquals("gzip", headers.getAcceptEncoding());
@@ -999,18 +999,18 @@ public class FirebaseRemoteConfigClientImplTest {
     checkPutRequestHeader(request, "", TEST_ETAG);
   }
 
-  private void checkPutRequestHeader(HttpRequest request, String query, String ifMatch) {
+  private void checkPutRequestHeader(HttpRequest request, String urlSuffix, String ifMatch) {
     assertEquals("PUT", request.getRequestMethod());
-    assertEquals(TEST_REMOTE_CONFIG_URL + query, request.getUrl().toString());
+    assertEquals(TEST_REMOTE_CONFIG_URL + urlSuffix, request.getUrl().toString());
     HttpHeaders headers = request.getHeaders();
     assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
     assertEquals("gzip", headers.getAcceptEncoding());
     assertEquals(ifMatch, headers.getIfMatch());
   }
 
-  private void checkPostRequestHeader(HttpRequest request, String query) {
+  private void checkPostRequestHeader(HttpRequest request, String urlSuffix) {
     assertEquals("POST", request.getRequestMethod());
-    assertEquals(TEST_REMOTE_CONFIG_URL + query, request.getUrl().toString());
+    assertEquals(TEST_REMOTE_CONFIG_URL + urlSuffix, request.getUrl().toString());
     HttpHeaders headers = request.getHeaders();
     assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
     assertEquals("gzip", headers.getAcceptEncoding());
