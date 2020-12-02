@@ -170,7 +170,7 @@ public final class ListVersionsOptions {
      * @return This builder.
      */
     public Builder setStartTimeMillis(long startTimeMillis) {
-      this.startTime = convertToUtcZuluFormat(startTimeMillis);
+      this.startTime = RemoteConfigUtil.convertToUtcZuluFormat(startTimeMillis);
       return this;
     }
 
@@ -182,15 +182,8 @@ public final class ListVersionsOptions {
      * @return This builder.
      */
     public Builder setEndTimeMillis(long endTimeMillis) {
-      this.endTime = convertToUtcZuluFormat(endTimeMillis);
+      this.endTime = RemoteConfigUtil.convertToUtcZuluFormat(endTimeMillis);
       return this;
-    }
-
-    private String convertToUtcZuluFormat(long millis) {
-      checkArgument(millis >= 0, "Milliseconds duration must not be negative");
-      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS000000'Z'");
-      dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-      return dateFormat.format(new Date(millis));
     }
 
     /**

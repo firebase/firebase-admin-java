@@ -16,11 +16,24 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.common.base.Strings;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 final class RemoteConfigUtil {
 
   static boolean isValidVersionNumber(String versionNumber) {
     return !Strings.isNullOrEmpty(versionNumber) && versionNumber.matches("^\\d+$");
+  }
+
+  static String convertToUtcZuluFormat(long millis) {
+    checkArgument(millis >= 0, "Milliseconds duration must not be negative");
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS000000'Z'");
+    dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+    return dateFormat.format(new Date(millis));
   }
 }
