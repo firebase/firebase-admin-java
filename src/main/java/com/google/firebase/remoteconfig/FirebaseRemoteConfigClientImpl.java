@@ -105,7 +105,7 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
   @Override
   public Template getTemplateAtVersion(
           @NonNull String versionNumber) throws FirebaseRemoteConfigException {
-    checkArgument(isValidVersionNumber(versionNumber),
+    checkArgument(RemoteConfigUtil.isValidVersionNumber(versionNumber),
             "Version number must be a non-empty string in int64 format.");
     HttpRequestInfo request = HttpRequestInfo.buildGetRequest(remoteConfigUrl)
             .addAllHeaders(COMMON_HEADERS)
@@ -141,7 +141,7 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
 
   @Override
   public Template rollback(@NonNull String versionNumber) throws FirebaseRemoteConfigException {
-    checkArgument(isValidVersionNumber(versionNumber),
+    checkArgument(RemoteConfigUtil.isValidVersionNumber(versionNumber),
             "Version number must be a non-empty string in int64 format.");
     Map<String, String> content = ImmutableMap.of("versionNumber", versionNumber);
     HttpRequestInfo request = HttpRequestInfo
@@ -174,10 +174,6 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
             "ETag header is not available in the server response.");
 
     return etag;
-  }
-
-  private boolean isValidVersionNumber(String versionNumber) {
-    return !Strings.isNullOrEmpty(versionNumber) && versionNumber.matches("^\\d+$");
   }
 
   static FirebaseRemoteConfigClientImpl fromApp(FirebaseApp app) {

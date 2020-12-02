@@ -919,11 +919,6 @@ public class FirebaseRemoteConfigClientImplTest {
     }
   }
 
-
-
-
-
-
   // Test listVersions
 
   @Test
@@ -946,8 +941,8 @@ public class FirebaseRemoteConfigClientImplTest {
             ListVersionsOptions.builder()
                     .setPageSize(10)
                     .setPageToken("token")
-                    .setStartTime(1605219122000L)
-                    .setEndTime(1606245035000L)
+                    .setStartTimeMillis(1605219122000L)
+                    .setEndTimeMillis(1606245035000L)
                     .setEndVersionNumber("29").build());
 
     assertTrue(versionsList.hasVersions());

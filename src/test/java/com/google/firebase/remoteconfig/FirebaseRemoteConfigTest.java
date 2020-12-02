@@ -505,9 +505,9 @@ public class FirebaseRemoteConfigTest {
             new TemplateResponse.ListVersionsResponse().setNextPageToken("token"));
     FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
 
-    ListVersionsResult listVersionsResult = remoteConfig.listVersions();
+    ListVersionsPage listVersionsPage = remoteConfig.listVersions();
 
-    assertEquals("token", listVersionsResult.getNextPageToken());
+    assertEquals("token", listVersionsPage.getNextPageToken());
   }
 
   @Test
@@ -528,9 +528,9 @@ public class FirebaseRemoteConfigTest {
             new TemplateResponse.ListVersionsResponse().setNextPageToken("token"));
     FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
 
-    ListVersionsResult listVersionsResult = remoteConfig.listVersionsAsync().get();
+    ListVersionsPage listVersionsPage = remoteConfig.listVersionsAsync().get();
 
-    assertEquals("token", listVersionsResult.getNextPageToken());
+    assertEquals("token", listVersionsPage.getNextPageToken());
   }
 
   @Test
@@ -551,10 +551,10 @@ public class FirebaseRemoteConfigTest {
             new TemplateResponse.ListVersionsResponse().setNextPageToken("token"));
     FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
 
-    ListVersionsResult listVersionsResult = remoteConfig.listVersions(
+    ListVersionsPage listVersionsPage = remoteConfig.listVersions(
             ListVersionsOptions.builder().build());
 
-    assertEquals("token", listVersionsResult.getNextPageToken());
+    assertEquals("token", listVersionsPage.getNextPageToken());
   }
 
   @Test
@@ -575,10 +575,10 @@ public class FirebaseRemoteConfigTest {
             new TemplateResponse.ListVersionsResponse().setNextPageToken("token"));
     FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
 
-    ListVersionsResult listVersionsResult = remoteConfig.listVersionsAsync(
+    ListVersionsPage listVersionsPage = remoteConfig.listVersionsAsync(
             ListVersionsOptions.builder().build()).get();
 
-    assertEquals("token", listVersionsResult.getNextPageToken());
+    assertEquals("token", listVersionsPage.getNextPageToken());
   }
 
   @Test

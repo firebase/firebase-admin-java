@@ -32,7 +32,7 @@ import java.util.NoSuchElementException;
  * over the versions in the current page, and calling up subsequent pages of versions. Instances of
  * this class are thread-safe and immutable.
  */
-public final class ListVersionsResult implements Page<Version> {
+public final class ListVersionsPage implements Page<Version> {
 
   static final String END_OF_LIST = "";
 
@@ -40,7 +40,7 @@ public final class ListVersionsResult implements Page<Version> {
   private final VersionSource source;
   private final ListVersionsOptions listVersionsOptions;
 
-  private ListVersionsResult(
+  private ListVersionsPage(
           @NonNull VersionsResultBatch currentBatch, @NonNull VersionSource source,
           @NonNull ListVersionsOptions listVersionsOptions) {
     this.currentBatch = checkNotNull(currentBatch);
@@ -61,11 +61,11 @@ public final class ListVersionsResult implements Page<Version> {
   /**
    * Returns the next page of versions.
    *
-   * @return A new {@link ListVersionsResult} instance, or null if there are no more pages.
+   * @return A new {@link ListVersionsPage} instance, or null if there are no more pages.
    */
   @NonNull
   @Override
-  public ListVersionsResult getNextPage() {
+  public ListVersionsPage getNextPage() {
     if (hasNextPage()) {
       ListVersionsOptions options;
       if (listVersionsOptions != null) {
@@ -124,9 +124,9 @@ public final class ListVersionsResult implements Page<Version> {
 
   private static class VersionIterable implements Iterable<Version> {
 
-    private final ListVersionsResult startingPage;
+    private final ListVersionsPage startingPage;
 
-    VersionIterable(@NonNull ListVersionsResult startingPage) {
+    VersionIterable(@NonNull ListVersionsPage startingPage) {
       this.startingPage = checkNotNull(startingPage, "starting page must not be null");
     }
 
@@ -142,11 +142,11 @@ public final class ListVersionsResult implements Page<Version> {
      */
     private static class VersionIterator implements Iterator<Version> {
 
-      private ListVersionsResult currentPage;
+      private ListVersionsPage currentPage;
       private List<Version> batch;
       private int index = 0;
 
-      private VersionIterator(ListVersionsResult startingPage) {
+      private VersionIterator(ListVersionsPage startingPage) {
         setCurrentPage(startingPage);
       }
 
@@ -176,7 +176,7 @@ public final class ListVersionsResult implements Page<Version> {
         throw new UnsupportedOperationException("remove operation not supported");
       }
 
-      private void setCurrentPage(ListVersionsResult page) {
+      private void setCurrentPage(ListVersionsPage page) {
         this.currentPage = checkNotNull(page);
         this.batch = ImmutableList.copyOf(page.getValues());
         this.index = 0;
@@ -242,7 +242,7 @@ public final class ListVersionsResult implements Page<Version> {
   }
 
   /**
-   * A simple factory class for {@link ListVersionsResult} instances. Performs argument validation
+   * A simple factory class for {@link ListVersionsPage} instances. Performs argument validation
    * before attempting to load any version data (which is expensive, and hence may be performed
    * asynchronously on a separate thread).
    */
@@ -260,9 +260,9 @@ public final class ListVersionsResult implements Page<Version> {
       this.listVersionsOptions = listVersionsOptions;
     }
 
-    ListVersionsResult create() throws FirebaseRemoteConfigException {
+    ListVersionsPage create() throws FirebaseRemoteConfigException {
       VersionsResultBatch batch = source.fetch(listVersionsOptions);
-      return new ListVersionsResult(batch, source, listVersionsOptions);
+      return new ListVersionsPage(batch, source, listVersionsOptions);
     }
   }
 }

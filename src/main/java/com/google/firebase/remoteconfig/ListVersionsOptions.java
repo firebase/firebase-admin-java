@@ -18,8 +18,6 @@ package com.google.firebase.remoteconfig;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.google.common.base.Strings;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -38,6 +36,16 @@ public final class ListVersionsOptions {
   private final String endTime;
 
   private ListVersionsOptions(Builder builder) {
+    if (builder.pageSize != null) {
+      checkArgument(builder.pageSize > 0 && builder.pageSize < 301,
+              "pageSize must be a number between 1 and 300 (inclusive).");
+    }
+    if (builder.endVersionNumber != null) {
+      checkArgument(RemoteConfigUtil.isValidVersionNumber(builder.endVersionNumber)
+                      && (Integer.parseInt(builder.endVersionNumber) > 0),
+              "endVersionNumber must be a non-empty string in int64 format and must be"
+                      + " greater than 0.");
+    }
     this.pageSize = builder.pageSize;
     this.pageToken = builder.pageToken;
     this.endVersionNumber = builder.endVersionNumber;
@@ -112,8 +120,6 @@ public final class ListVersionsOptions {
      * @return This builder.
      */
     public Builder setPageSize(int pageSize) {
-      checkArgument(pageSize > 0 && pageSize < 301,
-              "pageSize must be a number between 1 and 300 (inclusive).");
       this.pageSize = pageSize;
       return this;
     }
@@ -139,9 +145,20 @@ public final class ListVersionsOptions {
      * @return This builder.
      */
     public Builder setEndVersionNumber(String endVersionNumber) {
-      checkArgument(isValidVersionNumber(endVersionNumber),
-              "endVersionNumber must be a non-empty string in int64 format.");
       this.endVersionNumber = endVersionNumber;
+      return this;
+    }
+
+    /**
+     * Sets the newest version number to include in the results.
+     *
+     * @param endVersionNumber Specify the newest version number to include in the results.
+     *                         If specified, must be greater than zero. Defaults to the newest
+     *                         version.
+     * @return This builder.
+     */
+    public Builder setEndVersionNumber(long endVersionNumber) {
+      this.endVersionNumber = String.valueOf(endVersionNumber);;
       return this;
     }
 
@@ -152,7 +169,7 @@ public final class ListVersionsOptions {
      *                        Any entries updated before this time are omitted.
      * @return This builder.
      */
-    public Builder setStartTime(long startTimeMillis) {
+    public Builder setStartTimeMillis(long startTimeMillis) {
       this.startTime = convertToUtcZuluFormat(startTimeMillis);
       return this;
     }
@@ -164,7 +181,7 @@ public final class ListVersionsOptions {
      *                      Any entries updated on or after this time are omitted.
      * @return This builder.
      */
-    public Builder setEndTime(long endTimeMillis) {
+    public Builder setEndTimeMillis(long endTimeMillis) {
       this.endTime = convertToUtcZuluFormat(endTimeMillis);
       return this;
     }
@@ -174,12 +191,6 @@ public final class ListVersionsOptions {
       SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS000000'Z'");
       dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
       return dateFormat.format(new Date(millis));
-    }
-
-    private boolean isValidVersionNumber(String versionNumber) {
-      return !Strings.isNullOrEmpty(versionNumber)
-              && versionNumber.matches("^\\d+$")
-              && (Integer.parseInt(versionNumber) > 0);
     }
 
     /**
