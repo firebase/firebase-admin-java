@@ -16,23 +16,33 @@
 
 package com.google.firebase.remoteconfig;
 
+import com.google.firebase.remoteconfig.internal.TemplateResponse.ListVersionsResponse;
+
 public class MockRemoteConfigClient implements FirebaseRemoteConfigClient{
 
-  private Template resultTemplate;
-  private FirebaseRemoteConfigException exception;
+  private final Template resultTemplate;
+  private final FirebaseRemoteConfigException exception;
+  private final ListVersionsResponse listVersionsResponse;
 
   private MockRemoteConfigClient(Template resultTemplate,
+                                 ListVersionsResponse listVersionsResponse,
                                  FirebaseRemoteConfigException exception) {
     this.resultTemplate = resultTemplate;
+    this.listVersionsResponse = listVersionsResponse;
     this.exception = exception;
   }
 
   static MockRemoteConfigClient fromTemplate(Template resultTemplate) {
-    return new MockRemoteConfigClient(resultTemplate, null);
+    return new MockRemoteConfigClient(resultTemplate, null, null);
+  }
+
+  static MockRemoteConfigClient fromListVersionsResponse(
+          ListVersionsResponse listVersionsResponse) {
+    return new MockRemoteConfigClient(null, listVersionsResponse, null);
   }
 
   static MockRemoteConfigClient fromException(FirebaseRemoteConfigException exception) {
-    return new MockRemoteConfigClient(null, exception);
+    return new MockRemoteConfigClient(null, null, exception);
   }
 
   @Override
@@ -66,5 +76,14 @@ public class MockRemoteConfigClient implements FirebaseRemoteConfigClient{
       throw exception;
     }
     return resultTemplate;
+  }
+
+  @Override
+  public ListVersionsResponse listVersions(
+          ListVersionsOptions options) throws FirebaseRemoteConfigException {
+    if (exception != null) {
+      throw exception;
+    }
+    return listVersionsResponse;
   }
 }

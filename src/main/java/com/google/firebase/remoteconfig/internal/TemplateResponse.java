@@ -372,4 +372,39 @@ public final class TemplateResponse {
       return this;
     }
   }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config versions list responses from the
+   * Remote Config service.
+   **/
+  public static final class ListVersionsResponse {
+    @Key("versions")
+    private List<VersionResponse> versions;
+
+    @Key("nextPageToken")
+    private String nextPageToken;
+
+    public List<VersionResponse> getVersions() {
+      return versions;
+    }
+
+    public boolean hasVersions() {
+      return versions != null && !versions.isEmpty();
+    }
+
+    public String getNextPageToken() {
+      return nextPageToken;
+    }
+
+    public ListVersionsResponse setNextPageToken(String nextPageToken) {
+      this.nextPageToken = nextPageToken;
+      return this;
+    }
+
+    public ListVersionsResponse setVersions(
+            List<VersionResponse> versions) {
+      this.versions = versions;
+      return this;
+    }
+  }
 }

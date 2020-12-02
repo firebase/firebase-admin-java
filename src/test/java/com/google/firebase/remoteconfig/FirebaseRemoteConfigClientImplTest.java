@@ -17,6 +17,7 @@
 package com.google.firebase.remoteconfig;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -49,6 +50,7 @@ import com.google.firebase.testing.TestUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +72,9 @@ public class FirebaseRemoteConfigClientImplTest {
 
   private static final String MOCK_TEMPLATE_RESPONSE = TestUtils
           .loadResource("getRemoteConfig.json");
+
+  private static final String MOCK_LIST_VERSIONS_RESPONSE = TestUtils
+          .loadResource("listRemoteConfigVersions.json");
 
   private static final String TEST_ETAG = "etag-123456789012-1";
 
@@ -911,6 +916,191 @@ public class FirebaseRemoteConfigClientImplTest {
       checkPostRequestHeader(interceptor.getLastRequest(), ":rollback");
       checkRequestContent(interceptor.getLastRequest(),
               ImmutableMap.<String, Object>of("versionNumber", "24"));
+    }
+  }
+
+  // Test listVersions
+
+  @Test
+  public void testListVersionsWithNullOptions() throws Exception {
+    response.setContent(MOCK_LIST_VERSIONS_RESPONSE);
+
+    TemplateResponse.ListVersionsResponse versionsList = client.listVersions(null);
+
+    assertTrue(versionsList.hasVersions());
+    assertEquals("28", versionsList.getNextPageToken());
+    assertEquals(4, versionsList.getVersions().size());
+    checkGetRequestHeader(interceptor.getLastRequest(), ":listVersions");
+  }
+
+  @Test
+  public void testListVersionsWithOptions() throws Exception {
+    response.setContent(MOCK_LIST_VERSIONS_RESPONSE);
+
+    TemplateResponse.ListVersionsResponse versionsList = client.listVersions(
+            ListVersionsOptions.builder()
+                    .setPageSize(10)
+                    .setPageToken("token")
+                    .setStartTimeMillis(1605219122000L)
+                    .setEndTimeMillis(1606245035000L)
+                    .setEndVersionNumber("29").build());
+
+    assertTrue(versionsList.hasVersions());
+
+    HttpRequest request = interceptor.getLastRequest();
+    String urlWithoutParameters = request.getUrl().toString()
+            .substring(0, request.getUrl().toString().lastIndexOf('?'));
+    final Map<String, String> expectedQuery = ImmutableMap.of(
+            "endVersionNumber", "29",
+            "pageSize", "10",
+            "pageToken", "token",
+            "startTime", "2020-11-12T22:12:02.000000000Z",
+            "endTime", "2020-11-24T19:10:35.000000000Z"
+    );
+    Map<String, String> actualQuery = new HashMap<>();
+    String query = request.getUrl().toURI().getQuery();
+    String[] pairs = query.split("&");
+    for (String pair : pairs) {
+      int idx = pair.indexOf("=");
+      actualQuery.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"),
+              URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+    }
+
+    assertEquals("GET", request.getRequestMethod());
+    assertEquals(TEST_REMOTE_CONFIG_URL + ":listVersions", urlWithoutParameters);
+    HttpHeaders headers = request.getHeaders();
+    assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
+    assertEquals("gzip", headers.getAcceptEncoding());
+    assertEquals(expectedQuery, actualQuery);
+  }
+
+  @Test
+  public void testListVersionsWithEmptyResponse() throws Exception {
+    response.setContent("{}");
+
+    TemplateResponse.ListVersionsResponse versionsList = client.listVersions(null);
+
+    assertFalse(versionsList.hasVersions());
+    assertNull(versionsList.getNextPageToken());
+    assertNull(versionsList.getVersions());
+    checkGetRequestHeader(interceptor.getLastRequest(), ":listVersions");
+  }
+
+  @Test
+  public void testListVersionsHttpError() {
+    for (int code : HTTP_STATUS_CODES) {
+      response.setStatusCode(code).setContent("{}");
+
+      try {
+        client.listVersions(null);
+        fail("No error thrown for HTTP error");
+      } catch (FirebaseRemoteConfigException error) {
+        checkExceptionFromHttpResponse(error, HTTP_STATUS_TO_ERROR_CODE.get(code), null,
+                "Unexpected HTTP response with status: " + code + "\n{}", HttpMethods.GET);
+      }
+      checkGetRequestHeader(interceptor.getLastRequest(), ":listVersions");
+    }
+  }
+
+  @Test
+  public void testListVersionsTransportError() {
+    client = initClientWithFaultyTransport();
+
+    try {
+      client.listVersions(null);
+      fail("No error thrown for HTTP error");
+    } catch (FirebaseRemoteConfigException error) {
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
+      assertEquals("Unknown error while making a remote service call: transport error",
+              error.getMessage());
+      assertTrue(error.getCause() instanceof IOException);
+      assertNull(error.getHttpResponse());
+      assertNull(error.getRemoteConfigErrorCode());
+    }
+  }
+
+  @Test
+  public void testListVersionsSuccessResponseWithUnexpectedPayload() {
+    response.setContent("not valid json");
+
+    try {
+      client.listVersions(null);
+      fail("No error thrown for malformed response");
+    } catch (FirebaseRemoteConfigException error) {
+      assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
+      assertTrue(error.getMessage().startsWith("Error while parsing HTTP response: "));
+      assertNotNull(error.getCause());
+      assertNotNull(error.getHttpResponse());
+      assertNull(error.getRemoteConfigErrorCode());
+    }
+    checkGetRequestHeader(interceptor.getLastRequest(), ":listVersions");
+  }
+
+  @Test
+  public void testListVersionsErrorWithZeroContentResponse() {
+    for (int code : HTTP_STATUS_CODES) {
+      response.setStatusCode(code).setZeroContent();
+
+      try {
+        client.listVersions(null);
+        fail("No error thrown for HTTP error");
+      } catch (FirebaseRemoteConfigException error) {
+        checkExceptionFromHttpResponse(error, HTTP_STATUS_TO_ERROR_CODE.get(code), null,
+                "Unexpected HTTP response with status: " + code + "\nnull", HttpMethods.GET);
+      }
+      checkGetRequestHeader(interceptor.getLastRequest(), ":listVersions");
+    }
+  }
+
+  @Test
+  public void testListVersionsErrorWithMalformedResponse() {
+    for (int code : HTTP_STATUS_CODES) {
+      response.setStatusCode(code).setContent("not json");
+
+      try {
+        client.listVersions(null);
+        fail("No error thrown for HTTP error");
+      } catch (FirebaseRemoteConfigException error) {
+        checkExceptionFromHttpResponse(error, HTTP_STATUS_TO_ERROR_CODE.get(code), null,
+                "Unexpected HTTP response with status: " + code + "\nnot json", HttpMethods.GET);
+      }
+      checkGetRequestHeader(interceptor.getLastRequest(), ":listVersions");
+    }
+  }
+
+  @Test
+  public void testListVersionsErrorWithDetails() {
+    for (int code : HTTP_STATUS_CODES) {
+      response.setStatusCode(code).setContent(
+              "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\"}}");
+
+      try {
+        client.listVersions(null);
+        fail("No error thrown for HTTP error");
+      } catch (FirebaseRemoteConfigException error) {
+        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT, null, "test error",
+                HttpMethods.GET);
+      }
+      checkGetRequestHeader(interceptor.getLastRequest(), ":listVersions");
+    }
+  }
+
+  @Test
+  public void testListVersionsErrorWithRcError() {
+    for (int code : HTTP_STATUS_CODES) {
+      response.setStatusCode(code).setContent(
+              "{\"error\": {\"status\": \"INVALID_ARGUMENT\", "
+                      + "\"message\": \"[INVALID_ARGUMENT]: test error\"}}");
+
+      try {
+        client.listVersions(null);
+        fail("No error thrown for HTTP error");
+      } catch (FirebaseRemoteConfigException error) {
+        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT,
+                RemoteConfigErrorCode.INVALID_ARGUMENT, "[INVALID_ARGUMENT]: test error",
+                HttpMethods.GET);
+      }
+      checkGetRequestHeader(interceptor.getLastRequest(), ":listVersions");
     }
   }
 
