@@ -69,7 +69,7 @@ public final class Condition {
     checkNotNull(conditionResponse);
     this.name = conditionResponse.getName();
     this.expression = conditionResponse.getExpression();
-    if (conditionResponse.getTagColor() == null) {
+    if (Strings.isNullOrEmpty(conditionResponse.getTagColor())) {
       this.tagColor = TagColor.UNSPECIFIED;
     } else {
       this.tagColor = TagColor.valueOf(conditionResponse.getTagColor());
@@ -167,5 +167,10 @@ public final class Condition {
     Condition condition = (Condition) o;
     return Objects.equals(name, condition.name)
             && Objects.equals(expression, condition.expression) && tagColor == condition.tagColor;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, expression, tagColor);
   }
 }

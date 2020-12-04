@@ -24,7 +24,9 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.testing.TestUtils;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -77,6 +79,9 @@ public class TemplateTest {
 
   private static final Template TEMPLATE_WITH_VERSION = new Template()
           .setVersion(Version.withDescription("promo version"));
+
+  private static final String TEMPLATE_STRING = TestUtils
+          .loadResource("rcTemplateWithETag.json");
 
   @Test
   public void testConstructor() {
@@ -152,5 +157,151 @@ public class TemplateTest {
     assertNotEquals(templateThree, templateFour);
     assertNotEquals(templateThree, templateFive);
     assertNotEquals(templateFour, templateFive);
+  }
+
+  @Test(expected = IOException.class)
+  public void testFromJSONWithInvalidString() throws IOException {
+    Template.fromJSON("abc");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testFromJSONWithEmptyString() throws IOException {
+    Template.fromJSON("");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testFromJSONWithNullString() throws IOException {
+    Template.fromJSON(null);
+  }
+
+  @Test
+  public void testFromJSON() throws IOException {
+    Template template = Template.fromJSON("{}");
+
+    assertNotNull(template.getParameters());
+    assertNotNull(template.getConditions());
+    assertNotNull(template.getParameterGroups());
+    assertTrue(template.getParameters().isEmpty());
+    assertTrue(template.getConditions().isEmpty());
+    assertTrue(template.getParameterGroups().isEmpty());
+    assertNull(template.getETag());
+
+    template = Template.fromJSON("{"
+            + "  \"etag\": \"etag-001234\","
+            + "  \"conditions\": ["
+            + "    {"
+            + "      \"name\": \"ios_en\","
+            + "      \"expression\": \"device.os == 'ios' && device.country in ['us', 'uk']\","
+            + "      \"tagColor\": \"INDIGO\""
+            + "    },"
+            + "    {"
+            + "      \"name\": \"android_en\","
+            + "      \"expression\": \"device.os == 'android' && device.country in ['us', 'uk']\""
+            + "    }"
+            + "  ]"
+            + "}");
+
+    assertNotNull(template.getParameters());
+    assertNotNull(template.getConditions());
+    assertNotNull(template.getParameterGroups());
+    assertTrue(template.getParameters().isEmpty());
+    assertEquals(2, template.getConditions().size());
+    assertEquals("ios_en", template.getConditions().get(0).getName());
+    assertEquals("device.os == 'ios' && device.country in ['us', 'uk']",
+            template.getConditions().get(0).getExpression());
+    assertEquals(TagColor.INDIGO, template.getConditions().get(0).getTagColor());
+    assertEquals("android_en", template.getConditions().get(1).getName());
+    assertEquals("device.os == 'android' && device.country in ['us', 'uk']",
+            template.getConditions().get(1).getExpression());
+    assertEquals(TagColor.UNSPECIFIED, template.getConditions().get(1).getTagColor());
+    assertTrue(template.getParameterGroups().isEmpty());
+    assertEquals("etag-001234", template.getETag());
+  }
+
+  @Test
+  public void testToJSON() {
+    // Empty template
+    String jsonString = new Template().toJSON();
+
+    assertEquals("{\"parameters\":{},\"conditions\":[],"
+            + "\"parameterGroups\":{}}", jsonString);
+
+    // Template with parameter values
+    Template t = new Template();
+    t.getParameters()
+            .put("with_value", new Parameter().setDefaultValue(ParameterValue.of("hello")));
+    t.getParameters()
+            .put("with_inApp", new Parameter().setDefaultValue(ParameterValue.inAppDefault()));
+    jsonString = t.toJSON();
+
+    assertEquals("{\"parameters\":{\"with_value\":{\"defaultValue\":{\"value\":\"hello\"},"
+            + "\"conditionalValues\":{}},\"with_inApp\":{\"defaultValue\":"
+            + "{\"useInAppDefault\":true},\"conditionalValues\":{}}},\"conditions\":[],"
+            + "\"parameterGroups\":{}}", jsonString);
+
+    // Template with etag
+    jsonString = new Template().setETag("etag-12345").toJSON();
+
+    assertEquals("{\"etag\":\"etag-12345\",\"parameters\":{},\"conditions\":[],"
+            + "\"parameterGroups\":{}}", jsonString);
+
+    // Template with etag and conditions
+    jsonString = new Template()
+            .setETag("etag-0010201")
+            .setConditions(CONDITIONS).toJSON();
+
+    assertEquals("{\"etag\":\"etag-0010201\",\"parameters\":{},"
+            + "\"conditions\":[{\"name\":\"ios_en\",\"expression\":\"exp ios\","
+            + "\"tagColor\":\"INDIGO\"},{\"name\":\"android_en\","
+            + "\"expression\":\"exp android\"}],"
+            + "\"parameterGroups\":{}}", jsonString);
+
+    // Complete template
+    jsonString = new Template()
+            .setETag("etag-0010201")
+            .setParameters(PARAMETERS)
+            .setConditions(CONDITIONS)
+            .setParameterGroups(PARAMETER_GROUPS)
+            .setVersion(Version.withDescription("promo version"))
+            .toJSON();
+
+    assertEquals(TEMPLATE_STRING, jsonString);
+  }
+
+  @Test
+  public void testToJSONAndFromJSON() throws IOException {
+    String jsonString = new Template().toJSON();
+    Template template = Template.fromJSON(jsonString);
+
+    assertNotNull(template.getParameters());
+    assertNotNull(template.getConditions());
+    assertNotNull(template.getParameterGroups());
+    assertTrue(template.getParameters().isEmpty());
+    assertTrue(template.getConditions().isEmpty());
+    assertTrue(template.getParameterGroups().isEmpty());
+    assertNull(template.getETag());
+
+    Version expectedVersion = Version.withDescription("promo version");
+    jsonString = new Template()
+            .setETag("etag-0010201")
+            .setParameters(PARAMETERS)
+            .setConditions(CONDITIONS)
+            .setParameterGroups(PARAMETER_GROUPS)
+            .setVersion(expectedVersion)
+            .toJSON();
+    template = Template.fromJSON(jsonString);
+
+    assertEquals("etag-0010201", template.getETag());
+    assertEquals(PARAMETERS, template.getParameters());
+    assertEquals(PARAMETER_GROUPS, template.getParameterGroups());
+    assertEquals(expectedVersion, template.getVersion());
+    // check conditions
+    assertEquals(2, template.getConditions().size());
+    assertEquals("ios_en", template.getConditions().get(0).getName());
+    assertEquals("exp ios", template.getConditions().get(0).getExpression());
+    assertEquals(TagColor.INDIGO, template.getConditions().get(0).getTagColor());
+    assertEquals("android_en", template.getConditions().get(1).getName());
+    assertEquals("exp android", template.getConditions().get(1).getExpression());
+    assertEquals(TagColor.UNSPECIFIED, template.getConditions().get(1).getTagColor());
   }
 }

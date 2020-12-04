@@ -16,11 +16,27 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.JsonParser;
+import com.google.common.base.Strings;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.remoteconfig.internal.TemplateInput;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import com.google.gson.JsonSerializer;
+import com.google.gson.JsonSyntaxException;
 
+import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -73,6 +89,29 @@ public final class Template {
     if (templateResponse.getVersion() != null) {
       this.version = new Version(templateResponse.getVersion());
     }
+  }
+
+  /**
+   * Creates and returns a new Remote Config template from a JSON string.
+   *
+   * @param json A non-null JSON string to populate a Remote Config template.
+   * @return A new {@link Template} instance.
+   * @throws IOException If the input JSON string is not parsable.
+   */
+  public static Template fromJSON(@NonNull String json) throws IOException {
+    checkArgument(!Strings.isNullOrEmpty(json), "JSON String must not be null or empty.");
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    JsonParser parser = jsonFactory.createJsonParser(json);
+    TemplateInput templateInput = parser.parseAndClose(TemplateInput.class);
+    TemplateResponse templateResponse = new TemplateResponse()
+            .setParameters(templateInput.getParameters())
+            .setParameterGroups(templateInput.getParameterGroups())
+            .setConditions(templateInput.getConditions());
+    if (templateInput.getVersion() != null) {
+      templateResponse.setVersion(new TemplateResponse.VersionResponse()
+              .setDescription(templateInput.getVersion().getDescription()));
+    }
+    return new Template(templateResponse).setETag(templateInput.getEtag());
   }
 
   /**
@@ -177,6 +216,24 @@ public final class Template {
     return this;
   }
 
+  /**
+   * Gets the JSON-serializable representation of this template.
+   *
+   * @return A JSON-serializable representation of this {@link Template} instance.
+   */
+  public String toJSON() {
+    String jsonSerialization;
+    Gson gson = new GsonBuilder()
+            .registerTypeAdapter(ParameterValue.InAppDefault.class, new InAppDefaultAdapter())
+            .create();
+    try {
+      jsonSerialization = gson.toJson(this);
+    } catch (JsonSyntaxException e) {
+      throw new RuntimeException(e);
+    }
+    return jsonSerialization;
+  }
+
   Template setETag(String etag) {
     this.etag = etag;
     return this;
@@ -223,5 +280,16 @@ public final class Template {
   @Override
   public int hashCode() {
     return Objects.hash(etag, parameters, conditions, parameterGroups, version);
+  }
+
+  private static class InAppDefaultAdapter implements JsonSerializer<ParameterValue.InAppDefault> {
+
+    @Override
+    public JsonElement serialize(ParameterValue.InAppDefault src, Type typeOfSrc,
+                                 JsonSerializationContext context) {
+      JsonObject obj = new JsonObject();
+      obj.addProperty("useInAppDefault", true);
+      return obj;
+    }
   }
 }
