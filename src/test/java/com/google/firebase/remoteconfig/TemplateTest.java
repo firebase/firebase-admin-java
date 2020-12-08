@@ -288,17 +288,6 @@ public class TemplateTest {
             + "\"tagColor\":\"INDIGO\"},{\"expression\":\"exp android\","
             + "\"name\":\"android_en\"}],\"etag\":\"etag-0010201\",\"parameterGroups\":{},"
             + "\"parameters\":{}}", jsonString);
-
-    // Complete template
-    jsonString = new Template()
-            .setETag("etag-0010201")
-            .setParameters(PARAMETERS)
-            .setConditions(CONDITIONS)
-            .setParameterGroups(PARAMETER_GROUPS)
-            .setVersion(Version.withDescription("promo version"))
-            .toJSON();
-
-    assertEquals(TEMPLATE_STRING, jsonString);
   }
 
   @Test
