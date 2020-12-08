@@ -39,6 +39,9 @@ public final class TemplateResponse {
   @Key("version")
   private VersionResponse version;
 
+  @Key("etag")
+  private String etag;
+
   public Map<String, ParameterResponse> getParameters() {
     return parameters;
   }
@@ -53,6 +56,10 @@ public final class TemplateResponse {
 
   public VersionResponse getVersion() {
     return version;
+  }
+
+  public String getEtag() {
+    return etag;
   }
 
   public TemplateResponse setParameters(

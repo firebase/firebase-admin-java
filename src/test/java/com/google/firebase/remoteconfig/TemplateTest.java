@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.remoteconfig.internal.TemplateResponse;
 import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
@@ -219,6 +220,39 @@ public class TemplateTest {
   }
 
   @Test
+  public void testFromJSONWithVersion() throws IOException {
+    final Version expectedVersion = new Version(new TemplateResponse.VersionResponse()
+            .setDescription("template version")
+            .setUpdateTime("2020-12-08T15:49:51.887878Z")
+            .setUpdateUser(new TemplateResponse.UserResponse().setEmail("user@user.com"))
+            .setLegacy(false)
+            .setUpdateType("INCREMENTAL_UPDATE")
+            .setRollbackSource("26")
+            .setVersionNumber("34")
+            .setUpdateOrigin("ADMIN_SDK_NODE")
+    );
+    String jsonString = "{\"parameters\":{},\"conditions\":[],\"parameterGroups\":{},"
+            + "\"version\":{\"versionNumber\":\"34\","
+            + "\"updateTime\":\"Tue, 08 Dec 2020 15:49:51 UTC\","
+            + "\"updateOrigin\":\"ADMIN_SDK_NODE\",\"updateType\":\"INCREMENTAL_UPDATE\","
+            + "\"updateUser\":{\"email\":\"user@user.com\"},\"rollbackSource\":\"26\","
+            + "\"legacy\":false,\"description\":\"template version\"}}";
+    Template template = Template.fromJSON(jsonString);
+
+    assertNotNull(template.getParameters());
+    assertNotNull(template.getConditions());
+    assertNotNull(template.getParameterGroups());
+    assertTrue(template.getParameters().isEmpty());
+    assertTrue(template.getConditions().isEmpty());
+    assertTrue(template.getParameterGroups().isEmpty());
+    assertNull(template.getETag());
+    // check version
+    assertEquals(expectedVersion, template.getVersion());
+    // update time should be correctly converted to milliseconds
+    assertEquals(1607442591000L, template.getVersion().getUpdateTime());
+  }
+
+  @Test
   public void testToJSON() {
     // Empty template
     String jsonString = new Template().toJSON();
@@ -266,6 +300,28 @@ public class TemplateTest {
             .toJSON();
 
     assertEquals(TEMPLATE_STRING, jsonString);
+  }
+
+  @Test
+  public void testToJSONWithVersion() {
+    Version version = new Version(new TemplateResponse.VersionResponse()
+            .setDescription("template version")
+            .setUpdateTime("2020-12-08T15:49:51.887878Z")
+            .setUpdateUser(new TemplateResponse.UserResponse().setEmail("user@user.com"))
+            .setLegacy(false)
+            .setUpdateType("INCREMENTAL_UPDATE")
+            .setRollbackSource("26")
+            .setVersionNumber("34")
+            .setUpdateOrigin("ADMIN_SDK_NODE")
+    );
+    String jsonString = new Template().setVersion(version).toJSON();
+
+    assertEquals("{\"parameters\":{},\"conditions\":[],\"parameterGroups\":{},"
+            + "\"version\":{\"versionNumber\":\"34\","
+            + "\"updateTime\":\"Tue, 08 Dec 2020 15:49:51 UTC\","
+            + "\"updateOrigin\":\"ADMIN_SDK_NODE\",\"updateType\":\"INCREMENTAL_UPDATE\","
+            + "\"updateUser\":{\"email\":\"user@user.com\"},\"rollbackSource\":\"26\","
+            + "\"legacy\":false,\"description\":\"template version\"}}", jsonString);
   }
 
   @Test

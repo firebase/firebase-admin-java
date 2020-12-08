@@ -25,11 +25,7 @@ import com.google.firebase.remoteconfig.internal.TemplateResponse;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.VersionResponse;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Objects;
-import java.util.TimeZone;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Represents a Remote Config template version.
@@ -72,10 +68,8 @@ public final class Version {
       if (indexOfPeriod != -1) {
         updateTime = updateTime.substring(0, indexOfPeriod);
       }
-      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-      dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
       try {
-        this.updateTime = dateFormat.parse(updateTime).getTime();
+        this.updateTime = RemoteConfigUtil.convertToMilliseconds(updateTime);
       } catch (ParseException e) {
         throw new IllegalStateException("Unable to parse update time.", e);
       }

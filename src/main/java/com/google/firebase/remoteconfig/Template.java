@@ -23,9 +23,7 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonParser;
 import com.google.common.base.Strings;
-import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.remoteconfig.internal.TemplateInput;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -89,6 +87,7 @@ public final class Template {
     if (templateResponse.getVersion() != null) {
       this.version = new Version(templateResponse.getVersion());
     }
+    this.etag = templateResponse.getEtag();
   }
 
   /**
@@ -102,16 +101,8 @@ public final class Template {
     checkArgument(!Strings.isNullOrEmpty(json), "JSON String must not be null or empty.");
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     JsonParser parser = jsonFactory.createJsonParser(json);
-    TemplateInput templateInput = parser.parseAndClose(TemplateInput.class);
-    TemplateResponse templateResponse = new TemplateResponse()
-            .setParameters(templateInput.getParameters())
-            .setParameterGroups(templateInput.getParameterGroups())
-            .setConditions(templateInput.getConditions());
-    if (templateInput.getVersion() != null) {
-      templateResponse.setVersion(new TemplateResponse.VersionResponse()
-              .setDescription(templateInput.getVersion().getDescription()));
-    }
-    return new Template(templateResponse).setETag(templateInput.getEtag());
+    TemplateResponse templateResponse = parser.parseAndClose(TemplateResponse.class);
+    return new Template(templateResponse);
   }
 
   /**
@@ -225,6 +216,7 @@ public final class Template {
     String jsonSerialization;
     Gson gson = new GsonBuilder()
             .registerTypeAdapter(ParameterValue.InAppDefault.class, new InAppDefaultAdapter())
+            .registerTypeAdapter(Version.class, new VersionAdapter())
             .create();
     try {
       jsonSerialization = gson.toJson(this);
@@ -289,6 +281,24 @@ public final class Template {
                                  JsonSerializationContext context) {
       JsonObject obj = new JsonObject();
       obj.addProperty("useInAppDefault", true);
+      return obj;
+    }
+  }
+
+  private static class VersionAdapter implements JsonSerializer<Version> {
+
+    @Override
+    public JsonElement serialize(Version src, Type typeOfSrc,
+                                 JsonSerializationContext context) {
+      JsonObject obj = new JsonObject();
+      obj.addProperty("versionNumber", src.getVersionNumber());
+      obj.addProperty("updateTime", RemoteConfigUtil.convertToUtcDateFormat(src.getUpdateTime()));
+      obj.addProperty("updateOrigin", src.getUpdateOrigin());
+      obj.addProperty("updateType", src.getUpdateType());
+      obj.add("updateUser", context.serialize(src.getUpdateUser()));
+      obj.addProperty("rollbackSource", src.getRollbackSource());
+      obj.addProperty("legacy", src.isLegacy());
+      obj.addProperty("description", src.getDescription());
       return obj;
     }
   }
