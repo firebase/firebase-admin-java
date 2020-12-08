@@ -257,8 +257,8 @@ public class TemplateTest {
     // Empty template
     String jsonString = new Template().toJSON();
 
-    assertEquals("{\"parameters\":{},\"conditions\":[],"
-            + "\"parameterGroups\":{}}", jsonString);
+    assertEquals("{\"conditions\":[],"
+            + "\"parameterGroups\":{},\"parameters\":{}}", jsonString);
 
     // Template with parameter values
     Template t = new Template();
@@ -268,27 +268,26 @@ public class TemplateTest {
             .put("with_inApp", new Parameter().setDefaultValue(ParameterValue.inAppDefault()));
     jsonString = t.toJSON();
 
-    assertEquals("{\"parameters\":{\"with_value\":{\"defaultValue\":{\"value\":\"hello\"},"
-            + "\"conditionalValues\":{}},\"with_inApp\":{\"defaultValue\":"
-            + "{\"useInAppDefault\":true},\"conditionalValues\":{}}},\"conditions\":[],"
-            + "\"parameterGroups\":{}}", jsonString);
+    assertEquals("{\"conditions\":[],\"parameterGroups\":{},"
+            + "\"parameters\":{\"with_value\":{\"conditionalValues\":{},"
+            + "\"defaultValue\":{\"value\":\"hello\"}},\"with_inApp\":{\"conditionalValues\":{},"
+            + "\"defaultValue\":{\"useInAppDefault\":true}}}}", jsonString);
 
     // Template with etag
     jsonString = new Template().setETag("etag-12345").toJSON();
 
-    assertEquals("{\"etag\":\"etag-12345\",\"parameters\":{},\"conditions\":[],"
-            + "\"parameterGroups\":{}}", jsonString);
+    assertEquals("{\"conditions\":[],\"etag\":\"etag-12345\",\"parameterGroups\":{},"
+            + "\"parameters\":{}}", jsonString);
 
     // Template with etag and conditions
     jsonString = new Template()
             .setETag("etag-0010201")
             .setConditions(CONDITIONS).toJSON();
 
-    assertEquals("{\"etag\":\"etag-0010201\",\"parameters\":{},"
-            + "\"conditions\":[{\"name\":\"ios_en\",\"expression\":\"exp ios\","
-            + "\"tagColor\":\"INDIGO\"},{\"name\":\"android_en\","
-            + "\"expression\":\"exp android\"}],"
-            + "\"parameterGroups\":{}}", jsonString);
+    assertEquals("{\"conditions\":[{\"expression\":\"exp ios\",\"name\":\"ios_en\","
+            + "\"tagColor\":\"INDIGO\"},{\"expression\":\"exp android\","
+            + "\"name\":\"android_en\"}],\"etag\":\"etag-0010201\",\"parameterGroups\":{},"
+            + "\"parameters\":{}}", jsonString);
 
     // Complete template
     jsonString = new Template()
@@ -316,12 +315,12 @@ public class TemplateTest {
     );
     String jsonString = new Template().setVersion(version).toJSON();
 
-    assertEquals("{\"parameters\":{},\"conditions\":[],\"parameterGroups\":{},"
-            + "\"version\":{\"versionNumber\":\"34\","
+    assertEquals("{\"conditions\":[],\"parameterGroups\":{},\"parameters\":{},"
+            + "\"version\":{\"description\":\"template version\",\"legacy\":false,"
+            + "\"rollbackSource\":\"26\",\"updateOrigin\":\"ADMIN_SDK_NODE\","
             + "\"updateTime\":\"Tue, 08 Dec 2020 15:49:51 UTC\","
-            + "\"updateOrigin\":\"ADMIN_SDK_NODE\",\"updateType\":\"INCREMENTAL_UPDATE\","
-            + "\"updateUser\":{\"email\":\"user@user.com\"},\"rollbackSource\":\"26\","
-            + "\"legacy\":false,\"description\":\"template version\"}}", jsonString);
+            + "\"updateType\":\"INCREMENTAL_UPDATE\",\"updateUser\":{"
+            + "\"email\":\"user@user.com\"},\"versionNumber\":\"34\"}}", jsonString);
   }
 
   @Test

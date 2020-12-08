@@ -190,8 +190,20 @@ public final class Version {
     return this;
   }
 
-  VersionResponse toVersionResponse() {
+  VersionResponse toVersionResponse(boolean includeAll) {
+    if (!includeAll) {
+      return new VersionResponse()
+              .setDescription(this.description);
+    }
     return new VersionResponse()
+            .setUpdateTime(this.updateTime > 0L ? RemoteConfigUtil
+                    .convertToUtcDateFormat(this.updateTime) : null)
+            .setLegacy(this.legacy)
+            .setRollbackSource(this.rollbackSource)
+            .setUpdateOrigin(this.updateOrigin)
+            .setUpdateType(this.updateType)
+            .setUpdateUser((this.updateUser == null) ? null : this.updateUser.toUserResponse())
+            .setVersionNumber(this.versionNumber)
             .setDescription(this.description);
   }
 

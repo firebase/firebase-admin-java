@@ -121,7 +121,7 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
                                   boolean forcePublish) throws FirebaseRemoteConfigException {
     checkArgument(template != null, "Template must not be null.");
     HttpRequestInfo request = HttpRequestInfo.buildRequest("PUT", remoteConfigUrl,
-            new JsonHttpContent(jsonFactory, template.toTemplateResponse()))
+            new JsonHttpContent(jsonFactory, template.toTemplateResponse(false)))
             .addAllHeaders(COMMON_HEADERS)
             .addHeader("If-Match", forcePublish ? "*" : template.getETag());
     if (validateOnly) {

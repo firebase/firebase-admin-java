@@ -85,6 +85,11 @@ public final class TemplateResponse {
     return this;
   }
 
+  public TemplateResponse setEtag(String etag) {
+    this.etag = etag;
+    return this;
+  }
+
   /**
    * The Data Transfer Object for parsing Remote Config parameter responses from the
    * Remote Config service.

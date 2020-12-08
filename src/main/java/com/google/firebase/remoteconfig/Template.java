@@ -25,16 +25,8 @@ import com.google.api.client.json.JsonParser;
 import com.google.common.base.Strings;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
-import com.google.gson.JsonSyntaxException;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -99,6 +91,7 @@ public final class Template {
    */
   public static Template fromJSON(@NonNull String json) throws IOException {
     checkArgument(!Strings.isNullOrEmpty(json), "JSON String must not be null or empty.");
+    // using the default json factory as no rpc calls are made here
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     JsonParser parser = jsonFactory.createJsonParser(json);
     TemplateResponse templateResponse = parser.parseAndClose(TemplateResponse.class);
@@ -213,17 +206,12 @@ public final class Template {
    * @return A JSON-serializable representation of this {@link Template} instance.
    */
   public String toJSON() {
-    String jsonSerialization;
-    Gson gson = new GsonBuilder()
-            .registerTypeAdapter(ParameterValue.InAppDefault.class, new InAppDefaultAdapter())
-            .registerTypeAdapter(Version.class, new VersionAdapter())
-            .create();
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     try {
-      jsonSerialization = gson.toJson(this);
-    } catch (JsonSyntaxException e) {
+      return jsonFactory.toString(this.toTemplateResponse(true));
+    } catch (IOException e) {
       throw new RuntimeException(e);
     }
-    return jsonSerialization;
   }
 
   Template setETag(String etag) {
@@ -231,7 +219,7 @@ public final class Template {
     return this;
   }
 
-  TemplateResponse toTemplateResponse() {
+  TemplateResponse toTemplateResponse(boolean includeAll) {
     Map<String, TemplateResponse.ParameterResponse> parameterResponses = new HashMap<>();
     for (Map.Entry<String, Parameter> entry : this.parameters.entrySet()) {
       parameterResponses.put(entry.getKey(), entry.getValue().toParameterResponse());
@@ -245,12 +233,13 @@ public final class Template {
       parameterGroupResponse.put(entry.getKey(), entry.getValue().toParameterGroupResponse());
     }
     TemplateResponse.VersionResponse versionResponse = (this.version == null) ? null
-            : this.version.toVersionResponse();
+            : this.version.toVersionResponse(includeAll);
     return new TemplateResponse()
             .setParameters(parameterResponses)
             .setConditions(conditionResponses)
             .setParameterGroups(parameterGroupResponse)
-            .setVersion(versionResponse);
+            .setVersion(versionResponse)
+            .setEtag(includeAll ? this.etag : null);
   }
 
   @Override
@@ -272,34 +261,5 @@ public final class Template {
   @Override
   public int hashCode() {
     return Objects.hash(etag, parameters, conditions, parameterGroups, version);
-  }
-
-  private static class InAppDefaultAdapter implements JsonSerializer<ParameterValue.InAppDefault> {
-
-    @Override
-    public JsonElement serialize(ParameterValue.InAppDefault src, Type typeOfSrc,
-                                 JsonSerializationContext context) {
-      JsonObject obj = new JsonObject();
-      obj.addProperty("useInAppDefault", true);
-      return obj;
-    }
-  }
-
-  private static class VersionAdapter implements JsonSerializer<Version> {
-
-    @Override
-    public JsonElement serialize(Version src, Type typeOfSrc,
-                                 JsonSerializationContext context) {
-      JsonObject obj = new JsonObject();
-      obj.addProperty("versionNumber", src.getVersionNumber());
-      obj.addProperty("updateTime", RemoteConfigUtil.convertToUtcDateFormat(src.getUpdateTime()));
-      obj.addProperty("updateOrigin", src.getUpdateOrigin());
-      obj.addProperty("updateType", src.getUpdateType());
-      obj.add("updateUser", context.serialize(src.getUpdateUser()));
-      obj.addProperty("rollbackSource", src.getRollbackSource());
-      obj.addProperty("legacy", src.isLegacy());
-      obj.addProperty("description", src.getDescription());
-      return obj;
-    }
   }
 }
