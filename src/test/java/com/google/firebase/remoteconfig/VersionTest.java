@@ -39,6 +39,20 @@ public class VersionTest {
   }
 
   @Test
+  public void testConstructorWithValidZuluUpdateTime() {
+    Version version = new Version(new VersionResponse()
+            .setUpdateTime("2020-12-08T15:49:51.887878Z"));
+    assertEquals(1607442591000L, version.getUpdateTime());
+  }
+
+  @Test
+  public void testConstructorWithValidUTCUpdateTime() {
+    Version version = new Version(new VersionResponse()
+            .setUpdateTime("Tue, 08 Dec 2020 15:49:51 GMT"));
+    assertEquals(1607442591000L, version.getUpdateTime());
+  }
+
+  @Test
   public void testWithDescription() {
     final Version version = Version.withDescription("version description text");
 
