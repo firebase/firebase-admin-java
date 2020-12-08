@@ -79,14 +79,4 @@ final class RemoteConfigUtil {
       return false;
     }
   }
-
-  static boolean isUTCDateStringInZuluFormat(String dateString) {
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS000000'Z'");
-    try {
-      dateFormat.parse(dateString);
-      return true;
-    } catch (ParseException e) {
-      return false;
-    }
-  }
 }
