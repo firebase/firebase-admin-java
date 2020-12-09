@@ -97,9 +97,22 @@ public class TemplateTest {
     assertNull(template.getETag());
   }
 
+  @Test
+  public void testConstructorWithETag() {
+    Template template = new Template("etag-01-324324");
+
+    assertNotNull(template.getParameters());
+    assertNotNull(template.getConditions());
+    assertNotNull(template.getParameterGroups());
+    assertTrue(template.getParameters().isEmpty());
+    assertTrue(template.getConditions().isEmpty());
+    assertTrue(template.getParameterGroups().isEmpty());
+    assertEquals("etag-01-324324", template.getETag());
+  }
+
   @Test(expected = NullPointerException.class)
   public void testConstructorWithNullTemplateResponse() {
-    new Template(null);
+    new Template((TemplateResponse) null);
   }
 
   @Test(expected = NullPointerException.class)
@@ -139,8 +152,7 @@ public class TemplateTest {
 
     assertEquals(TEMPLATE_WITH_CONDITIONS_PARAMETERS_GROUPS, templateThree);
 
-    final Template templateFour = new Template()
-            .setETag("etag-123456789097-20");
+    final Template templateFour = new Template("etag-123456789097-20");
 
     assertEquals(TEMPLATE_WITH_ETAG, templateFour);
 
@@ -274,14 +286,13 @@ public class TemplateTest {
             + "\"defaultValue\":{\"useInAppDefault\":true}}}}", jsonString);
 
     // Template with etag
-    jsonString = new Template().setETag("etag-12345").toJSON();
+    jsonString = new Template("etag-12345").toJSON();
 
     assertEquals("{\"conditions\":[],\"etag\":\"etag-12345\",\"parameterGroups\":{},"
             + "\"parameters\":{}}", jsonString);
 
     // Template with etag and conditions
-    jsonString = new Template()
-            .setETag("etag-0010201")
+    jsonString = new Template("etag-0010201")
             .setConditions(CONDITIONS).toJSON();
 
     assertEquals("{\"conditions\":[{\"expression\":\"exp ios\",\"name\":\"ios_en\","
@@ -326,8 +337,7 @@ public class TemplateTest {
     assertNull(template.getETag());
 
     Version expectedVersion = Version.withDescription("promo version");
-    jsonString = new Template()
-            .setETag("etag-0010201")
+    jsonString = new Template("etag-0010201")
             .setParameters(PARAMETERS)
             .setConditions(CONDITIONS)
             .setParameterGroups(PARAMETER_GROUPS)

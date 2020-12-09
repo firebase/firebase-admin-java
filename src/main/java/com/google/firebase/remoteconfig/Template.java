@@ -46,11 +46,20 @@ public final class Template {
 
   /**
    * Creates a new {@link Template}.
+   *
+   * @param etag The ETag of this template.
    */
-  public Template() {
-    parameters = new HashMap<>();
-    conditions = new ArrayList<>();
-    parameterGroups = new HashMap<>();
+  public Template(String etag) {
+    this.parameters = new HashMap<>();
+    this.conditions = new ArrayList<>();
+    this.parameterGroups = new HashMap<>();
+    this.etag = etag;
+  }
+
+  Template() {
+    this.parameters = new HashMap<>();
+    this.conditions = new ArrayList<>();
+    this.parameterGroups = new HashMap<>();
   }
 
   Template(@NonNull TemplateResponse templateResponse) {
@@ -84,6 +93,7 @@ public final class Template {
 
   /**
    * Creates and returns a new Remote Config template from a JSON string.
+   * Input JSON string must contain an {@code etag} property to create a valid template.
    *
    * @param json A non-null JSON string to populate a Remote Config template.
    * @return A new {@link Template} instance.
