@@ -25,9 +25,7 @@ import static org.junit.Assert.assertTrue;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
-import com.google.firebase.testing.TestUtils;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -80,9 +78,6 @@ public class TemplateTest {
 
   private static final Template TEMPLATE_WITH_VERSION = new Template()
           .setVersion(Version.withDescription("promo version"));
-
-  private static final String TEMPLATE_STRING = TestUtils
-          .loadResource("rcTemplateWithETag.json");
 
   @Test
   public void testConstructor() {
@@ -172,23 +167,23 @@ public class TemplateTest {
     assertNotEquals(templateFour, templateFive);
   }
 
-  @Test(expected = IOException.class)
-  public void testFromJSONWithInvalidString() throws IOException {
+  @Test(expected = FirebaseRemoteConfigException.class)
+  public void testFromJSONWithInvalidString() throws FirebaseRemoteConfigException {
     Template.fromJSON("abc");
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testFromJSONWithEmptyString() throws IOException {
+  public void testFromJSONWithEmptyString() throws FirebaseRemoteConfigException {
     Template.fromJSON("");
   }
 
   @Test(expected = IllegalArgumentException.class)
-  public void testFromJSONWithNullString() throws IOException {
+  public void testFromJSONWithNullString() throws FirebaseRemoteConfigException {
     Template.fromJSON(null);
   }
 
   @Test
-  public void testFromJSON() throws IOException {
+  public void testFromJSONWithEmptyTemplateString() throws FirebaseRemoteConfigException {
     Template template = Template.fromJSON("{}");
 
     assertNotNull(template.getParameters());
@@ -198,8 +193,11 @@ public class TemplateTest {
     assertTrue(template.getConditions().isEmpty());
     assertTrue(template.getParameterGroups().isEmpty());
     assertNull(template.getETag());
+  }
 
-    template = Template.fromJSON("{"
+  @Test
+  public void testFromJSONWithNonEmptyTemplateString() throws FirebaseRemoteConfigException {
+    Template template = Template.fromJSON("{"
             + "  \"etag\": \"etag-001234\","
             + "  \"conditions\": ["
             + "    {"
@@ -232,7 +230,7 @@ public class TemplateTest {
   }
 
   @Test
-  public void testFromJSONWithVersion() throws IOException {
+  public void testFromJSONWithVersion() throws FirebaseRemoteConfigException {
     final Version expectedVersion = new Version(new TemplateResponse.VersionResponse()
             .setDescription("template version")
             .setUpdateTime("2020-12-08T15:49:51.887878Z")
@@ -265,34 +263,39 @@ public class TemplateTest {
   }
 
   @Test
-  public void testToJSON() {
-    // Empty template
+  public void testToJSONWithEmptyTemplate() {
     String jsonString = new Template().toJSON();
 
     assertEquals("{\"conditions\":[],"
             + "\"parameterGroups\":{},\"parameters\":{}}", jsonString);
+  }
 
-    // Template with parameter values
+  @Test
+  public void testToJSONWithParameterValues() {
     Template t = new Template();
     t.getParameters()
             .put("with_value", new Parameter().setDefaultValue(ParameterValue.of("hello")));
     t.getParameters()
             .put("with_inApp", new Parameter().setDefaultValue(ParameterValue.inAppDefault()));
-    jsonString = t.toJSON();
+    String jsonString = t.toJSON();
 
     assertEquals("{\"conditions\":[],\"parameterGroups\":{},"
             + "\"parameters\":{\"with_value\":{\"conditionalValues\":{},"
             + "\"defaultValue\":{\"value\":\"hello\"}},\"with_inApp\":{\"conditionalValues\":{},"
             + "\"defaultValue\":{\"useInAppDefault\":true}}}}", jsonString);
+  }
 
-    // Template with etag
-    jsonString = new Template("etag-12345").toJSON();
+  @Test
+  public void testToJSONWithEtag() {
+    String jsonString = new Template("etag-12345").toJSON();
 
     assertEquals("{\"conditions\":[],\"etag\":\"etag-12345\",\"parameterGroups\":{},"
             + "\"parameters\":{}}", jsonString);
+  }
 
-    // Template with etag and conditions
-    jsonString = new Template("etag-0010201")
+  @Test
+  public void testToJSONWithEtagAndConditions() {
+    String jsonString = new Template("etag-0010201")
             .setConditions(CONDITIONS).toJSON();
 
     assertEquals("{\"conditions\":[{\"expression\":\"exp ios\",\"name\":\"ios_en\","
@@ -324,26 +327,19 @@ public class TemplateTest {
   }
 
   @Test
-  public void testToJSONAndFromJSON() throws IOException {
-    String jsonString = new Template().toJSON();
-    Template template = Template.fromJSON(jsonString);
+  public void testToJSONAndFromJSON() throws FirebaseRemoteConfigException {
+    Template originalTemplate = new Template();
+    Template otherTemplate = Template.fromJSON(originalTemplate.toJSON());
 
-    assertNotNull(template.getParameters());
-    assertNotNull(template.getConditions());
-    assertNotNull(template.getParameterGroups());
-    assertTrue(template.getParameters().isEmpty());
-    assertTrue(template.getConditions().isEmpty());
-    assertTrue(template.getParameterGroups().isEmpty());
-    assertNull(template.getETag());
+    assertEquals(originalTemplate, otherTemplate);
 
     Version expectedVersion = Version.withDescription("promo version");
-    jsonString = new Template("etag-0010201")
+    originalTemplate = new Template("etag-0010201")
             .setParameters(PARAMETERS)
             .setConditions(CONDITIONS)
             .setParameterGroups(PARAMETER_GROUPS)
-            .setVersion(expectedVersion)
-            .toJSON();
-    template = Template.fromJSON(jsonString);
+            .setVersion(expectedVersion);
+    Template template = Template.fromJSON(originalTemplate.toJSON());
 
     assertEquals("etag-0010201", template.getETag());
     assertEquals(PARAMETERS, template.getParameters());

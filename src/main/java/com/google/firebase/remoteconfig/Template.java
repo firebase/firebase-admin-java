@@ -21,8 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.JsonParser;
 import com.google.common.base.Strings;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
 
@@ -97,15 +97,20 @@ public final class Template {
    *
    * @param json A non-null JSON string to populate a Remote Config template.
    * @return A new {@link Template} instance.
-   * @throws IOException If the input JSON string is not parsable.
+   * @throws FirebaseRemoteConfigException If the input JSON string is not parsable.
    */
-  public static Template fromJSON(@NonNull String json) throws IOException {
+  public static Template fromJSON(@NonNull String json) throws FirebaseRemoteConfigException {
     checkArgument(!Strings.isNullOrEmpty(json), "JSON String must not be null or empty.");
     // using the default json factory as no rpc calls are made here
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-    JsonParser parser = jsonFactory.createJsonParser(json);
-    TemplateResponse templateResponse = parser.parseAndClose(TemplateResponse.class);
-    return new Template(templateResponse);
+    try {
+      return new Template(jsonFactory
+              .createJsonParser(json)
+              .parseAndClose(TemplateResponse.class));
+    } catch (IOException e) {
+      throw new FirebaseRemoteConfigException(ErrorCode.INVALID_ARGUMENT,
+              "Unable to parse JSON string.");
+    }
   }
 
   /**
@@ -244,12 +249,15 @@ public final class Template {
     }
     TemplateResponse.VersionResponse versionResponse = (this.version == null) ? null
             : this.version.toVersionResponse(includeAll);
-    return new TemplateResponse()
+    TemplateResponse templateResponse = new TemplateResponse()
             .setParameters(parameterResponses)
             .setConditions(conditionResponses)
             .setParameterGroups(parameterGroupResponse)
-            .setVersion(versionResponse)
-            .setEtag(includeAll ? this.etag : null);
+            .setVersion(versionResponse);
+    if (includeAll) {
+      return templateResponse.setEtag(this.etag);
+    }
+    return templateResponse;
   }
 
   @Override

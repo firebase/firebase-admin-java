@@ -39,6 +39,8 @@ public final class TemplateResponse {
   @Key("version")
   private VersionResponse version;
 
+  // For local JSON serialization and deserialization purposes only.
+  // ETag in response type is never set by the HTTP response.
   @Key("etag")
   private String etag;
 

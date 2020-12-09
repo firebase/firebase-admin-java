@@ -30,24 +30,25 @@ final class RemoteConfigUtil {
   private static final String ZULU_DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS000000'Z'";
   private static final String ZULU_DATE_NO_FRAC_SECS_PATTERN = "yyyy-MM-dd'T'HH:mm:ss";
   private static final String UTC_DATE_PATTERN = "EEE, dd MMM yyyy HH:mm:ss z";
-  private static final String UTC_TIME_ZONE_ID = "UTC";
+  private static final TimeZone UTC_TIME_ZONE = TimeZone.getTimeZone("UTC");
 
   static boolean isValidVersionNumber(String versionNumber) {
     return !Strings.isNullOrEmpty(versionNumber) && versionNumber.matches("^\\d+$");
   }
 
   static long convertToMilliseconds(String dateString) throws ParseException {
-    if (isUTCDateString(dateString)) {
+    try {
+      return convertFromUtcZuluFormat(dateString);
+    } catch (ParseException e) {
       return convertFromUtcDateFormat(dateString);
     }
-    return convertFromUtcZuluFormat(dateString);
   }
 
   static String convertToUtcZuluFormat(long millis) {
     // sample output date string: 2020-12-08T15:49:51.887878Z
     checkArgument(millis >= 0, "Milliseconds duration must not be negative");
     SimpleDateFormat dateFormat = new SimpleDateFormat(ZULU_DATE_PATTERN);
-    dateFormat.setTimeZone(TimeZone.getTimeZone(UTC_TIME_ZONE_ID));
+    dateFormat.setTimeZone(UTC_TIME_ZONE);
     return dateFormat.format(new Date(millis));
   }
 
@@ -55,7 +56,7 @@ final class RemoteConfigUtil {
     // sample output date string: Tue, 08 Dec 2020 15:49:51 GMT
     checkArgument(millis >= 0, "Milliseconds duration must not be negative");
     SimpleDateFormat dateFormat = new SimpleDateFormat(UTC_DATE_PATTERN);
-    dateFormat.setTimeZone(TimeZone.getTimeZone(UTC_TIME_ZONE_ID));
+    dateFormat.setTimeZone(UTC_TIME_ZONE);
     return dateFormat.format(new Date(millis));
   }
 
@@ -63,7 +64,7 @@ final class RemoteConfigUtil {
     // sample input date string: 2020-12-08T15:49:51.887878Z
     checkArgument(!Strings.isNullOrEmpty(dateString), "Date string must not be null or empty");
     SimpleDateFormat dateFormat = new SimpleDateFormat(ZULU_DATE_NO_FRAC_SECS_PATTERN);
-    dateFormat.setTimeZone(TimeZone.getTimeZone(UTC_TIME_ZONE_ID));
+    dateFormat.setTimeZone(UTC_TIME_ZONE);
     return dateFormat.parse(dateString).getTime();
   }
 
@@ -71,17 +72,7 @@ final class RemoteConfigUtil {
     // sample input date string: Tue, 08 Dec 2020 15:49:51 GMT
     checkArgument(!Strings.isNullOrEmpty(dateString), "Date string must not be null or empty");
     SimpleDateFormat dateFormat = new SimpleDateFormat(UTC_DATE_PATTERN);
-    dateFormat.setTimeZone(TimeZone.getTimeZone(UTC_TIME_ZONE_ID));
+    dateFormat.setTimeZone(UTC_TIME_ZONE);
     return dateFormat.parse(dateString).getTime();
-  }
-
-  static boolean isUTCDateString(String dateString) {
-    SimpleDateFormat dateFormat = new SimpleDateFormat(UTC_DATE_PATTERN);
-    try {
-      dateFormat.parse(dateString);
-      return true;
-    } catch (ParseException e) {
-      return false;
-    }
   }
 }
