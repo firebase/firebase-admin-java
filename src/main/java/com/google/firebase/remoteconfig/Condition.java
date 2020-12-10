@@ -69,9 +69,7 @@ public final class Condition {
     checkNotNull(conditionResponse);
     this.name = conditionResponse.getName();
     this.expression = conditionResponse.getExpression();
-    if (Strings.isNullOrEmpty(conditionResponse.getTagColor())) {
-      this.tagColor = TagColor.UNSPECIFIED;
-    } else {
+    if (!Strings.isNullOrEmpty(conditionResponse.getTagColor())) {
       this.tagColor = TagColor.valueOf(conditionResponse.getTagColor());
     }
   }

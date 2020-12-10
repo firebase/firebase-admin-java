@@ -224,7 +224,7 @@ public class TemplateTest {
     assertEquals("android_en", template.getConditions().get(1).getName());
     assertEquals("device.os == 'android' && device.country in ['us', 'uk']",
             template.getConditions().get(1).getExpression());
-    assertEquals(TagColor.UNSPECIFIED, template.getConditions().get(1).getTagColor());
+    assertNull(template.getConditions().get(1).getTagColor());
     assertTrue(template.getParameterGroups().isEmpty());
     assertEquals("etag-001234", template.getETag());
   }
@@ -334,24 +334,13 @@ public class TemplateTest {
     assertEquals(originalTemplate, otherTemplate);
 
     Version expectedVersion = Version.withDescription("promo version");
-    originalTemplate = new Template("etag-0010201")
+    Template expectedTemplate = new Template("etag-0010201")
             .setParameters(PARAMETERS)
             .setConditions(CONDITIONS)
             .setParameterGroups(PARAMETER_GROUPS)
             .setVersion(expectedVersion);
-    Template template = Template.fromJSON(originalTemplate.toJSON());
+    Template actualTemplate = Template.fromJSON(expectedTemplate.toJSON());
 
-    assertEquals("etag-0010201", template.getETag());
-    assertEquals(PARAMETERS, template.getParameters());
-    assertEquals(PARAMETER_GROUPS, template.getParameterGroups());
-    assertEquals(expectedVersion, template.getVersion());
-    // check conditions
-    assertEquals(2, template.getConditions().size());
-    assertEquals("ios_en", template.getConditions().get(0).getName());
-    assertEquals("exp ios", template.getConditions().get(0).getExpression());
-    assertEquals(TagColor.INDIGO, template.getConditions().get(0).getTagColor());
-    assertEquals("android_en", template.getConditions().get(1).getName());
-    assertEquals("exp android", template.getConditions().get(1).getExpression());
-    assertEquals(TagColor.UNSPECIFIED, template.getConditions().get(1).getTagColor());
+    assertEquals(expectedTemplate, actualTemplate);
   }
 }

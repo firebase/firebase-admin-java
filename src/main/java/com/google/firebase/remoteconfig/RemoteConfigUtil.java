@@ -67,6 +67,7 @@ final class RemoteConfigUtil {
   }
 
   static long convertFromUtcZuluFormat(String dateString) throws ParseException {
+    checkArgument(!Strings.isNullOrEmpty(dateString), "Date string must not be null or empty");
     // Input timestamp is in RFC3339 UTC "Zulu" format, accurate to
     // nanoseconds (up to 9 fractional seconds digits).
     // SimpleDateFormat cannot handle fractional seconds, therefore we strip fractional seconds
@@ -77,7 +78,6 @@ final class RemoteConfigUtil {
     if (indexOfPeriod != -1) {
       dateString = dateString.substring(0, indexOfPeriod);
     }
-    checkArgument(!Strings.isNullOrEmpty(dateString), "Date string must not be null or empty");
     SimpleDateFormat dateFormat = new SimpleDateFormat(ZULU_DATE_NO_FRAC_SECS_PATTERN);
     dateFormat.setTimeZone(UTC_TIME_ZONE);
     return dateFormat.parse(dateString).getTime();
