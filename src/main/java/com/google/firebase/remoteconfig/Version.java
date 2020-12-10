@@ -25,11 +25,7 @@ import com.google.firebase.remoteconfig.internal.TemplateResponse;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.VersionResponse;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Objects;
-import java.util.TimeZone;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Represents a Remote Config template version.
@@ -64,18 +60,8 @@ public final class Version {
     this.versionNumber = versionResponse.getVersionNumber();
 
     if (!Strings.isNullOrEmpty(versionResponse.getUpdateTime())) {
-      // Update Time is a timestamp in RFC3339 UTC "Zulu" format, accurate to nanoseconds.
-      // example: "2014-10-02T15:01:23.045123456Z"
-      // SimpleDateFormat cannot handle nanoseconds, therefore we strip nanoseconds from the string.
-      String updateTime = versionResponse.getUpdateTime();
-      int indexOfPeriod = updateTime.indexOf(".");
-      if (indexOfPeriod != -1) {
-        updateTime = updateTime.substring(0, indexOfPeriod);
-      }
-      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-      dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
       try {
-        this.updateTime = dateFormat.parse(updateTime).getTime();
+        this.updateTime = RemoteConfigUtil.convertToMilliseconds(versionResponse.getUpdateTime());
       } catch (ParseException e) {
         throw new IllegalStateException("Unable to parse update time.", e);
       }
@@ -196,9 +182,19 @@ public final class Version {
     return this;
   }
 
-  VersionResponse toVersionResponse() {
-    return new VersionResponse()
-            .setDescription(this.description);
+  VersionResponse toVersionResponse(boolean includeAll) {
+    VersionResponse versionResponse = new VersionResponse().setDescription(this.description);
+    if (includeAll) {
+      versionResponse.setUpdateTime(this.updateTime > 0L
+              ? RemoteConfigUtil.convertToUtcDateFormat(this.updateTime) : null)
+              .setLegacy(this.legacy)
+              .setRollbackSource(this.rollbackSource)
+              .setUpdateOrigin(this.updateOrigin)
+              .setUpdateType(this.updateType)
+              .setUpdateUser((this.updateUser == null) ? null : this.updateUser.toUserResponse())
+              .setVersionNumber(this.versionNumber);
+    }
+    return versionResponse;
   }
 
   @Override

@@ -16,11 +16,17 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.json.JsonFactory;
+import com.google.common.base.Strings;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,11 +46,18 @@ public final class Template {
 
   /**
    * Creates a new {@link Template}.
+   *
+   * @param etag The ETag of this template.
    */
-  public Template() {
-    parameters = new HashMap<>();
-    conditions = new ArrayList<>();
-    parameterGroups = new HashMap<>();
+  public Template(String etag) {
+    this.parameters = new HashMap<>();
+    this.conditions = new ArrayList<>();
+    this.parameterGroups = new HashMap<>();
+    this.etag = etag;
+  }
+
+  Template() {
+    this((String) null);
   }
 
   Template(@NonNull TemplateResponse templateResponse) {
@@ -72,6 +85,29 @@ public final class Template {
     }
     if (templateResponse.getVersion() != null) {
       this.version = new Version(templateResponse.getVersion());
+    }
+    this.etag = templateResponse.getEtag();
+  }
+
+  /**
+   * Creates and returns a new Remote Config template from a JSON string.
+   * Input JSON string must contain an {@code etag} property to create a valid template.
+   *
+   * @param json A non-null JSON string to populate a Remote Config template.
+   * @return A new {@link Template} instance.
+   * @throws FirebaseRemoteConfigException If the input JSON string is not parsable.
+   */
+  public static Template fromJSON(@NonNull String json) throws FirebaseRemoteConfigException {
+    checkArgument(!Strings.isNullOrEmpty(json), "JSON String must not be null or empty.");
+    // using the default json factory as no rpc calls are made here
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    try {
+      TemplateResponse templateResponse = jsonFactory.createJsonParser(json)
+              .parseAndClose(TemplateResponse.class);
+      return new Template(templateResponse);
+    } catch (IOException e) {
+      throw new FirebaseRemoteConfigException(ErrorCode.INVALID_ARGUMENT,
+              "Unable to parse JSON string.");
     }
   }
 
@@ -177,12 +213,26 @@ public final class Template {
     return this;
   }
 
+  /**
+   * Gets the JSON-serializable representation of this template.
+   *
+   * @return A JSON-serializable representation of this {@link Template} instance.
+   */
+  public String toJSON() {
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    try {
+      return jsonFactory.toString(this.toTemplateResponse(true));
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   Template setETag(String etag) {
     this.etag = etag;
     return this;
   }
 
-  TemplateResponse toTemplateResponse() {
+  TemplateResponse toTemplateResponse(boolean includeAll) {
     Map<String, TemplateResponse.ParameterResponse> parameterResponses = new HashMap<>();
     for (Map.Entry<String, Parameter> entry : this.parameters.entrySet()) {
       parameterResponses.put(entry.getKey(), entry.getValue().toParameterResponse());
@@ -196,12 +246,16 @@ public final class Template {
       parameterGroupResponse.put(entry.getKey(), entry.getValue().toParameterGroupResponse());
     }
     TemplateResponse.VersionResponse versionResponse = (this.version == null) ? null
-            : this.version.toVersionResponse();
-    return new TemplateResponse()
+            : this.version.toVersionResponse(includeAll);
+    TemplateResponse templateResponse = new TemplateResponse()
             .setParameters(parameterResponses)
             .setConditions(conditionResponses)
             .setParameterGroups(parameterGroupResponse)
             .setVersion(versionResponse);
+    if (includeAll) {
+      return templateResponse.setEtag(this.etag);
+    }
+    return templateResponse;
   }
 
   @Override

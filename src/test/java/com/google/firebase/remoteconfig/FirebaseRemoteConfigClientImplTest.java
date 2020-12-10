@@ -105,7 +105,6 @@ public class FirebaseRemoteConfigClientImplTest {
                   .setTagColor(TagColor.INDIGO),
           new Condition("android_en",
                   "device.os == 'android' && device.country in ['us', 'uk']")
-                  .setTagColor(TagColor.UNSPECIFIED)
   );
 
   private static final Version EXPECTED_VERSION = new Version(new TemplateResponse.VersionResponse()

@@ -88,4 +88,11 @@ public class User {
   public int hashCode() {
     return Objects.hash(email, name, imageUrl);
   }
+
+  UserResponse toUserResponse() {
+    return new UserResponse()
+            .setEmail(this.email)
+            .setImageUrl(this.imageUrl)
+            .setName(this.name);
+  }
 }

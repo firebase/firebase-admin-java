@@ -39,6 +39,11 @@ public final class TemplateResponse {
   @Key("version")
   private VersionResponse version;
 
+  // For local JSON serialization and deserialization purposes only.
+  // ETag in response type is never set by the HTTP response.
+  @Key("etag")
+  private String etag;
+
   public Map<String, ParameterResponse> getParameters() {
     return parameters;
   }
@@ -53,6 +58,10 @@ public final class TemplateResponse {
 
   public VersionResponse getVersion() {
     return version;
+  }
+
+  public String getEtag() {
+    return etag;
   }
 
   public TemplateResponse setParameters(
@@ -75,6 +84,11 @@ public final class TemplateResponse {
 
   public TemplateResponse setVersion(VersionResponse version) {
     this.version = version;
+    return this;
+  }
+
+  public TemplateResponse setEtag(String etag) {
+    this.etag = etag;
     return this;
   }
 
