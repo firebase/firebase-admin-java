@@ -27,6 +27,12 @@ import java.util.TimeZone;
 
 final class RemoteConfigUtil {
 
+  // SimpleDateFormat cannot handle fractional seconds in timestamps
+  // (example: "2014-10-02T15:01:23.045123456Z"). Therefore, we strip fractional seconds
+  // from the date string (example: "2014-10-02T15:01:23") when parsing Zulu timestamp strings.
+  // The backend API expects timestamps in Zulu format with fractional seconds. To generate correct
+  // timestamps in payloads we use ".SSS000000'Z'" suffix.
+  // Hence, two Zulu date patterns are used below.
   private static final String ZULU_DATE_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS000000'Z'";
   private static final String ZULU_DATE_NO_FRAC_SECS_PATTERN = "yyyy-MM-dd'T'HH:mm:ss";
   private static final String UTC_DATE_PATTERN = "EEE, dd MMM yyyy HH:mm:ss z";
@@ -45,7 +51,7 @@ final class RemoteConfigUtil {
   }
 
   static String convertToUtcZuluFormat(long millis) {
-    // sample output date string: 2020-12-08T15:49:51.887878Z
+    // sample output date string: 2020-11-12T22:12:02.000000000Z
     checkArgument(millis >= 0, "Milliseconds duration must not be negative");
     SimpleDateFormat dateFormat = new SimpleDateFormat(ZULU_DATE_PATTERN);
     dateFormat.setTimeZone(UTC_TIME_ZONE);
@@ -61,7 +67,16 @@ final class RemoteConfigUtil {
   }
 
   static long convertFromUtcZuluFormat(String dateString) throws ParseException {
-    // sample input date string: 2020-12-08T15:49:51.887878Z
+    // Input timestamp is in RFC3339 UTC "Zulu" format, accurate to
+    // nanoseconds (up to 9 fractional seconds digits).
+    // SimpleDateFormat cannot handle fractional seconds, therefore we strip fractional seconds
+    // from the input date string before parsing.
+    // example: input -> "2014-10-02T15:01:23.045123456Z"
+    // formatted -> "2014-10-02T15:01:23"
+    int indexOfPeriod = dateString.indexOf(".");
+    if (indexOfPeriod != -1) {
+      dateString = dateString.substring(0, indexOfPeriod);
+    }
     checkArgument(!Strings.isNullOrEmpty(dateString), "Date string must not be null or empty");
     SimpleDateFormat dateFormat = new SimpleDateFormat(ZULU_DATE_NO_FRAC_SECS_PATTERN);
     dateFormat.setTimeZone(UTC_TIME_ZONE);

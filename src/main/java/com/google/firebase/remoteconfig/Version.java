@@ -60,18 +60,8 @@ public final class Version {
     this.versionNumber = versionResponse.getVersionNumber();
 
     if (!Strings.isNullOrEmpty(versionResponse.getUpdateTime())) {
-      // Update Time is a timestamp in RFC3339 UTC "Zulu" format, accurate to
-      // nanoseconds (up to 9 fractional seconds digits).
-      // example: "2014-10-02T15:01:23.045123456Z"
-      // SimpleDateFormat cannot handle fractional seconds, therefore we strip fractional seconds
-      // from the date string.
-      String updateTime = versionResponse.getUpdateTime();
-      int indexOfPeriod = updateTime.indexOf(".");
-      if (indexOfPeriod != -1) {
-        updateTime = updateTime.substring(0, indexOfPeriod);
-      }
       try {
-        this.updateTime = RemoteConfigUtil.convertToMilliseconds(updateTime);
+        this.updateTime = RemoteConfigUtil.convertToMilliseconds(versionResponse.getUpdateTime());
       } catch (ParseException e) {
         throw new IllegalStateException("Unable to parse update time.", e);
       }

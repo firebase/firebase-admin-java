@@ -57,9 +57,7 @@ public final class Template {
   }
 
   Template() {
-    this.parameters = new HashMap<>();
-    this.conditions = new ArrayList<>();
-    this.parameterGroups = new HashMap<>();
+    this((String) null);
   }
 
   Template(@NonNull TemplateResponse templateResponse) {
@@ -104,9 +102,9 @@ public final class Template {
     // using the default json factory as no rpc calls are made here
     JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
     try {
-      return new Template(jsonFactory
-              .createJsonParser(json)
-              .parseAndClose(TemplateResponse.class));
+      TemplateResponse templateResponse = jsonFactory.createJsonParser(json)
+              .parseAndClose(TemplateResponse.class);
+      return new Template(templateResponse);
     } catch (IOException e) {
       throw new FirebaseRemoteConfigException(ErrorCode.INVALID_ARGUMENT,
               "Unable to parse JSON string.");
