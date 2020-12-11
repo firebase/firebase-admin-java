@@ -138,7 +138,7 @@ public class FirebaseRemoteConfigIT {
 
     // Test list by batches
     final AtomicInteger collected = new AtomicInteger(0);
-    ListVersionsPage page = remoteConfig.listVersionsAsync().get();
+    ListVersionsPage page = remoteConfig.listVersions();
     while (page != null) {
       for (Version version : page.getValues()) {
         if (versions.contains(version.getVersionNumber())) {
@@ -151,7 +151,7 @@ public class FirebaseRemoteConfigIT {
 
     // Test iterate all
     collected.set(0);
-    page = remoteConfig.listVersionsAsync().get();
+    page = remoteConfig.listVersions();
     for (Version version : page.iterateAll()) {
       if (versions.contains(version.getVersionNumber())) {
         collected.incrementAndGet();
@@ -162,7 +162,7 @@ public class FirebaseRemoteConfigIT {
     // Test with list options
     collected.set(0);
     ListVersionsOptions listOptions = ListVersionsOptions.builder().setPageSize(2).build();
-    page = remoteConfig.listVersionsAsync(listOptions).get();
+    page = remoteConfig.listVersions(listOptions);
     for (Version version : page.getValues()) {
       if (versions.contains(version.getVersionNumber())) {
         collected.incrementAndGet();
