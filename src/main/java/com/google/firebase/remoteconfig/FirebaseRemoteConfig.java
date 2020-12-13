@@ -104,7 +104,7 @@ public final class FirebaseRemoteConfig {
   /**
    * Gets the requested version of the of the Remote Config template.
    *
-   * @param versionNumber The version number of the Remote Config template to look up.
+   * @param versionNumber The version number of the Remote Config template to get.
    * @return A {@link Template}.
    * @throws FirebaseRemoteConfigException If an error occurs while getting the template.
    */
@@ -116,7 +116,7 @@ public final class FirebaseRemoteConfig {
   /**
    * Gets the requested version of the of the Remote Config template.
    *
-   * @param versionNumber The version number of the Remote Config template to look up.
+   * @param versionNumber The version number of the Remote Config template to get.
    * @return A {@link Template}.
    * @throws FirebaseRemoteConfigException If an error occurs while getting the template.
    */
@@ -129,7 +129,7 @@ public final class FirebaseRemoteConfig {
    * Similar to {@link #getTemplateAtVersion(String versionNumber)} but performs the operation
    * asynchronously.
    *
-   * @param versionNumber The version number of the Remote Config template to look up.
+   * @param versionNumber The version number of the Remote Config template to get.
    * @return An {@code ApiFuture} that completes with a {@link Template} when
    *     the requested template is available.
    */
@@ -141,7 +141,7 @@ public final class FirebaseRemoteConfig {
    * Similar to {@link #getTemplateAtVersion(long versionNumber)} but performs the operation
    * asynchronously.
    *
-   * @param versionNumber The version number of the Remote Config template to look up.
+   * @param versionNumber The version number of the Remote Config template to get.
    * @return An {@code ApiFuture} that completes with a {@link Template} when
    *     the requested template is available.
    */
@@ -211,8 +211,8 @@ public final class FirebaseRemoteConfig {
   /**
    * Force publishes a Remote Config template.
    *
-   * <p>This method forces the Remote Config template to be updated and circumvent the ETag.
-   * This approach is not recommended because it risks causing the loss of updates to your
+   * <p>This method forces the Remote Config template to be updated without evaluating the ETag
+   * values. This approach is not recommended because it risks causing the loss of updates to your
    * Remote Config template if multiple clients are updating the Remote Config template.
    * See <a href="https://firebase.google.com/docs/remote-config/use-config-rest#etag_usage_and_forced_updates">
    * ETag usage and forced updates</a>.
@@ -335,9 +335,6 @@ public final class FirebaseRemoteConfig {
    * Gets a list of Remote Config template versions that have been published, sorted in reverse
    * chronological order. Only the last 300 versions are stored.
    *
-   * <p>All versions that correspond to non-active Remote Config templates (that is, all except the
-   * template that is being fetched by clients) are also deleted if they are more than 90 days old.
-   *
    * @return A {@link ListVersionsPage} instance.
    * @throws FirebaseRemoteConfigException If an error occurs while retrieving versions list.
    */
@@ -348,9 +345,6 @@ public final class FirebaseRemoteConfig {
   /**
    * Gets a list of Remote Config template versions that have been published, sorted in reverse
    * chronological order. Only the last 300 versions are stored.
-   *
-   * <p>All versions that correspond to non-active Remote Config templates (that is, all except the
-   * template that is being fetched by clients) are also deleted if they are more than 90 days old.
    *
    * @param options List version options.
    * @return A {@link ListVersionsPage} instance.

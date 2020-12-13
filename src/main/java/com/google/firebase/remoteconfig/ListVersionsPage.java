@@ -86,7 +86,7 @@ public final class ListVersionsPage implements Page<Version> {
   }
 
   /**
-   * Returns the string token that identifies the next page. Never returns null. Returns empty
+   * Returns the string token that identifies the next page. Never returns null. Returns an empty
    * string if there are no more pages available to be retrieved.
    *
    * @return A non-null string token (possibly empty, representing no more pages)
