@@ -42,37 +42,11 @@ public class FirebaseRemoteConfigIT {
 
   private static FirebaseRemoteConfig remoteConfig;
 
-  private static final long timestamp = System.currentTimeMillis();
-
-  private static final Map<String, Parameter> PARAMETERS = ImmutableMap.of(
-          "welcome_message_text", new Parameter()
-                  .setDefaultValue(ParameterValue
-                          .of(String.format("welcome to app %s", timestamp)))
-                  .setConditionalValues(ImmutableMap.<String, ParameterValue>of(
-                          "ios_en",
-                          ParameterValue.of(String.format("welcome to app en %s", timestamp))
-                  ))
-                  .setDescription("text for welcome message!"),
-          "header_text", new Parameter()
-                  .setDefaultValue(ParameterValue.inAppDefault()));
-
-  private static final Map<String, ParameterGroup> PARAMETER_GROUPS = ImmutableMap.of(
-          "new menu", new ParameterGroup()
-                  .setDescription(String.format("New Menu %s", timestamp))
-                  .setParameters(ImmutableMap.of(
-                          "pumpkin_spice_season", new Parameter()
-                                  .setDefaultValue(ParameterValue.of("true"))
-                                  .setDescription("Whether it's currently pumpkin spice season."))
-                  ));
-
   private static final List<Condition> CONDITIONS = ImmutableList.of(
           new Condition("ios_en", "device.os == 'ios' && device.country in ['us', 'uk']")
                   .setTagColor(TagColor.INDIGO),
           new Condition("android_en",
                   "device.os == 'android' && device.country in ['us', 'uk']"));
-
-  private static final Version VERSION = Version
-          .withDescription(String.format("promo config %s", timestamp));
 
   @BeforeClass
   public static void setUpClass() {
@@ -80,51 +54,121 @@ public class FirebaseRemoteConfigIT {
   }
 
   @Test
-  public void testTemplateOperations() throws FirebaseRemoteConfigException {
+  public void testValidateTemplate() throws FirebaseRemoteConfigException {
+    final Template inputTemplate = remoteConfig.getTemplate();
+    final Map<String, Parameter> expectedParameters = getParameters();
+    final Map<String, ParameterGroup> expectedParameterGroups = getParameterGroups();
+    final Version expectedVersion = getVersion();
+    inputTemplate.setParameters(expectedParameters)
+            .setParameterGroups(expectedParameterGroups)
+            .setConditions(CONDITIONS)
+            .setVersion(expectedVersion);
+
+    Template validatedTemplate = remoteConfig.validateTemplate(inputTemplate);
+
+    assertEquals(inputTemplate, validatedTemplate);
+  }
+
+  @Test
+  public void testPublishTemplate() throws FirebaseRemoteConfigException {
     // get template to fetch the active template with correct etag
     final Template oldTemplate = remoteConfig.getTemplate();
     final Template inputTemplate = Template.fromJSON(oldTemplate.toJSON());
-    final String versionNumber = oldTemplate.getVersion().getVersionNumber();
-
+    final Map<String, Parameter> parameters = getParameters();
+    final Map<String, ParameterGroup> parameterGroups = getParameterGroups();
+    final Version version = getVersion();
     // modify template
-    inputTemplate.setParameters(PARAMETERS)
-            .setParameterGroups(PARAMETER_GROUPS)
+    inputTemplate.setParameters(parameters)
+            .setParameterGroups(parameterGroups)
             .setConditions(CONDITIONS)
-            .setVersion(VERSION);
-
-    // validate template
-    Template validatedTemplate = remoteConfig.validateTemplate(inputTemplate);
-    assertEquals(inputTemplate.getETag(), validatedTemplate.getETag());
-    assertEquals(PARAMETERS, validatedTemplate.getParameters());
-    assertEquals(PARAMETER_GROUPS, validatedTemplate.getParameterGroups());
-    assertEquals(CONDITIONS, validatedTemplate.getConditions());
-    assertEquals(VERSION, validatedTemplate.getVersion());
+            .setVersion(version);
 
     // publish template
     Template publishedTemplate = remoteConfig.publishTemplate(inputTemplate);
+
     assertNotEquals(inputTemplate.getETag(), publishedTemplate.getETag());
-    assertEquals(PARAMETERS, publishedTemplate.getParameters());
-    assertEquals(PARAMETER_GROUPS, publishedTemplate.getParameterGroups());
+    assertEquals(parameters, publishedTemplate.getParameters());
+    assertEquals(parameterGroups, publishedTemplate.getParameterGroups());
     assertEquals(CONDITIONS, publishedTemplate.getConditions());
-    assertNotEquals(VERSION, publishedTemplate.getVersion());
+    assertNotEquals(version, publishedTemplate.getVersion());
+  }
+
+  @Test
+  public void testGetTemplate() throws FirebaseRemoteConfigException {
+    // get template to fetch the active template with correct etag
+    // modify and publish a known template to test get template operation.
+    final Template oldTemplate = remoteConfig.getTemplate();
+    final Template inputTemplate = Template.fromJSON(oldTemplate.toJSON());
+    final Map<String, Parameter> parameters = getParameters();
+    final Map<String, ParameterGroup> parameterGroups = getParameterGroups();
+    final Version version = getVersion();
+    inputTemplate.setParameters(parameters)
+            .setParameterGroups(parameterGroups)
+            .setConditions(CONDITIONS)
+            .setVersion(version);
+    // publish a known template
+    Template publishedTemplate = remoteConfig.publishTemplate(inputTemplate);
 
     // get template
     Template currentTemplate = remoteConfig.getTemplate();
+
     assertEquals(publishedTemplate, currentTemplate);
+  }
+
+  @Test
+  public void testGetTemplateAtVersion() throws FirebaseRemoteConfigException {
+    // get template to fetch the active template with correct etag
+    // store the template version number
+    // publish a new template to test get template at version operation.
+    final Template oldTemplate = remoteConfig.getTemplate();
+    final Template inputTemplate = Template.fromJSON(oldTemplate.toJSON());
+    final String versionNumber = oldTemplate.getVersion().getVersionNumber();
+    final Map<String, Parameter> parameters = getParameters();
+    final Map<String, ParameterGroup> parameterGroups = getParameterGroups();
+    final Version version = getVersion();
+    inputTemplate.setParameters(parameters)
+            .setParameterGroups(parameterGroups)
+            .setConditions(CONDITIONS)
+            .setVersion(version);
+    // publish a new template
+    Template publishedTemplate = remoteConfig.publishTemplate(inputTemplate);
 
     // get template at version
     Template atVersionTemplate = remoteConfig.getTemplateAtVersion(versionNumber);
+
     assertEquals(oldTemplate, atVersionTemplate);
     assertEquals(versionNumber, atVersionTemplate.getVersion().getVersionNumber());
+    assertNotEquals(publishedTemplate, atVersionTemplate);
+  }
+
+  @Test
+  public void testRollbackTemplate() throws FirebaseRemoteConfigException {
+    // get template to fetch the active template with correct etag.
+    // store the template version number to rollback.
+    final Template oldTemplate = remoteConfig.getTemplate();
+    final Template inputTemplate = Template.fromJSON(oldTemplate.toJSON());
+    final String versionNumber = oldTemplate.getVersion().getVersionNumber();
+    final Map<String, Parameter> parameters = getParameters();
+    final Map<String, ParameterGroup> parameterGroups = getParameterGroups();
+    final Version version = getVersion();
+    inputTemplate.setParameters(parameters)
+            .setParameterGroups(parameterGroups)
+            .setConditions(CONDITIONS)
+            .setVersion(version);
+    // publish a new template before rolling back to versionNumber
+    Template publishedTemplate = remoteConfig.publishTemplate(inputTemplate);
 
     // rollback template
     Template rolledBackTemplate = remoteConfig.rollback(versionNumber);
+
     assertEquals(String.format("Rollback to version %s", versionNumber),
             rolledBackTemplate.getVersion().getDescription());
 
     // get template to verify rollback
     Template activeTemplate = remoteConfig.getTemplate();
+
     assertEquals(rolledBackTemplate, activeTemplate);
+    assertNotEquals(publishedTemplate, activeTemplate);
   }
 
   @Test
@@ -195,5 +239,37 @@ public class FirebaseRemoteConfigIT {
     semaphore.acquire();
     assertEquals(versions.size(), collected.get());
     assertNull(error.get());
+  }
+
+  private Map<String, Parameter> getParameters() {
+    final long timestamp = System.currentTimeMillis();
+    return ImmutableMap.of(
+            "welcome_message_text", new Parameter()
+                    .setDefaultValue(ParameterValue
+                            .of(String.format("welcome to app %s", timestamp)))
+                    .setConditionalValues(ImmutableMap.<String, ParameterValue>of(
+                            "ios_en",
+                            ParameterValue.of(String.format("welcome to app en %s", timestamp))
+                    ))
+                    .setDescription("text for welcome message!"),
+            "header_text", new Parameter()
+                    .setDefaultValue(ParameterValue.inAppDefault()));
+  }
+
+  private Map<String, ParameterGroup> getParameterGroups() {
+    final long timestamp = System.currentTimeMillis();
+    return ImmutableMap.of(
+            "new menu", new ParameterGroup()
+                    .setDescription(String.format("New Menu %s", timestamp))
+                    .setParameters(ImmutableMap.of(
+                            "pumpkin_spice_season", new Parameter()
+                                    .setDefaultValue(ParameterValue.of("true"))
+                                    .setDescription("Whether it's currently pumpkin spice season."))
+                    ));
+  }
+
+  private Version getVersion() {
+    final long timestamp = System.currentTimeMillis();
+    return Version.withDescription(String.format("promo config %s", timestamp));
   }
 }
