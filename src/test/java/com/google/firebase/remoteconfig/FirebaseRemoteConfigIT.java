@@ -72,8 +72,7 @@ public class FirebaseRemoteConfigIT {
   @Test
   public void testPublishTemplate() throws FirebaseRemoteConfigException {
     // get template to fetch the active template with correct etag
-    final Template oldTemplate = remoteConfig.getTemplate();
-    final Template inputTemplate = Template.fromJSON(oldTemplate.toJSON());
+    final Template inputTemplate = remoteConfig.getTemplate();
     final Map<String, Parameter> parameters = getParameters();
     final Map<String, ParameterGroup> parameterGroups = getParameterGroups();
     final Version version = getVersion();
@@ -90,6 +89,7 @@ public class FirebaseRemoteConfigIT {
     assertEquals(parameters, publishedTemplate.getParameters());
     assertEquals(parameterGroups, publishedTemplate.getParameterGroups());
     assertEquals(CONDITIONS, publishedTemplate.getConditions());
+    assertEquals(version.getDescription(), publishedTemplate.getVersion().getDescription());
     assertNotEquals(version, publishedTemplate.getVersion());
   }
 
@@ -97,8 +97,7 @@ public class FirebaseRemoteConfigIT {
   public void testGetTemplate() throws FirebaseRemoteConfigException {
     // get template to fetch the active template with correct etag
     // modify and publish a known template to test get template operation.
-    final Template oldTemplate = remoteConfig.getTemplate();
-    final Template inputTemplate = Template.fromJSON(oldTemplate.toJSON());
+    final Template inputTemplate = remoteConfig.getTemplate();
     final Map<String, Parameter> parameters = getParameters();
     final Map<String, ParameterGroup> parameterGroups = getParameterGroups();
     final Version version = getVersion();
@@ -120,9 +119,9 @@ public class FirebaseRemoteConfigIT {
     // get template to fetch the active template with correct etag
     // store the template version number
     // publish a new template to test get template at version operation.
-    final Template oldTemplate = remoteConfig.getTemplate();
-    final Template inputTemplate = Template.fromJSON(oldTemplate.toJSON());
-    final String versionNumber = oldTemplate.getVersion().getVersionNumber();
+    final Template previousTemplate = remoteConfig.getTemplate();
+    final String versionNumber = previousTemplate.getVersion().getVersionNumber();
+    final Template inputTemplate = new Template(previousTemplate.getETag());
     final Map<String, Parameter> parameters = getParameters();
     final Map<String, ParameterGroup> parameterGroups = getParameterGroups();
     final Version version = getVersion();
@@ -136,7 +135,7 @@ public class FirebaseRemoteConfigIT {
     // get template at version
     Template atVersionTemplate = remoteConfig.getTemplateAtVersion(versionNumber);
 
-    assertEquals(oldTemplate, atVersionTemplate);
+    assertEquals(previousTemplate, atVersionTemplate);
     assertEquals(versionNumber, atVersionTemplate.getVersion().getVersionNumber());
     assertNotEquals(publishedTemplate, atVersionTemplate);
   }
@@ -145,9 +144,8 @@ public class FirebaseRemoteConfigIT {
   public void testRollbackTemplate() throws FirebaseRemoteConfigException {
     // get template to fetch the active template with correct etag.
     // store the template version number to rollback.
-    final Template oldTemplate = remoteConfig.getTemplate();
-    final Template inputTemplate = Template.fromJSON(oldTemplate.toJSON());
-    final String versionNumber = oldTemplate.getVersion().getVersionNumber();
+    final Template inputTemplate = remoteConfig.getTemplate();
+    final String versionNumber = inputTemplate.getVersion().getVersionNumber();
     final Map<String, Parameter> parameters = getParameters();
     final Map<String, ParameterGroup> parameterGroups = getParameterGroups();
     final Version version = getVersion();
