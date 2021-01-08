@@ -307,7 +307,7 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
         try {
           return jsonFactory.createJsonParser(response)
               .parseAndClose(MessagingServiceErrorResponse.class);
-        } catch (IOException ignore) {
+        } catch (Exception ignore) {
           // Ignore any error that may occur while parsing the error response. The server
           // may have responded with a non-json payload.
         }
