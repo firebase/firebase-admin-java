@@ -50,9 +50,13 @@ import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
 
 public class FirebaseTenantClientTest {
@@ -63,10 +67,15 @@ public class FirebaseTenantClientTest {
 
   private static final GoogleCredentials credentials = new MockGoogleCredentials(TEST_TOKEN);
 
+  private static final String FIREBASE_AUTH_EMULATOR_HOST = "localhost:3000";
+
   private static final String PROJECT_BASE_URL =
       "https://identitytoolkit.googleapis.com/v2/projects/test-project-id";
+  private static final String PROJECT_BASE_URL_EMULATOR =
+          String.format( "http://%s/identitytoolkit.googleapis.com/v2/projects/test-project-id", FIREBASE_AUTH_EMULATOR_HOST );
 
   private static final String TENANTS_BASE_URL = PROJECT_BASE_URL + "/tenants";
+  private static final String TENANTS_BASE_URL_EMULATOR = PROJECT_BASE_URL_EMULATOR + "/tenants";
 
   @After
   public void tearDown() {
@@ -309,7 +318,51 @@ public class FirebaseTenantClientTest {
       assertTrue(e.getCause() instanceof HttpResponseException);
       assertNotNull(e.getHttpResponse());
     }
-    checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/UNKNOWN");
+    checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + PROJECT_BASE_URL_EMULATOR);
+  }
+
+  @Test
+  public void testGetTenantEmulator() throws Exception {
+    injectEnvironmentVariable("FIREBASE_AUTH_EMULATOR_HOST", FIREBASE_AUTH_EMULATOR_HOST);
+    TestResponseInterceptor interceptor = initializeAppForTenantManagement(
+            TestUtils.loadResource("tenant.json"));
+
+    Tenant tenant = FirebaseAuth.getInstance().getTenantManager().getTenant("TENANT_1");
+
+    checkTenant(tenant, "TENANT_1");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL_EMULATOR + "/TENANT_1");
+  }
+
+  private static void injectEnvironmentVariable(String key, String value)
+          throws Exception {
+
+    Class<?> processEnvironment = Class.forName("java.lang.ProcessEnvironment");
+
+    Field unmodifiableMapField = getAccessibleField(processEnvironment, "theUnmodifiableEnvironment");
+    Object unmodifiableMap = unmodifiableMapField.get(null);
+    injectIntoUnmodifiableMap(key, value, unmodifiableMap);
+
+    Field mapField = getAccessibleField(processEnvironment, "theEnvironment");
+    Map<String, String> map = (Map<String, String>) mapField.get(null);
+    map.put(key, value);
+  }
+
+  private static Field getAccessibleField(Class<?> clazz, String fieldName)
+          throws NoSuchFieldException {
+
+    Field field = clazz.getDeclaredField(fieldName);
+    field.setAccessible(true);
+    return field;
+  }
+
+  private static void injectIntoUnmodifiableMap(String key, String value, Object map)
+          throws ReflectiveOperationException {
+
+    Class unmodifiableMap = Class.forName("java.util.Collections$UnmodifiableMap");
+    Field field = getAccessibleField(unmodifiableMap, "m");
+    Object obj = field.get(map);
+    ((Map<String, String>) obj).put(key, value);
   }
 
   private static void checkTenant(Tenant tenant, String tenantId) {

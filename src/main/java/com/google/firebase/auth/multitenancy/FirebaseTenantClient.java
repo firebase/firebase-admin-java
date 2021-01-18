@@ -42,6 +42,9 @@ final class FirebaseTenantClient {
   private static final String ID_TOOLKIT_URL =
       "https://identitytoolkit.googleapis.com/%s/projects/%s";
 
+  private static final String ID_TOOLKIT_URL_EMULATOR =
+          "http://%s/identitytoolkit.googleapis.com/%s/projects/%s";
+
   private final String tenantMgtBaseUrl;
   private final AuthHttpClient httpClient;
 
@@ -58,8 +61,16 @@ final class FirebaseTenantClient {
         "Project ID is required to access the auth service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
-    this.tenantMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v2", projectId);
+    this.tenantMgtBaseUrl = buildTenantMgtBaseUrl( projectId );
     this.httpClient = new AuthHttpClient(jsonFactory, requestFactory);
+  }
+
+  private String buildTenantMgtBaseUrl(String projectId) {
+    String maybeEmulator = System.getenv("FIREBASE_AUTH_EMULATOR_HOST");
+    if(maybeEmulator != null) {
+      return String.format( ID_TOOLKIT_URL_EMULATOR, maybeEmulator, "v2", projectId );
+    }
+    return String.format( ID_TOOLKIT_URL, "v2", projectId );
   }
 
   void setInterceptor(HttpResponseInterceptor interceptor) {
