@@ -72,7 +72,7 @@ public class FirebaseTenantClientTest {
   private static final String PROJECT_BASE_URL =
       "https://identitytoolkit.googleapis.com/v2/projects/test-project-id";
   private static final String PROJECT_BASE_URL_EMULATOR =
-          String.format( "http://%s/identitytoolkit.googleapis.com/v2/projects/test-project-id", FIREBASE_AUTH_EMULATOR_HOST );
+          String.format("http://%s/identitytoolkit.googleapis.com/v2/projects/test-project-id", FIREBASE_AUTH_EMULATOR_HOST);
 
   private static final String TENANTS_BASE_URL = PROJECT_BASE_URL + "/tenants";
   private static final String TENANTS_BASE_URL_EMULATOR = PROJECT_BASE_URL_EMULATOR + "/tenants";
@@ -339,10 +339,6 @@ public class FirebaseTenantClientTest {
 
     Class<?> processEnvironment = Class.forName("java.lang.ProcessEnvironment");
 
-    Field unmodifiableMapField = getAccessibleField(processEnvironment, "theUnmodifiableEnvironment");
-    Object unmodifiableMap = unmodifiableMapField.get(null);
-    injectIntoUnmodifiableMap(key, value, unmodifiableMap);
-
     Field mapField = getAccessibleField(processEnvironment, "theEnvironment");
     Map<String, String> map = (Map<String, String>) mapField.get(null);
     map.put(key, value);
@@ -350,19 +346,9 @@ public class FirebaseTenantClientTest {
 
   private static Field getAccessibleField(Class<?> clazz, String fieldName)
           throws NoSuchFieldException {
-
     Field field = clazz.getDeclaredField(fieldName);
     field.setAccessible(true);
     return field;
-  }
-
-  private static void injectIntoUnmodifiableMap(String key, String value, Object map)
-          throws ReflectiveOperationException {
-
-    Class unmodifiableMap = Class.forName("java.util.Collections$UnmodifiableMap");
-    Field field = getAccessibleField(unmodifiableMap, "m");
-    Object obj = field.get(map);
-    ((Map<String, String>) obj).put(key, value);
   }
 
   private static void checkTenant(Tenant tenant, String tenantId) {

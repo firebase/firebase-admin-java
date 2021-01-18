@@ -67,7 +67,7 @@ final class FirebaseTenantClient {
 
   private String buildTenantMgtBaseUrl(String projectId) {
     String maybeEmulator = System.getenv("FIREBASE_AUTH_EMULATOR_HOST");
-    if(maybeEmulator != null) {
+    if (maybeEmulator != null) {
       return String.format(ID_TOOLKIT_URL_EMULATOR, maybeEmulator, "v2", projectId);
     }
     return String.format(ID_TOOLKIT_URL, "v2", projectId);
