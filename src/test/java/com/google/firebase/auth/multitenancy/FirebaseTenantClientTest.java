@@ -321,20 +321,6 @@ public class FirebaseTenantClientTest {
     checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + PROJECT_BASE_URL_EMULATOR);
   }
 
-  @Test
-  public void testGetTenantEmulator() throws Exception {
-    System.setProperty("FIREBASE_AUTH_EMULATOR_HOST", FIREBASE_AUTH_EMULATOR_HOST);
-    TestResponseInterceptor interceptor = initializeAppForTenantManagement(
-            TestUtils.loadResource("tenant.json"));
-
-    Tenant tenant = FirebaseAuth.getInstance().getTenantManager().getTenant("TENANT_1");
-    System.setProperty("FIREBASE_AUTH_EMULATOR_HOST", null);
-
-    checkTenant(tenant, "TENANT_1");
-    checkRequestHeaders(interceptor);
-    checkUrl(interceptor, "GET", TENANTS_BASE_URL_EMULATOR + "/TENANT_1");
-  }
-
   private static void checkTenant(Tenant tenant, String tenantId) {
     assertEquals(tenantId, tenant.getTenantId());
     assertEquals("DISPLAY_NAME", tenant.getDisplayName());
