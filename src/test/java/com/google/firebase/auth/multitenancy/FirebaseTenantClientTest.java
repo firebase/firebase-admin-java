@@ -50,13 +50,10 @@ import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.After;
-import org.junit.Rule;
 import org.junit.Test;
 
 public class FirebaseTenantClientTest {
@@ -67,15 +64,11 @@ public class FirebaseTenantClientTest {
 
   private static final GoogleCredentials credentials = new MockGoogleCredentials(TEST_TOKEN);
 
-  private static final String FIREBASE_AUTH_EMULATOR_HOST = "localhost:3000";
-
   private static final String PROJECT_BASE_URL =
       "https://identitytoolkit.googleapis.com/v2/projects/test-project-id";
-  private static final String PROJECT_BASE_URL_EMULATOR =
-          String.format("http://%s/identitytoolkit.googleapis.com/v2/projects/test-project-id", FIREBASE_AUTH_EMULATOR_HOST);
 
   private static final String TENANTS_BASE_URL = PROJECT_BASE_URL + "/tenants";
-  private static final String TENANTS_BASE_URL_EMULATOR = PROJECT_BASE_URL_EMULATOR + "/tenants";
+
 
   @After
   public void tearDown() {
@@ -318,7 +311,7 @@ public class FirebaseTenantClientTest {
       assertTrue(e.getCause() instanceof HttpResponseException);
       assertNotNull(e.getHttpResponse());
     }
-    checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + PROJECT_BASE_URL_EMULATOR);
+    checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/UNKNOWN");
   }
 
   private static void checkTenant(Tenant tenant, String tenantId) {
