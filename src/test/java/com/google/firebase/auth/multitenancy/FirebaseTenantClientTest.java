@@ -323,7 +323,7 @@ public class FirebaseTenantClientTest {
 
   @Test
   public void testGetTenantEmulator() throws Exception {
-    injectEnvironmentVariable("FIREBASE_AUTH_EMULATOR_HOST", FIREBASE_AUTH_EMULATOR_HOST);
+    System.setProperty("FIREBASE_AUTH_EMULATOR_HOST", FIREBASE_AUTH_EMULATOR_HOST);
     TestResponseInterceptor interceptor = initializeAppForTenantManagement(
             TestUtils.loadResource("tenant.json"));
 
@@ -332,23 +332,6 @@ public class FirebaseTenantClientTest {
     checkTenant(tenant, "TENANT_1");
     checkRequestHeaders(interceptor);
     checkUrl(interceptor, "GET", TENANTS_BASE_URL_EMULATOR + "/TENANT_1");
-  }
-
-  private static void injectEnvironmentVariable(String key, String value)
-          throws Exception {
-
-    Class<?> processEnvironment = Class.forName("java.lang.ProcessEnvironment");
-
-    Field mapField = getAccessibleField(processEnvironment, "theEnvironment");
-    Map<String, String> map = (Map<String, String>) mapField.get(null);
-    map.put(key, value);
-  }
-
-  private static Field getAccessibleField(Class<?> clazz, String fieldName)
-          throws NoSuchFieldException {
-    Field field = clazz.getDeclaredField(fieldName);
-    field.setAccessible(true);
-    return field;
   }
 
   private static void checkTenant(Tenant tenant, String tenantId) {
