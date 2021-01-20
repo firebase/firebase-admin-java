@@ -328,6 +328,7 @@ public class FirebaseTenantClientTest {
             TestUtils.loadResource("tenant.json"));
 
     Tenant tenant = FirebaseAuth.getInstance().getTenantManager().getTenant("TENANT_1");
+    System.setProperty("FIREBASE_AUTH_EMULATOR_HOST", null);
 
     checkTenant(tenant, "TENANT_1");
     checkRequestHeaders(interceptor);
