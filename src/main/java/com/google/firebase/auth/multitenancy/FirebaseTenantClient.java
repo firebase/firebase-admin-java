@@ -75,7 +75,7 @@ final class FirebaseTenantClient {
 
   private String getFirebaseAuth() {
     String maybeEmulator = System.getenv("FIREBASE_AUTH_EMULATOR_HOST");
-    if(maybeEmulator != null) {
+    if (maybeEmulator != null) {
       return maybeEmulator;
     }
     return System.getProperty("FIREBASE_AUTH_EMULATOR_HOST");
