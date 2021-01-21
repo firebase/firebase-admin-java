@@ -90,9 +90,9 @@ public class FirebaseMessaging {
    * Sends the given {@link Message} via Firebase Cloud Messaging.
    *
    * <p>If the {@code dryRun} option is set to true, the message will not be actually sent. Instead
-   * FCM performs all the necessary validations, and emulates the send operation. {@code dryRun} 
-   * option is useful for validating if an FCM registration has been deleted. But it cannot be used
-   * to validate APNS tokens.
+   * FCM performs all the necessary validations, and emulates the send operation. The {@code dryRun}
+   * option is useful for determining whether an FCM registration has been deleted. But it cannot be
+   * used to validate APNs tokens.
    *
    * @param message A non-null {@link Message} to be sent.
    * @param dryRun a boolean indicating whether to perform a dry run (validation only) of the send.
@@ -164,9 +164,9 @@ public class FirebaseMessaging {
    * is a significantly more efficient way to send multiple messages.
    *
    * <p>If the {@code dryRun} option is set to true, the message will not be actually sent. Instead
-   * FCM performs all the necessary validations, and emulates the send operation. {@code dryRun} 
-   * option is useful for validating if an FCM registration has been deleted. But it cannot be used
-   * to validate APNS tokens.
+   * FCM performs all the necessary validations, and emulates the send operation. The {@code dryRun}
+   * option is useful for determining whether an FCM registration has been deleted. But it cannot be
+   * used to validate APNs tokens.
    *
    * <p>The responses list obtained by calling {@link BatchResponse#getResponses()} on the return
    * value corresponds to the order of input messages.
@@ -231,9 +231,9 @@ public class FirebaseMessaging {
    * Sends the given multicast message to all the FCM registration tokens specified in it.
    *
    * <p>If the {@code dryRun} option is set to true, the message will not be actually sent. Instead
-   * FCM performs all the necessary validations, and emulates the send operation. {@code dryRun} 
-   * option is useful for validating if an FCM registration has been deleted. But it cannot be used
-   * to validate APNS tokens.
+   * FCM performs all the necessary validations, and emulates the send operation. The {@code dryRun}
+   * option is useful for determining whether an FCM registration has been deleted. But it cannot be
+   * used to validate APNs tokens.
    *
    * <p>This method uses the {@link #sendAll(List)} API under the hood to send the given
    * message to all the target recipients. The responses list obtained by calling
