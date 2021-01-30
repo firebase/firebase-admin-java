@@ -52,8 +52,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
 
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
 
 public class FirebaseTenantClientTest {
@@ -69,9 +71,17 @@ public class FirebaseTenantClientTest {
 
   private static final String TENANTS_BASE_URL = PROJECT_BASE_URL + "/tenants";
 
+  private static final String AUTH_EMULATOR = "localhost:8000";
+  private static final String PROJECT_BASE_URL_EMULATOR =
+          "http://" + AUTH_EMULATOR + "/identitytoolkit.googleapis.com/v2/projects/test-project-id";
+  private static final String TENANTS_BASE_URL_EMULATOR = PROJECT_BASE_URL_EMULATOR + "/tenants";
+
+  @Rule
+  public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
   @After
-  public void tearDown() {
+  public void tearDown() throws ReflectiveOperationException {
+    environmentVariables.clear("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR);
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
@@ -312,6 +322,21 @@ public class FirebaseTenantClientTest {
       assertNotNull(e.getHttpResponse());
     }
     checkUrl(interceptor, "DELETE", TENANTS_BASE_URL + "/UNKNOWN");
+  }
+
+  @Test
+  public void testGetTenantFromAuthEmulator() throws Exception {
+    environmentVariables.set("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR);
+    TestResponseInterceptor interceptor = initializeAppForTenantManagement(
+            TestUtils.loadResource("tenant.json"));
+
+    Tenant tenant = FirebaseAuth.getInstance().getTenantManager().getTenant("TENANT_1");
+
+
+      checkTenant(tenant, "TENANT_1");
+      checkRequestHeaders(interceptor);
+      checkUrl(interceptor, "GET", TENANTS_BASE_URL_EMULATOR + "/TENANT_1");
+
   }
 
   private static void checkTenant(Tenant tenant, String tenantId) {
