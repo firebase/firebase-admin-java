@@ -52,11 +52,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
 
 public class FirebaseTenantClientTest {
 
@@ -332,11 +332,9 @@ public class FirebaseTenantClientTest {
 
     Tenant tenant = FirebaseAuth.getInstance().getTenantManager().getTenant("TENANT_1");
 
-
-      checkTenant(tenant, "TENANT_1");
-      checkRequestHeaders(interceptor);
-      checkUrl(interceptor, "GET", TENANTS_BASE_URL_EMULATOR + "/TENANT_1");
-
+    checkTenant(tenant, "TENANT_1");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "GET", TENANTS_BASE_URL_EMULATOR + "/TENANT_1");
   }
 
   private static void checkTenant(Tenant tenant, String tenantId) {
