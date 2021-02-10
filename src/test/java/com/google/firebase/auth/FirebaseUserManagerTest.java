@@ -95,7 +95,6 @@ public class FirebaseUserManagerTest {
   private static final String AUTH_EMULATOR = "localhost:8000";
   private static final String PROJECT_BASE_URL_EMULATOR =
           "http://" + AUTH_EMULATOR + "/identitytoolkit.googleapis.com/v2/projects/test-project-id";
-  private static final String TENANTS_BASE_URL_EMULATOR = PROJECT_BASE_URL_EMULATOR + "/tenants";
 
   private static final String SAML_RESPONSE = TestUtils.loadResource("saml.json");
 
