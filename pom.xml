@@ -352,7 +352,7 @@
                             <goal>integration-test</goal>
                             <goal>verify</goal>
                         </goals>
-                    </execution>                    
+                    </execution>
                 </executions>
             </plugin>
 
@@ -488,6 +488,13 @@
             <groupId>javax.ws.rs</groupId>
             <artifactId>javax.ws.rs-api</artifactId>
             <version>2.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <!-- Used for change env system -->
+            <groupId>com.github.stefanbirkner</groupId>
+            <artifactId>system-rules</artifactId>
+            <version>1.19.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

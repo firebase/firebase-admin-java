@@ -62,7 +62,9 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.contrib.java.lang.system.EnvironmentVariables;
 
 public class FirebaseUserManagerTest {
 
@@ -90,12 +92,20 @@ public class FirebaseUserManagerTest {
 
   private static final String TENANTS_BASE_URL = PROJECT_BASE_URL + "/tenants";
 
+  private static final String AUTH_EMULATOR = "localhost:8000";
+  private static final String PROJECT_BASE_URL_EMULATOR =
+          "http://" + AUTH_EMULATOR + "/identitytoolkit.googleapis.com/v2/projects/test-project-id";
+
   private static final String SAML_RESPONSE = TestUtils.loadResource("saml.json");
 
   private static final String OIDC_RESPONSE = TestUtils.loadResource("oidc.json");
 
+  @Rule
+  public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
+
   @After
   public void tearDown() {
+    environmentVariables.clear("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR);
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
@@ -1517,7 +1527,7 @@ public class FirebaseUserManagerTest {
             .setClientId("CLIENT_ID")
             .setIssuer("https://oidc.com/issuer");
 
-    OidcProviderConfig config = 
+    OidcProviderConfig config =
         FirebaseAuth.getInstance().createOidcProviderConfigAsync(createRequest).get();
 
     checkOidcProviderConfig(config, "oidc.provider-id");
@@ -2676,6 +2686,32 @@ public class FirebaseUserManagerTest {
     checkRequestHeaders(interceptor);
     String expectedUrl = TENANTS_BASE_URL + "/TENANT_ID/inboundSamlConfigs/saml.provider-id";
     checkUrl(interceptor, "DELETE", expectedUrl);
+  }
+
+  @Test
+  public void testCreateOidcProviderFromEmulatorAuth() throws Exception {
+    environmentVariables.set("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR);
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(OIDC_RESPONSE);
+    OidcProviderConfig.CreateRequest createRequest =
+            new OidcProviderConfig.CreateRequest()
+                    .setProviderId("oidc.provider-id")
+                    .setDisplayName("DISPLAY_NAME")
+                    .setEnabled(true)
+                    .setClientId("CLIENT_ID")
+                    .setIssuer("https://oidc.com/issuer");
+
+    OidcProviderConfig config = FirebaseAuth.getInstance().createOidcProviderConfig(createRequest);
+
+    checkOidcProviderConfig(config, "oidc.provider-id");
+    checkRequestHeaders(interceptor);
+    checkUrl(interceptor, "POST", PROJECT_BASE_URL_EMULATOR + "/oauthIdpConfigs");
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals("DISPLAY_NAME", parsed.get("displayName"));
+    assertTrue((boolean) parsed.get("enabled"));
+    assertEquals("CLIENT_ID", parsed.get("clientId"));
+    assertEquals("https://oidc.com/issuer", parsed.get("issuer"));
+    GenericUrl url = interceptor.getResponse().getRequest().getUrl();
+    assertEquals("oidc.provider-id", url.getFirst("oauthIdpConfigId"));
   }
 
   private static TestResponseInterceptor initializeAppForUserManagementWithStatusCode(
