@@ -35,6 +35,8 @@ import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
@@ -54,9 +56,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.After;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.contrib.java.lang.system.EnvironmentVariables;
 
 public class FirebaseTenantClientTest {
 
@@ -76,12 +76,9 @@ public class FirebaseTenantClientTest {
           "http://" + AUTH_EMULATOR + "/identitytoolkit.googleapis.com/v2/projects/test-project-id";
   private static final String TENANTS_BASE_URL_EMULATOR = PROJECT_BASE_URL_EMULATOR + "/tenants";
 
-  @Rule
-  public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
-
   @After
   public void tearDown() throws ReflectiveOperationException {
-    environmentVariables.clear("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR);
+    TestUtils.unsetEnvironmentVariables(ImmutableSet.of("FIREBASE_AUTH_EMULATOR_HOST"));
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
@@ -326,7 +323,8 @@ public class FirebaseTenantClientTest {
 
   @Test
   public void testGetTenantFromAuthEmulator() throws Exception {
-    environmentVariables.set("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR);
+    TestUtils.setEnvironmentVariables(
+            ImmutableMap.of("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR));
     TestResponseInterceptor interceptor = initializeAppForTenantManagement(
             TestUtils.loadResource("tenant.json"));
 

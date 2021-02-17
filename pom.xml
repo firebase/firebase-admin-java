@@ -490,12 +490,5 @@
             <version>2.0</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <!-- Used for change env system -->
-            <groupId>com.github.stefanbirkner</groupId>
-            <artifactId>system-rules</artifactId>
-            <version>1.19.0</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 </project>
