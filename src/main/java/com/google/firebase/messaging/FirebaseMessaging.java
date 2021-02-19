@@ -90,9 +90,9 @@ public class FirebaseMessaging {
    * Sends the given {@link Message} via Firebase Cloud Messaging.
    *
    * <p>If the {@code dryRun} option is set to true, the message will not be actually sent. Instead
-   * FCM performs all the necessary validations, and emulates the send operation. The {@code dryRun}
-   * option is useful for determining whether an FCM registration has been deleted. But it cannot be
-   * used to validate APNs tokens.
+   * FCM performs all the necessary validations and emulates the send operation. The {@code dryRun}
+   * option is useful for determining whether an FCM registration has been deleted. However, it 
+   * cannot be used to validate APNs tokens.
    *
    * @param message A non-null {@link Message} to be sent.
    * @param dryRun a boolean indicating whether to perform a dry run (validation only) of the send.
