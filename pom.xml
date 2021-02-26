@@ -60,6 +60,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <skipUTs>${skipTests}</skipUTs>
         <netty.version>4.1.59.Final</netty.version>
+        <argLine>-Duser.language=en</argLine>
     </properties>
 
     <scm>
