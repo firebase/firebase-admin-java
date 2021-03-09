@@ -16,6 +16,7 @@
 
 package com.google.firebase.messaging;
 
+import static com.google.firebase.messaging.FirebaseMessaging.MAX_MESSAGES_IN_LIST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -147,16 +148,16 @@ public class FirebaseMessagingIT {
   }
 
   @Test
-  public void testSendFiveHundred() throws Exception {
+  public void testSendMaximumAmountOfMessages() throws Exception {
     List<Message> messages = new ArrayList<>();
-    for (int i = 0; i < 500; i++) {
+    for (int i = 0; i < MAX_MESSAGES_IN_LIST; i++) {
       messages.add(Message.builder().setTopic("foo-bar-" + (i % 10)).build());
     }
 
     BatchResponse response = FirebaseMessaging.getInstance().sendAll(messages, true);
 
-    assertEquals(500, response.getResponses().size());
-    assertEquals(500, response.getSuccessCount());
+    assertEquals(MAX_MESSAGES_IN_LIST, response.getResponses().size());
+    assertEquals(MAX_MESSAGES_IN_LIST, response.getSuccessCount());
     assertEquals(0, response.getFailureCount());
     for (SendResponse sendResponse : response.getResponses()) {
       if (!sendResponse.isSuccessful()) {
