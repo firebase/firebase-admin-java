@@ -17,6 +17,7 @@
 package com.google.firebase.messaging;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.firebase.messaging.FirebaseMessaging.MAX_MESSAGES_IN_LIST;
 
 import com.google.api.client.util.Strings;
 import com.google.common.collect.ImmutableList;
@@ -31,7 +32,7 @@ import java.util.Map;
 /**
  * Represents a message that can be sent to multiple devices via Firebase Cloud Messaging (FCM).
  * Contains payload information as well as the list of device registration tokens to which the
- * message should be sent. A single {@code MulticastMessage} may contain up to 500 registration
+ * message should be sent. A single {@code MulticastMessage} may contain up to {@value com.google.firebase.messaging.FirebaseMessaging#MAX_MESSAGES_IN_LIST} registration
  * tokens.
  *
  * <p>Instances of this class are thread-safe and immutable. Use {@link MulticastMessage.Builder}
@@ -56,7 +57,7 @@ public class MulticastMessage {
   private MulticastMessage(Builder builder) {
     this.tokens = builder.tokens.build();
     checkArgument(!this.tokens.isEmpty(), "at least one token must be specified");
-    checkArgument(this.tokens.size() <= 500, "no more than 500 tokens can be specified");
+    checkArgument(this.tokens.size() <= MAX_MESSAGES_IN_LIST, "no more than " + MAX_MESSAGES_IN_LIST + " tokens can be specified");
     for (String token : this.tokens) {
       checkArgument(!Strings.isNullOrEmpty(token), "none of the tokens can be null or empty");
     }
@@ -107,7 +108,7 @@ public class MulticastMessage {
     private Builder() {}
 
     /**
-     * Adds a token to which the message should be sent. Up to 500 tokens can be specified on
+     * Adds a token to which the message should be sent. Up to {@value com.google.firebase.messaging.FirebaseMessaging#MAX_MESSAGES_IN_LIST} tokens can be specified on
      * a single instance of {@link MulticastMessage}.
      *
      * @param token A non-null, non-empty Firebase device registration token.
@@ -119,7 +120,7 @@ public class MulticastMessage {
     }
 
     /**
-     * Adds a collection of tokens to which the message should be sent. Up to 500 tokens can be
+     * Adds a collection of tokens to which the message should be sent. Up to {@value com.google.firebase.messaging.FirebaseMessaging#MAX_MESSAGES_IN_LIST} tokens can be
      * specified on a single instance of {@link MulticastMessage}.
      *
      * @param tokens Collection of Firebase device registration tokens.
