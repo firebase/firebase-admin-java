@@ -62,7 +62,8 @@ final class FirebaseTokenUtils {
       return new FirebaseTokenFactory(
           firebaseApp.getOptions().getJsonFactory(),
           clock,
-          CryptoSigners.getCryptoSigner(firebaseApp),
+          useEmulator() ? new CryptoSigners.EmulatedSigner()
+              : CryptoSigners.getCryptoSigner(firebaseApp),
           tenantId);
     } catch (IOException e) {
       throw new IllegalStateException(
@@ -100,17 +101,29 @@ final class FirebaseTokenUtils {
         .build();
   }
 
-  static FirebaseTokenVerifierImpl createSessionCookieVerifier(FirebaseApp app, Clock clock) {
+  static FirebaseTokenVerifier createSessionCookieVerifier(FirebaseApp app, Clock clock) {
     return createSessionCookieVerifier(app, clock, null);
   }
 
-  static FirebaseTokenVerifierImpl createSessionCookieVerifier(
+  static FirebaseTokenVerifier createSessionCookieVerifier(
       FirebaseApp app, Clock clock, @Nullable String tenantId) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkState(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifySessionCookie()");
     IdTokenVerifier idTokenVerifier = newIdTokenVerifier(
         clock, SESSION_COOKIE_ISSUER_PREFIX, projectId);
+    if (useEmulator()) {
+      return EmulatorFirebaseTokenVerifier.builder()
+          // TODO: Change these params
+          .setShortName("emulator session cookie")
+          .setDocUrl("https://firebase.google.com/docs/auth/admin/manage-cookies-emulator")
+          .setInvalidTokenErrorCode(AuthErrorCode.INVALID_SESSION_COOKIE)
+          .setExpiredTokenErrorCode(AuthErrorCode.EXPIRED_SESSION_COOKIE)
+          .setJsonFactory(app.getOptions().getJsonFactory())
+          .setIdTokenVerifier(idTokenVerifier)
+          .setTenantId(tenantId)
+          .build();
+    }
     GooglePublicKeysManager publicKeysManager = newPublicKeysManager(
         app.getOptions(), clock, SESSION_COOKIE_CERT_URL);
     return FirebaseTokenVerifierImpl.builder()
@@ -142,5 +155,10 @@ final class FirebaseTokenUtils {
         .setAudience(ImmutableList.of(projectId))
         .setIssuer(issuerPrefix + projectId)
         .build();
+  }
+
+  private static boolean useEmulator() {
+    return !Strings.isNullOrEmpty(
+        System.getenv("FIREBASE_AUTH_EMULATOR_HOST"));
   }
 }

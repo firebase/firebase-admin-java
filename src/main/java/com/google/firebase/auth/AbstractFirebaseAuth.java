@@ -309,7 +309,7 @@ public abstract class AbstractFirebaseAuth {
   @VisibleForTesting
   FirebaseTokenVerifier getIdTokenVerifier(boolean checkRevoked) {
     FirebaseTokenVerifier verifier = idTokenVerifier.get();
-    if (checkRevoked) {
+    if (checkRevoked || useEmulator()) {
       FirebaseUserManager userManager = getUserManager();
       verifier = RevocationCheckDecorator.decorateIdTokenVerifier(verifier, userManager);
     }
@@ -389,7 +389,7 @@ public abstract class AbstractFirebaseAuth {
   @VisibleForTesting
   FirebaseTokenVerifier getSessionCookieVerifier(boolean checkRevoked) {
     FirebaseTokenVerifier verifier = cookieVerifier.get();
-    if (checkRevoked) {
+    if (checkRevoked || useEmulator()) {
       FirebaseUserManager userManager = getUserManager();
       verifier = RevocationCheckDecorator.decorateSessionCookieVerifier(verifier, userManager);
     }
@@ -1705,6 +1705,11 @@ public abstract class AbstractFirebaseAuth {
             }
           }
         });
+  }
+
+  private boolean useEmulator() {
+    return !Strings.isNullOrEmpty(
+        System.getenv("FIREBASE_AUTH_EMULATOR_HOST"));
   }
 
   protected abstract static class Builder<T extends  Builder<T>> {

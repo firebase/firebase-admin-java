@@ -89,8 +89,9 @@ public class FirebaseTokenUtilsTest {
         .setProjectId(TEST_PROJECT_ID)
         .build());
 
-    FirebaseTokenVerifierImpl cookieVerifier = FirebaseTokenUtils.createSessionCookieVerifier(
-        app, CLOCK);
+    FirebaseTokenVerifierImpl cookieVerifier
+        = (FirebaseTokenVerifierImpl) FirebaseTokenUtils.createSessionCookieVerifier(
+            app, CLOCK);
 
     assertEquals("verifySessionCookie()", cookieVerifier.getMethod());
     assertEquals("session cookie", cookieVerifier.getShortName());

@@ -108,6 +108,25 @@ public class CryptoSigners {
     }
   }
 
+  /**
+   * A {@link CryptoSigner} implementation that doesn't sign data. For use with the Auth Emulator
+   * only
+   */
+  public static class EmulatedSigner implements CryptoSigner {
+
+    private static final String ACCOUNT = "firebase-auth-emulator@example.com";
+
+    @Override
+    public byte[] sign(byte[] payload) {
+      return "".getBytes();
+    }
+
+    @Override
+    public String getAccount() {
+      return ACCOUNT;
+    }
+  }
+
   private static class IAMErrorHandler
       extends AbstractPlatformErrorHandler<FirebaseAuthException> {
 
