@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2020 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,34 +16,17 @@
 
 package com.google.firebase.auth.internal;
 
-import com.google.api.client.util.Key;
-import com.google.common.base.Strings;
+import com.google.firebase.auth.ProviderConfig;
+import java.util.List;
 
 /**
- * JSON data binding for JSON error messages sent by Google identity toolkit service.
+ * Interface for config list response messages sent by Google identity toolkit service.
  */
-public class HttpErrorResponse {
+public interface ListProviderConfigsResponse<T extends ProviderConfig> {
 
-  @Key("error")
-  private Error error;
+  public List<T> getProviderConfigs();
 
-  public String getErrorCode() {
-    if (error != null) {
-      if (!Strings.isNullOrEmpty(error.getCode())) {
-        return error.getCode();
-      }
-    }
-    return "unknown";
-  }
+  public boolean hasProviderConfigs();
 
-  public static class Error {
-
-    @Key("message")
-    private String code;
-
-    public String getCode() {
-      return code;
-    }
-  }
-
+  public String getPageToken();
 }

@@ -48,17 +48,21 @@ public class InvalidHashTest {
 
   @Test
   public void testInvalidRepeatableHash() {
+    // TODO(rsgowman): Once we can update to Java8, we could just do something like this instead of
+    // having all of the helpers:
+    //     assertThrows(IllegalArgumentException.class, ()-> Md5.builder().setRounds(-1).build());
+
     List<RepeatableHash.Builder> builders = ImmutableList.<RepeatableHash.Builder>builder()
-        .add(Sha512.builder().setRounds(-1))
-        .add(Sha256.builder().setRounds(-1))
-        .add(Sha1.builder().setRounds(-1))
+        .add(Sha512.builder().setRounds(0))
+        .add(Sha256.builder().setRounds(0))
+        .add(Sha1.builder().setRounds(0))
         .add(Md5.builder().setRounds(-1))
         .add(Pbkdf2Sha256.builder().setRounds(-1))
         .add(PbkdfSha1.builder().setRounds(-1))
-        .add(Sha512.builder().setRounds(120001))
-        .add(Sha256.builder().setRounds(120001))
-        .add(Sha1.builder().setRounds(120001))
-        .add(Md5.builder().setRounds(120001))
+        .add(Sha512.builder().setRounds(8193))
+        .add(Sha256.builder().setRounds(8193))
+        .add(Sha1.builder().setRounds(8193))
+        .add(Md5.builder().setRounds(8193))
         .add(Pbkdf2Sha256.builder().setRounds(120001))
         .add(PbkdfSha1.builder().setRounds(120001))
         .build();
@@ -70,6 +74,22 @@ public class InvalidHashTest {
         assertTrue(expected instanceof IllegalArgumentException);
       }
     }
+  }
+
+  @Test
+  public void testValidRepeatableHash() {
+    Md5.builder().setRounds(0).build();
+    Md5.builder().setRounds(8192).build();
+    Sha1.builder().setRounds(1).build();
+    Sha1.builder().setRounds(8192).build();
+    Sha256.builder().setRounds(1).build();
+    Sha256.builder().setRounds(8192).build();
+    Sha512.builder().setRounds(1).build();
+    Sha512.builder().setRounds(8192).build();
+    PbkdfSha1.builder().setRounds(0).build();
+    PbkdfSha1.builder().setRounds(120000).build();
+    Pbkdf2Sha256.builder().setRounds(0).build();
+    Pbkdf2Sha256.builder().setRounds(120000).build();
   }
 
   @Test

@@ -110,7 +110,6 @@ public class IntegrationTestUtils {
               .setStorageBucket(getStorageBucket())
               .setCredentials(TestUtils.getCertCredential(getServiceAccountCertificate()))
               .setFirestoreOptions(FirestoreOptions.newBuilder()
-                  .setTimestampsInSnapshotsEnabled(true)
                   .setCredentials(TestUtils.getCertCredential(getServiceAccountCertificate()))
                   .build())
               .build();
@@ -121,7 +120,7 @@ public class IntegrationTestUtils {
 
   public static FirebaseApp initApp(String name) {
     FirebaseOptions options =
-        new FirebaseOptions.Builder()
+        FirebaseOptions.builder()
             .setDatabaseUrl(getDatabaseUrl())
             .setCredentials(TestUtils.getCertCredential(getServiceAccountCertificate()))
             .build();

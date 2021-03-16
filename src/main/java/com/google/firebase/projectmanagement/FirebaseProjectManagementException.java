@@ -15,18 +15,27 @@
 
 package com.google.firebase.projectmanagement;
 
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseException;
-import com.google.firebase.internal.Nullable;
+import com.google.firebase.IncomingHttpResponse;
+import com.google.firebase.database.annotations.Nullable;
+import com.google.firebase.internal.NonNull;
 
 /**
  * An exception encountered while interacting with the Firebase Project Management Service.
  */
-public class FirebaseProjectManagementException extends FirebaseException {
-  FirebaseProjectManagementException(String detailMessage) {
-    this(detailMessage, null);
+public final class FirebaseProjectManagementException extends FirebaseException {
+
+  FirebaseProjectManagementException(@NonNull FirebaseException base) {
+    this(base, base.getMessage());
   }
 
-  FirebaseProjectManagementException(String detailMessage, @Nullable Throwable cause) {
-    super(detailMessage, cause);
+  FirebaseProjectManagementException(@NonNull FirebaseException base, @NonNull String message) {
+    super(base.getErrorCode(), message, base.getCause(), base.getHttpResponse());
+  }
+
+  FirebaseProjectManagementException(
+      @NonNull ErrorCode code, @NonNull String message, @Nullable IncomingHttpResponse response) {
+    super(code, message, null, response);
   }
 }

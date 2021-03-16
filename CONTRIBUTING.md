@@ -136,9 +136,22 @@ Create a new project in the [Firebase console](https://console.firebase.google.c
 not already have one. Use a separate, dedicated project for integration tests since the test suite
 makes a large number of writes to the Firebase realtime database. Download the service account
 private key from the "Settings > Service Accounts" page of the project, and save it as
-`integration_cert.json` at the root of the codebase. Also obtain the web API key of the project
-from the "Settings > General" page, and save it as `integration_apikey.txt` at the root of the
-codebase. Now run the following command to invoke the integration test suite:
+`integration_cert.json` at the root of the codebase. Grant your service account the `Firebase
+Authentication Admin` role at
+[Google Cloud Platform Console / IAM & admin](https://console.cloud.google.com/iam-admin). This is
+required to ensure that exported user records contain the password hashes of the user accounts.
+Also obtain the web API key of the project from the "Settings > General" page, and save it as
+`integration_apikey.txt` at the root of the codebase.
+
+Some of the integration tests require an
+[Identity Platform](https://cloud.google.com/identity-platform/) project with multi-tenancy
+[enabled](https://cloud.google.com/identity-platform/docs/multi-tenancy-quickstart#enabling_multi-tenancy).
+An existing Firebase project can be upgraded to an Identity Platform project without losing any
+functionality via the
+[Identity Platform Marketplace Page](https://console.cloud.google.com/customer-identity). Note that
+charges may be incurred for active users beyond the Identity Platform free tier.
+
+Now run the following command to invoke the integration test suite:
 
 ```
 mvn verify
@@ -149,14 +162,14 @@ tests, specify the `-DskipUTs` flag.
 
 ### Generating API Docs
 
-Invoke the [Maven Javadoc plugin](https://maven.apache.org/plugins/maven-javadoc-plugin/) as 
+Invoke the [Maven Javadoc plugin](https://maven.apache.org/plugins/maven-javadoc-plugin/) as
 follows to generate API docs for all packages in the codebase:
 
 ```
 mvn javadoc:javadoc
 ```
 
-This will generate the API docs, and place them in the `target/site/apidocs` directory. 
+This will generate the API docs, and place them in the `target/site/apidocs` directory.
 
 To generate API docs for only the public APIs (i.e. ones that are not marked with `@hide` tags),
 you need to trigger the `devsite-apidocs` Maven profile. This profile uses Maven Javadoc plugin

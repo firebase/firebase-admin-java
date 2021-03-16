@@ -42,6 +42,15 @@ public final class FirebaseToken {
     return (String) claims.get("sub");
   }
 
+  /** Returns the tenant ID for the this token. */
+  public String getTenantId() {
+    Map<String, Object> firebase = (Map<String, Object>) claims.get("firebase");
+    if (firebase == null) {
+      return null;
+    }
+    return (String) firebase.get("tenant");
+  }
+
   /** Returns the Issuer for the this token. */
   public String getIssuer() {
     return (String) claims.get("iss");
@@ -57,14 +66,14 @@ public final class FirebaseToken {
     return (String) claims.get("picture");
   }
 
-  /** 
+  /**
    * Returns the e-mail address for this user, or {@code null} if it's unavailable.
    */
   public String getEmail() {
     return (String) claims.get("email");
   }
 
-  /** 
+  /**
    * Indicates if the email address returned by {@link #getEmail()} has been verified as good.
    */
   public boolean isEmailVerified() {

@@ -16,8 +16,6 @@
 
 package com.google.firebase.internal;
 
-import static org.junit.Assert.assertTrue;
-
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -34,7 +32,7 @@ public class FirebaseAppStoreTest {
   private static final String FIREBASE_DB_URL = "https://mock-project.firebaseio.com";
 
   private static final FirebaseOptions ALL_VALUES_OPTIONS =
-      new FirebaseOptions.Builder()
+      FirebaseOptions.builder()
           .setDatabaseUrl(FIREBASE_DB_URL)
           .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .build();
@@ -55,7 +53,7 @@ public class FirebaseAppStoreTest {
     FirebaseApp.initializeApp(ALL_VALUES_OPTIONS, name);
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
     FirebaseOptions options =
-        new FirebaseOptions.Builder()
+        FirebaseOptions.builder()
             .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
             .build();
     FirebaseApp.initializeApp(options, name);
@@ -66,18 +64,9 @@ public class FirebaseAppStoreTest {
     FirebaseApp.initializeApp(ALL_VALUES_OPTIONS);
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
     FirebaseOptions options =
-        new FirebaseOptions.Builder()
+        FirebaseOptions.builder()
             .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
             .build();
     FirebaseApp.initializeApp(options);
-  }
-
-  @Test
-  public void persistenceDisabled() {
-    String name = "myApp";
-    FirebaseApp.initializeApp(ALL_VALUES_OPTIONS, name);
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
-    FirebaseAppStore appStore = FirebaseAppStore.getInstance();
-    assertTrue(!appStore.getAllPersistedAppNames().contains(name));
   }
 }

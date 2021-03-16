@@ -106,13 +106,5 @@ public class StorageClient {
     StorageClientService(StorageClient client) {
       super(SERVICE_ID, client);
     }
-
-    @Override
-    public void destroy() {
-      // NOTE: We don't explicitly tear down anything here, but public methods of StorageClient
-      // will now fail because calls to getOptions() and getToken() will hit FirebaseApp,
-      // which will throw once the app is deleted.
-    }
   }
-
 }

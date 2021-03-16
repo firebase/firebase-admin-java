@@ -286,10 +286,5 @@ public class FirebaseProjectManagement {
       serviceInstance.setAndroidAppService(serviceImpl);
       serviceInstance.setIosAppService(serviceImpl);
     }
-
-    @Override
-    public void destroy() {
-      serviceImpl.destroy();
-    }
   }
 }

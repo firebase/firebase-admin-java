@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.cedarsoftware.util.DeepEquals;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.OAuth2Credentials;
 import com.google.common.collect.ImmutableMap;
@@ -38,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -67,7 +67,7 @@ public class JvmAuthTokenProviderTest {
     credentials.refresh();
     assertEquals(1, refreshDetector.count);
 
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(credentials)
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
@@ -87,7 +87,7 @@ public class JvmAuthTokenProviderTest {
     credentials.refresh();
     assertEquals(1, refreshDetector.count);
 
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(credentials)
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
@@ -103,7 +103,7 @@ public class JvmAuthTokenProviderTest {
   public void testGetTokenWithAuthOverrides() throws InterruptedException, IOException {
     MockGoogleCredentials credentials = new MockGoogleCredentials("mock-token");
     Map<String, Object> auth = ImmutableMap.<String, Object>of("uid", "test");
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(credentials)
         .setDatabaseAuthVariableOverride(auth)
         .build();
@@ -119,11 +119,11 @@ public class JvmAuthTokenProviderTest {
   public void testGetTokenError() throws InterruptedException {
     MockGoogleCredentials credentials = new MockGoogleCredentials("mock-token") {
       @Override
-      public AccessToken refreshAccessToken() throws IOException {
+      public AccessToken refreshAccessToken() {
         throw new RuntimeException("Test error");
       }
     };
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(credentials)
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
@@ -139,13 +139,13 @@ public class JvmAuthTokenProviderTest {
     final AtomicInteger counter = new AtomicInteger(0);
     MockGoogleCredentials credentials = new MockGoogleCredentials() {
       @Override
-      public AccessToken refreshAccessToken() throws IOException {
+      public AccessToken refreshAccessToken() {
         Date expiry = new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1));
         return new AccessToken("token-" + counter.getAndIncrement(), expiry);
       }
     };
 
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(credentials)
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
@@ -172,7 +172,7 @@ public class JvmAuthTokenProviderTest {
   @Test
   public void testTokenChangeListenerThread() throws InterruptedException, IOException {
     MockGoogleCredentials credentials = new MockGoogleCredentials();
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(credentials)
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
@@ -210,12 +210,12 @@ public class JvmAuthTokenProviderTest {
     final Semaphore semaphore = new Semaphore(0);
     credentials.addChangeListener(new OAuth2Credentials.CredentialsChangedListener() {
       @Override
-      public void onChanged(OAuth2Credentials credentials) throws IOException {
+      public void onChanged(OAuth2Credentials credentials) {
         semaphore.release();
       }
     });
 
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(credentials)
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
@@ -234,8 +234,8 @@ public class JvmAuthTokenProviderTest {
 
     assertEquals(expectedToken, map.get("token"));
 
-    Map<String, Object> auth = (Map)map.get("auth");
-    DeepEquals.deepEquals(expectedAuth, auth);
+    Map auth = (Map) map.get("auth");
+    assertTrue(Objects.deepEquals(expectedAuth, auth));
   }
 
   private static class TestGetTokenListener
@@ -271,7 +271,7 @@ public class JvmAuthTokenProviderTest {
     private int count = 0;
 
     @Override
-    public void onChanged(OAuth2Credentials credentials) throws IOException {
+    public void onChanged(OAuth2Credentials credentials) {
       count++;
     }
   }

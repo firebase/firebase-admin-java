@@ -17,6 +17,7 @@
 package com.google.firebase.auth;
 
 import com.google.api.client.json.JsonFactory;
+import com.google.common.io.BaseEncoding;
 import com.google.firebase.auth.internal.DownloadAccountResponse.User;
 import com.google.firebase.internal.Nullable;
 
@@ -28,10 +29,17 @@ public class ExportedUserRecord extends UserRecord {
 
   private final String passwordHash;
   private final String passwordSalt;
+  private static final String REDACTED_BASE64 = BaseEncoding.base64Url().encode(
+      "REDACTED".getBytes());
 
   ExportedUserRecord(User response, JsonFactory jsonFactory) {
     super(response, jsonFactory);
-    this.passwordHash = response.getPasswordHash();
+    String passwordHash = response.getPasswordHash();
+    if (passwordHash != null && !passwordHash.equals(REDACTED_BASE64)) {
+      this.passwordHash = passwordHash;
+    } else {
+      this.passwordHash = null;
+    }
     this.passwordSalt = response.getPasswordSalt();
   }
 

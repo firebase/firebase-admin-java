@@ -16,84 +16,57 @@
 
 package com.google.firebase.projectmanagement;
 
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
-import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.JsonObjectParser;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
-import com.google.firebase.internal.Nullable;
+import com.google.firebase.FirebaseException;
+import com.google.firebase.IncomingHttpResponse;
+import com.google.firebase.internal.AbstractPlatformErrorHandler;
+import com.google.firebase.internal.ErrorHandlingHttpClient;
+import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.SdkUtils;
-import java.io.IOException;
 
-class HttpHelper {
+final class HttpHelper {
 
-  @VisibleForTesting static final String PATCH_OVERRIDE_KEY = "X-HTTP-Method-Override";
-  @VisibleForTesting static final String PATCH_OVERRIDE_VALUE = "PATCH";
-  private static final ImmutableMap<Integer, String> ERROR_CODES =
-      ImmutableMap.<Integer, String>builder()
-          .put(401, "Request not authorized.")
-          .put(403, "Client does not have sufficient privileges.")
-          .put(404, "Failed to find the resource.")
-          .put(409, "The resource already exists.")
-          .put(429, "Request throttled by the backend server.")
-          .put(500, "Internal server error.")
-          .put(503, "Backend servers are over capacity. Try again later.")
-          .build();
   private static final String CLIENT_VERSION_HEADER = "X-Client-Version";
 
-  private final String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
-  private final JsonFactory jsonFactory;
-  private final HttpRequestFactory requestFactory;
-  private HttpResponseInterceptor interceptor;
+  private static final String CLIENT_VERSION = "Java/Admin/" + SdkUtils.getVersion();
+
+  private final ErrorHandlingHttpClient<FirebaseProjectManagementException> httpClient;
 
   HttpHelper(JsonFactory jsonFactory, HttpRequestFactory requestFactory) {
-    this.jsonFactory = jsonFactory;
-    this.requestFactory = requestFactory;
+    ProjectManagementErrorHandler errorHandler = new ProjectManagementErrorHandler(jsonFactory);
+    this.httpClient = new ErrorHandlingHttpClient<>(requestFactory, jsonFactory, errorHandler);
   }
 
   void setInterceptor(HttpResponseInterceptor interceptor) {
-    this.interceptor = interceptor;
+    httpClient.setInterceptor(interceptor);
   }
 
-  <T> void makeGetRequest(
+  <T> IncomingHttpResponse makeGetRequest(
       String url,
       T parsedResponseInstance,
       String requestIdentifier,
       String requestIdentifierDescription) throws FirebaseProjectManagementException {
-    try {
-      makeRequest(
-          requestFactory.buildGetRequest(new GenericUrl(url)),
-          parsedResponseInstance,
-          requestIdentifier,
-          requestIdentifierDescription);
-    } catch (IOException e) {
-      handleError(requestIdentifier, requestIdentifierDescription, e);
-    }
+    return makeRequest(
+        HttpRequestInfo.buildGetRequest(url),
+        parsedResponseInstance,
+        requestIdentifier,
+        requestIdentifierDescription);
   }
 
-  <T> void makePostRequest(
+  <T> IncomingHttpResponse makePostRequest(
       String url,
       Object payload,
       T parsedResponseInstance,
       String requestIdentifier,
       String requestIdentifierDescription) throws FirebaseProjectManagementException {
-    try {
-      makeRequest(
-          requestFactory.buildPostRequest(
-              new GenericUrl(url), new JsonHttpContent(jsonFactory, payload)),
-          parsedResponseInstance,
-          requestIdentifier,
-          requestIdentifierDescription);
-    } catch (IOException e) {
-      handleError(requestIdentifier, requestIdentifierDescription, e);
-    }
+    return makeRequest(
+        HttpRequestInfo.buildJsonPostRequest(url, payload),
+        parsedResponseInstance,
+        requestIdentifier,
+        requestIdentifierDescription);
   }
 
   <T> void makePatchRequest(
@@ -102,15 +75,11 @@ class HttpHelper {
       T parsedResponseInstance,
       String requestIdentifier,
       String requestIdentifierDescription) throws FirebaseProjectManagementException {
-    try {
-      HttpRequest baseRequest = requestFactory.buildPostRequest(
-          new GenericUrl(url), new JsonHttpContent(jsonFactory, payload));
-      baseRequest.getHeaders().set(PATCH_OVERRIDE_KEY, PATCH_OVERRIDE_VALUE);
-      makeRequest(
-          baseRequest, parsedResponseInstance, requestIdentifier, requestIdentifierDescription);
-    } catch (IOException e) {
-      handleError(requestIdentifier, requestIdentifierDescription, e);
-    }
+    makeRequest(
+        HttpRequestInfo.buildJsonRequest(HttpMethods.PATCH, url, payload),
+        parsedResponseInstance,
+        requestIdentifier,
+        requestIdentifierDescription);
   }
 
   <T> void makeDeleteRequest(
@@ -118,69 +87,40 @@ class HttpHelper {
       T parsedResponseInstance,
       String requestIdentifier,
       String requestIdentifierDescription) throws FirebaseProjectManagementException {
-    try {
-      makeRequest(
-          requestFactory.buildDeleteRequest(new GenericUrl(url)),
-          parsedResponseInstance,
-          requestIdentifier,
-          requestIdentifierDescription);
-    } catch (IOException e) {
-      handleError(requestIdentifier, requestIdentifierDescription, e);
-    }
+    makeRequest(
+        HttpRequestInfo.buildDeleteRequest(url),
+        parsedResponseInstance,
+        requestIdentifier,
+        requestIdentifierDescription);
   }
 
-  <T> void makeRequest(
-      HttpRequest baseRequest,
+  private <T> IncomingHttpResponse makeRequest(
+      HttpRequestInfo baseRequest,
       T parsedResponseInstance,
       String requestIdentifier,
       String requestIdentifierDescription) throws FirebaseProjectManagementException {
-    HttpResponse response = null;
     try {
-      baseRequest.getHeaders().set(CLIENT_VERSION_HEADER, clientVersion);
-      baseRequest.setParser(new JsonObjectParser(jsonFactory));
-      baseRequest.setResponseInterceptor(interceptor);
-      response = baseRequest.execute();
-      jsonFactory.createJsonParser(response.getContent(), Charsets.UTF_8)
-          .parseAndClose(parsedResponseInstance);
-    } catch (Exception e) {
-      handleError(requestIdentifier, requestIdentifierDescription, e);
-    } finally {
-      disconnectQuietly(response);
+      baseRequest.addHeader(CLIENT_VERSION_HEADER, CLIENT_VERSION);
+      IncomingHttpResponse response = httpClient.send(baseRequest);
+      httpClient.parse(response, parsedResponseInstance);
+      return response;
+    } catch (FirebaseProjectManagementException e) {
+      String message = String.format(
+          "%s \"%s\": %s", requestIdentifierDescription, requestIdentifier, e.getMessage());
+      throw new FirebaseProjectManagementException(e, message);
     }
   }
 
-  private static void disconnectQuietly(HttpResponse response) {
-    if (response != null) {
-      try {
-        response.disconnect();
-      } catch (IOException ignored) {
-        // Ignored.
-      }
-    }
-  }
+  private static class ProjectManagementErrorHandler
+      extends AbstractPlatformErrorHandler<FirebaseProjectManagementException> {
 
-  private static void handleError(
-      String requestIdentifier, String requestIdentifierDescription, Exception e)
-          throws FirebaseProjectManagementException {
-    String messageBody = "Error while invoking Firebase Project Management service.";
-    if (e instanceof HttpResponseException) {
-      int statusCode = ((HttpResponseException) e).getStatusCode();
-      if (ERROR_CODES.containsKey(statusCode)) {
-        messageBody = ERROR_CODES.get(statusCode);
-      }
+    ProjectManagementErrorHandler(JsonFactory jsonFactory) {
+      super(jsonFactory);
     }
-    throw createFirebaseProjectManagementException(
-        requestIdentifier, requestIdentifierDescription, messageBody, e);
-  }
 
-  static FirebaseProjectManagementException createFirebaseProjectManagementException(
-      String requestIdentifier,
-      String requestIdentifierDescription,
-      String messageBody,
-      @Nullable Exception cause) {
-    return new FirebaseProjectManagementException(
-        String.format(
-            "%s \"%s\": %s", requestIdentifierDescription, requestIdentifier, messageBody),
-        cause);
+    @Override
+    protected FirebaseProjectManagementException createException(FirebaseException base) {
+      return new FirebaseProjectManagementException(base);
+    }
   }
 }

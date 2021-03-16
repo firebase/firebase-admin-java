@@ -16,7 +16,6 @@
 
 package com.google.firebase.messaging;
 
-import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
 import java.util.List;
 
@@ -25,32 +24,12 @@ import java.util.List;
  * See {@link FirebaseMessaging#sendAll(List)} and {@link
  * FirebaseMessaging#sendMulticast(MulticastMessage)}.
  */
-public final class BatchResponse {
-
-  private final List<SendResponse> responses;
-  private final int successCount;
-
-  BatchResponse(List<SendResponse> responses) {
-    this.responses = ImmutableList.copyOf(responses);
-    int successCount = 0;
-    for (SendResponse response : this.responses) {
-      if (response.isSuccessful()) {
-        successCount++;
-      }
-    }
-    this.successCount = successCount;
-  }
+public interface BatchResponse {
 
   @NonNull
-  public List<SendResponse> getResponses() {
-    return responses;
-  }
+  List<SendResponse> getResponses();
 
-  public int getSuccessCount() {
-    return successCount;
-  }
+  int getSuccessCount();
 
-  public int getFailureCount() {
-    return responses.size() - successCount;
-  }
+  int getFailureCount();
 }

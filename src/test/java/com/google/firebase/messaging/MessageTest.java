@@ -28,6 +28,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.messaging.AndroidConfig.Priority;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +91,10 @@ public class MessageTest {
   @Test
   public void testNotificationMessageDeprecatedConstructor() throws IOException {
     Message message = Message.builder()
-        .setNotification(new Notification("title", "body"))
+        .setNotification(Notification.builder()
+            .setTitle("title")
+            .setBody("body")
+            .build())
         .setTopic("test-topic")
         .build();
     Map<String, String> data = ImmutableMap.of("title", "title", "body", "body");
@@ -163,6 +167,7 @@ public class MessageTest {
                 .addBodyLocalizationArg("body-arg1")
                 .addAllBodyLocalizationArgs(ImmutableList.of("body-arg2", "body-arg3"))
                 .setChannelId("channel-id")
+                .setNotificationCount(4)
                 .build())
             .build())
         .setTopic("test-topic")
@@ -180,6 +185,10 @@ public class MessageTest {
         .put("body_loc_key", "body-loc")
         .put("body_loc_args", ImmutableList.of("body-arg1", "body-arg2", "body-arg3"))
         .put("channel_id", "channel-id")
+        // There is a problem with the JsonParser assignment to BigDecimal takes priority over
+        // all other number types and so this integer value is interpreted as a BigDecimal 
+        // rather than an Integer.
+        .put("notification_count", BigDecimal.valueOf(4L))
         .build();
     Map<String, Object> data = ImmutableMap.of(
         "collapse_key", "test-key",
@@ -191,6 +200,34 @@ public class MessageTest {
     assertJsonEquals(ImmutableMap.of("topic", "test-topic", "android", data), message);
   }
 
+  @Test
+  public void testAndroidMessageWithDirectBootOk() throws IOException {
+    Message message = Message.builder()
+        .setAndroidConfig(AndroidConfig.builder()
+            .setDirectBootOk(true)
+            .setNotification(AndroidNotification.builder()
+                .setTitle("android-title")
+                .setBody("android-body")
+                .build())
+            .build())
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> notification = ImmutableMap.<String, Object>builder()
+        .put("title", "android-title")
+        .put("body", "android-body")
+        .build();
+    Map<String, Object> data = ImmutableMap.of(
+        "direct_boot_ok", true,
+        "notification", notification
+    );
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "android", data), message);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testAndroidNotificationWithNegativeCount() throws IllegalArgumentException {
+    AndroidNotification.builder().setNotificationCount(-1).build();
+  }
+  
   @Test
   public void testAndroidMessageWithoutLocalization() throws IOException {
     Message message = Message.builder()
@@ -715,7 +752,11 @@ public class MessageTest {
   @Test
   public void testImageInNotificationDeprecatedConstructor() throws IOException {
     Message message = Message.builder()
-        .setNotification(new Notification("title", "body", TEST_IMAGE_URL))
+        .setNotification(Notification.builder()
+            .setTitle("title")
+            .setBody("body")
+            .setImage(TEST_IMAGE_URL)
+            .build())
         .setTopic("test-topic")
         .build();
     Map<String, String> data = ImmutableMap.of(
@@ -741,7 +782,11 @@ public class MessageTest {
   @Test
   public void testImageInAndroidNotification() throws IOException {
     Message message = Message.builder()
-        .setNotification(new Notification("title", "body", TEST_IMAGE_URL))
+        .setNotification(Notification.builder()
+            .setTitle("title")
+            .setBody("body")
+            .setImage(TEST_IMAGE_URL)
+            .build())
         .setAndroidConfig(AndroidConfig.builder()
             .setNotification(AndroidNotification.builder()
                 .setTitle("android-title")
@@ -766,12 +811,16 @@ public class MessageTest {
     assertJsonEquals(ImmutableMap.of(
         "topic", "test-topic", "notification", notification, "android", androidConfig), message);
   }
-  
+
   @Test
   public void testImageInApnsNotification() throws IOException {
     Message message = Message.builder()
         .setTopic("test-topic")
-        .setNotification(new Notification("title", "body", TEST_IMAGE_URL))
+        .setNotification(Notification.builder()
+            .setTitle("title")
+            .setBody("body")
+            .setImage(TEST_IMAGE_URL)
+            .build())
         .setApnsConfig(
             ApnsConfig.builder().setAps(Aps.builder().build())
                 .setFcmOptions(ApnsFcmOptions.builder().setImage(TEST_IMAGE_URL_APNS).build())
@@ -795,6 +844,88 @@ public class MessageTest {
             .put("apns", apnsConfig)
             .build();
     assertJsonEquals(expected, message);
+  }
+
+  @Test
+  public void testInvalidColorInAndroidNotificationLightSettings() {
+    try {
+      LightSettings.Builder lightSettingsBuilder = LightSettings.builder()
+                      .setColorFromString("#01020K")
+                      .setLightOnDurationInMillis(1002L)
+                      .setLightOffDurationInMillis(1003L);
+
+      lightSettingsBuilder.build();
+      fail("No error thrown for invalid notification");
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
+  public void testExtendedAndroidNotificationParameters() throws IOException {
+    long[] vibrateTimings = {1000L, 1001L};
+    Message message = Message.builder()
+        .setNotification(Notification.builder()
+            .setTitle("title")
+            .setBody("body")
+            .build())
+        .setAndroidConfig(AndroidConfig.builder()
+            .setNotification(AndroidNotification.builder()
+                .setTitle("android-title")
+                .setBody("android-body")
+                .setTicker("ticker")
+                .setSticky(true)
+                .setEventTimeInMillis(1546304523123L)
+                .setLocalOnly(true)
+                .setPriority(AndroidNotification.Priority.HIGH)
+                .setVibrateTimingsInMillis(vibrateTimings)
+                .setDefaultVibrateTimings(false)
+                .setDefaultSound(false)
+                .setLightSettings(LightSettings.builder()
+                    .setColorFromString("#336699")
+                    .setLightOnDurationInMillis(1002L)
+                    .setLightOffDurationInMillis(1003L)
+                    .build())
+                .setDefaultLightSettings(false)
+                .setVisibility(AndroidNotification.Visibility.PUBLIC)
+                .setNotificationCount(10)
+                .build())
+            .build())
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> notification = ImmutableMap.<String, Object>builder()
+        .put("title", "title")
+        .put("body", "body")
+        .build();
+    Map<String, Object> androidConfig = ImmutableMap.<String, Object>builder()
+        .put("notification", ImmutableMap.<String, Object>builder()
+            .put("title", "android-title")
+            .put("body", "android-body")
+            .put("ticker", "ticker")
+            .put("sticky", true)
+            .put("event_time", "2019-01-01T01:02:03.123000000Z")
+            .put("local_only", true)
+            .put("notification_priority", "PRIORITY_HIGH")
+            .put("vibrate_timings", ImmutableList.of("1s", "1.001000000s"))
+            .put("default_vibrate_timings", false)
+            .put("default_sound", false)
+            .put("light_settings", ImmutableMap.<String, Object>builder()
+                .put("color", ImmutableMap.<String, Object>builder()
+                    .put("red", new BigDecimal(new BigInteger("2"), 1))
+                    .put("green", new BigDecimal(new BigInteger("4"), 1))
+                    .put("blue", new BigDecimal(new BigInteger("6"), 1))
+                    .put("alpha", new BigDecimal(new BigInteger("10"), 1))
+                    .build())
+                .put("light_on_duration", "1.002000000s")
+                .put("light_off_duration", "1.003000000s")
+                .build())
+            .put("default_light_settings", false)
+            .put("visibility", "public")
+            .put("notification_count", new BigDecimal(10))
+            .build())
+        .build();
+    assertJsonEquals(ImmutableMap.of(
+        "topic", "test-topic", "notification", notification, "android", androidConfig), message);
   }
 
   private static void assertJsonEquals(

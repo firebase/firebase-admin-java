@@ -17,7 +17,6 @@
 package com.google.firebase.testing;
 
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
-import com.google.firebase.internal.FirebaseAppStore;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -42,6 +41,5 @@ public class FirebaseAppRule implements TestRule {
 
   private void resetState() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
-    FirebaseAppStore.clearInstanceForTest();
   }
 }

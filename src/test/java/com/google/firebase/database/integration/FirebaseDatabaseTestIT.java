@@ -255,7 +255,7 @@ public class FirebaseDatabaseTestIT {
   
   private static FirebaseApp appWithDbUrl(String dbUrl, String name) {
     try {
-      FirebaseOptions options = new FirebaseOptions.Builder()
+      FirebaseOptions options = FirebaseOptions.builder()
           .setDatabaseUrl(dbUrl)
           .setCredentials(GoogleCredentials.fromStream(
               IntegrationTestUtils.getServiceAccountCertificate()))
@@ -268,7 +268,7 @@ public class FirebaseDatabaseTestIT {
   
   private static FirebaseApp appWithoutDbUrl(String name) {
     try {
-      FirebaseOptions options = new FirebaseOptions.Builder()
+      FirebaseOptions options = FirebaseOptions.builder()
           .setCredentials(GoogleCredentials.fromStream(
               IntegrationTestUtils.getServiceAccountCertificate()))
           .build();

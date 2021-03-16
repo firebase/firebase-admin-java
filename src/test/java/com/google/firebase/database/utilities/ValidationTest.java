@@ -18,9 +18,11 @@ package com.google.firebase.database.utilities;
 
 import static org.junit.Assert.fail;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.core.Path;
+import java.util.List;
 import java.util.Map;
 import org.junit.Test;
 
@@ -144,32 +146,32 @@ public class ValidationTest {
 
   @Test
   public void testUpdate() {
-    Map[] updates = new Map[]{
-        ImmutableMap.of("foo", "value"),
-        ImmutableMap.of("foo", ""),
-        ImmutableMap.of("foo", 10D),
-        ImmutableMap.of(".foo", "foo"),
-        ImmutableMap.of("foo", "value", "bar", "value"),
-    };
+    List<Map<String, Object>> updates = ImmutableList.<Map<String, Object>>of(
+        ImmutableMap.<String, Object>of("foo", "value"),
+        ImmutableMap.<String, Object>of("foo", ""),
+        ImmutableMap.<String, Object>of("foo", 10D),
+        ImmutableMap.<String, Object>of(".foo", "foo"),
+        ImmutableMap.<String, Object>of("foo", "value", "bar", "value")
+    );
     Path path = new Path("path");
-    for (Map map : updates) {
+    for (Map<String, Object> map : updates) {
       Validation.parseAndValidateUpdate(path, map);
     }
   }
 
   @Test
   public void testInvalidUpdate() {
-    Map[] invalidUpdates = new Map[]{
-        ImmutableMap.of(".sv", "foo"),
-        ImmutableMap.of(".value", "foo"),
-        ImmutableMap.of(".priority", ImmutableMap.of("a", "b")),
-        ImmutableMap.of("foo", "value", "foo/bar", "value"),
-        ImmutableMap.of("foo", Double.POSITIVE_INFINITY),
-        ImmutableMap.of("foo", Double.NEGATIVE_INFINITY),
-        ImmutableMap.of("foo", Double.NaN),
-    };
+    List<Map<String, Object>> invalidUpdates = ImmutableList.<Map<String, Object>>of(
+        ImmutableMap.<String, Object>of(".sv", "foo"),
+        ImmutableMap.<String, Object>of(".value", "foo"),
+        ImmutableMap.<String, Object>of(".priority", ImmutableMap.of("a", "b")),
+        ImmutableMap.<String, Object>of("foo", "value", "foo/bar", "value"),
+        ImmutableMap.<String, Object>of("foo", Double.POSITIVE_INFINITY),
+        ImmutableMap.<String, Object>of("foo", Double.NEGATIVE_INFINITY),
+        ImmutableMap.<String, Object>of("foo", Double.NaN)
+    );
     Path path = new Path("path");
-    for (Map map : invalidUpdates) {
+    for (Map<String, Object> map : invalidUpdates) {
       try {
         Validation.parseAndValidateUpdate(path, map);
         fail("No error thrown for invalid update: " + map);

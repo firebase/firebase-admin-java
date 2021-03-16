@@ -173,7 +173,7 @@ public class FirebaseDatabase {
     return db;
   }
 
-  /** 
+  /**
    * @return The version for this build of the Firebase Database client
    */
   public static String getSdkVersion() {
@@ -358,6 +358,10 @@ public class FirebaseDatabase {
     return this.config;
   }
 
+  /**
+   * Tears down the WebSocket connections and background threads started by this {@code
+   * FirebaseDatabase} instance thus disconnecting from the remote database.
+   */
   void destroy() {
     synchronized (lock) {
       if (destroyed.get()) {

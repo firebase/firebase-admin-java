@@ -49,7 +49,7 @@ public class FirebaseThreadManagersTest {
   @Test
   public void testGlobalThreadManager() {
     MockThreadManager threadManager = new MockThreadManager();
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials())
         .setThreadManager(threadManager)
         .build();
@@ -74,7 +74,7 @@ public class FirebaseThreadManagersTest {
   @Test
   public void testGlobalThreadManagerWithMultipleApps() {
     MockThreadManager threadManager = new MockThreadManager();
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials())
         .build();
     FirebaseApp defaultApp = FirebaseApp.initializeApp(options);
@@ -99,7 +99,7 @@ public class FirebaseThreadManagersTest {
   @Test
   public void testGlobalThreadManagerReInit() {
     MockThreadManager threadManager = new MockThreadManager();
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials())
         .setThreadManager(threadManager)
         .build();
@@ -125,7 +125,7 @@ public class FirebaseThreadManagersTest {
 
   @Test
   public void testDefaultThreadManager() throws Exception {
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials())
         .build();
     FirebaseApp defaultApp = FirebaseApp.initializeApp(options);
