@@ -606,51 +606,60 @@ public class FirebaseAuth {
   }
 
   /**
-   * Gets the user data corresponding to the specified user\'s federated identifier.
+   * Gets the user data for the user corresponding to a given provider id.
    *
-   * @param providerUid The user identifier with the given provider.
    * @param providerId Identifier for the given federated provider, for example,
    *     "google.com" for the Google provider.
+   * @param uid The user identifier with the given provider.
    * @return A {@link UserRecord} instance.
-   * @throws IllegalArgumentException If the providerUid is null or empty, or if
+   * @throws IllegalArgumentException If the uid is null or empty, or if
    *     the providerId is null, empty, or does not belong to a federated provider.
    * @throws FirebaseAuthException If an error occurs while retrieving user data.
    */
-  public UserRecord getUserByFederatedId(
-      @NonNull String providerUid, @NonNull String providerId) throws FirebaseAuthException {
+  public UserRecord getUserByProviderUid(
+      @NonNull String providerId, @NonNull String uid) throws FirebaseAuthException {
     return getUserByFederatedIdOp(providerUid, providerId).call();
   }
 
   /**
-   * Gets the user data corresponding to the specified user\'s federated identifier.
+   * Gets the user data for the user corresponding to a given provider id.
    *
-   * @param providerUid The user identifier with the given provider.
    * @param providerId Identifer for the given federated provider, for example,
    *     "google.com" for the Google provider.
+   * @param uid The user identifier with the given provider.
    * @return An {@code ApiFuture} which will complete successfully with a {@link UserRecord}
-   *     instance. If an error occurs while retrieving user data or if the uid and provider ID
+   *     instance. If an error occurs while retrieving user data or if the provider ID and uid
    *     do not correspond to a user, the future throws a {@link FirebaseAuthException}.
-   * @throws IllegalArgumentException If the providerUid is null or empty, or if
+   * @throws IllegalArgumentException If the uid is null or empty, or if
    *     the provider ID is null, empty, or does not belong to a federated provider.
    */
-  public ApiFuture<UserRecord> getUserByFederatedIdAsync(
-      @NonNull String providerUid, @NonNull String providerId) {
-    return getUserByFederatedIdOp(providerUid, providerId).callAsync(firebaseApp);
+  public ApiFuture<UserRecord> getUserByProviderUidAsync(
+      @NonNull String providerId, @NonNull String uid) {
+    return getUserByFederatedIdOp(providerId, uid).callAsync(firebaseApp);
   }
 
   private CallableOperation<UserRecord, FirebaseAuthException> getUserByFederatedIdOp(
-      final String providerUid, final String providerId) {
+      final String providerId, final String uid) {
     checkNotDestroyed();
-    checkArgument(!Strings.isNullOrEmpty(providerUid), "providerUid must not be null or empty");
     checkArgument(!Strings.isNullOrEmpty(providerId), "providerId must not be null or empty");
-    checkArgument(!providerId.equals("phone")
-        && !providerId.equals("password")
+    checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
+
+    // Although we don't really advertise it, we want to also handle
+    // non-federated idps with this call. So if we detect one of them, we'll
+    // reroute this request appropriately.
+    if (providerId == "phone") {
+      return this.getUserByPhoneNumberOp(uid);
+    } else if (providerId == "email") {
+      return this.getUserByEmailOp(uid);
+    }
+
+    checkArgument(!providerId.equals("password")
         && !providerId.equals("anonymous"), "providerId must belong to a federated provider");
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<UserRecord, FirebaseAuthException>() {
       @Override
       protected UserRecord execute() throws FirebaseAuthException {
-        return userManager.getUserByFederatedId(providerUid, providerId);
+        return userManager.getUserByFederatedId(providerId, uid);
       }
     };
   }

@@ -165,18 +165,18 @@ class FirebaseUserManager {
   }
 
   UserRecord getUserByFederatedId(
-      String providerUid, String providerId) throws FirebaseAuthException {
+      String providerId, String uid) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "federatedUserId", ImmutableList.of(
             ImmutableMap.<String, Object>builder()
-            .put("rawId", providerUid).put("providerId", providerId).build()));
+            .put("rawId", uid).put("providerId", providerId).build()));
 
     GetAccountInfoResponse response = post(
         "/accounts:lookup", payload, GetAccountInfoResponse.class);
     if (response == null || response.getUsers() == null || response.getUsers().isEmpty()) {
       throw new FirebaseAuthException(USER_NOT_FOUND_ERROR,
-          "No user record found for providerUid " + providerUid
-          + " and federated provider ID " + providerId);
+          "No user record found for uid " + uid
+          + " and provider ID " + providerId);
     }
     return new UserRecord(response.getUsers().get(0), jsonFactory);
   }

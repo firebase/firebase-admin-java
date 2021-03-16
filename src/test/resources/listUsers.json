@@ -16,6 +16,9 @@
       "providerId" : "phone",
       "phoneNumber" : "+1234567890",
       "rawId" : "+1234567890"
+    }, {
+      "providerId" : "google.com",
+      "rawId" : "google_uid"
     } ],
     "photoUrl" : "http://www.example.com/testuser/photo.png",
     "passwordHash" : "passwordHash",
@@ -42,6 +45,9 @@
       "providerId" : "phone",
       "phoneNumber" : "+1234567890",
       "rawId" : "+1234567890"
+    }, {
+      "providerId" : "google.com",
+      "rawId" : "google_uid"
     } ],
     "photoUrl" : "http://www.example.com/testuser/photo.png",
     "passwordHash" : "passwordHash",

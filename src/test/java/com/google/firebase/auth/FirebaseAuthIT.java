@@ -197,12 +197,9 @@ public class FirebaseAuthIT {
     RandomUser randomUser2 = RandomUser.create();
     RandomUser randomUser3 = RandomUser.create();
     try {
-      UserRecord user1 = createUser(
-          randomUser1.uid, /* phoneNumber= */ null, randomUser1.email);
-      UserRecord user2 = createUser(
-          randomUser2.uid, randomUser2.phone, randomUser2.email);
-      UserImportResult user3 = importUser(
-          randomUser3.uid, randomUser3.phone, randomUser3.email,
+      createUser(randomUser1.uid, /* phoneNumber= */ null, randomUser1.email);
+      createUser(randomUser2.uid, randomUser2.phone, randomUser2.email);
+      importUser(randomUser3.uid, randomUser3.phone, randomUser3.email,
           "google.com", randomUser3.uid + "_google.com");
 
       UserRecord lookedUpRecord = auth.getUserByFederatedIdAsync(
@@ -224,6 +221,7 @@ public class FirebaseAuthIT {
       } catch (IllegalArgumentException expected) {
       }
     } finally {
+      // TODO(rsgowman): We can switch this to using bulk delete.
       auth.deleteUserAsync(randomUser1.uid).get();
       auth.deleteUserAsync(randomUser2.uid).get();
       auth.deleteUserAsync(randomUser3.uid).get();
