@@ -1098,8 +1098,8 @@ public class FirebaseUserManagerTest {
         .setEmailVerified(true)
         .setPassword("secret")
         .setCustomClaims(claims)
-        .setLinkProvider(USER_PROVIDER)
-        .setDeleteProviders(ImmutableList.of("google.com"))
+        .setProviderToLink(USER_PROVIDER)
+        .setProvidersToUnlink(ImmutableList.of("google.com"))
         .getProperties(JSON_FACTORY);
     assertEquals(10, map.size());
     assertEquals(update.getUid(), map.get("localId"));
@@ -1153,7 +1153,7 @@ public class FirebaseUserManagerTest {
   public void testLinkProvider() {
     UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     Map<String, Object> map = update
-        .setLinkProvider(USER_PROVIDER)
+        .setProviderToLink(USER_PROVIDER)
         .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(2, map.size());
     assertEquals(update.getUid(), map.get("localId"));
@@ -1164,7 +1164,7 @@ public class FirebaseUserManagerTest {
   public void testDeleteProvider() {
     UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     Map<String, Object> map = update
-        .setDeleteProviders(ImmutableList.of("google.com"))
+        .setProvidersToUnlink(ImmutableList.of("google.com"))
         .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(2, map.size());
     assertEquals(update.getUid(), map.get("localId"));
@@ -1175,7 +1175,7 @@ public class FirebaseUserManagerTest {
   public void testDeleteProviderAndPhone() {
     UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     Map<String, Object> map = update
-        .setDeleteProviders(ImmutableList.of("google.com"))
+        .setProvidersToUnlink(ImmutableList.of("google.com"))
         .setPhoneNumber(null)
         .getProperties(Utils.getDefaultJsonFactory());
     assertEquals(2, map.size());

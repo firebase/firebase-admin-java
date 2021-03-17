@@ -549,21 +549,31 @@ public class UserRecord implements UserInfo {
     }
 
     /**
-     * Updates the provider to be linked to this user\'s account.
+     * Links this user to the specified provider.
      *
-     * @param userProvider provider info to be linked to this user\'s account.
+     * <p>Linking a provider to an existing user account does not invalidate the
+     * refresh token of that account. In other words, the existing account
+     * would continue to be able to access resources, despite not having used
+     * the newly linked provider to log in. If you wish to force the user to
+     * authenticate with this new provider, you need to (a) revoke their
+     * refresh token (see
+     * https://firebase.google.com/docs/auth/admin/manage-sessions#revoke_refresh_tokens),
+     * and (b) ensure no other authentication methods are present on this
+     * account.
+     *
+     * @param providerToLink provider info to be linked to this user\'s account.
      */
-    public UpdateRequest setLinkProvider(@NonNull UserProvider userProvider) {
-      properties.put("linkProviderUserInfo", userProvider);
+    public UpdateRequest setProviderToLink(@NonNull UserProvider providerToLink) {
+      properties.put("linkProviderUserInfo", providerToLink);
       return this;
     }
 
     /**
-     * Updates the identity providers to unlink from this user\'s account.
+     * Unlinks this user from the specified providers.
      *
      * @param providerIds list of identifiers for the identity providers.
      */
-    public UpdateRequest setDeleteProviders(Iterable<String> providerIds) {
+    public UpdateRequest setProvidersToUnlink(Iterable<String> providerIds) {
       checkNotNull(providerIds);
       for (String id : providerIds) {
         checkArgument(!Strings.isNullOrEmpty(id), "providerIds must not be null or empty");

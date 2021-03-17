@@ -269,7 +269,7 @@ public class FirebaseAuthIT {
   @Test
   public void testUserLifecycle() throws Exception {
     // Create user
-    UserRecord userRecord = auth.createUserAsync(new CreateRequest()).get();
+    UserRecord userRecord = auth.createUserAsync(new UserRecord.CreateRequest()).get();
     String uid = userRecord.getUid();
 
     // Get user
@@ -289,7 +289,7 @@ public class FirebaseAuthIT {
 
     // Update user
     RandomUser randomUser = UserTestUtils.generateRandomUserInfo();
-    UpdateRequest request = userRecord.updateRequest()
+    UserRecord.UpdateRequest request = userRecord.updateRequest()
         .setDisplayName("Updated Name")
         .setEmail(randomUser.getEmail())
         .setPhoneNumber(randomUser.getPhoneNumber())
@@ -310,7 +310,7 @@ public class FirebaseAuthIT {
 
     // Link user to IDP providers
     request = userRecord.updateRequest()
-        .setLinkProvider(
+        .setProviderToLink(
             UserProvider
                 .builder()
                 .setUid("testuid")
@@ -336,7 +336,7 @@ public class FirebaseAuthIT {
     assertTrue(userRecord.getCustomClaims().isEmpty());
 
     // Unlink phone provider
-    request = userRecord.updateRequest().setDeleteProviders(ImmutableList.of("phone"));
+    request = userRecord.updateRequest().setProvidersToUnlink(ImmutableList.of("phone"));
     userRecord = auth.updateUserAsync(request).get();
     assertNull(userRecord.getPhoneNumber());
     assertEquals(2, userRecord.getProviderData().length);
@@ -354,7 +354,7 @@ public class FirebaseAuthIT {
     assertTrue(userRecord.getCustomClaims().isEmpty());
 
     // Unlink IDP provider
-    request = userRecord.updateRequest().setDeleteProviders(ImmutableList.of("google.com"));
+    request = userRecord.updateRequest().setProvidersToUnlink(ImmutableList.of("google.com"));
     userRecord = auth.updateUserAsync(request).get();
     assertEquals(1, userRecord.getProviderData().length);
     assertNotEquals("google.com", userRecord.getProviderData()[0].getProviderId());
