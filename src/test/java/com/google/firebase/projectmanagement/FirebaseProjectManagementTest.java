@@ -26,6 +26,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -52,7 +53,7 @@ public class FirebaseProjectManagementTest {
   private static final String TEST_PROJECT_ID = "hello-world";
   private static final String TEST_APP_BUNDLE_ID = "com.hello.world";
   private static final FirebaseProjectManagementException FIREBASE_PROJECT_MANAGEMENT_EXCEPTION =
-      new FirebaseProjectManagementException("Error!", null);
+      new FirebaseProjectManagementException(ErrorCode.UNKNOWN, "Error!", null);
 
   @Rule
   public final MockitoRule mockitoRule = MockitoJUnit.rule();
@@ -67,7 +68,7 @@ public class FirebaseProjectManagementTest {
 
   @BeforeClass
   public static void setUpClass() {
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId(TEST_PROJECT_ID)
         .build();

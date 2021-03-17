@@ -18,6 +18,7 @@ package com.google.firebase.auth.internal;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.api.client.json.GenericJson;
@@ -28,8 +29,9 @@ import com.google.api.client.util.SecurityUtils;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.ErrorCode;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.testing.TestUtils;
-import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -45,6 +47,7 @@ public class FirebaseTokenFactoryTest {
   private static final String USER_ID = "fuber";
   private static final GenericJson EXTRA_CLAIMS = new GenericJson();
   private static final String ISSUER = "test-484@mg-test-1210.iam.gserviceaccount.com";
+  private static final String TENANT_ID = "tenant-id";
 
   static {
     EXTRA_CLAIMS.set("one", 2).set("three", "four").setFactory(FACTORY);
@@ -71,6 +74,7 @@ public class FirebaseTokenFactoryTest {
     assertEquals(USER_ID, signedJwt.getPayload().getUid());
     assertEquals(2L, signedJwt.getPayload().getIssuedAtTimeSeconds().longValue());
     assertTrue(TestUtils.verifySignature(signedJwt, ImmutableList.of(keys.getPublic())));
+    assertNull(signedJwt.getPayload().getTenantId());
 
     jwt = tokenFactory.createSignedCustomAuthTokenForUser(USER_ID);
     signedJwt = FirebaseCustomAuthToken.parse(FACTORY, jwt);
@@ -80,6 +84,23 @@ public class FirebaseTokenFactoryTest {
     assertEquals(USER_ID, signedJwt.getPayload().getUid());
     assertEquals(2L, signedJwt.getPayload().getIssuedAtTimeSeconds().longValue());
     assertTrue(TestUtils.verifySignature(signedJwt, ImmutableList.of(keys.getPublic())));
+    assertNull(signedJwt.getPayload().getTenantId());
+  }
+
+  @Test
+  public void tokenWithTenantId() throws Exception {
+    KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+    keyGen.initialize(512);
+    KeyPair keys = keyGen.genKeyPair();
+    FixedClock clock = new FixedClock(2002L);
+    CryptoSigner cryptoSigner = new TestCryptoSigner(keys.getPrivate());
+    FirebaseTokenFactory tokenFactory =
+        new FirebaseTokenFactory(FACTORY, clock, cryptoSigner, TENANT_ID);
+
+    String jwt = tokenFactory.createSignedCustomAuthTokenForUser(USER_ID);
+    FirebaseCustomAuthToken signedJwt = FirebaseCustomAuthToken.parse(FACTORY, jwt);
+
+    assertEquals(TENANT_ID, signedJwt.getPayload().getTenantId());
   }
 
   @Test
@@ -138,12 +159,12 @@ public class FirebaseTokenFactoryTest {
     }
 
     @Override
-    public byte[] sign(byte[] payload) throws IOException {
+    public byte[] sign(byte[] payload) throws FirebaseAuthException {
       try {
         return SecurityUtils.sign(SecurityUtils.getSha256WithRsaSignatureAlgorithm(),
             privateKey, payload);
       } catch (GeneralSecurityException e) {
-        throw new IOException(e);
+        throw new FirebaseAuthException(ErrorCode.UNKNOWN, "Failed to sign token", e, null, null);
       }
     }
 

@@ -30,6 +30,7 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.CryptoSigners;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
+import com.google.firebase.internal.Nullable;
 
 import java.io.IOException;
 
@@ -52,11 +53,17 @@ final class FirebaseTokenUtils {
   private FirebaseTokenUtils() { }
 
   static FirebaseTokenFactory createTokenFactory(FirebaseApp firebaseApp, Clock clock) {
+    return createTokenFactory(firebaseApp, clock, null);
+  }
+
+  static FirebaseTokenFactory createTokenFactory(
+      FirebaseApp firebaseApp, Clock clock, @Nullable String tenantId) {
     try {
       return new FirebaseTokenFactory(
           firebaseApp.getOptions().getJsonFactory(),
           clock,
-          CryptoSigners.getCryptoSigner(firebaseApp));
+          CryptoSigners.getCryptoSigner(firebaseApp),
+          tenantId);
     } catch (IOException e) {
       throw new IllegalStateException(
           "Failed to initialize FirebaseTokenFactory. Make sure to initialize the SDK "
@@ -68,6 +75,11 @@ final class FirebaseTokenUtils {
   }
 
   static FirebaseTokenVerifierImpl createIdTokenVerifier(FirebaseApp app, Clock clock) {
+    return createIdTokenVerifier(app, clock, null);
+  }
+
+  static FirebaseTokenVerifierImpl createIdTokenVerifier(
+      FirebaseApp app, Clock clock, @Nullable String tenantId) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkState(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifyIdToken()");
@@ -82,10 +94,18 @@ final class FirebaseTokenUtils {
         .setJsonFactory(app.getOptions().getJsonFactory())
         .setPublicKeysManager(publicKeysManager)
         .setIdTokenVerifier(idTokenVerifier)
+        .setInvalidTokenErrorCode(AuthErrorCode.INVALID_ID_TOKEN)
+        .setExpiredTokenErrorCode(AuthErrorCode.EXPIRED_ID_TOKEN)
+        .setTenantId(tenantId)
         .build();
   }
 
   static FirebaseTokenVerifierImpl createSessionCookieVerifier(FirebaseApp app, Clock clock) {
+    return createSessionCookieVerifier(app, clock, null);
+  }
+
+  static FirebaseTokenVerifierImpl createSessionCookieVerifier(
+      FirebaseApp app, Clock clock, @Nullable String tenantId) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkState(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifySessionCookie()");
@@ -94,12 +114,15 @@ final class FirebaseTokenUtils {
     GooglePublicKeysManager publicKeysManager = newPublicKeysManager(
         app.getOptions(), clock, SESSION_COOKIE_CERT_URL);
     return FirebaseTokenVerifierImpl.builder()
-        .setJsonFactory(app.getOptions().getJsonFactory())
-        .setPublicKeysManager(publicKeysManager)
-        .setIdTokenVerifier(idTokenVerifier)
         .setShortName("session cookie")
         .setMethod("verifySessionCookie()")
         .setDocUrl("https://firebase.google.com/docs/auth/admin/manage-cookies")
+        .setInvalidTokenErrorCode(AuthErrorCode.INVALID_SESSION_COOKIE)
+        .setExpiredTokenErrorCode(AuthErrorCode.EXPIRED_SESSION_COOKIE)
+        .setJsonFactory(app.getOptions().getJsonFactory())
+        .setPublicKeysManager(publicKeysManager)
+        .setIdTokenVerifier(idTokenVerifier)
+        .setTenantId(tenantId)
         .build();
   }
 

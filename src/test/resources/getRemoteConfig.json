@@ -1,0 +1,56 @@
+{
+  "conditions": [
+    {
+      "name": "ios_en",
+      "expression": "device.os == 'ios' && device.country in ['us', 'uk']",
+      "tagColor": "INDIGO"
+    },
+    {
+      "name": "android_en",
+      "expression": "device.os == 'android' && device.country in ['us', 'uk']"
+    }
+  ],
+  "parameters": {
+    "welcome_message_text": {
+      "defaultValue": {
+        "value": "welcome to app"
+      },
+      "conditionalValues": {
+        "ios_en": {
+          "value": "welcome to app en"
+        }
+      },
+      "description": "text for welcome message!"
+    },
+    "header_text": {
+      "defaultValue": {
+        "useInAppDefault": true
+      }
+    }
+  },
+  "parameterGroups": {
+    "new menu": {
+      "description": "New Menu",
+      "parameters": {
+        "pumpkin_spice_season": {
+          "defaultValue": {
+            "value": "true"
+          },
+          "description": "Whether it's currently pumpkin spice season."
+        }
+      }
+    }
+  },
+  "version": {
+    "versionNumber": "17",
+    "updateOrigin": "ADMIN_SDK_NODE",
+    "updateType": "INCREMENTAL_UPDATE",
+    "updateUser": {
+      "email": "firebase-user@account.com",
+      "name": "dev-admin",
+      "imageUrl": "http://image.jpg"
+    },
+    "updateTime": "2020-11-15T06:57:26.342763941Z",
+    "description": "promo config"
+  }
+}

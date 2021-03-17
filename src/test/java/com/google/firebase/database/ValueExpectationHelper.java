@@ -18,10 +18,10 @@ package com.google.firebase.database;
 
 import static org.junit.Assert.fail;
 
-import com.cedarsoftware.util.DeepEquals;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Semaphore;
 
 public class ValueExpectationHelper {
@@ -39,7 +39,7 @@ public class ValueExpectationHelper {
               public void onDataChange(DataSnapshot snapshot) {
                 Object result = snapshot.getValue();
                 // Hack to handle race condition in initial data
-                if (DeepEquals.deepEquals(expected, result)) {
+                if (Objects.deepEquals(expected, result)) {
                   // We may pass through intermediate states, but we should end up with
                   // the correct
                   // state

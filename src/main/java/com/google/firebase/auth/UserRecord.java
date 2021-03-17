@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.json.JsonFactory;
+import com.google.api.client.util.DateTime;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -49,6 +50,7 @@ public class UserRecord implements UserInfo {
   private static final int MAX_CLAIMS_PAYLOAD_SIZE = 1000;
 
   private final String uid;
+  private final String tenantId;
   private final String email;
   private final String phoneNumber;
   private final boolean emailVerified;
@@ -65,6 +67,7 @@ public class UserRecord implements UserInfo {
     checkNotNull(jsonFactory, "jsonFactory must not be null");
     checkArgument(!Strings.isNullOrEmpty(response.getUid()), "uid must not be null or empty");
     this.uid = response.getUid();
+    this.tenantId = response.getTenantId();
     this.email = response.getEmail();
     this.phoneNumber = response.getPhoneNumber();
     this.emailVerified = response.isEmailVerified();
@@ -80,7 +83,15 @@ public class UserRecord implements UserInfo {
       }
     }
     this.tokensValidAfterTimestamp = response.getValidSince() * 1000;
-    this.userMetadata = new UserMetadata(response.getCreatedAt(), response.getLastLoginAt());
+
+    String lastRefreshAtRfc3339 = response.getLastRefreshAt();
+    long lastRefreshAtMillis = 0;
+    if (!Strings.isNullOrEmpty(lastRefreshAtRfc3339)) {
+      lastRefreshAtMillis = DateTime.parseRfc3339(lastRefreshAtRfc3339).getValue();
+    }
+
+    this.userMetadata = new UserMetadata(
+        response.getCreatedAt(), response.getLastLoginAt(), lastRefreshAtMillis);
     this.customClaims = parseCustomClaims(response.getCustomClaims(), jsonFactory);
   }
 
@@ -105,6 +116,16 @@ public class UserRecord implements UserInfo {
   @Override
   public String getUid() {
     return uid;
+  }
+
+  /**
+   * Returns the tenant ID associated with this user, if one exists.
+   *
+   * @return a tenant ID string or null.
+   */
+  @Nullable
+  public String getTenantId() {
+    return this.tenantId;
   }
 
   /**
@@ -247,6 +268,11 @@ public class UserRecord implements UserInfo {
         "phone number must be a valid, E.164 compliant identifier starting with a '+' sign");
   }
 
+  static void checkProvider(String providerId, String providerUid) {
+    checkArgument(!Strings.isNullOrEmpty(providerId), "providerId must be a non-empty string");
+    checkArgument(!Strings.isNullOrEmpty(providerUid), "providerUid must be a non-empty string");
+  }
+
   static void checkUrl(String photoUrl) {
     checkArgument(!Strings.isNullOrEmpty(photoUrl), "url cannot be null or empty");
     try {
@@ -357,10 +383,10 @@ public class UserRecord implements UserInfo {
     /**
      * Sets the display name for the new user.
      *
-     * @param displayName a non-null, non-empty display name string.
+     * @param displayName a non-null display name string.
      */
     public CreateRequest setDisplayName(String displayName) {
-      checkNotNull(displayName, "displayName cannot be null or empty");
+      checkNotNull(displayName, "displayName cannot be null");
       properties.put("displayName", displayName);
       return this;
     }

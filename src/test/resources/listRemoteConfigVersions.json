@@ -1,0 +1,50 @@
+{
+  "versions": [
+    {
+      "versionNumber": "32",
+      "updateTime": "2020-11-24T19:10:35.506793Z",
+      "updateUser": {
+        "email": "admin@email.com",
+        "imageUrl": "https://photo.jpg"
+      },
+      "description": "Rollback to version 29",
+      "updateOrigin": "REST_API",
+      "updateType": "ROLLBACK",
+      "rollbackSource": "29"
+    },
+    {
+      "versionNumber": "31",
+      "updateTime": "2020-11-24T19:09:40.249437Z",
+      "updateUser": {
+        "email": "admin@email.com",
+        "imageUrl": "https://photo.jpg"
+      },
+      "description": "new template",
+      "updateOrigin": "REST_API",
+      "updateType": "INCREMENTAL_UPDATE"
+    },
+    {
+      "versionNumber": "30",
+      "updateTime": "2020-11-24T19:08:30.613942Z",
+      "updateUser": {
+        "email": "admin@email.com",
+        "imageUrl": "https://photo.jpg"
+      },
+      "description": "new template",
+      "updateOrigin": "REST_API",
+      "updateType": "INCREMENTAL_UPDATE"
+    },
+    {
+      "versionNumber": "29",
+      "updateTime": "2020-11-12T22:12:02.180181Z",
+      "updateUser": {
+        "email": "admin@email.com",
+        "imageUrl": "https://photo.jpg"
+      },
+      "description": "new template",
+      "updateOrigin": "REST_API",
+      "updateType": "INCREMENTAL_UPDATE"
+    }
+  ],
+  "nextPageToken": "28"
+}

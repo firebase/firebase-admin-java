@@ -162,11 +162,19 @@ public class TestUtils {
   }
 
   public static HttpRequest createRequest(MockLowLevelHttpRequest request) throws IOException {
+    return createRequest(request, TEST_URL);
+  }
+
+  /**
+   * Creates a test HTTP POST request for the given target URL.
+   */
+  public static HttpRequest createRequest(
+      MockLowLevelHttpRequest request, GenericUrl url) throws IOException {
     HttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpRequest(request)
         .build();
     HttpRequestFactory requestFactory = transport.createRequestFactory();
-    return requestFactory.buildPostRequest(TEST_URL, new EmptyContent());
+    return requestFactory.buildPostRequest(url, new EmptyContent());
   }
 
   public static HttpTransport createFaultyHttpTransport() {

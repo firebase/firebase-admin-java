@@ -28,7 +28,7 @@ import com.google.common.base.Strings;
  *
  * @param <T> Type of the service
  */
-public abstract class FirebaseService<T> {
+public class FirebaseService<T> {
 
   private final String id;
   protected final T instance;
@@ -62,5 +62,7 @@ public abstract class FirebaseService<T> {
    * Tear down this FirebaseService instance and the service object wrapped in it, cleaning up
    * any allocated resources in the process.
    */
-  public abstract void destroy();
+  public void destroy() {
+    // Child classes can override this method to implement any service-specific cleanup logic.
+  }
 }

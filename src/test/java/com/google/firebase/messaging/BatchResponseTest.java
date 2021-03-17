@@ -21,6 +21,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.ErrorCode;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Test;
@@ -31,7 +32,7 @@ public class BatchResponseTest {
   public void testEmptyResponses() {
     List<SendResponse> responses = new ArrayList<>();
 
-    BatchResponse batchResponse = new BatchResponse(responses);
+    BatchResponse batchResponse = new BatchResponseImpl(responses);
 
     assertEquals(0, batchResponse.getSuccessCount());
     assertEquals(0, batchResponse.getFailureCount());
@@ -43,11 +44,11 @@ public class BatchResponseTest {
     ImmutableList<SendResponse> responses = ImmutableList.of(
         SendResponse.fromMessageId("message1"),
         SendResponse.fromMessageId("message2"),
-        SendResponse.fromException(new FirebaseMessagingException("error-code",
-            "error-message", null))
+        SendResponse.fromException(
+            new FirebaseMessagingException(ErrorCode.INTERNAL, "error-message"))
     );
 
-    BatchResponse batchResponse = new BatchResponse(responses);
+    BatchResponse batchResponse = new BatchResponseImpl(responses);
 
     assertEquals(2, batchResponse.getSuccessCount());
     assertEquals(1, batchResponse.getFailureCount());
@@ -61,7 +62,7 @@ public class BatchResponseTest {
   public void testResponsesImmutable() {
     List<SendResponse> responses = new ArrayList<>();
     responses.add(SendResponse.fromMessageId("message1"));
-    BatchResponse batchResponse = new BatchResponse(responses);
+    BatchResponse batchResponse = new BatchResponseImpl(responses);
     SendResponse sendResponse = SendResponse.fromMessageId("message2");
 
     try {
@@ -74,6 +75,6 @@ public class BatchResponseTest {
 
   @Test(expected = NullPointerException.class)
   public void testResponsesCannotBeNull() {
-    new BatchResponse(null);
+    new BatchResponseImpl(null);
   }
 }
