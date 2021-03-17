@@ -907,6 +907,18 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testDeleteProviderAndPhone() {
+    UpdateRequest update = new UpdateRequest("test");
+    Map<String, Object> map = update
+        .setDeleteProviders(ImmutableList.of("google.com"))
+        .setPhoneNumber(null)
+        .getProperties(Utils.getDefaultJsonFactory());
+    assertEquals(2, map.size());
+    assertEquals(update.getUid(), map.get("localId"));
+    assertEquals(ImmutableList.of("google.com", "phone"), map.get("deleteProvider"));
+  }
+
+  @Test
   public void testDeleteDisplayName() {
     Map<String, Object> map = new UpdateRequest("test")
         .setDisplayName(null)

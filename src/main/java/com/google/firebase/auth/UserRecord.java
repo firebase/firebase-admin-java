@@ -537,8 +537,12 @@ public class UserRecord implements UserInfo {
      *
      * @param providerIds list of identifiers for the identity providers.
      */
-    public UpdateRequest setDeleteProviders(List<String> providerIds) {
+    public UpdateRequest setDeleteProviders(Iterable<String> providerIds) {
       checkNotNull(providerIds);
+      for (String id : providerIds) {
+        checkArgument(!Strings.isNullOrEmpty(id), "providerIds must not be null or empty");
+      }
+
       properties.put("deleteProvider", providerIds);
       return this;
     }
@@ -564,7 +568,24 @@ public class UserRecord implements UserInfo {
       }
 
       if (copy.containsKey("phoneNumber") && copy.get("phoneNumber") == null) {
-        copy.put("deleteProvider", ImmutableList.of("phone"));
+        Object deleteProvider = copy.get("deleteProvider");
+        if (deleteProvider != null) {
+          if (!(deleteProvider instanceof Iterable<?>)) {
+            throw new IllegalStateException("Contents of deleteProvider was not iterable");
+          }
+
+          // Due to java's type erasure, we can't fully check the type. :(
+          @SuppressWarnings("unchecked")
+          Iterable<String> deleteProviderIterable = (Iterable<String>)deleteProvider;
+
+          copy.put("deleteProvider", new ImmutableList.Builder<String>()
+              .addAll(deleteProviderIterable)
+              .add("phone")
+              .build());
+        } else {
+          copy.put("deleteProvider", ImmutableList.of("phone"));
+        }
+
         copy.remove("phoneNumber");
       }
 
