@@ -145,7 +145,7 @@ final class FirebaseUserManager {
     return results;
   }
 
-  UserRecord getUserByFederatedId(
+  UserRecord getUserByProviderUid(
       String providerId, String uid) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
         "federatedUserId", ImmutableList.of(

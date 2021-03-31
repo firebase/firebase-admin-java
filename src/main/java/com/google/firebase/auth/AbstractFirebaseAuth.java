@@ -566,7 +566,7 @@ public abstract class AbstractFirebaseAuth {
    */
   public UserRecord getUserByProviderUid(
       @NonNull String providerId, @NonNull String uid) throws FirebaseAuthException {
-    return getUserByFederatedIdOp(providerId, uid).call();
+    return getUserByProviderUidOp(providerId, uid).call();
   }
 
   /**
@@ -583,10 +583,10 @@ public abstract class AbstractFirebaseAuth {
    */
   public ApiFuture<UserRecord> getUserByProviderUidAsync(
       @NonNull String providerId, @NonNull String uid) {
-    return getUserByFederatedIdOp(providerId, uid).callAsync(firebaseApp);
+    return getUserByProviderUidOp(providerId, uid).callAsync(firebaseApp);
   }
 
-  private CallableOperation<UserRecord, FirebaseAuthException> getUserByFederatedIdOp(
+  private CallableOperation<UserRecord, FirebaseAuthException> getUserByProviderUidOp(
       final String providerId, final String uid) {
     checkArgument(!Strings.isNullOrEmpty(providerId), "providerId must not be null or empty");
     checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
@@ -606,7 +606,7 @@ public abstract class AbstractFirebaseAuth {
     return new CallableOperation<UserRecord, FirebaseAuthException>() {
       @Override
       protected UserRecord execute() throws FirebaseAuthException {
-        return userManager.getUserByFederatedId(providerId, uid);
+        return userManager.getUserByProviderUid(providerId, uid);
       }
     };
   }

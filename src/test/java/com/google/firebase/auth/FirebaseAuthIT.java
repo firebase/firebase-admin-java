@@ -267,45 +267,37 @@ public class FirebaseAuthIT {
 
   @Test
   public void testLookupUserByPhone() throws Exception {
-    RandomUser randomUser1 = UserTestUtils.generateRandomUserInfo();
-    RandomUser randomUser2 = UserTestUtils.generateRandomUserInfo();
-    RandomUser randomUser3 = UserTestUtils.generateRandomUserInfo();
+    UserRecord user1 = null;
+    UserRecord user2 = null;
     try {
-      createUser(randomUser1.getUid(), /* phoneNumber= */ null, randomUser1.getEmail());
-      createUser(randomUser2.getUid(), randomUser2.getPhoneNumber(), randomUser2.getEmail());
-      importUser(randomUser3.getUid(), randomUser3.getPhoneNumber(), randomUser3.getEmail(),
-          "google.com", randomUser3.getUid() + "_google.com");
+      user1 = createRandomUser();
+      user2 = importRandomUser();
 
       UserRecord lookedUpRecord = auth.getUserByPhoneNumberAsync(
-          randomUser2.getPhoneNumber()).get();
-      assertEquals(randomUser2.getUid(), lookedUpRecord.getUid());
+          user1.getPhoneNumber()).get();
+      assertEquals(user1.getUid(), lookedUpRecord.getUid());
 
-      lookedUpRecord = auth.getUserByPhoneNumberAsync(randomUser3.getPhoneNumber()).get();
-      assertEquals(randomUser3.getUid(), lookedUpRecord.getUid());
+      lookedUpRecord = auth.getUserByPhoneNumberAsync(user2.getPhoneNumber()).get();
+      assertEquals(user2.getUid(), lookedUpRecord.getUid());
     } finally {
-      auth.deleteUserAsync(randomUser1.getUid()).get();
-      auth.deleteUserAsync(randomUser2.getUid()).get();
-      auth.deleteUserAsync(randomUser3.getUid()).get();
+      if (user1 != null) {
+        auth.deleteUserAsync(user1.getUid()).get();
+      }
+      if (user2 != null) {
+        auth.deleteUserAsync(user2.getUid()).get();
+      }
     }
   }
 
   @Test
-  public void testLookupUserByFederatedId() throws Exception {
-    RandomUser randomUser1 = UserTestUtils.generateRandomUserInfo();
-    RandomUser randomUser2 = UserTestUtils.generateRandomUserInfo();
-    RandomUser randomUser3 = UserTestUtils.generateRandomUserInfo();
+  public void testLookupUserByProviderUid() throws Exception {
+    UserRecord user = null;
     try {
-      createUser(
-          randomUser1.getUid(), /* phoneNumber= */ null, randomUser1.getEmail());
-      createUser(
-          randomUser2.getUid(), randomUser2.getPhoneNumber(), randomUser2.getEmail());
-      importUser(
-          randomUser3.getUid(), randomUser3.getPhoneNumber(), randomUser3.getEmail(),
-          "google.com", randomUser3.getUid() + "_google.com");
+      user = importRandomUser();
 
       UserRecord lookedUpRecord = auth.getUserByProviderUidAsync(
-          "google.com", randomUser3.getUid() + "_google.com").get();
-      assertEquals(randomUser3.getUid(), lookedUpRecord.getUid());
+          "google.com", user.getUid() + "_google.com").get();
+      assertEquals(user.getUid(), lookedUpRecord.getUid());
       assertEquals(2, lookedUpRecord.getProviderData().length);
       List<String> providers = new ArrayList<>();
       for (UserInfo provider : lookedUpRecord.getProviderData()) {
@@ -315,10 +307,9 @@ public class FirebaseAuthIT {
       assertTrue(providers.contains("google.com"));
 
     } finally {
-      // TODO(rsgowman): We can switch this to using bulk delete.
-      auth.deleteUserAsync(randomUser1.getUid()).get();
-      auth.deleteUserAsync(randomUser2.getUid()).get();
-      auth.deleteUserAsync(randomUser3.getUid()).get();
+      if (user != null) {
+        auth.deleteUserAsync(user.getUid()).get();
+      }
     }
   }
 
@@ -986,51 +977,45 @@ public class FirebaseAuthIT {
     assertNull(error.get());
   }
 
-  private UserRecord createUser(
-      String uid,
-      @Nullable String phoneNumber,
-      @Nullable String email) throws Exception {
+  private UserRecord createRandomUser() throws Exception {
+    RandomUser randomUser = UserTestUtils.generateRandomUserInfo();
+
     UserRecord.CreateRequest user = new UserRecord.CreateRequest()
-        .setUid(uid)
+        .setUid(randomUser.getUid())
         .setDisplayName("Random User")
+        .setEmail(randomUser.getEmail())
+        .setEmailVerified(true)
+        .setPhoneNumber(randomUser.getPhoneNumber())
         .setPhotoUrl("https://example.com/photo.png")
         .setPassword("password");
-    if (phoneNumber != null) {
-      user.setPhoneNumber(phoneNumber);
-    }
-    if (email != null) {
-      user.setEmail(email);
-      user.setEmailVerified(true);
-    }
+
     return auth.createUserAsync(user).get();
   }
 
-  private UserImportResult importUser(
-      String uid,
-      @Nullable String phoneNumber,
-      @Nullable String email,
-      String providerId,
-      String providerUid) throws Exception {
+  private UserRecord importRandomUser() throws Exception {
+    RandomUser randomUser = UserTestUtils.generateRandomUserInfo();
+
     ImportUserRecord.Builder builder = ImportUserRecord.builder()
-        .setUid(uid)
+        .setUid(randomUser.getUid())
         .setDisabled(false)
+        .setEmail(randomUser.getEmail())
+        .setEmailVerified(true)
+        .setPhoneNumber(randomUser.getPhoneNumber())
         .setUserMetadata(
             new UserMetadata(/* creationTimestamp= */ 20L, /* lastSignInTimestamp= */ 20L,
                 /* lastRefreshTimestamp= */ 20L))
         .addUserProvider(
             UserProvider.builder()
-            .setProviderId(providerId)
-            .setUid(providerUid)
+            .setProviderId("google.com")
+            .setUid(randomUser.getUid() + "_google.com")
             .build());
-    if (phoneNumber != null) {
-      builder.setPhoneNumber(phoneNumber);
-    }
-    if (email != null) {
-      builder.setEmail(email);
-      builder.setEmailVerified(true);
-    }
+
     ImportUserRecord user = builder.build();
-    return auth.importUsersAsync(ImmutableList.of(user)).get();
+    UserImportResult result = auth.importUsersAsync(ImmutableList.of(user)).get();
+    assertEquals(result.getSuccessCount(), 1);
+    assertEquals(result.getFailureCount(), 0);
+
+    return auth.getUserAsync(randomUser.getUid()).get();
   }
 
   private Map<String, String> parseLinkParameters(String link) throws Exception {
