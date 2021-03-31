@@ -564,7 +564,7 @@ public class UserRecord implements UserInfo {
      * @param providerToLink provider info to be linked to this user\'s account.
      */
     public UpdateRequest setProviderToLink(@NonNull UserProvider providerToLink) {
-      properties.put("linkProviderUserInfo", providerToLink);
+      properties.put("linkProviderUserInfo", checkNotNull(providerToLink));
       return this;
     }
 
@@ -606,13 +606,24 @@ public class UserRecord implements UserInfo {
       if (copy.containsKey("phoneNumber") && copy.get("phoneNumber") == null) {
         Object deleteProvider = copy.get("deleteProvider");
         if (deleteProvider != null) {
-          if (!(deleteProvider instanceof Iterable<?>)) {
-            throw new IllegalStateException("Contents of deleteProvider was not iterable");
-          }
-
           // Due to java's type erasure, we can't fully check the type. :(
           @SuppressWarnings("unchecked")
           Iterable<String> deleteProviderIterable = (Iterable<String>)deleteProvider;
+
+          // If we've been told to unlink the phone provider both via setting
+          // phoneNumber to null *and* by setting providersToUnlink to include
+          // 'phone', then we'll reject that. Though it might also be reasonable
+          // to relax this restriction and just unlink it.
+          for (String dp : deleteProviderIterable) {
+            if (dp == "phone") {
+              throw new IllegalArgumentException(
+                  "Both UpdateRequest.setPhoneNumber(null) and "
+                  + "UpdateRequest.setProvidersToUnlink(['phone']) were set. To "
+                  + "unlink from a phone provider, only specify "
+                  + "UpdateRequest.setPhoneNumber(null).");
+
+            }
+          }
 
           copy.put("deleteProvider", new ImmutableList.Builder<String>()
               .addAll(deleteProviderIterable)
