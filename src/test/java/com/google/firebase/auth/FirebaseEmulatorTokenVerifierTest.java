@@ -319,7 +319,8 @@ public class FirebaseEmulatorTokenVerifierTest {
     return createUnsignedTokenForEmulator(createHeader(), createTokenPayload());
   }
 
-  private String createUnsignedTokenForEmulator(JsonWebSignature.Header header, JsonWebSignature.Payload payload) {
+  private String createUnsignedTokenForEmulator(
+      JsonWebSignature.Header header, JsonWebSignature.Payload payload) {
     try {
       String content =
           Base64.encodeBase64URLSafeString(JSON_FACTORY.toByteArray(header)) + "." + Base64

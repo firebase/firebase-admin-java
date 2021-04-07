@@ -86,10 +86,11 @@ final class FirebaseEmulatorTokenVerifier implements FirebaseTokenVerifier {
    *   <li>The JWT contains valid issuer (iss) and audience (aud) claims as determined by the
    *   {@code IdTokenVerifier}.</li>
    *   <li>The JWT contains a valid subject (sub) claim.</li>
-   *   <li>The JWT is unsigned. If the JWT is signed, the signature is not verified and silently ignored.</li>
+   *   <li>The JWT is unsigned. If the JWT is signed, the signature is not verified and silently
+   *   ignored.</li>
    * </ol>
    *
-   * Note that all validations on the JWT header are skipped.
+   * <p>Note that all validations on the JWT header are skipped.</p>
    *
    * @param token The token string to be verified.
    * @return A decoded representation of the input token string.
