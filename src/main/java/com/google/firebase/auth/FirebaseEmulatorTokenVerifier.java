@@ -33,7 +33,7 @@ import java.io.IOException;
  * The implementation of the {@link FirebaseTokenVerifier} interface, for the Auth Emulator. Can be
  * customized to verify both Firebase ID tokens and session cookies.
  */
-final class EmulatorFirebaseTokenVerifier implements FirebaseTokenVerifier {
+final class FirebaseEmulatorTokenVerifier implements FirebaseTokenVerifier {
 
   private final JsonFactory jsonFactory;
   private final IdTokenVerifier idTokenVerifier;
@@ -44,7 +44,7 @@ final class EmulatorFirebaseTokenVerifier implements FirebaseTokenVerifier {
   private final AuthErrorCode expiredTokenErrorCode;
   private final String tenantId;
 
-  private EmulatorFirebaseTokenVerifier(Builder builder) {
+  private FirebaseEmulatorTokenVerifier(Builder builder) {
     this.jsonFactory = checkNotNull(builder.jsonFactory);
     this.idTokenVerifier = checkNotNull(builder.idTokenVerifier);
     checkArgument(!Strings.isNullOrEmpty(builder.shortName), "shortName must be specified");
@@ -57,22 +57,39 @@ final class EmulatorFirebaseTokenVerifier implements FirebaseTokenVerifier {
     this.tenantId = builder.tenantId;
   }
 
+  IdTokenVerifier getIdTokenVerifier() {
+    return idTokenVerifier;
+  }
+
+  String getShortName() {
+    return shortName;
+  }
+
+  String getArticledShortName() {
+    return articledShortName;
+  }
+
+  String getDocUrl() {
+    return docUrl;
+  }
+
   static Builder builder() {
     return new Builder();
   }
 
   /**
-   * Verifies that the given token string is a valid Firebase JWT. This implementation considers a
-   * token string to be valid if all the following conditions are met:
+   * Verifies that the given token string is a valid Firebase JWT <b>for the Auth Emulator</b>.
+   * This implementation considers a token string to be valid if the following conditions are
+   * met:
    * <ol>
-   *   <li>The token string is a valid RS256 JWT.</li>
-   *   <li>The JWT contains a valid key ID (kid) claim.</li>
    *   <li>The JWT is not expired, and it has been issued some time in the past.</li>
    *   <li>The JWT contains valid issuer (iss) and audience (aud) claims as determined by the
    *   {@code IdTokenVerifier}.</li>
    *   <li>The JWT contains a valid subject (sub) claim.</li>
-   *   <li>The JWT is signed by a Firebase Auth backend server.</li>
+   *   <li>The JWT is unsigned. If the JWT is signed, the signature is not verified and silently ignored.</li>
    * </ol>
+   *
+   * Note that all validations on the JWT header are skipped.
    *
    * @param token The token string to be verified.
    * @return A decoded representation of the input token string.
@@ -255,8 +272,8 @@ final class EmulatorFirebaseTokenVerifier implements FirebaseTokenVerifier {
       return this;
     }
 
-    EmulatorFirebaseTokenVerifier build() {
-      return new EmulatorFirebaseTokenVerifier(this);
+    FirebaseEmulatorTokenVerifier build() {
+      return new FirebaseEmulatorTokenVerifier(this);
     }
   }
 }

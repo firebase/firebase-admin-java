@@ -219,6 +219,14 @@ public class CryptoSignersTest {
     assertArrayEquals("local-signed-bytes".getBytes(), data);
   }
 
+  @Test
+  public void testEmulatorCryptoSigner() throws Exception {
+    CryptoSigner signer = new CryptoSigners.EmulatorCryptoSigner();
+    byte[] data = signer.sign("foo".getBytes());
+    // No signed bytes returned
+    assertEquals(data.length, 0);
+  }
+
   @After
   public void tearDown() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();

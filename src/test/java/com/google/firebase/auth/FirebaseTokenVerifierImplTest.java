@@ -399,20 +399,6 @@ public class FirebaseTokenVerifierImplTest {
     }
   }
 
-  @Test
-  public void testVerifyTokenUnexpectedTenantId() {
-    try {
-      fullyPopulatedBuilder()
-        .build()
-        .verifyToken(createTokenWithTenantId("TENANT_ID"));
-    } catch (FirebaseAuthException e) {
-      assertEquals(AuthErrorCode.TENANT_ID_MISMATCH, e.getAuthErrorCode());
-      assertEquals(
-          "The tenant ID ('TENANT_ID') of the token did not match the expected value ('')",
-          e.getMessage());
-    }
-  }
-
   @Test(expected = NullPointerException.class)
   public void testBuilderNoPublicKeysManager() {
     fullyPopulatedBuilder().setPublicKeysManager(null).build();

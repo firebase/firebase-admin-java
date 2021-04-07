@@ -112,7 +112,7 @@ public class CryptoSigners {
    * A {@link CryptoSigner} implementation that doesn't sign data. For use with the Auth Emulator
    * only
    */
-  public static class EmulatedSigner implements CryptoSigner {
+  public static class EmulatorCryptoSigner implements CryptoSigner {
 
     private static final String ACCOUNT = "firebase-auth-emulator@example.com";
 
