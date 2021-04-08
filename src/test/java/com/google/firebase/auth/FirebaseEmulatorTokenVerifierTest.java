@@ -19,6 +19,7 @@ package com.google.firebase.auth;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.api.client.auth.openidconnect.IdTokenVerifier;
 import com.google.api.client.googleapis.util.Utils;
@@ -63,11 +64,28 @@ public class FirebaseEmulatorTokenVerifierTest {
   }
 
   @Test
+  public void testVerifyTokenWithoutKeyId() throws Exception {
+    String token = createTokenWithoutKeyId();
+
+    // Should not throw, even if missing kid
+    tokenVerifier.verifyToken(token);
+  }
+
+  @Test
+  public void testVerifyTokenWithoutAlg() throws Exception {
+    String token = createTokenWithoutAlg();
+
+    // Should not throw, even if algorithm is none
+    tokenVerifier.verifyToken(token);
+  }
+
+  @Test
   public void testVerifyTokenIncorrectAudience() {
     String token = createTokenWithIncorrectAudience();
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for incorrect audience");
     } catch (FirebaseAuthException e) {
       String message = String.format("Firebase test token has incorrect \"aud\" (audience) claim. "
           + "Expected \"%s\" but got \"invalid-audience\". "
@@ -84,6 +102,7 @@ public class FirebaseEmulatorTokenVerifierTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for incorrect issuer");
     } catch (FirebaseAuthException e) {
       String message = String.format("Firebase test token has incorrect \"iss\" (issuer) claim. "
           + "Expected \"%s\" but got "
@@ -100,6 +119,7 @@ public class FirebaseEmulatorTokenVerifierTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for missing subject");
     } catch (FirebaseAuthException e) {
       String message = "Firebase test token has no \"sub\" (subject) claim. "
           + "See https://test.doc.url for details on how to retrieve a test token.";
@@ -113,6 +133,7 @@ public class FirebaseEmulatorTokenVerifierTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for empty subject");
     } catch (FirebaseAuthException e) {
       String message = "Firebase test token has an empty string \"sub\" (subject) claim. "
           + "See https://test.doc.url for details on how to retrieve a test token.";
@@ -126,6 +147,7 @@ public class FirebaseEmulatorTokenVerifierTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for long subject");
     } catch (FirebaseAuthException e) {
       String message = "Firebase test token has \"sub\" (subject) claim longer "
           + "than 128 characters. "
@@ -144,6 +166,7 @@ public class FirebaseEmulatorTokenVerifierTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for token issued in future");
     } catch (FirebaseAuthException e) {
       String message = "Firebase test token is not yet valid. "
           + "See https://test.doc.url for details on how to retrieve a test token.";
@@ -161,6 +184,7 @@ public class FirebaseEmulatorTokenVerifierTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for expired token");
     } catch (FirebaseAuthException e) {
       String message = "Firebase test token has expired. "
           + "Get a fresh test token and try again. "
@@ -183,6 +207,7 @@ public class FirebaseEmulatorTokenVerifierTest {
   public void testMalformedToken() {
     try {
       tokenVerifier.verifyToken("not.a.jwt");
+      fail("No error thrown for malformed token");
     } catch (FirebaseAuthException e) {
       String message = "Failed to parse Firebase test token. "
           + "Make sure you passed a string that represents a complete and valid JWT. "
@@ -223,6 +248,7 @@ public class FirebaseEmulatorTokenVerifierTest {
       fullyPopulatedBuilder()
           .setTenantId("TENANT_1")
           .build().verifyToken(createTokenWithTenantId("TENANT_2"));
+      fail("No error thrown for mismatched tenant IDs");
     } catch (FirebaseAuthException e) {
       assertEquals(AuthErrorCode.TENANT_ID_MISMATCH, e.getAuthErrorCode());
       assertEquals(
@@ -236,26 +262,13 @@ public class FirebaseEmulatorTokenVerifierTest {
     try {
       fullyPopulatedBuilder()
           .setTenantId("TENANT_1")
-          .build().verifyToken(createUnsignedTokenForEmulator());
+          .build()
+          .verifyToken(createUnsignedTokenForEmulator());
+      fail("No error thrown for missing tenant ID in token");
     } catch (FirebaseAuthException e) {
       assertEquals(AuthErrorCode.TENANT_ID_MISMATCH, e.getAuthErrorCode());
       assertEquals(
           "The tenant ID ('') of the token did not match the expected value ('TENANT_1')",
-          e.getMessage());
-    }
-  }
-
-  @Test
-  public void testVerifyTokenMissingTenantId() {
-    try {
-      fullyPopulatedBuilder()
-        .setTenantId("TENANT_ID")
-        .build()
-        .verifyToken(createUnsignedTokenForEmulator());
-    } catch (FirebaseAuthException e) {
-      assertEquals(AuthErrorCode.TENANT_ID_MISMATCH, e.getAuthErrorCode());
-      assertEquals(
-          "The tenant ID ('') of the token did not match the expected value ('TENANT_ID')",
           e.getMessage());
     }
   }
@@ -325,11 +338,23 @@ public class FirebaseEmulatorTokenVerifierTest {
       String content =
           Base64.encodeBase64URLSafeString(JSON_FACTORY.toByteArray(header)) + "." + Base64
               .encodeBase64URLSafeString(JSON_FACTORY.toByteArray(payload));
-      // Unsigned token
+      // Unsigned token with no signature component
       return content + ".";
     } catch (IOException e) {
       throw new RuntimeException("Failed to create test token", e);
     }
+  }
+
+  private String createTokenWithoutKeyId() {
+    JsonWebSignature.Header header = createHeader();
+    header.setKeyId(null);
+    return createUnsignedTokenForEmulator(header, createTokenPayload());
+  }
+
+  private String createTokenWithoutAlg() {
+    JsonWebSignature.Header header = createHeader();
+    header.setAlgorithm("none");
+    return createUnsignedTokenForEmulator(header, createTokenPayload());
   }
 
   private String createTokenWithSubject(String sub) {
