@@ -31,6 +31,7 @@ import com.google.api.core.ApiFuture;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.firebase.ErrorCode;
 
 import com.google.firebase.FirebaseApp;
@@ -56,9 +57,12 @@ public class FirebaseAuthTest {
       ErrorCode.INVALID_ARGUMENT, "Test error message", null, null, null);
   private static final long VALID_SINCE = 1494364393;
   private static final String TEST_USER = "testUser";
+  private static final String AUTH_EMULATOR = "localhost:9099";
 
   @After
   public void cleanup() {
+    // Cleanup for tests on Auth Emulator
+    TestUtils.unsetEnvironmentVariables(ImmutableSet.of("FIREBASE_AUTH_EMULATOR_HOST"));
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
@@ -250,6 +254,45 @@ public class FirebaseAuthTest {
 
     try {
       auth.verifyIdToken("idtoken", true);
+      fail("No error thrown for revoked ID token");
+    } catch (FirebaseAuthException e) {
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
+      assertEquals("Firebase id token is revoked.", e.getMessage());
+      assertNull(e.getCause());
+      assertNull(e.getHttpResponse());
+      assertEquals(AuthErrorCode.REVOKED_ID_TOKEN, e.getAuthErrorCode());
+    }
+
+    assertEquals("idtoken", tokenVerifier.getLastTokenString());
+  }
+
+  @Test
+  public void testVerifyIdTokenWithEmulator() throws Exception {
+    // Enable emulator mode
+    TestUtils.setEnvironmentVariables(
+        ImmutableMap.of("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR));
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
+        getFirebaseToken(VALID_SINCE + 1000));
+    FirebaseAuth auth = getAuthForIdTokenVerificationWithRevocationCheck(tokenVerifier);
+
+    FirebaseToken firebaseToken = auth.verifyIdToken("idtoken", false);
+
+    assertEquals("testUser", firebaseToken.getUid());
+    assertEquals("idtoken", tokenVerifier.getLastTokenString());
+  }
+
+  @Test
+  public void testVerifyIdTokenFailureWithEmulator() {
+    // Enable emulator mode
+    TestUtils.setEnvironmentVariables(
+        ImmutableMap.of("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR));
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
+        getFirebaseToken(VALID_SINCE - 1000));
+    FirebaseAuth auth = getAuthForIdTokenVerificationWithRevocationCheck(tokenVerifier);
+
+    try {
+      // Should throw if token is revoked, even if checkRevoked is false.
+      auth.verifyIdToken("idtoken", false);
       fail("No error thrown for revoked ID token");
     } catch (FirebaseAuthException e) {
       assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
