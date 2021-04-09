@@ -475,6 +475,29 @@ public class UserRecord implements UserInfo {
       if (phone != null) {
         checkPhoneNumber(phone);
       }
+
+      if (phone == null && properties.containsKey("deleteProvider")) {
+        Object deleteProvider = properties.get("deleteProvider");
+        if (deleteProvider != null) {
+          // Due to java's type erasure, we can't fully check the type. :(
+          @SuppressWarnings("unchecked")
+          Iterable<String> deleteProviderIterable = (Iterable<String>)deleteProvider;
+
+          // If we've been told to unlink the phone provider both via setting phoneNumber to null
+          // *and* by setting providersToUnlink to include 'phone', then we'll reject that. Though
+          // it might also be reasonable to relax this restriction and just unlink it.
+          for (String dp : deleteProviderIterable) {
+            if (dp == "phone") {
+              throw new IllegalArgumentException(
+                  "Both UpdateRequest.setPhoneNumber(null) and "
+                  + "UpdateRequest.setProvidersToUnlink(['phone']) were set. To unlink from a "
+                  + "phone provider, only specify UpdateRequest.setPhoneNumber(null).");
+
+            }
+          }
+        }
+      }
+
       properties.put("phoneNumber", phone);
       return this;
     }
@@ -577,6 +600,17 @@ public class UserRecord implements UserInfo {
       checkNotNull(providerIds);
       for (String id : providerIds) {
         checkArgument(!Strings.isNullOrEmpty(id), "providerIds must not be null or empty");
+
+        if (id == "phone" && properties.containsKey("phoneNumber")
+            && properties.get("phoneNumber") == null) {
+          // If we've been told to unlink the phone provider both via setting phoneNumber to null
+          // *and* by setting providersToUnlink to include 'phone', then we'll reject that. Though
+          // it might also be reasonable to relax this restriction and just unlink it.
+          throw new IllegalArgumentException(
+              "Both UpdateRequest.setPhoneNumber(null) and "
+              + "UpdateRequest.setProvidersToUnlink(['phone']) were set. To unlink from a phone "
+              + "provider, only specify UpdateRequest.setPhoneNumber(null).");
+        }
       }
 
       properties.put("deleteProvider", providerIds);
@@ -609,21 +643,6 @@ public class UserRecord implements UserInfo {
           // Due to java's type erasure, we can't fully check the type. :(
           @SuppressWarnings("unchecked")
           Iterable<String> deleteProviderIterable = (Iterable<String>)deleteProvider;
-
-          // If we've been told to unlink the phone provider both via setting
-          // phoneNumber to null *and* by setting providersToUnlink to include
-          // 'phone', then we'll reject that. Though it might also be reasonable
-          // to relax this restriction and just unlink it.
-          for (String dp : deleteProviderIterable) {
-            if (dp == "phone") {
-              throw new IllegalArgumentException(
-                  "Both UpdateRequest.setPhoneNumber(null) and "
-                  + "UpdateRequest.setProvidersToUnlink(['phone']) were set. To "
-                  + "unlink from a phone provider, only specify "
-                  + "UpdateRequest.setPhoneNumber(null).");
-
-            }
-          }
 
           copy.put("deleteProvider", new ImmutableList.Builder<String>()
               .addAll(deleteProviderIterable)

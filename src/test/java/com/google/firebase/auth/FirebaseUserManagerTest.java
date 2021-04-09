@@ -1186,15 +1186,24 @@ public class FirebaseUserManagerTest {
   @Test
   public void testDoubleDeletePhoneProvider() throws Exception {
     UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("uid")
-        .setPhoneNumber(null)
+        .setPhoneNumber(null);
+
+    try {
+      update.setProvidersToUnlink(ImmutableList.of("phone"));
+      fail("No error thrown for double delete phone provider");
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test
+  public void testDoubleDeletePhoneProviderReverseOrder() throws Exception {
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("uid")
         .setProvidersToUnlink(ImmutableList.of("phone"));
 
-    initializeAppForUserManagement();
     try {
-      FirebaseAuth.getInstance().updateUserAsync(update).get();
+      update.setPhoneNumber(null);
       fail("No error thrown for double delete phone provider");
-    } catch (ExecutionException e) {
-      assertThat(e.getCause(), instanceOf(IllegalArgumentException.class));
+    } catch (IllegalArgumentException expected) {
     }
   }
 
