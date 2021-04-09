@@ -267,50 +267,31 @@ public class FirebaseAuthIT {
 
   @Test
   public void testLookupUserByPhone() throws Exception {
-    UserRecord user1 = null;
-    UserRecord user2 = null;
-    try {
-      user1 = createRandomUser();
-      user2 = importRandomUser();
+    UserRecord user1 = createTemporaryUser();
+    UserRecord user2 = importTemporaryUser();
 
-      UserRecord lookedUpRecord = auth.getUserByPhoneNumberAsync(
-          user1.getPhoneNumber()).get();
-      assertEquals(user1.getUid(), lookedUpRecord.getUid());
+    UserRecord lookedUpRecord = auth.getUserByPhoneNumberAsync(
+        user1.getPhoneNumber()).get();
+    assertEquals(user1.getUid(), lookedUpRecord.getUid());
 
-      lookedUpRecord = auth.getUserByPhoneNumberAsync(user2.getPhoneNumber()).get();
-      assertEquals(user2.getUid(), lookedUpRecord.getUid());
-    } finally {
-      if (user1 != null) {
-        auth.deleteUserAsync(user1.getUid()).get();
-      }
-      if (user2 != null) {
-        auth.deleteUserAsync(user2.getUid()).get();
-      }
-    }
+    lookedUpRecord = auth.getUserByPhoneNumberAsync(user2.getPhoneNumber()).get();
+    assertEquals(user2.getUid(), lookedUpRecord.getUid());
   }
 
   @Test
   public void testLookupUserByProviderUid() throws Exception {
-    UserRecord user = null;
-    try {
-      user = importRandomUser();
+    UserRecord user = importTemporaryUser();
 
-      UserRecord lookedUpRecord = auth.getUserByProviderUidAsync(
-          "google.com", user.getUid() + "_google.com").get();
-      assertEquals(user.getUid(), lookedUpRecord.getUid());
-      assertEquals(2, lookedUpRecord.getProviderData().length);
-      List<String> providers = new ArrayList<>();
-      for (UserInfo provider : lookedUpRecord.getProviderData()) {
-        providers.add(provider.getProviderId());
-      }
-      assertTrue(providers.contains("phone"));
-      assertTrue(providers.contains("google.com"));
-
-    } finally {
-      if (user != null) {
-        auth.deleteUserAsync(user.getUid()).get();
-      }
+    UserRecord lookedUpRecord = auth.getUserByProviderUidAsync(
+        "google.com", user.getUid() + "_google.com").get();
+    assertEquals(user.getUid(), lookedUpRecord.getUid());
+    assertEquals(2, lookedUpRecord.getProviderData().length);
+    List<String> providers = new ArrayList<>();
+    for (UserInfo provider : lookedUpRecord.getProviderData()) {
+      providers.add(provider.getProviderId());
     }
+    assertTrue(providers.contains("phone"));
+    assertTrue(providers.contains("google.com"));
   }
 
   @Test
@@ -977,7 +958,10 @@ public class FirebaseAuthIT {
     assertNull(error.get());
   }
 
-  private UserRecord createRandomUser() throws Exception {
+  /**
+   * Create a temporary user. This user will automatically be cleaned up after testing completes.
+   */
+  private UserRecord createTemporaryUser() throws Exception {
     RandomUser randomUser = UserTestUtils.generateRandomUserInfo();
 
     UserRecord.CreateRequest user = new UserRecord.CreateRequest()
@@ -989,10 +973,13 @@ public class FirebaseAuthIT {
         .setPhotoUrl("https://example.com/photo.png")
         .setPassword("password");
 
-    return auth.createUserAsync(user).get();
+    return temporaryUser.create(user);
   }
 
-  private UserRecord importRandomUser() throws Exception {
+  /**
+   * Import a temporary user. This user will automatically be cleaned up after testing completes.
+   */
+  private UserRecord importTemporaryUser() throws Exception {
     RandomUser randomUser = UserTestUtils.generateRandomUserInfo();
 
     ImportUserRecord.Builder builder = ImportUserRecord.builder()
@@ -1014,6 +1001,7 @@ public class FirebaseAuthIT {
     UserImportResult result = auth.importUsersAsync(ImmutableList.of(user)).get();
     assertEquals(result.getSuccessCount(), 1);
     assertEquals(result.getFailureCount(), 0);
+    temporaryUser.registerUid(randomUser.getUid());
 
     return auth.getUserAsync(randomUser.getUid()).get();
   }
