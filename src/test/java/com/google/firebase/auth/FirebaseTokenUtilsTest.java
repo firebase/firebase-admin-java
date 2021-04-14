@@ -137,14 +137,14 @@ public class FirebaseTokenUtilsTest {
         .setProjectId(TEST_PROJECT_ID)
         .build());
 
-    FirebaseTokenVerifierImpl sessionCookieVerifier =
+    FirebaseTokenVerifierImpl emulatorCookieVerifier =
         FirebaseTokenUtils.createSessionCookieVerifier(app, CLOCK);
 
-    assertEquals("Emulator session cookie", sessionCookieVerifier.getShortName());
-    assertEquals("an Emulator session cookie", sessionCookieVerifier.getArticledShortName());
+    assertEquals("Emulator session cookie", emulatorCookieVerifier.getShortName());
+    assertEquals("an Emulator session cookie", emulatorCookieVerifier.getArticledShortName());
     assertEquals("https://firebase.google.com/docs/auth/admin/manage-cookies",
-        sessionCookieVerifier.getDocUrl());
-    verifyJwtVerifier(sessionCookieVerifier.getIdTokenVerifier(),
+        emulatorCookieVerifier.getDocUrl());
+    verifyJwtVerifier(emulatorCookieVerifier.getIdTokenVerifier(),
         "https://session.firebase.google.com/test-project-id");
   }
 

@@ -862,6 +862,6 @@ public class FirebaseTokenVerifierImplTest {
   }
 
   private void setUpForEmulator() {
-    TestUtils.setEnvironmentVariables(ImmutableMap.of(AUTH_EMULATOR_HOST, "http://localhost:9099"));
+    TestUtils.setEnvironmentVariables(ImmutableMap.of(AUTH_EMULATOR_HOST, "localhost:9099"));
   }
 }
