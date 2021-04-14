@@ -21,6 +21,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.json.webtoken.JsonWebToken;
 import com.google.api.client.testing.http.FixedClock;
+import com.google.api.client.util.Base64;
 import com.google.api.client.util.Clock;
 import com.google.common.io.BaseEncoding;
 import java.io.IOException;
@@ -69,6 +70,31 @@ class TestTokenFactory {
     }
   }
 
+  public String createUnsignedTokenForEmulator() {
+    return createUnsignedTokenForEmulator(createHeaderForEmulator(), createTokenPayload());
+  }
+
+  public String createUnsignedTokenForEmulator(JsonWebSignature.Header header) {
+    return createUnsignedTokenForEmulator(header, createTokenPayload());
+  }
+
+  public String createUnsignedTokenForEmulator(JsonWebToken.Payload payload) {
+    return createUnsignedTokenForEmulator(createHeaderForEmulator(), payload);
+  }
+
+  public String createUnsignedTokenForEmulator(
+      JsonWebSignature.Header header, JsonWebSignature.Payload payload) {
+    try {
+      String content =
+          Base64.encodeBase64URLSafeString(JSON_FACTORY.toByteArray(header)) + "." + Base64
+              .encodeBase64URLSafeString(JSON_FACTORY.toByteArray(payload));
+      // Unsigned token with no signature component
+      return content + ".";
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to create test token", e);
+    }
+  }
+
   public JsonWebSignature.Header createHeader() {
     JsonWebSignature.Header header = new JsonWebSignature.Header();
     header.setAlgorithm("RS256");
@@ -85,5 +111,12 @@ class TestTokenFactory {
     payload.setExpirationTimeSeconds(CLOCK.currentTimeMillis() / 1000 + 3600);
     payload.setSubject(UID);
     return payload;
+  }
+
+  public JsonWebSignature.Header createHeaderForEmulator() {
+    JsonWebSignature.Header header = new JsonWebSignature.Header();
+    header.setAlgorithm("NONE");
+    header.setType("JWT");
+    return header;
   }
 }

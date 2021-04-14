@@ -103,15 +103,10 @@ final class FirebaseUserManager {
   }
 
   private String getIdToolkitUrl(String projectId, String version) {
-    String maybeEmulator = getEmulatorHost();
-    if (maybeEmulator != null) {
-      return String.format(ID_TOOLKIT_URL_EMULATOR, maybeEmulator, version, projectId);
+    if (Utils.isEmulatorMode()) {
+      return String.format(ID_TOOLKIT_URL_EMULATOR, Utils.getEmulatorHost(), version, projectId);
     }
     return String.format(ID_TOOLKIT_URL, version, projectId);
-  }
-
-  private String getEmulatorHost() {
-    return System.getenv("FIREBASE_AUTH_EMULATOR_HOST");
   }
 
   @VisibleForTesting

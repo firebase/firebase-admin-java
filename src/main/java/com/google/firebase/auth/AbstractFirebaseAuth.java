@@ -18,6 +18,7 @@ package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.firebase.auth.Utils.isEmulatorMode;
 
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Clock;
@@ -309,7 +310,7 @@ public abstract class AbstractFirebaseAuth {
   @VisibleForTesting
   FirebaseTokenVerifier getIdTokenVerifier(boolean checkRevoked) {
     FirebaseTokenVerifier verifier = idTokenVerifier.get();
-    if (checkRevoked || useEmulator()) {
+    if (checkRevoked || isEmulatorMode()) {
       FirebaseUserManager userManager = getUserManager();
       verifier = RevocationCheckDecorator.decorateIdTokenVerifier(verifier, userManager);
     }
@@ -389,7 +390,7 @@ public abstract class AbstractFirebaseAuth {
   @VisibleForTesting
   FirebaseTokenVerifier getSessionCookieVerifier(boolean checkRevoked) {
     FirebaseTokenVerifier verifier = cookieVerifier.get();
-    if (checkRevoked || useEmulator()) {
+    if (checkRevoked || isEmulatorMode()) {
       FirebaseUserManager userManager = getUserManager();
       verifier = RevocationCheckDecorator.decorateSessionCookieVerifier(verifier, userManager);
     }
@@ -1705,11 +1706,6 @@ public abstract class AbstractFirebaseAuth {
             }
           }
         });
-  }
-
-  private boolean useEmulator() {
-    return !Strings.isNullOrEmpty(
-        System.getenv("FIREBASE_AUTH_EMULATOR_HOST"));
   }
 
   protected abstract static class Builder<T extends  Builder<T>> {

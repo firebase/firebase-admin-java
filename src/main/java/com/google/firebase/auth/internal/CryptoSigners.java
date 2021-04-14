@@ -22,6 +22,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.Utils;
 import com.google.firebase.internal.AbstractPlatformErrorHandler;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.ErrorHandlingHttpClient;
@@ -145,6 +146,10 @@ public class CryptoSigners {
    * documented at go/firebase-admin-sign.
    */
   public static CryptoSigner getCryptoSigner(FirebaseApp firebaseApp) throws IOException {
+    if (Utils.isEmulatorMode()) {
+      return new EmulatorCryptoSigner();
+    }
+
     GoogleCredentials credentials = ImplFirebaseTrampolines.getCredentials(firebaseApp);
 
     // If the SDK was initialized with a service account, use it to sign bytes.

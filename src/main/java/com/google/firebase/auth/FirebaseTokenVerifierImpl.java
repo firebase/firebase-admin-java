@@ -18,6 +18,7 @@ package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.firebase.auth.Utils.isEmulatorMode;
 
 import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.auth.openidconnect.IdToken.Payload;
@@ -96,7 +97,9 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
   public FirebaseToken verifyToken(String token) throws FirebaseAuthException {
     IdToken idToken = parse(token);
     checkContents(idToken);
-    checkSignature(idToken);
+    if (!isEmulatorMode()) {
+      checkSignature(idToken);
+    }
     FirebaseToken firebaseToken = new FirebaseToken(idToken.getPayload());
     checkTenantId(firebaseToken);
     return firebaseToken;
@@ -168,9 +171,9 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     String errorMessage = null;
     AuthErrorCode errorCode = invalidTokenErrorCode;
 
-    if (header.getKeyId() == null) {
+    if (!isEmulatorMode() && header.getKeyId() == null) {
       errorMessage = getErrorForTokenWithoutKid(header, payload);
-    } else if (!RS256.equals(header.getAlgorithm())) {
+    } else if (!isEmulatorMode() && !RS256.equals(header.getAlgorithm())) {
       errorMessage = String.format(
           "Firebase %s has incorrect algorithm. Expected \"%s\" but got \"%s\".",
           shortName,

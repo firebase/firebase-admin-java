@@ -29,6 +29,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.Utils;
 import com.google.firebase.auth.internal.AuthHttpClient;
 import com.google.firebase.auth.internal.ListTenantsResponse;
 import com.google.firebase.internal.ApiClientUtils;
@@ -66,15 +67,10 @@ final class FirebaseTenantClient {
   }
 
   private String getTenantMgtBaseUrl(String projectId) {
-    String maybeEmulator = getEmulatorHost();
-    if (maybeEmulator != null) {
-      return String.format(ID_TOOLKIT_URL_EMULATOR, maybeEmulator, "v2", projectId);
+    if (Utils.isEmulatorMode()) {
+      return String.format(ID_TOOLKIT_URL_EMULATOR, Utils.getEmulatorHost(), "v2", projectId);
     }
     return String.format(ID_TOOLKIT_URL, "v2", projectId);
-  }
-
-  private String getEmulatorHost() {
-    return System.getenv("FIREBASE_AUTH_EMULATOR_HOST");
   }
 
   void setInterceptor(HttpResponseInterceptor interceptor) {

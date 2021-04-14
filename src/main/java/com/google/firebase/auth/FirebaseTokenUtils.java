@@ -29,7 +29,6 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.CryptoSigners;
-import com.google.firebase.auth.internal.CryptoSigners.EmulatorCryptoSigner;
 import com.google.firebase.auth.internal.FirebaseTokenFactory;
 import com.google.firebase.internal.Nullable;
 
@@ -63,8 +62,7 @@ final class FirebaseTokenUtils {
       return new FirebaseTokenFactory(
           firebaseApp.getOptions().getJsonFactory(),
           clock,
-          useEmulator() ? new EmulatorCryptoSigner()
-              : CryptoSigners.getCryptoSigner(firebaseApp),
+          CryptoSigners.getCryptoSigner(firebaseApp),
           tenantId);
     } catch (IOException e) {
       throw new IllegalStateException(
@@ -76,11 +74,11 @@ final class FirebaseTokenUtils {
     }
   }
 
-  static FirebaseTokenVerifier createIdTokenVerifier(FirebaseApp app, Clock clock) {
+  static FirebaseTokenVerifierImpl createIdTokenVerifier(FirebaseApp app, Clock clock) {
     return createIdTokenVerifier(app, clock, null);
   }
 
-  static FirebaseTokenVerifier createIdTokenVerifier(
+  static FirebaseTokenVerifierImpl createIdTokenVerifier(
       FirebaseApp app, Clock clock, @Nullable String tenantId) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkState(!Strings.isNullOrEmpty(projectId),
@@ -89,19 +87,9 @@ final class FirebaseTokenUtils {
         clock, ID_TOKEN_ISSUER_PREFIX, projectId);
     GooglePublicKeysManager publicKeysManager = newPublicKeysManager(
         app.getOptions(), clock, ID_TOKEN_CERT_URL);
-    if (useEmulator()) {
-      return FirebaseEmulatorTokenVerifier.builder()
-          .setShortName("Emulator ID token")
-          .setDocUrl("https://firebase.google.com/docs/auth/admin/verify-id-tokens")
-          .setInvalidTokenErrorCode(AuthErrorCode.INVALID_ID_TOKEN)
-          .setExpiredTokenErrorCode(AuthErrorCode.EXPIRED_ID_TOKEN)
-          .setJsonFactory(app.getOptions().getJsonFactory())
-          .setIdTokenVerifier(idTokenVerifier)
-          .setTenantId(tenantId)
-          .build();
-    }
+    String shortName = Utils.isEmulatorMode() ? "Emulator ID token" : "ID token";
     return FirebaseTokenVerifierImpl.builder()
-        .setShortName("ID token")
+        .setShortName(shortName)
         .setMethod("verifyIdToken()")
         .setDocUrl("https://firebase.google.com/docs/auth/admin/verify-id-tokens")
         .setJsonFactory(app.getOptions().getJsonFactory())
@@ -113,32 +101,22 @@ final class FirebaseTokenUtils {
         .build();
   }
 
-  static FirebaseTokenVerifier createSessionCookieVerifier(FirebaseApp app, Clock clock) {
+  static FirebaseTokenVerifierImpl createSessionCookieVerifier(FirebaseApp app, Clock clock) {
     return createSessionCookieVerifier(app, clock, null);
   }
 
-  static FirebaseTokenVerifier createSessionCookieVerifier(
+  static FirebaseTokenVerifierImpl createSessionCookieVerifier(
       FirebaseApp app, Clock clock, @Nullable String tenantId) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkState(!Strings.isNullOrEmpty(projectId),
         "Must initialize FirebaseApp with a project ID to call verifySessionCookie()");
     IdTokenVerifier idTokenVerifier = newIdTokenVerifier(
         clock, SESSION_COOKIE_ISSUER_PREFIX, projectId);
-    if (useEmulator()) {
-      return FirebaseEmulatorTokenVerifier.builder()
-          .setShortName("Emulator session cookie")
-          .setDocUrl("https://firebase.google.com/docs/auth/admin/manage-cookies")
-          .setInvalidTokenErrorCode(AuthErrorCode.INVALID_SESSION_COOKIE)
-          .setExpiredTokenErrorCode(AuthErrorCode.EXPIRED_SESSION_COOKIE)
-          .setJsonFactory(app.getOptions().getJsonFactory())
-          .setIdTokenVerifier(idTokenVerifier)
-          .setTenantId(tenantId)
-          .build();
-    }
+    String shortName = Utils.isEmulatorMode() ? "Emulator session cookie" : "session cookie";
     GooglePublicKeysManager publicKeysManager = newPublicKeysManager(
         app.getOptions(), clock, SESSION_COOKIE_CERT_URL);
     return FirebaseTokenVerifierImpl.builder()
-        .setShortName("session cookie")
+        .setShortName(shortName)
         .setMethod("verifySessionCookie()")
         .setDocUrl("https://firebase.google.com/docs/auth/admin/manage-cookies")
         .setInvalidTokenErrorCode(AuthErrorCode.INVALID_SESSION_COOKIE)
@@ -166,10 +144,5 @@ final class FirebaseTokenUtils {
         .setAudience(ImmutableList.of(projectId))
         .setIssuer(issuerPrefix + projectId)
         .build();
-  }
-
-  private static boolean useEmulator() {
-    return !Strings.isNullOrEmpty(
-        System.getenv("FIREBASE_AUTH_EMULATOR_HOST"));
   }
 }
