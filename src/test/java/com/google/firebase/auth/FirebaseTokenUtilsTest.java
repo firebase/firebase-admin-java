@@ -89,8 +89,8 @@ public class FirebaseTokenUtilsTest {
     FirebaseTokenVerifierImpl emulatorVerifier =
         FirebaseTokenUtils.createIdTokenVerifier(app, CLOCK);
 
-    assertEquals("Emulator ID token", emulatorVerifier.getShortName());
-    assertEquals("an Emulator ID token", emulatorVerifier.getArticledShortName());
+    assertEquals("ID token", emulatorVerifier.getShortName());
+    assertEquals("an ID token", emulatorVerifier.getArticledShortName());
     assertEquals("https://firebase.google.com/docs/auth/admin/verify-id-tokens",
         emulatorVerifier.getDocUrl());
     verifyJwtVerifier(emulatorVerifier.getIdTokenVerifier(),
@@ -140,8 +140,8 @@ public class FirebaseTokenUtilsTest {
     FirebaseTokenVerifierImpl emulatorCookieVerifier =
         FirebaseTokenUtils.createSessionCookieVerifier(app, CLOCK);
 
-    assertEquals("Emulator session cookie", emulatorCookieVerifier.getShortName());
-    assertEquals("an Emulator session cookie", emulatorCookieVerifier.getArticledShortName());
+    assertEquals("session cookie", emulatorCookieVerifier.getShortName());
+    assertEquals("a session cookie", emulatorCookieVerifier.getArticledShortName());
     assertEquals("https://firebase.google.com/docs/auth/admin/manage-cookies",
         emulatorCookieVerifier.getDocUrl());
     verifyJwtVerifier(emulatorCookieVerifier.getIdTokenVerifier(),

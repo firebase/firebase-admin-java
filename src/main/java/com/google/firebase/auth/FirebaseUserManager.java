@@ -41,6 +41,7 @@ import com.google.firebase.auth.internal.GetAccountInfoResponse;
 import com.google.firebase.auth.internal.ListOidcProviderConfigsResponse;
 import com.google.firebase.auth.internal.ListSamlProviderConfigsResponse;
 import com.google.firebase.auth.internal.UploadAccountResponse;
+import com.google.firebase.auth.internal.Utils;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.NonNull;

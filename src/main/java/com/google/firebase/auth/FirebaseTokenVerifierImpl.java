@@ -18,7 +18,6 @@ package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.firebase.auth.Utils.isEmulatorMode;
 
 import com.google.api.client.auth.openidconnect.IdToken;
 import com.google.api.client.auth.openidconnect.IdToken.Payload;
@@ -30,6 +29,7 @@ import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.firebase.ErrorCode;
+import com.google.firebase.auth.internal.Utils;
 import com.google.firebase.internal.Nullable;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -58,6 +58,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
   private final AuthErrorCode invalidTokenErrorCode;
   private final AuthErrorCode expiredTokenErrorCode;
   private final String tenantId;
+  private final boolean isEmulatorMode;
 
   private FirebaseTokenVerifierImpl(Builder builder) {
     this.jsonFactory = checkNotNull(builder.jsonFactory);
@@ -73,6 +74,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     this.invalidTokenErrorCode = checkNotNull(builder.invalidTokenErrorCode);
     this.expiredTokenErrorCode = checkNotNull(builder.expiredTokenErrorCode);
     this.tenantId = builder.tenantId;
+    this.isEmulatorMode = Utils.isEmulatorMode();
   }
 
   /**
@@ -97,7 +99,7 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
   public FirebaseToken verifyToken(String token) throws FirebaseAuthException {
     IdToken idToken = parse(token);
     checkContents(idToken);
-    if (!isEmulatorMode()) {
+    if (!isEmulatorMode) {
       checkSignature(idToken);
     }
     FirebaseToken firebaseToken = new FirebaseToken(idToken.getPayload());
@@ -171,9 +173,9 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     String errorMessage = null;
     AuthErrorCode errorCode = invalidTokenErrorCode;
 
-    if (!isEmulatorMode() && header.getKeyId() == null) {
+    if (!isEmulatorMode && header.getKeyId() == null) {
       errorMessage = getErrorForTokenWithoutKid(header, payload);
-    } else if (!isEmulatorMode() && !RS256.equals(header.getAlgorithm())) {
+    } else if (!isEmulatorMode && !RS256.equals(header.getAlgorithm())) {
       errorMessage = String.format(
           "Firebase %s has incorrect algorithm. Expected \"%s\" but got \"%s\".",
           shortName,

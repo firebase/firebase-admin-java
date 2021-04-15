@@ -87,9 +87,8 @@ final class FirebaseTokenUtils {
         clock, ID_TOKEN_ISSUER_PREFIX, projectId);
     GooglePublicKeysManager publicKeysManager = newPublicKeysManager(
         app.getOptions(), clock, ID_TOKEN_CERT_URL);
-    String shortName = Utils.isEmulatorMode() ? "Emulator ID token" : "ID token";
     return FirebaseTokenVerifierImpl.builder()
-        .setShortName(shortName)
+        .setShortName("ID token")
         .setMethod("verifyIdToken()")
         .setDocUrl("https://firebase.google.com/docs/auth/admin/verify-id-tokens")
         .setJsonFactory(app.getOptions().getJsonFactory())
@@ -112,11 +111,10 @@ final class FirebaseTokenUtils {
         "Must initialize FirebaseApp with a project ID to call verifySessionCookie()");
     IdTokenVerifier idTokenVerifier = newIdTokenVerifier(
         clock, SESSION_COOKIE_ISSUER_PREFIX, projectId);
-    String shortName = Utils.isEmulatorMode() ? "Emulator session cookie" : "session cookie";
     GooglePublicKeysManager publicKeysManager = newPublicKeysManager(
         app.getOptions(), clock, SESSION_COOKIE_CERT_URL);
     return FirebaseTokenVerifierImpl.builder()
-        .setShortName(shortName)
+        .setShortName("session cookie")
         .setMethod("verifySessionCookie()")
         .setDocUrl("https://firebase.google.com/docs/auth/admin/manage-cookies")
         .setInvalidTokenErrorCode(AuthErrorCode.INVALID_SESSION_COOKIE)
