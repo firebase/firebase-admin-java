@@ -79,6 +79,13 @@ public final class OidcProviderConfig extends ProviderConfig {
         "Invalid OIDC provider ID (must be prefixed with 'oidc.'): " + providerId);
   }
 
+  static Map<String, Boolean> ensureResponseType(Map<String,Object> properties) {
+    if (properties.get("responseType") == null) {
+      properties.put("responseType", new HashMap<String, Boolean>());
+    }
+    return (Map<String, Boolean>) properties.get("responseType");
+  }
+
   /**
    * A specification class for creating a new OIDC Auth provider.
    *
@@ -158,10 +165,7 @@ public final class OidcProviderConfig extends ProviderConfig {
      * @param enabled A boolean signifying whether the code response type is supported.
      */
     public CreateRequest setCodeResponseType(boolean enabled) {
-      if (properties.get("responseType") == null) {
-        properties.put("responseType", new HashMap<String, Boolean>());
-      }
-      Map<String, Boolean> map = (Map<String, Boolean>) properties.get("responseType");
+      Map<String, Boolean> map = ensureResponseType(properties);
       map.put("code", enabled);
       return this;
     }
@@ -175,11 +179,7 @@ public final class OidcProviderConfig extends ProviderConfig {
      * @param enabled A boolean signifying whether the ID token response type is supported.
      */
     public CreateRequest setIdTokenResponseType(boolean enabled) {
-      if (properties.get("responseType") == null) {
-        properties.put("responseType", new HashMap<String, Boolean>());
-      }
-
-      Map<String, Boolean> map = (Map<String, Boolean>) properties.get("responseType");
+      Map<String, Boolean> map = ensureResponseType(properties);
       map.put("idToken", enabled);
       return this;
     }
@@ -265,10 +265,7 @@ public final class OidcProviderConfig extends ProviderConfig {
      * @param enabled A boolean signifying whether the code response type is supported.
      */
     public UpdateRequest setCodeResponseType(boolean enabled) {
-      if (properties.get("responseType") == null) {
-        properties.put("responseType", new HashMap<String, Boolean>());
-      }
-      Map<String, Boolean> map = (Map<String, Boolean>) properties.get("responseType");
+      Map<String, Boolean> map = ensureResponseType(properties);
       map.put("code", enabled);
       return this;
     }
@@ -282,11 +279,7 @@ public final class OidcProviderConfig extends ProviderConfig {
      * @param enabled A boolean signifying whether the ID token response type is supported.
      */
     public UpdateRequest setIdTokenResponseType(boolean enabled) {
-      if (properties.get("responseType") == null) {
-        properties.put("responseType", new HashMap<String, Boolean>());
-      }
-
-      Map<String, Boolean> map = (Map<String, Boolean>) properties.get("responseType");
+      Map<String, Boolean> map = ensureResponseType(properties);
       map.put("idToken", enabled);
       return this;
     }

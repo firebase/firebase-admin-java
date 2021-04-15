@@ -25,6 +25,7 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
 
@@ -58,6 +59,31 @@ public class OidcProviderConfigTest {
     assertEquals("https://oidc.com/issuer", config.getIssuer());
     assertTrue(config.isCodeResponseType());
     assertFalse(config.isIdTokenResponseType());
+  }
+
+  @Test
+  public void testEnsureResponseType() {
+    Map<String, Object> properties = new HashMap<>();
+
+    Map<String, Boolean> responseType = OidcProviderConfig.ensureResponseType(properties);
+
+    assertNotNull(responseType);
+    assertEquals(responseType, properties.get("responseType"));
+  }
+
+  @Test
+  public void testEnsureResponseType_alreadyPresent() {
+    Map<String, Object> properties = new HashMap<>();
+    Map<String, Boolean> responseType = new HashMap<>();
+    responseType.put("code", true);
+    properties.put("responseType", responseType);
+
+    Map<String, Boolean> returnedResponseType = OidcProviderConfig.ensureResponseType(properties);
+
+    assertEquals(responseType, returnedResponseType);
+    assertTrue(returnedResponseType.get("code"));
+    assertEquals(returnedResponseType.size(), 1);
+    assertEquals(responseType, properties.get("responseType"));
   }
 
   @Test
