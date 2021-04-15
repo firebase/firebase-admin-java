@@ -55,8 +55,12 @@ public final class OidcProviderConfig extends ProviderConfig {
     return issuer;
   }
 
-  public GenericJson getResponseType() {
-    return responseType;
+  public boolean isCodeResponseType() {
+    return (responseType.containsKey("code") && (boolean) responseType.get("code"));
+  }
+
+  public boolean isIdTokenResponseType() {
+    return (responseType.containsKey("idToken") && (boolean) responseType.get("idToken"));
   }
 
   /**

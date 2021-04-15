@@ -56,11 +56,8 @@ public class OidcProviderConfigTest {
     assertEquals("CLIENT_ID", config.getClientId());
     assertEquals("CLIENT_SECRET", config.getClientSecret());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
-    assertNotNull(config.getResponseType());
-
-    GenericJson responseType = config.getResponseType();
-    assertTrue((boolean)responseType.get("code"));
-    assertFalse((boolean)responseType.get("idToken"));
+    assertTrue(config.isCodeResponseType());
+    assertFalse(config.isIdTokenResponseType());
   }
 
   @Test

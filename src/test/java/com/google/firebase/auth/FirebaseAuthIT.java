@@ -714,9 +714,8 @@ public class FirebaseAuthIT {
     assertEquals("ClientId", config.getClientId());
     assertEquals("ClientSecret", config.getClientSecret());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
-    GenericJson responseType = config.getResponseType();
-    assertTrue((boolean) responseType.get("code"));
-    assertNull(responseType.get("idToken"));
+    assertTrue(config.isCodeResponseType());
+    assertFalse(config.isIdTokenResponseType());
 
     // Get provider config
     config = auth.getOidcProviderConfigAsync(providerId).get();
@@ -726,9 +725,8 @@ public class FirebaseAuthIT {
     assertEquals("ClientId", config.getClientId());
     assertEquals("ClientSecret", config.getClientSecret());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
-    responseType = config.getResponseType();
-    assertTrue((boolean) responseType.get("code"));
-    assertNull(responseType.get("idToken"));
+    assertTrue(config.isCodeResponseType());
+    assertFalse(config.isIdTokenResponseType());
 
     // Update provider config
     OidcProviderConfig.UpdateRequest updateRequest =
@@ -748,9 +746,8 @@ public class FirebaseAuthIT {
     assertEquals("NewClientId", config.getClientId());
     assertEquals("NewClientSecret", config.getClientSecret());
     assertEquals("https://oidc.com/new-issuer", config.getIssuer());
-    responseType = config.getResponseType();
-    assertTrue((boolean) responseType.get("idToken"));
-    assertNull(responseType.get("code"));
+    assertTrue(config.isIdTokenResponseType());
+    assertFalse(config.isCodeResponseType());
 
     // Delete provider config
     temporaryProviderConfig.deleteOidcProviderConfig(providerId);

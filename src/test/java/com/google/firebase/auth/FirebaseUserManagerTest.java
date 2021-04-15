@@ -2821,10 +2821,8 @@ public class FirebaseUserManagerTest {
     assertEquals("CLIENT_ID", config.getClientId());
     assertEquals("CLIENT_SECRET", config.getClientSecret());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
-
-    GenericJson responseType = config.getResponseType();
-    assertTrue((boolean) responseType.get("code"));
-    assertFalse((boolean) responseType.get("idToken"));
+    assertTrue(config.isCodeResponseType());
+    assertFalse(config.isIdTokenResponseType());
   }
 
   private static void checkSamlProviderConfig(SamlProviderConfig config, String providerId) {

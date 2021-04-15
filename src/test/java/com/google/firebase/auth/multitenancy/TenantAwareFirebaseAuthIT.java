@@ -289,9 +289,8 @@ public class TenantAwareFirebaseAuthIT {
     assertEquals("ClientId", config.getClientId());
     assertEquals("ClientSecret", config.getClientSecret());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
-    GenericJson responseType = config.getResponseType();
-    assertTrue((boolean) responseType.get("code"));
-    assertNull(responseType.get("idToken"));
+    assertTrue(config.isCodeResponseType());
+    assertFalse(config.isIdTokenResponseType());
 
     // Get provider config
     config = tenantAwareAuth.getOidcProviderConfigAsync(providerId).get();
@@ -300,9 +299,8 @@ public class TenantAwareFirebaseAuthIT {
     assertEquals("ClientId", config.getClientId());
     assertEquals("ClientSecret", config.getClientSecret());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
-    responseType = config.getResponseType();
-    assertTrue((boolean) responseType.get("code"));
-    assertNull(responseType.get("idToken"));
+    assertTrue(config.isCodeResponseType());
+    assertFalse(config.isIdTokenResponseType());
 
     // Update provider config
     OidcProviderConfig.UpdateRequest updateRequest =
@@ -322,9 +320,8 @@ public class TenantAwareFirebaseAuthIT {
     assertEquals("NewClientId", config.getClientId());
     assertEquals("NewClientSecret", config.getClientSecret());
     assertEquals("https://oidc.com/new-issuer", config.getIssuer());
-    responseType = config.getResponseType();
-    assertTrue((boolean) responseType.get("idToken"));
-    assertNull(responseType.get("code"));
+    assertFalse(config.isCodeResponseType());
+    assertTrue(config.isIdTokenResponseType());
 
     // Delete provider config
     temporaryProviderConfig.deleteOidcProviderConfig(providerId);
