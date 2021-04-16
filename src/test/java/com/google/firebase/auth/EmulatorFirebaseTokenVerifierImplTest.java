@@ -51,7 +51,6 @@ public class EmulatorFirebaseTokenVerifierImplTest {
     GooglePublicKeysManager publicKeysManager = newPublicKeysManager(serviceAccount.getCert());
     this.tokenVerifier = newTestTokenVerifier(publicKeysManager);
     this.tokenFactory = new TestTokenFactory(serviceAccount.getPrivateKey(), TEST_TOKEN_ISSUER);
-
   }
 
   @After
@@ -78,17 +77,11 @@ public class EmulatorFirebaseTokenVerifierImplTest {
   }
 
   @Test
-  public void testVerifyTokenIncorrectAlgorithm() {
+  public void testVerifyTokenIncorrectAlgorithm() throws Exception {
     String token = createTokenWithIncorrectAlgorithm();
 
-    try {
-      tokenVerifier.verifyToken(token);
-    } catch (FirebaseAuthException e) {
-      String message = "Firebase test token has incorrect algorithm. "
-          + "Expected \"RS256\" but got \"HSA\". "
-          + "See https://test.doc.url for details on how to retrieve a test token.";
-      checkInvalidTokenException(e, message);
-    }
+    // Should not throw, even if missing kid
+    tokenVerifier.verifyToken(token);
   }
 
   @Test

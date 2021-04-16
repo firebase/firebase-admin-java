@@ -58,7 +58,6 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
   private final AuthErrorCode invalidTokenErrorCode;
   private final AuthErrorCode expiredTokenErrorCode;
   private final String tenantId;
-  private final boolean isEmulatorMode;
 
   private FirebaseTokenVerifierImpl(Builder builder) {
     this.jsonFactory = checkNotNull(builder.jsonFactory);
@@ -74,7 +73,6 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     this.invalidTokenErrorCode = checkNotNull(builder.invalidTokenErrorCode);
     this.expiredTokenErrorCode = checkNotNull(builder.expiredTokenErrorCode);
     this.tenantId = builder.tenantId;
-    this.isEmulatorMode = Utils.isEmulatorMode();
   }
 
   /**
@@ -97,8 +95,9 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
    */
   @Override
   public FirebaseToken verifyToken(String token) throws FirebaseAuthException {
+    boolean isEmulatorMode = Utils.isEmulatorMode();
     IdToken idToken = parse(token);
-    checkContents(idToken);
+    checkContents(idToken, isEmulatorMode);
     if (!isEmulatorMode) {
       checkSignature(idToken);
     }
@@ -165,7 +164,8 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     }
   }
 
-  private void checkContents(final IdToken idToken) throws FirebaseAuthException {
+  private void checkContents(final IdToken idToken, boolean isEmulatorMode)
+      throws FirebaseAuthException {
     final Header header = idToken.getHeader();
     final Payload payload = idToken.getPayload();
 

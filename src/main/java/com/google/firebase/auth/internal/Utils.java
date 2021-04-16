@@ -19,7 +19,7 @@ package com.google.firebase.auth.internal;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 
-public  class Utils {
+public class Utils {
   @VisibleForTesting
   public static final String AUTH_EMULATOR_HOST = "FIREBASE_AUTH_EMULATOR_HOST";
 
