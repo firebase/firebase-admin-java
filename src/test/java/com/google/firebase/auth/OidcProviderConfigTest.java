@@ -72,7 +72,7 @@ public class OidcProviderConfigTest {
   }
 
   @Test
-  public void testEnsureResponseType_alreadyPresent() {
+  public void testEnsureResponseTypeAlreadyPresent() {
     Map<String, Object> properties = new HashMap<>();
     Map<String, Boolean> responseType = new HashMap<>();
     responseType.put("code", true);
