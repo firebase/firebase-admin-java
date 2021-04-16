@@ -29,6 +29,7 @@ import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.firebase.ErrorCode;
+import com.google.firebase.auth.internal.Utils;
 import com.google.firebase.internal.Nullable;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -94,9 +95,12 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
    */
   @Override
   public FirebaseToken verifyToken(String token) throws FirebaseAuthException {
+    boolean isEmulatorMode = Utils.isEmulatorMode();
     IdToken idToken = parse(token);
-    checkContents(idToken);
-    checkSignature(idToken);
+    checkContents(idToken, isEmulatorMode);
+    if (!isEmulatorMode) {
+      checkSignature(idToken);
+    }
     FirebaseToken firebaseToken = new FirebaseToken(idToken.getPayload());
     checkTenantId(firebaseToken);
     return firebaseToken;
@@ -160,7 +164,8 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     }
   }
 
-  private void checkContents(final IdToken idToken) throws FirebaseAuthException {
+  private void checkContents(final IdToken idToken, boolean isEmulatorMode)
+      throws FirebaseAuthException {
     final Header header = idToken.getHeader();
     final Payload payload = idToken.getPayload();
 
@@ -168,9 +173,9 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     String errorMessage = null;
     AuthErrorCode errorCode = invalidTokenErrorCode;
 
-    if (header.getKeyId() == null) {
+    if (!isEmulatorMode && header.getKeyId() == null) {
       errorMessage = getErrorForTokenWithoutKid(header, payload);
-    } else if (!RS256.equals(header.getAlgorithm())) {
+    } else if (!isEmulatorMode && !RS256.equals(header.getAlgorithm())) {
       errorMessage = String.format(
           "Firebase %s has incorrect algorithm. Expected \"%s\" but got \"%s\".",
           shortName,

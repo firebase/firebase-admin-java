@@ -41,6 +41,7 @@ import com.google.firebase.auth.internal.GetAccountInfoResponse;
 import com.google.firebase.auth.internal.ListOidcProviderConfigsResponse;
 import com.google.firebase.auth.internal.ListSamlProviderConfigsResponse;
 import com.google.firebase.auth.internal.UploadAccountResponse;
+import com.google.firebase.auth.internal.Utils;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.NonNull;
@@ -72,6 +73,8 @@ final class FirebaseUserManager {
 
   private static final String ID_TOOLKIT_URL =
       "https://identitytoolkit.googleapis.com/%s/projects/%s";
+  private static final String ID_TOOLKIT_URL_EMULATOR =
+          "http://%s/identitytoolkit.googleapis.com/%s/projects/%s";
 
   private final String userMgtBaseUrl;
   private final String idpConfigMgtBaseUrl;
@@ -85,8 +88,8 @@ final class FirebaseUserManager {
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
     this.jsonFactory = checkNotNull(builder.jsonFactory, "JsonFactory must not be null");
-    final String idToolkitUrlV1 = String.format(ID_TOOLKIT_URL, "v1", projectId);
-    final String idToolkitUrlV2 = String.format(ID_TOOLKIT_URL, "v2", projectId);
+    final String idToolkitUrlV1 = getIdToolkitUrl(projectId, "v1");
+    final String idToolkitUrlV2 = getIdToolkitUrl(projectId, "v2");
     final String tenantId = builder.tenantId;
     if (tenantId == null) {
       this.userMgtBaseUrl = idToolkitUrlV1;
@@ -98,6 +101,13 @@ final class FirebaseUserManager {
     }
 
     this.httpClient = new AuthHttpClient(jsonFactory, builder.requestFactory);
+  }
+
+  private String getIdToolkitUrl(String projectId, String version) {
+    if (Utils.isEmulatorMode()) {
+      return String.format(ID_TOOLKIT_URL_EMULATOR, Utils.getEmulatorHost(), version, projectId);
+    }
+    return String.format(ID_TOOLKIT_URL, version, projectId);
   }
 
   @VisibleForTesting

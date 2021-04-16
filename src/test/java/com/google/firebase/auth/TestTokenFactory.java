@@ -20,8 +20,11 @@ import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.json.webtoken.JsonWebToken;
+import com.google.api.client.json.webtoken.JsonWebToken.Payload;
 import com.google.api.client.testing.http.FixedClock;
+import com.google.api.client.util.Base64;
 import com.google.api.client.util.Clock;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -69,6 +72,30 @@ class TestTokenFactory {
     }
   }
 
+  public String createUnsignedTokenForEmulator() {
+    return createUnsignedTokenForEmulator(createHeaderForEmulator(), createTokenPayload());
+  }
+
+  public String createUnsignedTokenForEmulator(JsonWebSignature.Header header) {
+    return createUnsignedTokenForEmulator(header, createTokenPayload());
+  }
+
+  public String createUnsignedTokenForEmulator(JsonWebToken.Payload payload) {
+    return createUnsignedTokenForEmulator(createHeaderForEmulator(), payload);
+  }
+
+  public String createUnsignedTokenForEmulator(
+      JsonWebSignature.Header header, JsonWebSignature.Payload payload) {
+    try {
+      String encodedHeader = Base64.encodeBase64URLSafeString(JSON_FACTORY.toByteArray(header));
+      String encodedPayload = Base64.encodeBase64URLSafeString(JSON_FACTORY.toByteArray(payload));
+      // Unsigned token with no signature component
+      return String.format("%s.%s.", encodedHeader, encodedPayload);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to create test token", e);
+    }
+  }
+
   public JsonWebSignature.Header createHeader() {
     JsonWebSignature.Header header = new JsonWebSignature.Header();
     header.setAlgorithm("RS256");
@@ -85,5 +112,70 @@ class TestTokenFactory {
     payload.setExpirationTimeSeconds(CLOCK.currentTimeMillis() / 1000 + 3600);
     payload.setSubject(UID);
     return payload;
+  }
+
+  public JsonWebSignature.Header createHeaderForEmulator() {
+    JsonWebSignature.Header header = new JsonWebSignature.Header();
+    header.setAlgorithm("none");
+    header.setType("JWT");
+    return header;
+  }
+
+  public String createTokenWithoutKeyId(boolean isEmulatorMode) {
+    JsonWebSignature.Header header = createHeader();
+    header.setKeyId(null);
+    return isEmulatorMode ? createUnsignedTokenForEmulator(header)
+        : createToken(header);
+  }
+
+  public String createTokenWithSubject(String sub, boolean isEmulatorMode) {
+    Payload payload = createTokenPayload();
+    payload.setSubject(sub);
+    return isEmulatorMode ? createUnsignedTokenForEmulator(payload)
+        : createToken(payload);
+  }
+
+  public String createTokenWithIncorrectAlgorithm(boolean isEmulatorMode) {
+    JsonWebSignature.Header header = createHeader();
+    header.setAlgorithm("HSA");
+    return isEmulatorMode ? createUnsignedTokenForEmulator(header)
+        : createToken(header);
+  }
+
+  public String createTokenWithoutAlgorithm(boolean isEmulatorMode) {
+    JsonWebSignature.Header header = createHeader();
+    header.setAlgorithm("none");
+    return isEmulatorMode ? createUnsignedTokenForEmulator(header)
+        : createToken(header);
+  }
+
+  public String createTokenWithIncorrectAudience(boolean isEmulatorMode) {
+    Payload payload = createTokenPayload();
+    payload.setAudience("invalid-audience");
+    return isEmulatorMode ? createUnsignedTokenForEmulator(payload)
+        : createToken(payload);
+  }
+
+  public String createTokenWithIncorrectIssuer(boolean isEmulatorMode) {
+    Payload payload = createTokenPayload();
+    payload.setIssuer("https://incorrect.issuer.prefix/" + TestTokenFactory.PROJECT_ID);
+    return isEmulatorMode ? createUnsignedTokenForEmulator(payload)
+        : createToken(payload);
+  }
+
+  public String createTokenWithTimestamps(long issuedAtSeconds, long expirationSeconds,
+      boolean isEmulatorMode) {
+    Payload payload = createTokenPayload();
+    payload.setIssuedAtTimeSeconds(issuedAtSeconds);
+    payload.setExpirationTimeSeconds(expirationSeconds);
+    return isEmulatorMode ? createUnsignedTokenForEmulator(payload)
+        : createToken(payload);
+  }
+
+  public String createTokenWithTenantId(String tenantId, boolean isEmulatorMode) {
+    Payload payload = createTokenPayload();
+    payload.set("firebase", ImmutableMap.of("tenant", tenantId));
+    return isEmulatorMode ? createUnsignedTokenForEmulator(payload)
+        : createToken(payload);
   }
 }
