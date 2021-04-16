@@ -80,7 +80,7 @@ public class EmulatorFirebaseTokenVerifierImplTest {
   public void testVerifyTokenIncorrectAlgorithm() throws Exception {
     String token = createTokenWithIncorrectAlgorithm();
 
-    // Should not throw, even if missing kid
+    // Should not throw, even if missing algorithm
     tokenVerifier.verifyToken(token);
   }
 
