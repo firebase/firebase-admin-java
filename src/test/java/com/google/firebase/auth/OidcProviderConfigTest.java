@@ -22,7 +22,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.api.client.googleapis.util.Utils;
-import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import java.io.IOException;
 import java.util.HashMap;
