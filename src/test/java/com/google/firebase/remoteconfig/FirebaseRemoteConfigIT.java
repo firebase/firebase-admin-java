@@ -54,6 +54,11 @@ public class FirebaseRemoteConfigIT {
   }
 
   @Test
+  public void testToTriggerNightlyEmailNotifications() {
+    assertEquals("a", "b");
+  }
+
+  @Test
   public void testValidateTemplate() throws FirebaseRemoteConfigException {
     final Template inputTemplate = remoteConfig.getTemplate();
     final Map<String, Parameter> expectedParameters = getParameters();
