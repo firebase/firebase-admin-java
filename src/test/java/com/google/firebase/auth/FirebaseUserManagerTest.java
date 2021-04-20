@@ -85,6 +85,13 @@ public class FirebaseUserManagerTest {
 
   private static final Map<String, Object> ACTION_CODE_SETTINGS_MAP =
           ACTION_CODE_SETTINGS.getProperties();
+  private static final UserProvider USER_PROVIDER = UserProvider.builder()
+        .setUid("testuid")
+        .setProviderId("facebook.com")
+        .setEmail("test@example.com")
+        .setDisplayName("Test User")
+        .setPhotoUrl("https://test.com/user.png")
+        .build();
 
   private static final String PROJECT_BASE_URL =
       "https://identitytoolkit.googleapis.com/v2/projects/test-project-id";
@@ -1147,8 +1154,10 @@ public class FirebaseUserManagerTest {
         .setEmailVerified(true)
         .setPassword("secret")
         .setCustomClaims(claims)
+        .setProviderToLink(USER_PROVIDER)
+        .setProvidersToUnlink(ImmutableList.of("google.com"))
         .getProperties(JSON_FACTORY);
-    assertEquals(8, map.size());
+    assertEquals(10, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals("Display Name", map.get("displayName"));
     assertEquals("http://test.com/example.png", map.get("photoUrl"));
@@ -1157,6 +1166,8 @@ public class FirebaseUserManagerTest {
     assertTrue((Boolean) map.get("emailVerified"));
     assertEquals("secret", map.get("password"));
     assertEquals(JSON_FACTORY.toString(claims), map.get("customAttributes"));
+    assertEquals(USER_PROVIDER, map.get("linkProviderUserInfo"));
+    assertEquals(ImmutableList.of("google.com"), map.get("deleteProvider"));
   }
 
   @Test
@@ -1192,6 +1203,64 @@ public class FirebaseUserManagerTest {
     assertEquals(2, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals("{}", map.get("customAttributes"));
+  }
+
+  @Test
+  public void testLinkProvider() {
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
+    Map<String, Object> map = update
+        .setProviderToLink(USER_PROVIDER)
+        .getProperties(Utils.getDefaultJsonFactory());
+    assertEquals(2, map.size());
+    assertEquals(update.getUid(), map.get("localId"));
+    assertEquals(USER_PROVIDER, map.get("linkProviderUserInfo"));
+  }
+
+  @Test
+  public void testDeleteProvider() {
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
+    Map<String, Object> map = update
+        .setProvidersToUnlink(ImmutableList.of("google.com"))
+        .getProperties(Utils.getDefaultJsonFactory());
+    assertEquals(2, map.size());
+    assertEquals(update.getUid(), map.get("localId"));
+    assertEquals(ImmutableList.of("google.com"), map.get("deleteProvider"));
+  }
+
+  @Test
+  public void testDeleteProviderAndPhone() {
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
+    Map<String, Object> map = update
+        .setProvidersToUnlink(ImmutableList.of("google.com"))
+        .setPhoneNumber(null)
+        .getProperties(Utils.getDefaultJsonFactory());
+    assertEquals(2, map.size());
+    assertEquals(update.getUid(), map.get("localId"));
+    assertEquals(ImmutableList.of("google.com", "phone"), map.get("deleteProvider"));
+  }
+
+  @Test
+  public void testDoubleDeletePhoneProvider() throws Exception {
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("uid")
+        .setPhoneNumber(null);
+
+    try {
+      update.setProvidersToUnlink(ImmutableList.of("phone"));
+      fail("No error thrown for double delete phone provider");
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test
+  public void testDoubleDeletePhoneProviderReverseOrder() throws Exception {
+    UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("uid")
+        .setProvidersToUnlink(ImmutableList.of("phone"));
+
+    try {
+      update.setPhoneNumber(null);
+      fail("No error thrown for double delete phone provider");
+    } catch (IllegalArgumentException expected) {
+    }
   }
 
   @Test

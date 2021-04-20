@@ -475,6 +475,29 @@ public class UserRecord implements UserInfo {
       if (phone != null) {
         checkPhoneNumber(phone);
       }
+
+      if (phone == null && properties.containsKey("deleteProvider")) {
+        Object deleteProvider = properties.get("deleteProvider");
+        if (deleteProvider != null) {
+          // Due to java's type erasure, we can't fully check the type. :(
+          @SuppressWarnings("unchecked")
+          Iterable<String> deleteProviderIterable = (Iterable<String>)deleteProvider;
+
+          // If we've been told to unlink the phone provider both via setting phoneNumber to null
+          // *and* by setting providersToUnlink to include 'phone', then we'll reject that. Though
+          // it might also be reasonable to relax this restriction and just unlink it.
+          for (String dp : deleteProviderIterable) {
+            if (dp == "phone") {
+              throw new IllegalArgumentException(
+                  "Both UpdateRequest.setPhoneNumber(null) and "
+                  + "UpdateRequest.setProvidersToUnlink(['phone']) were set. To unlink from a "
+                  + "phone provider, only specify UpdateRequest.setPhoneNumber(null).");
+
+            }
+          }
+        }
+      }
+
       properties.put("phoneNumber", phone);
       return this;
     }
@@ -548,6 +571,52 @@ public class UserRecord implements UserInfo {
       return this;
     }
 
+    /**
+     * Links this user to the specified provider.
+     *
+     * <p>Linking a provider to an existing user account does not invalidate the
+     * refresh token of that account. In other words, the existing account
+     * would continue to be able to access resources, despite not having used
+     * the newly linked provider to log in. If you wish to force the user to
+     * authenticate with this new provider, you need to (a) revoke their
+     * refresh token (see
+     * https://firebase.google.com/docs/auth/admin/manage-sessions#revoke_refresh_tokens),
+     * and (b) ensure no other authentication methods are present on this
+     * account.
+     *
+     * @param providerToLink provider info to be linked to this user\'s account.
+     */
+    public UpdateRequest setProviderToLink(@NonNull UserProvider providerToLink) {
+      properties.put("linkProviderUserInfo", checkNotNull(providerToLink));
+      return this;
+    }
+
+    /**
+     * Unlinks this user from the specified providers.
+     *
+     * @param providerIds list of identifiers for the identity providers.
+     */
+    public UpdateRequest setProvidersToUnlink(Iterable<String> providerIds) {
+      checkNotNull(providerIds);
+      for (String id : providerIds) {
+        checkArgument(!Strings.isNullOrEmpty(id), "providerIds must not be null or empty");
+
+        if (id == "phone" && properties.containsKey("phoneNumber")
+            && properties.get("phoneNumber") == null) {
+          // If we've been told to unlink the phone provider both via setting phoneNumber to null
+          // *and* by setting providersToUnlink to include 'phone', then we'll reject that. Though
+          // it might also be reasonable to relax this restriction and just unlink it.
+          throw new IllegalArgumentException(
+              "Both UpdateRequest.setPhoneNumber(null) and "
+              + "UpdateRequest.setProvidersToUnlink(['phone']) were set. To unlink from a phone "
+              + "provider, only specify UpdateRequest.setPhoneNumber(null).");
+        }
+      }
+
+      properties.put("deleteProvider", providerIds);
+      return this;
+    }
+
     UpdateRequest setValidSince(long epochSeconds) {
       checkValidSince(epochSeconds);
       properties.put("validSince", epochSeconds);
@@ -569,7 +638,20 @@ public class UserRecord implements UserInfo {
       }
 
       if (copy.containsKey("phoneNumber") && copy.get("phoneNumber") == null) {
-        copy.put("deleteProvider", ImmutableList.of("phone"));
+        Object deleteProvider = copy.get("deleteProvider");
+        if (deleteProvider != null) {
+          // Due to java's type erasure, we can't fully check the type. :(
+          @SuppressWarnings("unchecked")
+          Iterable<String> deleteProviderIterable = (Iterable<String>)deleteProvider;
+
+          copy.put("deleteProvider", new ImmutableList.Builder<String>()
+              .addAll(deleteProviderIterable)
+              .add("phone")
+              .build());
+        } else {
+          copy.put("deleteProvider", ImmutableList.of("phone"));
+        }
+
         copy.remove("phoneNumber");
       }
 

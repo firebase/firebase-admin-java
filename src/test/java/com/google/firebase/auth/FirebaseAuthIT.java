@@ -18,6 +18,7 @@ package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -334,6 +335,65 @@ public class FirebaseAuthIT {
     assertTrue(userRecord.isEmailVerified());
     assertFalse(userRecord.isDisabled());
     assertEquals(2, userRecord.getProviderData().length);
+    assertTrue(userRecord.getCustomClaims().isEmpty());
+
+    // Link user to IDP providers
+    request = userRecord.updateRequest()
+        .setProviderToLink(
+            UserProvider
+                .builder()
+                .setUid("testuid")
+                .setProviderId("google.com")
+                .setEmail("test@example.com")
+                .setDisplayName("Test User")
+                .setPhotoUrl("https://test.com/user.png")
+                .build());
+    userRecord = auth.updateUserAsync(request).get();
+    assertEquals(uid, userRecord.getUid());
+    assertEquals("Updated Name", userRecord.getDisplayName());
+    assertEquals(randomUser.getEmail(), userRecord.getEmail());
+    assertEquals(randomUser.getPhoneNumber(), userRecord.getPhoneNumber());
+    assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
+    assertTrue(userRecord.isEmailVerified());
+    assertFalse(userRecord.isDisabled());
+    assertEquals(3, userRecord.getProviderData().length);
+    List<String> providers = new ArrayList<>();
+    for (UserInfo provider : userRecord.getProviderData()) {
+      providers.add(provider.getProviderId());
+    }
+    assertTrue(providers.contains("google.com"));
+    assertTrue(userRecord.getCustomClaims().isEmpty());
+
+    // Unlink phone provider
+    request = userRecord.updateRequest().setProvidersToUnlink(ImmutableList.of("phone"));
+    userRecord = auth.updateUserAsync(request).get();
+    assertNull(userRecord.getPhoneNumber());
+    assertEquals(2, userRecord.getProviderData().length);
+    providers.clear();
+    for (UserInfo provider : userRecord.getProviderData()) {
+      providers.add(provider.getProviderId());
+    }
+    assertFalse(providers.contains("phone"));
+    assertEquals(uid, userRecord.getUid());
+    assertEquals("Updated Name", userRecord.getDisplayName());
+    assertEquals(randomUser.getEmail(), userRecord.getEmail());
+    assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
+    assertTrue(userRecord.isEmailVerified());
+    assertFalse(userRecord.isDisabled());
+    assertTrue(userRecord.getCustomClaims().isEmpty());
+
+    // Unlink IDP provider
+    request = userRecord.updateRequest().setProvidersToUnlink(ImmutableList.of("google.com"));
+    userRecord = auth.updateUserAsync(request).get();
+    assertEquals(1, userRecord.getProviderData().length);
+    assertNotEquals("google.com", userRecord.getProviderData()[0].getProviderId());
+    assertEquals(uid, userRecord.getUid());
+    assertEquals("Updated Name", userRecord.getDisplayName());
+    assertEquals(randomUser.getEmail(), userRecord.getEmail());
+    assertNull(userRecord.getPhoneNumber());
+    assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
+    assertTrue(userRecord.isEmailVerified());
+    assertFalse(userRecord.isDisabled());
     assertTrue(userRecord.getCustomClaims().isEmpty());
 
     // Get user by email
