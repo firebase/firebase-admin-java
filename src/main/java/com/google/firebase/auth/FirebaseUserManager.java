@@ -155,6 +155,15 @@ final class FirebaseUserManager {
     return results;
   }
 
+  UserRecord getUserByProviderUid(
+      String providerId, String uid) throws FirebaseAuthException {
+    final Map<String, Object> payload = ImmutableMap.<String, Object>of(
+        "federatedUserId", ImmutableList.of(
+            ImmutableMap.<String, Object>builder()
+            .put("rawId", uid).put("providerId", providerId).build()));
+    return lookupUserAccount(payload, uid);
+  }
+
   String createUser(UserRecord.CreateRequest request) throws FirebaseAuthException {
     GenericJson response = post("/accounts", request.getProperties(), GenericJson.class);
     return (String) response.get("localId");

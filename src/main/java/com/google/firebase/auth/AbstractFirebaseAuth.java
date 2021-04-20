@@ -555,6 +555,64 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
+   * Gets the user data for the user corresponding to a given provider id.
+   *
+   * @param providerId Identifier for the given federated provider, for example,
+   *     "google.com" for the Google provider.
+   * @param uid The user identifier with the given provider.
+   * @return A {@link UserRecord} instance.
+   * @throws IllegalArgumentException If the uid is null or empty, or if
+   *     the providerId is null, empty, or does not belong to a federated provider.
+   * @throws FirebaseAuthException If an error occurs while retrieving user data.
+   */
+  public UserRecord getUserByProviderUid(
+      @NonNull String providerId, @NonNull String uid) throws FirebaseAuthException {
+    return getUserByProviderUidOp(providerId, uid).call();
+  }
+
+  /**
+   * Gets the user data for the user corresponding to a given provider id.
+   *
+   * @param providerId Identifer for the given federated provider, for example,
+   *     "google.com" for the Google provider.
+   * @param uid The user identifier with the given provider.
+   * @return An {@code ApiFuture} which will complete successfully with a {@link UserRecord}
+   *     instance. If an error occurs while retrieving user data or if the provider ID and uid
+   *     do not correspond to a user, the future throws a {@link FirebaseAuthException}.
+   * @throws IllegalArgumentException If the uid is null or empty, or if
+   *     the provider ID is null, empty, or does not belong to a federated provider.
+   */
+  public ApiFuture<UserRecord> getUserByProviderUidAsync(
+      @NonNull String providerId, @NonNull String uid) {
+    return getUserByProviderUidOp(providerId, uid).callAsync(firebaseApp);
+  }
+
+  private CallableOperation<UserRecord, FirebaseAuthException> getUserByProviderUidOp(
+      final String providerId, final String uid) {
+    checkArgument(!Strings.isNullOrEmpty(providerId), "providerId must not be null or empty");
+    checkArgument(!Strings.isNullOrEmpty(uid), "uid must not be null or empty");
+
+    // Although we don't really advertise it, we want to also handle
+    // non-federated idps with this call. So if we detect one of them, we'll
+    // reroute this request appropriately.
+    if (providerId == "phone") {
+      return this.getUserByPhoneNumberOp(uid);
+    } else if (providerId == "email") {
+      return this.getUserByEmailOp(uid);
+    }
+
+    checkArgument(!providerId.equals("password")
+        && !providerId.equals("anonymous"), "providerId must belong to a federated provider");
+    final FirebaseUserManager userManager = getUserManager();
+    return new CallableOperation<UserRecord, FirebaseAuthException>() {
+      @Override
+      protected UserRecord execute() throws FirebaseAuthException {
+        return userManager.getUserByProviderUid(providerId, uid);
+      }
+    };
+  }
+
+  /**
    * Gets a page of users starting from the specified {@code pageToken}. Page size is limited to
    * 1000 users.
    *

@@ -356,6 +356,56 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testGetUserByProviderUidWithInvalidProviderId() throws Exception {
+    initializeAppForUserManagement();
+    try {
+      FirebaseAuth.getInstance().getUserByProviderUidAsync("", "uid").get();
+      fail("No error thrown for invalid request");
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test
+  public void testGetUserByProviderUidWithInvalidProviderUid() throws Exception {
+    initializeAppForUserManagement();
+    try {
+      FirebaseAuth.getInstance().getUserByProviderUidAsync("id", "").get();
+      fail("No error thrown for invalid request");
+    } catch (IllegalArgumentException expected) {
+    }
+  }
+
+  @Test
+  public void testGetUserByProviderUidWithValidInput() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("getUser.json"));
+    UserRecord userRecord = FirebaseAuth.getInstance()
+        .getUserByProviderUidAsync("google.com", "google_uid").get();
+    checkUserRecord(userRecord);
+    checkRequestHeaders(interceptor);
+  }
+
+  @Test
+  public void testGetUserByProviderUidWithPhone() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("getUser.json"));
+    UserRecord userRecord = FirebaseAuth.getInstance()
+        .getUserByProviderUidAsync("phone", "+1234567890").get();
+    checkUserRecord(userRecord);
+    checkRequestHeaders(interceptor);
+  }
+
+  @Test
+  public void testGetUserByProviderUidWithEmail() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("getUser.json"));
+    UserRecord userRecord = FirebaseAuth.getInstance()
+        .getUserByProviderUidAsync("email", "testuser@example.com").get();
+    checkUserRecord(userRecord);
+    checkRequestHeaders(interceptor);
+  }
+
+  @Test
   public void testListUsers() throws Exception {
     final TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("listUsers.json"));
@@ -2821,7 +2871,7 @@ public class FirebaseUserManagerTest {
     assertEquals("http://www.example.com/testuser/photo.png", userRecord.getPhotoUrl());
     assertEquals(1234567890, userRecord.getUserMetadata().getCreationTimestamp());
     assertEquals(0, userRecord.getUserMetadata().getLastSignInTimestamp());
-    assertEquals(2, userRecord.getProviderData().length);
+    assertEquals(3, userRecord.getProviderData().length);
     assertFalse(userRecord.isDisabled());
     assertTrue(userRecord.isEmailVerified());
     assertEquals(1494364393000L, userRecord.getTokensValidAfterTimestamp());
@@ -2840,6 +2890,10 @@ public class FirebaseUserManagerTest {
     assertNull(provider.getEmail());
     assertEquals("+1234567890", provider.getPhoneNumber());
     assertEquals("phone", provider.getProviderId());
+
+    provider = userRecord.getProviderData()[2];
+    assertEquals("google_uid", provider.getUid());
+    assertEquals("google.com", provider.getProviderId());
 
     Map<String, Object> claims = userRecord.getCustomClaims();
     assertEquals(2, claims.size());
