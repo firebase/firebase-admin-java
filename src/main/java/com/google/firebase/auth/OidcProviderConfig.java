@@ -18,11 +18,8 @@ package com.google.firebase.auth;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.google.api.client.json.GenericJson;
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Contains metadata associated with an OIDC Auth provider.
@@ -34,33 +31,15 @@ public final class OidcProviderConfig extends ProviderConfig {
   @Key("clientId")
   private String clientId;
 
-  @Key("clientSecret")
-  private String clientSecret;
-
   @Key("issuer")
   private String issuer;
-
-  @Key("responseType")
-  private GenericJson responseType;
 
   public String getClientId() {
     return clientId;
   }
 
-  public String getClientSecret() {
-    return clientSecret;
-  }
-
   public String getIssuer() {
     return issuer;
-  }
-
-  public boolean isCodeResponseType() {
-    return (responseType.containsKey("code") && (boolean) responseType.get("code"));
-  }
-
-  public boolean isIdTokenResponseType() {
-    return (responseType.containsKey("idToken") && (boolean) responseType.get("idToken"));
   }
 
   /**
@@ -77,13 +56,6 @@ public final class OidcProviderConfig extends ProviderConfig {
     checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
     checkArgument(providerId.startsWith("oidc."),
         "Invalid OIDC provider ID (must be prefixed with 'oidc.'): " + providerId);
-  }
-
-  static Map<String, Boolean> ensureResponseType(Map<String,Object> properties) {
-    if (properties.get("responseType") == null) {
-      properties.put("responseType", new HashMap<String, Boolean>());
-    }
-    return (Map<String, Boolean>) properties.get("responseType");
   }
 
   /**
@@ -128,19 +100,6 @@ public final class OidcProviderConfig extends ProviderConfig {
     }
 
     /**
-     * Sets the client secret for the new provider. This is required for the code flow.
-     *
-     * @param clientSecret A non-null, non-empty client secret string.
-     * @throws IllegalArgumentException If the client secret is null or empty.
-     */
-    public CreateRequest setClientSecret(String clientSecret) {
-      checkArgument(!Strings.isNullOrEmpty(clientSecret),
-          "Client Secret must not be null or empty.");
-      properties.put("clientSecret", clientSecret);
-      return this;
-    }
-
-    /**
      * Sets the issuer for the new provider.
      *
      * @param issuer A non-null, non-empty issuer URL string.
@@ -151,36 +110,6 @@ public final class OidcProviderConfig extends ProviderConfig {
       checkArgument(!Strings.isNullOrEmpty(issuer), "Issuer must not be null or empty.");
       assertValidUrl(issuer);
       properties.put("issuer", issuer);
-      return this;
-    }
-
-    /**
-     * Sets whether to enable the code response flow for the new provider. By default, this is not
-     * enabled if no response type is specified.
-     *
-     * <p>A client secret must be set for this response type.
-     *
-     * <p>Having both the code and ID token response flows is currently not supported.
-     *
-     * @param enabled A boolean signifying whether the code response type is supported.
-     */
-    public CreateRequest setCodeResponseType(boolean enabled) {
-      Map<String, Boolean> map = ensureResponseType(properties);
-      map.put("code", enabled);
-      return this;
-    }
-
-    /**
-     * Sets whether to enable the ID token response flow for the new provider. By default, this is
-     * enabled if no response type is specified.
-     *
-     * <p>Having both the code and ID token response flows is currently not supported.
-     *
-     * @param enabled A boolean signifying whether the ID token response type is supported.
-     */
-    public CreateRequest setIdTokenResponseType(boolean enabled) {
-      Map<String, Boolean> map = ensureResponseType(properties);
-      map.put("idToken", enabled);
       return this;
     }
 
@@ -228,19 +157,6 @@ public final class OidcProviderConfig extends ProviderConfig {
     }
 
     /**
-     * Sets the client secret for the new provider. This is required for the code flow.
-     *
-     * @param clientSecret A non-null, non-empty client secret string.
-     * @throws IllegalArgumentException If the client secret is null or empty.
-     */
-    public UpdateRequest setClientSecret(String clientSecret) {
-      checkArgument(!Strings.isNullOrEmpty(clientSecret),
-          "Client Secret must not be null or empty.");
-      properties.put("clientSecret", clientSecret);
-      return this;
-    }
-
-    /**
      * Sets the issuer for the existing provider.
      *
      * @param issuer A non-null, non-empty issuer URL string.
@@ -251,36 +167,6 @@ public final class OidcProviderConfig extends ProviderConfig {
       checkArgument(!Strings.isNullOrEmpty(issuer), "Issuer must not be null or empty.");
       assertValidUrl(issuer);
       properties.put("issuer", issuer);
-      return this;
-    }
-
-    /**
-     * Sets whether to enable the code response flow for the new provider. By default, this is not
-     * enabled if no response type is specified.
-     *
-     * <p>A client secret must be set for this response type.
-     *
-     * <p>Having both the code and ID token response flows is currently not supported.
-     *
-     * @param enabled A boolean signifying whether the code response type is supported.
-     */
-    public UpdateRequest setCodeResponseType(boolean enabled) {
-      Map<String, Boolean> map = ensureResponseType(properties);
-      map.put("code", enabled);
-      return this;
-    }
-
-    /**
-     * Sets whether to enable the ID token response flow for the new provider. By default, this is
-     * enabled if no response type is specified.
-     *
-     * <p>Having both the code and ID token response flows is currently not supported.
-     *
-     * @param enabled A boolean signifying whether the ID token response type is supported.
-     */
-    public UpdateRequest setIdTokenResponseType(boolean enabled) {
-      Map<String, Boolean> map = ensureResponseType(properties);
-      map.put("idToken", enabled);
       return this;
     }
 

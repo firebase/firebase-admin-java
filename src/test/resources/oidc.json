@@ -3,10 +3,5 @@
   "displayName" : "DISPLAY_NAME",
   "enabled" : true,
   "clientId" : "CLIENT_ID",
-  "clientSecret" : "CLIENT_SECRET",
-  "issuer" : "https://oidc.com/issuer",
-  "responseType" : {
-    "code": true,
-    "idToken": false
-  }
+  "issuer" : "https://oidc.com/issuer"
 }
