@@ -34,6 +34,8 @@ public class FirebaseProjectManagementIT {
       "Created By Firebase AdminSDK Java Integration Testing";
   private static final String TEST_APP_BUNDLE_ID = "com.firebase.adminsdk-java-integration-test";
   private static final String TEST_APP_PACKAGE_NAME = "com.firebase.adminsdk_java_integration_test";
+  // Commenting out SHA1 tests until we have a fix for b/185268518
+  // private static final String TEST_SHA1_CERTIFICATE = "1111111111111111111111111111111111111111";
   private static final String TEST_SHA256_CERTIFICATE =
       "AAAACCCCAAAACCCCAAAACCCCAAAACCCCAAAACCCCAAAACCCCAAAACCCCAAAACCCC";
   private static final Random random = new Random();
@@ -118,6 +120,30 @@ public class FirebaseProjectManagementIT {
   public void testAndroidCertificates() throws Exception {
     FirebaseProjectManagement projectManagement = FirebaseProjectManagement.getInstance();
     AndroidApp androidApp = projectManagement.getAndroidApp(testAndroidAppId);
+
+    // Commenting out SHA1 tests until we have a fix for b/185268518
+    // // Use the Synchronous version of the API.
+    // {
+    //   // Add SHA-1 certificate.
+    //   androidApp.createShaCertificate(ShaCertificate.create(TEST_SHA1_CERTIFICATE));
+    //   List<ShaCertificate> certificates = androidApp.getShaCertificates();
+    //   ShaCertificate expectedCertificate = null;
+    //   for (ShaCertificate certificate : certificates) {
+    //     if (certificate.getShaHash().equals(TEST_SHA1_CERTIFICATE.toLowerCase())) {
+    //       expectedCertificate  = certificate;
+    //     }
+    //   }
+    //   assertNotNull(expectedCertificate);
+    //   assertEquals(expectedCertificate.getCertType(), ShaCertificateType.SHA_1);
+    //
+    //   // Delete SHA-1 certificate.
+    //   androidApp.deleteShaCertificate(expectedCertificate);
+    //   for (ShaCertificate certificate : androidApp.getShaCertificates()) {
+    //     if (certificate.getShaHash().equals(TEST_SHA1_CERTIFICATE)) {
+    //       fail("Test SHA-1 certificate is not deleted.");
+    //     }
+    //   }
+    // }
 
     // Use the asynchronous version of the API.
     {
