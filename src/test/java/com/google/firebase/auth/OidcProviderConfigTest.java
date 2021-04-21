@@ -18,13 +18,11 @@ package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import org.junit.Test;
 
@@ -38,12 +36,7 @@ public class OidcProviderConfigTest {
         + "  'displayName': 'DISPLAY_NAME',"
         + "  'enabled':      true,"
         + "  'clientId':    'CLIENT_ID',"
-        + "  'clientSecret':'CLIENT_SECRET',"
-        + "  'issuer':      'https://oidc.com/issuer',"
-        + "  'responseType': {"
-        + "    'code':  true,"
-        + "    'idToken': false"
-        + "   }"
+        + "  'issuer':      'https://oidc.com/issuer'"
         + "}").replace("'", "\"");
 
   @Test
@@ -54,35 +47,7 @@ public class OidcProviderConfigTest {
     assertEquals("DISPLAY_NAME", config.getDisplayName());
     assertTrue(config.isEnabled());
     assertEquals("CLIENT_ID", config.getClientId());
-    assertEquals("CLIENT_SECRET", config.getClientSecret());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
-    assertTrue(config.isCodeResponseType());
-    assertFalse(config.isIdTokenResponseType());
-  }
-
-  @Test
-  public void testEnsureResponseType() {
-    Map<String, Object> properties = new HashMap<>();
-
-    Map<String, Boolean> responseType = OidcProviderConfig.ensureResponseType(properties);
-
-    assertNotNull(responseType);
-    assertEquals(responseType, properties.get("responseType"));
-  }
-
-  @Test
-  public void testEnsureResponseTypeAlreadyPresent() {
-    Map<String, Object> properties = new HashMap<>();
-    Map<String, Boolean> responseType = new HashMap<>();
-    responseType.put("code", true);
-    properties.put("responseType", responseType);
-
-    Map<String, Boolean> returnedResponseType = OidcProviderConfig.ensureResponseType(properties);
-
-    assertEquals(responseType, returnedResponseType);
-    assertTrue(returnedResponseType.get("code"));
-    assertEquals(returnedResponseType.size(), 1);
-    assertEquals(responseType, properties.get("responseType"));
   }
 
   @Test
@@ -93,23 +58,15 @@ public class OidcProviderConfigTest {
       .setDisplayName("DISPLAY_NAME")
       .setEnabled(false)
       .setClientId("CLIENT_ID")
-      .setClientSecret("CLIENT_SECRET")
-      .setIssuer("https://oidc.com/issuer")
-      .setCodeResponseType(true)
-      .setIdTokenResponseType(false);
+      .setIssuer("https://oidc.com/issuer");
 
     assertEquals("oidc.provider-id", createRequest.getProviderId());
     Map<String,Object> properties = createRequest.getProperties();
-    assertEquals(properties.size(), 6);
+    assertEquals(properties.size(), 4);
     assertEquals("DISPLAY_NAME", (String) properties.get("displayName"));
     assertFalse((boolean) properties.get("enabled"));
     assertEquals("CLIENT_ID", (String) properties.get("clientId"));
-    assertEquals("CLIENT_SECRET", properties.get("clientSecret"));
     assertEquals("https://oidc.com/issuer", (String) properties.get("issuer"));
-
-    Map<String, Boolean> responseType = (Map<String, Boolean>) properties.get("responseType");
-    assertTrue(responseType.get("code"));
-    assertFalse(responseType.get("idToken"));
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -142,16 +99,6 @@ public class OidcProviderConfigTest {
     new OidcProviderConfig.CreateRequest().setIssuer("not a valid url");
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testCreateRequestMissingClientSecret() {
-    new OidcProviderConfig.CreateRequest().setClientSecret(null);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testCreateRequestEmptyClientSecret() {
-    new OidcProviderConfig.CreateRequest().setClientSecret("");
-  }
-
   @Test
   public void testUpdateRequestFromOidcProviderConfig() throws IOException {
     OidcProviderConfig config = jsonFactory.fromString(OIDC_JSON_STRING, OidcProviderConfig.class);
@@ -170,23 +117,15 @@ public class OidcProviderConfigTest {
       .setDisplayName("DISPLAY_NAME")
       .setEnabled(false)
       .setClientId("CLIENT_ID")
-      .setClientSecret("CLIENT_SECRET")
-      .setIssuer("https://oidc.com/issuer")
-      .setCodeResponseType(true)
-      .setIdTokenResponseType(false);
+      .setIssuer("https://oidc.com/issuer");
 
     assertEquals("oidc.provider-id", updateRequest.getProviderId());
     Map<String,Object> properties = updateRequest.getProperties();
-    assertEquals(properties.size(), 6);
+    assertEquals(properties.size(), 4);
     assertEquals("DISPLAY_NAME", (String) properties.get("displayName"));
     assertFalse((boolean) properties.get("enabled"));
     assertEquals("CLIENT_ID", (String) properties.get("clientId"));
-    assertEquals("CLIENT_SECRET", (String) properties.get("clientSecret"));
     assertEquals("https://oidc.com/issuer", (String) properties.get("issuer"));
-
-    Map<String, Boolean> responseType = (Map<String, Boolean>) properties.get("responseType");
-    assertTrue(responseType.get("code"));
-    assertFalse(responseType.get("idToken"));
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -217,15 +156,5 @@ public class OidcProviderConfigTest {
   @Test(expected = IllegalArgumentException.class)
   public void testUpdateRequestInvalidIssuerUrl() {
     new OidcProviderConfig.UpdateRequest("oidc.provider-id").setIssuer("not a valid url");
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testUpdateRequestMissingClientSecret() {
-    new OidcProviderConfig.UpdateRequest("oidc.provider-id").setClientSecret(null);
-  }
-
-  @Test(expected = IllegalArgumentException.class)
-  public void testUpdateRequestEmptyClientSecret() {
-    new OidcProviderConfig.UpdateRequest("oidc.provider-id").setClientSecret("");
   }
 }

@@ -1615,10 +1615,7 @@ public class FirebaseUserManagerTest {
             .setDisplayName("DISPLAY_NAME")
             .setEnabled(true)
             .setClientId("CLIENT_ID")
-            .setClientSecret("CLIENT_SECRET")
-            .setIssuer("https://oidc.com/issuer")
-            .setCodeResponseType(true)
-            .setIdTokenResponseType(true);
+            .setIssuer("https://oidc.com/issuer");
 
     OidcProviderConfig config = FirebaseAuth.getInstance().createOidcProviderConfig(createRequest);
 
@@ -1629,13 +1626,7 @@ public class FirebaseUserManagerTest {
     assertEquals("DISPLAY_NAME", parsed.get("displayName"));
     assertTrue((boolean) parsed.get("enabled"));
     assertEquals("CLIENT_ID", parsed.get("clientId"));
-    assertEquals("CLIENT_SECRET", parsed.get("clientSecret"));
     assertEquals("https://oidc.com/issuer", parsed.get("issuer"));
-
-    Map<String, Boolean> responseType = (Map<String, Boolean>) parsed.get("responseType");
-    assertTrue(responseType.get("code"));
-    assertTrue(responseType.get("idToken"));
-
     GenericUrl url = interceptor.getResponse().getRequest().getUrl();
     assertEquals("oidc.provider-id", url.getFirst("oauthIdpConfigId"));
   }
@@ -1649,10 +1640,7 @@ public class FirebaseUserManagerTest {
             .setDisplayName("DISPLAY_NAME")
             .setEnabled(true)
             .setClientId("CLIENT_ID")
-            .setClientSecret("CLIENT_SECRET")
-            .setIssuer("https://oidc.com/issuer")
-            .setCodeResponseType(true)
-            .setIdTokenResponseType(true);
+            .setIssuer("https://oidc.com/issuer");
 
     OidcProviderConfig config =
         FirebaseAuth.getInstance().createOidcProviderConfigAsync(createRequest).get();
@@ -1664,13 +1652,7 @@ public class FirebaseUserManagerTest {
     assertEquals("DISPLAY_NAME", parsed.get("displayName"));
     assertTrue((boolean) parsed.get("enabled"));
     assertEquals("CLIENT_ID", parsed.get("clientId"));
-    assertEquals("CLIENT_SECRET", parsed.get("clientSecret"));
     assertEquals("https://oidc.com/issuer", parsed.get("issuer"));
-
-    Map<String, Boolean> responseType = (Map<String, Boolean>) parsed.get("responseType");
-    assertTrue(responseType.get("code"));
-    assertTrue(responseType.get("idToken"));
-
     GenericUrl url = interceptor.getResponse().getRequest().getUrl();
     assertEquals("oidc.provider-id", url.getFirst("oauthIdpConfigId"));
   }
@@ -1873,10 +1855,7 @@ public class FirebaseUserManagerTest {
             .setDisplayName("DISPLAY_NAME")
             .setEnabled(true)
             .setClientId("CLIENT_ID")
-            .setClientSecret("CLIENT_SECRET")
-            .setIssuer("https://oidc.com/issuer")
-            .setCodeResponseType(true)
-            .setIdTokenResponseType(true);
+            .setIssuer("https://oidc.com/issuer");
 
     OidcProviderConfig config = tenantAwareAuth.updateOidcProviderConfig(request);
 
@@ -1885,18 +1864,12 @@ public class FirebaseUserManagerTest {
     String expectedUrl = TENANTS_BASE_URL + "/TENANT_ID/oauthIdpConfigs/oidc.provider-id";
     checkUrl(interceptor, "PATCH", expectedUrl);
     GenericUrl url = interceptor.getResponse().getRequest().getUrl();
-    assertEquals("clientId,clientSecret,displayName,enabled,issuer,responseType.code,"
-        + "responseType.idToken", url.getFirst("updateMask"));
+    assertEquals("clientId,displayName,enabled,issuer", url.getFirst("updateMask"));
     GenericJson parsed = parseRequestContent(interceptor);
     assertEquals("DISPLAY_NAME", parsed.get("displayName"));
     assertTrue((boolean) parsed.get("enabled"));
     assertEquals("CLIENT_ID", parsed.get("clientId"));
-    assertEquals("CLIENT_SECRET", parsed.get("clientSecret"));
     assertEquals("https://oidc.com/issuer", parsed.get("issuer"));
-
-    Map<String, Boolean> responseType = (Map<String, Boolean>) parsed.get("responseType");
-    assertTrue(responseType.get("code"));
-    assertTrue(responseType.get("idToken"));
   }
 
   @Test
@@ -2975,10 +2948,7 @@ public class FirebaseUserManagerTest {
     assertEquals("DISPLAY_NAME", config.getDisplayName());
     assertTrue(config.isEnabled());
     assertEquals("CLIENT_ID", config.getClientId());
-    assertEquals("CLIENT_SECRET", config.getClientSecret());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
-    assertTrue(config.isCodeResponseType());
-    assertFalse(config.isIdTokenResponseType());
   }
 
   private static void checkSamlProviderConfig(SamlProviderConfig config, String providerId) {
@@ -3010,4 +2980,5 @@ public class FirebaseUserManagerTest {
   private interface UserManagerOp {
     void call(FirebaseAuth auth) throws Exception;
   }
+
 }

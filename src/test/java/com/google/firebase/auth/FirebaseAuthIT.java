@@ -792,19 +792,12 @@ public class FirebaseAuthIT {
             .setDisplayName("DisplayName")
             .setEnabled(true)
             .setClientId("ClientId")
-            .setClientSecret("ClientSecret")
-            .setIssuer("https://oidc.com/issuer")
-            .setCodeResponseType(true)
-            .setIdTokenResponseType(false));
-
+            .setIssuer("https://oidc.com/issuer"));
     assertEquals(providerId, config.getProviderId());
     assertEquals("DisplayName", config.getDisplayName());
     assertTrue(config.isEnabled());
     assertEquals("ClientId", config.getClientId());
-    assertEquals("ClientSecret", config.getClientSecret());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
-    assertTrue(config.isCodeResponseType());
-    assertFalse(config.isIdTokenResponseType());
 
     // Get provider config
     config = auth.getOidcProviderConfigAsync(providerId).get();
@@ -812,10 +805,7 @@ public class FirebaseAuthIT {
     assertEquals("DisplayName", config.getDisplayName());
     assertTrue(config.isEnabled());
     assertEquals("ClientId", config.getClientId());
-    assertEquals("ClientSecret", config.getClientSecret());
     assertEquals("https://oidc.com/issuer", config.getIssuer());
-    assertTrue(config.isCodeResponseType());
-    assertFalse(config.isIdTokenResponseType());
 
     // Update provider config
     OidcProviderConfig.UpdateRequest updateRequest =
@@ -823,20 +813,13 @@ public class FirebaseAuthIT {
             .setDisplayName("NewDisplayName")
             .setEnabled(false)
             .setClientId("NewClientId")
-            .setClientSecret("NewClientSecret")
-            .setIssuer("https://oidc.com/new-issuer")
-            .setCodeResponseType(false)
-            .setIdTokenResponseType(true);
-
+            .setIssuer("https://oidc.com/new-issuer");
     config = auth.updateOidcProviderConfigAsync(updateRequest).get();
     assertEquals(providerId, config.getProviderId());
     assertEquals("NewDisplayName", config.getDisplayName());
     assertFalse(config.isEnabled());
     assertEquals("NewClientId", config.getClientId());
-    assertEquals("NewClientSecret", config.getClientSecret());
     assertEquals("https://oidc.com/new-issuer", config.getIssuer());
-    assertTrue(config.isIdTokenResponseType());
-    assertFalse(config.isCodeResponseType());
 
     // Delete provider config
     temporaryProviderConfig.deleteOidcProviderConfig(providerId);
