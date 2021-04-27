@@ -94,6 +94,16 @@ public class FirebaseAuthSnippets {
     // [END get_user_by_phone]
   }
 
+  public static void getUserByProviderUId(
+      String providerId, String uid) throws FirebaseAuthException {
+    // [START get_user_by_provider_uid]
+    UserRecord userRecord = FirebaseAuth.getInstance().getUserByProviderUid(
+        providerId, uid);
+    // See the UserRecord reference doc for the contents of userRecord.
+    System.out.println("Successfully fetched user data: " + userRecord.getUid());
+    // [END get_user_by_provider_uid]
+  }
+
   public static void createUser() throws FirebaseAuthException {
     // [START create_user]
     CreateRequest request = new CreateRequest()

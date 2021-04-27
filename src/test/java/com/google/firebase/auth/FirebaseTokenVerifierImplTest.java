@@ -16,28 +16,28 @@
 
 package com.google.firebase.auth;
 
+import static com.google.firebase.auth.FirebaseTokenVerifierImplTestUtils.TEST_TOKEN_ISSUER;
+import static com.google.firebase.auth.FirebaseTokenVerifierImplTestUtils.checkException;
+import static com.google.firebase.auth.FirebaseTokenVerifierImplTestUtils.checkInvalidTokenException;
+import static com.google.firebase.auth.FirebaseTokenVerifierImplTestUtils.fullyPopulatedBuilder;
+import static com.google.firebase.auth.FirebaseTokenVerifierImplTestUtils.newPublicKeysManager;
+import static com.google.firebase.auth.FirebaseTokenVerifierImplTestUtils.newTestTokenVerifier;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import com.google.api.client.auth.openidconnect.IdTokenVerifier;
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.LowLevelHttpRequest;
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.json.webtoken.JsonWebToken.Payload;
 import com.google.api.client.testing.http.MockHttpTransport;
-import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.concurrent.TimeUnit;
-
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -53,8 +53,6 @@ public class FirebaseTokenVerifierImplTest {
           + "yc3R1dnd4eXpBQkNERUZHSElKS0xNTk9QUVJTVFVWV1hZWiwuLzsnW11cXDw"
           + "-P1wie318In0sInYiOjAsImlhdCI6MTQ4MDk4Mj"
           + "U2NH0.ZWEpoHgIPCAz8Q-cNFBS8jiqClTJ3j27yuRkQo-QxyI";
-
-  private static final String TEST_TOKEN_ISSUER = "https://test.token.issuer";
 
   private FirebaseTokenVerifier tokenVerifier;
   private TestTokenFactory tokenFactory;
@@ -83,6 +81,7 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for missing kid");
     } catch (FirebaseAuthException e) {
       String message = "Firebase test token has no \"kid\" claim. "
           + "See https://test.doc.url for details on how to retrieve a test token.";
@@ -96,6 +95,7 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for passing custom token");
     } catch (FirebaseAuthException e) {
       String message = "verifyTestToken() expects a test token, but was given a custom token. "
           + "See https://test.doc.url for details on how to retrieve a test token.";
@@ -109,9 +109,25 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for incorrect alg");
     } catch (FirebaseAuthException e) {
       String message = "Firebase test token has incorrect algorithm. "
           + "Expected \"RS256\" but got \"HSA\". "
+          + "See https://test.doc.url for details on how to retrieve a test token.";
+      checkInvalidTokenException(e, message);
+    }
+  }
+
+  @Test
+  public void testVerifyTokenWithoutAlgorithm() {
+    String token = createTokenWithoutAlgorithm();
+
+    try {
+      tokenVerifier.verifyToken(token);
+      fail("No error thrown for alg: 'none'");
+    } catch (FirebaseAuthException e) {
+      String message = "Firebase test token has incorrect algorithm. "
+          + "Expected \"RS256\" but got \"none\". "
           + "See https://test.doc.url for details on how to retrieve a test token.";
       checkInvalidTokenException(e, message);
     }
@@ -123,6 +139,7 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for incorrect audience");
     } catch (FirebaseAuthException e) {
       String message = "Firebase test token has incorrect \"aud\" (audience) claim. "
           + "Expected \"proj-test-101\" but got \"invalid-audience\". "
@@ -139,6 +156,7 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for incorrect issuer");
     } catch (FirebaseAuthException e) {
       String message = "Firebase test token has incorrect \"iss\" (issuer) claim. "
           + "Expected \"https://test.token.issuer\" but got "
@@ -155,6 +173,7 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for missing subject");
     } catch (FirebaseAuthException e) {
       String message = "Firebase test token has no \"sub\" (subject) claim. "
           + "See https://test.doc.url for details on how to retrieve a test token.";
@@ -168,6 +187,7 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for empty subject");
     } catch (FirebaseAuthException e) {
       String message = "Firebase test token has an empty string \"sub\" (subject) claim. "
           + "See https://test.doc.url for details on how to retrieve a test token.";
@@ -181,6 +201,7 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for very long subject");
     } catch (FirebaseAuthException e) {
       String message = "Firebase test token has \"sub\" (subject) claim longer "
           + "than 128 characters. "
@@ -199,6 +220,7 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for token issued in the future");
     } catch (FirebaseAuthException e) {
       String message = "Firebase test token is not yet valid. "
           + "See https://test.doc.url for details on how to retrieve a test token.";
@@ -216,6 +238,7 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for expired token");
     } catch (FirebaseAuthException e) {
       String message = "Firebase test token has expired. "
           + "Get a fresh test token and try again. "
@@ -233,6 +256,7 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for mismatched signature");
     } catch (FirebaseAuthException e) {
       String message = "Failed to verify the signature of Firebase test token. "
           + "See https://test.doc.url for details on how to retrieve a test token.";
@@ -248,6 +272,7 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for malformed cert");
     } catch (FirebaseAuthException e) {
       String message = "Error while fetching public key certificates: Could not parse certificate";
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
@@ -272,7 +297,7 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       idTokenVerifier.verifyToken(token);
-      Assert.fail("No exception thrown");
+      fail("No error thrown for failing to fetch certificate");
     } catch (FirebaseAuthException e) {
       String message = "Error while fetching public key certificates: Expected error";
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
@@ -291,6 +316,7 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       tokenVerifier.verifyToken(token);
+      fail("No error thrown for malformed signature");
     } catch (FirebaseAuthException e) {
       String message = "Failed to verify the signature of Firebase test token. "
           + "See https://test.doc.url for details on how to retrieve a test token.";
@@ -302,6 +328,7 @@ public class FirebaseTokenVerifierImplTest {
   public void testLegacyCustomToken() {
     try {
       tokenVerifier.verifyToken(LEGACY_CUSTOM_TOKEN);
+      fail("No error thrown for passing legacy token");
     } catch (FirebaseAuthException e) {
       String message = "verifyTestToken() expects a test token, but was given a "
           + "legacy custom token. "
@@ -314,6 +341,7 @@ public class FirebaseTokenVerifierImplTest {
   public void testMalformedToken() {
     try {
       tokenVerifier.verifyToken("not.a.jwt");
+      fail("No error thrown for malformed token");
     } catch (FirebaseAuthException e) {
       String message = "Failed to parse Firebase test token. "
           + "Make sure you passed a string that represents a complete and valid JWT. "
@@ -359,6 +387,7 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       verifier.verifyToken(token);
+      fail("No error thrown for mismatched tenant IDs");
     } catch (FirebaseAuthException e) {
       assertEquals(AuthErrorCode.TENANT_ID_MISMATCH, e.getAuthErrorCode());
       assertEquals(
@@ -376,39 +405,11 @@ public class FirebaseTokenVerifierImplTest {
 
     try {
       verifier.verifyToken(token);
+      fail("No error thrown for missing tenant ID");
     } catch (FirebaseAuthException e) {
       assertEquals(AuthErrorCode.TENANT_ID_MISMATCH, e.getAuthErrorCode());
       assertEquals(
           "The tenant ID ('') of the token did not match the expected value ('TENANT_1')",
-          e.getMessage());
-    }
-  }
-
-  @Test
-  public void testVerifyTokenMissingTenantId() {
-    try {
-      fullyPopulatedBuilder()
-        .setTenantId("TENANT_ID")
-        .build()
-        .verifyToken(tokenFactory.createToken());
-    } catch (FirebaseAuthException e) {
-      assertEquals(AuthErrorCode.TENANT_ID_MISMATCH, e.getAuthErrorCode());
-      assertEquals(
-          "The tenant ID ('') of the token did not match the expected value ('TENANT_ID')",
-          e.getMessage());
-    }
-  }
-
-  @Test
-  public void testVerifyTokenUnexpectedTenantId() {
-    try {
-      fullyPopulatedBuilder()
-        .build()
-        .verifyToken(createTokenWithTenantId("TENANT_ID"));
-    } catch (FirebaseAuthException e) {
-      assertEquals(AuthErrorCode.TENANT_ID_MISMATCH, e.getAuthErrorCode());
-      assertEquals(
-          "The tenant ID ('TENANT_ID') of the token did not match the expected value ('')",
           e.getMessage());
     }
   }
@@ -443,60 +444,12 @@ public class FirebaseTokenVerifierImplTest {
     fullyPopulatedBuilder().setDocUrl(null).build();
   }
 
-  private GooglePublicKeysManager newPublicKeysManager(String certificate) {
-    String serviceAccountCertificates =
-        String.format("{\"%s\" : \"%s\"}", TestTokenFactory.PRIVATE_KEY_ID, certificate);
-    HttpTransport transport = new MockHttpTransport.Builder()
-        .setLowLevelHttpResponse(
-            new MockLowLevelHttpResponse().setContent(serviceAccountCertificates))
-        .build();
-    return newPublicKeysManager(transport);
-  }
-
-  private GooglePublicKeysManager newPublicKeysManager(HttpTransport transport) {
-    return new GooglePublicKeysManager.Builder(
-        transport, FirebaseTokenUtils.UNQUOTED_CTRL_CHAR_JSON_FACTORY)
-        .setClock(TestTokenFactory.CLOCK)
-        .setPublicCertsEncodedUrl("https://test.cert.url")
-        .build();
-  }
-
-  private FirebaseTokenVerifier newTestTokenVerifier(GooglePublicKeysManager publicKeysManager) {
-    return fullyPopulatedBuilder()
-        .setPublicKeysManager(publicKeysManager)
-        .build();
-  }
-
-  private FirebaseTokenVerifierImpl.Builder fullyPopulatedBuilder() {
-    return FirebaseTokenVerifierImpl.builder()
-        .setShortName("test token")
-        .setMethod("verifyTestToken()")
-        .setDocUrl("https://test.doc.url")
-        .setJsonFactory(TestTokenFactory.JSON_FACTORY)
-        .setPublicKeysManager(newPublicKeysManager(ServiceAccount.EDITOR.getCert()))
-        .setInvalidTokenErrorCode(AuthErrorCode.INVALID_ID_TOKEN)
-        .setExpiredTokenErrorCode(AuthErrorCode.EXPIRED_ID_TOKEN)
-        .setIdTokenVerifier(newIdTokenVerifier());
-  }
-
-  private IdTokenVerifier newIdTokenVerifier() {
-    return new IdTokenVerifier.Builder()
-          .setClock(TestTokenFactory.CLOCK)
-          .setAudience(ImmutableList.of(TestTokenFactory.PROJECT_ID))
-          .setIssuer(TEST_TOKEN_ISSUER)
-          .build();
-  }
-
   private String createTokenWithoutKeyId() {
-    JsonWebSignature.Header header = tokenFactory.createHeader();
-    header.setKeyId(null);
-    return tokenFactory.createToken(header);
+    return tokenFactory.createTokenWithoutKeyId(false);
   }
 
   private String createTokenWithSubject(String sub) {
-    Payload payload = tokenFactory.createTokenPayload();
-    payload.setSubject(sub);
-    return tokenFactory.createToken(payload);
+    return tokenFactory.createTokenWithSubject(sub, false);
   }
 
   private String createCustomToken() {
@@ -508,45 +461,26 @@ public class FirebaseTokenVerifierImplTest {
   }
 
   private String createTokenWithIncorrectAlgorithm() {
-    JsonWebSignature.Header header = tokenFactory.createHeader();
-    header.setAlgorithm("HSA");
-    return tokenFactory.createToken(header);
+    return tokenFactory.createTokenWithIncorrectAlgorithm(false);
+  }
+
+  private String createTokenWithoutAlgorithm() {
+    return tokenFactory.createTokenWithoutAlgorithm(false);
   }
 
   private String createTokenWithIncorrectAudience() {
-    Payload payload = tokenFactory.createTokenPayload();
-    payload.setAudience("invalid-audience");
-    return tokenFactory.createToken(payload);
+    return tokenFactory.createTokenWithIncorrectAudience(false);
   }
 
   private String createTokenWithIncorrectIssuer() {
-    Payload payload = tokenFactory.createTokenPayload();
-    payload.setIssuer("https://incorrect.issuer.prefix/" + TestTokenFactory.PROJECT_ID);
-    return tokenFactory.createToken(payload);
+    return tokenFactory.createTokenWithIncorrectIssuer(false);
   }
 
   private String createTokenWithTimestamps(long issuedAtSeconds, long expirationSeconds) {
-    Payload payload = tokenFactory.createTokenPayload();
-    payload.setIssuedAtTimeSeconds(issuedAtSeconds);
-    payload.setExpirationTimeSeconds(expirationSeconds);
-    return tokenFactory.createToken(payload);
-  }
-
-  private void checkInvalidTokenException(FirebaseAuthException e, String message) {
-    checkException(e, message, AuthErrorCode.INVALID_ID_TOKEN);
-  }
-
-  private void checkException(FirebaseAuthException e, String message, AuthErrorCode errorCode) {
-    assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
-    assertEquals(message, e.getMessage());
-    assertNull(e.getCause());
-    assertNull(e.getHttpResponse());
-    assertEquals(errorCode, e.getAuthErrorCode());
+    return tokenFactory.createTokenWithTimestamps(issuedAtSeconds, expirationSeconds, false);
   }
 
   private String createTokenWithTenantId(String tenantId) {
-    Payload payload = tokenFactory.createTokenPayload();
-    payload.set("firebase", ImmutableMap.of("tenant", tenantId));
-    return tokenFactory.createToken(payload);
+    return tokenFactory.createTokenWithTenantId(tenantId, false);
   }
 }

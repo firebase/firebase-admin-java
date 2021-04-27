@@ -18,6 +18,7 @@ package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -266,6 +267,35 @@ public class FirebaseAuthIT {
   }
 
   @Test
+  public void testLookupUserByPhone() throws Exception {
+    UserRecord user1 = createTemporaryUser();
+    UserRecord user2 = importTemporaryUser();
+
+    UserRecord lookedUpRecord = auth.getUserByPhoneNumberAsync(
+        user1.getPhoneNumber()).get();
+    assertEquals(user1.getUid(), lookedUpRecord.getUid());
+
+    lookedUpRecord = auth.getUserByPhoneNumberAsync(user2.getPhoneNumber()).get();
+    assertEquals(user2.getUid(), lookedUpRecord.getUid());
+  }
+
+  @Test
+  public void testLookupUserByProviderUid() throws Exception {
+    UserRecord user = importTemporaryUser();
+
+    UserRecord lookedUpRecord = auth.getUserByProviderUidAsync(
+        "google.com", user.getUid() + "_google.com").get();
+    assertEquals(user.getUid(), lookedUpRecord.getUid());
+    assertEquals(2, lookedUpRecord.getProviderData().length);
+    List<String> providers = new ArrayList<>();
+    for (UserInfo provider : lookedUpRecord.getProviderData()) {
+      providers.add(provider.getProviderId());
+    }
+    assertTrue(providers.contains("phone"));
+    assertTrue(providers.contains("google.com"));
+  }
+
+  @Test
   public void testUserLifecycle() throws Exception {
     // Create user
     UserRecord userRecord = auth.createUserAsync(new UserRecord.CreateRequest()).get();
@@ -305,6 +335,65 @@ public class FirebaseAuthIT {
     assertTrue(userRecord.isEmailVerified());
     assertFalse(userRecord.isDisabled());
     assertEquals(2, userRecord.getProviderData().length);
+    assertTrue(userRecord.getCustomClaims().isEmpty());
+
+    // Link user to IDP providers
+    request = userRecord.updateRequest()
+        .setProviderToLink(
+            UserProvider
+                .builder()
+                .setUid("testuid")
+                .setProviderId("google.com")
+                .setEmail("test@example.com")
+                .setDisplayName("Test User")
+                .setPhotoUrl("https://test.com/user.png")
+                .build());
+    userRecord = auth.updateUserAsync(request).get();
+    assertEquals(uid, userRecord.getUid());
+    assertEquals("Updated Name", userRecord.getDisplayName());
+    assertEquals(randomUser.getEmail(), userRecord.getEmail());
+    assertEquals(randomUser.getPhoneNumber(), userRecord.getPhoneNumber());
+    assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
+    assertTrue(userRecord.isEmailVerified());
+    assertFalse(userRecord.isDisabled());
+    assertEquals(3, userRecord.getProviderData().length);
+    List<String> providers = new ArrayList<>();
+    for (UserInfo provider : userRecord.getProviderData()) {
+      providers.add(provider.getProviderId());
+    }
+    assertTrue(providers.contains("google.com"));
+    assertTrue(userRecord.getCustomClaims().isEmpty());
+
+    // Unlink phone provider
+    request = userRecord.updateRequest().setProvidersToUnlink(ImmutableList.of("phone"));
+    userRecord = auth.updateUserAsync(request).get();
+    assertNull(userRecord.getPhoneNumber());
+    assertEquals(2, userRecord.getProviderData().length);
+    providers.clear();
+    for (UserInfo provider : userRecord.getProviderData()) {
+      providers.add(provider.getProviderId());
+    }
+    assertFalse(providers.contains("phone"));
+    assertEquals(uid, userRecord.getUid());
+    assertEquals("Updated Name", userRecord.getDisplayName());
+    assertEquals(randomUser.getEmail(), userRecord.getEmail());
+    assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
+    assertTrue(userRecord.isEmailVerified());
+    assertFalse(userRecord.isDisabled());
+    assertTrue(userRecord.getCustomClaims().isEmpty());
+
+    // Unlink IDP provider
+    request = userRecord.updateRequest().setProvidersToUnlink(ImmutableList.of("google.com"));
+    userRecord = auth.updateUserAsync(request).get();
+    assertEquals(1, userRecord.getProviderData().length);
+    assertNotEquals("google.com", userRecord.getProviderData()[0].getProviderId());
+    assertEquals(uid, userRecord.getUid());
+    assertEquals("Updated Name", userRecord.getDisplayName());
+    assertEquals(randomUser.getEmail(), userRecord.getEmail());
+    assertNull(userRecord.getPhoneNumber());
+    assertEquals("https://example.com/photo.png", userRecord.getPhotoUrl());
+    assertTrue(userRecord.isEmailVerified());
+    assertFalse(userRecord.isDisabled());
     assertTrue(userRecord.getCustomClaims().isEmpty());
 
     // Get user by email
@@ -944,6 +1033,54 @@ public class FirebaseAuthIT {
     semaphore.acquire();
     assertEquals(providerIds.size(), collected.get());
     assertNull(error.get());
+  }
+
+  /**
+   * Create a temporary user. This user will automatically be cleaned up after testing completes.
+   */
+  private UserRecord createTemporaryUser() throws Exception {
+    RandomUser randomUser = UserTestUtils.generateRandomUserInfo();
+
+    UserRecord.CreateRequest user = new UserRecord.CreateRequest()
+        .setUid(randomUser.getUid())
+        .setDisplayName("Random User")
+        .setEmail(randomUser.getEmail())
+        .setEmailVerified(true)
+        .setPhoneNumber(randomUser.getPhoneNumber())
+        .setPhotoUrl("https://example.com/photo.png")
+        .setPassword("password");
+
+    return temporaryUser.create(user);
+  }
+
+  /**
+   * Import a temporary user. This user will automatically be cleaned up after testing completes.
+   */
+  private UserRecord importTemporaryUser() throws Exception {
+    RandomUser randomUser = UserTestUtils.generateRandomUserInfo();
+
+    ImportUserRecord.Builder builder = ImportUserRecord.builder()
+        .setUid(randomUser.getUid())
+        .setDisabled(false)
+        .setEmail(randomUser.getEmail())
+        .setEmailVerified(true)
+        .setPhoneNumber(randomUser.getPhoneNumber())
+        .setUserMetadata(
+            new UserMetadata(/* creationTimestamp= */ 20L, /* lastSignInTimestamp= */ 20L,
+                /* lastRefreshTimestamp= */ 20L))
+        .addUserProvider(
+            UserProvider.builder()
+            .setProviderId("google.com")
+            .setUid(randomUser.getUid() + "_google.com")
+            .build());
+
+    ImportUserRecord user = builder.build();
+    UserImportResult result = auth.importUsersAsync(ImmutableList.of(user)).get();
+    assertEquals(result.getSuccessCount(), 1);
+    assertEquals(result.getFailureCount(), 0);
+    temporaryUser.registerUid(randomUser.getUid());
+
+    return auth.getUserAsync(randomUser.getUid()).get();
   }
 
   private Map<String, String> parseLinkParameters(String link) throws Exception {
