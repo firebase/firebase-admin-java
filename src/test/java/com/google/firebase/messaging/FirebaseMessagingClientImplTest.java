@@ -43,6 +43,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.OutgoingHttpRequest;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.messaging.WebpushNotification.Action;
 import com.google.firebase.messaging.WebpushNotification.Direction;
@@ -355,7 +356,7 @@ public class FirebaseMessagingClientImplTest {
     };
     FirebaseMessagingClientImpl client = FirebaseMessagingClientImpl.builder()
         .setProjectId("test-project")
-        .setJsonFactory(Utils.getDefaultJsonFactory())
+        .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
         .setRequestFactory(transport.createRequestFactory(initializer))
         .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory())
         .setResponseInterceptor(interceptor)
@@ -555,7 +556,7 @@ public class FirebaseMessagingClientImplTest {
 
     return FirebaseMessagingClientImpl.builder()
         .setProjectId("test-project")
-        .setJsonFactory(Utils.getDefaultJsonFactory())
+        .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
         .setRequestFactory(transport.createRequestFactory())
         .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory())
         .setResponseInterceptor(interceptor)
@@ -578,7 +579,7 @@ public class FirebaseMessagingClientImplTest {
     HttpTransport transport = TestUtils.createFaultyHttpTransport();
     return FirebaseMessagingClientImpl.builder()
         .setProjectId("test-project")
-        .setJsonFactory(Utils.getDefaultJsonFactory())
+        .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
         .setRequestFactory(transport.createRequestFactory())
         .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory())
         .build();
@@ -596,7 +597,7 @@ public class FirebaseMessagingClientImplTest {
       HttpRequest request, Map<String, Object> expected) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     request.getContent().writeTo(out);
-    JsonParser parser = Utils.getDefaultJsonFactory().createJsonParser(out.toString());
+    JsonParser parser = ApiClientUtils.getDefaultJsonFactory().createJsonParser(out.toString());
     Map<String, Object> parsed = new HashMap<>();
     parser.parseAndClose(parsed);
     assertEquals(expected, parsed);
@@ -663,7 +664,7 @@ public class FirebaseMessagingClientImplTest {
   private FirebaseMessagingClientImpl.Builder fullyPopulatedBuilder() {
     return FirebaseMessagingClientImpl.builder()
         .setProjectId("test-project")
-        .setJsonFactory(Utils.getDefaultJsonFactory())
+        .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
         .setRequestFactory(Utils.getDefaultTransport().createRequestFactory())
         .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory());
   }

@@ -20,17 +20,18 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
+import com.google.firebase.internal.ApiClientUtils;
+
 import java.io.IOException;
 import java.util.Map;
 import org.junit.Test;
 
 public class TenantTest {
 
-  private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
+  private static final JsonFactory JSON_FACTORY = ApiClientUtils.getDefaultJsonFactory();
 
-  private static final String TENANT_JSON_STRING = 
+  private static final String TENANT_JSON_STRING =
       "{"
         + "\"name\":\"projects/project-id/resource/TENANT_ID\","
         + "\"displayName\":\"DISPLAY_NAME\","

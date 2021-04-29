@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.firebase.FirebaseOptions.APPLICATION_DEFAULT_CREDENTIALS;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonParser;
 import com.google.api.core.ApiFuture;
@@ -35,6 +34,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.FirebaseScheduledExecutor;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.ListenableFuture2ApiFuture;
@@ -569,7 +569,7 @@ public class FirebaseApp {
           .setCredentials(APPLICATION_DEFAULT_CREDENTIALS)
           .build();
     }
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
     FirebaseOptions.Builder builder = FirebaseOptions.builder();
     JsonParser parser;
     if (defaultConfig.startsWith("{")) {

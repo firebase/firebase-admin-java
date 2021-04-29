@@ -23,13 +23,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
-import com.google.firebase.auth.ListUsersPage;
 import com.google.firebase.auth.ListUsersPage.ListUsersResult;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
+import com.google.firebase.internal.ApiClientUtils;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -349,14 +349,14 @@ public class ListUsersPageTest {
   }
 
   private static ExportedUserRecord newUser(String uid) throws IOException {
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
     DownloadAccountResponse.User parsed = jsonFactory.fromString(
         String.format("{\"localId\":\"%s\"}", uid), DownloadAccountResponse.User.class);
     return new ExportedUserRecord(parsed, jsonFactory);
   }
 
   private static ExportedUserRecord newUser(String uid, String passwordHash) throws IOException {
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
     DownloadAccountResponse.User parsed = jsonFactory.fromString(
         String.format("{\"localId\":\"%s\", \"passwordHash\":\"%s\"}", uid, passwordHash),
         DownloadAccountResponse.User.class);

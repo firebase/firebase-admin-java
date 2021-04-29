@@ -24,7 +24,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
@@ -52,6 +51,7 @@ import com.google.firebase.auth.ProviderConfigTestUtils.TemporaryProviderConfig;
 import com.google.firebase.auth.UserTestUtils.RandomUser;
 import com.google.firebase.auth.UserTestUtils.TemporaryUser;
 import com.google.firebase.auth.hash.Scrypt;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
@@ -79,8 +79,8 @@ public class FirebaseAuthIT {
       "https://www.googleapis.com/identitytoolkit/v3/relyingparty/resetPassword";
   private static final String EMAIL_LINK_SIGN_IN_URL =
       "https://www.googleapis.com/identitytoolkit/v3/relyingparty/emailLinkSignin";
-  private static final JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-  private static final HttpTransport transport = Utils.getDefaultTransport();
+  private static final JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
+  private static final HttpTransport transport = ApiClientUtils.getDefaultTransport();
   private static final String ACTION_LINK_CONTINUE_URL = "http://localhost/?a=1&b=2#c=3";
 
   private static final FirebaseAuth auth = FirebaseAuth.getInstance(

@@ -21,10 +21,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.internal.ApiClientUtils;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +33,7 @@ import org.junit.Test;
 
 public class SamlProviderConfigTest {
 
-  private static final JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+  private static final JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
 
   private static final String SAML_JSON_STRING =
       ("{"

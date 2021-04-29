@@ -23,9 +23,10 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.internal.ListOidcProviderConfigsResponse;
+import com.google.firebase.internal.ApiClientUtils;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -344,7 +345,7 @@ public class ListProviderConfigsPageTest {
 
   private static OidcProviderConfig newOidcProviderConfig(String providerConfigId)
       throws IOException {
-    return Utils.getDefaultJsonFactory().fromString(
+    return ApiClientUtils.getDefaultJsonFactory().fromString(
         String.format("{\"name\":\"%s\"}", providerConfigId), OidcProviderConfig.class);
   }
 

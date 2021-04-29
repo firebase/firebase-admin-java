@@ -18,9 +18,10 @@ package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.internal.ApiClientUtils;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +29,7 @@ import org.junit.Test;
 
 public class UserProviderTest {
 
-  private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
+  private static final JsonFactory JSON_FACTORY = ApiClientUtils.getDefaultJsonFactory();
 
   @Test
   public void testAllProperties() throws IOException {
