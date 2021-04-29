@@ -21,13 +21,14 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.internal.ApiClientUtils;
+
 import java.io.IOException;
 import org.junit.Test;
 
@@ -73,7 +74,7 @@ public class OutgoingHttpRequestTest {
   @Test
   public void testOutgoingHttpRequestWithContent() throws IOException {
     JsonHttpContent streamingContent = new JsonHttpContent(
-        Utils.getDefaultJsonFactory(),
+        ApiClientUtils.getDefaultJsonFactory(),
         ImmutableMap.of("key", "value"));
     HttpRequest httpRequest = new MockHttpTransport().createRequestFactory()
         .buildPostRequest(new GenericUrl(TEST_URL), streamingContent);

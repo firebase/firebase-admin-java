@@ -16,7 +16,6 @@
 
 package com.google.firebase.auth;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.webtoken.JsonWebSignature;
 import com.google.api.client.json.webtoken.JsonWebToken;
@@ -26,6 +25,8 @@ import com.google.api.client.util.Base64;
 import com.google.api.client.util.Clock;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
+import com.google.firebase.internal.ApiClientUtils;
+
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -35,7 +36,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 
 class TestTokenFactory {
 
-  public static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
+  public static final JsonFactory JSON_FACTORY = ApiClientUtils.getDefaultJsonFactory();
   public static final Clock CLOCK = new FixedClock(2002000L * 1000);
   public static final String PROJECT_ID = "proj-test-101";
   public static final String PRIVATE_KEY_ID = "aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd";

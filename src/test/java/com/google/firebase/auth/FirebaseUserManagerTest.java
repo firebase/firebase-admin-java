@@ -25,7 +25,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
@@ -48,6 +47,7 @@ import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
 import com.google.firebase.auth.multitenancy.TenantAwareFirebaseAuth;
 import com.google.firebase.auth.multitenancy.TenantManager;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestResponseInterceptor;
@@ -67,7 +67,7 @@ import org.junit.Test;
 
 public class FirebaseUserManagerTest {
 
-  private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
+  private static final JsonFactory JSON_FACTORY = ApiClientUtils.getDefaultJsonFactory();
 
   private static final String TEST_TOKEN = "token";
 
@@ -1210,7 +1210,7 @@ public class FirebaseUserManagerTest {
     UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     Map<String, Object> map = update
         .setProviderToLink(USER_PROVIDER)
-        .getProperties(Utils.getDefaultJsonFactory());
+        .getProperties(ApiClientUtils.getDefaultJsonFactory());
     assertEquals(2, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals(USER_PROVIDER, map.get("linkProviderUserInfo"));
@@ -1221,7 +1221,7 @@ public class FirebaseUserManagerTest {
     UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("test");
     Map<String, Object> map = update
         .setProvidersToUnlink(ImmutableList.of("google.com"))
-        .getProperties(Utils.getDefaultJsonFactory());
+        .getProperties(ApiClientUtils.getDefaultJsonFactory());
     assertEquals(2, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals(ImmutableList.of("google.com"), map.get("deleteProvider"));
@@ -1233,7 +1233,7 @@ public class FirebaseUserManagerTest {
     Map<String, Object> map = update
         .setProvidersToUnlink(ImmutableList.of("google.com"))
         .setPhoneNumber(null)
-        .getProperties(Utils.getDefaultJsonFactory());
+        .getProperties(ApiClientUtils.getDefaultJsonFactory());
     assertEquals(2, map.size());
     assertEquals(update.getUid(), map.get("localId"));
     assertEquals(ImmutableList.of("google.com", "phone"), map.get("deleteProvider"));
@@ -2898,7 +2898,7 @@ public class FirebaseUserManagerTest {
             return FirebaseUserManager.builder()
                 .setProjectId("test-project-id")
                 .setHttpRequestFactory(transport.createRequestFactory())
-                .setJsonFactory(Utils.getDefaultJsonFactory())
+                .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
                 .build();
           }
           })

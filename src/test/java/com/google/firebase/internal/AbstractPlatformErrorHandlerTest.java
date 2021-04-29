@@ -251,7 +251,7 @@ public class AbstractPlatformErrorHandlerTest {
         .build();
     return new ErrorHandlingHttpClient<>(
         transport.createRequestFactory(),
-        Utils.getDefaultJsonFactory(),
+        ApiClientUtils.getDefaultJsonFactory(),
         new TestPlatformErrorHandler());
   }
 
@@ -265,7 +265,7 @@ public class AbstractPlatformErrorHandlerTest {
     };
     return new ErrorHandlingHttpClient<>(
         transport.createRequestFactory(),
-        Utils.getDefaultJsonFactory(),
+        ApiClientUtils.getDefaultJsonFactory(),
         new TestPlatformErrorHandler());
   }
 
@@ -281,7 +281,7 @@ public class AbstractPlatformErrorHandlerTest {
       AbstractPlatformErrorHandler<MockFirebaseException> {
 
     TestPlatformErrorHandler() {
-      super(Utils.getDefaultJsonFactory());
+      super(ApiClientUtils.getDefaultJsonFactory());
     }
 
     @Override

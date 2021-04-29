@@ -18,7 +18,6 @@ package com.google.firebase.testing;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
@@ -34,6 +33,8 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.internal.ApiClientUtils;
+
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -53,7 +54,8 @@ public class IntegrationTestUtils {
   private static synchronized GenericJson ensureServiceAccount() {
     if (serviceAccount == null) {
       try (InputStream stream = new FileInputStream(IT_SERVICE_ACCOUNT_PATH)) {
-        serviceAccount = Utils.getDefaultJsonFactory().fromInputStream(stream, GenericJson.class);
+        serviceAccount = ApiClientUtils.getDefaultJsonFactory()
+          .fromInputStream(stream, GenericJson.class);
       } catch (IOException e) {
         String msg = String.format("Failed to read service account certificate from %s. "
             + "Integration tests require a service account credential obtained from a Firebase "
@@ -146,23 +148,23 @@ public class IntegrationTestUtils {
     }
     return builder.build();
   }
-  
+
   public static class AppHttpClient {
 
     private final FirebaseApp app;
     private final FirebaseOptions options;
     private final HttpRequestFactory requestFactory;
-    
+
     public AppHttpClient() {
       this(FirebaseApp.getInstance());
     }
-    
+
     public AppHttpClient(FirebaseApp app) {
       this.app = checkNotNull(app);
       this.options = app.getOptions();
       this.requestFactory = this.options.getHttpTransport().createRequestFactory();
     }
-    
+
     public ResponseInfo put(String path, String json) throws IOException {
       String url = options.getDatabaseUrl() + path + "?access_token=" + getToken();
       HttpRequest request = requestFactory.buildPutRequest(new GenericUrl(url),
@@ -177,18 +179,18 @@ public class IntegrationTestUtils {
         }
       }
     }
-    
+
     private String getToken() {
       // TODO: We should consider exposing getToken (or similar) publicly for the
       // purpose of servers doing authenticated REST requests like this.
       return TestOnlyImplFirebaseTrampolines.getToken(app, false);
     }
   }
-  
+
   public static class ResponseInfo {
     private final int status;
     private final byte[] payload;
-    
+
     private ResponseInfo(HttpResponse response) throws IOException {
       this.status = response.getStatusCode();
       this.payload = ByteStreams.toByteArray(response.getContent());

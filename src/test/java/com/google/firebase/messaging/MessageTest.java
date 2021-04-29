@@ -25,6 +25,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonParser;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.messaging.AndroidConfig.Priority;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -186,7 +187,7 @@ public class MessageTest {
         .put("body_loc_args", ImmutableList.of("body-arg1", "body-arg2", "body-arg3"))
         .put("channel_id", "channel-id")
         // There is a problem with the JsonParser assignment to BigDecimal takes priority over
-        // all other number types and so this integer value is interpreted as a BigDecimal 
+        // all other number types and so this integer value is interpreted as a BigDecimal
         // rather than an Integer.
         .put("notification_count", BigDecimal.valueOf(4L))
         .build();
@@ -227,7 +228,7 @@ public class MessageTest {
   public void testAndroidNotificationWithNegativeCount() throws IllegalArgumentException {
     AndroidNotification.builder().setNotificationCount(-1).build();
   }
-  
+
   @Test
   public void testAndroidMessageWithoutLocalization() throws IOException {
     Message message = Message.builder()
@@ -934,7 +935,7 @@ public class MessageTest {
   }
 
   private static Map<String, Object> toMap(Object object) throws IOException {
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
     String json = jsonFactory.toString(object);
     JsonParser parser = jsonFactory.createJsonParser(json);
     Map<String, Object> map = new HashMap<>();

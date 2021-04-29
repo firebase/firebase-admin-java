@@ -23,7 +23,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpResponse;
@@ -54,6 +53,7 @@ import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.UserTestUtils;
 import com.google.firebase.auth.UserTestUtils.RandomUser;
 import com.google.firebase.auth.UserTestUtils.TemporaryUser;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
@@ -73,8 +73,8 @@ public class TenantAwareFirebaseAuthIT {
 
   private static final String VERIFY_CUSTOM_TOKEN_URL =
       "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyCustomToken";
-  private static final JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
-  private static final HttpTransport transport = Utils.getDefaultTransport();
+  private static final JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
+  private static final HttpTransport transport = ApiClientUtils.getDefaultTransport();
 
   private static TenantManager tenantManager;
   private static TenantAwareFirebaseAuth tenantAwareAuth;

@@ -40,6 +40,7 @@ import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.OutgoingHttpRequest;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayOutputStream;
@@ -352,7 +353,7 @@ public class InstanceIdClientImplTest {
 
   @Test(expected = NullPointerException.class)
   public void testRequestFactoryIsNull() {
-    new InstanceIdClientImpl(null, Utils.getDefaultJsonFactory());
+    new InstanceIdClientImpl(null, ApiClientUtils.getDefaultJsonFactory());
   }
 
   @Test(expected = NullPointerException.class)
@@ -420,7 +421,7 @@ public class InstanceIdClientImplTest {
         .build();
     return new InstanceIdClientImpl(
         transport.createRequestFactory(),
-        Utils.getDefaultJsonFactory(),
+        ApiClientUtils.getDefaultJsonFactory(),
         interceptor);
   }
 
@@ -435,7 +436,7 @@ public class InstanceIdClientImplTest {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     request.getContent().writeTo(out);
     Map<String, Object> parsed = new HashMap<>();
-    JsonParser parser = Utils.getDefaultJsonFactory().createJsonParser(out.toString());
+    JsonParser parser = ApiClientUtils.getDefaultJsonFactory().createJsonParser(out.toString());
     parser.parseAndClose(parsed);
     assertEquals(2, parsed.size());
     assertEquals("/topics/test-topic", parsed.get("to"));
@@ -467,6 +468,6 @@ public class InstanceIdClientImplTest {
   private InstanceIdClient initClientWithFaultyTransport() {
     return new InstanceIdClientImpl(
         TestUtils.createFaultyHttpTransport().createRequestFactory(),
-        Utils.getDefaultJsonFactory());
+        ApiClientUtils.getDefaultJsonFactory());
   }
 }

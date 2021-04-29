@@ -19,10 +19,10 @@ package com.google.firebase.remoteconfig;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.base.Strings;
 import com.google.firebase.ErrorCode;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
 
@@ -100,7 +100,7 @@ public final class Template {
   public static Template fromJSON(@NonNull String json) throws FirebaseRemoteConfigException {
     checkArgument(!Strings.isNullOrEmpty(json), "JSON String must not be null or empty.");
     // using the default json factory as no rpc calls are made here
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
     try {
       TemplateResponse templateResponse = jsonFactory.createJsonParser(json)
               .parseAndClose(TemplateResponse.class);
@@ -219,7 +219,7 @@ public final class Template {
    * @return A JSON-serializable representation of this {@link Template} instance.
    */
   public String toJSON() {
-    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
     try {
       return jsonFactory.toString(this.toTemplateResponse(true));
     } catch (IOException e) {

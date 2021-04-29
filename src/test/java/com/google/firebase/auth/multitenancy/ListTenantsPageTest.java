@@ -23,10 +23,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.internal.ListTenantsResponse;
+import com.google.firebase.internal.ApiClientUtils;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -319,7 +320,7 @@ public class ListTenantsPageTest {
   }
 
   private static Tenant newTenant(String tenantId) throws IOException {
-    return Utils.getDefaultJsonFactory().fromString(
+    return ApiClientUtils.getDefaultJsonFactory().fromString(
         String.format("{\"name\":\"%s\"}", tenantId), Tenant.class);
   }
 

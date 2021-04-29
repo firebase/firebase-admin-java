@@ -24,7 +24,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpRequest;
@@ -46,6 +45,7 @@ import com.google.firebase.auth.AuthErrorCode;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestResponseInterceptor;
@@ -60,7 +60,7 @@ import org.junit.Test;
 
 public class FirebaseTenantClientTest {
 
-  private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
+  private static final JsonFactory JSON_FACTORY = ApiClientUtils.getDefaultJsonFactory();
 
   private static final String TEST_TOKEN = "token";
 
@@ -398,7 +398,9 @@ public class FirebaseTenantClientTest {
         .setCredentials(credentials)
         .build());
     FirebaseTenantClient tenantClient = new FirebaseTenantClient(
-        "test-project-id", Utils.getDefaultJsonFactory(), transport.createRequestFactory());
+        "test-project-id",
+        ApiClientUtils.getDefaultJsonFactory(),
+        transport.createRequestFactory());
     return new TenantManager(app, tenantClient);
   }
 

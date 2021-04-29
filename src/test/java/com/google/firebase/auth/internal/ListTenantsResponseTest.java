@@ -20,17 +20,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.multitenancy.Tenant;
+import com.google.firebase.internal.ApiClientUtils;
 
 import org.junit.Test;
 
 public class ListTenantsResponseTest {
 
-  private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
+  private static final JsonFactory JSON_FACTORY = ApiClientUtils.getDefaultJsonFactory();
 
   @Test
   public void testDefaultValues() throws Exception {

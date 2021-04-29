@@ -5,13 +5,13 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
+import com.google.firebase.internal.ApiClientUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -21,7 +21,7 @@ import org.junit.Test;
 
 public class UserRecordTest {
 
-  private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
+  private static final JsonFactory JSON_FACTORY = ApiClientUtils.getDefaultJsonFactory();
 
   @Test(expected = NullPointerException.class)
   public void testNullResponse() {

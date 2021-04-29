@@ -19,7 +19,6 @@ package com.google.firebase;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Key;
@@ -29,6 +28,7 @@ import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
@@ -234,18 +234,18 @@ public final class FirebaseOptions {
   }
 
   /**
-   * Builder for constructing {@link FirebaseOptions}. 
+   * Builder for constructing {@link FirebaseOptions}.
    */
   public static final class Builder {
     @Key("databaseAuthVariableOverride")
     private Map<String, Object> databaseAuthVariableOverride = new HashMap<>();
-    
+
     @Key("databaseUrl")
     private String databaseUrl;
 
     @Key("projectId")
     private String projectId;
-    
+
     @Key("storageBucket")
     private String storageBucket;
 
@@ -253,8 +253,8 @@ public final class FirebaseOptions {
     private String serviceAccountId;
     private Supplier<GoogleCredentials> credentialsSupplier;
     private FirestoreOptions firestoreOptions;
-    private HttpTransport httpTransport = Utils.getDefaultTransport();
-    private JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    private HttpTransport httpTransport = ApiClientUtils.getDefaultTransport();
+    private JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
     private ThreadManager threadManager = FirebaseThreadManagers.DEFAULT_THREAD_MANAGER;
     private int connectTimeout;
     private int readTimeout;

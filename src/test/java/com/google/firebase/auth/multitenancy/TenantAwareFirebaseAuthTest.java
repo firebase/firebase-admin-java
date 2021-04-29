@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.json.GenericJson;
@@ -38,6 +37,7 @@ import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.auth.MockTokenVerifier;
 import com.google.firebase.auth.SessionCookieOptions;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayOutputStream;
@@ -270,7 +270,7 @@ public class TenantAwareFirebaseAuthTest {
     MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(new MockLowLevelHttpResponse().setContent(response))
         .build();
-    return FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+    return FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("token"))
         .setHttpTransport(transport)
         .setProjectId("test-project-id")
@@ -281,7 +281,7 @@ public class TenantAwareFirebaseAuthTest {
       throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     interceptor.getResponse().getRequest().getContent().writeTo(out);
-    return Utils.getDefaultJsonFactory().fromString(
+    return ApiClientUtils.getDefaultJsonFactory().fromString(
         new String(out.toByteArray()), GenericJson.class);
   }
 

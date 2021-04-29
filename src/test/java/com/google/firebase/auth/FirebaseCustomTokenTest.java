@@ -21,7 +21,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.LowLevelHttpRequest;
 import com.google.api.client.json.gson.GsonFactory;
@@ -36,9 +35,9 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.internal.FirebaseCustomAuthToken;
 import com.google.firebase.database.MapBuilder;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.ServiceAccount;
-import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
 import java.util.List;
 import org.junit.After;
@@ -91,7 +90,7 @@ public class FirebaseCustomTokenTest {
   @Test
   public void testCreateCustomTokenWithoutServiceAccountCredentials() throws Exception {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse();
-    String content = Utils.getDefaultJsonFactory().toString(
+    String content = ApiClientUtils.getDefaultJsonFactory().toString(
         ImmutableMap.of("signedBlob", BaseEncoding.base64().encode("test-signature".getBytes())));
     response.setContent(content);
     MockHttpTransport transport = new MultiRequestMockHttpTransport(ImmutableList.of(response));
@@ -116,7 +115,7 @@ public class FirebaseCustomTokenTest {
 
   @Test
   public void testCreateCustomTokenWithDiscoveredServiceAccount() throws Exception {
-    String content = Utils.getDefaultJsonFactory().toString(
+    String content = ApiClientUtils.getDefaultJsonFactory().toString(
         ImmutableMap.of("signedBlob", BaseEncoding.base64().encode("test-signature".getBytes())));
     List<MockLowLevelHttpResponse> responses = ImmutableList.of(
         // Service account discovery response

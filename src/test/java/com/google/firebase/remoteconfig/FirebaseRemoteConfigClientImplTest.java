@@ -43,6 +43,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.OutgoingHttpRequest;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
 import com.google.firebase.testing.TestResponseInterceptor;
@@ -1150,7 +1151,7 @@ public class FirebaseRemoteConfigClientImplTest {
 
     return FirebaseRemoteConfigClientImpl.builder()
             .setProjectId("test-project")
-            .setJsonFactory(Utils.getDefaultJsonFactory())
+            .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
             .setRequestFactory(transport.createRequestFactory())
             .setResponseInterceptor(interceptor)
             .build();
@@ -1160,7 +1161,7 @@ public class FirebaseRemoteConfigClientImplTest {
     HttpTransport transport = TestUtils.createFaultyHttpTransport();
     return FirebaseRemoteConfigClientImpl.builder()
             .setProjectId("test-project")
-            .setJsonFactory(Utils.getDefaultJsonFactory())
+            .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
             .setRequestFactory(transport.createRequestFactory())
             .build();
   }
@@ -1168,7 +1169,7 @@ public class FirebaseRemoteConfigClientImplTest {
   private FirebaseRemoteConfigClientImpl.Builder fullyPopulatedBuilder() {
     return FirebaseRemoteConfigClientImpl.builder()
             .setProjectId("test-project")
-            .setJsonFactory(Utils.getDefaultJsonFactory())
+            .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
             .setRequestFactory(Utils.getDefaultTransport().createRequestFactory());
   }
 
@@ -1209,7 +1210,7 @@ public class FirebaseRemoteConfigClientImplTest {
           HttpRequest request, Map<String, Object> expected) throws IOException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     request.getContent().writeTo(out);
-    JsonParser parser = Utils.getDefaultJsonFactory().createJsonParser(out.toString());
+    JsonParser parser = ApiClientUtils.getDefaultJsonFactory().createJsonParser(out.toString());
     Map<String, Object> parsed = new HashMap<>();
     parser.parseAndClose(parsed);
     assertEquals(expected, parsed);
