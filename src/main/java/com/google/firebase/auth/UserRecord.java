@@ -574,7 +574,7 @@ public class UserRecord implements UserInfo {
     /**
      * Links this user to the specified provider.
      *
-     * Linking a provider to an existing user account does not invalidate the
+     * <p>Linking a provider to an existing user account does not invalidate the
      * refresh token of that account. In other words, the existing account
      * continues to be able to access resources, despite not having used
      * the newly linked provider to sign in. If you wish to force the user to
