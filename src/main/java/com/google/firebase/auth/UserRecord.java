@@ -574,10 +574,10 @@ public class UserRecord implements UserInfo {
     /**
      * Links this user to the specified provider.
      *
-     * <p>Linking a provider to an existing user account does not invalidate the
+     * Linking a provider to an existing user account does not invalidate the
      * refresh token of that account. In other words, the existing account
-     * would continue to be able to access resources, despite not having used
-     * the newly linked provider to log in. If you wish to force the user to
+     * continues to be able to access resources, despite not having used
+     * the newly linked provider to sign in. If you wish to force the user to
      * authenticate with this new provider, you need to (a) revoke their
      * refresh token (see
      * https://firebase.google.com/docs/auth/admin/manage-sessions#revoke_refresh_tokens),
