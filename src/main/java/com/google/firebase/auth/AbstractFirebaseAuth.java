@@ -555,9 +555,9 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Gets the user data for the user corresponding to a given provider id.
+   * Gets the user data for the user corresponding to a given provider ID.
    *
-   * @param providerId Identifier for the given federated provider, for example,
+   * @param providerId Identifier for the given federated provider: for example,
    *     "google.com" for the Google provider.
    * @param uid The user identifier with the given provider.
    * @return A {@link UserRecord} instance.
@@ -571,9 +571,9 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
-   * Gets the user data for the user corresponding to a given provider id.
+   * Gets the user data for the user corresponding to a given provider ID.
    *
-   * @param providerId Identifer for the given federated provider, for example,
+   * @param providerId Identifer for the given federated provider: for example,
    *     "google.com" for the Google provider.
    * @param uid The user identifier with the given provider.
    * @return An {@code ApiFuture} which will complete successfully with a {@link UserRecord}
