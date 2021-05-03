@@ -1588,6 +1588,27 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testHttpErrorWithEmailNotFoundCode() {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent("{\"error\": {\"message\": \"EMAIL_NOT_FOUND\"}}")
+        .setStatusCode(400);
+    FirebaseAuth auth = getRetryDisabledAuth(response);
+    FirebaseUserManager userManager = auth.getUserManager();
+    try {
+      userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
+      fail("No exception thrown for HTTP error");
+    } catch (FirebaseAuthException e) {
+      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals(
+          "No user record found for the given email (EMAIL_NOT_FOUND).",
+          e.getMessage());
+      assertEquals(AuthErrorCode.EMAIL_NOT_FOUND, e.getAuthErrorCode());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+    }
+  }
+
+  @Test
   public void testUnexpectedHttpError() {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setContent("{}")
@@ -2982,3 +3003,4 @@ public class FirebaseUserManagerTest {
   }
 
 }
+

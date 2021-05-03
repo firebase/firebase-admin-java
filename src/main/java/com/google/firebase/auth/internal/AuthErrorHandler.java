@@ -61,6 +61,12 @@ final class AuthErrorHandler extends AbstractHttpErrorHandler<FirebaseAuthExcept
                   "The user with the provided email already exists",
                   AuthErrorCode.EMAIL_ALREADY_EXISTS))
           .put(
+              "EMAIL_NOT_FOUND",
+              new AuthError(
+                  ErrorCode.NOT_FOUND,
+                  "No user record found for the given email",
+                  AuthErrorCode.EMAIL_NOT_FOUND))
+          .put(
               "INVALID_DYNAMIC_LINK_DOMAIN",
               new AuthError(
                   ErrorCode.INVALID_ARGUMENT,
