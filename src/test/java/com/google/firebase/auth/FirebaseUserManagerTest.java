@@ -1448,27 +1448,6 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
-  public void testGeneratePasswordResetLinkWithEmailNotFoundError() {
-    TestResponseInterceptor interceptor =
-        initializeAppForUserManagementWithStatusCode(400,
-            "{\"error\": {\"message\": \"EMAIL_NOT_FOUND\"}}");
-    try {
-      FirebaseAuth.getInstance()
-            .generatePasswordResetLinkAsync("test@example.com").get();
-      fail("No error thrown for error response");
-    } catch (FirebaseAuthException e) {
-      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
-      assertEquals(
-          "No user record found for the given email (EMAIL_NOT_FOUND).",
-          e.getMessage());
-      assertTrue(e.getCause() instanceof HttpResponseException);
-      assertNotNull(e.getHttpResponse());
-      assertEquals(AuthErrorCode.EMAIL_NOT_FOUND, e.getAuthErrorCode());
-    }
-    checkUrl(interceptor, "POST", PROJECT_BASE_URL + "/accounts:sendOobCode");
-  }
-
-  @Test
   public void testGenerateEmailVerificationLinkNoEmail() throws Exception {
     initializeAppForUserManagement();
     try {
@@ -1603,6 +1582,27 @@ public class FirebaseUserManagerTest {
       assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
       assertEquals("Unexpected HTTP response with status: 500\n" + content, e.getMessage());
       assertNull(e.getAuthErrorCode());
+      assertTrue(e.getCause() instanceof HttpResponseException);
+      assertNotNull(e.getHttpResponse());
+    }
+  }
+
+  @Test
+  public void testHttpErrorWithEmailNotFoundCode() {
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent("{\"error\": {\"message\": \"EMAIL_NOT_FOUND\"}}")
+        .setStatusCode(400);
+    FirebaseAuth auth = getRetryDisabledAuth(response);
+    FirebaseUserManager userManager = auth.getUserManager();
+    try {
+      userManager.getEmailActionLink(EmailLinkType.PASSWORD_RESET, "test@example.com", null);
+      fail("No exception thrown for HTTP error");
+    } catch (FirebaseAuthException e) {
+      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+      assertEquals(
+          "No user record found for the given email (EMAIL_NOT_FOUND).",
+          e.getMessage());
+      assertEquals(AuthErrorCode.EMAIL_NOT_FOUND, e.getAuthErrorCode());
       assertTrue(e.getCause() instanceof HttpResponseException);
       assertNotNull(e.getHttpResponse());
     }
@@ -3003,3 +3003,4 @@ public class FirebaseUserManagerTest {
   }
 
 }
+
