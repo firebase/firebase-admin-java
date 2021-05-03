@@ -345,7 +345,7 @@
             <!-- Verify Phase -->
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.19.1</version>
+                <version>2.22.2</version>
                 <executions>
                     <execution>
                         <goals>
