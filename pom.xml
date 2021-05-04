@@ -198,7 +198,7 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.8.5</version>
+                        <version>0.8.7</version>
                         <executions>
                             <execution>
                                 <id>pre-unit-test</id>
@@ -224,7 +224,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
-                        <version>1.6.0</version>
+                        <version>3.0.0</version>
                         <executions>
                             <execution>
                                 <phase>test</phase>
