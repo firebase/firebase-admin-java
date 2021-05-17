@@ -140,7 +140,7 @@
                     <plugin>
                         <!-- Update relative paths in generated API docs -->
                         <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.7</version>
+                        <version>3.0.0</version>
                         <executions>
                             <execution>
                                 <phase>site</phase>
@@ -400,7 +400,7 @@
             <dependency>
                 <groupId>com.google.api-client</groupId>
                 <artifactId>google-api-client-bom</artifactId>
-                <version>1.31.4</version>
+                <version>1.31.5</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
