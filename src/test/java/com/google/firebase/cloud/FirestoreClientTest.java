@@ -69,11 +69,9 @@ public class FirestoreClientTest {
         .build());
     Firestore firestore = FirestoreClient.getFirestore(app);
     assertEquals("explicit-project-id", firestore.getOptions().getProjectId());
-    assertTrue(firestore.getOptions().areTimestampsInSnapshotsEnabled());
 
     firestore = FirestoreClient.getFirestore();
     assertEquals("explicit-project-id", firestore.getOptions().getProjectId());
-    assertTrue(firestore.getOptions().areTimestampsInSnapshotsEnabled());
   }
 
   @Test
@@ -88,13 +86,11 @@ public class FirestoreClientTest {
         .build());
     Firestore firestore = FirestoreClient.getFirestore(app);
     assertEquals("explicit-project-id", firestore.getOptions().getProjectId());
-    assertTrue(firestore.getOptions().areTimestampsInSnapshotsEnabled());
     assertSame(ImplFirebaseTrampolines.getCredentials(app),
         firestore.getOptions().getCredentialsProvider().getCredentials());
 
     firestore = FirestoreClient.getFirestore();
     assertEquals("explicit-project-id", firestore.getOptions().getProjectId());
-    assertTrue(firestore.getOptions().areTimestampsInSnapshotsEnabled());
     assertSame(ImplFirebaseTrampolines.getCredentials(app),
         firestore.getOptions().getCredentialsProvider().getCredentials());
   }
