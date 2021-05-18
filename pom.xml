@@ -140,7 +140,7 @@
                     <plugin>
                         <!-- Update relative paths in generated API docs -->
                         <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.7</version>
+                        <version>3.0.0</version>
                         <executions>
                             <execution>
                                 <phase>site</phase>
