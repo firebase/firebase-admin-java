@@ -37,6 +37,8 @@ public enum AuthErrorCode {
   EMAIL_ALREADY_EXISTS,
 
   /**
+  <<<<<<< v7
+  =======
    * No user record found for the given email, typically raised when
    * generating a password reset link using an email for a user that
    * is not already registered.
@@ -44,6 +46,7 @@ public enum AuthErrorCode {
   EMAIL_NOT_FOUND,
 
   /**
+  >>>>>>> master
    * The specified ID token is expired.
    */
   EXPIRED_ID_TOKEN,

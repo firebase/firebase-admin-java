@@ -62,7 +62,11 @@ final class FirebaseTenantClient {
         "Project ID is required to access the auth service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
+  <<<<<<< v7
+    this.tenantMgtBaseUrl = String.format(ID_TOOLKIT_URL, "v2", projectId);
+  =======
     this.tenantMgtBaseUrl = getTenantMgtBaseUrl(projectId);
+  >>>>>>> master
     this.httpClient = new AuthHttpClient(jsonFactory, requestFactory);
   }
 

@@ -51,7 +51,10 @@ import com.google.firebase.auth.ProviderConfigTestUtils.TemporaryProviderConfig;
 import com.google.firebase.auth.UserTestUtils.RandomUser;
 import com.google.firebase.auth.UserTestUtils.TemporaryUser;
 import com.google.firebase.auth.hash.Scrypt;
+  <<<<<<< v7
+  =======
 import com.google.firebase.internal.ApiClientUtils;
+  >>>>>>> master
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
@@ -434,10 +437,17 @@ public class FirebaseAuthIT {
 
     // New users should not have a lastRefreshTimestamp set.
     assertEquals(0, newUserRecord.getUserMetadata().getLastRefreshTimestamp());
+  <<<<<<< v7
 
     // Login to cause the lastRefreshTimestamp to be set.
     signInWithPassword(newUserRecord.getEmail(), "password");
 
+  =======
+
+    // Login to cause the lastRefreshTimestamp to be set.
+    signInWithPassword(newUserRecord.getEmail(), "password");
+
+  >>>>>>> master
     // Attempt to retrieve the user 3 times (with a small delay between each
     // attempt). Occasionally, this call retrieves the user data without the
     // lastLoginTime/lastRefreshTime set; possibly because it's hitting a

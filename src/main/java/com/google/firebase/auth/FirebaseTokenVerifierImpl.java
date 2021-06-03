@@ -29,7 +29,10 @@ import com.google.api.client.util.ArrayMap;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.firebase.ErrorCode;
+ <<<<<<< v7
+ =======
 import com.google.firebase.auth.internal.Utils;
+ >>>>>>> master
 import com.google.firebase.internal.Nullable;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -72,7 +75,11 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     this.docUrl = builder.docUrl;
     this.invalidTokenErrorCode = checkNotNull(builder.invalidTokenErrorCode);
     this.expiredTokenErrorCode = checkNotNull(builder.expiredTokenErrorCode);
+  <<<<<<< v7
+    this.tenantId = Strings.nullToEmpty(builder.tenantId);
+  =======
     this.tenantId = builder.tenantId;
+  >>>>>>> master
   }
 
   /**
@@ -164,8 +171,12 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     }
   }
 
+  <<<<<<< v7
+  private void checkContents(final IdToken idToken) throws FirebaseAuthException {
+  =======
   private void checkContents(final IdToken idToken, boolean isEmulatorMode)
       throws FirebaseAuthException {
+  >>>>>>> master
     final Header header = idToken.getHeader();
     final Payload payload = idToken.getPayload();
 
@@ -173,7 +184,11 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
     String errorMessage = null;
     AuthErrorCode errorCode = invalidTokenErrorCode;
 
+  <<<<<<< v7
+    if (header.getKeyId() == null) {
+  =======
     if (!isEmulatorMode && header.getKeyId() == null) {
+  >>>>>>> master
       errorMessage = getErrorForTokenWithoutKid(header, payload);
     } else if (!isEmulatorMode && !RS256.equals(header.getAlgorithm())) {
       errorMessage = String.format(
@@ -227,11 +242,19 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
       throw newException(detailedError, errorCode);
     }
   }
+  <<<<<<< v7
 
   private FirebaseAuthException newException(String message, AuthErrorCode errorCode) {
     return newException(message, errorCode, null);
   }
 
+   =======
+
+  private FirebaseAuthException newException(String message, AuthErrorCode errorCode) {
+    return newException(message, errorCode, null);
+  }
+
+  >>>>>>> master
   private FirebaseAuthException newException(
       String message, AuthErrorCode errorCode, Throwable cause) {
     return new FirebaseAuthException(
@@ -328,11 +351,19 @@ final class FirebaseTokenVerifierImpl implements FirebaseTokenVerifier {
   }
 
   private void checkTenantId(final FirebaseToken firebaseToken) throws FirebaseAuthException {
+  <<<<<<< v7
+    String tokenTenantId = Strings.nullToEmpty(firebaseToken.getTenantId());
+    if (!this.tenantId.equals(tokenTenantId)) {
+      String message = String.format(
+          "The tenant ID ('%s') of the token did not match the expected value ('%s')",
+          tokenTenantId,
+  =======
     String tokenTenantId = firebaseToken.getTenantId();
     if (this.tenantId != null && !this.tenantId.equals(tokenTenantId)) {
       String message = String.format(
           "The tenant ID ('%s') of the token did not match the expected value ('%s')",
           Strings.nullToEmpty(tokenTenantId),
+  >>>>>>> master
           tenantId);
       throw newException(message, AuthErrorCode.TENANT_ID_MISMATCH);
     }

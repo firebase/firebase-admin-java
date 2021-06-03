@@ -34,7 +34,10 @@ import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+  <<<<<<< v7
+  =======
 import com.google.firebase.internal.ApiClientUtils;
+  >>>>>>> master
 import com.google.firebase.internal.FirebaseScheduledExecutor;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.ListenableFuture2ApiFuture;
@@ -569,7 +572,11 @@ public class FirebaseApp {
           .setCredentials(APPLICATION_DEFAULT_CREDENTIALS)
           .build();
     }
+  <<<<<<< v7
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+  =======
     JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
+  >>>>>>> master
     FirebaseOptions.Builder builder = FirebaseOptions.builder();
     JsonParser parser;
     if (defaultConfig.startsWith("{")) {

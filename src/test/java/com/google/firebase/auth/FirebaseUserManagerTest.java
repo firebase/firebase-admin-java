@@ -98,10 +98,13 @@ public class FirebaseUserManagerTest {
 
   private static final String TENANTS_BASE_URL = PROJECT_BASE_URL + "/tenants";
 
+  <<<<<<< v7
+  =======
   private static final String AUTH_EMULATOR = "localhost:8000";
   private static final String PROJECT_BASE_URL_EMULATOR =
           "http://" + AUTH_EMULATOR + "/identitytoolkit.googleapis.com/v2/projects/test-project-id";
 
+  >>>>>>> master
   private static final String SAML_RESPONSE = TestUtils.loadResource("saml.json");
 
   private static final String OIDC_RESPONSE = TestUtils.loadResource("oidc.json");
@@ -1584,6 +1587,8 @@ public class FirebaseUserManagerTest {
       assertNull(e.getAuthErrorCode());
       assertTrue(e.getCause() instanceof HttpResponseException);
       assertNotNull(e.getHttpResponse());
+  <<<<<<< v7
+  =======
     }
   }
 
@@ -1605,6 +1610,7 @@ public class FirebaseUserManagerTest {
       assertEquals(AuthErrorCode.EMAIL_NOT_FOUND, e.getAuthErrorCode());
       assertTrue(e.getCause() instanceof HttpResponseException);
       assertNotNull(e.getHttpResponse());
+  >>>>>>> master
     }
   }
 
@@ -2946,7 +2952,11 @@ public class FirebaseUserManagerTest {
             return FirebaseUserManager.builder()
                 .setProjectId("test-project-id")
                 .setHttpRequestFactory(transport.createRequestFactory())
+  <<<<<<< v7
+                .setJsonFactory(Utils.getDefaultJsonFactory())
+  =======
                 .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
+  >>>>>>> master
                 .build();
           }
           })

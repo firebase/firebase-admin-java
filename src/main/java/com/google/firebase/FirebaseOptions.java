@@ -234,7 +234,11 @@ public final class FirebaseOptions {
   }
 
   /**
+  <<<<<<< v7
+   * Builder for constructing {@link FirebaseOptions}. 
+  =======
    * Builder for constructing {@link FirebaseOptions}.
+  >>>>>>> master
    */
   public static final class Builder {
     @Key("databaseAuthVariableOverride")

@@ -468,6 +468,10 @@ public class InstanceIdClientImplTest {
   private InstanceIdClient initClientWithFaultyTransport() {
     return new InstanceIdClientImpl(
         TestUtils.createFaultyHttpTransport().createRequestFactory(),
+  <<<<<<< v7
+        Utils.getDefaultJsonFactory());
+  =======
         ApiClientUtils.getDefaultJsonFactory());
+  >>>>>>> master
   }
 }

@@ -88,8 +88,13 @@ final class FirebaseUserManager {
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
     this.jsonFactory = checkNotNull(builder.jsonFactory, "JsonFactory must not be null");
+  <<<<<<< v7
+    final String idToolkitUrlV1 = String.format(ID_TOOLKIT_URL, "v1", projectId);
+    final String idToolkitUrlV2 = String.format(ID_TOOLKIT_URL, "v2", projectId);
+  =======
     final String idToolkitUrlV1 = getIdToolkitUrl(projectId, "v1");
     final String idToolkitUrlV2 = getIdToolkitUrl(projectId, "v2");
+  >>>>>>> master
     final String tenantId = builder.tenantId;
     if (tenantId == null) {
       this.userMgtBaseUrl = idToolkitUrlV1;
@@ -101,6 +106,8 @@ final class FirebaseUserManager {
     }
 
     this.httpClient = new AuthHttpClient(jsonFactory, builder.requestFactory);
+  <<<<<<< v7
+  =======
   }
 
   private String getIdToolkitUrl(String projectId, String version) {
@@ -108,6 +115,7 @@ final class FirebaseUserManager {
       return String.format(ID_TOOLKIT_URL_EMULATOR, Utils.getEmulatorHost(), version, projectId);
     }
     return String.format(ID_TOOLKIT_URL, version, projectId);
+  >>>>>>> master
   }
 
   @VisibleForTesting
@@ -410,9 +418,15 @@ final class FirebaseUserManager {
     private String tenantId;
     private HttpRequestFactory requestFactory;
     private JsonFactory jsonFactory;
+  <<<<<<< v7
 
     private Builder() { }
 
+  =======
+
+    private Builder() { }
+
+  >>>>>>> master
     public Builder setProjectId(String projectId) {
       this.projectId = projectId;
       return this;

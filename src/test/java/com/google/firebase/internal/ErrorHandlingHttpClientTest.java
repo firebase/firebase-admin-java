@@ -22,6 +22,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
+  <<<<<<< v7
+import com.google.api.client.googleapis.util.Utils;
+  =======
+  >>>>>>> master
 import com.google.api.client.http.ByteArrayContent;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpMethods;
@@ -52,7 +56,11 @@ import org.junit.Test;
 
 public class ErrorHandlingHttpClientTest {
 
+  <<<<<<< v7
+  private static final JsonFactory DEFAULT_JSON_FACTORY = Utils.getDefaultJsonFactory();
+  =======
   private static final JsonFactory DEFAULT_JSON_FACTORY = ApiClientUtils.getDefaultJsonFactory();
+  >>>>>>> master
 
   private static final HttpRequestInfo TEST_REQUEST = HttpRequestInfo.buildGetRequest(
       "https://firebase.google.com");
@@ -68,7 +76,11 @@ public class ErrorHandlingHttpClientTest {
   @Test(expected = NullPointerException.class)
   public void testNullJsonFactory() {
     new ErrorHandlingHttpClient<>(
+  <<<<<<< v7
+        Utils.getDefaultTransport().createRequestFactory(),
+  =======
         ApiClientUtils.getDefaultTransport().createRequestFactory(),
+  >>>>>>> master
         null,
         new TestHttpErrorHandler());
   }
@@ -76,7 +88,11 @@ public class ErrorHandlingHttpClientTest {
   @Test(expected = NullPointerException.class)
   public void testNullErrorHandler() {
     new ErrorHandlingHttpClient<>(
+  <<<<<<< v7
+        Utils.getDefaultTransport().createRequestFactory(),
+  =======
         ApiClientUtils.getDefaultTransport().createRequestFactory(),
+  >>>>>>> master
         DEFAULT_JSON_FACTORY,
         null);
   }
@@ -266,7 +282,11 @@ public class ErrorHandlingHttpClientTest {
     HttpRequestFactory requestFactory = ApiClientUtils.newAuthorizedRequestFactory(
         app, retryConfig);
     ErrorHandlingHttpClient<FirebaseException> client = new ErrorHandlingHttpClient<>(
+  <<<<<<< v7
+        requestFactory, Utils.getDefaultJsonFactory(), new TestHttpErrorHandler());
+  =======
         requestFactory, ApiClientUtils.getDefaultJsonFactory(), new TestHttpErrorHandler());
+  >>>>>>> master
 
     try {
       client.sendAndParse(TEST_REQUEST, GenericData.class);
@@ -301,7 +321,11 @@ public class ErrorHandlingHttpClientTest {
         .build());
     HttpRequestFactory requestFactory = ApiClientUtils.newAuthorizedRequestFactory(app);
     ErrorHandlingHttpClient<FirebaseException> client = new ErrorHandlingHttpClient<>(
+  <<<<<<< v7
+        requestFactory, Utils.getDefaultJsonFactory(), new TestHttpErrorHandler());
+  =======
         requestFactory, ApiClientUtils.getDefaultJsonFactory(), new TestHttpErrorHandler());
+  >>>>>>> master
 
     try {
       client.sendAndParse(TEST_REQUEST, GenericData.class);

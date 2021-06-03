@@ -208,7 +208,11 @@ public class FirebaseMessagingClientImplTest {
         fail("No error thrown for HTTP error");
       } catch (FirebaseMessagingException error) {
         checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code), null,
+  <<<<<<< v7
+            "Unexpected HTTP response with status: " + code + "\nnot json");
+  =======
             "Unexpected HTTP response with status: " + code + "\n[not json]");
+  >>>>>>> master
       }
       checkRequestHeader(interceptor.getLastRequest());
     }

@@ -23,6 +23,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+  <<<<<<< v7
+import com.google.api.client.googleapis.util.Utils;
+  =======
+  >>>>>>> master
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.testing.http.MockHttpTransport;
@@ -99,7 +103,11 @@ public class CryptoSignersTest {
         .build();
     CryptoSigners.IAMCryptoSigner signer = new CryptoSigners.IAMCryptoSigner(
         transport.createRequestFactory(),
+  <<<<<<< v7
+        Utils.getDefaultJsonFactory(),
+  =======
         ApiClientUtils.getDefaultJsonFactory(),
+  >>>>>>> master
         "test-service-account@iam.gserviceaccount.com");
     try {
       signer.sign("foo".getBytes());
