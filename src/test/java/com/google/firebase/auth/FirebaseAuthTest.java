@@ -103,10 +103,9 @@ public class FirebaseAuthTest {
   }
 
   @Test
-  public void testInvokeAfterAppDelete() throws Exception {
+  public void testInvokeAfterAppDelete() throws FirebaseAuthException {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testInvokeAfterAppDelete");
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
-    assertNotNull(auth);
     app.delete();
 
     String message = "FirebaseApp 'testInvokeAfterAppDelete' was deleted";
@@ -119,21 +118,33 @@ public class FirebaseAuthTest {
 
     try {
       auth.createCustomToken("uid");
+  <<<<<<< redacted-passwords
+      fail("No error thrown from token factory for deleted app");
+  =======
       fail("No error thrown when invoking auth after deleting app");
+  >>>>>>> master
     } catch (IllegalStateException ex) {
       assertEquals(message, ex.getMessage());
     }
 
     try {
       auth.verifyIdToken("idToken");
+  <<<<<<< redacted-passwords
+      fail("No error thrown from token verifier for deleted app");
+  =======
       fail("No error thrown when invoking auth after deleting app");
+  >>>>>>> master
     } catch (IllegalStateException ex) {
       assertEquals(message, ex.getMessage());
     }
 
     try {
       auth.getUser("uid");
+  <<<<<<< redacted-passwords
+      fail("No error thrown from user manager for deleted app");
+  =======
       fail("No error thrown when invoking auth after deleting app");
+  >>>>>>> master
     } catch (IllegalStateException ex) {
       assertEquals(message, ex.getMessage());
     }
@@ -573,6 +584,9 @@ public class FirebaseAuthTest {
   private FirebaseAuth getAuthForIdTokenVerification(
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions);
+  <<<<<<< redacted-passwords
+    FirebaseUserManager userManager = new FirebaseUserManager(app);
+  =======
     return getAuthForIdTokenVerification(app, tokenVerifierSupplier);
   }
 
@@ -580,6 +594,7 @@ public class FirebaseAuthTest {
       FirebaseApp app,
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
     FirebaseUserManager userManager = FirebaseUserManager.createUserManager(app, null);
+  >>>>>>> master
     return FirebaseAuth.builder()
         .setFirebaseApp(app)
         .setIdTokenVerifier(tokenVerifierSupplier)
@@ -600,6 +615,9 @@ public class FirebaseAuthTest {
   private FirebaseAuth getAuthForSessionCookieVerification(
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions);
+  <<<<<<< redacted-passwords
+    FirebaseUserManager userManager = new FirebaseUserManager(app);
+  =======
     return getAuthForSessionCookieVerification(app, tokenVerifierSupplier);
   }
 
@@ -607,6 +625,7 @@ public class FirebaseAuthTest {
       FirebaseApp app,
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
     FirebaseUserManager userManager = FirebaseUserManager.createUserManager(app, null);
+  >>>>>>> master
     return FirebaseAuth.builder()
         .setFirebaseApp(app)
         .setCookieVerifier(tokenVerifierSupplier)

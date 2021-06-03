@@ -21,7 +21,10 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.FirebaseApp;
+  <<<<<<< redacted-passwords
+  =======
 import com.google.firebase.auth.UserTestUtils.RandomUser;
+  >>>>>>> master
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.util.Collection;
 
@@ -45,6 +48,20 @@ public class GetUsersIT {
     testUser2 = FirebaseAuthIT.newUserWithParams(auth);
     testUser3 = FirebaseAuthIT.newUserWithParams(auth);
 
+  <<<<<<< redacted-passwords
+    FirebaseAuthIT.RandomUser randomUser = FirebaseAuthIT.RandomUser.create();
+    importUserUid = randomUser.uid;
+    String phone = FirebaseAuthIT.randomPhoneNumber();
+    UserImportResult result = auth.importUsers(ImmutableList.of(
+          ImportUserRecord.builder()
+          .setUid(randomUser.uid)
+          .setEmail(randomUser.email)
+          .setPhoneNumber(phone)
+          .addUserProvider(
+              UserProvider.builder()
+                  .setProviderId("google.com")
+                  .setUid("google_" + randomUser.uid)
+  =======
     RandomUser randomUser = UserTestUtils.generateRandomUserInfo();
     importUserUid = randomUser.getUid();
     UserImportResult result = auth.importUsers(ImmutableList.of(
@@ -56,6 +73,7 @@ public class GetUsersIT {
               UserProvider.builder()
                   .setProviderId("google.com")
                   .setUid("google_" + randomUser.getUid())
+  >>>>>>> master
                   .build())
           .build()
           ));

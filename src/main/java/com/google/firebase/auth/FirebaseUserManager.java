@@ -21,6 +21,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseInterceptor;
+  <<<<<<< redacted-passwords
+import com.google.api.client.http.json.JsonHttpContent;
+  =======
+  >>>>>>> master
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Key;
@@ -32,12 +36,27 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
+  <<<<<<< redacted-passwords
+import com.google.firebase.auth.UserRecord.CreateRequest;
+import com.google.firebase.auth.UserRecord.UpdateRequest;
+  =======
 import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.auth.internal.AuthHttpClient;
+  >>>>>>> master
 import com.google.firebase.auth.internal.BatchDeleteResponse;
 import com.google.firebase.auth.internal.DownloadAccountResponse;
 import com.google.firebase.auth.internal.GetAccountInfoRequest;
 import com.google.firebase.auth.internal.GetAccountInfoResponse;
+  <<<<<<< redacted-passwords
+import com.google.firebase.auth.internal.HttpErrorResponse;
+import com.google.firebase.auth.internal.UploadAccountResponse;
+import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.Nullable;
+import com.google.firebase.internal.SdkUtils;
+
+import java.io.IOException;
+  =======
 import com.google.firebase.auth.internal.ListOidcProviderConfigsResponse;
 import com.google.firebase.auth.internal.ListSamlProviderConfigsResponse;
 import com.google.firebase.auth.internal.UploadAccountResponse;
@@ -46,6 +65,7 @@ import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
+  >>>>>>> master
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -61,7 +81,10 @@ import java.util.Set;
  */
 final class FirebaseUserManager {
 
+  <<<<<<< redacted-passwords
+  =======
   static final int MAX_LIST_PROVIDER_CONFIGS_RESULTS = 100;
+  >>>>>>> master
   static final int MAX_GET_ACCOUNTS_BATCH_SIZE = 100;
   static final int MAX_DELETE_ACCOUNTS_BATCH_SIZE = 1000;
   static final int MAX_LIST_USERS_RESULTS = 1000;
@@ -79,14 +102,44 @@ final class FirebaseUserManager {
   private final String userMgtBaseUrl;
   private final String idpConfigMgtBaseUrl;
   private final JsonFactory jsonFactory;
+  <<<<<<< redacted-passwords
+  private final HttpRequestFactory requestFactory;
+  private final String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
+
+  private HttpResponseInterceptor interceptor;
+
+  /**
+   * Creates a new FirebaseUserManager instance.
+   *
+   * @param app A non-null {@link FirebaseApp}.
+   */
+  FirebaseUserManager(@NonNull FirebaseApp app) {
+    this(app, null);
+  }
+
+  FirebaseUserManager(@NonNull FirebaseApp app, @Nullable HttpRequestFactory requestFactory) {
+    checkNotNull(app, "FirebaseApp must not be null");
+    String projectId = ImplFirebaseTrampolines.getProjectId(app);
+  =======
   private final AuthHttpClient httpClient;
 
   private FirebaseUserManager(Builder builder) {
     String projectId = builder.projectId;
+  >>>>>>> master
     checkArgument(!Strings.isNullOrEmpty(projectId),
         "Project ID is required to access the auth service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
+  <<<<<<< redacted-passwords
+    this.baseUrl = String.format(ID_TOOLKIT_URL, projectId);
+    this.jsonFactory = app.getOptions().getJsonFactory();
+
+    if (requestFactory == null) {
+      requestFactory = ApiClientUtils.newAuthorizedRequestFactory(app);
+    }
+
+    this.requestFactory = requestFactory;
+  =======
     this.jsonFactory = checkNotNull(builder.jsonFactory, "JsonFactory must not be null");
   <<<<<<< v7
     final String idToolkitUrlV1 = String.format(ID_TOOLKIT_URL, "v1", projectId);
@@ -115,6 +168,7 @@ final class FirebaseUserManager {
       return String.format(ID_TOOLKIT_URL_EMULATOR, Utils.getEmulatorHost(), version, projectId);
     }
     return String.format(ID_TOOLKIT_URL, version, projectId);
+  >>>>>>> master
   >>>>>>> master
   }
 
@@ -163,6 +217,45 @@ final class FirebaseUserManager {
     return results;
   }
 
+  <<<<<<< redacted-passwords
+  Set<UserRecord> getAccountInfo(@NonNull Collection<UserIdentifier> identifiers)
+      throws FirebaseAuthException {
+    if (identifiers.isEmpty()) {
+      return new HashSet<UserRecord>();
+    }
+
+    GetAccountInfoRequest payload = new GetAccountInfoRequest();
+    for (UserIdentifier id : identifiers) {
+      id.populate(payload);
+    }
+
+    GetAccountInfoResponse response = post(
+        "/accounts:lookup", payload, GetAccountInfoResponse.class);
+
+    if (response == null) {
+      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to parse server response");
+    }
+
+    Set<UserRecord> results = new HashSet<>();
+    if (response.getUsers() != null) {
+      for (GetAccountInfoResponse.User user : response.getUsers()) {
+        results.add(new UserRecord(user, jsonFactory));
+      }
+    }
+    return results;
+  }
+
+  String createUser(CreateRequest request) throws FirebaseAuthException {
+    GenericJson response = post(
+        "/accounts", request.getProperties(), GenericJson.class);
+    if (response != null) {
+      String uid = (String) response.get("localId");
+      if (!Strings.isNullOrEmpty(uid)) {
+        return uid;
+      }
+    }
+    throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to create new user");
+  =======
   UserRecord getUserByProviderUid(
       String providerId, String uid) throws FirebaseAuthException {
     final Map<String, Object> payload = ImmutableMap.<String, Object>of(
@@ -170,6 +263,7 @@ final class FirebaseUserManager {
             ImmutableMap.<String, Object>builder()
             .put("rawId", uid).put("providerId", providerId).build()));
     return lookupUserAccount(payload, uid);
+  >>>>>>> master
   }
 
   String createUser(UserRecord.CreateRequest request) throws FirebaseAuthException {
@@ -193,6 +287,23 @@ final class FirebaseUserManager {
         "force", true);
     BatchDeleteResponse response = post(
         "/accounts:batchDelete", payload, BatchDeleteResponse.class);
+    return new DeleteUsersResult(uids.size(), response);
+  }
+
+  /**
+   * @pre uids != null
+   * @pre uids.size() <= MAX_DELETE_ACCOUNTS_BATCH_SIZE
+   */
+  DeleteUsersResult deleteUsers(@NonNull List<String> uids) throws FirebaseAuthException {
+    final Map<String, Object> payload = ImmutableMap.<String, Object>of(
+        "localIds", uids,
+        "force", true);
+    BatchDeleteResponse response = post(
+        "/accounts:batchDelete", payload, BatchDeleteResponse.class);
+    if (response == null) {
+      throw new FirebaseAuthException(INTERNAL_ERROR, "Failed to delete users");
+    }
+
     return new DeleteUsersResult(uids.size(), response);
   }
 

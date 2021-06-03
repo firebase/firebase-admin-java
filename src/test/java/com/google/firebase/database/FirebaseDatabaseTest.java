@@ -39,14 +39,24 @@ import java.util.List;
 import org.junit.Test;
 
 public class FirebaseDatabaseTest {
+  <<<<<<< redacted-passwords
+  
+  private static final FirebaseOptions firebaseOptions =
+      new FirebaseOptions.Builder()
+  =======
 
   private static final FirebaseOptions firebaseOptions =
       FirebaseOptions.builder()
+  >>>>>>> master
           .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .setDatabaseUrl("https://firebase-db-test.firebaseio.com")
           .build();
   private static final FirebaseOptions firebaseOptionsWithoutDatabaseUrl =
+  <<<<<<< redacted-passwords
+      new FirebaseOptions.Builder()
+  =======
       FirebaseOptions.builder()
+  >>>>>>> master
           .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
           .build();
 

@@ -30,8 +30,14 @@ import com.google.firebase.messaging.AndroidConfig.Priority;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+  <<<<<<< redacted-passwords
+import java.text.SimpleDateFormat;
+import java.util.Date;
+  =======
+  >>>>>>> master
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.junit.Test;
@@ -187,7 +193,11 @@ public class MessageTest {
         .put("body_loc_args", ImmutableList.of("body-arg1", "body-arg2", "body-arg3"))
         .put("channel_id", "channel-id")
         // There is a problem with the JsonParser assignment to BigDecimal takes priority over
+  <<<<<<< redacted-passwords
+        // all other number types and so this integer value is interpreted as a BigDecimal 
+  =======
         // all other number types and so this integer value is interpreted as a BigDecimal
+  >>>>>>> master
         // rather than an Integer.
         .put("notification_count", BigDecimal.valueOf(4L))
         .build();
@@ -228,7 +238,11 @@ public class MessageTest {
   public void testAndroidNotificationWithNegativeCount() throws IllegalArgumentException {
     AndroidNotification.builder().setNotificationCount(-1).build();
   }
+  <<<<<<< redacted-passwords
+  
+  =======
 
+  >>>>>>> master
   @Test
   public void testAndroidMessageWithoutLocalization() throws IOException {
     Message message = Message.builder()
@@ -848,7 +862,11 @@ public class MessageTest {
   }
 
   @Test
+  <<<<<<< redacted-passwords
+  public void testInvalidColorInAndroidNotificationLightSettings() throws IOException {
+  =======
   public void testInvalidColorInAndroidNotificationLightSettings() {
+  >>>>>>> master
     try {
       LightSettings.Builder lightSettingsBuilder = LightSettings.builder()
                       .setColorFromString("#01020K")
@@ -866,10 +884,14 @@ public class MessageTest {
   public void testExtendedAndroidNotificationParameters() throws IOException {
     long[] vibrateTimings = {1000L, 1001L};
     Message message = Message.builder()
+  <<<<<<< redacted-passwords
+        .setNotification(new Notification("title", "body"))
+  =======
         .setNotification(Notification.builder()
             .setTitle("title")
             .setBody("body")
             .build())
+  >>>>>>> master
         .setAndroidConfig(AndroidConfig.builder()
             .setNotification(AndroidNotification.builder()
                 .setTitle("android-title")

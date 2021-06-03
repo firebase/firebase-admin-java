@@ -69,7 +69,11 @@ public class ListUsersPageTest {
             newUser("user2", REDACTED_BASE64)),
         ListUsersPage.END_OF_LIST);
     TestUserSource source = new TestUserSource(result);
+  <<<<<<< redacted-passwords
+    ListUsersPage page = new ListUsersPage.PageFactory(source).create();
+  =======
     ListUsersPage page = new ListUsersPage.Factory(source).create();
+  >>>>>>> master
     assertFalse(page.hasNextPage());
     assertEquals(ListUsersPage.END_OF_LIST, page.getNextPageToken());
     assertNull(page.getNextPage());
@@ -356,7 +360,11 @@ public class ListUsersPageTest {
   }
 
   private static ExportedUserRecord newUser(String uid, String passwordHash) throws IOException {
+  <<<<<<< redacted-passwords
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+  =======
     JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
+  >>>>>>> master
     DownloadAccountResponse.User parsed = jsonFactory.fromString(
         String.format("{\"localId\":\"%s\", \"passwordHash\":\"%s\"}", uid, passwordHash),
         DownloadAccountResponse.User.class);

@@ -62,10 +62,37 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
 
   private static final String FCM_URL = "https://fcm.googleapis.com/v1/projects/%s/messages:send";
 
+  <<<<<<< redacted-passwords
+  private static final String FCM_BATCH_URL = "https://fcm.googleapis.com/batch";
+
+  private static final String API_FORMAT_VERSION_HEADER = "X-GOOG-API-FORMAT-VERSION";
+
+  private static final String CLIENT_VERSION_HEADER = "X-Firebase-Client";
+
+  private static final Map<String, String> FCM_ERROR_CODES =
+      ImmutableMap.<String, String>builder()
+          // FCM v1 canonical error codes
+          .put("NOT_FOUND", "registration-token-not-registered")
+          .put("PERMISSION_DENIED", "mismatched-credential")
+          .put("RESOURCE_EXHAUSTED", "message-rate-exceeded")
+          .put("UNAUTHENTICATED", "third-party-auth-error")
+
+          // FCM v1 new error codes
+          .put("APNS_AUTH_ERROR", "third-party-auth-error")
+          .put("INTERNAL", FirebaseMessaging.INTERNAL_ERROR)
+          .put("INVALID_ARGUMENT", "invalid-argument")
+          .put("QUOTA_EXCEEDED", "message-rate-exceeded")
+          .put("SENDER_ID_MISMATCH", "mismatched-credential")
+          .put("THIRD_PARTY_AUTH_ERROR", "third-party-auth-error")
+          .put("UNAVAILABLE", "server-unavailable")
+          .put("UNREGISTERED", "registration-token-not-registered")
+          .build();
+  =======
   private static final Map<String, String> COMMON_HEADERS =
       ImmutableMap.of(
           "X-GOOG-API-FORMAT-VERSION", "2",
           "X-Firebase-Client", "fire-admin-java/" + SdkUtils.getVersion());
+  >>>>>>> master
 
   private final String fcmSendUrl;
   private final HttpRequestFactory requestFactory;
@@ -133,6 +160,11 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
       List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
 
     MessagingBatchCallback callback = new MessagingBatchCallback();
+  <<<<<<< redacted-passwords
+    BatchRequest batch = newBatchRequest(messages, dryRun, callback);
+    batch.execute();
+    return new BatchResponseImpl(callback.getResponses());
+  =======
     try {
       BatchRequest batch = newBatchRequest(messages, dryRun, callback);
       batch.execute();
@@ -145,6 +177,7 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     } catch (IOException e) {
       throw errorHandler.handleIOException(e);
     }
+  >>>>>>> master
   }
 
   private BatchRequest newBatchRequest(

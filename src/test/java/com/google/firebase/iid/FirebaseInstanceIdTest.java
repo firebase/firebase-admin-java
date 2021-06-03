@@ -50,13 +50,19 @@ import org.junit.Test;
 
 public class FirebaseInstanceIdTest {
 
+  <<<<<<< redacted-passwords
+  private static final FirebaseOptions APP_OPTIONS = new FirebaseOptions.Builder()
+  =======
   <<<<<<< v7
   =======
   private static final FirebaseOptions APP_OPTIONS = FirebaseOptions.builder()
+  >>>>>>> master
       .setCredentials(new MockGoogleCredentials("test-token"))
       .setProjectId("test-project")
       .build();
 
+  <<<<<<< redacted-passwords
+  =======
   >>>>>>> master
   private static final Map<Integer, String> ERROR_MESSAGES = ImmutableMap.of(
       404, "Instance ID \"test-iid\": Failed to find the instance ID.",
@@ -77,6 +83,7 @@ public class FirebaseInstanceIdTest {
   private static final String TEST_URL =
       "https://console.firebase.google.com/v1/project/test-project/instanceId/test-iid";
 
+  >>>>>>> master
   @After
   public void tearDown() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
@@ -114,6 +121,9 @@ public class FirebaseInstanceIdTest {
 
   @Test
   public void testInvalidInstanceId() {
+  <<<<<<< redacted-passwords
+    FirebaseApp.initializeApp(APP_OPTIONS);
+  =======
   <<<<<<< v7
     FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
@@ -122,6 +132,7 @@ public class FirebaseInstanceIdTest {
     FirebaseApp.initializeApp(options);
   =======
     FirebaseApp.initializeApp(APP_OPTIONS);
+  >>>>>>> master
   >>>>>>> master
 
     FirebaseInstanceId instanceId = FirebaseInstanceId.getInstance();
@@ -150,12 +161,16 @@ public class FirebaseInstanceIdTest {
     MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(response)
         .build();
+  <<<<<<< redacted-passwords
+    FirebaseOptions options = new FirebaseOptions.Builder(APP_OPTIONS)
+  =======
   <<<<<<< v7
     FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId("test-project")
   =======
     FirebaseOptions options = APP_OPTIONS.toBuilder()
+  >>>>>>> master
   >>>>>>> master
         .setHttpTransport(transport)
         .build();
@@ -211,10 +226,37 @@ public class FirebaseInstanceIdTest {
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
 
+  <<<<<<< redacted-passwords
+    String url = "https://console.firebase.google.com/v1/project/test-project/instanceId/test-iid";
+    for (Map.Entry<Integer, String> entry : errors.entrySet()) {
+      MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+          .setStatusCode(entry.getKey())
+          .setContent("test error");
+      MockHttpTransport transport = new MockHttpTransport.Builder()
+          .setLowLevelHttpResponse(response)
+          .build();
+      FirebaseOptions options = new FirebaseOptions.Builder(APP_OPTIONS)
+          .setHttpTransport(transport)
+          .build();
+      final FirebaseApp app = FirebaseApp.initializeApp(options);
+
+      FirebaseInstanceId instanceId = FirebaseInstanceId.getInstance();
+      TestResponseInterceptor interceptor = new TestResponseInterceptor();
+      instanceId.setInterceptor(interceptor);
+      try {
+        instanceId.deleteInstanceIdAsync("test-iid").get();
+        fail("No error thrown for HTTP error");
+      } catch (ExecutionException e) {
+        assertTrue(e.getCause() instanceof FirebaseInstanceIdException);
+        assertEquals(entry.getValue(), e.getCause().getMessage());
+        assertTrue(e.getCause().getCause() instanceof HttpResponseException);
+      }
+  =======
     // Disable retries by passing a regular HttpRequestFactory.
     FirebaseInstanceId instanceId = new FirebaseInstanceId(app, transport.createRequestFactory());
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     instanceId.setInterceptor(interceptor);
+  >>>>>>> master
 
     try {
       for (int statusCode : ERROR_CODES.keySet()) {

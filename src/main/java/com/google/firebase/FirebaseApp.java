@@ -319,10 +319,17 @@ public class FirebaseApp {
   }
 
   /**
+  <<<<<<< redacted-passwords
+   * Deletes this {@link FirebaseApp} object and releases any local state and managed resources
+   * associated with it. All calls to this {@link FirebaseApp} instance will throw once this method
+   * has been called. This also releases any managed resources allocated by other services
+   * (e.g. {@code FirebaseAuth}, {@code FirebaseDatabase}) attached to this object instance.
+  =======
    * Deletes this {@link FirebaseApp} object, and releases any local state and managed resources
    * associated with it. All calls to this {@link FirebaseApp} instance will throw once this method
    * has been called. This also releases any managed resources allocated by other services
    * attached to this object instance (e.g. {@code FirebaseAuth}).
+  >>>>>>> master
    *
    * <p>A no-op if delete was called before.
    */

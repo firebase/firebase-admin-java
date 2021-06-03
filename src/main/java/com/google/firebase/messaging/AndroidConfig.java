@@ -207,7 +207,11 @@ public class AndroidConfig {
     }
 
     /**
+  <<<<<<< redacted-passwords
+     * Sets the direct_boot_ok flag, If set to true, messages will be allowed to be delivered to 
+  =======
      * Sets the {@code direct_boot_ok} flag. If set to true, messages are delivered to 
+  >>>>>>> master
      * the app while the device is in direct boot mode.
      */
     public Builder setDirectBootOk(boolean directBootOk) {
