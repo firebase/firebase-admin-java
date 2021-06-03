@@ -1,5 +1,9 @@
 /*
+  <<<<<<< hkj-error-handling
+ * Copyright 2019 Google Inc.
+  =======
  * Copyright 2020 Google Inc.
+  >>>>>>> master
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +26,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
+  <<<<<<< hkj-error-handling
+import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpStatusCodes;
+import com.google.api.client.http.LowLevelHttpRequest;
+  =======
   <<<<<<< v7
 import com.google.api.client.googleapis.util.Utils;
   =======
@@ -35,10 +45,20 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.http.LowLevelHttpRequest;
 import com.google.api.client.json.JsonFactory;
+  >>>>>>> master
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.api.client.testing.util.MockSleeper;
 import com.google.api.client.util.GenericData;
+  <<<<<<< hkj-error-handling
+import com.google.common.collect.ImmutableList;
+import com.google.firebase.ErrorCode;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseException;
+import com.google.firebase.FirebaseHttpResponse;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.auth.MockGoogleCredentials;
+  =======
 import com.google.auth.oauth2.AccessToken;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -51,11 +71,14 @@ import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.testing.TestResponseInterceptor;
 import java.io.ByteArrayOutputStream;
+  >>>>>>> master
 import java.io.IOException;
 import org.junit.Test;
 
 public class ErrorHandlingHttpClientTest {
 
+  <<<<<<< hkj-error-handling
+  =======
   <<<<<<< v7
   private static final JsonFactory DEFAULT_JSON_FACTORY = Utils.getDefaultJsonFactory();
   =======
@@ -65,21 +88,30 @@ public class ErrorHandlingHttpClientTest {
   private static final HttpRequestInfo TEST_REQUEST = HttpRequestInfo.buildGetRequest(
       "https://firebase.google.com");
 
+  >>>>>>> master
   @Test(expected = NullPointerException.class)
   public void testNullRequestFactory() {
     new ErrorHandlingHttpClient<>(
         null,
+  <<<<<<< hkj-error-handling
+        Utils.getDefaultJsonFactory(),
+  =======
         DEFAULT_JSON_FACTORY,
+  >>>>>>> master
         new TestHttpErrorHandler());
   }
 
   @Test(expected = NullPointerException.class)
   public void testNullJsonFactory() {
     new ErrorHandlingHttpClient<>(
+  <<<<<<< hkj-error-handling
+        Utils.getDefaultTransport().createRequestFactory(),
+  =======
   <<<<<<< v7
         Utils.getDefaultTransport().createRequestFactory(),
   =======
         ApiClientUtils.getDefaultTransport().createRequestFactory(),
+  >>>>>>> master
   >>>>>>> master
         null,
         new TestHttpErrorHandler());
@@ -88,12 +120,17 @@ public class ErrorHandlingHttpClientTest {
   @Test(expected = NullPointerException.class)
   public void testNullErrorHandler() {
     new ErrorHandlingHttpClient<>(
+  <<<<<<< hkj-error-handling
+        Utils.getDefaultTransport().createRequestFactory(),
+        Utils.getDefaultJsonFactory(),
+  =======
   <<<<<<< v7
         Utils.getDefaultTransport().createRequestFactory(),
   =======
         ApiClientUtils.getDefaultTransport().createRequestFactory(),
   >>>>>>> master
         DEFAULT_JSON_FACTORY,
+  >>>>>>> master
         null);
   }
 
@@ -101,6 +138,20 @@ public class ErrorHandlingHttpClientTest {
   public void testSuccessfulRequest() throws FirebaseException {
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setContent("{\"foo\": \"bar\"}");
+  <<<<<<< hkj-error-handling
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    ErrorHandlingHttpClient<FirebaseException> client = new ErrorHandlingHttpClient<>(
+        transport.createRequestFactory(),
+        Utils.getDefaultJsonFactory(),
+        new TestHttpErrorHandler());
+
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildGetRequest("https://firebase.google.com");
+    GenericData body = client.sendAndParse(requestInfo, GenericData.class);
+    assertEquals(1, body.size());
+    assertEquals("bar", body.get("foo"));
+  =======
     ErrorHandlingHttpClient<FirebaseException> client = createHttpClient(response);
 
     GenericData body = client.sendAndParse(TEST_REQUEST, GenericData.class);
@@ -196,6 +247,7 @@ public class ErrorHandlingHttpClientTest {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     last.getContent().writeTo(out);
     assertEquals("{\"key\":\"value\"}", out.toString());
+  >>>>>>> master
   }
 
   @Test
@@ -209,6 +261,18 @@ public class ErrorHandlingHttpClientTest {
     };
     ErrorHandlingHttpClient<FirebaseException> client = new ErrorHandlingHttpClient<>(
         transport.createRequestFactory(),
+  <<<<<<< hkj-error-handling
+        Utils.getDefaultJsonFactory(),
+        new TestHttpErrorHandler());
+
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildGetRequest("https://firebase.google.com");
+    try {
+      client.sendAndParse(requestInfo, GenericData.class);
+      fail("No exception thrown for HTTP error response");
+    } catch (FirebaseException e) {
+      assertEquals(ErrorCode.UNKNOWN, e.getCode());
+      assertEquals("Network error: Test", e.getMessage());
+  =======
         DEFAULT_JSON_FACTORY,
         new TestHttpErrorHandler());
 
@@ -218,6 +282,7 @@ public class ErrorHandlingHttpClientTest {
     } catch (FirebaseException e) {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertEquals("IO error: Test", e.getMessage());
+  >>>>>>> master
       assertNull(e.getHttpResponse());
       assertSame(exception, e.getCause());
     }
@@ -229,6 +294,30 @@ public class ErrorHandlingHttpClientTest {
         .setStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
         .addHeader("Custom-Header", "value")
         .setContent("{}");
+  <<<<<<< hkj-error-handling
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    ErrorHandlingHttpClient<FirebaseException> client = new ErrorHandlingHttpClient<>(
+        transport.createRequestFactory(),
+        Utils.getDefaultJsonFactory(),
+        new TestHttpErrorHandler());
+
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildGetRequest("https://firebase.google.com");
+    try {
+      client.sendAndParse(requestInfo, GenericData.class);
+      fail("No exception thrown for HTTP error response");
+    } catch (FirebaseException e) {
+      assertEquals(ErrorCode.INTERNAL, e.getCode());
+      assertEquals("Example error message: {}", e.getMessage());
+      FirebaseHttpResponse httpResponse = e.getHttpResponse();
+      assertNotNull(httpResponse);
+      assertEquals(HttpStatusCodes.STATUS_CODE_SERVER_ERROR, httpResponse.getStatusCode());
+      assertEquals("{}", httpResponse.getContent());
+      assertEquals(1, httpResponse.getHeaders().size());
+      assertEquals(ImmutableList.of("value"), httpResponse.getHeaders().get("custom-header"));
+      assertEquals("GET", httpResponse.getRequest().getMethod());
+  =======
     ErrorHandlingHttpClient<FirebaseException> client = createHttpClient(response);
 
     try {
@@ -241,12 +330,37 @@ public class ErrorHandlingHttpClientTest {
       IncomingHttpResponse httpResponse = e.getHttpResponse();
       assertEquals(1, httpResponse.getHeaders().size());
       assertEquals(ImmutableList.of("value"), httpResponse.getHeaders().get("custom-header"));
+  >>>>>>> master
       assertNotNull(e.getCause());
     }
   }
 
   @Test
   public void testParseError() {
+  <<<<<<< hkj-error-handling
+    MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
+        .setContent("not json");
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(response)
+        .build();
+    ErrorHandlingHttpClient<FirebaseException> client = new ErrorHandlingHttpClient<>(
+        transport.createRequestFactory(),
+        Utils.getDefaultJsonFactory(),
+        new TestHttpErrorHandler());
+
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildGetRequest("https://firebase.google.com");
+    try {
+      client.sendAndParse(requestInfo, GenericData.class);
+      fail("No exception thrown for HTTP error response");
+    } catch (FirebaseException e) {
+      assertEquals(ErrorCode.UNKNOWN, e.getCode());
+      assertEquals("Parse error", e.getMessage());
+      FirebaseHttpResponse httpResponse = e.getHttpResponse();
+      assertNotNull(httpResponse);
+      assertEquals(HttpStatusCodes.STATUS_CODE_OK, httpResponse.getStatusCode());
+      assertEquals("not json", httpResponse.getContent());
+      assertEquals("GET", httpResponse.getRequest().getMethod());
+  =======
     String payload = "not json";
     MockLowLevelHttpResponse response = new MockLowLevelHttpResponse()
         .setContent(payload);
@@ -259,6 +373,7 @@ public class ErrorHandlingHttpClientTest {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertEquals("Parse error", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_OK, payload);
+  >>>>>>> master
       assertNotNull(e.getCause());
     }
   }
@@ -270,15 +385,35 @@ public class ErrorHandlingHttpClientTest {
         .setLowLevelHttpRequest(request)
         .build();
 
+  <<<<<<< hkj-error-handling
+  =======
     FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("token"))
         .setHttpTransport(transport)
         .build());
+  >>>>>>> master
     RetryConfig retryConfig = RetryConfig.builder()
         .setMaxRetries(4)
         .setRetryStatusCodes(ImmutableList.of(503))
         .setSleeper(new MockSleeper())
         .build();
+  <<<<<<< hkj-error-handling
+    HttpRequestInfo requestInfo = HttpRequestInfo.buildGetRequest("https://firebase.google.com");
+
+    FirebaseApp app = FirebaseApp.initializeApp(new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("token"))
+        .setHttpTransport(transport)
+        .build());
+    ErrorHandlingHttpClient<FirebaseException> client = new ErrorHandlingHttpClient<>(
+        app, new TestHttpErrorHandler(), retryConfig);
+    try {
+      client.sendAndParse(requestInfo, GenericData.class);
+      fail("No exception thrown for HTTP error response");
+    } catch (FirebaseException e) {
+      assertEquals(ErrorCode.INTERNAL, e.getCode());
+      assertEquals("Example error message: null", e.getMessage());
+      assertNotNull(e.getHttpResponse());
+  =======
     HttpRequestFactory requestFactory = ApiClientUtils.newAuthorizedRequestFactory(
         app, retryConfig);
     ErrorHandlingHttpClient<FirebaseException> client = new ErrorHandlingHttpClient<>(
@@ -295,6 +430,7 @@ public class ErrorHandlingHttpClientTest {
       assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
       assertEquals("Example error message: null", e.getMessage());
       assertHttpResponse(e, HttpStatusCodes.STATUS_CODE_SERVICE_UNAVAILABLE, null);
+  >>>>>>> master
       assertNotNull(e.getCause());
 
       assertEquals(5, request.getCount());
@@ -303,6 +439,14 @@ public class ErrorHandlingHttpClientTest {
     }
   }
 
+  <<<<<<< hkj-error-handling
+  private static class TestHttpErrorHandler implements HttpErrorHandler<FirebaseException> {
+
+    @Override
+    public FirebaseException handleIOException(IOException e) {
+      return new FirebaseException(
+          ErrorCode.UNKNOWN, "Network error: " + e.getMessage(), null, e);
+  =======
   @Test
   public void testRequestInitializationError() {
     CountingLowLevelHttpRequest request = CountingLowLevelHttpRequest.fromStatus(503);
@@ -364,10 +508,21 @@ public class ErrorHandlingHttpClientTest {
     public FirebaseException handleIOException(IOException e) {
       return new FirebaseException(
           ErrorCode.UNKNOWN, "IO error: " + e.getMessage(), e);
+  >>>>>>> master
     }
 
     @Override
     public FirebaseException handleHttpResponseException(
+  <<<<<<< hkj-error-handling
+        HttpResponseException e, FirebaseHttpResponse response) {
+      return new FirebaseException(
+          ErrorCode.INTERNAL, "Example error message: " + e.getContent(), response, e);
+    }
+
+    @Override
+    public FirebaseException handleParseException(IOException e, FirebaseHttpResponse response) {
+      return new FirebaseException(ErrorCode.UNKNOWN, "Parse error", response, e);
+  =======
         HttpResponseException e, IncomingHttpResponse response) {
       return new FirebaseException(
           ErrorCode.INTERNAL, "Example error message: " + e.getContent(), e, response);
@@ -376,6 +531,7 @@ public class ErrorHandlingHttpClientTest {
     @Override
     public FirebaseException handleParseException(IOException e, IncomingHttpResponse response) {
       return new FirebaseException(ErrorCode.UNKNOWN, "Parse error", e, response);
+  >>>>>>> master
     }
   }
 }

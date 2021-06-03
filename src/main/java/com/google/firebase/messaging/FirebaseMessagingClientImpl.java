@@ -40,7 +40,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
+  <<<<<<< hkj-error-handling
+import com.google.firebase.FirebaseHttpRequest;
+import com.google.firebase.FirebaseHttpResponse;
+  =======
 import com.google.firebase.FirebaseException;
+  >>>>>>> master
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.OutgoingHttpRequest;
@@ -94,6 +99,11 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
           "X-Firebase-Client", "fire-admin-java/" + SdkUtils.getVersion());
   >>>>>>> master
 
+  private static final Map<String, String> COMMON_HEADERS =
+      ImmutableMap.of(
+          API_FORMAT_VERSION_HEADER, "2",
+          CLIENT_VERSION_HEADER, "fire-admin-java/" + SdkUtils.getVersion());
+
   private final String fcmSendUrl;
   private final HttpRequestFactory requestFactory;
   private final HttpRequestFactory childRequestFactory;
@@ -101,7 +111,10 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   private final HttpResponseInterceptor responseInterceptor;
   private final MessagingErrorHandler errorHandler;
   private final ErrorHandlingHttpClient<FirebaseMessagingException> httpClient;
+  <<<<<<< hkj-error-handling
+  =======
   private final MessagingBatchClient batchClient;
+  >>>>>>> master
 
   private FirebaseMessagingClientImpl(Builder builder) {
     checkArgument(!Strings.isNullOrEmpty(builder.projectId));
@@ -110,10 +123,17 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     this.childRequestFactory = checkNotNull(builder.childRequestFactory);
     this.jsonFactory = checkNotNull(builder.jsonFactory);
     this.responseInterceptor = builder.responseInterceptor;
+  <<<<<<< hkj-error-handling
+
+    this.errorHandler = new MessagingErrorHandler(builder.jsonFactory);
+    this.httpClient = new ErrorHandlingHttpClient<>(
+        builder.requestFactory, builder.jsonFactory, errorHandler);
+  =======
     this.errorHandler = new MessagingErrorHandler(this.jsonFactory);
     this.httpClient = new ErrorHandlingHttpClient<>(requestFactory, jsonFactory, errorHandler)
       .setInterceptor(responseInterceptor);
     this.batchClient = new MessagingBatchClient(requestFactory.getTransport(), jsonFactory);
+  >>>>>>> master
   }
 
   @VisibleForTesting
@@ -148,9 +168,16 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   private String sendSingleRequest(
       Message message, boolean dryRun) throws FirebaseMessagingException {
     HttpRequestInfo request =
+  <<<<<<< hkj-error-handling
+        HttpRequestInfo.buildPostRequest(
+            fcmSendUrl, new JsonHttpContent(jsonFactory, message.wrapForTransport(dryRun)))
+        .addAllHeaders(COMMON_HEADERS)
+        .setResponseInterceptor(responseInterceptor);
+  =======
         HttpRequestInfo.buildJsonPostRequest(
             fcmSendUrl, message.wrapForTransport(dryRun))
             .addAllHeaders(COMMON_HEADERS);
+  >>>>>>> master
     MessagingServiceResponse parsed = httpClient.sendAndParse(
         request, MessagingServiceResponse.class);
     return parsed.getMessageId();
@@ -160,6 +187,15 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
       List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
 
     MessagingBatchCallback callback = new MessagingBatchCallback();
+  <<<<<<< hkj-error-handling
+    try {
+      BatchRequest batch = newBatchRequest(messages, dryRun, callback);
+      batch.execute();
+      return new BatchResponse(callback.getResponses());
+    } catch (HttpResponseException e) {
+      FirebaseHttpRequest req = new FirebaseHttpRequest("POST", FCM_BATCH_URL);
+      FirebaseHttpResponse resp = new FirebaseHttpResponse(e, req);
+  =======
   <<<<<<< redacted-passwords
     BatchRequest batch = newBatchRequest(messages, dryRun, callback);
     batch.execute();
@@ -173,10 +209,14 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
       OutgoingHttpRequest req = new OutgoingHttpRequest(
           HttpMethods.POST, MessagingBatchClient.FCM_BATCH_URL);
       IncomingHttpResponse resp = new IncomingHttpResponse(e, req);
+  >>>>>>> master
       throw errorHandler.handleHttpResponseException(e, resp);
     } catch (IOException e) {
       throw errorHandler.handleIOException(e);
     }
+  <<<<<<< hkj-error-handling
+  =======
+  >>>>>>> master
   >>>>>>> master
   }
 
@@ -273,6 +313,22 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     }
   }
 
+  <<<<<<< hkj-error-handling
+  private static FirebaseMessagingException newException(MessagingServiceErrorResponse response) {
+
+    String code = response.getStatus();
+    ErrorCode c = Enum.valueOf(ErrorCode.class, code);
+
+    String msg = response.getErrorMessage();
+    if (Strings.isNullOrEmpty(msg)) {
+      msg = String.format("Unexpected HTTP response: %s", response.toString());
+    }
+
+    return new FirebaseMessagingException(c, msg, null, null, null);
+  }
+
+  =======
+  >>>>>>> master
   private static class MessagingBatchCallback
       implements BatchCallback<MessagingServiceResponse, MessagingServiceErrorResponse> {
 

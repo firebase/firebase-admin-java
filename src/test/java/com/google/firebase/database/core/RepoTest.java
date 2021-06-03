@@ -18,6 +18,7 @@ import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseErrorCode;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.MutableData;
@@ -594,7 +595,7 @@ public class RepoTest {
     assertNull(errorResult.get());
     assertEquals("foo", refResult.get().getKey());
 
-    DatabaseError ex = DatabaseError.fromCode(DatabaseError.WRITE_CANCELED);
+    DatabaseError ex = DatabaseError.fromCode(DatabaseErrorCode.WRITE_CANCELED);
     repo.callOnComplete(listener, ex, new Path("/bar"));
     assertEquals(ex, errorResult.get());
     assertEquals("bar", refResult.get().getKey());
@@ -629,7 +630,7 @@ public class RepoTest {
     });
     waitFor(semaphore);
     assertNotNull(errorResult.get());
-    assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
+    assertEquals(DatabaseErrorCode.DATA_STALE, errorResult.get().getCode());
     assertEquals("failure", refResult.get().getKey());
   }
 
@@ -666,7 +667,7 @@ public class RepoTest {
     });
     waitFor(semaphore);
     assertNotNull(errorResult.get());
-    assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
+    assertEquals(DatabaseErrorCode.DATA_STALE, errorResult.get().getCode());
     assertEquals("failure", refResult.get().getKey());
   }
 
@@ -699,7 +700,7 @@ public class RepoTest {
     });
     waitFor(semaphore);
     assertNotNull(errorResult.get());
-    assertEquals(DatabaseError.DATA_STALE, errorResult.get().getCode());
+    assertEquals(DatabaseErrorCode.DATA_STALE, errorResult.get().getCode());
     assertEquals("failure", refResult.get().getKey());
   }
 

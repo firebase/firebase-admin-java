@@ -29,6 +29,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseErrorCode;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.DatabaseReference.CompletionListener;
@@ -98,7 +99,7 @@ public class TransactionTestIT {
       public Transaction.Result doTransaction(MutableData currentData) {
         try {
           currentData.setValue(42);
-        } catch (DatabaseException e) {
+        } catch (Exception e) {
           fail("Should not fail");
         }
         return Transaction.success(currentData);
@@ -128,7 +129,7 @@ public class TransactionTestIT {
       public Transaction.Result doTransaction(MutableData currentData) {
         try {
           currentData.setValue(42);
-        } catch (DatabaseException e) {
+        } catch (Exception e) {
           fail("Should not throw");
         }
         return Transaction.success(currentData);
@@ -154,7 +155,7 @@ public class TransactionTestIT {
       public Transaction.Result doTransaction(MutableData currentData) {
         try {
           currentData.setValue(42);
-        } catch (DatabaseException e) {
+        } catch (Exception e) {
           fail("Should not fail");
         }
         return Transaction.success(currentData);
@@ -233,7 +234,7 @@ public class TransactionTestIT {
         if (currentData.getValue() == null) {
           try {
             currentData.setValue("temp value");
-          } catch (DatabaseException e) {
+          } catch (Exception e) {
             fail("Exception thrown: " + e.toString());
           }
           return Transaction.success(currentData);
@@ -285,7 +286,7 @@ public class TransactionTestIT {
       public Transaction.Result doTransaction(MutableData currentData) {
         try {
           currentData.setValue(42);
-        } catch (DatabaseException e) {
+        } catch (Exception e) {
           fail("Should not fail");
         }
         return Transaction.success(currentData);
@@ -330,7 +331,7 @@ public class TransactionTestIT {
           currentData.child("a").setValue(42);
           currentData.child("b").setValue(87);
           return Transaction.success(currentData);
-        } catch (DatabaseException e) {
+        } catch (Exception e) {
           fail("Should not throw");
           return Transaction.abort();
         }
@@ -367,7 +368,7 @@ public class TransactionTestIT {
           currentData.child("a").setValue(5);
           currentData.child("b").setValue(6);
           return Transaction.success(currentData);
-        } catch (DatabaseException e) {
+        } catch (Exception e) {
           fail("Should not throw");
           return Transaction.abort();
         }
@@ -399,7 +400,7 @@ public class TransactionTestIT {
         try {
           currentData.setValue(42);
           return Transaction.success(currentData);
-        } catch (DatabaseException e) {
+        } catch (Exception e) {
           fail("Should not throw");
           return Transaction.abort();
         }
@@ -421,7 +422,7 @@ public class TransactionTestIT {
         try {
           currentData.setValue(84);
           return Transaction.success(currentData);
-        } catch (DatabaseException e) {
+        } catch (Exception e) {
           fail("Should not throw");
           return Transaction.abort();
         }
@@ -737,7 +738,7 @@ public class TransactionTestIT {
       @Override
       public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
         assertNotNull(error);
-        assertEquals(DatabaseError.MAX_RETRIES, error.getCode());
+        assertEquals(DatabaseErrorCode.MAX_RETRIES, error.getCode());
         assertFalse(committed);
         semaphore.release(1);
       }
@@ -770,7 +771,7 @@ public class TransactionTestIT {
             @Override
             public void onComplete(DatabaseError error, boolean committed,
                 DataSnapshot currentData) {
-              assertEquals(DatabaseError.OVERRIDDEN_BY_SET, error.getCode());
+              assertEquals(DatabaseErrorCode.OVERRIDDEN_BY_SET, error.getCode());
               assertFalse(committed);
               semaphore.release(1);
             }
@@ -813,7 +814,7 @@ public class TransactionTestIT {
 
       @Override
       public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
-        assertEquals(DatabaseError.OVERRIDDEN_BY_SET, error.getCode());
+        assertEquals(DatabaseErrorCode.OVERRIDDEN_BY_SET, error.getCode());
         assertFalse(committed);
         fooTransaction.release();
       }
@@ -1022,7 +1023,7 @@ public class TransactionTestIT {
       @Override
       public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
         assertFalse(committed);
-        assertEquals(DatabaseError.DISCONNECTED, error.getCode());
+        assertEquals(DatabaseErrorCode.DISCONNECTED, error.getCode());
         semaphore.release(1);
       }
     });
@@ -1377,7 +1378,7 @@ public class TransactionTestIT {
       @Override
       public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
         assertFalse(committed);
-        assertEquals(DatabaseError.USER_CODE_EXCEPTION, error.getCode());
+        assertEquals(DatabaseErrorCode.USER_CODE_EXCEPTION, error.getCode());
         done.release(1);
       }
     });
@@ -1394,7 +1395,7 @@ public class TransactionTestIT {
       @Override
       public void onComplete(DatabaseError error, boolean committed, DataSnapshot currentData) {
         assertFalse(committed);
-        assertEquals(DatabaseError.USER_CODE_EXCEPTION, error.getCode());
+        assertEquals(DatabaseErrorCode.USER_CODE_EXCEPTION, error.getCode());
         done.release(1);
       }
     });

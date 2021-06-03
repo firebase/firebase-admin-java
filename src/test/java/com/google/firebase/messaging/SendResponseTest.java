@@ -38,8 +38,13 @@ public class SendResponseTest {
 
   @Test
   public void testFailureResponse() {
+  <<<<<<< hkj-error-handling
+    FirebaseMessagingException exception = new FirebaseMessagingException(ErrorCode.UNKNOWN,
+        "error-message", null);
+  =======
     FirebaseMessagingException exception = new FirebaseMessagingException(
         ErrorCode.INTERNAL, "error-message");
+  >>>>>>> master
     SendResponse response = SendResponse.fromException(exception);
 
     assertNull(response.getMessageId());

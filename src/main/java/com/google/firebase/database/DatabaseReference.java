@@ -544,7 +544,7 @@ public class DatabaseReference extends Query {
       try {
         return parent.toString() + "/" + URLEncoder.encode(getKey(), "UTF-8").replace("+", "%20");
       } catch (UnsupportedEncodingException e) {
-        throw new DatabaseException("Failed to URLEncode key: " + getKey(), e);
+        throw new IllegalArgumentException("Failed to URLEncode key: " + getKey(), e);
       }
     }
   }

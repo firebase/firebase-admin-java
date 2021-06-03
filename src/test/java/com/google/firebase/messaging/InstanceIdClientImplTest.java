@@ -32,7 +32,10 @@ import com.google.api.client.json.JsonParser;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.common.collect.ImmutableList;
+  <<<<<<< hkj-error-handling
+  =======
 import com.google.common.collect.ImmutableMap;
+  >>>>>>> master
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -187,6 +190,10 @@ public class InstanceIdClientImplTest {
       client.subscribeToTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
+  <<<<<<< hkj-error-handling
+      assertEquals(ErrorCode.UNKNOWN, error.getCode());
+      assertEquals("Error while calling IID backend service", error.getMessage());
+  =======
       assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
       assertEquals(
           "Unknown error while making a remote service call: transport error", error.getMessage());
@@ -207,6 +214,7 @@ public class InstanceIdClientImplTest {
     } catch (FirebaseMessagingException error) {
       assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
       assertTrue(error.getMessage().startsWith("Error while parsing HTTP response: "));
+  >>>>>>> master
       assertTrue(error.getCause() instanceof IOException);
     }
   }
@@ -327,6 +335,10 @@ public class InstanceIdClientImplTest {
       client.unsubscribeFromTopic("test-topic", ImmutableList.of("id1", "id2"));
       fail("No error thrown for HTTP error");
     } catch (FirebaseMessagingException error) {
+  <<<<<<< hkj-error-handling
+      assertEquals(ErrorCode.UNKNOWN, error.getCode());
+      assertEquals("Error while calling IID backend service", error.getMessage());
+  =======
       assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
       assertEquals(
           "Unknown error while making a remote service call: transport error", error.getMessage());
@@ -347,6 +359,7 @@ public class InstanceIdClientImplTest {
     } catch (FirebaseMessagingException error) {
       assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
       assertTrue(error.getMessage().startsWith("Error while parsing HTTP response: "));
+  >>>>>>> master
       assertTrue(error.getCause() instanceof IOException);
     }
   }
@@ -449,9 +462,15 @@ public class InstanceIdClientImplTest {
     assertEquals(expectedUrl, request.getUrl().toString());
   }
 
+  <<<<<<< hkj-error-handling
+  private void checkExceptionFromHttpResponse(FirebaseMessagingException error,
+      int expectedCode, String expectedMessage) {
+    assertEquals(ErrorCode.UNKNOWN, error.getCode());
+  =======
   private void checkExceptionFromHttpResponse(
       FirebaseMessagingException error, int statusCode, String expectedMessage) {
     assertEquals(HTTP_2_ERROR.get(statusCode), error.getErrorCode());
+  >>>>>>> master
     assertEquals(expectedMessage, error.getMessage());
     assertTrue(error.getCause() instanceof HttpResponseException);
     assertNull(error.getMessagingErrorCode());

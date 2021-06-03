@@ -95,7 +95,7 @@ public class UtilitiesTest {
       try {
         Utilities.parseUrl(url);
         fail("No error thrown for URL: '" + url + "'");
-      } catch (DatabaseException expected) {
+      } catch (IllegalArgumentException expected) {
         // expected
       }
     }

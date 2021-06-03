@@ -41,12 +41,11 @@ public class RepoManager {
    * Used for legacy unit tests. The public API should go through FirebaseDatabase which calls
    * createRepo.
    */
-  public static Repo getRepo(Context ctx, RepoInfo info) throws DatabaseException {
+  public static Repo getRepo(Context ctx, RepoInfo info) {
     return instance.getLocalRepo(ctx, info);
   }
 
-  public static Repo createRepo(Context ctx, RepoInfo info, FirebaseDatabase database)
-      throws DatabaseException {
+  public static Repo createRepo(Context ctx, RepoInfo info, FirebaseDatabase database) {
     return instance.createLocalRepo(ctx, info, database);
   }
 
@@ -89,7 +88,7 @@ public class RepoManager {
     instance.resumeInternal(ctx);
   }
 
-  private Repo getLocalRepo(Context ctx, RepoInfo info) throws DatabaseException {
+  private Repo getLocalRepo(Context ctx, RepoInfo info) {
     ctx.freeze(); // No-op if it's already frozen
     String repoHash = "https://" + info.host + "/" + info.namespace;
     synchronized (repos) {
@@ -102,8 +101,7 @@ public class RepoManager {
     }
   }
 
-  private Repo createLocalRepo(Context ctx, RepoInfo info, FirebaseDatabase database)
-      throws DatabaseException {
+  private Repo createLocalRepo(Context ctx, RepoInfo info, FirebaseDatabase database) {
     ctx.freeze(); // No-op if it's already frozen
     String repoHash = "https://" + info.host + "/" + info.namespace;
     synchronized (repos) {

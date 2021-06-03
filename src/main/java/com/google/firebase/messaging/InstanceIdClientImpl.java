@@ -23,6 +23,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.internal.AbstractHttpErrorHandler;
@@ -69,12 +70,34 @@ final class InstanceIdClientImpl implements InstanceIdClient {
 
   public TopicManagementResponse subscribeToTopic(
       String topic, List<String> registrationTokens) throws FirebaseMessagingException {
+  <<<<<<< hkj-error-handling
+    try {
+      return sendInstanceIdRequest(topic, registrationTokens, IID_SUBSCRIBE_PATH);
+    } catch (HttpResponseException e) {
+      throw createExceptionFromResponse(e);
+    } catch (IOException e) {
+      throw new FirebaseMessagingException(
+          ErrorCode.UNKNOWN, "Error while calling IID backend service", e);
+    }
+  =======
     return sendInstanceIdRequest(topic, registrationTokens, IID_SUBSCRIBE_PATH);
+  >>>>>>> master
   }
 
   public TopicManagementResponse unsubscribeFromTopic(
       String topic, List<String> registrationTokens) throws FirebaseMessagingException {
+  <<<<<<< hkj-error-handling
+    try {
+      return sendInstanceIdRequest(topic, registrationTokens, IID_UNSUBSCRIBE_PATH);
+    } catch (HttpResponseException e) {
+      throw createExceptionFromResponse(e);
+    } catch (IOException e) {
+      throw new FirebaseMessagingException(
+          ErrorCode.UNKNOWN, "Error while calling IID backend service", e);
+    }
+  =======
     return sendInstanceIdRequest(topic, registrationTokens, IID_UNSUBSCRIBE_PATH);
+  >>>>>>> master
   }
 
   private TopicManagementResponse sendInstanceIdRequest(
@@ -103,6 +126,24 @@ final class InstanceIdClientImpl implements InstanceIdClient {
     }
   }
 
+  <<<<<<< hkj-error-handling
+  private static FirebaseMessagingException newException(
+      InstanceIdServiceErrorResponse response, HttpResponseException e) {
+    // Infer error code from HTTP status
+    String code = IID_ERROR_CODES.get(e.getStatusCode());
+    if (code == null) {
+      code = FirebaseMessaging.UNKNOWN_ERROR;
+    }
+    String msg = response.error;
+    if (Strings.isNullOrEmpty(msg)) {
+      msg = String.format("Unexpected HTTP response with status: %d; body: %s",
+          e.getStatusCode(), e.getContent());
+    }
+    return new FirebaseMessagingException(ErrorCode.UNKNOWN, msg, e);
+  }
+
+  =======
+  >>>>>>> master
   private static class InstanceIdServiceResponse {
     @Key("results")
     private List<GenericJson> results;

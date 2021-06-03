@@ -106,7 +106,7 @@ public class QueryTestIT {
       try {
         ref.orderByChild(key);
         fail("Should throw");
-      } catch (DatabaseException | IllegalArgumentException e) { // ignore
+      } catch (IllegalArgumentException e) { // ignore
       }
     }
   }
@@ -118,174 +118,174 @@ public class QueryTestIT {
     try {
       ref.orderByKey().orderByPriority();
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByKey().orderByValue();
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByKey().orderByChild("foo");
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByValue().orderByPriority();
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByValue().orderByKey();
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByValue().orderByValue();
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByValue().orderByChild("foo");
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByChild("foo").orderByPriority();
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByChild("foo").orderByKey();
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByChild("foo").orderByValue();
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByKey().startAt(1);
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByKey().startAt(null);
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByKey().endAt(null);
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByKey().equalTo(null);
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByKey().startAt("test", "test");
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByKey().endAt(1);
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByKey().endAt("test", "test");
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByKey().orderByPriority();
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByPriority().orderByKey();
       fail("Should throw");
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByPriority().orderByValue();
       fail("Should throw");
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByPriority().orderByPriority();
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.limitToLast(1).limitToLast(1);
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.limitToFirst(1).limitToLast(1);
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.limitToLast(1).limitToFirst(1);
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.equalTo(true).endAt("test", "test");
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.equalTo(true).startAt("test", "test");
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.equalTo(true).equalTo("test", "test");
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.equalTo("test").equalTo(true);
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByChild("foo").orderByKey();
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.limitToFirst(5).limitToLast(10);
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.startAt(5).equalTo(10);
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByPriority().startAt(false);
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByPriority().endAt(true);
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
     try {
       ref.orderByPriority().equalTo(true);
       fail("Should throw");
-    } catch (DatabaseException | IllegalArgumentException e) { // ignore
+    } catch (IllegalArgumentException e) { // ignore
     }
   }
 
@@ -299,14 +299,14 @@ public class QueryTestIT {
       try {
         ref.startAt(null, key);
         fail("Should throw");
-      } catch (DatabaseException e) { // ignore
+      } catch (IllegalArgumentException e) { // ignore
 
       }
 
       try {
         ref.endAt(null, key);
         fail("Should throw");
-      } catch (DatabaseException e) { // ignore
+      } catch (IllegalArgumentException e) { // ignore
 
       }
     }
@@ -2458,7 +2458,7 @@ public class QueryTestIT {
           TestHelpers.assertDeepEquals(toSet, events.get(0).getSnapshot().getValue());
           try {
             writer.child("d").setValueAsync(4);
-          } catch (DatabaseException e) { // ignore
+          } catch (Exception e) { // ignore
             fail("Should not fail");
           }
           return false;

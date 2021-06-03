@@ -65,7 +65,7 @@ public class Query {
   // but we don't want to allow multiple orderByPriority calls, so track them here
   private final boolean orderByCalled;
 
-  Query(Repo repo, Path path, QueryParams params, boolean orderByCalled) throws DatabaseException {
+  Query(Repo repo, Path path, QueryParams params, boolean orderByCalled) {
     hardAssert(params.isValid(), "Validation of queries failed.");
     this.repo = repo;
     this.path = path;
@@ -248,7 +248,7 @@ public class Query {
    */
   public void keepSynced(final boolean keepSynced) {
     if (!this.path.isEmpty() && this.path.getFront().equals(ChildKey.getInfoKey())) {
-      throw new DatabaseException("Can't call keepSynced() on .info paths.");
+      throw new UnsupportedOperationException("Can't call keepSynced() on .info paths.");
     }
 
     repo.scheduleNow(

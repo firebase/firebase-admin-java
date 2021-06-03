@@ -1,5 +1,9 @@
 /*
- * Copyright 2020 Google Inc.
+  <<<<<<< hkj-error-handling
+ * Copyright 2019 Google Inc.
+  =======
+ * Copyright 2021 Google Inc.
+  >>>>>>> master
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +22,19 @@ package com.google.firebase.internal;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.firebase.FirebaseException;
+  <<<<<<< hkj-error-handling
+import com.google.firebase.FirebaseHttpResponse;
+import java.io.IOException;
+
+public interface HttpErrorHandler<T extends FirebaseException> {
+
+  T handleIOException(IOException e);
+
+  T handleHttpResponseException(HttpResponseException e, FirebaseHttpResponse response);
+
+  T handleParseException(IOException e, FirebaseHttpResponse response);
+
+  =======
 import com.google.firebase.IncomingHttpResponse;
 import java.io.IOException;
 
@@ -41,4 +58,5 @@ public interface HttpErrorHandler<T extends FirebaseException> {
    * Handle any errors that may occur while parsing the response payload.
    */
   T handleParseException(IOException e, IncomingHttpResponse response);
+  >>>>>>> master
 }

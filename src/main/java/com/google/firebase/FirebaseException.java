@@ -29,6 +29,35 @@ import com.google.firebase.internal.Nullable;
 public class FirebaseException extends Exception {
 
   private final ErrorCode errorCode;
+  <<<<<<< hkj-error-handling
+  private final FirebaseHttpResponse response;
+
+  public FirebaseException(@NonNull String detailMessage) {
+    this(detailMessage, null);
+  }
+
+  public FirebaseException(@NonNull String detailMessage, Throwable cause) {
+    this(ErrorCode.UNKNOWN, detailMessage, null, cause);
+  }
+
+  public FirebaseException(
+      @NonNull ErrorCode errorCode,
+      @NonNull String message,
+      @Nullable FirebaseHttpResponse response,
+      @Nullable Throwable cause) {
+    super(message, cause);
+    checkArgument(!Strings.isNullOrEmpty(message), "Message must not be null or empty");
+    this.errorCode = checkNotNull(errorCode);
+    this.response = response;
+  }
+
+  public ErrorCode getCode() {
+    return errorCode;
+  }
+
+  @Nullable public FirebaseHttpResponse getHttpResponse() {
+    return response;
+  =======
   private final IncomingHttpResponse httpResponse;
 
   public FirebaseException(
@@ -67,5 +96,6 @@ public class FirebaseException extends Exception {
   @Nullable
   public final IncomingHttpResponse getHttpResponse() {
     return httpResponse;
+  >>>>>>> master
   }
 }

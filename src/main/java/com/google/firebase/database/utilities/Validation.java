@@ -45,16 +45,16 @@ public class Validation {
     return !INVALID_PATH_REGEX.matcher(pathString).find();
   }
 
-  public static void validatePathString(String pathString) throws DatabaseException {
+  public static void validatePathString(String pathString) {
     if (!isValidPathString(pathString)) {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Invalid Firebase Database path: "
               + pathString
               + ". Firebase Database paths must not contain '.', '#', '$', '[', or ']'");
     }
   }
 
-  public static void validateRootPathString(String pathString) throws DatabaseException {
+  public static void validateRootPathString(String pathString) {
     if (pathString.startsWith(".info")) {
       validatePathString(pathString.substring(5));
     } else if (pathString.startsWith("/.info")) {
@@ -76,16 +76,16 @@ public class Validation {
     return key.equals(".info") || !INVALID_KEY_REGEX.matcher(key).find();
   }
 
-  public static void validateNullableKey(String key) throws DatabaseException {
+  public static void validateNullableKey(String key) {
     if (!(key == null || isValidKey(key))) {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Invalid key: " + key + ". Keys must not contain '/', '.', '#', '$', '[', or ']'");
     }
   }
 
   private static void validateDoubleValue(double d) {
     if (Double.isInfinite(d) || Double.isNaN(d)) {
-      throw new DatabaseException("Invalid value: Value cannot be NaN, Inf or -Inf.");
+      throw new IllegalArgumentException("Invalid value: Value cannot be NaN, Inf or -Inf.");
     }
   }
 
@@ -120,21 +120,20 @@ public class Validation {
     }
   }
 
-  public static void validateWritableKey(String key) throws DatabaseException {
+  public static void validateWritableKey(String key) {
     if (!isWritableKey(key)) {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Invalid key: " + key + ". Keys must not contain '/', '.', '#', '$', '[', or ']'");
     }
   }
 
-  public static void validateWritablePath(Path path) throws DatabaseException {
+  public static void validateWritablePath(Path path) throws IllegalArgumentException {
     if (!isWritablePath(path)) {
-      throw new DatabaseException("Invalid write location: " + path.toString());
+      throw new IllegalArgumentException("Invalid write location: " + path.toString());
     }
   }
 
-  public static Map<Path, Node> parseAndValidateUpdate(Path path, Map<String, Object> update)
-      throws DatabaseException {
+  public static Map<Path, Node> parseAndValidateUpdate(Path path, Map<String, Object> update) {
     final SortedMap<Path, Node> parsedUpdate = new TreeMap<>();
     for (Map.Entry<String, Object> entry : update.entrySet()) {
       Path updatePath = new Path(entry.getKey());
@@ -143,7 +142,7 @@ public class Validation {
       String childName = !updatePath.isEmpty() ? updatePath.getBack().asString() : "";
       if (childName.equals(ServerValues.NAME_SUBKEY_SERVERVALUE)
           || childName.equals("" + ".value")) {
-        throw new DatabaseException(
+        throw new IllegalArgumentException(
             "Path '" + updatePath + "' contains disallowed child name: " + childName);
       }
       Node parsedValue;
@@ -162,7 +161,7 @@ public class Validation {
       // descendants.
       hardAssert(prevPath == null || prevPath.compareTo(curPath) < 0);
       if (prevPath != null && prevPath.contains(curPath)) {
-        throw new DatabaseException(
+        throw new IllegalArgumentException(
             "Path '" + prevPath + "' is an ancestor of '" + curPath + "' in an update.");
       }
       prevPath = curPath;

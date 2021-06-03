@@ -52,12 +52,12 @@ public class UtilitiesTest {
     new DatabaseConfig().setPersistenceCacheSizeBytes(5 * 1024 * 1024); // works fine.
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void settingCacheSizeTooLowFails() {
     new DatabaseConfig().setPersistenceCacheSizeBytes(1024 * 1024 - 1);
   }
 
-  @Test(expected = DatabaseException.class)
+  @Test(expected = IllegalArgumentException.class)
   public void settingCacheSizeTooHighFails() {
     new DatabaseConfig().setPersistenceCacheSizeBytes(100 * 1024 * 1024 + 1);
   }

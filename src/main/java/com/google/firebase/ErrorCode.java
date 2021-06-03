@@ -1,5 +1,9 @@
 /*
- * Copyright 2020 Google Inc.
+  <<<<<<< hkj-error-handling
+ * Copyright 2019 Google Inc.
+  =======
+ * Copyright 2021 Google Inc.
+  >>>>>>> master
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +20,40 @@
 
 package com.google.firebase;
 
+  <<<<<<< hkj-error-handling
+public enum ErrorCode {
+
+  INVALID_ARGUMENT,
+
+  FAILED_PRECONDITION,
+
+  OUT_OF_RANGE,
+
+  UNAUTHENTICATED,
+
+  PERMISSION_DENIED,
+
+  NOT_FOUND,
+
+  CONFLICT,
+
+  ABORTED,
+
+  ALREADY_EXISTS,
+
+  RESOURCE_EXHAUSTED,
+
+  CANCELLED,
+
+  DATA_LOSS,
+
+  UNKNOWN,
+
+  INTERNAL,
+
+  UNAVAILABLE,
+
+  =======
 /**
  * Platform-wide error codes that can be raised by Admin SDK APIs.
  */
@@ -105,5 +143,6 @@ public enum ErrorCode {
    * shorter than the method's default deadline (i.e. requested deadline is not enough for the
    * server to process the request) and the request did not finish within the deadline.
    */
+  >>>>>>> master
   DEADLINE_EXCEEDED,
 }

@@ -451,7 +451,7 @@ public class QueryTest {
     try {
       query.keepSynced(true);
       fail("No error thrown for keepSynced() call on .info node");
-    } catch (DatabaseException expected) {
+    } catch (UnsupportedOperationException expected) {
       // expected
     }
   }
