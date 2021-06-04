@@ -49,6 +49,12 @@ public class AndroidConfig {
   @Key("notification")
   private final AndroidNotification notification;
 
+  @Key("fcm_options")
+  private final AndroidFcmOptions fcmOptions;
+  
+  @Key("direct_boot_ok")
+  private final Boolean directBootOk;
+
   private AndroidConfig(Builder builder) {
     this.collapseKey = builder.collapseKey;
     if (builder.priority != null) {
@@ -71,6 +77,8 @@ public class AndroidConfig {
     this.restrictedPackageName = builder.restrictedPackageName;
     this.data = builder.data.isEmpty() ? null : ImmutableMap.copyOf(builder.data);
     this.notification = builder.notification;
+    this.fcmOptions = builder.fcmOptions;
+    this.directBootOk = builder.directBootOk;
   }
 
   /**
@@ -98,6 +106,8 @@ public class AndroidConfig {
     private String restrictedPackageName;
     private final Map<String, String> data = new HashMap<>();
     private AndroidNotification notification;
+    private AndroidFcmOptions fcmOptions;
+    private Boolean directBootOk;
 
     private Builder() {}
 
@@ -184,6 +194,24 @@ public class AndroidConfig {
      */
     public Builder setNotification(AndroidNotification notification) {
       this.notification = notification;
+      return this;
+    }
+
+    /**
+     * Sets the {@link AndroidFcmOptions}, which overrides values set in the {@link FcmOptions}
+     * for Android messages.
+     */
+    public Builder setFcmOptions(AndroidFcmOptions androidFcmOptions) {
+      this.fcmOptions = androidFcmOptions;
+      return this;
+    }
+
+    /**
+     * Sets the {@code direct_boot_ok} flag. If set to true, messages are delivered to 
+     * the app while the device is in direct boot mode.
+     */
+    public Builder setDirectBootOk(boolean directBootOk) {
+      this.directBootOk = directBootOk;
       return this;
     }
 

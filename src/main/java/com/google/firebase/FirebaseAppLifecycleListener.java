@@ -19,7 +19,7 @@ package com.google.firebase;
 /** 
  * A listener which gets notified when {@link com.google.firebase.FirebaseApp} gets deleted. 
  */
-// TODO: consider making it public in a future release.
+@Deprecated
 interface FirebaseAppLifecycleListener {
 
   /**

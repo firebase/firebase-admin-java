@@ -46,6 +46,9 @@ public final class GetAccountInfoResponse {
     @Key("localId")
     private String uid;
 
+    @Key("tenantId")
+    private String tenantId;
+
     @Key("email")
     private String email;
 
@@ -73,6 +76,9 @@ public final class GetAccountInfoResponse {
     @Key("lastLoginAt")
     private long lastLoginAt;
 
+    @Key("lastRefreshAt")
+    private String lastRefreshAt;
+
     @Key("validSince")
     private long validSince;
 
@@ -81,6 +87,10 @@ public final class GetAccountInfoResponse {
 
     public String getUid() {
       return uid;
+    }
+
+    public String getTenantId() {
+      return tenantId;
     }
 
     public String getEmail() {
@@ -119,10 +129,14 @@ public final class GetAccountInfoResponse {
       return lastLoginAt;
     }
 
+    public String getLastRefreshAt() {
+      return lastRefreshAt;
+    }
+
     public long getValidSince() {
       return validSince;
     }
-    
+
     public String getCustomClaims() {
       return customClaims;
     }

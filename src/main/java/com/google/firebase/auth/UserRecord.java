@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.json.JsonFactory;
+import com.google.api.client.util.DateTime;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -49,6 +50,7 @@ public class UserRecord implements UserInfo {
   private static final int MAX_CLAIMS_PAYLOAD_SIZE = 1000;
 
   private final String uid;
+  private final String tenantId;
   private final String email;
   private final String phoneNumber;
   private final boolean emailVerified;
@@ -65,6 +67,7 @@ public class UserRecord implements UserInfo {
     checkNotNull(jsonFactory, "jsonFactory must not be null");
     checkArgument(!Strings.isNullOrEmpty(response.getUid()), "uid must not be null or empty");
     this.uid = response.getUid();
+    this.tenantId = response.getTenantId();
     this.email = response.getEmail();
     this.phoneNumber = response.getPhoneNumber();
     this.emailVerified = response.isEmailVerified();
@@ -80,7 +83,15 @@ public class UserRecord implements UserInfo {
       }
     }
     this.tokensValidAfterTimestamp = response.getValidSince() * 1000;
-    this.userMetadata = new UserMetadata(response.getCreatedAt(), response.getLastLoginAt());
+
+    String lastRefreshAtRfc3339 = response.getLastRefreshAt();
+    long lastRefreshAtMillis = 0;
+    if (!Strings.isNullOrEmpty(lastRefreshAtRfc3339)) {
+      lastRefreshAtMillis = DateTime.parseRfc3339(lastRefreshAtRfc3339).getValue();
+    }
+
+    this.userMetadata = new UserMetadata(
+        response.getCreatedAt(), response.getLastLoginAt(), lastRefreshAtMillis);
     this.customClaims = parseCustomClaims(response.getCustomClaims(), jsonFactory);
   }
 
@@ -105,6 +116,16 @@ public class UserRecord implements UserInfo {
   @Override
   public String getUid() {
     return uid;
+  }
+
+  /**
+   * Returns the tenant ID associated with this user, if one exists.
+   *
+   * @return a tenant ID string or null.
+   */
+  @Nullable
+  public String getTenantId() {
+    return this.tenantId;
   }
 
   /**
@@ -190,9 +211,9 @@ public class UserRecord implements UserInfo {
   }
 
   /**
-   * Returns a timestamp in milliseconds since epoch, truncated down to the closest second. 
+   * Returns a timestamp in milliseconds since epoch, truncated down to the closest second.
    * Tokens minted before this timestamp are considered invalid.
-   * 
+   *
    * @return Timestamp in milliseconds since the epoch. Tokens minted before this timestamp are
    *     considered invalid.
    */
@@ -245,6 +266,11 @@ public class UserRecord implements UserInfo {
     checkArgument(!Strings.isNullOrEmpty(phoneNumber), "phone number cannot be null or empty");
     checkArgument(phoneNumber.startsWith("+"),
         "phone number must be a valid, E.164 compliant identifier starting with a '+' sign");
+  }
+
+  static void checkProvider(String providerId, String providerUid) {
+    checkArgument(!Strings.isNullOrEmpty(providerId), "providerId must be a non-empty string");
+    checkArgument(!Strings.isNullOrEmpty(providerUid), "providerUid must be a non-empty string");
   }
 
   static void checkUrl(String photoUrl) {
@@ -357,10 +383,10 @@ public class UserRecord implements UserInfo {
     /**
      * Sets the display name for the new user.
      *
-     * @param displayName a non-null, non-empty display name string.
+     * @param displayName a non-null display name string.
      */
     public CreateRequest setDisplayName(String displayName) {
-      checkNotNull(displayName, "displayName cannot be null or empty");
+      checkNotNull(displayName, "displayName cannot be null");
       properties.put("displayName", displayName);
       return this;
     }
@@ -449,6 +475,29 @@ public class UserRecord implements UserInfo {
       if (phone != null) {
         checkPhoneNumber(phone);
       }
+
+      if (phone == null && properties.containsKey("deleteProvider")) {
+        Object deleteProvider = properties.get("deleteProvider");
+        if (deleteProvider != null) {
+          // Due to java's type erasure, we can't fully check the type. :(
+          @SuppressWarnings("unchecked")
+          Iterable<String> deleteProviderIterable = (Iterable<String>)deleteProvider;
+
+          // If we've been told to unlink the phone provider both via setting phoneNumber to null
+          // *and* by setting providersToUnlink to include 'phone', then we'll reject that. Though
+          // it might also be reasonable to relax this restriction and just unlink it.
+          for (String dp : deleteProviderIterable) {
+            if (dp == "phone") {
+              throw new IllegalArgumentException(
+                  "Both UpdateRequest.setPhoneNumber(null) and "
+                  + "UpdateRequest.setProvidersToUnlink(['phone']) were set. To unlink from a "
+                  + "phone provider, only specify UpdateRequest.setPhoneNumber(null).");
+
+            }
+          }
+        }
+      }
+
       properties.put("phoneNumber", phone);
       return this;
     }
@@ -522,6 +571,52 @@ public class UserRecord implements UserInfo {
       return this;
     }
 
+    /**
+     * Links this user to the specified provider.
+     *
+     * <p>Linking a provider to an existing user account does not invalidate the
+     * refresh token of that account. In other words, the existing account
+     * continues to be able to access resources, despite not having used
+     * the newly linked provider to sign in. If you wish to force the user to
+     * authenticate with this new provider, you need to (a) revoke their
+     * refresh token (see
+     * https://firebase.google.com/docs/auth/admin/manage-sessions#revoke_refresh_tokens),
+     * and (b) ensure no other authentication methods are present on this
+     * account.
+     *
+     * @param providerToLink provider info to be linked to this user\'s account.
+     */
+    public UpdateRequest setProviderToLink(@NonNull UserProvider providerToLink) {
+      properties.put("linkProviderUserInfo", checkNotNull(providerToLink));
+      return this;
+    }
+
+    /**
+     * Unlinks this user from the specified providers.
+     *
+     * @param providerIds list of identifiers for the identity providers.
+     */
+    public UpdateRequest setProvidersToUnlink(Iterable<String> providerIds) {
+      checkNotNull(providerIds);
+      for (String id : providerIds) {
+        checkArgument(!Strings.isNullOrEmpty(id), "providerIds must not be null or empty");
+
+        if (id == "phone" && properties.containsKey("phoneNumber")
+            && properties.get("phoneNumber") == null) {
+          // If we've been told to unlink the phone provider both via setting phoneNumber to null
+          // *and* by setting providersToUnlink to include 'phone', then we'll reject that. Though
+          // it might also be reasonable to relax this restriction and just unlink it.
+          throw new IllegalArgumentException(
+              "Both UpdateRequest.setPhoneNumber(null) and "
+              + "UpdateRequest.setProvidersToUnlink(['phone']) were set. To unlink from a phone "
+              + "provider, only specify UpdateRequest.setPhoneNumber(null).");
+        }
+      }
+
+      properties.put("deleteProvider", providerIds);
+      return this;
+    }
+
     UpdateRequest setValidSince(long epochSeconds) {
       checkValidSince(epochSeconds);
       properties.put("validSince", epochSeconds);
@@ -543,7 +638,20 @@ public class UserRecord implements UserInfo {
       }
 
       if (copy.containsKey("phoneNumber") && copy.get("phoneNumber") == null) {
-        copy.put("deleteProvider", ImmutableList.of("phone"));
+        Object deleteProvider = copy.get("deleteProvider");
+        if (deleteProvider != null) {
+          // Due to java's type erasure, we can't fully check the type. :(
+          @SuppressWarnings("unchecked")
+          Iterable<String> deleteProviderIterable = (Iterable<String>)deleteProvider;
+
+          copy.put("deleteProvider", new ImmutableList.Builder<String>()
+              .addAll(deleteProviderIterable)
+              .add("phone")
+              .build());
+        } else {
+          copy.put("deleteProvider", ImmutableList.of("phone"));
+        }
+
         copy.remove("phoneNumber");
       }
 

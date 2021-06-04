@@ -33,7 +33,7 @@ public class FirebaseAppSnippets {
     // [START initialize_sdk_with_service_account]
     FileInputStream serviceAccount = new FileInputStream("path/to/serviceAccountKey.json");
 
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(serviceAccount))
         .setDatabaseUrl("https://<DATABASE_NAME>.firebaseio.com/")
         .build();
@@ -44,7 +44,7 @@ public class FirebaseAppSnippets {
 
   public void initializeWithDefaultCredentials() throws IOException {
     // [START initialize_sdk_with_application_default]
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.getApplicationDefault())
         .setDatabaseUrl("https://<DATABASE_NAME>.firebaseio.com/")
         .build();
@@ -57,7 +57,7 @@ public class FirebaseAppSnippets {
     // [START initialize_sdk_with_refresh_token]
     FileInputStream refreshToken = new FileInputStream("path/to/refreshToken.json");
 
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(refreshToken))
         .setDatabaseUrl("https://<DATABASE_NAME>.firebaseio.com/")
         .build();
@@ -73,7 +73,7 @@ public class FirebaseAppSnippets {
   }
 
   public void initializeDefaultApp() throws IOException {
-    FirebaseOptions defaultOptions = new FirebaseOptions.Builder()
+    FirebaseOptions defaultOptions = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.getApplicationDefault())
         .build();
 
@@ -94,10 +94,10 @@ public class FirebaseAppSnippets {
   }
 
   public void initializeCustomApp() throws Exception {
-    FirebaseOptions defaultOptions = new FirebaseOptions.Builder()
+    FirebaseOptions defaultOptions = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.getApplicationDefault())
         .build();
-    FirebaseOptions otherAppConfig = new FirebaseOptions.Builder()
+    FirebaseOptions otherAppConfig = FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.getApplicationDefault())
         .build();
 
@@ -121,9 +121,10 @@ public class FirebaseAppSnippets {
     // [END access_services_nondefault]
   }
 
-  public void initializeWithServiceAccountId() {
+  public void initializeWithServiceAccountId() throws IOException {
     // [START initialize_sdk_with_service_account_id]
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
+        .setCredentials(GoogleCredentials.getApplicationDefault())
         .setServiceAccountId("my-client-id@my-project-id.iam.gserviceaccount.com")
         .build();
     FirebaseApp.initializeApp(options);

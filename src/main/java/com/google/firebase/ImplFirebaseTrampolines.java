@@ -16,12 +16,17 @@
 
 package com.google.firebase;
 
+import com.google.api.core.ApiAsyncFunction;
+import com.google.api.core.ApiFunction;
 import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.firestore.FirestoreOptions;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -43,6 +48,10 @@ public final class ImplFirebaseTrampolines {
     return app.getProjectId();
   }
 
+  public static FirestoreOptions getFirestoreOptions(@NonNull FirebaseApp app) {
+    return app.getOptions().getFirestoreOptions();
+  }
+
   public static boolean isDefaultApp(@NonNull FirebaseApp app) {
     return app.isDefaultApp();
   }
@@ -60,6 +69,23 @@ public final class ImplFirebaseTrampolines {
 
   public static ThreadFactory getThreadFactory(@NonNull FirebaseApp app) {
     return app.getThreadFactory();
+  }
+
+  public static <V, X> ApiFuture<X> transform(
+      ApiFuture<? extends V> input,
+      final ApiFunction<? super V, ? extends X> function,
+      @NonNull FirebaseApp app) {
+    return ApiFutures.transform(input, function, app.getScheduledExecutorService());
+  }
+
+  public static <V, X> ApiFuture<X> transformAsync(
+      ApiFuture<V> input, final ApiAsyncFunction<V, X> function, @NonNull FirebaseApp app) {
+    return ApiFutures.transformAsync(input, function, app.getScheduledExecutorService());
+  }
+
+  public static ScheduledFuture<?> schedule(
+      @NonNull FirebaseApp app, @NonNull Runnable runnable, long delayMillis) {
+    return app.schedule(runnable, delayMillis);
   }
 
   public static <T> ApiFuture<T> submitCallable(

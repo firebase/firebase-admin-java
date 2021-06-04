@@ -123,20 +123,20 @@ public class CustomClassMapper {
           return ((Number) obj).longValue();
         }
         return doubleValue;
-      } else if (obj instanceof Short) {
-        throw new DatabaseException("Shorts are not supported, please use int or long");
-      } else if (obj instanceof Byte) {
-        throw new DatabaseException("Bytes are not supported, please use int or long");
-      } else {
-        // Long, Integer
+      } else if (obj instanceof Long || obj instanceof Integer) {
         return obj;
+      } else {
+        throw new DatabaseException(
+            String.format(
+                "Numbers of type %s are not supported, please use an int, long, float or double",
+                obj.getClass().getSimpleName()));
       }
     } else if (obj instanceof String) {
       return obj;
     } else if (obj instanceof Boolean) {
       return obj;
     } else if (obj instanceof Character) {
-      throw new DatabaseException("Characters are not supported, please strings");
+      throw new DatabaseException("Characters are not supported, please use Strings");
     } else if (obj instanceof Map) {
       Map<String, Object> result = new HashMap<>();
       for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) obj).entrySet()) {
@@ -159,11 +159,11 @@ public class CustomClassMapper {
         return result;
       } else {
         throw new DatabaseException(
-            "Serializing Collections is not supported, " + "please use Lists instead");
+            "Serializing Collections is not supported, please use Lists instead");
       }
     } else if (obj.getClass().isArray()) {
       throw new DatabaseException(
-          "Serializing Arrays is not supported, please use Lists " + "instead");
+          "Serializing Arrays is not supported, please use Lists instead");
     } else if (obj instanceof Enum) {
       return ((Enum<?>) obj).name();
     } else {
@@ -185,7 +185,7 @@ public class CustomClassMapper {
       throw new DatabaseException("Generic wildcard types are not supported");
     } else if (type instanceof GenericArrayType) {
       throw new DatabaseException(
-          "Generic Arrays are not supported, please use Lists " + "instead");
+          "Generic Arrays are not supported, please use Lists instead");
     } else {
       throw new IllegalStateException("Unknown type encountered: " + type);
     }
@@ -204,7 +204,7 @@ public class CustomClassMapper {
       return (T) convertString(obj);
     } else if (clazz.isArray()) {
       throw new DatabaseException(
-          "Converting to Arrays is not supported, please use Lists" + "instead");
+          "Converting to Arrays is not supported, please use Lists instead");
     } else if (clazz.getTypeParameters().length > 0) {
       throw new DatabaseException(
           "Class "
@@ -282,14 +282,9 @@ public class CustomClassMapper {
       return (T) convertLong(obj);
     } else if (Float.class.isAssignableFrom(clazz) || float.class.isAssignableFrom(clazz)) {
       return (T) (Float) convertDouble(obj).floatValue();
-    } else if (Short.class.isAssignableFrom(clazz) || short.class.isAssignableFrom(clazz)) {
-      throw new DatabaseException("Deserializing to shorts is not supported");
-    } else if (Byte.class.isAssignableFrom(clazz) || byte.class.isAssignableFrom(clazz)) {
-      throw new DatabaseException("Deserializing to bytes is not supported");
-    } else if (Character.class.isAssignableFrom(clazz) || char.class.isAssignableFrom(clazz)) {
-      throw new DatabaseException("Deserializing to char is not supported");
     } else {
-      throw new IllegalArgumentException("Unknown primitive type: " + clazz);
+      throw new DatabaseException(
+          String.format("Deserializing values to %s is not supported", clazz.getSimpleName()));
     }
   }
 
@@ -716,7 +711,7 @@ public class CustomClassMapper {
           Method setter = this.setters.get(propertyName);
           Type[] params = setter.getGenericParameterTypes();
           if (params.length != 1) {
-            throw new IllegalStateException("Setter does not have exactly one " + "parameter");
+            throw new IllegalStateException("Setter does not have exactly one parameter");
           }
           Type resolvedType = resolveType(params[0], types);
           Object value = CustomClassMapper.deserializeToType(entry.getValue(), resolvedType);

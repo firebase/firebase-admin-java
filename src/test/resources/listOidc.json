@@ -1,0 +1,25 @@
+{
+  "oauthIdpConfigs" : [ {
+    "name": "projects/projectId/oauthIdpConfigs/oidc.provider-id1",
+    "displayName" : "DISPLAY_NAME",
+    "enabled" : true,
+    "clientId" : "CLIENT_ID",
+    "clientSecret" : "CLIENT_SECRET",
+    "issuer" : "https://oidc.com/issuer",
+    "responseType" : {
+      "code": true,
+      "idToken": false
+    }
+  }, {
+    "name": "projects/projectId/oauthIdpConfigs/oidc.provider-id2",
+    "displayName" : "DISPLAY_NAME",
+    "enabled" : true,
+    "clientId" : "CLIENT_ID",
+    "clientSecret" : "CLIENT_SECRET",
+    "issuer" : "https://oidc.com/issuer",
+    "responseType" : {
+      "code": true,
+      "idToken": false
+    }
+  } ]
+}

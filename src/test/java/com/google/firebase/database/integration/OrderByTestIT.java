@@ -65,7 +65,9 @@ public class OrderByTestIT {
 
   @AfterClass
   public static void tearDownClass() throws IOException {
-    uploadRules(masterApp, "{\"rules\": {\".read\": true, \".write\": true}}");
+    uploadRules(
+        masterApp,
+        "{\"rules\": {\".read\": \"auth != null\", \".write\": \"auth != null\"}}");
   }
 
   @Before
@@ -80,9 +82,10 @@ public class OrderByTestIT {
 
   private static String formatRules(DatabaseReference ref, String rules) {
     return String.format(
-        "{\"rules\": {\".read\": true, \".write\": true, \"%s\": %s}}", ref.getKey(), rules);
+        "{\"rules\": {\".read\": \"auth != null\", \".write\": \"auth != null\", \"%s\": %s}}",
+        ref.getKey(), rules);
   }
-  
+
   private static void uploadRules(FirebaseApp app, String rules) throws IOException {
     IntegrationTestUtils.AppHttpClient client = new IntegrationTestUtils.AppHttpClient(app);
     IntegrationTestUtils.ResponseInfo response = client.put("/.settings/rules.json", rules);
@@ -921,7 +924,7 @@ public class OrderByTestIT {
 
   @Test
   public void testStartAtAndEndAtOnValueIndex()
-      throws InterruptedException, ExecutionException, TimeoutException, TestFailure, IOException {
+      throws InterruptedException, ExecutionException, TimeoutException, TestFailure {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
     Map<String, Object> initial =
@@ -981,7 +984,7 @@ public class OrderByTestIT {
 
   @Test
   public void testRemovingDefaultListener()
-      throws InterruptedException, ExecutionException, TimeoutException, TestFailure, IOException {
+      throws InterruptedException, ExecutionException, TimeoutException, TestFailure {
     DatabaseReference ref = IntegrationTestUtils.getRandomNode(masterApp) ;
 
     Object initialData = MapBuilder.of("key", "value");

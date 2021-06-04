@@ -1,0 +1,17 @@
+{
+  "tenants" : [ {
+    "name" : "TENANT_1",
+    "displayName" : "DISPLAY_NAME",
+    "allowPasswordSignup" : true,
+    "enableEmailLinkSignin" : false,
+    "disableAuth" : true,
+    "enableAnonymousUser" : false
+  }, {
+    "name" : "TENANT_2",
+    "displayName" : "DISPLAY_NAME",
+    "allowPasswordSignup" : true,
+    "enableEmailLinkSignin" : false,
+    "disableAuth" : true,
+    "enableAnonymousUser" : false
+  } ]
+}

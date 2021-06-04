@@ -19,12 +19,13 @@ package com.google.firebase.auth;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
+import com.google.firebase.internal.ApiClientUtils;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -35,7 +36,7 @@ import org.junit.Test;
 
 public class ImportUserRecordTest {
 
-  private static final JsonFactory JSON_FACTORY = Utils.getDefaultJsonFactory();
+  private static final JsonFactory JSON_FACTORY = ApiClientUtils.getDefaultJsonFactory();
 
   @Test
   public void testUidOnlyRecord() {
@@ -62,7 +63,7 @@ public class ImportUserRecordTest {
         .setDisplayName("Test User")
         .setPhotoUrl("https://test.com/user.png")
         .setPhoneNumber("+1234567890")
-        .setUserMetadata(new UserMetadata(date.getTime(), date.getTime()))
+        .setUserMetadata(new UserMetadata(date.getTime(), date.getTime(), date.getTime()))
         .setDisabled(false)
         .setEmailVerified(true)
         .setPasswordHash("password".getBytes())

@@ -35,8 +35,11 @@ import io.netty.handler.ssl.SslContextBuilder;
 import java.io.EOFException;
 import java.net.URI;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
+import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManagerFactory;
 
 /**
@@ -57,13 +60,15 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
   private final ChannelHandler channelHandler;
   private final ExecutorService executorService;
   private final EventLoopGroup group;
+  private final boolean isSecure;
 
   private Channel channel;
 
   NettyWebSocketClient(
-      URI uri, String userAgent, ThreadFactory threadFactory,
+      URI uri, boolean isSecure, String userAgent, ThreadFactory threadFactory,
       WebsocketConnection.WSClientEventHandler eventHandler) {
     this.uri = checkNotNull(uri, "uri must not be null");
+    this.isSecure = isSecure;
     this.eventHandler = checkNotNull(eventHandler, "event handler must not be null");
     this.channelHandler = new WebSocketClientHandler(uri, userAgent, eventHandler);
     this.executorService = new FirebaseScheduledExecutor(threadFactory,
@@ -75,20 +80,26 @@ class NettyWebSocketClient implements WebsocketConnection.WSClient {
   public void connect() {
     checkState(channel == null, "channel already initialized");
     try {
-      TrustManagerFactory trustFactory = TrustManagerFactory.getInstance(
-          TrustManagerFactory.getDefaultAlgorithm());
-      trustFactory.init((KeyStore) null);
-      final SslContext sslContext = SslContextBuilder.forClient()
-          .trustManager(trustFactory).build();
       Bootstrap bootstrap = new Bootstrap();
+      SslContext sslContext = null;
+      if (this.isSecure) {
+        TrustManagerFactory trustFactory = TrustManagerFactory.getInstance(
+            TrustManagerFactory.getDefaultAlgorithm());
+        trustFactory.init((KeyStore) null);
+        sslContext = SslContextBuilder.forClient()
+            .trustManager(trustFactory).build();
+      }
       final int port = uri.getPort() != -1 ? uri.getPort() : DEFAULT_WSS_PORT;
+      final SslContext finalSslContext = sslContext;
       bootstrap.group(group)
           .channel(NioSocketChannel.class)
           .handler(new ChannelInitializer<SocketChannel>() {
             @Override
             protected void initChannel(SocketChannel ch) {
               ChannelPipeline p = ch.pipeline();
-              p.addLast(sslContext.newHandler(ch.alloc(), uri.getHost(), port));
+              if (finalSslContext != null) {
+                p.addLast(finalSslContext.newHandler(ch.alloc(), uri.getHost(), port));
+              }
               p.addLast(
                   new HttpClientCodec(),
                   // Set the max size for the HTTP responses. This only applies to the WebSocket

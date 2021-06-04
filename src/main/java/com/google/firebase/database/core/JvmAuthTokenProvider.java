@@ -41,7 +41,12 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
   }
 
   JvmAuthTokenProvider(FirebaseApp firebaseApp, Executor executor, boolean autoRefresh) {
-    this.credentials = ImplFirebaseTrampolines.getCredentials(firebaseApp);
+    this(firebaseApp, executor, autoRefresh, ImplFirebaseTrampolines.getCredentials(firebaseApp));
+  }
+
+  JvmAuthTokenProvider(FirebaseApp firebaseApp, Executor executor, boolean autoRefresh,
+      GoogleCredentials customCredentials) {
+    this.credentials = customCredentials;
     this.authVariable = firebaseApp.getOptions().getDatabaseAuthVariableOverride();
     this.executor = executor;
     if (autoRefresh) {
@@ -107,7 +112,7 @@ public class JvmAuthTokenProvider implements AuthTokenProvider {
     }
 
     @Override
-    public void onChanged(OAuth2Credentials credentials) throws IOException {
+    public void onChanged(OAuth2Credentials credentials) {
       // When this event fires, it is guaranteed that credentials.getAccessToken() will return a
       // valid OAuth2 token.
       final AccessToken accessToken = credentials.getAccessToken();

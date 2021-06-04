@@ -19,6 +19,7 @@ package com.google.firebase.messaging;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.api.client.util.Key;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Booleans;
@@ -62,6 +63,9 @@ public class Message {
   @Key("condition")
   private final String condition;
 
+  @Key("fcm_options")
+  private final FcmOptions fcmOptions;
+
   private Message(Builder builder) {
     this.data = builder.data.isEmpty() ? null : ImmutableMap.copyOf(builder.data);
     this.notification = builder.notification;
@@ -77,6 +81,61 @@ public class Message {
     this.token = builder.token;
     this.topic = stripPrefix(builder.topic);
     this.condition = builder.condition;
+    this.fcmOptions = builder.fcmOptions;
+  }
+
+  @VisibleForTesting
+  Map<String, String> getData() {
+    return data;
+  }
+
+  @VisibleForTesting
+  Notification getNotification() {
+    return notification;
+  }
+
+  @VisibleForTesting
+  AndroidConfig getAndroidConfig() {
+    return androidConfig;
+  }
+
+  @VisibleForTesting
+  WebpushConfig getWebpushConfig() {
+    return webpushConfig;
+  }
+
+  @VisibleForTesting
+  ApnsConfig getApnsConfig() {
+    return apnsConfig;
+  }
+
+  @VisibleForTesting
+  String getToken() {
+    return token;
+  }
+
+  @VisibleForTesting
+  String getTopic() {
+    return topic;
+  }
+
+  @VisibleForTesting
+  String getCondition() {
+    return condition;
+  }
+
+  @VisibleForTesting
+  FcmOptions getFcmOptions() {
+    return fcmOptions;
+  }
+
+  Map<String, Object> wrapForTransport(boolean dryRun) {
+    ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
+        .put("message", this);
+    if (dryRun) {
+      payload.put("validate_only", true);
+    }
+    return payload.build();
   }
 
   private static String stripPrefix(String topic) {
@@ -110,6 +169,7 @@ public class Message {
     private String token;
     private String topic;
     private String condition;
+    private FcmOptions fcmOptions;
 
     private Builder() {}
 
@@ -217,6 +277,15 @@ public class Message {
     }
 
     /**
+     * Sets the {@link FcmOptions}, which can be overridden by the platform-specific {@code
+     * fcm_options} fields.
+     */
+    public Builder setFcmOptions(FcmOptions fcmOptions) {
+      this.fcmOptions = fcmOptions;
+      return this;
+    }
+
+    /**
      * Creates a new {@link Message} instance from the parameters set on this builder.
      *
      * @return A new {@link Message} instance.
@@ -226,5 +295,4 @@ public class Message {
       return new Message(this);
     }
   }
-
 }

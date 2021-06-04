@@ -19,17 +19,21 @@ package com.google.firebase;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Key;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.firestore.FirestoreOptions;
 import com.google.common.base.Strings;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,9 +59,21 @@ public final class FirebaseOptions {
           "https://www.googleapis.com/auth/cloud-platform",
           "https://www.googleapis.com/auth/datastore");
 
+  static final Supplier<GoogleCredentials> APPLICATION_DEFAULT_CREDENTIALS =
+      new Supplier<GoogleCredentials>() {
+        @Override
+        public GoogleCredentials get() {
+          try {
+            return GoogleCredentials.getApplicationDefault().createScoped(FIREBASE_SCOPES);
+          } catch (IOException e) {
+            throw new IllegalStateException(e);
+          }
+        }
+      };
+
   private final String databaseUrl;
   private final String storageBucket;
-  private final GoogleCredentials credentials;
+  private final Supplier<GoogleCredentials> credentialsSupplier;
   private final Map<String, Object> databaseAuthVariableOverride;
   private final String projectId;
   private final String serviceAccountId;
@@ -66,12 +82,12 @@ public final class FirebaseOptions {
   private final int readTimeout;
   private final JsonFactory jsonFactory;
   private final ThreadManager threadManager;
+  private final FirestoreOptions firestoreOptions;
 
-  private FirebaseOptions(@NonNull FirebaseOptions.Builder builder) {
-    this.credentials = checkNotNull(builder.credentials,
-        "FirebaseOptions must be initialized with setCredentials().")
-        .createScoped(FIREBASE_SCOPES);
+  private FirebaseOptions(@NonNull final FirebaseOptions.Builder builder) {
     this.databaseUrl = builder.databaseUrl;
+    this.credentialsSupplier = checkNotNull(
+        builder.credentialsSupplier, "FirebaseOptions must be initialized with setCredentials().");
     this.databaseAuthVariableOverride = builder.databaseAuthVariableOverride;
     this.projectId = builder.projectId;
     if (!Strings.isNullOrEmpty(builder.storageBucket)) {
@@ -94,6 +110,7 @@ public final class FirebaseOptions {
     this.connectTimeout = builder.connectTimeout;
     checkArgument(builder.readTimeout >= 0);
     this.readTimeout = builder.readTimeout;
+    this.firestoreOptions = builder.firestoreOptions;
   }
 
   /**
@@ -115,7 +132,7 @@ public final class FirebaseOptions {
   }
 
   GoogleCredentials getCredentials() {
-    return credentials;
+    return credentialsSupplier.get();
   }
 
   /**
@@ -193,33 +210,61 @@ public final class FirebaseOptions {
     return threadManager;
   }
 
+  FirestoreOptions getFirestoreOptions() {
+    return firestoreOptions;
+  }
+
   /**
-   * Builder for constructing {@link FirebaseOptions}. 
+   * Creates an empty builder.
+   *
+   * @return A new builder instance.
+   */
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
+   * Creates a new {@code Builder} from the options object.
+   *
+   * <p>The new builder is not backed by this object's values; that is, changes made to the new
+   * builder don't change the values of the origin object.
+   */
+  public Builder toBuilder() {
+    return new Builder(this);
+  }
+
+  /**
+   * Builder for constructing {@link FirebaseOptions}.
    */
   public static final class Builder {
     @Key("databaseAuthVariableOverride")
     private Map<String, Object> databaseAuthVariableOverride = new HashMap<>();
-    
+
     @Key("databaseUrl")
     private String databaseUrl;
 
     @Key("projectId")
     private String projectId;
-    
+
     @Key("storageBucket")
     private String storageBucket;
 
     @Key("serviceAccountId")
     private String serviceAccountId;
-    
-    private GoogleCredentials credentials;
-    private HttpTransport httpTransport = Utils.getDefaultTransport();
-    private JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+    private Supplier<GoogleCredentials> credentialsSupplier;
+    private FirestoreOptions firestoreOptions;
+    private HttpTransport httpTransport = ApiClientUtils.getDefaultTransport();
+    private JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
     private ThreadManager threadManager = FirebaseThreadManagers.DEFAULT_THREAD_MANAGER;
     private int connectTimeout;
     private int readTimeout;
 
-    /** Constructs an empty builder. */
+    /**
+     * Constructs an empty builder.
+     *
+     * @deprecated Use {@link FirebaseOptions#builder()} instead.
+     */
+    @Deprecated
     public Builder() {}
 
     /**
@@ -227,11 +272,14 @@ public final class FirebaseOptions {
      *
      * <p>The new builder is not backed by this object's values, that is changes made to the new
      * builder don't change the values of the origin object.
+     *
+     * @deprecated Use {@link FirebaseOptions#toBuilder()} instead.
      */
+    @Deprecated
     public Builder(FirebaseOptions options) {
       databaseUrl = options.databaseUrl;
       storageBucket = options.storageBucket;
-      credentials = options.credentials;
+      credentialsSupplier = options.credentialsSupplier;
       databaseAuthVariableOverride = options.databaseAuthVariableOverride;
       projectId = options.projectId;
       httpTransport = options.httpTransport;
@@ -239,6 +287,7 @@ public final class FirebaseOptions {
       threadManager = options.threadManager;
       connectTimeout = options.connectTimeout;
       readTimeout = options.readTimeout;
+      firestoreOptions = options.firestoreOptions;
     }
 
     /**
@@ -278,18 +327,32 @@ public final class FirebaseOptions {
     }
 
     /**
-     * Sets the <code>GoogleCredentials</code> to use to authenticate the SDK.
+     * Sets the <code>GoogleCredentials</code> to use to authenticate the SDK. This parameter
+     * must be specified when creating a new instance of {@link FirebaseOptions}.
      *
      * <p>See <a href="https://firebase.google.com/docs/admin/setup#initialize_the_sdk">
      * Initialize the SDK</a> for code samples and detailed documentation.
      *
      * @param credentials A
-     *     <a href="http://google.github.io/google-auth-library-java/releases/0.7.1/apidocs/com/google/auth/oauth2/GoogleCredentials.html">{@code GoogleCredentials}</a>
+     *     <a href="https://googleapis.dev/java/google-auth-library/latest/index.html?com/google/auth/oauth2/GoogleCredentials.html">{@code GoogleCredentials}</a>
      *     instance used to authenticate the SDK.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setCredentials(GoogleCredentials credentials) {
-      this.credentials = checkNotNull(credentials);
+      this.credentialsSupplier = Suppliers
+          .ofInstance(checkNotNull(credentials).createScoped(FIREBASE_SCOPES));
+      return this;
+    }
+
+    /**
+     * Sets the <code>Supplier</code> of <code>GoogleCredentials</code> to use to authenticate the
+     * SDK. This is NOT intended for public use outside the SDK.
+     *
+     * @param credentialsSupplier Supplier instance that wraps GoogleCredentials.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    Builder setCredentials(Supplier<GoogleCredentials> credentialsSupplier) {
+      this.credentialsSupplier = checkNotNull(credentialsSupplier);
       return this;
     }
 
@@ -381,6 +444,22 @@ public final class FirebaseOptions {
      */
     public Builder setThreadManager(ThreadManager threadManager) {
       this.threadManager = threadManager;
+      return this;
+    }
+
+    /**
+     * Sets the <code>FirestoreOptions</code> used to initialize Firestore in the
+     * {@link com.google.firebase.cloud.FirestoreClient} API. This can be used to customize
+     * low-level transport (GRPC) parameters, and timestamp handling behavior.
+     *
+     * <p>If credentials or a project ID is set in <code>FirestoreOptions</code>, they will get
+     * overwritten by the corresponding parameters in <code>FirebaseOptions</code>.
+     *
+     * @param firestoreOptions A <code>FirestoreOptions</code> instance.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setFirestoreOptions(FirestoreOptions firestoreOptions) {
+      this.firestoreOptions = firestoreOptions;
       return this;
     }
 

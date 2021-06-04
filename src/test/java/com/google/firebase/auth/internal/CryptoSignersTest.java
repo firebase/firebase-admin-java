@@ -18,10 +18,13 @@ package com.google.firebase.auth.internal;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.googleapis.util.Utils;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpStatusCodes;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.auth.ServiceAccountSigner;
@@ -29,21 +32,23 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestResponseInterceptor;
-import java.io.IOException;
 import org.junit.After;
 import org.junit.Test;
 
 public class CryptoSignersTest {
 
   @Test
-  public void testServiceAccountCryptoSigner() throws IOException {
+  public void testServiceAccountCryptoSigner() throws Exception {
     ServiceAccountCredentials credentials = ServiceAccountCredentials.fromStream(
         ServiceAccount.EDITOR.asStream());
     byte[] expected = credentials.sign("foo".getBytes());
@@ -63,31 +68,54 @@ public class CryptoSignersTest {
   }
 
   @Test
-  public void testIAMCryptoSigner() throws IOException {
+  public void testIAMCryptoSigner() throws Exception {
     String signature = BaseEncoding.base64().encode("signed-bytes".getBytes());
-    String response = Utils.getDefaultJsonFactory().toString(
-        ImmutableMap.of("signature", signature));
+    String response = ApiClientUtils.getDefaultJsonFactory().toString(
+        ImmutableMap.of("signedBlob", signature));
     MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(new MockLowLevelHttpResponse().setContent(response))
         .build();
     TestResponseInterceptor interceptor = new TestResponseInterceptor();
     CryptoSigners.IAMCryptoSigner signer = new CryptoSigners.IAMCryptoSigner(
         transport.createRequestFactory(),
-        Utils.getDefaultJsonFactory(),
+        ApiClientUtils.getDefaultJsonFactory(),
         "test-service-account@iam.gserviceaccount.com");
     signer.setInterceptor(interceptor);
 
     byte[] data = signer.sign("foo".getBytes());
     assertArrayEquals("signed-bytes".getBytes(), data);
-    final String url = "https://iam.googleapis.com/v1/projects/-/serviceAccounts/"
+    final String url = "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/"
         + "test-service-account@iam.gserviceaccount.com:signBlob";
     assertEquals(url, interceptor.getResponse().getRequest().getUrl().toString());
   }
 
   @Test
+  public void testIAMCryptoSignerHttpError() {
+    String error = "{\"error\": {\"status\":\"INTERNAL\", \"message\": \"Test error\"}}";
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(new MockLowLevelHttpResponse()
+            .setStatusCode(HttpStatusCodes.STATUS_CODE_SERVER_ERROR)
+            .setContent(error))
+        .build();
+    CryptoSigners.IAMCryptoSigner signer = new CryptoSigners.IAMCryptoSigner(
+        transport.createRequestFactory(),
+        ApiClientUtils.getDefaultJsonFactory(),
+        "test-service-account@iam.gserviceaccount.com");
+    try {
+      signer.sign("foo".getBytes());
+    } catch (FirebaseAuthException e) {
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
+      assertEquals("Test error", e.getMessage());
+      assertNotNull(e.getCause());
+      assertNotNull(e.getHttpResponse());
+      assertNull(e.getAuthErrorCode());
+    }
+  }
+
+  @Test
   public void testInvalidIAMCryptoSigner() {
     try {
-      new CryptoSigners.IAMCryptoSigner(null, Utils.getDefaultJsonFactory(), "test");
+      new CryptoSigners.IAMCryptoSigner(null, ApiClientUtils.getDefaultJsonFactory(), "test");
       fail("No error thrown for null request factory");
     } catch (NullPointerException expected) {
       // expected
@@ -103,7 +131,7 @@ public class CryptoSignersTest {
 
     try {
       new CryptoSigners.IAMCryptoSigner(transport.createRequestFactory(),
-          Utils.getDefaultJsonFactory(), null);
+          ApiClientUtils.getDefaultJsonFactory(), null);
       fail("No error thrown for null service account");
     } catch (IllegalArgumentException expected) {
       // expected
@@ -111,7 +139,7 @@ public class CryptoSignersTest {
 
     try {
       new CryptoSigners.IAMCryptoSigner(transport.createRequestFactory(),
-          Utils.getDefaultJsonFactory(), "");
+          ApiClientUtils.getDefaultJsonFactory(), "");
       fail("No error thrown for empty service account");
     } catch (IllegalArgumentException expected) {
       // expected
@@ -119,15 +147,15 @@ public class CryptoSignersTest {
   }
 
   @Test
-  public void testMetadataService() throws IOException {
+  public void testMetadataService() throws Exception {
     String signature = BaseEncoding.base64().encode("signed-bytes".getBytes());
-    String response = Utils.getDefaultJsonFactory().toString(
-        ImmutableMap.of("signature", signature));
+    String response = ApiClientUtils.getDefaultJsonFactory().toString(
+        ImmutableMap.of("signedBlob", signature));
     MockHttpTransport transport = new MultiRequestMockHttpTransport(
         ImmutableList.of(
             new MockLowLevelHttpResponse().setContent("metadata-server@iam.gserviceaccount.com"),
             new MockLowLevelHttpResponse().setContent(response)));
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setHttpTransport(transport)
         .build();
@@ -140,22 +168,24 @@ public class CryptoSignersTest {
 
     byte[] data = signer.sign("foo".getBytes());
     assertArrayEquals("signed-bytes".getBytes(), data);
-    final String url = "https://iam.googleapis.com/v1/projects/-/serviceAccounts/"
+    final String url = "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/"
         + "metadata-server@iam.gserviceaccount.com:signBlob";
-    assertEquals(url, interceptor.getResponse().getRequest().getUrl().toString());
+    HttpRequest request = interceptor.getResponse().getRequest();
+    assertEquals(url, request.getUrl().toString());
+    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
   }
 
   @Test
-  public void testExplicitServiceAccountEmail() throws IOException {
+  public void testExplicitServiceAccountEmail() throws Exception {
     String signature = BaseEncoding.base64().encode("signed-bytes".getBytes());
-    String response = Utils.getDefaultJsonFactory().toString(
-        ImmutableMap.of("signature", signature));
+    String response = ApiClientUtils.getDefaultJsonFactory().toString(
+        ImmutableMap.of("signedBlob", signature));
 
     // Explicit service account should get precedence
     MockHttpTransport transport = new MultiRequestMockHttpTransport(
         ImmutableList.of(
             new MockLowLevelHttpResponse().setContent(response)));
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setServiceAccountId("explicit-service-account@iam.gserviceaccount.com")
         .setCredentials(new MockGoogleCredentialsWithSigner("test-token"))
         .setHttpTransport(transport)
@@ -168,15 +198,17 @@ public class CryptoSignersTest {
 
     byte[] data = signer.sign("foo".getBytes());
     assertArrayEquals("signed-bytes".getBytes(), data);
-    final String url = "https://iam.googleapis.com/v1/projects/-/serviceAccounts/"
+    final String url = "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/"
         + "explicit-service-account@iam.gserviceaccount.com:signBlob";
-    assertEquals(url, interceptor.getResponse().getRequest().getUrl().toString());
+    HttpRequest request = interceptor.getResponse().getRequest();
+    assertEquals(url, request.getUrl().toString());
+    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
   }
 
   @Test
-  public void testCredentialsWithSigner() throws IOException {
+  public void testCredentialsWithSigner() throws Exception {
     // Should fall back to signing-enabled credential
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentialsWithSigner("test-token"))
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options, "customApp");
@@ -185,6 +217,14 @@ public class CryptoSignersTest {
     assertEquals("credential-signer@iam.gserviceaccount.com", signer.getAccount());
     byte[] data = signer.sign("foo".getBytes());
     assertArrayEquals("local-signed-bytes".getBytes(), data);
+  }
+
+  @Test
+  public void testEmulatorCryptoSigner() throws Exception {
+    CryptoSigner signer = new CryptoSigners.EmulatorCryptoSigner();
+    byte[] data = signer.sign("foo".getBytes());
+    // No signed bytes returned
+    assertEquals(data.length, 0);
   }
 
   @After

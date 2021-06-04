@@ -19,8 +19,15 @@ package com.google.firebase.testing;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.googleapis.testing.auth.oauth2.MockTokenServerTransport;
+import com.google.api.client.http.EmptyContent;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.HttpRequest;
+import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.http.LowLevelHttpRequest;
 import com.google.api.client.json.webtoken.JsonWebSignature;
+import com.google.api.client.testing.http.MockHttpTransport;
+import com.google.api.client.testing.http.MockLowLevelHttpRequest;
 import com.google.auth.http.HttpTransportFactory;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableMap;
@@ -36,12 +43,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** Test Utils for use by all tests (both unit and integration tests). */
 public class TestUtils {
 
   public static final long TEST_TIMEOUT_MILLIS = 7 * 1000;
-  public static final String TEST_ADC_ACCESS_TOKEN = "test-adc-access-token";
+  private static final String TEST_ADC_ACCESS_TOKEN = "test-adc-access-token";
+  private static final GenericUrl TEST_URL = new GenericUrl("https://firebase.google.com");
 
   private static GoogleCredentials defaultCredentials;
 
@@ -77,6 +86,30 @@ public class TestUtils {
     }
   }
 
+  public static void unsetEnvironmentVariables(Set<String> vars) {
+    // Unsetting the environment variables after the JVM has started requires a bit of a hack:
+    // we reach into the package-private java.lang.ProcessEnvironment class, which incidentally
+    // is platform-specific, and replace the map held in a static final field there,
+    // using yet more reflection.
+    //
+    // This is copied from {#see com.google.apphosting.runtime.NullSandboxPlugin}
+    Map<String, String> allVars = new HashMap<>(System.getenv());
+    for (String var : vars) {
+      allVars.remove(var);
+    }
+    try {
+      Class<?> pe = Class.forName("java.lang.ProcessEnvironment", true, null);
+      Field f = pe.getDeclaredField("theUnmodifiableEnvironment");
+      f.setAccessible(true);
+      Field m = Field.class.getDeclaredField("modifiers");
+      m.setAccessible(true);
+      m.setInt(f, m.getInt(f) & ~Modifier.FINAL);
+      f.set(null, Collections.unmodifiableMap(allVars));
+    } catch (ReflectiveOperationException e) {
+      throw new RuntimeException("failed to unset the environment variables", e);
+    }
+  }
+
   public static String loadResource(String path) {
     InputStream stream = TestUtils.class.getClassLoader().getResourceAsStream(path);
     checkNotNull(stream, "Failed to load resource: %s", path);
@@ -106,7 +139,8 @@ public class TestUtils {
     if (defaultCredentials != null) {
       return defaultCredentials;
     }
-    final MockTokenServerTransport transport = new MockTokenServerTransport();
+    final MockTokenServerTransport transport = new MockTokenServerTransport(
+        "https://accounts.google.com/o/oauth2/token");
     transport.addServiceAccount(ServiceAccount.EDITOR.getEmail(), TEST_ADC_ACCESS_TOKEN);
     File serviceAccount = new File("src/test/resources/service_accounts", "editor.json");
     Map<String, String> environmentVariables =
@@ -121,5 +155,34 @@ public class TestUtils {
       }
     });
     return defaultCredentials;
+  }
+
+  public static HttpRequest createRequest() throws IOException {
+    return createRequest(new MockLowLevelHttpRequest());
+  }
+
+  public static HttpRequest createRequest(MockLowLevelHttpRequest request) throws IOException {
+    return createRequest(request, TEST_URL);
+  }
+
+  /**
+   * Creates a test HTTP POST request for the given target URL.
+   */
+  public static HttpRequest createRequest(
+      MockLowLevelHttpRequest request, GenericUrl url) throws IOException {
+    HttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpRequest(request)
+        .build();
+    HttpRequestFactory requestFactory = transport.createRequestFactory();
+    return requestFactory.buildPostRequest(url, new EmptyContent());
+  }
+
+  public static HttpTransport createFaultyHttpTransport() {
+    return new HttpTransport() {
+      @Override
+      protected LowLevelHttpRequest buildRequest(String s, String s1) throws IOException {
+        throw new IOException("transport error");
+      }
+    };
   }
 }

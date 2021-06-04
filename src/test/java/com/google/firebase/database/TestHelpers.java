@@ -16,7 +16,6 @@
 
 package com.google.firebase.database;
 
-import static com.cedarsoftware.util.DeepEquals.deepEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -43,6 +42,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Executors;
@@ -241,7 +241,7 @@ public class TestHelpers {
    * a true and more effective super set.
    */
   public static void assertDeepEquals(Object a, Object b) {
-    if (!deepEquals(a, b)) {
+    if (!Objects.deepEquals(a, b)) {
       fail("Values different.\nExpected: " + a + "\nActual: " + b);
     }
   }

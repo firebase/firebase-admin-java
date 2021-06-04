@@ -5,6 +5,9 @@ target/
 .classpath
 .project
 .checkstyle
+.factorypath
+.vscode/
 release.properties
 integration_cert.json
 integration_apikey.txt
+.DS_Store

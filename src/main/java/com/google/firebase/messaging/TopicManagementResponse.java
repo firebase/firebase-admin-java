@@ -16,6 +16,11 @@
 
 package com.google.firebase.messaging;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
+
+import com.google.api.client.json.GenericJson;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
@@ -41,7 +46,9 @@ public class TopicManagementResponse {
   private final int successCount;
   private final List<Error> errors;
 
-  TopicManagementResponse(List<Map<String, Object>> results) {
+  TopicManagementResponse(List<GenericJson> results) {
+    checkArgument(results != null && !results.isEmpty(),
+        "unexpected response from topic management service");
     int successCount = 0;
     ImmutableList.Builder<Error> errors = ImmutableList.builder();
     for (int i = 0; i < results.size(); i++) {
@@ -115,6 +122,14 @@ public class TopicManagementResponse {
     @NonNull
     public String getReason() {
       return reason;
+    }
+
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(this)
+              .add("index", index)
+              .add("reason", reason)
+              .toString();
     }
   }
 }

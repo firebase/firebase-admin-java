@@ -24,7 +24,6 @@ import static org.junit.Assert.fail;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.FirebaseOptions.Builder;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.FirebaseThreadManagers.GlobalThreadManager;
@@ -38,7 +37,7 @@ import org.junit.Test;
 public class CallableOperationTest {
 
   private static final String TEST_FIREBASE_THREAD = "test-firebase-thread";
-  private static final FirebaseOptions OPTIONS = new Builder()
+  private static final FirebaseOptions OPTIONS = FirebaseOptions.builder()
       .setCredentials(new MockGoogleCredentials())
       .setThreadManager(new MockThreadManager())
       .build();

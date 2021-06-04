@@ -23,6 +23,7 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.database.DataSnapshot;
@@ -77,7 +78,7 @@ public class FirebaseDatabaseAuthTestIT {
   @Test
   public void testAuthWithInvalidCertificateCredential() throws InterruptedException, IOException {
     FirebaseOptions options =
-        new FirebaseOptions.Builder()
+        FirebaseOptions.builder()
             .setDatabaseUrl(IntegrationTestUtils.getDatabaseUrl())
             .setCredentials(GoogleCredentials.fromStream(ServiceAccount.NONE.asStream()))
             .build();
@@ -93,10 +94,9 @@ public class FirebaseDatabaseAuthTestIT {
         "uid", "test",
         "custom", "secret"
     );
-    FirebaseOptions options =
-        new FirebaseOptions.Builder(masterApp.getOptions())
-            .setDatabaseAuthVariableOverride(authVariableOverrides)
-            .build();
+    FirebaseOptions options = masterApp.getOptions().toBuilder()
+        .setDatabaseAuthVariableOverride(authVariableOverrides)
+        .build();
     FirebaseApp testUidApp = FirebaseApp.initializeApp(options, "testGetAppWithUid");
     FirebaseDatabase masterDb = FirebaseDatabase.getInstance(masterApp);
     FirebaseDatabase testAuthOverridesDb = FirebaseDatabase.getInstance(testUidApp);
@@ -113,10 +113,9 @@ public class FirebaseDatabaseAuthTestIT {
   
   @Test
   public void testDatabaseAuthVariablesNoAuthorization() throws InterruptedException {
-    FirebaseOptions options =
-        new FirebaseOptions.Builder(masterApp.getOptions())
-            .setDatabaseAuthVariableOverride(null)
-            .build();
+    FirebaseOptions options = masterApp.getOptions().toBuilder()
+        .setDatabaseAuthVariableOverride(null)
+        .build();
     FirebaseApp testUidApp =
         FirebaseApp.initializeApp(options, "testServiceAccountDatabaseWithNoAuth");
 
@@ -169,7 +168,7 @@ public class FirebaseDatabaseAuthTestIT {
         success.compareAndSet(false, true);
         lock.countDown();
       }
-    });
+    }, MoreExecutors.directExecutor());
     boolean finished = lock.await(TestUtils.TEST_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
     if (shouldTimeout) {
       assertTrue("Write finished (expected to timeout).", !finished);

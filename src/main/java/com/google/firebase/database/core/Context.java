@@ -16,6 +16,7 @@
 
 package com.google.firebase.database.core;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.database.DatabaseException;
@@ -232,5 +233,14 @@ public class Context {
             .append("/")
             .append(platformAgent);
     return sb.toString();
+  }
+
+  public void setCustomCredentials(GoogleCredentials customCredentials, boolean autoRefresh) {
+    // ensure that platform exists
+    getPlatform();
+    // ensure that runloop exists else we might get a NPE
+    this.ensureRunLoop();
+    this.authTokenProvider = new JvmAuthTokenProvider(firebaseApp, this.getExecutorService(),
+        autoRefresh, customCredentials);
   }
 }

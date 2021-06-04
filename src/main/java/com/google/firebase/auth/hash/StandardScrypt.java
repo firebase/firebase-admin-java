@@ -24,7 +24,7 @@ import java.util.Map;
  * Represents the Standard Scrypt password hashing algorithm. Can be used as an instance of
  * {@link com.google.firebase.auth.UserImportHash} when importing users.
  */
-public class StandardScrypt extends UserImportHash {
+public final class StandardScrypt extends UserImportHash {
 
   private final int derivedKeyLength;
   private final int blockSize;

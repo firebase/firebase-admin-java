@@ -56,7 +56,7 @@ public class JvmPlatformTest {
         return Executors.defaultThreadFactory();
       }
     };
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
         .setThreadManager(threadManager)
         .build();
@@ -80,7 +80,7 @@ public class JvmPlatformTest {
 
   @Test
   public void userAgentHasCorrectParts() {
-    FirebaseOptions options = new FirebaseOptions.Builder()
+    FirebaseOptions options = FirebaseOptions.builder()
         .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options, "userAgentApp");

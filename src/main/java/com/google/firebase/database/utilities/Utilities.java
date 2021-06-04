@@ -18,78 +18,107 @@ package com.google.firebase.database.utilities;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.SettableApiFuture;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
+import com.google.common.net.UrlEscapers;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.core.Path;
 import com.google.firebase.database.core.RepoInfo;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
+import org.apache.http.client.utils.URLEncodedUtils;
 
 public class Utilities {
-
   private static final char[] HEX_CHARACTERS = "0123456789abcdef".toCharArray();
 
   public static ParsedUrl parseUrl(String url) throws DatabaseException {
-    String original = url;
     try {
-      int schemeOffset = original.indexOf("//");
-      if (schemeOffset == -1) {
-        throw new URISyntaxException(original, "Invalid scheme specified");
-      }
-      int pathOffset = original.substring(schemeOffset + 2).indexOf("/");
-      if (pathOffset != -1) {
-        pathOffset += schemeOffset + 2;
-        String[] pathSegments = original.substring(pathOffset).split("/");
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < pathSegments.length; ++i) {
-          if (!pathSegments[i].equals("")) {
-            builder.append("/");
-            builder.append(URLEncoder.encode(pathSegments[i], "UTF-8"));
-          }
-        }
-        original = original.substring(0, pathOffset) + builder.toString();
+      URI uri = URI.create(url);
+
+      String scheme = uri.getScheme();
+      if (scheme == null) {
+        throw new IllegalArgumentException("Database URL does not specify a URL scheme");
       }
 
-      URI uri = new URI(original);
-      // URLEncoding a space turns it into a '+', which is different
-      // from our expected behavior. Do a manual replace to fix it.
-      final String pathString = uri.getPath().replace("+", " ");
-      Validation.validateRootPathString(pathString);
-      String scheme = uri.getScheme();
+      String host = uri.getHost();
+      if (host == null) {
+        throw new IllegalArgumentException("Database URL does not specify a valid host");
+      }
 
       RepoInfo repoInfo = new RepoInfo();
-      repoInfo.host = uri.getHost().toLowerCase();
+      repoInfo.host = host.toLowerCase();
+      repoInfo.secure = scheme.equals("https") || scheme.equals("wss");
 
       int port = uri.getPort();
       if (port != -1) {
-        repoInfo.secure = scheme.equals("https");
         repoInfo.host += ":" + port;
-      } else {
-        repoInfo.secure = true;
       }
-      String[] parts = repoInfo.host.split("\\.");
 
-      repoInfo.namespace = parts[0].toLowerCase();
+      Map<String, String> params = getQueryParamsMap(uri.getRawQuery());
+      String namespaceParam = params.get("ns");
+      if (!Strings.isNullOrEmpty(namespaceParam)) {
+        repoInfo.namespace = namespaceParam;
+      } else {
+        String[] parts = host.split("\\.", -1);
+        repoInfo.namespace = parts[0].toLowerCase();
+      }
+
       repoInfo.internalHost = repoInfo.host;
+      // use raw (encoded) path for backwards compatibility.
+      String pathString = uri.getRawPath();
+      pathString = pathString.replace("+", " ");
+      Validation.validateRootPathString(pathString);
+
       ParsedUrl parsedUrl = new ParsedUrl();
       parsedUrl.path = new Path(pathString);
       parsedUrl.repoInfo = repoInfo;
-      return parsedUrl;
 
-    } catch (URISyntaxException e) {
-      throw new DatabaseException("Invalid Firebase Database url specified", e);
-    } catch (UnsupportedEncodingException e) {
-      throw new DatabaseException("Failed to URLEncode the path", e);
+      return parsedUrl;
+    } catch (Exception e) {
+      throw new DatabaseException("Invalid Firebase Database url specified: " + url, e);
     }
+  }
+
+  /**
+   * Extracts a map of query parameters from an encoded query string. Repeated parameters have
+   * values concatenated with commas.
+   *
+   * @param queryString to parse params from. Must be encoded.
+   * @return map of query parameters and their values.
+   */
+  @VisibleForTesting
+  static Map<String, String> getQueryParamsMap(String queryString)
+      throws UnsupportedEncodingException {
+    Map<String, String> paramsMap = new HashMap<>();
+    if (Strings.isNullOrEmpty(queryString)) {
+      return paramsMap;
+    }
+    String[] paramPairs = queryString.split("&");
+    for (String paramPair : paramPairs) {
+      String[] pairParts = paramPair.split("=");
+      // both the first and second part will be encoded now, we must decode them
+      String decodedKey = URLDecoder.decode(pairParts[0], Charsets.UTF_8.name());
+      String decodedValue = URLDecoder.decode(pairParts[1], Charsets.UTF_8.name());
+      String runningValue = paramsMap.get(decodedKey);
+      if (Strings.isNullOrEmpty(runningValue)) {
+        runningValue = decodedValue;
+      } else {
+        runningValue += "," + decodedValue;
+      }
+      paramsMap.put(pairParts[0], runningValue);
+    }
+    return paramsMap;
   }
 
   public static String[] splitIntoFrames(String src, int maxFrameSize) {

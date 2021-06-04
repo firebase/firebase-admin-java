@@ -19,6 +19,7 @@ package com.google.firebase.messaging;
 import com.google.api.client.util.Key;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,10 +38,14 @@ public class WebpushConfig {
   @Key("notification")
   private final Map<String, Object> notification;
 
+  @Key("fcm_options")
+  private final WebpushFcmOptions fcmOptions;
+
   private WebpushConfig(Builder builder) {
     this.headers = builder.headers.isEmpty() ? null : ImmutableMap.copyOf(builder.headers);
     this.data = builder.data.isEmpty() ? null : ImmutableMap.copyOf(builder.data);
     this.notification = builder.notification != null ? builder.notification.getFields() : null;
+    this.fcmOptions = builder.fcmOptions;
   }
 
   /**
@@ -57,6 +62,8 @@ public class WebpushConfig {
     private final Map<String, String> headers = new HashMap<>();
     private final Map<String, String> data = new HashMap<>();
     private WebpushNotification notification;
+    private WebpushFcmOptions fcmOptions;
+
 
     private Builder() {}
 
@@ -122,6 +129,17 @@ public class WebpushConfig {
      */
     public Builder setNotification(WebpushNotification notification) {
       this.notification = notification;
+      return this;
+    }
+
+    /**
+     * Sets the Webpush FCM options to be included in the Webpush config.
+     *
+     * @param fcmOptions A {@link WebpushFcmOptions} instance.
+     * @return This builder.
+     */
+    public Builder setFcmOptions(WebpushFcmOptions fcmOptions) {
+      this.fcmOptions = fcmOptions;
       return this;
     }
 

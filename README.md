@@ -1,6 +1,10 @@
+  <<<<<<< revert-555-hkj-release-730
+[![Build Status](https://github.com/firebase/firebase-admin-java/workflows/Continuous%20Integration/badge.svg)](https://github.com/firebase/firebase-admin-java/actions)
+  =======
 test move pull request
 
 [![Build Status](https://travis-ci.org/firebase/firebase-admin-java.svg?branch=master)](https://travis-ci.org/firebase/firebase-admin-java)
+  >>>>>>> test-qiao-public
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.google.firebase/firebase-admin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.google.firebase/firebase-admin)
 [![Javadoc](https://javadoc-badge.appspot.com/com.google.firebase/firebase-admin.svg)](https://firebase.google.com/docs/reference/admin/java/reference/packages)
 
