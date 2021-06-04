@@ -1,5 +1,9 @@
 /*
- * Copyright 2020 Google Inc.
+  <<<<<<< hkj-error-handling
+ * Copyright 2019 Google Inc.
+  =======
+ * Copyright 2021 Google Inc.
+  >>>>>>> master
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,29 +21,49 @@
 package com.google.firebase.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
+  <<<<<<< hkj-error-handling
+  =======
 import static com.google.common.base.Preconditions.checkNotNull;
+  >>>>>>> master
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpContent;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
+  <<<<<<< hkj-error-handling
+import com.google.api.client.http.HttpResponseInterceptor;
+  =======
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.JsonFactory;
+  >>>>>>> master
 import com.google.common.base.Strings;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+  <<<<<<< hkj-error-handling
+  =======
 /**
  * Internal API for configuring outgoing HTTP requests. To be used with the
  * {@link ErrorHandlingHttpClient} class.
  */
+  >>>>>>> master
 public final class HttpRequestInfo {
 
   private final String method;
   private final GenericUrl url;
   private final HttpContent content;
+  <<<<<<< hkj-error-handling
+  private final Map<String, String> headers = new HashMap<>();
+  private HttpResponseInterceptor interceptor;
+
+  private HttpRequestInfo(String method, String url, HttpContent content) {
+    checkArgument(!Strings.isNullOrEmpty(method), "method must not be null or empty");
+    this.method = method;
+    this.url = new GenericUrl(url);
+    this.content = content;
+  =======
   private final Object jsonContent;
   private final Map<String, String> headers = new HashMap<>();
 
@@ -49,6 +73,7 @@ public final class HttpRequestInfo {
     this.url = checkNotNull(url, "url must not be null");
     this.content = content;
     this.jsonContent = jsonContent;
+  >>>>>>> master
   }
 
   public HttpRequestInfo addHeader(String name, String value) {
@@ -61,6 +86,10 @@ public final class HttpRequestInfo {
     return this;
   }
 
+  <<<<<<< hkj-error-handling
+  public HttpRequestInfo setResponseInterceptor(HttpResponseInterceptor interceptor) {
+    this.interceptor = interceptor;
+  =======
   public HttpRequestInfo addParameter(String name, Object value) {
     this.url.put(name, value);
     return this;
@@ -68,10 +97,29 @@ public final class HttpRequestInfo {
 
   public HttpRequestInfo addAllParameters(Map<String, Object> params) {
     this.url.putAll(params);
+  >>>>>>> master
     return this;
   }
 
   public static HttpRequestInfo buildGetRequest(String url) {
+  <<<<<<< hkj-error-handling
+    return new HttpRequestInfo(HttpMethods.GET, url, null);
+  }
+
+  public static HttpRequestInfo buildPostRequest(String url, HttpContent content) {
+    return new HttpRequestInfo(HttpMethods.POST, url, content);
+  }
+
+  HttpRequest newHttpRequest(HttpRequestFactory factory) throws IOException {
+    HttpRequest request = factory.buildRequest(method, url, content);
+    for (Map.Entry<String, String> entry : headers.entrySet()) {
+      request.getHeaders().set(entry.getKey(), entry.getValue());
+    }
+    request.setResponseInterceptor(interceptor);
+
+    return request;
+  }
+  =======
     return buildRequest(HttpMethods.GET, url, null);
   }
 
@@ -129,4 +177,5 @@ public final class HttpRequestInfo {
 
     return null;
   }
+  >>>>>>> master
 }

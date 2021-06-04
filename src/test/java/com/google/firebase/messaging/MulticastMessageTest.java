@@ -38,10 +38,14 @@ public class MulticastMessageTest {
   private static final WebpushConfig WEBPUSH = WebpushConfig.builder()
       .putData("key", "value")
       .build();
+  <<<<<<< redacted-passwords
+  private static final Notification NOTIFICATION = new Notification("title", "body");
+  =======
   private static final Notification NOTIFICATION = Notification.builder()
       .setTitle("title")
       .setBody("body")
       .build();
+  >>>>>>> master
   private static final FcmOptions FCM_OPTIONS = FcmOptions.withAnalyticsLabel("analytics_label");
 
   @Test

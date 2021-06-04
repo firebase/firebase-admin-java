@@ -79,7 +79,7 @@ public class FirebaseDatabase {
   public static FirebaseDatabase getInstance() {
     FirebaseApp instance = FirebaseApp.getInstance();
     if (instance == null) {
-      throw new DatabaseException("You must call FirebaseApp.initialize() first.");
+      throw new IllegalStateException("You must call FirebaseApp.initialize() first.");
     }
     return getInstance(instance, instance.getOptions().getDatabaseUrl());
   }
@@ -93,7 +93,7 @@ public class FirebaseDatabase {
   public static FirebaseDatabase getInstance(String url) {
     FirebaseApp instance = FirebaseApp.getInstance();
     if (instance == null) {
-      throw new DatabaseException("You must call FirebaseApp.initialize() first.");
+      throw new IllegalStateException("You must call FirebaseApp.initialize() first.");
     }
     return getInstance(instance, url);
   }
@@ -122,7 +122,7 @@ public class FirebaseDatabase {
       service = ImplFirebaseTrampolines.addService(app, new FirebaseDatabaseService());
     }
     if (url == null || url.isEmpty()) {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Failed to get FirebaseDatabase instance: Specify DatabaseURL within "
               + "FirebaseApp or from your getInstance() call.");
     }
@@ -137,7 +137,7 @@ public class FirebaseDatabase {
       parsedUrl = Utilities.parseUrl(url);
     }
     if (!parsedUrl.path.isEmpty()) {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Specified Database URL '"
               + url
               + "' is invalid. It should point to the root of a "
@@ -232,7 +232,7 @@ public class FirebaseDatabase {
     ParsedUrl parsedUrl = Utilities.parseUrl(url);
     Repo repo = ensureRepo();
     if (!parsedUrl.repoInfo.host.equals(repo.getRepoInfo().host)) {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Invalid URL ("
               + url
               + ") passed to getReference().  "
@@ -323,7 +323,7 @@ public class FirebaseDatabase {
     synchronized (lock) {
       checkNotDestroyed();
       if (this.repo != null) {
-        throw new DatabaseException(
+        throw new IllegalStateException(
             "Calls to "
                 + methodCalled
                 + "() must be made before any "

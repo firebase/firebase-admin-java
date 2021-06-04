@@ -45,7 +45,10 @@ import com.google.firebase.auth.AuthErrorCode;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.MockGoogleCredentials;
+  <<<<<<< v7
+  =======
 import com.google.firebase.internal.ApiClientUtils;
+  >>>>>>> master
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestResponseInterceptor;
@@ -398,9 +401,13 @@ public class FirebaseTenantClientTest {
         .setCredentials(credentials)
         .build());
     FirebaseTenantClient tenantClient = new FirebaseTenantClient(
+  <<<<<<< v7
+        "test-project-id", Utils.getDefaultJsonFactory(), transport.createRequestFactory());
+  =======
         "test-project-id",
         ApiClientUtils.getDefaultJsonFactory(),
         transport.createRequestFactory());
+  >>>>>>> master
     return new TenantManager(app, tenantClient);
   }
 

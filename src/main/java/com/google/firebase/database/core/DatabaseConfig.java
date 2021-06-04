@@ -101,10 +101,10 @@ public class DatabaseConfig extends Context {
     assertUnfrozen();
 
     if (cacheSizeInBytes < 1024 * 1024) {
-      throw new DatabaseException("The minimum cache size must be at least 1MB");
+      throw new IllegalArgumentException("The minimum cache size must be at least 1MB");
     }
     if (cacheSizeInBytes > 100 * 1024 * 1024) {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           "Firebase Database currently doesn't support a cache size larger than 100MB");
     }
 

@@ -65,4 +65,8 @@ public class FirebaseService<T> {
   public void destroy() {
     // Child classes can override this method to implement any service-specific cleanup logic.
   }
+  <<<<<<< redacted-passwords
+
+  =======
+  >>>>>>> master
 }

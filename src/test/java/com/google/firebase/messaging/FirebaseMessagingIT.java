@@ -143,7 +143,11 @@ public class FirebaseMessagingIT {
     assertNull(responses.get(2).getMessageId());
     FirebaseMessagingException exception = responses.get(2).getException();
     assertNotNull(exception);
+  <<<<<<< hkj-error-handling
+    assertEquals(ErrorCode.INVALID_ARGUMENT, exception.getCode());
+  =======
     assertEquals(ErrorCode.INVALID_ARGUMENT, exception.getErrorCode());
+  >>>>>>> master
   }
 
   @Test

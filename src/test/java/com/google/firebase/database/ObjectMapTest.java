@@ -52,7 +52,7 @@ public class ObjectMapTest {
     try {
       data.getValue(Author.class);
       fail("Should throw");
-    } catch (DatabaseException e) {
+    } catch (IllegalArgumentException e) {
       // No-op, expected to throw
     }
   }
@@ -80,7 +80,7 @@ public class ObjectMapTest {
     try {
       m = data.getValue(Message.class);
       fail("Should throw");
-    } catch (DatabaseException e) {
+    } catch (IllegalArgumentException e) {
       // No-op, expected to throw
     }
   }

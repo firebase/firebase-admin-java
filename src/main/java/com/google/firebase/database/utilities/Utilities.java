@@ -42,7 +42,7 @@ import org.apache.http.client.utils.URLEncodedUtils;
 public class Utilities {
   private static final char[] HEX_CHARACTERS = "0123456789abcdef".toCharArray();
 
-  public static ParsedUrl parseUrl(String url) throws DatabaseException {
+  public static ParsedUrl parseUrl(String url) {
     try {
       URI uri = URI.create(url);
 
@@ -86,7 +86,7 @@ public class Utilities {
 
       return parsedUrl;
     } catch (Exception e) {
-      throw new DatabaseException("Invalid Firebase Database url specified: " + url, e);
+      throw new IllegalArgumentException("Invalid Firebase Database url specified: " + url, e);
     }
   }
 

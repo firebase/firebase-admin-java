@@ -51,7 +51,11 @@ public class FirebaseMessagingTest {
       .addToken("test-fcm-token2")
       .build();
   private static final FirebaseMessagingException TEST_EXCEPTION =
+  <<<<<<< hkj-error-handling
+      new FirebaseMessagingException(ErrorCode.UNKNOWN, "Test error message", new Exception());
+  =======
       new FirebaseMessagingException(ErrorCode.INTERNAL, "Test error message");
+  >>>>>>> master
 
   private static final ImmutableList.Builder<String> TOO_MANY_IDS = ImmutableList.builder();
 

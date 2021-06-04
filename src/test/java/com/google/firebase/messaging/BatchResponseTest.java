@@ -44,8 +44,13 @@ public class BatchResponseTest {
     ImmutableList<SendResponse> responses = ImmutableList.of(
         SendResponse.fromMessageId("message1"),
         SendResponse.fromMessageId("message2"),
+  <<<<<<< hkj-error-handling
+        SendResponse.fromException(new FirebaseMessagingException(ErrorCode.UNKNOWN,
+            "error-message", null))
+  =======
         SendResponse.fromException(
             new FirebaseMessagingException(ErrorCode.INTERNAL, "error-message"))
+  >>>>>>> master
     );
 
     BatchResponse batchResponse = new BatchResponseImpl(responses);

@@ -22,7 +22,10 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseAuthException;
+  <<<<<<< v7
+  =======
 import com.google.firebase.auth.internal.Utils;
+  >>>>>>> master
 import com.google.firebase.internal.AbstractPlatformErrorHandler;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.ErrorHandlingHttpClient;
@@ -96,11 +99,19 @@ public class CryptoSigners {
     @Override
     public byte[] sign(byte[] payload) throws FirebaseAuthException {
       String encodedPayload = BaseEncoding.base64().encode(payload);
+  <<<<<<< v7
+      Map<String, String> content = ImmutableMap.of("bytesToSign", encodedPayload);
+      String encodedUrl = String.format(IAM_SIGN_BLOB_URL, serviceAccount);
+      HttpRequestInfo requestInfo = HttpRequestInfo.buildJsonPostRequest(encodedUrl, content);
+      GenericJson parsed = httpClient.sendAndParse(requestInfo, GenericJson.class);
+      return BaseEncoding.base64().decode((String) parsed.get("signature"));
+  =======
       Map<String, String> content = ImmutableMap.of("payload", encodedPayload);
       String encodedUrl = String.format(IAM_SIGN_BLOB_URL, serviceAccount);
       HttpRequestInfo requestInfo = HttpRequestInfo.buildJsonPostRequest(encodedUrl, content);
       GenericJson parsed = httpClient.sendAndParse(requestInfo, GenericJson.class);
       return BaseEncoding.base64().decode((String) parsed.get("signedBlob"));
+  >>>>>>> master
     }
 
     @Override
@@ -109,6 +120,8 @@ public class CryptoSigners {
     }
   }
 
+  <<<<<<< v7
+  =======
   /**
    * A {@link CryptoSigner} implementation that doesn't sign data. For use with the Auth Emulator
    * only
@@ -128,6 +141,7 @@ public class CryptoSigners {
     }
   }
 
+  >>>>>>> master
   private static class IAMErrorHandler
       extends AbstractPlatformErrorHandler<FirebaseAuthException> {
 

@@ -62,7 +62,7 @@ public class InfoTestIT {
     try {
       ref.setValueAsync("hi");
       fail("Should not be allowed");
-    } catch (DatabaseException expected) {
+    } catch (IllegalArgumentException expected) {
       // No-op, expected
     }
   }
@@ -73,7 +73,7 @@ public class InfoTestIT {
     try {
       ref.setValueAsync("hi", 5);
       fail("Should not be allowed");
-    } catch (DatabaseException expected) {
+    } catch (IllegalArgumentException expected) {
       // No-op, expected
     }
   }
@@ -84,7 +84,7 @@ public class InfoTestIT {
     try {
       ref.setPriorityAsync("hi");
       fail("Should not be allowed");
-    } catch (DatabaseException expected) {
+    } catch (IllegalArgumentException expected) {
       // No-op, expected
     }
   }
@@ -108,7 +108,7 @@ public class InfoTestIT {
             }
           });
       fail("Should not be allowed");
-    } catch (DatabaseException expected) {
+    } catch (IllegalArgumentException expected) {
       // No-op, expected
     }
   }
@@ -119,7 +119,7 @@ public class InfoTestIT {
     try {
       ref.removeValueAsync();
       fail("Should not be allowed");
-    } catch (DatabaseException expected) {
+    } catch (IllegalArgumentException expected) {
       // No-op, expected
     }
   }
@@ -130,7 +130,7 @@ public class InfoTestIT {
     try {
       ref.child("test").setValueAsync("hi");
       fail("Should not be allowed");
-    } catch (DatabaseException expected) {
+    } catch (IllegalArgumentException expected) {
       // No-op, expected
     }
   }

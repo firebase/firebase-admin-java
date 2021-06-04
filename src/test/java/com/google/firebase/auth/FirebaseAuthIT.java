@@ -51,7 +51,10 @@ import com.google.firebase.auth.ProviderConfigTestUtils.TemporaryProviderConfig;
 import com.google.firebase.auth.UserTestUtils.RandomUser;
 import com.google.firebase.auth.UserTestUtils.TemporaryUser;
 import com.google.firebase.auth.hash.Scrypt;
+  <<<<<<< v7
+  =======
 import com.google.firebase.internal.ApiClientUtils;
+  >>>>>>> master
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
@@ -434,10 +437,17 @@ public class FirebaseAuthIT {
 
     // New users should not have a lastRefreshTimestamp set.
     assertEquals(0, newUserRecord.getUserMetadata().getLastRefreshTimestamp());
+  <<<<<<< v7
 
     // Login to cause the lastRefreshTimestamp to be set.
     signInWithPassword(newUserRecord.getEmail(), "password");
 
+  =======
+
+    // Login to cause the lastRefreshTimestamp to be set.
+    signInWithPassword(newUserRecord.getEmail(), "password");
+
+  >>>>>>> master
     // Attempt to retrieve the user 3 times (with a small delay between each
     // attempt). Occasionally, this call retrieves the user data without the
     // lastLoginTime/lastRefreshTime set; possibly because it's hitting a
@@ -462,14 +472,80 @@ public class FirebaseAuthIT {
   }
 
   @Test
+  public void testLastRefreshTime() throws Exception {
+    RandomUser user = RandomUser.create();
+    UserRecord newUserRecord = auth.createUser(new CreateRequest()
+                                                   .setUid(user.uid)
+                                                   .setEmail(user.email)
+                                                   .setEmailVerified(false)
+                                                   .setPassword("password"));
+
+    try {
+      // New users should not have a lastRefreshTimestamp set.
+      assertEquals(0, newUserRecord.getUserMetadata().getLastRefreshTimestamp());
+
+      // Login to cause the lastRefreshTimestamp to be set.
+      signInWithPassword(newUserRecord.getEmail(), "password");
+
+      // Attempt to retrieve the user 3 times (with a small delay between each
+      // attempt). Occassionally, this call retrieves the user data without the
+      // lastLoginTime/lastRefreshTime set; possibly because it's hitting a
+      // different server than the login request uses.
+      UserRecord userRecord = null;
+      for (int i = 0; i < 3; i++) {
+        userRecord = auth.getUser(newUserRecord.getUid());
+
+        if (userRecord.getUserMetadata().getLastRefreshTimestamp() != 0) {
+          break;
+        }
+
+        TimeUnit.SECONDS.sleep((long)Math.pow(2, i));
+      }
+
+      // Ensure the lastRefreshTimestamp is approximately "now" (with a tollerance of 10 minutes).
+      long now = System.currentTimeMillis();
+      long tollerance = TimeUnit.MINUTES.toMillis(10);
+      long lastRefreshTimestamp = userRecord.getUserMetadata().getLastRefreshTimestamp();
+      assertTrue(now - tollerance <= lastRefreshTimestamp);
+      assertTrue(lastRefreshTimestamp <= now + tollerance);
+    } finally {
+      auth.deleteUser(newUserRecord.getUid());
+    }
+  }
+
+  @Test
   public void testListUsers() throws Exception {
     final List<String> uids = new ArrayList<>();
 
+  <<<<<<< redacted-passwords
+    try {
+      uids.add(auth.createUserAsync(new CreateRequest().setPassword("password")).get().getUid());
+      uids.add(auth.createUserAsync(new CreateRequest().setPassword("password")).get().getUid());
+      uids.add(auth.createUserAsync(new CreateRequest().setPassword("password")).get().getUid());
+
+      // Test list by batches
+      final AtomicInteger collected = new AtomicInteger(0);
+      ListUsersPage page = auth.listUsersAsync(null).get();
+      while (page != null) {
+        for (ExportedUserRecord user : page.getValues()) {
+          if (uids.contains(user.getUid())) {
+            collected.incrementAndGet();
+            assertNotNull("Missing passwordHash field. A common cause would be "
+                + "forgetting to add the \"Firebase Authentication Admin\" permission. See "
+                + "instructions in CONTRIBUTING.md", user.getPasswordHash());
+            assertNotNull(user.getPasswordSalt());
+          }
+        }
+        page = page.getNextPage();
+      }
+      assertEquals(uids.size(), collected.get());
+  =======
     for (int i = 0; i < 3; i++) {
       UserRecord.CreateRequest createRequest =
           new UserRecord.CreateRequest().setPassword("password");
       uids.add(temporaryUser.create(createRequest).getUid());
     }
+  >>>>>>> master
 
     // Test list by batches
     final AtomicInteger collected = new AtomicInteger(0);
@@ -1098,8 +1174,18 @@ public class FirebaseAuthIT {
     return result;
   }
 
+  <<<<<<< redacted-passwords
+  static String randomPhoneNumber() {
+    Random random = new Random();
+    StringBuilder builder = new StringBuilder("+1");
+    for (int i = 0; i < 10; i++) {
+      builder.append(random.nextInt(10));
+    }
+    return builder.toString();
+  =======
   private String signInWithCustomToken(String customToken) throws IOException {
     return signInWithCustomToken(customToken, null);
+  >>>>>>> master
   }
 
   private String signInWithCustomToken(
@@ -1194,11 +1280,21 @@ public class FirebaseAuthIT {
     }
   }
 
+  <<<<<<< redacted-passwords
+  static class RandomUser {
+    final String uid;
+    final String email;
+
+    private RandomUser(String uid, String email) {
+      this.uid = uid;
+      this.email = email;
+  =======
   private boolean checkOidcProviderConfig(List<String> providerIds, OidcProviderConfig config) {
     if (providerIds.contains(config.getProviderId())) {
       assertEquals("CLIENT_ID", config.getClientId());
       assertEquals("https://oidc.com/issuer", config.getIssuer());
       return true;
+  >>>>>>> master
     }
     return false;
   }
@@ -1227,6 +1323,23 @@ public class FirebaseAuthIT {
                                .setUid(randomUser.getUid())
                                .setEmail(randomUser.getEmail())
                                .setPhoneNumber(randomUser.getPhoneNumber())
+                               .setDisplayName("Random User")
+                               .setPhotoUrl("https://example.com/photo.png")
+                               .setPassword("password"));
+  }
+
+  static UserRecord newUserWithParams() throws Exception {
+    return newUserWithParams(auth);
+  }
+
+  static UserRecord newUserWithParams(FirebaseAuth auth) throws Exception {
+    // TODO(rsgowman): This function could be used throughout this file (similar to the other
+    // ports).
+    RandomUser randomUser = RandomUser.create();
+    return auth.createUser(new CreateRequest()
+                               .setUid(randomUser.uid)
+                               .setEmail(randomUser.email)
+                               .setPhoneNumber(randomPhoneNumber())
                                .setDisplayName("Random User")
                                .setPhotoUrl("https://example.com/photo.png")
                                .setPassword("password"));

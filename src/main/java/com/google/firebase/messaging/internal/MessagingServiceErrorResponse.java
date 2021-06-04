@@ -39,7 +39,10 @@ public final class MessagingServiceErrorResponse extends GenericJson {
     return (String) error.get("status");
   }
 
+  <<<<<<< hkj-error-handling
+  =======
 
+  >>>>>>> master
   @Nullable
   public MessagingErrorCode getMessagingErrorCode() {
     if (error == null) {

@@ -54,7 +54,7 @@ public class EmulatorHelperTest {
         "localhost:9000"
     );
     for (String invalidFormedUrl : invalidFormedUrls) {
-      thrown.expect(DatabaseException.class);
+      thrown.expect(IllegalArgumentException.class);
       EmulatorHelper.isEmulatorUrl(invalidFormedUrl);
     }
   }

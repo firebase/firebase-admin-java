@@ -80,7 +80,7 @@ class EventHelper {
   }
 
   EventHelper addChildExpectation(
-      DatabaseReference ref, Event.EventType eventType, String childName) throws DatabaseException {
+      DatabaseReference ref, Event.EventType eventType, String childName) {
     if (!locations.contains(ref)) {
       toListen.add(ref);
     }

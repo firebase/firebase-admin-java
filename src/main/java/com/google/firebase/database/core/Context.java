@@ -125,7 +125,7 @@ public class Context {
 
   void assertUnfrozen() {
     if (frozen) {
-      throw new DatabaseException(
+      throw new IllegalStateException(
           "Modifications to DatabaseConfig objects must occur before they are in use");
     }
   }

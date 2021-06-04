@@ -31,7 +31,10 @@ import com.google.api.core.ApiFuture;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
+  <<<<<<< v7
+  =======
 import com.google.common.collect.ImmutableSet;
+  >>>>>>> master
 import com.google.firebase.ErrorCode;
 
 import com.google.firebase.FirebaseApp;
@@ -57,7 +60,10 @@ public class FirebaseAuthTest {
       ErrorCode.INVALID_ARGUMENT, "Test error message", null, null, null);
   private static final long VALID_SINCE = 1494364393;
   private static final String TEST_USER = "testUser";
+  <<<<<<< v7
+  =======
   private static final String AUTH_EMULATOR = "localhost:9099";
+  >>>>>>> master
 
   @After
   public void cleanup() {
@@ -97,10 +103,9 @@ public class FirebaseAuthTest {
   }
 
   @Test
-  public void testInvokeAfterAppDelete() throws Exception {
+  public void testInvokeAfterAppDelete() throws FirebaseAuthException {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, "testInvokeAfterAppDelete");
     FirebaseAuth auth = FirebaseAuth.getInstance(app);
-    assertNotNull(auth);
     app.delete();
 
     String message = "FirebaseApp 'testInvokeAfterAppDelete' was deleted";
@@ -113,21 +118,33 @@ public class FirebaseAuthTest {
 
     try {
       auth.createCustomToken("uid");
+  <<<<<<< redacted-passwords
+      fail("No error thrown from token factory for deleted app");
+  =======
       fail("No error thrown when invoking auth after deleting app");
+  >>>>>>> master
     } catch (IllegalStateException ex) {
       assertEquals(message, ex.getMessage());
     }
 
     try {
       auth.verifyIdToken("idToken");
+  <<<<<<< redacted-passwords
+      fail("No error thrown from token verifier for deleted app");
+  =======
       fail("No error thrown when invoking auth after deleting app");
+  >>>>>>> master
     } catch (IllegalStateException ex) {
       assertEquals(message, ex.getMessage());
     }
 
     try {
       auth.getUser("uid");
+  <<<<<<< redacted-passwords
+      fail("No error thrown from user manager for deleted app");
+  =======
       fail("No error thrown when invoking auth after deleting app");
+  >>>>>>> master
     } catch (IllegalStateException ex) {
       assertEquals(message, ex.getMessage());
     }
@@ -267,6 +284,8 @@ public class FirebaseAuthTest {
   }
 
   @Test
+  <<<<<<< v7
+  =======
   public void testVerifyIdTokenWithEmulator() throws Exception {
     // Enable emulator mode
     TestUtils.setEnvironmentVariables(
@@ -306,6 +325,7 @@ public class FirebaseAuthTest {
   }
 
   @Test
+  >>>>>>> master
   public void testVerifyIdTokenFailure() {
     MockTokenVerifier tokenVerifier = MockTokenVerifier.fromException(testException);
     FirebaseAuth auth = getAuthForIdTokenVerification(tokenVerifier);
@@ -431,7 +451,42 @@ public class FirebaseAuthTest {
       fail("No error thrown for invalid token");
     } catch (FirebaseAuthException authException) {
       assertSame(testException, authException);
+  <<<<<<< v7
     }
+  }
+
+  @Test
+  public void testVerifySessionCookieWithRevocationCheck() throws Exception {
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
+        getFirebaseToken(VALID_SINCE + 1000));
+    FirebaseAuth auth = getAuthForSessionCookieVerificationWithRevocationCheck(tokenVerifier);
+
+    FirebaseToken firebaseToken = auth.verifySessionCookie("cookie", true);
+
+    assertEquals("testUser", firebaseToken.getUid());
+    assertEquals("cookie", tokenVerifier.getLastTokenString());
+  }
+
+  @Test
+  public void testVerifySessionCookieWithRevocationCheckFailure() {
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
+        getFirebaseToken(VALID_SINCE - 1000));
+    FirebaseAuth auth = getAuthForSessionCookieVerificationWithRevocationCheck(tokenVerifier);
+
+    try {
+      auth.verifySessionCookie("cookie", true);
+      fail("No error thrown for revoked session cookie");
+    } catch (FirebaseAuthException e) {
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
+      assertEquals("Firebase session cookie is revoked.", e.getMessage());
+      assertNull(e.getCause());
+      assertNull(e.getHttpResponse());
+      assertEquals(AuthErrorCode.REVOKED_SESSION_COOKIE, e.getAuthErrorCode());
+  =======
+  >>>>>>> master
+    }
+
+    assertEquals("cookie", tokenVerifier.getLastTokenString());
   }
 
   @Test
@@ -505,6 +560,13 @@ public class FirebaseAuthTest {
     }
   }
 
+  <<<<<<< v7
+  private FirebaseToken getFirebaseToken(String subject) {
+    return new FirebaseToken(ImmutableMap.<String, Object>of("sub", subject));
+  }
+
+  =======
+  >>>>>>> master
   private FirebaseToken getFirebaseToken(long issuedAt) {
     return new FirebaseToken(ImmutableMap.<String, Object>of("sub", TEST_USER, "iat", issuedAt));
   }
@@ -522,6 +584,9 @@ public class FirebaseAuthTest {
   private FirebaseAuth getAuthForIdTokenVerification(
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions);
+  <<<<<<< redacted-passwords
+    FirebaseUserManager userManager = new FirebaseUserManager(app);
+  =======
     return getAuthForIdTokenVerification(app, tokenVerifierSupplier);
   }
 
@@ -529,6 +594,7 @@ public class FirebaseAuthTest {
       FirebaseApp app,
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
     FirebaseUserManager userManager = FirebaseUserManager.createUserManager(app, null);
+  >>>>>>> master
     return FirebaseAuth.builder()
         .setFirebaseApp(app)
         .setIdTokenVerifier(tokenVerifierSupplier)
@@ -549,6 +615,9 @@ public class FirebaseAuthTest {
   private FirebaseAuth getAuthForSessionCookieVerification(
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions);
+  <<<<<<< redacted-passwords
+    FirebaseUserManager userManager = new FirebaseUserManager(app);
+  =======
     return getAuthForSessionCookieVerification(app, tokenVerifierSupplier);
   }
 
@@ -556,6 +625,7 @@ public class FirebaseAuthTest {
       FirebaseApp app,
       Supplier<? extends FirebaseTokenVerifier> tokenVerifierSupplier) {
     FirebaseUserManager userManager = FirebaseUserManager.createUserManager(app, null);
+  >>>>>>> master
     return FirebaseAuth.builder()
         .setFirebaseApp(app)
         .setCookieVerifier(tokenVerifierSupplier)

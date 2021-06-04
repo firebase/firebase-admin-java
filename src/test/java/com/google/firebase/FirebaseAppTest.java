@@ -171,7 +171,6 @@ public class FirebaseAppTest {
     final String name = "myApp";
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(OPTIONS, name);
     firebaseApp.delete();
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
     FirebaseApp.getInstance(name);
   }
 

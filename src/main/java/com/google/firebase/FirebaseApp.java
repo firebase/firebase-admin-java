@@ -34,7 +34,10 @@ import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+  <<<<<<< v7
+  =======
 import com.google.firebase.internal.ApiClientUtils;
+  >>>>>>> master
 import com.google.firebase.internal.FirebaseScheduledExecutor;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.ListenableFuture2ApiFuture;
@@ -316,10 +319,17 @@ public class FirebaseApp {
   }
 
   /**
+  <<<<<<< redacted-passwords
+   * Deletes this {@link FirebaseApp} object and releases any local state and managed resources
+   * associated with it. All calls to this {@link FirebaseApp} instance will throw once this method
+   * has been called. This also releases any managed resources allocated by other services
+   * (e.g. {@code FirebaseAuth}, {@code FirebaseDatabase}) attached to this object instance.
+  =======
    * Deletes this {@link FirebaseApp} object, and releases any local state and managed resources
    * associated with it. All calls to this {@link FirebaseApp} instance will throw once this method
    * has been called. This also releases any managed resources allocated by other services
    * attached to this object instance (e.g. {@code FirebaseAuth}).
+  >>>>>>> master
    *
    * <p>A no-op if delete was called before.
    */
@@ -569,7 +579,11 @@ public class FirebaseApp {
           .setCredentials(APPLICATION_DEFAULT_CREDENTIALS)
           .build();
     }
+  <<<<<<< v7
+    JsonFactory jsonFactory = Utils.getDefaultJsonFactory();
+  =======
     JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
+  >>>>>>> master
     FirebaseOptions.Builder builder = FirebaseOptions.builder();
     JsonParser parser;
     if (defaultConfig.startsWith("{")) {

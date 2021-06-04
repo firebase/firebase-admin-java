@@ -18,14 +18,25 @@ package com.google.firebase.internal;
 
 import static com.google.firebase.internal.ApiClientUtils.DEFAULT_RETRY_CONFIG;
 import static org.junit.Assert.assertEquals;
+  <<<<<<< redacted-passwords
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.google.api.client.http.GenericUrl;
+  =======
+import static org.junit.Assert.assertTrue;
+
+  >>>>>>> master
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import com.google.api.client.testing.util.MockSleeper;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.internal.RetryInitializer.RetryHandlerDecorator;
+  <<<<<<< redacted-passwords
+import java.io.IOException;
+  =======
+  >>>>>>> master
 
 public class TestApiClientUtils {
 
@@ -36,6 +47,11 @@ public class TestApiClientUtils {
       .setSleeper(new MockSleeper())
       .build();
 
+  <<<<<<< redacted-passwords
+  private static final GenericUrl TEST_URL = new GenericUrl("https://firebase.google.com");
+
+  =======
+  >>>>>>> master
   /**
    * Creates a new {@code HttpRequestFactory} which provides authorization (OAuth2), timeouts and
    * automatic retries. Bypasses exponential backoff between consecutive retries for faster
@@ -60,12 +76,29 @@ public class TestApiClientUtils {
   }
 
   /**
+  <<<<<<< redacted-passwords
+   * Checks whther the given HttpRequestFactory has been configured for authorization and
+   * automatic retries.
+   *
+   * @param requestFactory The HttpRequestFactory to check.
+   */
+  public static void assertAuthAndRetrySupport(HttpRequestFactory requestFactory) {
+    assertTrue(requestFactory.getInitializer() instanceof FirebaseRequestInitializer);
+    HttpRequest request;
+    try {
+      request = requestFactory.buildGetRequest(TEST_URL);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to initialize request", e);
+    }
+
+  =======
    * Checks whether the given HttpRequest has been configured for authorization and
    * automatic retries.
    *
    * @param request The HttpRequest to check.
    */
   public static void assertAuthAndRetrySupport(HttpRequest request) {
+  >>>>>>> master
     // Verify authorization
     assertTrue(request.getHeaders().getAuthorization().startsWith("Bearer "));
 
@@ -76,7 +109,11 @@ public class TestApiClientUtils {
         .getRetryConfig();
     assertEquals(DEFAULT_RETRY_CONFIG.getMaxRetries(), retryConfig.getMaxRetries());
     assertEquals(DEFAULT_RETRY_CONFIG.getMaxIntervalMillis(), retryConfig.getMaxIntervalMillis());
+  <<<<<<< redacted-passwords
+    assertFalse(retryConfig.isRetryOnIOExceptions());
+  =======
     assertEquals(DEFAULT_RETRY_CONFIG.isRetryOnIOExceptions(), retryConfig.isRetryOnIOExceptions());
+  >>>>>>> master
     assertEquals(DEFAULT_RETRY_CONFIG.getRetryStatusCodes(), retryConfig.getRetryStatusCodes());
   }
 }

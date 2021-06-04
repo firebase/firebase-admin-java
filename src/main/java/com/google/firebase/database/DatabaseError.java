@@ -16,10 +16,14 @@
 
 package com.google.firebase.database;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.firebase.ErrorCode;
+import com.google.firebase.database.DatabaseReference.CompletionListener;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Instances of DatabaseError are passed to callbacks when an operation failed. They contain a
@@ -27,99 +31,78 @@ import java.util.Map;
  */
 public class DatabaseError {
 
-  /** <strong>Internal use.</strong> */
-  public static final int DATA_STALE = -1;
-  /** The server indicated that this operation failed. */
-  public static final int OPERATION_FAILED = -2;
-  /** This client does not have permission to perform this operation. */
-  public static final int PERMISSION_DENIED = -3;
-  /** The operation had to be aborted due to a network disconnect. */
-  public static final int DISCONNECTED = -4;
+  private static final Map<DatabaseErrorCode, String> errorReasons =
+      ImmutableMap.<DatabaseErrorCode, String>builder()
+        .put(DatabaseErrorCode.DATA_STALE,
+            "The transaction needs to be run again with current data")
+        .put(DatabaseErrorCode.OPERATION_FAILED,
+            "The server indicated that this operation failed")
+        .put(DatabaseErrorCode.PERMISSION_DENIED,
+            "This client does not have permission to perform this operation")
+        .put(DatabaseErrorCode.DISCONNECTED,
+            "The operation had to be aborted due to a network disconnect")
+        .put(DatabaseErrorCode.EXPIRED_TOKEN, "The supplied auth token has expired")
+        .put(DatabaseErrorCode.INVALID_TOKEN, "The supplied auth token was invalid")
+        .put(DatabaseErrorCode.MAX_RETRIES, "The transaction had too many retries")
+        .put(DatabaseErrorCode.OVERRIDDEN_BY_SET,
+            "The transaction was overridden by a subsequent set")
+        .put(DatabaseErrorCode.UNAVAILABLE, "The service is unavailable")
+        .put(DatabaseErrorCode.USER_CODE_EXCEPTION,
+            "User code called from the Firebase Database runloop threw an exception:\n")
+        // client codes
+        .put(DatabaseErrorCode.NETWORK_ERROR,
+            "The operation could not be performed due to a network error")
+        .put(DatabaseErrorCode.WRITE_CANCELED, "The write was canceled by the user.")
+        .put(DatabaseErrorCode.UNKNOWN_ERROR, "An unknown error occurred")
+        .build();
 
-  // Preempted was removed, this is for here for completeness and history
-  // public static final int PREEMPTED = -5;
+  private static final Map<DatabaseErrorCode, ErrorCode> platformCodes =
+      ImmutableMap.<DatabaseErrorCode, ErrorCode>builder()
+        .put(DatabaseErrorCode.DATA_STALE, ErrorCode.FAILED_PRECONDITION)
+        .put(DatabaseErrorCode.OPERATION_FAILED, ErrorCode.INTERNAL)
+        .put(DatabaseErrorCode.PERMISSION_DENIED, ErrorCode.PERMISSION_DENIED)
+        .put(DatabaseErrorCode.DISCONNECTED, ErrorCode.UNKNOWN)
+        .put(DatabaseErrorCode.EXPIRED_TOKEN, ErrorCode.PERMISSION_DENIED)
+        .put(DatabaseErrorCode.INVALID_TOKEN, ErrorCode.PERMISSION_DENIED)
+        .put(DatabaseErrorCode.MAX_RETRIES, ErrorCode.DEADLINE_EXCEEDED)
+        .put(DatabaseErrorCode.OVERRIDDEN_BY_SET, ErrorCode.FAILED_PRECONDITION)
+        .put(DatabaseErrorCode.UNAVAILABLE, ErrorCode.UNAVAILABLE)
+        .put(DatabaseErrorCode.USER_CODE_EXCEPTION, ErrorCode.UNKNOWN)
+        // client codes
+        .put(DatabaseErrorCode.NETWORK_ERROR, ErrorCode.UNKNOWN)
+        .put(DatabaseErrorCode.WRITE_CANCELED, ErrorCode.CANCELLED)
+        .put(DatabaseErrorCode.UNKNOWN_ERROR, ErrorCode.UNKNOWN)
+        .build();
 
-  /** The supplied auth token has expired. */
-  public static final int EXPIRED_TOKEN = -6;
-  /**
-   * The specified authentication token is invalid. This can occur when the token is malformed,
-   * expired, or the secret that was used to generate it has been revoked.
-   */
-  public static final int INVALID_TOKEN = -7;
-  /** The transaction had too many retries */
-  public static final int MAX_RETRIES = -8;
-  /** The transaction was overridden by a subsequent set */
-  public static final int OVERRIDDEN_BY_SET = -9;
-  /** The service is unavailable. */
-  public static final int UNAVAILABLE = -10;
-  /** An exception occurred in user code. */
-  public static final int USER_CODE_EXCEPTION = -11;
-
-  // client codes
-  /** The operation could not be performed due to a network error. */
-  public static final int NETWORK_ERROR = -24;
-
-  /** The write was canceled locally. */
-  public static final int WRITE_CANCELED = -25;
-
-  /**
-   * An unknown error occurred. Please refer to the error message and error details for more
-   * information.
-   */
-  public static final int UNKNOWN_ERROR = -999;
-
-  private static final Map<Integer, String> errorReasons = new HashMap<>();
-  private static final Map<String, Integer> errorCodes = new HashMap<>();
-
-  static {
-    // Firebase Database error codes
-    errorReasons.put(DATA_STALE, "The transaction needs to be run again with current data");
-    errorReasons.put(OPERATION_FAILED, "The server indicated that this operation failed");
-    errorReasons.put(
-        PERMISSION_DENIED, "This client does not have permission to perform this operation");
-    errorReasons.put(DISCONNECTED, "The operation had to be aborted due to a network disconnect");
-    errorReasons.put(EXPIRED_TOKEN, "The supplied auth token has expired");
-    errorReasons.put(INVALID_TOKEN, "The supplied auth token was invalid");
-    errorReasons.put(MAX_RETRIES, "The transaction had too many retries");
-    errorReasons.put(OVERRIDDEN_BY_SET, "The transaction was overridden by a subsequent set");
-    errorReasons.put(UNAVAILABLE, "The service is unavailable");
-    errorReasons.put(
-        USER_CODE_EXCEPTION,
-        "User code called from the Firebase Database runloop threw an exception:\n");
-
-    // client codes
-    errorReasons.put(NETWORK_ERROR, "The operation could not be performed due to a network error");
-    errorReasons.put(WRITE_CANCELED, "The write was canceled by the user.");
-    errorReasons.put(UNKNOWN_ERROR, "An unknown error occurred");
-  }
+  private static final Map<String, DatabaseErrorCode> errorCodes = new HashMap<>();
 
   static {
 
     // Firebase Database error codes
-    errorCodes.put("datastale", DATA_STALE);
-    errorCodes.put("failure", OPERATION_FAILED);
-    errorCodes.put("permission_denied", PERMISSION_DENIED);
-    errorCodes.put("disconnected", DISCONNECTED);
-    errorCodes.put("expired_token", EXPIRED_TOKEN);
-    errorCodes.put("invalid_token", INVALID_TOKEN);
-    errorCodes.put("maxretries", MAX_RETRIES);
-    errorCodes.put("overriddenbyset", OVERRIDDEN_BY_SET);
-    errorCodes.put("unavailable", UNAVAILABLE);
+    errorCodes.put("datastale", DatabaseErrorCode.DATA_STALE);
+    errorCodes.put("failure", DatabaseErrorCode.OPERATION_FAILED);
+    errorCodes.put("permission_denied", DatabaseErrorCode.PERMISSION_DENIED);
+    errorCodes.put("disconnected", DatabaseErrorCode.DISCONNECTED);
+    errorCodes.put("expired_token", DatabaseErrorCode.EXPIRED_TOKEN);
+    errorCodes.put("invalid_token", DatabaseErrorCode.INVALID_TOKEN);
+    errorCodes.put("maxretries", DatabaseErrorCode.MAX_RETRIES);
+    errorCodes.put("overriddenbyset", DatabaseErrorCode.OVERRIDDEN_BY_SET);
+    errorCodes.put("unavailable", DatabaseErrorCode.UNAVAILABLE);
 
     // client codes
-    errorCodes.put("network_error", NETWORK_ERROR);
-    errorCodes.put("write_canceled", WRITE_CANCELED);
+    errorCodes.put("network_error", DatabaseErrorCode.NETWORK_ERROR);
+    errorCodes.put("write_canceled", DatabaseErrorCode.WRITE_CANCELED);
   }
 
-  private final int code;
+  private final DatabaseErrorCode code;
   private final String message;
   private final String details;
 
-  private DatabaseError(int code, String message) {
+  private DatabaseError(DatabaseErrorCode code, String message) {
     this(code, message, null);
   }
 
-  private DatabaseError(int code, String message, String details) {
+  private DatabaseError(DatabaseErrorCode code, String message, String details) {
     this.code = code;
     this.message = message;
     this.details = (details == null) ? "" : details;
@@ -158,9 +141,9 @@ public class DatabaseError {
    * @return An error corresponding the to the status
    */
   public static DatabaseError fromStatus(String status, String reason, String details) {
-    Integer code = errorCodes.get(status.toLowerCase());
+    DatabaseErrorCode code = errorCodes.get(status.toLowerCase());
     if (code == null) {
-      code = UNKNOWN_ERROR;
+      code = DatabaseErrorCode.UNKNOWN_ERROR;
     }
 
     String message = reason == null ? errorReasons.get(code) : reason;
@@ -174,7 +157,7 @@ public class DatabaseError {
    * @param code The error code
    * @return An error corresponding the to the code
    */
-  public static DatabaseError fromCode(int code) {
+  public static DatabaseError fromCode(DatabaseErrorCode code) {
     if (!errorReasons.containsKey(code)) {
       throw new IllegalArgumentException("Invalid Firebase Database error code: " + code);
     }
@@ -186,14 +169,15 @@ public class DatabaseError {
     StringWriter stringWriter = new StringWriter();
     PrintWriter printWriter = new PrintWriter(stringWriter);
     e.printStackTrace(printWriter);
-    String reason = errorReasons.get(USER_CODE_EXCEPTION) + stringWriter.toString();
-    return new DatabaseError(USER_CODE_EXCEPTION, reason);
+    String reason = errorReasons.get(DatabaseErrorCode.USER_CODE_EXCEPTION)
+        + stringWriter.toString();
+    return new DatabaseError(DatabaseErrorCode.USER_CODE_EXCEPTION, reason);
   }
 
   /** 
    * @return One of the defined status codes, depending on the error.
    */
-  public int getCode() {
+  public DatabaseErrorCode getCode() {
     return code;
   }
 
@@ -223,6 +207,6 @@ public class DatabaseError {
    * @return An exception wrapping this error, with an appropriate message and no stack trace.
    */
   public DatabaseException toException() {
-    return new DatabaseException("Firebase Database error: " + message);
+    return new DatabaseException(platformCodes.get(code), "Firebase Database error: " + message);
   }
 }

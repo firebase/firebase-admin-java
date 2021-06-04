@@ -47,7 +47,7 @@ public class PriorityUtilities {
               Double.valueOf((Long) priority.getValue()), PriorityUtilities.NullPriority());
     }
     if (!isValidPriority(priority)) {
-      throw new DatabaseException(
+      throw new IllegalArgumentException(
           (nodePath != null ? "Path '" + nodePath + "'" : "Node")
               + " contains invalid priority: Must be a string, double, ServerValue, or null");
     }

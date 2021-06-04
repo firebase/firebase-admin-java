@@ -141,6 +141,10 @@ Authentication Admin` role at
 [Google Cloud Platform Console / IAM & admin](https://console.cloud.google.com/iam-admin). This is
 required to ensure that exported user records contain the password hashes of the user accounts.
 Also obtain the web API key of the project from the "Settings > General" page, and save it as
+  <<<<<<< redacted-passwords
+`integration_apikey.txt` at the root of the codebase. Now run the following command to invoke the
+integration test suite:
+  =======
 `integration_apikey.txt` at the root of the codebase.
 
 Some of the integration tests require an
@@ -152,6 +156,7 @@ functionality via the
 charges may be incurred for active users beyond the Identity Platform free tier.
 
 Now run the following command to invoke the integration test suite:
+  >>>>>>> master
 
 ```
 mvn verify

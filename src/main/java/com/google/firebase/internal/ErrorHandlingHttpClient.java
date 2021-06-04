@@ -1,5 +1,9 @@
 /*
- * Copyright 2020 Google Inc.
+  <<<<<<< hkj-error-handling
+ * Copyright 2019 Google Inc.
+  =======
+ * Copyright 2021 Google Inc.
+  >>>>>>> master
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +26,18 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.google.api.client.http.HttpResponseException;
+  <<<<<<< hkj-error-handling
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.JsonObjectParser;
+import com.google.api.client.json.JsonParser;
+import com.google.common.io.CharStreams;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseException;
+import com.google.firebase.FirebaseHttpResponse;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+  =======
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonParser;
@@ -36,23 +52,99 @@ import java.io.InputStreamReader;
  * An HTTP client implementation that handles any errors that may occur during HTTP calls, and
  * converts them into an instance of FirebaseException.
  */
+  >>>>>>> master
 public final class ErrorHandlingHttpClient<T extends FirebaseException> {
 
   private final HttpRequestFactory requestFactory;
   private final JsonFactory jsonFactory;
   private final HttpErrorHandler<T> errorHandler;
 
+  <<<<<<< hkj-error-handling
+  public ErrorHandlingHttpClient(
+      FirebaseApp app, HttpErrorHandler<T> errorHandler, RetryConfig retryConfig) {
+    this(
+        ApiClientUtils.newAuthorizedRequestFactory(app, retryConfig),
+        app.getOptions().getJsonFactory(),
+        errorHandler);
+  }
+
+  public ErrorHandlingHttpClient(HttpRequestFactory requestFactory,
+      JsonFactory jsonFactory, HttpErrorHandler<T> errorHandler) {
+  =======
   private HttpResponseInterceptor interceptor;
 
   public ErrorHandlingHttpClient(
       HttpRequestFactory requestFactory,
       JsonFactory jsonFactory,
       HttpErrorHandler<T> errorHandler) {
+  >>>>>>> master
     this.requestFactory = checkNotNull(requestFactory, "requestFactory must not be null");
     this.jsonFactory = checkNotNull(jsonFactory, "jsonFactory must not be null");
     this.errorHandler = checkNotNull(errorHandler, "errorHandler must not be null");
   }
 
+  <<<<<<< hkj-error-handling
+  public <V> V sendAndParse(HttpRequestInfo requestInfo, Class<V> responseType) throws T {
+    HttpResponseInfo responseInfo = this.sendRequest(requestInfo);
+
+    try {
+      return this.parseResponse(responseInfo, responseType);
+    } finally {
+      responseInfo.disconnect();
+    }
+  }
+
+  private HttpResponseInfo sendRequest(HttpRequestInfo requestInfo) throws T {
+    HttpRequest request = newHttpRequest(requestInfo);
+
+    try {
+      return new HttpResponseInfo(request.execute());
+    } catch (HttpResponseException e) {
+      FirebaseHttpResponse response = new FirebaseHttpResponse(e, request);
+      throw errorHandler.handleHttpResponseException(e, response);
+    } catch (IOException e) {
+      throw errorHandler.handleIOException(e);
+    }
+  }
+
+  private HttpRequest newHttpRequest(HttpRequestInfo requestInfo) throws T {
+    try {
+      HttpRequest request = requestInfo.newHttpRequest(requestFactory);
+      request.setParser(new JsonObjectParser(jsonFactory));
+      return request;
+    } catch (IOException e) {
+      throw errorHandler.handleIOException(e);
+    }
+  }
+
+  private <V> V parseResponse(HttpResponseInfo responseInfo, Class<V> responseType) throws T {
+    try {
+      JsonParser parser = jsonFactory.createJsonParser(responseInfo.content);
+      return parser.parseAndClose(responseType);
+    } catch (IOException e) {
+      throw errorHandler.handleParseException(e, responseInfo.toFirebaseHttpResponse());
+    }
+  }
+
+  private static class HttpResponseInfo {
+    private final HttpResponse response;
+    private final String content;
+
+    HttpResponseInfo(HttpResponse response) throws IOException {
+      this.response = response;
+      // Read and buffer the content here. Otherwise if a parse error occurs,
+      // we lose the content.
+      this.content = CharStreams.toString(
+          new InputStreamReader(response.getContent(), response.getContentCharset()));
+    }
+
+    void disconnect() {
+      ApiClientUtils.disconnectQuietly(response);
+    }
+
+    FirebaseHttpResponse toFirebaseHttpResponse() {
+      return new FirebaseHttpResponse(response, content);
+  =======
   public ErrorHandlingHttpClient<T> setInterceptor(HttpResponseInterceptor interceptor) {
     this.interceptor = interceptor;
     return this;
@@ -139,6 +231,7 @@ public final class ErrorHandlingHttpClient<T extends FirebaseException> {
     } catch (IOException e) {
       // Handle request initialization errors (credential loading and other config errors)
       throw errorHandler.handleIOException(e);
+  >>>>>>> master
     }
   }
 }

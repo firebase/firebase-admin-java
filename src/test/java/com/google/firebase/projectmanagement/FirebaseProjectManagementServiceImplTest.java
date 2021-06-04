@@ -43,8 +43,14 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
+  <<<<<<< redacted-passwords
+  =======
+  <<<<<<< v7
+  =======
 import com.google.firebase.internal.ApiClientUtils;
+  >>>>>>> master
 import com.google.firebase.internal.SdkUtils;
+  >>>>>>> master
 import com.google.firebase.internal.TestApiClientUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestUtils;
@@ -1033,6 +1039,12 @@ public class FirebaseProjectManagementServiceImplTest {
   }
 
   @Test
+  <<<<<<< redacted-passwords
+  public void testAuthAndRetriesSupport() {
+    FirebaseOptions options = new FirebaseOptions.Builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId(PROJECT_ID)
+  =======
   public void testAuthAndRetriesSupport() throws Exception {
     List<MockLowLevelHttpResponse> mockResponses = ImmutableList.of(
         new MockLowLevelHttpResponse().setContent("{}"));
@@ -1041,17 +1053,23 @@ public class FirebaseProjectManagementServiceImplTest {
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId(PROJECT_ID)
         .setHttpTransport(transport)
+  >>>>>>> master
         .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
 
     FirebaseProjectManagementServiceImpl serviceImpl =
         new FirebaseProjectManagementServiceImpl(app);
+  <<<<<<< redacted-passwords
+
+    TestApiClientUtils.assertAuthAndRetrySupport(serviceImpl.getRequestFactory());
+  =======
     serviceImpl.setInterceptor(interceptor);
 
     serviceImpl.deleteShaCertificate(SHA1_RESOURCE_NAME);
 
     assertEquals(1, interceptor.getNumberOfResponses());
     TestApiClientUtils.assertAuthAndRetrySupport(interceptor.getResponse(0).getRequest());
+  >>>>>>> master
   }
 
   @Test
@@ -1060,7 +1078,11 @@ public class FirebaseProjectManagementServiceImplTest {
         firstRpcResponse.setStatusCode(503).setContent("{}"),
         new MockLowLevelHttpResponse().setContent("{}"));
     MockHttpTransport transport = new MultiRequestMockHttpTransport(mockResponses);
+  <<<<<<< redacted-passwords
+    FirebaseOptions options = new FirebaseOptions.Builder()
+  =======
     FirebaseOptions options = FirebaseOptions.builder()
+  >>>>>>> master
         .setCredentials(new MockGoogleCredentials("test-token"))
         .setProjectId(PROJECT_ID)
         .setHttpTransport(transport)

@@ -20,6 +20,7 @@ import static com.google.firebase.database.utilities.Utilities.hardAssert;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseErrorCode;
 import com.google.firebase.database.DatabaseException;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -297,7 +298,7 @@ public class Repo implements PersistentConnection.Delegate {
       }
 
       postEvents(events);
-    } catch (DatabaseException e) {
+    } catch (Exception e) {
       logger.error("Firebase internal error", e);
     }
   }
@@ -353,7 +354,7 @@ public class Repo implements PersistentConnection.Delegate {
   }
 
   private void ackWriteAndRerunTransactions(long writeId, Path path, DatabaseError error) {
-    if (error != null && error.getCode() == DatabaseError.WRITE_CANCELED) {
+    if (error != null && error.getCode() == DatabaseErrorCode.WRITE_CANCELED) {
       // This write was already removed, we just need to ignore it...
     } else {
       boolean success = error == null;
@@ -394,7 +395,7 @@ public class Repo implements PersistentConnection.Delegate {
           }
         });
 
-    Path affectedPath = abortTransactions(path, DatabaseError.OVERRIDDEN_BY_SET);
+    Path affectedPath = abortTransactions(path, DatabaseErrorCode.OVERRIDDEN_BY_SET);
     this.rerunTransactions(affectedPath);
   }
 
@@ -437,7 +438,7 @@ public class Repo implements PersistentConnection.Delegate {
 
     for (Entry<Path, Node> update : updates) {
       Path pathFromRoot = path.child(update.getKey());
-      Path affectedPath = abortTransactions(pathFromRoot, DatabaseError.OVERRIDDEN_BY_SET);
+      Path affectedPath = abortTransactions(pathFromRoot, DatabaseErrorCode.OVERRIDDEN_BY_SET);
       rerunTransactions(affectedPath);
     }
   }
@@ -447,7 +448,7 @@ public class Repo implements PersistentConnection.Delegate {
     List<? extends Event> events = serverSyncTree.removeAllWrites();
     postEvents(events);
     // Abort any transactions
-    abortTransactions(Path.getEmptyPath(), DatabaseError.WRITE_CANCELED);
+    abortTransactions(Path.getEmptyPath(), DatabaseErrorCode.WRITE_CANCELED);
     // Remove outstanding writes from connection
     connection.purgeOutstandingWrites();
   }
@@ -591,7 +592,7 @@ public class Repo implements PersistentConnection.Delegate {
       infoData.update(path, node);
       List<? extends Event> events = this.infoSyncTree.applyServerOverwrite(path, node);
       this.postEvents(events);
-    } catch (DatabaseException e) {
+    } catch (Exception e) {
       logger.error("Failed to parse info update", e);
     }
   }
@@ -612,7 +613,7 @@ public class Repo implements PersistentConnection.Delegate {
           @Override
           public void visitTree(Path prefixPath, Node node) {
             events.addAll(serverSyncTree.applyServerOverwrite(prefixPath, node));
-            Path affectedPath = abortTransactions(prefixPath, DatabaseError.OVERRIDDEN_BY_SET);
+            Path affectedPath = abortTransactions(prefixPath, DatabaseErrorCode.OVERRIDDEN_BY_SET);
             rerunTransactions(affectedPath);
           }
         });
@@ -623,8 +624,8 @@ public class Repo implements PersistentConnection.Delegate {
   private void warnIfWriteFailed(String writeType, Path path, DatabaseError error) {
     // DATA_STALE is a normal, expected error during transaction processing.
     if (error != null
-        && !(error.getCode() == DatabaseError.DATA_STALE
-        || error.getCode() == DatabaseError.WRITE_CANCELED)) {
+        && !(error.getCode() == DatabaseErrorCode.DATA_STALE
+        || error.getCode() == DatabaseErrorCode.WRITE_CANCELED)) {
       logger.warn(writeType + " at " + path.toString() + " failed: " + error.toString());
     }
   }
@@ -868,7 +869,7 @@ public class Repo implements PersistentConnection.Delegate {
               }
             } else {
               // transactions are no longer sent. Update their status appropriately
-              if (error.getCode() == DatabaseError.DATA_STALE) {
+              if (error.getCode() == DatabaseErrorCode.DATA_STALE) {
                 for (TransactionData transaction : queue) {
                   if (transaction.status == TransactionStatus.SENT_NEEDS_ABORT) {
                     transaction.status = TransactionStatus.NEEDS_ABORT;
@@ -961,7 +962,7 @@ public class Repo implements PersistentConnection.Delegate {
       if (transaction.status == TransactionStatus.NEEDS_ABORT) {
         abortTransaction = true;
         abortReason = transaction.abortReason;
-        if (abortReason.getCode() != DatabaseError.WRITE_CANCELED) {
+        if (abortReason.getCode() != DatabaseErrorCode.WRITE_CANCELED) {
           events.addAll(
               serverSyncTree.ackUserWrite(
                   transaction.currentWriteId, /*revert=*/ true, /*persist=*/ false, serverClock));
@@ -1108,7 +1109,7 @@ public class Repo implements PersistentConnection.Delegate {
         });
   }
 
-  private Path abortTransactions(Path path, final int reason) {
+  private Path abortTransactions(Path path, final DatabaseErrorCode reason) {
     Path affectedPath = getAncestorTransactionNode(path).getPath();
     logger.debug("Aborting transactions for path: {}. Affected: {}", path, affectedPath);
 
@@ -1135,19 +1136,20 @@ public class Repo implements PersistentConnection.Delegate {
     return affectedPath;
   }
 
-  private void abortTransactionsAtNode(Tree<List<TransactionData>> node, int reason) {
+  private void abortTransactionsAtNode(Tree<List<TransactionData>> node, DatabaseErrorCode reason) {
     List<TransactionData> queue = node.getValue();
     List<Event> events = new ArrayList<>();
 
     if (queue != null) {
       List<Runnable> callbacks = new ArrayList<>();
       final DatabaseError abortError;
-      if (reason == DatabaseError.OVERRIDDEN_BY_SET) {
+      if (reason == DatabaseErrorCode.OVERRIDDEN_BY_SET) {
         abortError = DatabaseError.fromStatus(TRANSACTION_OVERRIDE_BY_SET);
       } else {
         hardAssert(
-            reason == DatabaseError.WRITE_CANCELED, "Unknown transaction abort reason: " + reason);
-        abortError = DatabaseError.fromCode(DatabaseError.WRITE_CANCELED);
+            reason == DatabaseErrorCode.WRITE_CANCELED,
+            "Unknown transaction abort reason: " + reason);
+        abortError = DatabaseError.fromCode(DatabaseErrorCode.WRITE_CANCELED);
       }
 
       int lastSent = -1;
@@ -1170,13 +1172,13 @@ public class Repo implements PersistentConnection.Delegate {
                   Repo.this,
                   transaction.outstandingListener,
                   QuerySpec.defaultQueryAtPath(transaction.path)));
-          if (reason == DatabaseError.OVERRIDDEN_BY_SET) {
+          if (reason == DatabaseErrorCode.OVERRIDDEN_BY_SET) {
             events.addAll(
                 serverSyncTree.ackUserWrite(
                     transaction.currentWriteId, /*revert=*/ true, /*persist=*/ false, serverClock));
           } else {
             hardAssert(
-                reason == DatabaseError.WRITE_CANCELED,
+                reason == DatabaseErrorCode.WRITE_CANCELED,
                 "Unknown transaction abort reason: " + reason);
             // If it was cancelled, it was already removed from the sync tree
           }
