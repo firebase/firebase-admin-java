@@ -116,8 +116,8 @@ public class AndroidConfig {
      * messages that can be collapsed, so that only the last message gets sent when delivery can be
      * resumed. A maximum of 4 different collapse keys may be active at any given time.
      * 
-     * By default, the collapse key is the app package name registered in
-     * the Firebase console.
+     * <p>By default, the collapse key is the app package name registered in
+     * the Firebase console.</p>
      *
      * @param collapseKey A collapse key string.
      * @return This builder.
