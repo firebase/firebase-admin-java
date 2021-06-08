@@ -112,9 +112,12 @@ public class AndroidConfig {
     private Builder() {}
 
     /**
-     * Sets a collapse key for the message. Collapse key serves as an identifier for a group of
+     * Sets a collapse key for the message. The collapse key serves as an identifier for a group of
      * messages that can be collapsed, so that only the last message gets sent when delivery can be
      * resumed. A maximum of 4 different collapse keys may be active at any given time.
+     * 
+     * <p>By default, the collapse key is the app package name registered in
+     * the Firebase console.</p>
      *
      * @param collapseKey A collapse key string.
      * @return This builder.
