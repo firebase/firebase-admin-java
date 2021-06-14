@@ -18,6 +18,7 @@ package com.google.firebase.auth.internal;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.firebase.internal.FirebaseProcessEnvironment;
 
 public class Utils {
   @VisibleForTesting
@@ -28,7 +29,7 @@ public class Utils {
   }
 
   public static String getEmulatorHost() {
-    return System.getenv(AUTH_EMULATOR_HOST);
+    return FirebaseProcessEnvironment.getenv(AUTH_EMULATOR_HOST);
   }
 
 }

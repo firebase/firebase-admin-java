@@ -38,7 +38,6 @@ import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
@@ -48,6 +47,7 @@ import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
 import com.google.firebase.auth.multitenancy.TenantAwareFirebaseAuth;
 import com.google.firebase.auth.multitenancy.TenantManager;
 import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.FirebaseProcessEnvironment;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestResponseInterceptor;
@@ -108,7 +108,7 @@ public class FirebaseUserManagerTest {
 
   @After
   public void tearDown() {
-    TestUtils.unsetEnvironmentVariables(ImmutableSet.of("FIREBASE_AUTH_EMULATOR_HOST"));
+    FirebaseProcessEnvironment.clearCache();
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
@@ -2853,8 +2853,7 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testCreateOidcProviderFromEmulatorAuth() throws Exception {
-    TestUtils.setEnvironmentVariables(
-            ImmutableMap.of("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR));
+    FirebaseProcessEnvironment.setenv("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR);
     TestResponseInterceptor interceptor = initializeAppForUserManagement(OIDC_RESPONSE);
     OidcProviderConfig.CreateRequest createRequest =
             new OidcProviderConfig.CreateRequest()

@@ -31,12 +31,12 @@ import com.google.api.core.ApiFuture;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.firebase.ErrorCode;
 
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.internal.FirebaseProcessEnvironment;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
@@ -62,7 +62,7 @@ public class FirebaseAuthTest {
   @After
   public void cleanup() {
     // Cleanup for tests on Auth Emulator
-    TestUtils.unsetEnvironmentVariables(ImmutableSet.of("FIREBASE_AUTH_EMULATOR_HOST"));
+    FirebaseProcessEnvironment.clearCache();
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
@@ -269,8 +269,7 @@ public class FirebaseAuthTest {
   @Test
   public void testVerifyIdTokenWithEmulator() throws Exception {
     // Enable emulator mode
-    TestUtils.setEnvironmentVariables(
-        ImmutableMap.of("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR));
+    FirebaseProcessEnvironment.setenv("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR);
     MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
         getFirebaseToken(VALID_SINCE + 1000));
     FirebaseAuth auth = getAuthForIdTokenVerificationWithRevocationCheck(tokenVerifier);
@@ -284,8 +283,7 @@ public class FirebaseAuthTest {
   @Test
   public void testVerifyIdTokenFailureWithEmulator() {
     // Enable emulator mode
-    TestUtils.setEnvironmentVariables(
-        ImmutableMap.of("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR));
+    FirebaseProcessEnvironment.setenv("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR);
     MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
         getFirebaseToken(VALID_SINCE - 1000));
     FirebaseAuth auth = getAuthForIdTokenVerificationWithRevocationCheck(tokenVerifier);
