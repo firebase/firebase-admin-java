@@ -29,6 +29,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.ApplicationDefaultCredentialsProvider;
 import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
@@ -64,7 +65,8 @@ public final class FirebaseOptions {
         @Override
         public GoogleCredentials get() {
           try {
-            return GoogleCredentials.getApplicationDefault().createScoped(FIREBASE_SCOPES);
+            return ApplicationDefaultCredentialsProvider.getApplicationDefault()
+                .createScoped(FIREBASE_SCOPES);
           } catch (IOException e) {
             throw new IllegalStateException(e);
           }

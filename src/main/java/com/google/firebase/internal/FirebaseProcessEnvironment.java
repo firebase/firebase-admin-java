@@ -20,6 +20,9 @@ import com.google.common.base.Strings;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * A utility for overriding environment variables during tests.
+ */
 public class FirebaseProcessEnvironment {
 
   private static final Map<String, String> localCache = new ConcurrentHashMap<>();

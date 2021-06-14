@@ -28,7 +28,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -41,6 +40,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp.TokenRefresher;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.internal.ApplicationDefaultCredentialsProvider;
 import com.google.firebase.internal.FirebaseProcessEnvironment;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.testing.FirebaseAppRule;
@@ -65,7 +65,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
-import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 /**
@@ -498,26 +497,30 @@ public class FirebaseAppTest {
   @Test
   public void testEmptyFirebaseConfigString() throws IOException {
     setFirebaseConfigEnvironmentVariable("");
-    try (MockedStatic<GoogleCredentials> scoped = Mockito.mockStatic(GoogleCredentials.class)) {
-      when(GoogleCredentials.getApplicationDefault()).thenReturn(TEST_CREDENTIALS);
+    ApplicationDefaultCredentialsProvider.setApplicationDefault(TEST_CREDENTIALS);
+    try {
       FirebaseApp firebaseApp = FirebaseApp.initializeApp();
       assertNull(firebaseApp.getOptions().getProjectId());
       assertNull(firebaseApp.getOptions().getStorageBucket());
       assertNull(firebaseApp.getOptions().getDatabaseUrl());
       assertTrue(firebaseApp.getOptions().getDatabaseAuthVariableOverride().isEmpty());
+    } finally {
+      ApplicationDefaultCredentialsProvider.setApplicationDefault(null);
     }
   }
 
   @Test
   public void testEmptyFirebaseConfigJSONObject() throws IOException {
     setFirebaseConfigEnvironmentVariable("{}");
-    try (MockedStatic<GoogleCredentials> scoped = Mockito.mockStatic(GoogleCredentials.class)) {
-      when(GoogleCredentials.getApplicationDefault()).thenReturn(TEST_CREDENTIALS);
+    ApplicationDefaultCredentialsProvider.setApplicationDefault(TEST_CREDENTIALS);
+    try {
       FirebaseApp firebaseApp = FirebaseApp.initializeApp();
       assertNull(firebaseApp.getOptions().getProjectId());
       assertNull(firebaseApp.getOptions().getStorageBucket());
       assertNull(firebaseApp.getOptions().getDatabaseUrl());
       assertTrue(firebaseApp.getOptions().getDatabaseAuthVariableOverride().isEmpty());
+    } finally {
+      ApplicationDefaultCredentialsProvider.setApplicationDefault(null);
     }
   }
 
@@ -542,19 +545,21 @@ public class FirebaseAppTest {
   @Test
   public void testFirebaseConfigFileWithSomeKeysMissing() throws IOException {
     setFirebaseConfigEnvironmentVariable("firebase_config_partial.json");
-    try (MockedStatic<GoogleCredentials> scoped = Mockito.mockStatic(GoogleCredentials.class)) {
-      when(GoogleCredentials.getApplicationDefault()).thenReturn(TEST_CREDENTIALS);
+    ApplicationDefaultCredentialsProvider.setApplicationDefault(TEST_CREDENTIALS);
+    try {
       FirebaseApp firebaseApp = FirebaseApp.initializeApp();
       assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
       assertEquals("https://hipster-chat.firebaseio.mock", firebaseApp.getOptions().getDatabaseUrl());
+    } finally {
+      ApplicationDefaultCredentialsProvider.setApplicationDefault(null);
     }
   }
 
   @Test
   public void testValidFirebaseConfigFile() throws IOException {
     setFirebaseConfigEnvironmentVariable("firebase_config.json");
-    try (MockedStatic<GoogleCredentials> scoped = Mockito.mockStatic(GoogleCredentials.class)) {
-      when(GoogleCredentials.getApplicationDefault()).thenReturn(TEST_CREDENTIALS);
+    ApplicationDefaultCredentialsProvider.setApplicationDefault(TEST_CREDENTIALS);
+    try {
       FirebaseApp firebaseApp = FirebaseApp.initializeApp();
       assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
       assertEquals("hipster-chat.appspot.mock", firebaseApp.getOptions().getStorageBucket());
@@ -562,6 +567,8 @@ public class FirebaseAppTest {
           "https://hipster-chat.firebaseio.mock", firebaseApp.getOptions().getDatabaseUrl());
       assertEquals(
           "testuser", firebaseApp.getOptions().getDatabaseAuthVariableOverride().get("uid"));
+    } finally {
+      ApplicationDefaultCredentialsProvider.setApplicationDefault(null);
     }
   }
 
@@ -586,24 +593,28 @@ public class FirebaseAppTest {
         + "\"projectId\": \"hipster-chat-mock\","
         + "\"storageBucket\": \"hipster-chat.appspot.mock\""
         + "}");
-    try (MockedStatic<GoogleCredentials> scoped = Mockito.mockStatic(GoogleCredentials.class)) {
-      when(GoogleCredentials.getApplicationDefault()).thenReturn(TEST_CREDENTIALS);
+    ApplicationDefaultCredentialsProvider.setApplicationDefault(TEST_CREDENTIALS);
+    try {
       FirebaseApp firebaseApp = FirebaseApp.initializeApp();
       assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
       assertEquals("hipster-chat.appspot.mock", firebaseApp.getOptions().getStorageBucket());
       assertEquals("https://hipster-chat.firebaseio.mock", firebaseApp.getOptions().getDatabaseUrl());
       assertEquals("testuser",
           firebaseApp.getOptions().getDatabaseAuthVariableOverride().get("uid"));
+    } finally {
+      ApplicationDefaultCredentialsProvider.setApplicationDefault(null);
     }
   }
 
   @Test
   public void testFirebaseConfigFileIgnoresInvalidKey() throws IOException {
     setFirebaseConfigEnvironmentVariable("firebase_config_invalid_key.json");
-    try (MockedStatic<GoogleCredentials> scoped = Mockito.mockStatic(GoogleCredentials.class)) {
-      when(GoogleCredentials.getApplicationDefault()).thenReturn(TEST_CREDENTIALS);
+    ApplicationDefaultCredentialsProvider.setApplicationDefault(TEST_CREDENTIALS);
+    try {
       FirebaseApp firebaseApp = FirebaseApp.initializeApp();
       assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
+    } finally {
+      ApplicationDefaultCredentialsProvider.setApplicationDefault(null);
     }
   }
 
@@ -613,10 +624,12 @@ public class FirebaseAppTest {
         + "\"databaseUareL\": \"https://hipster-chat.firebaseio.mock\","
         + "\"projectId\": \"hipster-chat-mock\""
         + "}");
-    try (MockedStatic<GoogleCredentials> scoped = Mockito.mockStatic(GoogleCredentials.class)) {
-      when(GoogleCredentials.getApplicationDefault()).thenReturn(TEST_CREDENTIALS);
+    ApplicationDefaultCredentialsProvider.setApplicationDefault(TEST_CREDENTIALS);
+    try {
       FirebaseApp firebaseApp = FirebaseApp.initializeApp();
       assertEquals("hipster-chat-mock", firebaseApp.getOptions().getProjectId());
+    } finally {
+      ApplicationDefaultCredentialsProvider.setApplicationDefault(null);
     }
   }
 
