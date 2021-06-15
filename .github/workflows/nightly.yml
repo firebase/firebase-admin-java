@@ -33,10 +33,10 @@ jobs:
       with:
         ref: ${{ github.event.client_payload.ref || github.ref }}
 
-    - name: Set up JDK 1.7
+    - name: Set up JDK 1.8
       uses: actions/setup-java@v1
       with:
-        java-version: 1.7
+        java-version: 1.8
 
     - name: Compile, test and package
       run: ./.github/scripts/package_artifacts.sh
@@ -63,7 +63,7 @@ jobs:
         subject: 'Nightly build ${{github.run_id}} of ${{github.repository}} failed!'
         html: >
           <b>Nightly workflow ${{github.run_id}} failed on: ${{github.repository}}</b>
-          <br /><br />Navigate to the 
+          <br /><br />Navigate to the
           <a href="https://github.com/firebase/firebase-admin-java/actions/runs/${{github.run_id}}">failed workflow</a>.
       continue-on-error: true
 
@@ -78,6 +78,6 @@ jobs:
         subject: 'Nightly build ${{github.run_id}} of ${{github.repository}} cancelled!'
         html: >
           <b>Nightly workflow ${{github.run_id}} cancelled on: ${{github.repository}}</b>
-          <br /><br />Navigate to the 
+          <br /><br />Navigate to the
           <a href="https://github.com/firebase/firebase-admin-java/actions/runs/${{github.run_id}}">cancelled workflow</a>.
       continue-on-error: true

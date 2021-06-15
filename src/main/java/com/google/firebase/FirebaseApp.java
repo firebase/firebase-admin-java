@@ -35,6 +35,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.FirebaseProcessEnvironment;
 import com.google.firebase.internal.FirebaseScheduledExecutor;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.ListenableFuture2ApiFuture;
@@ -292,10 +293,10 @@ public class FirebaseApp {
 
     // Try to get project ID from the environment.
     if (Strings.isNullOrEmpty(projectId)) {
-      projectId = System.getenv("GOOGLE_CLOUD_PROJECT");
+      projectId = FirebaseProcessEnvironment.getenv("GOOGLE_CLOUD_PROJECT");
     }
     if (Strings.isNullOrEmpty(projectId)) {
-      projectId = System.getenv("GCLOUD_PROJECT");
+      projectId = FirebaseProcessEnvironment.getenv("GCLOUD_PROJECT");
     }
     return projectId;
   }
@@ -563,7 +564,7 @@ public class FirebaseApp {
   }
 
   private static FirebaseOptions getOptionsFromEnvironment() throws IOException {
-    String defaultConfig = System.getenv(FIREBASE_CONFIG_ENV_VAR);
+    String defaultConfig = FirebaseProcessEnvironment.getenv(FIREBASE_CONFIG_ENV_VAR);
     if (Strings.isNullOrEmpty(defaultConfig)) {
       return FirebaseOptions.builder()
           .setCredentials(APPLICATION_DEFAULT_CREDENTIALS)

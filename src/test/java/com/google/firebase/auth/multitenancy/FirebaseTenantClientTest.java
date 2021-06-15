@@ -34,8 +34,6 @@ import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
@@ -46,6 +44,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.FirebaseProcessEnvironment;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.TestResponseInterceptor;
@@ -78,7 +77,7 @@ public class FirebaseTenantClientTest {
 
   @After
   public void tearDown() throws ReflectiveOperationException {
-    TestUtils.unsetEnvironmentVariables(ImmutableSet.of("FIREBASE_AUTH_EMULATOR_HOST"));
+    FirebaseProcessEnvironment.clearCache();
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
@@ -323,8 +322,7 @@ public class FirebaseTenantClientTest {
 
   @Test
   public void testGetTenantFromAuthEmulator() throws Exception {
-    TestUtils.setEnvironmentVariables(
-            ImmutableMap.of("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR));
+    FirebaseProcessEnvironment.setenv("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR);
     TestResponseInterceptor interceptor = initializeAppForTenantManagement(
             TestUtils.loadResource("tenant.json"));
 

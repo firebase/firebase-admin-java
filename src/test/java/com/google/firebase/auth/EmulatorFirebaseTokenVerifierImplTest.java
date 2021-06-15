@@ -29,11 +29,9 @@ import static org.junit.Assert.fail;
 
 import com.google.api.client.googleapis.auth.oauth2.GooglePublicKeysManager;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.firebase.ErrorCode;
+import com.google.firebase.internal.FirebaseProcessEnvironment;
 import com.google.firebase.testing.ServiceAccount;
-import com.google.firebase.testing.TestUtils;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
@@ -46,7 +44,7 @@ public class EmulatorFirebaseTokenVerifierImplTest {
   @Before
   public void setUp() throws Exception {
     // Set the Auth Emulator host prior to initialization
-    TestUtils.setEnvironmentVariables(ImmutableMap.of(AUTH_EMULATOR_HOST, "localhost:9099"));
+    FirebaseProcessEnvironment.setenv(AUTH_EMULATOR_HOST, "localhost:9099");
     ServiceAccount serviceAccount = ServiceAccount.EDITOR;
     GooglePublicKeysManager publicKeysManager = newPublicKeysManager(serviceAccount.getCert());
     this.tokenVerifier = newTestTokenVerifier(publicKeysManager);
@@ -55,7 +53,7 @@ public class EmulatorFirebaseTokenVerifierImplTest {
 
   @After
   public void tearDown() {
-    TestUtils.unsetEnvironmentVariables(ImmutableSet.of(AUTH_EMULATOR_HOST));
+    FirebaseProcessEnvironment.clearCache();
   }
 
   @Test

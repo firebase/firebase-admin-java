@@ -22,6 +22,7 @@ import com.google.firebase.database.annotations.Nullable;
 import com.google.firebase.database.core.RepoInfo;
 import com.google.firebase.database.utilities.ParsedUrl;
 import com.google.firebase.database.utilities.Utilities;
+import com.google.firebase.internal.FirebaseProcessEnvironment;
 
 public final class EmulatorHelper {
 
@@ -33,7 +34,7 @@ public final class EmulatorHelper {
       "FIREBASE_DATABASE_EMULATOR_HOST";
 
   public static String getEmulatorHostFromEnv() {
-    return System.getenv(FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR);
+    return FirebaseProcessEnvironment.getenv(FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR);
   }
 
   @VisibleForTesting

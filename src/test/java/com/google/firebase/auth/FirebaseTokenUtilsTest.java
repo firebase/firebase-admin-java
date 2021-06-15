@@ -27,13 +27,11 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.testing.http.FixedClock;
 import com.google.api.client.util.Clock;
 import com.google.auth.oauth2.GoogleCredentials;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
-import com.google.firebase.testing.TestUtils;
+import com.google.firebase.internal.FirebaseProcessEnvironment;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -51,7 +49,7 @@ public class FirebaseTokenUtilsTest {
 
   @After
   public void tearDown() {
-    TestUtils.unsetEnvironmentVariables(ImmutableSet.of("FIREBASE_AUTH_EMULATOR_HOST"));
+    FirebaseProcessEnvironment.clearCache();
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
@@ -79,8 +77,7 @@ public class FirebaseTokenUtilsTest {
 
   @Test
   public void testCreateIdTokenVerifierForEmulator() {
-    TestUtils.setEnvironmentVariables(
-        ImmutableMap.of("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR));
+    FirebaseProcessEnvironment.setenv("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR);
     FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
         .setProjectId(TEST_PROJECT_ID)
@@ -130,8 +127,7 @@ public class FirebaseTokenUtilsTest {
 
   @Test
   public void testSessionCookieVerifierForEmulator() {
-    TestUtils.setEnvironmentVariables(
-        ImmutableMap.of("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR));
+    FirebaseProcessEnvironment.setenv("FIREBASE_AUTH_EMULATOR_HOST", AUTH_EMULATOR);
     FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
         .setProjectId(TEST_PROJECT_ID)

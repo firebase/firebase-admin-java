@@ -23,15 +23,13 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.util.EmulatorHelper;
+import com.google.firebase.internal.FirebaseProcessEnvironment;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
@@ -220,9 +218,9 @@ public class FirebaseDatabaseTest {
     for (CustomTestCase tc : testCases) {
       try {
         FirebaseApp app = FirebaseApp.initializeApp(firebaseOptionsWithoutDatabaseUrl);
-        TestUtils.setEnvironmentVariables(
-            ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
-                Strings.nullToEmpty(tc.envVariableUrl)));
+        FirebaseProcessEnvironment.setenv(
+            EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
+            Strings.nullToEmpty(tc.envVariableUrl));
         FirebaseDatabase instance = FirebaseDatabase.getInstance(app, tc.rootDbUrl);
         assertEquals(tc.expectedEmulatorRootUrl,
             instance.getReference().repo.getRepoInfo().toString());
@@ -230,8 +228,7 @@ public class FirebaseDatabaseTest {
         // clean up after
         app.delete();
       } finally {
-        TestUtils.unsetEnvironmentVariables(
-            ImmutableSet.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR));
+        FirebaseProcessEnvironment.clearCache();
       }
     }
   }
@@ -257,9 +254,9 @@ public class FirebaseDatabaseTest {
     for (CustomTestCase tc : testCases) {
       try {
         FirebaseApp app = FirebaseApp.initializeApp(firebaseOptionsWithoutDatabaseUrl);
-        TestUtils.setEnvironmentVariables(
-            ImmutableMap.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
-                Strings.nullToEmpty(tc.envVariableUrl)));
+        FirebaseProcessEnvironment.setenv(
+            EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR,
+            Strings.nullToEmpty(tc.envVariableUrl));
         FirebaseDatabase instance = FirebaseDatabase.getInstance(app, tc.rootDbUrl);
         DatabaseReference dbRef = instance.getReferenceFromUrl(tc.pathUrl);
         assertEquals(tc.expectedEmulatorRootUrl, dbRef.repo.getRepoInfo().toString());
@@ -269,8 +266,7 @@ public class FirebaseDatabaseTest {
         app.delete();
 
       } finally {
-        TestUtils.unsetEnvironmentVariables(
-            ImmutableSet.of(EmulatorHelper.FIREBASE_RTDB_EMULATOR_HOST_ENV_VAR));
+        FirebaseProcessEnvironment.clearCache();
       }
     }
   }

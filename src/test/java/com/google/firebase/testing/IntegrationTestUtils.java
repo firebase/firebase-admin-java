@@ -193,7 +193,12 @@ public class IntegrationTestUtils {
 
     private ResponseInfo(HttpResponse response) throws IOException {
       this.status = response.getStatusCode();
-      this.payload = ByteStreams.toByteArray(response.getContent());
+      InputStream in = response.getContent();
+      if (in != null) {
+        this.payload = ByteStreams.toByteArray(in);
+      } else {
+        this.payload = new byte[0];
+      }
     }
 
     public int getStatus() {
