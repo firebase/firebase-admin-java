@@ -66,7 +66,7 @@ public class ApiClientUtilsTest {
     assertEquals(4, retryConfig.getMaxRetries());
     assertEquals(60 * 1000, retryConfig.getMaxIntervalMillis());
     assertFalse(retryConfig.isRetryOnIOExceptions());
-    assertEquals(retryConfig.getRetryStatusCodes(), ImmutableList.of(500, 503));
+    assertEquals(retryConfig.getRetryStatusCodes(), ImmutableList.of(503));
   }
 
   @Test

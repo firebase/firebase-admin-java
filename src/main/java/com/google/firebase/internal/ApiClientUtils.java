@@ -34,7 +34,7 @@ public class ApiClientUtils {
 
   static final RetryConfig DEFAULT_RETRY_CONFIG = RetryConfig.builder()
       .setMaxRetries(4)
-      .setRetryStatusCodes(ImmutableList.of(500, 503))
+      .setRetryStatusCodes(ImmutableList.of(503))
       .setMaxIntervalMillis(60 * 1000)
       .build();
 
