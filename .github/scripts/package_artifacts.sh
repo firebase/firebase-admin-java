@@ -28,7 +28,7 @@ echo "${FIREBASE_API_KEY}" > integration_apikey.txt
 #  3. Runs the unit tests (test phase)
 #  4. Packages the artifacts - src, bin, javadocs (package phase)
 #  5. Runs the integration tests (verify phase)
-mvn -B clean verify
+mvn -DtrimStackTrace=false -B clean verify
 
 # Maven target directory can consist of many files. Just copy the jar artifacts
 # into a new directory for upload.
