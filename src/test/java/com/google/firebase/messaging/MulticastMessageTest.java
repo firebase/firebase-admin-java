@@ -16,6 +16,7 @@
 
 package com.google.firebase.messaging;
 
+import static com.google.firebase.messaging.FirebaseMessaging.MAX_MESSAGES_IN_LIST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
@@ -75,7 +76,7 @@ public class MulticastMessageTest {
   @Test
   public void testTooManyTokens() {
     MulticastMessage.Builder builder = MulticastMessage.builder();
-    for (int i = 0; i < 501; i++) {
+    for (int i = 0; i < MAX_MESSAGES_IN_LIST + 1; i++) {
       builder.addToken("token" + i);
     }
     try {

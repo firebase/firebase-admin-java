@@ -16,6 +16,7 @@
 
 package com.google.firebase.messaging;
 
+import static com.google.firebase.messaging.FirebaseMessaging.MAX_MESSAGES_IN_LIST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -297,7 +298,7 @@ public class FirebaseMessagingTest {
     MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageId(null);
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
     ImmutableList.Builder<Message> listBuilder = ImmutableList.builder();
-    for (int i = 0; i < 501; i++) {
+    for (int i = 0; i < MAX_MESSAGES_IN_LIST + 1; i++) {
       listBuilder.add(Message.builder().setTopic("topic").build());
     }
 
