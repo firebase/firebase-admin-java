@@ -25,8 +25,11 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.client.json.GenericJson;
+import com.google.api.client.json.JsonParser;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
+import com.google.api.client.util.ArrayMap;
 import com.google.api.core.ApiFuture;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -36,10 +39,14 @@ import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.FirebaseProcessEnvironment;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
+
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -247,6 +254,22 @@ public class FirebaseAuthTest {
   }
 
   @Test
+  public void testVerifyIdTokenWithRevocationCheckAndUserDisabled() throws Exception {
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
+        getFirebaseToken(VALID_SINCE + 1000));
+    FirebaseAuth auth =
+        getAuthForIdTokenVerificationWithRevocationCheckWithDisabledUser(tokenVerifier);
+    try {
+      auth.verifyIdToken("idtoken", true);
+      fail("No exception thrown for disabled user.");
+    } catch (FirebaseAuthException e) {
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
+      assertEquals(AuthErrorCode.USER_DISABLED, e.getAuthErrorCode());
+      assertEquals("The user record is disabled.", e.getMessage());
+    }
+  }
+
+  @Test
   public void testVerifyIdTokenWithRevocationCheckFailure() {
     MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
         getFirebaseToken(VALID_SINCE - 1000));
@@ -445,6 +468,22 @@ public class FirebaseAuthTest {
   }
 
   @Test
+  public void testVerifySessionCookieWithRevocationCheckAndUserDisabled() throws Exception {
+    MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
+        getFirebaseToken(VALID_SINCE + 1000));
+    FirebaseAuth auth =
+        getAuthForSessionCookieVerificationWithRevocationCheckAndUserDisabled(tokenVerifier);
+    try {
+      auth.verifySessionCookie("cookie", true);
+      fail("No exception thrown for disabled user.");
+    } catch (FirebaseAuthException e) {
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
+      assertEquals(AuthErrorCode.USER_DISABLED, e.getAuthErrorCode());
+      assertEquals("The user record is disabled.", e.getMessage());
+    }
+  }
+
+  @Test
   public void testVerifySessionCookieWithRevocationCheckFailure() {
     MockTokenVerifier tokenVerifier = MockTokenVerifier.fromResult(
         getFirebaseToken(VALID_SINCE - 1000));
@@ -513,6 +552,12 @@ public class FirebaseAuthTest {
     return getAuthForIdTokenVerification(app, Suppliers.ofInstance(tokenVerifier));
   }
 
+  FirebaseAuth getAuthForIdTokenVerificationWithRevocationCheckWithDisabledUser(
+      FirebaseTokenVerifier tokenVerifier) throws IOException {
+    FirebaseApp app = getFirebaseAppForDisabledUserRetrieval();
+    return getAuthForIdTokenVerification(app, Suppliers.ofInstance(tokenVerifier));
+  }
+
   private FirebaseAuth getAuthForIdTokenVerification(FirebaseTokenVerifier tokenVerifier) {
     return getAuthForIdTokenVerification(Suppliers.ofInstance(tokenVerifier));
   }
@@ -537,6 +582,12 @@ public class FirebaseAuthTest {
   FirebaseAuth getAuthForSessionCookieVerificationWithRevocationCheck(
       FirebaseTokenVerifier tokenVerifier) {
     FirebaseApp app = getFirebaseAppForUserRetrieval();
+    return getAuthForSessionCookieVerification(app, Suppliers.ofInstance(tokenVerifier));
+  }
+
+  FirebaseAuth getAuthForSessionCookieVerificationWithRevocationCheckAndUserDisabled(
+      FirebaseTokenVerifier tokenVerifier) throws IOException {
+    FirebaseApp app = getFirebaseAppForDisabledUserRetrieval();
     return getAuthForSessionCookieVerification(app, Suppliers.ofInstance(tokenVerifier));
   }
 
@@ -565,6 +616,25 @@ public class FirebaseAuthTest {
     String getUserResponse = TestUtils.loadResource("getUser.json");
     MockHttpTransport transport = new MockHttpTransport.Builder()
         .setLowLevelHttpResponse(new MockLowLevelHttpResponse().setContent(getUserResponse))
+        .build();
+    return FirebaseApp.initializeApp(FirebaseOptions.builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setHttpTransport(transport)
+        .setProjectId("test-project-id")
+        .build());
+  }
+
+  private FirebaseApp getFirebaseAppForDisabledUserRetrieval() throws IOException {
+    String getUserResponse = TestUtils.loadResource("getUser.json");
+    JsonParser parser = ApiClientUtils.getDefaultJsonFactory().createJsonParser(getUserResponse);
+    GenericJson json =
+        parser.parseAndClose(GenericJson.class);
+    ArrayMap<String, Object> users =
+        ((ArrayList<ArrayMap<String, Object>>) json.get("users")).get(0);
+    users.put("disabled", true);
+
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(new MockLowLevelHttpResponse().setContent(json.toString()))
         .build();
     return FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(new MockGoogleCredentials("test-token"))

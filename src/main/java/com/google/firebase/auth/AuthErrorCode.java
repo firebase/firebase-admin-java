@@ -108,4 +108,9 @@ public enum AuthErrorCode {
    * No user record found for the given identifier.
    */
   USER_NOT_FOUND,
+
+  /**
+   * The user record is disabled.
+   */
+  USER_DISABLED,
 }

@@ -626,6 +626,45 @@ public class FirebaseAuthIT {
   }
 
   @Test
+  public void testVerifyIdTokenUserDisabled() throws Exception {
+    String customToken = auth.createCustomToken("disabledUser");
+    String idToken = signInWithCustomToken(customToken);
+
+    // User is not disabled, this should not throw an exception.
+    FirebaseToken decoded = auth.verifyIdToken(idToken, /* checkRevoked= */true);
+    assertEquals("disabledUser", decoded.getUid());
+
+    // Disable the user record.
+    auth.updateUser(new UserRecord.UpdateRequest("disabledUser").setDisabled(true));
+
+    // Verify the ID token without checking revocation. This should not throw an exception.
+    decoded = auth.verifyIdToken(idToken);
+    assertEquals("disabledUser", decoded.getUid());
+
+    // Verify the ID token while checking revocation. This should throw an exception.
+    try {
+      auth.verifyIdToken(idToken, /* checkRevoked= */true);
+      fail("Should throw a FirebaseAuthException since the user is disabled.");
+    } catch (FirebaseAuthException e) {
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
+      assertEquals(AuthErrorCode.USER_DISABLED, e.getAuthErrorCode());
+      assertEquals("The user record is disabled.", e.getMessage());
+    }
+
+    // Revoke the tokens for the user. The revocation error should take precedence over
+    // USER_DISABLED.
+    auth.revokeRefreshTokens("disabledUser");
+    try {
+      auth.verifyIdToken(idToken, /* checkRevoked= */ true);
+      fail("Should throw an exception as the ID tokens are revoked.");
+    } catch (FirebaseAuthException e) {
+      assertEquals(AuthErrorCode.REVOKED_ID_TOKEN, e.getAuthErrorCode());
+    }
+
+    auth.deleteUser("disabledUser");
+  }
+
+  @Test
   public void testVerifySessionCookie() throws Exception {
     String customToken = auth.createCustomTokenAsync("user3").get();
     String idToken = signInWithCustomToken(customToken);
@@ -659,6 +698,51 @@ public class FirebaseAuthIT {
     decoded = auth.verifySessionCookieAsync(sessionCookie, true).get();
     assertEquals("user3", decoded.getUid());
     auth.deleteUserAsync("user3");
+  }
+
+  @Test
+  public void testVerifySessionCookieUserDisabled() throws Exception {
+    String customToken = auth.createCustomToken("disabledUser2");
+    String idToken = signInWithCustomToken(customToken);
+
+    SessionCookieOptions options = SessionCookieOptions.builder()
+        .setExpiresIn(TimeUnit.HOURS.toMillis(1))
+        .build();
+    String sessionCookie = auth.createSessionCookieAsync(idToken, options).get();
+    assertFalse(Strings.isNullOrEmpty(sessionCookie));
+
+    // User is not disabled, this should not throw an exception.
+    FirebaseToken decoded = auth.verifySessionCookie(sessionCookie, /* checkRevoked= */true);
+    assertEquals("disabledUser2", decoded.getUid());
+
+    // Disable the user record.
+    auth.updateUser(new UserRecord.UpdateRequest("disabledUser2").setDisabled(true));
+
+    // Verify the session cookie without checking revocation. This should not throw an exception.
+    decoded = auth.verifySessionCookie(sessionCookie);
+    assertEquals("disabledUser2", decoded.getUid());
+
+    // Verify the session cookie while checking revocation. This should throw an exception.
+    try {
+      auth.verifySessionCookie(sessionCookie, /* checkRevoked= */true);
+      fail("Should throw a FirebaseAuthException since the user is disabled.");
+    } catch (FirebaseAuthException e) {
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
+      assertEquals(AuthErrorCode.USER_DISABLED, e.getAuthErrorCode());
+      assertEquals("The user record is disabled.", e.getMessage());
+    }
+
+    // Revoke the tokens for the user. The revocation error should take precedence over
+    // USER_DISABLED.
+    auth.revokeRefreshTokens("disabledUser2");
+    try {
+      auth.verifySessionCookie(sessionCookie, /* checkRevoked= */ true);
+      fail("Should throw an exception as the tokens are revoked.");
+    } catch (FirebaseAuthException e) {
+      assertEquals(AuthErrorCode.REVOKED_SESSION_COOKIE, e.getAuthErrorCode());
+    }
+
+    auth.deleteUser("disabledUser2");
   }
 
   @Test
