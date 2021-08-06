@@ -29,7 +29,6 @@ import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonParser;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
-import com.google.api.client.util.ArrayMap;
 import com.google.api.core.ApiFuture;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -47,6 +46,7 @@ import com.google.firebase.testing.TestUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -629,8 +629,8 @@ public class FirebaseAuthTest {
     JsonParser parser = ApiClientUtils.getDefaultJsonFactory().createJsonParser(getUserResponse);
     GenericJson json =
         parser.parseAndClose(GenericJson.class);
-    ArrayMap<String, Object> users =
-        ((ArrayList<ArrayMap<String, Object>>) json.get("users")).get(0);
+    Map<String, Object> users =
+        ((ArrayList<Map<String, Object>>) json.get("users")).get(0);
     users.put("disabled", true);
 
     MockHttpTransport transport = new MockHttpTransport.Builder()

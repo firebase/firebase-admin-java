@@ -51,12 +51,19 @@ class RevocationCheckDecorator implements FirebaseTokenVerifier {
   @Override
   public FirebaseToken verifyToken(String token) throws FirebaseAuthException {
     FirebaseToken firebaseToken = tokenVerifier.verifyToken(token);
-    validateRevokedOrDisabled(firebaseToken);
+    validateDisabledOrRevoked(firebaseToken);
     return firebaseToken;
   }
 
-  private void validateRevokedOrDisabled(FirebaseToken firebaseToken) throws FirebaseAuthException {
+  private void validateDisabledOrRevoked(FirebaseToken firebaseToken) throws FirebaseAuthException {
     UserRecord user = userManager.getUserById(firebaseToken.getUid());
+    if (user.isDisabled()) {
+      throw new FirebaseAuthException(ErrorCode.INVALID_ARGUMENT,
+          "The user record is disabled.",
+          /* cause= */ null,
+          /* response= */ null,
+          AuthErrorCode.USER_DISABLED);
+    }
     long issuedAtInSeconds = (long) firebaseToken.getClaims().get("iat");
     if (user.getTokensValidAfterTimestamp() > issuedAtInSeconds * 1000) {
       throw new FirebaseAuthException(
@@ -65,13 +72,6 @@ class RevocationCheckDecorator implements FirebaseTokenVerifier {
           null,
           null,
           errorCode);
-    }
-    if (user.isDisabled()) {
-      throw new FirebaseAuthException(ErrorCode.INVALID_ARGUMENT,
-          "The user record is disabled.",
-          /* cause= */ null,
-          /* response= */ null,
-          AuthErrorCode.USER_DISABLED);
     }
   }
 
