@@ -256,11 +256,13 @@ public abstract class AbstractFirebaseAuth {
    * API call.
    *
    * @param idToken A Firebase ID token string to parse and verify.
-   * @param checkRevoked A boolean denoting whether to check if the tokens were revoked.
+   * @param checkRevoked A boolean denoting whether to check if the tokens were revoked or if
+   *                     the user is disabled.
    * @return A {@link FirebaseToken} representing the verified and decoded token.
    * @throws IllegalArgumentException If the token is null, empty, or if the {@link FirebaseApp}
    *     instance does not have a project ID associated with it.
-   * @throws FirebaseAuthException If an error occurs while parsing or validating the token.
+   * @throws FirebaseAuthException If an error occurs while parsing or validating the token, or if
+   *     the user is disabled.
    */
   public FirebaseToken verifyIdToken(@NonNull String idToken, boolean checkRevoked)
       throws FirebaseAuthException {
@@ -343,8 +345,11 @@ public abstract class AbstractFirebaseAuth {
    * checkRevoked} is true, throws a {@link FirebaseAuthException}.
    *
    * @param cookie A Firebase session cookie string to verify and parse.
-   * @param checkRevoked A boolean indicating whether to check if the cookie was explicitly revoked.
+   * @param checkRevoked A boolean indicating whether to check if the cookie was explicitly revoked
+   *                    or if the user is disabled.
    * @return A {@link FirebaseToken} representing the verified and decoded cookie.
+   * @throws FirebaseAuthException If an error occurs while parsing or validating the token, or if
+   *     the user is disabled.
    */
   public FirebaseToken verifySessionCookie(String cookie, boolean checkRevoked)
       throws FirebaseAuthException {

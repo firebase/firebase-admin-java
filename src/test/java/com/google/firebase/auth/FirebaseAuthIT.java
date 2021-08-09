@@ -626,6 +626,46 @@ public class FirebaseAuthIT {
   }
 
   @Test
+  public void testVerifyIdTokenUserDisabled() throws Exception {
+    RandomUser user = UserTestUtils.generateRandomUserInfo();
+    String customToken = auth.createCustomToken(user.getUid());
+    String idToken = signInWithCustomToken(customToken);
+
+    temporaryUser.registerUid(user.getUid());
+
+    // User is not disabled, this should not throw an exception.
+    FirebaseToken decoded = auth.verifyIdToken(idToken, /* checkRevoked= */true);
+    assertEquals(user.getUid(), decoded.getUid());
+
+    // Disable the user record.
+    auth.updateUser(new UserRecord.UpdateRequest(user.getUid()).setDisabled(true));
+
+    // Verify the ID token without checking revocation. This should not throw an exception.
+    decoded = auth.verifyIdToken(idToken);
+    assertEquals(user.getUid(), decoded.getUid());
+
+    // Verify the ID token while checking revocation. This should throw an exception.
+    try {
+      auth.verifyIdToken(idToken, /* checkRevoked= */true);
+      fail("Should throw a FirebaseAuthException since the user is disabled.");
+    } catch (FirebaseAuthException e) {
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
+      assertEquals(AuthErrorCode.USER_DISABLED, e.getAuthErrorCode());
+      assertEquals("The user record is disabled.", e.getMessage());
+    }
+
+    // Revoke the tokens for the user. The USER_DISABLED should take precedence over
+    // the revocation error.
+    auth.revokeRefreshTokens(user.getUid());
+    try {
+      auth.verifyIdToken(idToken, /* checkRevoked= */ true);
+      fail("Should throw an exception as the ID tokens are revoked.");
+    } catch (FirebaseAuthException e) {
+      assertEquals(AuthErrorCode.USER_DISABLED, e.getAuthErrorCode());
+    }
+  }
+
+  @Test
   public void testVerifySessionCookie() throws Exception {
     String customToken = auth.createCustomTokenAsync("user3").get();
     String idToken = signInWithCustomToken(customToken);
@@ -659,6 +699,52 @@ public class FirebaseAuthIT {
     decoded = auth.verifySessionCookieAsync(sessionCookie, true).get();
     assertEquals("user3", decoded.getUid());
     auth.deleteUserAsync("user3");
+  }
+
+  @Test
+  public void testVerifySessionCookieUserDisabled() throws Exception {
+    RandomUser user = UserTestUtils.generateRandomUserInfo();
+    String customToken = auth.createCustomToken(user.getUid());
+    String idToken = signInWithCustomToken(customToken);
+
+    temporaryUser.registerUid(user.getUid());
+
+    SessionCookieOptions options = SessionCookieOptions.builder()
+        .setExpiresIn(TimeUnit.HOURS.toMillis(1))
+        .build();
+    String sessionCookie = auth.createSessionCookieAsync(idToken, options).get();
+    assertFalse(Strings.isNullOrEmpty(sessionCookie));
+
+    // User is not disabled, this should not throw an exception.
+    FirebaseToken decoded = auth.verifySessionCookie(sessionCookie, /* checkRevoked= */true);
+    assertEquals(user.getUid(), decoded.getUid());
+
+    // Disable the user record.
+    auth.updateUser(new UserRecord.UpdateRequest(user.getUid()).setDisabled(true));
+
+    // Verify the session cookie without checking revocation. This should not throw an exception.
+    decoded = auth.verifySessionCookie(sessionCookie);
+    assertEquals(user.getUid(), decoded.getUid());
+
+    // Verify the session cookie while checking revocation. This should throw an exception.
+    try {
+      auth.verifySessionCookie(sessionCookie, /* checkRevoked= */true);
+      fail("Should throw a FirebaseAuthException since the user is disabled.");
+    } catch (FirebaseAuthException e) {
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
+      assertEquals(AuthErrorCode.USER_DISABLED, e.getAuthErrorCode());
+      assertEquals("The user record is disabled.", e.getMessage());
+    }
+
+    // Revoke the tokens for the user. The USER_DISABLED should take precedence over
+    // the revocation error.
+    auth.revokeRefreshTokens(user.getUid());
+    try {
+      auth.verifySessionCookie(sessionCookie, /* checkRevoked= */ true);
+      fail("Should throw an exception as the tokens are revoked.");
+    } catch (FirebaseAuthException e) {
+      assertEquals(AuthErrorCode.USER_DISABLED, e.getAuthErrorCode());
+    }
   }
 
   @Test
