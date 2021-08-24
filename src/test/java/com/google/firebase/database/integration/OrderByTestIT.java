@@ -87,9 +87,8 @@ public class OrderByTestIT {
   }
 
   private static void uploadRules(FirebaseApp app, String rules) throws IOException {
-    IntegrationTestUtils.AppHttpClient client = new IntegrationTestUtils.AppHttpClient(app);
-    IntegrationTestUtils.ResponseInfo response = client.put("/.settings/rules.json", rules);
-    assertEquals(200, response.getStatus());
+    RulesClient client = new RulesClient(app);
+    client.updateRules(rules);
   }
 
   @Test
