@@ -16,21 +16,12 @@
 
 package com.google.firebase.testing;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.google.api.client.http.ByteArrayContent;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
 import com.google.api.client.json.GenericJson;
 import com.google.cloud.firestore.FirestoreOptions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.internal.ApiClientUtils;
@@ -147,66 +138,5 @@ public class IntegrationTestUtils {
       }
     }
     return builder.build();
-  }
-
-  public static class AppHttpClient {
-
-    private final FirebaseApp app;
-    private final FirebaseOptions options;
-    private final HttpRequestFactory requestFactory;
-
-    public AppHttpClient() {
-      this(FirebaseApp.getInstance());
-    }
-
-    public AppHttpClient(FirebaseApp app) {
-      this.app = checkNotNull(app);
-      this.options = app.getOptions();
-      this.requestFactory = this.options.getHttpTransport().createRequestFactory();
-    }
-
-    public ResponseInfo put(String path, String json) throws IOException {
-      String url = options.getDatabaseUrl() + path + "?access_token=" + getToken();
-      HttpRequest request = requestFactory.buildPutRequest(new GenericUrl(url),
-          ByteArrayContent.fromString("application/json", json));
-      HttpResponse response = null;
-      try {
-        response = request.execute();
-        return new ResponseInfo(response);
-      } finally {
-        if (response != null) {
-          response.disconnect();
-        }
-      }
-    }
-
-    private String getToken() {
-      // TODO: We should consider exposing getToken (or similar) publicly for the
-      // purpose of servers doing authenticated REST requests like this.
-      return TestOnlyImplFirebaseTrampolines.getToken(app, false);
-    }
-  }
-
-  public static class ResponseInfo {
-    private final int status;
-    private final byte[] payload;
-
-    private ResponseInfo(HttpResponse response) throws IOException {
-      this.status = response.getStatusCode();
-      InputStream in = response.getContent();
-      if (in != null) {
-        this.payload = ByteStreams.toByteArray(in);
-      } else {
-        this.payload = new byte[0];
-      }
-    }
-
-    public int getStatus() {
-      return status;
-    }
-
-    public byte[] getPayload() {
-      return payload;
-    }
   }
 }
