@@ -20,12 +20,14 @@
           "value": "welcome to app en"
         }
       },
-      "description": "text for welcome message!"
+      "description": "text for welcome message!",
+      "valueType": "STRING"
     },
     "header_text": {
       "defaultValue": {
         "useInAppDefault": true
-      }
+      },
+      "valueType": "STRING"
     }
   },
   "parameterGroups": {
@@ -36,7 +38,8 @@
           "defaultValue": {
             "value": "true"
           },
-          "description": "Whether it's currently pumpkin spice season."
+          "description": "Whether it's currently pumpkin spice season.",
+          "valueType": "BOOLEAN"
         }
       }
     }

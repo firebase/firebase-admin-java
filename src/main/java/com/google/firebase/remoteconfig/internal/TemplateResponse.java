@@ -107,6 +107,9 @@ public final class TemplateResponse {
     @Key("conditionalValues")
     private Map<String, ParameterValueResponse> conditionalValues;
 
+    @Key("valueType")
+    private String valueType;
+
     public ParameterValueResponse getDefaultValue() {
       return defaultValue;
     }
@@ -117,6 +120,10 @@ public final class TemplateResponse {
 
     public Map<String, ParameterValueResponse> getConditionalValues() {
       return conditionalValues;
+    }
+
+    public String getValueType() {
+      return valueType;
     }
 
     public ParameterResponse setDefaultValue(
@@ -133,6 +140,11 @@ public final class TemplateResponse {
     public ParameterResponse setConditionalValues(
             Map<String, ParameterValueResponse> conditionalValues) {
       this.conditionalValues = conditionalValues;
+      return this;
+    }
+
+    public ParameterResponse setValueType(String valueType) {
+      this.valueType = valueType;
       return this;
     }
   }

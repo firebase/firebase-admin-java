@@ -85,9 +85,11 @@ public class FirebaseRemoteConfigClientImplTest {
                   .setConditionalValues(ImmutableMap.<String, ParameterValue>of(
                           "ios_en", ParameterValue.of("welcome to app en")
                   ))
-                  .setDescription("text for welcome message!"),
+                  .setDescription("text for welcome message!")
+                  .setValueType(ParameterValueType.STRING),
           "header_text", new Parameter()
                   .setDefaultValue(ParameterValue.inAppDefault())
+                  .setValueType(ParameterValueType.STRING)
   );
 
   private static final Map<String, ParameterGroup> EXPECTED_PARAMETER_GROUPS = ImmutableMap.of(
@@ -97,6 +99,7 @@ public class FirebaseRemoteConfigClientImplTest {
                           "pumpkin_spice_season", new Parameter()
                                   .setDefaultValue(ParameterValue.of("true"))
                                   .setDescription("Whether it's currently pumpkin spice season.")
+                                  .setValueType(ParameterValueType.BOOLEAN)
                           )
                   )
   );
