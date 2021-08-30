@@ -169,14 +169,6 @@ public class FirebaseOptionsTest {
         .build();
   }
 
-  @Test(expected = NullPointerException.class)
-  public void createOptionsWithNullThreadManager() {
-    FirebaseOptions.builder()
-        .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
-        .setThreadManager(null)
-        .build();
-  }
-
   @Test
   public void checkToBuilderCreatesNewEquivalentInstance() {
     FirebaseOptions allValuesOptionsCopy = ALL_VALUES_OPTIONS.toBuilder().build();
