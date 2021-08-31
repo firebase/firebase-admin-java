@@ -421,7 +421,8 @@ public final class FirebaseOptions {
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setHttpTransport(HttpTransport httpTransport) {
-      this.httpTransport = httpTransport;
+      this.httpTransport = checkNotNull(httpTransport,
+          "FirebaseOptions must be initialized with a non-null HttpTransport.");
       return this;
     }
 
@@ -433,7 +434,8 @@ public final class FirebaseOptions {
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setJsonFactory(JsonFactory jsonFactory) {
-      this.jsonFactory = jsonFactory;
+      this.jsonFactory = checkNotNull(jsonFactory,
+            "FirebaseOptions must be initialized with a non-null JsonFactory.");
       return this;
     }
 
@@ -445,7 +447,8 @@ public final class FirebaseOptions {
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setThreadManager(ThreadManager threadManager) {
-      this.threadManager = threadManager;
+      this.threadManager = checkNotNull(threadManager,
+            "FirebaseOptions must be initialized with a non-null ThreadManager.");
       return this;
     }
 
