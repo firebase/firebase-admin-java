@@ -55,7 +55,6 @@ public class TemplateTest {
                   .setDefaultValue(ParameterValue.inAppDefault())
                   .setDescription("greeting text")
                   .setConditionalValues(CONDITIONAL_VALUES)
-                  .setValueType(ParameterValueType.STRING)
   );
 
   private static final Map<String, ParameterGroup> PARAMETER_GROUPS = ImmutableMap.of(
