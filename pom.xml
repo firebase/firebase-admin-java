@@ -125,6 +125,7 @@
                             </additionalOptions>
                             <useStandardDocletOptions>false</useStandardDocletOptions>
                             <additionalJOption>-J-Xmx1024m</additionalJOption>
+                            <doclint>none</doclint>
                         </configuration>
                     </plugin>
                     <plugin>
