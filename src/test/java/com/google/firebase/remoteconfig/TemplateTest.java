@@ -49,7 +49,8 @@ public class TemplateTest {
           "greeting_header", new Parameter()
                   .setDefaultValue(ParameterValue.inAppDefault())
                   .setDescription("greeting header text")
-                  .setConditionalValues(CONDITIONAL_VALUES),
+                  .setConditionalValues(CONDITIONAL_VALUES)
+                  .setValueType(ParameterValueType.STRING),
           "greeting_text", new Parameter()
                   .setDefaultValue(ParameterValue.inAppDefault())
                   .setDescription("greeting text")
@@ -274,15 +275,17 @@ public class TemplateTest {
   public void testToJSONWithParameterValues() {
     Template t = new Template();
     t.getParameters()
-            .put("with_value", new Parameter().setDefaultValue(ParameterValue.of("hello")));
+            .put("with_value", new Parameter().setDefaultValue(ParameterValue.of("hello"))
+                    .setValueType(ParameterValueType.NUMBER));
     t.getParameters()
             .put("with_inApp", new Parameter().setDefaultValue(ParameterValue.inAppDefault()));
     String jsonString = t.toJSON();
 
     assertEquals("{\"conditions\":[],\"parameterGroups\":{},"
             + "\"parameters\":{\"with_value\":{\"conditionalValues\":{},"
-            + "\"defaultValue\":{\"value\":\"hello\"}},\"with_inApp\":{\"conditionalValues\":{},"
-            + "\"defaultValue\":{\"useInAppDefault\":true}}}}", jsonString);
+            + "\"defaultValue\":{\"value\":\"hello\"},\"valueType\":\"NUMBER\"},\"with_inApp\":{"
+            + "\"conditionalValues\":{},\"defaultValue\":{\"useInAppDefault\":true}"
+            + "}}}", jsonString);
   }
 
   @Test

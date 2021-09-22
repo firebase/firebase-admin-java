@@ -18,6 +18,7 @@ package com.google.firebase.remoteconfig;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.base.Strings;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterResponse;
@@ -37,6 +38,7 @@ public final class Parameter {
   private ParameterValue defaultValue;
   private String description;
   private Map<String, ParameterValue> conditionalValues;
+  private ParameterValueType valueType;
 
   /**
    * Creates a new {@link Parameter}.
@@ -59,6 +61,9 @@ public final class Parameter {
     this.defaultValue = (responseDefaultValue == null) ? null
             : ParameterValue.fromParameterValueResponse(responseDefaultValue);
     this.description = parameterResponse.getDescription();
+    if (!Strings.isNullOrEmpty(parameterResponse.getValueType())) {
+      this.valueType = ParameterValueType.valueOf(parameterResponse.getValueType());
+    }
   }
 
   /**
@@ -91,6 +96,16 @@ public final class Parameter {
   @NonNull
   public Map<String, ParameterValue> getConditionalValues() {
     return conditionalValues;
+  }
+
+  /**
+   * Gets the data type of the parameter value.
+   *
+   * @return The data type of the parameter value or null.
+   */
+  @Nullable
+  public ParameterValueType getValueType() {
+    return valueType;
   }
 
   /**
@@ -133,6 +148,18 @@ public final class Parameter {
     return this;
   }
 
+  /**
+   * Sets the data type of the parameter value.
+   * Defaults to `ParameterValueType.STRING` if unspecified.
+   *
+   * @param valueType The data type of the parameter value.
+   * @return This {@link Parameter}.
+   */
+  public Parameter setValueType(@Nullable ParameterValueType valueType) {
+    this.valueType = valueType;
+    return this;
+  }
+
   ParameterResponse toParameterResponse() {
     Map<String, ParameterValueResponse> conditionalResponseValues = new HashMap<>();
     for (Map.Entry<String, ParameterValue> entry : conditionalValues.entrySet()) {
@@ -143,7 +170,8 @@ public final class Parameter {
     return new ParameterResponse()
             .setDefaultValue(defaultValueResponse)
             .setDescription(description)
-            .setConditionalValues(conditionalResponseValues);
+            .setConditionalValues(conditionalResponseValues)
+            .setValueType(this.valueType == null ? null : this.valueType.getValueType());
   }
 
   @Override
@@ -157,11 +185,12 @@ public final class Parameter {
     Parameter parameter = (Parameter) o;
     return Objects.equals(defaultValue, parameter.defaultValue)
             && Objects.equals(description, parameter.description)
-            && Objects.equals(conditionalValues, parameter.conditionalValues);
+            && Objects.equals(conditionalValues, parameter.conditionalValues)
+            && Objects.equals(valueType, parameter.valueType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(defaultValue, description, conditionalValues);
+    return Objects.hash(defaultValue, description, conditionalValues, valueType);
   }
 }

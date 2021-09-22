@@ -249,9 +249,11 @@ public class FirebaseRemoteConfigIT {
                             "ios_en",
                             ParameterValue.of(String.format("welcome to app en %s", timestamp))
                     ))
-                    .setDescription("text for welcome message!"),
+                    .setDescription("text for welcome message!")
+                    .setValueType(ParameterValueType.STRING),
             "header_text", new Parameter()
-                    .setDefaultValue(ParameterValue.inAppDefault()));
+                    .setDefaultValue(ParameterValue.inAppDefault())
+                    .setValueType(ParameterValueType.STRING));
   }
 
   private Map<String, ParameterGroup> getParameterGroups() {
@@ -262,7 +264,8 @@ public class FirebaseRemoteConfigIT {
                     .setParameters(ImmutableMap.of(
                             "pumpkin_spice_season", new Parameter()
                                     .setDefaultValue(ParameterValue.of("true"))
-                                    .setDescription("Whether it's currently pumpkin spice season."))
+                                    .setDescription("Whether it's currently pumpkin spice season.")
+                                    .setValueType(ParameterValueType.STRING))
                     ));
   }
 

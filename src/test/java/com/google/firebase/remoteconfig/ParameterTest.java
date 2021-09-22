@@ -38,6 +38,7 @@ public class ParameterTest {
     assertTrue(parameter.getConditionalValues().isEmpty());
     assertNull(parameter.getDefaultValue());
     assertNull(parameter.getDescription());
+    assertNull(parameter.getValueType());
   }
 
   @Test(expected = NullPointerException.class)
@@ -84,8 +85,23 @@ public class ParameterTest {
             .setConditionalValues(conditionalValues);
 
     assertEquals(parameterFive, parameterSix);
+
+    final Parameter parameterSeven = new Parameter()
+            .setDefaultValue(ParameterValue.inAppDefault())
+            .setDescription("greeting text")
+            .setConditionalValues(conditionalValues)
+            .setValueType(ParameterValueType.STRING);
+    final Parameter parameterEight = new Parameter()
+            .setDefaultValue(ParameterValue.inAppDefault())
+            .setDescription("greeting text")
+            .setConditionalValues(conditionalValues)
+            .setValueType(ParameterValueType.STRING);
+
+    assertEquals(parameterSeven, parameterEight);
     assertNotEquals(parameterOne, parameterThree);
     assertNotEquals(parameterOne, parameterFive);
+    assertNotEquals(parameterOne, parameterSeven);
     assertNotEquals(parameterThree, parameterFive);
+    assertNotEquals(parameterThree, parameterSeven);
   }
 }
