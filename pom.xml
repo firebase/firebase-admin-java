@@ -78,16 +78,6 @@
 
     <profiles>
         <profile>
-            <!-- Disable Doclint on Java 8 and higher -->
-            <id>disable-java8-doclint</id>
-            <activation>
-                <jdk>[1.8,)</jdk>
-            </activation>
-            <properties>
-                <additionalparam>-Xdoclint:none</additionalparam>
-            </properties>
-        </profile>
-        <profile>
             <id>devsite-apidocs</id>
             <activation>
                 <property>
@@ -123,18 +113,19 @@
                                     <version>1.3</version>
                                 </additionalDependency>
                             </additionalDependencies>
-                            <additionalparam>
-                                -hdf book.path /docs/reference/_book.yaml
-                                -hdf project.path /_project.yaml
-                                -hdf devsite.path /docs/reference/admin/java/reference/
-                                -d ${project.build.directory}/apidocs
-                                -templatedir ${devsite.template}
-                                -toroot /docs/reference/admin/java/reference/
-                                -yaml _toc.yaml
-                                -warning 101
-                            </additionalparam>
+                            <additionalOptions>
+                                <additionalOption>-hdf book.path /docs/reference/_book.yaml</additionalOption>
+                                <additionalOption>-hdf project.path /_project.yaml</additionalOption>
+                                <additionalOption>-hdf devsite.path /docs/reference/admin/java/reference/</additionalOption>
+                                <additionalOption>-d ${project.build.directory}/apidocs</additionalOption>
+                                <additionalOption>-templatedir ${devsite.template}</additionalOption>
+                                <additionalOption>-toroot /docs/reference/admin/java/reference/</additionalOption>
+                                <additionalOption>-yaml _toc.yaml</additionalOption>
+                                <additionalOption>-warning 101</additionalOption>
+                            </additionalOptions>
                             <useStandardDocletOptions>false</useStandardDocletOptions>
                             <additionalJOption>-J-Xmx1024m</additionalJOption>
+                            <doclint>none</doclint>
                         </configuration>
                     </plugin>
                     <plugin>
@@ -334,11 +325,12 @@
                             <version>1.3</version>
                         </additionalDependency>
                     </additionalDependencies>
-                    <additionalparam>
-                        -warning 101
-                    </additionalparam>
+                    <additionalOptions>
+                        <additionalOption>-warning 101</additionalOption>
+                    </additionalOptions>
                     <useStandardDocletOptions>false</useStandardDocletOptions>
                     <additionalJOption>-J-Xmx1024m</additionalJOption>
+                    <doclint>none</doclint>
                 </configuration>
             </plugin>
 
