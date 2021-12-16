@@ -7,32 +7,40 @@ assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+---
+**Thank you for submitting your issue. We are operating at reduced capacity from Dec 17 2021 to Jan 4 2022. Please expect delayed responses. For more urgent requests please reach us via our support channels https://firebase.google.com/support**
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+---
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+### [READ] Step 1: Are you in the right place?
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+  * For issues or feature requests related to __the code in this repository__
+    file a Github issue.
+    * If this is a __feature request__ make sure the issue title starts with "FR:".
+  * For general technical questions, post a question on [StackOverflow](http://stackoverflow.com/)
+    with the firebase tag.
+  * For general Firebase discussion, use the [firebase-talk](https://groups.google.com/forum/#!forum/firebase-talk)
+    google group.
+  * For help troubleshooting your application that does not fall under one
+    of the above categories, reach out to the personalized
+    [Firebase support channel](https://firebase.google.com/support/).
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+### [REQUIRED] Step 2: Describe your environment
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+  * Operating System version: _____
+  * Firebase SDK version: _____
+  * Library version: _____
+  * Firebase Product: _____ (auth, database, storage, etc)
 
-**Additional context**
-Add any other context about the problem here.
+### [REQUIRED] Step 3: Describe the problem
+
+#### Steps to reproduce:
+
+What happened? How can we make the problem occur?
+This could be a description, log/console output, etc.
+
+#### Relevant Code:
+
+```
+// TODO(you): code here to reproduce the problem
+```
