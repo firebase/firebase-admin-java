@@ -392,7 +392,7 @@
             <dependency>
                 <groupId>com.google.api-client</groupId>
                 <artifactId>google-api-client-bom</artifactId>
-                <version>1.33.0</version>
+                <version>1.33.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -438,7 +438,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.33</version>
+            <version>1.7.35</version>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
