@@ -20,6 +20,9 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
+import com.google.firebase.auth.hash.Argon2;
+import com.google.firebase.auth.hash.Argon2.Argon2HashType;
+import com.google.firebase.auth.hash.Argon2.Argon2Version;
 import com.google.firebase.auth.hash.Bcrypt;
 import com.google.firebase.auth.hash.HmacMd5;
 import com.google.firebase.auth.hash.HmacSha1;
@@ -42,6 +45,7 @@ public class UserImportHashTest {
   private static final byte[] SALT_SEPARATOR = "separator".getBytes();
 
   private static class MockHash extends UserImportHash {
+
     MockHash() {
       super("MOCK_HASH");
     }
@@ -107,6 +111,34 @@ public class UserImportHashTest {
         "memoryCost", 4
     );
     assertEquals(properties, scrypt.getProperties());
+  }
+
+  @Test
+  public void testArgon2Hash() {
+    /* base64 encoded {"hello": "world"} */
+    byte[] associatedData = "eyJoZWxsbyI6ICJ3b3JsZCJ9".getBytes();
+
+    UserImportHash argon2 = Argon2.builder()
+        .setHashLengthBytes(512)
+        .setHashType(Argon2HashType.ARGON2_ID)
+        .setParallelism(8)
+        .setIterations(16)
+        .setMemoryCostKib(512)
+        .setVersion(Argon2Version.VERSION_10)
+        .setAssociatedData(associatedData)
+        .build();
+
+    Map<String, Object> properties = ImmutableMap.<String, Object>builder()
+        .put("hashAlgorithm", "ARGON2")
+        .put("hashLengthBytes", 512)
+        .put("hashType", "ARGON2_ID")
+        .put("parallelism", 8)
+        .put("iterations", 16)
+        .put("memoryCostKib", 512)
+        .put("version", 0x10)
+        .put("associatedData", associatedData)
+        .build();
+    assertEquals(properties, argon2.getProperties());
   }
 
   @Test
