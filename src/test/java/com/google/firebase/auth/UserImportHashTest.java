@@ -125,7 +125,7 @@ public class UserImportHashTest {
         .setIterations(16)
         .setMemoryCostKib(512)
         .setVersion(Argon2Version.VERSION_10)
-        .setAssociatedData(associatedData)
+        // .setAssociatedData(associatedData)
         .build();
 
     Map<String, Object> properties = ImmutableMap.<String, Object>builder()
@@ -136,7 +136,7 @@ public class UserImportHashTest {
         .put("iterations", 16)
         .put("memoryCostKib", 512)
         .put("version", 0x10)
-        .put("associatedData", associatedData)
+        // .put("associatedData", associatedData)
         .build();
     assertEquals(properties, argon2.getProperties());
   }

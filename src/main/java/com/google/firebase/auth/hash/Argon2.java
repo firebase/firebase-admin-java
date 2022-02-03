@@ -19,8 +19,10 @@ package com.google.firebase.auth.hash;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.io.BaseEncoding;
 import com.google.firebase.auth.UserImportHash;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Represents the Argon2 password hashing algorithm. Can be used as an instance of {@link
@@ -58,20 +60,26 @@ public final class Argon2 extends UserImportHash {
     } else {
       this.version = Argon2Version.VERSION_13;
     }
-    this.associatedData = builder.associatedData;
+    if (builder.associatedData != null) {
+      this.associatedData = builder.associatedData;
+    } else {
+      this.associatedData = null;
+    }
   }
 
   @Override
   protected Map<String, Object> getOptions() {
-    return ImmutableMap.<String, Object>builder()
+    ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
         .put("hashLengthBytes", hashLengthBytes)
         .put("hashType", hashType)
         .put("parallelism", parallelism)
         .put("iterations", iterations)
         .put("memoryCostKib", memoryCostKib)
-        .put("version", version.getValue())
-        .put("associatedData", associatedData)
-        .build();
+        .put("version", version.getValue());
+    if (this.associatedData != null) {
+      builder.put("associatedData", associatedData);
+    }
+    return builder.build();
   }
 
   public static Builder builder() {
