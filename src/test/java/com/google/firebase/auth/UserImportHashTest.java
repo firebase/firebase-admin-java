@@ -17,11 +17,8 @@
 package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.MapDifference;
-import com.google.common.collect.Maps;
 import com.google.common.io.BaseEncoding;
 import com.google.firebase.auth.hash.Argon2;
 import com.google.firebase.auth.hash.Argon2.Argon2HashType;
@@ -46,9 +43,9 @@ public class UserImportHashTest {
 
   private static final byte[] SIGNER_KEY = "key".getBytes();
   private static final byte[] SALT_SEPARATOR = "separator".getBytes();
+  private static final byte[] ARGON2_ASSOCIATED_DATA = "associatedData".getBytes();
 
   private static class MockHash extends UserImportHash {
-
     MockHash() {
       super("MOCK_HASH");
     }
@@ -141,14 +138,13 @@ public class UserImportHashTest {
 
   @Test
   public void testArgon2Hash_withAssociatedDataWithoutVersion() {
-    byte[] associatedData = "associatedData".getBytes();
     UserImportHash argon2 = Argon2.builder()
         .setHashLengthBytes(512)
         .setHashType(Argon2HashType.ARGON2_ID)
         .setParallelism(8)
         .setIterations(16)
         .setMemoryCostKib(512)
-        .setAssociatedData(associatedData)
+        .setAssociatedData(ARGON2_ASSOCIATED_DATA)
         .build();
 
     Map<String, Object> properties = ImmutableMap.<String, Object>builder()
@@ -158,7 +154,53 @@ public class UserImportHashTest {
         .put("parallelism", 8)
         .put("iterations", 16)
         .put("memoryCostKib", 512)
-        .put("associatedData", BaseEncoding.base64Url().encode(associatedData))
+        .put("associatedData", BaseEncoding.base64Url().encode(ARGON2_ASSOCIATED_DATA))
+        .build();
+    assertEquals(properties, argon2.getProperties());
+  }
+
+  @Test
+  public void testArgon2Hash_withAssociatedDataAndVersion() {
+    UserImportHash argon2 = Argon2.builder()
+        .setHashLengthBytes(512)
+        .setHashType(Argon2HashType.ARGON2_ID)
+        .setParallelism(8)
+        .setIterations(16)
+        .setMemoryCostKib(512)
+        .setAssociatedData(ARGON2_ASSOCIATED_DATA)
+        .setVersion(Argon2Version.VERSION_10)
+        .build();
+
+    Map<String, Object> properties = ImmutableMap.<String, Object>builder()
+        .put("hashAlgorithm", "ARGON2")
+        .put("hashLengthBytes", 512)
+        .put("hashType", "ARGON2_ID")
+        .put("parallelism", 8)
+        .put("iterations", 16)
+        .put("memoryCostKib", 512)
+        .put("associatedData", BaseEncoding.base64Url().encode(ARGON2_ASSOCIATED_DATA))
+        .put("version", "VERSION_10")
+        .build();
+    assertEquals(properties, argon2.getProperties());
+  }
+
+  @Test
+  public void testArgon2Hash_withoutAssociatedDataAndVersion() {
+    UserImportHash argon2 = Argon2.builder()
+        .setHashLengthBytes(512)
+        .setHashType(Argon2HashType.ARGON2_ID)
+        .setParallelism(8)
+        .setIterations(16)
+        .setMemoryCostKib(2048)
+        .build();
+
+    Map<String, Object> properties = ImmutableMap.<String, Object>builder()
+        .put("hashAlgorithm", "ARGON2")
+        .put("hashLengthBytes", 512)
+        .put("hashType", "ARGON2_ID")
+        .put("parallelism", 8)
+        .put("iterations", 16)
+        .put("memoryCostKib", 2048)
         .build();
     assertEquals(properties, argon2.getProperties());
   }
