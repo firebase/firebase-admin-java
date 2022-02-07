@@ -57,8 +57,7 @@ public final class Argon2 extends UserImportHash {
     if (builder.version != null) {
       this.version = builder.version;
     } else {
-      /* Default to VERSION_13 */
-      this.version = Argon2Version.VERSION_13;
+      this.version = null;
     }
     if (builder.associatedData != null) {
       this.associatedData = BaseEncoding.base64Url().encode(builder.associatedData);
@@ -74,10 +73,12 @@ public final class Argon2 extends UserImportHash {
         .put("hashType", hashType.toString())
         .put("parallelism", parallelism)
         .put("iterations", iterations)
-        .put("memoryCostKib", memoryCostKib)
-        .put("version", version.toString());
+        .put("memoryCostKib", memoryCostKib);
     if (this.associatedData != null) {
       builder.put("associatedData", associatedData);
+    }
+    if (this.version != null) {
+      builder.put("version", version.toString());
     }
     return builder.build();
   }

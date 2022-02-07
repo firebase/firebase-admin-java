@@ -117,7 +117,7 @@ public class UserImportHashTest {
   }
 
   @Test
-  public void testArgon2Hash_withoutAssociatedData() {
+  public void testArgon2Hash_withoutAssociatedDataWithVersion() {
     UserImportHash argon2 = Argon2.builder()
         .setHashLengthBytes(512)
         .setHashType(Argon2HashType.ARGON2_ID)
@@ -140,7 +140,7 @@ public class UserImportHashTest {
   }
 
   @Test
-  public void testArgon2Hash_withAssociatedData() {
+  public void testArgon2Hash_withAssociatedDataWithoutVersion() {
     byte[] associatedData = "associatedData".getBytes();
     UserImportHash argon2 = Argon2.builder()
         .setHashLengthBytes(512)
@@ -158,7 +158,6 @@ public class UserImportHashTest {
         .put("parallelism", 8)
         .put("iterations", 16)
         .put("memoryCostKib", 512)
-        .put("version", "VERSION_13")
         .put("associatedData", BaseEncoding.base64Url().encode(associatedData))
         .build();
     assertEquals(properties, argon2.getProperties());
