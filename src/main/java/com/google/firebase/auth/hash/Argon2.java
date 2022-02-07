@@ -29,6 +29,15 @@ import java.util.Map;
  */
 public final class Argon2 extends UserImportHash {
 
+  private static final int MIN_HASH_LENGTH_BYTES = 4;
+  private static final int MAX_HASH_LENGTH_BYTES = 1024;
+  private static final int MIN_PARALLELISM = 1;
+  private static final int MAX_PARALLELISM = 16;
+  private static final int MIN_ITERATIONS = 1;
+  private static final int MAX_ITERATIONS = 16;
+  private static final int MIN_MEMORY_COST_KIB = 1;
+  private static final int MAX_MEMORY_COST_KIB = 32768;
+
   private final int hashLengthBytes;
   private final Argon2HashType hashType;
   private final int parallelism;
@@ -39,16 +48,24 @@ public final class Argon2 extends UserImportHash {
 
   private Argon2(Builder builder) {
     super("ARGON2");
-    checkArgument(builder.hashLengthBytes >= 4 && builder.hashLengthBytes <= 1024,
-        "hashLengthBytes is required for Argon2 and must be between 4 and 1024");
+    checkArgument(intShouldBeBetweenLimitsInclusive(builder.hashLengthBytes, MIN_HASH_LENGTH_BYTES,
+            MAX_HASH_LENGTH_BYTES),
+        "hashLengthBytes is required for Argon2 and must be between %s and %s",
+        MIN_HASH_LENGTH_BYTES, MAX_HASH_LENGTH_BYTES);
     checkArgument(builder.hashType != null,
         "A hashType is required for Argon2");
-    checkArgument(builder.parallelism >= 1 && builder.parallelism <= 16,
-        "parallelism is required for Argon2 and must be between 1 and 16");
-    checkArgument(builder.iterations >= 1 && builder.iterations <= 16,
-        "iterations is required for Argon2 and must be between 1 and 16");
-    checkArgument(builder.memoryCostKib > 0 && builder.memoryCostKib <= 32768,
-        "memoryCostKib is required for Argon2 and must be less than or equal to 32768");
+    checkArgument(
+        intShouldBeBetweenLimitsInclusive(builder.parallelism, MIN_PARALLELISM, MAX_PARALLELISM),
+        "parallelism is required for Argon2 and must be between %s and %s", MIN_PARALLELISM,
+        MAX_PARALLELISM);
+    checkArgument(
+        intShouldBeBetweenLimitsInclusive(builder.iterations, MIN_ITERATIONS, MAX_ITERATIONS),
+        "iterations is required for Argon2 and must be between %s and %s", MIN_ITERATIONS,
+        MAX_ITERATIONS);
+    checkArgument(intShouldBeBetweenLimitsInclusive(builder.memoryCostKib, MIN_MEMORY_COST_KIB,
+            MAX_MEMORY_COST_KIB),
+        "memoryCostKib is required for Argon2 and must be less than or equal to %s",
+        MAX_MEMORY_COST_KIB);
     this.hashLengthBytes = builder.hashLengthBytes;
     this.hashType = builder.hashType;
     this.parallelism = builder.parallelism;
@@ -64,6 +81,11 @@ public final class Argon2 extends UserImportHash {
     } else {
       this.associatedData = null;
     }
+  }
+
+  private static boolean intShouldBeBetweenLimitsInclusive(int property, int fromInclusive,
+      int toInclusive) {
+    return property >= fromInclusive && property <= toInclusive;
   }
 
   @Override

@@ -170,18 +170,18 @@ public class InvalidHashTest {
             .setHashLengthBytes(32)
             .setIterations(32)
             .setMemoryCostKib(512),
-        Argon2.builder() // memoryCostKib < 0
+        Argon2.builder() // memoryCostKib < 1
             .setHashType(Argon2HashType.ARGON2_ID)
             .setParallelism(16)
             .setHashLengthBytes(32)
             .setIterations(8)
-            .setMemoryCostKib(-1),
+            .setMemoryCostKib(0),
         Argon2.builder() // memoryCostKib > 32768
             .setHashType(Argon2HashType.ARGON2_ID)
             .setParallelism(16)
             .setHashLengthBytes(32)
             .setIterations(8)
-            .setMemoryCostKib(99999)
+            .setMemoryCostKib(32769)
     );
     for (Argon2.Builder builder : builders) {
       try {
