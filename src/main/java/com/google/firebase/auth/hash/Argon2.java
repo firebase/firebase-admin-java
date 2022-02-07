@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
 import com.google.firebase.auth.UserImportHash;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * Represents the Argon2 password hashing algorithm. Can be used as an instance of {@link
@@ -36,7 +35,7 @@ public final class Argon2 extends UserImportHash {
   private final int iterations;
   private final int memoryCostKib;
   private final Argon2Version version;
-  private final byte[] associatedData;
+  private final String associatedData;
 
   private Argon2(Builder builder) {
     super("ARGON2");
@@ -58,10 +57,11 @@ public final class Argon2 extends UserImportHash {
     if (builder.version != null) {
       this.version = builder.version;
     } else {
+      /* Default to VERSION_13 */
       this.version = Argon2Version.VERSION_13;
     }
     if (builder.associatedData != null) {
-      this.associatedData = builder.associatedData;
+      this.associatedData = BaseEncoding.base64Url().encode(builder.associatedData);
     } else {
       this.associatedData = null;
     }
@@ -71,11 +71,11 @@ public final class Argon2 extends UserImportHash {
   protected Map<String, Object> getOptions() {
     ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
         .put("hashLengthBytes", hashLengthBytes)
-        .put("hashType", hashType)
+        .put("hashType", hashType.toString())
         .put("parallelism", parallelism)
         .put("iterations", iterations)
         .put("memoryCostKib", memoryCostKib)
-        .put("version", version.getValue());
+        .put("version", version.toString());
     if (this.associatedData != null) {
       builder.put("associatedData", associatedData);
     }
@@ -146,17 +146,7 @@ public final class Argon2 extends UserImportHash {
   }
 
   public enum Argon2Version {
-    VERSION_10(0x10),
-    VERSION_13(0x13);
-
-    private final int value;
-
-    Argon2Version(final int newValue) {
-      value = newValue;
-    }
-
-    public int getValue() {
-      return value;
-    }
+    VERSION_10,
+    VERSION_13
   }
 }
