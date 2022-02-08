@@ -119,39 +119,81 @@ public final class Argon2 extends UserImportHash {
     private Argon2Version version;
     private byte[] associatedData;
 
-    private Builder() {
-    }
+    private Builder() {}
 
+    /**
+     * Sets the hash length in bytes. Required field.
+     *
+     * @param hashLengthBytes an integer between 4 and 1024 (inclusive).
+     * @return This builder.
+     */
     public Builder setHashLengthBytes(int hashLengthBytes) {
       this.hashLengthBytes = hashLengthBytes;
       return this;
     }
 
+    /**
+     * Sets the Argon2 hash type. Required field.
+     *
+     * @param hashType a value from the {@link Argon2HashType} enum.
+     * @return This builder.
+     */
     public Builder setHashType(Argon2HashType hashType) {
       this.hashType = hashType;
       return this;
     }
 
+    /**
+     * Sets the degree of parallelism, also called threads or lanes. Required field.
+     *
+     * @param parallelism an integer between 1 and 16 (inclusive).
+     * @return This builder.
+     */
     public Builder setParallelism(int parallelism) {
       this.parallelism = parallelism;
       return this;
     }
 
+    /**
+     * Sets the number of iterations to perform. Required field.
+     *
+     * @param iterations an integer between 1 and 16 (inclusive).
+     * @return This builder.
+     */
     public Builder setIterations(int iterations) {
       this.iterations = iterations;
       return this;
     }
 
+    /**
+     * Sets the memory cost in kibibytes. Required field.
+     *
+     * @param memoryCostKib an integer between 1 and 32768 (inclusive).
+     * @return This builder.
+     */
     public Builder setMemoryCostKib(int memoryCostKib) {
       this.memoryCostKib = memoryCostKib;
       return this;
     }
 
+    /**
+     * Sets the version of the Argon2 algorithm.
+     *
+     * @param version a value from the {@link Argon2Version} enum.
+     * @return This builder.
+     */
     public Builder setVersion(Argon2Version version) {
       this.version = version;
       return this;
     }
 
+    /**
+     * Sets additional associated data, if provided, to append to the hash value for additional
+     * security. This data is base64 encoded before it is sent to the API.
+     *
+     * @param associatedData Associated data as a byte array.
+     * @return This builder.
+     */
     public Builder setAssociatedData(byte[] associatedData) {
       this.associatedData = associatedData;
       return this;
