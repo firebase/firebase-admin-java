@@ -124,8 +124,7 @@ public class UserImportHashTest {
         .setVersion(Argon2Version.VERSION_10)
         .build();
 
-    Map<String, Object> properties = ImmutableMap.<String, Object>builder()
-        .put("hashAlgorithm", "ARGON2")
+    Map<String, Object> argon2Parameters = ImmutableMap.<String, Object>builder()
         .put("hashLengthBytes", 512)
         .put("hashType", "ARGON2_ID")
         .put("parallelism", 8)
@@ -133,7 +132,7 @@ public class UserImportHashTest {
         .put("memoryCostKib", 512)
         .put("version", "VERSION_10")
         .build();
-    assertEquals(properties, argon2.getProperties());
+    assertEquals(getArgon2ParametersMap(argon2Parameters), argon2.getProperties());
   }
 
   @Test
@@ -147,8 +146,7 @@ public class UserImportHashTest {
         .setAssociatedData(ARGON2_ASSOCIATED_DATA)
         .build();
 
-    Map<String, Object> properties = ImmutableMap.<String, Object>builder()
-        .put("hashAlgorithm", "ARGON2")
+    Map<String, Object> argon2Parameters = ImmutableMap.<String, Object>builder()
         .put("hashLengthBytes", 512)
         .put("hashType", "ARGON2_ID")
         .put("parallelism", 8)
@@ -156,7 +154,7 @@ public class UserImportHashTest {
         .put("memoryCostKib", 512)
         .put("associatedData", BaseEncoding.base64Url().encode(ARGON2_ASSOCIATED_DATA))
         .build();
-    assertEquals(properties, argon2.getProperties());
+    assertEquals(getArgon2ParametersMap(argon2Parameters), argon2.getProperties());
   }
 
   @Test
@@ -171,8 +169,7 @@ public class UserImportHashTest {
         .setVersion(Argon2Version.VERSION_10)
         .build();
 
-    Map<String, Object> properties = ImmutableMap.<String, Object>builder()
-        .put("hashAlgorithm", "ARGON2")
+    Map<String, Object> argon2Parameters = ImmutableMap.<String, Object>builder()
         .put("hashLengthBytes", 512)
         .put("hashType", "ARGON2_ID")
         .put("parallelism", 8)
@@ -181,7 +178,7 @@ public class UserImportHashTest {
         .put("associatedData", BaseEncoding.base64Url().encode(ARGON2_ASSOCIATED_DATA))
         .put("version", "VERSION_10")
         .build();
-    assertEquals(properties, argon2.getProperties());
+    assertEquals(getArgon2ParametersMap(argon2Parameters), argon2.getProperties());
   }
 
   @Test
@@ -194,15 +191,14 @@ public class UserImportHashTest {
         .setMemoryCostKib(2048)
         .build();
 
-    Map<String, Object> properties = ImmutableMap.<String, Object>builder()
-        .put("hashAlgorithm", "ARGON2")
+    Map<String, Object> argon2Parameters = ImmutableMap.<String, Object>builder()
         .put("hashLengthBytes", 512)
         .put("hashType", "ARGON2_ID")
         .put("parallelism", 8)
         .put("iterations", 16)
         .put("memoryCostKib", 2048)
         .build();
-    assertEquals(properties, argon2.getProperties());
+    assertEquals(getArgon2ParametersMap(argon2Parameters), argon2.getProperties());
   }
 
   @Test
@@ -246,5 +242,12 @@ public class UserImportHashTest {
     UserImportHash bcrypt = Bcrypt.getInstance();
     Map<String, Object> properties = ImmutableMap.<String, Object>of("hashAlgorithm", "BCRYPT");
     assertEquals(properties, bcrypt.getProperties());
+  }
+
+  private static ImmutableMap<String, Object> getArgon2ParametersMap(
+      Map<String, Object> argon2Parameters) {
+    return ImmutableMap.of(
+        "hashAlgorithm", "ARGON2",
+        "argon2Parameters", argon2Parameters);
   }
 }

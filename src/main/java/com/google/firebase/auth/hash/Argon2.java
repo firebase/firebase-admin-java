@@ -90,19 +90,19 @@ public final class Argon2 extends UserImportHash {
 
   @Override
   protected Map<String, Object> getOptions() {
-    ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object>builder()
+    ImmutableMap.Builder<String, Object> argon2Parameters = ImmutableMap.<String, Object>builder()
         .put("hashLengthBytes", hashLengthBytes)
         .put("hashType", hashType.toString())
         .put("parallelism", parallelism)
         .put("iterations", iterations)
         .put("memoryCostKib", memoryCostKib);
     if (this.associatedData != null) {
-      builder.put("associatedData", associatedData);
+      argon2Parameters.put("associatedData", associatedData);
     }
     if (this.version != null) {
-      builder.put("version", version.toString());
+      argon2Parameters.put("version", version.toString());
     }
-    return builder.build();
+    return ImmutableMap.<String, Object>of("argon2Parameters", argon2Parameters.build());
   }
 
   public static Builder builder() {
