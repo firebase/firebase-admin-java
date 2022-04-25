@@ -37,6 +37,9 @@ import com.google.firebase.auth.UserProvider;
 import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.google.firebase.auth.UserRecord.UpdateRequest;
+import com.google.firebase.auth.hash.Argon2;
+import com.google.firebase.auth.hash.Argon2.Argon2HashType;
+import com.google.firebase.auth.hash.Argon2.Argon2Version;
 import com.google.firebase.auth.hash.Bcrypt;
 import com.google.firebase.auth.hash.HmacSha256;
 import com.google.firebase.auth.hash.Pbkdf2Sha256;
@@ -586,6 +589,35 @@ public class FirebaseAuthSnippets {
       System.out.println("Error importing users: " + e.getMessage());
     }
     // [END import_with_scrypt]
+  }
+
+  public void importWithArgon2() {
+    // [START import_with_argon2]
+    try {
+      List<ImportUserRecord> users = Collections.singletonList(ImportUserRecord.builder()
+          .setUid("some-uid")
+          .setEmail("user@example.com")
+          .setPasswordHash("password-hash".getBytes())
+          .setPasswordSalt("salt".getBytes())
+          .build());
+      UserImportOptions options = UserImportOptions.withHash(
+          Argon2.builder()
+              .setHashLengthBytes(512)
+              .setHashType(Argon2HashType.ARGON2_ID)
+              .setParallelism(8)
+              .setIterations(16)
+              .setMemoryCostKib(2048)
+              .setVersion(Argon2Version.VERSION_10)
+              .setAssociatedData("associated-data".getBytes())
+              .build());
+      UserImportResult result = FirebaseAuth.getInstance().importUsers(users, options);
+      for (ErrorInfo indexedError : result.getErrors()) {
+        System.out.println("Failed to import user: " + indexedError.getReason());
+      }
+    } catch (FirebaseAuthException e) {
+      System.out.println("Error importing users: " + e.getMessage());
+    }
+    // [END import_with_argon2]
   }
 
   public void importWithoutPassword() {
