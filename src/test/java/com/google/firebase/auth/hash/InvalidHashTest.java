@@ -20,6 +20,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.auth.hash.Argon2.Argon2HashType;
 import java.util.List;
 import org.junit.Test;
 
@@ -116,6 +117,73 @@ public class InvalidHashTest {
             .setMemoryCost(15)
     );
     for (Scrypt.Builder builder : builders) {
+      try {
+        builder.build();
+        fail("No error thrown for invalid configuration");
+      } catch (IllegalArgumentException expected) {
+        // expected
+      }
+    }
+  }
+
+  @Test
+  public void testInvalidArgon2() {
+    List<Argon2.Builder> builders = ImmutableList.of(
+        Argon2.builder() // hashLengthBytes < 4
+            .setHashLengthBytes(2)
+            .setHashType(Argon2HashType.ARGON2_ID)
+            .setParallelism(8)
+            .setIterations(16)
+            .setMemoryCostKib(512),
+        Argon2.builder() // hashLengthBytes > 1024
+            .setHashLengthBytes(2048)
+            .setHashType(Argon2HashType.ARGON2_ID)
+            .setParallelism(8)
+            .setIterations(16)
+            .setMemoryCostKib(512),
+        Argon2.builder() // missing hashType
+            .setHashLengthBytes(32)
+            .setParallelism(8)
+            .setIterations(16)
+            .setMemoryCostKib(512),
+        Argon2.builder() // parallelism < 1
+            .setHashType(Argon2HashType.ARGON2_ID)
+            .setParallelism(0)
+            .setHashLengthBytes(32)
+            .setIterations(16)
+            .setMemoryCostKib(512),
+        Argon2.builder() // parallelism > 16
+            .setHashType(Argon2HashType.ARGON2_ID)
+            .setParallelism(32)
+            .setHashLengthBytes(32)
+            .setIterations(16)
+            .setMemoryCostKib(512),
+        Argon2.builder() // iterations < 1
+            .setHashType(Argon2HashType.ARGON2_ID)
+            .setParallelism(16)
+            .setHashLengthBytes(32)
+            .setIterations(0)
+            .setMemoryCostKib(512),
+        Argon2.builder() // iterations > 16
+            .setHashType(Argon2HashType.ARGON2_ID)
+            .setParallelism(16)
+            .setHashLengthBytes(32)
+            .setIterations(32)
+            .setMemoryCostKib(512),
+        Argon2.builder() // memoryCostKib < 1
+            .setHashType(Argon2HashType.ARGON2_ID)
+            .setParallelism(16)
+            .setHashLengthBytes(32)
+            .setIterations(8)
+            .setMemoryCostKib(0),
+        Argon2.builder() // memoryCostKib > 32768
+            .setHashType(Argon2HashType.ARGON2_ID)
+            .setParallelism(16)
+            .setHashLengthBytes(32)
+            .setIterations(8)
+            .setMemoryCostKib(32769)
+    );
+    for (Argon2.Builder builder : builders) {
       try {
         builder.build();
         fail("No error thrown for invalid configuration");

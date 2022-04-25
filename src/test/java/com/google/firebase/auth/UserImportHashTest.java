@@ -20,6 +20,9 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.BaseEncoding;
+import com.google.firebase.auth.hash.Argon2;
+import com.google.firebase.auth.hash.Argon2.Argon2HashType;
+import com.google.firebase.auth.hash.Argon2.Argon2Version;
 import com.google.firebase.auth.hash.Bcrypt;
 import com.google.firebase.auth.hash.HmacMd5;
 import com.google.firebase.auth.hash.HmacSha1;
@@ -40,6 +43,7 @@ public class UserImportHashTest {
 
   private static final byte[] SIGNER_KEY = "key".getBytes();
   private static final byte[] SALT_SEPARATOR = "separator".getBytes();
+  private static final byte[] ARGON2_ASSOCIATED_DATA = "associatedData".getBytes();
 
   private static class MockHash extends UserImportHash {
     MockHash() {
@@ -110,6 +114,94 @@ public class UserImportHashTest {
   }
 
   @Test
+  public void testArgon2Hash_withoutAssociatedDataWithVersion() {
+    UserImportHash argon2 = Argon2.builder()
+        .setHashLengthBytes(512)
+        .setHashType(Argon2HashType.ARGON2_ID)
+        .setParallelism(8)
+        .setIterations(16)
+        .setMemoryCostKib(512)
+        .setVersion(Argon2Version.VERSION_10)
+        .build();
+
+    Map<String, Object> argon2Parameters = ImmutableMap.<String, Object>builder()
+        .put("hashLengthBytes", 512)
+        .put("hashType", "ARGON2_ID")
+        .put("parallelism", 8)
+        .put("iterations", 16)
+        .put("memoryCostKib", 512)
+        .put("version", "VERSION_10")
+        .build();
+    assertEquals(getArgon2ParametersMap(argon2Parameters), argon2.getProperties());
+  }
+
+  @Test
+  public void testArgon2Hash_withAssociatedDataWithoutVersion() {
+    UserImportHash argon2 = Argon2.builder()
+        .setHashLengthBytes(512)
+        .setHashType(Argon2HashType.ARGON2_ID)
+        .setParallelism(8)
+        .setIterations(16)
+        .setMemoryCostKib(512)
+        .setAssociatedData(ARGON2_ASSOCIATED_DATA)
+        .build();
+
+    Map<String, Object> argon2Parameters = ImmutableMap.<String, Object>builder()
+        .put("hashLengthBytes", 512)
+        .put("hashType", "ARGON2_ID")
+        .put("parallelism", 8)
+        .put("iterations", 16)
+        .put("memoryCostKib", 512)
+        .put("associatedData", BaseEncoding.base64Url().encode(ARGON2_ASSOCIATED_DATA))
+        .build();
+    assertEquals(getArgon2ParametersMap(argon2Parameters), argon2.getProperties());
+  }
+
+  @Test
+  public void testArgon2Hash_withAssociatedDataAndVersion() {
+    UserImportHash argon2 = Argon2.builder()
+        .setHashLengthBytes(512)
+        .setHashType(Argon2HashType.ARGON2_ID)
+        .setParallelism(8)
+        .setIterations(16)
+        .setMemoryCostKib(512)
+        .setAssociatedData(ARGON2_ASSOCIATED_DATA)
+        .setVersion(Argon2Version.VERSION_10)
+        .build();
+
+    Map<String, Object> argon2Parameters = ImmutableMap.<String, Object>builder()
+        .put("hashLengthBytes", 512)
+        .put("hashType", "ARGON2_ID")
+        .put("parallelism", 8)
+        .put("iterations", 16)
+        .put("memoryCostKib", 512)
+        .put("associatedData", BaseEncoding.base64Url().encode(ARGON2_ASSOCIATED_DATA))
+        .put("version", "VERSION_10")
+        .build();
+    assertEquals(getArgon2ParametersMap(argon2Parameters), argon2.getProperties());
+  }
+
+  @Test
+  public void testArgon2Hash_withoutAssociatedDataAndVersion() {
+    UserImportHash argon2 = Argon2.builder()
+        .setHashLengthBytes(512)
+        .setHashType(Argon2HashType.ARGON2_ID)
+        .setParallelism(8)
+        .setIterations(16)
+        .setMemoryCostKib(2048)
+        .build();
+
+    Map<String, Object> argon2Parameters = ImmutableMap.<String, Object>builder()
+        .put("hashLengthBytes", 512)
+        .put("hashType", "ARGON2_ID")
+        .put("parallelism", 8)
+        .put("iterations", 16)
+        .put("memoryCostKib", 2048)
+        .build();
+    assertEquals(getArgon2ParametersMap(argon2Parameters), argon2.getProperties());
+  }
+
+  @Test
   public void testHmacHash() {
     Map<String, UserImportHash> hashes = ImmutableMap.<String, UserImportHash>of(
         "HMAC_SHA512", HmacSha512.builder().setKey(SIGNER_KEY).build(),
@@ -150,5 +242,12 @@ public class UserImportHashTest {
     UserImportHash bcrypt = Bcrypt.getInstance();
     Map<String, Object> properties = ImmutableMap.<String, Object>of("hashAlgorithm", "BCRYPT");
     assertEquals(properties, bcrypt.getProperties());
+  }
+
+  private static ImmutableMap<String, Object> getArgon2ParametersMap(
+      Map<String, Object> argon2Parameters) {
+    return ImmutableMap.of(
+        "hashAlgorithm", "ARGON2",
+        "argon2Parameters", argon2Parameters);
   }
 }
