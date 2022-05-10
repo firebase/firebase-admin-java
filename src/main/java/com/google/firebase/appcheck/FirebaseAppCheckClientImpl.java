@@ -56,11 +56,6 @@ final class FirebaseAppCheckClientImpl implements FirebaseAppCheckClient {
 
   @Override
   public VerifyAppCheckTokenResponse verifyToken(String token) throws FirebaseAppCheckException {
-    // Verify Token payload
-    // Verify token signature
-    // return the decoded token
-    // new DecodedAppCheckToken(payload)
-    // new VerifyAppCheckTokenResponse(token)
     DecodedAppCheckToken decodedAppCheckToken = tokenVerifier.verifyToken(token);
     return new VerifyAppCheckTokenResponse(decodedAppCheckToken);
   }
