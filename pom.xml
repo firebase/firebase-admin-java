@@ -367,7 +367,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.2.2</version>
+                <version>3.3.0</version>
                 <reportSets>
                     <reportSet>
                         <configuration>
@@ -385,7 +385,7 @@
             <dependency>
                 <groupId>com.google.cloud</groupId>
                 <artifactId>libraries-bom</artifactId>
-                <version>20.9.0</version>
+                <version>25.3.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
