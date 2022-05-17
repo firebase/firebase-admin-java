@@ -280,7 +280,7 @@
             <!-- Test Phase -->
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
+                <version>3.0.0-M6</version>
                 <configuration>
                     <skipTests>${skipUTs}</skipTests>
                 </configuration>
