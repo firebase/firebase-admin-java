@@ -21,7 +21,7 @@
       </activation>
       <properties>
         <gpg.executable>gpg</gpg.executable>
-        <gpg.keyname>A9B90B41060565F56F348F948B6B459CFD695DE8</gpg.keyname>
+        <gpg.keyname>8B6B459CFD695DE8</gpg.keyname>
         <gpg.passphrase>${env.GPG_PASSPHRASE}</gpg.passphrase>
       </properties>
     </profile>
