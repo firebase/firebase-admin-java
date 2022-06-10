@@ -46,7 +46,7 @@ requests, code review feedback, and also pull requests.
 
 ## Supported Java Versions
 
-We currently support Java 8 and higher. Firebase Admin Java SDK also runs on [Google App
+We currently support Java 8 and higher. The Firebase Admin Java SDK also runs on [Google App
 Engine](https://cloud.google.com/appengine/).
 
 The Firebase Admin Java SDK follows the [Oracle Java SE
