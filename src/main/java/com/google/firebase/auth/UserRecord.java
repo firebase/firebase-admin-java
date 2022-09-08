@@ -426,6 +426,16 @@ public class UserRecord implements UserInfo {
     Map<String, Object> getProperties() {
       return ImmutableMap.copyOf(properties);
     }
+
+    @Override
+    public boolean equals(Object o) {
+      return o instanceof CreateRequest && properties.equals(((CreateRequest) o).getProperties());
+    }
+
+    @Override
+    public int hashCode() {
+      return properties.hashCode();
+    }
   }
 
   /**
