@@ -1,5 +1,11 @@
 package com.google.firebase.cloud;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
+
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
@@ -13,8 +19,6 @@ import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
 import org.junit.After;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 public class FirestoreClientTest {
 
@@ -32,7 +36,7 @@ public class FirestoreClientTest {
 
   @Test
   public void testExplicitProjectId() throws IOException {
-    String databaseId = "databaseIdInTestExplicitProjectId";
+    final String databaseId = "databaseIdInTestExplicitProjectId";
     FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setProjectId("explicit-project-id")
@@ -55,7 +59,7 @@ public class FirestoreClientTest {
 
   @Test
   public void testServiceAccountProjectId() throws IOException {
-    String databaseId = "databaseIdInTestServiceAccountProjectId";
+    final String databaseId = "databaseIdInTestServiceAccountProjectId";
     FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setFirestoreOptions(FIRESTORE_OPTIONS)
@@ -77,7 +81,7 @@ public class FirestoreClientTest {
 
   @Test
   public void testFirestoreOptions() throws IOException {
-    String databaseId = "databaseIdInTestFirestoreOptions";
+    final String databaseId = "databaseIdInTestFirestoreOptions";
     FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setProjectId("explicit-project-id")
@@ -100,7 +104,7 @@ public class FirestoreClientTest {
 
   @Test
   public void testFirestoreOptionsOverride() throws IOException {
-    String databaseId = "databaseIdInTestFirestoreOptions";
+    final String databaseId = "databaseIdInTestFirestoreOptions";
     FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setProjectId("explicit-project-id")
@@ -120,7 +124,7 @@ public class FirestoreClientTest {
     Firestore firestore2 = FirestoreClient.getFirestore(app, databaseId);
     assertEquals("explicit-project-id", firestore2.getOptions().getProjectId());
     assertSame(ImplFirebaseTrampolines.getCredentials(app),
-            firestore2.getOptions().getCredentialsProvider().getCredentials());
+        firestore2.getOptions().getCredentialsProvider().getCredentials());
     assertEquals(databaseId, firestore2.getOptions().getDatabaseId());
 
     assertSame(firestore2, FirestoreClient.getFirestore(databaseId));
@@ -130,7 +134,7 @@ public class FirestoreClientTest {
 
   @Test
   public void testAppDelete() throws IOException {
-    String databaseId = "databaseIdInTestAppDelete";
+    final String databaseId = "databaseIdInTestAppDelete";
     FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setProjectId("mock-project-id")
