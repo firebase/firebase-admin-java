@@ -19,6 +19,7 @@ import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
 import org.junit.After;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 
 public class FirestoreClientTest {
 
@@ -135,7 +136,7 @@ public class FirestoreClientTest {
   @Test
   public void testAppDelete() throws IOException {
     final String databaseId = "databaseIdInTestAppDelete";
-    FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
+    final FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setProjectId("mock-project-id")
         .setFirestoreOptions(FIRESTORE_OPTIONS)
@@ -151,13 +152,33 @@ public class FirestoreClientTest {
 
     assertNotSame(firestore1, firestore2);
 
-    DocumentReference document = firestore1.collection("collection").document("doc");
+    final DocumentReference document = firestore1.collection("collection").document("doc");
     app.delete();
 
-    assertThrows(IllegalStateException.class, () -> FirestoreClient.getFirestore(app));
-    assertThrows(IllegalStateException.class, () -> document.get());
-    assertThrows(IllegalStateException.class, () -> FirestoreClient.getFirestore());
-    assertThrows(IllegalStateException.class, () -> FirestoreClient.getFirestore(app, databaseId));
-    assertThrows(IllegalStateException.class, () -> FirestoreClient.getFirestore(databaseId));
+    assertThrows(IllegalStateException.class, new ThrowingRunnable() {
+      public void run() {
+        FirestoreClient.getFirestore(app);
+      }
+    });
+    assertThrows(IllegalStateException.class, new ThrowingRunnable() {
+      public void run() throws Throwable {
+        document.get();
+      }
+    });
+    assertThrows(IllegalStateException.class, new ThrowingRunnable() {
+      public void run() throws Throwable {
+        FirestoreClient.getFirestore();
+      }
+    });
+    assertThrows(IllegalStateException.class, new ThrowingRunnable() {
+      public void run() throws Throwable {
+        FirestoreClient.getFirestore(app, databaseId);
+      }
+    });
+    assertThrows(IllegalStateException.class, new ThrowingRunnable() {
+      public void run() throws Throwable {
+        FirestoreClient.getFirestore(databaseId);
+      }
+    });
   }
 }

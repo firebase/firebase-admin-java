@@ -14,6 +14,7 @@ import com.google.firebase.internal.NonNull;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -139,15 +140,23 @@ public class FirestoreClient {
     private final FirebaseApp app;
 
     private final Map<String, FirestoreClient> clients =
-        Collections.synchronizedMap(new HashMap<>());
+        Collections.synchronizedMap(new HashMap<String, FirestoreClient>());
 
     private FirestoreInstances(FirebaseApp app) {
       this.app = app;
     }
 
     FirestoreClient get(String databaseId) {
-      return clients.computeIfAbsent(databaseId, id -> new FirestoreClient(app, id));
+      return clients.computeIfAbsent(databaseId, newFirestoreInstance);
     }
+
+    private final Function<String, FirestoreClient> newFirestoreInstance =
+        new Function<String, FirestoreClient>() {
+          @Override
+          public FirestoreClient apply(String id) {
+            return new FirestoreClient(app, id);
+          }
+        };
 
     void destroy() {
       synchronized (clients) {
