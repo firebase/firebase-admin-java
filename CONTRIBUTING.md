@@ -85,9 +85,7 @@ information on using pull requests.
 
 ### Initial Setup
 
-Install Java 7 or higher. You can also use Java 8, but please note that the Firebase Admin SDK must
-maintain full Java 7 compatibility. Therefore make sure that you do not use any Java 8 features
-(e.g. lambdas) when writing code for the Admin Java SDK.
+Install Java 8 or higher.
 
 We use [Apache Maven](http://maven.apache.org/) for building, testing and releasing the Admin Java
 SDK code. Follow the [installation guide](http://maven.apache.org/install.html), and install Maven
