@@ -2,9 +2,9 @@ package com.google.firebase.cloud;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.assertThrows;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.DocumentReference;
@@ -26,6 +26,7 @@ public class FirestoreClientTest {
       // Setting credentials is not required (they get overridden by Admin SDK), but without
       // this Firestore logs an ugly warning during tests.
       .setCredentials(new MockGoogleCredentials("test-token"))
+      .setDatabaseId("differedDefaultDatabaseId")
       .build();
 
   @After
@@ -35,47 +36,75 @@ public class FirestoreClientTest {
 
   @Test
   public void testExplicitProjectId() throws IOException {
+    final String databaseId = "databaseIdInTestExplicitProjectId";
     FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setProjectId("explicit-project-id")
         .setFirestoreOptions(FIRESTORE_OPTIONS)
         .build());
-    Firestore firestore = FirestoreClient.getFirestore(app);
-    assertEquals("explicit-project-id", firestore.getOptions().getProjectId());
+    Firestore firestore1 = FirestoreClient.getFirestore(app);
+    assertEquals("explicit-project-id", firestore1.getOptions().getProjectId());
+    assertEquals(FIRESTORE_OPTIONS.getDatabaseId(), firestore1.getOptions().getDatabaseId());
 
-    firestore = FirestoreClient.getFirestore();
-    assertEquals("explicit-project-id", firestore.getOptions().getProjectId());
+    assertSame(firestore1, FirestoreClient.getFirestore());
+
+    Firestore firestore2 = FirestoreClient.getFirestore(app, databaseId);
+    assertEquals("explicit-project-id", firestore2.getOptions().getProjectId());
+    assertEquals(databaseId, firestore2.getOptions().getDatabaseId());
+
+    assertSame(firestore2, FirestoreClient.getFirestore(databaseId));
+
+    assertNotSame(firestore1, firestore2);
   }
 
   @Test
   public void testServiceAccountProjectId() throws IOException {
+    final String databaseId = "databaseIdInTestServiceAccountProjectId";
     FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setFirestoreOptions(FIRESTORE_OPTIONS)
         .build());
-    Firestore firestore = FirestoreClient.getFirestore(app);
-    assertEquals("mock-project-id", firestore.getOptions().getProjectId());
+    Firestore firestore1 = FirestoreClient.getFirestore(app);
+    assertEquals("mock-project-id", firestore1.getOptions().getProjectId());
+    assertEquals(FIRESTORE_OPTIONS.getDatabaseId(), firestore1.getOptions().getDatabaseId());
 
-    firestore = FirestoreClient.getFirestore();
-    assertEquals("mock-project-id", firestore.getOptions().getProjectId());
+    assertSame(firestore1, FirestoreClient.getFirestore());
+
+    Firestore firestore2 = FirestoreClient.getFirestore(app, databaseId);
+    assertEquals("mock-project-id", firestore2.getOptions().getProjectId());
+    assertEquals(databaseId, firestore2.getOptions().getDatabaseId());
+
+    assertSame(firestore2, FirestoreClient.getFirestore(databaseId));
+
+    assertNotSame(firestore1, firestore2);
   }
 
   @Test
   public void testFirestoreOptions() throws IOException {
+    final String databaseId = "databaseIdInTestFirestoreOptions";
     FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setProjectId("explicit-project-id")
         .setFirestoreOptions(FIRESTORE_OPTIONS)
         .build());
-    Firestore firestore = FirestoreClient.getFirestore(app);
-    assertEquals("explicit-project-id", firestore.getOptions().getProjectId());
+    Firestore firestore1 = FirestoreClient.getFirestore(app);
+    assertEquals("explicit-project-id", firestore1.getOptions().getProjectId());
+    assertEquals(FIRESTORE_OPTIONS.getDatabaseId(), firestore1.getOptions().getDatabaseId());
 
-    firestore = FirestoreClient.getFirestore();
-    assertEquals("explicit-project-id", firestore.getOptions().getProjectId());
+    assertSame(firestore1, FirestoreClient.getFirestore());
+
+    Firestore firestore2 = FirestoreClient.getFirestore(app, databaseId);
+    assertEquals("explicit-project-id", firestore2.getOptions().getProjectId());
+    assertEquals(databaseId, firestore2.getOptions().getDatabaseId());
+
+    assertSame(firestore2, FirestoreClient.getFirestore(databaseId));
+
+    assertNotSame(firestore1, firestore2);
   }
 
   @Test
   public void testFirestoreOptionsOverride() throws IOException {
+    final String databaseId = "databaseIdInTestFirestoreOptions";
     FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setProjectId("explicit-project-id")
@@ -84,48 +113,51 @@ public class FirestoreClientTest {
             .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
             .build())
         .build());
-    Firestore firestore = FirestoreClient.getFirestore(app);
-    assertEquals("explicit-project-id", firestore.getOptions().getProjectId());
+    Firestore firestore1 = FirestoreClient.getFirestore(app);
+    assertEquals("explicit-project-id", firestore1.getOptions().getProjectId());
     assertSame(ImplFirebaseTrampolines.getCredentials(app),
-        firestore.getOptions().getCredentialsProvider().getCredentials());
+        firestore1.getOptions().getCredentialsProvider().getCredentials());
+    assertEquals("(default)", firestore1.getOptions().getDatabaseId());
 
-    firestore = FirestoreClient.getFirestore();
-    assertEquals("explicit-project-id", firestore.getOptions().getProjectId());
+    assertSame(firestore1, FirestoreClient.getFirestore());
+
+    Firestore firestore2 = FirestoreClient.getFirestore(app, databaseId);
+    assertEquals("explicit-project-id", firestore2.getOptions().getProjectId());
     assertSame(ImplFirebaseTrampolines.getCredentials(app),
-        firestore.getOptions().getCredentialsProvider().getCredentials());
+        firestore2.getOptions().getCredentialsProvider().getCredentials());
+    assertEquals(databaseId, firestore2.getOptions().getDatabaseId());
+
+    assertSame(firestore2, FirestoreClient.getFirestore(databaseId));
+
+    assertNotSame(firestore1, firestore2);
   }
 
   @Test
   public void testAppDelete() throws IOException {
+    final String databaseId = "databaseIdInTestAppDelete";
     FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
         .setProjectId("mock-project-id")
         .setFirestoreOptions(FIRESTORE_OPTIONS)
         .build());
 
-    Firestore firestore = FirestoreClient.getFirestore(app);
-    assertNotNull(firestore);
-    DocumentReference document = firestore.collection("collection").document("doc");
+    Firestore firestore1 = FirestoreClient.getFirestore(app);
+    assertNotNull(firestore1);
+    assertSame(firestore1, FirestoreClient.getFirestore());
+
+    Firestore firestore2 = FirestoreClient.getFirestore(app, databaseId);
+    assertNotNull(firestore2);
+    assertSame(firestore2, FirestoreClient.getFirestore(databaseId));
+
+    assertNotSame(firestore1, firestore2);
+
+    DocumentReference document = firestore1.collection("collection").document("doc");
     app.delete();
-    try {
-      FirestoreClient.getFirestore(app);
-      fail("No error thrown for deleted app");
-    } catch (IllegalStateException expected) {
-      // ignore
-    }
 
-    try {
-      document.get();
-      fail("No error thrown for deleted app");
-    } catch (IllegalStateException expected) {
-      // ignore
-    }
-
-    try {
-      FirestoreClient.getFirestore();
-      fail("No error thrown for deleted app");
-    } catch (IllegalStateException expected) {
-      // ignore
-    }
+    assertThrows(IllegalStateException.class, () -> FirestoreClient.getFirestore(app));
+    assertThrows(IllegalStateException.class, () -> document.get());
+    assertThrows(IllegalStateException.class, () -> FirestoreClient.getFirestore());
+    assertThrows(IllegalStateException.class, () -> FirestoreClient.getFirestore(app, databaseId));
+    assertThrows(IllegalStateException.class, () -> FirestoreClient.getFirestore(databaseId));
   }
 }
