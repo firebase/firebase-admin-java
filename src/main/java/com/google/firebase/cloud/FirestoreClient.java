@@ -70,8 +70,8 @@ public class FirestoreClient {
 
   /**
    * Returns the default Firestore instance associated with the specified Firebase app. For a given
-   * app, always returns the same instance. The Firestore instance and all references obtained from
-   * it becomes unusable, once the specified app is deleted.
+   * app, invocation always returns the same instance. The Firestore instance and all references
+   * obtained from it becomes unusable, once the specified app is deleted.
    *
    * @param app A non-null {@link FirebaseApp}.
    * @return A non-null <a href="https://googlecloudplatform.github.io/google-cloud-java/google-cloud-clients/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
@@ -83,9 +83,9 @@ public class FirestoreClient {
   }
 
   /**
-   * Returns the Firestore instance associated with the specified Firebase app. For a given app,
-   * always returns the same instance. The Firestore instance and all references obtained from it
-   * becomes unusable, once the specified app is deleted.
+   * Returns the Firestore instance associated with the specified Firebase app. Returns the same
+   * instance for all invocations given the same app and database parameter. The Firestore instance
+   * and all references obtained from it becomes unusable, once the specified app is deleted.
    *
    * @param app      A non-null {@link FirebaseApp}.
    * @param database - The name of database.
@@ -93,21 +93,21 @@ public class FirestoreClient {
    *     instance.
    */
   @NonNull
-  public static Firestore getFirestore(FirebaseApp app, String database) {
+  static Firestore getFirestore(FirebaseApp app, String database) {
     return getInstance(app, database).firestore;
   }
 
   /**
    * Returns the Firestore instance associated with the default Firebase app. Returns the same
-   * instance for all invocations. The Firestore instance and all references obtained from it
-   * becomes unusable, once the default app is deleted.
+   * instance for all invocations given the same database parameter. The Firestore instance and all
+   * references obtained from it becomes unusable, once the default app is deleted.
    *
    * @param database - The name of database.
    * @return A non-null <a href="https://googlecloudplatform.github.io/google-cloud-java/google-cloud-clients/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
    *     instance.
    */
   @NonNull
-  public static Firestore getFirestore(String database) {
+  static Firestore getFirestore(String database) {
     return getFirestore(FirebaseApp.getInstance(), database);
   }
 
