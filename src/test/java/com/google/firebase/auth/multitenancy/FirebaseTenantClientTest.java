@@ -33,6 +33,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.firebase.ErrorCode;
@@ -63,7 +64,12 @@ public class FirebaseTenantClientTest {
 
   private static final String TEST_TOKEN = "token";
 
+  private static final String TEST_EMULATOR_TOKEN = "owner";
+
   private static final GoogleCredentials credentials = new MockGoogleCredentials(TEST_TOKEN);
+
+  private static final GoogleCredentials emulator_credentials =
+          new MockGoogleCredentials(TEST_EMULATOR_TOKEN);
 
   private static final String PROJECT_BASE_URL =
       "https://identitytoolkit.googleapis.com/v2/projects/test-project-id";
@@ -342,7 +348,7 @@ public class FirebaseTenantClientTest {
 
   private static void checkRequestHeaders(TestResponseInterceptor interceptor) {
     HttpHeaders headers = interceptor.getResponse().getRequest().getHeaders();
-    String auth = "Bearer " + TEST_TOKEN;
+    String auth = "Bearer " + (isEmulatorMode() ? TEST_EMULATOR_TOKEN : TEST_TOKEN);
     assertEquals(auth, headers.getFirstHeaderStringValue("Authorization"));
 
     String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
@@ -362,7 +368,7 @@ public class FirebaseTenantClientTest {
     }
     MockHttpTransport transport = new MultiRequestMockHttpTransport(mocks);
     FirebaseApp.initializeApp(FirebaseOptions.builder()
-        .setCredentials(credentials)
+        .setCredentials(isEmulatorMode() ? emulator_credentials : credentials)
         .setHttpTransport(transport)
         .setProjectId("test-project-id")
         .build());
@@ -407,5 +413,11 @@ public class FirebaseTenantClientTest {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     interceptor.getResponse().getRequest().getContent().writeTo(out);
     return JSON_FACTORY.fromString(new String(out.toByteArray()), GenericJson.class);
+  }
+
+  private static boolean isEmulatorMode() {
+    return !Strings.isNullOrEmpty(
+            FirebaseProcessEnvironment.getenv("FIREBASE_AUTH_EMULATOR_HOST")
+    );
   }
 }

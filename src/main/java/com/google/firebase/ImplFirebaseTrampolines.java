@@ -22,6 +22,8 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.FirestoreOptions;
+import com.google.firebase.auth.internal.Utils;
+import com.google.firebase.internal.EmulatorCredentials;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 
@@ -41,6 +43,9 @@ public final class ImplFirebaseTrampolines {
   private ImplFirebaseTrampolines() {}
 
   public static GoogleCredentials getCredentials(@NonNull FirebaseApp app) {
+    if (Utils.isEmulatorMode()) {
+      return new EmulatorCredentials();
+    }
     return app.getOptions().getCredentials();
   }
 
