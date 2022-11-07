@@ -79,7 +79,8 @@ public class FirestoreClient {
    */
   @NonNull
   public static Firestore getFirestore(FirebaseApp app) {
-    return getFirestore(app, ImplFirebaseTrampolines.getFirestoreOptions(app).getDatabaseId());
+    final FirestoreOptions firestoreOptions = ImplFirebaseTrampolines.getFirestoreOptions(app);
+    return getFirestore(app, firestoreOptions == null ? null : firestoreOptions.getDatabaseId());
   }
 
   /**

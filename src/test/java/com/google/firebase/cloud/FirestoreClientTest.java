@@ -80,6 +80,20 @@ public class FirestoreClientTest {
   }
 
   @Test
+  public void testAbsentFirestoreOptions() throws Exception {
+    String projectId = "test-proj";
+    FirebaseOptions options = FirebaseOptions.builder()
+        .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
+        .setProjectId(projectId)
+        .build();
+
+    FirebaseApp.initializeApp(options);
+    Firestore firestore = FirestoreClient.getFirestore();
+    assertEquals(projectId, firestore.getOptions().getProjectId());
+    assertEquals("(default)", firestore.getOptions().getDatabaseId());
+  }
+
+  @Test
   public void testFirestoreOptions() throws IOException {
     final String databaseId = "databaseIdInTestFirestoreOptions";
     FirebaseApp app = FirebaseApp.initializeApp(FirebaseOptions.builder()
