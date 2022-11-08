@@ -71,7 +71,12 @@ public class FirebaseUserManagerTest {
 
   private static final String TEST_TOKEN = "token";
 
+  private static final String TEST_EMULATOR_TOKEN = "owner";
+
   private static final GoogleCredentials credentials = new MockGoogleCredentials(TEST_TOKEN);
+
+  private static final GoogleCredentials emulator_credentials =
+          new MockGoogleCredentials(TEST_EMULATOR_TOKEN);
 
   private static final ActionCodeSettings ACTION_CODE_SETTINGS = ActionCodeSettings.builder()
           .setUrl("https://example.dynamic.link")
@@ -2916,7 +2921,7 @@ public class FirebaseUserManagerTest {
     }
     MockHttpTransport transport = new MultiRequestMockHttpTransport(mocks);
     FirebaseApp.initializeApp(FirebaseOptions.builder()
-        .setCredentials(credentials)
+        .setCredentials(isEmulatorMode() ? emulator_credentials : credentials)
         .setHttpTransport(transport)
         .setProjectId("test-project-id")
         .build());
@@ -3014,7 +3019,7 @@ public class FirebaseUserManagerTest {
 
   private static void checkRequestHeaders(TestResponseInterceptor interceptor) {
     HttpHeaders headers = interceptor.getResponse().getRequest().getHeaders();
-    String auth = "Bearer " + TEST_TOKEN;
+    String auth = "Bearer " + (isEmulatorMode() ? TEST_EMULATOR_TOKEN : TEST_TOKEN);
     assertEquals(auth, headers.getFirstHeaderStringValue("Authorization"));
 
     String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
@@ -3025,6 +3030,12 @@ public class FirebaseUserManagerTest {
     HttpRequest request = interceptor.getResponse().getRequest();
     assertEquals(method, request.getRequestMethod());
     assertEquals(url, request.getUrl().toString().split("\\?")[0]);
+  }
+
+  private static boolean isEmulatorMode() {
+    return !Strings.isNullOrEmpty(
+            FirebaseProcessEnvironment.getenv("FIREBASE_AUTH_EMULATOR_HOST")
+    );
   }
 
   private interface UserManagerOp {
