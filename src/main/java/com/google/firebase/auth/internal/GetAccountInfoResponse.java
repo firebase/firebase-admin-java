@@ -17,6 +17,7 @@
 package com.google.firebase.auth.internal;
 
 import com.google.api.client.util.Key;
+
 import java.util.List;
 
 /**
@@ -85,6 +86,9 @@ public final class GetAccountInfoResponse {
     @Key("customAttributes")
     private String customClaims;
 
+    @Key("mfaInfo")
+    private MultiFactorInfo[] mfaInfo;
+
     public String getUid() {
       return uid;
     }
@@ -140,6 +144,10 @@ public final class GetAccountInfoResponse {
     public String getCustomClaims() {
       return customClaims;
     }
+
+    public MultiFactorInfo[] getMfaInfo() {
+      return mfaInfo;
+    }
   }
 
   /**
@@ -187,6 +195,73 @@ public final class GetAccountInfoResponse {
 
     public String getProviderId() {
       return providerId;
+    }
+  }
+
+  /**
+   * JSON data binding for multi factor info data.
+   */
+  public static final class MultiFactorInfo {
+    /**
+     * The ID of the enrolled second factor. This ID is unique to the user.
+     */
+    @Key("mfaEnrollmentId")
+    private String mfaEnrollmentId;
+
+    /**
+     * The optional display name of the enrolled second factor.
+     */
+    @Key("displayName")
+    private String displayName;
+
+    /**
+     * The type identifier of the second factor. For SMS second factors, this is `phone`.
+     */
+    @Key("factorId")
+    private String factorId;
+
+    /**
+     * The optional date the second factor was enrolled, formatted as a UTC string.
+     */
+    @Key("enrollmentTime")
+    private String enrollmentTime;
+
+    /**
+     * Normally this will show the phone number associated with this enrollment.
+     * In some situations, such as after a first factor sign in,
+     * it will only show the obfuscated version of the associated phone number.
+     */
+    @Key("phoneInfo")
+    private String phoneInfo;
+
+    /**
+     * Unobfuscated phoneInfo.
+     */
+    @Key("unobfuscatedPhoneInfo")
+    private String unobfuscatedPhoneInfo;
+
+    public String getMfaEnrollmentId() {
+      return mfaEnrollmentId;
+    }
+
+    public String getDisplayName() {
+      return displayName;
+    }
+
+    public String getFactorId() {
+      return factorId;
+    }
+
+    public String getEnrollmentTime() {
+      return enrollmentTime;
+    }
+
+    public String getPhoneInfo() {
+      return phoneInfo;
+    }
+
+    public String getUnobfuscatedPhoneInfo() {
+      return unobfuscatedPhoneInfo;
     }
   }
 }
