@@ -151,13 +151,13 @@ public class FirebaseAuthSnippets {
     // [END update_user]
   }
 
-  public static void setCustomUserClaims(TenantAwareFirebaseAuth tenantAuth,
+  public static void setCustomUserClaims(
       String uid) throws FirebaseAuthException {
     // [START set_custom_user_claims]
     // Set admin privilege on the user corresponding to uid.
     Map<String, Object> claims = new HashMap<>();
     claims.put("admin", true);
-    tenantAuth.setCustomUserClaims(uid, claims);
+    FirebaseAuth.getInstance().setCustomUserClaims(uid, claims);
     // The new custom claims will propagate to the user's ID token the
     // next time a new one is issued.
     // [END set_custom_user_claims]
@@ -173,7 +173,7 @@ public class FirebaseAuthSnippets {
 
     // [START read_custom_user_claims]
     // Lookup the user associated with the specified uid.
-    UserRecord user = tenantAuth.getUser(uid);
+    UserRecord user = FirebaseAuth.getInstance().getUser(uid);
     System.out.println(user.getCustomClaims().get("admin"));
     // [END read_custom_user_claims]
   }
@@ -1148,6 +1148,33 @@ public class FirebaseAuthSnippets {
       //Allow access to requested admin resource.
     }
     // [END verify_custom_claims_tenant]
+  }
+
+  public static void setCustomUserClaimsTenant(TenantAwareFirebaseAuth tenantAuth,
+      String uid) throws FirebaseAuthException {
+    // [START set_custom_user_claims_tenant]
+    // Set admin privilege on the user corresponding to uid in a specific tenant.
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("admin", true);
+    tenantAuth.setCustomUserClaims(uid, claims);
+    // The new custom claims will propagate to the user's ID token the
+    // next time a new one is issued.
+    // [END set_custom_user_claims_tenant]
+
+    String idToken = "id_token";
+    // [START verify_custom_claims_tenant]
+    // Verify the ID token first.
+    FirebaseToken decoded = tenantAuth.verifyIdToken(idToken);
+    if (Boolean.TRUE.equals(decoded.getClaims().get("admin"))) {
+      // Allow access to requested admin resource.
+    }
+    // [END verify_custom_claims_tenant]
+
+    // [START read_custom_user_claims_tenant]
+    // Lookup the user associated with the specified uid in a specific tenant.
+    UserRecord user = tenantAuth.getUser(uid);
+    System.out.println(user.getCustomClaims().get("admin"));
+    // [END read_custom_user_claims_tenant]
   }
 
   public void generateEmailVerificationLinkTenant(
