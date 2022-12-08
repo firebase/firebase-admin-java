@@ -151,13 +151,13 @@ public class FirebaseAuthSnippets {
     // [END update_user]
   }
 
-  public static void setCustomUserClaims(
+  public static void setCustomUserClaims(TenantAwareFirebaseAuth tenantAuth,
       String uid) throws FirebaseAuthException {
     // [START set_custom_user_claims]
     // Set admin privilege on the user corresponding to uid.
     Map<String, Object> claims = new HashMap<>();
     claims.put("admin", true);
-    FirebaseAuth.getInstance().setCustomUserClaims(uid, claims);
+    tenantAuth.setCustomUserClaims(uid, claims);
     // The new custom claims will propagate to the user's ID token the
     // next time a new one is issued.
     // [END set_custom_user_claims]
@@ -173,7 +173,7 @@ public class FirebaseAuthSnippets {
 
     // [START read_custom_user_claims]
     // Lookup the user associated with the specified uid.
-    UserRecord user = FirebaseAuth.getInstance().getUser(uid);
+    UserRecord user = tenantAuth.getUser(uid);
     System.out.println(user.getCustomClaims().get("admin"));
     // [END read_custom_user_claims]
   }
