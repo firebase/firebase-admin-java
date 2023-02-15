@@ -68,7 +68,7 @@ final class AppCheckTokenVerifier {
   DecodedAppCheckToken verifyToken(String token) throws FirebaseAppCheckException {
     SignedJWT signedJWT;
     JWTClaimsSet claimsSet;
-    String scopedProjectId = String.format("projects/%s", projectId);
+    String projectName = String.format("projects/%s", projectId);
     String projectIdMatchMessage = " Make sure the App Check token comes from the same "
             + "Firebase project as the service account used to authenticate this SDK.";
 
@@ -88,10 +88,10 @@ final class AppCheckTokenVerifier {
     } else if (!signedJWT.getHeader().getType().getType().equals("JWT")) {
       errorMessage = String.format("The provided App Check token has invalid type header."
               + "Expected %s but got %s", "JWT", signedJWT.getHeader().getType().getType());
-    } else if (!claimsSet.getAudience().contains(scopedProjectId)) {
+    } else if (!claimsSet.getAudience().contains(projectName)) {
       errorMessage = String.format("The provided App Check token has incorrect 'aud' (audience) "
               + "claim. Expected %s but got %s. %s",
-              scopedProjectId, claimsSet.getAudience().toString(), projectIdMatchMessage);
+              projectName, claimsSet.getAudience().toString(), projectIdMatchMessage);
     } else if (!claimsSet.getIssuer().startsWith(APP_CHECK_ISSUER)) {
       errorMessage = "invalid iss";
     } else if (claimsSet.getSubject().isEmpty()) {

@@ -52,13 +52,13 @@ public final class DecodedAppCheckToken {
   }
 
   /** Returns the Expiration Time for this token. */
-  public String getExpirationTime() {
-    return (String) claims.get("exp");
+  public Long getExpirationTime() {
+    return (Long) claims.get("exp");
   }
 
   /** Returns the Issued At for this token. */
-  public String getIssuedAt() {
-    return (String) claims.get("iat");
+  public Long getIssuedAt() {
+    return (Long) claims.get("iat");
   }
 
   /** Returns a map of all the claims on this token. */

@@ -29,10 +29,5 @@ public enum AppCheckErrorCode {
   /**
    * Internal server error.
    */
-  INTERNAL,
-
-  /**
-   * User is not authenticated.
-   */
-  UNAUTHENTICATED,
+  INTERNAL
 }
