@@ -569,8 +569,8 @@ public class FirebaseAuthSnippets {
       List<ImportUserRecord> users = Collections.singletonList(ImportUserRecord.builder()
           .setUid("some-uid")
           .setEmail("user@example.com")
-          .setPasswordHash("password-hash".getBytes())
-          .setPasswordSalt("salt".getBytes())
+          .setPasswordHash(BaseEncoding.base64().decode("password-hash"))
+          .setPasswordSalt(BaseEncoding.base64().decode("salt"))
           .build());
       UserImportOptions options = UserImportOptions.withHash(
           Scrypt.builder()
