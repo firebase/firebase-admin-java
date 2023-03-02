@@ -85,13 +85,15 @@ public final class FirebaseOptions {
   private final JsonFactory jsonFactory;
   private final ThreadManager threadManager;
   private final FirestoreOptions firestoreOptions;
+  private final Map<String, String> processEnvironmentOverride;
 
-  private FirebaseOptions(@NonNull final FirebaseOptions.Builder builder) {
+  private FirebaseOptions(@NonNull final Builder builder) {
     this.databaseUrl = builder.databaseUrl;
     this.credentialsSupplier = checkNotNull(
         builder.credentialsSupplier, "FirebaseOptions must be initialized with setCredentials().");
     this.databaseAuthVariableOverride = builder.databaseAuthVariableOverride;
     this.projectId = builder.projectId;
+    this.processEnvironmentOverride = builder.processEnvironmentOverride;
     if (!Strings.isNullOrEmpty(builder.storageBucket)) {
       checkArgument(!builder.storageBucket.startsWith("gs://"),
           "StorageBucket must not include 'gs://' prefix.");
@@ -207,6 +209,15 @@ public final class FirebaseOptions {
     return readTimeout;
   }
 
+  /**
+   * Return the process environment override values used for setting the env in {@link com.google.firebase.internal.FirebaseProcessEnvironment}
+   *
+   * @return {@link Map} of environment variables used for overriding
+   */
+  public Map<String, String> getProcessEnvironmentOverride() {
+    return processEnvironmentOverride;
+  }
+
   @NonNull
   ThreadManager getThreadManager() {
     return threadManager;
@@ -260,6 +271,7 @@ public final class FirebaseOptions {
     private ThreadManager threadManager;
     private int connectTimeout;
     private int readTimeout;
+    private Map<String, String> processEnvironmentOverride;
 
     /**
      * Constructs an empty builder.
@@ -492,6 +504,17 @@ public final class FirebaseOptions {
      */
     public Builder setReadTimeout(int readTimeout) {
       this.readTimeout = readTimeout;
+      return this;
+    }
+
+    /**
+     * Sets the environment variable to override in {@link com.google.firebase.internal.FirebaseProcessEnvironment}
+     *
+     * @param processEnvironmentOverride {@link Map} of key, value for environment variables
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setProcessEnvironmentOverride(Map<String, String> processEnvironmentOverride) {
+      this.processEnvironmentOverride = processEnvironmentOverride;
       return this;
     }
 
