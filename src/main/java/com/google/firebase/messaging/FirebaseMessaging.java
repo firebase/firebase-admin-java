@@ -20,18 +20,22 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.core.ApiFuture;
+import com.google.api.core.ApiFutures;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /**
  * This class is the entry point for all server-side Firebase Cloud Messaging actions.
@@ -91,7 +95,7 @@ public class FirebaseMessaging {
    *
    * <p>If the {@code dryRun} option is set to true, the message will not be actually sent. Instead
    * FCM performs all the necessary validations and emulates the send operation. The {@code dryRun}
-   * option is useful for determining whether an FCM registration has been deleted. However, it 
+   * option is useful for determining whether an FCM registration has been deleted. However, it
    * cannot be used to validate APNs tokens.
    *
    * @param message A non-null {@link Message} to be sent.
@@ -140,6 +144,191 @@ public class FirebaseMessaging {
   }
 
   /**
+   * Sends each message in the given list via Firebase Cloud Messaging.
+   * Unlike {@link #sendAll(List)}, this method makes a single HTTP call for each message in the
+   * given array.
+   *
+   * <p>The responses list obtained by calling {@link BatchResponse#getResponses()} on the return
+   * value corresponds to the order of input messages.
+   *
+   * @param messages A non-null, non-empty list containing up to 500 messages.
+   * @return A {@link BatchResponse} indicating the result of the operation.
+   * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
+   *     delivery. An exception here or a {@link BatchResponse} with all failures indicates a total
+   *     failure -- i.e. none of the messages in the list could be sent. Partial failures or no
+   *     failures are only indicated by a {@link BatchResponse}.
+   */
+  public BatchResponse sendEach(@NonNull List<Message> messages) throws FirebaseMessagingException {
+    return sendEachOp(messages, false).call();
+  }
+
+
+  /**
+   * Sends each message in the given list via Firebase Cloud Messaging.
+   * Unlike {@link #sendAll(List)}, this method makes a single HTTP call for each message in the
+   * given array.
+   *
+   * <p>If the {@code dryRun} option is set to true, the message will not be actually sent. Instead
+   * FCM performs all the necessary validations, and emulates the send operation. The {@code dryRun}
+   * option is useful for determining whether an FCM registration has been deleted. But it cannot be
+   * used to validate APNs tokens.
+   *
+   * <p>The responses list obtained by calling {@link BatchResponse#getResponses()} on the return
+   * value corresponds to the order of input messages.
+   *
+   * @param messages A non-null, non-empty list containing up to 500 messages.
+   * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
+   * @return A {@link BatchResponse} indicating the result of the operation.
+   * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
+   *     delivery. An exception here or a {@link BatchResponse} with all failures indicates a total
+   *     failure -- i.e. none of the messages in the list could be sent. Partial failures or no
+   *     failures are only indicated by a {@link BatchResponse}.
+   */
+  public BatchResponse sendEach(
+      @NonNull List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
+    return sendEachOp(messages, dryRun).call();
+  }
+
+  /**
+   * Similar to {@link #sendEach(List)} but performs the operation asynchronously.
+   *
+   * @param messages A non-null, non-empty list containing up to 500 messages.
+   * @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
+   *     the messages have been sent.
+   */
+  public ApiFuture<BatchResponse> sendEachAsync(@NonNull List<Message> messages) {
+    return sendEachOp(messages, false).callAsync(app);
+  }
+
+  /**
+   * Similar to {@link #sendEach(List, boolean)} but performs the operation asynchronously.
+   *
+   * @param messages A non-null, non-empty list containing up to 500 messages.
+   * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
+   * @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
+   *     the messages have been sent.
+   */
+  public ApiFuture<BatchResponse> sendEachAsync(@NonNull List<Message> messages, boolean dryRun) {
+    return sendEachOp(messages, dryRun).callAsync(app);
+  }
+
+  private CallableOperation<BatchResponse, FirebaseMessagingException> sendEachOp(
+      final List<Message> messages, final boolean dryRun) {
+    final List<Message> immutableMessages = ImmutableList.copyOf(messages);
+    checkArgument(!immutableMessages.isEmpty(), "messages list must not be empty");
+    checkArgument(immutableMessages.size() <= 500,
+        "messages list must not contain more than 500 elements");
+
+    return new CallableOperation<BatchResponse, FirebaseMessagingException>() {
+      @Override
+      protected BatchResponse execute() throws FirebaseMessagingException {
+        List<ApiFuture<SendResponse>> list = new ArrayList<>();
+        for (Message message : immutableMessages) {
+          ApiFuture<SendResponse> messageId = sendOpForSendResponse(message, dryRun).callAsync(app);
+          list.add(messageId);
+        }
+        try {
+          List<SendResponse> responses = ApiFutures.allAsList(list).get();
+          return new BatchResponseImpl(responses);
+        } catch (InterruptedException | ExecutionException e) {
+          throw new FirebaseMessagingException(ErrorCode.CANCELLED, SERVICE_ID);
+        }
+      }
+    };
+  }
+
+  private CallableOperation<SendResponse, FirebaseMessagingException> sendOpForSendResponse(
+      final Message message, final boolean dryRun) {
+    checkNotNull(message, "message must not be null");
+    final FirebaseMessagingClient messagingClient = getMessagingClient();
+    return new CallableOperation<SendResponse, FirebaseMessagingException>() {
+      @Override
+      protected SendResponse execute() {
+        try {
+          String messageId = messagingClient.send(message, dryRun);
+          return SendResponse.fromMessageId(messageId);
+        } catch (FirebaseMessagingException e) {
+          return SendResponse.fromException(e);
+        }
+      }
+    };
+  }
+
+  /**
+   * Sends the given multicast message to all the FCM registration tokens specified in it.
+   *
+   * <p>This method uses the {@link #sendEach(List)} API under the hood to send the given
+   * message to all the target recipients. The responses list obtained by calling
+   * {@link BatchResponse#getResponses()} on the return value corresponds to the order of tokens
+   * in the {@link MulticastMessage}.
+   *
+   * @param message A non-null {@link MulticastMessage}
+   * @return A {@link BatchResponse} indicating the result of the operation.
+   * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
+   *     delivery. An exception here or a {@link BatchResponse} with all failures indicates a total
+   *     failure -- i.e. none of the messages in the list could be sent. Partial failures or no
+   *     failures are only indicated by a {@link BatchResponse}.
+   */
+  public BatchResponse sendEachForMulticast(
+      @NonNull MulticastMessage message) throws FirebaseMessagingException {
+    return sendEachForMulticast(message, false);
+  }
+
+  /**
+   * Sends the given multicast message to all the FCM registration tokens specified in it.
+   *
+   * <p>If the {@code dryRun} option is set to true, the message will not be actually sent. Instead
+   * FCM performs all the necessary validations, and emulates the send operation. The {@code dryRun}
+   * option is useful for determining whether an FCM registration has been deleted. But it cannot be
+   * used to validate APNs tokens.
+   *
+   * <p>This method uses the {@link #sendEach(List)} API under the hood to send the given
+   * message to all the target recipients. The responses list obtained by calling
+   * {@link BatchResponse#getResponses()} on the return value corresponds to the order of tokens
+   * in the {@link MulticastMessage}.
+   *
+   * @param message A non-null {@link MulticastMessage}.
+   * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
+   * @return A {@link BatchResponse} indicating the result of the operation.
+   * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
+   *     delivery. An exception here or a {@link BatchResponse} with all failures indicates a total
+   *     failure -- i.e. none of the messages in the list could be sent. Partial failures or no
+   *     failures are only indicated by a {@link BatchResponse}.
+   */
+  public BatchResponse sendEachForMulticast(@NonNull MulticastMessage message, boolean dryRun)
+    throws FirebaseMessagingException {
+    checkNotNull(message, "multicast message must not be null");
+    return sendEach(message.getMessageList(), dryRun);
+  }
+
+  /**
+   * Similar to {@link #sendEachForMulticast(MulticastMessage)} but performs the operation
+   * asynchronously.
+   *
+   * @param message A non-null {@link MulticastMessage}.
+   * @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
+   *     the messages have been sent.
+   */
+  public ApiFuture<BatchResponse> sendEachForMulticastAsync(@NonNull MulticastMessage message) {
+    return sendEachForMulticastAsync(message, false);
+  }
+
+  /**
+   * Similar to {@link #sendEachForMulticast(MulticastMessage, boolean)} but performs the operation
+   * asynchronously.
+   *
+   * @param message A non-null {@link MulticastMessage}.
+   * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
+   * @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
+   *     the messages have been sent.
+   */
+  public ApiFuture<BatchResponse> sendEachForMulticastAsync(
+      @NonNull MulticastMessage message, boolean dryRun) {
+    checkNotNull(message, "multicast message must not be null");
+    return sendEachAsync(message.getMessageList(), dryRun);
+  }
+
+  /**
    * Sends all the messages in the given list via Firebase Cloud Messaging. Employs batching to
    * send the entire list as a single RPC call. Compared to the {@link #send(Message)} method, this
    * is a significantly more efficient way to send multiple messages.
@@ -152,6 +341,7 @@ public class FirebaseMessaging {
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
    *     delivery. An exception here indicates a total failure -- i.e. none of the messages in the
    *     list could be sent. Partial failures are indicated by a {@link BatchResponse} return value.
+   * @deprecated Use {@link #sendEach(List)} instead.
    */
   public BatchResponse sendAll(
       @NonNull List<Message> messages) throws FirebaseMessagingException {
@@ -177,6 +367,7 @@ public class FirebaseMessaging {
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
    *     delivery. An exception here indicates a total failure -- i.e. none of the messages in the
    *     list could be sent. Partial failures are indicated by a {@link BatchResponse} return value.
+   * @deprecated Use {@link #sendEach(List, boolean)} instead.
    */
   public BatchResponse sendAll(
       @NonNull List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
@@ -187,8 +378,9 @@ public class FirebaseMessaging {
    * Similar to {@link #sendAll(List)} but performs the operation asynchronously.
    *
    * @param messages A non-null, non-empty list containing up to 500 messages.
-   * @return @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
+   * @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
    *     the messages have been sent.
+   * @deprecated Use {@link #sendEachAsync(List)} instead.
    */
   public ApiFuture<BatchResponse> sendAllAsync(@NonNull List<Message> messages) {
     return sendAllAsync(messages, false);
@@ -199,8 +391,9 @@ public class FirebaseMessaging {
    *
    * @param messages A non-null, non-empty list containing up to 500 messages.
    * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
-   * @return @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
+   * @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
    *     the messages have been sent, or when the emulation has finished.
+   * @deprecated Use {@link #sendEachAsync(List, boolean)} instead.
    */
   public ApiFuture<BatchResponse> sendAllAsync(
       @NonNull List<Message> messages, boolean dryRun) {
@@ -221,6 +414,7 @@ public class FirebaseMessaging {
    *     delivery. An exception here indicates a total failure -- i.e. the messages could not be
    *     delivered to any recipient. Partial failures are indicated by a {@link BatchResponse}
    *     return value.
+   * @deprecated Use {@link #sendEachForMulticast(MulticastMessage)} instead.
    */
   public BatchResponse sendMulticast(
       @NonNull MulticastMessage message) throws FirebaseMessagingException {
@@ -247,6 +441,7 @@ public class FirebaseMessaging {
    *     delivery. An exception here indicates a total failure -- i.e. the messages could not be
    *     delivered to any recipient. Partial failures are indicated by a {@link BatchResponse}
    *     return value.
+   * @deprecated Use {@link #sendEachForMulticast(MulticastMessage, boolean)} instead.
    */
   public BatchResponse sendMulticast(
       @NonNull MulticastMessage message, boolean dryRun) throws FirebaseMessagingException {
@@ -261,6 +456,7 @@ public class FirebaseMessaging {
    * @param message A non-null {@link MulticastMessage}.
    * @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
    *     the messages have been sent.
+   * @deprecated Use {@link #sendEachForMulticastAsync(MulticastMessage)} instead.
    */
   public ApiFuture<BatchResponse> sendMulticastAsync(@NonNull MulticastMessage message) {
     return sendMulticastAsync(message, false);
@@ -274,6 +470,7 @@ public class FirebaseMessaging {
    * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
    * @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
    *     the messages have been sent.
+   * @deprecated Use {@link #sendEachForMulticastAsync(MulticastMessage, boolean)} instead.
    */
   public ApiFuture<BatchResponse> sendMulticastAsync(
       @NonNull MulticastMessage message, boolean dryRun) {
