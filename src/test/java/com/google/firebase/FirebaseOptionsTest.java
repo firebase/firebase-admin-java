@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
-
 import org.junit.Test;
 
 /** 
@@ -103,7 +102,8 @@ public class FirebaseOptionsTest {
     assertEquals(30000, firebaseOptions.getConnectTimeout());
     assertEquals(60000, firebaseOptions.getReadTimeout());
     assertSame(firestoreOptions, firebaseOptions.getFirestoreOptions());
-    assertEquals("localhost:9092", firebaseOptions.getProcessEnvironmentOverride().get("FIREBASE_AUTH_EMULATOR_HOST"));
+    assertEquals("localhost:9092",
+        firebaseOptions.getProcessEnvironmentOverride().get("FIREBASE_AUTH_EMULATOR_HOST"));
 
     GoogleCredentials credentials = firebaseOptions.getCredentials();
     assertNotNull(credentials);

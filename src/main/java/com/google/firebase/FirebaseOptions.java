@@ -33,7 +33,6 @@ import com.google.firebase.internal.ApplicationDefaultCredentialsProvider;
 import com.google.firebase.internal.FirebaseThreadManagers;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -210,7 +209,8 @@ public final class FirebaseOptions {
   }
 
   /**
-   * Return the process environment override values used for setting the env in {@link com.google.firebase.internal.FirebaseProcessEnvironment}
+   * Return the process environment override values used for setting the env in
+   * {@link com.google.firebase.internal.FirebaseProcessEnvironment}
    *
    * @return {@link Map} of environment variables used for overriding
    */
@@ -508,10 +508,12 @@ public final class FirebaseOptions {
     }
 
     /**
-     * Sets the environment variable to override in {@link com.google.firebase.internal.FirebaseProcessEnvironment}
+     * Sets the environment variable to override in
+     * {@link com.google.firebase.internal.FirebaseProcessEnvironment}
      *
      * @param processEnvironmentOverride {@link Map} of key, value for environment variables
-     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be
+     * chained.
      */
     public Builder setProcessEnvironmentOverride(Map<String, String> processEnvironmentOverride) {
       this.processEnvironmentOverride = processEnvironmentOverride;
