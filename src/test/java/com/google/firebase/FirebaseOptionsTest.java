@@ -44,6 +44,7 @@ import org.junit.Test;
 public class FirebaseOptionsTest {
 
   private static final String FIREBASE_DB_URL = "https://mock-project.firebaseio.com";
+  private static final String FIREBASE_FCM_URL = "https://localhost";
   private static final String FIREBASE_STORAGE_BUCKET = "mock-storage-bucket";
   private static final String FIREBASE_PROJECT_ID = "explicit-project-id";
 
@@ -53,6 +54,7 @@ public class FirebaseOptionsTest {
           .setStorageBucket(FIREBASE_STORAGE_BUCKET)
           .setProjectId(FIREBASE_PROJECT_ID)
           .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
+          .setFcmRootUrl(FIREBASE_FCM_URL)
           .build();
 
   private static final ThreadManager MOCK_THREAD_MANAGER = new ThreadManager() {
@@ -88,8 +90,10 @@ public class FirebaseOptionsTest {
             .setConnectTimeout(30000)
             .setReadTimeout(60000)
             .setFirestoreOptions(firestoreOptions)
+            .setFcmRootUrl(FIREBASE_FCM_URL)
             .build();
     assertEquals(FIREBASE_DB_URL, firebaseOptions.getDatabaseUrl());
+    assertEquals(FIREBASE_FCM_URL, firebaseOptions.getFcmRootUrl());
     assertEquals(FIREBASE_STORAGE_BUCKET, firebaseOptions.getStorageBucket());
     assertEquals(FIREBASE_PROJECT_ID, firebaseOptions.getProjectId());
     assertSame(jsonFactory, firebaseOptions.getJsonFactory());
@@ -183,6 +187,7 @@ public class FirebaseOptionsTest {
     assertNotSame(ALL_VALUES_OPTIONS, allValuesOptionsCopy);
     assertEquals(ALL_VALUES_OPTIONS.getCredentials(), allValuesOptionsCopy.getCredentials());
     assertEquals(ALL_VALUES_OPTIONS.getDatabaseUrl(), allValuesOptionsCopy.getDatabaseUrl());
+    assertEquals(ALL_VALUES_OPTIONS.getFcmRootUrl(), allValuesOptionsCopy.getFcmRootUrl());
     assertEquals(ALL_VALUES_OPTIONS.getProjectId(), allValuesOptionsCopy.getProjectId());
     assertEquals(ALL_VALUES_OPTIONS.getJsonFactory(), allValuesOptionsCopy.getJsonFactory());
     assertEquals(ALL_VALUES_OPTIONS.getHttpTransport(), allValuesOptionsCopy.getHttpTransport());

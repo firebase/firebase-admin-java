@@ -74,6 +74,7 @@ public final class FirebaseOptions {
       };
 
   private final String databaseUrl;
+  private final String fcmRootUrl;
   private final String storageBucket;
   private final Supplier<GoogleCredentials> credentialsSupplier;
   private final Map<String, Object> databaseAuthVariableOverride;
@@ -101,6 +102,11 @@ public final class FirebaseOptions {
     } else {
       this.serviceAccountId = null;
     }
+    if (!Strings.isNullOrEmpty(builder.fcmRootUrl)) {
+      this.fcmRootUrl = builder.fcmRootUrl;
+    } else {
+      this.fcmRootUrl = null;
+    }
     this.storageBucket = builder.storageBucket;
     this.httpTransport = builder.httpTransport != null ? builder.httpTransport
       : ApiClientUtils.getDefaultTransport();
@@ -122,6 +128,15 @@ public final class FirebaseOptions {
    */
   public String getDatabaseUrl() {
     return databaseUrl;
+  }
+
+  /**
+   * Returns the Fcm Root URL that is used for Fcm Messaging.
+   *
+   * @return The Fcm Messaging URL supplied via {@link Builder#setFcmRootUrl}.
+   */
+  public String getFcmRootUrl() {
+    return fcmRootUrl;
   }
 
   /**
@@ -260,6 +275,7 @@ public final class FirebaseOptions {
     private ThreadManager threadManager;
     private int connectTimeout;
     private int readTimeout;
+    private String fcmRootUrl;
 
     /**
      * Constructs an empty builder.
@@ -290,6 +306,7 @@ public final class FirebaseOptions {
       connectTimeout = options.connectTimeout;
       readTimeout = options.readTimeout;
       firestoreOptions = options.firestoreOptions;
+      fcmRootUrl = options.fcmRootUrl;
     }
 
     /**
@@ -303,6 +320,20 @@ public final class FirebaseOptions {
      */
     public Builder setDatabaseUrl(@Nullable String databaseUrl) {
       this.databaseUrl = databaseUrl;
+      return this;
+    }
+
+    /**
+     * Sets the Fcm Root URL to use for Fcm Messaging.
+     *
+     * <p>See <a href="https://firebase.google.com/docs/admin/setup#initialize_the_sdk">
+     * Initialize the SDK</a> for code samples and detailed documentation.
+     *
+     * @param fcmRootUrl The Fcm Root URL to use for Fcm Messaging.
+     * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
+     */
+    public Builder setFcmRootUrl(@Nullable String fcmRootUrl) {
+      this.fcmRootUrl = fcmRootUrl;
       return this;
     }
 

@@ -62,7 +62,8 @@ import org.junit.Test;
 public class FirebaseMessagingClientImplTest {
 
   private static final String TEST_FCM_URL =
-      "https://fcm.googleapis.com/v1/projects/test-project/messages:send";
+          "https://fcm.googleapis.com/v1/projects/test-project/messages:send";
+  private static final String TEST_FCM_BATCH_URL = "https://fcm.googleapis.com/batch";
 
   private static final List<Integer> HTTP_ERRORS = ImmutableList.of(401, 404, 500);
 
@@ -534,6 +535,7 @@ public class FirebaseMessagingClientImplTest {
       FirebaseMessagingClientImpl client = FirebaseMessagingClientImpl.fromApp(app);
 
       assertEquals(TEST_FCM_URL, client.getFcmSendUrl());
+      assertEquals(TEST_FCM_BATCH_URL, client.getFcmBatchUrl());
       assertSame(options.getJsonFactory(), client.getJsonFactory());
 
       HttpRequest request = client.getRequestFactory().buildGetRequest(
