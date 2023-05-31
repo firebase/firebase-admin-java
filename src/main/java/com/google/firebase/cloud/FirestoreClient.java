@@ -94,7 +94,7 @@ public class FirestoreClient {
    *     instance.
    */
   @NonNull
-  static Firestore getFirestore(FirebaseApp app, String database) {
+  public static Firestore getFirestore(FirebaseApp app, String database) {
     return getInstance(app, database).firestore;
   }
 
@@ -108,7 +108,7 @@ public class FirestoreClient {
    *     instance.
    */
   @NonNull
-  static Firestore getFirestore(String database) {
+  public static Firestore getFirestore(String database) {
     return getFirestore(FirebaseApp.getInstance(), database);
   }
 
