@@ -97,6 +97,103 @@ public class FirebaseMessagingIT {
   }
 
   @Test
+  public void testSendEach() throws Exception {
+    List<Message> messages = new ArrayList<>();
+    messages.add(
+        Message.builder()
+          .setNotification(Notification.builder()
+              .setTitle("Title")
+              .setBody("Body")
+              .build())
+          .setTopic("foo-bar")
+          .build());
+    messages.add(
+        Message.builder()
+          .setNotification(Notification.builder()
+              .setTitle("Title")
+              .setBody("Body")
+              .build())
+          .setTopic("foo-bar")
+          .build());
+    messages.add(
+        Message.builder()
+          .setNotification(Notification.builder()
+              .setTitle("Title")
+              .setBody("Body")
+              .build())
+          .setToken("not-a-token")
+          .build());
+
+    BatchResponse response = FirebaseMessaging.getInstance().sendEach(messages, true);
+
+    assertEquals(2, response.getSuccessCount());
+    assertEquals(1, response.getFailureCount());
+
+    List<SendResponse> responses = response.getResponses();
+    assertEquals(3, responses.size());
+    assertTrue(responses.get(0).isSuccessful());
+    String id = responses.get(0).getMessageId();
+    assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
+
+    assertTrue(responses.get(1).isSuccessful());
+    id = responses.get(1).getMessageId();
+    assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
+
+    assertFalse(responses.get(2).isSuccessful());
+    assertNull(responses.get(2).getMessageId());
+    FirebaseMessagingException exception = responses.get(2).getException();
+    assertNotNull(exception);
+    assertEquals(ErrorCode.INVALID_ARGUMENT, exception.getErrorCode());
+  }
+
+  @Test
+  public void testSendFiveHundredWithSendEach() throws Exception {
+    List<Message> messages = new ArrayList<>();
+    for (int i = 0; i < 500; i++) {
+      messages.add(Message.builder().setTopic("foo-bar-" + (i % 10)).build());
+    }
+
+    BatchResponse response = FirebaseMessaging.getInstance().sendEach(messages, true);
+
+    assertEquals(500, response.getResponses().size());
+    assertEquals(500, response.getSuccessCount());
+    assertEquals(0, response.getFailureCount());
+    for (SendResponse sendResponse : response.getResponses()) {
+      if (!sendResponse.isSuccessful()) {
+        sendResponse.getException().printStackTrace();
+      }
+      assertTrue(sendResponse.isSuccessful());
+      String id = sendResponse.getMessageId();
+      assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
+      assertNull(sendResponse.getException());
+    }
+  }
+
+  @Test
+  public void testSendEachForMulticast() throws Exception {
+    MulticastMessage multicastMessage = MulticastMessage.builder()
+        .setNotification(Notification.builder()
+            .setTitle("Title")
+            .setBody("Body")
+            .build())
+        .addToken("not-a-token")
+        .addToken("also-not-a-token")
+        .build();
+
+    BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(
+        multicastMessage, true);
+
+    assertEquals(0, response.getSuccessCount());
+    assertEquals(2, response.getFailureCount());
+    assertEquals(2, response.getResponses().size());
+    for (SendResponse sendResponse : response.getResponses()) {
+      assertFalse(sendResponse.isSuccessful());
+      assertNull(sendResponse.getMessageId());
+      assertNotNull(sendResponse.getException());
+    }
+  }
+
+  @Test
   public void testSendAll() throws Exception {
     List<Message> messages = new ArrayList<>();
     messages.add(
