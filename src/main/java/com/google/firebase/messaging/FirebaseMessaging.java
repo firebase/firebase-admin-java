@@ -155,7 +155,7 @@ public class FirebaseMessaging {
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
    *     delivery. An exception here or a {@link BatchResponse} with all failures indicates a total
-   *     failure -- i.e. none of the messages in the list could be sent. Partial failures or no
+   *     failure, meaning that none of the messages in the list could be sent. Partial failures or no
    *     failures are only indicated by a {@link BatchResponse}.
    */
   public BatchResponse sendEach(@NonNull List<Message> messages) throws FirebaseMessagingException {
@@ -181,7 +181,7 @@ public class FirebaseMessaging {
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
    *     delivery. An exception here or a {@link BatchResponse} with all failures indicates a total
-   *     failure -- i.e. none of the messages in the list could be sent. Partial failures or no
+   *     failure, meaning that none of the messages in the list could be sent. Partial failures or no
    *     failures are only indicated by a {@link BatchResponse}.
    */
   public BatchResponse sendEach(
@@ -266,7 +266,7 @@ public class FirebaseMessaging {
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
    *     delivery. An exception here or a {@link BatchResponse} with all failures indicates a total
-   *     failure -- i.e. none of the messages in the list could be sent. Partial failures or no
+   *     failure, meaning that none of the messages in the list could be sent. Partial failures or no
    *     failures are only indicated by a {@link BatchResponse}.
    */
   public BatchResponse sendEachForMulticast(
@@ -292,7 +292,7 @@ public class FirebaseMessaging {
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
    *     delivery. An exception here or a {@link BatchResponse} with all failures indicates a total
-   *     failure -- i.e. none of the messages in the list could be sent. Partial failures or no
+   *     failure, meaning that none of the messages in the list could be sent. Partial failures or no
    *     failures are only indicated by a {@link BatchResponse}.
    */
   public BatchResponse sendEachForMulticast(@NonNull MulticastMessage message, boolean dryRun)
@@ -339,8 +339,9 @@ public class FirebaseMessaging {
    * @param messages A non-null, non-empty list containing up to 500 messages.
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
-   *     delivery. An exception here indicates a total failure -- i.e. none of the messages in the
-   *     list could be sent. Partial failures are indicated by a {@link BatchResponse} return value.
+   *     delivery. An exception here indicates a total failure, meaning that none of the messages in
+   *     the list could be sent. Partial failures are indicated by a {@link BatchResponse} return
+   *     value.
    * @deprecated Use {@link #sendEach(List)} instead.
    */
   public BatchResponse sendAll(
@@ -365,8 +366,9 @@ public class FirebaseMessaging {
    * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
-   *     delivery. An exception here indicates a total failure -- i.e. none of the messages in the
-   *     list could be sent. Partial failures are indicated by a {@link BatchResponse} return value.
+   *     delivery. An exception here indicates a total failure, meaning that none of the messages in
+   *     the list could be sent. Partial failures are indicated by a {@link BatchResponse} return
+   *     value.
    * @deprecated Use {@link #sendEach(List, boolean)} instead.
    */
   public BatchResponse sendAll(
@@ -411,8 +413,8 @@ public class FirebaseMessaging {
    * @param message A non-null {@link MulticastMessage}
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
-   *     delivery. An exception here indicates a total failure -- i.e. the messages could not be
-   *     delivered to any recipient. Partial failures are indicated by a {@link BatchResponse}
+   *     delivery. An exception here indicates a total failure, meaning that the messages could not
+   *     be delivered to any recipient. Partial failures are indicated by a {@link BatchResponse}
    *     return value.
    * @deprecated Use {@link #sendEachForMulticast(MulticastMessage)} instead.
    */
@@ -438,8 +440,8 @@ public class FirebaseMessaging {
    * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
-   *     delivery. An exception here indicates a total failure -- i.e. the messages could not be
-   *     delivered to any recipient. Partial failures are indicated by a {@link BatchResponse}
+   *     delivery. An exception here indicates a total failure, meaning that the messages could not
+   *     be delivered to any recipient. Partial failures are indicated by a {@link BatchResponse}
    *     return value.
    * @deprecated Use {@link #sendEachForMulticast(MulticastMessage, boolean)} instead.
    */
