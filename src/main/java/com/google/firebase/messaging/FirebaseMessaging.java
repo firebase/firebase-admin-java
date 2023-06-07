@@ -155,8 +155,8 @@ public class FirebaseMessaging {
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
    *     delivery. An exception here or a {@link BatchResponse} with all failures indicates a total
-   *     failure, meaning that none of the messages in the list could be sent. Partial failures or no
-   *     failures are only indicated by a {@link BatchResponse}.
+   *     failure, meaning that none of the messages in the list could be sent. Partial failures or
+   *     no failures are only indicated by a {@link BatchResponse}.
    */
   public BatchResponse sendEach(@NonNull List<Message> messages) throws FirebaseMessagingException {
     return sendEachOp(messages, false).call();
@@ -181,8 +181,8 @@ public class FirebaseMessaging {
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
    *     delivery. An exception here or a {@link BatchResponse} with all failures indicates a total
-   *     failure, meaning that none of the messages in the list could be sent. Partial failures or no
-   *     failures are only indicated by a {@link BatchResponse}.
+   *     failure, meaning that none of the messages in the list could be sent. Partial failures or
+   *     no failures are only indicated by a {@link BatchResponse}.
    */
   public BatchResponse sendEach(
       @NonNull List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
@@ -266,8 +266,8 @@ public class FirebaseMessaging {
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
    *     delivery. An exception here or a {@link BatchResponse} with all failures indicates a total
-   *     failure, meaning that none of the messages in the list could be sent. Partial failures or no
-   *     failures are only indicated by a {@link BatchResponse}.
+   *     failure, meaning that none of the messages in the list could be sent. Partial failures or
+   *     no failures are only indicated by a {@link BatchResponse}.
    */
   public BatchResponse sendEachForMulticast(
       @NonNull MulticastMessage message) throws FirebaseMessagingException {
@@ -292,8 +292,8 @@ public class FirebaseMessaging {
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
    *     delivery. An exception here or a {@link BatchResponse} with all failures indicates a total
-   *     failure, meaning that none of the messages in the list could be sent. Partial failures or no
-   *     failures are only indicated by a {@link BatchResponse}.
+   *     failure, meaning that none of the messages in the list could be sent. Partial failures or
+   *     no failures are only indicated by a {@link BatchResponse}.
    */
   public BatchResponse sendEachForMulticast(@NonNull MulticastMessage message, boolean dryRun)
     throws FirebaseMessagingException {
