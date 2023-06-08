@@ -145,11 +145,11 @@ public class FirebaseMessaging {
 
   /**
    * Sends each message in the given list via Firebase Cloud Messaging.
-   * Unlike {@link #sendAll(List)}, this method makes a single HTTP call for each message in the
+   * Unlike {@link #sendAll(List)}, this method makes an HTTP call for each message in the
    * given array.
    *
-   * <p>The responses list obtained by calling {@link BatchResponse#getResponses()} on the return
-   * value corresponds to the order of input messages.
+   * <p>The list of responses obtained by calling {@link BatchResponse#getResponses()} on the return
+   * value is in the same order as the input list.
    *
    * @param messages A non-null, non-empty list containing up to 500 messages.
    * @return A {@link BatchResponse} indicating the result of the operation.
@@ -165,7 +165,7 @@ public class FirebaseMessaging {
 
   /**
    * Sends each message in the given list via Firebase Cloud Messaging.
-   * Unlike {@link #sendAll(List)}, this method makes a single HTTP call for each message in the
+   * Unlike {@link #sendAll(List)}, this method makes an HTTP call for each message in the
    * given array.
    *
    * <p>If the {@code dryRun} option is set to true, the message will not be actually sent. Instead
@@ -173,8 +173,8 @@ public class FirebaseMessaging {
    * option is useful for determining whether an FCM registration has been deleted. But it cannot be
    * used to validate APNs tokens.
    *
-   * <p>The responses list obtained by calling {@link BatchResponse#getResponses()} on the return
-   * value corresponds to the order of input messages.
+   * <p>The list of responses obtained by calling {@link BatchResponse#getResponses()} on the return
+   * value is in the same order as the input list.
    *
    * @param messages A non-null, non-empty list containing up to 500 messages.
    * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
@@ -258,9 +258,9 @@ public class FirebaseMessaging {
    * Sends the given multicast message to all the FCM registration tokens specified in it.
    *
    * <p>This method uses the {@link #sendEach(List)} API under the hood to send the given
-   * message to all the target recipients. The responses list obtained by calling
-   * {@link BatchResponse#getResponses()} on the return value corresponds to the order of tokens
-   * in the {@link MulticastMessage}.
+   * message to all the target recipients. The list of responses obtained by calling
+   * {@link BatchResponse#getResponses()} on the return value is in the same order as the
+   * tokens in the {@link MulticastMessage}.
    *
    * @param message A non-null {@link MulticastMessage}
    * @return A {@link BatchResponse} indicating the result of the operation.
@@ -283,9 +283,9 @@ public class FirebaseMessaging {
    * used to validate APNs tokens.
    *
    * <p>This method uses the {@link #sendEach(List)} API under the hood to send the given
-   * message to all the target recipients. The responses list obtained by calling
-   * {@link BatchResponse#getResponses()} on the return value corresponds to the order of tokens
-   * in the {@link MulticastMessage}.
+   * message to all the target recipients. The list of responses obtained by calling
+   * {@link BatchResponse#getResponses()} on the return value is in the same order as the
+   * tokens in the {@link MulticastMessage}.
    *
    * @param message A non-null {@link MulticastMessage}.
    * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
