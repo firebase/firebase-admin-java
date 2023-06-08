@@ -80,7 +80,8 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
 
   private FirebaseMessagingClientImpl(Builder builder) {
     checkArgument(!Strings.isNullOrEmpty(builder.projectId));
-    String fcmRootUrl = Strings.isNullOrEmpty(builder.fcmRootUrl) ? FCM_ROOT_URL : builder.fcmRootUrl;
+    String fcmRootUrl = Strings.isNullOrEmpty(builder.fcmRootUrl) ? FCM_ROOT_URL :
+            builder.fcmRootUrl;
     this.fcmSendUrl = String.format(String.format(
                     "%s/%s", fcmRootUrl, FCM_SEND_PATH),
             builder.projectId);
@@ -92,7 +93,8 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     this.errorHandler = new MessagingErrorHandler(this.jsonFactory);
     this.httpClient = new ErrorHandlingHttpClient<>(requestFactory, jsonFactory, errorHandler)
       .setInterceptor(responseInterceptor);
-    this.batchClient = new MessagingBatchClient(requestFactory.getTransport(), jsonFactory, fcmRootUrl);
+    this.batchClient = new MessagingBatchClient(requestFactory.getTransport(),
+            jsonFactory, fcmRootUrl);
   }
 
   @VisibleForTesting
