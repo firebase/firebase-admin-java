@@ -17,19 +17,29 @@
 package com.google.firebase.cloud;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.firestore.Firestore;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.google.common.io.CharStreams;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
+
+import com.google.firebase.testing.ServiceAccount;
 import org.junit.Test;
 
 public class StorageClientIT {
@@ -86,6 +96,17 @@ public class StorageClientIT {
   private Blob createTextBlob(Bucket bucket, String contents) {
     String fileName = "data_" + System.currentTimeMillis() + ".txt";
     return bucket.create(fileName, contents.getBytes(), "text/plain");
+  }
+
+  @Test
+  public void testStorageOptions() throws IOException {
+    Storage storage = StorageOptions.newBuilder()
+        .setCredentials(GoogleCredentials.fromStream(ServiceAccount.EDITOR.asStream()))
+        .setProjectId("explicit-project-id")
+        .setHost("explicit-host")
+        .build().getService();
+    assertEquals("explicit-project-id", storage.getOptions().getProjectId());
+    assertEquals("explicit-host", storage.getOptions().getHost());
   }
 
 }

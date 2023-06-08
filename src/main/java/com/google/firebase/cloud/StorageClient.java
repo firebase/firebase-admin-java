@@ -19,6 +19,7 @@ package com.google.firebase.cloud;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.cloud.firestore.FirestoreOptions;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
@@ -46,6 +47,9 @@ public class StorageClient {
   StorageClient(FirebaseApp app, Storage storage) {
     this.app = checkNotNull(app, "FirebaseApp must not be null");
     this.storage = checkNotNull(storage, "Storage must not be null");
+
+    StorageOptions userOptions =  app.getOptions().getStorageOptions();
+
   }
 
   public static StorageClient getInstance() {
@@ -56,7 +60,10 @@ public class StorageClient {
     StorageClientService service = ImplFirebaseTrampolines.getService(app, SERVICE_ID,
         StorageClientService.class);
     if (service == null) {
-      Storage storage = StorageOptions.newBuilder()
+      StorageOptions userOptions =  app.getOptions().getStorageOptions();
+      StorageOptions.Builder builder = userOptions != null ? userOptions.toBuilder() :
+          StorageOptions.newBuilder();
+      Storage storage = builder
           .setCredentials(ImplFirebaseTrampolines.getCredentials(app))
           .build()
           .getService();
