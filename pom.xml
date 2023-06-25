@@ -19,7 +19,7 @@
 
     <groupId>com.google.firebase</groupId>
     <artifactId>firebase-admin</artifactId>
-    <version>9.1.1</version>
+    <version>9.2.0</version>
     <packaging>jar</packaging>
 
     <name>firebase-admin</name>
@@ -59,7 +59,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <skipUTs>${skipTests}</skipUTs>
-        <netty.version>4.1.93.Final</netty.version>
+        <netty.version>4.1.94.Final</netty.version>
     </properties>
 
     <scm>
@@ -385,7 +385,7 @@
             <dependency>
                 <groupId>com.google.cloud</groupId>
                 <artifactId>libraries-bom</artifactId>
-                <version>26.16.0</version>
+                <version>26.17.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
