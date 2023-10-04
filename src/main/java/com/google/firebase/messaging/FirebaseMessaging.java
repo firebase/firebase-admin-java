@@ -344,6 +344,7 @@ public class FirebaseMessaging {
    *     value.
    * @deprecated Use {@link #sendEach(List)} instead.
    */
+  @Deprecated
   public BatchResponse sendAll(
       @NonNull List<Message> messages) throws FirebaseMessagingException {
     return sendAll(messages, false);
@@ -371,6 +372,7 @@ public class FirebaseMessaging {
    *     value.
    * @deprecated Use {@link #sendEach(List, boolean)} instead.
    */
+  @Deprecated
   public BatchResponse sendAll(
       @NonNull List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
     return sendAllOp(messages, dryRun).call();
@@ -384,6 +386,7 @@ public class FirebaseMessaging {
    *     the messages have been sent.
    * @deprecated Use {@link #sendEachAsync(List)} instead.
    */
+  @Deprecated
   public ApiFuture<BatchResponse> sendAllAsync(@NonNull List<Message> messages) {
     return sendAllAsync(messages, false);
   }
@@ -397,6 +400,7 @@ public class FirebaseMessaging {
    *     the messages have been sent, or when the emulation has finished.
    * @deprecated Use {@link #sendEachAsync(List, boolean)} instead.
    */
+  @Deprecated
   public ApiFuture<BatchResponse> sendAllAsync(
       @NonNull List<Message> messages, boolean dryRun) {
     return sendAllOp(messages, dryRun).callAsync(app);
@@ -418,6 +422,7 @@ public class FirebaseMessaging {
    *     return value.
    * @deprecated Use {@link #sendEachForMulticast(MulticastMessage)} instead.
    */
+  @Deprecated
   public BatchResponse sendMulticast(
       @NonNull MulticastMessage message) throws FirebaseMessagingException {
     return sendMulticast(message, false);
@@ -445,6 +450,7 @@ public class FirebaseMessaging {
    *     return value.
    * @deprecated Use {@link #sendEachForMulticast(MulticastMessage, boolean)} instead.
    */
+  @Deprecated
   public BatchResponse sendMulticast(
       @NonNull MulticastMessage message, boolean dryRun) throws FirebaseMessagingException {
     checkNotNull(message, "multicast message must not be null");
@@ -460,6 +466,7 @@ public class FirebaseMessaging {
    *     the messages have been sent.
    * @deprecated Use {@link #sendEachForMulticastAsync(MulticastMessage)} instead.
    */
+  @Deprecated
   public ApiFuture<BatchResponse> sendMulticastAsync(@NonNull MulticastMessage message) {
     return sendMulticastAsync(message, false);
   }
@@ -474,6 +481,7 @@ public class FirebaseMessaging {
    *     the messages have been sent.
    * @deprecated Use {@link #sendEachForMulticastAsync(MulticastMessage, boolean)} instead.
    */
+  @Deprecated
   public ApiFuture<BatchResponse> sendMulticastAsync(
       @NonNull MulticastMessage message, boolean dryRun) {
     checkNotNull(message, "multicast message must not be null");
