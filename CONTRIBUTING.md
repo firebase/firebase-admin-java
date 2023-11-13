@@ -127,23 +127,10 @@ mvn test
 Integration tests are also written using Junit4. They coexist with the unit tests in the `src/test`
 subdirectory. Integration tests follow the naming convention `*IT.java` (e.g. `DataTestIT.java`),
 which enables the Maven Surefire and Failsafe plugins to differentiate between the two types of
-tests. Integration tests are executed against a real life Firebase project, and therefore
-requires an Internet connection.
+tests.
 
-Create a new project in the [Firebase console](https://console.firebase.google.com/) if you do
-not already have one. Use a separate, dedicated project for integration tests since the test suite
-makes a large number of writes to the Firebase realtime database. Download the service account
-private key from the "Settings > Service Accounts" page of the project, and save it as
-`integration_cert.json` at the root of the codebase. Grant your service account the `Firebase
-Authentication Admin` role at
-[Google Cloud Platform Console / IAM & admin](https://console.cloud.google.com/iam-admin). This is
-required to ensure that exported user records contain the password hashes of the user accounts.
-Also obtain the web API key of the project from the "Settings > General" page, and save it as
-`integration_apikey.txt` at the root of the codebase.
-
-
-If you do not already have one suitable for running the tests against, you can create a new
-project in the
+Integration tests are executed against a real life Firebase project. If you do not already
+have one suitable for running the tests against, you can create a new project in the
 [Firebase Console](https://console.firebase.google.com) following the setup guide below.
 Otherwise you can obtain the following credentials from your current project:
 
