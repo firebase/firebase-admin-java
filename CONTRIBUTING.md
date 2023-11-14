@@ -190,8 +190,8 @@ Set up your Firebase project as follows:
    1. Go to
    [Google Developers Console | Identity Platform](https://console.cloud.google.com/customer-identity/)
    and if it is not already enabled, click **'Enable'**.
-   2. Then follow
-   [this guide](https://cloud.google.com/identity-platform/docs/multi-tenancy-quickstart#enabling_multi-tenancy)
+   2. Then
+   [enable multi-tenancy](https://cloud.google.com/identity-platform/docs/multi-tenancy-quickstart#enabling_multi-tenancy)
    to enable multi-tenancy.
 
 
