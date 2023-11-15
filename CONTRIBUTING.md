@@ -169,9 +169,9 @@ Set up your Firebase project as follows:
    2. Click on the **Create Database** button. You can choose to set up the Realtime Database
    either in the locked mode or in the test mode.
 
-   > **Note:** Integration tests are not ran against the default Realtime Database reference and are
-   instead ran against a database created at `https://{PROJECT_ID}.firebaseio.com`.
-   This second Realtime Database referance is created in the following steps.
+   > **Note:** Integration tests are not run against the default Realtime Database reference and are
+   instead run against a database created at `https://{PROJECT_ID}.firebaseio.com`.
+   This second Realtime Database reference is created in the following steps.
 
    3. In the **Data** tab click on the kebab menu (3 dots) and select **Create Database**.
    4. Enter your Project ID (Found in the **General** tab in **Account Settings**) as the
