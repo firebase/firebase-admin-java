@@ -148,11 +148,12 @@ public final class OidcProviderConfig extends ProviderConfig {
      *     invalid.
      */
     public CreateRequest setIssuer(String issuer) {
-      checkArgument(!Strings.isNullOrEmpty(issuer), "Issuer must not be null or empty.");
+      assert issuer != null && !issuer.isEmpty() : "Issuer must not be null or empty.";
       assertValidUrl(issuer);
       properties.put("issuer", issuer);
       return this;
     }
+
 
     /**
      * Sets whether to enable the code response flow for the new provider. By default, this is not
