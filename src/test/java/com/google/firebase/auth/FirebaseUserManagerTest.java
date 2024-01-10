@@ -979,7 +979,7 @@ public class FirebaseUserManagerTest {
         .setHttpTransport(transport)
         .setConnectTimeout(30000)
         .setReadTimeout(60000)
-        .setWriteTimeout(60000)
+        .setWriteTimeout(90000)
         .build());
     FirebaseAuth auth = FirebaseAuth.getInstance();
     FirebaseUserManager userManager = auth.getUserManager();
@@ -990,7 +990,7 @@ public class FirebaseUserManagerTest {
     HttpRequest request = interceptor.getResponse().getRequest();
     assertEquals(30000, request.getConnectTimeout());
     assertEquals(60000, request.getReadTimeout());
-    assertEquals(60000, request.getWriteTimeout());
+    assertEquals(90000, request.getWriteTimeout());
   }
 
   @Test

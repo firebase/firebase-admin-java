@@ -214,7 +214,7 @@ public final class FirebaseOptions {
    * Returns the write timeout in milliseconds, which is applied to outgoing REST calls
    * made by the SDK.
    *
-   * @return Read timeout in milliseconds. 0 indicates an infinite timeout.
+   * @return Write timeout in milliseconds. 0 indicates an infinite timeout.
    */
   public int getWriteTimeout() {
     return writeTimeout;
@@ -511,11 +511,11 @@ public final class FirebaseOptions {
     }
 
     /**
-     * Sets the read timeout for outgoing HTTP (REST) calls made by the SDK. This does not affect
+     * Sets the write timeout for outgoing HTTP (REST) calls made by the SDK. This does not affect
      * the {@link com.google.firebase.database.FirebaseDatabase} and
      * {@link com.google.firebase.cloud.FirestoreClient} APIs.
      *
-     * @param writeTimeout Read timeout in milliseconds. Must not be negative.
+     * @param writeTimeout Write timeout in milliseconds. Must not be negative.
      * @return This <code>Builder</code> instance is returned so subsequent calls can be chained.
      */
     public Builder setWriteTimeout(int writeTimeout) {

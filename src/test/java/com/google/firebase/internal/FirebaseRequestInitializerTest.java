@@ -38,7 +38,7 @@ public class FirebaseRequestInitializerTest {
   private static final int MAX_RETRIES = 5;
   private static final int CONNECT_TIMEOUT_MILLIS = 30000;
   private static final int READ_TIMEOUT_MILLIS = 60000;
-  private static final int WRITE_TIMEOUT_MILLIS = 60000;
+  private static final int WRITE_TIMEOUT_MILLIS = 90000;
 
   @After
   public void tearDown() {

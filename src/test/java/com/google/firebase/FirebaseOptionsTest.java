@@ -87,7 +87,7 @@ public class FirebaseOptionsTest {
             .setThreadManager(MOCK_THREAD_MANAGER)
             .setConnectTimeout(30000)
             .setReadTimeout(60000)
-            .setWriteTimeout(60000)
+            .setWriteTimeout(90000)
             .setFirestoreOptions(firestoreOptions)
             .build();
     assertEquals(FIREBASE_DB_URL, firebaseOptions.getDatabaseUrl());
@@ -98,7 +98,7 @@ public class FirebaseOptionsTest {
     assertSame(MOCK_THREAD_MANAGER, firebaseOptions.getThreadManager());
     assertEquals(30000, firebaseOptions.getConnectTimeout());
     assertEquals(60000, firebaseOptions.getReadTimeout());
-    assertEquals(60000, firebaseOptions.getWriteTimeout());
+    assertEquals(90000, firebaseOptions.getWriteTimeout());
     assertSame(firestoreOptions, firebaseOptions.getFirestoreOptions());
 
     GoogleCredentials credentials = firebaseOptions.getCredentials();
