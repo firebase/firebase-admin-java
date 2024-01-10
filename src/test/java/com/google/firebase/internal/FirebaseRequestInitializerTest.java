@@ -38,6 +38,7 @@ public class FirebaseRequestInitializerTest {
   private static final int MAX_RETRIES = 5;
   private static final int CONNECT_TIMEOUT_MILLIS = 30000;
   private static final int READ_TIMEOUT_MILLIS = 60000;
+  private static final int WRITE_TIMEOUT_MILLIS = 60000;
 
   @After
   public void tearDown() {
@@ -69,6 +70,7 @@ public class FirebaseRequestInitializerTest {
         .setCredentials(new MockGoogleCredentials("token"))
         .setConnectTimeout(CONNECT_TIMEOUT_MILLIS)
         .setReadTimeout(READ_TIMEOUT_MILLIS)
+        .setWriteTimeout(WRITE_TIMEOUT_MILLIS)
         .build());
     HttpRequest request = TestUtils.createRequest();
 
@@ -77,6 +79,7 @@ public class FirebaseRequestInitializerTest {
 
     assertEquals(CONNECT_TIMEOUT_MILLIS, request.getConnectTimeout());
     assertEquals(READ_TIMEOUT_MILLIS, request.getReadTimeout());
+    assertEquals(WRITE_TIMEOUT_MILLIS, request.getWriteTimeout());
     assertEquals("Bearer token", request.getHeaders().getAuthorization());
     assertEquals(HttpRequest.DEFAULT_NUMBER_OF_RETRIES, request.getNumberOfRetries());
     assertNull(request.getIOExceptionHandler());
