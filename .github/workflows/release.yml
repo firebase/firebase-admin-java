@@ -40,13 +40,14 @@ jobs:
     # via the 'ref' client parameter.
     steps:
     - name: Checkout source for staging
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         ref: ${{ github.event.client_payload.ref || github.ref }}
 
     - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v4
       with:
+        distribution: 'zulu'
         java-version: 1.8
 
     - name: Compile, test and package
@@ -58,7 +59,7 @@ jobs:
     # Attach the packaged artifacts to the workflow output. These can be manually
     # downloaded for later inspection if necessary.
     - name: Archive artifacts
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: dist
         path: dist
@@ -80,11 +81,12 @@ jobs:
 
     steps:
     - name: Checkout source for publish
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Set up JDK 1.8
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v4
       with:
+        distribution: 'zulu'
         java-version: 1.8
 
     - name: Publish preflight check
@@ -99,19 +101,13 @@ jobs:
         NEXUS_OSSRH_USERNAME: ${{ secrets.NEXUS_OSSRH_USERNAME }}
         NEXUS_OSSRH_PASSWORD: ${{ secrets.NEXUS_OSSRH_PASSWORD }}
 
-    # We pull this action from a custom fork of a contributor until
-    # https://github.com/actions/create-release/pull/32 is merged. Also note that v1 of
-    # this action does not support the "body" parameter.
+    # See: https://cli.github.com/manual/gh_release_create
     - name: Create release tag
-      uses: fleskesvor/create-release@1a72e235c178bf2ae6c51a8ae36febc24568c5fe
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ steps.preflight.outputs.version }}
-        release_name: Firebase Admin Java SDK ${{ steps.preflight.outputs.version }}
-        body: ${{ steps.preflight.outputs.changelog }}
-        draft: false
-        prerelease: false
+      run: gh release create ${{ steps.preflight.outputs.version }}
+            --title "Firebase Admin Java SDK ${{ steps.preflight.outputs.version }}"
+            --notes '${{ steps.preflight.outputs.changelog }}'
 
     # Post to Twitter if explicitly opted-in by adding the label 'release:tweet'.
     - name: Post to Twitter
