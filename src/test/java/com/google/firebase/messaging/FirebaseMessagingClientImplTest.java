@@ -44,6 +44,7 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.OutgoingHttpRequest;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.FirebaseProcessEnvironment;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.messaging.WebpushNotification.Action;
 import com.google.firebase.messaging.WebpushNotification.Direction;
@@ -544,6 +545,36 @@ public class FirebaseMessagingClientImplTest {
           new GenericUrl("https://example.com"));
       assertNull(request.getHeaders().getAuthorization());
     } finally {
+      app.delete();
+    }
+  }
+
+  @Test
+  public void testFromAppWithFcmUrlFromEnv() throws IOException {
+    FirebaseProcessEnvironment.setenv("GOOGLE_FCM_HOST", "https://test-host.com");
+    FirebaseOptions options = FirebaseOptions.builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId("test-project")
+        .build();
+    FirebaseApp app = FirebaseApp.initializeApp(options);
+
+    try {
+      FirebaseMessagingClientImpl client = FirebaseMessagingClientImpl.fromApp(app);
+      String expectedFcmSendUrl = "https://test-host.com/v1/projects/test-project/messages:send";
+      assertEquals(expectedFcmSendUrl, client.getFcmSendUrl());
+      String expectedFcmBatchUrl = "https://test-host.com/batch";
+      assertEquals(expectedFcmBatchUrl, client.getFcmBatchUrl());
+      assertSame(options.getJsonFactory(), client.getJsonFactory());
+
+      HttpRequest request = client.getRequestFactory().buildGetRequest(
+          new GenericUrl("https://example.com"));
+      assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+
+      request = client.getChildRequestFactory().buildGetRequest(
+          new GenericUrl("https://example.com"));
+      assertNull(request.getHeaders().getAuthorization());
+    } finally {
+      FirebaseProcessEnvironment.deleteEnv("GOOGLE_FCM_HOST");
       app.delete();
     }
   }
