@@ -59,7 +59,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <skipUTs>${skipTests}</skipUTs>
-        <netty.version>4.1.101.Final</netty.version>
+        <netty.version>4.1.107.Final</netty.version>
     </properties>
 
     <scm>
@@ -270,7 +270,7 @@
             <!-- Compile Phase -->
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>3.12.1</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
@@ -392,7 +392,7 @@
             <dependency>
                 <groupId>com.google.api-client</groupId>
                 <artifactId>google-api-client-bom</artifactId>
-                <version>2.2.0</version>
+                <version>2.3.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -438,7 +438,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>2.0.9</version>
+            <version>2.0.12</version>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
