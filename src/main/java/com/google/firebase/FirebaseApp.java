@@ -223,6 +223,7 @@ public class FirebaseApp {
           !instances.containsKey(normalizedName),
           "FirebaseApp name " + normalizedName + " already exists!");
 
+      overrideProcessEnvironment(options);
       FirebaseApp firebaseApp = new FirebaseApp(normalizedName, options, tokenRefresherFactory);
       instances.put(normalizedName, firebaseApp);
       return firebaseApp;
@@ -582,5 +583,9 @@ public class FirebaseApp {
     parser.parseAndClose(builder);
     builder.setCredentials(APPLICATION_DEFAULT_CREDENTIALS);
     return builder.build();
+  }
+
+  private static void overrideProcessEnvironment(FirebaseOptions options) {
+    options.getProcessEnvironmentOverride().forEach(FirebaseProcessEnvironment::setenv);
   }
 }

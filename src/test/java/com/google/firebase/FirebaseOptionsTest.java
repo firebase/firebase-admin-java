@@ -33,9 +33,10 @@ import com.google.cloud.firestore.FirestoreOptions;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
-
 import org.junit.Test;
 
 /** 
@@ -76,6 +77,8 @@ public class FirebaseOptionsTest {
     GsonFactory jsonFactory = new GsonFactory();
     NetHttpTransport httpTransport = new NetHttpTransport();
     FirestoreOptions firestoreOptions = FirestoreOptions.newBuilder().build();
+    Map<String, String> processEnvOverride = new HashMap<>();
+    processEnvOverride.put("FIREBASE_AUTH_EMULATOR_HOST", "localhost:9092");
     FirebaseOptions firebaseOptions =
         FirebaseOptions.builder()
             .setDatabaseUrl(FIREBASE_DB_URL)
@@ -86,6 +89,7 @@ public class FirebaseOptionsTest {
             .setHttpTransport(httpTransport)
             .setThreadManager(MOCK_THREAD_MANAGER)
             .setConnectTimeout(30000)
+            .setProcessEnvironmentOverride(processEnvOverride)
             .setReadTimeout(60000)
             .setFirestoreOptions(firestoreOptions)
             .build();
@@ -98,6 +102,8 @@ public class FirebaseOptionsTest {
     assertEquals(30000, firebaseOptions.getConnectTimeout());
     assertEquals(60000, firebaseOptions.getReadTimeout());
     assertSame(firestoreOptions, firebaseOptions.getFirestoreOptions());
+    assertEquals("localhost:9092",
+        firebaseOptions.getProcessEnvironmentOverride().get("FIREBASE_AUTH_EMULATOR_HOST"));
 
     GoogleCredentials credentials = firebaseOptions.getCredentials();
     assertNotNull(credentials);
