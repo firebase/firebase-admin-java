@@ -60,16 +60,19 @@ public final class FirebaseRequestInitializer implements HttpRequestInitializer 
 
     private final int connectTimeoutMillis;
     private final int readTimeoutMillis;
+    private final int writeTimeoutMillis;
 
     TimeoutInitializer(FirebaseOptions options) {
       this.connectTimeoutMillis = options.getConnectTimeout();
       this.readTimeoutMillis = options.getReadTimeout();
+      this.writeTimeoutMillis = options.getWriteTimeout();
     }
 
     @Override
     public void initialize(HttpRequest request) {
       request.setConnectTimeout(connectTimeoutMillis);
       request.setReadTimeout(readTimeoutMillis);
+      request.setWriteTimeout(writeTimeoutMillis);
     }
   }
 }
