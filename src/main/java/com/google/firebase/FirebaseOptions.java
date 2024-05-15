@@ -201,8 +201,7 @@ public final class FirebaseOptions {
   }
 
   /**
-   * Returns the read timeout in milliseconds, which is applied to outgoing REST calls
-   * made by the SDK.
+   * Returns the read timeout applied to outgoing REST calls in milliseconds.
    *
    * @return Read timeout in milliseconds. 0 indicates an infinite timeout.
    */
@@ -211,8 +210,7 @@ public final class FirebaseOptions {
   }
 
   /**
-   * Returns the write timeout in milliseconds, which is applied to outgoing REST calls
-   * made by the SDK.
+   * Returns the write timeout applied to outgoing REST calls in milliseconds.
    *
    * @return Write timeout in milliseconds. 0 indicates an infinite timeout.
    */
