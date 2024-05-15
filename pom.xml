@@ -59,7 +59,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <skipUTs>${skipTests}</skipUTs>
-        <netty.version>4.1.101.Final</netty.version>
+        <netty.version>4.1.109.Final</netty.version>
     </properties>
 
     <scm>
@@ -157,7 +157,7 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.4</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -189,7 +189,7 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.8.11</version>
+                        <version>0.8.12</version>
                         <executions>
                             <execution>
                                 <id>pre-unit-test</id>
@@ -215,7 +215,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.1.1</version>
+                        <version>3.2.0</version>
                         <executions>
                             <execution>
                                 <phase>test</phase>
@@ -270,7 +270,7 @@
             <!-- Compile Phase -->
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>3.13.0</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
@@ -280,7 +280,7 @@
             <!-- Test Phase -->
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.2</version>
+                <version>3.2.5</version>
                 <configuration>
                     <skipTests>${skipUTs}</skipTests>
                 </configuration>
@@ -289,7 +289,7 @@
             <!-- Package Phase -->
             <plugin>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.3.1</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -337,7 +337,7 @@
             <!-- Verify Phase -->
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.2.3</version>
+                <version>3.2.5</version>
                 <executions>
                     <execution>
                         <goals>
@@ -385,14 +385,14 @@
             <dependency>
                 <groupId>com.google.cloud</groupId>
                 <artifactId>libraries-bom</artifactId>
-                <version>26.28.0</version>
+                <version>26.39.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.google.api-client</groupId>
                 <artifactId>google-api-client-bom</artifactId>
-                <version>2.2.0</version>
+                <version>2.5.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -438,7 +438,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>2.0.9</version>
+            <version>2.0.13</version>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
