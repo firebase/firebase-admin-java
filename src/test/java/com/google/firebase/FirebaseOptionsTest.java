@@ -24,12 +24,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.firestore.FirestoreOptions;
+import com.google.firebase.internal.ApacheHttp2Transport;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
@@ -74,7 +74,7 @@ public class FirebaseOptionsTest {
   @Test
   public void createOptionsWithAllValuesSet() throws IOException {
     GsonFactory jsonFactory = new GsonFactory();
-    NetHttpTransport httpTransport = new NetHttpTransport();
+    ApacheHttp2Transport httpTransport = new ApacheHttp2Transport();
     FirestoreOptions firestoreOptions = FirestoreOptions.newBuilder().build();
     FirebaseOptions firebaseOptions =
         FirebaseOptions.builder()

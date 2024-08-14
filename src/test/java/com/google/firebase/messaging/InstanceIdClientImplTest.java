@@ -358,7 +358,7 @@ public class InstanceIdClientImplTest {
 
   @Test(expected = NullPointerException.class)
   public void testJsonFactoryIsNull() {
-    new InstanceIdClientImpl(Utils.getDefaultTransport().createRequestFactory(), null);
+    new InstanceIdClientImpl(ApiClientUtils.getDefaultTransport().createRequestFactory(), null);
   }
 
   @Test

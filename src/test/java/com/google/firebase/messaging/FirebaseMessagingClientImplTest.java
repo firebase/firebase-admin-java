@@ -358,7 +358,7 @@ public class FirebaseMessagingClientImplTest {
         .setProjectId("test-project")
         .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
         .setRequestFactory(transport.createRequestFactory(initializer))
-        .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory())
+        .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
         .setResponseInterceptor(interceptor)
         .build();
 
@@ -558,7 +558,7 @@ public class FirebaseMessagingClientImplTest {
         .setProjectId("test-project")
         .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
         .setRequestFactory(transport.createRequestFactory())
-        .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory())
+        .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
         .setResponseInterceptor(interceptor)
         .build();
   }
@@ -581,7 +581,7 @@ public class FirebaseMessagingClientImplTest {
         .setProjectId("test-project")
         .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
         .setRequestFactory(transport.createRequestFactory())
-        .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory())
+        .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
         .build();
   }
 
@@ -665,8 +665,8 @@ public class FirebaseMessagingClientImplTest {
     return FirebaseMessagingClientImpl.builder()
         .setProjectId("test-project")
         .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
-        .setRequestFactory(Utils.getDefaultTransport().createRequestFactory())
-        .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory());
+        .setRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
+        .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory());
   }
 
   private void checkExceptionFromHttpResponse(
