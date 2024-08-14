@@ -88,6 +88,6 @@ public class ApiClientUtils {
   }
 
   public static HttpTransport getDefaultTransport() {
-    return Utils.getDefaultTransport();
+    return new ApacheHttp2Transport();
   }
 }
