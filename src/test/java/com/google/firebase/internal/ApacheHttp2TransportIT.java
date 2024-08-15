@@ -4,12 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-import java.io.IOException;
-
-import org.junit.After;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.json.JsonFactory;
@@ -24,9 +18,16 @@ import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 
+import java.io.IOException;
+
+import org.junit.After;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 public class ApacheHttp2TransportIT {
   private static final GoogleCredentials MOCK_CREDENTIALS = new MockGoogleCredentials("test_token");
-  private static final ImmutableMap<String, Object> payload = ImmutableMap.<String, Object>of("foo", "bar");
+  private static final ImmutableMap<String, Object> payload = 
+      ImmutableMap.<String, Object>of("foo", "bar");
   // Sets a 1 second delay before response
   private static final String DELAY_URL = "https://nghttp2.org/httpbin/delay/1";
   private static final String POST_URL = "https://nghttp2.org/httpbin/post";
@@ -162,7 +163,8 @@ public class ApacheHttp2TransportIT {
     }
   }
 
-  private static ErrorHandlingHttpClient<FirebaseException> getHttpClient(boolean authorized, FirebaseApp app) {
+  private static ErrorHandlingHttpClient<FirebaseException> getHttpClient(boolean authorized,
+      FirebaseApp app) {
     HttpRequestFactory requestFactory;
     if (authorized) {
       requestFactory = ApiClientUtils.newAuthorizedRequestFactory(app);

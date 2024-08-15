@@ -64,7 +64,8 @@ final class ApacheHttp2Request extends LowLevelHttpRequest {
 
     // Make Producer
     CompletableFuture<Void> writeFuture = new CompletableFuture<>();
-    ApacheHttp2AsyncEntityProducer entityProducer = new ApacheHttp2AsyncEntityProducer(this, writeFuture);
+    ApacheHttp2AsyncEntityProducer entityProducer = 
+        new ApacheHttp2AsyncEntityProducer(this, writeFuture);
 
     // Execute
     final CompletableFuture<SimpleHttpResponse> responseFuture = new CompletableFuture<>();
