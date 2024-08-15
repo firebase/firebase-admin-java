@@ -26,10 +26,12 @@ public class ApacheHttp2AsyncEntityProducer implements AsyncEntityProducer {
     public ApacheHttp2AsyncEntityProducer(final StreamingContent content, final ContentType contentType, String contentEncoding, long contentLength, CompletableFuture<Void> writeFuture) {
         this.writeFuture = writeFuture;
 
-        try {
-            content.writeTo(baos);
-        } catch (IOException e) {
-            writeFuture.completeExceptionally(e);
+        if (content != null) {
+            try {
+                content.writeTo(baos);
+            } catch (IOException e) {
+                writeFuture.completeExceptionally(e);
+            }
         }
         this.bytebuf = ByteBuffer.wrap(baos.toByteArray());
         this.contentType = contentType;

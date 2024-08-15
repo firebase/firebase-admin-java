@@ -19,7 +19,6 @@ import org.apache.hc.core5.concurrent.FutureCallback;
 import org.apache.hc.core5.http.nio.support.BasicRequestProducer;
 import org.apache.hc.core5.util.Timeout;
 
-@SuppressWarnings("deprecation")
 final class ApacheHttp2Request extends LowLevelHttpRequest {
   private final CloseableHttpAsyncClient httpAsyncClient;
   private final SimpleRequestBuilder requestBuilder;
@@ -43,6 +42,7 @@ final class ApacheHttp2Request extends LowLevelHttpRequest {
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void setTimeout(int connectionTimeout, int readTimeout) throws IOException {
     requestConfig
       .setConnectTimeout(Timeout.ofMilliseconds(connectionTimeout))
@@ -91,8 +91,6 @@ final class ApacheHttp2Request extends LowLevelHttpRequest {
 
       if (writeTimeout != 0) {
         writeFuture.get(writeTimeout, TimeUnit.MILLISECONDS);
-      } else {
-        // writeFuture.get();
       }
 
       final SimpleHttpResponse response = responseFuture.get();
