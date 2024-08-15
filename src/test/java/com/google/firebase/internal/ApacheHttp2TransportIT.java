@@ -15,7 +15,6 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.IncomingHttpResponse;
-import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 
 import java.io.IOException;
@@ -25,9 +24,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ApacheHttp2TransportIT {
+  private static FirebaseApp app;
   private static final GoogleCredentials MOCK_CREDENTIALS = new MockGoogleCredentials("test_token");
   private static final ImmutableMap<String, Object> payload = 
       ImmutableMap.<String, Object>of("foo", "bar");
+
   // Sets a 1 second delay before response
   private static final String DELAY_URL = "https://nghttp2.org/httpbin/delay/1";
   private static final String POST_URL = "https://nghttp2.org/httpbin/post";
@@ -38,7 +39,7 @@ public class ApacheHttp2TransportIT {
 
   @After
   public void cleanup() {
-    TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
+    app.delete();
   }
 
   @Test
@@ -51,11 +52,11 @@ public class ApacheHttp2TransportIT {
 
   @Test
   public void testConnectTimeoutAuthorizedGet() throws FirebaseException {
-    FirebaseApp timeoutApp = FirebaseApp.initializeApp(FirebaseOptions.builder()
+    app  = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
         .setConnectTimeout(1)
-        .build());
-    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, timeoutApp);
+        .build(), "test-app");
+    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
     HttpRequestInfo request = HttpRequestInfo.buildGetRequest(DELAY_URL);
 
     try {
@@ -70,11 +71,11 @@ public class ApacheHttp2TransportIT {
 
   @Test
   public void testConnectTimeoutAuthorizedPost() throws FirebaseException {
-    FirebaseApp timeoutApp = FirebaseApp.initializeApp(FirebaseOptions.builder()
+    app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
         .setConnectTimeout(1)
-        .build());
-    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, timeoutApp);
+        .build(), "test-app");
+    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
     HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(DELAY_URL, payload);
 
     try {
@@ -89,11 +90,11 @@ public class ApacheHttp2TransportIT {
 
   @Test
   public void testReadTimeoutAuthorizedGet() throws FirebaseException {
-    FirebaseApp timeoutApp = FirebaseApp.initializeApp(FirebaseOptions.builder()
+    app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
         .setReadTimeout(1)
-        .build());
-    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, timeoutApp);
+        .build(), "test-app");
+    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
     HttpRequestInfo request = HttpRequestInfo.buildGetRequest(DELAY_URL);
 
     try {
@@ -108,11 +109,11 @@ public class ApacheHttp2TransportIT {
 
   @Test
   public void testReadTimeoutAuthorizedPost() throws FirebaseException {
-    FirebaseApp timeoutApp = FirebaseApp.initializeApp(FirebaseOptions.builder()
+    app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
         .setReadTimeout(1)
-        .build());
-    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, timeoutApp);
+        .build(), "test-app");
+    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
     HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(DELAY_URL, payload);
 
     try {
@@ -127,11 +128,11 @@ public class ApacheHttp2TransportIT {
 
   @Test
   public void testWriteTimeoutAuthorizedGet() throws FirebaseException {
-    FirebaseApp timeoutApp = FirebaseApp.initializeApp(FirebaseOptions.builder()
+    app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
         .setWriteTimeout(1)
-        .build());
-    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, timeoutApp);
+        .build(), "test-app");
+    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
     HttpRequestInfo request = HttpRequestInfo.buildGetRequest(DELAY_URL);
 
     try {
@@ -146,11 +147,11 @@ public class ApacheHttp2TransportIT {
 
   @Test
   public void testWriteTimeoutAuthorizedPost() throws FirebaseException {
-    FirebaseApp timeoutApp = FirebaseApp.initializeApp(FirebaseOptions.builder()
+    app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
         .setWriteTimeout(1)
-        .build());
-    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, timeoutApp);
+        .build(), "test-app");
+    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
     HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(DELAY_URL, payload);
 
     try {
@@ -177,9 +178,10 @@ public class ApacheHttp2TransportIT {
   }
 
   private static ErrorHandlingHttpClient<FirebaseException> getHttpClient(boolean authorized) {
-    return getHttpClient(authorized, FirebaseApp.initializeApp(FirebaseOptions.builder()
+    app = FirebaseApp.initializeApp(FirebaseOptions.builder()
     .setCredentials(MOCK_CREDENTIALS)
-    .build(), "test-app"));
+    .build(), "test-app");
+    return getHttpClient(authorized, app);
   }
 
 
