@@ -1,6 +1,23 @@
+/*
+ * Copyright 2024 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.firebase.internal;
 
 import com.google.api.client.util.StreamingContent;
+import com.google.common.annotations.VisibleForTesting;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -15,8 +32,9 @@ import org.apache.hc.core5.http.nio.DataStreamChannel;
 
 @SuppressWarnings("deprecation")
 public class ApacheHttp2AsyncEntityProducer implements AsyncEntityProducer {
-  private final ByteBuffer bytebuf;
-  private ByteArrayOutputStream baos = new ByteArrayOutputStream();
+  private ByteBuffer bytebuf;
+  private ByteArrayOutputStream baos;
+  private final StreamingContent content;
   private final ContentType contentType;
   private final long contentLength;
   private final String contentEncoding;
@@ -25,19 +43,14 @@ public class ApacheHttp2AsyncEntityProducer implements AsyncEntityProducer {
 
   public ApacheHttp2AsyncEntityProducer(StreamingContent content, ContentType contentType,
       String contentEncoding, long contentLength, CompletableFuture<Void> writeFuture) {
-    this.writeFuture = writeFuture;
-
-    if (content != null) {
-      try {
-        content.writeTo(baos);
-      } catch (IOException e) {
-        writeFuture.completeExceptionally(e);
-      }
-    }
-    this.bytebuf = ByteBuffer.wrap(baos.toByteArray());
+    this.content = content;
     this.contentType = contentType;
-    this.contentLength = contentLength;
     this.contentEncoding = contentEncoding;
+    this.contentLength = contentLength;
+    this.writeFuture = writeFuture;
+    this.bytebuf = null;
+
+    this.baos = new ByteArrayOutputStream((int) (contentLength < 0 ? 0 : contentLength));
     this.exception = new AtomicReference<>();
   }
 
@@ -53,7 +66,7 @@ public class ApacheHttp2AsyncEntityProducer implements AsyncEntityProducer {
 
   @Override
   public boolean isRepeatable() {
-    return false;
+    return true;
   }
 
   @Override
@@ -78,7 +91,7 @@ public class ApacheHttp2AsyncEntityProducer implements AsyncEntityProducer {
 
   @Override
   public boolean isChunked() {
-    return false;
+    return contentLength == -1;
   }
 
   @Override
@@ -88,12 +101,27 @@ public class ApacheHttp2AsyncEntityProducer implements AsyncEntityProducer {
 
   @Override
   public void produce(DataStreamChannel channel) throws IOException {
+    if (bytebuf == null) {
+      if (content != null) {
+        try {
+          content.writeTo(baos);
+        } catch (IOException e) {
+          writeFuture.completeExceptionally(e);
+          // failed(e);
+        }
+      }
+
+      this.bytebuf = ByteBuffer.wrap(baos.toByteArray());
+    }
+
     if (bytebuf.hasRemaining()) {
       channel.write(bytebuf);
     }
+
     if (!bytebuf.hasRemaining()) {
       channel.endStream();
       writeFuture.complete(null);
+      releaseResources();
     }
   }
 
@@ -112,5 +140,10 @@ public class ApacheHttp2AsyncEntityProducer implements AsyncEntityProducer {
   @Override
   public void releaseResources() {
     bytebuf.clear();
+  }
+
+  @VisibleForTesting
+  ByteBuffer getBytebuf() {
+    return bytebuf;
   }
 }

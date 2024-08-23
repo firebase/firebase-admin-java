@@ -1,11 +1,30 @@
+/*
+ * Copyright 2024 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.google.firebase.internal;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.LowLevelHttpResponse;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.GenericData;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -16,8 +35,16 @@ import com.google.firebase.FirebaseException;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.auth.MockGoogleCredentials;
-
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
+import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
+import org.apache.hc.core5.http.EntityDetails;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpException;
+import org.apache.hc.core5.http.HttpRequest;
+import org.apache.hc.core5.http.HttpRequestInterceptor;
+import org.apache.hc.core5.http.protocol.HttpContext;
 
 import org.junit.After;
 import org.junit.BeforeClass;
@@ -29,8 +56,11 @@ public class ApacheHttp2TransportIT {
   private static final ImmutableMap<String, Object> payload = 
       ImmutableMap.<String, Object>of("foo", "bar");
 
-  // Sets a 1 second delay before response
-  private static final String DELAY_URL = "https://nghttp2.org/httpbin/delay/1";
+  // Connects are not make at port 81
+  private static final String NO_CONNECT_URL = "http://google.com:81";
+  // Sets a 5 second delay before response
+  private static final String DELAY_URL = "https://nghttp2.org/httpbin/delay/5";
+  private static final String GET_URL = "https://nghttp2.org/httpbin/get";
   private static final String POST_URL = "https://nghttp2.org/httpbin/post";
 
   @BeforeClass
@@ -39,10 +69,20 @@ public class ApacheHttp2TransportIT {
 
   @After
   public void cleanup() {
-    app.delete();
+    if (app != null) {
+      app.delete();
+    }
+  }
+  
+  @Test(timeout = 10_000L)
+  public void testUnauthorizedGetRequest() throws FirebaseException {
+    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true);
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(GET_URL);
+    IncomingHttpResponse response = httpClient.send(request);
+    assertEquals(200, response.getStatusCode());
   }
 
-  @Test
+  @Test(timeout = 10_000L)
   public void testUnauthorizedPostRequest() throws FirebaseException {
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(false);
     HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(POST_URL, payload);
@@ -50,49 +90,49 @@ public class ApacheHttp2TransportIT {
     assertEquals("{\"foo\":\"bar\"}", body.get("data"));
   }
 
-  @Test
+  @Test(timeout = 10_000L)
   public void testConnectTimeoutAuthorizedGet() throws FirebaseException {
     app  = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
-        .setConnectTimeout(1)
+        .setConnectTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(DELAY_URL);
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(NO_CONNECT_URL);
 
     try {
       httpClient.send(request);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
-      assertEquals("IO error: Exception in request", e.getMessage());
+      assertEquals("IO error: Connection Timeout", e.getMessage());
       assertNull(e.getHttpResponse());
     }
   }
 
-  @Test
+  @Test(timeout = 10_000L)
   public void testConnectTimeoutAuthorizedPost() throws FirebaseException {
     app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
-        .setConnectTimeout(1)
+        .setConnectTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(DELAY_URL, payload);
+    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(NO_CONNECT_URL, payload);
 
     try {
       httpClient.send(request);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
-      assertEquals("IO error: Exception in request", e.getMessage());
+      assertEquals("IO error: Connection Timeout", e.getMessage());
       assertNull(e.getHttpResponse());
     }
   }
 
-  @Test
+  @Test(timeout = 10_000L)
   public void testReadTimeoutAuthorizedGet() throws FirebaseException {
     app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
-        .setReadTimeout(1)
+        .setReadTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
     HttpRequestInfo request = HttpRequestInfo.buildGetRequest(DELAY_URL);
@@ -102,16 +142,16 @@ public class ApacheHttp2TransportIT {
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
-      assertEquals("IO error: Exception in request", e.getMessage());
+      assertEquals("IO error: Stream exception in request", e.getMessage());
       assertNull(e.getHttpResponse());
     }
   }
 
-  @Test
+  @Test(timeout = 10_000L)
   public void testReadTimeoutAuthorizedPost() throws FirebaseException {
     app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
-        .setReadTimeout(1)
+        .setReadTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
     HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(DELAY_URL, payload);
@@ -121,47 +161,90 @@ public class ApacheHttp2TransportIT {
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
-      assertEquals("IO error: Exception in request", e.getMessage());
+      assertEquals("IO error: Stream exception in request", e.getMessage());
       assertNull(e.getHttpResponse());
     }
   }
 
-  @Test
+  @Test(timeout = 10_000L)
   public void testWriteTimeoutAuthorizedGet() throws FirebaseException {
     app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
-        .setWriteTimeout(1)
+        .setWriteTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(DELAY_URL);
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(NO_CONNECT_URL);
 
     try {
       httpClient.send(request);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
-      assertEquals("IO error: Timed out", e.getMessage());
+      assertEquals("IO error: Write Timeout", e.getMessage());
       assertNull(e.getHttpResponse());
     }
   }
 
-  @Test
+  @Test(timeout = 10_000L)
   public void testWriteTimeoutAuthorizedPost() throws FirebaseException {
     app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
-        .setWriteTimeout(1)
+        .setWriteTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(DELAY_URL, payload);
+    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(POST_URL, payload);
 
     try {
       httpClient.send(request);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
-      assertEquals("IO error: Timed out", e.getMessage());
+      assertEquals("IO error: Write Timeout", e.getMessage());
       assertNull(e.getHttpResponse());
     }
+  }
+
+  @Test(timeout = 10_000L)
+  public void testRequestShouldNotFollowRedirects() throws IOException {
+    ApacheHttp2Transport transport = new ApacheHttp2Transport();
+    ApacheHttp2Request request = transport.buildRequest("GET",
+        "https://google.com");
+    LowLevelHttpResponse response = request.execute();
+
+    assertEquals(301, response.getStatusCode());
+    assert (response instanceof ApacheHttp2Response);
+    assertEquals("https://www.google.com/", ((ApacheHttp2Response) response).getHeaderValue("location"));
+  }
+
+  @Test(timeout = 10_000L)
+  public void testRequestCanSetHeaders() {
+    final AtomicBoolean interceptorCalled = new AtomicBoolean(false);
+    CloseableHttpAsyncClient client = HttpAsyncClients.custom()
+        .addRequestInterceptorFirst(
+            new HttpRequestInterceptor() {
+              @Override
+              public void process(
+                  HttpRequest request, EntityDetails details, HttpContext context)
+                  throws HttpException, IOException {
+                Header header = request.getFirstHeader("foo");
+                assertNotNull("Should have found header", header);
+                assertEquals("bar", header.getValue());
+                interceptorCalled.set(true);
+                throw new IOException("cancelling request");
+              }
+            })
+        .build();
+
+    ApacheHttp2Transport transport = new ApacheHttp2Transport(client);
+    ApacheHttp2Request request = transport.buildRequest("GET", "http://www.google.com");
+    request.addHeader("foo", "bar");
+    try {
+      request.execute();
+      fail("should not actually make the request");
+    } catch (IOException exception) {
+      assertEquals("Exception in request", exception.getMessage());
+    }
+    assertTrue("Expected to have called our test interceptor", interceptorCalled.get());
   }
 
   private static ErrorHandlingHttpClient<FirebaseException> getHttpClient(boolean authorized,
