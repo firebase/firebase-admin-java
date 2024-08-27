@@ -56,8 +56,6 @@ public class ApacheHttp2TransportIT {
   private static final ImmutableMap<String, Object> payload = 
       ImmutableMap.<String, Object>of("foo", "bar");
 
-  // Connects are not make at port 81
-  private static final String NO_CONNECT_URL = "http://google.com:81";
   // Sets a 5 second delay before response
   private static final String DELAY_URL = "https://nghttp2.org/httpbin/delay/5";
   private static final String GET_URL = "https://nghttp2.org/httpbin/get";
@@ -97,7 +95,7 @@ public class ApacheHttp2TransportIT {
         .setConnectTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(NO_CONNECT_URL);
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(GET_URL);
 
     try {
       httpClient.send(request);
@@ -116,7 +114,7 @@ public class ApacheHttp2TransportIT {
         .setConnectTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(NO_CONNECT_URL, payload);
+    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(POST_URL, payload);
 
     try {
       httpClient.send(request);
@@ -173,7 +171,7 @@ public class ApacheHttp2TransportIT {
         .setWriteTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(NO_CONNECT_URL);
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(GET_URL);
 
     try {
       httpClient.send(request);
