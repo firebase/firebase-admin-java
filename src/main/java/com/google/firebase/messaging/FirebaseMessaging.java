@@ -217,6 +217,8 @@ public class FirebaseMessaging {
     return sendEachOpAsync(messages, dryRun);
   }
 
+  // Returns an ApiFuture directly since this function is non-blocking. Individual child send 
+  // requests are still called async and run in background threads.
   private ApiFuture<BatchResponse> sendEachOpAsync(
       final List<Message> messages, final boolean dryRun) {
     final List<Message> immutableMessages = ImmutableList.copyOf(messages);
@@ -226,11 +228,17 @@ public class FirebaseMessaging {
 
     List<ApiFuture<SendResponse>> list = new ArrayList<>();
     for (Message message : immutableMessages) {
+      // Make async send calls per message
       ApiFuture<SendResponse> messageId = sendOpForSendResponse(message, dryRun).callAsync(app);
       list.add(messageId);
     }
     
+    // Gather all futures and combine into a list
     ApiFuture<List<SendResponse>> responsesFuture = ApiFutures.allAsList(list);
+
+    // Chain this future to wrap the eventual responses in a BatchResponse without blocking
+    // the main thread. This uses the current thread to execute, but since the transformation
+    // function is non-blocking the transformation itself is also non-blocking.
     return ApiFutures.transform(
       responsesFuture, 
       (responses) -> {
