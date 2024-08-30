@@ -95,7 +95,7 @@ public class ApacheHttp2TransportIT {
         .setConnectTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(GET_URL);
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest("http://google.com:81");
 
     try {
       httpClient.send(request);
@@ -107,6 +107,9 @@ public class ApacheHttp2TransportIT {
       System.out.println(e.getCause().getMessage());
       System.out.println(e.getCause().getCause());
       System.out.println(e.getCause().getCause().getMessage());
+      System.out.println(e.getCause().getCause().getCause());
+      System.out.println(e.getCause().getCause().getCause());
+      System.out.println(e.getCause().getCause().getCause().getMessage());
       assertEquals("IO error: Connection Timeout", e.getMessage());
       assertNull(e.getHttpResponse());
     }
@@ -119,13 +122,20 @@ public class ApacheHttp2TransportIT {
         .setConnectTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(POST_URL, payload);
+    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest("https://google.com:81", payload);
 
     try {
       httpClient.send(request);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
+
+      System.out.println(e.getCause());
+      System.out.println(e.getCause().getMessage());
+      System.out.println(e.getCause().getCause());
+      System.out.println(e.getCause().getCause().getMessage());
+      System.out.println(e.getCause().getCause().getCause());
+      System.out.println(e.getCause().getCause().getCause().getMessage());
       assertEquals("IO error: Connection Timeout", e.getMessage());
       assertNull(e.getHttpResponse());
     }
