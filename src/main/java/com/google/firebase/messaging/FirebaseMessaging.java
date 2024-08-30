@@ -26,6 +26,7 @@ import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
@@ -159,7 +160,7 @@ public class FirebaseMessaging {
    *     no failures are only indicated by a {@link BatchResponse}.
    */
   public BatchResponse sendEach(@NonNull List<Message> messages) throws FirebaseMessagingException {
-    return sendEachOp(messages, false).call();
+    return sendEach(messages, false);
   }
 
 
@@ -186,7 +187,11 @@ public class FirebaseMessaging {
    */
   public BatchResponse sendEach(
       @NonNull List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
-    return sendEachOp(messages, dryRun).call();
+    try {
+      return sendEachOpAsync(messages, dryRun).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new FirebaseMessagingException(ErrorCode.CANCELLED, SERVICE_ID);
+    }
   }
 
   /**
@@ -197,7 +202,7 @@ public class FirebaseMessaging {
    *     the messages have been sent.
    */
   public ApiFuture<BatchResponse> sendEachAsync(@NonNull List<Message> messages) {
-    return sendEachOp(messages, false).callAsync(app);
+    return sendEachOpAsync(messages, false);
   }
 
   /**
@@ -209,32 +214,37 @@ public class FirebaseMessaging {
    *     the messages have been sent.
    */
   public ApiFuture<BatchResponse> sendEachAsync(@NonNull List<Message> messages, boolean dryRun) {
-    return sendEachOp(messages, dryRun).callAsync(app);
+    return sendEachOpAsync(messages, dryRun);
   }
 
-  private CallableOperation<BatchResponse, FirebaseMessagingException> sendEachOp(
+  // Returns an ApiFuture directly since this function is non-blocking. Individual child send 
+  // requests are still called async and run in background threads.
+  private ApiFuture<BatchResponse> sendEachOpAsync(
       final List<Message> messages, final boolean dryRun) {
     final List<Message> immutableMessages = ImmutableList.copyOf(messages);
     checkArgument(!immutableMessages.isEmpty(), "messages list must not be empty");
     checkArgument(immutableMessages.size() <= 500,
         "messages list must not contain more than 500 elements");
 
-    return new CallableOperation<BatchResponse, FirebaseMessagingException>() {
-      @Override
-      protected BatchResponse execute() throws FirebaseMessagingException {
-        List<ApiFuture<SendResponse>> list = new ArrayList<>();
-        for (Message message : immutableMessages) {
-          ApiFuture<SendResponse> messageId = sendOpForSendResponse(message, dryRun).callAsync(app);
-          list.add(messageId);
-        }
-        try {
-          List<SendResponse> responses = ApiFutures.allAsList(list).get();
-          return new BatchResponseImpl(responses);
-        } catch (InterruptedException | ExecutionException e) {
-          throw new FirebaseMessagingException(ErrorCode.CANCELLED, SERVICE_ID);
-        }
-      }
-    };
+    List<ApiFuture<SendResponse>> list = new ArrayList<>();
+    for (Message message : immutableMessages) {
+      // Make async send calls per message
+      ApiFuture<SendResponse> messageId = sendOpForSendResponse(message, dryRun).callAsync(app);
+      list.add(messageId);
+    }
+    
+    // Gather all futures and combine into a list
+    ApiFuture<List<SendResponse>> responsesFuture = ApiFutures.allAsList(list);
+
+    // Chain this future to wrap the eventual responses in a BatchResponse without blocking
+    // the main thread. This uses the current thread to execute, but since the transformation
+    // function is non-blocking the transformation itself is also non-blocking.
+    return ApiFutures.transform(
+      responsesFuture, 
+      (responses) -> {
+        return new BatchResponseImpl(responses);
+      },
+      MoreExecutors.directExecutor());
   }
 
   private CallableOperation<SendResponse, FirebaseMessagingException> sendOpForSendResponse(
