@@ -102,6 +102,11 @@ public class ApacheHttp2TransportIT {
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
+
+      System.out.println(e.getCause());
+      System.out.println(e.getCause().getMessage());
+      System.out.println(e.getCause().getCause());
+      System.out.println(e.getCause().getCause().getMessage());
       assertEquals("IO error: Connection Timeout", e.getMessage());
       assertNull(e.getHttpResponse());
     }
