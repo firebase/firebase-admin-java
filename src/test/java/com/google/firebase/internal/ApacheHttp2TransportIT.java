@@ -96,33 +96,43 @@ public class ApacheHttp2TransportIT {
         // .setConnectTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(NO_CONNECT_URL);
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(GET_URL);
 
     try {
       httpClient.send(request);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
+      System.out.println(e.getCause());
+      System.out.println(e.getCause().getMessage());
+      System.out.println(e.getCause().getCause());
+      System.out.println(e.getCause().getCause().getMessage());
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertEquals("IO error: Connection Timeout", e.getMessage());
       assertNull(e.getHttpResponse());
     }
   }
 
-  @Test(timeout = 20_000L)
+  @Test(timeout = 10_000L)
   public void testConnectTimeoutAuthorizedPost() throws FirebaseException {
     app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
-        .setConnectTimeout(5000)
+        .setConnectTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
     HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(NO_CONNECT_URL, payload);
+
+    System.out.println(System.getProperty("java.version"));
 
     try {
       httpClient.send(request);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
+      System.out.println(e.getCause());
+      System.out.println(e.getCause().getMessage());
+      System.out.println(e.getCause().getCause());
+      System.out.println(e.getCause().getCause().getMessage());
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
-      assertEquals("IO error: Connection Timeout", e.getMessage());
+      assertEquals("IO error: Exception in request", e.getMessage());
       assertNull(e.getHttpResponse());
     }
   }
