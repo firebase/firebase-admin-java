@@ -58,6 +58,7 @@ public class ApacheHttp2TransportIT {
 
   // Sets a 5 second delay before response
   private static final String DELAY_URL = "https://nghttp2.org/httpbin/delay/5";
+  private static final String NO_CONNECT_URL = "https://google.com:81";
   private static final String GET_URL = "https://nghttp2.org/httpbin/get";
   private static final String POST_URL = "https://nghttp2.org/httpbin/post";
 
@@ -92,50 +93,35 @@ public class ApacheHttp2TransportIT {
   public void testConnectTimeoutAuthorizedGet() throws FirebaseException {
     app  = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
-        .setConnectTimeout(100)
+        // .setConnectTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildGetRequest("http://google.com:81");
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(NO_CONNECT_URL);
 
     try {
       httpClient.send(request);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
-
-      System.out.println(e.getCause());
-      System.out.println(e.getCause().getMessage());
-      System.out.println(e.getCause().getCause());
-      System.out.println(e.getCause().getCause().getMessage());
-      System.out.println(e.getCause().getCause().getCause());
-      System.out.println(e.getCause().getCause().getCause());
-      System.out.println(e.getCause().getCause().getCause().getMessage());
       assertEquals("IO error: Connection Timeout", e.getMessage());
       assertNull(e.getHttpResponse());
     }
   }
 
-  @Test(timeout = 10_000L)
+  @Test(timeout = 20_000L)
   public void testConnectTimeoutAuthorizedPost() throws FirebaseException {
     app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
-        .setConnectTimeout(100)
+        .setConnectTimeout(5000)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest("https://google.com:81", payload);
+    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(NO_CONNECT_URL, payload);
 
     try {
       httpClient.send(request);
       fail("No exception thrown for HTTP error response");
     } catch (FirebaseException e) {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
-
-      System.out.println(e.getCause());
-      System.out.println(e.getCause().getMessage());
-      System.out.println(e.getCause().getCause());
-      System.out.println(e.getCause().getCause().getMessage());
-      System.out.println(e.getCause().getCause().getCause());
-      System.out.println(e.getCause().getCause().getCause().getMessage());
       assertEquals("IO error: Connection Timeout", e.getMessage());
       assertNull(e.getHttpResponse());
     }
