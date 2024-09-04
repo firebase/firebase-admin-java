@@ -95,7 +95,8 @@ public class ApacheHttp2TransportIT {
   public void testConnectTimeoutGet() throws IOException {
     HttpTransport transport = new ApacheHttp2Transport();
     try {
-      transport.createRequestFactory().buildGetRequest(new GenericUrl(NO_CONNECT_URL)).setConnectTimeout(100).execute();
+      transport.createRequestFactory().buildGetRequest(new GenericUrl(NO_CONNECT_URL))
+          .setConnectTimeout(100).execute();
       fail("No exception thrown for HTTP error response");
     } catch (IOException e) {
       System.out.println(e.getCause());
