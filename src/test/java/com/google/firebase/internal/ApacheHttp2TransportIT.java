@@ -22,8 +22,10 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.LowLevelHttpResponse;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.GenericData;
@@ -75,7 +77,7 @@ public class ApacheHttp2TransportIT {
   
   @Test(timeout = 10_000L)
   public void testUnauthorizedGetRequest() throws FirebaseException {
-    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true);
+    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(false);
     HttpRequestInfo request = HttpRequestInfo.buildGetRequest(GET_URL);
     IncomingHttpResponse response = httpClient.send(request);
     assertEquals(200, response.getStatusCode());
@@ -87,6 +89,34 @@ public class ApacheHttp2TransportIT {
     HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(POST_URL, payload);
     GenericData body = httpClient.sendAndParse(request, GenericData.class);
     assertEquals("{\"foo\":\"bar\"}", body.get("data"));
+  }
+
+  @Test(timeout = 10_000L)
+  public void testConnectTimeoutGet() throws IOException {
+    HttpTransport transport = new ApacheHttp2Transport();
+    try {
+      transport.createRequestFactory().buildGetRequest(new GenericUrl(NO_CONNECT_URL)).setConnectTimeout(100).execute();
+      fail("No exception thrown for HTTP error response");
+    } catch (IOException e) {
+      System.out.println(e.getCause());
+      System.out.println(e.getCause().getMessage());
+      assertEquals("Connection Timeout", e.getMessage());
+    }
+  }
+
+  @Test(timeout = 10_000L)
+  public void testConnectTimeoutPost() throws IOException {
+    ApacheHttp2Transport transport = new ApacheHttp2Transport();
+    ApacheHttp2Request request = transport.buildRequest("POST", NO_CONNECT_URL);
+    request.setTimeout(100, 0);
+    try {
+      request.execute();
+      fail("No exception thrown for HTTP error response");
+    } catch (IOException e) {
+      System.out.println(e.getCause());
+      System.out.println(e.getCause().getMessage());
+      assertEquals("Connection Timeout", e.getMessage());
+    }
   }
 
   @Test(timeout = 10_000L)
@@ -119,9 +149,7 @@ public class ApacheHttp2TransportIT {
         .setConnectTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(NO_CONNECT_URL, payload);
-
-    System.out.println(System.getProperty("java.version"));
+    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(POST_URL, payload);
 
     try {
       httpClient.send(request);
