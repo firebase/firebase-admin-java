@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.hc.client5.http.ConnectTimeoutException;
+import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
 import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
 import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
@@ -123,10 +124,12 @@ final class ApacheHttp2Request extends LowLevelHttpRequest {
     } catch (ExecutionException e) {
       if (e.getCause() instanceof ConnectTimeoutException) {
         throw new IOException("Connection Timeout", e.getCause());
+      } else if (e.getCause() instanceof HttpHostConnectException) {
+        throw new IOException("Connection exception in request", e.getCause());
       } else if (e.getCause() instanceof H2StreamResetException) {
         throw new IOException("Stream exception in request", e.getCause());
       } else {
-        throw new IOException("Exception in request", e);
+        throw new IOException("Unknown exception in request", e);
       }
     } catch (InterruptedException e) {
       throw new IOException("Request Interrupted", e);

@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.hc.client5.http.async.HttpAsyncClient;
 import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
+import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.TlsConfig;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
@@ -33,8 +34,10 @@ import org.apache.hc.core5.http.config.Http1Config;
 import org.apache.hc.core5.http2.HttpVersionPolicy;
 import org.apache.hc.core5.http2.config.H2Config;
 import org.apache.hc.core5.io.CloseMode;
-import org.apache.hc.core5.util.TimeValue;
 
+  /**
+   * HTTP/2 enabled async transport based on the Apache HTTP Client library
+   */
 public final class ApacheHttp2Transport extends HttpTransport {
 
   private final CloseableHttpAsyncClient httpAsyncClient;
@@ -62,14 +65,19 @@ public final class ApacheHttp2Transport extends HttpTransport {
   public static HttpAsyncClientBuilder defaultHttpAsyncClientBuilder() {
     PoolingAsyncClientConnectionManager connectionManager = 
         new PoolingAsyncClientConnectionManager();
-    connectionManager.setMaxTotal(100);
-    connectionManager.setDefaultMaxPerRoute(100);
-    connectionManager.closeIdle(TimeValue.of(30, TimeUnit.SECONDS));
+
+    // Set Max total connections and max per route to match google api client limits
+    // https://github.com/googleapis/google-http-java-client/blob/f9d4e15bd3c784b1fd3b0f3468000a91c6f79715/google-http-client-apache-v5/src/main/java/com/google/api/client/http/apache/v5/Apache5HttpTransport.java#L151
+    connectionManager.setMaxTotal(200);
+    connectionManager.setDefaultMaxPerRoute(20);
+    connectionManager.setDefaultConnectionConfig(
+        ConnectionConfig.custom().setTimeToLive(-1, TimeUnit.MILLISECONDS).build());
     connectionManager.setDefaultTlsConfig(
         TlsConfig.custom().setVersionPolicy(HttpVersionPolicy.NEGOTIATE).build());
 
     return HttpAsyncClientBuilder.create()
-      .setH2Config(H2Config.DEFAULT)
+      // Set maxConcurrentStreams to 100 to match the concurrent stream limit of the FCM backend.
+      .setH2Config(H2Config.custom().setMaxConcurrentStreams(100).build())
       .setHttp1Config(Http1Config.DEFAULT)
       .setConnectionManager(connectionManager)
       .setRoutePlanner(new SystemDefaultRoutePlanner(ProxySelector.getDefault()))
@@ -88,15 +96,21 @@ public final class ApacheHttp2Transport extends HttpTransport {
     return new ApacheHttp2Request(httpAsyncClient, requestBuilder);
   }
 
+  /**
+   * Gracefully shuts down the connection manager and releases allocated resources. This closes all
+   * connections, whether they are currently used or not.
+   */
   @Override
   public void shutdown() throws IOException {
     httpAsyncClient.close(CloseMode.GRACEFUL);
   }
 
+  /** Returns the Apache HTTP client. */
   public HttpAsyncClient getHttpClient() {
     return httpAsyncClient;
   }
 
+  /** Returns if the underlying HTTP client is mTLS. */
   @Override
   public boolean isMtls() {
     return isMtls;

@@ -30,7 +30,6 @@ import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.nio.AsyncEntityProducer;
 import org.apache.hc.core5.http.nio.DataStreamChannel;
 
-@SuppressWarnings("deprecation")
 public class ApacheHttp2AsyncEntityProducer implements AsyncEntityProducer {
   private ByteBuffer bytebuf;
   private ByteArrayOutputStream baos;
@@ -106,8 +105,8 @@ public class ApacheHttp2AsyncEntityProducer implements AsyncEntityProducer {
         try {
           content.writeTo(baos);
         } catch (IOException e) {
-          writeFuture.completeExceptionally(e);
-          // failed(e);
+          failed(e);
+          throw e;
         }
       }
 
@@ -139,7 +138,9 @@ public class ApacheHttp2AsyncEntityProducer implements AsyncEntityProducer {
 
   @Override
   public void releaseResources() {
-    bytebuf.clear();
+    if (bytebuf != null) {
+      bytebuf.clear();
+    }
   }
 
   @VisibleForTesting

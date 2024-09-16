@@ -58,9 +58,10 @@ public class ApacheHttp2TransportIT {
   private static final ImmutableMap<String, Object> payload = 
       ImmutableMap.<String, Object>of("foo", "bar");
 
-  // Sets a 5 second delay before response
+  // Sets a 5 second delay before server response to simulate a slow network that results in a read timeout.
   private static final String DELAY_URL = "https://nghttp2.org/httpbin/delay/5";
-  private static final String NO_CONNECT_URL = "http://google.com:81";
+  // Points to a unused port that simulates a slow conncetion which results in a conncetion timeout
+  private static final String NO_CONNECT_URL = "https://google.com:81";
   private static final String GET_URL = "https://nghttp2.org/httpbin/get";
   private static final String POST_URL = "https://nghttp2.org/httpbin/post";
 
