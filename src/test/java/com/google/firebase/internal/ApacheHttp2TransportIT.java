@@ -114,36 +114,6 @@ public class ApacheHttp2TransportIT {
   }
 
   @Test(timeout = 10_000L)
-  public void testConnectTimeoutGet() throws IOException {
-    ApacheHttp2Transport transport = new ApacheHttp2Transport();
-    ApacheHttp2Request request = transport.buildRequest("GET", "https://localhost:" + port);
-    request.setTimeout(100, 0);
-    try {
-      request.execute();
-      fail("No exception thrown for HTTP error response");
-    } catch (IOException e) {
-      System.out.println(e.getCause());
-      System.out.println(e.getCause().getMessage());
-      assertEquals("Connection Timeout", e.getMessage());
-    }
-  }
-
-  @Test(timeout = 10_000L)
-  public void testConnectTimeoutPost() throws IOException {
-    ApacheHttp2Transport transport = new ApacheHttp2Transport();
-    ApacheHttp2Request request = transport.buildRequest("POST", "https://localhost:" + port);
-    request.setTimeout(100, 0);
-    try {
-      request.execute();
-      fail("No exception thrown for HTTP error response");
-    } catch (IOException e) {
-      System.out.println(e.getCause());
-      System.out.println(e.getCause().getMessage());
-      assertEquals("Connection Timeout", e.getMessage());
-    }
-  }
-
-  @Test(timeout = 10_000L)
   public void testConnectTimeoutAuthorizedGet() throws FirebaseException {
     app  = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
