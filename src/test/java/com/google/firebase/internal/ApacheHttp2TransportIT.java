@@ -38,6 +38,8 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.auth.MockGoogleCredentials;
 import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClients;
@@ -49,6 +51,7 @@ import org.apache.hc.core5.http.HttpRequestInterceptor;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -58,16 +61,36 @@ public class ApacheHttp2TransportIT {
   private static final ImmutableMap<String, Object> payload = 
       ImmutableMap.<String, Object>of("foo", "bar");
 
-  // Sets a 5 second delay before server response to simulate a slow network that results in a read timeout.
+  // Sets a 5 second delay before server response to simulate a slow network that 
+  // results in a read timeout.
   private static final String DELAY_URL = "https://nghttp2.org/httpbin/delay/5";
-  // Points to a unused port that simulates a slow conncetion which results in a conncetion timeout
-  private static final String NO_CONNECT_URL = "https://google.com:81";
   private static final String GET_URL = "https://nghttp2.org/httpbin/get";
   private static final String POST_URL = "https://nghttp2.org/httpbin/post";
 
+  private static ServerSocket serverSocket;
+  private static Socket fillerSocket;
+  private static int port;
+
   @BeforeClass
-  public static void setUpClass() {
+  public static void setUpClass() throws IOException {
+    // Start server socket with a backlog queue of 1 and a automatically assigned port
+    serverSocket = new ServerSocket(0, 1);
+    port = serverSocket.getLocalPort();
+    // Fill the backlog queue to force socket to ignore future connections
+    fillerSocket = new Socket();
+    fillerSocket.connect(serverSocket.getLocalSocketAddress());
   }
+
+  @AfterClass
+  public static void cleanUpClass() throws IOException {
+    if (serverSocket != null && !serverSocket.isClosed()) {
+      serverSocket.close();
+    }
+    if (fillerSocket != null && !fillerSocket.isClosed()) {
+      fillerSocket.close();
+    }
+  }
+
 
   @After
   public void cleanup() {
@@ -96,7 +119,7 @@ public class ApacheHttp2TransportIT {
   public void testConnectTimeoutGet() throws IOException {
     HttpTransport transport = new ApacheHttp2Transport();
     try {
-      transport.createRequestFactory().buildGetRequest(new GenericUrl(NO_CONNECT_URL))
+      transport.createRequestFactory().buildGetRequest(new GenericUrl("https://localhost:" + port))
           .setConnectTimeout(100).execute();
       fail("No exception thrown for HTTP error response");
     } catch (IOException e) {
@@ -109,7 +132,7 @@ public class ApacheHttp2TransportIT {
   @Test(timeout = 10_000L)
   public void testConnectTimeoutPost() throws IOException {
     ApacheHttp2Transport transport = new ApacheHttp2Transport();
-    ApacheHttp2Request request = transport.buildRequest("POST", NO_CONNECT_URL);
+    ApacheHttp2Request request = transport.buildRequest("POST", "https://localhost:" + port);
     request.setTimeout(100, 0);
     try {
       request.execute();
@@ -128,7 +151,7 @@ public class ApacheHttp2TransportIT {
         .setConnectTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(NO_CONNECT_URL);
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest("https://localhost:" + port);
 
     try {
       httpClient.send(request);
@@ -147,7 +170,7 @@ public class ApacheHttp2TransportIT {
         .setConnectTimeout(100)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(NO_CONNECT_URL, payload);
+    HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest("https://localhost:" + port, payload);
 
     try {
       httpClient.send(request);
@@ -273,7 +296,7 @@ public class ApacheHttp2TransportIT {
       request.execute();
       fail("should not actually make the request");
     } catch (IOException exception) {
-      assertEquals("Exception in request", exception.getMessage());
+      assertEquals("Unknown exception in request", exception.getMessage());
     }
     assertTrue("Expected to have called our test interceptor", interceptorCalled.get());
   }

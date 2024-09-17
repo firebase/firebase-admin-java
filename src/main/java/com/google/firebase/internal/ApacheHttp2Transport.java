@@ -35,9 +35,9 @@ import org.apache.hc.core5.http2.HttpVersionPolicy;
 import org.apache.hc.core5.http2.config.H2Config;
 import org.apache.hc.core5.io.CloseMode;
 
-  /**
-   * HTTP/2 enabled async transport based on the Apache HTTP Client library
-   */
+/**
+ * HTTP/2 enabled async transport based on the Apache HTTP Client library
+ */
 public final class ApacheHttp2Transport extends HttpTransport {
 
   private final CloseableHttpAsyncClient httpAsyncClient;
