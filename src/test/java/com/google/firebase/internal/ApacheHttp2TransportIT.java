@@ -117,10 +117,11 @@ public class ApacheHttp2TransportIT {
 
   @Test(timeout = 10_000L)
   public void testConnectTimeoutGet() throws IOException {
-    HttpTransport transport = new ApacheHttp2Transport();
+  ApacheHttp2Transport transport = new ApacheHttp2Transport();
+    ApacheHttp2Request request = transport.buildRequest("GET", "https://localhost:" + port);
+    request.setTimeout(100, 0);
     try {
-      transport.createRequestFactory().buildGetRequest(new GenericUrl("https://localhost:" + port))
-          .setConnectTimeout(100).execute();
+      request.execute();
       fail("No exception thrown for HTTP error response");
     } catch (IOException e) {
       System.out.println(e.getCause());
