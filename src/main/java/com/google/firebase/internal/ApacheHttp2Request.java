@@ -21,6 +21,7 @@ import com.google.api.client.http.LowLevelHttpResponse;
 import com.google.common.annotations.VisibleForTesting;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -122,7 +123,8 @@ final class ApacheHttp2Request extends LowLevelHttpRequest {
       final SimpleHttpResponse response = responseFuture.get();
       return new ApacheHttp2Response(response);
     } catch (ExecutionException e) {
-      if (e.getCause() instanceof ConnectTimeoutException) {
+      if (e.getCause() instanceof ConnectTimeoutException 
+          || e.getCause() instanceof SocketTimeoutException) {
         throw new IOException("Connection Timeout", e.getCause());
       } else if (e.getCause() instanceof HttpHostConnectException) {
         throw new IOException("Connection exception in request", e.getCause());
