@@ -22,10 +22,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseException;
-import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.LowLevelHttpResponse;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.GenericData;
@@ -117,7 +115,7 @@ public class ApacheHttp2TransportIT {
 
   @Test(timeout = 10_000L)
   public void testConnectTimeoutGet() throws IOException {
-  ApacheHttp2Transport transport = new ApacheHttp2Transport();
+    ApacheHttp2Transport transport = new ApacheHttp2Transport();
     ApacheHttp2Request request = transport.buildRequest("GET", "https://localhost:" + port);
     request.setTimeout(100, 0);
     try {
