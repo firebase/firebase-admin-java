@@ -59,7 +59,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <skipUTs>${skipTests}</skipUTs>
-        <netty.version>4.1.110.Final</netty.version>
+        <netty.version>4.1.113.Final</netty.version>
     </properties>
 
     <scm>
@@ -89,7 +89,7 @@
                     <plugin>
                         <!-- Generate API docs using Doclava for the developer site -->
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.7.0</version>
+                        <version>3.10.0</version>
                         <executions>
                             <execution>
                                 <phase>site</phase>
@@ -157,7 +157,7 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.2.4</version>
+                        <version>3.2.5</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -280,7 +280,7 @@
             <!-- Test Phase -->
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version>
+                <version>3.5.0</version>
                 <configuration>
                     <skipTests>${skipUTs}</skipTests>
                 </configuration>
@@ -301,7 +301,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.7.0</version>
+                <version>3.10.0</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -337,7 +337,7 @@
             <!-- Verify Phase -->
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.2.5</version>
+                <version>3.5.0</version>
                 <executions>
                     <execution>
                         <goals>
@@ -367,7 +367,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>3.7.0</version>
                 <reportSets>
                     <reportSet>
                         <configuration>
@@ -385,14 +385,14 @@
             <dependency>
                 <groupId>com.google.cloud</groupId>
                 <artifactId>libraries-bom</artifactId>
-                <version>26.39.0</version>
+                <version>26.45.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>com.google.api-client</groupId>
                 <artifactId>google-api-client-bom</artifactId>
-                <version>2.5.1</version>
+                <version>2.7.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -438,7 +438,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>2.0.13</version>
+            <version>2.0.16</version>
         </dependency>
         <dependency>
             <groupId>io.netty</groupId>
@@ -490,7 +490,7 @@
         <dependency>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest</artifactId>
-            <version>2.2</version>
+            <version>3.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
