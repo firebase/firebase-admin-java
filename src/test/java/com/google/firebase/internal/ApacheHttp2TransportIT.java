@@ -21,9 +21,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockserver.model.Header.header;
+import static org.mockserver.model.HttpForward.forward;
+import static org.mockserver.model.HttpRequest.request;
+import static org.mockserver.model.HttpResponse.response;
 
+import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponseException;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.LowLevelHttpResponse;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.GenericData;
@@ -53,13 +59,17 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import org.mockserver.integration.ClientAndServer;
+import org.mockserver.model.HttpForward.Scheme;
+import org.mockserver.socket.PortFactory;
+
 public class ApacheHttp2TransportIT {
   private static FirebaseApp app;
   private static final GoogleCredentials MOCK_CREDENTIALS = new MockGoogleCredentials("test_token");
   private static final ImmutableMap<String, Object> payload = 
       ImmutableMap.<String, Object>of("foo", "bar");
 
-  // Sets a 5 second delay before server response to simulate a slow network that 
+  // Sets a 5 second delay before server response to simulate a slow network that
   // results in a read timeout.
   private static final String DELAY_URL = "https://nghttp2.org/httpbin/delay/5";
   private static final String GET_URL = "https://nghttp2.org/httpbin/get";
@@ -69,9 +79,13 @@ public class ApacheHttp2TransportIT {
   private static Socket fillerSocket;
   private static int port;
 
+  private static ClientAndServer mockProxy;
+  private static ClientAndServer mockServer;
+
   @BeforeClass
   public static void setUpClass() throws IOException {
-    // Start server socket with a backlog queue of 1 and a automatically assigned port
+    // Start server socket with a backlog queue of 1 and a automatically assigned
+    // port
     serverSocket = new ServerSocket(0, 1);
     port = serverSocket.getLocalPort();
     // Fill the backlog queue to force socket to ignore future connections
@@ -89,14 +103,26 @@ public class ApacheHttp2TransportIT {
     }
   }
 
-
   @After
   public void cleanup() {
     if (app != null) {
       app.delete();
     }
+
+    if (mockProxy != null && mockProxy.isRunning()) {
+      mockProxy.close();
+    }
+
+    if (mockServer != null && mockServer.isRunning()) {
+      mockServer.close();
+    }
+
+    System.clearProperty("http.proxyHost");
+    System.clearProperty("http.proxyPort");
+    System.clearProperty("https.proxyHost");
+    System.clearProperty("https.proxyPort");
   }
-  
+
   @Test(timeout = 10_000L)
   public void testUnauthorizedGetRequest() throws FirebaseException {
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(false);
@@ -115,7 +141,7 @@ public class ApacheHttp2TransportIT {
 
   @Test(timeout = 10_000L)
   public void testConnectTimeoutAuthorizedGet() throws FirebaseException {
-    app  = FirebaseApp.initializeApp(FirebaseOptions.builder()
+    app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
         .setConnectTimeout(100)
         .build(), "test-app");
@@ -270,6 +296,77 @@ public class ApacheHttp2TransportIT {
     assertTrue("Expected to have called our test interceptor", interceptorCalled.get());
   }
 
+  @Test(timeout = 10_000L)
+  public void testVerifyProxyIsRespected() {
+    try {
+      System.setProperty("https.proxyHost", "localhost");
+      System.setProperty("https.proxyPort", "8080");
+
+      HttpTransport transport = new ApacheHttp2Transport();
+      transport.createRequestFactory().buildGetRequest(new GenericUrl(GET_URL)).execute();
+      fail("No exception thrown for HTTP error response");
+    } catch (IOException e) {
+      assertEquals("Connection exception in request", e.getMessage());
+      assertTrue(e.getCause().getMessage().contains("localhost:8080"));
+    }
+  }
+
+  @Test(timeout = 10_000L)
+  public void testProxyMockHttp() throws Exception {
+    // Start MockServer
+    mockProxy = ClientAndServer.startClientAndServer(PortFactory.findFreePort());
+    mockServer = ClientAndServer.startClientAndServer(PortFactory.findFreePort());
+
+    System.setProperty("http.proxyHost", "localhost");
+    System.setProperty("http.proxyPort", mockProxy.getPort().toString());
+
+    // Configure proxy to receieve requests and forward them to a mock destination
+    // server
+    mockProxy
+        .when(
+            request())
+        .forward(
+            forward()
+                .withHost("localhost")
+                .withPort(mockServer.getPort())
+                .withScheme(Scheme.HTTP));
+
+    // Configure server to listen and respond
+    mockServer
+        .when(
+            request())
+        .respond(
+            response()
+                .withStatusCode(200)
+                .withBody("Expected server response"));
+
+    // Send a request through the proxy
+    app = FirebaseApp.initializeApp(FirebaseOptions.builder()
+        .setCredentials(MOCK_CREDENTIALS)
+        .setWriteTimeout(100)
+        .build(), "test-app");
+    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest("http://www.google.com");
+    IncomingHttpResponse response = httpClient.send(request);
+
+    // Verify that the proxy received request with destination host
+    mockProxy.verify(
+        request()
+            .withMethod("GET")
+            .withPath("/")
+            .withHeader(header("Host", "www.google.com")));
+
+    // Verify the forwarded request is received by the server
+    mockServer.verify(
+        request()
+            .withMethod("GET")
+            .withPath("/"));
+
+    // Verify response
+    assertEquals(200, response.getStatusCode());
+    assertEquals(response.getContent(), "Expected server response");
+  }
+
   private static ErrorHandlingHttpClient<FirebaseException> getHttpClient(boolean authorized,
       FirebaseApp app) {
     HttpRequestFactory requestFactory;
@@ -285,11 +382,10 @@ public class ApacheHttp2TransportIT {
 
   private static ErrorHandlingHttpClient<FirebaseException> getHttpClient(boolean authorized) {
     app = FirebaseApp.initializeApp(FirebaseOptions.builder()
-    .setCredentials(MOCK_CREDENTIALS)
-    .build(), "test-app");
+        .setCredentials(MOCK_CREDENTIALS)
+        .build(), "test-app");
     return getHttpClient(authorized, app);
   }
-
 
   private static class TestHttpErrorHandler implements HttpErrorHandler<FirebaseException> {
     @Override

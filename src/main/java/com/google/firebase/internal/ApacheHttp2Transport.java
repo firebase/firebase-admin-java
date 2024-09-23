@@ -29,11 +29,14 @@ import org.apache.hc.client5.http.config.TlsConfig;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.client5.http.impl.async.HttpAsyncClientBuilder;
 import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManager;
+import org.apache.hc.client5.http.impl.nio.PoolingAsyncClientConnectionManagerBuilder;
 import org.apache.hc.client5.http.impl.routing.SystemDefaultRoutePlanner;
+import org.apache.hc.client5.http.ssl.ClientTlsStrategyBuilder;
 import org.apache.hc.core5.http.config.Http1Config;
 import org.apache.hc.core5.http2.HttpVersionPolicy;
 import org.apache.hc.core5.http2.config.H2Config;
 import org.apache.hc.core5.io.CloseMode;
+import org.apache.hc.core5.ssl.SSLContexts;
 
 /**
  * HTTP/2 enabled async transport based on the Apache HTTP Client library
@@ -64,16 +67,20 @@ public final class ApacheHttp2Transport extends HttpTransport {
 
   public static HttpAsyncClientBuilder defaultHttpAsyncClientBuilder() {
     PoolingAsyncClientConnectionManager connectionManager = 
-        new PoolingAsyncClientConnectionManager();
-
-    // Set Max total connections and max per route to match google api client limits
-    // https://github.com/googleapis/google-http-java-client/blob/f9d4e15bd3c784b1fd3b0f3468000a91c6f79715/google-http-client-apache-v5/src/main/java/com/google/api/client/http/apache/v5/Apache5HttpTransport.java#L151
-    connectionManager.setMaxTotal(200);
-    connectionManager.setDefaultMaxPerRoute(20);
-    connectionManager.setDefaultConnectionConfig(
-        ConnectionConfig.custom().setTimeToLive(-1, TimeUnit.MILLISECONDS).build());
-    connectionManager.setDefaultTlsConfig(
-        TlsConfig.custom().setVersionPolicy(HttpVersionPolicy.NEGOTIATE).build());
+        PoolingAsyncClientConnectionManagerBuilder.create()
+          // Set Max total connections to match google api client limits
+          // https://github.com/googleapis/google-http-java-client/blob/f9d4e15bd3c784b1fd3b0f3468000a91c6f79715/google-http-client-apache-v5/src/main/java/com/google/api/client/http/apache/v5/Apache5HttpTransport.java#L151
+          .setMaxConnTotal(200)
+          // Set max connections per route to match the concurrent stream limit of the FCM backend.
+          .setMaxConnPerRoute(100)
+          .setDefaultConnectionConfig(
+            ConnectionConfig.custom().setTimeToLive(-1, TimeUnit.MILLISECONDS).build())
+          .setDefaultTlsConfig(
+            TlsConfig.custom().setVersionPolicy(HttpVersionPolicy.NEGOTIATE).build())
+          .setTlsStrategy(ClientTlsStrategyBuilder.create()
+            .setSslContext(SSLContexts.createSystemDefault())
+            .build())
+          .build();
 
     return HttpAsyncClientBuilder.create()
       // Set maxConcurrentStreams to 100 to match the concurrent stream limit of the FCM backend.
