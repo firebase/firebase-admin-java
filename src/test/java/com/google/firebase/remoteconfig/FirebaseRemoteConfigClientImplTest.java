@@ -1173,7 +1173,7 @@ public class FirebaseRemoteConfigClientImplTest {
     return FirebaseRemoteConfigClientImpl.builder()
             .setProjectId("test-project")
             .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
-            .setRequestFactory(Utils.getDefaultTransport().createRequestFactory());
+            .setRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory());
   }
 
   private void checkGetRequestHeader(HttpRequest request) {
