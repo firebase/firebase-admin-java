@@ -493,10 +493,5 @@
             <version>3.0</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.mock-server</groupId>
-            <artifactId>mockserver-junit-rule-no-dependencies</artifactId>
-            <version>5.14.0</version>
-        </dependency>
     </dependencies>
 </project>

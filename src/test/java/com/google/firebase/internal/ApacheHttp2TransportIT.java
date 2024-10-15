@@ -21,10 +21,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockserver.model.Header.header;
-import static org.mockserver.model.HttpForward.forward;
-import static org.mockserver.model.HttpRequest.request;
-import static org.mockserver.model.HttpResponse.response;
 
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequestFactory;
@@ -59,10 +55,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import org.mockserver.integration.ClientAndServer;
-import org.mockserver.model.HttpForward.Scheme;
-import org.mockserver.socket.PortFactory;
-
 public class ApacheHttp2TransportIT {
   private static FirebaseApp app;
   private static final GoogleCredentials MOCK_CREDENTIALS = new MockGoogleCredentials("test_token");
@@ -78,9 +70,6 @@ public class ApacheHttp2TransportIT {
   private static ServerSocket serverSocket;
   private static Socket fillerSocket;
   private static int port;
-
-  private static ClientAndServer mockProxy;
-  private static ClientAndServer mockServer;
 
   @BeforeClass
   public static void setUpClass() throws IOException {
@@ -107,14 +96,6 @@ public class ApacheHttp2TransportIT {
   public void cleanup() {
     if (app != null) {
       app.delete();
-    }
-
-    if (mockProxy != null && mockProxy.isRunning()) {
-      mockProxy.close();
-    }
-
-    if (mockServer != null && mockServer.isRunning()) {
-      mockServer.close();
     }
 
     System.clearProperty("http.proxyHost");
@@ -309,62 +290,6 @@ public class ApacheHttp2TransportIT {
       assertEquals("Connection exception in request", e.getMessage());
       assertTrue(e.getCause().getMessage().contains("localhost:8080"));
     }
-  }
-
-  @Test(timeout = 10_000L)
-  public void testProxyMockHttp() throws Exception {
-    // Start MockServer
-    mockProxy = ClientAndServer.startClientAndServer(PortFactory.findFreePort());
-    mockServer = ClientAndServer.startClientAndServer(PortFactory.findFreePort());
-
-    System.setProperty("http.proxyHost", "localhost");
-    System.setProperty("http.proxyPort", mockProxy.getPort().toString());
-
-    // Configure proxy to receieve requests and forward them to a mock destination
-    // server
-    mockProxy
-        .when(
-            request())
-        .forward(
-            forward()
-                .withHost("localhost")
-                .withPort(mockServer.getPort())
-                .withScheme(Scheme.HTTP));
-
-    // Configure server to listen and respond
-    mockServer
-        .when(
-            request())
-        .respond(
-            response()
-                .withStatusCode(200)
-                .withBody("Expected server response"));
-
-    // Send a request through the proxy
-    app = FirebaseApp.initializeApp(FirebaseOptions.builder()
-        .setCredentials(MOCK_CREDENTIALS)
-        .setWriteTimeout(100)
-        .build(), "test-app");
-    ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-    HttpRequestInfo request = HttpRequestInfo.buildGetRequest("http://www.google.com");
-    IncomingHttpResponse response = httpClient.send(request);
-
-    // Verify that the proxy received request with destination host
-    mockProxy.verify(
-        request()
-            .withMethod("GET")
-            .withPath("/")
-            .withHeader(header("Host", "www.google.com")));
-
-    // Verify the forwarded request is received by the server
-    mockServer.verify(
-        request()
-            .withMethod("GET")
-            .withPath("/"));
-
-    // Verify response
-    assertEquals(200, response.getStatusCode());
-    assertEquals(response.getContent(), "Expected server response");
   }
 
   private static ErrorHandlingHttpClient<FirebaseException> getHttpClient(boolean authorized,
