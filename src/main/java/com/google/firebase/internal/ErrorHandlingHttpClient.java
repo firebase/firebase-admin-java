@@ -89,6 +89,7 @@ public final class ErrorHandlingHttpClient<T extends FirebaseException> {
   }
 
   public IncomingHttpResponse send(HttpRequestInfo requestInfo) throws T {
+    requestInfo.addHeader("X-Goog-Api-Client", SdkUtils.getMetricsHeader());
     HttpRequest request = createHttpRequest(requestInfo);
 
     HttpResponse response = null;
