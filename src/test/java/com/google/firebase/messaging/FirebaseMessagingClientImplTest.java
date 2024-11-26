@@ -389,6 +389,7 @@ public class FirebaseMessagingClientImplTest {
     HttpHeaders headers = request.getHeaders();
     assertEquals("2", headers.get("X-GOOG-API-FORMAT-VERSION"));
     assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
+    assertEquals(SdkUtils.getMetricsHeader(), headers.get("X-Goog-Api-Client"));
   }
 
   private void checkRequest(

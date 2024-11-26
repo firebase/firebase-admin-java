@@ -39,6 +39,7 @@ import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestResponseInterceptor;
@@ -87,6 +88,8 @@ public class CryptoSignersTest {
     final String url = "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/"
         + "test-service-account@iam.gserviceaccount.com:signBlob";
     assertEquals(url, interceptor.getResponse().getRequest().getUrl().toString());
+    HttpRequest request = interceptor.getResponse().getRequest();
+    assertEquals(SdkUtils.getMetricsHeader(), request.getHeaders().get("X-Goog-Api-Client"));
   }
 
   @Test
@@ -173,6 +176,7 @@ public class CryptoSignersTest {
     HttpRequest request = interceptor.getResponse().getRequest();
     assertEquals(url, request.getUrl().toString());
     assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+    assertEquals(SdkUtils.getMetricsHeader(), request.getHeaders().get("X-Goog-Api-Client"));
   }
 
   @Test
@@ -203,6 +207,7 @@ public class CryptoSignersTest {
     HttpRequest request = interceptor.getResponse().getRequest();
     assertEquals(url, request.getUrl().toString());
     assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+    assertEquals(SdkUtils.getMetricsHeader(), request.getHeaders().get("X-Goog-Api-Client"));
   }
 
   @Test
