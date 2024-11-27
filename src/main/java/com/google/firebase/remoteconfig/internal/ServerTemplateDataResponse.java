@@ -1,0 +1,355 @@
+/*
+ * Copyright 2020 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.google.firebase.remoteconfig.internal;
+
+import com.google.api.client.util.Key;
+import com.google.common.collect.ImmutableMap;
+
+
+/**
+ * The Data Transfer Object for parsing Remote Config template responses from the
+ * Remote Config service.
+ **/
+public final class ServerTemplateDataResponse {
+
+  @Key("parameters")
+  private ImmutableMap<String, ParameterResponse> parameters;
+
+  @Key("serverConditions")
+  private ImmutableMap<String, ServerConditionResponse> serverConditions;
+
+  @Key("version")
+  private VersionResponse version;
+
+  // For local JSON serialization and deserialization purposes only.
+  // ETag in response type is never set by the HTTP response.
+  @Key("etag")
+  private String etag;
+
+  public ImmutableMap<String, ParameterResponse> getParameters() {
+    return parameters;
+  }
+
+  public ImmutableMap<String, ServerConditionResponse> getServerConditions() {
+    return serverConditions;
+  }
+
+  public VersionResponse getVersion() {
+    return version;
+  }
+
+  public String getEtag() {
+    return etag;
+  }
+
+  public ServerTemplateDataResponse setParameters(
+          ImmutableMap<String, ParameterResponse> parameters) {
+    this.parameters = parameters;
+    return this;
+  }
+
+  public ServerTemplateDataResponse setServerConditions(
+    ImmutableMap<String, ServerConditionResponse> serverConditions) {
+    this.serverConditions = serverConditions;
+    return this;
+  }
+
+  public ServerTemplateDataResponse setVersion(VersionResponse version) {
+    this.version = version;
+    return this;
+  }
+
+  public ServerTemplateDataResponse setEtag(String etag) {
+    this.etag = etag;
+    return this;
+  }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config parameter responses from the
+   * Remote Config service.
+   **/
+  public static final class ParameterResponse {
+
+    @Key("defaultValue")
+    private ParameterValueResponse defaultValue;
+
+    @Key("description")
+    private String description;
+
+    @Key("conditionalValues")
+    private ImmutableMap<String, ParameterValueResponse> conditionalValues;
+
+    @Key("valueType")
+    private String valueType;
+
+    public ParameterValueResponse getDefaultValue() {
+      return defaultValue;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public ImmutableMap<String, ParameterValueResponse> getConditionalValues() {
+      return conditionalValues;
+    }
+
+    public String getValueType() {
+      return valueType;
+    }
+
+    public ParameterResponse setDefaultValue(
+            ParameterValueResponse defaultValue) {
+      this.defaultValue = defaultValue;
+      return this;
+    }
+
+    public ParameterResponse setDescription(String description) {
+      this.description = description;
+      return this;
+    }
+
+    public ParameterResponse setConditionalValues(
+            ImmutableMap<String, ParameterValueResponse> conditionalValues) {
+      this.conditionalValues = conditionalValues;
+      return this;
+    }
+
+    public ParameterResponse setValueType(String valueType) {
+      this.valueType = valueType;
+      return this;
+    }
+  }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config parameter value responses from the
+   * Remote Config service.
+   **/
+  public static final class ParameterValueResponse {
+
+    @Key("value")
+    private String value;
+
+    @Key("useInAppDefault")
+    private Boolean useInAppDefault;
+
+    public String getValue() {
+      return value;
+    }
+
+    public boolean isUseInAppDefault() {
+      return Boolean.TRUE.equals(this.useInAppDefault);
+    }
+
+    public ParameterValueResponse setValue(String value) {
+      this.value = value;
+      return this;
+    }
+
+    public ParameterValueResponse setUseInAppDefault(boolean useInAppDefault) {
+      this.useInAppDefault = useInAppDefault;
+      return this;
+    }
+  }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config condition responses from the
+   * Remote Config service.
+   **/
+  public static final class ServerConditionResponse {
+
+    @Key("name")
+    private String name;
+
+    @Key("expression")
+    private String expression;
+
+    @Key("tagColor")
+    private String tagColor;
+
+    public String getName() {
+      return name;
+    }
+
+    public String getExpression() {
+      return expression;
+    }
+
+    public String getTagColor() {
+      return tagColor;
+    }
+
+    public ServerConditionResponse setName(String name) {
+      this.name = name;
+      return this;
+    }
+
+    public ServerConditionResponse setExpression(String expression) {
+      this.expression = expression;
+      return this;
+    }
+
+    public ServerConditionResponse setTagColor(String tagColor) {
+      this.tagColor = tagColor;
+      return this;
+    }
+  }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config version responses from the
+   * Remote Config service.
+   **/
+  public static final class VersionResponse {
+    @Key("versionNumber")
+    private String versionNumber;
+
+    @Key("updateTime")
+    private String updateTime;
+
+    @Key("updateOrigin")
+    private String updateOrigin;
+
+    @Key("updateType")
+    private String updateType;
+
+    @Key("updateUser")
+    private UserResponse updateUser;
+
+    @Key("description")
+    private String description;
+
+    @Key("rollbackSource")
+    private String rollbackSource;
+
+    @Key("legacy")
+    private Boolean legacy;
+
+    public String getVersionNumber() {
+      return versionNumber;
+    }
+
+    public String getUpdateTime() {
+      return updateTime;
+    }
+
+    public String getUpdateOrigin() {
+      return updateOrigin;
+    }
+
+    public String getUpdateType() {
+      return updateType;
+    }
+
+    public UserResponse getUpdateUser() {
+      return updateUser;
+    }
+
+    public String getDescription() {
+      return description;
+    }
+
+    public String getRollbackSource() {
+      return rollbackSource;
+    }
+
+    public boolean isLegacy() {
+      return Boolean.TRUE.equals(this.legacy);
+    }
+
+    public VersionResponse setDescription(String description) {
+      this.description = description;
+      return this;
+    }
+
+    public VersionResponse setVersionNumber(String versionNumber) {
+      this.versionNumber = versionNumber;
+      return this;
+    }
+
+    public VersionResponse setUpdateTime(String updateTime) {
+      this.updateTime = updateTime;
+      return this;
+    }
+
+    public VersionResponse setUpdateOrigin(String updateOrigin) {
+      this.updateOrigin = updateOrigin;
+      return this;
+    }
+
+    public VersionResponse setUpdateType(String updateType) {
+      this.updateType = updateType;
+      return this;
+    }
+
+    public VersionResponse setUpdateUser(UserResponse updateUser) {
+      this.updateUser = updateUser;
+      return this;
+    }
+
+    public VersionResponse setRollbackSource(String rollbackSource) {
+      this.rollbackSource = rollbackSource;
+      return this;
+    }
+
+    public VersionResponse setLegacy(Boolean legacy) {
+      this.legacy = legacy;
+      return this;
+    }
+  }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config user responses from the
+   * Remote Config service.
+   **/
+  public static final class UserResponse {
+    @Key("email")
+    private String email;
+
+    @Key("name")
+    private String name;
+
+    @Key("imageUrl")
+    private String imageUrl;
+
+    public String getEmail() {
+      return email;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getImageUrl() {
+      return imageUrl;
+    }
+
+    public UserResponse setEmail(String email) {
+      this.email = email;
+      return this;
+    }
+
+    public UserResponse setName(String name) {
+      this.name = name;
+      return this;
+    }
+
+    public UserResponse setImageUrl(String imageUrl) {
+      this.imageUrl = imageUrl;
+      return this;
+    }
+  }
+}

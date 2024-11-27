@@ -18,8 +18,10 @@ package com.google.firebase.remoteconfig;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+
 import com.google.api.core.ApiFuture;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.CallableOperation;
@@ -46,6 +48,10 @@ public final class FirebaseRemoteConfig {
 
   private FirebaseRemoteConfig(FirebaseApp app) {
     this(app, FirebaseRemoteConfigClientImpl.fromApp(app));
+  }
+  
+  public String getSample() throws FirebaseRemoteConfigException {
+    return "abc";
   }
 
   /**
@@ -102,14 +108,133 @@ public final class FirebaseRemoteConfig {
   }
 
   /**
+   * Gets the current active version of the Remote Config serverTemplate.
+   *
+   * @return A {@link Template}.
+   * @throws FirebaseRemoteConfigException If an error occurs while getting the template.
+   */
+  public ServerTemplate getServerTemplate(ImmutableMap<String, String> defaultConfig) 
+  throws FirebaseRemoteConfigException {
+    return getServerTemplateOp(defaultConfig).call();
+  }
+
+  /** 
+  * Overloaded getServerTemplate incase no default configuration is passed 
+  *
+  * 
+  * @return A {@link Template} instance with the latest template data.
+  */
+  public ServerTemplate getServerTemplate() 
+  throws FirebaseRemoteConfigException { 
+    return getServerTemplate(ImmutableMap.of());
+  }
+
+
+  /**
+   * Similar to {@link #getTemplate()} but performs the operation asynchronously.
+   *
+   * @return An {@code ApiFuture} that completes with a {@link Template} when
+   *      the template is available.
+   */
+  public ApiFuture<ServerTemplate> getServerTemplateAsync(
+      ImmutableMap<String, String> defaultConfig) throws FirebaseRemoteConfigException{
+    return getServerTemplateOp(defaultConfig).callAsync(app);
+  }
+
+  /**
+  * Overloaded getServerTemplateAsync incase no default configuration is passed 
+  *
+  * @param defaultConfig (optional) Default parameter values to use if a getter
+  *                      references a parameter not found in the template.
+  * @return An {@code ApiFuture} that completes with a {@link Template} 
+  *         instance with the latest template data.
+  */
+  public ApiFuture<ServerTemplate> getServerTemplateAsync() throws FirebaseRemoteConfigException { 
+    return getServerTemplateAsync(ImmutableMap.of());
+  }
+
+
+  private CallableOperation<ServerTemplate, FirebaseRemoteConfigException> getServerTemplateOp(
+        ImmutableMap<String, String> defaultConfig) {
+    // Initialize the ServerTemplate
+    ServerTemplate serverTemplate = initServerTemplate(null, defaultConfig);
+    return new CallableOperation<ServerTemplate, FirebaseRemoteConfigException>() {
+        @Override
+        protected ServerTemplate execute() throws FirebaseRemoteConfigException {
+            try {
+                // Asynchronously load the server template
+                serverTemplate.load().get(); // Wait for the loading to complete
+            } catch (Exception e) {
+                // Handle exceptions from load() (including InterruptedException and ExecutionException)
+                // log.error("Error loading server template", e);
+                if (e.getCause() instanceof FirebaseRemoteConfigException) {
+                    throw (FirebaseRemoteConfigException) e.getCause();
+                } 
+            }
+            return serverTemplate;
+        }
+    };
+}
+
+  /**
+  * Alternative to {@link #getServerTemplate(ImmutableMap)} where developers can initialize
+  * with a pre-cached template or config.
+  *
+  * @param serverTemplateData (optional) A pre-cached {@link ServerTemplate} template.
+  * @param defaultConfig A pre-cached configuration (can be an empty map).
+  * @return A {@link ServerTemplate} instance initialized with the provided data.
+  */
+  public ServerTemplate initServerTemplate(ServerTemplateData serverTemplateData,
+                                           ImmutableMap<String, String> defaultConfig) {
+    ServerTemplate serverTemplate = new ServerTemplate(this.remoteConfigClient, defaultConfig);
+    if (serverTemplateData != null) {
+      serverTemplate.set(serverTemplateData);
+    }
+    return serverTemplate;
+  }
+
+  /**
+  * Alternative to {@link #getServerTemplate(ImmutableMap)} where developers can initialize
+  * with a pre-cached template.
+  *
+  * @param serverTemplateData (optional) A pre-cached {@link ServerTemplate} template.
+  * @return A {@link ServerTemplate} instance initialized with the provided data.
+  */
+  public ServerTemplate initServerTemplate(ServerTemplateData serverTemplateData) {
+    return initServerTemplate(serverTemplateData, ImmutableMap.of());
+  }
+
+  /**
+  * Alternative to {@link #getServerTemplate(ImmutableMap)} where developers can initialize
+  * with a default configuration.
+  *
+  * @param defaultConfig A pre-cached configuration (can be an empty map).
+  * @return A {@link ServerTemplate} instance initialized with the provided data.
+  */
+  public ServerTemplate initServerTemplate(ImmutableMap<String, String> defaultConfig) {
+    return initServerTemplate(null, defaultConfig);
+  }
+
+  /**
+  * Alternative to {@link #getServerTemplate(ImmutableMap)} where developers can initialize
+  * with no pre-cached data.
+  *
+  * @return A {@link ServerTemplate} instance.
+  */
+  public ServerTemplate initServerTemplate() {
+    return initServerTemplate(null, ImmutableMap.of());
+  }
+
+
+  /**
    * Gets the requested version of the of the Remote Config template.
    *
    * @param versionNumber The version number of the Remote Config template to get.
    * @return A {@link Template}.
    * @throws FirebaseRemoteConfigException If an error occurs while getting the template.
    */
-  public Template getTemplateAtVersion(
-          @NonNull String versionNumber) throws FirebaseRemoteConfigException {
+  public Template getTemplateAtVersion(@NonNull String versionNumber)
+  throws FirebaseRemoteConfigException {
     return getTemplateAtVersionOp(versionNumber).call();
   }
 
