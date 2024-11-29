@@ -3026,6 +3026,8 @@ public class FirebaseUserManagerTest {
 
     String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
     assertEquals(clientVersion, headers.getFirstHeaderStringValue("X-Client-Version"));
+    assertEquals(SdkUtils.getMetricsHeader(), headers.get("X-Goog-Api-Client"));
+
   }
 
   private static void checkUrl(TestResponseInterceptor interceptor, String method, String url) {

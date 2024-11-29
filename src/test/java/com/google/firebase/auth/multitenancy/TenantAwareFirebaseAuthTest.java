@@ -38,6 +38,7 @@ import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.auth.MockTokenVerifier;
 import com.google.firebase.auth.SessionCookieOptions;
 import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayOutputStream;
@@ -85,6 +86,7 @@ public class TenantAwareFirebaseAuthTest {
     assertEquals("testToken", parsed.get("idToken"));
     assertEquals(new BigDecimal(3600), parsed.get("validDuration"));
     checkUrl(interceptor, AUTH_BASE_URL + ":createSessionCookie");
+    checkHeaders(interceptor);
   }
 
   @Test
@@ -121,6 +123,7 @@ public class TenantAwareFirebaseAuthTest {
     assertEquals("testToken", parsed.get("idToken"));
     assertEquals(new BigDecimal(3600), parsed.get("validDuration"));
     checkUrl(interceptor, AUTH_BASE_URL + ":createSessionCookie");
+    checkHeaders(interceptor);
   }
 
   @Test
@@ -212,6 +215,7 @@ public class TenantAwareFirebaseAuthTest {
     assertEquals("uid", token.getUid());
     assertEquals("cookie", tokenVerifier.getLastTokenString());
     checkUrl(interceptor, AUTH_BASE_URL + "/accounts:lookup");
+    checkHeaders(interceptor);
   }
 
   @Test
@@ -289,5 +293,10 @@ public class TenantAwareFirebaseAuthTest {
     HttpRequest request = interceptor.getResponse().getRequest();
     assertEquals(HttpMethods.POST, request.getRequestMethod());
     assertEquals(url, request.getUrl().getRawPath());
+  }
+
+  private static void checkHeaders(TestResponseInterceptor interceptor) {
+    HttpRequest request = interceptor.getResponse().getRequest();
+    assertEquals(SdkUtils.getMetricsHeader(), request.getHeaders().get("X-Goog-Api-Client"));
   }
 }

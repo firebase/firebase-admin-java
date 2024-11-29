@@ -127,6 +127,7 @@ public class ErrorHandlingHttpClientTest {
     assertEquals("v1", last.getHeaders().get("h1"));
     assertEquals("v2", last.getHeaders().get("h2"));
     assertEquals("v3", last.getHeaders().get("h3"));
+    assertEquals(SdkUtils.getMetricsHeader(), last.getHeaders().get("x-goog-api-client"));
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     last.getContent().writeTo(out);

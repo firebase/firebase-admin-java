@@ -41,6 +41,7 @@ import com.google.firebase.OutgoingHttpRequest;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayOutputStream;
@@ -447,6 +448,8 @@ public class InstanceIdClientImplTest {
       HttpRequest request, String expectedUrl) {
     assertEquals("POST", request.getRequestMethod());
     assertEquals(expectedUrl, request.getUrl().toString());
+    assertEquals(SdkUtils.getMetricsHeader(), request.getHeaders().get("X-Goog-Api-Client"));
+
   }
 
   private void checkExceptionFromHttpResponse(
