@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.internal.NonNull;
 
 /**
  * Wraps a parameter value with metadata and type-safe getters. Type-safe
@@ -49,7 +50,7 @@ public class Value {
    * @param source
    * @param value
    */
-  public Value(ValueSource source, String value) {
+  public Value(@NonNull ValueSource source, @NonNull String value) {
     this.source = source;
     this.value = value;
   }
@@ -59,7 +60,7 @@ public class Value {
    * 
    * @param source
    */
-  public Value(ValueSource source) {
+  public Value(@NonNull ValueSource source) {
     this(source, DEFAULT_VALUE_FOR_STRING);
   }
 
@@ -68,6 +69,7 @@ public class Value {
    * 
    * @return value as string
    */
+  @NonNull
   public String asString() {
     return this.value;
   }
@@ -79,6 +81,7 @@ public class Value {
    * 
    * @return value as boolean
    */
+  @NonNull
   public boolean asBoolean() {
     if (source == ValueSource.STATIC) {
       return DEFAULT_VALUE_FOR_BOOLEAN;
@@ -91,6 +94,7 @@ public class Value {
    * 
    * @return value as long
    */
+  @NonNull
   public long asLong() {
     if (source == ValueSource.STATIC) {
       return DEFAULT_VALUE_FOR_LONG;
@@ -108,6 +112,7 @@ public class Value {
    * 
    * @return value as double
    */
+  @NonNull
   public double asDouble() {
     if (source == ValueSource.STATIC) {
       return DEFAULT_VALUE_FOR_DOUBLE;
@@ -125,6 +130,7 @@ public class Value {
    * 
    * @return source.
    */
+  @NonNull
   public ValueSource getSource() {
     return source;
   }

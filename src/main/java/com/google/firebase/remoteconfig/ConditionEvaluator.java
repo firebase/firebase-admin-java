@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.internal.NonNull;
 
 /**
  * Encapsulates condition evaluation logic to simplify organization and
@@ -31,8 +32,9 @@ public class ConditionEvaluator {
      *                   user provided or predefined.
      * @return Evaluated conditions represented as map of condition name to boolean.
      */
-    public ImmutableMap<String, Boolean> evaluateConditions(ImmutableMap<String, OneOfCondition> conditions,
-            ImmutableMap<String, Object> context) {
+    @NonNull
+    public ImmutableMap<String, Boolean> evaluateConditions(@NonNull ImmutableMap<String, OneOfCondition> conditions,
+            @NonNull ImmutableMap<String, Object> context) {
         ImmutableMap.Builder<String, Boolean> evaluatedConditions = ImmutableMap.builder();
         int nestingLevel = 0;
 
@@ -96,10 +98,6 @@ public class ConditionEvaluator {
         }
 
         PercentConditionOperator operator = condition.getPercentConditionOperator();
-        if (operator == null) {
-            logger.warn("Percentage operator is not set.");
-            return false;
-        }
 
         // The micro-percent interval to be used with the BETWEEN operator.
         MicroPercentRange microPercentRange = condition.getMicroPercentRange();
@@ -130,8 +128,7 @@ public class ConditionEvaluator {
         String customSignalKey = condition.getCustomSignalKey();
         ImmutableList<String> targetCustomSignalValues = condition.getTargetCustomSignalValues();
 
-        if (customSignalOperator == null || customSignalKey == null || targetCustomSignalValues == null
-                || targetCustomSignalValues.isEmpty()) {
+        if (targetCustomSignalValues.isEmpty()) {
             logger.warn(
                     String.format("Values must be assigned to all custom signal fields. Operator:%s, Key:%s, Values:%s",
                             customSignalOperator, customSignalKey, targetCustomSignalValues));

@@ -15,6 +15,8 @@
  */
 package com.google.firebase.remoteconfig;
 
+import com.google.firebase.internal.NonNull;
+
 /**
  * Defines supported operators for custom signal conditions.
  */
@@ -39,7 +41,7 @@ public enum CustomSignalOperator  {
 
     private final String operator;
   
-    CustomSignalOperator(String operator) {
+    CustomSignalOperator(@NonNull String operator) {
       this.operator = operator;
     }
   
@@ -48,6 +50,7 @@ public enum CustomSignalOperator  {
      * 
      * @return operator.
      */
+    @NonNull
     public String getOperator() {
       return operator;
     }

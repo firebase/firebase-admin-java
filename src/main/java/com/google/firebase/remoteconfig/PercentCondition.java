@@ -15,6 +15,9 @@
  */
 package com.google.firebase.remoteconfig;
 
+import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.Nullable;
+
 /**
  * Represents a condition that compares the instance pseudo-random percentile to
  * a given limit.
@@ -32,7 +35,7 @@ public class PercentCondition {
      * @param percentConditionOperator
      * @param seed
      */
-    public PercentCondition(int microPercent, PercentConditionOperator percentConditionOperator, String seed) {
+    public PercentCondition(@NonNull int microPercent, @NonNull PercentConditionOperator percentConditionOperator, @NonNull String seed) {
         this.microPercent = microPercent;
         this.percentConditionOperator = percentConditionOperator;
         this.seed = seed;
@@ -46,7 +49,7 @@ public class PercentCondition {
      * @param percentConditionOperator
      * @param seed
      */
-    public PercentCondition(MicroPercentRange microPercentRange, PercentConditionOperator percentConditionOperator,
+    public PercentCondition(@NonNull MicroPercentRange microPercentRange, @NonNull PercentConditionOperator percentConditionOperator,
             String seed) {
         this.microPercentRange = microPercentRange;
         this.percentConditionOperator = percentConditionOperator;
@@ -60,6 +63,7 @@ public class PercentCondition {
      * 
      * @return micro percent.
      */
+    @Nullable
     public int getMicroPercent() {
         return microPercent;
     }
@@ -69,6 +73,7 @@ public class PercentCondition {
      * 
      * @return micro percent range.
      */
+    @Nullable
     public MicroPercentRange getMicroPercentRange() {
         return microPercentRange;
     }
@@ -79,6 +84,7 @@ public class PercentCondition {
      * 
      * @return operator.
      */
+    @NonNull
     public PercentConditionOperator getPercentConditionOperator() {
         return percentConditionOperator;
     }
@@ -90,6 +96,7 @@ public class PercentCondition {
      * 
      * @return seed.
      */
+    @NonNull
     public String getSeed() {
         return seed;
     }

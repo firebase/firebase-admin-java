@@ -18,6 +18,8 @@ package com.google.firebase.remoteconfig;
 
 import java.util.Map;
 
+import com.google.firebase.internal.NonNull;
+
 /**
  * Represents the configuration produced by evaluating a server template.
  */
@@ -35,7 +37,8 @@ public class ServerConfig {
      * @param key
      * @return config value for the given key as string.
      */
-    public String getString(String key) {
+    @NonNull
+    public String getString(@NonNull String key) {
         return configValues.get(key).asString();
     }
 
@@ -46,7 +49,8 @@ public class ServerConfig {
      * @param key
      * @return config value for the given key as boolean.
      */
-    public boolean getBoolean(String key) {
+    @NonNull
+    public boolean getBoolean(@NonNull String key) {
         return Boolean.parseBoolean(getString(key));
     }
 
@@ -57,7 +61,8 @@ public class ServerConfig {
      * @param key
      * @return config value for the given key as long.
      */
-    public long getLong(String key) {
+    @NonNull
+    public long getLong(@NonNull String key) {
         return Long.parseLong(getString(key));
     }
 
@@ -68,7 +73,8 @@ public class ServerConfig {
      * @param key
      * @return config value for the given key as double.
      */
-    public double getDouble(String key) {
+    @NonNull
+    public double getDouble(@NonNull String key) {
         return Double.parseDouble(getString(key));
     }
 

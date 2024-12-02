@@ -36,7 +36,7 @@ public class ServerTemplateData {
      * 
      * @param etag The ETag of this template.
      */
-    public ServerTemplateData(String etag) {
+    public ServerTemplateData(@NonNull String etag) {
         this.parameters = new HashMap<>();
         this.conditions = new HashMap<>();
         this.etag = etag;
@@ -76,6 +76,7 @@ public class ServerTemplateData {
      *
      * @return The ETag of the server template data.
      */
+    @NonNull
     public String getETag() {
         return this.etag;
     }
@@ -85,6 +86,7 @@ public class ServerTemplateData {
      *
      * @return The version information of the template.
      */
+    @NonNull
     public Version getVersion() {
         return version;
     }
@@ -97,6 +99,7 @@ public class ServerTemplateData {
      *                   optional conditional values.
      * @return This {@link ServerTemplateData} instance.
      */
+    @NonNull
     public ServerTemplateData setParameters(
             @NonNull Map<String, Parameter> parameters) {
         checkNotNull(parameters, "parameters must not be null.");
@@ -110,6 +113,7 @@ public class ServerTemplateData {
      * @param conditions A non-null map of conditions.
      * @return This {@link ServerTemplateData} instance.
      */
+    @NonNull
     public ServerTemplateData setConditions(
             @NonNull Map<String, OneOfCondition> conditions) {
         checkNotNull(conditions, "conditions must not be null.");
@@ -124,6 +128,7 @@ public class ServerTemplateData {
      * @param version A {@link Version} instance.
      * @return This {@link Template} instance.
      */
+    @NonNull
     public ServerTemplateData setVersion(Version version) {
         this.version = version;
         return this;

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
+import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.remoteconfig.Value.ValueSource;
 
@@ -26,7 +27,7 @@ public class ServerTemplate {
      * @param conditionEvaluator
      * @param defaultConfig
      */
-    public ServerTemplate(ConditionEvaluator conditionEvaluator, ImmutableMap<String, Value> defaultConfig) {
+    public ServerTemplate(@NonNull ConditionEvaluator conditionEvaluator, @NonNull ImmutableMap<String, Value> defaultConfig) {
         for (String configName : defaultConfig.keySet()) {
             stringifiedDefaultConfig.put(configName, defaultConfig.get(configName));
         }
