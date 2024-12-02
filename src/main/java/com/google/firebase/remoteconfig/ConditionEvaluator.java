@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.internal.NonNull;
 
 /**
  * Encapsulates condition evaluation logic to simplify organization and
@@ -31,8 +32,9 @@ public class ConditionEvaluator {
      *                   user provided or predefined.
      * @return Evaluated conditions represented as map of condition name to boolean.
      */
-    public ImmutableMap<String, Boolean> evaluateConditions(ImmutableMap<String, OneOfCondition> conditions,
-            ImmutableMap<String, Object> context) {
+    @NonNull
+    public ImmutableMap<String, Boolean> evaluateConditions(@NonNull ImmutableMap<String, OneOfCondition> conditions,
+            @NonNull ImmutableMap<String, Object> context) {
         ImmutableMap.Builder<String, Boolean> evaluatedConditions = ImmutableMap.builder();
         int nestingLevel = 0;
 
