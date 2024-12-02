@@ -15,6 +15,9 @@
  */
 package com.google.firebase.remoteconfig;
 
+import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.Nullable;
+
 /**
  * Represents a condition that may be one of several types. Only the first
  * defined field will be processed.
@@ -32,6 +35,7 @@ public class OneOfCondition {
      * 
      * @return list of conditions.
      */
+    @Nullable
     public OrCondition getOrCondition() {
         return orCondition;
     }
@@ -41,6 +45,7 @@ public class OneOfCondition {
      * 
      * @return list of conditions.
      */
+    @Nullable
     public AndCondition getAndCondition() {
         return andCondition;
     }
@@ -50,6 +55,7 @@ public class OneOfCondition {
      * 
      * @return true.
      */
+    @Nullable
     public String isTrue() {
         return trueValue;
     }
@@ -59,6 +65,7 @@ public class OneOfCondition {
      * 
      * @return false.
      */
+    @Nullable
     public String isFalse() {
         return falseValue;
     }
@@ -68,6 +75,7 @@ public class OneOfCondition {
      * 
      * @return percent condition.
      */
+    @Nullable
     public PercentCondition getPercent() {
         return percent;
     }
@@ -77,6 +85,7 @@ public class OneOfCondition {
      * 
      * @return custom condition.
      */
+    @Nullable
     public CustomSignalCondition getCustomSignal() {
         return customSignal;
     }
@@ -86,7 +95,7 @@ public class OneOfCondition {
      * 
      * @param orCondition
      */
-    public void setOrCondition(OrCondition orCondition) {
+    public void setOrCondition(@NonNull OrCondition orCondition) {
         this.orCondition = orCondition;
     }
 
@@ -95,7 +104,7 @@ public class OneOfCondition {
      * 
      * @param andCondition
      */
-    public void setAndCondition(AndCondition andCondition) {
+    public void setAndCondition(@NonNull AndCondition andCondition) {
         this.andCondition = andCondition;
     }
 
@@ -104,7 +113,7 @@ public class OneOfCondition {
      * 
      * @param percent
      */
-    public void setPercent(PercentCondition percent) {
+    public void setPercent(@NonNull PercentCondition percent) {
         this.percent = percent;
     }
 
@@ -113,7 +122,7 @@ public class OneOfCondition {
      * 
      * @param customSignal
      */
-    public void setCustomSignal(CustomSignalCondition customSignal) {
+    public void setCustomSignal(@NonNull CustomSignalCondition customSignal) {
         this.customSignal = customSignal;
     }
 

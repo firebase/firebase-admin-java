@@ -15,6 +15,8 @@
  */
 package com.google.firebase.remoteconfig;
 
+import com.google.firebase.internal.NonNull;
+
 /**
  * Defines supported operators for percent conditions.
  */
@@ -31,7 +33,7 @@ public enum PercentConditionOperator {
    * 
    * @param operator
    */
-  PercentConditionOperator(String operator) {
+  PercentConditionOperator(@NonNull String operator) {
     this.operator = operator;
   }
 
@@ -40,6 +42,7 @@ public enum PercentConditionOperator {
    * 
    * @return operator.
    */
+  @NonNull
   public String getOperator() {
     return operator;
   }

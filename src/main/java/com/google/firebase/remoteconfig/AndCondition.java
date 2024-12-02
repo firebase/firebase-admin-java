@@ -16,6 +16,7 @@
 package com.google.firebase.remoteconfig;
 
 import com.google.common.collect.ImmutableList;
+import com.google.firebase.internal.NonNull;
 
 /**
  * Represents a collection of conditions that evaluate to true if all are true.
@@ -24,9 +25,9 @@ public class AndCondition {
     private final ImmutableList<OneOfCondition> conditions;
 
     /**
-     * Creates AndCondition joining subconditions.
+     * Creates a new {@link AndCondition} joining subconditions.
      */
-    public AndCondition(ImmutableList<OneOfCondition> conditions) {
+    public AndCondition(@NonNull ImmutableList<OneOfCondition> conditions) {
         this.conditions = conditions;
     }
 
@@ -35,6 +36,7 @@ public class AndCondition {
      * 
      * @return List of conditions to evaluate.
      */
+    @NonNull
     public ImmutableList<OneOfCondition> getConditions() {
         return conditions;
     }

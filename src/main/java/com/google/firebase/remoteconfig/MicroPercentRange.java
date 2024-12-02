@@ -15,6 +15,8 @@
  */
 package com.google.firebase.remoteconfig;
 
+import com.google.firebase.internal.NonNull;
+
 /**
  * Represents the limit of percentiles to target in micro-percents. The value
  * must be in the range [0 and 100000000].
@@ -23,7 +25,7 @@ public class MicroPercentRange {
     private final int microPercentLowerBound;
     private final int microPercentUpperBound;
 
-    public MicroPercentRange(int microPercentLowerBound, int microPercentUpperBound){
+    public MicroPercentRange(@NonNull int microPercentLowerBound, @NonNull int microPercentUpperBound){
         this.microPercentLowerBound = microPercentLowerBound;
         this.microPercentUpperBound = microPercentUpperBound;
     }
@@ -35,6 +37,7 @@ public class MicroPercentRange {
      * 
      * @return micropercentile lower bound.
      */
+    @NonNull
     public int getMicroPercentLowerBound() {
         return microPercentLowerBound;
     }
@@ -46,6 +49,7 @@ public class MicroPercentRange {
      * 
      * @return micropercentile upper bound.
      */
+    @NonNull
     public int getMicroPercentUpperBound() {
         return microPercentUpperBound;
     }
