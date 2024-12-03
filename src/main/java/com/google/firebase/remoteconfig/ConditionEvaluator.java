@@ -26,6 +26,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -50,14 +51,16 @@ public class ConditionEvaluator {
    */
   @NonNull
   public ImmutableMap<String, Boolean> evaluateConditions(
-      @NonNull ImmutableMap<String, OneOfCondition> conditions,
-      @NonNull ImmutableMap<String, Object> context) {
+      @NonNull Map<String, OneOfCondition> conditions,
+      @NonNull Map<String, Object> context) {
+    ImmutableMap<String, OneOfCondition> immutableConditions = ImmutableMap.copyOf(conditions);
+    ImmutableMap<String, Object> immutableContext = ImmutableMap.copyOf(context);
     ImmutableMap.Builder<String, Boolean> evaluatedConditions = ImmutableMap.builder();
     int nestingLevel = 0;
 
-    for (ImmutableMap.Entry<String, OneOfCondition> condition : conditions.entrySet()) {
+    for (ImmutableMap.Entry<String, OneOfCondition> condition : immutableConditions.entrySet()) {
       evaluatedConditions.put(condition.getKey(), evaluateCondition(condition.getValue(),
-          context, nestingLevel));
+          immutableContext, nestingLevel));
     }
 
     return evaluatedConditions.build();
