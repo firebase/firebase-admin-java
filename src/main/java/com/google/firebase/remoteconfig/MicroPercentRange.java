@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.google.firebase.remoteconfig;
 
 import com.google.firebase.internal.NonNull;
@@ -22,35 +23,34 @@ import com.google.firebase.internal.NonNull;
  * must be in the range [0 and 100000000].
  */
 public class MicroPercentRange {
-    private final int microPercentLowerBound;
-    private final int microPercentUpperBound;
+  private final int microPercentLowerBound;
+  private final int microPercentUpperBound;
 
-    public MicroPercentRange(@NonNull int microPercentLowerBound, @NonNull int microPercentUpperBound){
-        this.microPercentLowerBound = microPercentLowerBound;
-        this.microPercentUpperBound = microPercentUpperBound;
-    }
+  public MicroPercentRange(@NonNull int microPercentLowerBound,
+      @NonNull int microPercentUpperBound) {
+    this.microPercentLowerBound = microPercentLowerBound;
+    this.microPercentUpperBound = microPercentUpperBound;
+  }
 
-    /**
-     * The lower limit of percentiles
-     * {@link MicroPercentRange.microPercentLowerBound} to target in micro-percents.
-     * The value must be in the range [0 and 100000000].
-     * 
-     * @return micropercentile lower bound.
-     */
-    @NonNull
-    public int getMicroPercentLowerBound() {
-        return microPercentLowerBound;
-    }
+  /**
+   * The lower limit of percentiles {@link microPercentLowerBound} to target in micro-percents.
+   * The value must be in the range [0 and 100000000].
+   * 
+   * @return micropercentile lower bound.
+   */
+  @NonNull
+  public int getMicroPercentLowerBound() {
+    return microPercentLowerBound;
+  }
 
-    /**
-     * The upper limit of percentiles
-     * {@link MicroPercentRange.microPercentUpperBound} to target in micro-percents.
-     * The value must be in the range [0 and 100000000].
-     * 
-     * @return micropercentile upper bound.
-     */
-    @NonNull
-    public int getMicroPercentUpperBound() {
-        return microPercentUpperBound;
-    }
+  /**
+   * The upper limit of percentiles {@link microPercentUpperBound} to target in micro-percents.
+   * The value must be in the range [0 and 100000000].
+   * 
+   * @return micropercentile upper bound.
+   */
+  @NonNull
+  public int getMicroPercentUpperBound() {
+    return microPercentUpperBound;
+  }
 }

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.google.firebase.remoteconfig;
 
 import com.google.firebase.internal.NonNull;
@@ -31,7 +32,8 @@ public enum PercentConditionOperator {
   /**
    * Creates percent condition operator.
    * 
-   * @param operator
+   * @param operator The choice of percent operator to determine how to compare targets to
+   *        percent(s).
    */
   PercentConditionOperator(@NonNull String operator) {
     this.operator = operator;

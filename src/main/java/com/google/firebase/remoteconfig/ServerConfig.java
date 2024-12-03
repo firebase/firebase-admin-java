@@ -16,66 +16,66 @@
 
 package com.google.firebase.remoteconfig;
 
-import java.util.Map;
-
 import com.google.firebase.internal.NonNull;
+
+import java.util.Map;
 
 /**
  * Represents the configuration produced by evaluating a server template.
  */
 public class ServerConfig {
-    private final Map<String, Value> configValues;
+  private final Map<String, Value> configValues;
 
-    ServerConfig(Map<String, Value> configValues) {
-        this.configValues = configValues;
-    }
+  ServerConfig(Map<String, Value> configValues) {
+    this.configValues = configValues;
+  }
 
-    /**
-     * Gets the value for the given key as a string. Convenience method for calling
-     * serverConfig.getValue(key).asString().
-     * 
-     * @param key
-     * @return config value for the given key as string.
-     */
-    @NonNull
-    public String getString(@NonNull String key) {
-        return configValues.get(key).asString();
-    }
+  /**
+   * Gets the value for the given key as a string. Convenience method for calling
+   * serverConfig.getValue(key).asString().
+   * 
+   * @param key The name of the parameter.
+   * @return config value for the given key as string.
+   */
+  @NonNull
+  public String getString(@NonNull String key) {
+    return configValues.get(key).asString();
+  }
 
-    /**
-     * Gets the value for the given key as a boolean.Convenience method for calling
-     * serverConfig.getValue(key).asBoolean().
-     * 
-     * @param key
-     * @return config value for the given key as boolean.
-     */
-    @NonNull
-    public boolean getBoolean(@NonNull String key) {
-        return Boolean.parseBoolean(getString(key));
-    }
+  /**
+   * Gets the value for the given key as a boolean.Convenience method for calling
+   * serverConfig.getValue(key).asBoolean().
+   * 
+   * @param key The name of the parameter.
+   * @return config value for the given key as boolean.
+   */
+  @NonNull
+  public boolean getBoolean(@NonNull String key) {
+    return Boolean.parseBoolean(getString(key));
+  }
 
-    /**
-     * Gets the value for the given key as long.Convenience method for calling
-     * serverConfig.getValue(key).asLong().
-     * 
-     * @param key
-     * @return config value for the given key as long.
-     */
-    @NonNull
-    public long getLong(@NonNull String key) {
-        return Long.parseLong(getString(key));
-    }
+  /**
+   * Gets the value for the given key as long.Convenience method for calling
+   * serverConfig.getValue(key).asLong().
+   * 
+   * @param key The name of the parameter.
+   * @return config value for the given key as long.
+   */
+  @NonNull
+  public long getLong(@NonNull String key) {
+    return Long.parseLong(getString(key));
+  }
 
-    /**
-     * Gets the value for the given key as double.Convenience method for calling
-     * serverConfig.getValue(key).asDouble().
-     * 
-     * @param key
-     * @return config value for the given key as double.
-     */
-    @NonNull
-    public double getDouble(@NonNull String key) {
-        return Double.parseDouble(getString(key));
-    }
+  /**
+   * Gets the value for the given key as double.Convenience method for calling
+   * serverConfig.getValue(key).asDouble().
+   * 
+   * @param key The name of the parameter.
+   * @return config value for the given key as double.
+   */
+  @NonNull
+  public double getDouble(@NonNull String key) {
+    return Double.parseDouble(getString(key));
+  }
 
 }
