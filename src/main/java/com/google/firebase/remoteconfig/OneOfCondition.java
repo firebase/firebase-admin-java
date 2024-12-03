@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.google.firebase.remoteconfig;
 
 import com.google.firebase.internal.NonNull;
@@ -23,120 +24,122 @@ import com.google.firebase.internal.Nullable;
  * defined field will be processed.
  */
 public class OneOfCondition {
-    private OrCondition orCondition;
-    private AndCondition andCondition;
-    private PercentCondition percent;
-    private CustomSignalCondition customSignal;
-    private String trueValue;
-    private String falseValue;
+  private OrCondition orCondition;
+  private AndCondition andCondition;
+  private PercentCondition percent;
+  private CustomSignalCondition customSignal;
+  private String trueValue;
+  private String falseValue;
 
-    /**
-     * Gets {@link OrCondition} with conditions on which OR operation will be applied.
-     * 
-     * @return list of conditions.
-     */
-    @Nullable
-    public OrCondition getOrCondition() {
-        return orCondition;
-    }
+  /**
+   * Gets {@link OrCondition} with conditions on which OR operation will be
+   * applied.
+   * 
+   * @return list of conditions.
+   */
+  @Nullable
+  public OrCondition getOrCondition() {
+    return orCondition;
+  }
 
-    /**
-     * Gets {@link AndCondition} with conditions on which AND operation will be applied.
-     * 
-     * @return list of conditions.
-     */
-    @Nullable
-    public AndCondition getAndCondition() {
-        return andCondition;
-    }
+  /**
+   * Gets {@link AndCondition} with conditions on which AND operation will be
+   * applied.
+   * 
+   * @return list of conditions.
+   */
+  @Nullable
+  public AndCondition getAndCondition() {
+    return andCondition;
+  }
 
-    /**
-     * Returns true indicating the expression has evaluated to true.
-     * 
-     * @return true.
-     */
-    @Nullable
-    public String isTrue() {
-        return trueValue;
-    }
+  /**
+   * Returns true indicating the expression has evaluated to true.
+   * 
+   * @return true.
+   */
+  @Nullable
+  public String isTrue() {
+    return trueValue;
+  }
 
-    /**
-     * Returns false indicating the expression has evaluated to false.
-     * 
-     * @return false.
-     */
-    @Nullable
-    public String isFalse() {
-        return falseValue;
-    }
+  /**
+   * Returns false indicating the expression has evaluated to false.
+   * 
+   * @return false.
+   */
+  @Nullable
+  public String isFalse() {
+    return falseValue;
+  }
 
-    /**
-     * Gets {@link PercentCondition}.
-     * 
-     * @return percent condition.
-     */
-    @Nullable
-    public PercentCondition getPercent() {
-        return percent;
-    }
+  /**
+   * Gets {@link PercentCondition}.
+   * 
+   * @return percent condition.
+   */
+  @Nullable
+  public PercentCondition getPercent() {
+    return percent;
+  }
 
-    /**
-     * Gets {@link CustomSignalCondition}.
-     * 
-     * @return custom condition.
-     */
-    @Nullable
-    public CustomSignalCondition getCustomSignal() {
-        return customSignal;
-    }
+  /**
+   * Gets {@link CustomSignalCondition}.
+   * 
+   * @return custom condition.
+   */
+  @Nullable
+  public CustomSignalCondition getCustomSignal() {
+    return customSignal;
+  }
 
-    /**
-     * Sets list of conditions on which OR operation will be applied.
-     * 
-     * @param orCondition
-     */
-    public void setOrCondition(@NonNull OrCondition orCondition) {
-        this.orCondition = orCondition;
-    }
+  /**
+   * Sets list of conditions on which OR operation will be applied.
+   * 
+   * @param orCondition Makes this condition an OR condition.
+   */
+  public void setOrCondition(@NonNull OrCondition orCondition) {
+    this.orCondition = orCondition;
+  }
 
-    /**
-     * Sets list of conditions on which AND operation will be applied.
-     * 
-     * @param andCondition
-     */
-    public void setAndCondition(@NonNull AndCondition andCondition) {
-        this.andCondition = andCondition;
-    }
+  /**
+   * Sets list of conditions on which AND operation will be applied.
+   * 
+   * @param andCondition Makes this condition an AND condition.
+   */
+  public void setAndCondition(@NonNull AndCondition andCondition) {
+    this.andCondition = andCondition;
+  }
 
-    /**
-     * Sets {@link PercentCondition}.
-     * 
-     * @param percent
-     */
-    public void setPercent(@NonNull PercentCondition percent) {
-        this.percent = percent;
-    }
+  /**
+   * Sets {@link PercentCondition}.
+   * 
+   * @param percent Makes this condition a percent condition.
+   */
+  public void setPercent(@NonNull PercentCondition percent) {
+    this.percent = percent;
+  }
 
-    /**
-     * Sets {@link CustomSignalCondition}.
-     * 
-     * @param customSignal
-     */
-    public void setCustomSignal(@NonNull CustomSignalCondition customSignal) {
-        this.customSignal = customSignal;
-    }
+  /**
+   * Sets {@link CustomSignalCondition}.
+   * 
+   * @param customSignal Makes this condition a custom signal condition.
+   */
+  public void setCustomSignal(@NonNull CustomSignalCondition customSignal) {
+    this.customSignal = customSignal;
+  }
 
-    /**
-     * Sets evaluation value to true.
-     */
-    public void setTrue() {
-        this.trueValue = "true";
-    }
+  /**
+   * Sets evaluation value to true.
+   */
+  public void setTrue() {
+    this.trueValue = "true";
+  }
 
-    /**
-     * Sets evaluation value to false.
-     */
-    public void setFalse() {
-        this.falseValue = "false";
-    }
+  /**
+   * Sets evaluation value to false.
+   */
+  public void setFalse() {
+    this.falseValue = "false";
+  }
 }

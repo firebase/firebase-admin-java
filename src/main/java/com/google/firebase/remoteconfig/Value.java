@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.firebase.remoteconfig;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package com.google.firebase.remoteconfig;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Wraps a parameter value with metadata and type-safe getters. Type-safe
@@ -32,8 +33,8 @@ public class Value {
   private static final String DEFAULT_VALUE_FOR_STRING = "";
   private static final long DEFAULT_VALUE_FOR_LONG = 0;
   private static final double DEFAULT_VALUE_FOR_DOUBLE = 0;
-  private static final ImmutableList<String> BOOLEAN_TRUTHY_VALUES = ImmutableList.of("1", "true", "t", "yes", "y",
-      "on");
+  private static final ImmutableList<String> BOOLEAN_TRUTHY_VALUES = ImmutableList.of("1", "true",
+      "t", "yes", "y", "on");
 
   public enum ValueSource {
     STATIC,
@@ -47,8 +48,8 @@ public class Value {
   /**
    * Creates a new {@link Value} object.
    * 
-   * @param source
-   * @param value
+   * @param source Indicates the source of a value.
+   * @param value  Indicates a parameter value.
    */
   public Value(@NonNull ValueSource source, @NonNull String value) {
     this.source = source;
@@ -58,7 +59,7 @@ public class Value {
   /**
    * Creates a new {@link Value} object with default value.
    * 
-   * @param source
+   * @param source Indicates the source of a value.
    */
   public Value(@NonNull ValueSource source) {
     this(source, DEFAULT_VALUE_FOR_STRING);

@@ -13,31 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.google.firebase.remoteconfig;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
 
 /**
- * Represents a collection of conditions that evaluate to true if one of them is true.
+ * Represents a collection of conditions that evaluate to true if one of them is
+ * true.
  */
 public class OrCondition {
-    private final ImmutableList<OneOfCondition> conditions;
+  private final ImmutableList<OneOfCondition> conditions;
 
-    /**
-     * Creates OrCondition joining subconditions.
-     */
-    public OrCondition(@NonNull ImmutableList<OneOfCondition> conditions) {
-        this.conditions = conditions;
-    }
+  /**
+   * Creates OrCondition joining subconditions.
+   */
+  public OrCondition(@NonNull ImmutableList<OneOfCondition> conditions) {
+    this.conditions = conditions;
+  }
 
-    /**
-     * Gets the list of {@link OneOfCondition}
-     * 
-     * @return List of conditions to evaluate.
-     */
-    @NonNull
-    public ImmutableList<OneOfCondition> getConditions() {
-        return conditions;
-    }
+  /**
+   * Gets the list of {@link OneOfCondition}
+   * 
+   * @return List of conditions to evaluate.
+   */
+  @NonNull
+  public ImmutableList<OneOfCondition> getConditions() {
+    return conditions;
+  }
 }
