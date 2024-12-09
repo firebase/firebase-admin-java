@@ -19,7 +19,6 @@ package com.google.firebase.remoteconfig;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.internal.Nullable;
 import com.google.firebase.remoteconfig.Value.ValueSource;
 
 import java.util.HashMap;
@@ -60,7 +59,7 @@ public class ServerTemplate {
    * @return evaluated server config.
    * @throws FirebaseRemoteConfigException when there cache is empty.
    */
-  public ServerConfig evaluate(@Nullable ImmutableMap<String, Object> context)
+  public ServerConfig evaluate(KeysAndValues context)
       throws FirebaseRemoteConfigException {
     if (cache == null) {
       throw new FirebaseRemoteConfigException(ErrorCode.FAILED_PRECONDITION,
