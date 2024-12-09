@@ -43,6 +43,16 @@ public class ConditionEvaluator {
   private static final int MAX_CONDITION_RECURSION_DEPTH = 10;
   private static final Logger logger = LoggerFactory.getLogger(ConditionEvaluator.class);
 
+  @FunctionalInterface
+  interface CompareStringFunction {
+    boolean apply(String signalVaue, String targetValue);
+  }
+
+  @FunctionalInterface
+  interface CompareNumberFunction {
+    boolean apply(Integer value);
+  }
+
   /**
    * @param conditions A named condition map of string to {@link OneOfCondition}.
    * @param context    Represents template evaluation input signals which can be
@@ -170,26 +180,60 @@ public class ConditionEvaluator {
     }
 
     switch (customSignalOperator) {
+      // String operations.
       case STRING_CONTAINS:
+        return compareStrings(targetCustomSignalValues, customSignalValue,
+            (customSignal, targetSignal) -> customSignal.contains(targetSignal));
       case STRING_DOES_NOT_CONTAIN:
+        return !compareStrings(targetCustomSignalValues, customSignalValue,
+            (customSignal, targetSignal) -> customSignal.contains(targetSignal));
       case STRING_EXACTLY_MATCHES:
+        return compareStrings(targetCustomSignalValues, customSignalValue,
+            (customSignal, targetSignal) -> customSignal.equals(targetSignal));
       case STRING_CONTAINS_REGEX:
-        return compareStrings(targetCustomSignalValues, customSignalValue, customSignalOperator);
+        return compareStrings(targetCustomSignalValues, customSignalValue,
+            (customSignal, targetSignal) -> Pattern.compile(targetSignal)
+                .matcher(customSignal).matches());
+
+      // Numeric operations.
       case NUMERIC_LESS_THAN:
+        return compareNumbers(targetCustomSignalValues, customSignalValue,
+            (result) -> result < 0);
       case NUMERIC_LESS_EQUAL:
+        return compareNumbers(targetCustomSignalValues, customSignalValue,
+            (result) -> result <= 0);
       case NUMERIC_EQUAL:
+        return compareNumbers(targetCustomSignalValues, customSignalValue,
+            (result) -> result == 0);
       case NUMERIC_NOT_EQUAL:
+        return compareNumbers(targetCustomSignalValues, customSignalValue,
+            (result) -> result != 0);
       case NUMERIC_GREATER_THAN:
+        return compareNumbers(targetCustomSignalValues, customSignalValue,
+            (result) -> result > 0);
       case NUMERIC_GREATER_EQUAL:
-        return compareNumbers(targetCustomSignalValues, customSignalValue, customSignalOperator);
+        return compareNumbers(targetCustomSignalValues, customSignalValue,
+            (result) -> result >= 0);
+
+      // Semantic operations.
       case SEMANTIC_VERSION_EQUAL:
+        return compareSemanticVersions(targetCustomSignalValues, customSignalValue,
+            (result) -> result == 0);
       case SEMANTIC_VERSION_GREATER_EQUAL:
+        return compareSemanticVersions(targetCustomSignalValues, customSignalValue,
+            (result) -> result >= 0);
       case SEMANTIC_VERSION_GREATER_THAN:
+        return compareSemanticVersions(targetCustomSignalValues, customSignalValue,
+            (result) -> result > 0);
       case SEMANTIC_VERSION_LESS_EQUAL:
+        return compareSemanticVersions(targetCustomSignalValues, customSignalValue,
+            (result) -> result <= 0);
       case SEMANTIC_VERSION_LESS_THAN:
+        return compareSemanticVersions(targetCustomSignalValues, customSignalValue,
+            (result) -> result < 0);
       case SEMANTIC_VERSION_NOT_EQUAL:
         return compareSemanticVersions(targetCustomSignalValues, customSignalValue,
-            customSignalOperator);
+            (result) -> result != 0);
       default:
         return false;
     }
@@ -230,127 +274,100 @@ public class ConditionEvaluator {
     }
   }
 
-  private boolean compareStrings(ImmutableList<String> targetValues, Object customSignalValue,
-      CustomSignalOperator operator) {
-    String value = customSignalValue.toString();
-
-    for (String target : targetValues) {
-      if (operator == CustomSignalOperator.STRING_CONTAINS && value.contains(target)) {
-        return true;
-      } else if (operator == CustomSignalOperator.STRING_DOES_NOT_CONTAIN
-          && !value.contains(target)) {
-        return true;
-      } else if (operator == CustomSignalOperator.STRING_EXACTLY_MATCHES && value.equals(target)) {
-        return true;
-      } else if (operator == CustomSignalOperator.STRING_CONTAINS_REGEX
-          && Pattern.compile(value).matcher(target).find()) {
+  private boolean compareStrings(ImmutableList<String> targetValues, Object customSignal,
+      CompareStringFunction compareFunction) {
+    String customSignalValue = customSignal.toString();
+    for (String targetValue : targetValues) {
+      if (compareFunction.apply(customSignalValue, targetValue)) {
         return true;
       }
     }
     return false;
   }
 
-  private boolean compareNumbers(ImmutableList<String> targetValues, Object customSignalValue,
-      CustomSignalOperator operator) {
+  private boolean compareNumbers(ImmutableList<String> targetValues, Object customSignal,
+      CompareNumberFunction compareFunction) {
     if (targetValues.size() != 1) {
-      logger.warn(String.format("Target values must contain 1 element for operation %s", operator));
+      logger.warn(String.format(
+          "Target values must contain 1 element for numeric operations. Target Value: %s",
+          targetValues));
       return false;
     }
 
-    double value = (Double) customSignalValue;
-    double target = Double.parseDouble(targetValues.get(0));
-
-    switch (operator) {
-      case NUMERIC_EQUAL:
-        return value == target;
-      case NUMERIC_GREATER_THAN:
-        return value > target;
-      case NUMERIC_GREATER_EQUAL:
-        return value >= target;
-      case NUMERIC_LESS_EQUAL:
-        return value <= target;
-      case NUMERIC_LESS_THAN:
-        return value < target;
-      case NUMERIC_NOT_EQUAL:
-        return value != target;
-      default:
-        return false;
+    double customSignalValue;
+    double targetValue;
+    try {
+      customSignalValue = Double.parseDouble(customSignal.toString());
+      targetValue = Double.parseDouble(targetValues.get(0));
+    } catch (NumberFormatException e) {
+      return false;
     }
+
+    return compareFunction.apply(customSignalValue < targetValue ? -1
+        : customSignalValue > targetValue ? 1 : 0);
   }
 
   private boolean compareSemanticVersions(ImmutableList<String> targetValues,
-      Object customSignalValue, CustomSignalOperator operator) throws RuntimeErrorException {
+      Object customSignalValue,
+      CompareNumberFunction compareFunction) throws RuntimeErrorException {
     if (targetValues.size() != 1) {
-      logger.warn(String.format("Target values must contain 1 element for operation %s",
-          operator));
+      logger.warn(String.format("Target values must contain 1 element for semantic operation."));
+      return false;
+    }
+
+    String targetValueString = targetValues.get(0);
+    String customSignalValueString = customSignalValue.toString();
+    if (!validateSemanticVersion(targetValueString)
+        || !validateSemanticVersion(customSignalValueString)) {
       return false;
     }
 
     // Max number of segments a numeric version can have. This is enforced by the
     // server as well.
     int maxLength = 5;
-
-    List<Integer> version1 = Arrays.stream(customSignalValue.toString().split("\\."))
-        .<Integer>map(s -> Integer.valueOf(s)).collect(Collectors.toList());
-    List<Integer> version2 = Arrays.stream(targetValues.get(0).split("\\."))
-        .<Integer>map(s -> Integer.valueOf(s))
+    List<Integer> targetVersion = Arrays.stream(targetValueString.split("\\."))
+        .map(Integer::parseInt)
         .collect(Collectors.toList());
-    for (int i = 0; i < maxLength; i++) {
+    List<Integer> customSignalVersion = Arrays.stream(customSignalValueString.split("\\."))
+        .map(Integer::parseInt)
+        .collect(Collectors.toList());
+
+    int targetVersionSize = targetVersion.size();
+    int customSignalVersionSize = customSignalVersion.size();
+    for (int i = 0; i <= maxLength; i++) {
       // Check to see if segments are present.
-      Boolean version1HasSegment = version1.get(i) != null;
-      Boolean version2HasSegment = version2.get(i) != null;
+      Boolean targetVersionHasSegment = (i < targetVersionSize);
+      Boolean customSignalVersionHasSegment = (i < customSignalVersionSize);
 
       // If both are undefined, we've consumed everything and they're equal.
-      if (!version1HasSegment && !version2HasSegment) {
-        return operator == CustomSignalOperator.SEMANTIC_VERSION_EQUAL;
+      if (!targetVersionHasSegment && !customSignalVersionHasSegment) {
+        return compareFunction.apply(0);
       }
 
       // Insert zeros if undefined for easier comparison.
-      if (!version1HasSegment) {
-        version1.add(i, 0);
+      if (!targetVersionHasSegment) {
+        targetVersion.add(0);
       }
-      if (!version2HasSegment) {
-        version2.add(i, 0);
+      if (!customSignalVersionHasSegment) {
+        customSignalVersion.add(0);
       }
 
-      switch (operator) {
-        case SEMANTIC_VERSION_GREATER_EQUAL:
-          if (version1.get(i).compareTo(version2.get(i)) >= 0) {
-            return true;
-          }
-          break;
-        case SEMANTIC_VERSION_GREATER_THAN:
-          if (version1.get(i).compareTo(version2.get(i)) > 0) {
-            return true;
-          }
-          break;
-        case SEMANTIC_VERSION_LESS_EQUAL:
-          if (version1.get(i).compareTo(version2.get(i)) <= 0) {
-            return true;
-          }
-          break;
-        case SEMANTIC_VERSION_LESS_THAN:
-          if (version1.get(i).compareTo(version2.get(i)) < 0) {
-            return true;
-          }
-          break;
-        case SEMANTIC_VERSION_EQUAL:
-          if (version1.get(i).compareTo(version2.get(i)) != 0) {
-            return false;
-          }
-          break;
-        case SEMANTIC_VERSION_NOT_EQUAL:
-          if (version1.get(i).compareTo(version2.get(i)) != 0) {
-            return true;
-          }
-          break;
-        default:
-          return false;
+      // Check if we have a difference in segments. Otherwise continue to next
+      // segment.
+      if (customSignalVersion.get(i).compareTo(targetVersion.get(i)) < 0) {
+        return compareFunction.apply(-1);
+      } else if (customSignalVersion.get(i).compareTo(targetVersion.get(i)) > 0) {
+        return compareFunction.apply(1);
       }
     }
     logger.warn(String.format(
         "Semantic version max length(5) exceeded. Target: %s, Custom Signal: %s",
-        version1, version2));
+        targetValueString, customSignalValueString));
     return false;
+  }
+
+  private boolean validateSemanticVersion(String version) {
+    Pattern pattern = Pattern.compile("^[0-9]+(?:\\.[0-9]+){0,4}$");
+    return pattern.matcher(version).matches();
   }
 }

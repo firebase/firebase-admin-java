@@ -41,10 +41,10 @@ public class PercentCondition {
    *        the hash space. This is a string which can have 0 - 32 characters and can contain ASCII
    *        characters [-_.0-9a-zA-Z].The string is case-sensitive.
    */
-  public PercentCondition(@NonNull int microPercent,
+  public PercentCondition(@Nullable Integer microPercent,
       @NonNull PercentConditionOperator percentConditionOperator,
       @NonNull String seed) {
-    this.microPercent = microPercent;
+    this.microPercent = microPercent != null ? microPercent : 0;
     this.percentConditionOperator = percentConditionOperator;
     this.seed = seed;
   }
