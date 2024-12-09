@@ -62,21 +62,20 @@ public class ConditionEvaluator {
   @NonNull
   public ImmutableMap<String, Boolean> evaluateConditions(
       @NonNull Map<String, OneOfCondition> conditions,
-      @NonNull Map<String, Object> context) {
+      @NonNull KeysAndValues context) {
     ImmutableMap<String, OneOfCondition> immutableConditions = ImmutableMap.copyOf(conditions);
-    ImmutableMap<String, Object> immutableContext = ImmutableMap.copyOf(context);
     ImmutableMap.Builder<String, Boolean> evaluatedConditions = ImmutableMap.builder();
     int nestingLevel = 0;
 
     for (ImmutableMap.Entry<String, OneOfCondition> condition : immutableConditions.entrySet()) {
       evaluatedConditions.put(condition.getKey(), evaluateCondition(condition.getValue(),
-          immutableContext, nestingLevel));
+          context, nestingLevel));
     }
 
     return evaluatedConditions.build();
   }
 
-  private boolean evaluateCondition(OneOfCondition condition, ImmutableMap<String, Object> context,
+  private boolean evaluateCondition(OneOfCondition condition, KeysAndValues context,
       int nestingLevel) {
     if (nestingLevel > MAX_CONDITION_RECURSION_DEPTH) {
       logger.warn("Maximum condition recursion depth exceeded.");
@@ -99,7 +98,7 @@ public class ConditionEvaluator {
     return false;
   }
 
-  private boolean evaluateOrCondition(OrCondition condition, ImmutableMap<String, Object> context,
+  private boolean evaluateOrCondition(OrCondition condition, KeysAndValues context,
       int nestingLevel) {
     ImmutableList<OneOfCondition> subConditions = condition.getConditions();
     for (OneOfCondition subCondition : subConditions) {
@@ -112,7 +111,7 @@ public class ConditionEvaluator {
   }
 
   private boolean evaluateAndCondition(AndCondition condition,
-      ImmutableMap<String, Object> context,
+      KeysAndValues context,
       int nestingLevel) {
     ImmutableList<OneOfCondition> subConditions = condition.getConditions();
     for (OneOfCondition subCondition : subConditions) {
@@ -125,7 +124,7 @@ public class ConditionEvaluator {
   }
 
   private boolean evaluatePercentCondition(PercentCondition condition,
-      ImmutableMap<String, Object> context) {
+      KeysAndValues context) {
     if (!context.containsKey("randomizationId")) {
       logger.warn("Percentage operation cannot be performed without randomizationId");
       return false;
@@ -162,7 +161,7 @@ public class ConditionEvaluator {
   }
 
   private boolean evaluateCustomSignalCondition(CustomSignalCondition condition,
-      ImmutableMap<String, Object> context) {
+      KeysAndValues context) {
     CustomSignalOperator customSignalOperator = condition.getCustomSignalOperator();
     String customSignalKey = condition.getCustomSignalKey();
     ImmutableList<String> targetCustomSignalValues = condition.getTargetCustomSignalValues();
