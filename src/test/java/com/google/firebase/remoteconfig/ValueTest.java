@@ -17,6 +17,8 @@
 package com.google.firebase.remoteconfig;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import com.google.firebase.remoteconfig.Value.ValueSource;
 
@@ -80,24 +82,24 @@ public class ValueTest {
   @Test
   public void testAsBooleanReturnsDefaultValueForStaticSource() {
     Value value = new Value(ValueSource.STATIC);
-    assertEquals(value.asBoolean(), false);
+    assertFalse(value.asBoolean());
   }
 
   @Test
   public void testAsBooleanReturnsDefaultValueForInvalidSourceValue() {
     Value value = new Value(ValueSource.REMOTE, "sample-string");
-    assertEquals(value.asBoolean(), false);
+    assertFalse(value.asBoolean());
   }
 
   @Test
   public void testAsBooleanReturnsSourceValueAsBoolean() {
     Value value = new Value(ValueSource.REMOTE, "1");
-    assertEquals(value.asBoolean(), true);
+    assertTrue(value.asBoolean());
   }
 
   @Test
   public void testAsBooleanReturnsSourceValueYesAsBoolean() {
     Value value = new Value(ValueSource.REMOTE, "YeS");
-    assertEquals(value.asBoolean(), true);
+    assertTrue(value.asBoolean());
   }
 }
