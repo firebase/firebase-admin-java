@@ -26,11 +26,10 @@ import java.util.Map;
  * Represents data stored in context passed to server-side Remote Config.
  */
 public class KeysAndValues {
-  ImmutableMap.Builder<String, String> keysAndValuesBuilder = ImmutableMap.builder();
   final ImmutableMap<String, String> keysAndValues;
 
   private KeysAndValues(@NonNull Builder builder) {
-    keysAndValues = keysAndValuesBuilder.putAll(builder.keysAndValues).build();
+    keysAndValues = keysAndValues.builder().putAll(builder.keysAndValues).build();
   }
 
   /**

@@ -39,6 +39,8 @@ import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.remoteconfig.internal.RemoteConfigServiceErrorResponse;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
+import com.google.firebase.remoteconfig.internal.ServerTemplateResponse;
+
 
 import java.io.IOException;
 import java.util.List;
@@ -103,6 +105,16 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
   }
 
   @Override
+  public ServerTemplateData getServerTemplate() throws FirebaseRemoteConfigException {
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(remoteConfigUrl)
+            .addAllHeaders(COMMON_HEADERS);
+    IncomingHttpResponse response = httpClient.send(request);
+    ServerTemplateResponse serverTemplateResponse = httpClient.parse(response, ServerTemplateResponse.class);
+    ServerTemplateData serverTemplateData = new ServerTemplateData(serverTemplateResponse);
+    return serverTemplateData.setETag(getETag(response));
+  }
+
+  @Override
   public Template getTemplateAtVersion(
           @NonNull String versionNumber) throws FirebaseRemoteConfigException {
     checkArgument(RemoteConfigUtil.isValidVersionNumber(versionNumber),
@@ -115,6 +127,7 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
     Template template = new Template(templateResponse);
     return template.setETag(getETag(response));
   }
+  
 
   @Override
   public Template publishTemplate(@NonNull Template template, boolean validateOnly,

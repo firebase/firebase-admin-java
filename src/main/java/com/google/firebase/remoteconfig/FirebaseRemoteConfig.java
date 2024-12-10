@@ -27,9 +27,12 @@ import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
 
 /**
- * This class is the entry point for all server-side Firebase Remote Config actions.
+ * This class is the entry point for all server-side Firebase Remote Config
+ * actions.
  *
- * <p>You can get an instance of {@link FirebaseRemoteConfig} via {@link #getInstance(FirebaseApp)},
+ * <p>
+ * You can get an instance of {@link FirebaseRemoteConfig} via
+ * {@link #getInstance(FirebaseApp)},
  * and then use it to manage Remote Config templates.
  */
 public final class FirebaseRemoteConfig {
@@ -49,22 +52,26 @@ public final class FirebaseRemoteConfig {
   }
 
   /**
-   * Gets the {@link FirebaseRemoteConfig} instance for the default {@link FirebaseApp}.
+   * Gets the {@link FirebaseRemoteConfig} instance for the default
+   * {@link FirebaseApp}.
    *
-   * @return The {@link FirebaseRemoteConfig} instance for the default {@link FirebaseApp}.
+   * @return The {@link FirebaseRemoteConfig} instance for the default
+   *         {@link FirebaseApp}.
    */
   public static FirebaseRemoteConfig getInstance() {
     return getInstance(FirebaseApp.getInstance());
   }
 
   /**
-   * Gets the {@link FirebaseRemoteConfig} instance for the specified {@link FirebaseApp}.
+   * Gets the {@link FirebaseRemoteConfig} instance for the specified
+   * {@link FirebaseApp}.
    *
-   * @return The {@link FirebaseRemoteConfig} instance for the specified {@link FirebaseApp}.
+   * @return The {@link FirebaseRemoteConfig} instance for the specified
+   *         {@link FirebaseApp}.
    */
   public static synchronized FirebaseRemoteConfig getInstance(FirebaseApp app) {
     FirebaseRemoteConfigService service = ImplFirebaseTrampolines.getService(app, SERVICE_ID,
-            FirebaseRemoteConfigService.class);
+        FirebaseRemoteConfigService.class);
     if (service == null) {
       service = ImplFirebaseTrampolines.addService(app, new FirebaseRemoteConfigService(app));
     }
@@ -75,7 +82,8 @@ public final class FirebaseRemoteConfig {
    * Gets the current active version of the Remote Config template.
    *
    * @return A {@link Template}.
-   * @throws FirebaseRemoteConfigException If an error occurs while getting the template.
+   * @throws FirebaseRemoteConfigException If an error occurs while getting the
+   *                                       template.
    */
   public Template getTemplate() throws FirebaseRemoteConfigException {
     return getTemplateOp().call();
@@ -85,7 +93,7 @@ public final class FirebaseRemoteConfig {
    * Similar to {@link #getTemplate()} but performs the operation asynchronously.
    *
    * @return An {@code ApiFuture} that completes with a {@link Template} when
-   *      the template is available.
+   *         the template is available.
    */
   public ApiFuture<Template> getTemplateAsync() {
     return getTemplateOp().callAsync(app);
@@ -102,14 +110,81 @@ public final class FirebaseRemoteConfig {
   }
 
   /**
+   * Alternative to {@link #getServerTemplate} where developers can initialize
+   * with a pre-cached template or config.
+   */
+  public ServerTemplateImpl.Builder serverTemplateBuilder() {
+    return new ServerTemplateImpl.Builder();
+  }
+
+  /**
+   * Initializes a template instance and loads the latest template data.
+   *
+   * @param defaultConfig Default parameter values to use if a getter
+   *                      references a parameter not found in the template.
+   * @return A {@link Template} instance with the latest template data.
+   */
+  public ServerTemplate getServerTemplate(KeysAndValues defaultConfig) throws FirebaseRemoteConfigException {
+    return getServerTemplateOp(defaultConfig).call();
+  }
+
+  /**
+   * Initializes a template instance without any defaults and loads the latest
+   * template data.
+   *
+   * @return A {@link Template} instance with the latest template data.
+   */
+  public ServerTemplate getServerTemplate() throws FirebaseRemoteConfigException {
+    return getServerTemplate(null);
+  }
+
+  /**
+   * Initializes a template instance and asynchronously loads the latest template
+   * data.
+   *
+   * @param defaultConfig Default parameter values to use if a getter
+   *                      references a parameter not found in the template.
+   * @return A {@link Template} instance with the latest template data.
+   */
+  public ApiFuture<ServerTemplate> getServerTemplateAsync(KeysAndValues defaultConfig)
+      throws FirebaseRemoteConfigException {
+    return getServerTemplateOp(defaultConfig).callAsync(app);
+  }
+
+  /**
+   * Initializes a template instance without any defaults and asynchronously loads
+   * the latest template data.
+   *
+   * @return A {@link Template} instance with the latest template data.
+   */
+  public ApiFuture<ServerTemplate> getServerTemplateAsync() throws FirebaseRemoteConfigException {
+    return getServerTemplateAsync(null);
+  }
+
+  private CallableOperation<ServerTemplate, FirebaseRemoteConfigException> getServerTemplateOp(
+      KeysAndValues defaultConfig) {
+    return new CallableOperation<ServerTemplate, FirebaseRemoteConfigException>() {
+      @Override
+      protected ServerTemplate execute() throws FirebaseRemoteConfigException {
+        ServerTemplate template = new ServerTemplateImpl.Builder()
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(ServerTemplateData.toJson(remoteConfigClient.getServerTemplate())) // Replace with your                                                                                               // actual JSON
+            .build();
+        return template;
+      }
+    };
+  }
+
+  /**
    * Gets the requested version of the of the Remote Config template.
    *
    * @param versionNumber The version number of the Remote Config template to get.
    * @return A {@link Template}.
-   * @throws FirebaseRemoteConfigException If an error occurs while getting the template.
+   * @throws FirebaseRemoteConfigException If an error occurs while getting the
+   *                                       template.
    */
   public Template getTemplateAtVersion(
-          @NonNull String versionNumber) throws FirebaseRemoteConfigException {
+      @NonNull String versionNumber) throws FirebaseRemoteConfigException {
     return getTemplateAtVersionOp(versionNumber).call();
   }
 
@@ -118,7 +193,8 @@ public final class FirebaseRemoteConfig {
    *
    * @param versionNumber The version number of the Remote Config template to get.
    * @return A {@link Template}.
-   * @throws FirebaseRemoteConfigException If an error occurs while getting the template.
+   * @throws FirebaseRemoteConfigException If an error occurs while getting the
+   *                                       template.
    */
   public Template getTemplateAtVersion(long versionNumber) throws FirebaseRemoteConfigException {
     String versionNumberString = String.valueOf(versionNumber);
@@ -126,24 +202,26 @@ public final class FirebaseRemoteConfig {
   }
 
   /**
-   * Similar to {@link #getTemplateAtVersion(String versionNumber)} but performs the operation
+   * Similar to {@link #getTemplateAtVersion(String versionNumber)} but performs
+   * the operation
    * asynchronously.
    *
    * @param versionNumber The version number of the Remote Config template to get.
    * @return An {@code ApiFuture} that completes with a {@link Template} when
-   *     the requested template is available.
+   *         the requested template is available.
    */
   public ApiFuture<Template> getTemplateAtVersionAsync(@NonNull String versionNumber) {
     return getTemplateAtVersionOp(versionNumber).callAsync(app);
   }
 
   /**
-   * Similar to {@link #getTemplateAtVersion(long versionNumber)} but performs the operation
+   * Similar to {@link #getTemplateAtVersion(long versionNumber)} but performs the
+   * operation
    * asynchronously.
    *
    * @param versionNumber The version number of the Remote Config template to get.
    * @return An {@code ApiFuture} that completes with a {@link Template} when
-   *     the requested template is available.
+   *         the requested template is available.
    */
   public ApiFuture<Template> getTemplateAtVersionAsync(long versionNumber) {
     String versionNumberString = String.valueOf(versionNumber);
@@ -151,7 +229,7 @@ public final class FirebaseRemoteConfig {
   }
 
   private CallableOperation<Template, FirebaseRemoteConfigException> getTemplateAtVersionOp(
-          final String versionNumber) {
+      final String versionNumber) {
     final FirebaseRemoteConfigClient remoteConfigClient = getRemoteConfigClient();
     return new CallableOperation<Template, FirebaseRemoteConfigException>() {
       @Override
@@ -166,19 +244,21 @@ public final class FirebaseRemoteConfig {
    *
    * @param template The Remote Config template to be published.
    * @return The published {@link Template}.
-   * @throws FirebaseRemoteConfigException If an error occurs while publishing the template.
+   * @throws FirebaseRemoteConfigException If an error occurs while publishing the
+   *                                       template.
    */
   public Template publishTemplate(@NonNull Template template) throws FirebaseRemoteConfigException {
     return publishTemplateOp(template).call();
   }
 
   /**
-   * Similar to {@link #publishTemplate(Template template)} but performs the operation
+   * Similar to {@link #publishTemplate(Template template)} but performs the
+   * operation
    * asynchronously.
    *
    * @param template The Remote Config template to be published.
    * @return An {@code ApiFuture} that completes with a {@link Template} when
-   *     the provided template is published.
+   *         the provided template is published.
    */
   public ApiFuture<Template> publishTemplateAsync(@NonNull Template template) {
     return publishTemplateOp(template).callAsync(app);
@@ -189,20 +269,22 @@ public final class FirebaseRemoteConfig {
    *
    * @param template The Remote Config template to be validated.
    * @return The validated {@link Template}.
-   * @throws FirebaseRemoteConfigException If an error occurs while validating the template.
+   * @throws FirebaseRemoteConfigException If an error occurs while validating the
+   *                                       template.
    */
   public Template validateTemplate(
-          @NonNull Template template) throws FirebaseRemoteConfigException {
+      @NonNull Template template) throws FirebaseRemoteConfigException {
     return publishTemplateOp(template, new PublishOptions().setValidateOnly(true)).call();
   }
 
   /**
-   * Similar to {@link #validateTemplate(Template template)} but performs the operation
+   * Similar to {@link #validateTemplate(Template template)} but performs the
+   * operation
    * asynchronously.
    *
    * @param template The Remote Config template to be validated.
    * @return An {@code ApiFuture} that completes with a {@link Template} when
-   *     the provided template is validated.
+   *         the provided template is validated.
    */
   public ApiFuture<Template> validateTemplateAsync(@NonNull Template template) {
     return publishTemplateOp(template, new PublishOptions().setValidateOnly(true)).callAsync(app);
@@ -211,64 +293,80 @@ public final class FirebaseRemoteConfig {
   /**
    * Force publishes a Remote Config template.
    *
-   * <p>This method forces the Remote Config template to be updated without evaluating the ETag
-   * values. This approach is not recommended because it risks causing the loss of updates to your
-   * Remote Config template if multiple clients are updating the Remote Config template.
-   * See <a href="https://firebase.google.com/docs/remote-config/use-config-rest#etag_usage_and_forced_updates">
+   * <p>
+   * This method forces the Remote Config template to be updated without
+   * evaluating the ETag
+   * values. This approach is not recommended because it risks causing the loss of
+   * updates to your
+   * Remote Config template if multiple clients are updating the Remote Config
+   * template.
+   * See <a href=
+   * "https://firebase.google.com/docs/remote-config/use-config-rest#etag_usage_and_forced_updates">
    * ETag usage and forced updates</a>.
    *
    * @param template The Remote Config template to be forcefully published.
    * @return The published {@link Template}.
-   * @throws FirebaseRemoteConfigException If an error occurs while publishing the template.
+   * @throws FirebaseRemoteConfigException If an error occurs while publishing the
+   *                                       template.
    */
   public Template forcePublishTemplate(
-          @NonNull Template template) throws FirebaseRemoteConfigException {
+      @NonNull Template template) throws FirebaseRemoteConfigException {
     return publishTemplateOp(template, new PublishOptions().setForcePublish(true)).call();
   }
 
   /**
-   * Similar to {@link #forcePublishTemplate(Template template)} but performs the operation
+   * Similar to {@link #forcePublishTemplate(Template template)} but performs the
+   * operation
    * asynchronously.
    *
    * @param template The Remote Config template to be forcefully published.
    * @return An {@code ApiFuture} that completes with a {@link Template} when
-   *     the provided template is published.
+   *         the provided template is published.
    */
   public ApiFuture<Template> forcePublishTemplateAsync(@NonNull Template template) {
     return publishTemplateOp(template, new PublishOptions().setForcePublish(true)).callAsync(app);
   }
 
   private CallableOperation<Template, FirebaseRemoteConfigException> publishTemplateOp(
-          final Template template) {
+      final Template template) {
     return publishTemplateOp(template, new PublishOptions());
   }
 
   private CallableOperation<Template, FirebaseRemoteConfigException> publishTemplateOp(
-          final Template template, final PublishOptions options) {
+      final Template template, final PublishOptions options) {
     final FirebaseRemoteConfigClient remoteConfigClient = getRemoteConfigClient();
     return new CallableOperation<Template, FirebaseRemoteConfigException>() {
       @Override
       protected Template execute() throws FirebaseRemoteConfigException {
         return remoteConfigClient
-                .publishTemplate(template, options.isValidateOnly(), options.isForcePublish());
+            .publishTemplate(template, options.isValidateOnly(), options.isForcePublish());
       }
     };
   }
 
   /**
-   * Rolls back a project's published Remote Config template to the specified version.
+   * Rolls back a project's published Remote Config template to the specified
+   * version.
    *
-   * <p>A rollback is equivalent to getting a previously published Remote Config
+   * <p>
+   * A rollback is equivalent to getting a previously published Remote Config
    * template and re-publishing it using a force update.
    *
-   * @param versionNumber The version number of the Remote Config template to roll back to.
-   *                      The specified version number must be lower than the current version
-   *                      number, and not have been deleted due to staleness. Only the last 300
-   *                      versions are stored. All versions that correspond to non-active Remote
-   *                      Config templates (that is, all except the template that is being fetched
-   *                      by clients) are also deleted if they are more than 90 days old.
+   * @param versionNumber The version number of the Remote Config template to roll
+   *                      back to.
+   *                      The specified version number must be lower than the
+   *                      current version
+   *                      number, and not have been deleted due to staleness. Only
+   *                      the last 300
+   *                      versions are stored. All versions that correspond to
+   *                      non-active Remote
+   *                      Config templates (that is, all except the template that
+   *                      is being fetched
+   *                      by clients) are also deleted if they are more than 90
+   *                      days old.
    * @return The rolled back {@link Template}.
-   * @throws FirebaseRemoteConfigException If an error occurs while rolling back the template.
+   * @throws FirebaseRemoteConfigException If an error occurs while rolling back
+   *                                       the template.
    */
   public Template rollback(long versionNumber) throws FirebaseRemoteConfigException {
     String versionNumberString = String.valueOf(versionNumber);
@@ -276,19 +374,28 @@ public final class FirebaseRemoteConfig {
   }
 
   /**
-   * Rolls back a project's published Remote Config template to the specified version.
+   * Rolls back a project's published Remote Config template to the specified
+   * version.
    *
-   * <p>A rollback is equivalent to getting a previously published Remote Config
+   * <p>
+   * A rollback is equivalent to getting a previously published Remote Config
    * template and re-publishing it using a force update.
    *
-   * @param versionNumber The version number of the Remote Config template to roll back to.
-   *                      The specified version number must be lower than the current version
-   *                      number, and not have been deleted due to staleness. Only the last 300
-   *                      versions are stored. All versions that correspond to non-active Remote
-   *                      Config templates (that is, all except the template that is being fetched
-   *                      by clients) are also deleted if they are more than 90 days old.
+   * @param versionNumber The version number of the Remote Config template to roll
+   *                      back to.
+   *                      The specified version number must be lower than the
+   *                      current version
+   *                      number, and not have been deleted due to staleness. Only
+   *                      the last 300
+   *                      versions are stored. All versions that correspond to
+   *                      non-active Remote
+   *                      Config templates (that is, all except the template that
+   *                      is being fetched
+   *                      by clients) are also deleted if they are more than 90
+   *                      days old.
    * @return The rolled back {@link Template}.
-   * @throws FirebaseRemoteConfigException If an error occurs while rolling back the template.
+   * @throws FirebaseRemoteConfigException If an error occurs while rolling back
+   *                                       the template.
    */
   public Template rollback(@NonNull String versionNumber) throws FirebaseRemoteConfigException {
     return rollbackOp(versionNumber).call();
@@ -298,9 +405,10 @@ public final class FirebaseRemoteConfig {
    * Similar to {@link #rollback(long versionNumber)} but performs the operation
    * asynchronously.
    *
-   * @param versionNumber The version number of the Remote Config template to roll back to.
+   * @param versionNumber The version number of the Remote Config template to roll
+   *                      back to.
    * @return An {@code ApiFuture} that completes with a {@link Template} once
-   *     the rollback operation is successful.
+   *         the rollback operation is successful.
    */
   public ApiFuture<Template> rollbackAsync(long versionNumber) {
     String versionNumberString = String.valueOf(versionNumber);
@@ -311,9 +419,10 @@ public final class FirebaseRemoteConfig {
    * Similar to {@link #rollback(String versionNumber)} but performs the operation
    * asynchronously.
    *
-   * @param versionNumber The version number of the Remote Config template to roll back to.
+   * @param versionNumber The version number of the Remote Config template to roll
+   *                      back to.
    * @return An {@code ApiFuture} that completes with a {@link Template} once
-   *     the rollback operation is successful.
+   *         the rollback operation is successful.
    */
   public ApiFuture<Template> rollbackAsync(@NonNull String versionNumber) {
     String versionNumberString = String.valueOf(versionNumber);
@@ -321,7 +430,7 @@ public final class FirebaseRemoteConfig {
   }
 
   private CallableOperation<Template, FirebaseRemoteConfigException> rollbackOp(
-          final String versionNumber) {
+      final String versionNumber) {
     final FirebaseRemoteConfigClient remoteConfigClient = getRemoteConfigClient();
     return new CallableOperation<Template, FirebaseRemoteConfigException>() {
       @Override
@@ -332,26 +441,30 @@ public final class FirebaseRemoteConfig {
   }
 
   /**
-   * Gets a list of Remote Config template versions that have been published, sorted in reverse
+   * Gets a list of Remote Config template versions that have been published,
+   * sorted in reverse
    * chronological order. Only the last 300 versions are stored.
    *
    * @return A {@link ListVersionsPage} instance.
-   * @throws FirebaseRemoteConfigException If an error occurs while retrieving versions list.
+   * @throws FirebaseRemoteConfigException If an error occurs while retrieving
+   *                                       versions list.
    */
   public ListVersionsPage listVersions() throws FirebaseRemoteConfigException {
     return listVersionsOp().call();
   }
 
   /**
-   * Gets a list of Remote Config template versions that have been published, sorted in reverse
+   * Gets a list of Remote Config template versions that have been published,
+   * sorted in reverse
    * chronological order. Only the last 300 versions are stored.
    *
    * @param options List version options.
    * @return A {@link ListVersionsPage} instance.
-   * @throws FirebaseRemoteConfigException If an error occurs while retrieving versions list.
+   * @throws FirebaseRemoteConfigException If an error occurs while retrieving
+   *                                       versions list.
    */
   public ListVersionsPage listVersions(
-          @NonNull ListVersionsOptions options) throws FirebaseRemoteConfigException {
+      @NonNull ListVersionsOptions options) throws FirebaseRemoteConfigException {
     return listVersionsOp(options).call();
   }
 
@@ -366,7 +479,8 @@ public final class FirebaseRemoteConfig {
   }
 
   /**
-   * Similar to {@link #listVersions(ListVersionsOptions options)} but performs the operation
+   * Similar to {@link #listVersions(ListVersionsOptions options)} but performs
+   * the operation
    * asynchronously.
    *
    * @param options List version options.
@@ -381,10 +495,9 @@ public final class FirebaseRemoteConfig {
   }
 
   private CallableOperation<ListVersionsPage, FirebaseRemoteConfigException> listVersionsOp(
-          final ListVersionsOptions options) {
+      final ListVersionsOptions options) {
     final FirebaseRemoteConfigClient remoteConfigClient = getRemoteConfigClient();
-    final ListVersionsPage.DefaultVersionSource source =
-            new ListVersionsPage.DefaultVersionSource(remoteConfigClient);
+    final ListVersionsPage.DefaultVersionSource source = new ListVersionsPage.DefaultVersionSource(remoteConfigClient);
     final ListVersionsPage.Factory factory = new ListVersionsPage.Factory(source, options);
     return new CallableOperation<ListVersionsPage, FirebaseRemoteConfigException>() {
       @Override
@@ -408,7 +521,8 @@ public final class FirebaseRemoteConfig {
     @Override
     public void destroy() {
       // NOTE: We don't explicitly tear down anything here, but public methods of
-      // FirebaseRemoteConfig will now fail because calls to getOptions() and getToken()
+      // FirebaseRemoteConfig will now fail because calls to getOptions() and
+      // getToken()
       // will hit FirebaseApp, which will throw once the app is deleted.
     }
   }
