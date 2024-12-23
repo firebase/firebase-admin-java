@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.remoteconfig.internal.KeysAndValues;
 
 import java.util.HashMap;
 import java.util.Map;

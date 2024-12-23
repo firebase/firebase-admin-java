@@ -25,6 +25,7 @@ import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseService;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.remoteconfig.internal.KeysAndValues;
 
 /**
  * This class is the entry point for all server-side Firebase Remote Config
@@ -166,9 +167,12 @@ public final class FirebaseRemoteConfig {
     return new CallableOperation<ServerTemplate, FirebaseRemoteConfigException>() {
       @Override
       protected ServerTemplate execute() throws FirebaseRemoteConfigException {
+        ServerTemplateData serverTemplateData = remoteConfigClient.getServerTemplate(); 
+        // Convert ServerTemplateData to JSON string using the toJson method of ServerTemplate
+        // String templateJson = new ServerTemplateImpl.Builder().toJson(serverTemplateData); 
         ServerTemplate template = new ServerTemplateImpl.Builder()
             .defaultConfig(defaultConfig)
-            .cachedTemplate(ServerTemplateData.toJson(remoteConfigClient.getServerTemplate())) // Replace with your                                                                                               // actual JSON
+            .cachedTemplate(serverTemplateData) // Replace with your                                                                                               // actual JSON
             .build();
         return template;
       }

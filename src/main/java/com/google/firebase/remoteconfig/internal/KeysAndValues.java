@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.remoteconfig;
+package com.google.firebase.remoteconfig.internal;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
@@ -29,7 +29,7 @@ public class KeysAndValues {
   final ImmutableMap<String, String> keysAndValues;
 
   private KeysAndValues(@NonNull Builder builder) {
-    keysAndValues = keysAndValues.builder().putAll(builder.keysAndValues).build();
+    keysAndValues = ImmutableMap.<String, String>builder().putAll(builder.keysAndValues).build(); 
   }
 
   /**
@@ -58,14 +58,7 @@ public class KeysAndValues {
    */
   public static class Builder {
     // Holds the converted pairs of custom keys and values.
-    private Map<String, String> keysAndValues;
-
-    /**
-     * Creates an empty Map to save context.
-     */
-    public Builder() {
-      keysAndValues = new HashMap<>();
-    }
+    private final Map<String, String> keysAndValues = new HashMap<>();
 
     /**
      * Adds a context data with string value.
