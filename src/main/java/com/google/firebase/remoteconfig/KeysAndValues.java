@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.remoteconfig.internal;
+package com.google.firebase.remoteconfig;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
