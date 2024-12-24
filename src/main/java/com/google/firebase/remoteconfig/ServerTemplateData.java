@@ -24,10 +24,8 @@ import com.google.common.base.Strings;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.remoteconfig.internal.TemplateResponse;
-
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse;
-
+import com.google.firebase.remoteconfig.internal.TemplateResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,9 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * Represents a Remote Config template.
- */
+/** Represents a Remote Config template. */
 public final class ServerTemplateData {
 
   private String etag;
@@ -68,20 +64,20 @@ public final class ServerTemplateData {
     this.serverConditions = new ArrayList<>();
     this.parameterGroups = new HashMap<>();
     if (serverTemplateResponse.getParameters() != null) {
-      for (Map.Entry<String, TemplateResponse.ParameterResponse> entry
-              : serverTemplateResponse.getParameters().entrySet()) {
+      for (Map.Entry<String, TemplateResponse.ParameterResponse> entry :
+          serverTemplateResponse.getParameters().entrySet()) {
         this.parameters.put(entry.getKey(), new Parameter(entry.getValue()));
       }
     }
     if (serverTemplateResponse.getServerConditions() != null) {
-      for (ServerTemplateResponse.ServerConditionResponse conditionResponse
-              : serverTemplateResponse.getServerConditions()) {
+      for (ServerTemplateResponse.ServerConditionResponse conditionResponse :
+          serverTemplateResponse.getServerConditions()) {
         this.serverConditions.add(new ServerCondition(conditionResponse));
       }
     }
     if (serverTemplateResponse.getParameterGroups() != null) {
-      for (Map.Entry<String, TemplateResponse.ParameterGroupResponse> entry
-              : serverTemplateResponse.getParameterGroups().entrySet()) {
+      for (Map.Entry<String, TemplateResponse.ParameterGroupResponse> entry :
+          serverTemplateResponse.getParameterGroups().entrySet()) {
         this.parameterGroups.put(entry.getKey(), new ParameterGroup(entry.getValue()));
       }
     }
@@ -92,24 +88,25 @@ public final class ServerTemplateData {
   }
 
   /**
-   * Creates and returns a new Remote Config template from a JSON string.
-   * Input JSON string must contain an {@code etag} property to create a valid template.
+   * Creates and returns a new Remote Config template from a JSON string. Input JSON string must
+   * contain an {@code etag} property to create a valid template.
    *
    * @param json A non-null JSON string to populate a Remote Config template.
    * @return A new {@link ServerTemplateData} instance.
    * @throws FirebaseRemoteConfigException If the input JSON string is not parsable.
    */
-  public static ServerTemplateData fromJSON(@NonNull String json) throws FirebaseRemoteConfigException {
+  public static ServerTemplateData fromJSON(@NonNull String json)
+      throws FirebaseRemoteConfigException {
     checkArgument(!Strings.isNullOrEmpty(json), "JSON String must not be null or empty.");
     // using the default json factory as no rpc calls are made here
     JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
     try {
-      ServerTemplateResponse serverTemplateResponse = jsonFactory.createJsonParser(json)
-              .parseAndClose(ServerTemplateResponse.class);
+      ServerTemplateResponse serverTemplateResponse =
+          jsonFactory.createJsonParser(json).parseAndClose(ServerTemplateResponse.class);
       return new ServerTemplateData(serverTemplateResponse);
     } catch (IOException e) {
-      throw new FirebaseRemoteConfigException(ErrorCode.INVALID_ARGUMENT,
-              "Unable to parse JSON string.");
+      throw new FirebaseRemoteConfigException(
+          ErrorCode.INVALID_ARGUMENT, "Unable to parse JSON string.");
     }
   }
 
@@ -166,11 +163,10 @@ public final class ServerTemplateData {
    * Sets the map of parameters of the template.
    *
    * @param parameters A non-null map of parameter keys to their optional default values and
-   *                   optional conditional values.
+   *     optional conditional values.
    * @return This {@link ServerTemplateData} instance.
    */
-  public ServerTemplateData setParameters(
-          @NonNull Map<String, Parameter> parameters) {
+  public ServerTemplateData setParameters(@NonNull Map<String, Parameter> parameters) {
     checkNotNull(parameters, "parameters must not be null.");
     this.parameters = parameters;
     return this;
@@ -182,8 +178,7 @@ public final class ServerTemplateData {
    * @param conditions A non-null list of conditions in descending order by priority.
    * @return This {@link ServerTemplateData} instance.
    */
-  public ServerTemplateData setServerConditions(
-          @NonNull List<ServerCondition> conditions) {
+  public ServerTemplateData setServerConditions(@NonNull List<ServerCondition> conditions) {
     checkNotNull(conditions, "conditions must not be null.");
     this.serverConditions = conditions;
     return this;
@@ -192,20 +187,20 @@ public final class ServerTemplateData {
   /**
    * Sets the map of parameter groups of the template.
    *
-   * @param parameterGroups A non-null map of parameter group names to their
-   *                        parameter group instances.
+   * @param parameterGroups A non-null map of parameter group names to their parameter group
+   *     instances.
    * @return This {@link ServerTemplateData} instance.
    */
   public ServerTemplateData setParameterGroups(
-          @NonNull Map<String, ParameterGroup> parameterGroups) {
+      @NonNull Map<String, ParameterGroup> parameterGroups) {
     checkNotNull(parameterGroups, "parameter groups must not be null.");
     this.parameterGroups = parameterGroups;
     return this;
   }
 
   /**
-   * Sets the version information of the template.
-   * Only the version's description field can be specified here.
+   * Sets the version information of the template. Only the version's description field can be
+   * specified here.
    *
    * @param version A {@link Version} instance.
    * @return This {@link ServerTemplateData} instance.
@@ -239,7 +234,8 @@ public final class ServerTemplateData {
     for (Map.Entry<String, Parameter> entry : this.parameters.entrySet()) {
       parameterResponses.put(entry.getKey(), entry.getValue().toParameterResponse());
     }
-    List<ServerTemplateResponse.ServerConditionResponse> serverConditionResponses = new ArrayList<>();
+    List<ServerTemplateResponse.ServerConditionResponse> serverConditionResponses =
+        new ArrayList<>();
     for (ServerCondition condition : this.serverConditions) {
       serverConditionResponses.add(condition.toServerConditionResponse());
     }
@@ -247,9 +243,10 @@ public final class ServerTemplateData {
     for (Map.Entry<String, ParameterGroup> entry : this.parameterGroups.entrySet()) {
       parameterGroupResponse.put(entry.getKey(), entry.getValue().toParameterGroupResponse());
     }
-    TemplateResponse.VersionResponse versionResponse = (this.version == null) ? null
-            : this.version.toVersionResponse(includeAll);
-    ServerTemplateResponse serverTemplateResponse = new ServerTemplateResponse()
+    TemplateResponse.VersionResponse versionResponse =
+        (this.version == null) ? null : this.version.toVersionResponse(includeAll);
+    ServerTemplateResponse serverTemplateResponse =
+        new ServerTemplateResponse()
             .setParameters(parameterResponses)
             .setServerConditions(serverConditionResponses)
             .setParameterGroups(parameterGroupResponse)
@@ -270,15 +267,14 @@ public final class ServerTemplateData {
     }
     ServerTemplateData template = (ServerTemplateData) o;
     return Objects.equals(etag, template.etag)
-            && Objects.equals(parameters, template.parameters)
-            && Objects.equals(serverConditions, template.serverConditions)
-            && Objects.equals(parameterGroups, template.parameterGroups)
-            && Objects.equals(version, template.version);
+        && Objects.equals(parameters, template.parameters)
+        && Objects.equals(serverConditions, template.serverConditions)
+        && Objects.equals(parameterGroups, template.parameterGroups)
+        && Objects.equals(version, template.version);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(etag, parameters, serverConditions, parameterGroups, version);
   }
-
 }
