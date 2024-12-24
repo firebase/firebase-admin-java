@@ -22,13 +22,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.google.common.base.Strings;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.ServerConditionResponse;
-
 import java.util.Objects;
 
 /**
- * Represents a Remote Config condition that can be included in a {@link Template}.
- * A condition targets a specific group of users. A list of these conditions make up
- * part of a Remote Config template.
+ * Represents a Remote Config condition that can be included in a {@link Template}. A condition
+ * targets a specific group of users. A list of these conditions make up part of a Remote Config
+ * template.
  */
 public final class ServerCondition {
 
@@ -39,10 +38,7 @@ public final class ServerCondition {
    * Creates a new {@link Condition}.
    *
    * @param name A non-null, non-empty, and unique name of this condition.
-   * @param expression A non-null and non-empty expression of this condition.
-   * @param tagColor A color associated with this condition for display purposes in the
-   *                 Firebase Console. Not specifying this value results in the console picking an
-   *                 arbitrary color to associate with the condition.
+   * @param condition A non-null and non-empty condition.
    */
   public ServerCondition(@NonNull String name, @NonNull OneOfCondition condition) {
     checkArgument(!Strings.isNullOrEmpty(name), "condition name must not be null or empty");
@@ -91,8 +87,8 @@ public final class ServerCondition {
   /**
    * Sets the expression of the condition.
    *
-   * <p>See <a href="https://firebase.google.com/docs/remote-config/condition-reference">
-   * condition expressions</a> for the expected syntax of this field.
+   * <p>See <a href="https://firebase.google.com/docs/remote-config/condition-reference">condition
+   * expressions</a> for the expected syntax of this field.
    *
    * @param condition The logic of this condition.
    * @return This {@link Condition}.
@@ -103,9 +99,7 @@ public final class ServerCondition {
   }
 
   ServerConditionResponse toServerConditionResponse() {
-    return new ServerConditionResponse()
-            .setName(this.name)
-            .setCondtion(this.serverCondition);
+    return new ServerConditionResponse().setName(this.name).setCondtion(this.serverCondition);
   }
 
   @Override
@@ -118,7 +112,7 @@ public final class ServerCondition {
     }
     ServerCondition condition = (ServerCondition) o;
     return Objects.equals(name, condition.name)
-            && Objects.equals(serverCondition, condition.serverCondition);
+        && Objects.equals(serverCondition, condition.serverCondition);
   }
 
   @Override
