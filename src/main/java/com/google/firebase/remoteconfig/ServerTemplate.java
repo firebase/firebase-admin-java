@@ -1,7 +1,6 @@
 package com.google.firebase.remoteconfig;
 
 import com.google.api.core.ApiFuture;
-import com.google.firebase.remoteconfig.internal.KeysAndValues;
 
 public interface ServerTemplate {
   public interface Builder {

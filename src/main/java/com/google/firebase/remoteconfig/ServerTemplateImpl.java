@@ -2,7 +2,6 @@ package com.google.firebase.remoteconfig;
 
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.firebase.remoteconfig.internal.KeysAndValues;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 

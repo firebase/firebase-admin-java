@@ -19,7 +19,6 @@ package com.google.firebase.remoteconfig;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.remoteconfig.internal.KeysAndValues;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
