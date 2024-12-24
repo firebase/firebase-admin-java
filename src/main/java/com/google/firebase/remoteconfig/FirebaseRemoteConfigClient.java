@@ -41,6 +41,6 @@ interface FirebaseRemoteConfigClient {
   ListVersionsResponse listVersions(
           ListVersionsOptions options) throws FirebaseRemoteConfigException;
   
-  ServerTemplateData getServerTemplate() throws FirebaseRemoteConfigException;
+  String getServerTemplate() throws FirebaseRemoteConfigException;
   
 }

@@ -7,7 +7,9 @@ public interface ServerTemplate {
 
     Builder defaultConfig(KeysAndValues config);
 
-    Builder cachedTemplate(ServerTemplateData templateJson);
+    Builder cachedTemplate(String templateJson);
+
+    Builder addClient(FirebaseRemoteConfigClient client);
     
     ServerTemplate build();
   }
@@ -26,7 +28,7 @@ public interface ServerTemplate {
   */
   ApiFuture<Void> load() throws FirebaseRemoteConfigException;
 
-  String toJson(ServerTemplateData serverTemplateData);
+  String toJson();
 }
 
 
