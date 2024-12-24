@@ -157,19 +157,27 @@ public final class FirebaseRemoteConfig {
     return new CallableOperation<ServerTemplate, FirebaseRemoteConfigException>() {
       @Override
       protected ServerTemplate execute() throws FirebaseRemoteConfigException {
-        ServerTemplateData serverTemplateData = remoteConfigClient.getServerTemplate();
+        String serverTemplateData = remoteConfigClient.getServerTemplate();
+        System.out.println("defaultConfig" + defaultConfig);
+        System.out.println("server Data" + serverTemplateData);
         // Convert ServerTemplateData to JSON string using the toJson method of ServerTemplate
         // String templateJson = new ServerTemplateImpl.Builder().toJson(serverTemplateData);
         ServerTemplate template =
             new ServerTemplateImpl.Builder()
                 .defaultConfig(defaultConfig)
-                .cachedTemplate(serverTemplateData) // Replace with your
+                .cachedTemplate(serverTemplateData)
+                .addClient(remoteConfigClient) // Replace with your
                 //                                                       //
                 // actual JSON
                 .build();
+        
         return template;
       }
     };
+  }
+
+  public String getSample() {
+    return "abc55";
   }
 
   /**

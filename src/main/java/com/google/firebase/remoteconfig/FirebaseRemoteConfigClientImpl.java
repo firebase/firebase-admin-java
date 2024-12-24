@@ -50,6 +50,9 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
   private static final String REMOTE_CONFIG_URL =
       "https://firebaseremoteconfig.googleapis.com/v1/projects/%s/remoteConfig";
 
+  private static final String SERVER_REMOTE_CONFIG_URL =
+      "https://firebaseremoteconfig.googleapis.com/v1/projects/%s/namespaces/firebase-server/serverRemoteConfig";
+
   private static final Map<String, String> COMMON_HEADERS =
       ImmutableMap.of(
           "X-Firebase-Client",
@@ -63,6 +66,7 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
           "gzip");
 
   private final String remoteConfigUrl;
+  private final String serverRemoteConfigUrl;
   private final HttpRequestFactory requestFactory;
   private final JsonFactory jsonFactory;
   private final ErrorHandlingHttpClient<FirebaseRemoteConfigException> httpClient;
@@ -70,6 +74,9 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
   private FirebaseRemoteConfigClientImpl(Builder builder) {
     checkArgument(!Strings.isNullOrEmpty(builder.projectId));
     this.remoteConfigUrl = String.format(REMOTE_CONFIG_URL, builder.projectId);
+    System.out.println("projectId" + builder.projectId);
+    this.serverRemoteConfigUrl = String.format(SERVER_REMOTE_CONFIG_URL, builder.projectId);
+    System.out.println("URL" + serverRemoteConfigUrl);
     this.requestFactory = checkNotNull(builder.requestFactory);
     this.jsonFactory = checkNotNull(builder.jsonFactory);
     HttpResponseInterceptor responseInterceptor = builder.responseInterceptor;
@@ -82,6 +89,11 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
   @VisibleForTesting
   String getRemoteConfigUrl() {
     return remoteConfigUrl;
+  }
+
+  @VisibleForTesting
+  String getServerRemoteConfigUrl() {
+    return serverRemoteConfigUrl;
   }
 
   @VisibleForTesting
@@ -105,14 +117,25 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
   }
 
   @Override
-  public ServerTemplateData getServerTemplate() throws FirebaseRemoteConfigException {
+  public String getServerTemplate() throws FirebaseRemoteConfigException {
     HttpRequestInfo request =
-        HttpRequestInfo.buildGetRequest(remoteConfigUrl).addAllHeaders(COMMON_HEADERS);
+        HttpRequestInfo.buildGetRequest(serverRemoteConfigUrl).addAllHeaders(COMMON_HEADERS);
+
     IncomingHttpResponse response = httpClient.send(request);
-    ServerTemplateResponse serverTemplateResponse =
-        httpClient.parse(response, ServerTemplateResponse.class);
-    ServerTemplateData serverTemplateData = new ServerTemplateData(serverTemplateResponse);
-    return serverTemplateData.setETag(getETag(response));
+
+    // Check the response code
+    if (response.getStatusCode() == 200) {
+      //System.out.println("Raw response: " + response.getContent());
+      String serverTemplateResponseJson = response.getContent();
+      System.out.println("Server template JSON received." + serverTemplateResponseJson);
+      System.out.println(serverTemplateResponseJson);
+      return serverTemplateResponseJson;
+    } else {
+      System.err.println(
+          "Error fetching server template. Status code: " + response.getStatusCode());
+      // Handle the error appropriately (e.g., return a default template, retry, etc.)
+      return null; // Or a default template
+    }
   }
 
   @Override

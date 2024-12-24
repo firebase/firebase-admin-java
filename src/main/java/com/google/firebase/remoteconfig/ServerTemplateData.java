@@ -101,8 +101,12 @@ public final class ServerTemplateData {
     // using the default json factory as no rpc calls are made here
     JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
     try {
+      System.out.println("Inide json");
+      System.out.println(json);
       ServerTemplateResponse serverTemplateResponse =
           jsonFactory.createJsonParser(json).parseAndClose(ServerTemplateResponse.class);
+      System.out.println("inside server template respnxce");
+      System.out.println(serverTemplateResponse);
       return new ServerTemplateData(serverTemplateResponse);
     } catch (IOException e) {
       throw new FirebaseRemoteConfigException(
