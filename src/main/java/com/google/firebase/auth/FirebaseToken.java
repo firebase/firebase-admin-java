@@ -37,12 +37,12 @@ public final class FirebaseToken {
     this.claims = ImmutableMap.copyOf(claims);
   }
 
-  /** Returns the Uid for the this token. */
+  /** Returns the Uid for this token. */
   public String getUid() {
     return (String) claims.get("sub");
   }
 
-  /** Returns the tenant ID for the this token. */
+  /** Returns the tenant ID for this token. */
   public String getTenantId() {
     Map<String, Object> firebase = (Map<String, Object>) claims.get("firebase");
     if (firebase == null) {
@@ -51,7 +51,7 @@ public final class FirebaseToken {
     return (String) firebase.get("tenant");
   }
 
-  /** Returns the Issuer for the this token. */
+  /** Returns the Issuer for this token. */
   public String getIssuer() {
     return (String) claims.get("iss");
   }
