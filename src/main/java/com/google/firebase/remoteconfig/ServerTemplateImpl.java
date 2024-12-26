@@ -5,7 +5,7 @@ import com.google.api.core.ApiFutures;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-public class ServerTemplateImpl implements ServerTemplate {
+public final class ServerTemplateImpl implements ServerTemplate {
 
   private KeysAndValues defaultConfig;
   private FirebaseRemoteConfigClient client;
