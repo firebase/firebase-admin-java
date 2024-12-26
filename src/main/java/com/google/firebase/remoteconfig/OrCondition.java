@@ -19,18 +19,21 @@ package com.google.firebase.remoteconfig;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents a collection of conditions that evaluate to true if one of them is
  * true.
  */
-public class OrCondition {
+public final class OrCondition {
   private final ImmutableList<OneOfCondition> conditions;
 
   /**
    * Creates OrCondition joining subconditions.
    */
-  public OrCondition(@NonNull ImmutableList<OneOfCondition> conditions) {
-    this.conditions = conditions;
+  public OrCondition(@NonNull List<OneOfCondition> conditions) {
+    this.conditions = ImmutableList.copyOf(conditions);
   }
 
   /**
@@ -39,7 +42,7 @@ public class OrCondition {
    * @return List of conditions to evaluate.
    */
   @NonNull
-  public ImmutableList<OneOfCondition> getConditions() {
-    return conditions;
+  public List<OneOfCondition> getConditions() {
+    return new ArrayList<>(conditions);
   }
 }

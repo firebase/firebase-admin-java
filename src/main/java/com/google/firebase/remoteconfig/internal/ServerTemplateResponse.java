@@ -12,7 +12,7 @@ import java.util.Map;
  * The Data Transfer Object for parsing Remote Config template responses from the Remote Config
  * service.
  */
-public class ServerTemplateResponse {
+public final class ServerTemplateResponse {
   @Key("parameters")
   private Map<String, ParameterResponse> parameters;
 

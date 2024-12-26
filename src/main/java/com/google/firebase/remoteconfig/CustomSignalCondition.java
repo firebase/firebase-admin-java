@@ -19,10 +19,13 @@ package com.google.firebase.remoteconfig;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents a condition that compares provided signals against a target value.
  */
-public class CustomSignalCondition {
+public final class CustomSignalCondition {
   private final String customSignalKey;
   private final CustomSignalOperator customSignalOperator;
   private final ImmutableList<String> targetCustomSignalValues;
@@ -38,10 +41,10 @@ public class CustomSignalCondition {
    */
   public CustomSignalCondition(@NonNull String customSignalKey,
       @NonNull CustomSignalOperator customSignalOperator,
-      @NonNull ImmutableList<String> targetCustomSignalValues) {
+      @NonNull List<String> targetCustomSignalValues) {
     this.customSignalKey = customSignalKey;
     this.customSignalOperator = customSignalOperator;
-    this.targetCustomSignalValues = targetCustomSignalValues;
+    this.targetCustomSignalValues = ImmutableList.copyOf(targetCustomSignalValues);
   }
 
   /**
@@ -72,7 +75,7 @@ public class CustomSignalCondition {
    * @return List of target values.
    */
   @NonNull
-  public ImmutableList<String> getTargetCustomSignalValues() {
-    return targetCustomSignalValues;
+  public List<String> getTargetCustomSignalValues() {
+    return new ArrayList<>(targetCustomSignalValues);
   }
 }

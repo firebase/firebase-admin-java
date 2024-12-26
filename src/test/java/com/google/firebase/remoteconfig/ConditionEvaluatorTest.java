@@ -40,7 +40,7 @@ public class ConditionEvaluatorTest {
     conditions.put("is_enabled", emptyOneOfConditionOr);
     KeysAndValues context = new KeysAndValues.Builder().build();
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         context);
 
     assertFalse(result.get("is_enabled"));
@@ -54,7 +54,7 @@ public class ConditionEvaluatorTest {
     conditions.put("is_enabled", oneOfConditionOr);
     KeysAndValues context = new KeysAndValues.Builder().build();
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         context);
 
     assertTrue(result.get("is_enabled"));
@@ -69,7 +69,7 @@ public class ConditionEvaluatorTest {
     conditions.put("is_enabled", oneOfConditionOr);
     KeysAndValues context = new KeysAndValues.Builder().build();
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         context);
 
     assertTrue(result.get("is_enabled"));
@@ -84,7 +84,7 @@ public class ConditionEvaluatorTest {
     conditions.put("is_enabled", oneOfConditionOr);
     KeysAndValues context = new KeysAndValues.Builder().build();
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         context);
 
     assertFalse(result.get("is_enabled"));
@@ -97,7 +97,7 @@ public class ConditionEvaluatorTest {
     conditions.put("is_enabled", oneOfConditionTrue);
     KeysAndValues context = new KeysAndValues.Builder().build();
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         context);
 
     assertTrue(result.get("is_enabled"));
@@ -112,7 +112,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "abc");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("is_enabled"));
@@ -129,7 +129,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("is_enabled"));
@@ -146,7 +146,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("is_enabled"));
@@ -163,7 +163,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("is_enabled"));
@@ -179,7 +179,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("is_enabled"));
@@ -195,7 +195,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("is_enabled"));
@@ -211,7 +211,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("is_enabled"));
@@ -228,7 +228,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("is_enabled"));
@@ -245,7 +245,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("is_enabled"));
@@ -261,7 +261,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("is_enabled"));
@@ -278,7 +278,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("is_enabled"));
@@ -335,7 +335,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-50.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -348,7 +348,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-50.01");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -361,7 +361,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-50.01");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -374,7 +374,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-50.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -387,7 +387,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-49.9");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -400,7 +400,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -413,7 +413,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.000001");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -426,7 +426,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -439,7 +439,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.000001");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -452,7 +452,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-50.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -465,7 +465,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-50.01");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -478,7 +478,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-50.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -491,7 +491,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-49.09");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -504,7 +504,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "Two hundred");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -517,7 +517,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "Two hudred");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -530,7 +530,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "Two hudred");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -543,7 +543,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "Two hundred");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -556,7 +556,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "hundred");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -569,7 +569,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "Two hundred");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -582,7 +582,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "hundred");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -595,7 +595,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "Two ahundred");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -608,7 +608,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.2.0.1");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -621,7 +621,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -634,7 +634,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.2.0.1");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -647,7 +647,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -660,7 +660,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.2.1.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -673,7 +673,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.1");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -686,7 +686,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -699,7 +699,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -712,7 +712,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -725,7 +725,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -738,7 +738,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -751,7 +751,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -764,7 +764,7 @@ public class ConditionEvaluatorTest {
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -791,7 +791,7 @@ public class ConditionEvaluatorTest {
       KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
       contextBuilder.put("randomizationId", randomizationId.toString());
 
-      ImmutableMap<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+      Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
           contextBuilder.build());
 
       if (result.get("is_enabled")) {

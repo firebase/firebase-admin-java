@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -39,7 +40,7 @@ import org.slf4j.LoggerFactory;
  * Encapsulates condition evaluation logic to simplify organization and
  * facilitate testing.
  */
-public class ConditionEvaluator {
+public final class ConditionEvaluator {
   private static final int MAX_CONDITION_RECURSION_DEPTH = 10;
   private static final Logger logger = LoggerFactory.getLogger(ConditionEvaluator.class);
 
@@ -60,7 +61,7 @@ public class ConditionEvaluator {
    * @return Evaluated conditions represented as map of condition name to boolean.
    */
   @NonNull
-  public ImmutableMap<String, Boolean> evaluateConditions(
+  public Map<String, Boolean> evaluateConditions(
       @NonNull Map<String, OneOfCondition> conditions,
       @NonNull KeysAndValues context) {
     ImmutableMap<String, OneOfCondition> immutableConditions = ImmutableMap.copyOf(conditions);
@@ -72,7 +73,7 @@ public class ConditionEvaluator {
           context, nestingLevel));
     }
 
-    return evaluatedConditions.build();
+    return new HashMap<>(evaluatedConditions.build());
   }
 
   private boolean evaluateCondition(OneOfCondition condition, KeysAndValues context,
@@ -100,7 +101,7 @@ public class ConditionEvaluator {
 
   private boolean evaluateOrCondition(OrCondition condition, KeysAndValues context,
       int nestingLevel) {
-    ImmutableList<OneOfCondition> subConditions = condition.getConditions();
+    ImmutableList<OneOfCondition> subConditions = ImmutableList.copyOf(condition.getConditions());
     for (OneOfCondition subCondition : subConditions) {
       // Short-circuit the evaluation result for true.
       if (evaluateCondition(subCondition, context, nestingLevel + 1)) {
@@ -113,7 +114,7 @@ public class ConditionEvaluator {
   private boolean evaluateAndCondition(AndCondition condition,
       KeysAndValues context,
       int nestingLevel) {
-    ImmutableList<OneOfCondition> subConditions = condition.getConditions();
+    ImmutableList<OneOfCondition> subConditions = ImmutableList.copyOf(condition.getConditions());
     for (OneOfCondition subCondition : subConditions) {
       // Short-circuit the evaluation result for false.
       if (!evaluateCondition(subCondition, context, nestingLevel + 1)) {
@@ -164,7 +165,8 @@ public class ConditionEvaluator {
       KeysAndValues context) {
     CustomSignalOperator customSignalOperator = condition.getCustomSignalOperator();
     String customSignalKey = condition.getCustomSignalKey();
-    ImmutableList<String> targetCustomSignalValues = condition.getTargetCustomSignalValues();
+    ImmutableList<String> targetCustomSignalValues = ImmutableList.copyOf(
+        condition.getTargetCustomSignalValues());
 
     if (targetCustomSignalValues.isEmpty()) {
       logger.warn(String.format(

@@ -38,7 +38,6 @@ import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.remoteconfig.internal.RemoteConfigServiceErrorResponse;
-import com.google.firebase.remoteconfig.internal.ServerTemplateResponse;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
 import java.io.IOException;
 import java.util.List;

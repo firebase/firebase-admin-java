@@ -23,7 +23,7 @@ import java.util.Map;
 /**
  * Represents the configuration produced by evaluating a server template.
  */
-public class ServerConfig {
+public final class ServerConfig {
   private final Map<String, Value> configValues;
 
   ServerConfig(Map<String, Value> configValues) {

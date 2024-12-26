@@ -23,7 +23,7 @@ import com.google.firebase.internal.Nullable;
  * Represents a condition that compares the instance pseudo-random percentile to
  * a given limit.
  */
-public class PercentCondition {
+public final class PercentCondition {
   private int microPercent;
   private MicroPercentRange microPercentRange;
   private final PercentConditionOperator percentConditionOperator;
