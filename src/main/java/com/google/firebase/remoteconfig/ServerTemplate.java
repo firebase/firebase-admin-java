@@ -17,11 +17,11 @@ public interface ServerTemplate {
   * Proccess the template data with a condition evaluator 
   * based on the provided context. 
   */
-  ServerConfig evaluate(KeysAndValues context);
+  ServerConfig evaluate(KeysAndValues context) throws FirebaseRemoteConfigException;
   /**
   * Proccess the template data without context.
   */
-  ServerConfig evaluate();
+  ServerConfig evaluate() throws FirebaseRemoteConfigException;
 
   /**
   * Fetches and caches the current active version of the project.
