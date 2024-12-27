@@ -62,14 +62,14 @@ public final class ConditionEvaluator {
    */
   @NonNull
   public Map<String, Boolean> evaluateConditions(
-      @NonNull Map<String, OneOfCondition> conditions,
+      @NonNull List<ServerCondition> conditions,
       @NonNull KeysAndValues context) {
-    ImmutableMap<String, OneOfCondition> immutableConditions = ImmutableMap.copyOf(conditions);
+    ImmutableList<ServerCondition> serverConditions = ImmutableList.copyOf(conditions);
     ImmutableMap.Builder<String, Boolean> evaluatedConditions = ImmutableMap.builder();
     int nestingLevel = 0;
 
-    for (ImmutableMap.Entry<String, OneOfCondition> condition : immutableConditions.entrySet()) {
-      evaluatedConditions.put(condition.getKey(), evaluateCondition(condition.getValue(),
+    for (ServerCondition condition : serverConditions) {
+      evaluatedConditions.put(condition.getName(), evaluateCondition(condition.getCondition(),
           context, nestingLevel));
     }
 
