@@ -24,7 +24,6 @@ public final class ServerTemplateImpl implements ServerTemplate {
 
   public static class Builder implements ServerTemplate.Builder {
     private KeysAndValues defaultConfig;
-    private ConditionEvaluator conditionEvaluator;
     private String cachedTemplate;
     private FirebaseRemoteConfigClient client;
 
