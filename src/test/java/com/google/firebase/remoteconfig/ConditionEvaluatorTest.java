@@ -20,10 +20,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.firebase.remoteconfig.internal.KeysAndValues;
 
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.UUID;
 
@@ -36,11 +34,10 @@ public class ConditionEvaluatorTest {
   @Test
   public void testEvaluateConditionsEmptyOrConditionToFalse() {
     OneOfCondition emptyOneOfConditionOr = createOneOfOrCondition(null);
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", emptyOneOfConditionOr);
+    ServerCondition condition = new ServerCondition("is_enabled", emptyOneOfConditionOr);
     KeysAndValues context = new KeysAndValues.Builder().build();
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         context);
 
     assertFalse(result.get("is_enabled"));
@@ -50,11 +47,10 @@ public class ConditionEvaluatorTest {
   public void testEvaluateConditionsEmptyOrAndConditionToTrue() {
     OneOfCondition emptyOneOfConditionAnd = createOneOfAndCondition(null);
     OneOfCondition oneOfConditionOr = createOneOfOrCondition(emptyOneOfConditionAnd);
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", oneOfConditionOr);
+    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionOr);
     KeysAndValues context = new KeysAndValues.Builder().build();
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         context);
 
     assertTrue(result.get("is_enabled"));
@@ -65,11 +61,10 @@ public class ConditionEvaluatorTest {
     OneOfCondition oneOfConditionTrue = createOneOfTrueCondition();
     OneOfCondition oneOfConditionAnd = createOneOfAndCondition(oneOfConditionTrue);
     OneOfCondition oneOfConditionOr = createOneOfOrCondition(oneOfConditionAnd);
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", oneOfConditionOr);
+    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionOr);
     KeysAndValues context = new KeysAndValues.Builder().build();
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         context);
 
     assertTrue(result.get("is_enabled"));
@@ -80,11 +75,10 @@ public class ConditionEvaluatorTest {
     OneOfCondition oneOfConditionFalse = createOneOfFalseCondition();
     OneOfCondition oneOfConditionAnd = createOneOfAndCondition(oneOfConditionFalse);
     OneOfCondition oneOfConditionOr = createOneOfOrCondition(oneOfConditionAnd);
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", oneOfConditionOr);
+    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionOr);
     KeysAndValues context = new KeysAndValues.Builder().build();
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         context);
 
     assertFalse(result.get("is_enabled"));
@@ -93,11 +87,10 @@ public class ConditionEvaluatorTest {
   @Test
   public void testEvaluateConditionsNonOrTopConditionToTrue() {
     OneOfCondition oneOfConditionTrue = createOneOfTrueCondition();
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", oneOfConditionTrue);
+    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionTrue);
     KeysAndValues context = new KeysAndValues.Builder().build();
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         context);
 
     assertTrue(result.get("is_enabled"));
@@ -107,12 +100,11 @@ public class ConditionEvaluatorTest {
   public void testEvaluateConditionsPercentConditionWithInvalidOperatorToFalse() {
     OneOfCondition oneOfConditionPercent = createPercentCondition(0,
         PercentConditionOperator.UNSPECIFIED, "seed");
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", oneOfConditionPercent);
+    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionPercent);
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "abc");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("is_enabled"));
@@ -124,12 +116,11 @@ public class ConditionEvaluatorTest {
         PercentConditionOperator.LESS_OR_EQUAL, "seed");
     OneOfCondition oneOfConditionAnd = createOneOfAndCondition(oneOfConditionPercent);
     OneOfCondition oneOfConditionOr = createOneOfOrCondition(oneOfConditionAnd);
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", oneOfConditionOr);
+    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionOr);
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("is_enabled"));
@@ -141,12 +132,11 @@ public class ConditionEvaluatorTest {
         PercentConditionOperator.LESS_OR_EQUAL, "seed");
     OneOfCondition oneOfConditionAnd = createOneOfAndCondition(oneOfConditionPercent);
     OneOfCondition oneOfConditionOr = createOneOfOrCondition(oneOfConditionAnd);
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", oneOfConditionOr);
+    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionOr);
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("is_enabled"));
@@ -158,12 +148,11 @@ public class ConditionEvaluatorTest {
         PercentConditionOperator.LESS_OR_EQUAL, "seed");
     OneOfCondition oneOfConditionAnd = createOneOfAndCondition(oneOfConditionPercent);
     OneOfCondition oneOfConditionOr = createOneOfOrCondition(oneOfConditionAnd);
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", oneOfConditionOr);
+    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionOr);
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("is_enabled"));
@@ -174,12 +163,11 @@ public class ConditionEvaluatorTest {
     OneOfCondition oneOfConditionPercent = createBetweenPercentCondition(null, null, "seed");
     OneOfCondition oneOfConditionAnd = createOneOfAndCondition(oneOfConditionPercent);
     OneOfCondition oneOfConditionOr = createOneOfOrCondition(oneOfConditionAnd);
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", oneOfConditionOr);
+    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionOr);
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("is_enabled"));
@@ -190,12 +178,11 @@ public class ConditionEvaluatorTest {
     OneOfCondition oneOfConditionPercent = createBetweenPercentCondition(0, null, "seed");
     OneOfCondition oneOfConditionAnd = createOneOfAndCondition(oneOfConditionPercent);
     OneOfCondition oneOfConditionOr = createOneOfOrCondition(oneOfConditionAnd);
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", oneOfConditionOr);
+    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionOr);
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("is_enabled"));
@@ -206,12 +193,11 @@ public class ConditionEvaluatorTest {
     OneOfCondition oneOfConditionPercent = createBetweenPercentCondition(null, 10_000_0000, "seed");
     OneOfCondition oneOfConditionAnd = createOneOfAndCondition(oneOfConditionPercent);
     OneOfCondition oneOfConditionOr = createOneOfOrCondition(oneOfConditionAnd);
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", oneOfConditionOr);
+    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionOr);
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("is_enabled"));
@@ -223,12 +209,11 @@ public class ConditionEvaluatorTest {
         PercentConditionOperator.GREATER_THAN, "seed");
     OneOfCondition oneOfConditionAnd = createOneOfAndCondition(oneOfConditionPercent);
     OneOfCondition oneOfConditionOr = createOneOfOrCondition(oneOfConditionAnd);
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", oneOfConditionOr);
+    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionOr);
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("is_enabled"));
@@ -240,12 +225,11 @@ public class ConditionEvaluatorTest {
         PercentConditionOperator.GREATER_THAN, "seed");
     OneOfCondition oneOfConditionAnd = createOneOfAndCondition(oneOfConditionPercent);
     OneOfCondition oneOfConditionOr = createOneOfOrCondition(oneOfConditionAnd);
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", oneOfConditionOr);
+    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionOr);
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("is_enabled"));
@@ -256,12 +240,11 @@ public class ConditionEvaluatorTest {
     OneOfCondition oneOfConditionPercent = createBetweenPercentCondition(0, 10_000_0000, "seed");
     OneOfCondition oneOfConditionAnd = createOneOfAndCondition(oneOfConditionPercent);
     OneOfCondition oneOfConditionOr = createOneOfOrCondition(oneOfConditionAnd);
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", oneOfConditionOr);
+    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionOr);
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("is_enabled"));
@@ -273,12 +256,11 @@ public class ConditionEvaluatorTest {
         5_000_000, "seed");
     OneOfCondition oneOfConditionAnd = createOneOfAndCondition(oneOfConditionPercent);
     OneOfCondition oneOfConditionOr = createOneOfOrCondition(oneOfConditionAnd);
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", oneOfConditionOr);
+    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionOr);
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("randomizationId", "123");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("is_enabled"));
@@ -330,12 +312,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalNumericLessThanToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.NUMERIC_LESS_THAN, ImmutableList.of("-50.0"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-50.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -343,12 +325,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalNumericLessThanToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.NUMERIC_LESS_THAN, ImmutableList.of("-50.0"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-50.01");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -356,12 +338,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalInvalidValueNumericOperationToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.NUMERIC_LESS_THAN, ImmutableList.of("non-numeric"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-50.01");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -369,12 +351,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalNumericLessEqualToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.NUMERIC_LESS_EQUAL, ImmutableList.of("-50.0"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-50.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -382,12 +364,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalNumericLessEqualToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.NUMERIC_LESS_EQUAL, ImmutableList.of("-50.0"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-49.9");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -395,12 +377,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalNumericEqualsToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.NUMERIC_EQUAL, ImmutableList.of("50.0"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -408,12 +390,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalNumericEqualsToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.NUMERIC_EQUAL, ImmutableList.of("50.0"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.000001");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -421,12 +403,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalNumericNotEqualsToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.NUMERIC_NOT_EQUAL, ImmutableList.of("50.0"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -434,12 +416,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalNumericNotEqualsToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.NUMERIC_NOT_EQUAL, ImmutableList.of("50.0"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.000001");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -447,12 +429,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalNumericGreaterEqualToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.NUMERIC_GREATER_EQUAL, ImmutableList.of("-50.0"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-50.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -460,12 +442,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalNumericGreaterEqualToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.NUMERIC_GREATER_EQUAL, ImmutableList.of("-50.0"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-50.01");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -473,12 +455,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalNumericgreaterThanToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.NUMERIC_GREATER_THAN, ImmutableList.of("-50.0"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-50.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -486,12 +468,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalNumericGreaterThanToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.NUMERIC_GREATER_THAN, ImmutableList.of("-50.0"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "-49.09");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -499,12 +481,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalStringContainsToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.STRING_CONTAINS, ImmutableList.of("One", "hundred"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "Two hundred");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -512,12 +494,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalStringContainsToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.STRING_CONTAINS, ImmutableList.of("One", "hundred"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "Two hudred");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -525,12 +507,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalStringDoesNotContainToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.STRING_DOES_NOT_CONTAIN, ImmutableList.of("One", "hundred"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "Two hudred");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -538,12 +520,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalStringDoesNotContainToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.STRING_DOES_NOT_CONTAIN, ImmutableList.of("One", "hundred"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "Two hundred");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -551,12 +533,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalStringExactlyMatchesToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.STRING_EXACTLY_MATCHES, ImmutableList.of("hundred"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "hundred");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -564,12 +546,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalStringExactlyMatchesToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.STRING_EXACTLY_MATCHES, ImmutableList.of("hundred"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "Two hundred");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -577,12 +559,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalStringContainsRegexToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.STRING_CONTAINS_REGEX, ImmutableList.of(".*hund.*"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "hundred");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -590,12 +572,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionsCustomSignalStringContainsRegexToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.STRING_CONTAINS_REGEX, ImmutableList.of("$hund.*"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "Two ahundred");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -603,12 +585,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionCustomSignalSemanticLessThanToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.SEMANTIC_VERSION_LESS_THAN, ImmutableList.of("50.0.20"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.2.0.1");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -616,12 +598,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionCustomSignalSemanticLessThanToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.SEMANTIC_VERSION_LESS_THAN, ImmutableList.of("50.0.20"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -629,12 +611,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionCustomSignalSemanticLessThanInvalidVersionToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.SEMANTIC_VERSION_LESS_THAN, ImmutableList.of("50.0.-20"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.2.0.1");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -642,12 +624,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionCustomSignalSemanticLessEqualToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.SEMANTIC_VERSION_LESS_EQUAL, ImmutableList.of("50.0.20.0.0"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -655,12 +637,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionCustomSignalSemanticLessEqualToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.SEMANTIC_VERSION_LESS_EQUAL, ImmutableList.of("50.0.2"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.2.1.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -668,12 +650,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionCustomSignalSemanticGreaterThanToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.SEMANTIC_VERSION_GREATER_THAN, ImmutableList.of("50.0.2"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.1");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -681,12 +663,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionCustomSignalSemanticGreaterThanToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.SEMANTIC_VERSION_GREATER_THAN, ImmutableList.of("50.0.20"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -694,12 +676,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionCustomSignalSemanticGreaterEqualToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.SEMANTIC_VERSION_GREATER_EQUAL, ImmutableList.of("50.0.20"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -707,12 +689,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionCustomSignalSemanticGreaterEqualToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.SEMANTIC_VERSION_GREATER_EQUAL, ImmutableList.of("50.0.20.1"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -720,12 +702,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionCustomSignalSemanticEqualToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.SEMANTIC_VERSION_EQUAL, ImmutableList.of("50.0.20"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -733,12 +715,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionCustomSignalSemanticEqualToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.SEMANTIC_VERSION_EQUAL, ImmutableList.of("50.0.20.1"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
@@ -746,12 +728,12 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionCustomSignalSemanticNotEqualToTrue() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.SEMANTIC_VERSION_NOT_EQUAL, ImmutableList.of("50.0.20.1"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertTrue(result.get("signal_key"));
@@ -759,39 +741,36 @@ public class ConditionEvaluatorTest {
 
   @Test
   public void testEvaluateConditionCustomSignalSemanticNotEqualToFalse() {
-    Map<String, OneOfCondition> conditions = createCustomSignalNamedCondition(
+    ServerCondition condition = createCustomSignalServerCondition(
         CustomSignalOperator.SEMANTIC_VERSION_NOT_EQUAL, ImmutableList.of("50.0.20"));
     KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
     contextBuilder.put("signal_key", "50.0.20.0.0");
 
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
         contextBuilder.build());
 
     assertFalse(result.get("signal_key"));
   }
 
-  private Map<String, OneOfCondition> createCustomSignalNamedCondition(
+  private ServerCondition createCustomSignalServerCondition(
       CustomSignalOperator operator,
       ImmutableList<String> targetCustomSignalValues) {
     CustomSignalCondition condition = new CustomSignalCondition("signal_key", operator,
         targetCustomSignalValues);
     OneOfCondition oneOfConditionCustomSignal = new OneOfCondition();
     oneOfConditionCustomSignal.setCustomSignal(condition);
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("signal_key", oneOfConditionCustomSignal);
-    return conditions;
+    return new ServerCondition("signal_key", oneOfConditionCustomSignal);
   }
 
-  private int evaluateRandomAssignments(OneOfCondition condition, int numOfAssignments) {
+  private int evaluateRandomAssignments(OneOfCondition percentCondition, int numOfAssignments) {
     int evalTrueCount = 0;
-    Map<String, OneOfCondition> conditions = new HashMap<>();
-    conditions.put("is_enabled", condition);
+    ServerCondition condition = new ServerCondition("is_enabled", percentCondition);
     for (int i = 0; i < numOfAssignments; i++) {
       UUID randomizationId = UUID.randomUUID();
       KeysAndValues.Builder contextBuilder = new KeysAndValues.Builder();
       contextBuilder.put("randomizationId", randomizationId.toString());
 
-      Map<String, Boolean> result = conditionEvaluator.evaluateConditions(conditions,
+      Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
           contextBuilder.build());
 
       if (result.get("is_enabled")) {

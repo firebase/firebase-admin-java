@@ -62,6 +62,14 @@ public class MockRemoteConfigClient implements FirebaseRemoteConfigClient{
   }
 
   @Override
+  public String getServerTemplate() throws FirebaseRemoteConfigException {
+    if (exception != null) {
+      throw exception;
+    }
+    return resultTemplate.toString();
+  }
+
+  @Override
   public Template publishTemplate(Template template, boolean validateOnly,
                                   boolean forcePublish) throws FirebaseRemoteConfigException {
     if (exception != null) {
