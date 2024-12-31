@@ -30,7 +30,7 @@ public final class PercentCondition {
   private final String seed;
 
   /**
-   * Create a percent condition for {@link PercentConditionOperator.BETWEEN}.
+   * Create a percent condition for operator BETWEEN.
    * 
    * @param microPercent The limit of percentiles to target in micro-percents when using the
    *        LESS_OR_EQUAL and GREATER_THAN operators. The value must be in the range
@@ -50,8 +50,7 @@ public final class PercentCondition {
   }
 
   /**
-   * Create a percent condition for {@link PercentConditionOperator.GREATER_THAN}
-   * and {@link PercentConditionOperator.LESS_OR_EQUAL}.
+   * Create a percent condition for operators GREATER_THAN and LESS_OR_EQUAL.
    * 
    * @param microPercentRange The micro-percent interval to be used with the BETWEEN operator.
    * @param percentConditionOperator The choice of percent operator to determine how to compare

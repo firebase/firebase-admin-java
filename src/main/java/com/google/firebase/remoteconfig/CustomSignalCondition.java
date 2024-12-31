@@ -48,7 +48,7 @@ public final class CustomSignalCondition {
   }
 
   /**
-   * Gets the key of the signal set in the EvaluationContext {@link customSignalKey}.
+   * Gets the key of the signal set in the EvaluationContext.
    * 
    * @return Custom signal key.
    */
@@ -58,8 +58,7 @@ public final class CustomSignalCondition {
   }
 
   /**
-   * Gets the choice of custom signal operator {@link customSignalOperator} to determine how to
-   * compare targets to value(s).
+   * Gets the choice of custom signal operator to determine how to compare targets to value(s).
    * 
    * @return Custom signal operator.
    */
@@ -69,8 +68,8 @@ public final class CustomSignalCondition {
   }
 
   /**
-   * Gets the list of at most 100 target custom signal values {@link targetCustomSignalValues}.
-   * For numeric operators, this will have exactly ONE target value.
+   * Gets the list of at most 100 target custom signal values. For numeric operators, this will
+   * have exactly ONE target value.
    * 
    * @return List of target values.
    */

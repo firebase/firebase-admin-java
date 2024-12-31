@@ -34,7 +34,7 @@ public class MicroPercentRange {
   }
 
   /**
-   * The lower limit of percentiles {@link microPercentLowerBound} to target in micro-percents.
+   * The lower limit of percentiles to target in micro-percents.
    * The value must be in the range [0 and 100000000].
    * 
    * @return micropercentile lower bound.
@@ -45,7 +45,7 @@ public class MicroPercentRange {
   }
 
   /**
-   * The upper limit of percentiles {@link microPercentUpperBound} to target in micro-percents.
+   * The upper limit of percentiles to target in micro-percents.
    * The value must be in the range [0 and 100000000].
    * 
    * @return micropercentile upper bound.
