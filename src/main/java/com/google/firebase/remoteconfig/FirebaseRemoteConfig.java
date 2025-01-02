@@ -158,10 +158,6 @@ public final class FirebaseRemoteConfig {
       @Override
       protected ServerTemplate execute() throws FirebaseRemoteConfigException {
         String serverTemplateData = remoteConfigClient.getServerTemplate();
-        System.out.println("defaultConfig" + defaultConfig);
-        System.out.println("server Data" + serverTemplateData);
-        // Convert ServerTemplateData to JSON string using the toJson method of ServerTemplate
-        // String templateJson = new ServerTemplateImpl.Builder().toJson(serverTemplateData);
         ServerTemplate template =
             new ServerTemplateImpl.Builder()
                 .defaultConfig(defaultConfig)

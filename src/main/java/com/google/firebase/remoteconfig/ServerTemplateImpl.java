@@ -25,18 +25,17 @@ public final class ServerTemplateImpl implements ServerTemplate {
   public static class Builder implements ServerTemplate.Builder {
     private KeysAndValues defaultConfig;
     private String cachedTemplate;
+    
 
     @Override
     public Builder defaultConfig(KeysAndValues config) {
       this.defaultConfig = config;
-      System.out.println(this.defaultConfig);
       return this;
     }
 
     @Override
     public Builder cachedTemplate(String templateJson) {
       this.cachedTemplate = templateJson;
-      System.out.println(this.cachedTemplate);
       return this;
     }
 
@@ -48,7 +47,6 @@ public final class ServerTemplateImpl implements ServerTemplate {
     // Added getter for cache
     public ServerTemplateData getCache() {
       try {
-        System.out.println("inside getCache");
         return ServerTemplateData.fromJSON(cachedTemplate);
       } catch (FirebaseRemoteConfigException e) {
         // TODO Auto-generated catch block
@@ -59,7 +57,6 @@ public final class ServerTemplateImpl implements ServerTemplate {
   }
 
   private ServerTemplateImpl(Builder builder) {
-    System.out.println("Successfully cache template");
     this.defaultConfig = builder.defaultConfig;
     this.cache = builder.getCache();
   }
@@ -96,13 +93,8 @@ public final class ServerTemplateImpl implements ServerTemplate {
 
   @Override
   public ApiFuture<Void> load() throws FirebaseRemoteConfigException {
-    System.out.println("Inside load");
     this.cachedTemplate = client.getServerTemplate();
-    System.out.println(cachedTemplate);
     this.cache = ServerTemplateData.fromJSON(cachedTemplate);
-    // Assuming getServerTemplate() now returns ServerTemplateData
-    // this.cache = serverTemplateData.setETag(getETag(response));
-    // Remove this line, as getETag(response) is not defined
     return ApiFutures.immediateFuture(null);
   }
 
