@@ -166,8 +166,6 @@ public final class FirebaseRemoteConfig {
             new ServerTemplateImpl.Builder()
                 .defaultConfig(defaultConfig)
                 .cachedTemplate(serverTemplateData)
-                .addClient(remoteConfigClient) // Replace with your
-                //                                                       //
                 // actual JSON
                 .build();
         

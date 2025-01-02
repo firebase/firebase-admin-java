@@ -8,8 +8,6 @@ public interface ServerTemplate {
     Builder defaultConfig(KeysAndValues config);
 
     Builder cachedTemplate(String templateJson);
-
-    Builder addClient(FirebaseRemoteConfigClient client);
     
     ServerTemplate build();
   }

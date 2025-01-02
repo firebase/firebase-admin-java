@@ -20,12 +20,11 @@ public final class ServerTemplateImpl implements ServerTemplate {
   private FirebaseRemoteConfigClient client;
   private ServerTemplateData cache;
   private String cachedTemplate; // Added field for cached template
-  private static final Logger logger = LoggerFactory.getLogger(ConditionEvaluator.class);
+  private static final Logger logger = LoggerFactory.getLogger(ServerTemplate.class);
 
   public static class Builder implements ServerTemplate.Builder {
     private KeysAndValues defaultConfig;
     private String cachedTemplate;
-    private FirebaseRemoteConfigClient client;
 
     @Override
     public Builder defaultConfig(KeysAndValues config) {
@@ -38,13 +37,6 @@ public final class ServerTemplateImpl implements ServerTemplate {
     public Builder cachedTemplate(String templateJson) {
       this.cachedTemplate = templateJson;
       System.out.println(this.cachedTemplate);
-      return this;
-    }
-
-    @Override
-    public Builder addClient(FirebaseRemoteConfigClient client) {
-      System.out.println("Inside client");
-      this.client = client;
       return this;
     }
 
@@ -70,7 +62,6 @@ public final class ServerTemplateImpl implements ServerTemplate {
     System.out.println("Successfully cache template");
     this.defaultConfig = builder.defaultConfig;
     this.cache = builder.getCache();
-    this.client = builder.client;// Initialize cache from builder
   }
 
   @Override

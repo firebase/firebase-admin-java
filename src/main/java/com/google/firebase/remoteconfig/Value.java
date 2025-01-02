@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  * types.
  */
 public class Value {
-  private static final Logger logger = LoggerFactory.getLogger(ConditionEvaluator.class);
+  private static final Logger logger = LoggerFactory.getLogger(Value.class);
   private static final boolean DEFAULT_VALUE_FOR_BOOLEAN = false;
   private static final String DEFAULT_VALUE_FOR_STRING = "";
   private static final long DEFAULT_VALUE_FOR_LONG = 0;
