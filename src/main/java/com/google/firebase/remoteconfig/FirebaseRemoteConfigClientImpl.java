@@ -119,22 +119,9 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
   public String getServerTemplate() throws FirebaseRemoteConfigException {
     HttpRequestInfo request =
         HttpRequestInfo.buildGetRequest(serverRemoteConfigUrl).addAllHeaders(COMMON_HEADERS);
-
     IncomingHttpResponse response = httpClient.send(request);
-
-    // Check the response code
-    if (response.getStatusCode() == 200) {
-      //System.out.println("Raw response: " + response.getContent());
-      String serverTemplateResponseJson = response.getContent();
-      System.out.println("Server template JSON received." + serverTemplateResponseJson);
-      System.out.println(serverTemplateResponseJson);
-      return serverTemplateResponseJson;
-    } else {
-      System.err.println(
-          "Error fetching server template. Status code: " + response.getStatusCode());
-      // Handle the error appropriately (e.g., return a default template, retry, etc.)
-      return null; // Or a default template
-    }
+    String serverTemplateResponseJson = response.getContent();
+    return serverTemplateResponseJson;
   }
 
   @Override
