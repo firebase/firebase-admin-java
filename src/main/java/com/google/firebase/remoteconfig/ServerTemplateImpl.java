@@ -14,32 +14,29 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-final class ServerTemplateImpl implements ServerTemplate {
+public final class ServerTemplateImpl implements ServerTemplate {
 
   private final KeysAndValues defaultConfig;
   private FirebaseRemoteConfigClient client;
   private ServerTemplateData cache;
   private String cachedTemplate; // Added field for cached template
-  private static final Logger logger = LoggerFactory.getLogger(ConditionEvaluator.class);
+  private static final Logger logger = LoggerFactory.getLogger(ServerTemplate.class);
 
-   static final class Builder implements ServerTemplate.Builder {
+  public static class Builder implements ServerTemplate.Builder {
     private KeysAndValues defaultConfig;
     private String cachedTemplate;
-    private FirebaseRemoteConfigClient client;
-
-    public Builder(FirebaseRemoteConfigClient remoteConfigClient) {
-      this.client = remoteConfigClient;
-    }
 
     @Override
     public Builder defaultConfig(KeysAndValues config) {
       this.defaultConfig = config;
+      System.out.println(this.defaultConfig);
       return this;
     }
 
     @Override
     public Builder cachedTemplate(String templateJson) {
       this.cachedTemplate = templateJson;
+      System.out.println(this.cachedTemplate);
       return this;
     }
 
@@ -47,20 +44,25 @@ final class ServerTemplateImpl implements ServerTemplate {
     public ServerTemplate build() {
       return new ServerTemplateImpl(this);
     }
+
+    // Added getter for cache
+    public ServerTemplateData getCache() {
+      try {
+        System.out.println("inside getCache");
+        return ServerTemplateData.fromJSON(cachedTemplate);
+      } catch (FirebaseRemoteConfigException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+      return null;
+    }
   }
 
   private ServerTemplateImpl(Builder builder) {
+    System.out.println("Successfully cache template");
     this.defaultConfig = builder.defaultConfig;
-    this.client = builder.client;
-    this.cachedTemplate = builder.cachedTemplate; // Get cachedTemplate from the builder
-    try {
-      this.cache = ServerTemplateData.fromJSON(this.cachedTemplate); // Initialize cache here
-    } catch (FirebaseRemoteConfigException e) {
-      logger.error("Failed to initialize cache from JSON:", e);
-      // Or handle the exception appropriately 
-    }
+    this.cache = builder.getCache();
   }
-  
 
   @Override
   public ServerConfig evaluate(KeysAndValues context) throws FirebaseRemoteConfigException {
@@ -94,8 +96,13 @@ final class ServerTemplateImpl implements ServerTemplate {
 
   @Override
   public ApiFuture<Void> load() throws FirebaseRemoteConfigException {
+    System.out.println("Inside load");
     this.cachedTemplate = client.getServerTemplate();
+    System.out.println(cachedTemplate);
     this.cache = ServerTemplateData.fromJSON(cachedTemplate);
+    // Assuming getServerTemplate() now returns ServerTemplateData
+    // this.cache = serverTemplateData.setETag(getETag(response));
+    // Remove this line, as getETag(response) is not defined
     return ApiFutures.immediateFuture(null);
   }
 

@@ -20,6 +20,7 @@ public interface ServerTemplate {
   * Proccess the template data without context.
   */
   ServerConfig evaluate() throws FirebaseRemoteConfigException;
+
   /**
   * Fetches and caches the current active version of the project.
   */
