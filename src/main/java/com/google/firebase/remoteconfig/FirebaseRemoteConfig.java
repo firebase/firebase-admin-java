@@ -106,7 +106,7 @@ public final class FirebaseRemoteConfig {
    * template or config.
    */
   public ServerTemplateImpl.Builder serverTemplateBuilder() {
-    return new ServerTemplateImpl.Builder();
+    return new ServerTemplateImpl.Builder(this.remoteConfigClient);
   }
 
   /**
@@ -159,7 +159,7 @@ public final class FirebaseRemoteConfig {
       protected ServerTemplate execute() throws FirebaseRemoteConfigException {
         String serverTemplateData = remoteConfigClient.getServerTemplate();
         ServerTemplate template =
-            new ServerTemplateImpl.Builder()
+                serverTemplateBuilder()
                 .defaultConfig(defaultConfig)
                 .cachedTemplate(serverTemplateData)
                 // actual JSON
