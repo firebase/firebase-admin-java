@@ -10,6 +10,7 @@ import com.google.gson.GsonBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiConsumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,11 @@ public final class ServerTemplateImpl implements ServerTemplate {
   public static class Builder implements ServerTemplate.Builder {
     private KeysAndValues defaultConfig;
     private String cachedTemplate;
-    
+    private FirebaseRemoteConfigClient client;
+  
+    public Builder(FirebaseRemoteConfigClient remoteConfigClient) {
+      this.client = remoteConfigClient;
+    }
 
     @Override
     public Builder defaultConfig(KeysAndValues config) {
@@ -43,22 +48,18 @@ public final class ServerTemplateImpl implements ServerTemplate {
     public ServerTemplate build() {
       return new ServerTemplateImpl(this);
     }
-
-    // Added getter for cache
-    public ServerTemplateData getCache() {
-      try {
-        return ServerTemplateData.fromJSON(cachedTemplate);
-      } catch (FirebaseRemoteConfigException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-      return null;
-    }
   }
 
   private ServerTemplateImpl(Builder builder) {
     this.defaultConfig = builder.defaultConfig;
-    this.cache = builder.getCache();
+    this.cachedTemplate = builder.cachedTemplate;
+    this.client = builder.client;
+    try {
+      this.cache = ServerTemplateData.fromJSON(cachedTemplate);
+    } catch (FirebaseRemoteConfigException e) {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
   }
 
   @Override
