@@ -28,7 +28,7 @@ public final class ServerTemplateImpl implements ServerTemplate {
     private String cachedTemplate;
     private FirebaseRemoteConfigClient client;
   
-    public Builder(FirebaseRemoteConfigClient remoteConfigClient) {
+    Builder(FirebaseRemoteConfigClient remoteConfigClient) {
       this.client = remoteConfigClient;
     }
 
