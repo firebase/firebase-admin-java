@@ -23,7 +23,6 @@ import static org.junit.Assert.fail;
 
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
-import com.google.cloud.storage.StorageException;
 import com.google.common.io.CharStreams;
 import com.google.firebase.testing.IntegrationTestUtils;
 import java.io.IOException;
@@ -51,9 +50,9 @@ public class StorageClientIT {
   public void testCloudStorageNonExistingBucket() {
     StorageClient storage = StorageClient.getInstance(IntegrationTestUtils.ensureDefaultApp());
     try {
-      storage.bucket("non-existing");
+      storage.bucket("non.existing");
       fail("No error thrown for non-existing bucket");
-    } catch (IllegalArgumentException | StorageException expected) {
+    } catch (IllegalArgumentException expected) {
       // ignore
     }
   }
