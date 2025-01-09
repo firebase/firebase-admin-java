@@ -5,12 +5,12 @@ import com.google.api.core.ApiFutures;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.remoteconfig.Value.ValueSource;
+import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,13 +152,14 @@ public final class ServerTemplateImpl implements ServerTemplate {
       }
 
       ParameterValue defaultValue = parameter.getDefaultValue();
-      if (defaultValue == null) {
-        logger.warn(String.format("Default parameter value for %s is set to null.",
+      ParameterValueResponse defaultValueResponse = defaultValue.toParameterValueResponse();
+      if (defaultValueResponse.getValue() != null && defaultValueResponse.getValue().isEmpty()) {
+        logger.warn(String.format("Default parameter value for %s is not set.",
             parameterName));
         continue;
       }
 
-      if (defaultValue.toParameterValueResponse().isUseInAppDefault()) {
+      if (defaultValueResponse.isUseInAppDefault()) {
         logger.info(String.format("Default value for %s is set to use in app default.",
             parameterName));
         continue;
