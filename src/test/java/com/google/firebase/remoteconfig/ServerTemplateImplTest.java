@@ -22,7 +22,6 @@ import com.google.firebase.testing.TestUtils;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 public class ServerTemplateImplTest {
 
   private static String cacheTemplate;
@@ -249,5 +248,21 @@ public class ServerTemplateImplTest {
     ServerConfig evaluatedConfig = template.evaluate(context);
 
     assertEquals("Conditional value", evaluatedConfig.getString("Chained conditions"));
+  }
+
+  @Test
+  public void testGetEvaluatedConfigOnInvalidTypeReturnsDefaultValue() throws Exception {
+    KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
+    KeysAndValues context = new KeysAndValues.Builder()
+            .put("randomizationId", "user")
+            .build();
+    ServerTemplate template = new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
+
+    ServerConfig evaluatedConfig = template.evaluate(context);
+
+    assertEquals(0L, evaluatedConfig.getLong("Percent"));
   }
 }
