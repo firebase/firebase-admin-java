@@ -152,14 +152,14 @@ public final class ServerTemplateImpl implements ServerTemplate {
       }
 
       ParameterValue defaultValue = parameter.getDefaultValue();
-      ParameterValueResponse defaultValueResponse = defaultValue.toParameterValueResponse();
-      if (defaultValueResponse.getValue() != null && defaultValueResponse.getValue().isEmpty()) {
+      if (defaultValue == null) {
         logger.warn(String.format("Default parameter value for %s is not set.",
             parameterName));
         continue;
       }
 
-      if (defaultValueResponse.isUseInAppDefault()) {
+      ParameterValueResponse defaultValueResponse = defaultValue.toParameterValueResponse();
+      if (defaultValueResponse != null && defaultValueResponse.isUseInAppDefault()) {
         logger.info(String.format("Default value for %s is set to use in app default.",
             parameterName));
         continue;

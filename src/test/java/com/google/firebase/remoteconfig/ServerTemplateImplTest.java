@@ -22,6 +22,7 @@ import com.google.firebase.testing.TestUtils;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 public class ServerTemplateImplTest {
 
   private static String cacheTemplate;
@@ -35,7 +36,8 @@ public class ServerTemplateImplTest {
   public void testEvaluateCustomSignalReturnsDefaultValue() throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().put("users", "100").build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null).defaultConfig(defaultConfig)
+    ServerTemplate template = new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
             .cachedTemplate(cacheTemplate)
             .build();
 
@@ -105,7 +107,8 @@ public class ServerTemplateImplTest {
   }
 
   @Test
-  public void testEvaluatePercentReturnsConditionalValue() throws FirebaseRemoteConfigException {
+  public void testEvaluatePercentReturnsConditionalValue() 
+    throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder()
             .put("randomizationId", "user")
@@ -251,7 +254,7 @@ public class ServerTemplateImplTest {
   }
 
   @Test
-  public void testGetEvaluatedConfigOnInvalidTypeReturnsDefaultValue() throws Exception {
+  public void testGetEvaluateConfigOnInvalidTypeReturnsDefaultValue() throws Exception {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder()
             .put("randomizationId", "user")
@@ -264,5 +267,50 @@ public class ServerTemplateImplTest {
     ServerConfig evaluatedConfig = template.evaluate(context);
 
     assertEquals(0L, evaluatedConfig.getLong("Percent"));
+  }
+
+  @Test
+  public void testGetEvaluateConfigInvalidKeyReturnsStaticValueSource() throws Exception {
+    KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
+    KeysAndValues context = new KeysAndValues.Builder().build();
+    ServerTemplate template = new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
+
+    ServerConfig evaluatedConfig = template.evaluate(context);
+
+    assertEquals(Value.ValueSource.STATIC, evaluatedConfig.getValue("invalid").getSource());
+  }
+
+  @Test
+  public void testGetEvaluateConfigInAppDefaultConfigReturnsDefaultValueSource() throws Exception {
+    KeysAndValues defaultConfig = new KeysAndValues.Builder().put("In-app default", "abc").build();
+    KeysAndValues context = new KeysAndValues.Builder().build();
+    ServerTemplate template = new ServerTemplateImpl.Builder(null)
+                .defaultConfig(defaultConfig)
+                .cachedTemplate(cacheTemplate)
+                .build();
+
+    ServerConfig evaluatedConfig = template.evaluate(context);
+
+    assertEquals(Value.ValueSource.DEFAULT, evaluatedConfig.getValue("In-app default").getSource());
+  }
+
+  @Test
+  public void testGetEvaluateConfigUnsetDefaultConfigReturnsDefaultValueSource() throws Exception {
+    KeysAndValues defaultConfig = new KeysAndValues.Builder()
+        .put("Unset default config", "abc")
+        .build();
+    KeysAndValues context = new KeysAndValues.Builder().build();
+    ServerTemplate template = new ServerTemplateImpl.Builder(null)
+                .defaultConfig(defaultConfig)
+                .cachedTemplate(cacheTemplate)
+                .build();
+
+    ServerConfig evaluatedConfig = template.evaluate(context);
+
+    assertEquals(Value.ValueSource.DEFAULT, 
+        evaluatedConfig.getValue("Unset default config").getSource());
   }
 }
