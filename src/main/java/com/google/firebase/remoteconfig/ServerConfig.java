@@ -39,7 +39,7 @@ public final class ServerConfig {
    */
   @NonNull
   public String getString(@NonNull String key) {
-    return configValues.get(key).asString();
+    return this.getValue(key).asString();
   }
 
   /**
@@ -51,7 +51,7 @@ public final class ServerConfig {
    */
   @NonNull
   public boolean getBoolean(@NonNull String key) {
-    return Boolean.parseBoolean(getString(key));
+    return this.getValue(key).asBoolean();
   }
 
   /**
@@ -63,7 +63,7 @@ public final class ServerConfig {
    */
   @NonNull
   public long getLong(@NonNull String key) {
-    return Long.parseLong(getString(key));
+    return this.getValue(key).asLong();
   }
 
   /**
@@ -75,7 +75,21 @@ public final class ServerConfig {
    */
   @NonNull
   public double getDouble(@NonNull String key) {
-    return Double.parseDouble(getString(key));
+    return this.getValue(key).asDouble();
   }
 
+  /**
+   * Gets the {@link Value} for the given key. Ensures application logic will
+   * always have a type-safe reference, even if the parameter is removed remotely.
+   * 
+   * @param key The name of the parameter.
+   * @return config value for the given key.
+   */
+  @NonNull
+  public Value getValue(String key) {
+    if (configValues.containsKey(key)) {
+      return configValues.get(key);
+    }
+    return new Value(Value.ValueSource.STATIC);
+  }
 }
