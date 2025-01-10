@@ -92,11 +92,11 @@ public final class FirebaseRemoteConfig {
   }
 
   private CallableOperation<Template, FirebaseRemoteConfigException> getTemplateOp() {
-    final FirebaseRemoteConfigClient remoteConfigClient = getRemoteConfigClient();
+    final FirebaseRemoteConfigClient client = getRemoteConfigClient();
     return new CallableOperation<Template, FirebaseRemoteConfigException>() {
       @Override
       protected Template execute() throws FirebaseRemoteConfigException {
-        return remoteConfigClient.getTemplate();
+        return client.getTemplate();
       }
     };
   }
@@ -225,11 +225,11 @@ public final class FirebaseRemoteConfig {
 
   private CallableOperation<Template, FirebaseRemoteConfigException> getTemplateAtVersionOp(
       final String versionNumber) {
-    final FirebaseRemoteConfigClient remoteConfigClient = getRemoteConfigClient();
+    final FirebaseRemoteConfigClient client = getRemoteConfigClient();
     return new CallableOperation<Template, FirebaseRemoteConfigException>() {
       @Override
       protected Template execute() throws FirebaseRemoteConfigException {
-        return remoteConfigClient.getTemplateAtVersion(versionNumber);
+        return client.getTemplateAtVersion(versionNumber);
       }
     };
   }
@@ -319,11 +319,11 @@ public final class FirebaseRemoteConfig {
 
   private CallableOperation<Template, FirebaseRemoteConfigException> publishTemplateOp(
       final Template template, final PublishOptions options) {
-    final FirebaseRemoteConfigClient remoteConfigClient = getRemoteConfigClient();
+    final FirebaseRemoteConfigClient client = getRemoteConfigClient();
     return new CallableOperation<Template, FirebaseRemoteConfigException>() {
       @Override
       protected Template execute() throws FirebaseRemoteConfigException {
-        return remoteConfigClient.publishTemplate(
+        return client.publishTemplate(
             template, options.isValidateOnly(), options.isForcePublish());
       }
     };
@@ -392,11 +392,11 @@ public final class FirebaseRemoteConfig {
 
   private CallableOperation<Template, FirebaseRemoteConfigException> rollbackOp(
       final String versionNumber) {
-    final FirebaseRemoteConfigClient remoteConfigClient = getRemoteConfigClient();
+    final FirebaseRemoteConfigClient client = getRemoteConfigClient();
     return new CallableOperation<Template, FirebaseRemoteConfigException>() {
       @Override
       protected Template execute() throws FirebaseRemoteConfigException {
-        return remoteConfigClient.rollback(versionNumber);
+        return client.rollback(versionNumber);
       }
     };
   }
@@ -451,9 +451,9 @@ public final class FirebaseRemoteConfig {
 
   private CallableOperation<ListVersionsPage, FirebaseRemoteConfigException> listVersionsOp(
       final ListVersionsOptions options) {
-    final FirebaseRemoteConfigClient remoteConfigClient = getRemoteConfigClient();
+    final FirebaseRemoteConfigClient client = getRemoteConfigClient();
     final ListVersionsPage.DefaultVersionSource source =
-        new ListVersionsPage.DefaultVersionSource(remoteConfigClient);
+        new ListVersionsPage.DefaultVersionSource(client);
     final ListVersionsPage.Factory factory = new ListVersionsPage.Factory(source, options);
     return new CallableOperation<ListVersionsPage, FirebaseRemoteConfigException>() {
       @Override

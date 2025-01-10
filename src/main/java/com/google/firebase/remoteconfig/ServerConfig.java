@@ -79,17 +79,20 @@ public final class ServerConfig {
   }
 
   /**
-   * Gets the {@link Value} for the given key. Ensures application logic will
-   * always have a type-safe reference, even if the parameter is removed remotely.
+   * Gets the {@link ValueSource} for the given key.
    * 
    * @param key The name of the parameter.
-   * @return config value for the given key.
+   * @return config value source for the given key.
    */
   @NonNull
-  public Value getValue(String key) {
+  public ValueSource getValueSource(@NonNull String key) {
+    return this.getValue(key).getSource();
+  }
+
+  private Value getValue(String key) {
     if (configValues.containsKey(key)) {
       return configValues.get(key);
     }
-    return new Value(Value.ValueSource.STATIC);
+    return new Value(ValueSource.STATIC);
   }
 }

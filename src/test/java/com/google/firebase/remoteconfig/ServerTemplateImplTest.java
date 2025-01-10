@@ -123,8 +123,8 @@ public class ServerTemplateImplTest {
     assertEquals("Conditional value", evaluatedConfig.getString("Percent"));
   }
 
-  @Test(expected = NullPointerException.class)
-  public void testEvaluateWithoutDefaultValueOmitsConfigValue()
+  @Test
+  public void testEvaluateWithoutDefaultValueReturnsEmptyString()
     throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().build();
@@ -134,24 +134,8 @@ public class ServerTemplateImplTest {
             .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
-    evaluatedConfig.getString("Unset default value");
-  }
 
-  @Test
-  public void testEvaluateWithoutDefaultValueReturnsDefaultConfigValue()
-    throws FirebaseRemoteConfigException {
-    KeysAndValues defaultConfig = new KeysAndValues.Builder()
-            .put("Unset default value", "Default config value")
-            .build();
-    KeysAndValues context = new KeysAndValues.Builder().build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-            .defaultConfig(defaultConfig)
-            .cachedTemplate(cacheTemplate)
-            .build();
-
-    ServerConfig evaluatedConfig = template.evaluate(context);
-
-    assertEquals("Default config value", evaluatedConfig.getString("Unset default value"));
+    assertEquals("", evaluatedConfig.getString("Unset default value"));
   }
 
   @Test(expected = FirebaseRemoteConfigException.class)
@@ -179,8 +163,8 @@ public class ServerTemplateImplTest {
     template.evaluate(context);
   }
 
-  @Test(expected = NullPointerException.class)
-  public void testEvaluateWithInAppDefaultOmitsConfigValue() throws Exception {
+  @Test
+  public void testEvaluateWithInAppDefaultReturnsEmptyString() throws Exception {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().build();
     ServerTemplate template = new ServerTemplateImpl.Builder(null)
@@ -189,11 +173,13 @@ public class ServerTemplateImplTest {
             .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
-    evaluatedConfig.getString("In-app default");
+
+    assertEquals("", evaluatedConfig.getString("In-app default"));
+
   }
 
-  @Test(expected = NullPointerException.class)
-  public void testEvaluateWithDerivedInAppDefaultOmitsConfigValue() throws Exception {
+  @Test
+  public void testEvaluateWithDerivedInAppDefaultReturnsDefaultValue() throws Exception {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().build();
     ServerTemplate template = new ServerTemplateImpl.Builder(null)
@@ -202,7 +188,8 @@ public class ServerTemplateImplTest {
             .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
-    evaluatedConfig.getString("Derived in-app default");
+
+    assertEquals("Default value", evaluatedConfig.getString("Derived in-app default"));
   }
 
   @Test
@@ -280,7 +267,7 @@ public class ServerTemplateImplTest {
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
-    assertEquals(Value.ValueSource.STATIC, evaluatedConfig.getValue("invalid").getSource());
+    assertEquals(ValueSource.STATIC, evaluatedConfig.getValueSource("invalid"));
   }
 
   @Test
@@ -294,7 +281,7 @@ public class ServerTemplateImplTest {
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
-    assertEquals(Value.ValueSource.DEFAULT, evaluatedConfig.getValue("In-app default").getSource());
+    assertEquals(ValueSource.DEFAULT, evaluatedConfig.getValueSource("In-app default"));
   }
 
   @Test
@@ -310,7 +297,6 @@ public class ServerTemplateImplTest {
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
-    assertEquals(Value.ValueSource.DEFAULT, 
-        evaluatedConfig.getValue("Unset default config").getSource());
+    assertEquals(ValueSource.DEFAULT, evaluatedConfig.getValueSource("Unset default config"));
   }
 }

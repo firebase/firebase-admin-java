@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * getters insulate application logic from remote changes to parameter names and
  * types.
  */
-public class Value {
+class Value {
   private static final Logger logger = LoggerFactory.getLogger(Value.class);
   private static final boolean DEFAULT_VALUE_FOR_BOOLEAN = false;
   private static final String DEFAULT_VALUE_FOR_STRING = "";
@@ -35,12 +35,6 @@ public class Value {
   private static final double DEFAULT_VALUE_FOR_DOUBLE = 0;
   private static final ImmutableList<String> BOOLEAN_TRUTHY_VALUES = ImmutableList.of("1", "true",
       "t", "yes", "y", "on");
-
-  public enum ValueSource {
-    STATIC,
-    REMOTE,
-    DEFAULT
-  }
 
   private final ValueSource source;
   private final String value;
@@ -51,7 +45,7 @@ public class Value {
    * @param source Indicates the source of a value.
    * @param value  Indicates a parameter value.
    */
-  public Value(@NonNull ValueSource source, @NonNull String value) {
+  Value(@NonNull ValueSource source, @NonNull String value) {
     this.source = source;
     this.value = value;
   }
@@ -61,7 +55,7 @@ public class Value {
    * 
    * @param source Indicates the source of a value.
    */
-  public Value(@NonNull ValueSource source) {
+  Value(@NonNull ValueSource source) {
     this(source, DEFAULT_VALUE_FOR_STRING);
   }
 
@@ -71,7 +65,7 @@ public class Value {
    * @return value as string
    */
   @NonNull
-  public String asString() {
+  String asString() {
     return this.value;
   }
 
@@ -83,7 +77,7 @@ public class Value {
    * @return value as boolean
    */
   @NonNull
-  public boolean asBoolean() {
+  boolean asBoolean() {
     if (source == ValueSource.STATIC) {
       return DEFAULT_VALUE_FOR_BOOLEAN;
     }
@@ -96,7 +90,7 @@ public class Value {
    * @return value as long
    */
   @NonNull
-  public long asLong() {
+  long asLong() {
     if (source == ValueSource.STATIC) {
       return DEFAULT_VALUE_FOR_LONG;
     }
@@ -114,7 +108,7 @@ public class Value {
    * @return value as double
    */
   @NonNull
-  public double asDouble() {
+  double asDouble() {
     if (source == ValueSource.STATIC) {
       return DEFAULT_VALUE_FOR_DOUBLE;
     }
@@ -132,7 +126,7 @@ public class Value {
    * @return source.
    */
   @NonNull
-  public ValueSource getSource() {
+  ValueSource getSource() {
     return source;
   }
 }
