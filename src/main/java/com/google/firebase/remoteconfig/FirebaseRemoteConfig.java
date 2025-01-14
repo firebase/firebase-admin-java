@@ -170,10 +170,6 @@ public final class FirebaseRemoteConfig {
     };
   }
 
-  public String getSample() {
-    return "abc55";
-  }
-
   /**
    * Gets the requested version of the of the Remote Config template.
    *
