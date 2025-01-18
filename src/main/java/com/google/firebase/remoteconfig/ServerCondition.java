@@ -66,7 +66,7 @@ public final class ServerCondition {
   ServerCondition(@NonNull ServerConditionResponse serverConditionResponse) {
     checkNotNull(serverConditionResponse);
     this.name = serverConditionResponse.getName();
-    this.serverCondition = new OneOfCondition(serverConditionResponse.getCondition());
+    this.serverCondition = new OneOfCondition(serverConditionResponse.getServerCondition());
   }
 
   /**
@@ -116,7 +116,12 @@ public final class ServerCondition {
   }
 
   ServerConditionResponse toServerConditionResponse() {
-    return new ServerConditionResponse().setName(this.name);
+    ServerConditionResponse serverConditionResponse =
+        new ServerConditionResponse().setName(this.name);
+    serverConditionResponse.setServerCondtion(this.serverCondition.toOneOfConditionResponse());
+    return serverConditionResponse;
+    // return new
+    // ServerConditionResponse().setName(this.name).setServerCondition(this.serverCondition);
   }
 
   @Override

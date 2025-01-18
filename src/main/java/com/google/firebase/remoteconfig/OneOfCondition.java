@@ -48,12 +48,19 @@ public class OneOfCondition {
       this.percent = new PercentCondition(oneOfconditionResponse.getPercentCondition());
     }
     if (oneOfconditionResponse.getCustomSignalCondition() != null) {
-      this.customSignal = new CustomSignalCondition(
-        oneOfconditionResponse.getCustomSignalCondition());
+      this.customSignal =
+          new CustomSignalCondition(oneOfconditionResponse.getCustomSignalCondition());
     }
   }
 
-  public OneOfCondition() {}
+  OneOfCondition() {
+    this.orCondition = null;
+    this.andCondition = null;
+    this.percent = null;
+    this.customSignal = null;
+    this.trueValue = null;
+    this.falseValue = null;
+  }
 
   /**
    * Gets {@link OrCondition} with conditions on which OR operation will be applied.
@@ -159,5 +166,22 @@ public class OneOfCondition {
   /** Sets evaluation value to false. */
   public void setFalse() {
     this.falseValue = "false";
+  }
+
+  public OneOfConditionResponse toOneOfConditionResponse() {
+    OneOfConditionResponse oneOfConditionResponse = new OneOfConditionResponse();
+    if (this.andCondition != null) {
+      oneOfConditionResponse.setAndCondition(this.andCondition.toAndConditionResponse());
+    }
+    if (this.orCondition != null) {
+      oneOfConditionResponse.setOrCondition(this.orCondition.toOrConditionResponse());
+    }
+    if (this.percent != null) {
+      oneOfConditionResponse.setPercentCondition(this.percent.toPercentConditionResponse());
+    }
+    if (this.customSignal != null) {
+      oneOfConditionResponse.setCustomSignalCondition(this.customSignal.toCustomConditonResponse());
+    }
+    return oneOfConditionResponse;
   }
 }

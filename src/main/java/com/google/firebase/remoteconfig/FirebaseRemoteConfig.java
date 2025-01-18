@@ -137,8 +137,7 @@ public final class FirebaseRemoteConfig {
    *     found in the template.
    * @return A {@link Template} instance with the latest template data.
    */
-  public ApiFuture<ServerTemplate> getServerTemplateAsync(KeysAndValues defaultConfig)
-      throws FirebaseRemoteConfigException {
+  public ApiFuture<ServerTemplate> getServerTemplateAsync(KeysAndValues defaultConfig) {
     return getServerTemplateOp(defaultConfig).callAsync(app);
   }
 
@@ -148,7 +147,7 @@ public final class FirebaseRemoteConfig {
    *
    * @return A {@link Template} instance with the latest template data.
    */
-  public ApiFuture<ServerTemplate> getServerTemplateAsync() throws FirebaseRemoteConfigException {
+  public ApiFuture<ServerTemplate> getServerTemplateAsync() {
     return getServerTemplateAsync(null);
   }
 

@@ -56,4 +56,14 @@ public final class OrCondition {
   public List<OneOfCondition> getConditions() {
     return new ArrayList<>(conditions);
   }
+
+  public OrConditionResponse toOrConditionResponse() {
+    OrConditionResponse orConditionResponse = new OrConditionResponse();
+    List<OneOfConditionResponse> nestedConditionResponses = new ArrayList<>();
+    for (OneOfCondition condition : conditions) {
+      nestedConditionResponses.add(condition.toOneOfConditionResponse());
+    }
+    orConditionResponse.setConditions(nestedConditionResponses);
+    return orConditionResponse;
+  }
 }

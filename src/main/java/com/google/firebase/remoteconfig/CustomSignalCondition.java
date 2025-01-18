@@ -46,7 +46,7 @@ public final class CustomSignalCondition {
     this.customSignalOperator = customSignalOperator;
     this.targetCustomSignalValues = ImmutableList.copyOf(targetCustomSignalValues);
   }
-  
+
   /**
    * Creates a new {@link CustomSignalCondition} from API response.
    *
@@ -139,5 +139,14 @@ public final class CustomSignalCondition {
   @NonNull
   public List<String> getTargetCustomSignalValues() {
     return new ArrayList<>(targetCustomSignalValues);
+  }
+
+  public CustomSignalConditionResponse toCustomConditonResponse() {
+    CustomSignalConditionResponse customSignalConditionResponse =
+        new CustomSignalConditionResponse();
+    customSignalConditionResponse.setKey(this.customSignalKey);
+    customSignalConditionResponse.setOperator(this.customSignalOperator.getOperator());
+    customSignalConditionResponse.setTargetValues(this.targetCustomSignalValues);
+    return customSignalConditionResponse;
   }
 }

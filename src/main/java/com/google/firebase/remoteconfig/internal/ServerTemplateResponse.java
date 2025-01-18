@@ -92,7 +92,7 @@ public final class ServerTemplateResponse {
       return name;
     }
 
-    public OneOfConditionResponse getCondition() {
+    public OneOfConditionResponse getServerCondition() {
       return condition;
     }
 
@@ -101,7 +101,7 @@ public final class ServerTemplateResponse {
       return this;
     }
 
-    public ServerConditionResponse setCondtion(OneOfConditionResponse condition) {
+    public ServerConditionResponse setServerCondtion(OneOfConditionResponse condition) {
       this.condition = condition;
       return this;
     }

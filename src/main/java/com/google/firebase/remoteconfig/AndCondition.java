@@ -24,23 +24,21 @@ import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OneOfCon
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Represents a collection of conditions that evaluate to true if all are true.
- */
+/** Represents a collection of conditions that evaluate to true if all are true. */
 public final class AndCondition {
   private final ImmutableList<OneOfCondition> conditions;
 
-  /**
-   * Creates a new {@link AndCondition} joining subconditions.
-   */
+  /** Creates a new 
+   * {@link AndCondition} 
+   * joining subconditions. 
+   * */
   public AndCondition(@NonNull List<OneOfCondition> conditions) {
     this.conditions = ImmutableList.copyOf(conditions);
   }
 
-
   AndCondition(AndConditionResponse andConditionResponse) {
-    List<OneOfCondition> nestedConditions =  new ArrayList<>();
-    for (OneOfConditionResponse nestedResponse: andConditionResponse.getConditions()) {
+    List<OneOfCondition> nestedConditions = new ArrayList<>();
+    for (OneOfConditionResponse nestedResponse : andConditionResponse.getConditions()) {
       OneOfCondition nestedCondition = new OneOfCondition(nestedResponse);
       nestedConditions.add(nestedCondition);
     }
@@ -49,11 +47,21 @@ public final class AndCondition {
 
   /**
    * Gets the list of {@link OneOfCondition}
-   * 
+   *
    * @return List of conditions to evaluate.
    */
   @NonNull
   public List<OneOfCondition> getConditions() {
     return new ArrayList<>(conditions);
+  }
+
+  public AndConditionResponse toAndConditionResponse() {
+    AndConditionResponse andConditionResponse = new AndConditionResponse();
+    List<OneOfConditionResponse> nestedConditionResponses = new ArrayList<>();
+    for (OneOfCondition condition : conditions) {
+      nestedConditionResponses.add(condition.toOneOfConditionResponse());
+    }
+    andConditionResponse.setConditions(nestedConditionResponses);
+    return andConditionResponse;
   }
 }

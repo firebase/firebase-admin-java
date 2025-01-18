@@ -137,4 +137,14 @@ public final class PercentCondition {
   public String getSeed() {
     return seed;
   }
+
+  public PercentConditionResponse toPercentConditionResponse() {
+    PercentConditionResponse percentConditionResponse = new PercentConditionResponse();
+    percentConditionResponse.setMicroPercent(this.microPercent);
+    percentConditionResponse.setMicroPercentRange(
+        this.microPercentRange.toMicroPercentRangeResponse());
+    percentConditionResponse.setPercentOperator(this.percentConditionOperator.getOperator());
+    percentConditionResponse.setSeed(this.seed);
+    return percentConditionResponse;
+  }
 }
