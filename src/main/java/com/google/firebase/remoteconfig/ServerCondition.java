@@ -60,13 +60,13 @@ public final class ServerCondition {
 
   /**
    * Creates a new {@link ServerCondition} from API response.
-   * 
+   *
    * @param serverConditionResponse the conditions obtained from server call.
    */
   ServerCondition(@NonNull ServerConditionResponse serverConditionResponse) {
     checkNotNull(serverConditionResponse);
     this.name = serverConditionResponse.getName();
-    this.serverCondition = this.convertToOneOfCondition(serverConditionResponse.getCondition());
+    this.serverCondition = new OneOfCondition(serverConditionResponse.getCondition());
   }
 
   /**
@@ -135,142 +135,5 @@ public final class ServerCondition {
   @Override
   public int hashCode() {
     return Objects.hash(name, serverCondition);
-  }
-
-  private OneOfCondition convertToOneOfCondition(OneOfConditionResponse response) {
-    if (response.getCustomSignalCondition() != null) {
-      return this.getCustomSignalOneOfCondition(response.getCustomSignalCondition());
-    } else if (response.getPercentCondition() != null) {
-      return this.getPercentOneOfCondition(response.getPercentCondition());
-    } else if (response.getAndCondition() != null) {
-      return this.getAndOneOfCondition(response.getAndCondition());
-    } else if (response.getOrCondition() != null) {
-      return this.getOrOneOfCondition(response.getOrCondition());
-    }
-    logger.atError().log("No valid condition found in response: %s", response);
-    return null;
-  }
-
-  private OneOfCondition getOrOneOfCondition(OrConditionResponse orConditionResponse) {
-    List<OneOfCondition> nestedConditions =  new ArrayList<>();
-    for (OneOfConditionResponse nestedResponse: orConditionResponse.getConditions()) {
-      OneOfCondition nestedCondition = this.convertToOneOfCondition(nestedResponse);
-      nestedConditions.add(nestedCondition);
-    }
-    OrCondition orCondition = new OrCondition(nestedConditions);
-    OneOfCondition condition = new OneOfCondition();
-    condition.setOrCondition(orCondition);
-    return condition;
-  }
-
-  private OneOfCondition getAndOneOfCondition(AndConditionResponse andConditionResponse) {
-    List<OneOfCondition> nestedConditions =  new ArrayList<>();
-    for (OneOfConditionResponse nestedResponse: andConditionResponse.getConditions()) {
-      OneOfCondition nestedCondition = this.convertToOneOfCondition(nestedResponse);
-      nestedConditions.add(nestedCondition);
-    }
-    AndCondition andCondition = new AndCondition(nestedConditions);
-    OneOfCondition condition = new OneOfCondition();
-    condition.setAndCondition(andCondition);
-    return condition;
-  }
-
-  private OneOfCondition getCustomSignalOneOfCondition(
-      CustomSignalConditionResponse customSignalResponse) {
-    String customSignalKey = customSignalResponse.getKey();
-    List<String> targetCustomSignalValues = customSignalResponse.getTargetValues();
-    CustomSignalOperator operator;
-    switch (customSignalResponse.getOperator()) {
-      case "NUMERIC_EQUAL":
-        operator = CustomSignalOperator.NUMERIC_EQUAL;
-        break;
-      case "NUMERIC_GREATER_EQUAL":
-        operator = CustomSignalOperator.NUMERIC_GREATER_EQUAL;
-        break;
-      case "NUMERIC_GREATER_THAN":
-        operator = CustomSignalOperator.NUMERIC_GREATER_THAN;
-        break;
-      case "NUMERIC_LESS_EQUAL":
-        operator = CustomSignalOperator.NUMERIC_LESS_EQUAL;
-        break;
-      case "NUMERIC_LESS_THAN":
-        operator = CustomSignalOperator.NUMERIC_LESS_THAN;
-        break;
-      case "NUMERIC_NOT_EQUAL":
-        operator = CustomSignalOperator.NUMERIC_NOT_EQUAL;
-        break;
-      case "SEMANTIC_VERSION_EQUAL":
-        operator = CustomSignalOperator.SEMANTIC_VERSION_EQUAL;
-        break;
-      case "SEMANTIC_VERSION_GREATER_EQUAL":
-        operator = CustomSignalOperator.SEMANTIC_VERSION_GREATER_EQUAL;
-        break;
-      case "SEMANTIC_VERSION_GREATER_THAN":
-        operator = CustomSignalOperator.SEMANTIC_VERSION_GREATER_THAN;
-        break;
-      case "SEMANTIC_VERSION_LESS_EQUAL":
-        operator = CustomSignalOperator.SEMANTIC_VERSION_LESS_EQUAL;
-        break;
-      case "SEMANTIC_VERSION_LESS_THAN":
-        operator = CustomSignalOperator.SEMANTIC_VERSION_LESS_THAN;
-        break;
-      case "SEMANTIC_VERSION_NOT_EQUAL":
-        operator = CustomSignalOperator.SEMANTIC_VERSION_NOT_EQUAL;
-        break;
-      case "STRING_CONTAINS":
-        operator = CustomSignalOperator.STRING_CONTAINS;
-        break;
-      case "STRING_CONTAINS_REGEX":
-        operator = CustomSignalOperator.STRING_CONTAINS_REGEX;
-        break;
-      case "STRING_DOES_NOT_CONTAIN":
-        operator = CustomSignalOperator.STRING_DOES_NOT_CONTAIN;
-        break;
-      case "STRING_EXACTLY_MATCHES":
-        operator = CustomSignalOperator.STRING_EXACTLY_MATCHES;
-        break;
-      default:
-        operator = CustomSignalOperator.UNSPECIFIED;
-    }
-    CustomSignalCondition customSignalCondition = new CustomSignalCondition(
-        customSignalKey, operator, targetCustomSignalValues);
-    OneOfCondition condition = new OneOfCondition();
-    condition.setCustomSignal(customSignalCondition);
-    return condition;
-  }
-
-  private OneOfCondition getPercentOneOfCondition(PercentConditionResponse percentResponse) {
-    PercentConditionOperator operator;
-    switch (percentResponse.getPercentOperator()) {
-      case "BETWEEN":
-        operator = PercentConditionOperator.BETWEEN;
-        break;
-      case "GREATER_THAN":
-        operator = PercentConditionOperator.GREATER_THAN;
-        break;
-      case "LESS_OR_EQUAL":
-        operator = PercentConditionOperator.LESS_OR_EQUAL;
-        break;
-      default:
-        operator = PercentConditionOperator.UNSPECIFIED;
-    }
-    int microPercent = percentResponse.getMicroPercent();
-    String seed = percentResponse.getSeed();
-    MicroPercentRange microPercentRange = null;
-    if (percentResponse.getMicroPercentRange() != null) {
-      microPercentRange = new MicroPercentRange(
-          percentResponse.getMicroPercentRange().getMicroPercentLowerBound(),
-          percentResponse.getMicroPercentRange().getMicroPercentUpperBound());
-    }
-        
-    PercentCondition percentCondition;
-    if (microPercentRange != null) {
-      percentCondition = new PercentCondition(microPercentRange, operator, seed);
-    } else {
-      percentCondition = new PercentCondition(microPercent, operator, seed);
-    }
-    OneOfCondition condition = new OneOfCondition();
-    condition.setPercent(percentCondition);
-    return condition;
   }
 }

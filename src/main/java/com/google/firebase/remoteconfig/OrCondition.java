@@ -18,27 +18,38 @@ package com.google.firebase.remoteconfig;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OneOfConditionResponse;
+import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OrConditionResponse;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Represents a collection of conditions that evaluate to true if one of them is
- * true.
- */
+/** Represents a collection of conditions that evaluate to true if one of them is true. */
 public final class OrCondition {
   private final ImmutableList<OneOfCondition> conditions;
 
-  /**
-   * Creates OrCondition joining subconditions.
-   */
+  /** Creates OrCondition joining subconditions. */
   public OrCondition(@NonNull List<OneOfCondition> conditions) {
     this.conditions = ImmutableList.copyOf(conditions);
   }
 
   /**
+   * Creates a new {@link OrCondition} from API response.
+   *
+   * @param orConditionResponse the conditions obtained from server call.
+   */
+  OrCondition(OrConditionResponse orConditionResponse) {
+    List<OneOfCondition> nestedConditions = new ArrayList<>();
+    for (OneOfConditionResponse nestedResponse : orConditionResponse.getConditions()) {
+      OneOfCondition nestedCondition = new OneOfCondition(nestedResponse);
+      nestedConditions.add(nestedCondition);
+    }
+    this.conditions = ImmutableList.copyOf(nestedConditions);
+  }
+
+  /**
    * Gets the list of {@link OneOfCondition}
-   * 
+   *
    * @return List of conditions to evaluate.
    */
   @NonNull

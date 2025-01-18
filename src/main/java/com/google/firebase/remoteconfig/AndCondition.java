@@ -18,6 +18,8 @@ package com.google.firebase.remoteconfig;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.AndConditionResponse;
+import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OneOfConditionResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +35,16 @@ public final class AndCondition {
    */
   public AndCondition(@NonNull List<OneOfCondition> conditions) {
     this.conditions = ImmutableList.copyOf(conditions);
+  }
+
+
+  AndCondition(AndConditionResponse andConditionResponse) {
+    List<OneOfCondition> nestedConditions =  new ArrayList<>();
+    for (OneOfConditionResponse nestedResponse: andConditionResponse.getConditions()) {
+      OneOfCondition nestedCondition = new OneOfCondition(nestedResponse);
+      nestedConditions.add(nestedCondition);
+    }
+    this.conditions = ImmutableList.copyOf(nestedConditions);
   }
 
   /**

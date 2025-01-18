@@ -18,11 +18,9 @@ package com.google.firebase.remoteconfig;
 
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
+import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.PercentConditionResponse;
 
-/**
- * Represents a condition that compares the instance pseudo-random percentile to
- * a given limit.
- */
+/** Represents a condition that compares the instance pseudo-random percentile to a given limit. */
 public final class PercentCondition {
   private int microPercent;
   private MicroPercentRange microPercentRange;
@@ -31,17 +29,17 @@ public final class PercentCondition {
 
   /**
    * Create a percent condition for operator BETWEEN.
-   * 
+   *
    * @param microPercent The limit of percentiles to target in micro-percents when using the
-   *        LESS_OR_EQUAL and GREATER_THAN operators. The value must be in the range
-   *        [0 and 100000000].
+   *     LESS_OR_EQUAL and GREATER_THAN operators. The value must be in the range [0 and 100000000].
    * @param percentConditionOperator The choice of percent operator to determine how to compare
-   *        targets to percent(s).
+   *     targets to percent(s).
    * @param seed The seed used when evaluating the hash function to map an instance to a value in
-   *        the hash space. This is a string which can have 0 - 32 characters and can contain ASCII
-   *        characters [-_.0-9a-zA-Z].The string is case-sensitive.
+   *     the hash space. This is a string which can have 0 - 32 characters and can contain ASCII
+   *     characters [-_.0-9a-zA-Z].The string is case-sensitive.
    */
-  public PercentCondition(@Nullable Integer microPercent,
+  public PercentCondition(
+      @Nullable Integer microPercent,
       @NonNull PercentConditionOperator percentConditionOperator,
       @NonNull String seed) {
     this.microPercent = microPercent != null ? microPercent : 0;
@@ -51,15 +49,16 @@ public final class PercentCondition {
 
   /**
    * Create a percent condition for operators GREATER_THAN and LESS_OR_EQUAL.
-   * 
+   *
    * @param microPercentRange The micro-percent interval to be used with the BETWEEN operator.
    * @param percentConditionOperator The choice of percent operator to determine how to compare
-   *        targets to percent(s).
-   * @param seed The seed used when evaluating the hash function to map an instance to a value
-   *        in the hash space. This is a string which can have 0 - 32 characters and can contain
-   *        ASCII characters [-_.0-9a-zA-Z].The string is case-sensitive.
+   *     targets to percent(s).
+   * @param seed The seed used when evaluating the hash function to map an instance to a value in
+   *     the hash space. This is a string which can have 0 - 32 characters and can contain ASCII
+   *     characters [-_.0-9a-zA-Z].The string is case-sensitive.
    */
-  public PercentCondition(@NonNull MicroPercentRange microPercentRange,
+  public PercentCondition(
+      @NonNull MicroPercentRange microPercentRange,
       @NonNull PercentConditionOperator percentConditionOperator,
       String seed) {
     this.microPercentRange = microPercentRange;
@@ -68,10 +67,38 @@ public final class PercentCondition {
   }
 
   /**
-   * Gets the limit of percentiles to target in micro-percents when using the
-   * LESS_OR_EQUAL and GREATER_THAN operators. The value must be in the range [0
-   * and 100000000].
-   * 
+   * Creates a new {@link PercentCondition} from API response.
+   *
+   * @param percentCondition the conditions obtained from server call.
+   */
+  PercentCondition(PercentConditionResponse percentCondition) {
+    this.microPercent = percentCondition.getMicroPercent();
+    this.seed = percentCondition.getSeed();
+    switch (percentCondition.getPercentOperator()) {
+      case "BETWEEN":
+        this.percentConditionOperator = PercentConditionOperator.BETWEEN;
+        break;
+      case "GREATER_THAN":
+        this.percentConditionOperator = PercentConditionOperator.GREATER_THAN;
+        break;
+      case "LESS_OR_EQUAL":
+        this.percentConditionOperator = PercentConditionOperator.LESS_OR_EQUAL;
+        break;
+      default:
+        this.percentConditionOperator = PercentConditionOperator.UNSPECIFIED;
+    }
+    if (percentCondition.getMicroPercentRange() != null) {
+      this.microPercentRange =
+          new MicroPercentRange(
+              percentCondition.getMicroPercentRange().getMicroPercentLowerBound(),
+              percentCondition.getMicroPercentRange().getMicroPercentUpperBound());
+    }
+  }
+
+  /**
+   * Gets the limit of percentiles to target in micro-percents when using the LESS_OR_EQUAL and
+   * GREATER_THAN operators. The value must be in the range [0 and 100000000].
+   *
    * @return micro percent.
    */
   @Nullable
@@ -81,7 +108,7 @@ public final class PercentCondition {
 
   /**
    * Gets micro-percent interval to be used with the BETWEEN operator.
-   * 
+   *
    * @return micro percent range.
    */
   @Nullable
@@ -90,9 +117,8 @@ public final class PercentCondition {
   }
 
   /**
-   * Gets choice of percent operator to determine how to compare targets to
-   * percent(s).
-   * 
+   * Gets choice of percent operator to determine how to compare targets to percent(s).
+   *
    * @return operator.
    */
   @NonNull
@@ -101,10 +127,10 @@ public final class PercentCondition {
   }
 
   /**
-   * The seed used when evaluating the hash function to map an instance to a value
-   * in the hash space. This is a string which can have 0 - 32 characters and can
-   * contain ASCII characters [-_.0-9a-zA-Z].The string is case-sensitive.
-   * 
+   * The seed used when evaluating the hash function to map an instance to a value in the hash
+   * space. This is a string which can have 0 - 32 characters and can contain ASCII characters
+   * [-_.0-9a-zA-Z].The string is case-sensitive.
+   *
    * @return seed.
    */
   @NonNull
