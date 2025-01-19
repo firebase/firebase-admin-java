@@ -60,6 +60,6 @@ public class MicroPercentRange {
     MicroPercentRangeResponse microPercentRangeResponse = new MicroPercentRangeResponse();
     microPercentRangeResponse.setMicroPercentLowerBound(this.microPercentLowerBound);
     microPercentRangeResponse.setMicroPercentUpperBound(this.microPercentUpperBound);
-    return null;
+    return microPercentRangeResponse;
   }
 }

@@ -127,8 +127,9 @@ public class OneOfCondition {
    *
    * @param orCondition Makes this condition an OR condition.
    */
-  public void setOrCondition(@NonNull OrCondition orCondition) {
+  public OneOfCondition setOrCondition(@NonNull OrCondition orCondition) {
     this.orCondition = orCondition;
+    return this;
   }
 
   /**
@@ -136,8 +137,9 @@ public class OneOfCondition {
    *
    * @param andCondition Makes this condition an AND condition.
    */
-  public void setAndCondition(@NonNull AndCondition andCondition) {
+  public OneOfCondition setAndCondition(@NonNull AndCondition andCondition) {
     this.andCondition = andCondition;
+    return this;
   }
 
   /**
@@ -145,8 +147,9 @@ public class OneOfCondition {
    *
    * @param percent Makes this condition a percent condition.
    */
-  public void setPercent(@NonNull PercentCondition percent) {
+  public OneOfCondition setPercent(@NonNull PercentCondition percent) {
     this.percent = percent;
+    return this;
   }
 
   /**
@@ -154,18 +157,21 @@ public class OneOfCondition {
    *
    * @param customSignal Makes this condition a custom signal condition.
    */
-  public void setCustomSignal(@NonNull CustomSignalCondition customSignal) {
+  public OneOfCondition setCustomSignal(@NonNull CustomSignalCondition customSignal) {
     this.customSignal = customSignal;
+    return this;
   }
 
   /** Sets evaluation value to true. */
-  public void setTrue() {
+  public OneOfCondition setTrue() {
     this.trueValue = "true";
+    return this;
   }
 
   /** Sets evaluation value to false. */
-  public void setFalse() {
+  public OneOfCondition setFalse() {
     this.falseValue = "false";
+    return this;
   }
 
   public OneOfConditionResponse toOneOfConditionResponse() {
