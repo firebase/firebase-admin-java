@@ -54,15 +54,9 @@ public class OneOfCondition {
   }
 
   OneOfCondition() {
-    this.orCondition = null;
-    this.andCondition = null;
-    this.percent = null;
-    this.customSignal = null;
-    this.trueValue = null;
-    this.falseValue = null;
   }
 
-  /**
+/**
    * Gets {@link OrCondition} with conditions on which OR operation will be applied.
    *
    * @return list of conditions.

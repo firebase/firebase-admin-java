@@ -51,6 +51,7 @@ import com.google.firebase.testing.TestUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,8 @@ public class FirebaseRemoteConfigClientImplTest {
 
   private static final String TEST_REMOTE_CONFIG_URL =
           "https://firebaseremoteconfig.googleapis.com/v1/projects/test-project/remoteConfig";
+  private static final String TEST_SERVER_REMOTE_CONFIG_URL =
+          "https://firebaseremoteconfig.googleapis.com/v1/projects/test-project/namespaces/firebase-server/serverRemoteConfig";
 
   private static final List<Integer> HTTP_STATUS_CODES = ImmutableList.of(401, 404, 500);
 
@@ -72,6 +75,9 @@ public class FirebaseRemoteConfigClientImplTest {
 
   private static final String MOCK_TEMPLATE_RESPONSE = TestUtils
           .loadResource("getRemoteConfig.json");
+  
+  private static final String MOCK_SERVER_TEMPLATE_RESPONSE = TestUtils
+          .loadResource("getServerRemoteConfig.json");
 
   private static final String MOCK_LIST_VERSIONS_RESPONSE = TestUtils
           .loadResource("listRemoteConfigVersions.json");
@@ -110,6 +116,13 @@ public class FirebaseRemoteConfigClientImplTest {
                   "device.os == 'android' && device.country in ['us', 'uk']")
   );
 
+  private static final List<ServerCondition> EXPECTED_SERVER_CONDITIONS = new ArrayList<ServerCondition>(List.of(
+          new ServerCondition("custom_signal",null).setServerCondition(new OneOfCondition().setOrCondition(new OrCondition(ImmutableList.of(new OneOfCondition().setAndCondition(new AndCondition(ImmutableList.of(new OneOfCondition().setCustomSignal(new CustomSignalCondition("users",  CustomSignalOperator.NUMERIC_LESS_THAN, new ArrayList<>(List.of("100"))))))))))),
+          new ServerCondition("percent",null).setServerCondition(new OneOfCondition().setOrCondition(new OrCondition(ImmutableList.of(new OneOfCondition().setAndCondition(new AndCondition(ImmutableList.of(new OneOfCondition().setPercent(new PercentCondition(new MicroPercentRange(12000000, 100000000), PercentConditionOperator.BETWEEN, "3maarirs9xzs"))))))))),
+          new ServerCondition("chained_conditions",null).setServerCondition(new OneOfCondition().setOrCondition(new OrCondition(ImmutableList.of(new OneOfCondition().setAndCondition(new AndCondition(ImmutableList.of(new OneOfCondition().setCustomSignal(new CustomSignalCondition("users",  CustomSignalOperator.NUMERIC_LESS_THAN, new ArrayList<>(List.of("100")))), new OneOfCondition().setPercent(new PercentCondition(new MicroPercentRange(25000000, 100000000), PercentConditionOperator.BETWEEN, "cla24qoibb61"))))))))))
+  );
+  
+
   private static final Version EXPECTED_VERSION = new Version(new TemplateResponse.VersionResponse()
           .setVersionNumber("17")
           .setUpdateOrigin("ADMIN_SDK_NODE")
@@ -127,6 +140,13 @@ public class FirebaseRemoteConfigClientImplTest {
           .setParameters(EXPECTED_PARAMETERS)
           .setConditions(EXPECTED_CONDITIONS)
           .setParameterGroups(EXPECTED_PARAMETER_GROUPS)
+          .setVersion(EXPECTED_VERSION);
+  
+  private static final ServerTemplateData EXPECT_SERVER_TEMPLATE_DATA = new ServerTemplateData()
+          .setETag(TEST_ETAG)
+          .setParameters(EXPECTED_PARAMETERS)
+          .setParameterGroups(EXPECTED_PARAMETER_GROUPS)
+          .setServerConditions(EXPECTED_SERVER_CONDITIONS)
           .setVersion(EXPECTED_VERSION);
 
   private MockLowLevelHttpResponse response;
@@ -1188,6 +1208,19 @@ public class FirebaseRemoteConfigClientImplTest {
     assertEquals("gzip", headers.getAcceptEncoding());
   }
 
+  private void checkGetRequestHeaderForServer(HttpRequest request) {
+    checkGetRequestHeaderForServer(request, "");
+  }
+
+  private void checkGetRequestHeaderForServer(HttpRequest request, String urlSuffix) {
+    assertEquals("GET", request.getRequestMethod());
+    assertEquals(TEST_SERVER_REMOTE_CONFIG_URL + urlSuffix, request.getUrl().toString());
+    HttpHeaders headers = request.getHeaders();
+    assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
+    assertEquals(SdkUtils.getMetricsHeader(), request.getHeaders().get("X-Goog-Api-Client"));
+    assertEquals("gzip", headers.getAcceptEncoding());
+  }
+
   private void checkPutRequestHeader(HttpRequest request) {
     checkPutRequestHeader(request, "", TEST_ETAG);
   }
@@ -1237,4 +1270,202 @@ public class FirebaseRemoteConfigClientImplTest {
     assertEquals(httpMethod, request.getMethod());
     assertTrue(request.getUrl().startsWith("https://firebaseremoteconfig.googleapis.com"));
   }
+
+
+
+// Get server template tests
+
+
+@Test
+public void testGetServerTemplate() throws Exception {
+  response.addHeader("etag", TEST_ETAG);
+  response.setContent(MOCK_SERVER_TEMPLATE_RESPONSE);
+
+  String receivedTemplate = client.getServerTemplate();
+  ServerTemplateData serverTemplateData = ServerTemplateData.fromJSON(receivedTemplate);
+
+  assertEquals(EXPECTED_PARAMETERS, serverTemplateData.getParameters());
+  assertEquals(TEST_ETAG, serverTemplateData.getETag());
+  assertEquals(EXPECTED_SERVER_CONDITIONS, serverTemplateData.getServerConditions());
+//  assertEquals(EXPECT_SERVER_TEMPLATE_DATA, serverTemplateData);
+  assertEquals(1605423446000L, serverTemplateData.getVersion().getUpdateTime());
+  checkGetRequestHeaderForServer(interceptor.getLastRequest());
+}
+
+@Test
+public void testGetServerTemplateWithTimestampUpToNanosecondPrecision() throws Exception {
+  List<String> timestamps = ImmutableList.of(
+          "2020-11-15T06:57:26.342Z",
+          "2020-11-15T06:57:26.342763Z",
+          "2020-11-15T06:57:26.342763941Z"
+  );
+  for (String timestamp : timestamps) {
+    response.addHeader("etag", TEST_ETAG);
+    String templateResponse = "{\"version\": {"
+            + "    \"versionNumber\": \"17\","
+            + "    \"updateTime\": \"" + timestamp + "\""
+            + "  }}";
+    response.setContent(templateResponse);
+
+    String receivedTemplate = client.getServerTemplate();
+    ServerTemplateData serverTemplateData = ServerTemplateData.fromJSON(receivedTemplate);
+  
+    assertEquals(TEST_ETAG, serverTemplateData.getETag());
+    assertEquals("17", serverTemplateData.getVersion().getVersionNumber());
+    assertEquals(1605423446000L, serverTemplateData.getVersion().getUpdateTime());
+    checkGetRequestHeaderForServer(interceptor.getLastRequest());
+  }
+}
+
+@Test
+public void testGetServerTemplateWithEmptyTemplateResponse() throws Exception {
+  response.addHeader("etag", TEST_ETAG);
+  response.setContent("{}");
+
+ 
+  String receivedTemplate = client.getServerTemplate();
+  ServerTemplateData serverTemplateData = ServerTemplateData.fromJSON(receivedTemplate);
+
+  assertEquals(TEST_ETAG, serverTemplateData.getETag());
+  assertEquals(0, serverTemplateData.getParameters().size());
+  assertEquals(0, serverTemplateData.getServerConditions().size());
+  assertEquals(0, serverTemplateData.getParameterGroups().size());
+  assertNull(serverTemplateData.getVersion());
+  checkGetRequestHeaderForServer(interceptor.getLastRequest());
+}
+
+@Test(expected = IllegalStateException.class)
+public void testGetServerTemplateWithNoEtag() throws FirebaseRemoteConfigException {
+  // ETag does not exist
+  response.setContent(MOCK_SERVER_TEMPLATE_RESPONSE);
+
+  client.getServerTemplate();
+}
+
+@Test(expected = IllegalStateException.class)
+public void testGetServerTemplateWithEmptyEtag() throws FirebaseRemoteConfigException {
+  // Empty ETag
+  response.addHeader("etag", "");
+  response.setContent(MOCK_SERVER_TEMPLATE_RESPONSE);
+
+  client.getServerTemplate();
+}
+
+@Test
+public void testGetServerTemplateHttpError() {
+  for (int code : HTTP_STATUS_CODES) {
+    response.setStatusCode(code).setContent("{}");
+
+    try {
+      client.getServerTemplate();
+      fail("No error thrown for HTTP error");
+    } catch (FirebaseRemoteConfigException error) {
+      checkExceptionFromHttpResponse(error, HTTP_STATUS_TO_ERROR_CODE.get(code), null,
+              "Unexpected HTTP response with status: " + code + "\n{}", HttpMethods.GET);
+    }
+    checkGetRequestHeaderForServer(interceptor.getLastRequest());
+  }
+}
+
+@Test
+public void testGetServerTemplateTransportError() {
+  client = initClientWithFaultyTransport();
+
+  try {
+    client.getServerTemplate();
+    fail("No error thrown for HTTP error");
+  } catch (FirebaseRemoteConfigException error) {
+    assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
+    assertEquals("Unknown error while making a remote service call: transport error",
+            error.getMessage());
+    assertTrue(error.getCause() instanceof IOException);
+    assertNull(error.getHttpResponse());
+    assertNull(error.getRemoteConfigErrorCode());
+  }
+}
+
+@Test
+public void testGetServerTemplateSuccessResponseWithUnexpectedPayload() {
+  response.setContent("not valid json");
+
+  try {
+    client.getServerTemplate();
+    fail("No error thrown for malformed response");
+  } catch (FirebaseRemoteConfigException error) {
+    assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
+    assertTrue(error.getMessage().startsWith("Error while parsing HTTP response: "));
+    assertNotNull(error.getCause());
+    assertNotNull(error.getHttpResponse());
+    assertNull(error.getRemoteConfigErrorCode());
+  }
+  checkGetRequestHeaderForServer(interceptor.getLastRequest());
+}
+
+@Test
+public void testGetServerTemplateErrorWithZeroContentResponse() {
+  for (int code : HTTP_STATUS_CODES) {
+    response.setStatusCode(code).setZeroContent();
+
+    try {
+      client.getServerTemplate();
+      fail("No error thrown for HTTP error");
+    } catch (FirebaseRemoteConfigException error) {
+      checkExceptionFromHttpResponse(error, HTTP_STATUS_TO_ERROR_CODE.get(code), null,
+              "Unexpected HTTP response with status: " + code + "\nnull", HttpMethods.GET);
+    }
+    checkGetRequestHeaderForServer(interceptor.getLastRequest());
+  }
+}
+
+@Test
+public void testGetServerTemplateErrorWithMalformedResponse() {
+  for (int code : HTTP_STATUS_CODES) {
+    response.setStatusCode(code).setContent("not json");
+
+    try {
+      client.getServerTemplate();
+      fail("No error thrown for HTTP error");
+    } catch (FirebaseRemoteConfigException error) {
+      checkExceptionFromHttpResponse(error, HTTP_STATUS_TO_ERROR_CODE.get(code), null,
+              "Unexpected HTTP response with status: " + code + "\nnot json", HttpMethods.GET);
+    }
+    checkGetRequestHeaderForServer(interceptor.getLastRequest());
+  }
+}
+
+@Test
+public void testGetServerTemplateErrorWithDetails() {
+  for (int code : HTTP_STATUS_CODES) {
+    response.setStatusCode(code).setContent(
+            "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\"}}");
+
+    try {
+      client.getServerTemplate();
+      fail("No error thrown for HTTP error");
+    } catch (FirebaseRemoteConfigException error) {
+      checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT, null, "test error",
+              HttpMethods.GET);
+    }
+    checkGetRequestHeaderForServer(interceptor.getLastRequest());
+  }
+}
+
+@Test
+public void testGetServerTemplateErrorWithRcError() {
+  for (int code : HTTP_STATUS_CODES) {
+    response.setStatusCode(code).setContent(
+            "{\"error\": {\"status\": \"INVALID_ARGUMENT\", "
+                    + "\"message\": \"[INVALID_ARGUMENT]: test error\"}}");
+
+    try {
+      client.getServerTemplate();
+      fail("No error thrown for HTTP error");
+    } catch (FirebaseRemoteConfigException error) {
+      checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT,
+              RemoteConfigErrorCode.INVALID_ARGUMENT, "[INVALID_ARGUMENT]: test error",
+              HttpMethods.GET);
+    }
+    checkGetRequestHeaderForServer(interceptor.getLastRequest());
+  }
+}
 }
