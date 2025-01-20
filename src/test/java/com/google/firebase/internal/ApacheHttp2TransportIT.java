@@ -292,6 +292,21 @@ public class ApacheHttp2TransportIT {
     }
   }
 
+  @Test
+  public void testVerifyDefaultTransportReused() {
+    FirebaseOptions o1 = FirebaseOptions.builder()
+      .setCredentials(MOCK_CREDENTIALS)
+      .build();
+    
+    FirebaseOptions o2 = FirebaseOptions.builder()
+      .setCredentials(MOCK_CREDENTIALS)
+      .build();
+
+    HttpTransport t1 = o1.getHttpTransport();
+    HttpTransport t2 = o2.getHttpTransport();
+    assertEquals(t1, t2);
+  }
+
   private static ErrorHandlingHttpClient<FirebaseException> getHttpClient(boolean authorized,
       FirebaseApp app) {
     HttpRequestFactory requestFactory;
