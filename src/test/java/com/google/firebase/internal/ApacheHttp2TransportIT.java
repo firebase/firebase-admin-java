@@ -200,7 +200,7 @@ public class ApacheHttp2TransportIT {
   public void testWriteTimeoutAuthorizedGet() throws FirebaseException {
     app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
-        .setWriteTimeout(100)
+        .setWriteTimeout(1)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
     HttpRequestInfo request = HttpRequestInfo.buildGetRequest(GET_URL);
@@ -219,7 +219,7 @@ public class ApacheHttp2TransportIT {
   public void testWriteTimeoutAuthorizedPost() throws FirebaseException {
     app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
-        .setWriteTimeout(100)
+        .setWriteTimeout(1)
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
     HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(POST_URL, payload);
