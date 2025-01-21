@@ -47,6 +47,8 @@ import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
 import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -116,11 +118,10 @@ public class FirebaseRemoteConfigClientImplTest {
                   "device.os == 'android' && device.country in ['us', 'uk']")
   );
 
-  private static final List<ServerCondition> EXPECTED_SERVER_CONDITIONS = new ArrayList<ServerCondition>(List.of(
-          new ServerCondition("custom_signal",null).setServerCondition(new OneOfCondition().setOrCondition(new OrCondition(ImmutableList.of(new OneOfCondition().setAndCondition(new AndCondition(ImmutableList.of(new OneOfCondition().setCustomSignal(new CustomSignalCondition("users",  CustomSignalOperator.NUMERIC_LESS_THAN, new ArrayList<>(List.of("100"))))))))))),
+  private static final List<ServerCondition> EXPECTED_SERVER_CONDITIONS = ImmutableList.of(
+          new ServerCondition("custom_signal",null).setServerCondition(new OneOfCondition().setOrCondition(new OrCondition(ImmutableList.of(new OneOfCondition().setAndCondition(new AndCondition(ImmutableList.of(new OneOfCondition().setCustomSignal(new CustomSignalCondition("users",  CustomSignalOperator.NUMERIC_LESS_THAN, new ArrayList<>(ImmutableList.of("100"))))))))))),
           new ServerCondition("percent",null).setServerCondition(new OneOfCondition().setOrCondition(new OrCondition(ImmutableList.of(new OneOfCondition().setAndCondition(new AndCondition(ImmutableList.of(new OneOfCondition().setPercent(new PercentCondition(new MicroPercentRange(12000000, 100000000), PercentConditionOperator.BETWEEN, "3maarirs9xzs"))))))))),
-          new ServerCondition("chained_conditions",null).setServerCondition(new OneOfCondition().setOrCondition(new OrCondition(ImmutableList.of(new OneOfCondition().setAndCondition(new AndCondition(ImmutableList.of(new OneOfCondition().setCustomSignal(new CustomSignalCondition("users",  CustomSignalOperator.NUMERIC_LESS_THAN, new ArrayList<>(List.of("100")))), new OneOfCondition().setPercent(new PercentCondition(new MicroPercentRange(25000000, 100000000), PercentConditionOperator.BETWEEN, "cla24qoibb61"))))))))))
-  );
+          new ServerCondition("chained_conditions",null).setServerCondition(new OneOfCondition().setOrCondition(new OrCondition(ImmutableList.of(new OneOfCondition().setAndCondition(new AndCondition(ImmutableList.of(new OneOfCondition().setCustomSignal(new CustomSignalCondition("users",  CustomSignalOperator.NUMERIC_LESS_THAN, new ArrayList<>(ImmutableList.of("100")))), new OneOfCondition().setPercent(new PercentCondition(new MicroPercentRange(25000000, 100000000), PercentConditionOperator.BETWEEN, "cla24qoibb61"))))))))));
   
 
   private static final Version EXPECTED_VERSION = new Version(new TemplateResponse.VersionResponse()
@@ -1286,8 +1287,7 @@ public void testGetServerTemplate() throws Exception {
 
   assertEquals(EXPECTED_PARAMETERS, serverTemplateData.getParameters());
   assertEquals(TEST_ETAG, serverTemplateData.getETag());
-  assertEquals(EXPECTED_SERVER_CONDITIONS, serverTemplateData.getServerConditions());
-//  assertEquals(EXPECT_SERVER_TEMPLATE_DATA, serverTemplateData);
+  assertEquals(convertObjectToString(EXPECTED_SERVER_CONDITIONS), convertObjectToString(serverTemplateData.getServerConditions()));
   assertEquals(1605423446000L, serverTemplateData.getVersion().getUpdateTime());
   checkGetRequestHeaderForServer(interceptor.getLastRequest());
 }
@@ -1467,5 +1467,10 @@ public void testGetServerTemplateErrorWithRcError() {
     }
     checkGetRequestHeaderForServer(interceptor.getLastRequest());
   }
+}
+
+public static String convertObjectToString(Object object) {
+  Gson gson = new GsonBuilder().setPrettyPrinting().create(); // Optional: pretty printing
+  return gson.toJson(object);
 }
 }
