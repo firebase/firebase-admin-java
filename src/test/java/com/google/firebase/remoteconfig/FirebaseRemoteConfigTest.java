@@ -45,10 +45,6 @@ public class FirebaseRemoteConfigTest {
   private static final FirebaseRemoteConfigException TEST_EXCEPTION =
           new FirebaseRemoteConfigException(ErrorCode.INTERNAL, "Test error message");
 
-  private static final String MOCK_SERVER_TEMPLATE_RESPONSE = TestUtils
-          .loadResource("getServerRemoteConfig.json");
-
-
   @After
   public void tearDown() {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
@@ -634,17 +630,6 @@ public class FirebaseRemoteConfigTest {
     ServerTemplate template = remoteConfig.getServerTemplate();
     String templateData = template.toJson();
     assertEquals(TEST_SERVER_TEMPLATE, templateData);
-  }
-
-  @Test
-  public void testGetServerTemplate1() throws FirebaseRemoteConfigException {
-    MockRemoteConfigClient client = MockRemoteConfigClient.fromTemplate(
-            new Template().setETag(TEST_ETAG));
-    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
-
-    Template template = remoteConfig.getTemplate();
-
-    assertEquals(TEST_ETAG, template.getETag());
   }
 
   @Test
