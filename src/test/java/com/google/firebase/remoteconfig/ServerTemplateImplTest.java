@@ -18,12 +18,21 @@ package com.google.firebase.remoteconfig;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.api.core.ApiFuture;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.testing.TestUtils;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class ServerTemplateImplTest {
+
+  private static final FirebaseOptions TEST_OPTIONS = FirebaseOptions.builder()
+          .setCredentials(new MockGoogleCredentials("test-token"))
+          .setProjectId("test-project")
+          .build();
 
   private static String cacheTemplate;
 
@@ -298,5 +307,48 @@ public class ServerTemplateImplTest {
     ServerConfig evaluatedConfig = template.evaluate(context);
 
     assertEquals(ValueSource.DEFAULT, evaluatedConfig.getValueSource("Unset default config"));
+  }
+
+  private static final String TEST_ETAG = "etag-123456789012-1";
+
+  private FirebaseRemoteConfig getRemoteConfig(FirebaseRemoteConfigClient client) {
+    FirebaseApp app = FirebaseApp.initializeApp(TEST_OPTIONS);
+    return new FirebaseRemoteConfig(app, client);
+  }
+  
+  @Test
+  public void testLoad() throws Exception {
+    String TEST_SERVER_TEMPLATE = "{\n" +
+            "  \"etag\": \"etag-123456789012-1\",\n" +
+            "  \"parameters\": {},\n" +
+            "  \"serverConditions\": [],\n" +
+            "  \"parameterGroups\": {}\n" +
+            "}";
+    KeysAndValues defaultConfig = new KeysAndValues.Builder()
+        .put("Unset default config", "abc")
+        .build();
+
+    // Mock the HTTP client to return a predefined response
+    MockRemoteConfigClient client = MockRemoteConfigClient.fromServerTemplate(
+            new ServerTemplateData().setETag(TEST_ETAG).toJSON());
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
+    ServerTemplate template1 = remoteConfig.serverTemplateBuilder().defaultConfig(defaultConfig).cachedTemplate(cacheTemplate).build();
+    
+    // Call the load method
+    ApiFuture<Void> loadFuture = template1.load();
+    loadFuture.get();
+    String cachedTemplate = template1.toJson();
+    assertEquals(TEST_SERVER_TEMPLATE, cachedTemplate);
+
+    // Assert that the cached template and cache are set correctly
+   // String cachedTemplate = template.ca; // Assuming cachedTemplate is accessible
+   // ServerTemplateData cache = remoteConfig.cache; // Assuming cache is accessible
+
+  //  assertEquals(TEST_SERVER_TEMPLATE, cachedTemplate);
+
+    // Parse and compare the JSON content of the cache
+    //JSONObject expectedJson = new JSONObject(TEST_SERVER_TEMPLATE);
+    //JSONObject actualJson = new JSONObject(cache.toJSON());
+   // assertEquals(expectedJson.toString(), actualJson.toString());
   }
 }

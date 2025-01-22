@@ -21,28 +21,35 @@ import com.google.firebase.remoteconfig.internal.TemplateResponse.ListVersionsRe
 public class MockRemoteConfigClient implements FirebaseRemoteConfigClient{
 
   private final Template resultTemplate;
+  private final String resultServerTemplate;
   private final FirebaseRemoteConfigException exception;
   private final ListVersionsResponse listVersionsResponse;
 
   private MockRemoteConfigClient(Template resultTemplate,
+                                 String resultServerTemplate,
                                  ListVersionsResponse listVersionsResponse,
                                  FirebaseRemoteConfigException exception) {
     this.resultTemplate = resultTemplate;
+    this.resultServerTemplate = resultServerTemplate;
     this.listVersionsResponse = listVersionsResponse;
     this.exception = exception;
   }
 
   static MockRemoteConfigClient fromTemplate(Template resultTemplate) {
-    return new MockRemoteConfigClient(resultTemplate, null, null);
+    return new MockRemoteConfigClient(resultTemplate,null, null, null);
+  }
+
+  static MockRemoteConfigClient fromServerTemplate(String resultTemplate) {
+    return new MockRemoteConfigClient(null, resultTemplate,null, null);
   }
 
   static MockRemoteConfigClient fromListVersionsResponse(
           ListVersionsResponse listVersionsResponse) {
-    return new MockRemoteConfigClient(null, listVersionsResponse, null);
+    return new MockRemoteConfigClient(null,null, listVersionsResponse, null);
   }
 
   static MockRemoteConfigClient fromException(FirebaseRemoteConfigException exception) {
-    return new MockRemoteConfigClient(null, null, exception);
+    return new MockRemoteConfigClient(null,null, null, exception);
   }
 
   @Override
@@ -54,19 +61,19 @@ public class MockRemoteConfigClient implements FirebaseRemoteConfigClient{
   }
 
   @Override
+  public String getServerTemplate() throws FirebaseRemoteConfigException {
+    if (exception != null) {
+      throw exception;
+    }
+    return resultServerTemplate;
+  }
+
+  @Override
   public Template getTemplateAtVersion(String versionNumber) throws FirebaseRemoteConfigException {
     if (exception != null) {
       throw exception;
     }
     return resultTemplate;
-  }
-
-  @Override
-  public String getServerTemplate() throws FirebaseRemoteConfigException {
-    if (exception != null) {
-      throw exception;
-    }
-    return resultTemplate.toString();
   }
 
   @Override
