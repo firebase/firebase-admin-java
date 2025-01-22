@@ -16,6 +16,9 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.AndConditionResponse;
@@ -33,6 +36,8 @@ public final class AndCondition {
    * joining subconditions. 
    * */
   public AndCondition(@NonNull List<OneOfCondition> conditions) {
+    checkNotNull(conditions, "List of conditions must not be null.");
+    checkArgument(!conditions.isEmpty(), "List of conditions must not be empty.");
     this.conditions = ImmutableList.copyOf(conditions);
   }
 

@@ -16,6 +16,9 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import com.google.common.base.Strings;
 import com.google.firebase.internal.NonNull;
 
 /**
@@ -36,6 +39,7 @@ public enum PercentConditionOperator {
    *        percent(s).
    */
   PercentConditionOperator(@NonNull String operator) {
+    checkArgument(!Strings.isNullOrEmpty(operator), "Operator must not be null or empty.");
     this.operator = operator;
   }
 

@@ -16,6 +16,9 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import com.google.common.base.Strings;
 import com.google.firebase.internal.NonNull;
 
 import java.util.Map;
@@ -90,6 +93,7 @@ public final class ServerConfig {
   }
 
   private Value getValue(String key) {
+    checkArgument(!Strings.isNullOrEmpty(key), "Server config key cannot be null or empty.");
     if (configValues.containsKey(key)) {
       return configValues.get(key);
     }

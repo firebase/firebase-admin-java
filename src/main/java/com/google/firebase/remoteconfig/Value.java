@@ -16,6 +16,10 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.api.client.util.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
 
@@ -46,6 +50,8 @@ class Value {
    * @param value  Indicates a parameter value.
    */
   Value(@NonNull ValueSource source, @NonNull String value) {
+    checkArgument(!Strings.isNullOrEmpty(value), "Value cannot be null or empty.");
+    checkNotNull(source, "Value source cannot be null.");
     this.source = source;
     this.value = value;
   }

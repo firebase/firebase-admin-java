@@ -16,6 +16,8 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OneOfConditionResponse;
@@ -122,6 +124,7 @@ public class OneOfCondition {
    * @param orCondition Makes this condition an OR condition.
    */
   public OneOfCondition setOrCondition(@NonNull OrCondition orCondition) {
+    checkNotNull(orCondition, "`Or` condition cannot be set to null.");
     this.orCondition = orCondition;
     return this;
   }
@@ -132,6 +135,7 @@ public class OneOfCondition {
    * @param andCondition Makes this condition an AND condition.
    */
   public OneOfCondition setAndCondition(@NonNull AndCondition andCondition) {
+    checkNotNull(andCondition, "`And` condition cannot be set to null.");
     this.andCondition = andCondition;
     return this;
   }
@@ -142,6 +146,7 @@ public class OneOfCondition {
    * @param percent Makes this condition a percent condition.
    */
   public OneOfCondition setPercent(@NonNull PercentCondition percent) {
+    checkNotNull(percent, "`Percent` condition cannot be set to null.");
     this.percent = percent;
     return this;
   }
@@ -152,6 +157,7 @@ public class OneOfCondition {
    * @param customSignal Makes this condition a custom signal condition.
    */
   public OneOfCondition setCustomSignal(@NonNull CustomSignalCondition customSignal) {
+    checkNotNull(customSignal, "`Custom signal` condition cannot be set to null.");
     this.customSignal = customSignal;
     return this;
   }

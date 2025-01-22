@@ -16,6 +16,9 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
@@ -64,6 +67,10 @@ public final class ConditionEvaluator {
   public Map<String, Boolean> evaluateConditions(
       @NonNull List<ServerCondition> conditions,
       @NonNull KeysAndValues context) {
+    checkNotNull(conditions, "List of conditions must not be null.");
+    checkArgument(!conditions.isEmpty(), "List of conditions must not be empty.");
+    checkNotNull(context, "Context must not be null.");
+
     ImmutableList<ServerCondition> serverConditions = ImmutableList.copyOf(conditions);
     ImmutableMap.Builder<String, Boolean> evaluatedConditions = ImmutableMap.builder();
     int nestingLevel = 0;

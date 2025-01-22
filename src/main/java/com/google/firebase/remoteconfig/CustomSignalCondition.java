@@ -16,6 +16,10 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.CustomSignalConditionResponse;
@@ -42,6 +46,10 @@ public final class CustomSignalCondition {
       @NonNull String customSignalKey,
       @NonNull CustomSignalOperator customSignalOperator,
       @NonNull List<String> targetCustomSignalValues) {
+    checkArgument(!Strings.isNullOrEmpty(customSignalKey), "custom signal key must not be null or empty.");
+    checkNotNull(customSignalOperator);
+    checkNotNull(targetCustomSignalValues);
+    checkArgument(!targetCustomSignalValues.isEmpty(), "Target custom signal values must not be empty.");
     this.customSignalKey = customSignalKey;
     this.customSignalOperator = customSignalOperator;
     this.targetCustomSignalValues = ImmutableList.copyOf(targetCustomSignalValues);

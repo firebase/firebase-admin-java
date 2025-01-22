@@ -16,6 +16,9 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
 
@@ -69,6 +72,8 @@ public class KeysAndValues {
      */
     @NonNull
     public Builder put(@NonNull String key, @NonNull String value) {
+      checkArgument(!Strings.isNullOrEmpty(key), "Context key must not be null or empty.");
+      checkArgument(!Strings.isNullOrEmpty(value), "Context key must not be null or empty.");
       keysAndValues.put(key, value);
       return this;
     }
@@ -82,6 +87,7 @@ public class KeysAndValues {
      */
     @NonNull
     public Builder put(@NonNull String key, boolean value) {
+      checkArgument(!Strings.isNullOrEmpty(key), "Context key must not be null or empty.");
       keysAndValues.put(key, Boolean.toString(value));
       return this;
     }
@@ -95,6 +101,7 @@ public class KeysAndValues {
      */
     @NonNull
     public Builder put(@NonNull String key, double value) {
+      checkArgument(!Strings.isNullOrEmpty(key), "Context key must not be null or empty.");
       keysAndValues.put(key, Double.toString(value));
       return this;
     }
@@ -108,6 +115,7 @@ public class KeysAndValues {
      */
     @NonNull
     public Builder put(@NonNull String key, long value) {
+      checkArgument(!Strings.isNullOrEmpty(key), "Context key must not be null or empty.");
       keysAndValues.put(key, Long.toString(value));
       return this;
     }

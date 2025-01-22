@@ -16,6 +16,10 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.google.common.base.Strings;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.PercentConditionResponse;
@@ -42,6 +46,8 @@ public final class PercentCondition {
       @Nullable Integer microPercent,
       @NonNull PercentConditionOperator percentConditionOperator,
       @NonNull String seed) {
+    checkNotNull(percentConditionOperator, "Percentage operator cannot be null.");
+    checkArgument(!Strings.isNullOrEmpty(seed), "Seed cannot be null or empty.");
     this.microPercent = microPercent != null ? microPercent : 0;
     this.percentConditionOperator = percentConditionOperator;
     this.seed = seed;
@@ -61,6 +67,8 @@ public final class PercentCondition {
       @NonNull MicroPercentRange microPercentRange,
       @NonNull PercentConditionOperator percentConditionOperator,
       String seed) {
+    checkNotNull(microPercentRange, "Percent range cannot be null.");
+    checkNotNull(percentConditionOperator, "Percentage operator cannot be null.");
     this.microPercentRange = microPercentRange;
     this.percentConditionOperator = percentConditionOperator;
     this.seed = seed;

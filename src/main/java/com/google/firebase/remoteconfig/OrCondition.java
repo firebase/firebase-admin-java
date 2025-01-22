@@ -16,6 +16,9 @@
 
 package com.google.firebase.remoteconfig;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OneOfConditionResponse;
@@ -30,6 +33,8 @@ public final class OrCondition {
 
   /** Creates OrCondition joining subconditions. */
   public OrCondition(@NonNull List<OneOfCondition> conditions) {
+    checkNotNull(conditions, "List of conditions must not be null.");
+    checkArgument(!conditions.isEmpty(), "List of conditions must not be empty.");
     this.conditions = ImmutableList.copyOf(conditions);
   }
 
