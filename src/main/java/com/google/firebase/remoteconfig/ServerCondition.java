@@ -111,7 +111,7 @@ public final class ServerCondition {
    * @return This {@link Condition}.
    */
   public ServerCondition setServerCondition(@NonNull OneOfCondition condition) {
-    checkNotNull(condition, "Condition must not be null.");
+    checkArgument(condition != null, "condition must not be null or empty");
     this.serverCondition = condition;
     return this;
   }
