@@ -161,7 +161,6 @@ public final class FirebaseRemoteConfig {
                 serverTemplateBuilder()
                 .defaultConfig(defaultConfig)
                 .cachedTemplate(serverTemplateData)
-                // actual JSON
                 .build();
         
         return template;
