@@ -46,8 +46,8 @@ public final class PercentCondition {
       @Nullable Integer microPercent,
       @NonNull PercentConditionOperator percentConditionOperator,
       @NonNull String seed) {
-    checkNotNull(percentConditionOperator, "Percentage operator cannot be null.");
-    checkArgument(!Strings.isNullOrEmpty(seed), "Seed cannot be null or empty.");
+    checkNotNull(percentConditionOperator, "Percentage operator must not be null.");
+    checkArgument(!Strings.isNullOrEmpty(seed), "Seed must not be null or empty.");
     this.microPercent = microPercent != null ? microPercent : 0;
     this.percentConditionOperator = percentConditionOperator;
     this.seed = seed;
@@ -67,8 +67,8 @@ public final class PercentCondition {
       @NonNull MicroPercentRange microPercentRange,
       @NonNull PercentConditionOperator percentConditionOperator,
       String seed) {
-    checkNotNull(microPercentRange, "Percent range cannot be null.");
-    checkNotNull(percentConditionOperator, "Percentage operator cannot be null.");
+    checkNotNull(microPercentRange, "Percent range must not be null.");
+    checkNotNull(percentConditionOperator, "Percentage operator must not be null.");
     this.microPercentRange = microPercentRange;
     this.percentConditionOperator = percentConditionOperator;
     this.seed = seed;
@@ -80,6 +80,7 @@ public final class PercentCondition {
    * @param percentCondition the conditions obtained from server call.
    */
   PercentCondition(PercentConditionResponse percentCondition) {
+    checkArgument(!Strings.isNullOrEmpty(percentCondition.getSeed()), "Seed must not be empty or null");
     this.microPercent = percentCondition.getMicroPercent();
     this.seed = percentCondition.getSeed();
     switch (percentCondition.getPercentOperator()) {
@@ -95,6 +96,7 @@ public final class PercentCondition {
       default:
         this.percentConditionOperator = PercentConditionOperator.UNSPECIFIED;
     }
+    checkArgument(this.percentConditionOperator != PercentConditionOperator.UNSPECIFIED, "Percentage operator is invalid");
     if (percentCondition.getMicroPercentRange() != null) {
       this.microPercentRange =
           new MicroPercentRange(

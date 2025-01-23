@@ -36,14 +36,17 @@ public final class AndCondition {
    * joining subconditions. 
    * */
   public AndCondition(@NonNull List<OneOfCondition> conditions) {
-    checkNotNull(conditions, "List of conditions must not be null.");
-    checkArgument(!conditions.isEmpty(), "List of conditions must not be empty.");
+    checkNotNull(conditions, "List of conditions for AND operation cannot be null.");
+    checkArgument(!conditions.isEmpty(), "List of conditions for AND operation cannot be empty.");
     this.conditions = ImmutableList.copyOf(conditions);
   }
 
   AndCondition(AndConditionResponse andConditionResponse) {
     List<OneOfCondition> nestedConditions = new ArrayList<>();
-    for (OneOfConditionResponse nestedResponse : andConditionResponse.getConditions()) {
+    List<OneOfConditionResponse> conditionList = andConditionResponse.getConditions();
+    checkNotNull(conditionList, "List of conditions for AND operation cannot be null.");
+    checkArgument(!conditionList.isEmpty(), "List of conditions for AND operation cannot be empty");
+    for (OneOfConditionResponse nestedResponse : conditionList) {
       OneOfCondition nestedCondition = new OneOfCondition(nestedResponse);
       nestedConditions.add(nestedCondition);
     }

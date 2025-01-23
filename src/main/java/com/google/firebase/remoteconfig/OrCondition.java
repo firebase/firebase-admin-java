@@ -33,8 +33,8 @@ public final class OrCondition {
 
   /** Creates OrCondition joining subconditions. */
   public OrCondition(@NonNull List<OneOfCondition> conditions) {
-    checkNotNull(conditions, "List of conditions must not be null.");
-    checkArgument(!conditions.isEmpty(), "List of conditions must not be empty.");
+    checkNotNull(conditions, "List of conditions for OR must not be null.");
+    checkArgument(!conditions.isEmpty(), "List of conditions for OR must not be empty.");
     this.conditions = ImmutableList.copyOf(conditions);
   }
 
@@ -45,7 +45,10 @@ public final class OrCondition {
    */
   OrCondition(OrConditionResponse orConditionResponse) {
     List<OneOfCondition> nestedConditions = new ArrayList<>();
-    for (OneOfConditionResponse nestedResponse : orConditionResponse.getConditions()) {
+    List<OneOfConditionResponse> conditionList = orConditionResponse.getConditions();
+    checkNotNull(conditionList, "List of conditions for OR operation cannot be null.");
+    checkArgument(!conditionList.isEmpty(), "List of conditions for OR operation cannot be empty");
+    for (OneOfConditionResponse nestedResponse : conditionList) {
       OneOfCondition nestedCondition = new OneOfCondition(nestedResponse);
       nestedConditions.add(nestedCondition);
     }
