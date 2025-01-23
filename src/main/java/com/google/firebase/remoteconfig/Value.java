@@ -49,8 +49,7 @@ class Value {
    * @param source Indicates the source of a value.
    * @param value  Indicates a parameter value.
    */
-  Value(@NonNull ValueSource source, @NonNull String value) {
-    checkArgument(!Strings.isNullOrEmpty(value), "Value cannot be null or empty.");
+  Value(@NonNull ValueSource source, String value) {
     checkNotNull(source, "Value source cannot be null.");
     this.source = source;
     this.value = value;
