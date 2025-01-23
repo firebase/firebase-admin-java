@@ -88,6 +88,10 @@ public class ApiClientUtils {
   }
 
   public static HttpTransport getDefaultTransport() {
-    return new ApacheHttp2Transport();
+    return TransportInstanceHolder.INSTANCE;
+  }
+
+  private static class TransportInstanceHolder {
+    static final HttpTransport INSTANCE = new ApacheHttp2Transport();
   }
 }
