@@ -42,7 +42,7 @@ public class ServerConditionTest {
 
   @Test
   public void testConstructorWithResponse() {
-    CustomSignalConditionResponse customResponse = new CustomSignalConditionResponse().setKey("test_key");
+    CustomSignalConditionResponse customResponse = new CustomSignalConditionResponse().setKey("test_key").setOperator("NUMERIC_EQUAL").setTargetValues(ImmutableList.of("1"));
     OneOfConditionResponse conditionResponse = new OneOfConditionResponse().setCustomSignalCondition(customResponse);
     ServerConditionResponse response = new ServerConditionResponse().setName("ios_en_2").setServerCondtion(conditionResponse);
     ServerCondition serverCondition = new ServerCondition(response);

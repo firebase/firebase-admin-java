@@ -61,6 +61,8 @@ public final class CustomSignalCondition {
    * @param customSignalCondition the conditions obtained from server call.
    */
   CustomSignalCondition(CustomSignalConditionResponse customSignalCondition) {
+    checkNotNull(customSignalCondition, "Custom signal condition must not be empty.");
+    checkArgument(!customSignalCondition.getTargetValues().isEmpty(), "Target customSignalCondition values must not be empty.");
     this.customSignalKey = customSignalCondition.getKey();
     List<String> targetCustomSignalValuesList = customSignalCondition.getTargetValues();
     this.targetCustomSignalValues = ImmutableList.copyOf(targetCustomSignalValuesList);
