@@ -198,9 +198,12 @@ public class ApacheHttp2TransportIT {
 
   @Test(timeout = 10_000L)
   public void testWriteTimeoutAuthorizedGet() throws FirebaseException {
+    // Use a fresh transport so that writeTimeout triggers while waiting for the transport to
+    // be ready to receive data.
     app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
-        .setWriteTimeout(1)
+        .setWriteTimeout(100)
+        .setHttpTransport(new ApacheHttp2Transport())
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
     HttpRequestInfo request = HttpRequestInfo.buildGetRequest(GET_URL);
@@ -217,9 +220,12 @@ public class ApacheHttp2TransportIT {
 
   @Test(timeout = 10_000L)
   public void testWriteTimeoutAuthorizedPost() throws FirebaseException {
+    // Use a fresh transport so that writeTimeout triggers while waiting for the transport to
+    // be ready to receive data.
     app = FirebaseApp.initializeApp(FirebaseOptions.builder()
         .setCredentials(MOCK_CREDENTIALS)
-        .setWriteTimeout(1)
+        .setWriteTimeout(100)
+        .setHttpTransport(new ApacheHttp2Transport())
         .build(), "test-app");
     ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
     HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest(POST_URL, payload);
