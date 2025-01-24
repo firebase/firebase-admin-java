@@ -39,8 +39,8 @@ public class MockRemoteConfigClient implements FirebaseRemoteConfigClient{
     return new MockRemoteConfigClient(resultTemplate,null, null, null);
   }
 
-  static MockRemoteConfigClient fromServerTemplate(String resultTemplate) {
-    return new MockRemoteConfigClient(null, resultTemplate,null, null);
+  static MockRemoteConfigClient fromServerTemplate(String resultServerTemplate) {
+    return new MockRemoteConfigClient(null, resultServerTemplate,null, null);
   }
 
   static MockRemoteConfigClient fromListVersionsResponse(

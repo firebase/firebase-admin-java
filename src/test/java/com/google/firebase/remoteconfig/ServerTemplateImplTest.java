@@ -327,7 +327,7 @@ public class ServerTemplateImplTest {
   private static final String TEST_ETAG = "etag-123456789012-1";
 
   private FirebaseRemoteConfig getRemoteConfig(FirebaseRemoteConfigClient client) {
-    FirebaseApp app = FirebaseApp.initializeApp(TEST_OPTIONS);
+    FirebaseApp app = FirebaseApp.initializeApp(TEST_OPTIONS, "test-app");
     return new FirebaseRemoteConfig(app, client);
   }
 
