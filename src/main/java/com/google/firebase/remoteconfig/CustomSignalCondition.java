@@ -46,10 +46,12 @@ public final class CustomSignalCondition {
       @NonNull String customSignalKey,
       @NonNull CustomSignalOperator customSignalOperator,
       @NonNull List<String> targetCustomSignalValues) {
-    checkArgument(!Strings.isNullOrEmpty(customSignalKey), "Custom signal key must not be null or empty.");
+    checkArgument(
+        !Strings.isNullOrEmpty(customSignalKey), "Custom signal key must not be null or empty.");
     checkNotNull(customSignalOperator);
     checkNotNull(targetCustomSignalValues);
-    checkArgument(!targetCustomSignalValues.isEmpty(), "Target custom signal values must not be empty.");
+    checkArgument(
+        !targetCustomSignalValues.isEmpty(), "Target custom signal values must not be empty.");
     this.customSignalKey = customSignalKey.trim();
     this.customSignalOperator = customSignalOperator;
     this.targetCustomSignalValues = ImmutableList.copyOf(targetCustomSignalValues);
@@ -61,8 +63,12 @@ public final class CustomSignalCondition {
    * @param customSignalCondition the conditions obtained from server call.
    */
   CustomSignalCondition(CustomSignalConditionResponse customSignalCondition) {
-    checkArgument(!Strings.isNullOrEmpty(customSignalCondition.getKey()), "Custom signal key must not be null or empty.");
-    checkArgument(!customSignalCondition.getTargetValues().isEmpty(), "Target custom signal values must not be empty.");
+    checkArgument(
+        !Strings.isNullOrEmpty(customSignalCondition.getKey()),
+        "Custom signal key must not be null or empty.");
+    checkArgument(
+        !customSignalCondition.getTargetValues().isEmpty(),
+        "Target custom signal values must not be empty.");
     this.customSignalKey = customSignalCondition.getKey().trim();
     List<String> targetCustomSignalValuesList = customSignalCondition.getTargetValues();
     this.targetCustomSignalValues = ImmutableList.copyOf(targetCustomSignalValuesList);
@@ -118,7 +124,9 @@ public final class CustomSignalCondition {
       default:
         this.customSignalOperator = CustomSignalOperator.UNSPECIFIED;
     }
-    checkArgument(this.customSignalOperator != CustomSignalOperator.UNSPECIFIED, "Custom signal operator passed is invalid");
+    checkArgument(
+        this.customSignalOperator != CustomSignalOperator.UNSPECIFIED,
+        "Custom signal operator passed is invalid");
   }
 
   /**

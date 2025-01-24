@@ -55,10 +55,9 @@ public class OneOfCondition {
     }
   }
 
-  OneOfCondition() {
-  }
+  OneOfCondition() {}
 
-/**
+  /**
    * Gets {@link OrCondition} with conditions on which OR operation will be applied.
    *
    * @return list of conditions.

@@ -16,14 +16,13 @@
 
 package com.google.firebase.remoteconfig;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OneOfConditionResponse;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OrConditionResponse;
-
 import java.util.ArrayList;
 import java.util.List;
 

@@ -80,7 +80,8 @@ public final class PercentCondition {
    * @param percentCondition the conditions obtained from server call.
    */
   PercentCondition(PercentConditionResponse percentCondition) {
-    checkArgument(!Strings.isNullOrEmpty(percentCondition.getSeed()), "Seed must not be empty or null");
+    checkArgument(
+        !Strings.isNullOrEmpty(percentCondition.getSeed()), "Seed must not be empty or null");
     this.microPercent = percentCondition.getMicroPercent();
     this.seed = percentCondition.getSeed();
     switch (percentCondition.getPercentOperator()) {
@@ -96,7 +97,9 @@ public final class PercentCondition {
       default:
         this.percentConditionOperator = PercentConditionOperator.UNSPECIFIED;
     }
-    checkArgument(this.percentConditionOperator != PercentConditionOperator.UNSPECIFIED, "Percentage operator is invalid");
+    checkArgument(
+        this.percentConditionOperator != PercentConditionOperator.UNSPECIFIED,
+        "Percentage operator is invalid");
     if (percentCondition.getMicroPercentRange() != null) {
       this.microPercentRange =
           new MicroPercentRange(
