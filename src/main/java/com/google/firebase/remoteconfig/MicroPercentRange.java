@@ -56,7 +56,7 @@ public class MicroPercentRange {
     return microPercentUpperBound;
   }
 
-  public MicroPercentRangeResponse toMicroPercentRangeResponse() {
+  MicroPercentRangeResponse toMicroPercentRangeResponse() {
     MicroPercentRangeResponse microPercentRangeResponse = new MicroPercentRangeResponse();
     microPercentRangeResponse.setMicroPercentLowerBound(this.microPercentLowerBound);
     microPercentRangeResponse.setMicroPercentUpperBound(this.microPercentUpperBound);

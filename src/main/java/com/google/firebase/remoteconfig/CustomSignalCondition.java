@@ -160,7 +160,7 @@ public final class CustomSignalCondition {
     return new ArrayList<>(targetCustomSignalValues);
   }
 
-  public CustomSignalConditionResponse toCustomConditonResponse() {
+  CustomSignalConditionResponse toCustomConditonResponse() {
     CustomSignalConditionResponse customSignalConditionResponse =
         new CustomSignalConditionResponse();
     customSignalConditionResponse.setKey(this.customSignalKey);

@@ -125,7 +125,7 @@ public class ServerConditionTest {
     condition.setName("");
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = NullPointerException.class)
   public void testSetNullServerCondition() {
     OneOfCondition conditions =
         new OneOfCondition()

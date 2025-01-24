@@ -151,7 +151,7 @@ public final class PercentCondition {
     return seed;
   }
 
-  public PercentConditionResponse toPercentConditionResponse() {
+  PercentConditionResponse toPercentConditionResponse() {
     PercentConditionResponse percentConditionResponse = new PercentConditionResponse();
     percentConditionResponse.setMicroPercent(this.microPercent);
     percentConditionResponse.setMicroPercentRange(

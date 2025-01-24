@@ -63,7 +63,7 @@ public final class AndCondition {
     return new ArrayList<>(conditions);
   }
 
-  public AndConditionResponse toAndConditionResponse() {
+  AndConditionResponse toAndConditionResponse() {
     AndConditionResponse andConditionResponse = new AndConditionResponse();
     List<OneOfConditionResponse> nestedConditionResponses = new ArrayList<>();
     for (OneOfCondition condition : conditions) {

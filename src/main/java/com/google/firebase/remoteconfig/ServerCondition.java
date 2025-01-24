@@ -21,15 +21,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
 import com.google.firebase.internal.NonNull;
-import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.AndConditionResponse;
-import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.CustomSignalConditionResponse;
-import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OneOfConditionResponse;
-import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OrConditionResponse;
-import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.PercentConditionResponse;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.ServerConditionResponse;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 import org.slf4j.Logger;
@@ -111,7 +104,7 @@ public final class ServerCondition {
    * @return This {@link Condition}.
    */
   public ServerCondition setServerCondition(@NonNull OneOfCondition condition) {
-    checkArgument(condition != null, "condition must not be null or empty");
+    checkNotNull(condition, "condition must not be null or empty");
     this.serverCondition = condition;
     return this;
   }

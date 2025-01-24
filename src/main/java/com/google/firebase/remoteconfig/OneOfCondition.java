@@ -173,7 +173,7 @@ public class OneOfCondition {
     return this;
   }
 
-  public OneOfConditionResponse toOneOfConditionResponse() {
+  OneOfConditionResponse toOneOfConditionResponse() {
     OneOfConditionResponse oneOfConditionResponse = new OneOfConditionResponse();
     if (this.andCondition != null) {
       oneOfConditionResponse.setAndCondition(this.andCondition.toAndConditionResponse());
