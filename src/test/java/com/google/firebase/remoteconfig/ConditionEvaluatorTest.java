@@ -31,29 +31,14 @@ public class ConditionEvaluatorTest {
 
   private final ConditionEvaluator conditionEvaluator = new ConditionEvaluator();
 
-  @Test
-  public void testEvaluateConditionsEmptyOrConditionToFalse() {
-    OneOfCondition emptyOneOfConditionOr = createOneOfOrCondition(null);
-    ServerCondition condition = new ServerCondition("is_enabled", emptyOneOfConditionOr);
-    KeysAndValues context = new KeysAndValues.Builder().build();
-
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
-        context);
-
-    assertFalse(result.get("is_enabled"));
+  @Test(expected = IllegalArgumentException.class)
+  public void testEvaluateConditionsEmptyOrConditionThrowsException() {
+    createOneOfOrCondition(null);
   }
 
-  @Test
-  public void testEvaluateConditionsEmptyOrAndConditionToTrue() {
-    OneOfCondition emptyOneOfConditionAnd = createOneOfAndCondition(null);
-    OneOfCondition oneOfConditionOr = createOneOfOrCondition(emptyOneOfConditionAnd);
-    ServerCondition condition = new ServerCondition("is_enabled", oneOfConditionOr);
-    KeysAndValues context = new KeysAndValues.Builder().build();
-
-    Map<String, Boolean> result = conditionEvaluator.evaluateConditions(Arrays.asList(condition),
-        context);
-
-    assertTrue(result.get("is_enabled"));
+  @Test(expected = IllegalArgumentException.class)
+  public void testEvaluateConditionsEmptyOrAndConditionThrowsException() {
+    createOneOfAndCondition(null);
   }
 
   @Test
