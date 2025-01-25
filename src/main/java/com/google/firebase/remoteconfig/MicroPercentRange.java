@@ -20,11 +20,7 @@ import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.MicroPercentRangeResponse;
 
-/**
- * Represents the limit of percentiles to target in micro-percents. The value
- * must be in the range [0 and 100000000].
- */
-public class MicroPercentRange {
+class MicroPercentRange {
   private final int microPercentLowerBound;
   private final int microPercentUpperBound;
 
@@ -34,25 +30,13 @@ public class MicroPercentRange {
     this.microPercentUpperBound = microPercentUpperBound != null ? microPercentUpperBound : 0;
   }
 
-  /**
-   * The lower limit of percentiles to target in micro-percents.
-   * The value must be in the range [0 and 100000000].
-   * 
-   * @return micropercentile lower bound.
-   */
   @NonNull
-  public int getMicroPercentLowerBound() {
+  int getMicroPercentLowerBound() {
     return microPercentLowerBound;
   }
 
-  /**
-   * The upper limit of percentiles to target in micro-percents.
-   * The value must be in the range [0 and 100000000].
-   * 
-   * @return micropercentile upper bound.
-   */
   @NonNull
-  public int getMicroPercentUpperBound() {
+  int getMicroPercentUpperBound() {
     return microPercentUpperBound;
   }
 

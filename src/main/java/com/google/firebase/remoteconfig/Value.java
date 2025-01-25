@@ -16,10 +16,8 @@
 
 package com.google.firebase.remoteconfig;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.util.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
 

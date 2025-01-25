@@ -27,21 +27,11 @@ import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.CustomSi
 import java.util.ArrayList;
 import java.util.List;
 
-/** Represents a condition that compares provided signals against a target value. */
-public final class CustomSignalCondition {
+final class CustomSignalCondition {
   private final String customSignalKey;
   private final CustomSignalOperator customSignalOperator;
   private final ImmutableList<String> targetCustomSignalValues;
 
-  /**
-   * Creates new Custom signal condition.
-   *
-   * @param customSignalKey The key of the signal set in the EvaluationContext
-   * @param customSignalOperator The choice of custom signal operator to determine how to compare
-   *     targets to value(s).
-   * @param targetCustomSignalValues A list of at most 100 target custom signal values. For numeric
-   *     operators, this will have exactly ONE target value.
-   */
   public CustomSignalCondition(
       @NonNull String customSignalKey,
       @NonNull CustomSignalOperator customSignalOperator,
@@ -57,11 +47,6 @@ public final class CustomSignalCondition {
     this.targetCustomSignalValues = ImmutableList.copyOf(targetCustomSignalValues);
   }
 
-  /**
-   * Creates a new {@link CustomSignalCondition} from API response.
-   *
-   * @param customSignalCondition the conditions obtained from server call.
-   */
   CustomSignalCondition(CustomSignalConditionResponse customSignalCondition) {
     checkArgument(
         !Strings.isNullOrEmpty(customSignalCondition.getKey()),
@@ -129,34 +114,18 @@ public final class CustomSignalCondition {
         "Custom signal operator passed is invalid");
   }
 
-  /**
-   * Gets the key of the signal set in the EvaluationContext.
-   *
-   * @return Custom signal key.
-   */
   @NonNull
-  public String getCustomSignalKey() {
+  String getCustomSignalKey() {
     return customSignalKey;
   }
 
-  /**
-   * Gets the choice of custom signal operator to determine how to compare targets to value(s).
-   *
-   * @return Custom signal operator.
-   */
   @NonNull
-  public CustomSignalOperator getCustomSignalOperator() {
+  CustomSignalOperator getCustomSignalOperator() {
     return customSignalOperator;
   }
 
-  /**
-   * Gets the list of at most 100 target custom signal values. For numeric operators, this will have
-   * exactly ONE target value.
-   *
-   * @return List of target values.
-   */
   @NonNull
-  public List<String> getTargetCustomSignalValues() {
+  List<String> getTargetCustomSignalValues() {
     return new ArrayList<>(targetCustomSignalValues);
   }
 

@@ -118,7 +118,7 @@ public final class ServerTemplateResponse {
       return this;
     }
 
-    public ServerConditionResponse setServerCondtion(OneOfConditionResponse condition) {
+    public ServerConditionResponse setServerCondition(OneOfConditionResponse condition) {
       this.condition = condition;
       return this;
     }

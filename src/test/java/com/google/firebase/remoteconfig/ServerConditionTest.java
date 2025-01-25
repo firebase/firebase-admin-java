@@ -64,7 +64,7 @@ public class ServerConditionTest {
     OneOfConditionResponse conditionResponse =
         new OneOfConditionResponse().setCustomSignalCondition(customResponse);
     ServerConditionResponse response =
-        new ServerConditionResponse().setName("ios_en_2").setServerCondtion(conditionResponse);
+        new ServerConditionResponse().setName("ios_en_2").setServerCondition(conditionResponse);
     ServerCondition serverCondition = new ServerCondition(response);
 
     assertEquals("ios_en_2", serverCondition.getName());

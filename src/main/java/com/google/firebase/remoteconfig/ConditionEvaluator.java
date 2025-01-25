@@ -39,11 +39,7 @@ import javax.management.RuntimeErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Encapsulates condition evaluation logic to simplify organization and
- * facilitate testing.
- */
-public final class ConditionEvaluator {
+final class ConditionEvaluator {
   private static final int MAX_CONDITION_RECURSION_DEPTH = 10;
   private static final Logger logger = LoggerFactory.getLogger(ConditionEvaluator.class);
 
@@ -57,14 +53,8 @@ public final class ConditionEvaluator {
     boolean apply(Integer value);
   }
 
-  /**
-   * @param conditions A named condition map of string to {@link OneOfCondition}.
-   * @param context    Represents template evaluation input signals which can be
-   *                   user provided or predefined.
-   * @return Evaluated conditions represented as map of condition name to boolean.
-   */
   @NonNull
-  public Map<String, Boolean> evaluateConditions(
+  Map<String, Boolean> evaluateConditions(
       @NonNull List<ServerCondition> conditions,
       @NonNull KeysAndValues context) {
     checkNotNull(conditions, "List of conditions must not be null.");

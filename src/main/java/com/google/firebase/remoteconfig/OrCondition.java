@@ -25,52 +25,35 @@ import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OneOfCon
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OrConditionResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-/** Represents a collection of conditions that evaluate to true if one of them is true. */
-public final class OrCondition {
+final class OrCondition {
   private final ImmutableList<OneOfCondition> conditions;
 
-  /** Creates OrCondition joining subconditions. */
   public OrCondition(@NonNull List<OneOfCondition> conditions) {
     checkNotNull(conditions, "List of conditions for OR must not be null.");
     checkArgument(!conditions.isEmpty(), "List of conditions for OR must not be empty.");
     this.conditions = ImmutableList.copyOf(conditions);
   }
 
-  /**
-   * Creates a new {@link OrCondition} from API response.
-   *
-   * @param orConditionResponse the conditions obtained from server call.
-   */
   OrCondition(OrConditionResponse orConditionResponse) {
-    List<OneOfCondition> nestedConditions = new ArrayList<>();
     List<OneOfConditionResponse> conditionList = orConditionResponse.getConditions();
-    checkNotNull(conditionList, "List of conditions for OR operation cannot be null.");
-    checkArgument(!conditionList.isEmpty(), "List of conditions for OR operation cannot be empty");
-    for (OneOfConditionResponse nestedResponse : conditionList) {
-      OneOfCondition nestedCondition = new OneOfCondition(nestedResponse);
-      nestedConditions.add(nestedCondition);
-    }
-    this.conditions = ImmutableList.copyOf(nestedConditions);
+    checkNotNull(conditionList, "List of conditions for AND operation cannot be null.");
+    checkArgument(!conditionList.isEmpty(), "List of conditions for AND operation cannot be empty");
+    this.conditions = conditionList.stream()
+                                  .map(OneOfCondition::new) 
+                                  .collect(ImmutableList.toImmutableList());
   }
 
-  /**
-   * Gets the list of {@link OneOfCondition}
-   *
-   * @return List of conditions to evaluate.
-   */
   @NonNull
-  public List<OneOfCondition> getConditions() {
+  List<OneOfCondition> getConditions() {
     return new ArrayList<>(conditions);
   }
 
   OrConditionResponse toOrConditionResponse() {
-    OrConditionResponse orConditionResponse = new OrConditionResponse();
-    List<OneOfConditionResponse> nestedConditionResponses = new ArrayList<>();
-    for (OneOfCondition condition : conditions) {
-      nestedConditionResponses.add(condition.toOneOfConditionResponse());
-    }
-    orConditionResponse.setConditions(nestedConditionResponses);
-    return orConditionResponse;
+    return new OrConditionResponse()
+                   .setConditions(this.conditions.stream()
+                                                 .map(OneOfCondition::toOneOfConditionResponse)
+                                                 .collect(Collectors.toList()));    
   }
 }

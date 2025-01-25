@@ -34,8 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/** Represents a Remote Config template. */
-public final class ServerTemplateData {
+final class ServerTemplateData {
 
   private String etag;
   private Map<String, Parameter> parameters;
@@ -43,12 +42,8 @@ public final class ServerTemplateData {
   private Map<String, ParameterGroup> parameterGroups;
   private Version version;
 
-  /**
-   * Creates a new {@link Template}.
-   *
-   * @param etag The ETag of this template.
-   */
-  public ServerTemplateData(String etag) {
+
+  ServerTemplateData(String etag) {
     this.parameters = new HashMap<>();
     this.serverConditions = new ArrayList<>();
     this.parameterGroups = new HashMap<>();
@@ -88,15 +83,8 @@ public final class ServerTemplateData {
     this.etag = serverTemplateResponse.getEtag();
   }
 
-  /**
-   * Creates and returns a new Remote Config template from a JSON string. Input JSON string must
-   * contain an {@code etag} property to create a valid template.
-   *
-   * @param json A non-null JSON string to populate a Remote Config template.
-   * @return A new {@link ServerTemplateData} instance.
-   * @throws FirebaseRemoteConfigException If the input JSON string is not parsable.
-   */
-  public static ServerTemplateData fromJSON(@NonNull String json)
+
+  static ServerTemplateData fromJSON(@NonNull String json)
       throws FirebaseRemoteConfigException {
     checkArgument(!Strings.isNullOrEmpty(json), "JSON String must not be null or empty.");
     // using the default json factory as no rpc calls are made here
@@ -111,112 +99,57 @@ public final class ServerTemplateData {
     }
   }
 
-  /**
-   * Gets the ETag of the template.
-   *
-   * @return The ETag of the template.
-   */
-  public String getETag() {
+
+  String getETag() {
     return this.etag;
   }
 
-  /**
-   * Gets the map of parameters of the template.
-   *
-   * @return A non-null map of parameter keys to their optional default values and optional
-   *     conditional values.
-   */
+
   @NonNull
   public Map<String, Parameter> getParameters() {
     return this.parameters;
   }
 
-  /**
-   * Gets the list of conditions of the template.
-   *
-   * @return A non-null list of conditions.
-   */
   @NonNull
-  public List<ServerCondition> getServerConditions() {
+  List<ServerCondition> getServerConditions() {
     return serverConditions;
   }
 
-  /**
-   * Gets the map of parameter groups of the template.
-   *
-   * @return A non-null map of parameter group names to their parameter group instances.
-   */
   @NonNull
-  public Map<String, ParameterGroup> getParameterGroups() {
+  Map<String, ParameterGroup> getParameterGroups() {
     return parameterGroups;
   }
 
-  /**
-   * Gets the version information of the template.
-   *
-   * @return The version information of the template.
-   */
-  public Version getVersion() {
+  Version getVersion() {
     return version;
   }
 
-  /**
-   * Sets the map of parameters of the template.
-   *
-   * @param parameters A non-null map of parameter keys to their optional default values and
-   *     optional conditional values.
-   * @return This {@link ServerTemplateData} instance.
-   */
-  public ServerTemplateData setParameters(@NonNull Map<String, Parameter> parameters) {
+  ServerTemplateData setParameters(@NonNull Map<String, Parameter> parameters) {
     checkNotNull(parameters, "parameters must not be null.");
     this.parameters = parameters;
     return this;
   }
 
-  /**
-   * Sets the list of conditions of the template.
-   *
-   * @param conditions A non-null list of conditions in descending order by priority.
-   * @return This {@link ServerTemplateData} instance.
-   */
-  public ServerTemplateData setServerConditions(@NonNull List<ServerCondition> conditions) {
+
+  ServerTemplateData setServerConditions(@NonNull List<ServerCondition> conditions) {
     checkNotNull(conditions, "conditions must not be null.");
     this.serverConditions = conditions;
     return this;
   }
 
-  /**
-   * Sets the map of parameter groups of the template.
-   *
-   * @param parameterGroups A non-null map of parameter group names to their parameter group
-   *     instances.
-   * @return This {@link ServerTemplateData} instance.
-   */
-  public ServerTemplateData setParameterGroups(
+  ServerTemplateData setParameterGroups(
       @NonNull Map<String, ParameterGroup> parameterGroups) {
     checkNotNull(parameterGroups, "parameter groups must not be null.");
     this.parameterGroups = parameterGroups;
     return this;
   }
 
-  /**
-   * Sets the version information of the template. Only the version's description field can be
-   * specified here.
-   *
-   * @param version A {@link Version} instance.
-   * @return This {@link ServerTemplateData} instance.
-   */
-  public ServerTemplateData setVersion(Version version) {
+  ServerTemplateData setVersion(Version version) {
     this.version = version;
     return this;
   }
 
-  /**
-   * Gets the JSON-serializable representation of this template.
-   *
-   * @return A JSON-serializable representation of this {@link ServerTemplateData} instance.
-   */
-  public String toJSON() {
+  String toJSON() {
     JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
     try {
       return jsonFactory.toString(this.toServerTemplateResponse(true));

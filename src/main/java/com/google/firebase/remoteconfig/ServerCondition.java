@@ -28,94 +28,48 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Represents a Remote Config condition that can be included in a {@link ServerTemplate}. A
- * condition targets a specific group of users. A list of these conditions make up part of a Remote
- * Config template.
- */
-public final class ServerCondition {
+final class ServerCondition {
 
   private String name;
   private OneOfCondition serverCondition;
-  private static final Logger logger = LoggerFactory.getLogger(ServerCondition.class);
 
-  /**
-   * Creates a new {@link ServerCondition}.
-   *
-   * @param name A non-null, non-empty, and unique name of this condition.
-   * @param condition A non-null and non-empty condition.
-   */
-  public ServerCondition(@NonNull String name, @NonNull OneOfCondition condition) {
+  ServerCondition(@NonNull String name, @NonNull OneOfCondition condition) {
     checkArgument(!Strings.isNullOrEmpty(name), "condition name must not be null or empty");
     this.name = name;
     this.serverCondition = condition;
   }
 
-  /**
-   * Creates a new {@link ServerCondition} from API response.
-   *
-   * @param serverConditionResponse the conditions obtained from server call.
-   */
   ServerCondition(@NonNull ServerConditionResponse serverConditionResponse) {
     checkNotNull(serverConditionResponse);
     this.name = serverConditionResponse.getName();
     this.serverCondition = new OneOfCondition(serverConditionResponse.getServerCondition());
   }
 
-  /**
-   * Gets the name of the condition.
-   *
-   * @return The name of the condition.
-   */
   @NonNull
-  public String getName() {
+  String getName() {
     return name;
   }
 
-  /**
-   * Gets the expression of the condition.
-   *
-   * @return The expression of the condition.
-   */
   @NonNull
-  public OneOfCondition getCondition() {
+  OneOfCondition getCondition() {
     return serverCondition;
   }
 
-  /**
-   * Sets the name of the condition.
-   *
-   * @param name A non-empty and unique name of this condition.
-   * @return This {@link Condition}.
-   */
-  public ServerCondition setName(@NonNull String name) {
+  ServerCondition setName(@NonNull String name) {
     checkArgument(!Strings.isNullOrEmpty(name), "condition name must not be null or empty");
     this.name = name;
     return this;
   }
 
-  /**
-   * Sets the expression of the condition.
-   *
-   * <p>See <a href="https://firebase.google.com/docs/remote-config/condition-reference">condition
-   * expressions</a> for the expected syntax of this field.
-   *
-   * @param condition The logic of this condition.
-   * @return This {@link Condition}.
-   */
-  public ServerCondition setServerCondition(@NonNull OneOfCondition condition) {
+  ServerCondition setServerCondition(@NonNull OneOfCondition condition) {
     checkNotNull(condition, "condition must not be null or empty");
     this.serverCondition = condition;
     return this;
   }
 
   ServerConditionResponse toServerConditionResponse() {
-    ServerConditionResponse serverConditionResponse =
-        new ServerConditionResponse().setName(this.name);
-    serverConditionResponse.setServerCondtion(this.serverCondition.toOneOfConditionResponse());
-    return serverConditionResponse;
-    // return new
-    // ServerConditionResponse().setName(this.name).setServerCondition(this.serverCondition);
+    return new ServerConditionResponse().setName(this.name)
+        .setServerCondition(this.serverCondition.toOneOfConditionResponse());
   }
 
   @Override

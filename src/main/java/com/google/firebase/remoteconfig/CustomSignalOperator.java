@@ -21,10 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.common.base.Strings;
 import com.google.firebase.internal.NonNull;
 
-/**
- * Defines supported operators for custom signal conditions.
- */
-public enum CustomSignalOperator {
+enum CustomSignalOperator {
   NUMERIC_EQUAL("NUMERIC_EQUAL"),
   NUMERIC_GREATER_EQUAL("NUMERIC_GREATER_EQUAL"),
   NUMERIC_GREATER_THAN("NUMERIC_GREATER_THAN"),
@@ -50,13 +47,8 @@ public enum CustomSignalOperator {
     this.operator = operator;
   }
 
-  /**
-   * Get the custom signal operator {@link CustomSignalOperator}.
-   * 
-   * @return operator.
-   */
   @NonNull
-  public String getOperator() {
+  String getOperator() {
     return operator;
   }
 }

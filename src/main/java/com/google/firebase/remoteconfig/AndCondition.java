@@ -26,50 +26,35 @@ import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OneOfCon
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-/** Represents a collection of conditions that evaluate to true if all are true. */
-public final class AndCondition {
+final class AndCondition {
   private final ImmutableList<OneOfCondition> conditions;
 
-  /** Creates a new 
-   * {@link AndCondition} 
-   * joining subconditions. 
-   * */
-  public AndCondition(@NonNull List<OneOfCondition> conditions) {
+  AndCondition(@NonNull List<OneOfCondition> conditions) {
     checkNotNull(conditions, "List of conditions for AND operation cannot be null.");
     checkArgument(!conditions.isEmpty(), "List of conditions for AND operation cannot be empty.");
     this.conditions = ImmutableList.copyOf(conditions);
   }
 
   AndCondition(AndConditionResponse andConditionResponse) {
-    List<OneOfCondition> nestedConditions = new ArrayList<>();
     List<OneOfConditionResponse> conditionList = andConditionResponse.getConditions();
     checkNotNull(conditionList, "List of conditions for AND operation cannot be null.");
     checkArgument(!conditionList.isEmpty(), "List of conditions for AND operation cannot be empty");
-    for (OneOfConditionResponse nestedResponse : conditionList) {
-      OneOfCondition nestedCondition = new OneOfCondition(nestedResponse);
-      nestedConditions.add(nestedCondition);
-    }
-    this.conditions = ImmutableList.copyOf(nestedConditions);
+    this.conditions = conditionList.stream()
+                                  .map(OneOfCondition::new) 
+                                  .collect(ImmutableList.toImmutableList());
   }
 
-  /**
-   * Gets the list of {@link OneOfCondition}
-   *
-   * @return List of conditions to evaluate.
-   */
   @NonNull
-  public List<OneOfCondition> getConditions() {
+  List<OneOfCondition> getConditions() {
     return new ArrayList<>(conditions);
   }
 
   AndConditionResponse toAndConditionResponse() {
-    AndConditionResponse andConditionResponse = new AndConditionResponse();
-    List<OneOfConditionResponse> nestedConditionResponses = new ArrayList<>();
-    for (OneOfCondition condition : conditions) {
-      nestedConditionResponses.add(condition.toOneOfConditionResponse());
-    }
-    andConditionResponse.setConditions(nestedConditionResponses);
-    return andConditionResponse;
+    return new AndConditionResponse()
+                   .setConditions(this.conditions.stream()
+                                                 .map(OneOfCondition::toOneOfConditionResponse)
+                                                 .collect(Collectors.toList()));    
   }
 }
