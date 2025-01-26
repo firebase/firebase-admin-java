@@ -18,6 +18,7 @@ package com.google.firebase.remoteconfig;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OneOfConditionResponse;
@@ -46,7 +47,15 @@ class OneOfCondition {
     }
   }
 
-  OneOfCondition() {}
+  @VisibleForTesting
+  OneOfCondition() {
+    this.orCondition = null;
+    this.andCondition = null;
+    this.percent = null;
+    this.customSignal = null;
+    this.trueValue = null;
+    this.falseValue = null;
+  }
 
   @Nullable
   OrCondition getOrCondition() {

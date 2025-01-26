@@ -25,9 +25,6 @@ import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.ServerCo
 
 import java.util.Objects;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 final class ServerCondition {
 
   private String name;
