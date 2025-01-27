@@ -26,6 +26,7 @@ import com.google.gson.GsonBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,7 @@ public final class ServerTemplateImpl implements ServerTemplate {
   private final KeysAndValues defaultConfig;
   private FirebaseRemoteConfigClient client;
   private ServerTemplateData cache;
-  private String cachedTemplate; // Added field for cached template
+  private final AtomicReference<String> cachedTemplate; // Added field for cached template
   private static final Logger logger = LoggerFactory.getLogger(ServerTemplate.class);
 
   public static class Builder implements ServerTemplate.Builder {
@@ -67,10 +68,10 @@ public final class ServerTemplateImpl implements ServerTemplate {
 
   private ServerTemplateImpl(Builder builder) {
     this.defaultConfig = builder.defaultConfig;
-    this.cachedTemplate = builder.cachedTemplate;
+    this.cachedTemplate = new AtomicReference<>(builder.cachedTemplate);
     this.client = builder.client;
     try {
-      this.cache = ServerTemplateData.fromJSON(cachedTemplate);
+      this.cache = ServerTemplateData.fromJSON(this.cachedTemplate.get());
     } catch (FirebaseRemoteConfigException e) {
       // TODO Auto-generated catch block
       e.printStackTrace();
@@ -109,8 +110,9 @@ public final class ServerTemplateImpl implements ServerTemplate {
 
   @Override
   public ApiFuture<Void> load() throws FirebaseRemoteConfigException {
-    this.cachedTemplate = client.getServerTemplate();
-    this.cache = ServerTemplateData.fromJSON(cachedTemplate);
+    String serverTemplate = client.getServerTemplate();
+    this.cachedTemplate.set(serverTemplate);
+    this.cache = ServerTemplateData.fromJSON(serverTemplate);
     return ApiFutures.immediateFuture(null);
   }
 
@@ -120,7 +122,7 @@ public final class ServerTemplateImpl implements ServerTemplate {
   }
 
   public String getCachedTemplate() {
-    return cachedTemplate;
+    return cachedTemplate.get();
   }
 
   @Override
