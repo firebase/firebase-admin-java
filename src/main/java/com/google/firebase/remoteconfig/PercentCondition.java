@@ -42,7 +42,7 @@ public final class PercentCondition {
    *     the hash space. This is a string which can have 0 - 32 characters and can contain ASCII
    *     characters [-_.0-9a-zA-Z].The string is case-sensitive.
    */
-  public PercentCondition(
+  PercentCondition(
       @Nullable Integer microPercent,
       @NonNull PercentConditionOperator percentConditionOperator,
       @NonNull String seed) {
@@ -63,7 +63,7 @@ public final class PercentCondition {
    *     the hash space. This is a string which can have 0 - 32 characters and can contain ASCII
    *     characters [-_.0-9a-zA-Z].The string is case-sensitive.
    */
-  public PercentCondition(
+  PercentCondition(
       @NonNull MicroPercentRange microPercentRange,
       @NonNull PercentConditionOperator percentConditionOperator,
       String seed) {

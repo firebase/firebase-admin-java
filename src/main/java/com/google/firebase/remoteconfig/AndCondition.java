@@ -32,15 +32,17 @@ final class AndCondition {
   private final ImmutableList<OneOfCondition> conditions;
 
   AndCondition(@NonNull List<OneOfCondition> conditions) {
-    checkNotNull(conditions, "List of conditions for AND operation cannot be null.");
-    checkArgument(!conditions.isEmpty(), "List of conditions for AND operation cannot be empty.");
+    checkNotNull(conditions, "List of conditions for AND operation must not be null.");
+    checkArgument(!conditions.isEmpty(), 
+        "List of conditions for AND operation must not be empty.");
     this.conditions = ImmutableList.copyOf(conditions);
   }
 
   AndCondition(AndConditionResponse andConditionResponse) {
     List<OneOfConditionResponse> conditionList = andConditionResponse.getConditions();
-    checkNotNull(conditionList, "List of conditions for AND operation cannot be null.");
-    checkArgument(!conditionList.isEmpty(), "List of conditions for AND operation cannot be empty");
+    checkNotNull(conditionList, "List of conditions for AND operation must not be null.");
+    checkArgument(!conditionList.isEmpty(), 
+        "List of conditions for AND operation must not be empty");
     this.conditions = conditionList.stream()
                                   .map(OneOfCondition::new) 
                                   .collect(ImmutableList.toImmutableList());

@@ -17,6 +17,7 @@
 package com.google.firebase.remoteconfig;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.CustomSignalConditionResponse;
@@ -71,17 +72,20 @@ public class ServerConditionTest {
     assertEquals("test_key", serverCondition.getCondition().getCustomSignal().getCustomSignalKey());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testIllegalConstructor() {
-    new ServerCondition(null, null);
+    IllegalArgumentException error =
+        assertThrows(IllegalArgumentException.class, () -> new ServerCondition(null, null));
+
+    assertEquals("condition name must not be null or empty", error.getMessage());
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void testConstructorWithNullServerConditionResponse() {
-    new ServerCondition(null);
+    assertThrows(NullPointerException.class, () -> new ServerCondition(null));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testSetNullName() {
     OneOfCondition conditions =
         new OneOfCondition()
@@ -100,10 +104,14 @@ public class ServerConditionTest {
                                                     new ArrayList<>(
                                                         ImmutableList.of("100"))))))))));
     ServerCondition condition = new ServerCondition("ios", conditions);
-    condition.setName(null);
+    
+    IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+        () -> condition.setName(null));
+
+    assertEquals("condition name must not be null or empty", error.getMessage());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testSetEmptyName() {
     OneOfCondition conditions =
         new OneOfCondition()
@@ -122,10 +130,14 @@ public class ServerConditionTest {
                                                     new ArrayList<>(
                                                         ImmutableList.of("100"))))))))));
     ServerCondition condition = new ServerCondition("ios", conditions);
-    condition.setName("");
+    
+    IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+        () -> condition.setName(""));
+
+    assertEquals("condition name must not be null or empty", error.getMessage());
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void testSetNullServerCondition() {
     OneOfCondition conditions =
         new OneOfCondition()
@@ -144,7 +156,8 @@ public class ServerConditionTest {
                                                     new ArrayList<>(
                                                         ImmutableList.of("100"))))))))));
     ServerCondition condition = new ServerCondition("ios", conditions);
-    condition.setServerCondition(null);
+    
+    assertThrows(NullPointerException.class, () -> condition.setServerCondition(null));
   }
 
   @Test

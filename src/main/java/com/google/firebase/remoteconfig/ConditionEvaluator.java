@@ -124,7 +124,7 @@ final class ConditionEvaluator {
   private boolean evaluatePercentCondition(PercentCondition condition,
       KeysAndValues context) {
     if (!context.containsKey("randomizationId")) {
-      logger.warn("Percentage operation cannot be performed without randomizationId");
+      logger.warn("Percentage operation must not be performed without randomizationId");
       return false;
     }
 

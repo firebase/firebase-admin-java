@@ -16,7 +16,9 @@
 
 package com.google.firebase.remoteconfig;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
@@ -31,14 +33,18 @@ public class ConditionEvaluatorTest {
 
   private final ConditionEvaluator conditionEvaluator = new ConditionEvaluator();
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testEvaluateConditionsEmptyOrConditionThrowsException() {
-    createOneOfOrCondition(null);
+    IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+        () -> createOneOfOrCondition(null));
+    assertEquals("List of conditions for OR operation must not be empty.", error.getMessage());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testEvaluateConditionsEmptyOrAndConditionThrowsException() {
-    createOneOfAndCondition(null);
+    IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
+        () -> createOneOfAndCondition(null));
+    assertEquals("List of conditions for AND operation must not be empty.", error.getMessage());
   }
 
   @Test

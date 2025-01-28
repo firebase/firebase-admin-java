@@ -31,8 +31,8 @@ final class OrCondition {
   private final ImmutableList<OneOfCondition> conditions;
 
   public OrCondition(@NonNull List<OneOfCondition> conditions) {
-    checkNotNull(conditions, "List of conditions for OR must not be null.");
-    checkArgument(!conditions.isEmpty(), "List of conditions for OR must not be empty.");
+    checkNotNull(conditions, "List of conditions for OR operation must not be null.");
+    checkArgument(!conditions.isEmpty(), "List of conditions for OR operation must not be empty.");
     this.conditions = ImmutableList.copyOf(conditions);
   }
 

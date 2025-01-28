@@ -17,6 +17,7 @@
 package com.google.firebase.remoteconfig;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import com.google.api.core.ApiFuture;
 import com.google.firebase.FirebaseApp;
@@ -49,6 +50,17 @@ public class ServerTemplateImplTest {
   @BeforeClass
   public static void setUpClass() {
     cacheTemplate = TestUtils.loadResource("getServerTemplateData.json");
+  }
+
+  @Test
+  public void testServerTemplateWithoutCacheValueThrowsException()
+      throws FirebaseRemoteConfigException {
+    KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
+
+    IllegalArgumentException error = assertThrows(IllegalArgumentException.class, 
+        () ->  new ServerTemplateImpl.Builder(null).defaultConfig(defaultConfig).build());
+
+    assertEquals("JSON String must not be null or empty.", error.getMessage());
   }
 
   @Test
@@ -161,7 +173,7 @@ public class ServerTemplateImplTest {
     assertEquals("", evaluatedConfig.getString("Unset default value"));
   }
 
-  @Test(expected = FirebaseRemoteConfigException.class)
+  @Test
   public void testEvaluateWithInvalidCacheValueThrowsException()
       throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
@@ -173,17 +185,11 @@ public class ServerTemplateImplTest {
             .cachedTemplate(invalidJsonString)
             .build();
 
-    template.evaluate(context);
-  }
+    FirebaseRemoteConfigException error = assertThrows(FirebaseRemoteConfigException.class,
+        () -> template.evaluate(context));
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testEvaluateWithoutCacheValueThrowsException() throws FirebaseRemoteConfigException {
-    KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
-    KeysAndValues context = new KeysAndValues.Builder().build();
-    ServerTemplate template =
-        new ServerTemplateImpl.Builder(null).defaultConfig(defaultConfig).build();
-
-    template.evaluate(context);
+    assertEquals("No Remote Config Server template in cache. Call load() before "
+        + "calling evaluate().", error.getMessage());
   }
 
   @Test
