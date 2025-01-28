@@ -600,9 +600,10 @@ public abstract class AbstractFirebaseAuth {
     // Although we don't really advertise it, we want to also handle
     // non-federated idps with this call. So if we detect one of them, we'll
     // reroute this request appropriately.
-    if (providerId == "phone") {
+    if ("phone".equals(providerId)) {
       return this.getUserByPhoneNumberOp(uid);
-    } else if (providerId == "email") {
+    }
+    if ("email".equals(providerId)) {
       return this.getUserByEmailOp(uid);
     }
 
