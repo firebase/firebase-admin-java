@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
 
 import java.math.BigInteger;
@@ -28,13 +27,12 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiPredicate;
+import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import javax.management.RuntimeErrorException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,16 +41,6 @@ final class ConditionEvaluator {
   private static final int MAX_CONDITION_RECURSION_DEPTH = 10;
   private static final Logger logger = LoggerFactory.getLogger(ConditionEvaluator.class);
 
-  @FunctionalInterface
-  interface CompareStringFunction {
-    boolean apply(String signalVaue, String targetValue);
-  }
-
-  @FunctionalInterface
-  interface CompareNumberFunction {
-    boolean apply(Integer value);
-  }
-
   @NonNull
   Map<String, Boolean> evaluateConditions(
       @NonNull List<ServerCondition> conditions,
@@ -60,17 +48,15 @@ final class ConditionEvaluator {
     checkNotNull(conditions, "List of conditions must not be null.");
     checkArgument(!conditions.isEmpty(), "List of conditions must not be empty.");
     checkNotNull(context, "Context must not be null.");
-
-    ImmutableList<ServerCondition> serverConditions = ImmutableList.copyOf(conditions);
-    ImmutableMap.Builder<String, Boolean> evaluatedConditions = ImmutableMap.builder();
-    int nestingLevel = 0;
-
-    for (ServerCondition condition : serverConditions) {
-      evaluatedConditions.put(condition.getName(), evaluateCondition(condition.getCondition(),
-          context, nestingLevel));
-    }
-
-    return new HashMap<>(evaluatedConditions.build());
+   
+    Map<String, Boolean> evaluatedConditions = conditions.stream()
+        .collect(Collectors.toMap(
+            ServerCondition::getName,
+            condition -> 
+                evaluateCondition(condition.getCondition(), context, /* nestingLevel= */0)
+        ));
+    
+    return evaluatedConditions;
   }
 
   private boolean evaluateCondition(OneOfCondition condition, KeysAndValues context,
@@ -96,29 +82,17 @@ final class ConditionEvaluator {
     return false;
   }
 
+
   private boolean evaluateOrCondition(OrCondition condition, KeysAndValues context,
       int nestingLevel) {
-    ImmutableList<OneOfCondition> subConditions = ImmutableList.copyOf(condition.getConditions());
-    for (OneOfCondition subCondition : subConditions) {
-      // Short-circuit the evaluation result for true.
-      if (evaluateCondition(subCondition, context, nestingLevel + 1)) {
-        return true;
-      }
-    }
-    return false;
+    return condition.getConditions().stream()
+        .anyMatch(subCondition -> evaluateCondition(subCondition, context, nestingLevel + 1));
   }
 
-  private boolean evaluateAndCondition(AndCondition condition,
-      KeysAndValues context,
+  private boolean evaluateAndCondition(AndCondition condition, KeysAndValues context,
       int nestingLevel) {
-    ImmutableList<OneOfCondition> subConditions = ImmutableList.copyOf(condition.getConditions());
-    for (OneOfCondition subCondition : subConditions) {
-      // Short-circuit the evaluation result for false.
-      if (!evaluateCondition(subCondition, context, nestingLevel + 1)) {
-        return false;
-      }
-    }
-    return true;
+    return condition.getConditions().stream()
+        .allMatch(subCondition -> evaluateCondition(subCondition, context, nestingLevel + 1));
   }
 
   private boolean evaluatePercentCondition(PercentCondition condition,
@@ -273,18 +247,14 @@ final class ConditionEvaluator {
   }
 
   private boolean compareStrings(ImmutableList<String> targetValues, Object customSignal,
-      CompareStringFunction compareFunction) {
+                               BiPredicate<String, String> compareFunction) {
     String customSignalValue = customSignal.toString();
-    for (String targetValue : targetValues) {
-      if (compareFunction.apply(customSignalValue, targetValue)) {
-        return true;
-      }
-    }
-    return false;
+    return targetValues.stream().anyMatch(targetValue -> 
+              compareFunction.test(customSignalValue, targetValue));
   }
 
   private boolean compareNumbers(ImmutableList<String> targetValues, Object customSignal,
-      CompareNumberFunction compareFunction) {
+                             IntPredicate compareFunction) {
     if (targetValues.size() != 1) {
       logger.warn(String.format(
           "Target values must contain 1 element for numeric operations. Target Value: %s",
@@ -292,22 +262,21 @@ final class ConditionEvaluator {
       return false;
     }
 
-    double customSignalValue;
-    double targetValue;
     try {
-      customSignalValue = Double.parseDouble(customSignal.toString());
-      targetValue = Double.parseDouble(targetValues.get(0));
+      double customSignalValue = Double.parseDouble(customSignal.toString());
+      double targetValue = Double.parseDouble(targetValues.get(0));
+      int comparisonResult = Double.compare(customSignalValue, targetValue);
+      return compareFunction.test(comparisonResult);
     } catch (NumberFormatException e) {
+      logger.warn("Error parsing numeric values: customSignal=%s, targetValue=%s",
+          customSignal, targetValues.get(0), e);
       return false;
     }
-
-    return compareFunction.apply(customSignalValue < targetValue ? -1
-        : customSignalValue > targetValue ? 1 : 0);
   }
 
   private boolean compareSemanticVersions(ImmutableList<String> targetValues,
-      Object customSignalValue,
-      CompareNumberFunction compareFunction) throws RuntimeErrorException {
+                                      Object customSignalValue,
+                                      IntPredicate compareFunction) {
     if (targetValues.size() != 1) {
       logger.warn(String.format("Target values must contain 1 element for semantic operation."));
       return false;
@@ -320,48 +289,43 @@ final class ConditionEvaluator {
       return false;
     }
 
-    // Max number of segments a numeric version can have. This is enforced by the
-    // server as well.
+    List<Integer> targetVersion = parseSemanticVersion(targetValueString);
+    List<Integer> customSignalVersion = parseSemanticVersion(customSignalValueString);
+
     int maxLength = 5;
-    List<Integer> targetVersion = Arrays.stream(targetValueString.split("\\."))
-        .map(Integer::parseInt)
-        .collect(Collectors.toList());
-    List<Integer> customSignalVersion = Arrays.stream(customSignalValueString.split("\\."))
-        .map(Integer::parseInt)
-        .collect(Collectors.toList());
+    if (targetVersion.size() > maxLength || customSignalVersion.size() > maxLength) {
+      logger.warn("Semantic version max length(%s) exceeded. Target: %s, Custom Signal: %s",
+          maxLength, targetValueString, customSignalValueString);
+      return false;
+    }
 
-    int targetVersionSize = targetVersion.size();
-    int customSignalVersionSize = customSignalVersion.size();
-    for (int i = 0; i <= maxLength; i++) {
-      // Check to see if segments are present.
-      Boolean targetVersionHasSegment = (i < targetVersionSize);
-      Boolean customSignalVersionHasSegment = (i < customSignalVersionSize);
+    int comparison = compareSemanticVersions(customSignalVersion, targetVersion);
+    return compareFunction.test(comparison);
+  }
 
-      // If both are undefined, we've consumed everything and they're equal.
-      if (!targetVersionHasSegment && !customSignalVersionHasSegment) {
-        return compareFunction.apply(0);
-      }
+  private int compareSemanticVersions(List<Integer> version1, List<Integer> version2) {
+    int maxLength = Math.max(version1.size(), version2.size());
+    int version1Size = version1.size();
+    int version2Size = version2.size();
 
-      // Insert zeros if undefined for easier comparison.
-      if (!targetVersionHasSegment) {
-        targetVersion.add(0);
-      }
-      if (!customSignalVersionHasSegment) {
-        customSignalVersion.add(0);
-      }
+    for (int i = 0; i < maxLength; i++) {
+      // Default to 0 if segment is missing
+      int v1 =  i < version1Size ? version1.get(i) : 0;
+      int v2 =  i < version2Size ? version2.get(i) : 0;
 
-      // Check if we have a difference in segments. Otherwise continue to next
-      // segment.
-      if (customSignalVersion.get(i).compareTo(targetVersion.get(i)) < 0) {
-        return compareFunction.apply(-1);
-      } else if (customSignalVersion.get(i).compareTo(targetVersion.get(i)) > 0) {
-        return compareFunction.apply(1);
+      int comparison = Integer.compare(v1, v2);
+      if (comparison != 0) {
+        return comparison;
       }
     }
-    logger.warn(String.format(
-        "Semantic version max length(5) exceeded. Target: %s, Custom Signal: %s",
-        targetValueString, customSignalValueString));
-    return false;
+    // Versions are equal
+    return 0;
+  }
+
+  private List<Integer> parseSemanticVersion(String versionString) {
+    return Arrays.stream(versionString.split("\\."))
+          .map(Integer::parseInt)
+          .collect(Collectors.toList());
   }
 
   private boolean validateSemanticVersion(String version) {
