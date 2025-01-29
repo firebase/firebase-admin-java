@@ -97,7 +97,7 @@ public class FirebaseMessagingIT {
   }
 
   @Test
-  public void testSendAll() throws Exception {
+  public void testSendEach() throws Exception {
     List<Message> messages = new ArrayList<>();
     messages.add(
         Message.builder()
@@ -124,7 +124,7 @@ public class FirebaseMessagingIT {
           .setToken("not-a-token")
           .build());
 
-    BatchResponse response = FirebaseMessaging.getInstance().sendAll(messages, true);
+    BatchResponse response = FirebaseMessaging.getInstance().sendEach(messages, true);
 
     assertEquals(2, response.getSuccessCount());
     assertEquals(1, response.getFailureCount());
@@ -147,13 +147,13 @@ public class FirebaseMessagingIT {
   }
 
   @Test
-  public void testSendFiveHundred() throws Exception {
+  public void testSendFiveHundredWithSendEach() throws Exception {
     List<Message> messages = new ArrayList<>();
     for (int i = 0; i < 500; i++) {
       messages.add(Message.builder().setTopic("foo-bar-" + (i % 10)).build());
     }
 
-    BatchResponse response = FirebaseMessaging.getInstance().sendAll(messages, true);
+    BatchResponse response = FirebaseMessaging.getInstance().sendEach(messages, true);
 
     assertEquals(500, response.getResponses().size());
     assertEquals(500, response.getSuccessCount());
@@ -170,7 +170,7 @@ public class FirebaseMessagingIT {
   }
 
   @Test
-  public void testSendMulticast() throws Exception {
+  public void testSendEachForMulticast() throws Exception {
     MulticastMessage multicastMessage = MulticastMessage.builder()
         .setNotification(Notification.builder()
             .setTitle("Title")
@@ -180,7 +180,7 @@ public class FirebaseMessagingIT {
         .addToken("also-not-a-token")
         .build();
 
-    BatchResponse response = FirebaseMessaging.getInstance().sendMulticast(
+    BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(
         multicastMessage, true);
 
     assertEquals(0, response.getSuccessCount());

@@ -25,6 +25,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.HttpUnsuccessfulResponseHandler;
 import com.google.api.client.testing.http.MockHttpTransport;
 import com.google.api.client.testing.http.MockLowLevelHttpResponse;
@@ -128,4 +129,12 @@ public class ApiClientUtilsTest {
 
     assertTrue(lowLevelResponse.isDisconnected());
   }
+
+  @Test
+  public void testVerifyDefaultTransportReused() {
+    HttpTransport t1 = ApiClientUtils.getDefaultTransport();
+    HttpTransport t2 = ApiClientUtils.getDefaultTransport();
+    assertEquals(t1, t2);
+  }
+
 }

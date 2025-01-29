@@ -16,6 +16,9 @@
 
 package com.google.firebase.messaging;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -27,13 +30,19 @@ import com.google.api.client.json.GenericJson;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.internal.Nullable;
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+
 import org.junit.After;
 import org.junit.Test;
 
@@ -45,6 +54,9 @@ public class FirebaseMessagingTest {
       .build();
   private static final Message EMPTY_MESSAGE = Message.builder()
       .setTopic("test-topic")
+      .build();
+  private static final Message EMPTY_MESSAGE_2 = Message.builder()
+      .setTopic("test-topic2")
       .build();
   private static final MulticastMessage TEST_MULTICAST_MESSAGE = MulticastMessage.builder()
       .addToken("test-fcm-token1")
@@ -263,37 +275,37 @@ public class FirebaseMessagingTest {
   }
 
   @Test
-  public void testSendAllWithNull() throws  FirebaseMessagingException {
+  public void testSendEachWithNull() throws  FirebaseMessagingException {
     MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageId(null);
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
 
     try {
-      messaging.sendAll(null);
+      messaging.sendEach(null);
       fail("No error thrown for null message list");
     } catch (NullPointerException expected) {
       // expected
     }
 
-    assertNull(client.lastBatch);
+    assertNull(client.lastMessage);
   }
 
   @Test
-  public void testSendAllWithEmptyList() throws FirebaseMessagingException {
+  public void testSendEachWithEmptyList() throws FirebaseMessagingException {
     MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageId(null);
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
 
     try {
-      messaging.sendAll(ImmutableList.<Message>of());
+      messaging.sendEach(ImmutableList.<Message>of());
       fail("No error thrown for empty message list");
     } catch (IllegalArgumentException expected) {
       // expected
     }
 
-    assertNull(client.lastBatch);
+    assertNull(client.lastMessage);
   }
 
   @Test
-  public void testSendAllWithTooManyMessages() throws FirebaseMessagingException {
+  public void testSendEachWithTooManyMessages() throws FirebaseMessagingException {
     MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageId(null);
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
     ImmutableList.Builder<Message> listBuilder = ImmutableList.builder();
@@ -302,217 +314,234 @@ public class FirebaseMessagingTest {
     }
 
     try {
-      messaging.sendAll(listBuilder.build(), false);
+      messaging.sendEach(listBuilder.build(), false);
       fail("No error thrown for too many messages in the list");
     } catch (IllegalArgumentException expected) {
       // expected
     }
 
-    assertNull(client.lastBatch);
+    assertNull(client.lastMessage);
   }
 
   @Test
-  public void testSendAll() throws FirebaseMessagingException {
-    BatchResponse batchResponse = getBatchResponse("test");
-    MockFirebaseMessagingClient client = MockFirebaseMessagingClient
-        .fromBatchResponse(batchResponse);
+  public void testSendEach() throws FirebaseMessagingException {
+    ImmutableList<Message> messages = ImmutableList.of(EMPTY_MESSAGE, EMPTY_MESSAGE_2);
+    ImmutableList<String> messageIds = ImmutableList.of("test1", "test2");
+    Map<Message, SendResponse> messageMap = new HashMap<>();
+    for (int i = 0; i < 2; i++) {
+      messageMap.put(messages.get(i), SendResponse.fromMessageId(messageIds.get(i)));
+    }
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageMap(messageMap);
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
-    ImmutableList<Message> messages = ImmutableList.of(EMPTY_MESSAGE);
 
-    BatchResponse response = messaging.sendAll(messages);
+    BatchResponse response = messaging.sendEach(messages);
 
-    assertSame(batchResponse, response);
-    assertSame(messages, client.lastBatch);
+    assertEquals(2, response.getSuccessCount());
+    for (int i = 0; i < 2; i++) {
+      assertEquals(messageIds.get(i), response.getResponses().get(i).getMessageId());
+    }
+    assertThat(client.lastMessage, anyOf(is(EMPTY_MESSAGE), is(EMPTY_MESSAGE_2)));
     assertFalse(client.isLastDryRun);
   }
 
   @Test
-  public void testSendAllDryRun() throws FirebaseMessagingException {
-    BatchResponse batchResponse = getBatchResponse("test");
-    MockFirebaseMessagingClient client = MockFirebaseMessagingClient
-        .fromBatchResponse(batchResponse);
+  public void testSendEachDryRun() throws FirebaseMessagingException {
+    ImmutableList<Message> messages = ImmutableList.of(EMPTY_MESSAGE, EMPTY_MESSAGE_2);
+    ImmutableList<String> messageIds = ImmutableList.of("test1", "test2");
+    Map<Message, SendResponse> messageMap = new HashMap<>();
+    for (int i = 0; i < 2; i++) {
+      messageMap.put(messages.get(i), SendResponse.fromMessageId(messageIds.get(i)));
+    }
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageMap(messageMap);
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
-    ImmutableList<Message> messages = ImmutableList.of(EMPTY_MESSAGE);
 
-    BatchResponse response = messaging.sendAll(messages, true);
+    BatchResponse response = messaging.sendEach(messages, true);
 
-    assertSame(batchResponse, response);
-    assertSame(messages, client.lastBatch);
+    assertEquals(2, response.getSuccessCount());
+    for (int i = 0; i < 2; i++) {
+      assertEquals(messageIds.get(i), response.getResponses().get(i).getMessageId());
+    }
+    assertThat(client.lastMessage, anyOf(is(EMPTY_MESSAGE), is(EMPTY_MESSAGE_2)));
     assertTrue(client.isLastDryRun);
   }
 
   @Test
-  public void testSendAllFailure() {
-    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromException(TEST_EXCEPTION);
+  public void testSendEachFailure() throws FirebaseMessagingException {
+    ImmutableList<Message> messages = ImmutableList.of(EMPTY_MESSAGE, EMPTY_MESSAGE_2);
+    Map<Message, SendResponse> messageMap = new HashMap<>();
+    messageMap.put(messages.get(0), SendResponse.fromMessageId("test"));
+    messageMap.put(messages.get(1), SendResponse.fromException(TEST_EXCEPTION));
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageMap(messageMap);
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
-    ImmutableList<Message> messages = ImmutableList.of(EMPTY_MESSAGE);
 
-    try {
-      messaging.sendAll(messages);
-    } catch (FirebaseMessagingException e) {
-      assertSame(TEST_EXCEPTION, e);
+    BatchResponse response =  messaging.sendEach(messages);
+
+    assertEquals(1, response.getFailureCount());
+    assertEquals(1, response.getSuccessCount());
+    assertEquals("test", response.getResponses().get(0).getMessageId());
+    assertEquals(TEST_EXCEPTION, response.getResponses().get(1).getException());
+    assertFalse(client.isLastDryRun);
+  }
+
+  @Test
+  public void testSendEachAsync() throws Exception {
+    ImmutableList<Message> messages = ImmutableList.of(EMPTY_MESSAGE, EMPTY_MESSAGE_2);
+    ImmutableList<String> messageIds = ImmutableList.of("test1", "test2");
+    Map<Message, SendResponse> messageMap = new HashMap<>();
+    for (int i = 0; i < 2; i++) {
+      messageMap.put(messages.get(i), SendResponse.fromMessageId(messageIds.get(i)));
     }
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageMap(messageMap);
+    FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
 
-    assertSame(messages, client.lastBatch);
+    BatchResponse response = messaging.sendEachAsync(messages).get();
+
+    assertEquals(2, response.getSuccessCount());
+    for (int i = 0; i < 2; i++) {
+      assertEquals(messageIds.get(i), response.getResponses().get(i).getMessageId());
+    }
+    assertThat(client.lastMessage, anyOf(is(EMPTY_MESSAGE), is(EMPTY_MESSAGE_2)));
     assertFalse(client.isLastDryRun);
   }
 
   @Test
-  public void testSendAllAsync() throws Exception {
-    BatchResponse batchResponse = getBatchResponse("test");
-    MockFirebaseMessagingClient client = MockFirebaseMessagingClient
-        .fromBatchResponse(batchResponse);
+  public void testSendEachAsyncDryRun() throws Exception {
+    ImmutableList<Message> messages = ImmutableList.of(EMPTY_MESSAGE, EMPTY_MESSAGE_2);
+    ImmutableList<String> messageIds = ImmutableList.of("test1", "test2");
+    Map<Message, SendResponse> messageMap = new HashMap<>();
+    for (int i = 0; i < 2; i++) {
+      messageMap.put(messages.get(i), SendResponse.fromMessageId(messageIds.get(i)));
+    }
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageMap(messageMap);
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
-    ImmutableList<Message> messages = ImmutableList.of(EMPTY_MESSAGE);
 
-    BatchResponse response = messaging.sendAllAsync(messages).get();
+    BatchResponse response = messaging.sendEachAsync(messages, true).get();
 
-    assertSame(batchResponse, response);
-    assertSame(messages, client.lastBatch);
-    assertFalse(client.isLastDryRun);
-  }
-
-  @Test
-  public void testSendAllAsyncDryRun() throws Exception {
-    BatchResponse batchResponse = getBatchResponse("test");
-    MockFirebaseMessagingClient client = MockFirebaseMessagingClient
-        .fromBatchResponse(batchResponse);
-    FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
-    ImmutableList<Message> messages = ImmutableList.of(EMPTY_MESSAGE);
-
-    BatchResponse response = messaging.sendAllAsync(messages, true).get();
-
-    assertSame(batchResponse, response);
-    assertSame(messages, client.lastBatch);
+    assertEquals(2, response.getSuccessCount());
+    for (int i = 0; i < 2; i++) {
+      assertEquals(messageIds.get(i), response.getResponses().get(i).getMessageId());
+    }
+    assertThat(client.lastMessage, anyOf(is(EMPTY_MESSAGE), is(EMPTY_MESSAGE_2)));
     assertTrue(client.isLastDryRun);
   }
 
   @Test
-  public void testSendAllAsyncFailure() throws InterruptedException {
-    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromException(TEST_EXCEPTION);
+  public void testSendEachAsyncFailure() throws Exception {
+    ImmutableList<Message> messages = ImmutableList.of(EMPTY_MESSAGE, EMPTY_MESSAGE_2);
+    Map<Message, SendResponse> messageMap = new HashMap<>();
+    messageMap.put(messages.get(0), SendResponse.fromMessageId("test"));
+    messageMap.put(messages.get(1), SendResponse.fromException(TEST_EXCEPTION));
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageMap(messageMap);
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
-    ImmutableList<Message> messages = ImmutableList.of(EMPTY_MESSAGE);
 
-    try {
-      messaging.sendAllAsync(messages).get();
-    } catch (ExecutionException e) {
-      assertSame(TEST_EXCEPTION, e.getCause());
-    }
+    BatchResponse response =  messaging.sendEachAsync(messages).get();
 
-    assertSame(messages, client.lastBatch);
+    assertEquals(1, response.getFailureCount());
+    assertEquals(1, response.getSuccessCount());
+    assertEquals("test", response.getResponses().get(0).getMessageId());
+    assertEquals(TEST_EXCEPTION, response.getResponses().get(1).getException());
     assertFalse(client.isLastDryRun);
   }
 
   @Test
-  public void testSendMulticastWithNull() throws  FirebaseMessagingException {
+  public void testSendEachForMulticastWithNull() throws  FirebaseMessagingException {
     MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageId(null);
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
 
     try {
-      messaging.sendMulticast(null);
+      messaging.sendEachForMulticast(null);
       fail("No error thrown for null multicast message");
     } catch (NullPointerException expected) {
       // expected
     }
 
-    assertNull(client.lastBatch);
+    assertNull(client.lastMessage);
   }
 
   @Test
-  public void testSendMulticast() throws FirebaseMessagingException {
-    BatchResponse batchResponse = getBatchResponse("test");
-    MockFirebaseMessagingClient client = MockFirebaseMessagingClient
-        .fromBatchResponse(batchResponse);
+  public void testSendEachForMulticast() throws FirebaseMessagingException {
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageId("test");
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
 
-    BatchResponse response = messaging.sendMulticast(TEST_MULTICAST_MESSAGE);
+    BatchResponse response = messaging.sendEachForMulticast(TEST_MULTICAST_MESSAGE);
 
-    assertSame(batchResponse, response);
-    assertEquals(2, client.lastBatch.size());
-    assertEquals("test-fcm-token1", client.lastBatch.get(0).getToken());
-    assertEquals("test-fcm-token2", client.lastBatch.get(1).getToken());
+    assertEquals(2, response.getSuccessCount());
+    for (int i = 0; i < 2; i++) {
+      assertEquals("test", response.getResponses().get(i).getMessageId());
+    }
     assertFalse(client.isLastDryRun);
   }
 
   @Test
-  public void testSendMulticastDryRun() throws FirebaseMessagingException {
-    BatchResponse batchResponse = getBatchResponse("test");
-    MockFirebaseMessagingClient client = MockFirebaseMessagingClient
-        .fromBatchResponse(batchResponse);
+  public void testSendEachForMulticastDryRun() throws FirebaseMessagingException {
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageId("test");
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
 
-    BatchResponse response = messaging.sendMulticast(TEST_MULTICAST_MESSAGE, true);
+    BatchResponse response = messaging.sendEachForMulticast(TEST_MULTICAST_MESSAGE, true);
 
-    assertSame(batchResponse, response);
-    assertEquals(2, client.lastBatch.size());
-    assertEquals("test-fcm-token1", client.lastBatch.get(0).getToken());
-    assertEquals("test-fcm-token2", client.lastBatch.get(1).getToken());
+    assertEquals(2, response.getSuccessCount());
+    for (int i = 0; i < 2; i++) {
+      assertEquals("test", response.getResponses().get(i).getMessageId());
+    }
     assertTrue(client.isLastDryRun);
   }
 
   @Test
-  public void testSendMulticastFailure() {
+  public void testSendEachForMulticastFailure() throws FirebaseMessagingException {
     MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromException(TEST_EXCEPTION);
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
 
-    try {
-      messaging.sendMulticast(TEST_MULTICAST_MESSAGE);
-    } catch (FirebaseMessagingException e) {
-      assertSame(TEST_EXCEPTION, e);
+    BatchResponse response =  messaging.sendEachForMulticast(TEST_MULTICAST_MESSAGE);
+
+    assertEquals(2, response.getFailureCount());
+    assertEquals(0, response.getSuccessCount());
+    for (int i = 0; i < 2; i++) {
+      assertEquals(TEST_EXCEPTION, response.getResponses().get(i).getException());
     }
-
-    assertEquals(2, client.lastBatch.size());
-    assertEquals("test-fcm-token1", client.lastBatch.get(0).getToken());
-    assertEquals("test-fcm-token2", client.lastBatch.get(1).getToken());
     assertFalse(client.isLastDryRun);
   }
 
   @Test
-  public void testSendMulticastAsync() throws Exception {
-    BatchResponse batchResponse = getBatchResponse("test");
-    MockFirebaseMessagingClient client = MockFirebaseMessagingClient
-        .fromBatchResponse(batchResponse);
+  public void testSendEachForMulticastAsync() throws Exception {
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageId("test");
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
 
-    BatchResponse response = messaging.sendMulticastAsync(TEST_MULTICAST_MESSAGE).get();
+    BatchResponse response = messaging.sendEachForMulticastAsync(TEST_MULTICAST_MESSAGE).get();
 
-    assertSame(batchResponse, response);
-    assertEquals(2, client.lastBatch.size());
-    assertEquals("test-fcm-token1", client.lastBatch.get(0).getToken());
-    assertEquals("test-fcm-token2", client.lastBatch.get(1).getToken());
+    assertEquals(2, response.getSuccessCount());
+    for (int i = 0; i < 2; i++) {
+      assertEquals("test", response.getResponses().get(i).getMessageId());
+    }
     assertFalse(client.isLastDryRun);
   }
 
   @Test
-  public void testSendMulticastAsyncDryRun() throws Exception {
-    BatchResponse batchResponse = getBatchResponse("test");
-    MockFirebaseMessagingClient client = MockFirebaseMessagingClient
-        .fromBatchResponse(batchResponse);
+  public void testSendEachForMulticastAsyncDryRun() throws Exception {
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageId("test");
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
 
-    BatchResponse response = messaging.sendMulticastAsync(TEST_MULTICAST_MESSAGE, true).get();
+    BatchResponse response = messaging.sendEachForMulticastAsync(
+        TEST_MULTICAST_MESSAGE, true).get();
 
-    assertSame(batchResponse, response);
-    assertEquals(2, client.lastBatch.size());
-    assertEquals("test-fcm-token1", client.lastBatch.get(0).getToken());
-    assertEquals("test-fcm-token2", client.lastBatch.get(1).getToken());
+    assertEquals(2, response.getSuccessCount());
+    for (int i = 0; i < 2; i++) {
+      assertEquals("test", response.getResponses().get(i).getMessageId());
+    }
     assertTrue(client.isLastDryRun);
   }
 
   @Test
-  public void testSendMulticastAsyncFailure() throws InterruptedException {
+  public void testSendEachForMulticastAsyncFailure() throws Exception {
     MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromException(TEST_EXCEPTION);
     FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
 
-    try {
-      messaging.sendMulticastAsync(TEST_MULTICAST_MESSAGE).get();
-    } catch (ExecutionException e) {
-      assertSame(TEST_EXCEPTION, e.getCause());
-    }
+    BatchResponse response =  messaging.sendEachForMulticastAsync(TEST_MULTICAST_MESSAGE).get();
 
-    assertEquals(2, client.lastBatch.size());
-    assertEquals("test-fcm-token1", client.lastBatch.get(0).getToken());
-    assertEquals("test-fcm-token2", client.lastBatch.get(1).getToken());
+    assertEquals(2, response.getFailureCount());
+    assertEquals(0, response.getSuccessCount());
+    for (int i = 0; i < 2; i++) {
+      assertEquals(TEST_EXCEPTION, response.getResponses().get(i).getException());
+    }
     assertFalse(client.isLastDryRun);
   }
 
@@ -664,14 +693,6 @@ public class FirebaseMessagingTest {
         .build();
   }
 
-  private BatchResponse getBatchResponse(String ...messageIds) {
-    ImmutableList.Builder<SendResponse> listBuilder = ImmutableList.builder();
-    for (String messageId : messageIds) {
-      listBuilder.add(SendResponse.fromMessageId(messageId));
-    }
-    return new BatchResponseImpl(listBuilder.build());
-  }
-
   private static class MockFirebaseMessagingClient implements FirebaseMessagingClient {
 
     private String messageId;
@@ -679,8 +700,8 @@ public class FirebaseMessagingTest {
     private FirebaseMessagingException exception;
 
     private Message lastMessage;
-    private List<Message> lastBatch;
     private boolean isLastDryRun;
+    private ImmutableMap<Message, SendResponse> messageMap;
 
     private MockFirebaseMessagingClient(
         String messageId, BatchResponse batchResponse, FirebaseMessagingException exception) {
@@ -689,12 +710,18 @@ public class FirebaseMessagingTest {
       this.exception = exception;
     }
 
+    private MockFirebaseMessagingClient(
+        Map<Message, SendResponse> messageMap, FirebaseMessagingException exception) {
+      this.messageMap = ImmutableMap.copyOf(messageMap);
+      this.exception = exception;
+    }
+
     static MockFirebaseMessagingClient fromMessageId(String messageId) {
       return new MockFirebaseMessagingClient(messageId, null, null);
     }
 
-    static MockFirebaseMessagingClient fromBatchResponse(BatchResponse batchResponse) {
-      return new MockFirebaseMessagingClient(null, batchResponse, null);
+    static MockFirebaseMessagingClient fromMessageMap(Map<Message, SendResponse> messageMap) {
+      return new MockFirebaseMessagingClient(messageMap, null);
     }
 
     static MockFirebaseMessagingClient fromException(FirebaseMessagingException exception) {
@@ -702,23 +729,28 @@ public class FirebaseMessagingTest {
     }
 
     @Override
+    @Nullable
     public String send(Message message, boolean dryRun) throws FirebaseMessagingException {
       lastMessage = message;
       isLastDryRun = dryRun;
       if (exception != null) {
         throw exception;
       }
-      return messageId;
+      if (messageMap == null) {
+        return messageId;
+      }
+      if (!messageMap.containsKey(message)) {
+        return null;
+      }
+      if (messageMap.get(message).getException() != null) {
+        throw messageMap.get(message).getException();
+      }
+      return messageMap.get(message).getMessageId();
     }
 
     @Override
     public BatchResponse sendAll(
         List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
-      lastBatch = messages;
-      isLastDryRun = dryRun;
-      if (exception != null) {
-        throw exception;
-      }
       return batchResponse;
     }
   }

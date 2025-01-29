@@ -1173,7 +1173,7 @@ public class FirebaseRemoteConfigClientImplTest {
     return FirebaseRemoteConfigClientImpl.builder()
             .setProjectId("test-project")
             .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
-            .setRequestFactory(Utils.getDefaultTransport().createRequestFactory());
+            .setRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory());
   }
 
   private void checkGetRequestHeader(HttpRequest request) {
@@ -1185,6 +1185,7 @@ public class FirebaseRemoteConfigClientImplTest {
     assertEquals(TEST_REMOTE_CONFIG_URL + urlSuffix, request.getUrl().toString());
     HttpHeaders headers = request.getHeaders();
     assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
+    assertEquals(SdkUtils.getMetricsHeader(), request.getHeaders().get("X-Goog-Api-Client"));
     assertEquals("gzip", headers.getAcceptEncoding());
   }
 
@@ -1197,6 +1198,7 @@ public class FirebaseRemoteConfigClientImplTest {
     assertEquals(TEST_REMOTE_CONFIG_URL + urlSuffix, request.getUrl().toString());
     HttpHeaders headers = request.getHeaders();
     assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
+    assertEquals(SdkUtils.getMetricsHeader(), request.getHeaders().get("X-Goog-Api-Client"));
     assertEquals("gzip", headers.getAcceptEncoding());
     assertEquals(ifMatch, headers.getIfMatch());
   }
@@ -1206,6 +1208,7 @@ public class FirebaseRemoteConfigClientImplTest {
     assertEquals(TEST_REMOTE_CONFIG_URL + urlSuffix, request.getUrl().toString());
     HttpHeaders headers = request.getHeaders();
     assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
+    assertEquals(SdkUtils.getMetricsHeader(), request.getHeaders().get("X-Goog-Api-Client"));
     assertEquals("gzip", headers.getAcceptEncoding());
   }
 

@@ -1124,6 +1124,7 @@ public class FirebaseProjectManagementServiceImplTest {
     assertEquals(expectedUrl, request.getUrl().toString());
     assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
     assertEquals(CLIENT_VERSION, request.getHeaders().get("X-Client-Version"));
+    assertEquals(SdkUtils.getMetricsHeader(), request.getHeaders().get("X-Goog-Api-Client"));
   }
 
   private void checkRequestPayload(Map<String, String> expected) throws IOException {

@@ -19,7 +19,6 @@ package com.google.firebase.database.utilities;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.SettableApiFuture;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
 import com.google.common.io.BaseEncoding;
 import com.google.common.net.UrlEscapers;
@@ -32,6 +31,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -108,8 +108,8 @@ public class Utilities {
     for (String paramPair : paramPairs) {
       String[] pairParts = paramPair.split("=");
       // both the first and second part will be encoded now, we must decode them
-      String decodedKey = URLDecoder.decode(pairParts[0], Charsets.UTF_8.name());
-      String decodedValue = URLDecoder.decode(pairParts[1], Charsets.UTF_8.name());
+      String decodedKey = URLDecoder.decode(pairParts[0], StandardCharsets.UTF_8.name());
+      String decodedValue = URLDecoder.decode(pairParts[1], StandardCharsets.UTF_8.name());
       String runningValue = paramsMap.get(decodedKey);
       if (Strings.isNullOrEmpty(runningValue)) {
         runningValue = decodedValue;

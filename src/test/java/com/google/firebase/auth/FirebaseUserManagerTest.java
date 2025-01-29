@@ -979,6 +979,7 @@ public class FirebaseUserManagerTest {
         .setHttpTransport(transport)
         .setConnectTimeout(30000)
         .setReadTimeout(60000)
+        .setWriteTimeout(90000)
         .build());
     FirebaseAuth auth = FirebaseAuth.getInstance();
     FirebaseUserManager userManager = auth.getUserManager();
@@ -989,6 +990,7 @@ public class FirebaseUserManagerTest {
     HttpRequest request = interceptor.getResponse().getRequest();
     assertEquals(30000, request.getConnectTimeout());
     assertEquals(60000, request.getReadTimeout());
+    assertEquals(90000, request.getWriteTimeout());
   }
 
   @Test
@@ -3024,6 +3026,8 @@ public class FirebaseUserManagerTest {
 
     String clientVersion = "Java/Admin/" + SdkUtils.getVersion();
     assertEquals(clientVersion, headers.getFirstHeaderStringValue("X-Client-Version"));
+    assertEquals(SdkUtils.getMetricsHeader(), headers.get("X-Goog-Api-Client"));
+
   }
 
   private static void checkUrl(TestResponseInterceptor interceptor, String method, String url) {

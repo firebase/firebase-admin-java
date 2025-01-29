@@ -17,7 +17,6 @@
 package com.google.firebase.messaging;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -29,7 +28,6 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpMethods;
 import com.google.api.client.http.HttpRequest;
-import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.HttpResponseInterceptor;
 import com.google.api.client.http.HttpTransport;
@@ -73,16 +71,9 @@ public class FirebaseMessagingClientImplTest {
 
   private static final String MOCK_RESPONSE = "{\"name\": \"mock-name\"}";
 
-  private static final String MOCK_BATCH_SUCCESS_RESPONSE = TestUtils.loadResource(
-      "fcm_batch_success.txt");
-
-  private static final String MOCK_BATCH_FAILURE_RESPONSE = TestUtils.loadResource(
-      "fcm_batch_failure.txt");
-
   private static final Message EMPTY_MESSAGE = Message.builder()
       .setTopic("test-topic")
       .build();
-  private static final List<Message> MESSAGE_LIST = ImmutableList.of(EMPTY_MESSAGE, EMPTY_MESSAGE);
 
   private static final boolean DRY_RUN_ENABLED = true;
   private static final boolean DRY_RUN_DISABLED = false;
@@ -320,187 +311,6 @@ public class FirebaseMessagingClientImplTest {
     }
   }
 
-  @Test
-  public void testSendAll() throws Exception {
-    final TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClientForBatchRequests(
-        MOCK_BATCH_SUCCESS_RESPONSE, interceptor);
-
-    BatchResponse responses = client.sendAll(MESSAGE_LIST, false);
-
-    assertBatchResponse(responses, interceptor, 2, 0);
-  }
-
-  @Test
-  public void testSendAllDryRun() throws Exception {
-    final TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClientForBatchRequests(
-        MOCK_BATCH_SUCCESS_RESPONSE, interceptor);
-
-    BatchResponse responses = client.sendAll(MESSAGE_LIST, true);
-
-    assertBatchResponse(responses, interceptor, 2, 0);
-  }
-
-  @Test
-  public void testRequestInitializerAppliedToBatchRequests() throws Exception {
-    TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    MockHttpTransport transport = new MockHttpTransport.Builder()
-        .setLowLevelHttpResponse(getBatchResponse(MOCK_BATCH_SUCCESS_RESPONSE))
-        .build();
-    HttpRequestInitializer initializer = new HttpRequestInitializer() {
-      @Override
-      public void initialize(HttpRequest httpRequest) {
-        httpRequest.getHeaders().set("x-custom-header", "test-value");
-      }
-    };
-    FirebaseMessagingClientImpl client = FirebaseMessagingClientImpl.builder()
-        .setProjectId("test-project")
-        .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
-        .setRequestFactory(transport.createRequestFactory(initializer))
-        .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory())
-        .setResponseInterceptor(interceptor)
-        .build();
-
-    try {
-      client.sendAll(MESSAGE_LIST, DRY_RUN_DISABLED);
-    } finally {
-      HttpRequest request = interceptor.getLastRequest();
-      assertEquals("test-value", request.getHeaders().get("x-custom-header"));
-    }
-  }
-
-  @Test
-  public void testSendAllFailure() throws Exception {
-    final TestResponseInterceptor interceptor = new TestResponseInterceptor();
-    FirebaseMessagingClient client = initMessagingClientForBatchRequests(
-        MOCK_BATCH_FAILURE_RESPONSE, interceptor);
-    List<Message> messages = ImmutableList.of(EMPTY_MESSAGE, EMPTY_MESSAGE, EMPTY_MESSAGE);
-
-    BatchResponse responses = client.sendAll(messages, DRY_RUN_DISABLED);
-
-    assertBatchResponse(responses, interceptor, 1, 2);
-  }
-
-  @Test
-  public void testSendAllHttpError() {
-    for (int code : HTTP_ERRORS) {
-      response.setStatusCode(code).setContent("{}");
-
-      try {
-        client.sendAll(MESSAGE_LIST, DRY_RUN_DISABLED);
-        fail("No error thrown for HTTP error");
-      } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code), null,
-            "Unexpected HTTP response with status: " + code + "\n{}");
-      }
-      checkBatchRequestHeader(interceptor.getLastRequest());
-    }
-  }
-
-  @Test
-  public void testSendAllTransportError() {
-    FirebaseMessagingClient client = initClientWithFaultyTransport();
-
-    try {
-      client.sendAll(MESSAGE_LIST, DRY_RUN_DISABLED);
-      fail("No error thrown for HTTP error");
-    } catch (FirebaseMessagingException error) {
-      assertEquals(ErrorCode.UNKNOWN, error.getErrorCode());
-      assertEquals(
-          "Unknown error while making a remote service call: transport error", error.getMessage());
-      assertTrue(error.getCause() instanceof IOException);
-      assertNull(error.getHttpResponse());
-      assertNull(error.getMessagingErrorCode());
-    }
-  }
-
-  @Test
-  public void testSendAllErrorWithEmptyResponse() {
-    for (int code : HTTP_ERRORS) {
-      response.setStatusCode(code).setZeroContent();
-
-      try {
-        client.sendAll(MESSAGE_LIST, DRY_RUN_DISABLED);
-        fail("No error thrown for HTTP error");
-      } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, HTTP_2_ERROR.get(code), null,
-            "Unexpected HTTP response with status: " + code + "\nnull");
-      }
-      checkBatchRequestHeader(interceptor.getLastRequest());
-    }
-  }
-
-  @Test
-  public void testSendAllErrorWithDetails() {
-    for (int code : HTTP_ERRORS) {
-      response.setStatusCode(code).setContent(
-          "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\"}}");
-
-      try {
-        client.sendAll(MESSAGE_LIST, DRY_RUN_DISABLED);
-        fail("No error thrown for HTTP error");
-      } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT, null);
-      }
-      checkBatchRequestHeader(interceptor.getLastRequest());
-    }
-  }
-
-  @Test
-  public void testSendAllErrorWithCanonicalCode() {
-    for (int code : HTTP_ERRORS) {
-      response.setStatusCode(code).setContent(
-          "{\"error\": {\"status\": \"NOT_FOUND\", \"message\": \"test error\"}}");
-
-      try {
-        client.sendAll(MESSAGE_LIST, DRY_RUN_DISABLED);
-        fail("No error thrown for HTTP error");
-      } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, ErrorCode.NOT_FOUND, null);
-      }
-      checkBatchRequestHeader(interceptor.getLastRequest());
-    }
-  }
-
-  @Test
-  public void testSendAllErrorWithFcmError() {
-    for (int code : HTTP_ERRORS) {
-      response.setStatusCode(code).setContent(
-          "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\", "
-              + "\"details\":[{\"@type\": \"type.googleapis.com/google.firebase.fcm"
-              + ".v1.FcmError\", \"errorCode\": \"UNREGISTERED\"}]}}");
-
-      try {
-        client.sendAll(MESSAGE_LIST, DRY_RUN_DISABLED);
-        fail("No error thrown for HTTP error");
-      } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT,
-            MessagingErrorCode.UNREGISTERED);
-      }
-      checkBatchRequestHeader(interceptor.getLastRequest());
-    }
-  }
-
-  @Test
-  public void testSendAllErrorWithoutMessage() {
-    final String responseBody = "{\"error\": {\"status\": \"INVALID_ARGUMENT\", "
-        + "\"details\":[{\"@type\": \"type.googleapis.com/google.firebase.fcm"
-        + ".v1.FcmError\", \"errorCode\": \"UNREGISTERED\"}]}}";
-    for (int code : HTTP_ERRORS) {
-      response.setStatusCode(code).setContent(responseBody);
-
-      try {
-        client.sendAll(MESSAGE_LIST, DRY_RUN_DISABLED);
-        fail("No error thrown for HTTP error");
-      } catch (FirebaseMessagingException error) {
-        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT,
-            MessagingErrorCode.UNREGISTERED,
-            "Unexpected HTTP response with status: " + code + "\n" + responseBody);
-      }
-      checkBatchRequestHeader(interceptor.getLastRequest());
-    }
-  }
 
   @Test(expected = IllegalArgumentException.class)
   public void testBuilderNullProjectId() {
@@ -558,21 +368,9 @@ public class FirebaseMessagingClientImplTest {
         .setProjectId("test-project")
         .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
         .setRequestFactory(transport.createRequestFactory())
-        .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory())
+        .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
         .setResponseInterceptor(interceptor)
         .build();
-  }
-
-  private FirebaseMessagingClientImpl initMessagingClientForBatchRequests(
-      String responsePayload, TestResponseInterceptor interceptor) {
-    MockLowLevelHttpResponse httpResponse = getBatchResponse(responsePayload);
-    return initMessagingClient(httpResponse, interceptor);
-  }
-
-  private MockLowLevelHttpResponse getBatchResponse(String responsePayload) {
-    return new MockLowLevelHttpResponse()
-        .setContentType("multipart/mixed; boundary=test_boundary")
-        .setContent(responsePayload);
   }
 
   private FirebaseMessagingClientImpl initClientWithFaultyTransport() {
@@ -581,7 +379,7 @@ public class FirebaseMessagingClientImplTest {
         .setProjectId("test-project")
         .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
         .setRequestFactory(transport.createRequestFactory())
-        .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory())
+        .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
         .build();
   }
 
@@ -591,6 +389,7 @@ public class FirebaseMessagingClientImplTest {
     HttpHeaders headers = request.getHeaders();
     assertEquals("2", headers.get("X-GOOG-API-FORMAT-VERSION"));
     assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
+    assertEquals(SdkUtils.getMetricsHeader(), headers.get("X-Goog-Api-Client"));
   }
 
   private void checkRequest(
@@ -603,70 +402,12 @@ public class FirebaseMessagingClientImplTest {
     assertEquals(expected, parsed);
   }
 
-  private void assertBatchResponse(
-      BatchResponse batchResponse, TestResponseInterceptor interceptor,
-      int successCount, int failureCount) throws IOException {
-
-    assertEquals(successCount, batchResponse.getSuccessCount());
-    assertEquals(failureCount, batchResponse.getFailureCount());
-
-    List<SendResponse> responses = batchResponse.getResponses();
-    assertEquals(successCount + failureCount, responses.size());
-    for (int i = 0; i < successCount; i++) {
-      SendResponse sendResponse = responses.get(i);
-      assertTrue(sendResponse.isSuccessful());
-      assertEquals("projects/test-project/messages/" + (i + 1), sendResponse.getMessageId());
-      assertNull(sendResponse.getException());
-    }
-
-    for (int i = successCount; i < failureCount; i++) {
-      SendResponse sendResponse = responses.get(i);
-      assertFalse(sendResponse.isSuccessful());
-      assertNull(sendResponse.getMessageId());
-
-      FirebaseMessagingException exception = sendResponse.getException();
-      assertNotNull(exception);
-      assertEquals(ErrorCode.INVALID_ARGUMENT, exception.getErrorCode());
-      assertNull(exception.getCause());
-      assertNull(exception.getHttpResponse());
-      assertEquals(MessagingErrorCode.INVALID_ARGUMENT, exception.getMessagingErrorCode());
-    }
-
-    checkBatchRequestHeader(interceptor.getLastRequest());
-    checkBatchRequest(interceptor.getLastRequest(), successCount + failureCount);
-  }
-
-  private void checkBatchRequestHeader(HttpRequest request) {
-    assertEquals("POST", request.getRequestMethod());
-    assertEquals("https://fcm.googleapis.com/batch", request.getUrl().toString());
-  }
-
-  private void checkBatchRequest(HttpRequest request, int expectedParts) throws IOException {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    request.getContent().writeTo(out);
-    String[] lines = out.toString().split("\n");
-    assertEquals(expectedParts, countLinesWithPrefix(lines, "POST " + TEST_FCM_URL));
-    assertEquals(expectedParts, countLinesWithPrefix(lines, "x-goog-api-format-version: 2"));
-    assertEquals(expectedParts, countLinesWithPrefix(
-        lines, "x-firebase-client: fire-admin-java/" + SdkUtils.getVersion()));
-  }
-
-  private int countLinesWithPrefix(String[] lines, String prefix) {
-    int matchCount = 0;
-    for (String line : lines) {
-      if (line.trim().startsWith(prefix)) {
-        matchCount++;
-      }
-    }
-    return matchCount;
-  }
-
   private FirebaseMessagingClientImpl.Builder fullyPopulatedBuilder() {
     return FirebaseMessagingClientImpl.builder()
         .setProjectId("test-project")
         .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
-        .setRequestFactory(Utils.getDefaultTransport().createRequestFactory())
-        .setChildRequestFactory(Utils.getDefaultTransport().createRequestFactory());
+        .setRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
+        .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory());
   }
 
   private void checkExceptionFromHttpResponse(

@@ -24,12 +24,12 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.auth.oauth2.AccessToken;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.firestore.FirestoreOptions;
+import com.google.firebase.internal.ApacheHttp2Transport;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import java.io.IOException;
@@ -38,7 +38,7 @@ import java.util.concurrent.ThreadFactory;
 
 import org.junit.Test;
 
-/** 
+/**
  * Tests for {@link FirebaseOptions}.
  */
 public class FirebaseOptionsTest {
@@ -74,7 +74,7 @@ public class FirebaseOptionsTest {
   @Test
   public void createOptionsWithAllValuesSet() throws IOException {
     GsonFactory jsonFactory = new GsonFactory();
-    NetHttpTransport httpTransport = new NetHttpTransport();
+    ApacheHttp2Transport httpTransport = new ApacheHttp2Transport();
     FirestoreOptions firestoreOptions = FirestoreOptions.newBuilder().build();
     FirebaseOptions firebaseOptions =
         FirebaseOptions.builder()
@@ -87,6 +87,7 @@ public class FirebaseOptionsTest {
             .setThreadManager(MOCK_THREAD_MANAGER)
             .setConnectTimeout(30000)
             .setReadTimeout(60000)
+            .setWriteTimeout(90000)
             .setFirestoreOptions(firestoreOptions)
             .build();
     assertEquals(FIREBASE_DB_URL, firebaseOptions.getDatabaseUrl());
@@ -97,6 +98,7 @@ public class FirebaseOptionsTest {
     assertSame(MOCK_THREAD_MANAGER, firebaseOptions.getThreadManager());
     assertEquals(30000, firebaseOptions.getConnectTimeout());
     assertEquals(60000, firebaseOptions.getReadTimeout());
+    assertEquals(90000, firebaseOptions.getWriteTimeout());
     assertSame(firestoreOptions, firebaseOptions.getFirestoreOptions());
 
     GoogleCredentials credentials = firebaseOptions.getCredentials();
@@ -207,6 +209,14 @@ public class FirebaseOptionsTest {
         .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
         .setReadTimeout(-1)
         .build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void createOptionsWithInvalidWriteTimeout() {
+    FirebaseOptions.builder()
+            .setCredentials(TestUtils.getCertCredential(ServiceAccount.EDITOR.asStream()))
+            .setWriteTimeout(-1)
+            .build();
   }
 
   @Test

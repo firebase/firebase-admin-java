@@ -56,7 +56,7 @@ public class StorageClientIT {
   public void testCloudStorageNonExistingBucket() {
     StorageClient storage = StorageClient.getInstance(IntegrationTestUtils.ensureDefaultApp());
     try {
-      storage.bucket("non-existing");
+      storage.bucket("non.existing");
       fail("No error thrown for non-existing bucket");
     } catch (IllegalArgumentException expected) {
       // ignore

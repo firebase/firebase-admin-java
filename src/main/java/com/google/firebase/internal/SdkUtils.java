@@ -39,6 +39,14 @@ public class SdkUtils {
     return SDK_VERSION;
   }
 
+  public static String getJavaVersion() {
+    return System.getProperty("java.version");
+  }
+
+  public static String getMetricsHeader() {
+    return String.format("gl-java/%s fire-admin/%s", getJavaVersion(), getVersion());
+  }
+
   private static String loadSdkVersion() {
     try (InputStream in = SdkUtils.class.getClassLoader()
         .getResourceAsStream(ADMIN_SDK_PROPERTIES)) {

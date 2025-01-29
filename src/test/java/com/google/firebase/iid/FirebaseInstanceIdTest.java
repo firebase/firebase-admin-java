@@ -38,6 +38,7 @@ import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.OutgoingHttpRequest;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
+import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.GenericFunction;
 import com.google.firebase.testing.TestResponseInterceptor;
 import com.google.firebase.testing.TestUtils;
@@ -174,6 +175,7 @@ public class FirebaseInstanceIdTest {
       assertEquals(HttpMethods.DELETE, request.getRequestMethod());
       assertEquals(TEST_URL, request.getUrl().toString());
       assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+      assertEquals(SdkUtils.getMetricsHeader(), request.getHeaders().get("X-Goog-Api-Client"));
     }
   }
 
