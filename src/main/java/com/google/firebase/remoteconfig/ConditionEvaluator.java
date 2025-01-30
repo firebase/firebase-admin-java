@@ -150,7 +150,7 @@ final class ConditionEvaluator {
       return false;
     }
 
-    Object customSignalValue = context.get(customSignalKey);
+    String customSignalValue = context.get(customSignalKey);
     if (customSignalValue == null) {
       return false;
     }
