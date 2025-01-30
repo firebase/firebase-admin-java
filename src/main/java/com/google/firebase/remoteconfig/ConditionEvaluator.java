@@ -82,6 +82,7 @@ final class ConditionEvaluator {
     } else if (condition.getCustomSignal() != null) {
       return evaluateCustomSignalCondition(condition.getCustomSignal(), context);
     }
+    logger.atWarn().log("Received invalid condition for evaluation.");
     return false;
   }
 
