@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.Nullable;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -44,16 +45,18 @@ final class ConditionEvaluator {
   @NonNull
   Map<String, Boolean> evaluateConditions(
       @NonNull List<ServerCondition> conditions,
-      @NonNull KeysAndValues context) {
+      @Nullable KeysAndValues context) {
     checkNotNull(conditions, "List of conditions must not be null.");
     checkArgument(!conditions.isEmpty(), "List of conditions must not be empty.");
-    checkNotNull(context, "Context must not be null.");
+    KeysAndValues evaluationContext = context != null 
+        ? context 
+        : new KeysAndValues.Builder().build();
    
     Map<String, Boolean> evaluatedConditions = conditions.stream()
         .collect(Collectors.toMap(
             ServerCondition::getName,
             condition -> 
-                evaluateCondition(condition.getCondition(), context, /* nestingLevel= */0)
+                evaluateCondition(condition.getCondition(), evaluationContext, /* nestingLevel= */0)
         ));
     
     return evaluatedConditions;
