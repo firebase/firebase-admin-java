@@ -215,7 +215,7 @@ final class ConditionEvaluator {
     }
   }
 
-  private BigInteger getMicroPercentile(String seed, Object randomizationId) {
+  private BigInteger getMicroPercentile(String seed, String randomizationId) {
     String seedPrefix = seed != null && !seed.isEmpty() ? seed + "." : "";
     String stringToHash = seedPrefix + randomizationId;
     BigInteger hash = hashSeededRandomizationId(stringToHash);
@@ -250,14 +250,13 @@ final class ConditionEvaluator {
     }
   }
 
-  private boolean compareStrings(ImmutableList<String> targetValues, Object customSignal,
+  private boolean compareStrings(ImmutableList<String> targetValues, String customSignal,
                                BiPredicate<String, String> compareFunction) {
-    String customSignalValue = customSignal.toString();
     return targetValues.stream().anyMatch(targetValue -> 
-              compareFunction.test(customSignalValue, targetValue));
+              compareFunction.test(customSignal, targetValue));
   }
 
-  private boolean compareNumbers(ImmutableList<String> targetValues, Object customSignal,
+  private boolean compareNumbers(ImmutableList<String> targetValues, String customSignal,
                              IntPredicate compareFunction) {
     if (targetValues.size() != 1) {
       logger.warn(String.format(
@@ -267,9 +266,9 @@ final class ConditionEvaluator {
     }
 
     try {
-      double customSignalValue = Double.parseDouble(customSignal.toString());
+      double customSignalDouble = Double.parseDouble(customSignal);
       double targetValue = Double.parseDouble(targetValues.get(0));
-      int comparisonResult = Double.compare(customSignalValue, targetValue);
+      int comparisonResult = Double.compare(customSignalDouble, targetValue);
       return compareFunction.test(comparisonResult);
     } catch (NumberFormatException e) {
       logger.warn("Error parsing numeric values: customSignal=%s, targetValue=%s",
@@ -279,7 +278,7 @@ final class ConditionEvaluator {
   }
 
   private boolean compareSemanticVersions(ImmutableList<String> targetValues,
-                                      Object customSignalValue,
+                                      String customSignal,
                                       IntPredicate compareFunction) {
     if (targetValues.size() != 1) {
       logger.warn(String.format("Target values must contain 1 element for semantic operation."));
@@ -287,19 +286,18 @@ final class ConditionEvaluator {
     }
 
     String targetValueString = targetValues.get(0);
-    String customSignalValueString = customSignalValue.toString();
     if (!validateSemanticVersion(targetValueString)
-        || !validateSemanticVersion(customSignalValueString)) {
+        || !validateSemanticVersion(customSignal)) {
       return false;
     }
 
     List<Integer> targetVersion = parseSemanticVersion(targetValueString);
-    List<Integer> customSignalVersion = parseSemanticVersion(customSignalValueString);
+    List<Integer> customSignalVersion = parseSemanticVersion(customSignal);
 
     int maxLength = 5;
     if (targetVersion.size() > maxLength || customSignalVersion.size() > maxLength) {
       logger.warn("Semantic version max length(%s) exceeded. Target: %s, Custom Signal: %s",
-          maxLength, targetValueString, customSignalValueString);
+          maxLength, targetValueString, customSignal);
       return false;
     }
 
