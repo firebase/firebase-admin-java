@@ -41,6 +41,7 @@ public class TopicManagementResponse {
       .put("NOT_FOUND", "registration-token-not-registered")
       .put("INTERNAL", "internal-error")
       .put("TOO_MANY_TOPICS", "too-many-topics")
+      .put("RESOURCE_EXHAUSTED", "resource-exhausted")
       .build();
 
   private final int successCount;

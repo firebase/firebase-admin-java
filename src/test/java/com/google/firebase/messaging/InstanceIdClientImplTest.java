@@ -413,6 +413,17 @@ public class InstanceIdClientImplTest {
     assertEquals(expected, topicManagementResponse.getErrors().toString());
   }
 
+  @Test
+  public void testTopicManagementResponseErrorResourceExhausted() {
+    GenericJson json = new GenericJson().set("error", "RESOURCE_EXHAUSTED");
+    ImmutableList<GenericJson> jsonList = ImmutableList.of(json);
+
+    TopicManagementResponse topicManagementResponse = new TopicManagementResponse(jsonList);
+
+    String expected = "[Error{index=0, reason=resource-exhausted}]";
+    assertEquals(expected, topicManagementResponse.getErrors().toString());
+  }
+
   private static InstanceIdClientImpl initInstanceIdClient(
       final MockLowLevelHttpResponse mockResponse,
       final HttpResponseInterceptor interceptor) {
