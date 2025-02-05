@@ -404,7 +404,30 @@ public class InstanceIdClientImplTest {
 
   @Test
   public void testTopicManagementResponseErrorToString() {
-    GenericJson json = new GenericJson().set("error", "test error");
+    GenericJson json = new GenericJson().set("error", "INVALID_ARGUMENT");
+    ImmutableList<GenericJson> jsonList = ImmutableList.of(json);
+
+    TopicManagementResponse topicManagementResponse = new TopicManagementResponse(jsonList);
+
+    String expected = "[Error{index=0, reason=invalid-argument}]";
+    assertEquals(expected, topicManagementResponse.getErrors().toString());
+  }
+
+  @Test
+  public void testTopicManagementResponseErrorNotInErrorCodes() {
+    String myError = "myError";
+    GenericJson json = new GenericJson().set("error", myError);
+    ImmutableList<GenericJson> jsonList = ImmutableList.of(json);
+
+    TopicManagementResponse topicManagementResponse = new TopicManagementResponse(jsonList);
+
+    String expected = "[Error{index=0, reason=" + myError + "}]";
+    assertEquals(expected, topicManagementResponse.getErrors().toString());
+  }
+
+  @Test
+  public void testTopicManagementResponseErrorUnknown() {
+    GenericJson json = new GenericJson().set("error", "");
     ImmutableList<GenericJson> jsonList = ImmutableList.of(json);
 
     TopicManagementResponse topicManagementResponse = new TopicManagementResponse(jsonList);
@@ -443,7 +466,7 @@ public class InstanceIdClientImplTest {
     assertEquals(1, result.getFailureCount());
     assertEquals(1, result.getErrors().size());
     assertEquals(1, result.getErrors().get(0).getIndex());
-    assertEquals("unknown-error", result.getErrors().get(0).getReason());
+    assertEquals("error_reason", result.getErrors().get(0).getReason());
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     request.getContent().writeTo(out);
