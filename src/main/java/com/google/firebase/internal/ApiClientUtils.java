@@ -41,14 +41,17 @@ public class ApiClientUtils {
   private ApiClientUtils() { }
 
   /**
-   * Creates a new {@code HttpRequestFactory} which provides authorization (OAuth2), timeouts and
-   * automatic retries.
+   * Creates a new {@code HttpRequestFactory} which provides authorization (OAuth2) and timeouts.
+   * Automatic retries are enabled or disabled based on the application's configuration.
    *
    * @param app {@link FirebaseApp} from which to obtain authorization credentials.
    * @return A new {@code HttpRequestFactory} instance.
    */
   public static HttpRequestFactory newAuthorizedRequestFactory(FirebaseApp app) {
-    return newAuthorizedRequestFactory(app, DEFAULT_RETRY_CONFIG);
+    if (app.getOptions().isRetryEnabled()) {
+      return newAuthorizedRequestFactory(app, DEFAULT_RETRY_CONFIG);
+    }
+    return newAuthorizedRequestFactory(app, /*retryConfig*/ null);
   }
 
   /**

@@ -71,10 +71,28 @@ public class ApiClientUtilsTest {
   }
 
   @Test
-  public void testAuthorizedHttpClientWithoutRetry() throws IOException {
+  public void testAuthorizedHttpClientNoRetryConfigured() throws IOException {
     FirebaseApp app = FirebaseApp.initializeApp(TEST_OPTIONS);
 
     HttpRequestFactory requestFactory = ApiClientUtils.newAuthorizedRequestFactory(app, null);
+
+    assertTrue(requestFactory.getInitializer() instanceof FirebaseRequestInitializer);
+    HttpRequest request = requestFactory.buildGetRequest(TEST_URL);
+    assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
+    HttpUnsuccessfulResponseHandler retryHandler = request.getUnsuccessfulResponseHandler();
+    assertFalse(retryHandler instanceof RetryHandlerDecorator);
+  }
+
+  @Test
+  public void testAuthorizedHttpClientWithRetryDisabled() throws IOException {
+    FirebaseOptions options = FirebaseOptions.builder()
+            .setCredentials(new MockGoogleCredentials("test-token"))
+            .setRetryEnabled(false)
+            .build();
+
+    FirebaseApp app = FirebaseApp.initializeApp(options);
+
+    HttpRequestFactory requestFactory = ApiClientUtils.newAuthorizedRequestFactory(app);
 
     assertTrue(requestFactory.getInitializer() instanceof FirebaseRequestInitializer);
     HttpRequest request = requestFactory.buildGetRequest(TEST_URL);
