@@ -32,6 +32,9 @@ import java.util.Map;
  */
 public class ApnsConfig {
 
+  @Key("live_activity_token")
+  private final String liveActivityToken;
+
   @Key("headers")
   private final Map<String, String> headers;
 
@@ -45,6 +48,7 @@ public class ApnsConfig {
     checkArgument(builder.aps != null, "aps must be specified");
     checkArgument(!builder.customData.containsKey("aps"),
         "aps cannot be specified as part of custom data");
+    this.liveActivityToken = builder.liveActivityToken;
     this.headers = builder.headers.isEmpty() ? null : ImmutableMap.copyOf(builder.headers);
     this.payload = ImmutableMap.<String, Object>builder()
         .putAll(builder.customData)
@@ -64,12 +68,21 @@ public class ApnsConfig {
 
   public static class Builder {
 
+    private final String liveActivityToken;
     private final Map<String, String> headers = new HashMap<>();
     private final Map<String, Object> customData = new HashMap<>();
     private Aps aps;
     private ApnsFcmOptions fcmOptions;
 
     private Builder() {}
+
+    /**
+     * Sets the liveActivityToken.
+     */
+    public Builder set(String liveActivityToken) {
+      this.liveActivityToken = liveActivityToken;
+      return this;
+    }
 
     /**
      * Adds the given key-value pair as an APNS header.
