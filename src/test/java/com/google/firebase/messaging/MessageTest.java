@@ -890,6 +890,7 @@ public class MessageTest {
                 .setDefaultLightSettings(false)
                 .setVisibility(AndroidNotification.Visibility.PUBLIC)
                 .setNotificationCount(10)
+                .setProxy(AndroidNotification.Proxy.DENY)
                 .build())
             .build())
         .setTopic("test-topic")
@@ -923,6 +924,7 @@ public class MessageTest {
             .put("default_light_settings", false)
             .put("visibility", "public")
             .put("notification_count", new BigDecimal(10))
+            .put("proxy", "DENY")
             .build())
         .build();
     assertJsonEquals(ImmutableMap.of(

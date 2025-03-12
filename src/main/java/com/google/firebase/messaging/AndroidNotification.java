@@ -112,6 +112,9 @@ public class AndroidNotification {
   @Key("notification_count")
   private final Integer notificationCount;
 
+  @Key("proxy")
+  private final String proxy;
+
   private static final Map<Priority, String> PRIORITY_MAP = 
       ImmutableMap.<Priority, String>builder()
           .put(Priority.MIN, "PRIORITY_MIN")
@@ -179,6 +182,11 @@ public class AndroidNotification {
       checkArgument(builder.notificationCount >= 0, 
           "notificationCount if specified must be zero or positive valued");
     }
+    if (builder.proxy != null) {
+      this.proxy = builder.proxy.name();
+    } else {
+      this.proxy = null;
+    }
     this.notificationCount = builder.notificationCount;
   }
 
@@ -194,11 +202,18 @@ public class AndroidNotification {
       return PRIORITY_MAP.get(this);
     }
   }
-  
+
   public enum Visibility {
     PRIVATE,
     PUBLIC,
     SECRET,
+  }
+
+  public enum Proxy {
+    PROXY_UNSPECIFIED,
+    ALLOW,
+    DENY,
+    IF_PRIORITY_LOWERED
   }
 
   /**
@@ -237,6 +252,7 @@ public class AndroidNotification {
     private LightSettings lightSettings;
     private Boolean defaultLightSettings;
     private Visibility visibility;
+    private Proxy proxy;
 
     private Builder() {}
 
@@ -599,6 +615,19 @@ public class AndroidNotification {
      */
     public Builder setNotificationCount(int notificationCount) {
       this.notificationCount = notificationCount;
+      return this;
+    }
+
+    /**
+     * Sets the proxy of this notification.
+     *
+     * @param proxy The proxy value. one of the values in
+     * {PROXY_UNSPECIFIED, ALLOW, DENY, IF_PRIORITY_LOWERED}
+     *
+     * @return This builder.
+     */
+    public Builder setProxy(Proxy proxy) {
+      this.proxy = proxy;
       return this;
     }
 
