@@ -210,7 +210,6 @@ public class AndroidNotification {
   }
 
   public enum Proxy {
-    PROXY_UNSPECIFIED,
     ALLOW,
     DENY,
     IF_PRIORITY_LOWERED
