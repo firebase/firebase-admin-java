@@ -620,8 +620,7 @@ public class AndroidNotification {
     /**
      * Sets the proxy of this notification.
      *
-     * @param proxy The proxy value. one of the values in
-     * {PROXY_UNSPECIFIED, ALLOW, DENY, IF_PRIORITY_LOWERED}
+     * @param proxy The proxy value, one of the values in {ALLOW, DENY, IF_PRIORITY_LOWERED}
      *
      * @return This builder.
      */
