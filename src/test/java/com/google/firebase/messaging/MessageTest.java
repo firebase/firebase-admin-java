@@ -411,6 +411,7 @@ public class MessageTest {
             .putCustomData("cd1", "cd-v1")
             .putAllCustomData(ImmutableMap.<String, Object>of("cd2", "cd-v2", "cd3", true))
             .setAps(Aps.builder().build())
+            .setLiveActivityToken("test-live-activity-token")
             .build())
         .setTopic("test-topic")
         .build();
@@ -421,10 +422,11 @@ public class MessageTest {
         .put("cd3", true)
         .put("aps", ImmutableMap.of())
         .build();
-    Map<String, Object> data = ImmutableMap.<String, Object>of(
-        "headers", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"),
-        "payload", payload
-    );
+    Map<String, Object> data = ImmutableMap.<String, Object>builder()
+        .put("headers", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"))
+        .put("payload", payload)
+        .put("live_activity_token", "test-live-activity-token")
+        .build();
     assertJsonEquals(ImmutableMap.of("topic", "test-topic", "apns", data), message);
   }
 
@@ -442,6 +444,7 @@ public class MessageTest {
                 .setSound("test-sound")
                 .setThreadId("test-thread-id")
                 .build())
+            .setLiveActivityToken("test-live-activity-token-aps")
             .build())
         .setTopic("test-topic")
         .build();
@@ -459,7 +462,10 @@ public class MessageTest {
     assertJsonEquals(
         ImmutableMap.of(
             "topic", "test-topic",
-            "apns", ImmutableMap.<String, Object>of("payload", payload)),
+            "apns", ImmutableMap.<String, Object>builder()
+                .put("payload", payload)
+                .put("live_activity_token", "test-live-activity-token-aps")
+                .build()),
         message);
 
     message = Message.builder()
@@ -825,6 +831,7 @@ public class MessageTest {
         .setApnsConfig(
             ApnsConfig.builder().setAps(Aps.builder().build())
                 .setFcmOptions(ApnsFcmOptions.builder().setImage(TEST_IMAGE_URL_APNS).build())
+                .setLiveActivityToken("test-live-activity-token-image")
                 .build()).build();
 
     ImmutableMap<String, Object> notification =
@@ -837,6 +844,7 @@ public class MessageTest {
         ImmutableMap.<String, Object>builder()
             .put("fcm_options", ImmutableMap.of("image", TEST_IMAGE_URL_APNS))
             .put("payload", ImmutableMap.of("aps", ImmutableMap.of()))
+            .put("live_activity_token", "test-live-activity-token-image")
             .build();
     ImmutableMap<String, Object> expected =
         ImmutableMap.<String, Object>builder()
@@ -845,6 +853,34 @@ public class MessageTest {
             .put("apns", apnsConfig)
             .build();
     assertJsonEquals(expected, message);
+  }
+
+  @Test
+  public void testApnsMessageWithOnlyLiveActivityToken() throws IOException {
+    Message message = Message.builder()
+        .setApnsConfig(ApnsConfig.builder()
+            .setAps(Aps.builder().build())
+            .setLiveActivityToken("only-live-activity")
+            .build())
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> expectedApns = ImmutableMap.<String, Object>builder()
+        .put("live_activity_token", "only-live-activity")
+        .put("payload", ImmutableMap.of("aps", ImmutableMap.of()))
+        .build();
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "apns", expectedApns), message);
+
+    // Test without live activity token
+    message = Message.builder()
+        .setApnsConfig(ApnsConfig.builder()
+            .setAps(Aps.builder().build())
+            .build())
+        .setTopic("test-topic")
+        .build();
+    expectedApns = ImmutableMap.<String, Object>builder()
+        .put("payload", ImmutableMap.of("aps", ImmutableMap.of()))
+        .build();
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "apns", expectedApns), message);
   }
 
   @Test
