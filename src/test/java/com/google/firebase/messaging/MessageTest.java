@@ -959,10 +959,7 @@ public class MessageTest {
                 .build())
             .put("default_light_settings", false)
             .put("visibility", "public")
-            // There is a problem with the JsonParser assignment to BigDecimal takes priority over
-            // all other number types and so this integer value is interpreted as a BigDecimal
-            // rather than an Integer.
-            .put("notification_count", BigDecimal.valueOf(10L))
+            .put("notification_count", new BigDecimal(10))
             .put("proxy", "DENY")
             .build())
         .build();
@@ -971,7 +968,7 @@ public class MessageTest {
   }
 
   private static void assertJsonEquals(
-      Map<?, ?> expected, Object actual) throws IOException {
+      Map expected, Object actual) throws IOException {
     assertEquals(expected, toMap(actual));
   }
 
