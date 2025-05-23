@@ -41,6 +41,9 @@ public class ApnsConfig {
   @Key("fcm_options")
   private final ApnsFcmOptions fcmOptions;
 
+  @Key("live-activity-token")
+  private final String liveActivityToken;
+
   private ApnsConfig(Builder builder) {
     checkArgument(builder.aps != null, "aps must be specified");
     checkArgument(!builder.customData.containsKey("aps"),
@@ -51,6 +54,7 @@ public class ApnsConfig {
         .put("aps", builder.aps.getFields())
         .build();
     this.fcmOptions = builder.fcmOptions;
+    this.liveActivityToken = builder.liveActivityToken;
   }
 
   /**
@@ -68,6 +72,7 @@ public class ApnsConfig {
     private final Map<String, Object> customData = new HashMap<>();
     private Aps aps;
     private ApnsFcmOptions fcmOptions;
+    private String liveActivityToken;
 
     private Builder() {}
 
@@ -134,6 +139,17 @@ public class ApnsConfig {
      */
     public Builder setFcmOptions(ApnsFcmOptions apnsFcmOptions) {
       this.fcmOptions = apnsFcmOptions;
+      return this;
+    }
+
+    /**
+     * Sets the Live Activity token.
+     *
+     * @param liveActivityToken Live Activity token.
+     * @return This builder.
+     */
+    public Builder setLiveActivityToken(String liveActivityToken) {
+      this.liveActivityToken = liveActivityToken;
       return this;
     }
 
