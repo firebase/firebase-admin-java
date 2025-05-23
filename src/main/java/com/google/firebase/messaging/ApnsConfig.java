@@ -41,7 +41,7 @@ public class ApnsConfig {
   @Key("fcm_options")
   private final ApnsFcmOptions fcmOptions;
 
-  @Key("live-activity-token")
+  @Key("live_activity_token")
   private final String liveActivityToken;
 
   private ApnsConfig(Builder builder) {

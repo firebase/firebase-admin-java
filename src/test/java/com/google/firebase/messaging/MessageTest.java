@@ -425,7 +425,7 @@ public class MessageTest {
     Map<String, Object> data = ImmutableMap.<String, Object>builder()
         .put("headers", ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"))
         .put("payload", payload)
-        .put("live-activity-token", "test-live-activity-token")
+        .put("live_activity_token", "test-live-activity-token")
         .build();
     assertJsonEquals(ImmutableMap.of("topic", "test-topic", "apns", data), message);
   }
@@ -464,7 +464,7 @@ public class MessageTest {
             "topic", "test-topic",
             "apns", ImmutableMap.<String, Object>builder()
                 .put("payload", payload)
-                .put("live-activity-token", "test-live-activity-token-aps")
+                .put("live_activity_token", "test-live-activity-token-aps")
                 .build()),
         message);
 
@@ -844,7 +844,7 @@ public class MessageTest {
         ImmutableMap.<String, Object>builder()
             .put("fcm_options", ImmutableMap.of("image", TEST_IMAGE_URL_APNS))
             .put("payload", ImmutableMap.of("aps", ImmutableMap.of()))
-            .put("live-activity-token", "test-live-activity-token-image")
+            .put("live_activity_token", "test-live-activity-token-image")
             .build();
     ImmutableMap<String, Object> expected =
         ImmutableMap.<String, Object>builder()
@@ -865,7 +865,7 @@ public class MessageTest {
         .setTopic("test-topic")
         .build();
     Map<String, Object> expectedApns = ImmutableMap.<String, Object>builder()
-        .put("live-activity-token", "only-live-activity")
+        .put("live_activity_token", "only-live-activity")
         .put("payload", ImmutableMap.of("aps", ImmutableMap.of()))
         .build();
     assertJsonEquals(ImmutableMap.of("topic", "test-topic", "apns", expectedApns), message);
