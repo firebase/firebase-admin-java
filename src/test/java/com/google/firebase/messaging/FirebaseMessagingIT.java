@@ -63,6 +63,7 @@ public class FirebaseMessagingIT {
                     .setBody("Body")
                     .build())
                 .build())
+            .setLiveActivityToken("integration-test-live-activity-token")
             .build())
         .setWebpushConfig(WebpushConfig.builder()
             .putHeader("X-Custom-Val", "Foo")
