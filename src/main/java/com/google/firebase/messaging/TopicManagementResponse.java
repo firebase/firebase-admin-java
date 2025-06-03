@@ -41,6 +41,7 @@ public class TopicManagementResponse {
       .put("NOT_FOUND", "registration-token-not-registered")
       .put("INTERNAL", "internal-error")
       .put("TOO_MANY_TOPICS", "too-many-topics")
+      .put("RESOURCE_EXHAUSTED", "resource-exhausted")
       .build();
 
   private final int successCount;
@@ -101,8 +102,11 @@ public class TopicManagementResponse {
 
     private Error(int index, String reason) {
       this.index = index;
-      this.reason = ERROR_CODES.containsKey(reason)
-        ? ERROR_CODES.get(reason) : UNKNOWN_ERROR;
+      if (reason == null || reason.trim().isEmpty()) {
+        this.reason = UNKNOWN_ERROR;
+      } else {
+        this.reason = ERROR_CODES.getOrDefault(reason, reason);
+      }
     }
 
     /**
