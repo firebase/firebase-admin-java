@@ -127,6 +127,37 @@ public class ServerTemplateImplTest {
   }
 
   @Test
+  public void testEvaluatePercentWithoutRandomizationIdReturnsDefaultValue()
+      throws FirebaseRemoteConfigException {
+    KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
+    KeysAndValues context = new KeysAndValues.Builder().build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
+
+    ServerConfig evaluatedConfig = template.evaluate(context);
+
+    assertEquals("Default value", evaluatedConfig.getString("Percent"));
+  }
+
+  @Test
+  public void testEvaluatePercentReturnsConditionalValue() throws FirebaseRemoteConfigException {
+    KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
+    KeysAndValues context = new KeysAndValues.Builder().put("randomizationId", "user").build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
+
+    ServerConfig evaluatedConfig = template.evaluate(context);
+
+    assertEquals("Conditional value", evaluatedConfig.getString("Percent"));
+  }
+
+  @Test
   public void testEvaluateWithoutDefaultValueReturnsEmptyString()
       throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
@@ -177,10 +208,42 @@ public class ServerTemplateImplTest {
   }
 
   @Test
+  public void testEvaluateWithDerivedInAppDefaultReturnsDefaultValue() throws Exception {
+    KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
+    KeysAndValues context = new KeysAndValues.Builder().build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
+
+    ServerConfig evaluatedConfig = template.evaluate(context);
+
+    assertEquals("Default value", evaluatedConfig.getString("Derived in-app default"));
+  }
+
+  @Test
+  public void testEvaluateWithMultipleConditionReturnsConditionalValue() throws Exception {
+    KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
+    KeysAndValues context = new KeysAndValues.Builder().put("users", "99").build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
+
+    ServerConfig evaluatedConfig = template.evaluate(context);
+
+    assertEquals("Conditional value 1", evaluatedConfig.getString("Multiple conditions"));
+  }
+
+  @Test
   public void testEvaluateWithChainedAndConditionReturnsDefaultValue() throws Exception {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
-    KeysAndValues context =
-        new KeysAndValues.Builder().put("users", "100").put("premium users", "20").build();
+    KeysAndValues context = new KeysAndValues.Builder().put("users", "100")
+          .put("premium users", 20)
+          .put("randomizationId", "user")
+          .build();
     ServerTemplate template =
         new ServerTemplateImpl.Builder(null)
             .defaultConfig(defaultConfig)
@@ -206,6 +269,21 @@ public class ServerTemplateImplTest {
     ServerConfig evaluatedConfig = template.evaluate(context);
 
     assertEquals("Conditional value", evaluatedConfig.getString("Chained conditions"));
+  }
+
+  @Test
+  public void testGetEvaluateConfigOnInvalidTypeReturnsDefaultValue() throws Exception {
+    KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
+    KeysAndValues context = new KeysAndValues.Builder().put("randomizationId", "user").build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
+
+    ServerConfig evaluatedConfig = template.evaluate(context);
+
+    assertEquals(0L, evaluatedConfig.getLong("Percent"));
   }
 
   @Test
