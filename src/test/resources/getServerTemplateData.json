@@ -1,0 +1,97 @@
+{
+  "conditions": [
+    {
+      "name": "custom_signal",
+      "condition": {
+        "orCondition": {
+          "conditions": [
+            {
+              "andCondition": {
+                "conditions": [
+                  {
+                    "customSignal": {
+                      "customSignalOperator": "NUMERIC_LESS_THAN",
+                      "customSignalKey": "users",
+                      "targetCustomSignalValues": [
+                        "100"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "chained_conditions",
+      "condition": {
+        "orCondition": {
+          "conditions": [
+            {
+              "andCondition": {
+                "conditions": [
+                  {
+                    "customSignal": {
+                      "customSignalOperator": "NUMERIC_LESS_THAN",
+                      "customSignalKey": "users",
+                      "targetCustomSignalValues": [
+                        "100"
+                      ]
+                    }
+                  },
+                  {
+                    "customSignal": {
+                      "customSignalOperator": "NUMERIC_GREATER_THAN",
+                      "customSignalKey": "premium users",
+                      "targetCustomSignalValues": [
+                        "20"
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "parameters": {
+    "Custom": {
+      "defaultValue": {
+        "value": "Default value"
+      },
+      "conditionalValues": {
+        "custom_signal": {
+          "value": "Conditional value"
+        }
+      }
+    },
+    "Welcome Message": {
+      "defaultValue": {
+        "value": "Welcome"
+      }
+    },
+    "Unset default value": {
+      "defaultValue": {
+        "value": ""
+      }
+    },
+    "Chained conditions": {
+      "defaultValue": {
+        "value": "Default value"
+      },
+      "conditionalValues": {
+        "chained_conditions": {
+          "value": "Conditional value"
+        }
+      }
+    }
+  },
+  "version": {
+    "versionNumber": "27",
+    "isLegacy": true
+  }
+}
