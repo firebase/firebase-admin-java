@@ -193,14 +193,19 @@ public class ServerConditionTest {
                                                     "users",
                                                     CustomSignalOperator.NUMERIC_LESS_THAN,
                                                     new ArrayList<>(ImmutableList.of("100")))),
-                                                    new OneOfCondition()
-                                                    .setCustomSignal(
-                                                        new CustomSignalCondition(
+                                        new OneOfCondition()
+                                            .setCustomSignal(
+                                                new CustomSignalCondition(
                                                             "users",
-                                                            CustomSignalOperator
-                                                                .NUMERIC_GREATER_THAN,
-                                                            new ArrayList<>(ImmutableList.of("20"))
-                                                        ))))))));
+                                                    CustomSignalOperator
+                                                        .NUMERIC_GREATER_THAN,
+                                                    new ArrayList<>(ImmutableList.of("20")))),
+                                        new OneOfCondition()
+                                            .setPercent(
+                                                new PercentCondition(
+                                                    new MicroPercentRange(25000000, 100000000),
+                                                    PercentConditionOperator.BETWEEN,
+                                                    "cla24qoibb61"))))))));
 
     final ServerCondition serverConditionOne = new ServerCondition("ios", conditionOne);
     final ServerCondition serverConditionTwo = new ServerCondition("ios", conditionOne);

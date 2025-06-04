@@ -134,12 +134,19 @@ public final class ServerTemplateResponse {
     @Key("customSignal")
     private CustomSignalConditionResponse customSignalCondition;
 
+    @Key("percent")
+    private PercentConditionResponse percentCondition;
+
     public OrConditionResponse getOrCondition() {
       return orCondition;
     }
 
     public AndConditionResponse getAndCondition() {
       return andCondition;
+    }
+
+    public PercentConditionResponse getPercentCondition() {
+      return percentCondition;
     }
 
     public CustomSignalConditionResponse getCustomSignalCondition() {
@@ -159,6 +166,11 @@ public final class ServerTemplateResponse {
     public OneOfConditionResponse setCustomSignalCondition(
           CustomSignalConditionResponse customSignalCondition) {
       this.customSignalCondition = customSignalCondition;
+      return this;
+    }
+
+    public OneOfConditionResponse setPercentCondition(PercentConditionResponse percentCondition) {
+      this.percentCondition = percentCondition;
       return this;
     }
   }
@@ -225,6 +237,83 @@ public final class ServerTemplateResponse {
 
     public CustomSignalConditionResponse setTargetValues(List<String> targetValues) {
       this.targetValues = targetValues;
+      return this;
+    }
+  }
+
+  public static final class PercentConditionResponse {
+    @Key("microPercent")
+    private int microPercent;
+
+    @Key("microPercentRange")
+    private MicroPercentRangeResponse microPercentRange;
+
+    @Key("percentOperator")
+    private String percentOperator;
+
+    @Key("seed")
+    private String seed;
+
+    public int getMicroPercent() {
+      return microPercent;
+    }
+
+    public MicroPercentRangeResponse getMicroPercentRange() {
+      return microPercentRange;
+    }
+
+    public String getPercentOperator() {
+      return percentOperator;
+    }
+
+    public String getSeed() {
+      return seed;
+    }
+
+    public PercentConditionResponse setMicroPercent(int microPercent) {
+      this.microPercent = microPercent;
+      return this;
+    }
+
+    public PercentConditionResponse setMicroPercentRange(
+          MicroPercentRangeResponse microPercentRange) {
+      this.microPercentRange = microPercentRange;
+      return this;
+    }
+
+    public PercentConditionResponse setPercentOperator(String percentOperator) {
+      this.percentOperator = percentOperator;
+      return this;
+    }
+
+    public PercentConditionResponse setSeed(String seed) {
+      this.seed = seed;
+      return this;
+    }
+  }
+
+  public static final class MicroPercentRangeResponse {
+    @Key("microPercentLowerBound")
+    private int microPercentLowerBound;
+
+    @Key("microPercentUpperBound")
+    private int microPercentUpperBound;
+
+    public int getMicroPercentLowerBound() {
+      return microPercentLowerBound;
+    }
+
+    public int getMicroPercentUpperBound() {
+      return microPercentUpperBound;
+    }
+
+    public MicroPercentRangeResponse setMicroPercentLowerBound(int microPercentLowerBound) {
+      this.microPercentLowerBound = microPercentLowerBound;
+      return this;
+    }
+
+    public MicroPercentRangeResponse setMicroPercentUpperBound(int microPercentUpperBound) {
+      this.microPercentUpperBound = microPercentUpperBound;
       return this;
     }
   }

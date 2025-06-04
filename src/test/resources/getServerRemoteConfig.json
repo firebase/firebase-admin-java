@@ -25,6 +25,31 @@
       }
     },
     {
+      "name": "percent",
+      "condition": {
+        "orCondition": {
+          "conditions": [
+            {
+              "andCondition": {
+                "conditions": [
+                  {
+                    "percent": {
+                      "percentOperator": "BETWEEN",
+                      "seed": "3maarirs9xzs",
+                      "microPercentRange": {
+                        "microPercentLowerBound": 12000000,
+                        "microPercentUpperBound": 100000000
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
       "name": "chained_conditions",
       "condition": {
         "orCondition": {
@@ -48,6 +73,16 @@
                       "targetCustomSignalValues": [
                         "20"
                       ]
+                    }
+                  },
+                  {
+                    "percent": {
+                      "percentOperator": "BETWEEN",
+                      "seed": "cla24qoibb61",
+                      "microPercentRange": {
+                        "microPercentLowerBound": 25000000,
+                        "microPercentUpperBound": 100000000
+                      }
                     }
                   }
                 ]
