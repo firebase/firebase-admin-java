@@ -149,6 +149,36 @@ public class FirebaseMessagingSnippets {
     // [END send_all]
   }
 
+  public void sendEach() throws FirebaseMessagingException {
+    String registrationToken = "YOUR_REGISTRATION_TOKEN";
+
+    // [START send_each]
+    // Create a list containing up to 500 messages.
+    List<Message> messages = Arrays.asList(
+        Message.builder()
+            .setNotification(Notification.builder()
+                .setTitle("Price drop")
+                .setBody("5% off all electronics")
+                .build())
+            .setToken(registrationToken)
+            .build(),
+        // ...
+        Message.builder()
+            .setNotification(Notification.builder()
+                .setTitle("Price drop")
+                .setBody("2% off all books")
+                .build())
+            .setTopic("readers-club")
+            .build()
+    );
+
+    BatchResponse response = FirebaseMessaging.getInstance().sendEach(messages);
+    // See the BatchResponse reference documentation
+    // for the contents of response.
+    System.out.println(response.getSuccessCount() + " messages were sent successfully");
+    // [END send_each]
+  }
+
   public void sendMulticast() throws FirebaseMessagingException {
     // [START send_multicast]
     // Create a list containing up to 500 registration tokens.
@@ -199,6 +229,36 @@ public class FirebaseMessagingSnippets {
       System.out.println("List of tokens that caused failures: " + failedTokens);
     }
     // [END send_multicast_error]
+  }
+
+  public void sendEachForMulticastAndHandleErrors() throws FirebaseMessagingException {
+    // [START send_each_for_multicast_error]
+    // These registration tokens come from the client FCM SDKs.
+    List<String> registrationTokens = Arrays.asList(
+        "YOUR_REGISTRATION_TOKEN_1",
+        // ...
+        "YOUR_REGISTRATION_TOKEN_n"
+    );
+
+    MulticastMessage message = MulticastMessage.builder()
+        .putData("score", "850")
+        .putData("time", "2:45")
+        .addAllTokens(registrationTokens)
+        .build();
+    BatchResponse response = FirebaseMessaging.getMessaging().sendEachForMulticast(message);
+    if (response.getFailureCount() > 0) {
+      List<SendResponse> responses = response.getResponses();
+      List<String> failedTokens = new ArrayList<>();
+      for (int i = 0; i < responses.size(); i++) {
+        if (!responses.get(i).isSuccessful()) {
+          // The order of responses corresponds to the order of the registration tokens.
+          failedTokens.add(registrationTokens.get(i));
+        }
+      }
+
+      System.out.println("List of tokens that caused failures: " + failedTokens);
+    }
+    // [END send_each_for_multicast_error]
   }
 
   public Message androidMessage() {
