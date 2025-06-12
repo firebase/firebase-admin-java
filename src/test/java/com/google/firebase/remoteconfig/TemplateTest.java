@@ -24,8 +24,12 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.remoteconfig.ParameterValue.PersonalizationValue;
+import com.google.firebase.remoteconfig.ParameterValue.RolloutsValue;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -79,6 +83,66 @@ public class TemplateTest {
 
   private static final Template TEMPLATE_WITH_VERSION = new Template()
           .setVersion(Version.withDescription("promo version"));
+
+  // Reformatted JSON String for Checkstyle
+  private static final String TEST_JSON_WITH_ROLLOUT_PERSONALIZATION =
+      "{\n"
+      + "  \"conditions\": [\n"
+      + "    { \"name\": \"ios_en\", \"expression\": "
+      + "\"device.os == 'ios' && device.country in ['us', 'uk']\",\n"
+      + "      \"tagColor\": \"INDIGO\" },\n"
+      + "    { \"name\": \"android_en\", \"expression\": "
+      + "\"device.os == 'android' && device.country in ['us', 'uk']\",\n"
+      + "      \"tagColor\": \"BLUE\" }\n"
+      + "  ],\n"
+      + "  \"parameters\": {\n"
+      + "    \"test_param\": {\n"
+      + "      \"defaultValue\": { \"useInAppDefault\": true },\n"
+      + "      \"conditionalValues\": {\n"
+      + "        \"ios_en\": { \"value\": \"true\" },\n"
+      + "        \"android_en\": { \"rolloutValue\": { \"rolloutId\": \"rollout_5\",\n"
+      + "          \"value\": \"true\", \"percent\": 10 } }\n"
+      + "      },\n"
+      + "      \"valueType\": \"BOOLEAN\"\n"
+      + "    },\n"
+      + "    \"welcome_message_text\": {\n"
+      + "      \"defaultValue\": { \"useInAppDefault\": true },\n"
+      + "      \"valueType\": \"STRING\"\n"
+      + "    },\n"
+      + "    \"header_text_abc\": {\n"
+      + "      \"defaultValue\": { \"value\": \"A Gryffindor must be brave, talented and helpful.\" },\n"
+      + "      \"conditionalValues\": {\n"
+      + "        \"android_en\": { \"value\": \"A Droid must be brave, talented & helpful.\" }\n"
+      + "      },\n"
+      + "      \"description\": \"Header text\",\n"
+      + "      \"valueType\": \"STRING\"\n"
+      + "    },\n"
+      + "    \"welcome_message\": {\n"
+      + "      \"defaultValue\": { \"value\": \"welcome to app 17376234\" },\n"
+      + "      \"conditionalValues\": {\n"
+      + "        \"ios_en\": { \"personalizationValue\": { \"personalizationId\": \"aasdfsdf\" } },\n"
+      + "        \"android_en\": { \"rolloutValue\": { \"rolloutId\": \"rollout_7\", "
+      + "\"value\": \"rc_test_rollout\", \"percent\": 100 } }\n"
+      + "      },\n"
+      + "      \"description\": \"text for welcome message\",\n"
+      + "      \"valueType\": \"STRING\"\n"
+      + "    }\n"
+      + "  },\n"
+      + "  \"parameterGroups\": {\n"
+      + "    \"new menu\": {\n"
+      + "      \"description\": \"New Menu asadad\",\n"
+      + "      \"parameters\": {\n"
+      + "        \"pumpkin_spice_season\": {\n"
+      + "          \"defaultValue\": { \"value\": \"true\" },\n"
+      + "          \"description\": \"Whether it's currently pumpkin spice season.\",\n"
+      + "          \"valueType\": \"STRING\"\n"
+      + "        }\n"
+      + "      }\n"
+      + "    }\n"
+      + "  },\n"
+      + "  \"etag\": \"etag-12345\"\n"
+      + "}";
+
 
   @Test
   public void testConstructor() {
@@ -345,5 +409,109 @@ public class TemplateTest {
     Template actualTemplate = Template.fromJSON(expectedTemplate.toJSON());
 
     assertEquals(expectedTemplate, actualTemplate);
+  }
+
+  @Test
+  public void testFromJsonWithRolloutAndPersonalization() throws FirebaseRemoteConfigException {
+    Template template = Template.fromJSON(TEST_JSON_WITH_ROLLOUT_PERSONALIZATION);
+    assertNotNull(template);
+
+    Parameter testParam = template.getParameters().get("test_param");
+    assertNotNull(testParam);
+    ParameterValue pvAndroidEn = testParam.getConditionalValues().get("android_en");
+    assertTrue(pvAndroidEn instanceof ParameterValue.RolloutsValue);
+    ParameterValue.RolloutsValue testParamRollout = (ParameterValue.RolloutsValue) pvAndroidEn;
+    assertEquals("rollout_5", testParamRollout.getRolloutId());
+    assertEquals("true", testParamRollout.getValue());
+    assertEquals(10, testParamRollout.getPercent());
+
+    Parameter welcomeMsgParam = template.getParameters().get("welcome_message");
+    assertNotNull(welcomeMsgParam);
+
+    ParameterValue pvIosEn = welcomeMsgParam.getConditionalValues().get("ios_en");
+    assertTrue(pvIosEn instanceof ParameterValue.PersonalizationValue);
+    ParameterValue.PersonalizationValue welcomeMsgPers =
+        (ParameterValue.PersonalizationValue) pvIosEn;
+    assertEquals("aasdfsdf", welcomeMsgPers.getPersonalizationId());
+
+    ParameterValue pvWelcomeAndroid = welcomeMsgParam.getConditionalValues().get("android_en");
+    assertTrue(pvWelcomeAndroid instanceof ParameterValue.RolloutsValue);
+    ParameterValue.RolloutsValue welcomeMsgRollout =
+        (ParameterValue.RolloutsValue) pvWelcomeAndroid;
+    assertEquals("rollout_7", welcomeMsgRollout.getRolloutId());
+    assertEquals("rc_test_rollout", welcomeMsgRollout.getValue());
+    assertEquals(100, welcomeMsgRollout.getPercent());
+  }
+
+  @Test
+  public void testToJsonWithRolloutAndPersonalizationRoundTrip() throws FirebaseRemoteConfigException {
+    Template originalTemplate = new Template();
+    originalTemplate.setETag("etag-roundtrip-test");
+
+    List<Condition> conditions = ImmutableList.of(
+            new Condition("cond1", "device.os == 'android'"),
+            new Condition("cond2", "device.os == 'ios'")
+    );
+    originalTemplate.setConditions(conditions);
+
+    Parameter promoConfig = new Parameter();
+    promoConfig.setDefaultValue(ParameterValue.of("default_promo"));
+    Map<String, ParameterValue> promoCondValues = new HashMap<>();
+    ParameterValue rolloutVal = ParameterValue.ofRollout(
+        "promo_rollout_1", "special_promo_A", 50);
+    promoCondValues.put("cond1", rolloutVal);
+    promoCondValues.put("cond2", ParameterValue.ofPersonalization("user_segment_promo"));
+    promoConfig.setConditionalValues(promoCondValues);
+    promoConfig.setValueType(ParameterValueType.STRING);
+
+    Parameter featureFlag = new Parameter();
+    featureFlag.setDefaultValue(ParameterValue.inAppDefault());
+    Map<String, ParameterValue> featureCondValues = new HashMap<>();
+    ParameterValue featureRolloutVal = ParameterValue.ofRollout("feature_rollout_abc",
+        "enabled", 100);
+    featureCondValues.put("cond1", featureRolloutVal);
+    featureFlag.setConditionalValues(featureCondValues);
+    featureFlag.setValueType(ParameterValueType.BOOLEAN);
+
+    Map<String, Parameter> parameters = new HashMap<>();
+    parameters.put("promo_config", promoConfig);
+    parameters.put("feature_flag", featureFlag);
+    originalTemplate.setParameters(parameters);
+    originalTemplate.setParameterGroups(Collections.<String, ParameterGroup>emptyMap());
+
+    String jsonString = originalTemplate.toJSON();
+    assertNotNull(jsonString);
+    assertNotEquals("", jsonString);
+
+    Template deserializedTemplate = Template.fromJSON(jsonString);
+    assertEquals(originalTemplate, deserializedTemplate);
+
+    Parameter deserPromoCfg = deserializedTemplate.getParameters().get("promo_config");
+    assertNotNull(deserPromoCfg);
+    assertEquals(ParameterValue.of("default_promo"), deserPromoCfg.getDefaultValue());
+
+    ParameterValue promoCond1Val = deserPromoCfg.getConditionalValues().get("cond1");
+    assertTrue(promoCond1Val instanceof ParameterValue.RolloutsValue);
+    ParameterValue.RolloutsValue promoRollout = (ParameterValue.RolloutsValue) promoCond1Val;
+    assertEquals("promo_rollout_1", promoRollout.getRolloutId());
+    assertEquals("special_promo_A", promoRollout.getValue());
+    assertEquals(50, promoRollout.getPercent());
+
+    ParameterValue promoCond2Val = deserPromoCfg.getConditionalValues().get("cond2");
+    assertTrue(promoCond2Val instanceof ParameterValue.PersonalizationValue);
+    ParameterValue.PersonalizationValue promoPersValue =
+        (ParameterValue.PersonalizationValue) promoCond2Val;
+    assertEquals("user_segment_promo", promoPersValue.getPersonalizationId());
+
+    Parameter deserFeatureFlag = deserializedTemplate.getParameters().get("feature_flag");
+    assertNotNull(deserFeatureFlag);
+    assertEquals(ParameterValue.inAppDefault(), deserFeatureFlag.getDefaultValue());
+
+    ParameterValue featureCond1Val = deserFeatureFlag.getConditionalValues().get("cond1");
+    assertTrue(featureCond1Val instanceof ParameterValue.RolloutsValue);
+    ParameterValue.RolloutsValue featureRollout = (ParameterValue.RolloutsValue) featureCond1Val;
+    assertEquals("feature_rollout_abc", featureRollout.getRolloutId());
+    assertEquals("enabled", featureRollout.getValue());
+    assertEquals(100, featureRollout.getPercent());
   }
 }

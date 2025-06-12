@@ -18,10 +18,14 @@ package com.google.firebase.remoteconfig;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.api.client.util.Key;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
+// Removed RolloutValueResponse and PersonalizationValueResponse imports from TemplateResponse
+// as ParameterValue will now have its own versions of these.
 
 import java.util.Objects;
+// Removed Map and HashMap imports as they are no longer directly used here after this change.
 
 /**
  * Represents a Remote Config parameter value that can be used in a {@link Template}.
@@ -52,37 +56,41 @@ public abstract class ParameterValue {
   static ParameterValue fromParameterValueResponse(
           @NonNull ParameterValueResponse parameterValueResponse) {
     checkNotNull(parameterValueResponse);
+
+    if (parameterValueResponse.getValue() != null) {
+      return ParameterValue.of(parameterValueResponse.getValue());
+    }
     if (parameterValueResponse.isUseInAppDefault()) {
       return ParameterValue.inAppDefault();
     }
-    return ParameterValue.of(parameterValueResponse.getValue());
+
+    // The getters getRolloutValue() and getPersonalizationValue() in ParameterValueResponse
+    // will now return ParameterValue.RolloutsValue and ParameterValue.PersonalizationValue
+    // respectively (as per the next subtask for TemplateResponse.java).
+    // So, we can directly return them.
+    if (parameterValueResponse.getRolloutValue() != null) {
+      return parameterValueResponse.getRolloutValue();
+    }
+    if (parameterValueResponse.getPersonalizationValue() != null) {
+      return parameterValueResponse.getPersonalizationValue();
+    }
+    return ParameterValue.of(null); // Fallback
   }
 
-  /**
-   * Represents an explicit Remote Config parameter value with a value that the
-   * parameter is set to.
-   */
   public static final class Explicit extends ParameterValue {
-
     private final String value;
 
     private Explicit(String value) {
       this.value = value;
     }
 
-    /**
-     * Gets the value of {@link ParameterValue.Explicit}.
-     *
-     * @return The value.
-     */
     public String getValue() {
       return this.value;
     }
 
     @Override
     ParameterValueResponse toParameterValueResponse() {
-      return new ParameterValueResponse()
-              .setValue(this.value);
+      return new ParameterValueResponse().setValue(this.value);
     }
 
     @Override
@@ -103,10 +111,10 @@ public abstract class ParameterValue {
     }
   }
 
-  /**
-   * Represents an in app default parameter value.
-   */
   public static final class InAppDefault extends ParameterValue {
+    InAppDefault() { // Package-private constructor
+      // Constructor content (if any)
+    }
 
     @Override
     ParameterValueResponse toParameterValueResponse() {
@@ -118,10 +126,136 @@ public abstract class ParameterValue {
       if (this == o) {
         return true;
       }
+      return o != null && getClass() == o.getClass();
+    }
+
+    @Override
+    public int hashCode() {
+      return 1; // Simple constant hashCode
+    }
+  }
+
+  public static final class RolloutsValue extends ParameterValue {
+    @Key("rolloutId")
+    private String rolloutId;
+
+    @Key("value")
+    private String value;
+
+    @Key("percent")
+    private int percent;
+
+    public RolloutsValue() {} // Public no-argument constructor
+
+    // Package-private constructor for factory method
+    RolloutsValue(String rolloutId, String value, int percent) {
+      this.rolloutId = checkNotNull(rolloutId, "rolloutId must not be null");
+      this.value = value;
+      this.percent = percent;
+    }
+
+    public String getRolloutId() {
+      return rolloutId;
+    }
+
+    public void setRolloutId(String rolloutId) {
+      this.rolloutId = checkNotNull(rolloutId, "rolloutId must not be null");
+    }
+
+    public String getValue() {
+      return value;
+    }
+
+    public void setValue(String value) {
+      this.value = value;
+    }
+
+    public int getPercent() {
+      return percent;
+    }
+
+    public void setPercent(int percent) {
+      this.percent = percent;
+    }
+
+    @Override
+    ParameterValueResponse toParameterValueResponse() {
+      ParameterValueResponse response = new ParameterValueResponse();
+      response.setRolloutValue(this); // Pass this instance directly
+      return response;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-      return true;
+      RolloutsValue that = (RolloutsValue) o;
+      return percent == that.percent
+              && Objects.equals(rolloutId, that.rolloutId)
+              && Objects.equals(value, that.value);
     }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(rolloutId, value, percent);
+    }
+  }
+
+  public static final class PersonalizationValue extends ParameterValue {
+    @Key("personalizationId")
+    private String personalizationId;
+
+    public PersonalizationValue() {} // Public no-argument constructor
+
+    // Package-private constructor for factory method
+    PersonalizationValue(String personalizationId) {
+      this.personalizationId = checkNotNull(personalizationId,
+          "personalizationId must not be null");
+    }
+
+    public String getPersonalizationId() {
+      return personalizationId;
+    }
+
+    public void setPersonalizationId(String personalizationId) {
+      this.personalizationId = checkNotNull(personalizationId,
+          "personalizationId must not be null");
+    }
+
+    @Override
+    ParameterValueResponse toParameterValueResponse() {
+      ParameterValueResponse response = new ParameterValueResponse();
+      response.setPersonalizationValue(this); // Pass this instance directly
+      return response;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      PersonalizationValue that = (PersonalizationValue) o;
+      return Objects.equals(personalizationId, that.personalizationId);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(personalizationId);
+    }
+  }
+
+  public static RolloutsValue ofRollout(String rolloutId, String value, int percent) {
+    return new RolloutsValue(rolloutId, value, percent);
+  }
+
+  public static PersonalizationValue ofPersonalization(String personalizationId) {
+    return new PersonalizationValue(personalizationId);
   }
 }

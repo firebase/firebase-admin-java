@@ -17,6 +17,7 @@
 package com.google.firebase.remoteconfig.internal;
 
 import com.google.api.client.util.Key;
+import com.google.firebase.remoteconfig.ParameterValue; // Added import
 
 import java.util.List;
 import java.util.Map;
@@ -161,6 +162,12 @@ public final class TemplateResponse {
     @Key("useInAppDefault")
     private Boolean useInAppDefault;
 
+    @Key("rolloutValue")
+    private ParameterValue.RolloutsValue rolloutValue; // Changed type
+
+    @Key("personalizationValue")
+    private ParameterValue.PersonalizationValue personalizationValue; // Changed type
+
     public String getValue() {
       return value;
     }
@@ -169,13 +176,45 @@ public final class TemplateResponse {
       return Boolean.TRUE.equals(this.useInAppDefault);
     }
 
+    public ParameterValue.RolloutsValue getRolloutValue() { // Changed return type
+      return rolloutValue;
+    }
+
+    public ParameterValue.PersonalizationValue getPersonalizationValue() { // Changed return type
+      return personalizationValue;
+    }
+
     public ParameterValueResponse setValue(String value) {
       this.value = value;
+      this.useInAppDefault = null;
+      this.rolloutValue = null;
+      this.personalizationValue = null;
       return this;
     }
 
     public ParameterValueResponse setUseInAppDefault(boolean useInAppDefault) {
       this.useInAppDefault = useInAppDefault;
+      this.value = null;
+      this.rolloutValue = null;
+      this.personalizationValue = null;
+      return this;
+    }
+
+    public ParameterValueResponse setRolloutValue(
+            ParameterValue.RolloutsValue rolloutValue) { // Changed param type
+      this.rolloutValue = rolloutValue;
+      this.value = null;
+      this.useInAppDefault = null;
+      this.personalizationValue = null;
+      return this;
+    }
+
+    public ParameterValueResponse setPersonalizationValue(
+            ParameterValue.PersonalizationValue personalizationValue) { // Changed param type
+      this.personalizationValue = personalizationValue;
+      this.value = null;
+      this.useInAppDefault = null;
+      this.rolloutValue = null;
       return this;
     }
   }
