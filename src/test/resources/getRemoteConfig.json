@@ -18,6 +18,13 @@
       "conditionalValues": {
         "ios_en": {
           "value": "welcome to app en"
+        },
+        "android_en": {
+          "rolloutValue": {
+            "rolloutId": "welcome_rollout",
+            "value": "welcome android rollout",
+            "percent": 100
+          }
         }
       },
       "description": "text for welcome message!",
@@ -26,6 +33,30 @@
     "header_text": {
       "defaultValue": {
         "useInAppDefault": true
+      },
+      "valueType": "STRING"
+    },
+    "rollout_test_param": {
+      "defaultValue": { "value": "default_rollout_value" },
+      "conditionalValues": {
+        "android_en": {
+          "rolloutValue": {
+            "rolloutId": "test_rollout_1",
+            "value": "android_specific_rollout_value",
+            "percent": 50
+          }
+        }
+      },
+      "valueType": "STRING"
+    },
+    "personalization_test_param": {
+      "defaultValue": { "value": "default_personalization_value" },
+      "conditionalValues": {
+        "ios_en": {
+          "personalizationValue": {
+            "personalizationId": "test_personalization_abc"
+          }
+        }
       },
       "valueType": "STRING"
     }
