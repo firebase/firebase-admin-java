@@ -245,7 +245,7 @@ public class FirebaseMessagingSnippets {
         .putData("time", "2:45")
         .addAllTokens(registrationTokens)
         .build();
-    BatchResponse response = FirebaseMessaging.getMessaging().sendEachForMulticast(message);
+    BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(message);
     if (response.getFailureCount() > 0) {
       List<SendResponse> responses = response.getResponses();
       List<String> failedTokens = new ArrayList<>();
