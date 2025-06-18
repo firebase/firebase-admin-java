@@ -26,8 +26,6 @@ import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OneOfCon
 class OneOfCondition {
   private OrCondition orCondition;
   private AndCondition andCondition;
-  private PercentCondition percent;
-  private CustomSignalCondition customSignal;
   private String trueValue;
   private String falseValue;
 
@@ -38,21 +36,12 @@ class OneOfCondition {
     if (oneOfconditionResponse.getAndCondition() != null) {
       this.andCondition = new AndCondition(oneOfconditionResponse.getAndCondition());
     }
-    if (oneOfconditionResponse.getPercentCondition() != null) {
-      this.percent = new PercentCondition(oneOfconditionResponse.getPercentCondition());
-    }
-    if (oneOfconditionResponse.getCustomSignalCondition() != null) {
-      this.customSignal =
-          new CustomSignalCondition(oneOfconditionResponse.getCustomSignalCondition());
-    }
   }
 
   @VisibleForTesting
   OneOfCondition() {
     this.orCondition = null;
     this.andCondition = null;
-    this.percent = null;
-    this.customSignal = null;
     this.trueValue = null;
     this.falseValue = null;
   }
@@ -77,16 +66,6 @@ class OneOfCondition {
     return falseValue;
   }
 
-  @Nullable
-  PercentCondition getPercent() {
-    return percent;
-  }
-
-  @Nullable
-  CustomSignalCondition getCustomSignal() {
-    return customSignal;
-  }
-
   OneOfCondition setOrCondition(@NonNull OrCondition orCondition) {
     checkNotNull(orCondition, "`Or` condition cannot be set to null.");
     this.orCondition = orCondition;
@@ -96,18 +75,6 @@ class OneOfCondition {
   OneOfCondition setAndCondition(@NonNull AndCondition andCondition) {
     checkNotNull(andCondition, "`And` condition cannot be set to null.");
     this.andCondition = andCondition;
-    return this;
-  }
-
-  OneOfCondition setPercent(@NonNull PercentCondition percent) {
-    checkNotNull(percent, "`Percent` condition cannot be set to null.");
-    this.percent = percent;
-    return this;
-  }
-
-  OneOfCondition setCustomSignal(@NonNull CustomSignalCondition customSignal) {
-    checkNotNull(customSignal, "`Custom signal` condition cannot be set to null.");
-    this.customSignal = customSignal;
     return this;
   }
 
@@ -128,12 +95,6 @@ class OneOfCondition {
     }
     if (this.orCondition != null) {
       oneOfConditionResponse.setOrCondition(this.orCondition.toOrConditionResponse());
-    }
-    if (this.percent != null) {
-      oneOfConditionResponse.setPercentCondition(this.percent.toPercentConditionResponse());
-    }
-    if (this.customSignal != null) {
-      oneOfConditionResponse.setCustomSignalCondition(this.customSignal.toCustomConditonResponse());
     }
     return oneOfConditionResponse;
   }
