@@ -402,9 +402,11 @@ public class FirebaseUserManagerTest {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("getUser.json"));
     UserRecord userRecord = FirebaseAuth.getInstance()
-        .getUserByProviderUidAsync("phone", "+1234567890").get();
+        .getUserByProviderUidAsync(new String("phone"), "+1234567890").get();
     checkUserRecord(userRecord);
     checkRequestHeaders(interceptor);
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals(ImmutableList.of("+1234567890"), parsed.get("phoneNumber"));
   }
 
   @Test
@@ -412,9 +414,11 @@ public class FirebaseUserManagerTest {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
         TestUtils.loadResource("getUser.json"));
     UserRecord userRecord = FirebaseAuth.getInstance()
-        .getUserByProviderUidAsync("email", "testuser@example.com").get();
+        .getUserByProviderUidAsync(new String("email"), "testuser@example.com").get();
     checkUserRecord(userRecord);
     checkRequestHeaders(interceptor);
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals(ImmutableList.of("testuser@example.com"), parsed.get("email"));
   }
 
   @Test
@@ -1248,11 +1252,12 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDoubleDeletePhoneProvider() throws Exception {
+    String providerId = new String("phone");
     UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("uid")
         .setPhoneNumber(null);
 
     try {
-      update.setProvidersToUnlink(ImmutableList.of("phone"));
+      update.setProvidersToUnlink(ImmutableList.of(providerId));
       fail("No error thrown for double delete phone provider");
     } catch (IllegalArgumentException expected) {
     }
@@ -1260,8 +1265,9 @@ public class FirebaseUserManagerTest {
 
   @Test
   public void testDoubleDeletePhoneProviderReverseOrder() throws Exception {
+    String providerId = new String("phone");
     UserRecord.UpdateRequest update = new UserRecord.UpdateRequest("uid")
-        .setProvidersToUnlink(ImmutableList.of("phone"));
+        .setProvidersToUnlink(ImmutableList.of(providerId));
 
     try {
       update.setPhoneNumber(null);
