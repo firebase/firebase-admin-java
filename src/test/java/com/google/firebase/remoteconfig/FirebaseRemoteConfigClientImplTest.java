@@ -25,6 +25,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpHeaders;
 import com.google.api.client.http.HttpMethods;
@@ -41,6 +42,7 @@ import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.OutgoingHttpRequest;
+
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.SdkUtils;

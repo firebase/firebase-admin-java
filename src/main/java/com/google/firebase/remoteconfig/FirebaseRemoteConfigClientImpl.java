@@ -191,6 +191,7 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
     List<String> etagList = (List<String>) response.getHeaders().get("etag");
     checkState(etagList != null && !etagList.isEmpty(),
             "ETag header is not available in the server response.");
+
     String etag = etagList.get(0);
     checkState(!Strings.isNullOrEmpty(etag),
             "ETag header is not available in the server response.");
@@ -263,7 +264,7 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
       String response = getResponse(base);
       RemoteConfigServiceErrorResponse parsed = safeParse(response);
       return FirebaseRemoteConfigException.withRemoteConfigErrorCode(
-        base, parsed.getRemoteConfigErrorCode());
+              base, parsed.getRemoteConfigErrorCode());
     }
 
     private String getResponse(FirebaseException base) {
