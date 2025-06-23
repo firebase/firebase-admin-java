@@ -92,3 +92,4 @@ public final class ServerTemplateImpl implements ServerTemplate {
     return gson.toJson(this.cache);
   }
 }
+

@@ -99,3 +99,4 @@ class OneOfCondition {
     return oneOfConditionResponse;
   }
 }
+

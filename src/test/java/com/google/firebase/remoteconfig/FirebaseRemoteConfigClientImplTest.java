@@ -1238,3 +1238,4 @@ public class FirebaseRemoteConfigClientImplTest {
     assertTrue(request.getUrl().startsWith("https://firebaseremoteconfig.googleapis.com"));
   }
 }
+

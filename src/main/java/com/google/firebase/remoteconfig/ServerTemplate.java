@@ -34,3 +34,4 @@ public interface ServerTemplate {
 
   String toJson();
 }
+

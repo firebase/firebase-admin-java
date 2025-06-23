@@ -58,3 +58,4 @@ final class OrCondition {
                                                  .collect(Collectors.toList()));    
   }
 }
+

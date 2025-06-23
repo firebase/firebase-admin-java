@@ -213,3 +213,4 @@ final class ServerTemplateData {
     return Objects.hash(etag, parameters, serverConditions, parameterGroups, version);
   }
 }
+
