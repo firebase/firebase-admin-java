@@ -42,5 +42,4 @@ interface FirebaseRemoteConfigClient {
           ListVersionsOptions options) throws FirebaseRemoteConfigException;
   
   String getServerTemplate() throws FirebaseRemoteConfigException;
-  
 }

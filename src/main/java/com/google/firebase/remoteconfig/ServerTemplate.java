@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Google LLC
+ * Copyright 2025 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,16 +27,6 @@ public interface ServerTemplate {
     
     ServerTemplate build();
   }
-  /**
-  * Proccess the template data with a condition evaluator 
-  * based on the provided context. 
-  */
-  ServerConfig evaluate(KeysAndValues context) throws FirebaseRemoteConfigException;
-  /**
-  * Proccess the template data without context.
-  */
-  ServerConfig evaluate() throws FirebaseRemoteConfigException;
-
   /**
   * Fetches and caches the current active version of the project.
   */
