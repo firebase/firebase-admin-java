@@ -21,18 +21,18 @@ import com.google.firebase.remoteconfig.internal.TemplateResponse.ListVersionsRe
 public class MockRemoteConfigClient implements FirebaseRemoteConfigClient{
 
   private final Template resultTemplate;
-  private final String resultServerTemplate;
   private final FirebaseRemoteConfigException exception;
   private final ListVersionsResponse listVersionsResponse;
+  private final String resultServerTemplate;
 
   private MockRemoteConfigClient(Template resultTemplate,
-                                 String resultServerTemplate,
                                  ListVersionsResponse listVersionsResponse,
-                                 FirebaseRemoteConfigException exception) {
+                                 FirebaseRemoteConfigException exception,
+                                 String resultServerTemplate) {
     this.resultTemplate = resultTemplate;
-    this.resultServerTemplate = resultServerTemplate;
     this.listVersionsResponse = listVersionsResponse;
     this.exception = exception;
+    this.resultServerTemplate = resultServerTemplate;
   }
 
   static MockRemoteConfigClient fromTemplate(Template resultTemplate) {
@@ -40,16 +40,16 @@ public class MockRemoteConfigClient implements FirebaseRemoteConfigClient{
   }
 
   static MockRemoteConfigClient fromServerTemplate(String resultServerTemplate) {
-    return new MockRemoteConfigClient(null, resultServerTemplate,null, null);
+    return new MockRemoteConfigClient(null, null, null, resultServerTemplate);
   }
 
   static MockRemoteConfigClient fromListVersionsResponse(
           ListVersionsResponse listVersionsResponse) {
-    return new MockRemoteConfigClient(null, null, listVersionsResponse, null);
+    return new MockRemoteConfigClient(null, listVersionsResponse, null, null);
   }
 
   static MockRemoteConfigClient fromException(FirebaseRemoteConfigException exception) {
-    return new MockRemoteConfigClient(null, null, null, exception);
+    return new MockRemoteConfigClient(null, null, exception, null);
   }
 
   @Override
