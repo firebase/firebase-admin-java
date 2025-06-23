@@ -61,3 +61,4 @@ final class AndCondition {
                                                  .collect(Collectors.toList()));    
   }
 }
+
