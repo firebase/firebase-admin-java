@@ -40,30 +40,30 @@ import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.remoteconfig.internal.RemoteConfigServiceErrorResponse;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-/** A helper class for interacting with Firebase Remote Config service. */
+/**
+ * A helper class for interacting with Firebase Remote Config service.
+ */
 final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient {
 
-  private static final String REMOTE_CONFIG_URL =
-      "https://firebaseremoteconfig.googleapis.com/v1/projects/%s/remoteConfig";
+  private static final String REMOTE_CONFIG_URL = "https://firebaseremoteconfig.googleapis.com/v1/projects/%s/remoteConfig";
 
   private static final String SERVER_REMOTE_CONFIG_URL =
       "https://firebaseremoteconfig.googleapis.com/v1/projects/%s/namespaces/firebase-server/serverRemoteConfig";
 
   private static final Map<String, String> COMMON_HEADERS =
-      ImmutableMap.of(
-          "X-Firebase-Client",
-          "fire-admin-java/" + SdkUtils.getVersion(),
-          // There is a known issue in which the ETag is not properly returned in cases
-          // where the request does not specify a compression type. Currently, it is
-          // required to include the header `Accept-Encoding: gzip` or equivalent in all
-          // requests.
-          // https://firebase.google.com/docs/remote-config/use-config-rest#etag_usage_and_forced_updates
-          "Accept-Encoding",
-          "gzip");
+          ImmutableMap.of(
+                  "X-Firebase-Client", "fire-admin-java/" + SdkUtils.getVersion(),
+                  // There is a known issue in which the ETag is not properly returned in cases
+                  // where the request does not specify a compression type. Currently, it is
+                  // required to include the header `Accept-Encoding: gzip` or equivalent in all
+                  // requests. https://firebase.google.com/docs/remote-config/use-config-rest#etag_usage_and_forced_updates
+                  "Accept-Encoding", "gzip"
+          );
 
   private final String remoteConfigUrl;
   private final String serverRemoteConfigUrl;
@@ -79,8 +79,7 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
     this.jsonFactory = checkNotNull(builder.jsonFactory);
     HttpResponseInterceptor responseInterceptor = builder.responseInterceptor;
     RemoteConfigErrorHandler errorHandler = new RemoteConfigErrorHandler(this.jsonFactory);
-    this.httpClient =
-        new ErrorHandlingHttpClient<>(requestFactory, jsonFactory, errorHandler)
+    this.httpClient = new ErrorHandlingHttpClient<>(requestFactory, jsonFactory, errorHandler)
             .setInterceptor(responseInterceptor);
   }
 
@@ -106,8 +105,8 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
 
   @Override
   public Template getTemplate() throws FirebaseRemoteConfigException {
-    HttpRequestInfo request =
-        HttpRequestInfo.buildGetRequest(remoteConfigUrl).addAllHeaders(COMMON_HEADERS);
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(remoteConfigUrl)
+            .addAllHeaders(COMMON_HEADERS);
     IncomingHttpResponse response = httpClient.send(request);
     TemplateResponse templateResponse = httpClient.parse(response, TemplateResponse.class);
     Template template = new Template(templateResponse);
@@ -127,13 +126,11 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
   }
 
   @Override
-  public Template getTemplateAtVersion(@NonNull String versionNumber)
-      throws FirebaseRemoteConfigException {
-    checkArgument(
-        RemoteConfigUtil.isValidVersionNumber(versionNumber),
-        "Version number must be a non-empty string in int64 format.");
-    HttpRequestInfo request =
-        HttpRequestInfo.buildGetRequest(remoteConfigUrl)
+  public Template getTemplateAtVersion(
+          @NonNull String versionNumber) throws FirebaseRemoteConfigException {
+    checkArgument(RemoteConfigUtil.isValidVersionNumber(versionNumber),
+            "Version number must be a non-empty string in int64 format.");
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(remoteConfigUrl)
             .addAllHeaders(COMMON_HEADERS)
             .addParameter("versionNumber", versionNumber);
     IncomingHttpResponse response = httpClient.send(request);
@@ -143,15 +140,11 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
   }
 
   @Override
-  public Template publishTemplate(
-      @NonNull Template template, boolean validateOnly, boolean forcePublish)
-      throws FirebaseRemoteConfigException {
+  public Template publishTemplate(@NonNull Template template, boolean validateOnly,
+                                  boolean forcePublish) throws FirebaseRemoteConfigException {
     checkArgument(template != null, "Template must not be null.");
-    HttpRequestInfo request =
-        HttpRequestInfo.buildRequest(
-                "PUT",
-                remoteConfigUrl,
-                new JsonHttpContent(jsonFactory, template.toTemplateResponse(false)))
+    HttpRequestInfo request = HttpRequestInfo.buildRequest("PUT", remoteConfigUrl,
+            new JsonHttpContent(jsonFactory, template.toTemplateResponse(false)))
             .addAllHeaders(COMMON_HEADERS)
             .addHeader("If-Match", forcePublish ? "*" : template.getETag());
     if (validateOnly) {
@@ -171,12 +164,11 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
 
   @Override
   public Template rollback(@NonNull String versionNumber) throws FirebaseRemoteConfigException {
-    checkArgument(
-        RemoteConfigUtil.isValidVersionNumber(versionNumber),
-        "Version number must be a non-empty string in int64 format.");
+    checkArgument(RemoteConfigUtil.isValidVersionNumber(versionNumber),
+            "Version number must be a non-empty string in int64 format.");
     Map<String, String> content = ImmutableMap.of("versionNumber", versionNumber);
-    HttpRequestInfo request =
-        HttpRequestInfo.buildJsonPostRequest(remoteConfigUrl + ":rollback", content)
+    HttpRequestInfo request = HttpRequestInfo
+            .buildJsonPostRequest(remoteConfigUrl + ":rollback", content)
             .addAllHeaders(COMMON_HEADERS);
     IncomingHttpResponse response = httpClient.send(request);
     TemplateResponse templateResponse = httpClient.parse(response, TemplateResponse.class);
@@ -185,10 +177,9 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
   }
 
   @Override
-  public TemplateResponse.ListVersionsResponse listVersions(ListVersionsOptions options)
-      throws FirebaseRemoteConfigException {
-    HttpRequestInfo request =
-        HttpRequestInfo.buildGetRequest(remoteConfigUrl + ":listVersions")
+  public TemplateResponse.ListVersionsResponse listVersions(
+          ListVersionsOptions options) throws FirebaseRemoteConfigException {
+    HttpRequestInfo request = HttpRequestInfo.buildGetRequest(remoteConfigUrl + ":listVersions")
             .addAllHeaders(COMMON_HEADERS);
     if (options != null) {
       request.addAllParameters(options.wrapForTransport());
@@ -198,30 +189,27 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
 
   private String getETag(IncomingHttpResponse response) {
     List<String> etagList = (List<String>) response.getHeaders().get("etag");
-    checkState(
-        etagList != null && !etagList.isEmpty(),
-        "ETag header is not available in the server response.");
-
+    checkState(etagList != null && !etagList.isEmpty(),
+            "ETag header is not available in the server response.");
     String etag = etagList.get(0);
-    checkState(
-        !Strings.isNullOrEmpty(etag), "ETag header is not available in the server response.");
+    checkState(!Strings.isNullOrEmpty(etag),
+            "ETag header is not available in the server response.");
 
     return etag;
   }
 
   static FirebaseRemoteConfigClientImpl fromApp(FirebaseApp app) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
-    checkArgument(
-        !Strings.isNullOrEmpty(projectId),
-        "Project ID is required to access Remote Config service. Use a service "
-            + "account credential or set the project ID explicitly via FirebaseOptions. "
-            + "Alternatively you can also set the project ID via the GOOGLE_CLOUD_PROJECT "
-            + "environment variable.");
+    checkArgument(!Strings.isNullOrEmpty(projectId),
+            "Project ID is required to access Remote Config service. Use a service "
+                    + "account credential or set the project ID explicitly via FirebaseOptions. "
+                    + "Alternatively you can also set the project ID via the GOOGLE_CLOUD_PROJECT "
+                    + "environment variable.");
     return FirebaseRemoteConfigClientImpl.builder()
-        .setProjectId(projectId)
-        .setRequestFactory(ApiClientUtils.newAuthorizedRequestFactory(app))
-        .setJsonFactory(app.getOptions().getJsonFactory())
-        .build();
+            .setProjectId(projectId)
+            .setRequestFactory(ApiClientUtils.newAuthorizedRequestFactory(app))
+            .setJsonFactory(app.getOptions().getJsonFactory())
+            .build();
   }
 
   static Builder builder() {
@@ -235,7 +223,7 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
     private JsonFactory jsonFactory;
     private HttpResponseInterceptor responseInterceptor;
 
-    private Builder() {}
+    private Builder() { }
 
     Builder setProjectId(String projectId) {
       this.projectId = projectId;
@@ -252,7 +240,8 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
       return this;
     }
 
-    Builder setResponseInterceptor(HttpResponseInterceptor responseInterceptor) {
+    Builder setResponseInterceptor(
+            HttpResponseInterceptor responseInterceptor) {
       this.responseInterceptor = responseInterceptor;
       return this;
     }
@@ -263,7 +252,7 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
   }
 
   private static class RemoteConfigErrorHandler
-      extends AbstractPlatformErrorHandler<FirebaseRemoteConfigException> {
+          extends AbstractPlatformErrorHandler<FirebaseRemoteConfigException> {
 
     private RemoteConfigErrorHandler(JsonFactory jsonFactory) {
       super(jsonFactory);
@@ -274,7 +263,7 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
       String response = getResponse(base);
       RemoteConfigServiceErrorResponse parsed = safeParse(response);
       return FirebaseRemoteConfigException.withRemoteConfigErrorCode(
-          base, parsed.getRemoteConfigErrorCode());
+        base, parsed.getRemoteConfigErrorCode());
     }
 
     private String getResponse(FirebaseException base) {
@@ -288,9 +277,8 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
     private RemoteConfigServiceErrorResponse safeParse(String response) {
       if (!Strings.isNullOrEmpty(response)) {
         try {
-          return jsonFactory
-              .createJsonParser(response)
-              .parseAndClose(RemoteConfigServiceErrorResponse.class);
+          return jsonFactory.createJsonParser(response)
+                  .parseAndClose(RemoteConfigServiceErrorResponse.class);
         } catch (IOException ignore) {
           // Ignore any error that may occur while parsing the error response. The server
           // may have responded with a non-json payload.
