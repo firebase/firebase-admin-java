@@ -35,12 +35,22 @@ import java.util.concurrent.ExecutionException;
 import org.junit.After;
 import org.junit.Test;
 
+/** Unit tests 
+ * for {@link FirebaseRemoteConfig}. 
+ * */
 public class FirebaseRemoteConfigTest {
 
   private static final FirebaseOptions TEST_OPTIONS = FirebaseOptions.builder()
           .setCredentials(new MockGoogleCredentials("test-token"))
           .setProjectId("test-project")
           .build();
+  private static final String TEST_SERVER_TEMPLATE =
+      "{\n"
+          + "  \"etag\": \"etag-123456789012-1\",\n"
+          + "  \"parameters\": {},\n"
+          + "  \"serverConditions\": [],\n"
+          + "  \"parameterGroups\": {}\n"
+          + "}";
   private static final FirebaseRemoteConfigException TEST_EXCEPTION =
           new FirebaseRemoteConfigException(ErrorCode.INTERNAL, "Test error message");
 
@@ -78,6 +88,20 @@ public class FirebaseRemoteConfigTest {
     assertSame(client, remoteConfig.getRemoteConfigClient());
     String expectedUrl = "https://firebaseremoteconfig.googleapis.com/v1/projects/test-project/remoteConfig";
     assertEquals(expectedUrl, ((FirebaseRemoteConfigClientImpl) client).getRemoteConfigUrl());
+  }
+
+  @Test
+  public void testDefaultServerRemoteConfigClient() {
+    FirebaseApp app = FirebaseApp.initializeApp(TEST_OPTIONS, "custom-app");
+    FirebaseRemoteConfig remoteConfig = FirebaseRemoteConfig.getInstance(app);
+
+    FirebaseRemoteConfigClient client = remoteConfig.getRemoteConfigClient();
+
+    assertTrue(client instanceof FirebaseRemoteConfigClientImpl);
+    assertSame(client, remoteConfig.getRemoteConfigClient());
+    String expectedUrl =
+        "https://firebaseremoteconfig.googleapis.com/v1/projects/test-project/namespaces/firebase-server/serverRemoteConfig";
+    assertEquals(expectedUrl, ((FirebaseRemoteConfigClientImpl) client).getServerRemoteConfigUrl());
   }
 
   @Test
@@ -596,5 +620,55 @@ public class FirebaseRemoteConfigTest {
   private FirebaseRemoteConfig getRemoteConfig(FirebaseRemoteConfigClient client) {
     FirebaseApp app = FirebaseApp.initializeApp(TEST_OPTIONS);
     return new FirebaseRemoteConfig(app, client);
+  }
+
+  // Get Server template tests
+
+  @Test
+  public void testGetServerTemplate() throws FirebaseRemoteConfigException {
+    MockRemoteConfigClient client =
+        MockRemoteConfigClient.fromServerTemplate(
+            new ServerTemplateData().setETag(TEST_ETAG).toJSON());
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
+
+    ServerTemplate template = remoteConfig.getServerTemplate();
+    String templateData = template.toJson();
+    assertEquals(TEST_SERVER_TEMPLATE, templateData);
+  }
+
+  @Test
+  public void testGetServerTemplateFailure() {
+    MockRemoteConfigClient client = MockRemoteConfigClient.fromException(TEST_EXCEPTION);
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
+
+    try {
+      remoteConfig.getServerTemplate();
+    } catch (FirebaseRemoteConfigException e) {
+      assertSame(TEST_EXCEPTION, e);
+    }
+  }
+
+  @Test
+  public void testGetServerTemplateAsync() throws Exception {
+    MockRemoteConfigClient client =
+        MockRemoteConfigClient.fromServerTemplate(
+            new ServerTemplateData().setETag(TEST_ETAG).toJSON());
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
+
+    ServerTemplate template = remoteConfig.getServerTemplateAsync().get();
+    String templateData = template.toJson();
+    assertEquals(TEST_SERVER_TEMPLATE, templateData);
+  }
+
+  @Test
+  public void testGetServerTemplateAsyncFailure() throws InterruptedException {
+    MockRemoteConfigClient client = MockRemoteConfigClient.fromException(TEST_EXCEPTION);
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
+
+    try {
+      remoteConfig.getServerTemplateAsync().get();
+    } catch (ExecutionException e) {
+      assertSame(TEST_EXCEPTION, e.getCause());
+    }
   }
 }

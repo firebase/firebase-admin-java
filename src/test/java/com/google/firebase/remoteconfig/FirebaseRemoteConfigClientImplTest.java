@@ -42,6 +42,7 @@ import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.OutgoingHttpRequest;
+
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.SdkUtils;
@@ -1239,3 +1240,4 @@ public class FirebaseRemoteConfigClientImplTest {
     assertTrue(request.getUrl().startsWith("https://firebaseremoteconfig.googleapis.com"));
   }
 }
+
