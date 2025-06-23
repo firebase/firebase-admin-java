@@ -21,35 +21,35 @@ import com.google.firebase.remoteconfig.internal.TemplateResponse.ListVersionsRe
 public class MockRemoteConfigClient implements FirebaseRemoteConfigClient{
 
   private final Template resultTemplate;
+  private final String resultServerTemplate;
   private final FirebaseRemoteConfigException exception;
   private final ListVersionsResponse listVersionsResponse;
-  private final String resultServerTemplate;
 
   private MockRemoteConfigClient(Template resultTemplate,
+                                 String resultServerTemplate,
                                  ListVersionsResponse listVersionsResponse,
-                                 FirebaseRemoteConfigException exception,
-                                 String resultServerTemplate) {
+                                 FirebaseRemoteConfigException exception) {
     this.resultTemplate = resultTemplate;
+    this.resultServerTemplate = resultServerTemplate;
     this.listVersionsResponse = listVersionsResponse;
     this.exception = exception;
-    this.resultServerTemplate = resultServerTemplate;
   }
 
   static MockRemoteConfigClient fromTemplate(Template resultTemplate) {
-    return new MockRemoteConfigClient(resultTemplate, null, null, null);
+    return new MockRemoteConfigClient(resultTemplate,null, null, null);
   }
 
   static MockRemoteConfigClient fromServerTemplate(String resultServerTemplate) {
-    return new MockRemoteConfigClient(null, null, null, resultServerTemplate);
+    return new MockRemoteConfigClient(null, resultServerTemplate,null, null);
   }
 
   static MockRemoteConfigClient fromListVersionsResponse(
           ListVersionsResponse listVersionsResponse) {
-    return new MockRemoteConfigClient(null, listVersionsResponse, null, null);
+    return new MockRemoteConfigClient(null,null, listVersionsResponse, null);
   }
 
   static MockRemoteConfigClient fromException(FirebaseRemoteConfigException exception) {
-    return new MockRemoteConfigClient(null, null, exception, null);
+    return new MockRemoteConfigClient(null,null, null, exception);
   }
 
   @Override
