@@ -18,14 +18,14 @@ package com.google.firebase.remoteconfig;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.util.Key;
+// com.google.api.client.util.Key is no longer needed here.
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
-// Removed RolloutValueResponse and PersonalizationValueResponse imports from TemplateResponse
-// as ParameterValue will now have its own versions of these.
+// Ensured these specific DTO imports are present
+import com.google.firebase.remoteconfig.internal.TemplateResponse.PersonalizationValueResponse;
+import com.google.firebase.remoteconfig.internal.TemplateResponse.RolloutValueResponse;
 
 import java.util.Objects;
-// Removed Map and HashMap imports as they are no longer directly used here after this change.
 
 /**
  * Represents a Remote Config parameter value that can be used in a {@link Template}.
@@ -64,15 +64,17 @@ public abstract class ParameterValue {
       return ParameterValue.inAppDefault();
     }
 
-    // The getters getRolloutValue() and getPersonalizationValue() in ParameterValueResponse
-    // will now return ParameterValue.RolloutsValue and ParameterValue.PersonalizationValue
-    // respectively (as per the next subtask for TemplateResponse.java).
-    // So, we can directly return them.
-    if (parameterValueResponse.getRolloutValue() != null) {
-      return parameterValueResponse.getRolloutValue();
+    // Updated to use DTOs from TemplateResponse
+    TemplateResponse.RolloutValueResponse rolloutDto = parameterValueResponse.getRolloutValue();
+    if (rolloutDto != null) {
+      int percent = (rolloutDto.getPercent() != null) ? rolloutDto.getPercent() : 0;
+      return new RolloutsValue(rolloutDto.getRolloutId(), rolloutDto.getValue(), percent);
     }
-    if (parameterValueResponse.getPersonalizationValue() != null) {
-      return parameterValueResponse.getPersonalizationValue();
+
+    TemplateResponse.PersonalizationValueResponse personalizationDto =
+            parameterValueResponse.getPersonalizationValue();
+    if (personalizationDto != null) {
+      return new PersonalizationValue(personalizationDto.getPersonalizationId());
     }
     return ParameterValue.of(null); // Fallback
   }
@@ -136,21 +138,14 @@ public abstract class ParameterValue {
   }
 
   public static final class RolloutsValue extends ParameterValue {
-    @Key("rolloutId")
-    private String rolloutId;
+    private final String rolloutId;
+    private final String value;
+    private final int percent;
 
-    @Key("value")
-    private String value;
-
-    @Key("percent")
-    private int percent;
-
-    public RolloutsValue() {} // Public no-argument constructor
-
-    // Package-private constructor for factory method
+    // Package-private constructor
     RolloutsValue(String rolloutId, String value, int percent) {
       this.rolloutId = checkNotNull(rolloutId, "rolloutId must not be null");
-      this.value = value;
+      this.value = value; // Value can be null
       this.percent = percent;
     }
 
@@ -158,30 +153,23 @@ public abstract class ParameterValue {
       return rolloutId;
     }
 
-    public void setRolloutId(String rolloutId) {
-      this.rolloutId = checkNotNull(rolloutId, "rolloutId must not be null");
-    }
-
     public String getValue() {
       return value;
-    }
-
-    public void setValue(String value) {
-      this.value = value;
     }
 
     public int getPercent() {
       return percent;
     }
 
-    public void setPercent(int percent) {
-      this.percent = percent;
-    }
-
     @Override
     ParameterValueResponse toParameterValueResponse() {
+      TemplateResponse.RolloutValueResponse rolloutDto = new TemplateResponse.RolloutValueResponse();
+      rolloutDto.setRolloutId(this.rolloutId);
+      rolloutDto.setValue(this.value);
+      rolloutDto.setPercent(this.percent); // int to Integer is fine
+
       ParameterValueResponse response = new ParameterValueResponse();
-      response.setRolloutValue(this); // Pass this instance directly
+      response.setRolloutValue(rolloutDto);
       return response;
     }
 
@@ -206,12 +194,9 @@ public abstract class ParameterValue {
   }
 
   public static final class PersonalizationValue extends ParameterValue {
-    @Key("personalizationId")
-    private String personalizationId;
+    private final String personalizationId;
 
-    public PersonalizationValue() {} // Public no-argument constructor
-
-    // Package-private constructor for factory method
+    // Package-private constructor
     PersonalizationValue(String personalizationId) {
       this.personalizationId = checkNotNull(personalizationId,
           "personalizationId must not be null");
@@ -221,15 +206,14 @@ public abstract class ParameterValue {
       return personalizationId;
     }
 
-    public void setPersonalizationId(String personalizationId) {
-      this.personalizationId = checkNotNull(personalizationId,
-          "personalizationId must not be null");
-    }
-
     @Override
     ParameterValueResponse toParameterValueResponse() {
+      TemplateResponse.PersonalizationValueResponse personalizationDto =
+          new TemplateResponse.PersonalizationValueResponse();
+      personalizationDto.setPersonalizationId(this.personalizationId);
+
       ParameterValueResponse response = new ParameterValueResponse();
-      response.setPersonalizationValue(this); // Pass this instance directly
+      response.setPersonalizationValue(personalizationDto);
       return response;
     }
 

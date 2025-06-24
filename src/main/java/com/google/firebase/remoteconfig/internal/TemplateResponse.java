@@ -17,7 +17,7 @@
 package com.google.firebase.remoteconfig.internal;
 
 import com.google.api.client.util.Key;
-import com.google.firebase.remoteconfig.ParameterValue; // Added import
+// Removed: import com.google.firebase.remoteconfig.ParameterValue;
 
 import java.util.List;
 import java.util.Map;
@@ -163,10 +163,10 @@ public final class TemplateResponse {
     private Boolean useInAppDefault;
 
     @Key("rolloutValue")
-    private ParameterValue.RolloutsValue rolloutValue; // Changed type
+    private RolloutValueResponse rolloutValue; // Changed type
 
     @Key("personalizationValue")
-    private ParameterValue.PersonalizationValue personalizationValue; // Changed type
+    private PersonalizationValueResponse personalizationValue; // Changed type
 
     public String getValue() {
       return value;
@@ -176,11 +176,11 @@ public final class TemplateResponse {
       return Boolean.TRUE.equals(this.useInAppDefault);
     }
 
-    public ParameterValue.RolloutsValue getRolloutValue() { // Changed return type
+    public RolloutValueResponse getRolloutValue() { // Changed return type
       return rolloutValue;
     }
 
-    public ParameterValue.PersonalizationValue getPersonalizationValue() { // Changed return type
+    public PersonalizationValueResponse getPersonalizationValue() { // Changed return type
       return personalizationValue;
     }
 
@@ -201,7 +201,7 @@ public final class TemplateResponse {
     }
 
     public ParameterValueResponse setRolloutValue(
-            ParameterValue.RolloutsValue rolloutValue) { // Changed param type
+            RolloutValueResponse rolloutValue) { // Changed param type
       this.rolloutValue = rolloutValue;
       this.value = null;
       this.useInAppDefault = null;
@@ -210,11 +210,67 @@ public final class TemplateResponse {
     }
 
     public ParameterValueResponse setPersonalizationValue(
-            ParameterValue.PersonalizationValue personalizationValue) { // Changed param type
+            PersonalizationValueResponse personalizationValue) { // Changed param type
       this.personalizationValue = personalizationValue;
       this.value = null;
       this.useInAppDefault = null;
       this.rolloutValue = null;
+      return this;
+    }
+  }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config rollout value responses from the
+   * Remote Config service.
+   */
+  public static final class RolloutValueResponse {
+    @Key("rolloutId")
+    private String rolloutId;
+
+    @Key("value")
+    private String value;
+
+    @Key("percent")
+    private Integer percent;
+
+    public RolloutValueResponse() {} // Default constructor for JSON library
+
+    // Getters
+    public String getRolloutId() { return rolloutId; }
+    public String getValue() { return value; }
+    public Integer getPercent() { return percent; }
+
+    // Setters
+    public RolloutValueResponse setRolloutId(String rolloutId) {
+      this.rolloutId = rolloutId;
+      return this;
+    }
+    public RolloutValueResponse setValue(String value) {
+      this.value = value;
+      return this;
+    }
+    public RolloutValueResponse setPercent(Integer percent) {
+      this.percent = percent;
+      return this;
+    }
+  }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config personalization value responses from the
+   * Remote Config service.
+   */
+  public static final class PersonalizationValueResponse {
+    @Key("personalizationId")
+    private String personalizationId;
+
+    public PersonalizationValueResponse() {} // Default constructor
+
+    // Getter
+    public String getPersonalizationId() { return personalizationId; }
+
+    // Setter
+    public PersonalizationValueResponse setPersonalizationId(String personalizationId) {
+      this.personalizationId = personalizationId;
       return this;
     }
   }
