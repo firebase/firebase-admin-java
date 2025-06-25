@@ -24,13 +24,8 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-// Removed ParameterValue.PersonalizationValue and ParameterValue.RolloutsValue imports
-// as the tests using them are being removed.
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
 
-// Removed Collections, HashMap imports as they might not be needed after test removal.
-// If other tests use them, this might need adjustment, but the goal is minimal changes
-// beyond removing the specified tests.
 import java.util.List;
 import java.util.Map;
 
@@ -84,8 +79,6 @@ public class TemplateTest {
 
   private static final Template TEMPLATE_WITH_VERSION = new Template()
           .setVersion(Version.withDescription("promo version"));
-
-  // TEST_JSON_WITH_ROLLOUT_PERSONALIZATION and related tests will be removed.
 
   @Test
   public void testConstructor() {

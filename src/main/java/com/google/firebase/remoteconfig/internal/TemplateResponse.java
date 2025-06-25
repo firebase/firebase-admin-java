@@ -17,7 +17,6 @@
 package com.google.firebase.remoteconfig.internal;
 
 import com.google.api.client.util.Key;
-// Removed: import com.google.firebase.remoteconfig.ParameterValue;
 
 import java.util.List;
 import java.util.Map;
@@ -163,10 +162,10 @@ public final class TemplateResponse {
     private Boolean useInAppDefault;
 
     @Key("rolloutValue")
-    private RolloutValueResponse rolloutValue; // Changed type
+    private RolloutValueResponse rolloutValue;
 
     @Key("personalizationValue")
-    private PersonalizationValueResponse personalizationValue; // Changed type
+    private PersonalizationValueResponse personalizationValue;
 
     public String getValue() {
       return value;
@@ -176,11 +175,11 @@ public final class TemplateResponse {
       return Boolean.TRUE.equals(this.useInAppDefault);
     }
 
-    public RolloutValueResponse getRolloutValue() { // Changed return type
+    public RolloutValueResponse getRolloutValue() {
       return rolloutValue;
     }
 
-    public PersonalizationValueResponse getPersonalizationValue() { // Changed return type
+    public PersonalizationValueResponse getPersonalizationValue() {
       return personalizationValue;
     }
 
@@ -201,7 +200,7 @@ public final class TemplateResponse {
     }
 
     public ParameterValueResponse setRolloutValue(
-            RolloutValueResponse rolloutValue) { // Changed param type
+            RolloutValueResponse rolloutValue) {
       this.rolloutValue = rolloutValue;
       this.value = null;
       this.useInAppDefault = null;
@@ -210,7 +209,7 @@ public final class TemplateResponse {
     }
 
     public ParameterValueResponse setPersonalizationValue(
-            PersonalizationValueResponse personalizationValue) { // Changed param type
+            PersonalizationValueResponse personalizationValue) {
       this.personalizationValue = personalizationValue;
       this.value = null;
       this.useInAppDefault = null;
@@ -233,14 +232,12 @@ public final class TemplateResponse {
     @Key("percent")
     private Integer percent;
 
-    public RolloutValueResponse() {} // Default constructor for JSON library
+    public RolloutValueResponse() {}
 
-    // Getters
     public String getRolloutId() { return rolloutId; }
     public String getValue() { return value; }
     public Integer getPercent() { return percent; }
 
-    // Setters
     public RolloutValueResponse setRolloutId(String rolloutId) {
       this.rolloutId = rolloutId;
       return this;
@@ -263,12 +260,10 @@ public final class TemplateResponse {
     @Key("personalizationId")
     private String personalizationId;
 
-    public PersonalizationValueResponse() {} // Default constructor
+    public PersonalizationValueResponse() {}
 
-    // Getter
     public String getPersonalizationId() { return personalizationId; }
 
-    // Setter
     public PersonalizationValueResponse setPersonalizationId(String personalizationId) {
       this.personalizationId = personalizationId;
       return this;

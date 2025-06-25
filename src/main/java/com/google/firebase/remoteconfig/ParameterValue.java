@@ -18,10 +18,8 @@ package com.google.firebase.remoteconfig;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-// com.google.api.client.util.Key is no longer needed here.
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
-// Ensured these specific DTO imports are present
 import com.google.firebase.remoteconfig.internal.TemplateResponse.PersonalizationValueResponse;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.RolloutValueResponse;
 
@@ -64,7 +62,6 @@ public abstract class ParameterValue {
       return ParameterValue.inAppDefault();
     }
 
-    // Updated to use DTOs from TemplateResponse
     TemplateResponse.RolloutValueResponse rolloutDto = parameterValueResponse.getRolloutValue();
     if (rolloutDto != null) {
       int percent = (rolloutDto.getPercent() != null) ? rolloutDto.getPercent() : 0;
