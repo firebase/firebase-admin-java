@@ -26,6 +26,7 @@ import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OneOfCon
 class OneOfCondition {
   private OrCondition orCondition;
   private AndCondition andCondition;
+  private CustomSignalCondition customSignal;
   private String trueValue;
   private String falseValue;
 
@@ -35,6 +36,10 @@ class OneOfCondition {
     }
     if (oneOfconditionResponse.getAndCondition() != null) {
       this.andCondition = new AndCondition(oneOfconditionResponse.getAndCondition());
+    }
+    if (oneOfconditionResponse.getCustomSignalCondition() != null) {
+      this.customSignal = 
+          new CustomSignalCondition(oneOfconditionResponse.getCustomSignalCondition());
     }
   }
 
@@ -66,6 +71,11 @@ class OneOfCondition {
     return falseValue;
   }
 
+  @Nullable
+  CustomSignalCondition getCustomSignal() {
+    return customSignal;
+  }
+
   OneOfCondition setOrCondition(@NonNull OrCondition orCondition) {
     checkNotNull(orCondition, "`Or` condition cannot be set to null.");
     this.orCondition = orCondition;
@@ -75,6 +85,12 @@ class OneOfCondition {
   OneOfCondition setAndCondition(@NonNull AndCondition andCondition) {
     checkNotNull(andCondition, "`And` condition cannot be set to null.");
     this.andCondition = andCondition;
+    return this;
+  }
+
+  OneOfCondition setCustomSignal(@NonNull CustomSignalCondition customSignal) {
+    checkNotNull(customSignal, "`Custom signal` condition cannot be set to null.");
+    this.customSignal = customSignal;
     return this;
   }
 
@@ -95,6 +111,9 @@ class OneOfCondition {
     }
     if (this.orCondition != null) {
       oneOfConditionResponse.setOrCondition(this.orCondition.toOrConditionResponse());
+    }
+    if (this.customSignal != null) {
+      oneOfConditionResponse.setCustomSignalCondition(this.customSignal.toCustomConditonResponse());
     }
     return oneOfConditionResponse;
   }
