@@ -28,10 +28,18 @@ public interface ServerTemplate {
     ServerTemplate build();
   }
   /**
+  * Proccess the template data with a condition evaluator 
+  * based on the provided context. 
+  */
+  ServerConfig evaluate(KeysAndValues context) throws FirebaseRemoteConfigException;
+  /**
+  * Proccess the template data without context.
+  */
+  ServerConfig evaluate() throws FirebaseRemoteConfigException;
+  /**
   * Fetches and caches the current active version of the project.
   */
   ApiFuture<Void> load() throws FirebaseRemoteConfigException;
 
   String toJson();
 }
-

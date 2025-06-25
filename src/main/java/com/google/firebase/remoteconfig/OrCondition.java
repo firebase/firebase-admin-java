@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2025 Google LLC
  *
@@ -58,4 +57,3 @@ final class OrCondition {
                                                  .collect(Collectors.toList()));    
   }
 }
-
