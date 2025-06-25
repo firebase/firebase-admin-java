@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2025 Google LLC
  *
@@ -61,4 +60,3 @@ final class AndCondition {
                                                  .collect(Collectors.toList()));    
   }
 }
-
