@@ -1127,7 +1127,8 @@ public class FirebaseRemoteConfigClientImplTest {
 
     ParameterValue rtpAndroidEnValue = rolloutTestParam.getConditionalValues().get("android_en");
     assertNotNull(
-        "Conditional value for 'android_en' in 'rollout_test_param' should not be null",
+        "Conditional value for 'android_en' in 'rollout_test_param' "
+            + "should not be null", // Further broken down
         rtpAndroidEnValue);
     assertTrue("Conditional value for 'android_en' should be RolloutsValue",
             rtpAndroidEnValue instanceof ParameterValue.RolloutsValue);
@@ -1160,7 +1161,8 @@ public class FirebaseRemoteConfigClientImplTest {
 
     ParameterValue wmpAndroidEnValue = welcomeMessageParam.getConditionalValues().get("android_en");
     assertNotNull(
-        "Cond value for 'android_en' in 'welcome_message_text' should not be null",
+        "Cond value for 'android_en' in 'welcome_message_text' "
+            + "should not be null", // Further broken down
         wmpAndroidEnValue);
     assertTrue("Cond value for 'android_en' in 'welcome_message_text' should be RolloutsValue",
             wmpAndroidEnValue instanceof ParameterValue.RolloutsValue);

@@ -232,20 +232,28 @@ public final class TemplateResponse {
     @Key("percent")
     private Integer percent;
 
-    public RolloutValueResponse() {}
+    public String getRolloutId() {
+      return rolloutId;
+    }
 
-    public String getRolloutId() { return rolloutId; }
-    public String getValue() { return value; }
-    public Integer getPercent() { return percent; }
+    public String getValue() {
+      return value;
+    }
+
+    public Integer getPercent() {
+      return percent;
+    }
 
     public RolloutValueResponse setRolloutId(String rolloutId) {
       this.rolloutId = rolloutId;
       return this;
     }
+
     public RolloutValueResponse setValue(String value) {
       this.value = value;
       return this;
     }
+
     public RolloutValueResponse setPercent(Integer percent) {
       this.percent = percent;
       return this;
@@ -260,9 +268,9 @@ public final class TemplateResponse {
     @Key("personalizationId")
     private String personalizationId;
 
-    public PersonalizationValueResponse() {}
-
-    public String getPersonalizationId() { return personalizationId; }
+    public String getPersonalizationId() {
+      return personalizationId;
+    }
 
     public PersonalizationValueResponse setPersonalizationId(String personalizationId) {
       this.personalizationId = personalizationId;

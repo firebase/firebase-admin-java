@@ -62,13 +62,13 @@ public abstract class ParameterValue {
       return ParameterValue.inAppDefault();
     }
 
-    TemplateResponse.RolloutValueResponse rolloutDto = parameterValueResponse.getRolloutValue();
+    RolloutValueResponse rolloutDto = parameterValueResponse.getRolloutValue();
     if (rolloutDto != null) {
       int percent = (rolloutDto.getPercent() != null) ? rolloutDto.getPercent() : 0;
       return new RolloutsValue(rolloutDto.getRolloutId(), rolloutDto.getValue(), percent);
     }
 
-    TemplateResponse.PersonalizationValueResponse personalizationDto =
+    PersonalizationValueResponse personalizationDto =
             parameterValueResponse.getPersonalizationValue();
     if (personalizationDto != null) {
       return new PersonalizationValue(personalizationDto.getPersonalizationId());
@@ -111,9 +111,6 @@ public abstract class ParameterValue {
   }
 
   public static final class InAppDefault extends ParameterValue {
-    InAppDefault() { // Package-private constructor
-      // Constructor content (if any)
-    }
 
     @Override
     ParameterValueResponse toParameterValueResponse() {
@@ -125,13 +122,13 @@ public abstract class ParameterValue {
       if (this == o) {
         return true;
       }
-      return o != null && getClass() == o.getClass();
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      return true; // All instances of InAppDefault are equal
     }
 
-    @Override
-    public int hashCode() {
-      return 1; // Simple constant hashCode
-    }
+    // hashCode method was removed as per Plan v9
   }
 
   public static final class RolloutsValue extends ParameterValue {
@@ -139,10 +136,9 @@ public abstract class ParameterValue {
     private final String value;
     private final int percent;
 
-    // Package-private constructor
     RolloutsValue(String rolloutId, String value, int percent) {
       this.rolloutId = checkNotNull(rolloutId, "rolloutId must not be null");
-      this.value = value; // Value can be null
+      this.value = value;
       this.percent = percent;
     }
 
@@ -160,14 +156,14 @@ public abstract class ParameterValue {
 
     @Override
     ParameterValueResponse toParameterValueResponse() {
-      TemplateResponse.RolloutValueResponse rolloutDto = new TemplateResponse.RolloutValueResponse();
+      RolloutValueResponse rolloutDto = new RolloutValueResponse();
       rolloutDto.setRolloutId(this.rolloutId);
       rolloutDto.setValue(this.value);
-      rolloutDto.setPercent(this.percent); // int to Integer is fine
+      rolloutDto.setPercent(this.percent);
 
-      ParameterValueResponse response = new ParameterValueResponse();
-      response.setRolloutValue(rolloutDto);
-      return response;
+      ParameterValueResponse resp = new ParameterValueResponse();
+      resp.setRolloutValue(rolloutDto);
+      return resp;
     }
 
     @Override
@@ -193,7 +189,6 @@ public abstract class ParameterValue {
   public static final class PersonalizationValue extends ParameterValue {
     private final String personalizationId;
 
-    // Package-private constructor
     PersonalizationValue(String personalizationId) {
       this.personalizationId = checkNotNull(personalizationId,
           "personalizationId must not be null");
@@ -205,13 +200,13 @@ public abstract class ParameterValue {
 
     @Override
     ParameterValueResponse toParameterValueResponse() {
-      TemplateResponse.PersonalizationValueResponse personalizationDto =
-          new TemplateResponse.PersonalizationValueResponse();
+      PersonalizationValueResponse personalizationDto =
+          new PersonalizationValueResponse();
       personalizationDto.setPersonalizationId(this.personalizationId);
 
-      ParameterValueResponse response = new ParameterValueResponse();
-      response.setPersonalizationValue(personalizationDto);
-      return response;
+      ParameterValueResponse resp = new ParameterValueResponse();
+      resp.setPersonalizationValue(personalizationDto);
+      return resp;
     }
 
     @Override
