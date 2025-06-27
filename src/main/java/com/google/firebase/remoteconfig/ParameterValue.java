@@ -125,10 +125,9 @@ public abstract class ParameterValue {
       if (o == null || getClass() != o.getClass()) {
         return false;
       }
-      return true; // All instances of InAppDefault are equal
+      return true;
     }
 
-    // hashCode method was removed as per Plan v9
   }
 
   public static final class RolloutsValue extends ParameterValue {

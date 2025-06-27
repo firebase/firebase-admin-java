@@ -1121,16 +1121,15 @@ public class FirebaseRemoteConfigClientImplTest {
 
     // 1. Assertions for "rollout_test_param"
     Parameter rolloutTestParam = receivedTemplate.getParameters().get("rollout_test_param");
-    assertNotNull("Parameter 'rollout_test_param' should not be null", rolloutTestParam);
+    assertNotNull("Param 'rollout_test_param' is null", rolloutTestParam);
     // Assuming a simple default value was set in the JSON:
     // assertEquals(ParameterValue.of("default_rollout_value"), rolloutTestParam.getDefaultValue());
 
     ParameterValue rtpAndroidEnValue = rolloutTestParam.getConditionalValues().get("android_en");
     assertNotNull(
-        "Conditional value for 'android_en' in 'rollout_test_param' "
-            + "should not be null", // Further broken down
+        "CV 'android_en' in 'rollout_test_param' is null",
         rtpAndroidEnValue);
-    assertTrue("Conditional value for 'android_en' should be RolloutsValue",
+    assertTrue("CV for 'android_en' should be RolloutsValue",
             rtpAndroidEnValue instanceof ParameterValue.RolloutsValue);
     ParameterValue.RolloutsValue rolloutValueRtp = (ParameterValue.RolloutsValue) rtpAndroidEnValue;
     assertEquals("test_rollout_1", rolloutValueRtp.getRolloutId());
@@ -1140,32 +1139,35 @@ public class FirebaseRemoteConfigClientImplTest {
     // 2. Assertions for "personalization_test_param"
     Parameter personalizationTestParam = receivedTemplate.getParameters()
         .get("personalization_test_param");
-    assertNotNull("Parameter 'personalization_test_param' should not be null",
+    assertNotNull(
+        "Param 'personalization_test_param' is null",
         personalizationTestParam);
     // Assuming a simple default value:
     // assertEquals(ParameterValue.of("default_personalization_value"),
     // personalizationTestParam.getDefaultValue());
 
     ParameterValue ptpIosEnValue = personalizationTestParam.getConditionalValues().get("ios_en");
-    assertNotNull("Conditional value for 'ios_en' in 'personalization_test_param' should not be null",
+    assertNotNull(
+        "CV 'ios_en' in 'personalization_test_param' is null",
         ptpIosEnValue);
-    assertTrue("Conditional value for 'ios_en' should be PersonalizationValue",
-            ptpIosEnValue instanceof ParameterValue.PersonalizationValue);
+    assertTrue(
+        "CV 'ios_en' should be PersonalizationValue",
+        ptpIosEnValue instanceof ParameterValue.PersonalizationValue);
     ParameterValue.PersonalizationValue personalizationValuePtp =
             (ParameterValue.PersonalizationValue) ptpIosEnValue;
     assertEquals("test_personalization_abc", personalizationValuePtp.getPersonalizationId());
 
     // 3. Assertions for updated "welcome_message_text" parameter's new conditional value
     Parameter welcomeMessageParam = receivedTemplate.getParameters().get("welcome_message_text");
-    assertNotNull("Parameter 'welcome_message_text' should not be null", welcomeMessageParam);
+    assertNotNull("Param 'welcome_message_text' is null", welcomeMessageParam);
 
     ParameterValue wmpAndroidEnValue = welcomeMessageParam.getConditionalValues().get("android_en");
     assertNotNull(
-        "Cond value for 'android_en' in 'welcome_message_text' "
-            + "should not be null", // Further broken down
+        "CV 'android_en' in 'welcome_message_text' is null",
         wmpAndroidEnValue);
-    assertTrue("Cond value for 'android_en' in 'welcome_message_text' should be RolloutsValue",
-            wmpAndroidEnValue instanceof ParameterValue.RolloutsValue);
+    assertTrue(
+        "CV 'android_en' in 'welcome_message_text' should be RolloutsValue",
+        wmpAndroidEnValue instanceof ParameterValue.RolloutsValue);
     ParameterValue.RolloutsValue rolloutValueWmp = (ParameterValue.RolloutsValue) wmpAndroidEnValue;
     assertEquals("welcome_rollout", rolloutValueWmp.getRolloutId());
     assertEquals("welcome android rollout", rolloutValueWmp.getValue());
@@ -1307,3 +1309,5 @@ public class FirebaseRemoteConfigClientImplTest {
     assertTrue(request.getUrl().startsWith("https://firebaseremoteconfig.googleapis.com"));
   }
 }
+
+[end of src/test/java/com/google/firebase/remoteconfig/FirebaseRemoteConfigClientImplTest.java]
