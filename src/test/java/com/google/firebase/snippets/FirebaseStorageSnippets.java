@@ -42,7 +42,7 @@ public class FirebaseStorageSnippets {
     Bucket bucket = StorageClient.getInstance().bucket();
 
     // 'bucket' is an object defined in the google-cloud-storage Java library.
-    // See http://googlecloudplatform.github.io/google-cloud-java/latest/apidocs/com/google/cloud/storage/Bucket.html
+    // See https://cloud.google.com/java/docs/reference/google-cloud-storage/latest/com.google.cloud.storage.Bucket
     // for more details.
     // [END init_admin_sdk_for_storage]
     System.out.println("Retrieved bucket: " + bucket.getName());
