@@ -59,6 +59,11 @@ public enum AuthErrorCode {
   INVALID_DYNAMIC_LINK_DOMAIN,
 
   /**
+   * The provided hosting link domain is not configured or authorized for the current project.
+   */
+  INVALID_HOSTING_LINK_DOMAIN,
+
+  /**
    * The specified ID token is invalid.
    */
   INVALID_ID_TOKEN,

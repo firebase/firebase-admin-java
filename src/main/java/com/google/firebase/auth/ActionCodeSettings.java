@@ -51,6 +51,9 @@ public final class ActionCodeSettings {
     if (!Strings.isNullOrEmpty(builder.dynamicLinkDomain)) {
       properties.put("dynamicLinkDomain", builder.dynamicLinkDomain);
     }
+    if (!Strings.isNullOrEmpty(builder.linkDomain)) {
+      properties.put("linkDomain", builder.linkDomain);
+    }
     if (!Strings.isNullOrEmpty(builder.iosBundleId)) {
       properties.put("iOSBundleId", builder.iosBundleId);
     }
@@ -83,7 +86,9 @@ public final class ActionCodeSettings {
 
     private String url;
     private boolean handleCodeInApp;
+    // Deprecated, use linkDomain instead.
     private String dynamicLinkDomain;
+    private String linkDomain;
     private String iosBundleId;
     private String androidPackageName;
     private String androidMinimumVersion;
@@ -135,9 +140,24 @@ public final class ActionCodeSettings {
      *
      * @param dynamicLinkDomain Firebase Dynamic Link domain string.
      * @return This builder.
+     * @deprecated Use {@link #setLinkDomain(String)} instead.
      */
     public Builder setDynamicLinkDomain(String dynamicLinkDomain) {
       this.dynamicLinkDomain = dynamicLinkDomain;
+      return this;
+    }
+
+    /**
+     * Sets the link domain to use for the current link if it is to be opened using
+     * HandleCodeInApp, as multiple link domains can be configured per project. This
+     * setting provides the ability to explicitly choose one. If none is provided, the default
+     * Firebase Hosting domain will be used.
+     *
+     * @param linkDomain Link domain string.
+     * @return This builder.
+     */
+    public Builder setLinkDomain(String linkDomain) {
+      this.linkDomain = linkDomain;
       return this;
     }
 
