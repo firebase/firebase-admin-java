@@ -26,9 +26,9 @@ public class MockRemoteConfigClient implements FirebaseRemoteConfigClient{
   private final ListVersionsResponse listVersionsResponse;
 
   private MockRemoteConfigClient(Template resultTemplate,
-                                 String resultServerTemplate,
-                                 ListVersionsResponse listVersionsResponse,
-                                 FirebaseRemoteConfigException exception) {
+                                String resultServerTemplate,
+                                ListVersionsResponse listVersionsResponse,
+                                FirebaseRemoteConfigException exception) {
     this.resultTemplate = resultTemplate;
     this.resultServerTemplate = resultServerTemplate;
     this.listVersionsResponse = listVersionsResponse;
@@ -102,4 +102,3 @@ public class MockRemoteConfigClient implements FirebaseRemoteConfigClient{
     return listVersionsResponse;
   }
 }
-

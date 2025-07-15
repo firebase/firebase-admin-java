@@ -100,4 +100,3 @@ public final class ServerConfig {
     return new Value(ValueSource.STATIC);
   }
 }
-
