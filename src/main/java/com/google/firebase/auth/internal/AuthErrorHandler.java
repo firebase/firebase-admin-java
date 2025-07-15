@@ -74,6 +74,13 @@ final class AuthErrorHandler extends AbstractHttpErrorHandler<FirebaseAuthExcept
                       + "configured or authorized for the current project",
                   AuthErrorCode.INVALID_DYNAMIC_LINK_DOMAIN))
           .put(
+              "INVALID_HOSTING_LINK_DOMAIN",
+              new AuthError(
+                  ErrorCode.INVALID_ARGUMENT,
+                  "The provided hosting link domain is not "
+                      + "configured or authorized for the current project",
+                  AuthErrorCode.INVALID_HOSTING_LINK_DOMAIN))
+          .put(
               "PHONE_NUMBER_EXISTS",
               new AuthError(
                   ErrorCode.ALREADY_EXISTS,
