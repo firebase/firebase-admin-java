@@ -26,6 +26,7 @@ import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OneOfCon
 class OneOfCondition {
   private OrCondition orCondition;
   private AndCondition andCondition;
+  private PercentCondition percent;
   private CustomSignalCondition customSignal;
   private String trueValue;
   private String falseValue;
@@ -37,6 +38,9 @@ class OneOfCondition {
     if (oneOfconditionResponse.getAndCondition() != null) {
       this.andCondition = new AndCondition(oneOfconditionResponse.getAndCondition());
     }
+    if (oneOfconditionResponse.getPercentCondition() != null) {
+      this.percent = new PercentCondition(oneOfconditionResponse.getPercentCondition());
+    }
     if (oneOfconditionResponse.getCustomSignalCondition() != null) {
       this.customSignal = 
           new CustomSignalCondition(oneOfconditionResponse.getCustomSignalCondition());
@@ -47,6 +51,7 @@ class OneOfCondition {
   OneOfCondition() {
     this.orCondition = null;
     this.andCondition = null;
+    this.percent = null;
     this.trueValue = null;
     this.falseValue = null;
   }
@@ -72,6 +77,11 @@ class OneOfCondition {
   }
 
   @Nullable
+  PercentCondition getPercent() {
+    return percent;
+  }
+
+  @Nullable
   CustomSignalCondition getCustomSignal() {
     return customSignal;
   }
@@ -85,6 +95,12 @@ class OneOfCondition {
   OneOfCondition setAndCondition(@NonNull AndCondition andCondition) {
     checkNotNull(andCondition, "`And` condition cannot be set to null.");
     this.andCondition = andCondition;
+    return this;
+  }
+
+  OneOfCondition setPercent(@NonNull PercentCondition percent) {
+    checkNotNull(percent, "`Percent` condition cannot be set to null.");
+    this.percent = percent;
     return this;
   }
 
@@ -114,6 +130,9 @@ class OneOfCondition {
     }
     if (this.customSignal != null) {
       oneOfConditionResponse.setCustomSignalCondition(this.customSignal.toCustomConditonResponse());
+    }
+    if (this.percent != null) {
+      oneOfConditionResponse.setPercentCondition(this.percent.toPercentConditionResponse());
     }
     return oneOfConditionResponse;
   }

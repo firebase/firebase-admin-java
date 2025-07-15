@@ -138,6 +138,23 @@ public class FirebaseRemoteConfigClientImplTest {
                                                                   .NUMERIC_LESS_THAN,
                                                               new ArrayList<>(
                                                                   ImmutableList.of("100"))))))))))),
+          new ServerCondition("percent", null)
+              .setServerCondition(
+                  new OneOfCondition()
+                      .setOrCondition(
+                          new OrCondition(
+                              ImmutableList.of(
+                                  new OneOfCondition()
+                                      .setAndCondition(
+                                          new AndCondition(
+                                              ImmutableList.of(
+                                                  new OneOfCondition()
+                                                      .setPercent(
+                                                          new PercentCondition(
+                                                              new MicroPercentRange(
+                                                                  12000000, 100000000),
+                                                              PercentConditionOperator.BETWEEN,
+                                                              "3maarirs9xzs"))))))))),
           new ServerCondition("chained_conditions", null)
               .setServerCondition(
                   new OneOfCondition()
@@ -149,22 +166,29 @@ public class FirebaseRemoteConfigClientImplTest {
                                           new AndCondition(
                                               ImmutableList.of(
                                                   new OneOfCondition()
-                                                    .setCustomSignal(
-                                                      new CustomSignalCondition(
-                                                          "users",
-                                                        CustomSignalOperator
-                                                            .NUMERIC_LESS_THAN,
-                                                      new ArrayList<>(
-                                                        ImmutableList.of("100")))),
+                                                      .setCustomSignal(
+                                                        new CustomSignalCondition(
+                                                            "users",
+                                                          CustomSignalOperator
+                                                              .NUMERIC_LESS_THAN,
+                                                          new ArrayList<>(
+                                                            ImmutableList.of("100")))),
                                                   new OneOfCondition()
-                                                    .setCustomSignal(
-                                                      new CustomSignalCondition(
-                                                        "premium users",
-                                                        CustomSignalOperator
-                                                            .NUMERIC_GREATER_THAN,
-                                                        new ArrayList<>(
-                                                            ImmutableList.of("20"))))
-                                                ))))))));
+                                                      .setCustomSignal(
+                                                        new CustomSignalCondition(
+                                                          "premium users",
+                                                          CustomSignalOperator
+                                                              .NUMERIC_GREATER_THAN,
+                                                          new ArrayList<>(
+                                                              ImmutableList.of("20")))),
+                                                  new OneOfCondition()
+                                                    .setPercent(
+                                                      new PercentCondition(
+                                                          new MicroPercentRange(
+                                                              25000000, 100000000),
+                                                          PercentConditionOperator.BETWEEN,
+                                                          "cla24qoibb61"))
+                                                              ))))))));
 
   private static final Version EXPECTED_VERSION =
       new Version(
