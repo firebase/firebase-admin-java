@@ -23,6 +23,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +42,7 @@ import org.slf4j.LoggerFactory;
 final class ConditionEvaluator {
   private static final int MAX_CONDITION_RECURSION_DEPTH = 10;
   private static final Logger logger = LoggerFactory.getLogger(ConditionEvaluator.class);
+  private static final BigInteger MICRO_PERCENT_MODULO = BigInteger.valueOf(100_000_000L);
 
   /**
    * Evaluates server conditions and assigns a boolean value to each condition.
@@ -83,6 +88,8 @@ final class ConditionEvaluator {
       return false;
     } else if (condition.getCustomSignal() != null) {
       return evaluateCustomSignalCondition(condition.getCustomSignal(), context);
+    } else if (condition.getPercent() != null) {
+      return evaluatePercentCondition(condition.getPercent(), context);
     }
     logger.atWarn().log("Received invalid condition for evaluation.");
     return false;
@@ -176,6 +183,66 @@ final class ConditionEvaluator {
             (result) -> result != 0);
       default:
         return false;
+    }
+  }
+
+  private boolean evaluatePercentCondition(PercentCondition condition,
+      KeysAndValues context) {
+    if (!context.containsKey("randomizationId")) {
+      logger.warn("Percentage operation must not be performed without randomizationId");
+      return false;
+    }
+
+    PercentConditionOperator operator = condition.getPercentConditionOperator();
+
+    // The micro-percent interval to be used with the BETWEEN operator.
+    MicroPercentRange microPercentRange = condition.getMicroPercentRange();
+    int microPercentUpperBound = microPercentRange != null
+        ? microPercentRange.getMicroPercentUpperBound()
+        : 0;
+    int microPercentLowerBound = microPercentRange != null
+        ? microPercentRange.getMicroPercentLowerBound()
+        : 0;
+    // The limit of percentiles to target in micro-percents when using the
+    // LESS_OR_EQUAL and GREATER_THAN operators. The value must be in the range [0
+    // and 100000000].
+    int microPercent = condition.getMicroPercent();
+    BigInteger microPercentile = getMicroPercentile(condition.getSeed(),
+        context.get("randomizationId"));
+    switch (operator) {
+      case LESS_OR_EQUAL:
+        return microPercentile.compareTo(BigInteger.valueOf(microPercent)) <= 0;
+      case GREATER_THAN:
+        return microPercentile.compareTo(BigInteger.valueOf(microPercent)) > 0;
+      case BETWEEN:
+        return microPercentile.compareTo(BigInteger.valueOf(microPercentLowerBound)) > 0
+            && microPercentile.compareTo(BigInteger.valueOf(microPercentUpperBound)) <= 0;
+      case UNSPECIFIED:
+      default:
+        return false;
+    }
+  }
+
+  private BigInteger getMicroPercentile(String seed, String randomizationId) {
+    String seedPrefix = seed != null && !seed.isEmpty() ? seed + "." : "";
+    String stringToHash = seedPrefix + randomizationId;
+    BigInteger hash = hashSeededRandomizationId(stringToHash);
+    BigInteger microPercentile = hash.mod(MICRO_PERCENT_MODULO);
+
+    return microPercentile;
+  }
+
+  private BigInteger hashSeededRandomizationId(String seededRandomizationId) {
+    try {
+      // Create a SHA-256 hash.
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] hashBytes = digest.digest(seededRandomizationId.getBytes(StandardCharsets.UTF_8));
+
+      // Convert the hash bytes to a BigInteger
+      return new BigInteger(1, hashBytes);
+    } catch (NoSuchAlgorithmException e) {
+      logger.error("SHA-256 algorithm not found", e);
+      throw new RuntimeException("SHA-256 algorithm not found", e);
     }
   }
 
