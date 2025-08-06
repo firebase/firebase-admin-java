@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 final class ConditionEvaluator {
   private static final int MAX_CONDITION_RECURSION_DEPTH = 10;
   private static final Logger logger = LoggerFactory.getLogger(ConditionEvaluator.class);
+  private static final BigInteger MICRO_PERCENT_MODULO = BigInteger.valueOf(100_000_000L);
 
   /**
    * Evaluates server conditions and assigns a boolean value to each condition.
@@ -226,8 +227,7 @@ final class ConditionEvaluator {
     String seedPrefix = seed != null && !seed.isEmpty() ? seed + "." : "";
     String stringToHash = seedPrefix + randomizationId;
     BigInteger hash = hashSeededRandomizationId(stringToHash);
-    BigInteger modValue = new BigInteger(Integer.toString(100 * 1_000_000));
-    BigInteger microPercentile = hash.mod(modValue);
+    BigInteger microPercentile = hash.mod(MICRO_PERCENT_MODULO);
 
     return microPercentile;
   }
@@ -238,19 +238,8 @@ final class ConditionEvaluator {
       MessageDigest digest = MessageDigest.getInstance("SHA-256");
       byte[] hashBytes = digest.digest(seededRandomizationId.getBytes(StandardCharsets.UTF_8));
 
-      // Convert the hash bytes to a hexadecimal string.
-      StringBuilder hexString = new StringBuilder();
-      for (byte b : hashBytes) {
-        String hex = Integer.toHexString(0xff & b);
-        if (hex.length() == 1) {
-          hexString.append('0');
-        }
-        hexString.append(hex);
-      }
-
-      // Convert the hexadecimal string to a BigInteger
-      return new BigInteger(hexString.toString(), 16);
-
+      // Convert the hash bytes to a BigInteger
+      return new BigInteger(1, hashBytes);
     } catch (NoSuchAlgorithmException e) {
       logger.error("SHA-256 algorithm not found", e);
       throw new RuntimeException("SHA-256 algorithm not found", e);

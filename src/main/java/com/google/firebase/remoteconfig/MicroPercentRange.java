@@ -16,7 +16,6 @@
 
 package com.google.firebase.remoteconfig;
 
-import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.MicroPercentRangeResponse;
 
@@ -30,12 +29,10 @@ class MicroPercentRange {
     this.microPercentUpperBound = microPercentUpperBound != null ? microPercentUpperBound : 0;
   }
 
-  @NonNull
   int getMicroPercentLowerBound() {
     return microPercentLowerBound;
   }
 
-  @NonNull
   int getMicroPercentUpperBound() {
     return microPercentUpperBound;
   }
