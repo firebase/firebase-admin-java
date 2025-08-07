@@ -20,6 +20,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
+import com.google.firebase.internal.Nullable;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -78,10 +79,11 @@ public final class ServerTemplateImpl implements ServerTemplate {
   }
 
   @Override
-  public ServerConfig evaluate(KeysAndValues context) throws FirebaseRemoteConfigException {
+  public ServerConfig evaluate(@Nullable KeysAndValues context) 
+      throws FirebaseRemoteConfigException {
     if (this.cache == null) {
       throw new FirebaseRemoteConfigException(ErrorCode.FAILED_PRECONDITION,
-          "No Remote Config Server template in cache. Call load() before calling evaluate().");
+        "No Remote Config Server template in cache. Call load() before calling evaluate().");
     }
 
     Map<String, Value> configValues = new HashMap<>();
@@ -93,8 +95,11 @@ public final class ServerTemplateImpl implements ServerTemplate {
     }
 
     ConditionEvaluator conditionEvaluator = new ConditionEvaluator();
-    ImmutableMap<String, Boolean> evaluatedCondition = ImmutableMap.copyOf(
-        conditionEvaluator.evaluateConditions(cache.getServerConditions(), context));
+    ImmutableMap<String, Boolean> evaluatedCondition = 
+        context != null && !cache.getServerConditions().isEmpty()
+        ? ImmutableMap.copyOf(
+          conditionEvaluator.evaluateConditions(cache.getServerConditions(), context))
+        : ImmutableMap.of();
     ImmutableMap<String, Parameter> parameters = ImmutableMap.copyOf(cache.getParameters());
     mergeDerivedConfigValues(evaluatedCondition, parameters, configValues);
 
@@ -103,8 +108,7 @@ public final class ServerTemplateImpl implements ServerTemplate {
 
   @Override
   public ServerConfig evaluate() throws FirebaseRemoteConfigException {
-    KeysAndValues context = new KeysAndValues.Builder().build();
-    return evaluate(context);
+    return evaluate(null);
   }
 
   @Override
