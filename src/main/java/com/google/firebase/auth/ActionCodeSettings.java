@@ -86,7 +86,6 @@ public final class ActionCodeSettings {
 
     private String url;
     private boolean handleCodeInApp;
-    // Deprecated, use linkDomain instead.
     private String dynamicLinkDomain;
     private String linkDomain;
     private String iosBundleId;
@@ -142,6 +141,7 @@ public final class ActionCodeSettings {
      * @return This builder.
      * @deprecated Use {@link #setLinkDomain(String)} instead.
      */
+    @Deprecated
     public Builder setDynamicLinkDomain(String dynamicLinkDomain) {
       this.dynamicLinkDomain = dynamicLinkDomain;
       return this;
