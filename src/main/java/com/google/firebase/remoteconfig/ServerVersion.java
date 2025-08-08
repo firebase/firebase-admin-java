@@ -193,8 +193,8 @@ public final class ServerVersion {
       return false;
     }
     ServerVersion serverVersion = (ServerVersion) o;
-    return updateTime == serverVersion.updateTime
-            && legacy == serverVersion.legacy
+    return legacy == serverVersion.legacy
+            && Objects.equals(updateTime, serverVersion.updateTime)
             && Objects.equals(versionNumber, serverVersion.versionNumber)
             && Objects.equals(updateOrigin, serverVersion.updateOrigin)
             && Objects.equals(updateType, serverVersion.updateType)
