@@ -1446,7 +1446,7 @@ public class FirebaseRemoteConfigClientImplTest {
     assertEquals(
         convertObjectToString(EXPECTED_SERVER_CONDITIONS),
         convertObjectToString(serverTemplateData.getServerConditions()));
-    assertEquals(1605423446000L, serverTemplateData.getVersion().getUpdateTime());
+    assertEquals("2020-11-15T06:57:26.342763941Z", serverTemplateData.getVersion().getUpdateTime());
     checkGetRequestHeaderForServer(interceptor.getLastRequest());
   }
 
@@ -1473,7 +1473,7 @@ public class FirebaseRemoteConfigClientImplTest {
 
       assertEquals(TEST_ETAG, serverTemplateData.getETag());
       assertEquals("17", serverTemplateData.getVersion().getVersionNumber());
-      assertEquals(1605423446000L, serverTemplateData.getVersion().getUpdateTime());
+      assertEquals(timestamp, serverTemplateData.getVersion().getUpdateTime());
       checkGetRequestHeaderForServer(interceptor.getLastRequest());
     }
   }

@@ -40,7 +40,7 @@ final class ServerTemplateData {
   private Map<String, Parameter> parameters;
   private List<ServerCondition> serverConditions;
   private Map<String, ParameterGroup> parameterGroups;
-  private Version version;
+  private ServerVersion serverVersion;
 
 
   ServerTemplateData(String etag) {
@@ -78,7 +78,7 @@ final class ServerTemplateData {
       }
     }
     if (serverTemplateResponse.getVersion() != null) {
-      this.version = new Version(serverTemplateResponse.getVersion());
+      this.serverVersion = new ServerVersion(serverTemplateResponse.getVersion());
     }
     this.etag = serverTemplateResponse.getEtag();
   }
@@ -120,8 +120,8 @@ final class ServerTemplateData {
     return parameterGroups;
   }
 
-  Version getVersion() {
-    return version;
+  ServerVersion getVersion() {
+    return serverVersion;
   }
 
   ServerTemplateData setParameters(@NonNull Map<String, Parameter> parameters) {
@@ -144,8 +144,8 @@ final class ServerTemplateData {
     return this;
   }
 
-  ServerTemplateData setVersion(Version version) {
-    this.version = version;
+  ServerTemplateData setVersion(ServerVersion serverVersion) {
+    this.serverVersion = serverVersion;
     return this;
   }
 
@@ -178,7 +178,7 @@ final class ServerTemplateData {
       parameterGroupResponse.put(entry.getKey(), entry.getValue().toParameterGroupResponse());
     }
     TemplateResponse.VersionResponse versionResponse =
-        (this.version == null) ? null : this.version.toVersionResponse(includeAll);
+        (this.serverVersion == null) ? null : this.serverVersion.toVersionResponse(includeAll);
     ServerTemplateResponse serverTemplateResponse =
         new ServerTemplateResponse()
             .setParameters(parameterResponses)
@@ -204,12 +204,12 @@ final class ServerTemplateData {
         && Objects.equals(parameters, template.parameters)
         && Objects.equals(serverConditions, template.serverConditions)
         && Objects.equals(parameterGroups, template.parameterGroups)
-        && Objects.equals(version, template.version);
+        && Objects.equals(serverVersion, template.serverVersion);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(etag, parameters, serverConditions, parameterGroups, version);
+    return Objects.hash(etag, parameters, serverConditions, parameterGroups, serverVersion);
   }
 }
 
