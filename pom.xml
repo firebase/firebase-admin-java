@@ -59,7 +59,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <skipUTs>${skipTests}</skipUTs>
-        <netty.version>4.2.2.Final</netty.version>
+        <netty.version>4.2.3.Final</netty.version>
     </properties>
 
     <scm>
@@ -385,7 +385,7 @@
             <dependency>
                 <groupId>com.google.cloud</groupId>
                 <artifactId>libraries-bom</artifactId>
-                <version>26.63.0</version>
+                <version>26.65.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
