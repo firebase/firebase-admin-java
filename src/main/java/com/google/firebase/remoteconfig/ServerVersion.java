@@ -138,8 +138,9 @@ public final class ServerVersion {
   /**
    * Gets the rollback source of the template.
    *
-   * <p>The serverVersion number of the Remote Config template that has become the current serverVersion
-   * due to a rollback. Only present if this serverVersion is the result of a rollback.
+   * <p>The serverVersion number of the Remote Config template that has become the current
+   * serverVersion due to a rollback. Only present if this serverVersion is the result of a
+   * rollback.
    *
    * @return The rollback source of the template or null.
    */

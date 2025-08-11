@@ -69,7 +69,8 @@ public class ServerVersionTest {
 
     final ServerVersion versionThree = ServerVersion.withDescription("abcd");
     final ServerVersion versionFour = ServerVersion.withDescription("abcd");
-    final ServerVersion versionFive = new ServerVersion(new VersionResponse()).setDescription("abcd");
+    final ServerVersion versionFive = new ServerVersion(new VersionResponse())
+            .setDescription("abcd");
 
     assertEquals(versionThree, versionFour);
     assertEquals(versionThree, versionFive);
