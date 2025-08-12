@@ -64,6 +64,21 @@ public class ServerTemplateImplTest {
   }
 
   @Test
+  public void testEvaluateWithoutContextReturnsDefaultValue()
+      throws FirebaseRemoteConfigException {
+    KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
+
+    ServerConfig evaluatedConfig = template.evaluate();
+
+    assertEquals("Default value", evaluatedConfig.getString("Custom"));
+  }
+
+  @Test
   public void testEvaluateCustomSignalReturnsDefaultValue() throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().put("users", "100").build();
