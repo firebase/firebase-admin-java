@@ -100,7 +100,7 @@ class Value {
     try {
       return Long.parseLong(value);
     } catch (NumberFormatException e) {
-      logger.warn("Unable to convert %s to long type.", value);
+      logger.warn("Unable to convert {} to long type.", value);
       return DEFAULT_VALUE_FOR_LONG;
     }
   }
@@ -118,7 +118,7 @@ class Value {
     try {
       return Double.parseDouble(this.value);
     } catch (NumberFormatException e) {
-      logger.warn("Unable to convert %s to double type.", value);
+      logger.warn("Unable to convert {} to double type.", value);
       return DEFAULT_VALUE_FOR_DOUBLE;
     }
   }
