@@ -32,7 +32,7 @@ public final class ServerTemplateResponse {
   @Key("parameters")
   private Map<String, ParameterResponse> parameters;
 
-  @Key("conditions")
+  @Key("serverConditions")
   private List<ServerConditionResponse> serverConditions;
 
   @Key("parameterGroups")
@@ -102,7 +102,7 @@ public final class ServerTemplateResponse {
     @Key("name")
     private String name;
 
-    @Key("condition")
+    @Key("serverCondition")
     private OneOfConditionResponse condition;
 
     public String getName() {
@@ -248,7 +248,7 @@ public final class ServerTemplateResponse {
     @Key("microPercentRange")
     private MicroPercentRangeResponse microPercentRange;
 
-    @Key("percentOperator")
+    @Key("percentConditionOperator")
     private String percentOperator;
 
     @Key("seed")
