@@ -1432,7 +1432,7 @@ public class FirebaseRemoteConfigClientImplTest {
   }
 
   // Get server template tests
-
+  
   @Test
   public void testGetServerTemplate() throws Exception {
     response.addHeader("etag", TEST_ETAG);
