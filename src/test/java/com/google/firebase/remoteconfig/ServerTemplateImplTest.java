@@ -26,6 +26,8 @@ import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.testing.TestUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 
 /**
 * Tests for {@link ServerTemplateImpl}.
@@ -37,13 +39,6 @@ public class ServerTemplateImplTest {
           .setCredentials(new MockGoogleCredentials("test-token"))
           .setProjectId("test-project")
           .build();
-  private static final String TEST_SERVER_TEMPLATE =
-        "{\n"
-            + "  \"etag\": \"etag-123456789012-1\",\n"
-            + "  \"parameters\": {},\n"
-            + "  \"serverConditions\": [],\n"
-            + "  \"parameterGroups\": {}\n"
-            + "}";
 
   private static String cacheTemplate;
 
@@ -354,27 +349,66 @@ public class ServerTemplateImplTest {
     return new FirebaseRemoteConfig(app, client);
   }
 
-  @Test
-  public void testLoad() throws Exception {
+@Test
+public void testLoad() throws Exception {
+    // 1. Define the template data that the mock client will return.
+    // This is the EXPECTED state after `load()` is called.
+    final String expectedTemplateJsonAfterLoad = new ServerTemplateData().setETag(TEST_ETAG).toJSON();
+
+    // 2. Mock the HTTP client to return the predefined response.
+    MockRemoteConfigClient client =
+        MockRemoteConfigClient.fromServerTemplate(expectedTemplateJsonAfterLoad);
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
+
+    // 3. Build the template instance.
+    // It's initialized with a complex `cacheTemplate` to ensure `load()` properly overwrites it.
     KeysAndValues defaultConfig =
         new KeysAndValues.Builder().put("Unset default config", "abc").build();
-
-    // Mock the HTTP client to return a predefined response
-    MockRemoteConfigClient client =
-        MockRemoteConfigClient.fromServerTemplate(
-            new ServerTemplateData().setETag(TEST_ETAG).toJSON());
-    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
-    ServerTemplate template1 =
+    ServerTemplate template =
         remoteConfig
             .serverTemplateBuilder()
             .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate) // This is the initial state before `load()`
+            .build();
+
+    // 4. Call the load method, which fetches the new template from the mock client.
+    ApiFuture<Void> loadFuture = template.load();
+    loadFuture.get(); // Wait for the async operation to complete.
+
+    // 5. Get the ACTUAL state of the template after `load()` has executed.
+    String actualJsonAfterLoad = template.toJson();
+
+    // 6. Assert that the template's state has been updated to match what the mock client returned.
+    // Parsing to JsonElement performs a deep, order-insensitive comparison.
+    JsonElement expectedJson = JsonParser.parseString(expectedTemplateJsonAfterLoad);
+    JsonElement actualJson = JsonParser.parseString(actualJsonAfterLoad);
+
+    assertEquals(expectedJson, actualJson);
+}
+
+@Test
+public void testBuilderParsesCachedTemplateCorrectly() throws FirebaseRemoteConfigException {
+    // Arrange: 
+    // 1. Create a canonical JSON string by parsing the input file and then
+    // re-serializing it. This gives us the precise expected output format,
+    // accounting for any formatting or default value differences.
+    ServerTemplateData canonicalData = ServerTemplateData.fromJSON(cacheTemplate);
+    String expectedJsonString = canonicalData.toJSON();
+
+    // Act: 
+    // 2. Build a ServerTemplate instance from the original cached JSON string,
+    // which triggers the parsing logic we want to test.
+    ServerTemplate template = new ServerTemplateImpl.Builder(null)
             .cachedTemplate(cacheTemplate)
             .build();
 
-    // Call the load method
-    ApiFuture<Void> loadFuture = template1.load();
-    loadFuture.get();
-    String cachedTemplate = template1.toJson();
-    assertEquals(TEST_SERVER_TEMPLATE, cachedTemplate);
-  }
+    // Assert: 
+    // 3. Compare the JSON from the newly built template against the canonical version.
+    // This verifies that the internal state was parsed and stored correctly.
+    // Using JsonElement ensures the comparison is not affected by key order.
+    JsonElement expectedJsonTree = JsonParser.parseString(expectedJsonString);
+    JsonElement actualJsonTree = JsonParser.parseString(template.toJson());
+
+    assertEquals(expectedJsonTree, actualJsonTree);
+}
 }

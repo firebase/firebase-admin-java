@@ -22,8 +22,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.internal.Nullable;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -130,8 +128,7 @@ public final class ServerTemplateImpl implements ServerTemplate {
 
   @Override
   public String toJson() {
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    return gson.toJson(this.cache);
+    return this.cache.toJSON();
   }
 
   private void mergeDerivedConfigValues(ImmutableMap<String, Boolean> evaluatedCondition,

@@ -28,6 +28,8 @@ import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import java.util.concurrent.ExecutionException;
 import org.junit.After;
 import org.junit.Test;
@@ -42,13 +44,6 @@ public class FirebaseRemoteConfigTest {
           .setCredentials(new MockGoogleCredentials("test-token"))
           .setProjectId("test-project")
           .build();
-  private static final String TEST_SERVER_TEMPLATE =
-      "{\n"
-          + "  \"etag\": \"etag-123456789012-1\",\n"
-          + "  \"parameters\": {},\n"
-          + "  \"serverConditions\": [],\n"
-          + "  \"parameterGroups\": {}\n"
-          + "}";
   private static final FirebaseRemoteConfigException TEST_EXCEPTION =
       new FirebaseRemoteConfigException(ErrorCode.INTERNAL, "Test error message");
 
@@ -629,14 +624,16 @@ public class FirebaseRemoteConfigTest {
 
   @Test
   public void testGetServerTemplate() throws FirebaseRemoteConfigException {
-    MockRemoteConfigClient client =
-        MockRemoteConfigClient.fromServerTemplate(
-            new ServerTemplateData().setETag(TEST_ETAG).toJSON());
+    MockRemoteConfigClient client = MockRemoteConfigClient.fromServerTemplate(
+        new ServerTemplateData().setETag(TEST_ETAG).toJSON());
     FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
 
     ServerTemplate template = remoteConfig.getServerTemplate();
     String templateData = template.toJson();
-    assertEquals(TEST_SERVER_TEMPLATE, templateData);
+    JsonElement expectedJson = JsonParser.parseString(new ServerTemplateData().setETag(TEST_ETAG).toJSON());
+    JsonElement actualJson = JsonParser.parseString(templateData);
+
+    assertEquals(expectedJson, actualJson);
   }
 
   @Test
@@ -653,14 +650,16 @@ public class FirebaseRemoteConfigTest {
 
   @Test
   public void testGetServerTemplateAsync() throws Exception {
-    MockRemoteConfigClient client =
-        MockRemoteConfigClient.fromServerTemplate(
-            new ServerTemplateData().setETag(TEST_ETAG).toJSON());
+    MockRemoteConfigClient client = MockRemoteConfigClient.fromServerTemplate(
+        new ServerTemplateData().setETag(TEST_ETAG).toJSON());
     FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
 
     ServerTemplate template = remoteConfig.getServerTemplateAsync().get();
     String templateData = template.toJson();
-    assertEquals(TEST_SERVER_TEMPLATE, templateData);
+    JsonElement expectedJson = JsonParser.parseString(new ServerTemplateData().setETag(TEST_ETAG).toJSON());
+    JsonElement actualJson = JsonParser.parseString(templateData);
+
+    assertEquals(expectedJson, actualJson);
   }
 
   @Test
