@@ -24,20 +24,19 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.testing.TestUtils;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
-/**
- * Tests for {@link ServerTemplateImpl}.
- */
+/** Tests for {@link ServerTemplateImpl}. */
 public class ServerTemplateImplTest {
 
-  private static final FirebaseOptions TEST_OPTIONS = FirebaseOptions.builder()
-      .setCredentials(new MockGoogleCredentials("test-token"))
-      .setProjectId("test-project")
-      .build();
+  private static final FirebaseOptions TEST_OPTIONS =
+      FirebaseOptions.builder()
+          .setCredentials(new MockGoogleCredentials("test-token"))
+          .setProjectId("test-project")
+          .build();
 
   private static String cacheTemplate;
 
@@ -51,20 +50,22 @@ public class ServerTemplateImplTest {
       throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
 
-    IllegalArgumentException error = assertThrows(IllegalArgumentException.class,
-        () -> new ServerTemplateImpl.Builder(null).defaultConfig(defaultConfig).build());
+    IllegalArgumentException error =
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> new ServerTemplateImpl.Builder(null).defaultConfig(defaultConfig).build());
 
     assertEquals("JSON String must not be null or empty.", error.getMessage());
   }
 
   @Test
-  public void testEvaluateWithoutContextReturnsDefaultValue()
-      throws FirebaseRemoteConfigException {
+  public void testEvaluateWithoutContextReturnsDefaultValue() throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate();
 
@@ -75,10 +76,11 @@ public class ServerTemplateImplTest {
   public void testEvaluateCustomSignalReturnsDefaultValue() throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().put("users", "100").build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -90,10 +92,11 @@ public class ServerTemplateImplTest {
       throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().put("users", "99").build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -105,10 +108,11 @@ public class ServerTemplateImplTest {
       throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -120,10 +124,11 @@ public class ServerTemplateImplTest {
       throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().put("users", "abc").build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -135,10 +140,11 @@ public class ServerTemplateImplTest {
       throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -149,10 +155,11 @@ public class ServerTemplateImplTest {
   public void testEvaluatePercentReturnsConditionalValue() throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().put("randomizationId", "user").build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -164,10 +171,11 @@ public class ServerTemplateImplTest {
       throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -180,26 +188,29 @@ public class ServerTemplateImplTest {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().build();
     String invalidJsonString = "abc";
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(invalidJsonString)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(invalidJsonString)
+            .build();
 
-    FirebaseRemoteConfigException error = assertThrows(FirebaseRemoteConfigException.class,
-        () -> template.evaluate(context));
+    FirebaseRemoteConfigException error =
+        assertThrows(FirebaseRemoteConfigException.class, () -> template.evaluate(context));
 
-    assertEquals("No Remote Config Server template in cache. Call load() before "
-        + "calling evaluate().", error.getMessage());
+    assertEquals(
+        "No Remote Config Server template in cache. Call load() before " + "calling evaluate().",
+        error.getMessage());
   }
 
   @Test
   public void testEvaluateWithInAppDefaultReturnsEmptyString() throws Exception {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -210,10 +221,11 @@ public class ServerTemplateImplTest {
   public void testEvaluateWithDerivedInAppDefaultReturnsDefaultValue() throws Exception {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -224,10 +236,11 @@ public class ServerTemplateImplTest {
   public void testEvaluateWithMultipleConditionReturnsConditionalValue() throws Exception {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().put("users", "99").build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -237,14 +250,17 @@ public class ServerTemplateImplTest {
   @Test
   public void testEvaluateWithChainedAndConditionReturnsDefaultValue() throws Exception {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
-    KeysAndValues context = new KeysAndValues.Builder().put("users", "100")
-        .put("premium users", 20)
-        .put("randomizationId", "user")
-        .build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    KeysAndValues context =
+        new KeysAndValues.Builder()
+            .put("users", "100")
+            .put("premium users", 20)
+            .put("randomizationId", "user")
+            .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -254,11 +270,13 @@ public class ServerTemplateImplTest {
   @Test
   public void testEvaluateWithChainedAndConditionReturnsConditionalValue() throws Exception {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
-    KeysAndValues context = new KeysAndValues.Builder().put("users", "99").put("premium users", "30").build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    KeysAndValues context =
+        new KeysAndValues.Builder().put("users", "99").put("premium users", "30").build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -269,10 +287,11 @@ public class ServerTemplateImplTest {
   public void testGetEvaluateConfigOnInvalidTypeReturnsDefaultValue() throws Exception {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().put("randomizationId", "user").build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -283,10 +302,11 @@ public class ServerTemplateImplTest {
   public void testGetEvaluateConfigInvalidKeyReturnsStaticValueSource() throws Exception {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     KeysAndValues context = new KeysAndValues.Builder().build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -297,10 +317,11 @@ public class ServerTemplateImplTest {
   public void testGetEvaluateConfigInAppDefaultConfigReturnsDefaultValueSource() throws Exception {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().put("In-app default", "abc").build();
     KeysAndValues context = new KeysAndValues.Builder().build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -309,12 +330,14 @@ public class ServerTemplateImplTest {
 
   @Test
   public void testGetEvaluateConfigUnsetDefaultConfigReturnsDefaultValueSource() throws Exception {
-    KeysAndValues defaultConfig = new KeysAndValues.Builder().put("Unset default config", "abc").build();
+    KeysAndValues defaultConfig =
+        new KeysAndValues.Builder().put("Unset default config", "abc").build();
     KeysAndValues context = new KeysAndValues.Builder().build();
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null)
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate)
+            .build();
 
     ServerConfig evaluatedConfig = template.evaluate(context);
 
@@ -332,21 +355,25 @@ public class ServerTemplateImplTest {
   public void testLoad() throws Exception {
     // 1. Define the template data that the mock client will return.
     // This is the EXPECTED state after `load()` is called.
-    final String expectedTemplateJsonAfterLoad = new ServerTemplateData().setETag(TEST_ETAG).toJSON();
+    final String expectedTemplateJsonAfterLoad =
+        new ServerTemplateData().setETag(TEST_ETAG).toJSON();
 
     // 2. Mock the HTTP client to return the predefined response.
-    MockRemoteConfigClient client = MockRemoteConfigClient.fromServerTemplate(expectedTemplateJsonAfterLoad);
+    MockRemoteConfigClient client =
+        MockRemoteConfigClient.fromServerTemplate(expectedTemplateJsonAfterLoad);
     FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
 
     // 3. Build the template instance.
     // It's initialized with a complex `cacheTemplate` to ensure `load()` properly
     // overwrites it.
-    KeysAndValues defaultConfig = new KeysAndValues.Builder().put("Unset default config", "abc").build();
-    ServerTemplate template = remoteConfig
-        .serverTemplateBuilder()
-        .defaultConfig(defaultConfig)
-        .cachedTemplate(cacheTemplate) // This is the initial state before `load()`
-        .build();
+    KeysAndValues defaultConfig =
+        new KeysAndValues.Builder().put("Unset default config", "abc").build();
+    ServerTemplate template =
+        remoteConfig
+            .serverTemplateBuilder()
+            .defaultConfig(defaultConfig)
+            .cachedTemplate(cacheTemplate) // This is the initial state before `load()`
+            .build();
 
     // 4. Call the load method, which fetches the new template from the mock client.
     ApiFuture<Void> loadFuture = template.load();
@@ -376,9 +403,8 @@ public class ServerTemplateImplTest {
     // Act:
     // 2. Build a ServerTemplate instance from the original cached JSON string,
     // which triggers the parsing logic we want to test.
-    ServerTemplate template = new ServerTemplateImpl.Builder(null)
-        .cachedTemplate(cacheTemplate)
-        .build();
+    ServerTemplate template =
+        new ServerTemplateImpl.Builder(null).cachedTemplate(cacheTemplate).build();
 
     // Assert:
     // 3. Compare the JSON from the newly built template against the canonical

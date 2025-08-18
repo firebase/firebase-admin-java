@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
-
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -36,7 +35,6 @@ import java.util.function.IntPredicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,34 +45,36 @@ final class ConditionEvaluator {
 
   /**
    * Evaluates server conditions and assigns a boolean value to each condition.
-   * 
+   *
    * @param conditions List of conditions which are to be evaluated.
-   * @param context    A map with additional metadata used during evaluation.
+   * @param context A map with additional metadata used during evaluation.
    * @return A map of condition to evaluated value.
    */
   @NonNull
   Map<String, Boolean> evaluateConditions(
-      @NonNull List<ServerCondition> conditions,
-      @Nullable KeysAndValues context) {
+      @NonNull List<ServerCondition> conditions, @Nullable KeysAndValues context) {
     checkNotNull(conditions, "List of conditions must not be null.");
     checkArgument(!conditions.isEmpty(), "List of conditions must not be empty.");
     if (context == null || conditions.isEmpty()) {
       return ImmutableMap.of();
     }
-    KeysAndValues evaluationContext = context != null
-        ? context
-        : new KeysAndValues.Builder().build();
+    KeysAndValues evaluationContext =
+        context != null ? context : new KeysAndValues.Builder().build();
 
-    Map<String, Boolean> evaluatedConditions = conditions.stream()
-        .collect(ImmutableMap.toImmutableMap(
-            ServerCondition::getName,
-            condition -> evaluateCondition(condition.getCondition(), evaluationContext, /* nestingLevel= */0)));
+    Map<String, Boolean> evaluatedConditions =
+        conditions.stream()
+            .collect(
+                ImmutableMap.toImmutableMap(
+                    ServerCondition::getName,
+                    condition ->
+                        evaluateCondition(
+                            condition.getCondition(), evaluationContext, /* nestingLevel= */ 0)));
 
     return evaluatedConditions;
   }
 
-  private boolean evaluateCondition(OneOfCondition condition, KeysAndValues context,
-      int nestingLevel) {
+  private boolean evaluateCondition(
+      OneOfCondition condition, KeysAndValues context, int nestingLevel) {
     if (nestingLevel > MAX_CONDITION_RECURSION_DEPTH) {
       logger.warn("Maximum condition recursion depth exceeded.");
       return false;
@@ -97,29 +97,30 @@ final class ConditionEvaluator {
     return false;
   }
 
-  private boolean evaluateOrCondition(OrCondition condition, KeysAndValues context,
-      int nestingLevel) {
+  private boolean evaluateOrCondition(
+      OrCondition condition, KeysAndValues context, int nestingLevel) {
     return condition.getConditions().stream()
         .anyMatch(subCondition -> evaluateCondition(subCondition, context, nestingLevel + 1));
   }
 
-  private boolean evaluateAndCondition(AndCondition condition, KeysAndValues context,
-      int nestingLevel) {
+  private boolean evaluateAndCondition(
+      AndCondition condition, KeysAndValues context, int nestingLevel) {
     return condition.getConditions().stream()
         .allMatch(subCondition -> evaluateCondition(subCondition, context, nestingLevel + 1));
   }
 
-  private boolean evaluateCustomSignalCondition(CustomSignalCondition condition,
-      KeysAndValues context) {
+  private boolean evaluateCustomSignalCondition(
+      CustomSignalCondition condition, KeysAndValues context) {
     CustomSignalOperator customSignalOperator = condition.getCustomSignalOperator();
     String customSignalKey = condition.getCustomSignalKey();
-    ImmutableList<String> targetCustomSignalValues = ImmutableList.copyOf(
-        condition.getTargetCustomSignalValues());
+    ImmutableList<String> targetCustomSignalValues =
+        ImmutableList.copyOf(condition.getTargetCustomSignalValues());
 
     if (targetCustomSignalValues.isEmpty()) {
-      logger.warn(String.format(
-          "Values must be assigned to all custom signal fields. Operator:%s, Key:%s, Values:%s",
-          customSignalOperator, customSignalKey, targetCustomSignalValues));
+      logger.warn(
+          String.format(
+              "Values must be assigned to all custom signal fields. Operator:%s, Key:%s, Values:%s",
+              customSignalOperator, customSignalKey, targetCustomSignalValues));
       return false;
     }
 
@@ -131,64 +132,65 @@ final class ConditionEvaluator {
     switch (customSignalOperator) {
       // String operations.
       case STRING_CONTAINS:
-        return compareStrings(targetCustomSignalValues, customSignalValue,
+        return compareStrings(
+            targetCustomSignalValues,
+            customSignalValue,
             (customSignal, targetSignal) -> customSignal.contains(targetSignal));
       case STRING_DOES_NOT_CONTAIN:
-        return !compareStrings(targetCustomSignalValues, customSignalValue,
+        return !compareStrings(
+            targetCustomSignalValues,
+            customSignalValue,
             (customSignal, targetSignal) -> customSignal.contains(targetSignal));
       case STRING_EXACTLY_MATCHES:
-        return compareStrings(targetCustomSignalValues, customSignalValue,
+        return compareStrings(
+            targetCustomSignalValues,
+            customSignalValue,
             (customSignal, targetSignal) -> customSignal.equals(targetSignal));
       case STRING_CONTAINS_REGEX:
-        return compareStrings(targetCustomSignalValues, customSignalValue,
+        return compareStrings(
+            targetCustomSignalValues,
+            customSignalValue,
             (customSignal, targetSignal) -> compareStringRegex(customSignal, targetSignal));
 
       // Numeric operations.
       case NUMERIC_LESS_THAN:
-        return compareNumbers(targetCustomSignalValues, customSignalValue,
-            (result) -> result < 0);
+        return compareNumbers(targetCustomSignalValues, customSignalValue, (result) -> result < 0);
       case NUMERIC_LESS_EQUAL:
-        return compareNumbers(targetCustomSignalValues, customSignalValue,
-            (result) -> result <= 0);
+        return compareNumbers(targetCustomSignalValues, customSignalValue, (result) -> result <= 0);
       case NUMERIC_EQUAL:
-        return compareNumbers(targetCustomSignalValues, customSignalValue,
-            (result) -> result == 0);
+        return compareNumbers(targetCustomSignalValues, customSignalValue, (result) -> result == 0);
       case NUMERIC_NOT_EQUAL:
-        return compareNumbers(targetCustomSignalValues, customSignalValue,
-            (result) -> result != 0);
+        return compareNumbers(targetCustomSignalValues, customSignalValue, (result) -> result != 0);
       case NUMERIC_GREATER_THAN:
-        return compareNumbers(targetCustomSignalValues, customSignalValue,
-            (result) -> result > 0);
+        return compareNumbers(targetCustomSignalValues, customSignalValue, (result) -> result > 0);
       case NUMERIC_GREATER_EQUAL:
-        return compareNumbers(targetCustomSignalValues, customSignalValue,
-            (result) -> result >= 0);
+        return compareNumbers(targetCustomSignalValues, customSignalValue, (result) -> result >= 0);
 
       // Semantic operations.
       case SEMANTIC_VERSION_EQUAL:
-        return compareSemanticVersions(targetCustomSignalValues, customSignalValue,
-            (result) -> result == 0);
+        return compareSemanticVersions(
+            targetCustomSignalValues, customSignalValue, (result) -> result == 0);
       case SEMANTIC_VERSION_GREATER_EQUAL:
-        return compareSemanticVersions(targetCustomSignalValues, customSignalValue,
-            (result) -> result >= 0);
+        return compareSemanticVersions(
+            targetCustomSignalValues, customSignalValue, (result) -> result >= 0);
       case SEMANTIC_VERSION_GREATER_THAN:
-        return compareSemanticVersions(targetCustomSignalValues, customSignalValue,
-            (result) -> result > 0);
+        return compareSemanticVersions(
+            targetCustomSignalValues, customSignalValue, (result) -> result > 0);
       case SEMANTIC_VERSION_LESS_EQUAL:
-        return compareSemanticVersions(targetCustomSignalValues, customSignalValue,
-            (result) -> result <= 0);
+        return compareSemanticVersions(
+            targetCustomSignalValues, customSignalValue, (result) -> result <= 0);
       case SEMANTIC_VERSION_LESS_THAN:
-        return compareSemanticVersions(targetCustomSignalValues, customSignalValue,
-            (result) -> result < 0);
+        return compareSemanticVersions(
+            targetCustomSignalValues, customSignalValue, (result) -> result < 0);
       case SEMANTIC_VERSION_NOT_EQUAL:
-        return compareSemanticVersions(targetCustomSignalValues, customSignalValue,
-            (result) -> result != 0);
+        return compareSemanticVersions(
+            targetCustomSignalValues, customSignalValue, (result) -> result != 0);
       default:
         return false;
     }
   }
 
-  private boolean evaluatePercentCondition(PercentCondition condition,
-      KeysAndValues context) {
+  private boolean evaluatePercentCondition(PercentCondition condition, KeysAndValues context) {
     if (!context.containsKey("randomizationId")) {
       logger.warn("Percentage operation must not be performed without randomizationId");
       return false;
@@ -198,18 +200,16 @@ final class ConditionEvaluator {
 
     // The micro-percent interval to be used with the BETWEEN operator.
     MicroPercentRange microPercentRange = condition.getMicroPercentRange();
-    int microPercentUpperBound = microPercentRange != null
-        ? microPercentRange.getMicroPercentUpperBound()
-        : 0;
-    int microPercentLowerBound = microPercentRange != null
-        ? microPercentRange.getMicroPercentLowerBound()
-        : 0;
+    int microPercentUpperBound =
+        microPercentRange != null ? microPercentRange.getMicroPercentUpperBound() : 0;
+    int microPercentLowerBound =
+        microPercentRange != null ? microPercentRange.getMicroPercentLowerBound() : 0;
     // The limit of percentiles to target in micro-percents when using the
     // LESS_OR_EQUAL and GREATER_THAN operators. The value must be in the range [0
     // and 100000000].
     int microPercent = condition.getMicroPercent();
-    BigInteger microPercentile = getMicroPercentile(condition.getSeed(),
-        context.get("randomizationId"));
+    BigInteger microPercentile =
+        getMicroPercentile(condition.getSeed(), context.get("randomizationId"));
     switch (operator) {
       case LESS_OR_EQUAL:
         return microPercentile.compareTo(BigInteger.valueOf(microPercent)) <= 0;
@@ -247,9 +247,12 @@ final class ConditionEvaluator {
     }
   }
 
-  private boolean compareStrings(ImmutableList<String> targetValues, String customSignal,
+  private boolean compareStrings(
+      ImmutableList<String> targetValues,
+      String customSignal,
       BiPredicate<String, String> compareFunction) {
-    return targetValues.stream().anyMatch(targetValue -> compareFunction.test(customSignal, targetValue));
+    return targetValues.stream()
+        .anyMatch(targetValue -> compareFunction.test(customSignal, targetValue));
   }
 
   private boolean compareStringRegex(String customSignal, String targetSignal) {
@@ -260,12 +263,13 @@ final class ConditionEvaluator {
     }
   }
 
-  private boolean compareNumbers(ImmutableList<String> targetValues, String customSignal,
-      IntPredicate compareFunction) {
+  private boolean compareNumbers(
+      ImmutableList<String> targetValues, String customSignal, IntPredicate compareFunction) {
     if (targetValues.size() != 1) {
-      logger.warn(String.format(
-          "Target values must contain 1 element for numeric operations. Target Value: %s",
-          targetValues));
+      logger.warn(
+          String.format(
+              "Target values must contain 1 element for numeric operations. Target Value: %s",
+              targetValues));
       return false;
     }
 
@@ -275,23 +279,22 @@ final class ConditionEvaluator {
       int comparisonResult = Double.compare(customSignalDouble, targetValue);
       return compareFunction.test(comparisonResult);
     } catch (NumberFormatException e) {
-      logger.warn("Error parsing numeric values: customSignal=%s, targetValue=%s",
+      logger.warn(
+          "Error parsing numeric values: customSignal=%s, targetValue=%s",
           customSignal, targetValues.get(0), e);
       return false;
     }
   }
 
-  private boolean compareSemanticVersions(ImmutableList<String> targetValues,
-      String customSignal,
-      IntPredicate compareFunction) {
+  private boolean compareSemanticVersions(
+      ImmutableList<String> targetValues, String customSignal, IntPredicate compareFunction) {
     if (targetValues.size() != 1) {
       logger.warn(String.format("Target values must contain 1 element for semantic operation."));
       return false;
     }
 
     String targetValueString = targetValues.get(0);
-    if (!validateSemanticVersion(targetValueString)
-        || !validateSemanticVersion(customSignal)) {
+    if (!validateSemanticVersion(targetValueString) || !validateSemanticVersion(customSignal)) {
       return false;
     }
 
@@ -300,7 +303,8 @@ final class ConditionEvaluator {
 
     int maxLength = 5;
     if (targetVersion.size() > maxLength || customSignalVersion.size() > maxLength) {
-      logger.warn("Semantic version max length(%s) exceeded. Target: %s, Custom Signal: %s",
+      logger.warn(
+          "Semantic version max length(%s) exceeded. Target: %s, Custom Signal: %s",
           maxLength, targetValueString, customSignal);
       return false;
     }
