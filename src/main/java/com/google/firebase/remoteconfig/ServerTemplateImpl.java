@@ -42,7 +42,7 @@ public final class ServerTemplateImpl implements ServerTemplate {
     private KeysAndValues defaultConfig;
     private String cachedTemplate;
     private FirebaseRemoteConfigClient client;
-  
+
     Builder(FirebaseRemoteConfigClient remoteConfigClient) {
       this.client = remoteConfigClient;
     }
@@ -77,11 +77,11 @@ public final class ServerTemplateImpl implements ServerTemplate {
   }
 
   @Override
-  public ServerConfig evaluate(@Nullable KeysAndValues context) 
+  public ServerConfig evaluate(@Nullable KeysAndValues context)
       throws FirebaseRemoteConfigException {
     if (this.cache == null) {
       throw new FirebaseRemoteConfigException(ErrorCode.FAILED_PRECONDITION,
-        "No Remote Config Server template in cache. Call load() before calling evaluate().");
+          "No Remote Config Server template in cache. Call load() before calling evaluate().");
     }
 
     Map<String, Value> configValues = new HashMap<>();
@@ -94,7 +94,7 @@ public final class ServerTemplateImpl implements ServerTemplate {
 
     ConditionEvaluator conditionEvaluator = new ConditionEvaluator();
     ImmutableMap<String, Boolean> evaluatedCondition = ImmutableMap.copyOf(
-      conditionEvaluator.evaluateConditions(cache.getServerConditions(), context));
+        conditionEvaluator.evaluateConditions(cache.getServerConditions(), context));
     ImmutableMap<String, Parameter> parameters = ImmutableMap.copyOf(cache.getParameters());
     mergeDerivedConfigValues(evaluatedCondition, parameters, configValues);
 
