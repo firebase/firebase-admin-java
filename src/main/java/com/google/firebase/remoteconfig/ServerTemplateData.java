@@ -144,8 +144,8 @@ final class ServerTemplateData {
     return this;
   }
 
-  ServerTemplateData setVersion(Version serverVersion) {
-    this.version = serverVersion;
+  ServerTemplateData setVersion(Version version) {
+    this.version = version;
     return this;
   }
 
