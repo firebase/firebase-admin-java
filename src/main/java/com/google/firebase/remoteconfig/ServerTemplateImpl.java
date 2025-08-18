@@ -93,11 +93,8 @@ public final class ServerTemplateImpl implements ServerTemplate {
     }
 
     ConditionEvaluator conditionEvaluator = new ConditionEvaluator();
-    ImmutableMap<String, Boolean> evaluatedCondition = 
-        context != null && !cache.getServerConditions().isEmpty()
-        ? ImmutableMap.copyOf(
-          conditionEvaluator.evaluateConditions(cache.getServerConditions(), context))
-        : ImmutableMap.of();
+    ImmutableMap<String, Boolean> evaluatedCondition = ImmutableMap.copyOf(
+      conditionEvaluator.evaluateConditions(cache.getServerConditions(), context));
     ImmutableMap<String, Parameter> parameters = ImmutableMap.copyOf(cache.getParameters());
     mergeDerivedConfigValues(evaluatedCondition, parameters, configValues);
 
