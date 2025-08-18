@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
- 
+
 final class ConditionEvaluator {
   private static final int MAX_CONDITION_RECURSION_DEPTH = 10;
   private static final Logger logger = LoggerFactory.getLogger(ConditionEvaluator.class);
@@ -49,7 +49,7 @@ final class ConditionEvaluator {
    * Evaluates server conditions and assigns a boolean value to each condition.
    * 
    * @param conditions List of conditions which are to be evaluated.
-   * @param context A map with additional metadata used during evaluation. 
+   * @param context    A map with additional metadata used during evaluation.
    * @return A map of condition to evaluated value.
    */
   @NonNull
@@ -58,19 +58,17 @@ final class ConditionEvaluator {
       @Nullable KeysAndValues context) {
     checkNotNull(conditions, "List of conditions must not be null.");
     checkArgument(!conditions.isEmpty(), "List of conditions must not be empty.");
-    if(context == null || conditions.isEmpty()){
+    if (context == null || conditions.isEmpty()) {
       return ImmutableMap.of();
     }
-    KeysAndValues evaluationContext = context != null 
-        ? context 
+    KeysAndValues evaluationContext = context != null
+        ? context
         : new KeysAndValues.Builder().build();
 
     Map<String, Boolean> evaluatedConditions = conditions.stream()
         .collect(ImmutableMap.toImmutableMap(
             ServerCondition::getName,
-            condition -> 
-                evaluateCondition(condition.getCondition(), evaluationContext, /* nestingLevel= */0)
-        ));
+            condition -> evaluateCondition(condition.getCondition(), evaluationContext, /* nestingLevel= */0)));
 
     return evaluatedConditions;
   }
@@ -98,7 +96,6 @@ final class ConditionEvaluator {
     logger.atWarn().log("Received invalid condition for evaluation.");
     return false;
   }
-
 
   private boolean evaluateOrCondition(OrCondition condition, KeysAndValues context,
       int nestingLevel) {
@@ -251,9 +248,8 @@ final class ConditionEvaluator {
   }
 
   private boolean compareStrings(ImmutableList<String> targetValues, String customSignal,
-                              BiPredicate<String, String> compareFunction) {
-    return targetValues.stream().anyMatch(targetValue -> 
-              compareFunction.test(customSignal, targetValue));
+      BiPredicate<String, String> compareFunction) {
+    return targetValues.stream().anyMatch(targetValue -> compareFunction.test(customSignal, targetValue));
   }
 
   private boolean compareStringRegex(String customSignal, String targetSignal) {
@@ -265,7 +261,7 @@ final class ConditionEvaluator {
   }
 
   private boolean compareNumbers(ImmutableList<String> targetValues, String customSignal,
-                            IntPredicate compareFunction) {
+      IntPredicate compareFunction) {
     if (targetValues.size() != 1) {
       logger.warn(String.format(
           "Target values must contain 1 element for numeric operations. Target Value: %s",
@@ -286,8 +282,8 @@ final class ConditionEvaluator {
   }
 
   private boolean compareSemanticVersions(ImmutableList<String> targetValues,
-                                      String customSignal,
-                                      IntPredicate compareFunction) {
+      String customSignal,
+      IntPredicate compareFunction) {
     if (targetValues.size() != 1) {
       logger.warn(String.format("Target values must contain 1 element for semantic operation."));
       return false;
@@ -320,8 +316,8 @@ final class ConditionEvaluator {
 
     for (int i = 0; i < maxLength; i++) {
       // Default to 0 if segment is missing
-      int v1 =  i < version1Size ? version1.get(i) : 0;
-      int v2 =  i < version2Size ? version2.get(i) : 0;
+      int v1 = i < version1Size ? version1.get(i) : 0;
+      int v2 = i < version2Size ? version2.get(i) : 0;
 
       int comparison = Integer.compare(v1, v2);
       if (comparison != 0) {
@@ -334,8 +330,8 @@ final class ConditionEvaluator {
 
   private List<Integer> parseSemanticVersion(String versionString) {
     return Arrays.stream(versionString.split("\\."))
-          .map(Integer::parseInt)
-          .collect(Collectors.toList());
+        .map(Integer::parseInt)
+        .collect(Collectors.toList());
   }
 
   private boolean validateSemanticVersion(String version) {

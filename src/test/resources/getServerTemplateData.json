@@ -132,7 +132,7 @@
         }
       }
     },
-    "Derived in-app default":  {
+    "Derived in-app default": {
       "defaultValue": {
         "value": "Default value"
       },

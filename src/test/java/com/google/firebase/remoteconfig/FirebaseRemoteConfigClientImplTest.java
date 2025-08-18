@@ -61,156 +61,144 @@ import org.junit.Test;
 
 public class FirebaseRemoteConfigClientImplTest {
 
-  private static final String TEST_REMOTE_CONFIG_URL =
-      "https://firebaseremoteconfig.googleapis.com/v1/projects/test-project/remoteConfig";
-  private static final String TEST_SERVER_REMOTE_CONFIG_URL =
-      "https://firebaseremoteconfig.googleapis.com/v1/projects/test-project/namespaces/firebase-server/serverRemoteConfig";
+  private static final String TEST_REMOTE_CONFIG_URL = "https://firebaseremoteconfig.googleapis.com/v1/projects/test-project/remoteConfig";
+  private static final String TEST_SERVER_REMOTE_CONFIG_URL = "https://firebaseremoteconfig.googleapis.com/v1/projects/test-project/namespaces/firebase-server/serverRemoteConfig";
 
   private static final List<Integer> HTTP_STATUS_CODES = ImmutableList.of(401, 404, 500);
 
   private static final Map<Integer, ErrorCode> HTTP_STATUS_TO_ERROR_CODE = ImmutableMap.of(
-          401, ErrorCode.UNAUTHENTICATED,
-          404, ErrorCode.NOT_FOUND,
-          500, ErrorCode.INTERNAL);
+      401, ErrorCode.UNAUTHENTICATED,
+      404, ErrorCode.NOT_FOUND,
+      500, ErrorCode.INTERNAL);
 
   private static final String MOCK_TEMPLATE_RESPONSE = TestUtils
-          .loadResource("getRemoteConfig.json");
-  
+      .loadResource("getRemoteConfig.json");
+
   private static final String MOCK_SERVER_TEMPLATE_RESPONSE = TestUtils
-          .loadResource("getServerRemoteConfig.json");
+      .loadResource("getServerRemoteConfig.json");
 
   private static final String MOCK_LIST_VERSIONS_RESPONSE = TestUtils
-          .loadResource("listRemoteConfigVersions.json");
+      .loadResource("listRemoteConfigVersions.json");
 
   private static final String TEST_ETAG = "etag-123456789012-1";
 
-  private static final Map<String, Parameter> EXPECTED_PARAMETERS =
-      ImmutableMap.of(
-          "welcome_message_text",
-              new Parameter()
-                  .setDefaultValue(ParameterValue.of("welcome to app"))
-                  .setConditionalValues(
-                      ImmutableMap.<String, ParameterValue>of(
-                          "ios_en", ParameterValue.of("welcome to app en")))
-                  .setDescription("text for welcome message!")
-                  .setValueType(ParameterValueType.STRING),
-          "header_text",
-              new Parameter()
-                  .setDefaultValue(ParameterValue.inAppDefault())
-                  .setValueType(ParameterValueType.STRING));
+  private static final Map<String, Parameter> EXPECTED_PARAMETERS = ImmutableMap.of(
+      "welcome_message_text",
+      new Parameter()
+          .setDefaultValue(ParameterValue.of("welcome to app"))
+          .setConditionalValues(
+              ImmutableMap.<String, ParameterValue>of(
+                  "ios_en", ParameterValue.of("welcome to app en")))
+          .setDescription("text for welcome message!")
+          .setValueType(ParameterValueType.STRING),
+      "header_text",
+      new Parameter()
+          .setDefaultValue(ParameterValue.inAppDefault())
+          .setValueType(ParameterValueType.STRING));
 
-  private static final Map<String, ParameterGroup> EXPECTED_PARAMETER_GROUPS =
-      ImmutableMap.of(
-          "new menu",
-          new ParameterGroup()
-              .setDescription("New Menu")
-              .setParameters(
-                  ImmutableMap.of(
-                      "pumpkin_spice_season",
-                      new Parameter()
-                          .setDefaultValue(ParameterValue.of("true"))
-                          .setDescription("Whether it's currently pumpkin spice season.")
-                          .setValueType(ParameterValueType.BOOLEAN))));
+  private static final Map<String, ParameterGroup> EXPECTED_PARAMETER_GROUPS = ImmutableMap.of(
+      "new menu",
+      new ParameterGroup()
+          .setDescription("New Menu")
+          .setParameters(
+              ImmutableMap.of(
+                  "pumpkin_spice_season",
+                  new Parameter()
+                      .setDefaultValue(ParameterValue.of("true"))
+                      .setDescription("Whether it's currently pumpkin spice season.")
+                      .setValueType(ParameterValueType.BOOLEAN))));
 
-  private static final List<Condition> EXPECTED_CONDITIONS =
-      ImmutableList.of(
-          new Condition("ios_en", "device.os == 'ios' && device.country in ['us', 'uk']")
-              .setTagColor(TagColor.INDIGO),
-          new Condition("android_en", "device.os == 'android' && device.country in ['us', 'uk']"));
+  private static final List<Condition> EXPECTED_CONDITIONS = ImmutableList.of(
+      new Condition("ios_en", "device.os == 'ios' && device.country in ['us', 'uk']")
+          .setTagColor(TagColor.INDIGO),
+      new Condition("android_en", "device.os == 'android' && device.country in ['us', 'uk']"));
 
-  private static final List<ServerCondition> EXPECTED_SERVER_CONDITIONS =
-      ImmutableList.of(
-          new ServerCondition("custom_signal", null)
-              .setServerCondition(
-                  new OneOfCondition()
-                      .setOrCondition(
-                          new OrCondition(
-                              ImmutableList.of(
-                                  new OneOfCondition()
-                                      .setAndCondition(
-                                          new AndCondition(
-                                              ImmutableList.of(
-                                                  new OneOfCondition()
-                                                      .setCustomSignal(
-                                                          new CustomSignalCondition(
-                                                              "users",
-                                                              CustomSignalOperator
-                                                                  .NUMERIC_LESS_THAN,
-                                                              new ArrayList<>(
-                                                                  ImmutableList.of("100"))))))))))),
-          new ServerCondition("percent", null)
-              .setServerCondition(
-                  new OneOfCondition()
-                      .setOrCondition(
-                          new OrCondition(
-                              ImmutableList.of(
-                                  new OneOfCondition()
-                                      .setAndCondition(
-                                          new AndCondition(
-                                              ImmutableList.of(
-                                                  new OneOfCondition()
-                                                      .setPercent(
-                                                          new PercentCondition(
-                                                              new MicroPercentRange(
-                                                                  12000000, 100000000),
-                                                              PercentConditionOperator.BETWEEN,
-                                                              "3maarirs9xzs"))))))))),
-          new ServerCondition("chained_conditions", null)
-              .setServerCondition(
-                  new OneOfCondition()
-                      .setOrCondition(
-                          new OrCondition(
-                              ImmutableList.of(
-                                  new OneOfCondition()
-                                      .setAndCondition(
-                                          new AndCondition(
-                                              ImmutableList.of(
-                                                  new OneOfCondition()
-                                                      .setCustomSignal(
-                                                        new CustomSignalCondition(
-                                                            "users",
-                                                          CustomSignalOperator
-                                                              .NUMERIC_LESS_THAN,
+  private static final List<ServerCondition> EXPECTED_SERVER_CONDITIONS = ImmutableList.of(
+      new ServerCondition("custom_signal", null)
+          .setServerCondition(
+              new OneOfCondition()
+                  .setOrCondition(
+                      new OrCondition(
+                          ImmutableList.of(
+                              new OneOfCondition()
+                                  .setAndCondition(
+                                      new AndCondition(
+                                          ImmutableList.of(
+                                              new OneOfCondition()
+                                                  .setCustomSignal(
+                                                      new CustomSignalCondition(
+                                                          "users",
+                                                          CustomSignalOperator.NUMERIC_LESS_THAN,
                                                           new ArrayList<>(
-                                                            ImmutableList.of("100")))),
-                                                  new OneOfCondition()
-                                                      .setCustomSignal(
-                                                        new CustomSignalCondition(
+                                                              ImmutableList.of("100"))))))))))),
+      new ServerCondition("percent", null)
+          .setServerCondition(
+              new OneOfCondition()
+                  .setOrCondition(
+                      new OrCondition(
+                          ImmutableList.of(
+                              new OneOfCondition()
+                                  .setAndCondition(
+                                      new AndCondition(
+                                          ImmutableList.of(
+                                              new OneOfCondition()
+                                                  .setPercent(
+                                                      new PercentCondition(
+                                                          new MicroPercentRange(
+                                                              12000000, 100000000),
+                                                          PercentConditionOperator.BETWEEN,
+                                                          "3maarirs9xzs"))))))))),
+      new ServerCondition("chained_conditions", null)
+          .setServerCondition(
+              new OneOfCondition()
+                  .setOrCondition(
+                      new OrCondition(
+                          ImmutableList.of(
+                              new OneOfCondition()
+                                  .setAndCondition(
+                                      new AndCondition(
+                                          ImmutableList.of(
+                                              new OneOfCondition()
+                                                  .setCustomSignal(
+                                                      new CustomSignalCondition(
+                                                          "users",
+                                                          CustomSignalOperator.NUMERIC_LESS_THAN,
+                                                          new ArrayList<>(
+                                                              ImmutableList.of("100")))),
+                                              new OneOfCondition()
+                                                  .setCustomSignal(
+                                                      new CustomSignalCondition(
                                                           "premium users",
-                                                          CustomSignalOperator
-                                                              .NUMERIC_GREATER_THAN,
+                                                          CustomSignalOperator.NUMERIC_GREATER_THAN,
                                                           new ArrayList<>(
                                                               ImmutableList.of("20")))),
-                                                  new OneOfCondition()
-                                                    .setPercent(
+                                              new OneOfCondition()
+                                                  .setPercent(
                                                       new PercentCondition(
                                                           new MicroPercentRange(
                                                               25000000, 100000000),
                                                           PercentConditionOperator.BETWEEN,
-                                                          "cla24qoibb61"))
-                                                              ))))))));
+                                                          "cla24qoibb61"))))))))));
 
-  private static final Version EXPECTED_VERSION =
-      new Version(
-          new TemplateResponse.VersionResponse()
-              .setVersionNumber("17")
-              .setUpdateOrigin("ADMIN_SDK_NODE")
-              .setUpdateType("INCREMENTAL_UPDATE")
-              .setUpdateUser(
-                  new TemplateResponse.UserResponse()
-                      .setEmail("firebase-user@account.com")
-                      .setName("dev-admin")
-                      .setImageUrl("http://image.jpg"))
-              .setUpdateTime("2020-11-15T06:57:26.342763941Z")
-              .setDescription("promo config"));
+  private static final Version EXPECTED_VERSION = new Version(
+      new TemplateResponse.VersionResponse()
+          .setVersionNumber("17")
+          .setUpdateOrigin("ADMIN_SDK_NODE")
+          .setUpdateType("INCREMENTAL_UPDATE")
+          .setUpdateUser(
+              new TemplateResponse.UserResponse()
+                  .setEmail("firebase-user@account.com")
+                  .setName("dev-admin")
+                  .setImageUrl("http://image.jpg"))
+          .setUpdateTime("2020-11-15T06:57:26.342763941Z")
+          .setDescription("promo config"));
 
-  private static final Template EXPECTED_TEMPLATE =
-      new Template()
-          .setETag(TEST_ETAG)
-          .setParameters(EXPECTED_PARAMETERS)
-          .setConditions(EXPECTED_CONDITIONS)
-          .setParameterGroups(EXPECTED_PARAMETER_GROUPS)
-          .setVersion(EXPECTED_VERSION);
+  private static final Template EXPECTED_TEMPLATE = new Template()
+      .setETag(TEST_ETAG)
+      .setParameters(EXPECTED_PARAMETERS)
+      .setConditions(EXPECTED_CONDITIONS)
+      .setParameterGroups(EXPECTED_PARAMETER_GROUPS)
+      .setVersion(EXPECTED_VERSION);
 
   private MockLowLevelHttpResponse response;
   private TestResponseInterceptor interceptor;
@@ -240,20 +228,18 @@ public class FirebaseRemoteConfigClientImplTest {
 
   @Test
   public void testGetTemplateWithTimestampUpToNanosecondPrecision() throws Exception {
-    List<String> timestamps =
-        ImmutableList.of(
-            "2020-11-15T06:57:26.342Z",
-            "2020-11-15T06:57:26.342763Z",
-            "2020-11-15T06:57:26.342763941Z");
+    List<String> timestamps = ImmutableList.of(
+        "2020-11-15T06:57:26.342Z",
+        "2020-11-15T06:57:26.342763Z",
+        "2020-11-15T06:57:26.342763941Z");
     for (String timestamp : timestamps) {
       response.addHeader("etag", TEST_ETAG);
-      String templateResponse =
-          "{\"version\": {"
-              + "    \"versionNumber\": \"17\","
-              + "    \"updateTime\": \""
-              + timestamp
-              + "\""
-              + "  }}";
+      String templateResponse = "{\"version\": {"
+          + "    \"versionNumber\": \"17\","
+          + "    \"updateTime\": \""
+          + timestamp
+          + "\""
+          + "  }}";
       response.setContent(templateResponse);
 
       Template receivedTemplate = client.getTemplate();
@@ -395,14 +381,14 @@ public class FirebaseRemoteConfigClientImplTest {
   public void testGetTemplateErrorWithDetails() {
     for (int code : HTTP_STATUS_CODES) {
       response.setStatusCode(code).setContent(
-              "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\"}}");
+          "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\"}}");
 
       try {
         client.getTemplate();
         fail("No error thrown for HTTP error");
       } catch (FirebaseRemoteConfigException error) {
         checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT, null, "test error",
-                HttpMethods.GET);
+            HttpMethods.GET);
       }
       checkGetRequestHeader(interceptor.getLastRequest());
     }
@@ -412,16 +398,16 @@ public class FirebaseRemoteConfigClientImplTest {
   public void testGetTemplateErrorWithRcError() {
     for (int code : HTTP_STATUS_CODES) {
       response.setStatusCode(code).setContent(
-              "{\"error\": {\"status\": \"INVALID_ARGUMENT\", "
-                      + "\"message\": \"[INVALID_ARGUMENT]: test error\"}}");
+          "{\"error\": {\"status\": \"INVALID_ARGUMENT\", "
+              + "\"message\": \"[INVALID_ARGUMENT]: test error\"}}");
 
       try {
         client.getTemplate();
         fail("No error thrown for HTTP error");
       } catch (FirebaseRemoteConfigException error) {
         checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT,
-                RemoteConfigErrorCode.INVALID_ARGUMENT, "[INVALID_ARGUMENT]: test error",
-                HttpMethods.GET);
+            RemoteConfigErrorCode.INVALID_ARGUMENT, "[INVALID_ARGUMENT]: test error",
+            HttpMethods.GET);
       }
       checkGetRequestHeader(interceptor.getLastRequest());
     }
@@ -436,9 +422,8 @@ public class FirebaseRemoteConfigClientImplTest {
 
   @Test
   public void testGetTemplateAtVersionWithInvalidString() throws Exception {
-    List<String> invalidVersionStrings =
-        ImmutableList.of(
-            "", " ", "abc", "t123", "123t", "t123t", "12t3", "#$*&^", "-123", "+123", "123.4");
+    List<String> invalidVersionStrings = ImmutableList.of(
+        "", " ", "abc", "t123", "123t", "t123t", "12t3", "#$*&^", "-123", "+123", "123.4");
 
     for (String version : invalidVersionStrings) {
       try {
@@ -670,17 +655,17 @@ public class FirebaseRemoteConfigClientImplTest {
   public void testPublishTemplateWithValidTemplateAndValidateOnlyTrue() throws Exception {
     response.addHeader("etag", TEST_ETAG);
     response.setContent(MOCK_TEMPLATE_RESPONSE);
-    Template expectedTemplate =
-        new Template()
-            .setETag("etag-123456789012-45")
-            .setParameters(EXPECTED_PARAMETERS)
-            .setConditions(EXPECTED_CONDITIONS)
-            .setParameterGroups(EXPECTED_PARAMETER_GROUPS)
-            .setVersion(EXPECTED_VERSION);
+    Template expectedTemplate = new Template()
+        .setETag("etag-123456789012-45")
+        .setParameters(EXPECTED_PARAMETERS)
+        .setConditions(EXPECTED_CONDITIONS)
+        .setParameterGroups(EXPECTED_PARAMETER_GROUPS)
+        .setVersion(EXPECTED_VERSION);
 
     Template validatedTemplate = client.publishTemplate(expectedTemplate, true, false);
 
-    // check if the etag matches the input template's etag and not the etag from the server response
+    // check if the etag matches the input template's etag and not the etag from the
+    // server response
     assertNotEquals(TEST_ETAG, validatedTemplate.getETag());
     assertEquals("etag-123456789012-45", validatedTemplate.getETag());
     assertEquals(expectedTemplate, validatedTemplate);
@@ -866,9 +851,8 @@ public class FirebaseRemoteConfigClientImplTest {
 
   @Test
   public void testRollbackWithInvalidString() throws Exception {
-    List<String> invalidVersionStrings =
-        ImmutableList.of(
-            "", " ", "abc", "t123", "123t", "t123t", "12t3", "#$*&^", "-123", "+123", "123.4");
+    List<String> invalidVersionStrings = ImmutableList.of(
+        "", " ", "abc", "t123", "123t", "t123t", "12t3", "#$*&^", "-123", "+123", "123.4");
 
     for (String version : invalidVersionStrings) {
       try {
@@ -1097,28 +1081,26 @@ public class FirebaseRemoteConfigClientImplTest {
   public void testListVersionsWithOptions() throws Exception {
     response.setContent(MOCK_LIST_VERSIONS_RESPONSE);
 
-    TemplateResponse.ListVersionsResponse versionsList =
-        client.listVersions(
-            ListVersionsOptions.builder()
-                .setPageSize(10)
-                .setPageToken("token")
-                .setStartTimeMillis(1605219122000L)
-                .setEndTimeMillis(1606245035000L)
-                .setEndVersionNumber("29")
-                .build());
+    TemplateResponse.ListVersionsResponse versionsList = client.listVersions(
+        ListVersionsOptions.builder()
+            .setPageSize(10)
+            .setPageToken("token")
+            .setStartTimeMillis(1605219122000L)
+            .setEndTimeMillis(1606245035000L)
+            .setEndVersionNumber("29")
+            .build());
 
     assertTrue(versionsList.hasVersions());
 
     HttpRequest request = interceptor.getLastRequest();
-    String urlWithoutParameters =
-        request.getUrl().toString().substring(0, request.getUrl().toString().lastIndexOf('?'));
-    final Map<String, String> expectedQuery =
-        ImmutableMap.of(
-            "endVersionNumber", "29",
-            "pageSize", "10",
-            "pageToken", "token",
-            "startTime", "2020-11-12T22:12:02.000000000Z",
-            "endTime", "2020-11-24T19:10:35.000000000Z");
+    String urlWithoutParameters = request.getUrl().toString().substring(0,
+        request.getUrl().toString().lastIndexOf('?'));
+    final Map<String, String> expectedQuery = ImmutableMap.of(
+        "endVersionNumber", "29",
+        "pageSize", "10",
+        "pageToken", "token",
+        "startTime", "2020-11-12T22:12:02.000000000Z",
+        "endTime", "2020-11-24T19:10:35.000000000Z");
     Map<String, String> actualQuery = new HashMap<>();
     String query = request.getUrl().toURI().getQuery();
     String[] pairs = query.split("&");
@@ -1305,11 +1287,10 @@ public class FirebaseRemoteConfigClientImplTest {
 
   @Test
   public void testFromApp() throws IOException {
-    FirebaseOptions options =
-        FirebaseOptions.builder()
-            .setCredentials(new MockGoogleCredentials("test-token"))
-            .setProjectId("test-project")
-            .build();
+    FirebaseOptions options = FirebaseOptions.builder()
+        .setCredentials(new MockGoogleCredentials("test-token"))
+        .setProjectId("test-project")
+        .build();
     FirebaseApp app = FirebaseApp.initializeApp(options);
 
     try {
@@ -1318,8 +1299,7 @@ public class FirebaseRemoteConfigClientImplTest {
       assertEquals(TEST_REMOTE_CONFIG_URL, client.getRemoteConfigUrl());
       assertSame(options.getJsonFactory(), client.getJsonFactory());
 
-      HttpRequest request =
-          client.getRequestFactory().buildGetRequest(new GenericUrl("https://example.com"));
+      HttpRequest request = client.getRequestFactory().buildGetRequest(new GenericUrl("https://example.com"));
       assertEquals("Bearer test-token", request.getHeaders().getAuthorization());
     } finally {
       app.delete();
@@ -1328,8 +1308,7 @@ public class FirebaseRemoteConfigClientImplTest {
 
   private FirebaseRemoteConfigClientImpl initRemoteConfigClient(
       MockLowLevelHttpResponse mockResponse, HttpResponseInterceptor interceptor) {
-    MockHttpTransport transport =
-        new MockHttpTransport.Builder().setLowLevelHttpResponse(mockResponse).build();
+    MockHttpTransport transport = new MockHttpTransport.Builder().setLowLevelHttpResponse(mockResponse).build();
 
     return FirebaseRemoteConfigClientImpl.builder()
         .setProjectId("test-project")
@@ -1432,7 +1411,7 @@ public class FirebaseRemoteConfigClientImplTest {
   }
 
   // Get server template tests
-  
+
   @Test
   public void testGetServerTemplate() throws Exception {
     response.addHeader("etag", TEST_ETAG);
@@ -1452,20 +1431,18 @@ public class FirebaseRemoteConfigClientImplTest {
 
   @Test
   public void testGetServerTemplateWithTimestampUpToNanosecondPrecision() throws Exception {
-    List<String> timestamps =
-        ImmutableList.of(
-            "2020-11-15T06:57:26.342Z",
-            "2020-11-15T06:57:26.342763Z",
-            "2020-11-15T06:57:26.342763941Z");
+    List<String> timestamps = ImmutableList.of(
+        "2020-11-15T06:57:26.342Z",
+        "2020-11-15T06:57:26.342763Z",
+        "2020-11-15T06:57:26.342763941Z");
     for (String timestamp : timestamps) {
       response.addHeader("etag", TEST_ETAG);
-      String templateResponse =
-          "{\"version\": {"
-              + "    \"versionNumber\": \"17\","
-              + "    \"updateTime\": \""
-              + timestamp
-              + "\""
-              + "  }}";
+      String templateResponse = "{\"version\": {"
+          + "    \"versionNumber\": \"17\","
+          + "    \"updateTime\": \""
+          + timestamp
+          + "\""
+          + "  }}";
       response.setContent(templateResponse);
 
       String receivedTemplate = client.getServerTemplate();

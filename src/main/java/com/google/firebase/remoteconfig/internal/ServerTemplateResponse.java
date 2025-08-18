@@ -25,7 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The Data Transfer Object for parsing Remote Config template responses from the Remote Config
+ * The Data Transfer Object for parsing Remote Config template responses from
+ * the Remote Config
  * service.
  */
 public final class ServerTemplateResponse {
@@ -94,7 +95,8 @@ public final class ServerTemplateResponse {
   }
 
   /**
-   * The Data Transfer Object for parsing Remote Config condition responses from the Remote Config
+   * The Data Transfer Object for parsing Remote Config condition responses from
+   * the Remote Config
    * service.
    */
   public static final class ServerConditionResponse {
@@ -164,7 +166,7 @@ public final class ServerTemplateResponse {
     }
 
     public OneOfConditionResponse setCustomSignalCondition(
-          CustomSignalConditionResponse customSignalCondition) {
+        CustomSignalConditionResponse customSignalCondition) {
       this.customSignalCondition = customSignalCondition;
       return this;
     }
@@ -276,7 +278,7 @@ public final class ServerTemplateResponse {
     }
 
     public PercentConditionResponse setMicroPercentRange(
-          MicroPercentRangeResponse microPercentRange) {
+        MicroPercentRangeResponse microPercentRange) {
       this.microPercentRange = microPercentRange;
       return this;
     }
@@ -318,4 +320,3 @@ public final class ServerTemplateResponse {
     }
   }
 }
-
