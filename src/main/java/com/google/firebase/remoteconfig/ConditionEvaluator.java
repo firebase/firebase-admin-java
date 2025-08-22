@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.Nullable;
 import java.math.BigInteger;
@@ -64,7 +65,7 @@ final class ConditionEvaluator {
     Map<String, Boolean> evaluatedConditions =
         conditions.stream()
             .collect(
-                ImmutableMap.toImmutableMap(
+                toImmutableMap(
                     ServerCondition::getName,
                     condition ->
                         evaluateCondition(
