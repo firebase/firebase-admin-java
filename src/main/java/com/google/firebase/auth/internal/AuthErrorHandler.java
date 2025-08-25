@@ -180,7 +180,7 @@ final class AuthErrorHandler extends AbstractHttpErrorHandler<FirebaseAuthExcept
 
   /**
    * JSON data binding for JSON error messages sent by Google identity toolkit service. These
-   * error messages take the form `{"error": {"message": "CODE: OPTIONAL DETAILS"}}`.
+   * error messages take the form `{"error": {"message": "CODE : OPTIONAL DETAILS"}}`.
    */
   private static class AuthServiceErrorResponse {
 
@@ -196,7 +196,7 @@ final class AuthErrorHandler extends AbstractHttpErrorHandler<FirebaseAuthExcept
 
       int separator = message.indexOf(':');
       if (separator != -1) {
-        return message.substring(0, separator);
+        return message.substring(0, separator).trim();
       }
 
       return message;
