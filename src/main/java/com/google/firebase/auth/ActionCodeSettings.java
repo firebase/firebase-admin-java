@@ -149,7 +149,7 @@ public final class ActionCodeSettings {
 
     /**
      * Sets the link domain to use for the current link if it is to be opened using
-     * HandleCodeInApp, as multiple link domains can be configured per project. This
+     * {@code handleCodeInApp}, as multiple link domains can be configured per project. This
      * setting provides the ability to explicitly choose one. If none is provided, the default
      * Firebase Hosting domain will be used.
      *

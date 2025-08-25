@@ -77,8 +77,8 @@ final class AuthErrorHandler extends AbstractHttpErrorHandler<FirebaseAuthExcept
               "INVALID_HOSTING_LINK_DOMAIN",
               new AuthError(
                   ErrorCode.INVALID_ARGUMENT,
-                  "The provided hosting link domain is not "
-                      + "configured or authorized for the current project",
+                  "The provided hosting link domain is not configured in Firebase Hosting or is "
+                      + "not owned by the current project",
                   AuthErrorCode.INVALID_HOSTING_LINK_DOMAIN))
           .put(
               "PHONE_NUMBER_EXISTS",
