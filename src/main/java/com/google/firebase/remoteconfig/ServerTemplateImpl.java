@@ -20,9 +20,8 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
+import com.google.firebase.internal.Nullable;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,7 +42,7 @@ public final class ServerTemplateImpl implements ServerTemplate {
     private KeysAndValues defaultConfig;
     private String cachedTemplate;
     private FirebaseRemoteConfigClient client;
-  
+
     Builder(FirebaseRemoteConfigClient remoteConfigClient) {
       this.client = remoteConfigClient;
     }
@@ -78,7 +77,8 @@ public final class ServerTemplateImpl implements ServerTemplate {
   }
 
   @Override
-  public ServerConfig evaluate(KeysAndValues context) throws FirebaseRemoteConfigException {
+  public ServerConfig evaluate(@Nullable KeysAndValues context)
+      throws FirebaseRemoteConfigException {
     if (this.cache == null) {
       throw new FirebaseRemoteConfigException(ErrorCode.FAILED_PRECONDITION,
           "No Remote Config Server template in cache. Call load() before calling evaluate().");
@@ -103,8 +103,7 @@ public final class ServerTemplateImpl implements ServerTemplate {
 
   @Override
   public ServerConfig evaluate() throws FirebaseRemoteConfigException {
-    KeysAndValues context = new KeysAndValues.Builder().build();
-    return evaluate(context);
+    return evaluate(null);
   }
 
   @Override
@@ -126,8 +125,7 @@ public final class ServerTemplateImpl implements ServerTemplate {
 
   @Override
   public String toJson() {
-    Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    return gson.toJson(this.cache);
+    return this.cache.toJSON();
   }
 
   private void mergeDerivedConfigValues(ImmutableMap<String, Boolean> evaluatedCondition,

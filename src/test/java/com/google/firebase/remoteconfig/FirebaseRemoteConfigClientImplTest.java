@@ -68,36 +68,37 @@ public class FirebaseRemoteConfigClientImplTest {
 
   private static final List<Integer> HTTP_STATUS_CODES = ImmutableList.of(401, 404, 500);
 
-  private static final Map<Integer, ErrorCode> HTTP_STATUS_TO_ERROR_CODE = ImmutableMap.of(
+  private static final Map<Integer, ErrorCode> HTTP_STATUS_TO_ERROR_CODE =
+      ImmutableMap.of(
           401, ErrorCode.UNAUTHENTICATED,
           404, ErrorCode.NOT_FOUND,
           500, ErrorCode.INTERNAL);
 
-  private static final String MOCK_TEMPLATE_RESPONSE = TestUtils
-          .loadResource("getRemoteConfig.json");
-  
-  private static final String MOCK_SERVER_TEMPLATE_RESPONSE = TestUtils
-          .loadResource("getServerRemoteConfig.json");
+  private static final String MOCK_TEMPLATE_RESPONSE =
+      TestUtils.loadResource("getRemoteConfig.json");
 
-  private static final String MOCK_LIST_VERSIONS_RESPONSE = TestUtils
-          .loadResource("listRemoteConfigVersions.json");
+  private static final String MOCK_SERVER_TEMPLATE_RESPONSE =
+      TestUtils.loadResource("getServerRemoteConfig.json");
+
+  private static final String MOCK_LIST_VERSIONS_RESPONSE =
+      TestUtils.loadResource("listRemoteConfigVersions.json");
 
   private static final String TEST_ETAG = "etag-123456789012-1";
 
   private static final Map<String, Parameter> EXPECTED_PARAMETERS =
       ImmutableMap.of(
           "welcome_message_text",
-              new Parameter()
-                  .setDefaultValue(ParameterValue.of("welcome to app"))
-                  .setConditionalValues(
-                      ImmutableMap.<String, ParameterValue>of(
-                          "ios_en", ParameterValue.of("welcome to app en")))
-                  .setDescription("text for welcome message!")
-                  .setValueType(ParameterValueType.STRING),
+          new Parameter()
+              .setDefaultValue(ParameterValue.of("welcome to app"))
+              .setConditionalValues(
+                  ImmutableMap.<String, ParameterValue>of(
+                      "ios_en", ParameterValue.of("welcome to app en")))
+              .setDescription("text for welcome message!")
+              .setValueType(ParameterValueType.STRING),
           "header_text",
-              new Parameter()
-                  .setDefaultValue(ParameterValue.inAppDefault())
-                  .setValueType(ParameterValueType.STRING));
+          new Parameter()
+              .setDefaultValue(ParameterValue.inAppDefault())
+              .setValueType(ParameterValueType.STRING));
 
   private static final Map<String, ParameterGroup> EXPECTED_PARAMETER_GROUPS =
       ImmutableMap.of(
@@ -167,28 +168,27 @@ public class FirebaseRemoteConfigClientImplTest {
                                               ImmutableList.of(
                                                   new OneOfCondition()
                                                       .setCustomSignal(
-                                                        new CustomSignalCondition(
-                                                            "users",
-                                                          CustomSignalOperator
-                                                              .NUMERIC_LESS_THAN,
-                                                          new ArrayList<>(
-                                                            ImmutableList.of("100")))),
+                                                          new CustomSignalCondition(
+                                                              "users",
+                                                              CustomSignalOperator
+                                                                  .NUMERIC_LESS_THAN,
+                                                              new ArrayList<>(
+                                                                  ImmutableList.of("100")))),
                                                   new OneOfCondition()
                                                       .setCustomSignal(
-                                                        new CustomSignalCondition(
-                                                          "premium users",
-                                                          CustomSignalOperator
-                                                              .NUMERIC_GREATER_THAN,
-                                                          new ArrayList<>(
-                                                              ImmutableList.of("20")))),
+                                                          new CustomSignalCondition(
+                                                              "premium users",
+                                                              CustomSignalOperator
+                                                                  .NUMERIC_GREATER_THAN,
+                                                              new ArrayList<>(
+                                                                  ImmutableList.of("20")))),
                                                   new OneOfCondition()
-                                                    .setPercent(
-                                                      new PercentCondition(
-                                                          new MicroPercentRange(
-                                                              25000000, 100000000),
-                                                          PercentConditionOperator.BETWEEN,
-                                                          "cla24qoibb61"))
-                                                              ))))))));
+                                                      .setPercent(
+                                                          new PercentCondition(
+                                                              new MicroPercentRange(
+                                                                  25000000, 100000000),
+                                                              PercentConditionOperator.BETWEEN,
+                                                              "cla24qoibb61"))))))))));
 
   private static final Version EXPECTED_VERSION =
       new Version(
@@ -394,15 +394,17 @@ public class FirebaseRemoteConfigClientImplTest {
   @Test
   public void testGetTemplateErrorWithDetails() {
     for (int code : HTTP_STATUS_CODES) {
-      response.setStatusCode(code).setContent(
+      response
+          .setStatusCode(code)
+          .setContent(
               "{\"error\": {\"status\": \"INVALID_ARGUMENT\", \"message\": \"test error\"}}");
 
       try {
         client.getTemplate();
         fail("No error thrown for HTTP error");
       } catch (FirebaseRemoteConfigException error) {
-        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT, null, "test error",
-                HttpMethods.GET);
+        checkExceptionFromHttpResponse(
+            error, ErrorCode.INVALID_ARGUMENT, null, "test error", HttpMethods.GET);
       }
       checkGetRequestHeader(interceptor.getLastRequest());
     }
@@ -411,17 +413,22 @@ public class FirebaseRemoteConfigClientImplTest {
   @Test
   public void testGetTemplateErrorWithRcError() {
     for (int code : HTTP_STATUS_CODES) {
-      response.setStatusCode(code).setContent(
+      response
+          .setStatusCode(code)
+          .setContent(
               "{\"error\": {\"status\": \"INVALID_ARGUMENT\", "
-                      + "\"message\": \"[INVALID_ARGUMENT]: test error\"}}");
+                  + "\"message\": \"[INVALID_ARGUMENT]: test error\"}}");
 
       try {
         client.getTemplate();
         fail("No error thrown for HTTP error");
       } catch (FirebaseRemoteConfigException error) {
-        checkExceptionFromHttpResponse(error, ErrorCode.INVALID_ARGUMENT,
-                RemoteConfigErrorCode.INVALID_ARGUMENT, "[INVALID_ARGUMENT]: test error",
-                HttpMethods.GET);
+        checkExceptionFromHttpResponse(
+            error,
+            ErrorCode.INVALID_ARGUMENT,
+            RemoteConfigErrorCode.INVALID_ARGUMENT,
+            "[INVALID_ARGUMENT]: test error",
+            HttpMethods.GET);
       }
       checkGetRequestHeader(interceptor.getLastRequest());
     }
@@ -680,7 +687,8 @@ public class FirebaseRemoteConfigClientImplTest {
 
     Template validatedTemplate = client.publishTemplate(expectedTemplate, true, false);
 
-    // check if the etag matches the input template's etag and not the etag from the server response
+    // check if the etag matches the input template's etag and not the etag from the
+    // server response
     assertNotEquals(TEST_ETAG, validatedTemplate.getETag());
     assertEquals("etag-123456789012-45", validatedTemplate.getETag());
     assertEquals(expectedTemplate, validatedTemplate);
@@ -1470,7 +1478,6 @@ public class FirebaseRemoteConfigClientImplTest {
 
       String receivedTemplate = client.getServerTemplate();
       ServerTemplateData serverTemplateData = ServerTemplateData.fromJSON(receivedTemplate);
-
       assertEquals(TEST_ETAG, serverTemplateData.getETag());
       assertEquals("17", serverTemplateData.getVersion().getVersionNumber());
       assertEquals(1605423446000L, serverTemplateData.getVersion().getUpdateTime());
