@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.google.firebase.remoteconfig;
 
 import static org.junit.Assert.assertEquals;
@@ -22,32 +23,32 @@ import org.junit.Test;
 
 public class ParameterValueTest {
 
-    @Test
-    public void testCreateExplicitValue() {
-        final ParameterValue.Explicit parameterValue = ParameterValue.of("title text");
+  @Test
+  public void testCreateExplicitValue() {
+    final ParameterValue.Explicit parameterValue = ParameterValue.of("title text");
 
-        assertEquals("title text", parameterValue.getValue());
-    }
+    assertEquals("title text", parameterValue.getValue());
+  }
 
-    @Test
-    public void testCreateInAppDefault() {
-        final ParameterValue.InAppDefault parameterValue = ParameterValue.inAppDefault();
+  @Test
+  public void testCreateInAppDefault() {
+    final ParameterValue.InAppDefault parameterValue = ParameterValue.inAppDefault();
 
-        assertEquals(ParameterValue.InAppDefault.class, parameterValue.getClass());
-    }
+    assertEquals(ParameterValue.InAppDefault.class, parameterValue.getClass());
+  }
 
-    @Test
-    public void testEquality() {
-        ParameterValue.Explicit parameterValueOne = ParameterValue.of("value");
-        ParameterValue.Explicit parameterValueTwo = ParameterValue.of("value");
-        ParameterValue.Explicit parameterValueThree = ParameterValue.of("title");
+  @Test
+  public void testEquality() {
+    ParameterValue.Explicit parameterValueOne = ParameterValue.of("value");
+    ParameterValue.Explicit parameterValueTwo = ParameterValue.of("value");
+    ParameterValue.Explicit parameterValueThree = ParameterValue.of("title");
 
-        assertEquals(parameterValueOne, parameterValueTwo);
-        assertNotEquals(parameterValueOne, parameterValueThree);
+    assertEquals(parameterValueOne, parameterValueTwo);
+    assertNotEquals(parameterValueOne, parameterValueThree);
 
-        ParameterValue.InAppDefault parameterValueFour = ParameterValue.inAppDefault();
-        ParameterValue.InAppDefault parameterValueFive = ParameterValue.inAppDefault();
+    ParameterValue.InAppDefault parameterValueFour = ParameterValue.inAppDefault();
+    ParameterValue.InAppDefault parameterValueFive = ParameterValue.inAppDefault();
 
-        assertEquals(parameterValueFour, parameterValueFive);
-    }
+    assertEquals(parameterValueFour, parameterValueFive);
+  }
 }
