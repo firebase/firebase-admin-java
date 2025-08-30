@@ -25,14 +25,15 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The Data Transfer Object for parsing Remote Config template responses from the Remote Config
+ * The Data Transfer Object for parsing Remote Config template responses from
+ * the Remote Config
  * service.
  */
 public final class ServerTemplateResponse {
   @Key("parameters")
   private Map<String, ParameterResponse> parameters;
 
-  @Key("conditions")
+  @Key("serverConditions")
   private List<ServerConditionResponse> serverConditions;
 
   @Key("parameterGroups")
@@ -94,7 +95,8 @@ public final class ServerTemplateResponse {
   }
 
   /**
-   * The Data Transfer Object for parsing Remote Config condition responses from the Remote Config
+   * The Data Transfer Object for parsing Remote Config condition responses from
+   * the Remote Config
    * service.
    */
   public static final class ServerConditionResponse {
@@ -102,7 +104,7 @@ public final class ServerTemplateResponse {
     @Key("name")
     private String name;
 
-    @Key("condition")
+    @Key("serverCondition")
     private OneOfConditionResponse condition;
 
     public String getName() {
@@ -164,7 +166,7 @@ public final class ServerTemplateResponse {
     }
 
     public OneOfConditionResponse setCustomSignalCondition(
-          CustomSignalConditionResponse customSignalCondition) {
+        CustomSignalConditionResponse customSignalCondition) {
       this.customSignalCondition = customSignalCondition;
       return this;
     }
@@ -248,7 +250,7 @@ public final class ServerTemplateResponse {
     @Key("microPercentRange")
     private MicroPercentRangeResponse microPercentRange;
 
-    @Key("percentOperator")
+    @Key("percentConditionOperator")
     private String percentOperator;
 
     @Key("seed")
@@ -276,7 +278,7 @@ public final class ServerTemplateResponse {
     }
 
     public PercentConditionResponse setMicroPercentRange(
-          MicroPercentRangeResponse microPercentRange) {
+        MicroPercentRangeResponse microPercentRange) {
       this.microPercentRange = microPercentRange;
       return this;
     }
@@ -318,4 +320,3 @@ public final class ServerTemplateResponse {
     }
   }
 }
-
