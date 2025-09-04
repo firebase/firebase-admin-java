@@ -100,8 +100,8 @@ jobs:
       env:
         GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-        NEXUS_OSSRH_USERNAME: ${{ secrets.NEXUS_OSSRH_USERNAME }}
-        NEXUS_OSSRH_PASSWORD: ${{ secrets.NEXUS_OSSRH_PASSWORD }}
+        CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+        CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
 
     # See: https://cli.github.com/manual/gh_release_create
     - name: Create release tag
