@@ -38,6 +38,7 @@ import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.remoteconfig.internal.RemoteConfigServiceErrorResponse;
+import com.google.firebase.remoteconfig.internal.ServerTemplateResponse;
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
 
 import java.io.IOException;
@@ -51,6 +52,9 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
 
   private static final String REMOTE_CONFIG_URL = "https://firebaseremoteconfig.googleapis.com/v1/projects/%s/remoteConfig";
 
+  private static final String SERVER_REMOTE_CONFIG_URL =
+      "https://firebaseremoteconfig.googleapis.com/v1/projects/%s/namespaces/firebase-server/serverRemoteConfig";
+
   private static final Map<String, String> COMMON_HEADERS =
           ImmutableMap.of(
                   "X-Firebase-Client", "fire-admin-java/" + SdkUtils.getVersion(),
@@ -62,6 +66,7 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
           );
 
   private final String remoteConfigUrl;
+  private final String serverRemoteConfigUrl;
   private final HttpRequestFactory requestFactory;
   private final JsonFactory jsonFactory;
   private final ErrorHandlingHttpClient<FirebaseRemoteConfigException> httpClient;
@@ -69,6 +74,7 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
   private FirebaseRemoteConfigClientImpl(Builder builder) {
     checkArgument(!Strings.isNullOrEmpty(builder.projectId));
     this.remoteConfigUrl = String.format(REMOTE_CONFIG_URL, builder.projectId);
+    this.serverRemoteConfigUrl = String.format(SERVER_REMOTE_CONFIG_URL, builder.projectId);
     this.requestFactory = checkNotNull(builder.requestFactory);
     this.jsonFactory = checkNotNull(builder.jsonFactory);
     HttpResponseInterceptor responseInterceptor = builder.responseInterceptor;
@@ -80,6 +86,11 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
   @VisibleForTesting
   String getRemoteConfigUrl() {
     return remoteConfigUrl;
+  }
+
+  @VisibleForTesting
+  String getServerRemoteConfigUrl() {
+    return serverRemoteConfigUrl;
   }
 
   @VisibleForTesting
@@ -100,6 +111,18 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
     TemplateResponse templateResponse = httpClient.parse(response, TemplateResponse.class);
     Template template = new Template(templateResponse);
     return template.setETag(getETag(response));
+  }
+
+  @Override
+  public String getServerTemplate() throws FirebaseRemoteConfigException {
+    HttpRequestInfo request =
+        HttpRequestInfo.buildGetRequest(serverRemoteConfigUrl).addAllHeaders(COMMON_HEADERS);
+    IncomingHttpResponse response = httpClient.send(request);
+    ServerTemplateResponse templateResponse = httpClient.parse(response, 
+                                ServerTemplateResponse.class);
+    ServerTemplateData serverTemplateData = new ServerTemplateData(templateResponse);
+    serverTemplateData.setETag(getETag(response));
+    return serverTemplateData.toJSON(); 
   }
 
   @Override
@@ -267,3 +290,4 @@ final class FirebaseRemoteConfigClientImpl implements FirebaseRemoteConfigClient
     }
   }
 }
+
