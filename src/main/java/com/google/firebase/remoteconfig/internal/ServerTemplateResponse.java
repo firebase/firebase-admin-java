@@ -250,7 +250,7 @@ public final class ServerTemplateResponse {
     @Key("microPercentRange")
     private MicroPercentRangeResponse microPercentRange;
 
-    @Key("percentConditionOperator")
+    @Key("percentOperator")
     private String percentOperator;
 
     @Key("seed")
