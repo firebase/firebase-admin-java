@@ -55,7 +55,6 @@ final class ConditionEvaluator {
   Map<String, Boolean> evaluateConditions(
       @NonNull List<ServerCondition> conditions, @Nullable KeysAndValues context) {
     checkNotNull(conditions, "List of conditions must not be null.");
-    checkArgument(!conditions.isEmpty(), "List of conditions must not be empty.");
     if (context == null || conditions.isEmpty()) {
       return ImmutableMap.of();
     }
