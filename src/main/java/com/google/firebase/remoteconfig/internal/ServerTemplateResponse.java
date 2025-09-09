@@ -33,7 +33,7 @@ public final class ServerTemplateResponse {
   @Key("parameters")
   private Map<String, ParameterResponse> parameters;
 
-  @Key("serverConditions")
+  @Key("conditions")
   private List<ServerConditionResponse> serverConditions;
 
   @Key("parameterGroups")
@@ -104,7 +104,7 @@ public final class ServerTemplateResponse {
     @Key("name")
     private String name;
 
-    @Key("serverCondition")
+    @Key("condition")
     private OneOfConditionResponse condition;
 
     public String getName() {

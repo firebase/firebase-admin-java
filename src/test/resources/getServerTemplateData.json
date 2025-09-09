@@ -1,8 +1,8 @@
 {
-  "serverConditions": [
+  "conditions": [
     {
       "name": "custom_signal",
-      "serverCondition": {
+      "condition": {
         "orCondition": {
           "conditions": [
             {
@@ -26,7 +26,7 @@
     },
     {
       "name": "percent",
-      "serverCondition": {
+      "condition": {
         "orCondition": {
           "conditions": [
             {
@@ -51,7 +51,7 @@
     },
     {
       "name": "chained_conditions",
-      "serverCondition": {
+      "condition": {
         "orCondition": {
           "conditions": [
             {
