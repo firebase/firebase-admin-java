@@ -1,8 +1,8 @@
 {
-  "serverConditions": [
+  "conditions": [
     {
       "name": "custom_signal",
-      "serverCondition": {
+      "condition": {
         "orCondition": {
           "conditions": [
             {
@@ -26,7 +26,7 @@
     },
     {
       "name": "percent",
-      "serverCondition": {
+      "condition": {
         "orCondition": {
           "conditions": [
             {
@@ -34,7 +34,7 @@
                 "conditions": [
                   {
                     "percent": {
-                      "percentConditionOperator": "BETWEEN",
+                      "percentOperator": "BETWEEN",
                       "seed": "3maarirs9xzs",
                       "microPercentRange": {
                         "microPercentLowerBound": 12000000,
@@ -51,7 +51,7 @@
     },
     {
       "name": "chained_conditions",
-      "serverCondition": {
+      "condition": {
         "orCondition": {
           "conditions": [
             {
@@ -77,7 +77,7 @@
                   },
                   {
                     "percent": {
-                      "percentConditionOperator": "BETWEEN",
+                      "percentOperator": "BETWEEN",
                       "seed": "cla24qoibb61",
                       "microPercentRange": {
                         "microPercentLowerBound": 25000000,

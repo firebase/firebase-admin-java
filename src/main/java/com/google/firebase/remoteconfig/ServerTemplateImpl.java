@@ -86,7 +86,7 @@ public final class ServerTemplateImpl implements ServerTemplate {
 
     Map<String, Value> configValues = new HashMap<>();
     ImmutableMap<String, String> defaultConfigValues = defaultConfig.keysAndValues;
-    // Initializes config Value objects with default values.
+    // Initializes configValue objects with default values.
     for (String configName : defaultConfigValues.keySet()) {
       configValues.put(configName, new Value(ValueSource.DEFAULT,
           defaultConfigValues.get(configName)));
