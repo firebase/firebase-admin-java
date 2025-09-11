@@ -2,6 +2,7 @@ package com.google.firebase.auth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
@@ -17,6 +18,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+
 import org.junit.Test;
 
 public class UserRecordTest {
@@ -92,7 +94,7 @@ public class UserRecordTest {
                 .put("photoUrl", "http://photo.url")
                 .put("providerId", "providerId")
                 .build()
-            )
+        )
     );
     String json = JSON_FACTORY.toString(resp);
     UserRecord userRecord = parseUser(json);
@@ -105,6 +107,37 @@ public class UserRecordTest {
       assertEquals("1234567890", provider.getPhoneNumber());
       assertEquals("http://photo.url", provider.getPhotoUrl());
       assertEquals("providerId", provider.getProviderId());
+    }
+  }
+
+  @Test
+  public void testPhoneMultiFactors() throws IOException {
+    ImmutableMap<String, Object> resp = ImmutableMap.<String, Object>of(
+        "localId", "user",
+        "mfaInfo", ImmutableList.of(
+            ImmutableMap.builder()
+                .put("mfaEnrollmentId", "53HG4HG45HG8G04GJ40J4G3J")
+                .put("displayName", "Display Name")
+                .put("factorId", "phone")
+                .put("enrollmentTime", "Fri, 22 Sep 2017 01:49:58 GMT")
+                .put("phoneInfo", "+16505551234")
+                .build()
+        )
+    );
+    String json = JSON_FACTORY.toString(resp);
+    UserRecord userRecord = parseUser(json);
+    assertEquals("user", userRecord.getUid());
+
+    assertNotNull(userRecord.getMultiFactor());
+    PhoneMultiFactorInfo[] enrolledFactors = userRecord.getMultiFactor().getEnrolledFactors();
+    assertEquals(1, enrolledFactors.length);
+    for (PhoneMultiFactorInfo multiFactorInfo : enrolledFactors) {
+      assertEquals("53HG4HG45HG8G04GJ40J4G3J", multiFactorInfo.getUid());
+      assertEquals("Display Name", multiFactorInfo.getDisplayName());
+      assertEquals("phone", multiFactorInfo.getFactorId());
+      assertEquals("Fri, 22 Sep 2017 01:49:58 GMT", multiFactorInfo.getEnrollmentTime());
+      assertEquals("+16505551234", multiFactorInfo.getPhoneNumber());
+      assertNull(multiFactorInfo.getUnobfuscatedPhoneNumber());
     }
   }
 
