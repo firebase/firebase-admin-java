@@ -43,6 +43,7 @@ final class ConditionEvaluator {
   private static final int MAX_CONDITION_RECURSION_DEPTH = 10;
   private static final Logger logger = LoggerFactory.getLogger(ConditionEvaluator.class);
   private static final BigInteger MICRO_PERCENT_MODULO = BigInteger.valueOf(100_000_000L);
+  private static final Pattern SEMVER_PATTERN =  Pattern.compile("^[0-9]+(?:\\.[0-9]+){0,4}$");
 
   /**
    * Evaluates server conditions and assigns a boolean value to each condition.
@@ -340,7 +341,6 @@ final class ConditionEvaluator {
   }
 
   private boolean validateSemanticVersion(String version) {
-    Pattern pattern = Pattern.compile("^[0-9]+(?:\\.[0-9]+){0,4}$");
-    return pattern.matcher(version).matches();
+    return SEMVER_PATTERN.matcher(version).matches();
   }
 }

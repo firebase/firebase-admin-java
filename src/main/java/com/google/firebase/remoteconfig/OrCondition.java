@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OneOfConditionResponse;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OrConditionResponse;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -46,8 +45,8 @@ final class OrCondition {
   }
 
   @NonNull
-  List<OneOfCondition> getConditions() {
-    return new ArrayList<>(conditions);
+  ImmutableList<OneOfCondition> getConditions() {
+    return conditions;
   }
 
   OrConditionResponse toOrConditionResponse() {

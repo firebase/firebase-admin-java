@@ -24,7 +24,6 @@ import com.google.firebase.internal.NonNull;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.AndConditionResponse;
 import com.google.firebase.remoteconfig.internal.ServerTemplateResponse.OneOfConditionResponse;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,8 +48,8 @@ final class AndCondition {
   }
 
   @NonNull
-  List<OneOfCondition> getConditions() {
-    return new ArrayList<>(conditions);
+  ImmutableList<OneOfCondition> getConditions() {
+    return conditions;
   }
 
   AndConditionResponse toAndConditionResponse() {
