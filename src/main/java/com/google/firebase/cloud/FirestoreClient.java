@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * {@code FirestoreClient} provides access to Google Cloud Firestore. Use this API to obtain a
- * <a href="https://googlecloudplatform.github.io/google-cloud-java/google-cloud-clients/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
+ * <a href="https://cloud.google.com/java/docs/reference/google-cloud-firestore/latest/com.google.cloud.firestore.Firestore">{@code Firestore}</a>
  * instance, which provides methods for updating and querying data in Firestore.
  *
  * <p>A Google Cloud project ID is required to access Firestore. FirestoreClient determines the
@@ -60,7 +60,7 @@ public class FirestoreClient {
    * same instance for all invocations. The Firestore instance and all references obtained from it
    * becomes unusable, once the default app is deleted.
    *
-   * @return A non-null <a href="https://googlecloudplatform.github.io/google-cloud-java/google-cloud-clients/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
+   * @return A non-null <a href="https://cloud.google.com/java/docs/reference/google-cloud-firestore/latest/com.google.cloud.firestore.Firestore">{@code Firestore}</a>
    *     instance.
    */
   @NonNull
@@ -74,7 +74,7 @@ public class FirestoreClient {
    * obtained from it becomes unusable, once the specified app is deleted.
    *
    * @param app A non-null {@link FirebaseApp}.
-   * @return A non-null <a href="https://googlecloudplatform.github.io/google-cloud-java/google-cloud-clients/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
+   * @return A non-null <a href="https://cloud.google.com/java/docs/reference/google-cloud-firestore/latest/com.google.cloud.firestore.Firestore">{@code Firestore}</a>
    *     instance.
    */
   @NonNull
@@ -90,7 +90,7 @@ public class FirestoreClient {
    *
    * @param app      A non-null {@link FirebaseApp}.
    * @param database - The name of database.
-   * @return A non-null <a href="https://googlecloudplatform.github.io/google-cloud-java/google-cloud-clients/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
+   * @return A non-null <a href="https://cloud.google.com/java/docs/reference/google-cloud-firestore/latest/com.google.cloud.firestore.Firestore">{@code Firestore}</a>
    *     instance.
    */
   @NonNull
@@ -104,7 +104,7 @@ public class FirestoreClient {
    * references obtained from it becomes unusable, once the default app is deleted.
    *
    * @param database - The name of database.
-   * @return A non-null <a href="https://googlecloudplatform.github.io/google-cloud-java/google-cloud-clients/apidocs/com/google/cloud/firestore/Firestore.html">{@code Firestore}</a>
+   * @return A non-null <a href="https://cloud.google.com/java/docs/reference/google-cloud-firestore/latest/com.google.cloud.firestore.Firestore">{@code Firestore}</a>
    *     instance.
    */
   @NonNull

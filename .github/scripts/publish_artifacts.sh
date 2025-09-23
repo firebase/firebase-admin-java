@@ -26,7 +26,7 @@ gpg --import --no-tty --batch --yes firebase.asc
 #  1. Compiles the source (compile phase)
 #  2. Packages the artifacts - src, bin, javadocs (package phase)
 #  3. Signs the artifacts (verify phase)
-#  4. Publishes artifacts via Nexus (deploy phase)
+#  4. Publishes artifacts via Central Publisher Portal (deploy phase)
 mvn -B clean deploy \
   -Dcheckstyle.skip \
   -DskipTests \
