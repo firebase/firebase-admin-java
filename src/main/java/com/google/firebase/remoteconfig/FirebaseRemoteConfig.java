@@ -102,6 +102,73 @@ public final class FirebaseRemoteConfig {
   }
 
   /**
+   * Alternative to {@link #getServerTemplate} where developers can initialize with a pre-cached
+   * template or config.
+   */
+  public ServerTemplateImpl.Builder serverTemplateBuilder() {
+    return new ServerTemplateImpl.Builder(this.remoteConfigClient);
+  }
+
+  /**
+   * Initializes a template instance and loads the latest template data.
+   *
+   * @param defaultConfig Default parameter values to use if a getter references a parameter not
+   *     found in the template.
+   * @return A {@link Template} instance with the latest template data.
+   */
+  public ServerTemplate getServerTemplate(KeysAndValues defaultConfig)
+      throws FirebaseRemoteConfigException {
+    return getServerTemplateOp(defaultConfig).call();
+  }
+
+  /**
+   * Initializes a template instance without any defaults and loads the latest template data.
+   *
+   * @return A {@link Template} instance with the latest template data.
+   */
+  public ServerTemplate getServerTemplate() throws FirebaseRemoteConfigException {
+    return getServerTemplate(null);
+  }
+
+  /**
+   * Initializes a template instance and asynchronously loads the latest template data.
+   *
+   * @param defaultConfig Default parameter values to use if a getter references a parameter not
+   *     found in the template.
+   * @return A {@link Template} instance with the latest template data.
+   */
+  public ApiFuture<ServerTemplate> getServerTemplateAsync(KeysAndValues defaultConfig) {
+    return getServerTemplateOp(defaultConfig).callAsync(app);
+  }
+
+  /**
+   * Initializes a template instance without any defaults and asynchronously loads the latest
+   * template data.
+   *
+   * @return A {@link Template} instance with the latest template data.
+   */
+  public ApiFuture<ServerTemplate> getServerTemplateAsync() {
+    return getServerTemplateAsync(null);
+  }
+
+  private CallableOperation<ServerTemplate, FirebaseRemoteConfigException> getServerTemplateOp(
+      KeysAndValues defaultConfig) {
+    return new CallableOperation<ServerTemplate, FirebaseRemoteConfigException>() {
+      @Override
+      protected ServerTemplate execute() throws FirebaseRemoteConfigException {
+        String serverTemplateData = remoteConfigClient.getServerTemplate();
+        ServerTemplate template =
+                serverTemplateBuilder()
+                .defaultConfig(defaultConfig)
+                .cachedTemplate(serverTemplateData)
+                .build();
+        
+        return template;
+      }
+    };
+  }
+
+  /**
    * Gets the requested version of the of the Remote Config template.
    *
    * @param versionNumber The version number of the Remote Config template to get.
@@ -413,3 +480,4 @@ public final class FirebaseRemoteConfig {
     }
   }
 }
+
