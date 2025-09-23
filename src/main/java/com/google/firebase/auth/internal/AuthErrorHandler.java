@@ -74,6 +74,13 @@ final class AuthErrorHandler extends AbstractHttpErrorHandler<FirebaseAuthExcept
                       + "configured or authorized for the current project",
                   AuthErrorCode.INVALID_DYNAMIC_LINK_DOMAIN))
           .put(
+              "INVALID_HOSTING_LINK_DOMAIN",
+              new AuthError(
+                  ErrorCode.INVALID_ARGUMENT,
+                  "The provided hosting link domain is not configured in Firebase Hosting or is "
+                      + "not owned by the current project",
+                  AuthErrorCode.INVALID_HOSTING_LINK_DOMAIN))
+          .put(
               "PHONE_NUMBER_EXISTS",
               new AuthError(
                   ErrorCode.ALREADY_EXISTS,
@@ -180,7 +187,7 @@ final class AuthErrorHandler extends AbstractHttpErrorHandler<FirebaseAuthExcept
 
   /**
    * JSON data binding for JSON error messages sent by Google identity toolkit service. These
-   * error messages take the form `{"error": {"message": "CODE: OPTIONAL DETAILS"}}`.
+   * error messages take the form `{"error": {"message": "CODE : OPTIONAL DETAILS"}}`.
    */
   private static class AuthServiceErrorResponse {
 
@@ -196,7 +203,7 @@ final class AuthErrorHandler extends AbstractHttpErrorHandler<FirebaseAuthExcept
 
       int separator = message.indexOf(':');
       if (separator != -1) {
-        return message.substring(0, separator);
+        return message.substring(0, separator).trim();
       }
 
       return message;

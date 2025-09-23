@@ -82,6 +82,7 @@ public class FirebaseAuthIT {
   private static final JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
   private static final HttpTransport transport = ApiClientUtils.getDefaultTransport();
   private static final String ACTION_LINK_CONTINUE_URL = "http://localhost/?a=1&b=2#c=3";
+  private static final String INVALID_ACTION_LINK_CONTINUE_URL = "http://www.localhost/?a=1&b=2#c=3";
 
   private static final FirebaseAuth auth = FirebaseAuth.getInstance(
       IntegrationTestUtils.ensureDefaultApp());
@@ -866,6 +867,31 @@ public class FirebaseAuthIT {
     String idToken = signInWithEmailLink(user.getEmail(), linkParams.get("oobCode"));
     assertFalse(Strings.isNullOrEmpty(idToken));
     assertTrue(auth.getUser(user.getUid()).isEmailVerified());
+  }
+
+  @Test
+  public void testAuthErrorCodeParse() throws Exception {
+    RandomUser user = UserTestUtils.generateRandomUserInfo();
+    temporaryUser.create(new UserRecord.CreateRequest()
+        .setUid(user.getUid())
+        .setEmail(user.getEmail())
+        .setEmailVerified(false)
+        .setPassword("password"));
+    try {
+      auth.generateSignInWithEmailLink(user.getEmail(), ActionCodeSettings.builder()
+          .setUrl(INVALID_ACTION_LINK_CONTINUE_URL)
+          .build());
+      fail("No error thrown for invlaid custom hosting domain");
+    } catch (FirebaseAuthException e) {
+      assertEquals(
+          "The domain of the continue URL is not whitelisted (UNAUTHORIZED_DOMAIN): Domain not "
+              + "allowlisted by project",
+          e.getMessage());
+      assertEquals(ErrorCode.INVALID_ARGUMENT, e.getErrorCode());
+      assertNotNull(e.getCause());
+      assertNotNull(e.getHttpResponse());
+      assertEquals(AuthErrorCode.UNAUTHORIZED_CONTINUE_URL, e.getAuthErrorCode());
+    }
   }
 
   @Test
