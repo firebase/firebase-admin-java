@@ -34,8 +34,8 @@ public final class ServerTemplateImpl implements ServerTemplate {
 
   private final KeysAndValues defaultConfig;
   private FirebaseRemoteConfigClient client;
-  private ServerTemplateData cache;
-  private final AtomicReference<String> cachedTemplate; // Added field for cached template
+  private AtomicReference<ServerTemplateData> cache;
+  private final AtomicReference<String> cachedTemplate; 
   private static final Logger logger = LoggerFactory.getLogger(ServerTemplate.class);
 
   public static class Builder implements ServerTemplate.Builder {
@@ -69,8 +69,11 @@ public final class ServerTemplateImpl implements ServerTemplate {
     this.defaultConfig = builder.defaultConfig;
     this.cachedTemplate = new AtomicReference<>(builder.cachedTemplate);
     this.client = builder.client;
+    this.cache = new AtomicReference<>(null); 
+
+    String initialTemplate = this.cachedTemplate.get();
     try {
-      this.cache = ServerTemplateData.fromJSON(this.cachedTemplate.get());
+      this.cache.set(ServerTemplateData.fromJSON(initialTemplate));
     } catch (FirebaseRemoteConfigException e) {
       e.printStackTrace();
     }
@@ -79,7 +82,8 @@ public final class ServerTemplateImpl implements ServerTemplate {
   @Override
   public ServerConfig evaluate(@Nullable KeysAndValues context)
       throws FirebaseRemoteConfigException {
-    if (this.cache == null) {
+    ServerTemplateData cachedData = this.cache.get();
+    if (cachedData == null) {
       throw new FirebaseRemoteConfigException(ErrorCode.FAILED_PRECONDITION,
           "No Remote Config Server template in cache. Call load() before calling evaluate().");
     }
@@ -94,8 +98,8 @@ public final class ServerTemplateImpl implements ServerTemplate {
 
     ConditionEvaluator conditionEvaluator = new ConditionEvaluator();
     ImmutableMap<String, Boolean> evaluatedCondition = ImmutableMap.copyOf(
-        conditionEvaluator.evaluateConditions(cache.getServerConditions(), context));
-    ImmutableMap<String, Parameter> parameters = ImmutableMap.copyOf(cache.getParameters());
+        conditionEvaluator.evaluateConditions(cachedData.getServerConditions(), context));
+    ImmutableMap<String, Parameter> parameters = ImmutableMap.copyOf(cachedData.getParameters());
     mergeDerivedConfigValues(evaluatedCondition, parameters, configValues);
 
     return new ServerConfig(configValues);
@@ -110,7 +114,7 @@ public final class ServerTemplateImpl implements ServerTemplate {
   public ApiFuture<Void> load() throws FirebaseRemoteConfigException {
     String serverTemplate = client.getServerTemplate();
     this.cachedTemplate.set(serverTemplate);
-    this.cache = ServerTemplateData.fromJSON(serverTemplate);
+    this.cache.set(ServerTemplateData.fromJSON(serverTemplate));
     return ApiFutures.immediateFuture(null);
   }
 
@@ -125,12 +129,15 @@ public final class ServerTemplateImpl implements ServerTemplate {
 
   @Override
   public String toJson() {
-    return this.cache.toJSON();
+    ServerTemplateData currentCache = this.cache.get();
+    if (currentCache == null) {
+      return "{}"; 
+    }
+    return currentCache.toJSON();
   }
 
   private void mergeDerivedConfigValues(ImmutableMap<String, Boolean> evaluatedCondition,
       ImmutableMap<String, Parameter> parameters, Map<String, Value> configValues) {
-    // Overlays config Value objects derived by evaluating the template.
     for (String parameterName : parameters.keySet()) {
       Parameter parameter = parameters.get(parameterName);
       if (parameter == null) {
