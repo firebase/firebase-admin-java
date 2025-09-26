@@ -61,6 +61,7 @@ public class UserRecord implements UserInfo {
   private final long tokensValidAfterTimestamp;
   private final UserMetadata userMetadata;
   private final Map<String, Object> customClaims;
+  private final MultiFactorSettings multiFactor;
 
   UserRecord(User response, JsonFactory jsonFactory) {
     checkNotNull(response, "response must not be null");
@@ -82,6 +83,18 @@ public class UserRecord implements UserInfo {
         this.providers[i] = new ProviderUserInfo(response.getProviders()[i]);
       }
     }
+
+    if (response.getMfaInfo() == null || response.getMfaInfo().length == 0) {
+      this.multiFactor = new MultiFactorSettings(new PhoneMultiFactorInfo[0]);
+    } else {
+      int mfaInfoLength = response.getMfaInfo().length;
+      PhoneMultiFactorInfo[] multiFactorInfos = new PhoneMultiFactorInfo[mfaInfoLength];
+      for (int i = 0; i < multiFactorInfos.length; i++) {
+        multiFactorInfos[i] = new PhoneMultiFactorInfo(response.getMfaInfo()[i]);
+      }
+      this.multiFactor = new MultiFactorSettings(multiFactorInfos);
+    }
+
     this.tokensValidAfterTimestamp = response.getValidSince() * 1000;
 
     String lastRefreshAtRfc3339 = response.getLastRefreshAt();
@@ -238,6 +251,13 @@ public class UserRecord implements UserInfo {
   @NonNull
   public Map<String,Object> getCustomClaims() {
     return customClaims;
+  }
+
+  /**
+   * The multi-factor related properties for the current user, if available.
+   */
+  public MultiFactorSettings getMultiFactor() {
+    return multiFactor;
   }
 
   /**
