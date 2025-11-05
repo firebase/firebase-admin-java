@@ -224,6 +224,29 @@ public class MessageTest {
     assertJsonEquals(ImmutableMap.of("topic", "test-topic", "android", data), message);
   }
 
+  @Test
+  public void testAndroidMessageWithBandwidthConstrainedOk() throws IOException {
+    Message message = Message.builder()
+        .setAndroidConfig(AndroidConfig.builder()
+            .setBandwidthConstrainedOk(true)
+            .setNotification(AndroidNotification.builder()
+                .setTitle("android-title")
+                .setBody("android-body")
+                .build())
+            .build())
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> notification = ImmutableMap.<String, Object>builder()
+        .put("title", "android-title")
+        .put("body", "android-body")
+        .build();
+    Map<String, Object> data = ImmutableMap.of(
+        "bandwidth_constrained_ok", true,
+        "notification", notification
+    );
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "android", data), message);
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void testAndroidNotificationWithNegativeCount() throws IllegalArgumentException {
     AndroidNotification.builder().setNotificationCount(-1).build();
