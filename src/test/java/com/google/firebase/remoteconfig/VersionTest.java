@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 
 import com.google.firebase.remoteconfig.internal.TemplateResponse;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.VersionResponse;
@@ -27,15 +28,16 @@ import org.junit.Test;
 
 public class VersionTest {
 
-  @Test(expected = NullPointerException.class)
+  @Test
   public void testConstructorWithNullVersionResponse() {
-    new Version(null);
+    assertThrows(NullPointerException.class, () -> new Version(null));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testConstructorWithInvalidUpdateTime() {
-    new Version(new VersionResponse()
-            .setUpdateTime("sunday,26th"));
+    assertThrows(IllegalStateException.class, () -> 
+        new Version(new VersionResponse().setUpdateTime("sunday,26th")));
+
   }
 
   @Test
