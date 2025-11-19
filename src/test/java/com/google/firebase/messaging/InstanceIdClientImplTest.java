@@ -415,13 +415,13 @@ public class InstanceIdClientImplTest {
 
   @Test
   public void testTopicManagementResponseErrorNotInErrorCodes() {
-    String myError = "myError";
+    String myError = "MY_ERROR";
     GenericJson json = new GenericJson().set("error", myError);
     ImmutableList<GenericJson> jsonList = ImmutableList.of(json);
 
     TopicManagementResponse topicManagementResponse = new TopicManagementResponse(jsonList);
 
-    String expected = "[Error{index=0, reason=" + myError + "}]";
+    String expected = "[Error{index=0, reason=my-error}]";
     assertEquals(expected, topicManagementResponse.getErrors().toString());
   }
 
@@ -447,6 +447,18 @@ public class InstanceIdClientImplTest {
     assertEquals(expected, topicManagementResponse.getErrors().toString());
   }
 
+  @Test
+  public void testTopicManagementResponseErrorTooManyTopics() {
+    GenericJson json = new GenericJson().set("error", "TOO_MANY_TOPICS");
+    ImmutableList<GenericJson> jsonList = ImmutableList.of(json);
+
+    TopicManagementResponse topicManagementResponse = new TopicManagementResponse(jsonList);
+
+    String expected = "[Error{index=0, reason=too-many-topics}]";
+    assertEquals(expected, topicManagementResponse.getErrors().toString());
+  }
+
+
   private static InstanceIdClientImpl initInstanceIdClient(
       final MockLowLevelHttpResponse mockResponse,
       final HttpResponseInterceptor interceptor) {
@@ -466,7 +478,7 @@ public class InstanceIdClientImplTest {
     assertEquals(1, result.getFailureCount());
     assertEquals(1, result.getErrors().size());
     assertEquals(1, result.getErrors().get(0).getIndex());
-    assertEquals("error_reason", result.getErrors().get(0).getReason());
+    assertEquals("error-reason", result.getErrors().get(0).getReason());
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     request.getContent().writeTo(out);
