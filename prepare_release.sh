@@ -67,13 +67,12 @@ if [[ $(git status --porcelain) ]]; then
 fi
 
 echo "[INFO] Updating the main branch"
-git checkout main
-git pull origin main
+git fetch origin main
 
 TIMESTAMP=$(date +%s)
 RELEASE_BRANCH="release-${TIMESTAMP}"
 echo "[INFO] Creating new release branch: ${RELEASE_BRANCH}"
-git checkout -b ${RELEASE_BRANCH} main
+git checkout -b ${RELEASE_BRANCH} origin/main
 
 
 #################################
