@@ -66,14 +66,14 @@ if [[ $(git status --porcelain) ]]; then
     #exit 1
 fi
 
-echo "[INFO] Updating the master branch"
-git checkout master
-git pull origin master
+echo "[INFO] Updating the main branch"
+git checkout main
+git pull origin main
 
 TIMESTAMP=$(date +%s)
 RELEASE_BRANCH="release-${TIMESTAMP}"
 echo "[INFO] Creating new release branch: ${RELEASE_BRANCH}"
-git checkout -b ${RELEASE_BRANCH} master
+git checkout -b ${RELEASE_BRANCH} main
 
 
 #################################
