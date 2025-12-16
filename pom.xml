@@ -124,7 +124,7 @@
                     <plugin>
                         <!-- Update relative paths in generated API docs -->
                         <artifactId>maven-antrun-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.0</version>
                         <executions>
                             <execution>
                                 <phase>site</phase>
