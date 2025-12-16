@@ -404,7 +404,30 @@ public class InstanceIdClientImplTest {
 
   @Test
   public void testTopicManagementResponseErrorToString() {
-    GenericJson json = new GenericJson().set("error", "test error");
+    GenericJson json = new GenericJson().set("error", "INVALID_ARGUMENT");
+    ImmutableList<GenericJson> jsonList = ImmutableList.of(json);
+
+    TopicManagementResponse topicManagementResponse = new TopicManagementResponse(jsonList);
+
+    String expected = "[Error{index=0, reason=invalid-argument}]";
+    assertEquals(expected, topicManagementResponse.getErrors().toString());
+  }
+
+  @Test
+  public void testTopicManagementResponseErrorNotInErrorCodes() {
+    String myError = "MY_ERROR";
+    GenericJson json = new GenericJson().set("error", myError);
+    ImmutableList<GenericJson> jsonList = ImmutableList.of(json);
+
+    TopicManagementResponse topicManagementResponse = new TopicManagementResponse(jsonList);
+
+    String expected = "[Error{index=0, reason=my-error}]";
+    assertEquals(expected, topicManagementResponse.getErrors().toString());
+  }
+
+  @Test
+  public void testTopicManagementResponseErrorUnknown() {
+    GenericJson json = new GenericJson().set("error", "");
     ImmutableList<GenericJson> jsonList = ImmutableList.of(json);
 
     TopicManagementResponse topicManagementResponse = new TopicManagementResponse(jsonList);
@@ -412,6 +435,29 @@ public class InstanceIdClientImplTest {
     String expected = "[Error{index=0, reason=unknown-error}]";
     assertEquals(expected, topicManagementResponse.getErrors().toString());
   }
+
+  @Test
+  public void testTopicManagementResponseErrorResourceExhausted() {
+    GenericJson json = new GenericJson().set("error", "RESOURCE_EXHAUSTED");
+    ImmutableList<GenericJson> jsonList = ImmutableList.of(json);
+
+    TopicManagementResponse topicManagementResponse = new TopicManagementResponse(jsonList);
+
+    String expected = "[Error{index=0, reason=resource-exhausted}]";
+    assertEquals(expected, topicManagementResponse.getErrors().toString());
+  }
+
+  @Test
+  public void testTopicManagementResponseErrorTooManyTopics() {
+    GenericJson json = new GenericJson().set("error", "TOO_MANY_TOPICS");
+    ImmutableList<GenericJson> jsonList = ImmutableList.of(json);
+
+    TopicManagementResponse topicManagementResponse = new TopicManagementResponse(jsonList);
+
+    String expected = "[Error{index=0, reason=too-many-topics}]";
+    assertEquals(expected, topicManagementResponse.getErrors().toString());
+  }
+
 
   private static InstanceIdClientImpl initInstanceIdClient(
       final MockLowLevelHttpResponse mockResponse,
@@ -432,7 +478,7 @@ public class InstanceIdClientImplTest {
     assertEquals(1, result.getFailureCount());
     assertEquals(1, result.getErrors().size());
     assertEquals(1, result.getErrors().get(0).getIndex());
-    assertEquals("unknown-error", result.getErrors().get(0).getReason());
+    assertEquals("error-reason", result.getErrors().get(0).getReason());
 
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     request.getContent().writeTo(out);
