@@ -18,7 +18,10 @@ package com.google.firebase.remoteconfig;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
+import com.google.common.collect.ImmutableList;
+import com.google.firebase.remoteconfig.ParameterValue.ExperimentVariantValue;
 import org.junit.Test;
 
 public class ParameterValueTest {
@@ -38,6 +41,44 @@ public class ParameterValueTest {
   }
 
   @Test
+  public void testCreateRolloutValue() {
+    final ParameterValue.RolloutValue parameterValue =
+            ParameterValue.rollout("rollout_1", "value_1", 10.0);
+
+    assertEquals("rollout_1", parameterValue.getRolloutId());
+    assertEquals("value_1", parameterValue.getValue());
+    assertEquals(10.0, parameterValue.getPercent(), 0.0);
+  }
+
+  @Test
+  public void testCreatePersonalizationValue() {
+    final ParameterValue.PersonalizationValue parameterValue =
+            ParameterValue.personalization("personalization_1");
+
+    assertEquals("personalization_1", parameterValue.getPersonalizationId());
+  }
+
+  @Test
+  public void testCreateExperimentValue() {
+    final ParameterValue.ExperimentValue parameterValue =
+            ParameterValue.experiment("experiment_1", ImmutableList.of(
+                    ExperimentVariantValue.of("variant_1", "value_1"),
+                    ExperimentVariantValue.ofNoChange("variant_2")
+            ));
+
+    assertEquals("experiment_1", parameterValue.getExperimentId());
+    assertEquals(2, parameterValue.getExperimentVariantValues().size());
+    ExperimentVariantValue variant1 = parameterValue.getExperimentVariantValues().get(0);
+    assertEquals("variant_1", variant1.getVariantId());
+    assertEquals("value_1", variant1.getValue());
+    assertEquals(false, variant1.isNoChange());
+    ExperimentVariantValue variant2 = parameterValue.getExperimentVariantValues().get(1);
+    assertEquals("variant_2", variant2.getVariantId());
+    assertEquals(null, variant2.getValue());
+    assertEquals(true, variant2.isNoChange());
+  }
+
+  @Test
   public void testEquality() {
     ParameterValue.Explicit parameterValueOne = ParameterValue.of("value");
     ParameterValue.Explicit parameterValueTwo = ParameterValue.of("value");
@@ -50,5 +91,41 @@ public class ParameterValueTest {
     ParameterValue.InAppDefault parameterValueFive = ParameterValue.inAppDefault();
 
     assertEquals(parameterValueFour, parameterValueFive);
+
+    ParameterValue.RolloutValue rolloutValueOne =
+            ParameterValue.rollout("rollout_1", "value_1", 10.0);
+    ParameterValue.RolloutValue rolloutValueTwo =
+            ParameterValue.rollout("rollout_1", "value_1", 10.0);
+    ParameterValue.RolloutValue rolloutValueThree =
+            ParameterValue.rollout("rollout_2", "value_1", 10.0);
+
+    assertEquals(rolloutValueOne, rolloutValueTwo);
+    assertNotEquals(rolloutValueOne, rolloutValueThree);
+
+    ParameterValue.PersonalizationValue personalizationValueOne =
+            ParameterValue.personalization("personalization_1");
+    ParameterValue.PersonalizationValue personalizationValueTwo =
+            ParameterValue.personalization("personalization_1");
+    ParameterValue.PersonalizationValue personalizationValueThree =
+            ParameterValue.personalization("personalization_2");
+
+    assertEquals(personalizationValueOne, personalizationValueTwo);
+    assertNotEquals(personalizationValueOne, personalizationValueThree);
+
+    ParameterValue.ExperimentValue experimentValueOne =
+            ParameterValue.experiment("experiment_1", ImmutableList.of(
+                    ExperimentVariantValue.of("variant_1", "value_1")
+            ));
+    ParameterValue.ExperimentValue experimentValueTwo =
+            ParameterValue.experiment("experiment_1", ImmutableList.of(
+                    ExperimentVariantValue.of("variant_1", "value_1")
+            ));
+    ParameterValue.ExperimentValue experimentValueThree =
+            ParameterValue.experiment("experiment_2", ImmutableList.of(
+                    ExperimentVariantValue.of("variant_1", "value_1")
+            ));
+
+    assertEquals(experimentValueOne, experimentValueTwo);
+    assertNotEquals(experimentValueOne, experimentValueThree);
   }
 }

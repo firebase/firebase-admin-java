@@ -161,12 +161,33 @@ public final class TemplateResponse {
     @Key("useInAppDefault")
     private Boolean useInAppDefault;
 
+    @Key("rolloutValue")
+    private RolloutValueResponse rolloutValue;
+
+    @Key("personalizationValue")
+    private PersonalizationValueResponse personalizationValue;
+
+    @Key("experimentValue")
+    private ExperimentValueResponse experimentValue;
+
     public String getValue() {
       return value;
     }
 
     public boolean isUseInAppDefault() {
       return Boolean.TRUE.equals(this.useInAppDefault);
+    }
+
+    public RolloutValueResponse getRolloutValue() {
+      return rolloutValue;
+    }
+
+    public PersonalizationValueResponse getPersonalizationValue() {
+      return personalizationValue;
+    }
+
+    public ExperimentValueResponse getExperimentValue() {
+      return experimentValue;
     }
 
     public ParameterValueResponse setValue(String value) {
@@ -176,6 +197,155 @@ public final class TemplateResponse {
 
     public ParameterValueResponse setUseInAppDefault(boolean useInAppDefault) {
       this.useInAppDefault = useInAppDefault;
+      return this;
+    }
+
+    public ParameterValueResponse setRolloutValue(RolloutValueResponse rolloutValue) {
+      this.rolloutValue = rolloutValue;
+      return this;
+    }
+
+    public ParameterValueResponse setPersonalizationValue(
+            PersonalizationValueResponse personalizationValue) {
+      this.personalizationValue = personalizationValue;
+      return this;
+    }
+
+    public ParameterValueResponse setExperimentValue(ExperimentValueResponse experimentValue) {
+      this.experimentValue = experimentValue;
+      return this;
+    }
+  }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config Rollout value responses from the
+   * Remote Config service.
+   **/
+  public static final class RolloutValueResponse {
+    @Key("rolloutId")
+    private String rolloutId;
+
+    @Key("value")
+    private String value;
+
+    @Key("percent")
+    private Double percent;
+
+    public String getRolloutId() {
+      return rolloutId;
+    }
+
+    public String getValue() {
+      return value;
+    }
+
+    public Double getPercent() {
+      return percent;
+    }
+
+    public RolloutValueResponse setRolloutId(String rolloutId) {
+      this.rolloutId = rolloutId;
+      return this;
+    }
+
+    public RolloutValueResponse setValue(String value) {
+      this.value = value;
+      return this;
+    }
+
+    public RolloutValueResponse setPercent(Double percent) {
+      this.percent = percent;
+      return this;
+    }
+  }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config Personalization value responses from the
+   * Remote Config service.
+   **/
+  public static final class PersonalizationValueResponse {
+    @Key("personalizationId")
+    private String personalizationId;
+
+    public String getPersonalizationId() {
+      return personalizationId;
+    }
+
+    public PersonalizationValueResponse setPersonalizationId(String personalizationId) {
+      this.personalizationId = personalizationId;
+      return this;
+    }
+  }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config Experiment value responses from the
+   * Remote Config service.
+   **/
+  public static final class ExperimentValueResponse {
+    @Key("experimentId")
+    private String experimentId;
+
+    @Key("experimentVariantValues")
+    private List<ExperimentVariantValueResponse> experimentVariantValues;
+
+    public String getExperimentId() {
+      return experimentId;
+    }
+
+    public List<ExperimentVariantValueResponse> getExperimentVariantValues() {
+      return experimentVariantValues;
+    }
+
+    public ExperimentValueResponse setExperimentId(String experimentId) {
+      this.experimentId = experimentId;
+      return this;
+    }
+
+    public ExperimentValueResponse setExperimentVariantValues(
+            List<ExperimentVariantValueResponse> experimentVariantValues) {
+      this.experimentVariantValues = experimentVariantValues;
+      return this;
+    }
+  }
+
+  /**
+   * The Data Transfer Object for parsing Remote Config Experiment variant value responses from the
+   * Remote Config service.
+   **/
+  public static final class ExperimentVariantValueResponse {
+    @Key("variantId")
+    private String variantId;
+
+    @Key("value")
+    private String value;
+
+    @Key("noChange")
+    private Boolean noChange;
+
+    public String getVariantId() {
+      return variantId;
+    }
+
+    public String getValue() {
+      return value;
+    }
+
+    public Boolean getNoChange() {
+      return noChange;
+    }
+
+    public ExperimentVariantValueResponse setVariantId(String variantId) {
+      this.variantId = variantId;
+      return this;
+    }
+
+    public ExperimentVariantValueResponse setValue(String value) {
+      this.value = value;
+      return this;
+    }
+
+    public ExperimentVariantValueResponse setNoChange(Boolean noChange) {
+      this.noChange = noChange;
       return this;
     }
   }
