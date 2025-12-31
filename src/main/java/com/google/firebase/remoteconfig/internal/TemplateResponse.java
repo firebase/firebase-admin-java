@@ -285,7 +285,7 @@ public final class TemplateResponse {
     @Key("experimentId")
     private String experimentId;
 
-    @Key("experimentVariantValues")
+    @Key("variantValue")
     private List<ExperimentVariantValueResponse> experimentVariantValues;
 
     public String getExperimentId() {

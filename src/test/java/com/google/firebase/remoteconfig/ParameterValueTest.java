@@ -43,7 +43,7 @@ public class ParameterValueTest {
   @Test
   public void testCreateRolloutValue() {
     final ParameterValue.RolloutValue parameterValue =
-            ParameterValue.rollout("rollout_1", "value_1", 10.0);
+            ParameterValue.ofRollout("rollout_1", "value_1", 10.0);
 
     assertEquals("rollout_1", parameterValue.getRolloutId());
     assertEquals("value_1", parameterValue.getValue());
@@ -53,7 +53,7 @@ public class ParameterValueTest {
   @Test
   public void testCreatePersonalizationValue() {
     final ParameterValue.PersonalizationValue parameterValue =
-            ParameterValue.personalization("personalization_1");
+            ParameterValue.ofPersonalization("personalization_1");
 
     assertEquals("personalization_1", parameterValue.getPersonalizationId());
   }
@@ -61,7 +61,7 @@ public class ParameterValueTest {
   @Test
   public void testCreateExperimentValue() {
     final ParameterValue.ExperimentValue parameterValue =
-            ParameterValue.experiment("experiment_1", ImmutableList.of(
+            ParameterValue.ofExperiment("experiment_1", ImmutableList.of(
                     ExperimentVariantValue.of("variant_1", "value_1"),
                     ExperimentVariantValue.ofNoChange("variant_2")
             ));
@@ -93,35 +93,35 @@ public class ParameterValueTest {
     assertEquals(parameterValueFour, parameterValueFive);
 
     ParameterValue.RolloutValue rolloutValueOne =
-            ParameterValue.rollout("rollout_1", "value_1", 10.0);
+            ParameterValue.ofRollout("rollout_1", "value_1", 10.0);
     ParameterValue.RolloutValue rolloutValueTwo =
-            ParameterValue.rollout("rollout_1", "value_1", 10.0);
+            ParameterValue.ofRollout("rollout_1", "value_1", 10.0);
     ParameterValue.RolloutValue rolloutValueThree =
-            ParameterValue.rollout("rollout_2", "value_1", 10.0);
+            ParameterValue.ofRollout("rollout_2", "value_1", 10.0);
 
     assertEquals(rolloutValueOne, rolloutValueTwo);
     assertNotEquals(rolloutValueOne, rolloutValueThree);
 
     ParameterValue.PersonalizationValue personalizationValueOne =
-            ParameterValue.personalization("personalization_1");
+            ParameterValue.ofPersonalization("personalization_1");
     ParameterValue.PersonalizationValue personalizationValueTwo =
-            ParameterValue.personalization("personalization_1");
+            ParameterValue.ofPersonalization("personalization_1");
     ParameterValue.PersonalizationValue personalizationValueThree =
-            ParameterValue.personalization("personalization_2");
+            ParameterValue.ofPersonalization("personalization_2");
 
     assertEquals(personalizationValueOne, personalizationValueTwo);
     assertNotEquals(personalizationValueOne, personalizationValueThree);
 
     ParameterValue.ExperimentValue experimentValueOne =
-            ParameterValue.experiment("experiment_1", ImmutableList.of(
+            ParameterValue.ofExperiment("experiment_1", ImmutableList.of(
                     ExperimentVariantValue.of("variant_1", "value_1")
             ));
     ParameterValue.ExperimentValue experimentValueTwo =
-            ParameterValue.experiment("experiment_1", ImmutableList.of(
+            ParameterValue.ofExperiment("experiment_1", ImmutableList.of(
                     ExperimentVariantValue.of("variant_1", "value_1")
             ));
     ParameterValue.ExperimentValue experimentValueThree =
-            ParameterValue.experiment("experiment_2", ImmutableList.of(
+            ParameterValue.ofExperiment("experiment_2", ImmutableList.of(
                     ExperimentVariantValue.of("variant_1", "value_1")
             ));
 

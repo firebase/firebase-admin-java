@@ -62,7 +62,7 @@ public abstract class ParameterValue {
    * @param percent The percentage of the rollout.
    * @return A {@link ParameterValue.RolloutValue} instance.
    */
-  public static RolloutValue rollout(String rolloutId, String value, double percent) {
+  public static RolloutValue ofRollout(String rolloutId, String value, double percent) {
     return new RolloutValue(rolloutId, value, percent);
   }
 
@@ -72,7 +72,7 @@ public abstract class ParameterValue {
    * @param personalizationId The personalization ID.
    * @return A {@link ParameterValue.PersonalizationValue} instance.
    */
-  public static PersonalizationValue personalization(String personalizationId) {
+  public static PersonalizationValue ofPersonalization(String personalizationId) {
     return new PersonalizationValue(personalizationId);
   }
 
@@ -83,7 +83,7 @@ public abstract class ParameterValue {
    * @param variantValues The list of experiment variant values.
    * @return A {@link ParameterValue.ExperimentValue} instance.
    */
-  public static ExperimentValue experiment(String experimentId,
+  public static ExperimentValue ofExperiment(String experimentId,
                                    List<ExperimentVariantValue> variantValues) {
     return new ExperimentValue(experimentId, variantValues);
   }
@@ -98,11 +98,11 @@ public abstract class ParameterValue {
     }
     if (parameterValueResponse.getRolloutValue() != null) {
       RolloutValueResponse rv = parameterValueResponse.getRolloutValue();
-      return ParameterValue.rollout(rv.getRolloutId(), rv.getValue(), rv.getPercent());
+      return ParameterValue.ofRollout(rv.getRolloutId(), rv.getValue(), rv.getPercent());
     }
     if (parameterValueResponse.getPersonalizationValue() != null) {
       PersonalizationValueResponse pv = parameterValueResponse.getPersonalizationValue();
-      return ParameterValue.personalization(pv.getPersonalizationId());
+      return ParameterValue.ofPersonalization(pv.getPersonalizationId());
     }
     if (parameterValueResponse.getExperimentValue() != null) {
       ExperimentValueResponse ev = parameterValueResponse.getExperimentValue();
@@ -112,7 +112,7 @@ public abstract class ParameterValue {
                 new ExperimentVariantValue(evv.getVariantId(), evv.getValue(),
                         evv.getNoChange()));
       }
-      return ParameterValue.experiment(ev.getExperimentId(), variantValues);
+      return ParameterValue.ofExperiment(ev.getExperimentId(), variantValues);
     }
     return ParameterValue.of(parameterValueResponse.getValue());
   }
