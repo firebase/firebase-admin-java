@@ -16,6 +16,7 @@
 
 package com.google.firebase.remoteconfig;
 
+import static java.util.stream.Collectors.toList;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.firebase.internal.NonNull;
@@ -106,12 +107,9 @@ public abstract class ParameterValue {
     }
     if (parameterValueResponse.getExperimentValue() != null) {
       ExperimentValueResponse ev = parameterValueResponse.getExperimentValue();
-      List<ExperimentVariantValue> variantValues = new ArrayList<>();
-      for (ExperimentVariantValueResponse evv : ev.getExperimentVariantValues()) {
-        variantValues.add(
-                new ExperimentVariantValue(evv.getVariantId(), evv.getValue(),
-                        evv.getNoChange()));
-      }
+      List<ExperimentVariantValue> variantValues = ev.getExperimentVariantValues().stream()
+        .map(evv -> new ExperimentVariantValue(evv.getVariantId(), evv.getValue(), evv.getNoChange()))
+        .collect(toList());
       return ParameterValue.ofExperiment(ev.getExperimentId(), variantValues);
     }
     return ParameterValue.of(parameterValueResponse.getValue());
@@ -368,13 +366,12 @@ public abstract class ParameterValue {
 
     @Override
     ParameterValueResponse toParameterValueResponse() {
-      List<ExperimentVariantValueResponse> variantValueResponses = new ArrayList<>();
-      for (ExperimentVariantValue variantValue : variantValues) {
-        variantValueResponses.add(new ExperimentVariantValueResponse()
-                .setVariantId(variantValue.getVariantId())
-                .setValue(variantValue.getValue())
-                .setNoChange(variantValue.isNoChange()));
-      }
+      List<ExperimentVariantValueResponse> variantValueResponses = variantValues.stream()
+        .map(variantValue -> new ExperimentVariantValueResponse()
+            .setVariantId(variantValue.getVariantId())
+            .setValue(variantValue.getValue())
+            .setNoChange(variantValue.isNoChange()))
+        .collect(toList());
       return new ParameterValueResponse().setExperimentValue(
               new ExperimentValueResponse()
                       .setExperimentId(this.experimentId)
