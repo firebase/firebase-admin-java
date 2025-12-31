@@ -22,6 +22,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
@@ -147,6 +148,33 @@ public class FirebaseRemoteConfigTest {
     Template template = remoteConfig.getTemplate();
 
     assertEquals(TEST_ETAG, template.getETag());
+  }
+
+  @Test
+  public void testGetTemplateWithManagedValues() throws FirebaseRemoteConfigException {
+    Template template = new Template()
+        .setETag(TEST_ETAG)
+        .setParameters(ImmutableMap.of(
+            "p1", new Parameter().setDefaultValue(
+                ParameterValue.ofRollout("rollout_1", "value_1", 10.0)),
+            "p2", new Parameter().setDefaultValue(
+                ParameterValue.ofPersonalization("personalization_1"))
+        ));
+    MockRemoteConfigClient client = MockRemoteConfigClient.fromTemplate(template);
+    FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
+
+    Template fetchedTemplate = remoteConfig.getTemplate();
+
+    assertEquals(TEST_ETAG, fetchedTemplate.getETag());
+    ParameterValue.RolloutValue rolloutValue =
+        (ParameterValue.RolloutValue) fetchedTemplate.getParameters().get("p1").getDefaultValue();
+    assertEquals("rollout_1", rolloutValue.getRolloutId());
+    assertEquals("value_1", rolloutValue.getValue());
+    assertEquals(10.0, rolloutValue.getPercent(), 0.0);
+
+    ParameterValue.PersonalizationValue personalizationValue =
+        (ParameterValue.PersonalizationValue) fetchedTemplate.getParameters().get("p2").getDefaultValue();
+    assertEquals("personalization_1", personalizationValue.getPersonalizationId());
   }
 
   @Test
