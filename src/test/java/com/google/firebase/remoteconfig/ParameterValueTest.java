@@ -124,8 +124,13 @@ public class ParameterValueTest {
             ParameterValue.ofExperiment("experiment_2", ImmutableList.of(
                     ExperimentVariantValue.of("variant_1", "value_1")
             ));
+    ParameterValue.ExperimentValue experimentValueFour =
+            ParameterValue.ofExperiment("experiment_1", ImmutableList.of(
+                    ExperimentVariantValue.of("variant_2", "value_2")
+            ));
 
     assertEquals(experimentValueOne, experimentValueTwo);
     assertNotEquals(experimentValueOne, experimentValueThree);
+    assertNotEquals(experimentValueOne, experimentValueFour);
   }
 }
