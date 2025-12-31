@@ -155,10 +155,10 @@ public class FirebaseRemoteConfigTest {
     Template template = new Template()
         .setETag(TEST_ETAG)
         .setParameters(ImmutableMap.of(
-            "p1", new Parameter().setDefaultValue(
-                ParameterValue.ofRollout("rollout_1", "value_1", 10.0)),
-            "p2", new Parameter().setDefaultValue(
-                ParameterValue.ofPersonalization("personalization_1"))
+            "p1", new Parameter().setConditionalValues(ImmutableMap.of(
+                "c1", ParameterValue.ofRollout("rollout_1", "value_1", 10.0))),
+            "p2", new Parameter().setConditionalValues(ImmutableMap.of(
+                "c2", ParameterValue.ofPersonalization("personalization_1")))
         ));
     MockRemoteConfigClient client = MockRemoteConfigClient.fromTemplate(template);
     FirebaseRemoteConfig remoteConfig = getRemoteConfig(client);
@@ -167,13 +167,15 @@ public class FirebaseRemoteConfigTest {
 
     assertEquals(TEST_ETAG, fetchedTemplate.getETag());
     ParameterValue.RolloutValue rolloutValue =
-        (ParameterValue.RolloutValue) fetchedTemplate.getParameters().get("p1").getDefaultValue();
+        (ParameterValue.RolloutValue) fetchedTemplate.getParameters().get("p1")
+            .getConditionalValues().get("c1");
     assertEquals("rollout_1", rolloutValue.getRolloutId());
     assertEquals("value_1", rolloutValue.getValue());
     assertEquals(10.0, rolloutValue.getPercent(), 0.0);
 
     ParameterValue.PersonalizationValue personalizationValue =
-        (ParameterValue.PersonalizationValue) fetchedTemplate.getParameters().get("p2").getDefaultValue();
+        (ParameterValue.PersonalizationValue) fetchedTemplate.getParameters().get("p2")
+            .getConditionalValues().get("c2");
     assertEquals("personalization_1", personalizationValue.getPersonalizationId());
   }
 
