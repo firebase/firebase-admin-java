@@ -298,7 +298,7 @@ public abstract class ParameterValue {
      * @return A {@link ExperimentVariantValue} instance.
      */
     public static ExperimentVariantValue of(String variantId, String value) {
-      return new ExperimentVariantValue(variantId, value, false);
+      return new ExperimentVariantValue(variantId, value, null);
     }
 
     /**
