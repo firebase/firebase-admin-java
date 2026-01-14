@@ -16,6 +16,15 @@
 
 package com.google.firebase.fpnv;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -23,17 +32,12 @@ import com.google.firebase.fpnv.internal.FirebasePnvTokenVerifier;
 import com.google.firebase.internal.FirebaseProcessEnvironment;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
+import java.lang.reflect.Field;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import java.lang.reflect.Field;
-
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
 
 public class FirebasePnvTest {
   private static final FirebaseOptions firebaseOptions = FirebaseOptions.builder()
@@ -82,7 +86,7 @@ public class FirebasePnvTest {
   }
 
   @Test
-  public void testVerifyToken_DelegatesToVerifier() {
+  public void testVerifyToken_DelegatesToVerifier() throws FirebasePnvException {
     String testToken = "test.fpnv.token";
     FirebasePnvToken expectedToken = mock(FirebasePnvToken.class);
 
@@ -95,9 +99,12 @@ public class FirebasePnvTest {
   }
 
   @Test
-  public void testVerifyToken_PropagatesException() {
+  public void testVerifyToken_PropagatesException() throws FirebasePnvException {
     String testToken = "bad.token";
-    FirebasePnvException error = new FirebasePnvException(FirebasePnvErrorCode.INVALID_TOKEN, "Bad token");
+    FirebasePnvException error = new FirebasePnvException(
+        FirebasePnvErrorCode.INVALID_TOKEN,
+        "Bad token"
+    );
 
     when(mockVerifier.verifyToken(testToken)).thenThrow(error);
 
