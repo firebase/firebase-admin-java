@@ -95,14 +95,20 @@ public class FirebasePnvTokenVerifier {
     } catch (ParseException e) {
       throw new FirebasePnvException(
           FirebasePnvErrorCode.INVALID_TOKEN,
-          "Failed to parse JWT token: " + e.getMessage()
+          "Failed to parse JWT token: " + e.getMessage(),
+          e
       );
     } catch (ExpiredJWTException e) {
-      throw new FirebasePnvException(FirebasePnvErrorCode.TOKEN_EXPIRED, "FPNV token has expired.");
+      throw new FirebasePnvException(
+          FirebasePnvErrorCode.TOKEN_EXPIRED,
+          "FPNV token has expired.",
+          e
+      );
     } catch (BadJOSEException | JOSEException e) {
       throw new FirebasePnvException(FirebasePnvErrorCode.SERVICE_ERROR,
           "Check your project: " + projectId + ". "
-              + e.getMessage()
+              + e.getMessage(),
+          e
       );
     }
   }
@@ -140,7 +146,7 @@ public class FirebasePnvTokenVerifier {
 
     if (Strings.isNullOrEmpty(issuer)) {
       throw new FirebasePnvException(FirebasePnvErrorCode.INVALID_ARGUMENT,
-          "Invalid issuer. Expected: " + issuer);
+          "FPNV token has no 'iss' (issuer) claim.");
     }
 
     // Verify Audience
