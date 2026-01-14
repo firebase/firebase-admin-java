@@ -18,6 +18,7 @@ package com.google.firebase.fpnv;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
@@ -54,21 +55,25 @@ public class FirebasePnvToken {
    * Returns the audience for which this token is intended.
    */
   public List<String> getAudience() {
-    return (List<String>) claims.get("aud");
+    Object audience = claims.get("aud");
+    if (audience instanceof String) {
+      return ImmutableList.of((String) audience);
+    }
+    return (List<String>) audience;
   }
 
   /**
    * Returns the expiration time in seconds since the Unix epoch.
    */
   public long getExpirationTime() {
-    return (long) claims.get("exp");
+    return ((java.util.Date) claims.get("exp")).getTime();
   }
 
   /**
    * Returns the issued-at time in seconds since the Unix epoch.
    */
   public long getIssuedAt() {
-    return (long) claims.get("iat");
+    return ((java.util.Date) claims.get("iat")).getTime();
   }
 
   /**

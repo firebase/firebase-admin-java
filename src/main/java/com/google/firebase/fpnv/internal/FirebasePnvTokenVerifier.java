@@ -101,7 +101,7 @@ public class FirebasePnvTokenVerifier {
       throw new FirebasePnvException(FirebasePnvErrorCode.TOKEN_EXPIRED, "FPNV token has expired.");
     } catch (BadJOSEException | JOSEException e) {
       throw new FirebasePnvException(FirebasePnvErrorCode.SERVICE_ERROR,
-          "Chek your project: " + projectId + ". "
+          "Check your project: " + projectId + ". "
               + e.getMessage()
       );
     }
@@ -160,15 +160,6 @@ public class FirebasePnvTokenVerifier {
           FirebasePnvErrorCode.INVALID_TOKEN,
           "Token has an empty 'sub' (phone number)."
       );
-    }
-
-    // TODO: i guess this is redundant
-    //  jwtProcessor.process did this already
-    // Verify Expiration
-    Date now = new Date();
-    Date exp = claims.getExpirationTime();
-    if (exp == null || now.after(exp)) {
-      throw new FirebasePnvException(FirebasePnvErrorCode.TOKEN_EXPIRED, "Token has expired.");
     }
   }
 

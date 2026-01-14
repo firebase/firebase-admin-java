@@ -21,21 +21,21 @@ package com.google.firebase.fpnv;
  * Check the error code and message for more
  * details.
  */
-public class FirebasePnvException extends RuntimeException {
+public class FirebasePnvException extends Exception {
   private final FirebasePnvErrorCode errorCode;
 
   /**
    * Exception that created from {@link FirebasePnvErrorCode} and {@link String} message.
    *
-   * @param authErrorCode {@link FirebasePnvErrorCode}
+   * @param errorCode {@link FirebasePnvErrorCode}
    * @param message {@link String}
    */
   public FirebasePnvException(
-      FirebasePnvErrorCode authErrorCode,
+      FirebasePnvErrorCode errorCode,
       String message
   ) {
     super(message);
-    this.errorCode = authErrorCode;
+    this.errorCode = errorCode;
   }
 
   public FirebasePnvErrorCode getFpnvErrorCode() {

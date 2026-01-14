@@ -16,6 +16,13 @@
 
 package com.google.firebase.fpnv;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -36,27 +43,23 @@ import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
+import com.nimbusds.jwt.proc.ExpiredJWTException;
+import java.lang.reflect.Field;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.util.Arrays;
+import java.util.Date;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.lang.reflect.Field;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.util.Arrays;
-import java.util.Date;
-
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 public class FpnvTokenVerifierTest {
   private static final FirebaseOptions firebaseOptions = FirebaseOptions.builder()
       .setCredentials(TestUtils.getCertCredential(ServiceAccount.OWNER.asStream()))
       .build();
-  private static final String PROJECT_ID = "test-project-123";
+  private static final String PROJECT_ID = "mock-project-id";
   private static final String ISSUER = "https://fpnv.googleapis.com/projects/" + PROJECT_ID;
   private static final String[] AUD = new String[]{
       ISSUER,
@@ -182,19 +185,18 @@ public class FpnvTokenVerifierTest {
 
   @Test
   public void testVerifyToken_Claims_Expired() throws Exception {
-    Date past = new Date(System.currentTimeMillis() - 10000); // Expired
-
-    JWTClaimsSet expiredClaims = new JWTClaimsSet.Builder()
+    JWTClaimsSet claims = new JWTClaimsSet.Builder()
         .issuer(ISSUER)
         .audience(ISSUER)
         .subject("+1555")
-        .expirationTime(past)
+        .expirationTime(new Date(System.currentTimeMillis() + 10000))
         .build();
 
-    String tokenString = createToken(header, expiredClaims);
+    String tokenString = createToken(header, claims);
+    ExpiredJWTException error = new ExpiredJWTException("Bad token");
 
     // Mock processor returning the expired claims
-    when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(expiredClaims);
+    when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenThrow(error);
 
     FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
         verifier.verifyToken(tokenString)
