@@ -25,6 +25,23 @@ public class FirebasePnvException extends Exception {
   private final FirebasePnvErrorCode errorCode;
 
   /**
+   * Exception that created from {@link FirebasePnvErrorCode},
+   * {@link String} message and {@link Throwable} cause.
+   *
+   * @param errorCode {@link FirebasePnvErrorCode}
+   * @param message {@link String}
+   * @param cause {@link Throwable}
+   */
+  public FirebasePnvException(
+      FirebasePnvErrorCode errorCode,
+      String message,
+      Throwable cause
+  ) {
+    super(message, cause);
+    this.errorCode = errorCode;
+  }
+
+  /**
    * Exception that created from {@link FirebasePnvErrorCode} and {@link String} message.
    *
    * @param errorCode {@link FirebasePnvErrorCode}
@@ -34,8 +51,7 @@ public class FirebasePnvException extends Exception {
       FirebasePnvErrorCode errorCode,
       String message
   ) {
-    super(message);
-    this.errorCode = errorCode;
+    this(errorCode, message, null);
   }
 
   public FirebasePnvErrorCode getFpnvErrorCode() {

@@ -30,7 +30,6 @@ public class FirebasePnvToken {
   private final Map<String, Object> claims;
 
   public FirebasePnvToken(Map<String, Object> claims) {
-    // this.claims = claims != null ? Collections.unmodifiableMap(claims) : Collections.emptyMap();
     checkArgument(claims != null && claims.containsKey("sub"),
         "Claims map must at least contain sub");
     this.claims = ImmutableMap.copyOf(claims);
@@ -58,8 +57,14 @@ public class FirebasePnvToken {
     Object audience = claims.get("aud");
     if (audience instanceof String) {
       return ImmutableList.of((String) audience);
+    } else if (audience instanceof List) {
+      // The nimbus-jose-jwt library should provide a List<String>, but we copy it
+      // to an immutable list for safety and to prevent modification.
+      @SuppressWarnings("unchecked")
+      List<String> audienceList = (List<String>) audience;
+      return ImmutableList.copyOf(audienceList);
     }
-    return (List<String>) audience;
+    return ImmutableList.of();
   }
 
   /**
