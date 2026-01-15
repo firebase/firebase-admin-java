@@ -40,7 +40,6 @@ import com.nimbusds.jwt.proc.ExpiredJWTException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.ParseException;
-import java.util.Date;
 import java.util.Objects;
 
 /**
@@ -64,11 +63,11 @@ public class FirebasePnvTokenVerifier {
   }
 
   /**
-   * Main method that do.
-   * - Explicitly verify the header
-   * - Verify Signature and Structure
-   * - Verify Claims (Issuer, Audience, Expiration)
-   * - Construct Token Object
+   * Main method that performs the following verification steps:
+   * - Explicitly verifies the header
+   * - Verifies signature and structure
+   * - Verifies claims (e.g. issuer, audience, expiration)
+   * - Constructs a token object upon successful verification
    *
    * @param token String input data
    * @return {@link FirebasePnvToken}
@@ -104,10 +103,18 @@ public class FirebasePnvTokenVerifier {
           "FPNV token has expired.",
           e
       );
-    } catch (BadJOSEException | JOSEException e) {
-      throw new FirebasePnvException(FirebasePnvErrorCode.SERVICE_ERROR,
+    } catch (BadJOSEException e) {
+      throw new FirebasePnvException(
+          FirebasePnvErrorCode.INVALID_TOKEN,
           "Check your project: " + projectId + ". "
-              + e.getMessage(),
+          + "FPNV token is invalid: " + e.getMessage(),
+          e
+      );
+    } catch (JOSEException e) {
+      throw new FirebasePnvException(
+          FirebasePnvErrorCode.INTERNAL_ERROR,
+          "Check your project: " + projectId + ". "
+          + "Failed to verify FPNV token signature: " + e.getMessage(),
           e
       );
     }
@@ -121,7 +128,6 @@ public class FirebasePnvTokenVerifier {
           "FPNV has incorrect 'algorithm'. Expected " + JWSAlgorithm.ES256.getName()
               + " but got " + header.getAlgorithm());
     }
-
     // Check Key ID (kid)
     if (Strings.isNullOrEmpty(header.getKeyID())) {
       throw new FirebasePnvException(
@@ -141,6 +147,7 @@ public class FirebasePnvTokenVerifier {
   }
 
   private void verifyClaims(JWTClaimsSet claims) throws FirebasePnvException {
+    checkArgument(!Objects.isNull(claims), "JWTClaimsSet claims must not be null");
     // Verify Issuer
     String issuer = claims.getIssuer();
 

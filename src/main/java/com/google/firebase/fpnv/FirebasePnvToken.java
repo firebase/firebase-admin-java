@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.nimbusds.jwt.JWTClaimsSet;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +30,11 @@ import java.util.Map;
 public class FirebasePnvToken {
   private final Map<String, Object> claims;
 
+  /**
+   * Create an instance of {@link FirebasePnvToken} from {@link JWTClaimsSet} claims.
+   *
+   * @param claims Map claims.
+   */
   public FirebasePnvToken(Map<String, Object> claims) {
     checkArgument(claims != null && claims.containsKey("sub"),
         "Claims map must at least contain sub");
@@ -71,14 +77,14 @@ public class FirebasePnvToken {
    * Returns the expiration time in seconds since the Unix epoch.
    */
   public long getExpirationTime() {
-    return ((java.util.Date) claims.get("exp")).getTime();
+    return ((java.util.Date) claims.get("exp")).getTime() / 1000L;
   }
 
   /**
    * Returns the issued-at time in seconds since the Unix epoch.
    */
   public long getIssuedAt() {
-    return ((java.util.Date) claims.get("iat")).getTime();
+    return ((java.util.Date) claims.get("iat")).getTime() / 1000L;
   }
 
   /**

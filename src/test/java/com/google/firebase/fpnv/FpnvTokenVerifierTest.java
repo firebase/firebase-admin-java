@@ -30,6 +30,7 @@ import com.google.firebase.fpnv.internal.FirebasePnvTokenVerifier;
 import com.google.firebase.internal.FirebaseProcessEnvironment;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
+import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -39,6 +40,7 @@ import com.nimbusds.jose.crypto.RSASSASigner;
 import com.nimbusds.jose.jwk.Curve;
 import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator;
+import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
@@ -56,10 +58,11 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 public class FpnvTokenVerifierTest {
+  private static final String PROJECT_ID = "mock-project-id";
   private static final FirebaseOptions firebaseOptions = FirebaseOptions.builder()
+      .setProjectId(PROJECT_ID)
       .setCredentials(TestUtils.getCertCredential(ServiceAccount.OWNER.asStream()))
       .build();
-  private static final String PROJECT_ID = "mock-project-id";
   private static final String ISSUER = "https://fpnv.googleapis.com/projects/" + PROJECT_ID;
   private static final String[] AUD = new String[]{
       ISSUER,
@@ -73,6 +76,7 @@ public class FpnvTokenVerifierTest {
   private KeyPair rsaKeyPair;
   private ECKey ecKey;
   private JWSHeader header;
+  private JWTClaimsSet claims;
 
   @Before
   public void setUp() throws Exception {
@@ -99,6 +103,15 @@ public class FpnvTokenVerifierTest {
         .keyID(ecKey.getKeyID())
         .type(JOSEObjectType.JWT)
         .build();
+
+    // Create a valid JWTClaimsSet
+    claims = new JWTClaimsSet.Builder()
+        .issuer(ISSUER)
+        .audience(Arrays.asList(AUD))
+        .subject("+15551234567")
+        .issueTime(new Date())
+        .expirationTime(new Date(System.currentTimeMillis() + 10000))
+        .build();
   }
 
   @After
@@ -124,18 +137,15 @@ public class FpnvTokenVerifierTest {
   }
 
   @Test
+  public void testVerifyToken_NullOrEmptyToken() {
+    IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
+        verifier.verifyToken("")
+    );
+    assertTrue(e.getMessage().contains("FPNV token must not be null"));
+  }
+
+  @Test
   public void testVerifyToken_Success() throws Exception {
-    Date now = new Date();
-    Date exp = new Date(now.getTime() + 3600 * 1000); // 1 hour valid
-
-    JWTClaimsSet claims = new JWTClaimsSet.Builder()
-        .issuer(ISSUER)
-        .audience(Arrays.asList(AUD))
-        .subject("+15551234567")
-        .issueTime(now)
-        .expirationTime(exp)
-        .build();
-
     String tokenString = createToken(header, claims);
 
     // 1. Mock the processor to return these claims (skipping real signature verification)
@@ -168,6 +178,25 @@ public class FpnvTokenVerifierTest {
   }
 
   @Test
+  public void testVerifyToken_Header_WrongTyp() throws Exception {
+    JWSHeader header = new JWSHeader
+        .Builder(JWSAlgorithm.ES256)
+        .keyID(ecKey.getKeyID())
+        .type(JOSEObjectType.JOSE)
+        .build();
+    JWTClaimsSet claims = new JWTClaimsSet.Builder().build();
+
+    String tokenString = createToken(header, claims);
+
+    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+        verifier.verifyToken(tokenString)
+    );
+
+    assertEquals(FirebasePnvErrorCode.INVALID_ARGUMENT, e.getFpnvErrorCode());
+    assertTrue(e.getMessage().contains("has incorrect 'typ'"));
+  }
+
+  @Test
   public void testVerifyToken_Header_MissingKeyId() throws Exception {
     // ES256 but missing 'kid'
     JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.ES256).build();
@@ -195,7 +224,6 @@ public class FpnvTokenVerifierTest {
     String tokenString = createToken(header, claims);
     ExpiredJWTException error = new ExpiredJWTException("Bad token");
 
-    // Mock processor returning the expired claims
     when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenThrow(error);
 
     FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
@@ -242,5 +270,58 @@ public class FpnvTokenVerifierTest {
 
     assertEquals(FirebasePnvErrorCode.INVALID_TOKEN, e.getFpnvErrorCode());
     assertTrue(e.getMessage().contains("Token has an empty 'sub' (phone number)"));
+  }
+
+  @Test
+  public void testVerifyToken_ParseException() {
+    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+        verifier.verifyToken(" ")
+    );
+    assertEquals(FirebasePnvErrorCode.INVALID_TOKEN, e.getFpnvErrorCode());
+    assertTrue(e.getMessage().contains("Failed to parse JWT token"));
+  }
+
+  @Test
+  public void testVerifyToken_BadJOSEException() throws Exception {
+    String tokenString = createToken(header, claims);
+    String errorMessage = "BadJOSEException";
+    BadJOSEException error = new BadJOSEException(errorMessage);
+
+    when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenThrow(error);
+
+    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+        verifier.verifyToken(tokenString)
+    );
+
+    assertEquals(FirebasePnvErrorCode.INVALID_TOKEN, e.getFpnvErrorCode());
+    assertEquals(
+        "Check your project: "
+            + PROJECT_ID
+            + ". FPNV token is invalid: "
+            + errorMessage,
+        e.getMessage()
+    );
+  }
+
+  @Test
+  public void testVerifyToken_JOSEException() throws Exception {
+    String tokenString = createToken(header, claims);
+    String errorMessage = "JOSEException";
+    JOSEException error = new JOSEException(errorMessage);
+
+    when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenThrow(error);
+
+    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+        verifier.verifyToken(tokenString)
+    );
+
+    assertEquals(FirebasePnvErrorCode.INTERNAL_ERROR, e.getFpnvErrorCode());
+    assertEquals(
+        "Check your project: "
+            + PROJECT_ID
+            + ". Failed to verify FPNV token signature: "
+            + errorMessage,
+        e.getMessage()
+    );
   }
 }
