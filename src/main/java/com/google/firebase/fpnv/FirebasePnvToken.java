@@ -91,6 +91,6 @@ public class FirebasePnvToken {
    * Returns the entire map of claims.
    */
   public Map<String, Object> getClaims() {
-    return ImmutableMap.copyOf(claims);
+    return claims;
   }
 }
