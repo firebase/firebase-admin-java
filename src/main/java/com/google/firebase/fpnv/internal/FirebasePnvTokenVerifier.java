@@ -77,19 +77,12 @@ public class FirebasePnvTokenVerifier {
     checkArgument(!Strings.isNullOrEmpty(token), "FPNV token must not be null or empty");
 
     try {
-      // Parse the token first to inspect header
       SignedJWT signedJwt = SignedJWT.parse(token);
-
-      // Explicitly verify the header (alg & kid)
       verifyHeader(signedJwt.getHeader());
 
-      // Verify Signature and Structure
       JWTClaimsSet claims = jwtProcessor.process(signedJwt, null);
-
-      // Verify Claims (Issuer, Audience, Expiration)
       verifyClaims(claims);
 
-      // Construct Token Object
       return new FirebasePnvToken(claims.getClaims());
     } catch (ParseException e) {
       throw new FirebasePnvException(
@@ -122,7 +115,7 @@ public class FirebasePnvTokenVerifier {
 
   private void verifyHeader(JWSHeader header) throws FirebasePnvException {
     // Check Algorithm (alg)
-    if (!JWSAlgorithm.ES256.equals(header.getAlgorithm())) {
+    if (!header.getAlgorithm().equals(JWSAlgorithm.ES256)) {
       throw new FirebasePnvException(
           FirebasePnvErrorCode.INVALID_ARGUMENT,
           "FPNV has incorrect 'algorithm'. Expected " + JWSAlgorithm.ES256.getName()
@@ -135,8 +128,8 @@ public class FirebasePnvTokenVerifier {
           "FPNV has no 'kid' claim."
       );
     }
-    // Check Typ (typ)
-    if (Objects.isNull(header.getType()) || !HEADER_TYP.equals(header.getType().getType())) {
+    // Check Type (typ)
+    if (Objects.isNull(header.getType()) || !header.getType().toString().equals(HEADER_TYP)) {
       throw new FirebasePnvException(
           FirebasePnvErrorCode.INVALID_ARGUMENT,
           "FPNV has incorrect 'typ'. Expected " + HEADER_TYP
