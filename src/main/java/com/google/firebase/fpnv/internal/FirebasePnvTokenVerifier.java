@@ -25,6 +25,7 @@ import com.google.firebase.fpnv.FirebasePnvErrorCode;
 import com.google.firebase.fpnv.FirebasePnvException;
 import com.google.firebase.fpnv.FirebasePnvToken;
 import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -129,7 +130,7 @@ public class FirebasePnvTokenVerifier {
       );
     }
     // Check Type (typ)
-    if (Objects.isNull(header.getType()) || !header.getType().toString().equals(HEADER_TYP)) {
+    if (!JOSEObjectType.JWT.equals(header.getType())) {
       throw new FirebasePnvException(
           FirebasePnvErrorCode.INVALID_ARGUMENT,
           "FPNV has incorrect 'typ'. Expected " + HEADER_TYP
