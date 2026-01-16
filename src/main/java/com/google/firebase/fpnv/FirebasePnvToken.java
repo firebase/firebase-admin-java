@@ -31,9 +31,9 @@ public class FirebasePnvToken {
   private final Map<String, Object> claims;
 
   /**
-   * Create an instance of {@link FirebasePnvToken} from {@link JWTClaimsSet} claims.
+   * Create an instance of {@link FirebasePnvToken} from a map of JWT claims.
    *
-   * @param claims Map claims.
+   * @param claims A map of JWT claims.
    */
   public FirebasePnvToken(Map<String, Object> claims) {
     checkArgument(claims != null && claims.containsKey("sub"),
@@ -91,6 +91,6 @@ public class FirebasePnvToken {
    * Returns the entire map of claims.
    */
   public Map<String, Object> getClaims() {
-    return claims;
+    return ImmutableMap.copyOf(claims);
   }
 }
