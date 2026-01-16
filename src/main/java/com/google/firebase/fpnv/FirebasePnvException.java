@@ -16,12 +16,15 @@
 
 package com.google.firebase.fpnv;
 
+import com.google.firebase.ErrorCode;
+import com.google.firebase.FirebaseException;
+
 /**
  * Generic exception related to Firebase Phone Number Verification.
  * Check the error code and message for more
  * details.
  */
-public class FirebasePnvException extends Exception {
+public class FirebasePnvException extends FirebaseException {
   private final FirebasePnvErrorCode errorCode;
 
   /**
@@ -37,7 +40,7 @@ public class FirebasePnvException extends Exception {
       String message,
       Throwable cause
   ) {
-    super(message, cause);
+    super(mapToFirebaseError(errorCode), message, cause);
     this.errorCode = errorCode;
   }
 
@@ -57,4 +60,23 @@ public class FirebasePnvException extends Exception {
   public FirebasePnvErrorCode getFpnvErrorCode() {
     return errorCode;
   }
+
+  private static ErrorCode mapToFirebaseError(FirebasePnvErrorCode code) {
+    if (code == null) {
+      return ErrorCode.INTERNAL;
+    }
+    switch (code) {
+      case INVALID_ARGUMENT:
+        return ErrorCode.INVALID_ARGUMENT;
+      case TOKEN_EXPIRED:
+      case INVALID_TOKEN:
+        return ErrorCode.UNAUTHENTICATED;
+      case SERVICE_ERROR:
+        return ErrorCode.UNAVAILABLE;
+      case INTERNAL_ERROR:
+      default:
+        return ErrorCode.INTERNAL;
+    }
+  }
 }
+
