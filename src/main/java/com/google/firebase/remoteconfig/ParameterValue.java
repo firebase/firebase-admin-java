@@ -99,7 +99,15 @@ public abstract class ParameterValue {
     }
     if (parameterValueResponse.getRolloutValue() != null) {
       RolloutValueResponse rv = parameterValueResponse.getRolloutValue();
-      return ParameterValue.ofRollout(rv.getRolloutId(), rv.getValue(), rv.getPercent());
+      // Protobuf serialization does not set values for fields on the wire when
+      // they are equal to the default value for the field type. When deserializing,
+      // can appear as the value not being set. Explicitly handle default value for
+      // the percent field since 0 is a valid value. 
+      double percent = 0;
+      if (rv.getPercent() != null) {
+        percent = rv.getPercent();
+      }
+      return ParameterValue.ofRollout(rv.getRolloutId(), rv.getValue(), percent);
     }
     if (parameterValueResponse.getPersonalizationValue() != null) {
       PersonalizationValueResponse pv = parameterValueResponse.getPersonalizationValue();
