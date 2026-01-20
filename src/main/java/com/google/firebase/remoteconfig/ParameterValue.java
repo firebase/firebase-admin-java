@@ -283,12 +283,12 @@ public abstract class ParameterValue {
   public static final class ExperimentVariantValue {
     private final String variantId;
     private final String value;
-    private final boolean noChange;
+    private final Boolean noChange;
 
     ExperimentVariantValue(String variantId, String value, Boolean noChange) {
       this.variantId = variantId;
       this.value = value;
-      this.noChange = Boolean.TRUE.equals(noChange);
+      this.noChange = noChange;
     }
 
     /**
@@ -321,8 +321,13 @@ public abstract class ParameterValue {
       return value;
     }
 
-    public boolean isNoChange() {
+    @Nullable
+    Boolean getNoChange() {
       return noChange;
+    }
+
+    public boolean isNoChange() {
+      return Boolean.TRUE.equals(noChange);
     }
 
     @Override
@@ -371,7 +376,7 @@ public abstract class ParameterValue {
           .map(variantValue -> new ExperimentVariantValueResponse()
               .setVariantId(variantValue.getVariantId())
               .setValue(variantValue.getValue())
-              .setNoChange(variantValue.isNoChange()))
+              .setNoChange(variantValue.getNoChange()))
           .collect(toList());
       return new ParameterValueResponse().setExperimentValue(
               new ExperimentValueResponse()

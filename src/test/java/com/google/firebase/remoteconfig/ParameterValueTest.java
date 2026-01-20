@@ -72,6 +72,7 @@ public class ParameterValueTest {
     assertEquals("variant_1", variant1.getVariantId());
     assertEquals("value_1", variant1.getValue());
     assertEquals(false, variant1.isNoChange());
+    assertEquals(null, variant1.getNoChange());
     ExperimentVariantValue variant2 = parameterValue.getExperimentVariantValues().get(1);
     assertEquals("variant_2", variant2.getVariantId());
     assertEquals(null, variant2.getValue());
