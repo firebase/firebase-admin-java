@@ -101,7 +101,7 @@ jobs:
       env:
         GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-        GPG_KEYID: ${{ vars.GPG_KEYID }}
+        GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
         CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
         CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
 
