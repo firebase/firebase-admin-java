@@ -101,6 +101,7 @@ jobs:
       env:
         GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
         CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
         CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
 
@@ -112,17 +113,3 @@ jobs:
             --title "Firebase Admin Java SDK ${{ steps.preflight.outputs.version }}"
             --notes '${{ steps.preflight.outputs.changelog }}'
 
-    # Post to Twitter if explicitly opted-in by adding the label 'release:tweet'.
-    - name: Post to Twitter
-      if: success() &&
-        contains(github.event.pull_request.labels.*.name, 'release:tweet')
-      uses: firebase/firebase-admin-node/.github/actions/send-tweet@2e2b36a84ba28679bcb7aecdacabfec0bded2d48 # Admin Node SDK v13.6.0
-      with:
-        status: >
-          ${{ steps.preflight.outputs.version }} of @Firebase Admin Java SDK is available.
-          https://github.com/firebase/firebase-admin-java/releases/tag/${{ steps.preflight.outputs.version }}
-        consumer-key: ${{ secrets.TWITTER_CONSUMER_KEY }}
-        consumer-secret: ${{ secrets.TWITTER_CONSUMER_SECRET }}
-        access-token: ${{ secrets.TWITTER_ACCESS_TOKEN }}
-        access-token-secret: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
-      continue-on-error: true
