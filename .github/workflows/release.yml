@@ -15,10 +15,18 @@
 name: Release Candidate
 
 on:
-  # Only run the workflow when a PR is updated or when a developer explicitly requests
-  # a build by sending a 'firebase_build' event.
+  # Run the workflow when:
+  # 1. A PR is updated (staging checks).
+  # 2. A commit is pushed to main (release publication).
+  # 3. A developer explicitly requests a build via 'firebase_build' event.
   pull_request:
-    types: [opened, synchronize, closed]
+    types: [opened, synchronize]
+
+  push:
+    branches:
+      - main
+    paths:
+      - 'pom.xml'
 
   repository_dispatch:
     types:
@@ -26,23 +34,19 @@ on:
 
 jobs:
   stage_release:
-    # To publish a release, merge the release PR with the label 'release:publish'.
+    # To publish a release, merge a PR with the title prefix '[chore] Release ' to main
+    # and ensure the squashed commit message also has the prefix.
     # To stage a release without publishing it, send a 'firebase_build' event or apply
     # the 'release:stage' label to a PR.
     if: github.event.action == 'firebase_build' ||
       contains(github.event.pull_request.labels.*.name, 'release:stage') ||
-      (github.event.pull_request.merged &&
-        contains(github.event.pull_request.labels.*.name, 'release:publish'))
+      (github.event_name == 'push' && startsWith(github.event.head_commit.message, '[chore] Release '))
 
     runs-on: ubuntu-latest
 
-    # When manually triggering the build, the requester can specify a target branch or a tag
-    # via the 'ref' client parameter.
     steps:
     - name: Checkout source for staging
       uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      with:
-        ref: ${{ github.event.client_payload.ref || github.ref }}
 
     - name: Set up JDK 8
       uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
@@ -67,15 +71,13 @@ jobs:
   publish_release:
     needs: stage_release
 
-    # Check whether the release should be published. We publish only when the trigger PR is
-    #   1. merged
+    # Check whether the release should be published. We publish only when the trigger is
+    #   1. a push (merge)
     #   2. to the main branch
-    #   3. with the label 'release:publish', and
-    #   4. the title prefix '[chore] Release '.
-    if: github.event.pull_request.merged &&
+    #   3. and the commit message has the title prefix '[chore] Release '.
+    if: github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
-      contains(github.event.pull_request.labels.*.name, 'release:publish') &&
-      startsWith(github.event.pull_request.title, '[chore] Release ')
+      startsWith(github.event.head_commit.message, '[chore] Release ')
 
     runs-on: ubuntu-latest
     environment: Release
@@ -92,6 +94,17 @@ jobs:
         distribution: 'zulu'
         java-version: 8
 
+    # See: https://cli.github.com/manual/gh_release_create
+    - name: Create release tag
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RELEASE_VER: ${{ steps.preflight.outputs.version }}
+        RELEASE_BODY: ${{ steps.preflight.outputs.changelog }}
+      run: |
+        gh release create "$RELEASE_VER" \
+          --title "Firebase Admin Java SDK $RELEASE_VER" \
+          --notes "$RELEASE_BODY"
+
     - name: Publish preflight check
       id: preflight
       run: ./.github/scripts/publish_preflight_check.sh
@@ -104,12 +117,3 @@ jobs:
         GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
         CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
         CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
-
-    # See: https://cli.github.com/manual/gh_release_create
-    - name: Create release tag
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: gh release create ${{ steps.preflight.outputs.version }}
-            --title "Firebase Admin Java SDK ${{ steps.preflight.outputs.version }}"
-            --notes '${{ steps.preflight.outputs.changelog }}'
-
