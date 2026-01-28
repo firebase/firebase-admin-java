@@ -37,10 +37,8 @@ public class TopicManagementResponse {
   // Server error codes as defined in https://developers.google.com/instance-id/reference/server
   // TODO: Should we handle other error codes here (e.g. PERMISSION_DENIED)?
   private static final Map<String, String> ERROR_CODES = ImmutableMap.<String, String>builder()
-      .put("INVALID_ARGUMENT", "invalid-argument")
       .put("NOT_FOUND", "registration-token-not-registered")
       .put("INTERNAL", "internal-error")
-      .put("TOO_MANY_TOPICS", "too-many-topics")
       .build();
 
   private final int successCount;
@@ -101,8 +99,11 @@ public class TopicManagementResponse {
 
     private Error(int index, String reason) {
       this.index = index;
-      this.reason = ERROR_CODES.containsKey(reason)
-        ? ERROR_CODES.get(reason) : UNKNOWN_ERROR;
+      if (reason == null || reason.trim().isEmpty()) {
+        this.reason = UNKNOWN_ERROR;
+      } else {
+        this.reason = ERROR_CODES.getOrDefault(reason, reason.toLowerCase().replace('_', '-'));
+      }
     }
 
     /**

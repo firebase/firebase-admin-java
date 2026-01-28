@@ -19,7 +19,7 @@
 
     <groupId>com.google.firebase</groupId>
     <artifactId>firebase-admin</artifactId>
-    <version>9.6.0</version>
+    <version>9.7.0</version>
     <packaging>jar</packaging>
 
     <name>firebase-admin</name>
@@ -59,7 +59,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <skipUTs>${skipTests}</skipUTs>
-        <netty.version>4.2.5.Final</netty.version>
+        <netty.version>4.2.9.Final</netty.version>
     </properties>
 
     <scm>
@@ -82,7 +82,7 @@
                     <plugin>
                         <!-- Generate API docs using Doclava for the developer site -->
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.11.3</version>
+                        <version>3.12.0</version>
                         <executions>
                             <execution>
                                 <phase>site</phase>
@@ -124,7 +124,7 @@
                     <plugin>
                         <!-- Update relative paths in generated API docs -->
                         <artifactId>maven-antrun-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.0</version>
                         <executions>
                             <execution>
                                 <phase>site</phase>
@@ -182,7 +182,7 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.8.13</version>
+                        <version>0.8.14</version>
                         <executions>
                             <execution>
                                 <id>pre-unit-test</id>
@@ -208,7 +208,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.5.1</version>
+                        <version>3.6.3</version>
                         <executions>
                             <execution>
                                 <phase>test</phase>
@@ -263,7 +263,7 @@
             <!-- Compile Phase -->
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.0</version>
+                <version>3.14.1</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
@@ -273,7 +273,7 @@
             <!-- Test Phase -->
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.3</version>
+                <version>3.5.4</version>
                 <configuration>
                     <skipTests>${skipUTs}</skipTests>
                 </configuration>
@@ -282,7 +282,7 @@
             <!-- Package Phase -->
             <plugin>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>3.3.1</version>
+                <version>3.4.0</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -294,7 +294,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.11.3</version>
+                <version>3.12.0</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -330,7 +330,7 @@
             <!-- Verify Phase -->
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>3.5.3</version>
+                <version>3.5.4</version>
                 <executions>
                     <execution>
                         <goals>
@@ -345,7 +345,7 @@
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
-                <version>0.8.0</version>
+                <version>0.10.0</version>
                 <extensions>true</extensions>
                 <configuration>
                     <publishingServerId>central</publishingServerId>
@@ -378,7 +378,7 @@
             <dependency>
                 <groupId>com.google.cloud</groupId>
                 <artifactId>libraries-bom</artifactId>
-                <version>26.67.0</version>
+                <version>26.74.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>

@@ -40,12 +40,12 @@ jobs:
     # via the 'ref' client parameter.
     steps:
     - name: Checkout source for staging
-      uses: actions/checkout@v4
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       with:
         ref: ${{ github.event.client_payload.ref || github.ref }}
 
     - name: Set up JDK 8
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
       with:
         distribution: 'zulu'
         java-version: 8
@@ -59,7 +59,7 @@ jobs:
     # Attach the packaged artifacts to the workflow output. These can be manually
     # downloaded for later inspection if necessary.
     - name: Archive artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: dist
         path: dist
@@ -69,24 +69,25 @@ jobs:
 
     # Check whether the release should be published. We publish only when the trigger PR is
     #   1. merged
-    #   2. to the master branch
+    #   2. to the main branch
     #   3. with the label 'release:publish', and
     #   4. the title prefix '[chore] Release '.
     if: github.event.pull_request.merged &&
-      github.ref == 'refs/heads/master' &&
+      github.ref == 'refs/heads/main' &&
       contains(github.event.pull_request.labels.*.name, 'release:publish') &&
       startsWith(github.event.pull_request.title, '[chore] Release ')
 
     runs-on: ubuntu-latest
+    environment: Release
     permissions:
       contents: write
 
     steps:
     - name: Checkout source for publish
-      uses: actions/checkout@v4
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
     - name: Set up JDK 8
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
       with:
         distribution: 'zulu'
         java-version: 8
@@ -100,6 +101,7 @@ jobs:
       env:
         GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
         CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
         CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
 
@@ -111,17 +113,3 @@ jobs:
             --title "Firebase Admin Java SDK ${{ steps.preflight.outputs.version }}"
             --notes '${{ steps.preflight.outputs.changelog }}'
 
-    # Post to Twitter if explicitly opted-in by adding the label 'release:tweet'.
-    - name: Post to Twitter
-      if: success() &&
-        contains(github.event.pull_request.labels.*.name, 'release:tweet')
-      uses: firebase/firebase-admin-node/.github/actions/send-tweet@master
-      with:
-        status: >
-          ${{ steps.preflight.outputs.version }} of @Firebase Admin Java SDK is available.
-          https://github.com/firebase/firebase-admin-java/releases/tag/${{ steps.preflight.outputs.version }}
-        consumer-key: ${{ secrets.TWITTER_CONSUMER_KEY }}
-        consumer-secret: ${{ secrets.TWITTER_CONSUMER_SECRET }}
-        access-token: ${{ secrets.TWITTER_ACCESS_TOKEN }}
-        access-token-secret: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
-      continue-on-error: true
