@@ -94,6 +94,10 @@ jobs:
         distribution: 'zulu'
         java-version: 8
 
+    - name: Publish preflight check
+      id: preflight
+      run: ./.github/scripts/publish_preflight_check.sh
+
     # See: https://cli.github.com/manual/gh_release_create
     - name: Create release tag
       env:
@@ -104,10 +108,6 @@ jobs:
         gh release create "$RELEASE_VER" \
           --title "Firebase Admin Java SDK $RELEASE_VER" \
           --notes "$RELEASE_BODY"
-
-    - name: Publish preflight check
-      id: preflight
-      run: ./.github/scripts/publish_preflight_check.sh
 
     - name: Publish to Maven Central
       run: ./.github/scripts/publish_artifacts.sh
