@@ -56,11 +56,13 @@ import org.apache.hc.core5.http.HttpRequest;
 import org.apache.hc.core5.http.HttpRequestMapper;
 import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.Message;
 import org.apache.hc.core5.http.impl.bootstrap.HttpServer;
 import org.apache.hc.core5.http.impl.io.HttpService;
 import org.apache.hc.core5.http.io.HttpRequestHandler;
 import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
 import org.apache.hc.core5.http.io.support.BasicHttpServerRequestHandler;
+import org.apache.hc.core5.http.message.BasicHttpResponse;
 import org.apache.hc.core5.http.nio.AsyncPushConsumer;
 import org.apache.hc.core5.http.nio.AsyncRequestProducer;
 import org.apache.hc.core5.http.nio.AsyncResponseConsumer;
@@ -87,7 +89,9 @@ public class ApacheHttp2TransportTest {
               final HandlerFactory<AsyncPushConsumer> pushHandlerFactory,
               final HttpContext context,
               final FutureCallback<T> callback) {
-            return (Future<T>) CompletableFuture.completedFuture(new SimpleHttpResponse(200));
+            return (Future<T>) CompletableFuture
+                .completedFuture(
+                    new Message<HttpResponse, ApacheHttp2Entity>(new BasicHttpResponse(200), null));
           }
         }, requestBuilder);
 
@@ -118,7 +122,9 @@ public class ApacheHttp2TransportTest {
               final HandlerFactory<AsyncPushConsumer> pushHandlerFactory,
               final HttpContext context,
               final FutureCallback<T> callback) {
-            return (Future<T>) CompletableFuture.completedFuture(new SimpleHttpResponse(200));
+            return (Future<T>) CompletableFuture
+                .completedFuture(
+                    new Message<HttpResponse, ApacheHttp2Entity>(new BasicHttpResponse(200), null));
           }
         }, requestBuilder);
 
@@ -148,7 +154,9 @@ public class ApacheHttp2TransportTest {
               final HandlerFactory<AsyncPushConsumer> pushHandlerFactory,
               final HttpContext context,
               final FutureCallback<T> callback) {
-            return (Future<T>) CompletableFuture.completedFuture(simpleHttpResponse);
+            return (Future<T>) CompletableFuture
+                .completedFuture(new Message<HttpResponse, ApacheHttp2Entity>(simpleHttpResponse,
+                    new ApacheHttp2Entity(simpleHttpResponse.getBodyBytes(), null)));
           }
         }, requestBuilder);
     LowLevelHttpResponse response = request.execute();
@@ -157,7 +165,7 @@ public class ApacheHttp2TransportTest {
     // we confirm that the simple response we prepared in this test is the same as
     // the content's response
     assertTrue(response.getContent() instanceof ByteArrayInputStream);
-    assertEquals(simpleHttpResponse, ((ApacheHttp2Response) response).getResponse());
+    assertEquals(simpleHttpResponse, ((ApacheHttp2Response) response).getMessage().getHead());
     // No need to cloase ByteArrayInputStream since close() has no effect.
   }
 
@@ -212,7 +220,9 @@ public class ApacheHttp2TransportTest {
           final HandlerFactory<AsyncPushConsumer> pushHandlerFactory,
           final HttpContext context,
           final FutureCallback<T> callback) {
-        return (Future<T>) CompletableFuture.completedFuture(new SimpleHttpResponse(200));
+        return (Future<T>) CompletableFuture
+            .completedFuture(new Message<HttpResponse, ApacheHttp2Entity>(
+                new BasicHttpResponse(200), null));
       }
     };
     ApacheHttp2Transport transport = new ApacheHttp2Transport(mockClient);
@@ -326,6 +336,93 @@ public class ApacheHttp2TransportTest {
     request.setContentType("text/html");
     request.setContentLength(bytes.length);
     request.execute();
+  }
+
+  @Test
+  public void testGzipResponse() throws IOException {
+    final String originalContent = "hello world";
+    final java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+    try (java.util.zip.GZIPOutputStream gzip = new java.util.zip.GZIPOutputStream(baos)) {
+      gzip.write(originalContent.getBytes(StandardCharsets.UTF_8));
+    }
+    final byte[] gzippedContent = baos.toByteArray();
+
+    final HttpRequestHandler handler = new HttpRequestHandler() {
+      @Override
+      public void handle(
+          ClassicHttpRequest request, ClassicHttpResponse response, HttpContext context)
+          throws HttpException, IOException {
+        response.setCode(HttpStatus.SC_OK);
+        response.setHeader(HttpHeaders.CONTENT_ENCODING, "gzip");
+        response.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(gzippedContent.length));
+        response.setHeader(HttpHeaders.CONTENT_TYPE, "text/plain; charset=UTF-8");
+        ByteArrayEntity entity = new ByteArrayEntity(gzippedContent, ContentType.TEXT_PLAIN);
+        response.setEntity(entity);
+      }
+    };
+
+    try (FakeServer server = new FakeServer(handler)) {
+      ApacheHttp2Transport transport = new ApacheHttp2Transport();
+      GenericUrl testUrl = new GenericUrl("http://localhost/foo");
+      testUrl.setPort(server.getPort());
+
+      // Execute the low-level request directly to accurately assert metadata
+      // without Google's parsed HttpHeaders map mangling the payload lengths.
+      ApacheHttp2Request request = transport.buildRequest("GET", testUrl.build());
+      LowLevelHttpResponse response = request.execute();
+
+      assertEquals(200, response.getStatusCode());
+      assertEquals("text/plain; charset=UTF-8", response.getContentType());
+
+      boolean wasAutoDecompressed = response.getContentEncoding() == null;
+      if (wasAutoDecompressed) {
+        System.out.println("Auto-decompressed");
+        assertEquals(originalContent.length(), response.getContentLength());
+      } else {
+        System.out.println("Not auto-decompressed");
+        assertEquals("gzip", response.getContentEncoding());
+        assertEquals(gzippedContent.length, response.getContentLength());
+      }
+
+      // Verify the low-level stream returns the exact expected payload based on
+      // decompression state
+      java.io.InputStream stream = response.getContent();
+      byte[] resultBytes = com.google.common.io.ByteStreams.toByteArray(stream);
+
+      if (wasAutoDecompressed) {
+        assertEquals(originalContent, new String(resultBytes, StandardCharsets.UTF_8));
+      } else {
+        org.junit.Assert.assertArrayEquals(gzippedContent, resultBytes);
+      }
+    }
+  }
+
+  @Test
+  public void testEmptyResponseWithHeaders() throws IOException {
+    // Tests that a response with no actual body but headers does not throw NPE
+    // in ApacheHttp2Response due to entity being null.
+    final HttpRequestHandler handler = new HttpRequestHandler() {
+      @Override
+      public void handle(
+          ClassicHttpRequest request, ClassicHttpResponse response, HttpContext context)
+          throws HttpException, IOException {
+        response.setCode(HttpStatus.SC_NO_CONTENT);
+        response.setHeader(HttpHeaders.CONTENT_LENGTH, "0");
+        // Explicitly omitting the entity to simulate NO_CONTENT bodyless response
+      }
+    };
+
+    try (FakeServer server = new FakeServer(handler)) {
+      HttpTransport transport = new ApacheHttp2Transport();
+      GenericUrl testUrl = new GenericUrl("http://localhost/empty");
+      testUrl.setPort(server.getPort());
+      com.google.api.client.http.HttpResponse response = transport.createRequestFactory()
+          .buildGetRequest(testUrl)
+          .execute();
+
+      assertEquals(204, response.getStatusCode());
+      assertEquals(0L, response.getHeaders().getContentLength().longValue());
+    }
   }
 
   private static class FakeServer implements AutoCloseable {
