@@ -20,7 +20,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.nimbusds.jwt.JWTClaimsSet;
 import java.util.List;
 import java.util.Map;
 
