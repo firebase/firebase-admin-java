@@ -18,6 +18,7 @@ package com.google.firebase.fpnv;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.mock;
@@ -112,5 +113,37 @@ public class FirebasePnvTest {
         FirebasePnv.getInstance().verifyToken(testToken)
     );
     assertEquals(FirebasePnvErrorCode.INVALID_TOKEN, e.getFpnvErrorCode());
+  }
+
+  @Test
+  public void testVerifyToken_PropagatesException_Service_Error() throws FirebasePnvException {
+    String testToken = "SERVICE_ERROR";
+    FirebasePnvException error = new FirebasePnvException(
+        FirebasePnvErrorCode.SERVICE_ERROR,
+        "SERVICE_ERROR"
+    );
+
+    when(mockVerifier.verifyToken(testToken)).thenThrow(error);
+
+    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+        FirebasePnv.getInstance().verifyToken(testToken)
+    );
+    assertEquals(FirebasePnvErrorCode.SERVICE_ERROR, e.getFpnvErrorCode());
+  }
+
+  @Test
+  public void testVerifyToken_PropagatesException_Internal_Error() throws FirebasePnvException {
+    String testToken = "INTERNAL";
+    FirebasePnvException error = new FirebasePnvException(
+        null,
+        "INTERNAL"
+    );
+
+    when(mockVerifier.verifyToken(testToken)).thenThrow(error);
+
+    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+        FirebasePnv.getInstance().verifyToken(testToken)
+    );
+    assertNull(null, e.getFpnvErrorCode());
   }
 }

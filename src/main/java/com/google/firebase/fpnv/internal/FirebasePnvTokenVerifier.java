@@ -151,8 +151,7 @@ public class FirebasePnvTokenVerifier {
     }
 
     // Verify Audience
-    if (claims.getAudience() == null
-        || claims.getAudience().isEmpty()
+    if (claims.getAudience().isEmpty()
         || !claims.getAudience().contains(issuer)
     ) {
       throw new FirebasePnvException(FirebasePnvErrorCode.INVALID_TOKEN,
@@ -174,10 +173,7 @@ public class FirebasePnvTokenVerifier {
     DefaultJWTProcessor<SecurityContext> processor = new DefaultJWTProcessor<>();
     try {
       // Use JWKSourceBuilder instead of deprecated RemoteJWKSet
-      JWKSource<SecurityContext> keySource = JWKSourceBuilder
-          .create(new URL(FPNV_JWKS_URL))
-          .retrying(true) // Helper to retry on transient network errors
-          .build();
+      JWKSource<SecurityContext> keySource = createKeySource();
 
       JWSKeySelector<SecurityContext> keySelector =
           new JWSVerificationKeySelector<>(JWSAlgorithm.ES256, keySource);
@@ -186,6 +182,19 @@ public class FirebasePnvTokenVerifier {
       throw new RuntimeException("Invalid JWKS URL", e);
     }
     return processor;
+  }
+
+  /**
+   * Helper JWKSourceBuilder.
+   *
+   * @return an instance of JWKSource
+   * @throws MalformedURLException if URL is invalid
+   */
+  protected JWKSource<SecurityContext> createKeySource() throws MalformedURLException {
+    return JWKSourceBuilder
+        .create(new URL(FPNV_JWKS_URL))
+        .retrying(true) // Helper to retry on transient network errors
+        .build();
   }
 
   private String getProjectId(FirebaseApp app) {
