@@ -49,9 +49,14 @@ public class ApacheHttp2AsyncEntityConsumer implements AsyncEntityConsumer<Apach
 
   @Override
   public void consume(ByteBuffer src) throws IOException {
-    byte[] bytes = new byte[src.remaining()];
-    src.get(bytes);
-    buffer.write(bytes);
+    if (src.hasArray()) {
+      buffer.write(src.array(), src.arrayOffset() + src.position(), src.remaining());
+      src.position(src.limit());
+    } else {
+      byte[] bytes = new byte[src.remaining()];
+      src.get(bytes);
+      buffer.write(bytes);
+    }
   }
 
   @Override

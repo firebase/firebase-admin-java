@@ -376,10 +376,8 @@ public class ApacheHttp2TransportTest {
 
       boolean wasAutoDecompressed = response.getContentEncoding() == null;
       if (wasAutoDecompressed) {
-        System.out.println("Auto-decompressed");
         assertEquals(originalContent.length(), response.getContentLength());
       } else {
-        System.out.println("Not auto-decompressed");
         assertEquals("gzip", response.getContentEncoding());
         assertEquals(gzippedContent.length, response.getContentLength());
       }
