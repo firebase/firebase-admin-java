@@ -32,13 +32,14 @@ import java.util.concurrent.TimeoutException;
 import org.apache.hc.client5.http.ConnectTimeoutException;
 import org.apache.hc.client5.http.HttpHostConnectException;
 import org.apache.hc.client5.http.async.methods.SimpleHttpRequest;
-import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
 import org.apache.hc.client5.http.async.methods.SimpleRequestBuilder;
-import org.apache.hc.client5.http.async.methods.SimpleResponseConsumer;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.async.CloseableHttpAsyncClient;
 import org.apache.hc.core5.concurrent.FutureCallback;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.Message;
 import org.apache.hc.core5.http.nio.support.BasicRequestProducer;
+import org.apache.hc.core5.http.nio.support.BasicResponseConsumer;
 import org.apache.hc.core5.http2.H2StreamResetException;
 import org.apache.hc.core5.util.Timeout;
 
@@ -49,6 +50,7 @@ final class ApacheHttp2Request extends LowLevelHttpRequest {
   private final RequestConfig.Builder requestConfig;
   private int writeTimeout;
   private ApacheHttp2AsyncEntityProducer entityProducer;
+  private ApacheHttp2AsyncEntityConsumer entityConsumer;
 
   ApacheHttp2Request(
       CloseableHttpAsyncClient httpAsyncClient, SimpleRequestBuilder requestBuilder) {
@@ -85,17 +87,20 @@ final class ApacheHttp2Request extends LowLevelHttpRequest {
     // Build request
     request = requestBuilder.build();
 
-    // Make Producer
+    // Make Entity Producer
     CompletableFuture<Void> writeFuture = new CompletableFuture<>();
     entityProducer = new ApacheHttp2AsyncEntityProducer(this, writeFuture);
 
+    // Make Entity Consumer
+    entityConsumer = new ApacheHttp2AsyncEntityConsumer();
+
     // Execute
-    final Future<SimpleHttpResponse> responseFuture = httpAsyncClient.execute(
+    final Future<Message<HttpResponse, ApacheHttp2Entity>> responseFuture = httpAsyncClient.execute(
         new BasicRequestProducer(request, entityProducer),
-        SimpleResponseConsumer.create(),
-        new FutureCallback<SimpleHttpResponse>() {
+        new BasicResponseConsumer<ApacheHttp2Entity>(entityConsumer),
+        new FutureCallback<Message<HttpResponse, ApacheHttp2Entity>>() {
           @Override
-          public void completed(final SimpleHttpResponse response) {
+          public void completed(final Message<HttpResponse, ApacheHttp2Entity> response) {
           }
 
           @Override
@@ -120,10 +125,10 @@ final class ApacheHttp2Request extends LowLevelHttpRequest {
 
     // Wait for response
     try {
-      final SimpleHttpResponse response = responseFuture.get();
+      final Message<HttpResponse, ApacheHttp2Entity> response = responseFuture.get();
       return new ApacheHttp2Response(response);
     } catch (ExecutionException e) {
-      if (e.getCause() instanceof ConnectTimeoutException 
+      if (e.getCause() instanceof ConnectTimeoutException
           || e.getCause() instanceof SocketTimeoutException) {
         throw new IOException("Connection Timeout", e.getCause());
       } else if (e.getCause() instanceof HttpHostConnectException) {
@@ -143,5 +148,10 @@ final class ApacheHttp2Request extends LowLevelHttpRequest {
   @VisibleForTesting
   ApacheHttp2AsyncEntityProducer getEntityProducer() {
     return entityProducer;
+  }
+
+  @VisibleForTesting
+  ApacheHttp2AsyncEntityConsumer getEntityConsumer() {
+    return entityConsumer;
   }
 }

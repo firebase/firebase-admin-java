@@ -23,17 +23,27 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.apache.hc.client5.http.async.methods.SimpleHttpResponse;
-import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.EntityDetails;
 import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.http.Message;
+import org.apache.hc.core5.http.message.StatusLine;
 
 public class ApacheHttp2Response extends LowLevelHttpResponse {
-  private final SimpleHttpResponse response;
+  private final Message<HttpResponse, ApacheHttp2Entity> message;
+  private final HttpResponse response;
   private final Header[] allHeaders;
+  private final EntityDetails entity;
+  private final byte[] content;
 
-  ApacheHttp2Response(SimpleHttpResponse response) {
-    this.response = response;
-    allHeaders = response.getHeaders();
+  ApacheHttp2Response(Message<HttpResponse, ApacheHttp2Entity> message) {
+    this.message = message;
+    this.response = message.getHead();
+    this.allHeaders = response.getHeaders();
+
+    ApacheHttp2Entity body = message.getBody();
+    this.entity = body != null ? body.getEntityDetails() : null;
+    this.content = body != null ? body.getContent() : null;
   }
 
   @Override
@@ -43,25 +53,25 @@ public class ApacheHttp2Response extends LowLevelHttpResponse {
 
   @Override
   public InputStream getContent() throws IOException {
-    return new ByteArrayInputStream(response.getBodyBytes());
+    return content == null ? null : new ByteArrayInputStream(content);
   }
 
   @Override
   public String getContentEncoding() {
-    Header contentEncodingHeader = response.getFirstHeader("Content-Encoding");
-    return contentEncodingHeader == null ? null : contentEncodingHeader.getValue();
+    return entity == null ? null : entity.getContentEncoding();
   }
 
   @Override
   public long getContentLength() {
-    String bodyText = response.getBodyText();
-    return bodyText == null ? 0 : bodyText.length();
+    if (content != null) {
+      return content.length;
+    }
+    return entity == null ? -1 : entity.getContentLength();
   }
 
   @Override
   public String getContentType() {
-    ContentType contentType = response.getContentType();
-    return contentType == null ? null : contentType.toString();
+    return entity == null ? null : entity.getContentType();
   }
 
   @Override
@@ -71,11 +81,12 @@ public class ApacheHttp2Response extends LowLevelHttpResponse {
 
   @Override
   public String getStatusLine() {
-    return response.toString();
+    return new StatusLine(response).toString();
   }
 
   public String getHeaderValue(String name) {
-    return response.getLastHeader(name).getValue();
+    Header header = response.getLastHeader(name);
+    return header == null ? null : header.getValue();
   }
 
   @Override
@@ -94,7 +105,7 @@ public class ApacheHttp2Response extends LowLevelHttpResponse {
   }
 
   @VisibleForTesting
-  public SimpleHttpResponse getResponse() {
-    return response;
+  public Message<HttpResponse, ApacheHttp2Entity> getMessage() {
+    return message;
   }
 }
