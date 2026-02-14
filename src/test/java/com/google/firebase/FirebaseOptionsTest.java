@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.auth.oauth2.AccessToken;
@@ -37,6 +38,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadFactory;
 
 import org.junit.Test;
+
 
 /**
  * Tests for {@link FirebaseOptions}.
@@ -89,6 +91,7 @@ public class FirebaseOptionsTest {
             .setReadTimeout(60000)
             .setWriteTimeout(90000)
             .setFirestoreOptions(firestoreOptions)
+            .setRetryEnabled(false)
             .build();
     assertEquals(FIREBASE_DB_URL, firebaseOptions.getDatabaseUrl());
     assertEquals(FIREBASE_STORAGE_BUCKET, firebaseOptions.getStorageBucket());
@@ -100,6 +103,7 @@ public class FirebaseOptionsTest {
     assertEquals(60000, firebaseOptions.getReadTimeout());
     assertEquals(90000, firebaseOptions.getWriteTimeout());
     assertSame(firestoreOptions, firebaseOptions.getFirestoreOptions());
+    assertFalse(firebaseOptions.isRetryEnabled());
 
     GoogleCredentials credentials = firebaseOptions.getCredentials();
     assertNotNull(credentials);
@@ -193,6 +197,7 @@ public class FirebaseOptionsTest {
     assertEquals(ALL_VALUES_OPTIONS.getReadTimeout(), allValuesOptionsCopy.getReadTimeout());
     assertSame(ALL_VALUES_OPTIONS.getFirestoreOptions(),
         allValuesOptionsCopy.getFirestoreOptions());
+    assertEquals(ALL_VALUES_OPTIONS.isRetryEnabled(), allValuesOptionsCopy.isRetryEnabled());
   }
 
   @Test(expected = IllegalArgumentException.class)
