@@ -205,14 +205,30 @@ public abstract class ParameterValue {
       this.percent = percent;
     }
 
+    /**
+     * Gets the ID of the Rollout linked to this value.
+     *
+     * @return The Rollout ID
+     */
     public String getRolloutId() {
       return rolloutId;
     }
 
+    /**
+     * Gets the value that is being rolled out.
+     *
+     * @return The rollout value
+     */
     public String getValue() {
       return value;
     }
 
+    /**
+     * Gets the rollout percentage representing the exposure of rollout value
+     * in the target audience.
+     *
+     * @return Percentage of audience exposed to the rollout
+     */
     public double getPercent() {
       return percent;
     }
@@ -256,6 +272,11 @@ public abstract class ParameterValue {
       this.personalizationId = personalizationId;
     }
 
+    /**
+     * Gets the ID of the Personalization linked to this value.
+     *
+     * @return The Personalization ID
+     */
     public String getPersonalizationId() {
       return personalizationId;
     }
@@ -320,10 +341,20 @@ public abstract class ParameterValue {
       return new ExperimentVariantValue(variantId, null, true);
     }
 
+    /**
+     * Gets the ID of the experiment variant.
+     *
+     * @return The variant ID
+     */
     public String getVariantId() {
       return variantId;
     }
 
+    /**
+     * Gets the value of the experiment variant.
+     *
+     * @return The variant value
+     */
     @Nullable
     public String getValue() {
       return value;
@@ -334,6 +365,11 @@ public abstract class ParameterValue {
       return noChange;
     }
 
+    /**
+     * Returns whether the experiment variant is a no-change variant.
+     *
+     * @return true if the experiment variant is a no-change variant, and false otherwise.
+     */
     public boolean isNoChange() {
       return Boolean.TRUE.equals(noChange);
     }
@@ -370,10 +406,20 @@ public abstract class ParameterValue {
       this.variantValues = variantValues;
     }
 
+    /**
+     * Gets the ID of the experiment linked to this value.
+     *
+     * @return The Experiment ID
+     */
     public String getExperimentId() {
       return experimentId;
     }
 
+    /**
+     * Gets a collection of variant values served by the experiment.
+     *
+     * @return List of {@link ExperimentVariantValue}
+     */
     public List<ExperimentVariantValue> getExperimentVariantValues() {
       return variantValues;
     }
