@@ -47,6 +47,7 @@ import com.google.firebase.OutgoingHttpRequest;
 import com.google.firebase.internal.AbstractPlatformErrorHandler;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.ErrorHandlingHttpClient;
+import com.google.firebase.internal.FirebaseProcessEnvironment;
 import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.messaging.internal.MessagingServiceErrorResponse;
@@ -60,7 +61,10 @@ import java.util.Map;
  */
 final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
 
-  private static final String FCM_URL = "https://fcm.googleapis.com/v1/projects/%s/messages:send";
+  private static final String FCM_ROOT_URL = "https://fcm.googleapis.com";
+  private static final String FCM_SEND_PATH = "v1/projects/%s/messages:send";
+  private static final String FCM_BATCH_PATH = "batch";
+  private static final String GOOGLE_FCM_HOST = "GOOGLE_FCM_HOST";
 
   private static final Map<String, String> COMMON_HEADERS =
       ImmutableMap.of(
@@ -68,6 +72,7 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
           "X-Firebase-Client", "fire-admin-java/" + SdkUtils.getVersion());
 
   private final String fcmSendUrl;
+  private final String fcmBatchUrl;
   private final HttpRequestFactory requestFactory;
   private final HttpRequestFactory childRequestFactory;
   private final JsonFactory jsonFactory;
@@ -78,7 +83,14 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
 
   private FirebaseMessagingClientImpl(Builder builder) {
     checkArgument(!Strings.isNullOrEmpty(builder.projectId));
-    this.fcmSendUrl = String.format(FCM_URL, builder.projectId);
+    String fcmRootUrl = FirebaseProcessEnvironment.getenv(GOOGLE_FCM_HOST);
+    if (Strings.isNullOrEmpty(fcmRootUrl)) {
+      fcmRootUrl = FCM_ROOT_URL;
+    }
+    this.fcmSendUrl = String.format(String.format(
+                    "%s/%s", fcmRootUrl, FCM_SEND_PATH),
+            builder.projectId);
+    this.fcmBatchUrl = String.format("%s/%s", fcmRootUrl, FCM_BATCH_PATH);
     this.requestFactory = checkNotNull(builder.requestFactory);
     this.childRequestFactory = checkNotNull(builder.childRequestFactory);
     this.jsonFactory = checkNotNull(builder.jsonFactory);
@@ -86,12 +98,18 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     this.errorHandler = new MessagingErrorHandler(this.jsonFactory);
     this.httpClient = new ErrorHandlingHttpClient<>(requestFactory, jsonFactory, errorHandler)
       .setInterceptor(responseInterceptor);
-    this.batchClient = new MessagingBatchClient(requestFactory.getTransport(), jsonFactory);
+    this.batchClient = new MessagingBatchClient(requestFactory.getTransport(),
+            jsonFactory, fcmRootUrl);
   }
 
   @VisibleForTesting
   String getFcmSendUrl() {
     return fcmSendUrl;
+  }
+
+  @VisibleForTesting
+  String getFcmBatchUrl() {
+    return fcmBatchUrl;
   }
 
   @VisibleForTesting
@@ -139,7 +157,7 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
       return new BatchResponseImpl(callback.getResponses());
     } catch (HttpResponseException e) {
       OutgoingHttpRequest req = new OutgoingHttpRequest(
-          HttpMethods.POST, MessagingBatchClient.FCM_BATCH_URL);
+          HttpMethods.POST, fcmBatchUrl);
       IncomingHttpResponse resp = new IncomingHttpResponse(e, req);
       throw errorHandler.handleHttpResponseException(e, resp);
     } catch (IOException e) {
@@ -319,13 +337,8 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
 
   private static class MessagingBatchClient extends AbstractGoogleJsonClient {
 
-    private static final String FCM_ROOT_URL = "https://fcm.googleapis.com";
-    private static final String FCM_BATCH_PATH = "batch";
-    private static final String FCM_BATCH_URL = String.format(
-        "%s/%s", FCM_ROOT_URL, FCM_BATCH_PATH);
-
-    MessagingBatchClient(HttpTransport transport, JsonFactory jsonFactory) {
-      super(new Builder(transport, jsonFactory));
+    MessagingBatchClient(HttpTransport transport, JsonFactory jsonFactory, String fcmRootUrl) {
+      super(new Builder(transport, jsonFactory, fcmRootUrl));
     }
 
     private MessagingBatchClient(Builder builder) {
@@ -333,8 +346,8 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     }
 
     private static class Builder extends AbstractGoogleJsonClient.Builder {
-      Builder(HttpTransport transport, JsonFactory jsonFactory) {
-        super(transport, jsonFactory, FCM_ROOT_URL, "", null, false);
+      Builder(HttpTransport transport, JsonFactory jsonFactory, String fcmRootUrl) {
+        super(transport, jsonFactory, fcmRootUrl, "", null, false);
         setBatchPath(FCM_BATCH_PATH);
         setApplicationName("fire-admin-java");
       }
