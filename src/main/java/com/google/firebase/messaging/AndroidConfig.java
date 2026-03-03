@@ -58,6 +58,9 @@ public class AndroidConfig {
   @Key("bandwidth_constrained_ok")
   private final Boolean bandwidthConstrainedOk;
 
+  @Key("restricted_satellite_ok")
+  private final Boolean restrictedSatelliteOk;
+
   private AndroidConfig(Builder builder) {
     this.collapseKey = builder.collapseKey;
     if (builder.priority != null) {
@@ -83,6 +86,7 @@ public class AndroidConfig {
     this.fcmOptions = builder.fcmOptions;
     this.directBootOk = builder.directBootOk;
     this.bandwidthConstrainedOk = builder.bandwidthConstrainedOk;
+    this.restrictedSatelliteOk = builder.restrictedSatelliteOk;
   }
 
   /**
@@ -113,6 +117,7 @@ public class AndroidConfig {
     private AndroidFcmOptions fcmOptions;
     private Boolean directBootOk;
     private Boolean bandwidthConstrainedOk;
+    private Boolean restrictedSatelliteOk;
 
     private Builder() {}
 
@@ -224,11 +229,20 @@ public class AndroidConfig {
     }
 
     /**
-     * Sets the {@code bandwidth_constrained_ok} flag. If set to true, messages can be delivered
-     * even when the device is connected through a bandwidth-constrained network.
+     * Sets the {@code bandwidth_constrained_ok} flag. If set to true, messages will be allowed
+     * to be delivered to the app while the device is on a bandwidth constrained network.
      */
     public Builder setBandwidthConstrainedOk(boolean bandwidthConstrainedOk) {
       this.bandwidthConstrainedOk = bandwidthConstrainedOk;
+      return this;
+    }
+
+    /**
+     * Sets the {@code restricted_satellite_ok} flag. If set to true, messages will be allowed
+     * to be delivered to the app while the device is on a restricted satellite network.
+     */
+    public Builder setRestrictedSatelliteOk(boolean restrictedSatelliteOk) {
+      this.restrictedSatelliteOk = restrictedSatelliteOk;
       return this;
     }
 
