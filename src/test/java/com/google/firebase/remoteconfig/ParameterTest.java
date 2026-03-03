@@ -104,4 +104,22 @@ public class ParameterTest {
     assertNotEquals(parameterThree, parameterFive);
     assertNotEquals(parameterThree, parameterSeven);
   }
+
+  @Test
+  public void testEqualityWithManagedValues() {
+    final Parameter parameterOne = new Parameter()
+            .setDefaultValue(ParameterValue.ofRollout("rollout_1", "value_1", 10.0));
+    final Parameter parameterTwo = new Parameter()
+            .setDefaultValue(ParameterValue.ofRollout("rollout_1", "value_1", 10.0));
+
+    assertEquals(parameterOne, parameterTwo);
+
+    final Parameter parameterThree = new Parameter()
+            .setDefaultValue(ParameterValue.ofPersonalization("personalization_1"));
+    final Parameter parameterFour = new Parameter()
+            .setDefaultValue(ParameterValue.ofPersonalization("personalization_1"));
+
+    assertEquals(parameterThree, parameterFour);
+    assertNotEquals(parameterOne, parameterThree);
+  }
 }

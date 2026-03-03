@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,5 +16,22 @@
 
 package com.google.firebase.internal;
 
-/** Indicates that a value cannot be null. */
-public @interface NonNull {}
+import org.apache.hc.core5.http.EntityDetails;
+
+public class ApacheHttp2Entity {
+  private final byte[] content;
+  private final EntityDetails entityDetails;
+
+  public ApacheHttp2Entity(byte[] content, EntityDetails entityDetails) {
+    this.content = content;
+    this.entityDetails = entityDetails;
+  }
+
+  public byte[] getContent() {
+    return content;
+  }
+
+  public EntityDetails getEntityDetails() {
+    return entityDetails;
+  }
+}
