@@ -1069,6 +1069,29 @@ public abstract class AbstractFirebaseAuth {
     };
   }
 
+  public String generateVerifyAndChangeEmailLink(@NonNull String email, @NonNull String newEmail)
+      throws FirebaseAuthException {
+    return generateVerifyAndChangeEmailLink(email, newEmail, null);
+  }
+
+  public String generateVerifyAndChangeEmailLink(
+      @NonNull String email, @NonNull String newEmail, @Nullable ActionCodeSettings settings)
+      throws FirebaseAuthException {
+    return getUserManager().getEmailActionLink(
+        EmailLinkType.VERIFY_AND_CHANGE_EMAIL, email, newEmail, settings);
+  }
+
+  public ApiFuture<String> generateVerifyAndChangeEmailLinkAsync(
+      @NonNull String email, @NonNull String newEmail) {
+    return generateVerifyAndChangeEmailLinkAsync(email, newEmail, null);
+  }
+
+  public ApiFuture<String> generateVerifyAndChangeEmailLinkAsync(
+      @NonNull String email, @NonNull String newEmail, @Nullable ActionCodeSettings settings) {
+    return CallableOperation.getInstance().callAsync(
+        () -> generateVerifyAndChangeEmailLink(email, newEmail, settings));
+  }
+
   /**
    * Generates the out-of-band email action link for password reset flows for the specified email
    * address.
