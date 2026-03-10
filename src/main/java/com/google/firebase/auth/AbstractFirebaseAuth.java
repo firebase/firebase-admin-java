@@ -1069,33 +1069,6 @@ public abstract class AbstractFirebaseAuth {
     };
   }
 
-  public String generateVerifyAndChangeEmailLink(@NonNull String email, @NonNull String newEmail)
-      throws FirebaseAuthException {
-    return generateVerifyAndChangeEmailLink(email, newEmail, null);
-  }
-
-  public String generateVerifyAndChangeEmailLink(
-      @NonNull String email, @NonNull String newEmail, @Nullable ActionCodeSettings settings)
-      throws FirebaseAuthException {
-    return getUserManager().getEmailActionLink(
-        EmailLinkType.VERIFY_AND_CHANGE_EMAIL, email, newEmail, settings);
-  }
-
-  public ApiFuture<String> generateVerifyAndChangeEmailLinkAsync(
-      @NonNull String email, @NonNull String newEmail) {
-    return generateVerifyAndChangeEmailLinkAsync(email, newEmail, null);
-  }
-
-  public ApiFuture<String> generateVerifyAndChangeEmailLinkAsync(
-      @NonNull String email, @NonNull String newEmail, @Nullable ActionCodeSettings settings) {
-    return new CallableOperation<String, FirebaseAuthException>() {
-      @Override
-      protected String execute() throws FirebaseAuthException {
-        return generateVerifyAndChangeEmailLink(email, newEmail, settings);
-      }
-    }.callAsync(firebaseApp);
-  }
-
   /**
    * Generates the out-of-band email action link for password reset flows for the specified email
    * address.
@@ -1217,6 +1190,75 @@ public abstract class AbstractFirebaseAuth {
   }
 
   /**
+   * Generates the out-of-band email action link for verify and change email flows for the specified
+   * user.
+   *
+   * @param email The email address of the user to be verified.
+   * @param newEmail The email address to update the user's account to.
+   * @return A verify and change email link.
+   * @throws IllegalArgumentException If either email address is null or empty.
+   * @throws FirebaseAuthException If an error occurs while generating the link.
+   */
+  public String generateVerifyAndChangeEmailLink(@NonNull String email, @NonNull String newEmail)
+      throws FirebaseAuthException {
+    return generateVerifyAndChangeEmailLink(email, newEmail, null);
+  }
+
+  /**
+   * Generates the out-of-band email action link for verify and change email flows for the specified
+   * user, using the action code settings provided.
+   *
+   * @param email The email address of the user to be verified.
+   * @param newEmail The email address to update the user's account to.
+   * @param settings The action code settings object which defines whether the link is to be handled
+   *     by a mobile app and the additional state information to be passed in the deep link.
+   * @return A verify and change email link.
+   * @throws IllegalArgumentException If either email address is null or empty.
+   * @throws FirebaseAuthException If an error occurs while generating the link.
+   */
+  public String generateVerifyAndChangeEmailLink(
+      @NonNull String email, @NonNull String newEmail, @Nullable ActionCodeSettings settings)
+      throws FirebaseAuthException {
+    return generateEmailActionLinkOp(EmailLinkType.VERIFY_AND_CHANGE_EMAIL, email, newEmail,
+        settings).call();
+  }
+
+  /**
+   * Similar to {@link #generateVerifyAndChangeEmailLink(String, String)} but performs the operation
+   * asynchronously.
+   *
+   * @param email The email address of the user to be verified.
+   * @param newEmail The email address to update the user's account to.
+   * @return An {@code ApiFuture} which will complete successfully with the generated email action
+   *     link. If an error occurs while generating the link, the future throws a {@link
+   *     FirebaseAuthException}.
+   * @throws IllegalArgumentException If either email address is null or empty.
+   */
+  public ApiFuture<String> generateVerifyAndChangeEmailLinkAsync(
+      @NonNull String email, @NonNull String newEmail) {
+    return generateVerifyAndChangeEmailLinkAsync(email, newEmail, null);
+  }
+
+  /**
+   * Similar to {@link #generateVerifyAndChangeEmailLink(String, String, ActionCodeSettings)} but
+   * performs the operation asynchronously.
+   *
+   * @param email The email address of the user to be verified.
+   * @param newEmail The email address to update the user's account to.
+   * @param settings The action code settings object which defines whether the link is to be handled
+   *     by a mobile app and the additional state information to be passed in the deep link.
+   * @return An {@code ApiFuture} which will complete successfully with the generated email action
+   *     link. If an error occurs while generating the link, the future throws a {@link
+   *     FirebaseAuthException}.
+   * @throws IllegalArgumentException If either email address is null or empty.
+   */
+  public ApiFuture<String> generateVerifyAndChangeEmailLinkAsync(
+      @NonNull String email, @NonNull String newEmail, @Nullable ActionCodeSettings settings) {
+    return generateEmailActionLinkOp(EmailLinkType.VERIFY_AND_CHANGE_EMAIL, email, newEmail,
+        settings).callAsync(firebaseApp);
+  }
+
+  /**
    * Generates the out-of-band email action link for email link sign-in flows, using the action code
    * settings provided.
    *
@@ -1253,15 +1295,24 @@ public abstract class AbstractFirebaseAuth {
 
   private CallableOperation<String, FirebaseAuthException> generateEmailActionLinkOp(
       final EmailLinkType type, final String email, final ActionCodeSettings settings) {
+    return generateEmailActionLinkOp(type, email, null, settings);
+  }
+
+  private CallableOperation<String, FirebaseAuthException> generateEmailActionLinkOp(
+      final EmailLinkType type, final String email, @Nullable final String newEmail,
+      final ActionCodeSettings settings) {
     checkArgument(!Strings.isNullOrEmpty(email), "email must not be null or empty");
     if (type == EmailLinkType.EMAIL_SIGNIN) {
       checkNotNull(settings, "ActionCodeSettings must not be null when generating sign-in links");
+    }
+    if (type == EmailLinkType.VERIFY_AND_CHANGE_EMAIL) {
+      checkArgument(!Strings.isNullOrEmpty(newEmail), "newEmail must not be null or empty");
     }
     final FirebaseUserManager userManager = getUserManager();
     return new CallableOperation<String, FirebaseAuthException>() {
       @Override
       protected String execute() throws FirebaseAuthException {
-        return userManager.getEmailActionLink(type, email, settings);
+        return userManager.getEmailActionLink(type, email, newEmail, settings);
       }
     };
   }

@@ -1511,7 +1511,7 @@ public class FirebaseUserManagerTest {
     assertEquals("VERIFY_EMAIL", parsed.get("requestType"));
     assertTrue((Boolean) parsed.get("returnOobLink"));
   }
-  
+
   @Test
   public void testGenerateVerifyAndChangeEmailLink() throws Exception {
     TestResponseInterceptor interceptor = initializeAppForUserManagement(
@@ -1527,6 +1527,35 @@ public class FirebaseUserManagerTest {
     assertEquals("new@example.com", parsed.get("newEmail"));
     assertEquals("VERIFY_AND_CHANGE_EMAIL", parsed.get("requestType"));
     assertTrue((Boolean) parsed.get("returnOobLink"));
+  }
+
+  @Test
+  public void testGenerateVerifyAndChangeEmailLinkWithSettings() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("generateEmailLink.json"));
+
+    // Create custom settings with a continue URL
+    ActionCodeSettings settings = ActionCodeSettings.builder()
+        .setUrl("https://example.com/continue")
+        .setHandleCodeInApp(true)
+        .build();
+
+    String link = FirebaseAuth.getInstance()
+        .generateVerifyAndChangeEmailLinkAsync("test@example.com",
+            "new@example.com", settings).get();
+
+    assertEquals("https://mock-oob-link.for.auth.tests", link);
+    checkRequestHeaders(interceptor);
+
+    GenericJson parsed = parseRequestContent(interceptor);
+    // We expect 6 fields now because of the newEmail and ActionCodeSettings properties.
+    assertEquals(6, parsed.size());
+    assertEquals("test@example.com", parsed.get("email"));
+    assertEquals("new@example.com", parsed.get("newEmail"));
+    assertEquals("VERIFY_AND_CHANGE_EMAIL", parsed.get("requestType"));
+    assertTrue((Boolean) parsed.get("returnOobLink"));
+    assertEquals("https://example.com/continue", parsed.get("continueUrl"));
+    assertTrue((Boolean) parsed.get("canHandleCodeInApp"));
   }
 
   @Test
