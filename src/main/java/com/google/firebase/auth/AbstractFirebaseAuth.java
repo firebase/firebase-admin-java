@@ -1088,8 +1088,12 @@ public abstract class AbstractFirebaseAuth {
 
   public ApiFuture<String> generateVerifyAndChangeEmailLinkAsync(
       @NonNull String email, @NonNull String newEmail, @Nullable ActionCodeSettings settings) {
-    return CallableOperation.getInstance().callAsync(
-        () -> generateVerifyAndChangeEmailLink(email, newEmail, settings));
+    return new CallableOperation<String, FirebaseAuthException>() {
+      @Override
+      protected String execute() throws FirebaseAuthException {
+        return generateVerifyAndChangeEmailLink(email, newEmail, settings);
+      }
+    }.callAsync(firebaseApp);
   }
 
   /**
