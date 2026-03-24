@@ -21,8 +21,6 @@ import com.google.api.client.util.Key;
 import java.util.List;
 import java.util.Map;
 
-import org.checkerframework.checker.units.qual.K;
-
 /**
  * The Data Transfer Object for parsing Remote Config template responses from the
  * Remote Config service.

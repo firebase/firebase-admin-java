@@ -82,10 +82,12 @@ public abstract class ParameterValue {
    *
    * @param experimentId The experiment ID.
    * @param variantValues The list of experiment variant values.
+   * @param exposurePercent The percentage of users exposed to the experiment.
    * @return A {@link ParameterValue.ExperimentValue} instance.
    */
-  public static ExperimentValue ofExperiment(String experimentId,
-                                   List<ExperimentVariantValue> variantValues, Double exposurePercent) {
+  public static ExperimentValue of(
+    String experimentId, 
+    List<ExperimentVariantValue> variantValues, Double exposurePercent) { 
     return new ExperimentValue(experimentId, variantValues, exposurePercent);
   }
 
@@ -119,7 +121,8 @@ public abstract class ParameterValue {
           .map(evv -> new ExperimentVariantValue(
             evv.getVariantId(),  evv.getValue(), evv.getNoChange()))
           .collect(toList());
-      return ParameterValue.ofExperiment(ev.getExperimentId(), variantValues, ev.getExposurePercent());
+      return ParameterValue.ofExperiment(
+        ev.getExperimentId(), variantValues, ev.getExposurePercent());
     }
     return ParameterValue.of(parameterValueResponse.getValue());
   }
@@ -418,6 +421,15 @@ public abstract class ParameterValue {
       return experimentId;
     }
 
+    
+    /**
+     * Gets the percentage of users exposed to the experiment.
+     *
+     * @return The exposure percent
+     */
+    public Double getExposurePercent() { return exposurePercent; }
+
+
     /**
      * Gets a collection of variant values served by the experiment.
      *
@@ -451,12 +463,13 @@ public abstract class ParameterValue {
       }
       ExperimentValue that = (ExperimentValue) o;
       return Objects.equals(experimentId, that.experimentId)
-              && Objects.equals(variantValues, that.variantValues);
+              && Objects.equals(variantValues, that.variantValues)
+              && Objects.equals(exposurePercent, that.exposurePercent);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(experimentId, variantValues);
+      return Objects.hash(experimentId, variantValues, exposurePercent);
     }
   }
 }

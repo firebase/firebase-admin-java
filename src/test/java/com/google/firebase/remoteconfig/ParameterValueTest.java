@@ -77,6 +77,8 @@ public class ParameterValueTest {
     assertEquals("variant_2", variant2.getVariantId());
     assertEquals(null, variant2.getValue());
     assertEquals(true, variant2.isNoChange());
+    assertEquals(10.0, parameterValue.getExposurePercent(), 0.0);
+
   }
 
   @Test
