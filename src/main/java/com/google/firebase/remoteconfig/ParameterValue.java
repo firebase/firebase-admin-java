@@ -85,8 +85,8 @@ public abstract class ParameterValue {
    * @return A {@link ParameterValue.ExperimentValue} instance.
    */
   public static ExperimentValue ofExperiment(String experimentId,
-                                   List<ExperimentVariantValue> variantValues) {
-    return new ExperimentValue(experimentId, variantValues);
+                                   List<ExperimentVariantValue> variantValues, Double exposurePercent) {
+    return new ExperimentValue(experimentId, variantValues, exposurePercent);
   }
 
   abstract ParameterValueResponse toParameterValueResponse();
@@ -119,7 +119,7 @@ public abstract class ParameterValue {
           .map(evv -> new ExperimentVariantValue(
             evv.getVariantId(),  evv.getValue(), evv.getNoChange()))
           .collect(toList());
-      return ParameterValue.ofExperiment(ev.getExperimentId(), variantValues);
+      return ParameterValue.ofExperiment(ev.getExperimentId(), variantValues, ev.getExposurePercent());
     }
     return ParameterValue.of(parameterValueResponse.getValue());
   }
@@ -400,10 +400,13 @@ public abstract class ParameterValue {
   public static final class ExperimentValue extends ParameterValue {
     private final String experimentId;
     private final List<ExperimentVariantValue> variantValues;
+    private final Double exposurePercent;
 
-    private ExperimentValue(String experimentId, List<ExperimentVariantValue> variantValues) {
+
+    private ExperimentValue(String experimentId, List<ExperimentVariantValue> variantValues, Double exposurePercent) {
       this.experimentId = experimentId;
       this.variantValues = variantValues;
+      this.exposurePercent = exposurePercent;
     }
 
     /**

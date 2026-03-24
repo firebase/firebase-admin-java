@@ -64,7 +64,7 @@ public class ParameterValueTest {
             ParameterValue.ofExperiment("experiment_1", ImmutableList.of(
                     ExperimentVariantValue.of("variant_1", "value_1"),
                     ExperimentVariantValue.ofNoChange("variant_2")
-            ));
+            ), 10.0);
 
     assertEquals("experiment_1", parameterValue.getExperimentId());
     assertEquals(2, parameterValue.getExperimentVariantValues().size());
@@ -116,19 +116,19 @@ public class ParameterValueTest {
     ParameterValue.ExperimentValue experimentValueOne =
             ParameterValue.ofExperiment("experiment_1", ImmutableList.of(
                     ExperimentVariantValue.of("variant_1", "value_1")
-            ));
+            ), 10.0);
     ParameterValue.ExperimentValue experimentValueTwo =
             ParameterValue.ofExperiment("experiment_1", ImmutableList.of(
                     ExperimentVariantValue.of("variant_1", "value_1")
-            ));
+            ), 10.0);
     ParameterValue.ExperimentValue experimentValueThree =
             ParameterValue.ofExperiment("experiment_2", ImmutableList.of(
                     ExperimentVariantValue.of("variant_1", "value_1")
-            ));
+            ), 10.0);
     ParameterValue.ExperimentValue experimentValueFour =
             ParameterValue.ofExperiment("experiment_1", ImmutableList.of(
                     ExperimentVariantValue.of("variant_2", "value_2")
-            ));
+            ), 10.0);
 
     assertEquals(experimentValueOne, experimentValueTwo);
     assertNotEquals(experimentValueOne, experimentValueThree);
