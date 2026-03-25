@@ -80,6 +80,7 @@ public abstract class ParameterValue {
    *
    * @param experimentId The experiment ID.
    * @param variantValues The list of experiment variant values.
+   * @param exposurePercent The exposure percentage of the experiment.
    * @return A {@link ParameterValue.ExperimentValue} instance.
    */
   public static ExperimentValue ofExperiment(
@@ -456,7 +457,7 @@ public abstract class ParameterValue {
       ExperimentValue that = (ExperimentValue) o;
       return Objects.equals(experimentId, that.experimentId)
           && Objects.equals(variantValues, that.variantValues)
-          && Double.compare(that.exposurePercent, exposurePercent) == 0;
+          && Objects.equals(that.exposurePercent, exposurePercent);
     }
 
     @Override
