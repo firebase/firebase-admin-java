@@ -29,7 +29,9 @@ import com.google.firebase.remoteconfig.internal.TemplateResponse.RolloutValueRe
 import java.util.List;
 import java.util.Objects;
 
-/** Represents a Remote Config parameter value that can be used in a {@link Template}. */
+/** Represents a Remote Config parameter value 
+ * that can be used in a 
+ * {@link Template}. */
 public abstract class ParameterValue {
 
   /**
