@@ -26,13 +26,10 @@ import com.google.firebase.remoteconfig.internal.TemplateResponse.ExperimentVari
 import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.PersonalizationValueResponse;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.RolloutValueResponse;
-
 import java.util.List;
 import java.util.Objects;
 
-/**
- * Represents a Remote Config parameter value that can be used in a {@link Template}.
- */
+/** Represents a Remote Config parameter value that can be used in a {@link Template}. */
 public abstract class ParameterValue {
 
   /**
@@ -83,15 +80,15 @@ public abstract class ParameterValue {
    * @param variantValues The list of experiment variant values.
    * @return A {@link ParameterValue.ExperimentValue} instance.
    */
-  public static ExperimentValue ofExperiment(String experimentId,
-                                   List<ExperimentVariantValue> variantValues, double exposurePercent) {
+  public static ExperimentValue ofExperiment(
+      String experimentId, List<ExperimentVariantValue> variantValues, double exposurePercent) {
     return new ExperimentValue(experimentId, variantValues, exposurePercent);
   }
 
   abstract ParameterValueResponse toParameterValueResponse();
 
   static ParameterValue fromParameterValueResponse(
-          @NonNull ParameterValueResponse parameterValueResponse) {
+      @NonNull ParameterValueResponse parameterValueResponse) {
     checkNotNull(parameterValueResponse);
     if (parameterValueResponse.isUseInAppDefault()) {
       return ParameterValue.inAppDefault();
@@ -101,7 +98,7 @@ public abstract class ParameterValue {
       // Protobuf serialization does not set values for fields on the wire when
       // they are equal to the default value for the field type. When deserializing,
       // can appear as the value not being set. Explicitly handle default value for
-      // the percent field since 0 is a valid value. 
+      // the percent field since 0 is a valid value.
       double percent = 0;
       if (rv.getPercent() != null) {
         percent = rv.getPercent();
@@ -114,18 +111,21 @@ public abstract class ParameterValue {
     }
     if (parameterValueResponse.getExperimentValue() != null) {
       ExperimentValueResponse ev = parameterValueResponse.getExperimentValue();
-      List<ExperimentVariantValue> variantValues = ev.getExperimentVariantValues().stream()
-          .map(evv -> new ExperimentVariantValue(
-            evv.getVariantId(),  evv.getValue(), evv.getNoChange()))
-          .collect(toList());
-      return ParameterValue.ofExperiment(ev.getExperimentId(), variantValues, ev.getExposurePercent());
+      List<ExperimentVariantValue> variantValues =
+          ev.getExperimentVariantValues().stream()
+              .map(
+                  evv ->
+                      new ExperimentVariantValue(
+                          evv.getVariantId(), evv.getValue(), evv.getNoChange()))
+              .collect(toList());
+      return ParameterValue.ofExperiment(
+          ev.getExperimentId(), variantValues, ev.getExposurePercent());
     }
     return ParameterValue.of(parameterValueResponse.getValue());
   }
 
   /**
-   * Represents an explicit Remote Config parameter value with a value that the
-   * parameter is set to.
+   * Represents an explicit Remote Config parameter value with a value that the parameter is set to.
    */
   public static final class Explicit extends ParameterValue {
 
@@ -146,8 +146,7 @@ public abstract class ParameterValue {
 
     @Override
     ParameterValueResponse toParameterValueResponse() {
-      return new ParameterValueResponse()
-              .setValue(this.value);
+      return new ParameterValueResponse().setValue(this.value);
     }
 
     @Override
@@ -168,9 +167,7 @@ public abstract class ParameterValue {
     }
   }
 
-  /**
-   * Represents an in app default parameter value.
-   */
+  /** Represents an in app default parameter value. */
   public static final class InAppDefault extends ParameterValue {
 
     @Override
@@ -190,9 +187,7 @@ public abstract class ParameterValue {
     }
   }
 
-  /**
-   * Represents a Rollout value.
-   */
+  /** Represents a Rollout value. */
   public static final class RolloutValue extends ParameterValue {
     private final String rolloutId;
     private final String value;
@@ -223,8 +218,8 @@ public abstract class ParameterValue {
     }
 
     /**
-     * Gets the rollout percentage representing the exposure of rollout value
-     * in the target audience.
+     * Gets the rollout percentage representing the exposure of rollout value in the target
+     * audience.
      *
      * @return Percentage of audience exposed to the rollout
      */
@@ -234,11 +229,12 @@ public abstract class ParameterValue {
 
     @Override
     ParameterValueResponse toParameterValueResponse() {
-      return new ParameterValueResponse().setRolloutValue(
+      return new ParameterValueResponse()
+          .setRolloutValue(
               new RolloutValueResponse()
-                      .setRolloutId(this.rolloutId)
-                      .setValue(this.value)
-                      .setPercent(this.percent));
+                  .setRolloutId(this.rolloutId)
+                  .setValue(this.value)
+                  .setPercent(this.percent));
     }
 
     @Override
@@ -251,8 +247,8 @@ public abstract class ParameterValue {
       }
       RolloutValue that = (RolloutValue) o;
       return Double.compare(that.percent, percent) == 0
-              && Objects.equals(rolloutId, that.rolloutId)
-              && Objects.equals(value, that.value);
+          && Objects.equals(rolloutId, that.rolloutId)
+          && Objects.equals(value, that.value);
     }
 
     @Override
@@ -261,9 +257,7 @@ public abstract class ParameterValue {
     }
   }
 
-  /**
-   * Represents a Personalization value.
-   */
+  /** Represents a Personalization value. */
   public static final class PersonalizationValue extends ParameterValue {
     private final String personalizationId;
 
@@ -282,9 +276,9 @@ public abstract class ParameterValue {
 
     @Override
     ParameterValueResponse toParameterValueResponse() {
-      return new ParameterValueResponse().setPersonalizationValue(
-              new PersonalizationValueResponse()
-                      .setPersonalizationId(this.personalizationId));
+      return new ParameterValueResponse()
+          .setPersonalizationValue(
+              new PersonalizationValueResponse().setPersonalizationId(this.personalizationId));
     }
 
     @Override
@@ -305,9 +299,7 @@ public abstract class ParameterValue {
     }
   }
 
-  /**
-   * Represents a specific variant within an Experiment.
-   */
+  /** Represents a specific variant within an Experiment. */
   public static final class ExperimentVariantValue {
     private final String variantId;
     private final String value;
@@ -383,8 +375,8 @@ public abstract class ParameterValue {
       }
       ExperimentVariantValue that = (ExperimentVariantValue) o;
       return noChange == that.noChange
-              && Objects.equals(variantId, that.variantId)
-              && Objects.equals(value, that.value);
+          && Objects.equals(variantId, that.variantId)
+          && Objects.equals(value, that.value);
     }
 
     @Override
@@ -393,16 +385,14 @@ public abstract class ParameterValue {
     }
   }
 
-  /**
-   * Represents an Experiment value.
-   */
+  /** Represents an Experiment value. */
   public static final class ExperimentValue extends ParameterValue {
     private final String experimentId;
     private final List<ExperimentVariantValue> variantValues;
     private final double exposurePercent;
 
-
-    private ExperimentValue(String experimentId, List<ExperimentVariantValue> variantValues, double exposurePercent) {
+    private ExperimentValue(
+        String experimentId, List<ExperimentVariantValue> variantValues, double exposurePercent) {
       this.experimentId = experimentId;
       this.variantValues = variantValues;
       this.exposurePercent = exposurePercent;
@@ -426,7 +416,6 @@ public abstract class ParameterValue {
       return exposurePercent;
     }
 
-
     /**
      * Gets a collection of variant values served by the experiment.
      *
@@ -438,16 +427,20 @@ public abstract class ParameterValue {
 
     @Override
     ParameterValueResponse toParameterValueResponse() {
-      List<ExperimentVariantValueResponse> variantValueResponses = variantValues.stream()
-          .map(variantValue -> new ExperimentVariantValueResponse()
-              .setVariantId(variantValue.getVariantId())
-              .setValue(variantValue.getValue())
-              .setNoChange(variantValue.getNoChange()))
-          .collect(toList());
-      return new ParameterValueResponse().setExperimentValue(
+      List<ExperimentVariantValueResponse> variantValueResponses =
+          variantValues.stream()
+              .map(
+                  variantValue ->
+                      new ExperimentVariantValueResponse()
+                          .setVariantId(variantValue.getVariantId())
+                          .setValue(variantValue.getValue())
+                          .setNoChange(variantValue.getNoChange()))
+              .collect(toList());
+      return new ParameterValueResponse()
+          .setExperimentValue(
               new ExperimentValueResponse()
-                      .setExperimentId(this.experimentId)
-                      .setExperimentVariantValues(variantValueResponses));
+                  .setExperimentId(this.experimentId)
+                  .setExperimentVariantValues(variantValueResponses));
     }
 
     @Override
@@ -460,8 +453,8 @@ public abstract class ParameterValue {
       }
       ExperimentValue that = (ExperimentValue) o;
       return Objects.equals(experimentId, that.experimentId)
-              && Objects.equals(variantValues, that.variantValues)
-              && Double.compare(that.exposurePercent, exposurePercent) == 0;
+          && Objects.equals(variantValues, that.variantValues)
+          && Double.compare(that.exposurePercent, exposurePercent) == 0;
     }
 
     @Override
