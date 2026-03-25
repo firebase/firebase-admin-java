@@ -85,7 +85,7 @@ public abstract class ParameterValue {
    * @param exposurePercent The percentage of users exposed to the experiment.
    * @return A {@link ParameterValue.ExperimentValue} instance.
    */
-  public static ExperimentValue of(
+  public static ExperimentValue ofExperiment(
     String experimentId, 
     List<ExperimentVariantValue> variantValues, Double exposurePercent) { 
     return new ExperimentValue(experimentId, variantValues, exposurePercent);
