@@ -18,7 +18,6 @@ package com.google.firebase.remoteconfig;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.remoteconfig.ParameterValue.ExperimentVariantValue;

@@ -27,7 +27,6 @@ import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValue
 import com.google.firebase.remoteconfig.internal.TemplateResponse.PersonalizationValueResponse;
 import com.google.firebase.remoteconfig.internal.TemplateResponse.RolloutValueResponse;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -82,12 +81,10 @@ public abstract class ParameterValue {
    *
    * @param experimentId The experiment ID.
    * @param variantValues The list of experiment variant values.
-   * @param exposurePercent The percentage of users exposed to the experiment.
    * @return A {@link ParameterValue.ExperimentValue} instance.
    */
-  public static ExperimentValue ofExperiment(
-    String experimentId, 
-    List<ExperimentVariantValue> variantValues, Double exposurePercent) { 
+  public static ExperimentValue ofExperiment(String experimentId,
+                                   List<ExperimentVariantValue> variantValues, double exposurePercent) {
     return new ExperimentValue(experimentId, variantValues, exposurePercent);
   }
 
@@ -121,8 +118,7 @@ public abstract class ParameterValue {
           .map(evv -> new ExperimentVariantValue(
             evv.getVariantId(),  evv.getValue(), evv.getNoChange()))
           .collect(toList());
-      return ParameterValue.ofExperiment(
-        ev.getExperimentId(), variantValues, ev.getExposurePercent());
+      return ParameterValue.ofExperiment(ev.getExperimentId(), variantValues, ev.getExposurePercent());
     }
     return ParameterValue.of(parameterValueResponse.getValue());
   }
@@ -403,10 +399,10 @@ public abstract class ParameterValue {
   public static final class ExperimentValue extends ParameterValue {
     private final String experimentId;
     private final List<ExperimentVariantValue> variantValues;
-    private final Double exposurePercent;
+    private final double exposurePercent;
 
 
-    private ExperimentValue(String experimentId, List<ExperimentVariantValue> variantValues, Double exposurePercent) {
+    private ExperimentValue(String experimentId, List<ExperimentVariantValue> variantValues, double exposurePercent) {
       this.experimentId = experimentId;
       this.variantValues = variantValues;
       this.exposurePercent = exposurePercent;
@@ -421,13 +417,14 @@ public abstract class ParameterValue {
       return experimentId;
     }
 
-    
     /**
-     * Gets the percentage of users exposed to the experiment.
+     * Gets the exposure percentage of the experiment linked to this value.
      *
-     * @return The exposure percent
+     * @return Exposure percentage of the experiment linked to this value.
      */
-    public Double getExposurePercent() { return exposurePercent; }
+    public double getExposurePercent() {
+      return exposurePercent;
+    }
 
 
     /**
@@ -464,7 +461,7 @@ public abstract class ParameterValue {
       ExperimentValue that = (ExperimentValue) o;
       return Objects.equals(experimentId, that.experimentId)
               && Objects.equals(variantValues, that.variantValues)
-              && Objects.equals(exposurePercent, that.exposurePercent);
+              && Double.compare(that.exposurePercent, exposurePercent) == 0;
     }
 
     @Override
