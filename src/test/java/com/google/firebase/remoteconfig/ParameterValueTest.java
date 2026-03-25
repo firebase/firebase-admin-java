@@ -68,6 +68,10 @@ public class ParameterValueTest {
 
     assertEquals("experiment_1", parameterValue.getExperimentId());
     assertEquals(2, parameterValue.getExperimentVariantValues().size());
+    assertEquals(10.0, parameterValue.getExposurePercent(), 0.0);
+
+    assertEquals("experiment_1", parameterValue.getExperimentId());
+    assertEquals(2, parameterValue.getExperimentVariantValues().size());
     ExperimentVariantValue variant1 = parameterValue.getExperimentVariantValues().get(0);
     assertEquals("variant_1", variant1.getVariantId());
     assertEquals("value_1", variant1.getValue());
