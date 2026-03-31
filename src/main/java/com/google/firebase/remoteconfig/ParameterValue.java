@@ -121,8 +121,13 @@ public abstract class ParameterValue {
                       new ExperimentVariantValue(
                           evv.getVariantId(), evv.getValue(), evv.getNoChange()))
               .collect(toList());
+      // Handle null exposurePercent by defaulting to 0
+      double exposurePercent = 0;
+      if (ev.getExposurePercent() != null) {
+        exposurePercent = ev.getExposurePercent();
+      }
       return ParameterValue.ofExperiment(
-          ev.getExperimentId(), variantValues, ev.getExposurePercent());
+          ev.getExperimentId(), variantValues, exposurePercent);
     }
     return ParameterValue.of(parameterValueResponse.getValue());
   }
@@ -457,7 +462,7 @@ public abstract class ParameterValue {
       ExperimentValue that = (ExperimentValue) o;
       return Objects.equals(experimentId, that.experimentId)
           && Objects.equals(variantValues, that.variantValues)
-          && Objects.equals(that.exposurePercent, exposurePercent);
+          && Double.compare(that.exposurePercent, exposurePercent) == 0;
     }
 
     @Override
