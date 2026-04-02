@@ -288,6 +288,9 @@ public final class TemplateResponse {
     @Key("variantValue")
     private List<ExperimentVariantValueResponse> experimentVariantValues;
 
+    @Key("exposurePercent")
+    private Double exposurePercent;
+
     public String getExperimentId() {
       return experimentId;
     }
@@ -295,6 +298,11 @@ public final class TemplateResponse {
     public List<ExperimentVariantValueResponse> getExperimentVariantValues() {
       return experimentVariantValues;
     }
+
+    public Double getExposurePercent() {
+      return exposurePercent;
+    }
+
 
     public ExperimentValueResponse setExperimentId(String experimentId) {
       this.experimentId = experimentId;
@@ -304,6 +312,11 @@ public final class TemplateResponse {
     public ExperimentValueResponse setExperimentVariantValues(
             List<ExperimentVariantValueResponse> experimentVariantValues) {
       this.experimentVariantValues = experimentVariantValues;
+      return this;
+    }
+
+    public ExperimentValueResponse setExposurePercent(Double exposurePercent) {
+      this.exposurePercent = exposurePercent;
       return this;
     }
   }
