@@ -141,7 +141,7 @@ public class ParameterValueTest {
     assertNotEquals(experimentValueOne, experimentValueFour);
   }
 
-    @Test
+  @Test
   public void testExperimentValueWithZeroExposure() {
     ParameterValue.ExperimentValue value = ParameterValue.ofExperiment(
         "exp_0", ImmutableList.of(ExperimentVariantValue.of("v1", "foo")), 0.0);
