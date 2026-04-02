@@ -448,7 +448,8 @@ public abstract class ParameterValue {
           .setExperimentValue(
               new ExperimentValueResponse()
                   .setExperimentId(this.experimentId)
-                  .setExperimentVariantValues(variantValueResponses));
+                  .setExperimentVariantValues(variantValueResponses)
+                  .setExposurePercent(this.exposurePercent));
     }
 
     @Override

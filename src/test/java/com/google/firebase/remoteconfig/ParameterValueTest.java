@@ -18,9 +18,12 @@ package com.google.firebase.remoteconfig;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.remoteconfig.ParameterValue.ExperimentVariantValue;
+import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
+
 import org.junit.Test;
 
 public class ParameterValueTest {
@@ -137,4 +140,20 @@ public class ParameterValueTest {
     assertNotEquals(experimentValueOne, experimentValueThree);
     assertNotEquals(experimentValueOne, experimentValueFour);
   }
+
+    @Test
+  public void testExperimentValueWithZeroExposure() {
+    ParameterValue.ExperimentValue value = ParameterValue.ofExperiment(
+        "exp_0", ImmutableList.of(ExperimentVariantValue.of("v1", "foo")), 0.0);
+    
+    // Test Serialization
+    ParameterValueResponse response = value.toParameterValueResponse();
+    assertEquals(0.0, response.getExperimentValue().getExposurePercent(), 0.0);
+    
+    // Test Deserialization
+    ParameterValue fromResponse = ParameterValue.fromParameterValueResponse(response);
+    assertTrue(fromResponse instanceof ParameterValue.ExperimentValue);
+    assertEquals(0.0, ((ParameterValue.ExperimentValue) fromResponse).getExposurePercent(), 0.0);
+  }
+
 }

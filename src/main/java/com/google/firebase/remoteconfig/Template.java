@@ -60,7 +60,7 @@ public final class Template {
     this((String) null);
   }
 
-  Template(@NonNull TemplateResponse templateResponse) {
+  Template(@NonNull TemplateResponse templateResponse) throws FirebaseRemoteConfigException {
     checkNotNull(templateResponse);
     this.parameters = new HashMap<>();
     this.conditions = new ArrayList<>();
@@ -86,6 +86,7 @@ public final class Template {
     if (templateResponse.getVersion() != null) {
       this.version = new Version(templateResponse.getVersion());
     }
+    validateExperimentExposurePercents(this.parameters);
     this.etag = templateResponse.getEtag();
   }
 
@@ -277,5 +278,29 @@ public final class Template {
   @Override
   public int hashCode() {
     return Objects.hash(etag, parameters, conditions, parameterGroups, version);
+  }
+
+  private static void validateExperimentExposurePercents(Map<String, Parameter> parameters)
+      throws FirebaseRemoteConfigException {
+    if (parameters == null) {
+      return;
+    }
+    for (Map.Entry<String, Parameter> entry : parameters.entrySet()) {
+      Parameter parameter = entry.getValue();
+      if (parameter == null || parameter.getConditionalValues() == null) {
+        continue;
+      }
+      for (ParameterValue value : parameter.getConditionalValues().values()) {
+        if (value instanceof ParameterValue.ExperimentValue) {
+          double exposurePercent = ((ParameterValue.ExperimentValue) value).getExposurePercent();
+          // Validate range [0, 100] and finiteness
+          if (exposurePercent < 0 || exposurePercent > 100 || !Double.isFinite(exposurePercent)) {
+            throw new FirebaseRemoteConfigException(
+                ErrorCode.INVALID_ARGUMENT,
+                "Experiment exposure percent must be between 0 and 100 (" + entry.getKey() + ")");
+          }
+        }
+      }
+    }
   }
 }
