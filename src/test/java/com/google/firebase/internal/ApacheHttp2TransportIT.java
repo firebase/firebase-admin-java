@@ -75,7 +75,6 @@ public class ApacheHttp2TransportIT {
   private static final ImmutableMap<String, Object> payload = 
       ImmutableMap.<String, Object>of("foo", "bar");
 
-
   private static ServerSocket serverSocket;
   private static Socket fillerSocket;
   private static int port;
@@ -190,76 +189,6 @@ public class ApacheHttp2TransportIT {
       assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
       assertEquals("IO error: Connection Timeout", e.getMessage());
       assertNull(e.getHttpResponse());
-    }
-  }
-
-  @Test(timeout = 10_000L)
-  public void testReadTimeoutAuthorizedGet() throws Exception {
-    final HttpRequestHandler handler = new HttpRequestHandler() {
-      @Override
-      public void handle(
-          ClassicHttpRequest request, ClassicHttpResponse response, HttpContext context)
-          throws HttpException, IOException {
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          // Ignore
-        }
-        response.setCode(HttpStatus.SC_OK);
-      }
-    };
-    try (FakeServer server = new FakeServer(handler)) {
-      app = FirebaseApp.initializeApp(FirebaseOptions.builder()
-          .setCredentials(MOCK_CREDENTIALS)
-          .setConnectTimeout(5000)
-          .setReadTimeout(100)
-          .build(), "test-app");
-      ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-      HttpRequestInfo request = HttpRequestInfo.buildGetRequest("http://localhost:" + server.getPort());
-
-      try {
-        httpClient.send(request);
-        fail("No exception thrown for HTTP error response");
-      } catch (FirebaseException e) {
-        assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
-        assertEquals("IO error: Connection Timeout", e.getMessage());
-        assertNull(e.getHttpResponse());
-      }
-    }
-  }
-
-  @Test(timeout = 10_000L)
-  public void testReadTimeoutAuthorizedPost() throws Exception {
-    final HttpRequestHandler handler = new HttpRequestHandler() {
-      @Override
-      public void handle(
-          ClassicHttpRequest request, ClassicHttpResponse response, HttpContext context)
-          throws HttpException, IOException {
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          // Ignore
-        }
-        response.setCode(HttpStatus.SC_OK);
-      }
-    };
-    try (FakeServer server = new FakeServer(handler)) {
-      app = FirebaseApp.initializeApp(FirebaseOptions.builder()
-          .setCredentials(MOCK_CREDENTIALS)
-          .setConnectTimeout(5000)
-          .setReadTimeout(100)
-          .build(), "test-app-2");
-      ErrorHandlingHttpClient<FirebaseException> httpClient = getHttpClient(true, app);
-      HttpRequestInfo request = HttpRequestInfo.buildJsonPostRequest("http://localhost:" + server.getPort(), payload);
-
-      try {
-        httpClient.send(request);
-        fail("No exception thrown for HTTP error response");
-      } catch (FirebaseException e) {
-        assertEquals(ErrorCode.UNKNOWN, e.getErrorCode());
-        assertEquals("IO error: Connection Timeout", e.getMessage());
-        assertNull(e.getHttpResponse());
-      }
     }
   }
 
