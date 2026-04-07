@@ -316,7 +316,7 @@ public class ApacheHttp2TransportIT {
 
     @Override
     public void close() {
-      server.initiateShutdown();
+      server.close();
     }
   }
 }
