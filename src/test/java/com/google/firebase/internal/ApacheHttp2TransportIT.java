@@ -53,16 +53,12 @@ import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.HttpRequest;
 import org.apache.hc.core5.http.HttpRequestInterceptor;
-import org.apache.hc.core5.http.HttpRequestMapper;
-import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.impl.bootstrap.HttpServer;
-import org.apache.hc.core5.http.impl.io.HttpService;
+import org.apache.hc.core5.http.impl.bootstrap.ServerBootstrap;
 import org.apache.hc.core5.http.io.HttpRequestHandler;
 import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
-import org.apache.hc.core5.http.io.support.BasicHttpServerRequestHandler;
 import org.apache.hc.core5.http.protocol.HttpContext;
-import org.apache.hc.core5.http.protocol.HttpProcessor;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -120,7 +116,6 @@ public class ApacheHttp2TransportIT {
           ClassicHttpRequest request, ClassicHttpResponse response, HttpContext context)
           throws HttpException, IOException {
         response.setCode(HttpStatus.SC_OK);
-        response.setHeader(HttpHeaders.CONTENT_LENGTH, "0");
       }
     };
     try (FakeServer server = new FakeServer(handler)) {
@@ -141,7 +136,6 @@ public class ApacheHttp2TransportIT {
         String responseJson = "{\"data\":\"{\\\"foo\\\":\\\"bar\\\"}\"}";
         byte[] responseData = responseJson.getBytes(StandardCharsets.UTF_8);
         response.setCode(HttpStatus.SC_OK);
-        response.setHeader(HttpHeaders.CONTENT_LENGTH, String.valueOf(responseData.length));
         response.setHeader(HttpHeaders.CONTENT_TYPE, "application/json");
         response.setEntity(new ByteArrayEntity(responseData, ContentType.APPLICATION_JSON));
       }
@@ -309,38 +303,10 @@ public class ApacheHttp2TransportIT {
     private final HttpServer server;
 
     FakeServer(final HttpRequestHandler httpHandler) throws IOException {
-      HttpRequestMapper<HttpRequestHandler> mapper = new HttpRequestMapper<HttpRequestHandler>() {
-        @Override
-        public HttpRequestHandler resolve(HttpRequest request, HttpContext context)
-            throws HttpException {
-          return httpHandler;
-        }
-      };
-      server = new HttpServer(
-          0,
-          HttpService.builder()
-              .withHttpProcessor(
-                  new HttpProcessor() {
-                    @Override
-                    public void process(
-                        HttpRequest request, EntityDetails entity, HttpContext context)
-                        throws HttpException, IOException {
-                    }
-
-                    @Override
-                    public void process(
-                        HttpResponse response, EntityDetails entity, HttpContext context)
-                        throws HttpException, IOException {
-                    }
-                  })
-              .withHttpServerRequestHandler(new BasicHttpServerRequestHandler(mapper))
-              .build(),
-          null,
-          null,
-          null,
-          null,
-          null,
-          null);
+      server = ServerBootstrap.bootstrap()
+          .setListenerPort(0)
+          .register("*", httpHandler)
+          .create();
       server.start();
     }
 
