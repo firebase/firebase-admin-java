@@ -63,9 +63,9 @@ public class ApacheHttp2TransportIT {
 
   // Sets a 5 second delay before server response to simulate a slow network that
   // results in a read timeout.
-  private static final String DELAY_URL = "https://nghttp2.org/httpbin/delay/5";
-  private static final String GET_URL = "https://nghttp2.org/httpbin/get";
-  private static final String POST_URL = "https://nghttp2.org/httpbin/post";
+  private static final String DELAY_URL = "https://httpbin.org/delay/5";
+  private static final String GET_URL = "https://httpbin.org/get";
+  private static final String POST_URL = "https://httpbin.org/post";
 
   private static ServerSocket serverSocket;
   private static Socket fillerSocket;
