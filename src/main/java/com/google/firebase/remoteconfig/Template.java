@@ -86,7 +86,7 @@ public final class Template {
     if (templateResponse.getVersion() != null) {
       this.version = new Version(templateResponse.getVersion());
     }
-    validateExperimentExposurePercents(this.parameters);
+    validateExperimentExposurePercents(this.parameters, this.parameterGroups);
     this.etag = templateResponse.getEtag();
   }
 
@@ -280,25 +280,56 @@ public final class Template {
     return Objects.hash(etag, parameters, conditions, parameterGroups, version);
   }
 
-  private static void validateExperimentExposurePercents(Map<String, Parameter> parameters)
-      throws FirebaseRemoteConfigException {
+  private void validateExperimentExposurePercents(
+      Map<String, Parameter> parameters,
+      Map<String, ParameterGroup> parameterGroups) throws FirebaseRemoteConfigException {
+    Map<String, Double> experimentExposurePercents = new HashMap<>();
+    validateParameters(parameters, experimentExposurePercents);
+    if (parameterGroups != null) {
+      for (ParameterGroup group : parameterGroups.values()) {
+        validateParameters(group.getParameters(), experimentExposurePercents);
+      }
+    }
+  }
+
+  private void validateParameters(
+      Map<String, Parameter> parameters,
+      Map<String, Double> experimentExposurePercents) throws FirebaseRemoteConfigException {
     if (parameters == null) {
       return;
     }
     for (Map.Entry<String, Parameter> entry : parameters.entrySet()) {
       Parameter parameter = entry.getValue();
-      if (parameter == null || parameter.getConditionalValues() == null) {
-        continue;
+      String parameterName = entry.getKey();
+      checkExposurePercent(parameter.getDefaultValue(), parameterName, experimentExposurePercents);
+      if (parameter.getConditionalValues() != null) {
+        for (ParameterValue value : parameter.getConditionalValues().values()) {
+          checkExposurePercent(value, parameterName, experimentExposurePercents);
+        }
       }
-      for (ParameterValue value : parameter.getConditionalValues().values()) {
-        if (value instanceof ParameterValue.ExperimentValue) {
-          double exposurePercent = ((ParameterValue.ExperimentValue) value).getExposurePercent();
-          // Validate range [0, 100] and finiteness
-          if (exposurePercent < 0 || exposurePercent > 100 || !Double.isFinite(exposurePercent)) {
-            throw new FirebaseRemoteConfigException(
-                ErrorCode.INVALID_ARGUMENT,
-                "Experiment exposure percent must be between 0 and 100 (" + entry.getKey() + ")");
+    }
+  }
+
+  private void checkExposurePercent(
+      ParameterValue value,
+      String parameterName,
+      Map<String, Double> experimentExposurePercents) throws FirebaseRemoteConfigException {
+    if (value instanceof ParameterValue.ExperimentValue) {
+      ParameterValue.ExperimentValue experimentValue = (ParameterValue.ExperimentValue) value;
+      Double exposurePercent = experimentValue.getExposurePercent();
+      if (exposurePercent != null) {
+        // Enforce range [0, 100]
+        if (exposurePercent < 0 || exposurePercent > 100) {
+          return;
+        }
+        // Enforce consistency for the same experimentId
+        String experimentId = experimentValue.getExperimentId();
+        if (experimentExposurePercents.containsKey(experimentId)) {
+          if (!Objects.equals(experimentExposurePercents.get(experimentId), exposurePercent)) {
+            return;
           }
+        } else {
+          experimentExposurePercents.put(experimentId, exposurePercent);
         }
       }
     }
