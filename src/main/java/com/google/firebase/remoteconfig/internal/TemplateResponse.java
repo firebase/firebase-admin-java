@@ -303,7 +303,6 @@ public final class TemplateResponse {
       return exposurePercent;
     }
 
-
     public ExperimentValueResponse setExperimentId(String experimentId) {
       this.experimentId = experimentId;
       return this;
