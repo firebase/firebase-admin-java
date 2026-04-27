@@ -107,7 +107,7 @@ public class TemplateTest {
   }
 
   @Test(expected = NullPointerException.class)
-  public void testConstructorWithNullTemplateResponse() {
+  public void testConstructorWithNullTemplateResponse() throws FirebaseRemoteConfigException {
     new Template((TemplateResponse) null);
   }
 
