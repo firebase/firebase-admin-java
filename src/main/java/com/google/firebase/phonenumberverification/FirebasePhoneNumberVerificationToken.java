@@ -74,14 +74,22 @@ public class FirebasePhoneNumberVerificationToken {
    * Returns the expiration time in seconds since the Unix epoch.
    */
   public long getExpirationTime() {
-    return ((java.util.Date) claims.get("exp")).getTime() / 1000L;
+    Object exp = claims.get("exp");
+    if (exp instanceof java.util.Date) {
+      return ((java.util.Date) exp).getTime() / 1000L;
+    }
+    return exp instanceof Number ? ((Number) exp).longValue() : 0L;
   }
 
   /**
    * Returns the issued-at time in seconds since the Unix epoch.
    */
   public long getIssuedAt() {
-    return ((java.util.Date) claims.get("iat")).getTime() / 1000L;
+    Object iat = claims.get("iat");
+    if (iat instanceof java.util.Date) {
+      return ((java.util.Date) iat).getTime() / 1000L;
+    }
+    return iat instanceof Number ? ((Number) iat).longValue() : 0L;
   }
 
   /**
