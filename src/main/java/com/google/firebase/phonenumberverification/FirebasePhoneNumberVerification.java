@@ -70,7 +70,8 @@ public final class FirebasePhoneNumberVerification {
     return this.tokenVerifier.verifyToken(phoneNumberVerificationJwt);
   }
 
-  private static class FirebasePhoneNumberVerificationService extends FirebaseService<FirebasePhoneNumberVerification> {
+  private static class FirebasePhoneNumberVerificationService
+      extends FirebaseService<FirebasePhoneNumberVerification> {
     FirebasePhoneNumberVerificationService(FirebaseApp app) {
       super(SERVICE_ID, new FirebasePhoneNumberVerification(app));
     }

@@ -70,8 +70,10 @@ public class FirebasePhoneNumberVerificationTokenVerifier {
    * @return {@link FirebasePhoneNumberVerificationToken}
    * @throws FirebasePhoneNumberVerificationException If verification fails
    */
-  public FirebasePhoneNumberVerificationToken verifyToken(String token) throws FirebasePhoneNumberVerificationException {
-    checkArgument(!Strings.isNullOrEmpty(token), "Firebase Phone Number Verification token must not be null or empty");
+  public FirebasePhoneNumberVerificationToken verifyToken(String token)
+      throws FirebasePhoneNumberVerificationException {
+    checkArgument(!Strings.isNullOrEmpty(token),
+        "Firebase Phone Number Verification token must not be null or empty");
 
     try {
       SignedJWT signedJwt = SignedJWT.parse(token);
@@ -97,14 +99,15 @@ public class FirebasePhoneNumberVerificationTokenVerifier {
       throw new FirebasePhoneNumberVerificationException(
           FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN,
           "Check your project: " + projectId + ". "
-          + "Firebase Phone Number Verification token is invalid: " + e.getMessage(),
+          + "Firebase Phone Number Verification token is invalid: "
+          + e.getMessage(),
           e
       );
     } catch (JOSEException e) {
       throw new FirebasePhoneNumberVerificationException(
           FirebasePhoneNumberVerificationErrorCode.INTERNAL_ERROR,
-          "Check your project: " + projectId + ". "
-          + "Failed to verify Firebase Phone Number Verification token signature: " + e.getMessage(),
+          "Check your project: " + projectId + ". Failed to verify "
+          + "Firebase Phone Number Verification token signature: " + e.getMessage(),
           e
       );
     }
@@ -114,8 +117,8 @@ public class FirebasePhoneNumberVerificationTokenVerifier {
     if (!header.getAlgorithm().equals(JWSAlgorithm.ES256)) {
       throw new FirebasePhoneNumberVerificationException(
           FirebasePhoneNumberVerificationErrorCode.INVALID_ARGUMENT,
-          "Firebase Phone Number Verification token has incorrect 'algorithm'. Expected " + JWSAlgorithm.ES256.getName()
-              + " but got " + header.getAlgorithm());
+          "Firebase Phone Number Verification token has incorrect 'algorithm'. "
+          + "Expected " + JWSAlgorithm.ES256.getName() + " but got " + header.getAlgorithm());
     }
     if (Strings.isNullOrEmpty(header.getKeyID())) {
       throw new FirebasePhoneNumberVerificationException(
@@ -137,19 +140,23 @@ public class FirebasePhoneNumberVerificationTokenVerifier {
     String issuer = claims.getIssuer();
 
     if (Strings.isNullOrEmpty(issuer)) {
-      throw new FirebasePhoneNumberVerificationException(FirebasePhoneNumberVerificationErrorCode.INVALID_ARGUMENT,
+      throw new FirebasePhoneNumberVerificationException(
+          FirebasePhoneNumberVerificationErrorCode.INVALID_ARGUMENT,
           "Firebase Phone Number Verification token has no 'iss' (issuer) claim.");
     }
 
     String expectedIssuer = "https://fpnv.googleapis.com/projects/" + this.projectId;
     if (!expectedIssuer.equals(issuer)) {
-      throw new FirebasePhoneNumberVerificationException(FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN,
+      throw new FirebasePhoneNumberVerificationException(
+          FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN,
           "Firebase Phone Number Verification token has an incorrect 'iss' (issuer) claim.");
     }
 
     if (claims.getAudience().isEmpty() || !claims.getAudience().contains(issuer)) {
-      throw new FirebasePhoneNumberVerificationException(FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN,
-          "Invalid audience. Expected to contain: " + issuer + " but found: " + claims.getAudience()
+      throw new FirebasePhoneNumberVerificationException(
+          FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN,
+          "Invalid audience. Expected to contain: " + issuer
+          + " but found: " + claims.getAudience()
       );
     }
 
