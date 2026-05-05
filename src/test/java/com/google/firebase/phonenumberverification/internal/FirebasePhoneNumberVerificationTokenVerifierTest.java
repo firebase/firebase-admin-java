@@ -446,4 +446,24 @@ public class FirebasePhoneNumberVerificationTokenVerifierTest {
       assertTrue(cause.getCause() instanceof MalformedURLException);
     }
   }
+
+  @Test
+  public void testVerifyToken_Claims_InvalidIssuerProject() throws Exception {
+    JWTClaimsSet badIssuerClaims = new JWTClaimsSet.Builder()
+        .issuer("https://fpnv.googleapis.com/projects/attacker-project-id")
+        .audience("https://fpnv.googleapis.com/projects/attacker-project-id")
+        .subject(subject)
+        .expirationTime(new Date(System.currentTimeMillis() + 10000))
+        .build();
+
+    String tokenString = createToken(header, badIssuerClaims);
+    when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(badIssuerClaims);
+
+    FirebasePhoneNumberVerificationException e = assertThrows(FirebasePhoneNumberVerificationException.class, () ->
+        verifier.verifyToken(tokenString)
+    );
+
+    assertEquals(FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN, e.getPhoneNumberVerificationErrorCode());
+    assertTrue(e.getMessage().contains("incorrect 'iss' (issuer) claim"));
+  }
 }

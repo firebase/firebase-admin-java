@@ -141,6 +141,12 @@ public class FirebasePhoneNumberVerificationTokenVerifier {
           "Firebase Phone Number Verification token has no 'iss' (issuer) claim.");
     }
 
+    String expectedIssuer = "https://fpnv.googleapis.com/projects/" + this.projectId;
+    if (!expectedIssuer.equals(issuer)) {
+      throw new FirebasePhoneNumberVerificationException(FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN,
+          "Firebase Phone Number Verification token has an incorrect 'iss' (issuer) claim.");
+    }
+
     if (claims.getAudience().isEmpty() || !claims.getAudience().contains(issuer)) {
       throw new FirebasePhoneNumberVerificationException(FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN,
           "Invalid audience. Expected to contain: " + issuer + " but found: " + claims.getAudience()
