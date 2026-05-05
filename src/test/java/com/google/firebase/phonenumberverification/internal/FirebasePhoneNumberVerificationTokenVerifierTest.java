@@ -431,7 +431,8 @@ public class FirebasePhoneNumberVerificationTokenVerifierTest {
         + "  \"auth_uri\": \"https://accounts.google.com/o/oauth2/auth\",\n"
         + "  \"token_uri\": \"https://accounts.google.com/o/oauth2/token\",\n"
         + "  \"auth_provider_x509_cert_url\": \"https://www.googleapis.com/oauth2/v1/certs\",\n"
-        + "  \"client_x509_cert_url\": \"https://www.googleapis.com/robot/v1/metadata/x509/mock-project-id-none%40mock-project-id.iam.gserviceaccount.com\"\n"
+        + "  \"client_x509_cert_url\": \"https://www.googleapis.com/robot/v1/metadata/x509/"
+        + "mock-project-id-none%40mock-project-id.iam.gserviceaccount.com\"\n"
         + "}";
 
     FirebaseOptions localFirebaseOptions = FirebaseOptions.builder()

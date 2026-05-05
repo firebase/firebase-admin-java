@@ -108,7 +108,7 @@ public final class Template {
       return new Template(templateResponse);
     } catch (IOException e) {
       throw new FirebaseRemoteConfigException(ErrorCode.INVALID_ARGUMENT,
-              "Unable to parse JSON string.");
+          "Unable to parse JSON string.");
     }
   }
 
