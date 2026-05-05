@@ -38,22 +38,27 @@ public final class FirebasePhoneNumberVerification {
   /**
    * Gets the {@link FirebasePhoneNumberVerification} instance for the default {@link FirebaseApp}.
    *
-   * @return The {@link FirebasePhoneNumberVerification} instance for the default {@link FirebaseApp}.
+   * @return The {@link FirebasePhoneNumberVerification} instance for the default
+   *     {@link FirebaseApp}.
    */
   public static FirebasePhoneNumberVerification getInstance() {
     return getInstance(FirebaseApp.getInstance());
   }
 
   /**
-   * Gets the {@link FirebasePhoneNumberVerification} instance for the specified {@link FirebaseApp}.
+   * Gets the {@link FirebasePhoneNumberVerification} instance for the specified
+   * {@link FirebaseApp}.
    *
-   * @return The {@link FirebasePhoneNumberVerification} instance for the specified {@link FirebaseApp}.
+   * @return The {@link FirebasePhoneNumberVerification} instance for the specified
+   *     {@link FirebaseApp}.
    */
   public static synchronized FirebasePhoneNumberVerification getInstance(FirebaseApp app) {
-    FirebasePhoneNumberVerificationService service = ImplFirebaseTrampolines.getService(app, SERVICE_ID,
-        FirebasePhoneNumberVerificationService.class);
+    FirebasePhoneNumberVerificationService service =
+        ImplFirebaseTrampolines.getService(app, SERVICE_ID,
+            FirebasePhoneNumberVerificationService.class);
     if (service == null) {
-      service = ImplFirebaseTrampolines.addService(app, new FirebasePhoneNumberVerificationService(app));
+      service = ImplFirebaseTrampolines.addService(
+          app, new FirebasePhoneNumberVerificationService(app));
     }
     return service.getInstance();
   }

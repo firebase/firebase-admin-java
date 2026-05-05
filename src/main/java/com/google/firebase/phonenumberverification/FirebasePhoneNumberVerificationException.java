@@ -44,7 +44,8 @@ public class FirebasePhoneNumberVerificationException extends FirebaseException 
   }
 
   /**
-   * Exception that created from {@link FirebasePhoneNumberVerificationErrorCode} and {@link String} message.
+   * Exception that created from {@link FirebasePhoneNumberVerificationErrorCode}
+   * and {@link String} message.
    *
    * @param errorCode {@link FirebasePhoneNumberVerificationErrorCode}
    * @param message {@link String}

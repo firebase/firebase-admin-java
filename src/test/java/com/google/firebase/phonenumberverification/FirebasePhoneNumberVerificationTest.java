@@ -84,63 +84,77 @@ public class FirebasePhoneNumberVerificationTest {
   }
 
   @Test
-  public void testVerifyToken_DelegatesToVerifier() throws FirebasePhoneNumberVerificationException {
+  public void testVerifyToken_DelegatesToVerifier()
+      throws FirebasePhoneNumberVerificationException {
     String testToken = "test.token";
-    FirebasePhoneNumberVerificationToken expectedToken = mock(FirebasePhoneNumberVerificationToken.class);
+    FirebasePhoneNumberVerificationToken expectedToken =
+        mock(FirebasePhoneNumberVerificationToken.class);
 
     when(mockVerifier.verifyToken(testToken)).thenReturn(expectedToken);
 
-    FirebasePhoneNumberVerificationToken result = firebasePhoneNumberVerification.verifyToken(testToken);
+    FirebasePhoneNumberVerificationToken result =
+        firebasePhoneNumberVerification.verifyToken(testToken);
 
     assertEquals(expectedToken, result);
     verify(mockVerifier, times(1)).verifyToken(testToken);
   }
 
   @Test
-  public void testVerifyToken_PropagatesException() throws FirebasePhoneNumberVerificationException {
+  public void testVerifyToken_PropagatesException()
+      throws FirebasePhoneNumberVerificationException {
     String testToken = "bad.token";
-    FirebasePhoneNumberVerificationException error = new FirebasePhoneNumberVerificationException(
-        FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN,
-        "Bad token"
-    );
+    FirebasePhoneNumberVerificationException error =
+        new FirebasePhoneNumberVerificationException(
+            FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN,
+            "Bad token"
+        );
 
     when(mockVerifier.verifyToken(testToken)).thenThrow(error);
 
-    FirebasePhoneNumberVerificationException e = assertThrows(FirebasePhoneNumberVerificationException.class, () ->
-        FirebasePhoneNumberVerification.getInstance().verifyToken(testToken)
-    );
-    assertEquals(FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN, e.getPhoneNumberVerificationErrorCode());
+    FirebasePhoneNumberVerificationException e =
+        assertThrows(FirebasePhoneNumberVerificationException.class, () ->
+            FirebasePhoneNumberVerification.getInstance().verifyToken(testToken)
+        );
+    assertEquals(FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN,
+        e.getPhoneNumberVerificationErrorCode());
   }
 
   @Test
-  public void testVerifyToken_PropagatesException_Service_Error() throws FirebasePhoneNumberVerificationException {
+  public void testVerifyToken_PropagatesException_Service_Error()
+      throws FirebasePhoneNumberVerificationException {
     String testToken = "SERVICE_ERROR";
-    FirebasePhoneNumberVerificationException error = new FirebasePhoneNumberVerificationException(
-        FirebasePhoneNumberVerificationErrorCode.SERVICE_ERROR,
-        "SERVICE_ERROR"
-    );
+    FirebasePhoneNumberVerificationException error =
+        new FirebasePhoneNumberVerificationException(
+            FirebasePhoneNumberVerificationErrorCode.SERVICE_ERROR,
+            "SERVICE_ERROR"
+        );
 
     when(mockVerifier.verifyToken(testToken)).thenThrow(error);
 
-    FirebasePhoneNumberVerificationException e = assertThrows(FirebasePhoneNumberVerificationException.class, () ->
-        FirebasePhoneNumberVerification.getInstance().verifyToken(testToken)
-    );
-    assertEquals(FirebasePhoneNumberVerificationErrorCode.SERVICE_ERROR, e.getPhoneNumberVerificationErrorCode());
+    FirebasePhoneNumberVerificationException e =
+        assertThrows(FirebasePhoneNumberVerificationException.class, () ->
+            FirebasePhoneNumberVerification.getInstance().verifyToken(testToken)
+        );
+    assertEquals(FirebasePhoneNumberVerificationErrorCode.SERVICE_ERROR,
+        e.getPhoneNumberVerificationErrorCode());
   }
 
   @Test
-  public void testVerifyToken_PropagatesException_Internal_Error() throws FirebasePhoneNumberVerificationException {
+  public void testVerifyToken_PropagatesException_Internal_Error()
+      throws FirebasePhoneNumberVerificationException {
     String testToken = "INTERNAL";
-    FirebasePhoneNumberVerificationException error = new FirebasePhoneNumberVerificationException(
-        null,
-        "INTERNAL"
-    );
+    FirebasePhoneNumberVerificationException error =
+        new FirebasePhoneNumberVerificationException(
+            null,
+            "INTERNAL"
+        );
 
     when(mockVerifier.verifyToken(testToken)).thenThrow(error);
 
-    FirebasePhoneNumberVerificationException e = assertThrows(FirebasePhoneNumberVerificationException.class, () ->
-        FirebasePhoneNumberVerification.getInstance().verifyToken(testToken)
-    );
+    FirebasePhoneNumberVerificationException e =
+        assertThrows(FirebasePhoneNumberVerificationException.class, () ->
+            FirebasePhoneNumberVerification.getInstance().verifyToken(testToken)
+        );
     assertNull(e.getPhoneNumberVerificationErrorCode());
   }
 }

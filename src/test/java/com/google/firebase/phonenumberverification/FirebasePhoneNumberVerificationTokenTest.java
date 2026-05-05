@@ -50,7 +50,8 @@ public class FirebasePhoneNumberVerificationTokenTest {
         .expirationTime(new Date(System.currentTimeMillis() + 10000))
         .build();
 
-    FirebasePhoneNumberVerificationToken token = new FirebasePhoneNumberVerificationToken(claims.getClaims());
+    FirebasePhoneNumberVerificationToken token =
+        new FirebasePhoneNumberVerificationToken(claims.getClaims());
 
     assertNotNull(token);
     assertEquals(ImmutableList.of(), token.getAudience());
@@ -65,7 +66,8 @@ public class FirebasePhoneNumberVerificationTokenTest {
         .expirationTime(new Date(System.currentTimeMillis() + 10000))
         .build();
 
-    FirebasePhoneNumberVerificationToken token = new FirebasePhoneNumberVerificationToken(claims.getClaims());
+    FirebasePhoneNumberVerificationToken token =
+        new FirebasePhoneNumberVerificationToken(claims.getClaims());
 
     assertNotNull(token);
     assertEquals(ImmutableList.of(), token.getAudience());
