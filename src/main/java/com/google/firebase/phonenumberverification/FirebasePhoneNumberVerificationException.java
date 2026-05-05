@@ -14,29 +14,28 @@
  * limitations under the License.
  */
 
-package com.google.firebase.fpnv;
+package com.google.firebase.phonenumberverification;
 
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseException;
 
 /**
  * Generic exception related to Firebase Phone Number Verification.
- * Check the error code and message for more
- * details.
+ * Check the error code and message for more details.
  */
-public class FirebasePnvException extends FirebaseException {
-  private final FirebasePnvErrorCode errorCode;
+public class FirebasePhoneNumberVerificationException extends FirebaseException {
+  private final FirebasePhoneNumberVerificationErrorCode errorCode;
 
   /**
-   * Exception that created from {@link FirebasePnvErrorCode},
+   * Exception that created from {@link FirebasePhoneNumberVerificationErrorCode},
    * {@link String} message and {@link Throwable} cause.
    *
-   * @param errorCode {@link FirebasePnvErrorCode}
+   * @param errorCode {@link FirebasePhoneNumberVerificationErrorCode}
    * @param message {@link String}
    * @param cause {@link Throwable}
    */
-  public FirebasePnvException(
-      FirebasePnvErrorCode errorCode,
+  public FirebasePhoneNumberVerificationException(
+      FirebasePhoneNumberVerificationErrorCode errorCode,
       String message,
       Throwable cause
   ) {
@@ -45,23 +44,23 @@ public class FirebasePnvException extends FirebaseException {
   }
 
   /**
-   * Exception that created from {@link FirebasePnvErrorCode} and {@link String} message.
+   * Exception that created from {@link FirebasePhoneNumberVerificationErrorCode} and {@link String} message.
    *
-   * @param errorCode {@link FirebasePnvErrorCode}
+   * @param errorCode {@link FirebasePhoneNumberVerificationErrorCode}
    * @param message {@link String}
    */
-  public FirebasePnvException(
-      FirebasePnvErrorCode errorCode,
+  public FirebasePhoneNumberVerificationException(
+      FirebasePhoneNumberVerificationErrorCode errorCode,
       String message
   ) {
     this(errorCode, message, null);
   }
 
-  public FirebasePnvErrorCode getFpnvErrorCode() {
+  public FirebasePhoneNumberVerificationErrorCode getPhoneNumberVerificationErrorCode() {
     return errorCode;
   }
 
-  private static ErrorCode mapToFirebaseError(FirebasePnvErrorCode code) {
+  private static ErrorCode mapToFirebaseError(FirebasePhoneNumberVerificationErrorCode code) {
     if (code == null) {
       return ErrorCode.INTERNAL;
     }
@@ -79,4 +78,3 @@ public class FirebasePnvException extends FirebaseException {
     }
   }
 }
-

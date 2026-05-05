@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package com.google.firebase.fpnv.internal;
+package com.google.firebase.phonenumberverification.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
-import com.google.firebase.fpnv.FirebasePnvErrorCode;
-import com.google.firebase.fpnv.FirebasePnvException;
-import com.google.firebase.fpnv.FirebasePnvToken;
+import com.google.firebase.phonenumberverification.FirebasePhoneNumberVerificationErrorCode;
+import com.google.firebase.phonenumberverification.FirebasePhoneNumberVerificationException;
+import com.google.firebase.phonenumberverification.FirebasePhoneNumberVerificationToken;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -44,9 +44,9 @@ import java.text.ParseException;
 import java.util.Objects;
 
 /**
- * Internal class to verify FPNV tokens.
+ * Internal class to verify Firebase Phone Number Verification tokens.
  */
-public class FirebasePnvTokenVerifier {
+public class FirebasePhoneNumberVerificationTokenVerifier {
   private static final String FPNV_JWKS_URL = "https://fpnv.googleapis.com/v1beta/jwks";
   private static final String HEADER_TYP = "JWT";
 
@@ -54,28 +54,24 @@ public class FirebasePnvTokenVerifier {
   private final DefaultJWTProcessor<SecurityContext> jwtProcessor;
 
   /**
-   * Create {@link FirebasePnvTokenVerifier} for internal purposes.
+   * Create {@link FirebasePhoneNumberVerificationTokenVerifier} for internal purposes.
    *
-   * @param app The {@link FirebaseApp} to get a FirebaseAuth instance for.
+   * @param app The {@link FirebaseApp} to get a project ID from.
    */
-  public FirebasePnvTokenVerifier(FirebaseApp app) {
+  public FirebasePhoneNumberVerificationTokenVerifier(FirebaseApp app) {
     this.projectId = getProjectId(app);
     this.jwtProcessor = createJwtProcessor();
   }
 
   /**
-   * Main method that performs the following verification steps:
-   * - Explicitly verifies the header
-   * - Verifies signature and structure
-   * - Verifies claims (e.g. issuer, audience, expiration)
-   * - Constructs a token object upon successful verification
+   * Main method that performs token verification steps.
    *
    * @param token String input data
-   * @return {@link FirebasePnvToken}
-   * @throws FirebasePnvException Can throw {@link FirebasePnvException}
+   * @return {@link FirebasePhoneNumberVerificationToken}
+   * @throws FirebasePhoneNumberVerificationException If verification fails
    */
-  public FirebasePnvToken verifyToken(String token) throws FirebasePnvException {
-    checkArgument(!Strings.isNullOrEmpty(token), "FPNV token must not be null or empty");
+  public FirebasePhoneNumberVerificationToken verifyToken(String token) throws FirebasePhoneNumberVerificationException {
+    checkArgument(!Strings.isNullOrEmpty(token), "Firebase Phone Number Verification token must not be null or empty");
 
     try {
       SignedJWT signedJwt = SignedJWT.parse(token);
@@ -84,86 +80,76 @@ public class FirebasePnvTokenVerifier {
       JWTClaimsSet claims = jwtProcessor.process(signedJwt, null);
       verifyClaims(claims);
 
-      return new FirebasePnvToken(claims.getClaims());
+      return new FirebasePhoneNumberVerificationToken(claims.getClaims());
     } catch (ParseException e) {
-      throw new FirebasePnvException(
-          FirebasePnvErrorCode.INVALID_TOKEN,
+      throw new FirebasePhoneNumberVerificationException(
+          FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN,
           "Failed to parse JWT token: " + e.getMessage(),
           e
       );
     } catch (ExpiredJWTException e) {
-      throw new FirebasePnvException(
-          FirebasePnvErrorCode.TOKEN_EXPIRED,
-          "FPNV token has expired.",
+      throw new FirebasePhoneNumberVerificationException(
+          FirebasePhoneNumberVerificationErrorCode.TOKEN_EXPIRED,
+          "Firebase Phone Number Verification token has expired.",
           e
       );
     } catch (BadJOSEException e) {
-      throw new FirebasePnvException(
-          FirebasePnvErrorCode.INVALID_TOKEN,
+      throw new FirebasePhoneNumberVerificationException(
+          FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN,
           "Check your project: " + projectId + ". "
-          + "FPNV token is invalid: " + e.getMessage(),
+          + "Firebase Phone Number Verification token is invalid: " + e.getMessage(),
           e
       );
     } catch (JOSEException e) {
-      throw new FirebasePnvException(
-          FirebasePnvErrorCode.INTERNAL_ERROR,
+      throw new FirebasePhoneNumberVerificationException(
+          FirebasePhoneNumberVerificationErrorCode.INTERNAL_ERROR,
           "Check your project: " + projectId + ". "
-          + "Failed to verify FPNV token signature: " + e.getMessage(),
+          + "Failed to verify Firebase Phone Number Verification token signature: " + e.getMessage(),
           e
       );
     }
   }
 
-  private void verifyHeader(JWSHeader header) throws FirebasePnvException {
-    // Check Algorithm (alg)
+  private void verifyHeader(JWSHeader header) throws FirebasePhoneNumberVerificationException {
     if (!header.getAlgorithm().equals(JWSAlgorithm.ES256)) {
-      throw new FirebasePnvException(
-          FirebasePnvErrorCode.INVALID_ARGUMENT,
-          "FPNV has incorrect 'algorithm'. Expected " + JWSAlgorithm.ES256.getName()
+      throw new FirebasePhoneNumberVerificationException(
+          FirebasePhoneNumberVerificationErrorCode.INVALID_ARGUMENT,
+          "Firebase Phone Number Verification token has incorrect 'algorithm'. Expected " + JWSAlgorithm.ES256.getName()
               + " but got " + header.getAlgorithm());
     }
-    // Check Key ID (kid)
     if (Strings.isNullOrEmpty(header.getKeyID())) {
-      throw new FirebasePnvException(
-          FirebasePnvErrorCode.INVALID_ARGUMENT,
-          "FPNV has no 'kid' claim."
+      throw new FirebasePhoneNumberVerificationException(
+          FirebasePhoneNumberVerificationErrorCode.INVALID_ARGUMENT,
+          "Firebase Phone Number Verification token has no 'kid' claim."
       );
     }
-    // Check Type (typ)
     if (!JOSEObjectType.JWT.equals(header.getType())) {
-      throw new FirebasePnvException(
-          FirebasePnvErrorCode.INVALID_ARGUMENT,
-          "FPNV has incorrect 'typ'. Expected " + HEADER_TYP
+      throw new FirebasePhoneNumberVerificationException(
+          FirebasePhoneNumberVerificationErrorCode.INVALID_ARGUMENT,
+          "Firebase Phone Number Verification token has incorrect 'typ'. Expected " + HEADER_TYP
               + " but got " + header.getType()
       );
     }
-
   }
 
-  private void verifyClaims(JWTClaimsSet claims) throws FirebasePnvException {
+  private void verifyClaims(JWTClaimsSet claims) throws FirebasePhoneNumberVerificationException {
     checkArgument(!Objects.isNull(claims), "JWTClaimsSet claims must not be null");
-    // Verify Issuer
     String issuer = claims.getIssuer();
 
     if (Strings.isNullOrEmpty(issuer)) {
-      throw new FirebasePnvException(FirebasePnvErrorCode.INVALID_ARGUMENT,
-          "FPNV token has no 'iss' (issuer) claim.");
+      throw new FirebasePhoneNumberVerificationException(FirebasePhoneNumberVerificationErrorCode.INVALID_ARGUMENT,
+          "Firebase Phone Number Verification token has no 'iss' (issuer) claim.");
     }
 
-    // Verify Audience
-    if (claims.getAudience().isEmpty()
-        || !claims.getAudience().contains(issuer)
-    ) {
-      throw new FirebasePnvException(FirebasePnvErrorCode.INVALID_TOKEN,
-          "Invalid audience. Expected to contain: "
-              + issuer + " but found: " + claims.getAudience()
+    if (claims.getAudience().isEmpty() || !claims.getAudience().contains(issuer)) {
+      throw new FirebasePhoneNumberVerificationException(FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN,
+          "Invalid audience. Expected to contain: " + issuer + " but found: " + claims.getAudience()
       );
     }
 
-    // Verify Subject for emptiness / null
     if (Strings.isNullOrEmpty(claims.getSubject())) {
-      throw new FirebasePnvException(
-          FirebasePnvErrorCode.INVALID_TOKEN,
+      throw new FirebasePhoneNumberVerificationException(
+          FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN,
           "Token has an empty 'sub' (phone number)."
       );
     }
@@ -172,9 +158,7 @@ public class FirebasePnvTokenVerifier {
   private DefaultJWTProcessor<SecurityContext> createJwtProcessor() {
     DefaultJWTProcessor<SecurityContext> processor = new DefaultJWTProcessor<>();
     try {
-      // Use JWKSourceBuilder instead of deprecated RemoteJWKSet
       JWKSource<SecurityContext> keySource = createKeySource();
-
       JWSKeySelector<SecurityContext> keySelector =
           new JWSVerificationKeySelector<>(JWSAlgorithm.ES256, keySource);
       processor.setJWSKeySelector(keySelector);
@@ -184,16 +168,10 @@ public class FirebasePnvTokenVerifier {
     return processor;
   }
 
-  /**
-   * Helper JWKSourceBuilder.
-   *
-   * @return an instance of JWKSource
-   * @throws MalformedURLException if URL is invalid
-   */
   protected JWKSource<SecurityContext> createKeySource() throws MalformedURLException {
     return JWKSourceBuilder
         .create(new URL(FPNV_JWKS_URL))
-        .retrying(true) // Helper to retry on transient network errors
+        .retrying(true)
         .build();
   }
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.fpnv.internal;
+package com.google.firebase.phonenumberverification.internal;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -28,10 +28,10 @@ import static org.mockito.Mockito.when;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
-import com.google.firebase.fpnv.FirebasePnvErrorCode;
-import com.google.firebase.fpnv.FirebasePnvException;
-import com.google.firebase.fpnv.FirebasePnvToken;
 import com.google.firebase.internal.FirebaseProcessEnvironment;
+import com.google.firebase.phonenumberverification.FirebasePhoneNumberVerificationErrorCode;
+import com.google.firebase.phonenumberverification.FirebasePhoneNumberVerificationException;
+import com.google.firebase.phonenumberverification.FirebasePhoneNumberVerificationToken;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import com.nimbusds.jose.JOSEException;
@@ -50,7 +50,6 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.jwt.proc.ExpiredJWTException;
-
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -67,7 +66,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-public class FpnvTokenVerifierTest {
+public class FirebasePhoneNumberVerificationTokenVerifierTest {
   private static final String PROJECT_ID = "mock-project-id-2";
   private static final FirebaseOptions firebaseOptions = FirebaseOptions.builder()
       .setProjectId(PROJECT_ID)
@@ -82,42 +81,37 @@ public class FpnvTokenVerifierTest {
   @Mock
   private DefaultJWTProcessor<SecurityContext> mockJwtProcessor;
 
-  private FirebasePnvTokenVerifier verifier;
+  private FirebasePhoneNumberVerificationTokenVerifier verifier;
   private KeyPair rsaKeyPair;
   private ECKey ecKey;
   private JWSHeader header;
   private JWTClaimsSet claims;
-  private final String  subject = "+15551234567";
+  private final String subject = "+15551234567";
   private final Date issueTime = new Date();
   private final Date expirationTime = new Date(System.currentTimeMillis() + 10000);
 
   @Before
   public void setUp() throws Exception {
-    // noinspection resource
     MockitoAnnotations.openMocks(this);
 
-    // Generate a real RSA key pair for signing test tokens
     KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
     gen.initialize(2048);
     rsaKeyPair = gen.generateKeyPair();
 
     ecKey = new ECKeyGenerator(Curve.P_256).keyID("ec-key-id").generate();
 
-    // Initialize Verifier and inject mock processor
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(firebaseOptions);
-    verifier = new FirebasePnvTokenVerifier(firebaseApp);
+    verifier = new FirebasePhoneNumberVerificationTokenVerifier(firebaseApp);
 
-    Field processorField = FirebasePnvTokenVerifier.class.getDeclaredField("jwtProcessor");
+    Field processorField = FirebasePhoneNumberVerificationTokenVerifier.class.getDeclaredField("jwtProcessor");
     processorField.setAccessible(true);
     processorField.set(verifier, mockJwtProcessor);
 
-    // Create a valid ES256 token
     header = new JWSHeader.Builder(JWSAlgorithm.ES256)
         .keyID(ecKey.getKeyID())
         .type(JOSEObjectType.JWT)
         .build();
 
-    // Create a valid JWTClaimsSet
     claims = new JWTClaimsSet.Builder()
         .issuer(ISSUER)
         .audience(Arrays.asList(AUD))
@@ -133,15 +127,13 @@ public class FpnvTokenVerifierTest {
     TestOnlyImplFirebaseTrampolines.clearInstancesForTest();
   }
 
-  // --- Helper to create a signed JWT string ---
   private String createToken(JWSHeader header, JWTClaimsSet claims) throws Exception {
     SignedJWT jwt = new SignedJWT(header, claims);
 
-    // Sign based on the algorithm in the header
     if (JWSAlgorithm.RS256.equals(header.getAlgorithm())) {
       jwt.sign(new RSASSASigner(rsaKeyPair.getPrivate()));
     } else if (JWSAlgorithm.HS256.equals(header.getAlgorithm())) {
-      jwt.sign(new MACSigner("12345678901234567890123456789012")); // 32-byte secret
+      jwt.sign(new MACSigner("12345678901234567890123456789012"));
     } else if (JWSAlgorithm.ES256.equals(header.getAlgorithm())) {
       jwt.sign(new ECDSASigner(ecKey.toECPrivateKey()));
     }
@@ -154,20 +146,17 @@ public class FpnvTokenVerifierTest {
     IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
         verifier.verifyToken("")
     );
-    assertTrue(e.getMessage().contains("FPNV token must not be null"));
+    assertTrue(e.getMessage().contains("Firebase Phone Number Verification token must not be null"));
   }
 
   @Test
   public void testVerifyToken_Success() throws Exception {
     String tokenString = createToken(header, claims);
 
-    // 1. Mock the processor to return these claims (skipping real signature verification)
     when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(claims);
 
-    // 2. Execute
-    FirebasePnvToken result = verifier.verifyToken(tokenString);
+    FirebasePhoneNumberVerificationToken result = verifier.verifyToken(tokenString);
 
-    // 3. Verify
     assertNotNull(result);
     assertEquals(subject, result.getPhoneNumber());
     assertEquals(issueTime.getTime() / 1000L, result.getIssuedAt());
@@ -179,25 +168,22 @@ public class FpnvTokenVerifierTest {
 
   @Test
   public void testVerifyToken_Header_WrongAlgorithm() throws Exception {
-    // Create token with HS256 (HMAC) instead of ES256
     JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.HS256).build();
     JWTClaimsSet claims = new JWTClaimsSet.Builder().build();
 
     String tokenString = createToken(header, claims);
 
-    // Should fail at header check, before reaching the processor
-    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+    FirebasePhoneNumberVerificationException e = assertThrows(FirebasePhoneNumberVerificationException.class, () ->
         verifier.verifyToken(tokenString)
     );
 
-    assertEquals(FirebasePnvErrorCode.INVALID_ARGUMENT, e.getFpnvErrorCode());
+    assertEquals(FirebasePhoneNumberVerificationErrorCode.INVALID_ARGUMENT, e.getPhoneNumberVerificationErrorCode());
     assertTrue(e.getMessage().contains("algorithm"));
   }
 
   @Test
   public void testVerifyToken_Header_WrongTyp() throws Exception {
-    JWSHeader header = new JWSHeader
-        .Builder(JWSAlgorithm.ES256)
+    JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.ES256)
         .keyID(ecKey.getKeyID())
         .type(JOSEObjectType.JOSE)
         .build();
@@ -205,34 +191,32 @@ public class FpnvTokenVerifierTest {
 
     String tokenString = createToken(header, claims);
 
-    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+    FirebasePhoneNumberVerificationException e = assertThrows(FirebasePhoneNumberVerificationException.class, () ->
         verifier.verifyToken(tokenString)
     );
 
-    assertEquals(FirebasePnvErrorCode.INVALID_ARGUMENT, e.getFpnvErrorCode());
+    assertEquals(FirebasePhoneNumberVerificationErrorCode.INVALID_ARGUMENT, e.getPhoneNumberVerificationErrorCode());
     assertTrue(e.getMessage().contains("has incorrect 'typ'"));
   }
 
   @Test
   public void testVerifyToken_Header_MissingKeyId() throws Exception {
-    // ES256 but missing 'kid'
     JWSHeader header = new JWSHeader.Builder(JWSAlgorithm.ES256).build();
     JWTClaimsSet claims = new JWTClaimsSet.Builder().build();
 
     String tokenString = createToken(header, claims);
 
-    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+    FirebasePhoneNumberVerificationException e = assertThrows(FirebasePhoneNumberVerificationException.class, () ->
         verifier.verifyToken(tokenString)
     );
 
-    assertEquals(FirebasePnvErrorCode.INVALID_ARGUMENT, e.getFpnvErrorCode());
-    assertTrue(e.getMessage().contains("FPNV has no 'kid' claim"));
+    assertEquals(FirebasePhoneNumberVerificationErrorCode.INVALID_ARGUMENT, e.getPhoneNumberVerificationErrorCode());
+    assertTrue(e.getMessage().contains("Firebase Phone Number Verification token has no 'kid' claim"));
   }
 
   @Test
   public void testVerifyToken_Claims_Null() throws Exception {
-    JWTClaimsSet noSubClaims = new JWTClaimsSet.Builder()
-        .build();
+    JWTClaimsSet noSubClaims = new JWTClaimsSet.Builder().build();
 
     String tokenString = createToken(header, noSubClaims);
     when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(null);
@@ -254,12 +238,12 @@ public class FpnvTokenVerifierTest {
     String tokenString = createToken(header, claims);
     when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(claims);
 
-    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+    FirebasePhoneNumberVerificationException e = assertThrows(FirebasePhoneNumberVerificationException.class, () ->
         verifier.verifyToken(tokenString)
     );
 
-    assertEquals(FirebasePnvErrorCode.INVALID_ARGUMENT, e.getFpnvErrorCode());
-    assertTrue(e.getMessage().contains("FPNV token has no 'iss' (issuer) claim."));
+    assertEquals(FirebasePhoneNumberVerificationErrorCode.INVALID_ARGUMENT, e.getPhoneNumberVerificationErrorCode());
+    assertTrue(e.getMessage().contains("Firebase Phone Number Verification token has no 'iss' (issuer) claim."));
   }
 
   @Test
@@ -276,17 +260,17 @@ public class FpnvTokenVerifierTest {
 
     when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenThrow(error);
 
-    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+    FirebasePhoneNumberVerificationException e = assertThrows(FirebasePhoneNumberVerificationException.class, () ->
         verifier.verifyToken(tokenString)
     );
 
-    assertEquals(FirebasePnvErrorCode.TOKEN_EXPIRED, e.getFpnvErrorCode());
+    assertEquals(FirebasePhoneNumberVerificationErrorCode.TOKEN_EXPIRED, e.getPhoneNumberVerificationErrorCode());
   }
 
   @Test
   public void testVerifyToken_Claims_WrongAudience() throws Exception {
     JWTClaimsSet badClaims = new JWTClaimsSet.Builder()
-        .issuer("https://wrong.com") // Wrong issuer
+        .issuer("https://wrong.com")
         .audience(ISSUER)
         .subject(subject)
         .expirationTime(new Date(System.currentTimeMillis() + 10000))
@@ -295,11 +279,11 @@ public class FpnvTokenVerifierTest {
     String tokenString = createToken(header, badClaims);
     when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(badClaims);
 
-    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+    FirebasePhoneNumberVerificationException e = assertThrows(FirebasePhoneNumberVerificationException.class, () ->
         verifier.verifyToken(tokenString)
     );
 
-    assertEquals(FirebasePnvErrorCode.INVALID_TOKEN, e.getFpnvErrorCode());
+    assertEquals(FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN, e.getPhoneNumberVerificationErrorCode());
     assertTrue(e.getMessage().contains("Invalid audience."));
   }
 
@@ -315,11 +299,11 @@ public class FpnvTokenVerifierTest {
     String tokenString = createToken(header, badClaims);
     when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(badClaims);
 
-    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+    FirebasePhoneNumberVerificationException e = assertThrows(FirebasePhoneNumberVerificationException.class, () ->
         verifier.verifyToken(tokenString)
     );
 
-    assertEquals(FirebasePnvErrorCode.INVALID_TOKEN, e.getFpnvErrorCode());
+    assertEquals(FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN, e.getPhoneNumberVerificationErrorCode());
     assertTrue(e.getMessage().contains("Invalid audience. Expected to contain: "));
   }
 
@@ -329,25 +313,25 @@ public class FpnvTokenVerifierTest {
         .issuer(ISSUER)
         .audience(ISSUER)
         .expirationTime(new Date(System.currentTimeMillis() + 10000))
-        .build(); // Missing subject
+        .build();
 
     String tokenString = createToken(header, noSubClaims);
     when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(noSubClaims);
 
-    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+    FirebasePhoneNumberVerificationException e = assertThrows(FirebasePhoneNumberVerificationException.class, () ->
         verifier.verifyToken(tokenString)
     );
 
-    assertEquals(FirebasePnvErrorCode.INVALID_TOKEN, e.getFpnvErrorCode());
+    assertEquals(FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN, e.getPhoneNumberVerificationErrorCode());
     assertTrue(e.getMessage().contains("Token has an empty 'sub' (phone number)"));
   }
 
   @Test
   public void testVerifyToken_ParseException() {
-    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+    FirebasePhoneNumberVerificationException e = assertThrows(FirebasePhoneNumberVerificationException.class, () ->
         verifier.verifyToken(" ")
     );
-    assertEquals(FirebasePnvErrorCode.INVALID_TOKEN, e.getFpnvErrorCode());
+    assertEquals(FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN, e.getPhoneNumberVerificationErrorCode());
     assertTrue(e.getMessage().contains("Failed to parse JWT token"));
   }
 
@@ -359,18 +343,12 @@ public class FpnvTokenVerifierTest {
 
     when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenThrow(error);
 
-    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+    FirebasePhoneNumberVerificationException e = assertThrows(FirebasePhoneNumberVerificationException.class, () ->
         verifier.verifyToken(tokenString)
     );
 
-    assertEquals(FirebasePnvErrorCode.INVALID_TOKEN, e.getFpnvErrorCode());
-    assertEquals(
-        "Check your project: "
-            + PROJECT_ID
-            + ". FPNV token is invalid: "
-            + errorMessage,
-        e.getMessage()
-    );
+    assertEquals(FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN, e.getPhoneNumberVerificationErrorCode());
+    assertTrue(e.getMessage().contains("Firebase Phone Number Verification token is invalid:"));
   }
 
   @Test
@@ -381,18 +359,12 @@ public class FpnvTokenVerifierTest {
 
     when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenThrow(error);
 
-    FirebasePnvException e = assertThrows(FirebasePnvException.class, () ->
+    FirebasePhoneNumberVerificationException e = assertThrows(FirebasePhoneNumberVerificationException.class, () ->
         verifier.verifyToken(tokenString)
     );
 
-    assertEquals(FirebasePnvErrorCode.INTERNAL_ERROR, e.getFpnvErrorCode());
-    assertEquals(
-        "Check your project: "
-            + PROJECT_ID
-            + ". Failed to verify FPNV token signature: "
-            + errorMessage,
-        e.getMessage()
-    );
+    assertEquals(FirebasePhoneNumberVerificationErrorCode.INTERNAL_ERROR, e.getPhoneNumberVerificationErrorCode());
+    assertTrue(e.getMessage().contains("Failed to verify Firebase Phone Number Verification token signature:"));
   }
 
   @Test
@@ -444,11 +416,10 @@ public class FpnvTokenVerifierTest {
             )
         ).build();
 
-    // Initialize Verifier and inject mock processor
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(localFirebaseOptions, "second");
 
     IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
-        new FirebasePnvTokenVerifier(firebaseApp)
+        new FirebasePhoneNumberVerificationTokenVerifier(firebaseApp)
     );
 
     assertEquals("Project ID is required in FirebaseOptions.", e.getMessage());
@@ -457,16 +428,13 @@ public class FpnvTokenVerifierTest {
   @Test
   public void testCreateJwtProcessor_HandlesException() throws Exception {
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(firebaseOptions, "third");
-    // 1. Create the spy
-    FirebasePnvTokenVerifier original = new FirebasePnvTokenVerifier(firebaseApp);
-    FirebasePnvTokenVerifier spyClass = spy(original);
+    FirebasePhoneNumberVerificationTokenVerifier original = new FirebasePhoneNumberVerificationTokenVerifier(firebaseApp);
+    FirebasePhoneNumberVerificationTokenVerifier spyClass = spy(original);
 
-    // 2. Force the protected method to throw the checked exception
     doThrow(new MalformedURLException("Simulated bad URL"))
         .when(spyClass).createKeySource();
 
-    // 3. Invoke and catch
-    Method method = FirebasePnvTokenVerifier.class.getDeclaredMethod("createJwtProcessor");
+    Method method = FirebasePhoneNumberVerificationTokenVerifier.class.getDeclaredMethod("createJwtProcessor");
     method.setAccessible(true);
 
     try {
@@ -478,5 +446,4 @@ public class FpnvTokenVerifierTest {
       assertTrue(cause.getCause() instanceof MalformedURLException);
     }
   }
-
 }

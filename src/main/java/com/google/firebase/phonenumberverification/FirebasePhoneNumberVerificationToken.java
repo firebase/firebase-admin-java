@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.firebase.fpnv;
+package com.google.firebase.phonenumberverification;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -26,15 +26,15 @@ import java.util.Map;
 /**
  * Represents a verified Firebase Phone Number Verification token.
  */
-public class FirebasePnvToken {
+public class FirebasePhoneNumberVerificationToken {
   private final Map<String, Object> claims;
 
   /**
-   * Create an instance of {@link FirebasePnvToken} from a map of JWT claims.
+   * Create an instance of {@link FirebasePhoneNumberVerificationToken} from a map of JWT claims.
    *
    * @param claims A map of JWT claims.
    */
-  public FirebasePnvToken(Map<String, Object> claims) {
+  public FirebasePhoneNumberVerificationToken(Map<String, Object> claims) {
     checkArgument(claims != null && claims.containsKey("sub"),
         "Claims map must at least contain sub");
     this.claims = ImmutableMap.copyOf(claims);
@@ -63,8 +63,6 @@ public class FirebasePnvToken {
     if (audience instanceof String) {
       return ImmutableList.of((String) audience);
     } else if (audience instanceof List) {
-      // The nimbus-jose-jwt library should provide a List<String>, but we copy it
-      // to an immutable list for safety and to prevent modification.
       @SuppressWarnings("unchecked")
       List<String> audienceList = (List<String>) audience;
       return ImmutableList.copyOf(audienceList);

@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-package com.google.firebase.fpnv;
+package com.google.firebase.phonenumberverification;
 
 import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
 
-
-public class FirebasePnvErrorCodeTest {
+public class FirebasePhoneNumberVerificationErrorCodeTest {
   @Test
   public void testEnum() {
-    // Assert that all values exist
-    assertNotNull(FirebasePnvErrorCode.valueOf("INVALID_ARGUMENT"));
-    assertNotNull(FirebasePnvErrorCode.valueOf("INVALID_TOKEN"));
-    assertNotNull(FirebasePnvErrorCode.valueOf("TOKEN_EXPIRED"));
-    assertNotNull(FirebasePnvErrorCode.valueOf("INTERNAL_ERROR"));
-    assertNotNull(FirebasePnvErrorCode.valueOf("SERVICE_ERROR"));
+    assertNotNull(FirebasePhoneNumberVerificationErrorCode.valueOf("INVALID_ARGUMENT"));
+    assertNotNull(FirebasePhoneNumberVerificationErrorCode.valueOf("INVALID_TOKEN"));
+    assertNotNull(FirebasePhoneNumberVerificationErrorCode.valueOf("TOKEN_EXPIRED"));
+    assertNotNull(FirebasePhoneNumberVerificationErrorCode.valueOf("INTERNAL_ERROR"));
+    assertNotNull(FirebasePhoneNumberVerificationErrorCode.valueOf("SERVICE_ERROR"));
   }
 }

@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.google.firebase.fpnv;
+package com.google.firebase.phonenumberverification;
 
 /**
- * Error codes that are used in {@link FirebasePnv}.
+ * Error codes that are used in {@link FirebasePhoneNumberVerification}.
  */
-public enum FirebasePnvErrorCode {
+public enum FirebasePhoneNumberVerificationErrorCode {
   INVALID_ARGUMENT,
   INVALID_TOKEN,
   TOKEN_EXPIRED,
