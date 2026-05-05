@@ -283,8 +283,8 @@ public class FirebasePhoneNumberVerificationTokenVerifierTest {
   @Test
   public void testVerifyToken_Claims_WrongAudience() throws Exception {
     JWTClaimsSet badClaims = new JWTClaimsSet.Builder()
-        .issuer("https://wrong.com")
-        .audience(ISSUER)
+        .issuer(ISSUER)
+        .audience("https://wrong-audience.com")
         .subject(subject)
         .expirationTime(new Date(System.currentTimeMillis() + 10000))
         .build();
