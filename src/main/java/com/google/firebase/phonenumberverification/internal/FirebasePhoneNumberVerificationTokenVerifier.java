@@ -51,7 +51,7 @@ public class FirebasePhoneNumberVerificationTokenVerifier {
   private static final String HEADER_TYP = "JWT";
 
   private final String projectId;
-  private DefaultJWTProcessor<SecurityContext> jwtProcessor;
+  private volatile DefaultJWTProcessor<SecurityContext> jwtProcessor;
 
   /**
    * Create {@link FirebasePhoneNumberVerificationTokenVerifier} for internal purposes.
