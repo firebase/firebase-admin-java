@@ -39,6 +39,7 @@ import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.jwt.proc.ExpiredJWTException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.Objects;
@@ -183,7 +184,7 @@ public class FirebasePhoneNumberVerificationTokenVerifier {
 
   protected JWKSource<SecurityContext> createKeySource() throws MalformedURLException {
     return JWKSourceBuilder
-        .create(new URL(FPNV_JWKS_URL))
+        .create(URI.create(FPNV_JWKS_URL).toURL())
         .retrying(true)
         .build();
   }
