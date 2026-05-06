@@ -229,7 +229,7 @@ public class FirebasePhoneNumberVerificationTokenVerifierTest {
     String tokenString = createToken(header, noSubClaims);
     when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(null);
 
-    IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
+    NullPointerException e = assertThrows(NullPointerException.class, () ->
         verifier.verifyToken(tokenString)
     );
 
