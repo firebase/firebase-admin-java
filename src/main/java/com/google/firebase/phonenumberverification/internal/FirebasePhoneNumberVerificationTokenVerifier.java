@@ -114,7 +114,7 @@ public class FirebasePhoneNumberVerificationTokenVerifier {
   }
 
   private void verifyHeader(JWSHeader header) throws FirebasePhoneNumberVerificationException {
-    if (!header.getAlgorithm().equals(JWSAlgorithm.ES256)) {
+    if (!JWSAlgorithm.ES256.equals(header.getAlgorithm())) {
       throw new FirebasePhoneNumberVerificationException(
           FirebasePhoneNumberVerificationErrorCode.INVALID_ARGUMENT,
           "Firebase Phone Number Verification token has incorrect 'algorithm'. "
