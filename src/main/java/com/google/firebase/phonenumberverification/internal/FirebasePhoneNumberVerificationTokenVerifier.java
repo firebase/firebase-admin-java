@@ -62,6 +62,10 @@ public class FirebasePhoneNumberVerificationTokenVerifier {
     this.projectId = getProjectId(app);
   }
 
+  /**
+   * Package-private constructor designed explicitly for dependency injection
+   * during isolated unit testing flows.
+   */
   FirebasePhoneNumberVerificationTokenVerifier(
       String projectId, DefaultJWTProcessor<SecurityContext> jwtProcessor) {
     this.projectId = projectId;
