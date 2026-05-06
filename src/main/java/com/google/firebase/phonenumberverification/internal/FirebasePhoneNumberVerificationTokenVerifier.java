@@ -17,6 +17,7 @@
 package com.google.firebase.phonenumberverification.internal;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
@@ -159,7 +160,7 @@ public class FirebasePhoneNumberVerificationTokenVerifier {
   }
 
   private void verifyClaims(JWTClaimsSet claims) throws FirebasePhoneNumberVerificationException {
-    checkArgument(!Objects.isNull(claims), "JWTClaimsSet claims must not be null");
+    checkNotNull(claims, "JWTClaimsSet claims must not be null");
     String issuer = claims.getIssuer();
 
     if (Strings.isNullOrEmpty(issuer)) {
@@ -199,7 +200,7 @@ public class FirebasePhoneNumberVerificationTokenVerifier {
           new JWSVerificationKeySelector<>(JWSAlgorithm.ES256, keySource);
       processor.setJWSKeySelector(keySelector);
     } catch (MalformedURLException e) {
-      throw new RuntimeException("Invalid JWKS URL", e);
+      throw new IllegalStateException("Invalid JWKS URL", e);
     }
     return processor;
   }

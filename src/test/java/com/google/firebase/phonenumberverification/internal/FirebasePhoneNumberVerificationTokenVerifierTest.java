@@ -471,7 +471,7 @@ public class FirebasePhoneNumberVerificationTokenVerifierTest {
       method.invoke(spyClass);
     } catch (Exception e) {
       Throwable cause = e.getCause();
-      assertEquals(RuntimeException.class, cause.getClass());
+      assertEquals(IllegalStateException.class, cause.getClass());
       assertEquals("Invalid JWKS URL", cause.getMessage());
       assertTrue(cause.getCause() instanceof MalformedURLException);
     }
