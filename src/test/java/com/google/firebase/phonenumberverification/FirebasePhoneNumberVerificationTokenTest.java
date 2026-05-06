@@ -91,14 +91,14 @@ public class FirebasePhoneNumberVerificationTokenTest {
     IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
         new FirebasePhoneNumberVerificationToken(claims)
     );
-    assertTrue(e.getMessage().contains("Claims map must at least contain sub"));
+    assertTrue(e.getMessage().contains("Claims map must contain sub"));
   }
 
   @Test
   public void test_Null_Sub() {
-    IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
+    NullPointerException e = assertThrows(NullPointerException.class, () ->
         new FirebasePhoneNumberVerificationToken(null)
     );
-    assertTrue(e.getMessage().contains("Claims map must at least contain sub"));
+    assertEquals("Claims map must not be null", e.getMessage());
   }
 }

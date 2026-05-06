@@ -42,7 +42,6 @@ import com.nimbusds.jwt.proc.ExpiredJWTException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.text.ParseException;
-import java.util.Objects;
 
 /**
  * Internal class to verify Firebase Phone Number Verification tokens.

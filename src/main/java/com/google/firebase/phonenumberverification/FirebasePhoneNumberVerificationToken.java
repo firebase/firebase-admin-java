@@ -17,6 +17,7 @@
 package com.google.firebase.phonenumberverification;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -35,8 +36,8 @@ public class FirebasePhoneNumberVerificationToken {
    * @param claims A map of JWT claims.
    */
   public FirebasePhoneNumberVerificationToken(Map<String, Object> claims) {
-    checkArgument(claims != null && claims.containsKey("sub"),
-        "Claims map must at least contain sub");
+    checkNotNull(claims, "Claims map must not be null");
+    checkArgument(claims.containsKey("sub"), "Claims map must contain sub");
     this.claims = ImmutableMap.copyOf(claims);
   }
 
