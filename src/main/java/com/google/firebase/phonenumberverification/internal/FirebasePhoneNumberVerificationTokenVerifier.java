@@ -40,7 +40,6 @@ import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.jwt.proc.ExpiredJWTException;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
 import java.text.ParseException;
 import java.util.Objects;
 
@@ -52,7 +51,7 @@ public class FirebasePhoneNumberVerificationTokenVerifier {
   private static final String HEADER_TYP = "JWT";
 
   private final String projectId;
-  private final DefaultJWTProcessor<SecurityContext> jwtProcessor;
+  private DefaultJWTProcessor<SecurityContext> jwtProcessor;
 
   /**
    * Create {@link FirebasePhoneNumberVerificationTokenVerifier} for internal purposes.
@@ -61,7 +60,26 @@ public class FirebasePhoneNumberVerificationTokenVerifier {
    */
   public FirebasePhoneNumberVerificationTokenVerifier(FirebaseApp app) {
     this.projectId = getProjectId(app);
-    this.jwtProcessor = createJwtProcessor();
+  }
+
+  FirebasePhoneNumberVerificationTokenVerifier(
+      String projectId, DefaultJWTProcessor<SecurityContext> jwtProcessor) {
+    this.projectId = projectId;
+    this.jwtProcessor = jwtProcessor;
+  }
+
+  private DefaultJWTProcessor<SecurityContext> getJwtProcessor() {
+    DefaultJWTProcessor<SecurityContext> processor = this.jwtProcessor;
+    if (processor == null) {
+      synchronized (this) {
+        processor = this.jwtProcessor;
+        if (processor == null) {
+          processor = createJwtProcessor();
+          this.jwtProcessor = processor;
+        }
+      }
+    }
+    return processor;
   }
 
   /**
@@ -80,7 +98,7 @@ public class FirebasePhoneNumberVerificationTokenVerifier {
       SignedJWT signedJwt = SignedJWT.parse(token);
       verifyHeader(signedJwt.getHeader());
 
-      JWTClaimsSet claims = jwtProcessor.process(signedJwt, null);
+      JWTClaimsSet claims = getJwtProcessor().process(signedJwt, null);
       verifyClaims(claims);
 
       return new FirebasePhoneNumberVerificationToken(claims.getClaims());
