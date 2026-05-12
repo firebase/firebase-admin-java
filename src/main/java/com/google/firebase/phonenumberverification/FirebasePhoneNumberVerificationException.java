@@ -18,64 +18,34 @@ package com.google.firebase.phonenumberverification;
 
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseException;
+import com.google.firebase.IncomingHttpResponse;
+import com.google.firebase.internal.NonNull;
+import com.google.firebase.internal.Nullable;
 
 /**
- * Generic exception related to Firebase Phone Number Verification.
- * Check the error code and message for more details.
+ * Generic exception related to Firebase Phone Number Verification. Check the error code and message
+ * for more details.
  */
 public class FirebasePhoneNumberVerificationException extends FirebaseException {
+
   private final FirebasePhoneNumberVerificationErrorCode errorCode;
 
-  /**
-   * Exception that created from {@link FirebasePhoneNumberVerificationErrorCode},
-   * {@link String} message and {@link Throwable} cause.
-   *
-   * @param errorCode {@link FirebasePhoneNumberVerificationErrorCode}
-   * @param message {@link String}
-   * @param cause {@link Throwable}
-   */
   public FirebasePhoneNumberVerificationException(
-      FirebasePhoneNumberVerificationErrorCode errorCode,
-      String message,
-      Throwable cause
-  ) {
-    super(mapToFirebaseError(errorCode), message, cause);
-    this.errorCode = errorCode;
+      @NonNull ErrorCode errorCode,
+      @NonNull String message,
+      Throwable cause,
+      IncomingHttpResponse response,
+      FirebasePhoneNumberVerificationErrorCode phoneErrorCode) {
+    super(errorCode, message, cause, response);
+    this.errorCode = phoneErrorCode;
   }
 
-  /**
-   * Exception that created from {@link FirebasePhoneNumberVerificationErrorCode}
-   * and {@link String} message.
-   *
-   * @param errorCode {@link FirebasePhoneNumberVerificationErrorCode}
-   * @param message {@link String}
-   */
-  public FirebasePhoneNumberVerificationException(
-      FirebasePhoneNumberVerificationErrorCode errorCode,
-      String message
-  ) {
-    this(errorCode, message, null);
+  public FirebasePhoneNumberVerificationException(FirebaseException base) {
+    this(base.getErrorCode(), base.getMessage(), base.getCause(), base.getHttpResponse(), null);
   }
 
+  @Nullable
   public FirebasePhoneNumberVerificationErrorCode getPhoneNumberVerificationErrorCode() {
     return errorCode;
-  }
-
-  private static ErrorCode mapToFirebaseError(FirebasePhoneNumberVerificationErrorCode code) {
-    if (code == null) {
-      return ErrorCode.INTERNAL;
-    }
-    switch (code) {
-      case INVALID_ARGUMENT:
-        return ErrorCode.INVALID_ARGUMENT;
-      case TOKEN_EXPIRED:
-      case INVALID_TOKEN:
-        return ErrorCode.UNAUTHENTICATED;
-      case SERVICE_ERROR:
-        return ErrorCode.UNAVAILABLE;
-      case INTERNAL_ERROR:
-      default:
-        return ErrorCode.INTERNAL;
-    }
   }
 }

@@ -17,12 +17,32 @@
 package com.google.firebase.phonenumberverification;
 
 /**
- * Error codes that are used in {@link FirebasePhoneNumberVerification}.
+ * Error codes that can be raised by the Phone Number Verification APIs.
  */
 public enum FirebasePhoneNumberVerificationErrorCode {
+
+  /**
+   * One or more arguments specified in the request were invalid.
+   */
   INVALID_ARGUMENT,
+
+  /**
+   * The provided phone number verification token is invalid or malformed.
+   */
   INVALID_TOKEN,
+
+  /**
+   * The provided phone number verification token has expired.
+   */
   TOKEN_EXPIRED,
+
+  /**
+   * Internal error encountered during phone number verification.
+   */
   INTERNAL_ERROR,
+
+  /**
+   * Phone number verification service is temporarily unavailable.
+   */
   SERVICE_ERROR,
 }

@@ -25,6 +25,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -50,11 +51,9 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.jwt.proc.ExpiredJWTException;
-import java.io.ByteArrayInputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.util.Arrays;
@@ -394,54 +393,10 @@ public class FirebasePhoneNumberVerificationTokenVerifierTest {
   }
 
   @Test
-  public void testVerifyToken_EmptyProjectId() {
-    String jsonString = "{\n"
-        + "  \"type\": \"service_account\",\n"
-        + "  \"project_id\": \"\",\n"
-        + "  \"private_key_id\": \"mock-key-id-1\",\n"
-        + "  \"private_key\": \"-----BEGIN PRIVATE KEY-----\\n"
-        + "MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDrqbYkSM6sixYX"
-        + "\\ngClj447vB/04RwUFykc54ntbyvbymUOJgyAUJLNjEIig60OIXpvdwt/xzyxvmns4"
-        + "\\nivbmWxJpANBDUziUt7AwLkYAEQxkfcP72PFiSGNkFPrxzZWEGcK3E4slaEe6xdFa"
-        + "\\n0AuefIcDSwIMmRP7+20unThJw1jCG4rQTbnuEwM/4U5mK1nXC3s3mzf8p9IHZ5Xi"
-        + "\\nEBBxKWY1c9Ly6VNwDR7xxh8sLfEJmG57C+iJRZLUloAWqQlnRM0vK5Z6MmMwnSpZ"
-        + "\\nW7KgYEl13WEMhR4ZaCZ5Gy5O+5x4Do363459obDbWK67grcx/qtFnyQq8HVDKyI9"
-        + "\\nJZpVpwR1AgMBAAECggEAa8AcHLkBbljlz/b0dcydFOO1Pt8SB9S1/lx0hMLnaIL1"
-        + "\\nI1HGAA/LyZbMsa8AIMEJSTsKA9jy+1BJ2M+JFkg7wbDyiGXrr+vQ7iaqMOuam/P5"
-        + "\\nARTvQT3R2/fPyXFzVIQmyGhyLbdhXJ+IGpqXRW6wmKvaEwKG5abPBAo0q11bHtxy"
-        + "\\nUV9RMXiW6cvzqgkthb7lO3k1ae4s+juiCPZFFpgTT9LkHYxf0XkpAZCvdUJlmf+B"
-        + "\\ngc6bgobtN/zQ3l2hjGHFnNFhaQtNzd2xGcAuAR+BmoOx37YIn7ddYtm4RUgKnjZm"
-        + "\\nFesOC8YumD1S2ioHsXXCb+BXVrARJTTFxIFboiVGnQKBgQD67nXZfsuKXE/BPh/X"
-        + "\\nMMDjtcoYf4T++3BNe01I69fnfB4DAQ5yQ1dA7MTe7tQUO99e5OzhZJhAMsQYc82D"
-        + "\\nLodOpYAeQCa0wN8eYuw5PAIe5G0+62bwNIy9WljcePQl2nkl4rU7fFZLu6yERvRQ"
-        + "\\nA+kn5Dx+wyVYTvDLeE13x3DoVwKBgQDwbEySxyPtxmuDPw2s8rdW9ZVYs71hzULu"
-        + "\\nc9RaPpzSdSzOEewgGOygL3wcqENcU3nT3baMlqZEp/BIL8z1bf8UzQRGebimfWG8"
-        + "\\nlUL1BzLjZMnGXMA7+bhL+iQ98E5BBXHC7I8ir4Qej5235N4UPvqTuhNCisiGod8F"
-        + "\\nE1ScFGSqEwKBgQCzv9HHxR5EtK+k+72PRqtF8tkcB2zbwn3F4wePrvHwLmbJPB5/"
-        + "\\nF2IPbgvwriBZhjISJebR5l9xzWvPIFUdHV1rpv5JrSaM4IRzneUdcrEKNBNVuQb6"
-        + "\\nFoqisW9qL3KlEwUpcGbmf8DJa1y/PJySHNsN6l6zZ1L/GT1AY6MKpGFq7QKBgQCw"
-        + "\\nvNw5lhzqYU+Npt91wONYEKaeE1tntw253vo+8QI1kB/EyNYM7mWch+uz4VnLWC4Z"
-        + "\\nukXE6cYGeHIhjsobraWzc9btu/MqqMcda5hSKd2V3fSaVnqWXEfHynWz9qCAGfF7"
-        + "\\n+oxqUh5MnQSzN5KtzXJFAKfB5eXtWrdossIjDrbFcwKBgQDOUO39/wRP781pf8vV"
-        + "\\naEzklwT64QlbgqK5iBntKvQLTy3xPMqtzJd2RGfTwgMQ6G2PV6W4WHKj9bTpujcM"
-        + "\\nxk7rLcIEXovagJC82ZCGujo5joJ3fam9/q9I5ju5xw13yMOHyeyzsErCpSP/Xr8f"
-        + "\\nr5uOncBw2twGqOZ+FlQtCdE1Dg==\\n-----END PRIVATE KEY-----\\n\",\n"
-        + "  \"client_email\": \"mock-project-id-none@mock-project-id.iam.gserviceaccount.com\",\n"
-        + "  \"client_id\": \"1234567890\",\n"
-        + "  \"auth_uri\": \"https://accounts.google.com/o/oauth2/auth\",\n"
-        + "  \"token_uri\": \"https://accounts.google.com/o/oauth2/token\",\n"
-        + "  \"auth_provider_x509_cert_url\": \"https://www.googleapis.com/oauth2/v1/certs\",\n"
-        + "  \"client_x509_cert_url\": \"https://www.googleapis.com/robot/v1/metadata/x509/"
-        + "mock-project-id-none%40mock-project-id.iam.gserviceaccount.com\"\n"
-        + "}";
-
+  public void testVerifierWithoutProjectId() {
     FirebaseOptions localFirebaseOptions = FirebaseOptions.builder()
-        .setCredentials(TestUtils.getCertCredential(
-                new ByteArrayInputStream(
-                    jsonString.getBytes(StandardCharsets.UTF_8)
-                )
-            )
-        ).build();
+        .setCredentials(GoogleCredentials.create(null))
+        .build();
 
     FirebaseApp firebaseApp = FirebaseApp.initializeApp(localFirebaseOptions, "second");
 

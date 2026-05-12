@@ -26,6 +26,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
@@ -105,8 +106,11 @@ public class FirebasePhoneNumberVerificationTest {
     String testToken = "bad.token";
     FirebasePhoneNumberVerificationException error =
         new FirebasePhoneNumberVerificationException(
-            FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN,
-            "Bad token"
+            ErrorCode.UNAUTHENTICATED,
+            "Bad token",
+            null,
+            null,
+            FirebasePhoneNumberVerificationErrorCode.INVALID_TOKEN
         );
 
     when(mockVerifier.verifyToken(testToken)).thenThrow(error);
@@ -125,8 +129,11 @@ public class FirebasePhoneNumberVerificationTest {
     String testToken = "SERVICE_ERROR";
     FirebasePhoneNumberVerificationException error =
         new FirebasePhoneNumberVerificationException(
-            FirebasePhoneNumberVerificationErrorCode.SERVICE_ERROR,
-            "SERVICE_ERROR"
+            ErrorCode.UNAVAILABLE,
+            "SERVICE_ERROR",
+            null,
+            null,
+            FirebasePhoneNumberVerificationErrorCode.SERVICE_ERROR
         );
 
     when(mockVerifier.verifyToken(testToken)).thenThrow(error);
@@ -145,8 +152,11 @@ public class FirebasePhoneNumberVerificationTest {
     String testToken = "INTERNAL";
     FirebasePhoneNumberVerificationException error =
         new FirebasePhoneNumberVerificationException(
+            ErrorCode.INTERNAL,
+            "INTERNAL",
             null,
-            "INTERNAL"
+            null,
+            null
         );
 
     when(mockVerifier.verifyToken(testToken)).thenThrow(error);
