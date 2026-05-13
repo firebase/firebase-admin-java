@@ -200,7 +200,7 @@ public class ServerTemplateImplTest {
     assertEquals("Unable to parse JSON string.", error.getMessage());
     // Verify the cause is the original FirebaseRemoteConfigException
     assertTrue(error.getCause() instanceof FirebaseRemoteConfigException);
- }
+  }
 
   @Test
   public void testEvaluateWithInAppDefaultReturnsEmptyString() throws Exception {
