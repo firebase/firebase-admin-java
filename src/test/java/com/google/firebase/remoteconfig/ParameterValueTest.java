@@ -22,6 +22,8 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.remoteconfig.ParameterValue.ExperimentVariantValue;
+import com.google.firebase.remoteconfig.internal.TemplateResponse.ParameterValueResponse;
+
 import org.junit.Test;
 
 public class ParameterValueTest {
@@ -64,7 +66,11 @@ public class ParameterValueTest {
             ParameterValue.ofExperiment("experiment_1", ImmutableList.of(
                     ExperimentVariantValue.of("variant_1", "value_1"),
                     ExperimentVariantValue.ofNoChange("variant_2")
-            ));
+            ), 10.0);
+
+    assertEquals("experiment_1", parameterValue.getExperimentId());
+    assertEquals(2, parameterValue.getExperimentVariantValues().size());
+    assertEquals(10.0, parameterValue.getExposurePercent(), 0.0);
 
     assertEquals("experiment_1", parameterValue.getExperimentId());
     assertEquals(2, parameterValue.getExperimentVariantValues().size());
@@ -77,6 +83,7 @@ public class ParameterValueTest {
     assertEquals("variant_2", variant2.getVariantId());
     assertEquals(null, variant2.getValue());
     assertEquals(true, variant2.isNoChange());
+
   }
 
   @Test
@@ -116,22 +123,37 @@ public class ParameterValueTest {
     ParameterValue.ExperimentValue experimentValueOne =
             ParameterValue.ofExperiment("experiment_1", ImmutableList.of(
                     ExperimentVariantValue.of("variant_1", "value_1")
-            ));
+            ), 10.0);
     ParameterValue.ExperimentValue experimentValueTwo =
             ParameterValue.ofExperiment("experiment_1", ImmutableList.of(
                     ExperimentVariantValue.of("variant_1", "value_1")
-            ));
+            ), 10.0);
     ParameterValue.ExperimentValue experimentValueThree =
             ParameterValue.ofExperiment("experiment_2", ImmutableList.of(
                     ExperimentVariantValue.of("variant_1", "value_1")
-            ));
+            ), 10.0);
     ParameterValue.ExperimentValue experimentValueFour =
             ParameterValue.ofExperiment("experiment_1", ImmutableList.of(
                     ExperimentVariantValue.of("variant_2", "value_2")
-            ));
-
+            ), 20.0);
     assertEquals(experimentValueOne, experimentValueTwo);
     assertNotEquals(experimentValueOne, experimentValueThree);
     assertNotEquals(experimentValueOne, experimentValueFour);
   }
+
+  @Test
+  public void testExperimentValueWithZeroExposure() {
+    ParameterValue.ExperimentValue value = ParameterValue.ofExperiment(
+        "exp_0", ImmutableList.of(ExperimentVariantValue.of("v1", "foo")), 0.0);
+    
+    // Test Serialization
+    ParameterValueResponse response = value.toParameterValueResponse();
+    assertEquals(0.0, response.getExperimentValue().getExposurePercent(), 0.0);
+    
+    // Test Deserialization
+    ParameterValue fromResponse = ParameterValue.fromParameterValueResponse(response);
+    assertTrue(fromResponse instanceof ParameterValue.ExperimentValue);
+    assertEquals(0.0, ((ParameterValue.ExperimentValue) fromResponse).getExposurePercent(), 0.0);
+  }
+
 }
