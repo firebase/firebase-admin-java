@@ -75,7 +75,7 @@ public final class ServerTemplateImpl implements ServerTemplate {
     try {
       this.cache.set(ServerTemplateData.fromJSON(initialTemplate));
     } catch (FirebaseRemoteConfigException e) {
-      e.printStackTrace();
+        throw new IllegalArgumentException("Unable to parse JSON string.", e);
     }
   }
 
