@@ -191,15 +191,15 @@ public class ServerTemplateImplTest {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
     String invalidJsonString = "abc";
     IllegalArgumentException error = assertThrows(
-       IllegalArgumentException.class,
-       () -> new ServerTemplateImpl.Builder(null)
+        IllegalArgumentException.class,
+        () -> new ServerTemplateImpl.Builder(null)
            .defaultConfig(defaultConfig)
            .cachedTemplate(invalidJsonString)
            .build());
 
-   assertEquals("Unable to parse JSON string.", error.getMessage());
-   // Verify the cause is the original FirebaseRemoteConfigException
-   assertTrue(error.getCause() instanceof FirebaseRemoteConfigException);
+    assertEquals("Unable to parse JSON string.", error.getMessage());
+    // Verify the cause is the original FirebaseRemoteConfigException
+    assertTrue(error.getCause() instanceof FirebaseRemoteConfigException);
  }
 
   @Test
