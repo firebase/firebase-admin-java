@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
-import com.google.api.client.googleapis.util.Utils;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.JsonParser;
 import com.google.common.collect.ImmutableList;
@@ -242,6 +241,29 @@ public class MessageTest {
         .build();
     Map<String, Object> data = ImmutableMap.of(
         "bandwidth_constrained_ok", true,
+        "notification", notification
+    );
+    assertJsonEquals(ImmutableMap.of("topic", "test-topic", "android", data), message);
+  }
+
+  @Test
+  public void testAndroidMessageWithRestrictedSatelliteOk() throws IOException {
+    Message message = Message.builder()
+        .setAndroidConfig(AndroidConfig.builder()
+            .setRestrictedSatelliteOk(true)
+            .setNotification(AndroidNotification.builder()
+                .setTitle("android-title")
+                .setBody("android-body")
+                .build())
+            .build())
+        .setTopic("test-topic")
+        .build();
+    Map<String, Object> notification = ImmutableMap.<String, Object>builder()
+        .put("title", "android-title")
+        .put("body", "android-body")
+        .build();
+    Map<String, Object> data = ImmutableMap.of(
+        "restricted_satellite_ok", true,
         "notification", notification
     );
     assertJsonEquals(ImmutableMap.of("topic", "test-topic", "android", data), message);
@@ -991,7 +1013,7 @@ public class MessageTest {
   }
 
   private static void assertJsonEquals(
-      Map expected, Object actual) throws IOException {
+      Map<String, Object> expected, Object actual) throws IOException {
     assertEquals(expected, toMap(actual));
   }
 
