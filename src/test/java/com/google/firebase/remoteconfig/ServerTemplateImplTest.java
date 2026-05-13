@@ -18,6 +18,7 @@ package com.google.firebase.remoteconfig;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
 import com.google.api.core.ApiFuture;
 import com.google.firebase.FirebaseApp;
@@ -188,20 +189,17 @@ public class ServerTemplateImplTest {
   public void testEvaluateWithInvalidCacheValueThrowsException()
       throws FirebaseRemoteConfigException {
     KeysAndValues defaultConfig = new KeysAndValues.Builder().build();
-    KeysAndValues context = new KeysAndValues.Builder().build();
     String invalidJsonString = "abc";
-    ServerTemplate template =
-        new ServerTemplateImpl.Builder(null)
-            .defaultConfig(defaultConfig)
-            .cachedTemplate(invalidJsonString)
-            .build();
+    IllegalArgumentException error = assertThrows(
+        IllegalArgumentException.class,
+        () -> new ServerTemplateImpl.Builder(null)
+           .defaultConfig(defaultConfig)
+           .cachedTemplate(invalidJsonString)
+           .build());
 
-    FirebaseRemoteConfigException error =
-        assertThrows(FirebaseRemoteConfigException.class, () -> template.evaluate(context));
-
-    assertEquals(
-        "No Remote Config Server template in cache. Call load() before " + "calling evaluate().",
-        error.getMessage());
+    assertEquals("Unable to parse JSON string.", error.getMessage());
+    // Verify the cause is the original FirebaseRemoteConfigException
+    assertTrue(error.getCause() instanceof FirebaseRemoteConfigException);
   }
 
   @Test
