@@ -25,7 +25,7 @@ import com.google.firebase.phonenumberverification.internal.FirebasePhoneNumberV
  * This class is the entry point for the Firebase Phone Number Verification service.
  *
  * <p>You can get an instance of {@link FirebasePhoneNumberVerification} via {@link #getInstance()},
- * or {@link #getInstance(FirebaseApp)} and then use it.
+ * or {@link #getInstance(FirebaseApp)}.
  */
 public final class FirebasePhoneNumberVerification {
   private static final String SERVICE_ID = FirebasePhoneNumberVerification.class.getName();
