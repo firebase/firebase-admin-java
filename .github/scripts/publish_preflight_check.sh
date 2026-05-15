@@ -57,7 +57,7 @@ echo_info "--------------------------------------------"
 echo_info ""
 
 echo_info "Loading version from: pom.xml"
-readonly RELEASE_VERSION=$(grep -m 1 '<version>' pom.xml | sed -e 's/.*<version>\(.*\)<\/version>.*/\1/' | tr -d '[:space:]') || true
+readonly RELEASE_VERSION=$(python3 -c "import xml.etree.ElementTree as ET; ns = {'m': 'http://maven.apache.org/POM/4.0.0'}; print(ET.parse('pom.xml').getroot().find('m:version', ns).text)") || true
 if [[ -z "${RELEASE_VERSION}" ]]; then
   echo_warn "Failed to extract release version from: pom.xml"
   terminate
