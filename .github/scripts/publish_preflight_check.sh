@@ -57,7 +57,7 @@ echo_info "--------------------------------------------"
 echo_info ""
 
 echo_info "Loading version from: pom.xml"
-readonly RELEASE_VERSION=`mvn help:evaluate -Dexpression=project.version -q -DforceStdout` || true
+readonly RELEASE_VERSION=$(grep -m 1 '<version>' pom.xml | sed -e 's/.*<version>\(.*\)<\/version>.*/\1/' | tr -d '[:space:]') || true
 if [[ -z "${RELEASE_VERSION}" ]]; then
   echo_warn "Failed to extract release version from: pom.xml"
   terminate
@@ -97,10 +97,6 @@ echo_info "Checking release tag"
 echo_info "--------------------------------------------"
 echo_info ""
 
-echo_info "---< git fetch --depth=1 origin +refs/tags/*:refs/tags/* >---"
-git fetch --depth=1 origin +refs/tags/*:refs/tags/*
-echo ""
-
 readonly EXISTING_TAG=`git rev-parse -q --verify "refs/tags/v${RELEASE_VERSION}"` || true
 if [[ -n "${EXISTING_TAG}" ]]; then
   echo_warn "Tag v${RELEASE_VERSION} already exists. Exiting."
@@ -121,10 +117,6 @@ echo_info "--------------------------------------------"
 echo_info "Generating changelog"
 echo_info "--------------------------------------------"
 echo_info ""
-
-echo_info "---< git fetch origin main --prune --unshallow >---"
-git fetch origin main --prune --unshallow
-echo ""
 
 echo_info "Generating changelog from history..."
 readonly CURRENT_DIR=$(dirname "$0")

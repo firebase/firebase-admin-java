@@ -46,13 +46,14 @@ jobs:
 
     steps:
     - name: Checkout source for staging
-      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      uses: actions/checkout@11bd519010775d10515a451893e8a7351609121c # v4.4.0
 
     - name: Set up JDK 8
-      uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
+      uses: actions/setup-java@b36c23c03b3d6229505f96305a415a77c77f0a82 # v4.12.0
       with:
         distribution: 'zulu'
         java-version: 8
+        cache: 'maven'
 
     - name: Compile, test and package
       run: ./.github/scripts/package_artifacts.sh
@@ -86,13 +87,17 @@ jobs:
 
     steps:
     - name: Checkout source for publish
-      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      uses: actions/checkout@11bd519010775d10515a451893e8a7351609121c # v4.4.0
+      with:
+        fetch-depth: 0
+        fetch-tags: true
 
     - name: Set up JDK 8
-      uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4.8.0
+      uses: actions/setup-java@b36c23c03b3d6229505f96305a415a77c77f0a82 # v4.12.0
       with:
         distribution: 'zulu'
         java-version: 8
+        cache: 'maven'
 
     - name: Publish preflight check
       id: preflight
@@ -112,7 +117,7 @@ jobs:
     - name: Publish to Maven Central
       run: ./.github/scripts/publish_artifacts.sh
       env:
-        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
         GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
         GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
         CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
