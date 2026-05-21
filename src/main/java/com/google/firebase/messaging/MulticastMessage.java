@@ -30,18 +30,20 @@ import java.util.Map;
 
 /**
  * Represents a message that can be sent to multiple devices via Firebase Cloud Messaging (FCM).
- * Contains payload information as well as the list of device registration tokens to which the
- * message should be sent. A single {@code MulticastMessage} may contain up to 500 registration
- * tokens.
+ * Contains payload information as well as the list of device registration tokens and/or
+ * Firebase Installation IDs (FIDs) to which the message should be sent. A single
+ * {@code MulticastMessage} may contain up to 500 registration tokens and FIDs combined.
  *
  * <p>Instances of this class are thread-safe and immutable. Use {@link MulticastMessage.Builder}
  * to create new instances. See {@link FirebaseMessaging#sendMulticast(MulticastMessage)} for
  * details on how to send the message to FCM for multicast delivery.
  *
- * <p>This class and the associated Builder retain the order of tokens. Therefore the order of
- * the responses list obtained by calling {@link BatchResponse#getResponses()} on the return value
- * of {@link FirebaseMessaging#sendMulticast(MulticastMessage)} corresponds to the order in which
- * tokens were added to the {@link MulticastMessage.Builder}.
+ * <p>This class and the associated Builder retain the order of tokens and FIDs. Therefore
+ * the order of the responses list obtained by calling {@link BatchResponse#getResponses()}
+ * on the return value of {@link FirebaseMessaging#sendMulticast(MulticastMessage)}
+ * corresponds to the order in which targets were added to the
+ * {@link MulticastMessage.Builder}. If both tokens and FIDs are provided, tokens are
+ * processed first, followed by FIDs.
  */
 public class MulticastMessage {
 

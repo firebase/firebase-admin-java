@@ -271,7 +271,8 @@ public class FirebaseMessaging {
    * <p>This method uses the {@link #sendEach(List)} API under the hood to send the given
    * message to all the target recipients. The list of responses obtained by calling
    * {@link BatchResponse#getResponses()} on the return value is in the same order as the
-   * tokens and/or FIDs in the {@link MulticastMessage}.
+   * tokens and/or FIDs in the {@link MulticastMessage}. If both tokens and FIDs are
+   * provided, tokens are processed first, followed by FIDs.
    *
    * @param message A non-null {@link MulticastMessage}
    * @return A {@link BatchResponse} indicating the result of the operation.
@@ -297,7 +298,8 @@ public class FirebaseMessaging {
    * <p>This method uses the {@link #sendEach(List)} API under the hood to send the given
    * message to all the target recipients. The list of responses obtained by calling
    * {@link BatchResponse#getResponses()} on the return value is in the same order as the
-   * tokens and/or FIDs in the {@link MulticastMessage}.
+   * tokens and/or FIDs in the {@link MulticastMessage}. If both tokens and FIDs are
+   * provided, tokens are processed first, followed by FIDs.
    *
    * @param message A non-null {@link MulticastMessage}.
    * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
@@ -425,7 +427,8 @@ public class FirebaseMessaging {
    * <p>This method uses the {@link #sendAll(List)} API under the hood to send the given
    * message to all the target recipients. The responses list obtained by calling
    * {@link BatchResponse#getResponses()} on the return value corresponds to the order of
-   * tokens and/or FIDs in the {@link MulticastMessage}.
+   * tokens and/or FIDs in the {@link MulticastMessage}. If both tokens and FIDs are
+   * provided, tokens are processed first, followed by FIDs.
    *
    * @param message A non-null {@link MulticastMessage}
    * @return A {@link BatchResponse} indicating the result of the operation.
@@ -453,7 +456,8 @@ public class FirebaseMessaging {
    * <p>This method uses the {@link #sendAll(List)} API under the hood to send the given
    * message to all the target recipients. The responses list obtained by calling
    * {@link BatchResponse#getResponses()} on the return value corresponds to the order of
-   * tokens and/or FIDs in the {@link MulticastMessage}.
+   * tokens and/or FIDs in the {@link MulticastMessage}. If both tokens and FIDs are
+   * provided, tokens are processed first, followed by FIDs.
    *
    * @param message A non-null {@link MulticastMessage}.
    * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
