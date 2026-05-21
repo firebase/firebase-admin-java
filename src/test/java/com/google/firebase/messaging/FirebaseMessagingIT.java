@@ -21,6 +21,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.api.client.http.HttpResponseException;
 import com.google.common.collect.ImmutableList;
@@ -88,6 +89,28 @@ public class FirebaseMessagingIT {
         .build();
     try {
       messaging.sendAsync(message, true).get();
+    } catch (ExecutionException e) {
+      FirebaseMessagingException cause = (FirebaseMessagingException) e.getCause();
+      assertEquals(ErrorCode.INVALID_ARGUMENT, cause.getErrorCode());
+      assertEquals(MessagingErrorCode.INVALID_ARGUMENT, cause.getMessagingErrorCode());
+      assertNotNull(cause.getHttpResponse());
+      assertTrue(cause.getCause() instanceof HttpResponseException);
+    }
+  }
+
+  @Test
+  public void testSendFidError() throws InterruptedException {
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    Message message = Message.builder()
+        .setNotification(Notification.builder()
+            .setTitle("Title")
+            .setBody("Body")
+            .build())
+        .setFid("not-a-fid")
+        .build();
+    try {
+      messaging.sendAsync(message, true).get();
+      fail("No exception thrown for invalid FID");
     } catch (ExecutionException e) {
       FirebaseMessagingException cause = (FirebaseMessagingException) e.getCause();
       assertEquals(ErrorCode.INVALID_ARGUMENT, cause.getErrorCode());
@@ -191,6 +214,34 @@ public class FirebaseMessagingIT {
       assertFalse(sendResponse.isSuccessful());
       assertNull(sendResponse.getMessageId());
       assertNotNull(sendResponse.getException());
+    }
+  }
+
+  @Test
+  public void testSendEachForMulticastFidsError() throws Exception {
+    MulticastMessage multicastMessage = MulticastMessage.builder()
+        .setNotification(Notification.builder()
+            .setTitle("Title")
+            .setBody("Body")
+            .build())
+        .addFid("not-a-fid")
+        .addFid("also-not-a-fid")
+        .build();
+
+    BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(
+        multicastMessage, true);
+
+    assertEquals(0, response.getSuccessCount());
+    assertEquals(2, response.getFailureCount());
+    assertEquals(2, response.getResponses().size());
+    for (SendResponse sendResponse : response.getResponses()) {
+      assertFalse(sendResponse.isSuccessful());
+      assertNull(sendResponse.getMessageId());
+      assertNotNull(sendResponse.getException());
+      assertEquals(ErrorCode.INVALID_ARGUMENT,
+          sendResponse.getException().getErrorCode());
+      assertEquals(MessagingErrorCode.INVALID_ARGUMENT,
+          sendResponse.getException().getMessagingErrorCode());
     }
   }
 
