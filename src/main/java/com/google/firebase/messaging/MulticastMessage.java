@@ -45,7 +45,9 @@ import java.util.Map;
  */
 public class MulticastMessage {
 
+  @Deprecated
   private final List<String> tokens;
+  private final List<String> fids;
   private final Map<String, String> data;
   private final Notification notification;
   private final AndroidConfig androidConfig;
@@ -55,10 +57,17 @@ public class MulticastMessage {
 
   private MulticastMessage(Builder builder) {
     this.tokens = builder.tokens.build();
-    checkArgument(!this.tokens.isEmpty(), "at least one token must be specified");
-    checkArgument(this.tokens.size() <= 500, "no more than 500 tokens can be specified");
+    this.fids = builder.fids.build();
+    int tokensSize = this.tokens.size();
+    int fidsSize = this.fids.size();
+    checkArgument(tokensSize + fidsSize > 0, "at least one token or fid must be specified");
+    checkArgument(tokensSize + fidsSize <= 500,
+        "no more than 500 tokens and fids combined can be specified");
     for (String token : this.tokens) {
       checkArgument(!Strings.isNullOrEmpty(token), "none of the tokens can be null or empty");
+    }
+    for (String fid : this.fids) {
+      checkArgument(!Strings.isNullOrEmpty(fid), "none of the fids can be null or empty");
     }
     this.data = builder.data.isEmpty() ? null : ImmutableMap.copyOf(builder.data);
     this.notification = builder.notification;
@@ -69,6 +78,26 @@ public class MulticastMessage {
   }
 
   List<Message> getMessageList() {
+    ImmutableList.Builder<Message> messages = ImmutableList.builder();
+
+    if (!this.tokens.isEmpty()) {
+      Message.Builder tokenBuilder = getMetadataBuilder();
+      for (String token : this.tokens) {
+        messages.add(tokenBuilder.setToken(token).build());
+      }
+    }
+
+    if (!this.fids.isEmpty()) {
+      Message.Builder fidBuilder = getMetadataBuilder();
+      for (String fid : this.fids) {
+        messages.add(fidBuilder.setFid(fid).build());
+      }
+    }
+
+    return messages.build();
+  }
+
+  private Message.Builder getMetadataBuilder() {
     Message.Builder builder = Message.builder()
         .setNotification(this.notification)
         .setAndroidConfig(this.androidConfig)
@@ -78,11 +107,7 @@ public class MulticastMessage {
     if (this.data != null) {
       builder.putAllData(this.data);
     }
-    ImmutableList.Builder<Message> messages = ImmutableList.builder();
-    for (String token : this.tokens) {
-      messages.add(builder.setToken(token).build());
-    }
-    return messages.build();
+    return builder;
   }
 
   /**
@@ -96,7 +121,9 @@ public class MulticastMessage {
 
   public static class Builder {
 
+    @Deprecated
     private final ImmutableList.Builder<String> tokens = ImmutableList.builder();
+    private final ImmutableList.Builder<String> fids = ImmutableList.builder();
     private final Map<String, String> data = new HashMap<>();
     private Notification notification;
     private AndroidConfig androidConfig;
@@ -107,26 +134,58 @@ public class MulticastMessage {
     private Builder() {}
 
     /**
-     * Adds a token to which the message should be sent. Up to 500 tokens can be specified on
-     * a single instance of {@link MulticastMessage}.
+     * Adds a token to which the message should be sent. Up to 500 tokens
+     * and FIDs combined can be specified on a single instance of
+     * {@link MulticastMessage}.
      *
      * @param token A non-null, non-empty Firebase device registration token.
      * @return This builder.
+     * @deprecated Use {@link #addFid(String)} instead.
      */
+    @Deprecated
     public Builder addToken(@NonNull String token) {
       this.tokens.add(token);
       return this;
     }
 
     /**
-     * Adds a collection of tokens to which the message should be sent. Up to 500 tokens can be
-     * specified on a single instance of {@link MulticastMessage}.
+     * Adds a Firebase Installation ID (FID) to which the message should be sent.
+     * Up to 500 tokens and FIDs combined can be specified on a single instance
+     * of {@link MulticastMessage}.
+     *
+     * @param fid A non-null, non-empty Firebase Installation ID.
+     * @return This builder.
+     */
+    public Builder addFid(@NonNull String fid) {
+      this.fids.add(fid);
+      return this;
+    }
+
+    /**
+     * Adds a collection of tokens to which the message should be sent. Up to 500
+     * tokens and FIDs combined can be specified on a single instance of
+     * {@link MulticastMessage}.
      *
      * @param tokens Collection of Firebase device registration tokens.
      * @return This builder.
+     * @deprecated Use {@link #addAllFids(Collection)} instead.
      */
+    @Deprecated
     public Builder addAllTokens(@NonNull Collection<String> tokens) {
       this.tokens.addAll(tokens);
+      return this;
+    }
+
+    /**
+     * Adds a collection of Firebase Installation IDs (FIDs) to which the message
+     * should be sent. Up to 500 tokens and FIDs combined can be specified on a
+     * single instance of {@link MulticastMessage}.
+     *
+     * @param fids Collection of Firebase Installation IDs.
+     * @return This builder.
+     */
+    public Builder addAllFids(@NonNull Collection<String> fids) {
+      this.fids.addAll(fids);
       return this;
     }
 
