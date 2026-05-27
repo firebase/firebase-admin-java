@@ -113,8 +113,8 @@ public class FirebaseMessagingIT {
       fail("No exception thrown for invalid FID");
     } catch (ExecutionException e) {
       FirebaseMessagingException cause = (FirebaseMessagingException) e.getCause();
-      assertEquals(ErrorCode.INVALID_ARGUMENT, cause.getErrorCode());
-      assertEquals(MessagingErrorCode.INVALID_ARGUMENT, cause.getMessagingErrorCode());
+      assertEquals(ErrorCode.NOT_FOUND, cause.getErrorCode());
+      assertEquals(MessagingErrorCode.UNREGISTERED, cause.getMessagingErrorCode());
       assertNotNull(cause.getHttpResponse());
       assertTrue(cause.getCause() instanceof HttpResponseException);
     }
@@ -238,11 +238,48 @@ public class FirebaseMessagingIT {
       assertFalse(sendResponse.isSuccessful());
       assertNull(sendResponse.getMessageId());
       assertNotNull(sendResponse.getException());
-      assertEquals(ErrorCode.INVALID_ARGUMENT,
+      assertEquals(ErrorCode.NOT_FOUND,
           sendResponse.getException().getErrorCode());
-      assertEquals(MessagingErrorCode.INVALID_ARGUMENT,
+      assertEquals(MessagingErrorCode.UNREGISTERED,
           sendResponse.getException().getMessagingErrorCode());
     }
+  }
+
+  @Test
+  public void testSendEachForMulticastMixedError() throws Exception {
+    MulticastMessage multicastMessage = MulticastMessage.builder()
+        .setNotification(Notification.builder()
+            .setTitle("Title")
+            .setBody("Body")
+            .build())
+        .addToken("not-a-token")
+        .addFid("not-a-fid")
+        .build();
+
+    BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(
+        multicastMessage, true);
+
+    assertEquals(0, response.getSuccessCount());
+    assertEquals(2, response.getFailureCount());
+    assertEquals(2, response.getResponses().size());
+
+    SendResponse response1 = response.getResponses().get(0);
+    assertFalse(response1.isSuccessful());
+    assertNull(response1.getMessageId());
+    assertNotNull(response1.getException());
+    assertEquals(ErrorCode.INVALID_ARGUMENT, response1.getException().getErrorCode());
+    assertEquals(
+        MessagingErrorCode.INVALID_ARGUMENT,
+        response1.getException().getMessagingErrorCode());
+
+    SendResponse response2 = response.getResponses().get(1);
+    assertFalse(response2.isSuccessful());
+    assertNull(response2.getMessageId());
+    assertNotNull(response2.getException());
+    assertEquals(ErrorCode.NOT_FOUND, response2.getException().getErrorCode());
+    assertEquals(
+        MessagingErrorCode.UNREGISTERED,
+        response2.getException().getMessagingErrorCode());
   }
 
   @Test
