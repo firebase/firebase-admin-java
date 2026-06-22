@@ -152,7 +152,8 @@ public class FirebaseMessaging {
    * <p>The list of responses obtained by calling {@link BatchResponse#getResponses()} on the return
    * value is in the same order as the input list.
    *
-   * @param messages A non-null, non-empty list containing up to 500 messages.
+   * @param messages A non-null, non-empty list of messages. For very large lists, consider
+   *     chunking into smaller batches to avoid FCM server-side rate limiting.
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
    *     delivery. An exception here or a {@link BatchResponse} with all failures indicates a total
@@ -162,7 +163,6 @@ public class FirebaseMessaging {
   public BatchResponse sendEach(@NonNull List<Message> messages) throws FirebaseMessagingException {
     return sendEach(messages, false);
   }
-
 
   /**
    * Sends each message in the given list via Firebase Cloud Messaging.
@@ -177,7 +177,8 @@ public class FirebaseMessaging {
    * <p>The list of responses obtained by calling {@link BatchResponse#getResponses()} on the return
    * value is in the same order as the input list.
    *
-   * @param messages A non-null, non-empty list containing up to 500 messages.
+   * @param messages A non-null, non-empty list of messages. For very large lists, consider
+   *     chunking into smaller batches to avoid FCM server-side rate limiting.
    * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
@@ -197,7 +198,8 @@ public class FirebaseMessaging {
   /**
    * Similar to {@link #sendEach(List)} but performs the operation asynchronously.
    *
-   * @param messages A non-null, non-empty list containing up to 500 messages.
+   * @param messages A non-null, non-empty list of messages. For very large lists, consider
+   *     chunking into smaller batches to avoid FCM server-side rate limiting.
    * @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
    *     the messages have been sent.
    */
@@ -208,7 +210,8 @@ public class FirebaseMessaging {
   /**
    * Similar to {@link #sendEach(List, boolean)} but performs the operation asynchronously.
    *
-   * @param messages A non-null, non-empty list containing up to 500 messages.
+   * @param messages A non-null, non-empty list of messages. For very large lists, consider
+   *     chunking into smaller batches to avoid FCM server-side rate limiting.
    * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
    * @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
    *     the messages have been sent.
@@ -217,14 +220,16 @@ public class FirebaseMessaging {
     return sendEachOpAsync(messages, dryRun);
   }
 
-  // Returns an ApiFuture directly since this function is non-blocking. Individual child send 
+  // Returns an ApiFuture directly since this function is non-blocking. Individual child send
   // requests are still called async and run in background threads.
   private ApiFuture<BatchResponse> sendEachOpAsync(
       final List<Message> messages, final boolean dryRun) {
     final List<Message> immutableMessages = ImmutableList.copyOf(messages);
     checkArgument(!immutableMessages.isEmpty(), "messages list must not be empty");
-    checkArgument(immutableMessages.size() <= 500,
-        "messages list must not contain more than 500 elements");
+    // NOTE: The 500-message limit that existed here was inherited from the deprecated sendAll()
+    // method, which used a single HTTP batch request limited by Google's batch API. Since
+    // sendEach() makes individual HTTP calls per message, no such limit applies. Callers should
+    // chunk very large lists themselves to avoid FCM server-side rate limiting.
 
     List<ApiFuture<SendResponse>> list = new ArrayList<>();
     for (Message message : immutableMessages) {
@@ -232,7 +237,7 @@ public class FirebaseMessaging {
       ApiFuture<SendResponse> messageId = sendOpForSendResponse(message, dryRun).callAsync(app);
       list.add(messageId);
     }
-    
+
     // Gather all futures and combine into a list
     ApiFuture<List<SendResponse>> responsesFuture = ApiFutures.allAsList(list);
 
@@ -240,7 +245,7 @@ public class FirebaseMessaging {
     // the main thread. This uses the current thread to execute, but since the transformation
     // function is non-blocking the transformation itself is also non-blocking.
     return ApiFutures.transform(
-      responsesFuture, 
+      responsesFuture,
       (responses) -> {
         return new BatchResponseImpl(responses);
       },
@@ -272,7 +277,8 @@ public class FirebaseMessaging {
    * {@link BatchResponse#getResponses()} on the return value is in the same order as the
    * tokens in the {@link MulticastMessage}.
    *
-   * @param message A non-null {@link MulticastMessage}
+   * @param message A non-null {@link MulticastMessage}. For very large token lists, consider
+   *     chunking into smaller batches to avoid FCM server-side rate limiting.
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
    *     delivery. An exception here or a {@link BatchResponse} with all failures indicates a total
@@ -297,7 +303,8 @@ public class FirebaseMessaging {
    * {@link BatchResponse#getResponses()} on the return value is in the same order as the
    * tokens in the {@link MulticastMessage}.
    *
-   * @param message A non-null {@link MulticastMessage}.
+   * @param message A non-null {@link MulticastMessage}. For very large token lists, consider
+   *     chunking into smaller batches to avoid FCM server-side rate limiting.
    * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
    * @return A {@link BatchResponse} indicating the result of the operation.
    * @throws FirebaseMessagingException If an error occurs while handing the messages off to FCM for
@@ -315,7 +322,8 @@ public class FirebaseMessaging {
    * Similar to {@link #sendEachForMulticast(MulticastMessage)} but performs the operation
    * asynchronously.
    *
-   * @param message A non-null {@link MulticastMessage}.
+   * @param message A non-null {@link MulticastMessage}. For very large token lists, consider
+   *     chunking into smaller batches to avoid FCM server-side rate limiting.
    * @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
    *     the messages have been sent.
    */
@@ -327,7 +335,8 @@ public class FirebaseMessaging {
    * Similar to {@link #sendEachForMulticast(MulticastMessage, boolean)} but performs the operation
    * asynchronously.
    *
-   * @param message A non-null {@link MulticastMessage}.
+   * @param message A non-null {@link MulticastMessage}. For very large token lists, consider
+   *     chunking into smaller batches to avoid FCM server-side rate limiting.
    * @param dryRun A boolean indicating whether to perform a dry run (validation only) of the send.
    * @return An {@code ApiFuture} that will complete with a {@link BatchResponse} when
    *     the messages have been sent.
