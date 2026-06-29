@@ -192,6 +192,22 @@ public class FirebaseMessagingIT {
       assertNull(sendResponse.getException());
     }
   }
+  
+  @Test
+  public void testSendMoreThanFiveHundredWithSendEach() throws Exception {
+    List<Message> messages = new ArrayList<>();
+    for (int i = 0; i < 501; i++) {
+      messages.add(Message.builder().setTopic("foo-bar-" + (i % 10)).build());
+    }
+
+    // Previously this would throw IllegalArgumentException due to the 500 limit.
+    // After removing the limit, this should succeed.
+    BatchResponse response = FirebaseMessaging.getInstance().sendEach(messages, true);
+
+    assertEquals(501, response.getResponses().size());
+    assertEquals(501, response.getSuccessCount());
+    assertEquals(0, response.getFailureCount());
+  }
 
   @Test
   public void testSendEachForMulticast() throws Exception {
