@@ -54,8 +54,15 @@ public class Message {
   @Key("apns")
   private final ApnsConfig apnsConfig;
 
+  /**
+   * @deprecated Use {@link #fid} instead.
+   */
+  @Deprecated
   @Key("token")
   private final String token;
+
+  @Key("fid")
+  private final String fid;
 
   @Key("topic")
   private final String topic;
@@ -74,11 +81,14 @@ public class Message {
     this.apnsConfig = builder.apnsConfig;
     int count = Booleans.countTrue(
         !Strings.isNullOrEmpty(builder.token),
+        !Strings.isNullOrEmpty(builder.fid),
         !Strings.isNullOrEmpty(builder.topic),
         !Strings.isNullOrEmpty(builder.condition)
     );
-    checkArgument(count == 1, "Exactly one of token, topic or condition must be specified");
+    checkArgument(count == 1,
+        "Exactly one of token, fid, topic or condition must be specified");
     this.token = builder.token;
+    this.fid = builder.fid;
     this.topic = stripPrefix(builder.topic);
     this.condition = builder.condition;
     this.fcmOptions = builder.fcmOptions;
@@ -109,9 +119,18 @@ public class Message {
     return apnsConfig;
   }
 
+  /**
+   * @deprecated Use {@link #getFid()} instead.
+   */
+  @Deprecated
   @VisibleForTesting
   String getToken() {
     return token;
+  }
+
+  @VisibleForTesting
+  String getFid() {
+    return fid;
   }
 
   @VisibleForTesting
@@ -166,7 +185,9 @@ public class Message {
     private AndroidConfig androidConfig;
     private WebpushConfig webpushConfig;
     private ApnsConfig apnsConfig;
+    @Deprecated
     private String token;
+    private String fid;
     private String topic;
     private String condition;
     private FcmOptions fcmOptions;
@@ -222,9 +243,23 @@ public class Message {
      *
      * @param token A valid device registration token.
      * @return This builder.
+     * @deprecated Use {@link #setFid(String)} instead.
      */
+    @Deprecated
     public Builder setToken(String token) {
       this.token = token;
+      return this;
+    }
+
+    /**
+     * Sets the Firebase Installation ID (FID) of the app instance to which the message
+     * should be sent.
+     *
+     * @param fid A valid Firebase Installation ID.
+     * @return This builder.
+     */
+    public Builder setFid(String fid) {
+      this.fid = fid;
       return this;
     }
 
