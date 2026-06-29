@@ -86,6 +86,21 @@ public class MulticastMessageTest {
     }
   }
 
+  @Test
+  public void testTooManyFids() {
+    MulticastMessage.Builder builder = MulticastMessage.builder();
+    for (int i = 0; i < 501; i++) {
+      builder.addFid("fid" + i);
+    }
+    try {
+      builder.build();
+      fail("No error thrown for more than 500 fids");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("no more than 500 tokens and fids combined can be specified",
+          expected.getMessage());
+    }
+  }
+
   @Test(expected = NullPointerException.class)
   public void testNullToken() {
     MulticastMessage.builder().addToken(null).build();
@@ -94,6 +109,92 @@ public class MulticastMessageTest {
   @Test(expected = IllegalArgumentException.class)
   public void testEmptyToken() {
     MulticastMessage.builder().addToken("").build();
+  }
+
+  @Test
+  public void testMulticastMessageFids() {
+    MulticastMessage multicastMessage = MulticastMessage.builder()
+        .setAndroidConfig(ANDROID)
+        .setApnsConfig(APNS)
+        .setWebpushConfig(WEBPUSH)
+        .setNotification(NOTIFICATION)
+        .setFcmOptions(FCM_OPTIONS)
+        .putData("key1", "value1")
+        .putAllData(ImmutableMap.of("key2", "value2"))
+        .addFid("fid1")
+        .addAllFids(ImmutableList.of("fid2", "fid3"))
+        .build();
+
+    List<Message> messages = multicastMessage.getMessageList();
+
+    assertEquals(3, messages.size());
+    for (int i = 0; i < 3; i++) {
+      Message message = messages.get(i);
+      assertMessageFid(message, "fid" + (i + 1));
+    }
+  }
+
+  @Test
+  public void testMulticastMessageMixed() {
+    MulticastMessage multicastMessage = MulticastMessage.builder()
+        .setAndroidConfig(ANDROID)
+        .setApnsConfig(APNS)
+        .setWebpushConfig(WEBPUSH)
+        .setNotification(NOTIFICATION)
+        .setFcmOptions(FCM_OPTIONS)
+        .putData("key1", "value1")
+        .putAllData(ImmutableMap.of("key2", "value2"))
+        .addToken("token1")
+        .addFid("fid1")
+        .addToken("token2")
+        .addFid("fid2")
+        .build();
+
+    List<Message> messages = multicastMessage.getMessageList();
+
+    assertEquals(4, messages.size());
+    assertMessage(messages.get(0), "token1");
+    assertMessage(messages.get(1), "token2");
+    assertMessageFid(messages.get(2), "fid1");
+    assertMessageFid(messages.get(3), "fid2");
+  }
+
+  @Test
+  public void testTooManyTargetsCombined() {
+    MulticastMessage.Builder builder = MulticastMessage.builder();
+    for (int i = 0; i < 250; i++) {
+      builder.addToken("token" + i);
+    }
+    for (int i = 0; i < 251; i++) {
+      builder.addFid("fid" + i);
+    }
+    try {
+      builder.build();
+      fail("No error thrown for more than 500 combined targets");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("no more than 500 tokens and fids combined can be specified",
+          expected.getMessage());
+    }
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testNullFid() {
+    MulticastMessage.builder().addFid(null).build();
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testEmptyFid() {
+    MulticastMessage.builder().addFid("").build();
+  }
+
+  private void assertMessageFid(Message message, String expectedFid) {
+    assertSame(ANDROID, message.getAndroidConfig());
+    assertSame(APNS, message.getApnsConfig());
+    assertSame(WEBPUSH, message.getWebpushConfig());
+    assertSame(NOTIFICATION, message.getNotification());
+    assertSame(FCM_OPTIONS, message.getFcmOptions());
+    assertEquals(ImmutableMap.of("key1", "value1", "key2", "value2"), message.getData());
+    assertEquals(expectedFid, message.getFid());
   }
 
   private void assertMessage(Message message, String expectedToken) {

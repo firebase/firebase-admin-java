@@ -54,6 +54,28 @@ public class MessageTest {
         Message.builder().setCondition("'foo' in topics").build());
     assertJsonEquals(ImmutableMap.of("token", "test-token"),
         Message.builder().setToken("test-token").build());
+    assertJsonEquals(ImmutableMap.of("fid", "test-fid"),
+        Message.builder().setFid("test-fid").build());
+  }
+
+  @Test
+  public void testMultipleTargets() {
+    List<Message.Builder> builders = ImmutableList.of(
+        Message.builder().setToken("token").setFid("fid"),
+        Message.builder().setToken("token").setTopic("topic"),
+        Message.builder().setFid("fid").setCondition("cond"),
+        Message.builder().setTopic("topic").setCondition("cond"),
+        Message.builder().setToken("token").setFid("fid").setTopic("topic").setCondition("cond")
+    );
+    for (int i = 0; i < builders.size(); i++) {
+      try {
+        builders.get(i).build();
+        fail("No error thrown for multiple targets: " + i);
+      } catch (IllegalArgumentException expected) {
+        assertEquals("Exactly one of token, fid, topic or condition must be specified",
+            expected.getMessage());
+      }
+    }
   }
 
   @Test
