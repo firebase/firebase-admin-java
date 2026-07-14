@@ -45,8 +45,15 @@ public class Message {
   @Key("notification")
   private final Notification notification;
 
+  /**
+   * @deprecated Use {@link #getAndroidConfigV2()} instead.
+   */
+  @Deprecated
   @Key("android")
   private final AndroidConfig androidConfig;
+
+  @Key("androidV2")
+  private final AndroidConfigV2 androidConfigV2;
 
   @Key("webpush")
   private final WebpushConfig webpushConfig;
@@ -76,7 +83,13 @@ public class Message {
   private Message(Builder builder) {
     this.data = builder.data.isEmpty() ? null : ImmutableMap.copyOf(builder.data);
     this.notification = builder.notification;
+    int androidConfigs = Booleans.countTrue(
+        builder.androidConfig != null,
+        builder.androidConfigV2 != null
+    );
+    checkArgument(androidConfigs <= 1, "android and androidV2 are mutually exclusive");
     this.androidConfig = builder.androidConfig;
+    this.androidConfigV2 = builder.androidConfigV2;
     this.webpushConfig = builder.webpushConfig;
     this.apnsConfig = builder.apnsConfig;
     int count = Booleans.countTrue(
@@ -104,9 +117,18 @@ public class Message {
     return notification;
   }
 
+  /**
+   * @deprecated Use {@link #getAndroidConfigV2()} instead.
+   */
+  @Deprecated
   @VisibleForTesting
   AndroidConfig getAndroidConfig() {
     return androidConfig;
+  }
+
+  @VisibleForTesting
+  AndroidConfigV2 getAndroidConfigV2() {
+    return androidConfigV2;
   }
 
   @VisibleForTesting
@@ -183,6 +205,7 @@ public class Message {
     private final Map<String, String> data = new HashMap<>();
     private Notification notification;
     private AndroidConfig androidConfig;
+    private AndroidConfigV2 androidConfigV2;
     private WebpushConfig webpushConfig;
     private ApnsConfig apnsConfig;
     @Deprecated
@@ -210,9 +233,22 @@ public class Message {
      *
      * @param androidConfig An {@link AndroidConfig} instance.
      * @return This builder.
+     * @deprecated Use {@link #setAndroidConfigV2(AndroidConfigV2)} instead.
      */
+    @Deprecated
     public Builder setAndroidConfig(AndroidConfig androidConfig) {
       this.androidConfig = androidConfig;
+      return this;
+    }
+
+    /**
+     * Sets the Android v2-specific information to be included in the message.
+     *
+     * @param androidConfigV2 An {@link AndroidConfigV2} instance.
+     * @return This builder.
+     */
+    public Builder setAndroidConfigV2(AndroidConfigV2 androidConfigV2) {
+      this.androidConfigV2 = androidConfigV2;
       return this;
     }
 
