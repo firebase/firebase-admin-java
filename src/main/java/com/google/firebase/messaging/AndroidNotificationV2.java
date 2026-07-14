@@ -17,19 +17,22 @@
 package com.google.firebase.messaging;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
  * Represents the Android-specific notification options that can be included in a
@@ -125,12 +128,18 @@ public final class AndroidNotificationV2 {
           .put(NotificationPriority.MAX, "PRIORITY_MAX")
           .build();
 
+  private static final Pattern COLOR_PATTERN = Pattern.compile("^#[0-9a-fA-F]{6}$");
+
+  private static final DateTimeFormatter EVENT_TIME_FORMATTER =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS000000'Z'")
+          .withZone(ZoneOffset.UTC);
+
   private AndroidNotificationV2(Builder builder) {
     this.title = builder.title;
     this.body = builder.body;
     this.icon = builder.icon;
     if (builder.color != null) {
-      checkArgument(builder.color.matches("^#[0-9a-fA-F]{6}$"),
+      checkArgument(COLOR_PATTERN.matcher(builder.color).matches(),
           "color must be in the form #RRGGBB");
     }
     this.color = builder.color;
@@ -173,7 +182,7 @@ public final class AndroidNotificationV2 {
     this.defaultLightSettings = builder.defaultLightSettings;
     this.visibility = (builder.visibility != null
         && builder.visibility != Visibility.UNSPECIFIED)
-        ? builder.visibility.name().toLowerCase() : null;
+        ? builder.visibility.name().toLowerCase(Locale.ENGLISH) : null;
     if (builder.notificationCount != null) {
       checkArgument(builder.notificationCount >= 0,
           "notificationCount if specified must be zero or positive valued");
@@ -354,6 +363,7 @@ public final class AndroidNotificationV2 {
      * @return This builder.
      */
     public Builder addAllBodyLocalizationArgs(@NonNull List<String> args) {
+      checkNotNull(args, "args must not be null");
       this.bodyLocArgs.addAll(args);
       return this;
     }
@@ -390,6 +400,7 @@ public final class AndroidNotificationV2 {
      * @return This builder.
      */
     public Builder addAllTitleLocalizationArgs(@NonNull List<String> args) {
+      checkNotNull(args, "args must not be null");
       this.titleLocArgs.addAll(args);
       return this;
     }
@@ -457,9 +468,7 @@ public final class AndroidNotificationV2 {
      * @return This builder.
      */
     public Builder setEventTimeInMillis(long eventTimeInMillis) {
-      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS000000'Z'");
-      dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-      this.eventTime = dateFormat.format(new Date(eventTimeInMillis));
+      this.eventTime = EVENT_TIME_FORMATTER.format(Instant.ofEpochMilli(eventTimeInMillis));
       return this;
     }
 
@@ -503,6 +512,7 @@ public final class AndroidNotificationV2 {
      * @return This builder.
      */
     public Builder setVibrateTimingsInMillis(long[] vibrateTimingsInMillis) {
+      checkNotNull(vibrateTimingsInMillis, "vibrateTimingsInMillis must not be null");
       List<String> list = new ArrayList<>();
       for (long value : vibrateTimingsInMillis) {
         checkArgument(value >= 0, "elements in vibrateTimingsInMillis must not be negative");
