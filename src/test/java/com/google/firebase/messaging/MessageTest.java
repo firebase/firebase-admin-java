@@ -1249,6 +1249,21 @@ public class MessageTest {
     }
   }
 
+  @Test(expected = NullPointerException.class)
+  public void testAndroidNotificationV2WithNullVibrateTimings() {
+    AndroidNotificationV2.builder().setVibrateTimingsInMillis(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testAndroidNotificationV2WithNullBodyLocArgs() {
+    AndroidNotificationV2.builder().addAllBodyLocalizationArgs(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testAndroidNotificationV2WithNullTitleLocArgs() {
+    AndroidNotificationV2.builder().addAllTitleLocalizationArgs(null);
+  }
+
   private static void assertJsonEquals(
       Map<String, Object> expected, Object actual) throws IOException {
     assertEquals(expected, toMap(actual));

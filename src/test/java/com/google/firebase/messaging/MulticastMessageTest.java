@@ -32,6 +32,7 @@ public class MulticastMessageTest {
       .build();
   private static final AndroidConfigV2 ANDROID_V2 = AndroidConfigV2.builder()
       .setCollapseKey("collapseKeyV2")
+      .setBackgroundSync(AndroidBackgroundSyncMessage.builder().build())
       .build();
   private static final ApnsConfig APNS = ApnsConfig.builder()
       .setAps(Aps.builder()
