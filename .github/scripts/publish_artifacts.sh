@@ -29,7 +29,7 @@ gpg --import --no-tty --batch --yes firebase.asc
 #  4. Publishes artifacts via Central Publisher Portal (deploy phase)
 mvn -B clean deploy \
   -Dcheckstyle.skip \
-  -DskipTests \
+  -Dmaven.test.skip=true \
   -Prelease \
   --settings .github/resources/settings.xml
 
