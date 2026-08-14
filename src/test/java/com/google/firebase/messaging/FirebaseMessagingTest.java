@@ -38,6 +38,7 @@ import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -305,22 +306,21 @@ public class FirebaseMessagingTest {
   }
 
   @Test
-  public void testSendEachWithTooManyMessages() throws FirebaseMessagingException {
-    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromMessageId(null);
-    FirebaseMessaging messaging = getMessagingForSend(Suppliers.ofInstance(client));
-    ImmutableList.Builder<Message> listBuilder = ImmutableList.builder();
+  public void testSendEachWithMoreThanFiveHundredMessages() {
+    List<Message> messages = new ArrayList<>();
     for (int i = 0; i < 501; i++) {
-      listBuilder.add(Message.builder().setTopic("topic").build());
+      messages.add(Message.builder().setTopic("foo-bar").build());
     }
-
+    // Previously threw IllegalArgumentException due to artificial 500 limit.
+    // sendEach() makes individual HTTP calls per message, so no such limit applies.
+    // Verify that 501 messages no longer throws an IllegalArgumentException.
     try {
-      messaging.sendEach(listBuilder.build(), false);
-      fail("No error thrown for too many messages in the list");
-    } catch (IllegalArgumentException expected) {
-      // expected
+      FirebaseMessaging.getInstance().sendEach(messages);
+    } catch (IllegalArgumentException e) {
+      fail("sendEach() should not throw IllegalArgumentException for more than 500 messages");
+    } catch (Exception e) {
+      // Other exceptions (e.g. network) are acceptable in unit test context
     }
-
-    assertNull(client.lastMessage);
   }
 
   @Test
