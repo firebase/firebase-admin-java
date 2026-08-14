@@ -19,6 +19,8 @@ package com.google.firebase.cloud;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.FirestoreOptions;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
@@ -27,6 +29,7 @@ import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.internal.FirebaseService;
+import com.google.firebase.internal.NonNull;
 
 /**
  * StorageClient provides access to Google Cloud Storage APIs. You can specify a default cloud
@@ -56,14 +59,28 @@ public class StorageClient {
     StorageClientService service = ImplFirebaseTrampolines.getService(app, SERVICE_ID,
         StorageClientService.class);
     if (service == null) {
-      Storage storage = StorageOptions.newBuilder()
+      StorageOptions userOptions =  app.getOptions().getStorageOptions();
+      StorageOptions.Builder builder = userOptions != null ? userOptions.toBuilder() :
+          StorageOptions.newBuilder();
+      Storage storage = builder
           .setCredentials(ImplFirebaseTrampolines.getCredentials(app))
+          .setProjectId(ImplFirebaseTrampolines.getProjectId(app))
           .build()
           .getService();
       StorageClient client = new StorageClient(app, storage);
       service = ImplFirebaseTrampolines.addService(app, new StorageClientService(client));
     }
     return service.getInstance();
+  }
+
+  @NonNull
+  public static Storage getStorage(FirebaseApp app) {
+    return getInstance(app).storage;
+  }
+
+  @NonNull
+  public static Storage getStorage() {
+    return getStorage(FirebaseApp.getInstance());
   }
 
   /**

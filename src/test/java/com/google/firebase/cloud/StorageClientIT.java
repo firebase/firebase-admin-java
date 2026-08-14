@@ -21,10 +21,16 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.google.common.io.CharStreams;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
 import com.google.firebase.testing.IntegrationTestUtils;
+import com.google.firebase.testing.ServiceAccount;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -87,5 +93,4 @@ public class StorageClientIT {
     String fileName = "data_" + System.currentTimeMillis() + ".txt";
     return bucket.create(fileName, contents.getBytes(), "text/plain");
   }
-
 }
