@@ -730,19 +730,21 @@ public class CustomClassMapper {
             throw new RuntimeException(e);
           }
         } else {
-          String message =
-              "No setter/field for "
-                  + propertyName
-                  + " found "
-                  + "on class "
-                  + this.clazz.getName();
-          if (this.properties.containsKey(propertyName.toLowerCase())) {
-            message += " (fields/setters are case sensitive!)";
-          }
-          if (this.throwOnUnknownProperties) {
-            throw new DatabaseException(message);
-          } else if (this.warnOnUnknownProperties) {
-            logger.warn(message);
+          if (this.throwOnUnknownProperties || this.warnOnUnknownProperties) {
+            String message =
+                "No setter/field for "
+                    + propertyName
+                    + " found "
+                    + "on class "
+                    + this.clazz.getName();
+            if (this.properties.containsKey(propertyName.toLowerCase())) {
+              message += " (fields/setters are case sensitive!)";
+            }
+            if (this.throwOnUnknownProperties) {
+              throw new DatabaseException(message);
+            } else if (this.warnOnUnknownProperties) {
+              logger.warn(message);
+            }
           }
         }
       }
