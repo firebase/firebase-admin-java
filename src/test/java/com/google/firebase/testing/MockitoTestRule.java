@@ -33,11 +33,12 @@ public class MockitoTestRule implements MethodRule {
     return new Statement() {
       @Override
       public void evaluate() throws Throwable {
-        MockitoAnnotations.initMocks(target);
+        AutoCloseable closeable = MockitoAnnotations.openMocks(target);
         try {
           base.evaluate();
         } finally {
           Mockito.validateMockitoUsage();
+          closeable.close();
         }
       }
     };
