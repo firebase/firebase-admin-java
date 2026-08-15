@@ -219,10 +219,20 @@ final class FirebaseUserManager {
 
   String getEmailActionLink(EmailLinkType type, String email,
       @Nullable ActionCodeSettings settings) throws FirebaseAuthException {
+    return getEmailActionLink(type, email, null, settings);
+  }
+
+  String getEmailActionLink(EmailLinkType type, String email, @Nullable String newEmail,
+      @Nullable ActionCodeSettings settings) throws FirebaseAuthException {
     ImmutableMap.Builder<String, Object> payload = ImmutableMap.<String, Object>builder()
-            .put("requestType", type.name())
-            .put("email", email)
-            .put("returnOobLink", true);
+        .put("requestType", type.name())
+        .put("email", email)
+        .put("returnOobLink", true);
+
+    if (newEmail != null) {
+      payload.put("newEmail", newEmail);
+    }
+
     if (settings != null) {
       payload.putAll(settings.getProperties());
     }
@@ -389,6 +399,7 @@ final class FirebaseUserManager {
     VERIFY_EMAIL,
     EMAIL_SIGNIN,
     PASSWORD_RESET,
+    VERIFY_AND_CHANGE_EMAIL,
   }
 
   static FirebaseUserManager createUserManager(FirebaseApp app, String tenantId) {

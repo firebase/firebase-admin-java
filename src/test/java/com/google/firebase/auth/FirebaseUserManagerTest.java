@@ -47,6 +47,7 @@ import com.google.firebase.auth.FirebaseUserManager.EmailLinkType;
 import com.google.firebase.auth.multitenancy.TenantAwareFirebaseAuth;
 import com.google.firebase.auth.multitenancy.TenantManager;
 import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.CallableOperation;
 import com.google.firebase.internal.FirebaseProcessEnvironment;
 import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.MultiRequestMockHttpTransport;
@@ -1512,6 +1513,52 @@ public class FirebaseUserManagerTest {
   }
 
   @Test
+  public void testGenerateVerifyAndChangeEmailLink() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("generateEmailLink.json"));
+    String link = FirebaseAuth.getInstance()
+        .generateVerifyAndChangeEmailLinkAsync("test@example.com", "new@example.com").get();
+    assertEquals("https://mock-oob-link.for.auth.tests", link);
+    checkRequestHeaders(interceptor);
+
+    GenericJson parsed = parseRequestContent(interceptor);
+    assertEquals(4, parsed.size());
+    assertEquals("test@example.com", parsed.get("email"));
+    assertEquals("new@example.com", parsed.get("newEmail"));
+    assertEquals("VERIFY_AND_CHANGE_EMAIL", parsed.get("requestType"));
+    assertTrue((Boolean) parsed.get("returnOobLink"));
+  }
+
+  @Test
+  public void testGenerateVerifyAndChangeEmailLinkWithSettings() throws Exception {
+    TestResponseInterceptor interceptor = initializeAppForUserManagement(
+        TestUtils.loadResource("generateEmailLink.json"));
+
+    // Create custom settings with a continue URL
+    ActionCodeSettings settings = ActionCodeSettings.builder()
+        .setUrl("https://example.com/continue")
+        .setHandleCodeInApp(true)
+        .build();
+
+    String link = FirebaseAuth.getInstance()
+        .generateVerifyAndChangeEmailLinkAsync("test@example.com",
+            "new@example.com", settings).get();
+
+    assertEquals("https://mock-oob-link.for.auth.tests", link);
+    checkRequestHeaders(interceptor);
+
+    GenericJson parsed = parseRequestContent(interceptor);
+    // We expect 6 fields now because of the newEmail and ActionCodeSettings properties.
+    assertEquals(6, parsed.size());
+    assertEquals("test@example.com", parsed.get("email"));
+    assertEquals("new@example.com", parsed.get("newEmail"));
+    assertEquals("VERIFY_AND_CHANGE_EMAIL", parsed.get("requestType"));
+    assertTrue((Boolean) parsed.get("returnOobLink"));
+    assertEquals("https://example.com/continue", parsed.get("continueUrl"));
+    assertTrue((Boolean) parsed.get("canHandleCodeInApp"));
+  }
+
+  @Test
   public void testGenerateESignInWithEmailLinkNoEmail() throws Exception {
     initializeAppForUserManagement();
     try {
@@ -1528,6 +1575,7 @@ public class FirebaseUserManagerTest {
     } catch (IllegalArgumentException expected) {
     }
   }
+
 
   @Test
   public void testGenerateESignInWithEmailLinkNullSettings() throws Exception {
@@ -2863,6 +2911,7 @@ public class FirebaseUserManagerTest {
     String expectedUrl = TENANTS_BASE_URL + "/TENANT_ID/inboundSamlConfigs/saml.provider-id";
     checkUrl(interceptor, "DELETE", expectedUrl);
   }
+
 
   @Test
   public void testCreateOidcProviderFromEmulatorAuth() throws Exception {
