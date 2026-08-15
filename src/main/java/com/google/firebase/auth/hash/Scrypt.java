@@ -26,7 +26,7 @@ import java.util.Map;
  * Represents the Scrypt password hashing algorithm. This is the
  * <a href="https://github.com/firebase/scrypt">modified Scrypt algorithm</a> used by
  * Firebase Auth. See {@link StandardScrypt} for the standard Scrypt algorithm. Can be used as an
- * instance of {@link com.google.firebase.auth.UserImportHash} when importing users.
+ * instance of {@link com.google.firebase.auth.UserImportHash} when importing users. This is the default algorithm for passwords.
  */
 public final class Scrypt extends RepeatableHash {
 
