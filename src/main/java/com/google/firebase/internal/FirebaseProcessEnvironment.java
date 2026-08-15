@@ -43,4 +43,9 @@ public class FirebaseProcessEnvironment {
   public static void clearCache() {
     localCache.clear();
   }
+
+  public static void deleteEnv(String name) {
+    localCache.remove(name);
+    System.clearProperty(name);
+  }
 }
