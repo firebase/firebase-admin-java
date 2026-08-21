@@ -55,7 +55,8 @@ public final class VerifyAppCheckTokenResponse {
   }
 
   /**
-   * Returns whether the token was already consumed prior to verification, if consume option was requested.
+   * Returns whether the token was already consumed prior to verification,
+   * if consume option was requested.
    */
   public Optional<Boolean> isAlreadyConsumed() {
     return alreadyConsumed;

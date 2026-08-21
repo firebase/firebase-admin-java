@@ -73,7 +73,11 @@ public class AppCheckTokenVerifier {
   private volatile DefaultJWTProcessor<SecurityContext> jwtProcessor;
 
   public AppCheckTokenVerifier(FirebaseApp app) {
-    this(app, ApiClientUtils.newAuthorizedRequestFactory(app), ApiClientUtils.getDefaultJsonFactory(), null);
+    this(
+        app,
+        ApiClientUtils.newAuthorizedRequestFactory(app),
+        ApiClientUtils.getDefaultJsonFactory(),
+        null);
   }
 
   /**
@@ -124,7 +128,8 @@ public class AppCheckTokenVerifier {
    *
    * @param token The App Check token string to verify.
    * @param options Verification options specified via {@link VerifyAppCheckTokenOptions}.
-   * @return A {@link VerifyAppCheckTokenResponse} containing the decoded token and consumption status.
+   * @return A {@link VerifyAppCheckTokenResponse} containing the decoded token
+   *     and consumption status.
    * @throws FirebaseAppCheckException If verification fails.
    */
   public VerifyAppCheckTokenResponse verifyToken(
