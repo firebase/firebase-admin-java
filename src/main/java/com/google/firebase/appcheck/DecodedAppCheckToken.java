@@ -37,7 +37,7 @@ public class DecodedAppCheckToken {
    *
    * @param claims A map of JWT claims.
    */
-  DecodedAppCheckToken(Map<String, Object> claims) {
+  public DecodedAppCheckToken(Map<String, Object> claims) {
     checkNotNull(claims, "Claims map must not be null");
     checkArgument(claims.containsKey("sub"), "Claims map must contain sub");
     this.claims = ImmutableMap.copyOf(claims);

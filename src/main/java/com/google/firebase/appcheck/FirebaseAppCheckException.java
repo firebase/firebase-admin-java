@@ -43,6 +43,12 @@ public class FirebaseAppCheckException extends FirebaseException {
     this(errorCode, message, cause, null);
   }
 
+  public FirebaseAppCheckException(
+      @NonNull ErrorCode errorCode,
+      @NonNull String message) {
+    this(errorCode, message, null, null);
+  }
+
   public FirebaseAppCheckException(@NonNull FirebaseException base) {
     this(base.getErrorCode(), base.getMessage(), base.getCause(), base.getHttpResponse());
   }

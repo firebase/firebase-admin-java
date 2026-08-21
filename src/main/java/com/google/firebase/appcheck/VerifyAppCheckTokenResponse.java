@@ -31,7 +31,7 @@ public final class VerifyAppCheckTokenResponse {
   private final DecodedAppCheckToken token;
   private final Optional<Boolean> alreadyConsumed;
 
-  VerifyAppCheckTokenResponse(
+  public VerifyAppCheckTokenResponse(
       @NonNull String appId,
       @NonNull DecodedAppCheckToken token,
       @Nullable Boolean alreadyConsumed) {
