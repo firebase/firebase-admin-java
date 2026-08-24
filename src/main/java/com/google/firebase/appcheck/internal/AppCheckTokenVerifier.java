@@ -54,6 +54,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.text.ParseException;
+import java.util.List;
 
 /**
  * Internal verifier for Firebase App Check tokens.
@@ -220,14 +221,15 @@ public class AppCheckTokenVerifier {
               + issuer);
     }
 
+    List<String> audience = claims.getAudience();
     String expectedAudience = APP_CHECK_AUDIENCE_PREFIX + this.projectId;
-    if (claims.getAudience().isEmpty() || !claims.getAudience().contains(expectedAudience)) {
+    if (audience == null || audience.isEmpty() || !audience.contains(expectedAudience)) {
       throw new FirebaseAppCheckException(
           ErrorCode.INVALID_ARGUMENT,
           "App Check token has incorrect audience. Expected to contain: "
               + expectedAudience
               + " but got: "
-              + claims.getAudience());
+              + audience);
     }
 
     if (Strings.isNullOrEmpty(claims.getSubject())) {
@@ -253,12 +255,13 @@ public class AppCheckTokenVerifier {
     GenericJson requestPayload = new GenericJson();
     requestPayload.put("app_check_token", token);
 
+    HttpResponse httpResponse = null;
     try {
       HttpRequest httpRequest =
           requestFactory.buildPostRequest(
               genericUrl, new JsonHttpContent(jsonFactory, requestPayload));
       httpRequest.setParser(jsonFactory.createJsonObjectParser());
-      HttpResponse httpResponse = httpRequest.execute();
+      httpResponse = httpRequest.execute();
 
       GenericJson response = httpResponse.parseAs(GenericJson.class);
       Boolean alreadyConsumed = (Boolean) response.get("alreadyConsumed");
@@ -269,6 +272,8 @@ public class AppCheckTokenVerifier {
     } catch (IOException e) {
       throw new FirebaseAppCheckException(
           ErrorCode.INTERNAL, "Error verifying App Check token with backend: " + e.getMessage(), e);
+    } finally {
+      ApiClientUtils.disconnectQuietly(httpResponse);
     }
   }
 
