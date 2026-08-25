@@ -55,6 +55,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.text.ParseException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Internal verifier for Firebase App Check tokens.
@@ -66,6 +67,7 @@ public class AppCheckTokenVerifier {
   private static final String APP_CHECK_AUDIENCE_PREFIX = "projects/";
   private static final String VERIFY_TOKEN_URL_FORMAT =
       "https://firebaseappcheck.googleapis.com/v1/projects/%s:verifyAppCheckToken";
+  private static final long JWKS_CACHE_TTL_MILLIS = TimeUnit.HOURS.toMillis(6);
 
   private final FirebaseApp app;
   private final String projectId;
@@ -291,7 +293,10 @@ public class AppCheckTokenVerifier {
   }
 
   protected JWKSource<SecurityContext> createKeySource() throws MalformedURLException {
-    return JWKSourceBuilder.create(URI.create(JWKS_URL).toURL()).retrying(true).build();
+    return JWKSourceBuilder.create(URI.create(JWKS_URL).toURL())
+        .cache(JWKS_CACHE_TTL_MILLIS, JWKSourceBuilder.DEFAULT_CACHE_REFRESH_TIMEOUT)
+        .retrying(true)
+        .build();
   }
 
   private String getProjectId(FirebaseApp app) {
