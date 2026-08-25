@@ -73,7 +73,7 @@ public class AppCheckTokenVerifier {
   private final String projectId;
   private final HttpRequestFactory requestFactory;
   private final JsonFactory jsonFactory;
-  private volatile DefaultJWTProcessor<SecurityContext> jwtProcessor;
+  private final DefaultJWTProcessor<SecurityContext> jwtProcessor;
 
   public AppCheckTokenVerifier(FirebaseApp app) {
     this(
@@ -98,21 +98,7 @@ public class AppCheckTokenVerifier {
     this.projectId = getProjectId(app);
     this.requestFactory = checkNotNull(requestFactory, "HttpRequestFactory must not be null");
     this.jsonFactory = checkNotNull(jsonFactory, "JsonFactory must not be null");
-    this.jwtProcessor = jwtProcessor;
-  }
-
-  private DefaultJWTProcessor<SecurityContext> getJwtProcessor() {
-    DefaultJWTProcessor<SecurityContext> processor = this.jwtProcessor;
-    if (processor == null) {
-      synchronized (this) {
-        processor = this.jwtProcessor;
-        if (processor == null) {
-          processor = createJwtProcessor();
-          this.jwtProcessor = processor;
-        }
-      }
-    }
-    return processor;
+    this.jwtProcessor = jwtProcessor != null ? jwtProcessor : createJwtProcessor();
   }
 
   /**
@@ -160,7 +146,7 @@ public class AppCheckTokenVerifier {
     try {
       SignedJWT signedJwt = SignedJWT.parse(token);
       verifyHeader(signedJwt.getHeader());
-      JWTClaimsSet claims = getJwtProcessor().process(signedJwt, null);
+      JWTClaimsSet claims = this.jwtProcessor.process(signedJwt, null);
       verifyClaims(claims);
       return new DecodedAppCheckToken(claims.getClaims());
     } catch (ParseException e) {
