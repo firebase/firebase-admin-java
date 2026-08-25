@@ -16,10 +16,13 @@
 
 package com.google.firebase.appcheck;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Optional;
 import org.junit.Test;
 
 public class VerifyAppCheckTokenOptionsTest {
@@ -47,5 +50,31 @@ public class VerifyAppCheckTokenOptionsTest {
     assertNotNull(options);
     assertTrue(options.getConsume().isPresent());
     assertFalse(options.getConsume().get());
+  }
+
+  @Test
+  public void testBuilder_SetConsumeOptional_Present() {
+    VerifyAppCheckTokenOptions options =
+        VerifyAppCheckTokenOptions.builder().setConsume(Optional.of(true)).build();
+    assertNotNull(options);
+    assertTrue(options.getConsume().isPresent());
+    assertTrue(options.getConsume().get());
+  }
+
+  @Test
+  public void testBuilder_SetConsumeOptional_Empty() {
+    VerifyAppCheckTokenOptions options =
+        VerifyAppCheckTokenOptions.builder().setConsume(Optional.empty()).build();
+    assertNotNull(options);
+    assertFalse(options.getConsume().isPresent());
+  }
+
+  @Test
+  public void testBuilder_SetConsumeOptionalNull_ThrowsException() {
+    NullPointerException e =
+        assertThrows(
+            NullPointerException.class,
+            () -> VerifyAppCheckTokenOptions.builder().setConsume((Optional<Boolean>) null));
+    assertEquals("consume must not be null", e.getMessage());
   }
 }

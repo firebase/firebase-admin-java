@@ -16,6 +16,8 @@
 
 package com.google.firebase.appcheck;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import java.util.Optional;
 
 /**
@@ -60,11 +62,11 @@ public final class VerifyAppCheckTokenOptions {
     /**
      * Sets whether to consume the token during verification.
      *
-     * @param consume Optional boolean value.
+     * @param consume Optional boolean value. Must not be null.
      * @return This builder.
      */
     public Builder setConsume(Optional<Boolean> consume) {
-      this.consume = consume != null ? consume : Optional.<Boolean>empty();
+      this.consume = checkNotNull(consume, "consume must not be null");
       return this;
     }
 
