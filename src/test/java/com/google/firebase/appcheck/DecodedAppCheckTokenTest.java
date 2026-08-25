@@ -26,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.internal.FirebaseProcessEnvironment;
+import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -81,8 +82,8 @@ public class DecodedAppCheckTokenTest {
     assertEquals(APP_ID, token.getSubject());
     assertEquals(ISSUER, token.getIssuer());
     assertEquals(ImmutableList.of(AUDIENCE), token.getAudience());
-    assertEquals(1600000000L, token.getIssuedAt());
-    assertEquals(1600003600L, token.getExpirationTime());
+    assertEquals(Instant.ofEpochMilli(1600000000000L), token.getIssuedAt());
+    assertEquals(Instant.ofEpochMilli(1600003600000L), token.getExpirationTime());
     assertEquals(claims, token.getClaims());
   }
 
@@ -98,8 +99,8 @@ public class DecodedAppCheckTokenTest {
     DecodedAppCheckToken token = new DecodedAppCheckToken(claims);
 
     assertNotNull(token);
-    assertEquals(1600000000L, token.getIssuedAt());
-    assertEquals(1600003600L, token.getExpirationTime());
+    assertEquals(Instant.ofEpochSecond(1600000000L), token.getIssuedAt());
+    assertEquals(Instant.ofEpochSecond(1600003600L), token.getExpirationTime());
   }
 
   @Test
@@ -146,10 +147,10 @@ public class DecodedAppCheckTokenTest {
   }
 
   @Test
-  public void testTimestamps_ZeroWhenMissingOrUnknownType() {
+  public void testTimestamps_NullWhenMissingOrUnknownType() {
     Map<String, Object> claims = ImmutableMap.<String, Object>of("sub", APP_ID);
     DecodedAppCheckToken token = new DecodedAppCheckToken(claims);
-    assertEquals(0L, token.getIssuedAt());
-    assertEquals(0L, token.getExpirationTime());
+    assertNull(token.getIssuedAt());
+    assertNull(token.getExpirationTime());
   }
 }

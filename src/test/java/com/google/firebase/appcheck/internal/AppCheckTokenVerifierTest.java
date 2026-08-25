@@ -168,8 +168,8 @@ public class AppCheckTokenVerifierTest {
     assertEquals(APP_ID, decodedToken.getSubject());
     assertEquals(ISSUER, decodedToken.getIssuer());
     assertEquals(Collections.singletonList(AUDIENCE), decodedToken.getAudience());
-    assertEquals(issueTime.getTime() / 1000L, decodedToken.getIssuedAt());
-    assertEquals(expirationTime.getTime() / 1000L, decodedToken.getExpirationTime());
+    assertEquals(issueTime.toInstant(), decodedToken.getIssuedAt());
+    assertEquals(expirationTime.toInstant(), decodedToken.getExpirationTime());
     assertEquals(ISSUER, decodedToken.getClaims().get("iss"));
     assertEquals(APP_ID, decodedToken.getClaims().get("sub"));
   }

@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -73,25 +74,17 @@ public class DecodedAppCheckToken {
   }
 
   /**
-   * Returns the expiration time in seconds since the Unix epoch.
+   * Returns the expiration time as an {@link Instant}, or {@code null} if not present.
    */
-  public long getExpirationTime() {
-    Object exp = claims.get("exp");
-    if (exp instanceof Date) {
-      return ((Date) exp).getTime() / 1000L;
-    }
-    return exp instanceof Number ? ((Number) exp).longValue() : 0L;
+  public Instant getExpirationTime() {
+    return toInstant(claims.get("exp"));
   }
 
   /**
-   * Returns the issued-at time in seconds since the Unix epoch.
+   * Returns the issued-at time as an {@link Instant}, or {@code null} if not present.
    */
-  public long getIssuedAt() {
-    Object iat = claims.get("iat");
-    if (iat instanceof Date) {
-      return ((Date) iat).getTime() / 1000L;
-    }
-    return iat instanceof Number ? ((Number) iat).longValue() : 0L;
+  public Instant getIssuedAt() {
+    return toInstant(claims.get("iat"));
   }
 
   /**
@@ -99,5 +92,15 @@ public class DecodedAppCheckToken {
    */
   public Map<String, Object> getClaims() {
     return claims;
+  }
+
+  private static Instant toInstant(Object timeObj) {
+    if (timeObj instanceof Date) {
+      return ((Date) timeObj).toInstant();
+    }
+    if (timeObj instanceof Number) {
+      return Instant.ofEpochSecond(((Number) timeObj).longValue());
+    }
+    return null;
   }
 }
