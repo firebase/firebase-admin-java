@@ -158,13 +158,13 @@ public class AppCheckTokenVerifier {
     } catch (BadJOSEException e) {
       throw new FirebaseAppCheckException(
           ErrorCode.INVALID_ARGUMENT,
-          "Check your project: " + projectId + ". Firebase App Check token is invalid: "
+          "Check your project: " + projectId + ". Failed to verify App Check token signature: "
               + e.getMessage(),
           e);
     } catch (JOSEException e) {
       throw new FirebaseAppCheckException(
           ErrorCode.INTERNAL,
-          "Check your project: " + projectId + ". Failed to verify App Check token signature: "
+          "Check your project: " + projectId + ". Internal error processing App Check token: "
               + e.getMessage(),
           e);
     }

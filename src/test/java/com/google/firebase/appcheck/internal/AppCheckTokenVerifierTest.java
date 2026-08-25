@@ -364,7 +364,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(token));
     assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
-    assertTrue(ex.getMessage().contains("token is invalid"));
+    assertTrue(ex.getMessage().contains("Failed to verify App Check token signature"));
   }
 
   @Test
@@ -376,7 +376,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(token));
     assertEquals(ErrorCode.INTERNAL, ex.getErrorCode());
-    assertTrue(ex.getMessage().contains("Failed to verify App Check token signature"));
+    assertTrue(ex.getMessage().contains("Internal error processing App Check token"));
   }
 
   @Test
