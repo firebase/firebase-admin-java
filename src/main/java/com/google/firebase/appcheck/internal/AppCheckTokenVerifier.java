@@ -200,6 +200,12 @@ public class AppCheckTokenVerifier {
           ErrorCode.INVALID_ARGUMENT, "App Check token has no 'iss' (issuer) claim.");
     }
 
+    // The issuer is of the form https://firebaseappcheck.googleapis.com/<project_number>.
+    // Because the SDK currently only has access to the project ID (not the project number),
+    // the verifier checks the issuer prefix rather than strict equality. If the SDK is updated in
+    // the future to expose the project number (per https://google.aip.dev/cloud/2510), this check
+    // should be updated to verify strict equality against
+    // https://firebaseappcheck.googleapis.com/<project_number>.
     if (!issuer.startsWith(APP_CHECK_ISSUER)) {
       throw new FirebaseAppCheckException(
           ErrorCode.INVALID_ARGUMENT,
