@@ -59,6 +59,28 @@ public class DecodedAppCheckToken {
   }
 
   /**
+   * Returns the App ID for which this token was issued.
+   * This is an alias for {@link #getSubject()}.
+   */
+  public String getAppId() {
+    return getSubject();
+  }
+
+  /**
+   * Returns the JWT ID ('jti') of the token, or {@code null} if not present.
+   */
+  public String getJti() {
+    return (String) claims.get("jti");
+  }
+
+  /**
+   * Returns the attestation provider for this token, or {@code null} if not present.
+   */
+  public String getProvider() {
+    return (String) claims.get("provider");
+  }
+
+  /**
    * Returns the audience for which this token is intended.
    */
   public List<String> getAudience() {

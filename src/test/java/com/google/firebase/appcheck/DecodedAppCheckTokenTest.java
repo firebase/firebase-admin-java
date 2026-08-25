@@ -74,13 +74,18 @@ public class DecodedAppCheckTokenTest {
             .put("aud", AUDIENCE)
             .put("iat", iat)
             .put("exp", exp)
+            .put("jti", "test-jwt-id")
+            .put("provider", "play_integrity")
             .build();
 
     DecodedAppCheckToken token = new DecodedAppCheckToken(claims);
 
     assertNotNull(token);
     assertEquals(APP_ID, token.getSubject());
+    assertEquals(APP_ID, token.getAppId());
     assertEquals(ISSUER, token.getIssuer());
+    assertEquals("test-jwt-id", token.getJti());
+    assertEquals("play_integrity", token.getProvider());
     assertEquals(ImmutableList.of(AUDIENCE), token.getAudience());
     assertEquals(Instant.ofEpochMilli(1600000000000L), token.getIssuedAt());
     assertEquals(Instant.ofEpochMilli(1600003600000L), token.getExpirationTime());
@@ -99,6 +104,9 @@ public class DecodedAppCheckTokenTest {
     DecodedAppCheckToken token = new DecodedAppCheckToken(claims);
 
     assertNotNull(token);
+    assertEquals(APP_ID, token.getAppId());
+    assertNull(token.getJti());
+    assertNull(token.getProvider());
     assertEquals(Instant.ofEpochSecond(1600000000L), token.getIssuedAt());
     assertEquals(Instant.ofEpochSecond(1600003600L), token.getExpirationTime());
   }
