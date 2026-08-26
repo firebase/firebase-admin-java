@@ -88,14 +88,14 @@ public class DecodedAppCheckToken {
   }
 
   /**
-   * Returns the expiration time as an {@link Instant}, or {@code null} if not present.
+   * Returns the expiration time as an {@link Instant}.
    */
   public Instant getExpirationTime() {
     return toInstant(claims.get("exp"));
   }
 
   /**
-   * Returns the issued-at time as an {@link Instant}, or {@code null} if not present.
+   * Returns the issued-at time as an {@link Instant}.
    */
   public Instant getIssuedAt() {
     return toInstant(claims.get("iat"));
