@@ -59,14 +59,6 @@ public class DecodedAppCheckToken {
   }
 
   /**
-   * Returns the App ID for which this token was issued.
-   * This is an alias for {@link #getSubject()}.
-   */
-  public String getAppId() {
-    return getSubject();
-  }
-
-  /**
    * Returns the JWT ID ('jti') of the token, or {@code null} if not present.
    */
   public String getJti() {

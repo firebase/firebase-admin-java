@@ -82,7 +82,6 @@ public class DecodedAppCheckTokenTest {
 
     assertNotNull(token);
     assertEquals(APP_ID, token.getSubject());
-    assertEquals(APP_ID, token.getAppId());
     assertEquals(ISSUER, token.getIssuer());
     assertEquals("test-jwt-id", token.getJti());
     assertEquals("play_integrity", token.getProvider());
@@ -104,7 +103,7 @@ public class DecodedAppCheckTokenTest {
     DecodedAppCheckToken token = new DecodedAppCheckToken(claims);
 
     assertNotNull(token);
-    assertEquals(APP_ID, token.getAppId());
+    assertEquals(APP_ID, token.getSubject());
     assertNull(token.getJti());
     assertNull(token.getProvider());
     assertEquals(Instant.ofEpochSecond(1600000000L), token.getIssuedAt());
