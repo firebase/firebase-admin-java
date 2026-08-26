@@ -57,6 +57,10 @@ import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.RSASSASigner;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.BadJOSEException;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -67,6 +71,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPublicKey;
 import java.util.Collections;
 import java.util.Date;
 import org.junit.After;
@@ -437,5 +442,110 @@ public class AppCheckTokenVerifierTest {
       assertEquals("Invalid JWKS URL", cause.getMessage());
       assertTrue(cause.getCause() instanceof MalformedURLException);
     }
+  }
+
+  @Test
+  public void testVerifyToken_RealJwtProcessor_Success() throws Exception {
+    RSAKey jwk =
+        new RSAKey.Builder((RSAPublicKey) rsaKeyPair.getPublic())
+            .keyID(KEY_ID)
+            .algorithm(JWSAlgorithm.RS256)
+            .build();
+    final JWKSource<SecurityContext> keySource = new ImmutableJWKSet<>(new JWKSet(jwk));
+
+    FirebaseApp realApp = FirebaseApp.initializeApp(firebaseOptions, "real-crypto-app");
+    AppCheckTokenVerifier realVerifier =
+        new AppCheckTokenVerifier(
+            realApp,
+            ApiClientUtils.newAuthorizedRequestFactory(realApp),
+            ApiClientUtils.getDefaultJsonFactory(),
+            null) {
+          @Override
+          protected JWKSource<SecurityContext> createKeySource() {
+            return keySource;
+          }
+        };
+
+    String token = createToken(header, claims);
+    VerifyAppCheckTokenResponse response = realVerifier.verifyToken(token);
+
+    assertNotNull(response);
+    assertEquals(APP_ID, response.getAppId());
+    assertEquals(APP_ID, response.getToken().getSubject());
+    assertEquals(ISSUER, response.getToken().getIssuer());
+    assertEquals(Collections.singletonList(AUDIENCE), response.getToken().getAudience());
+  }
+
+  @Test
+  public void testVerifyToken_RealJwtProcessor_InvalidSignature_ThrowsException() throws Exception {
+    KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA");
+    gen.initialize(2048);
+    KeyPair otherKeyPair = gen.generateKeyPair();
+
+    RSAKey wrongJwk =
+        new RSAKey.Builder((RSAPublicKey) otherKeyPair.getPublic())
+            .keyID(KEY_ID)
+            .algorithm(JWSAlgorithm.RS256)
+            .build();
+    final JWKSource<SecurityContext> keySource = new ImmutableJWKSet<>(new JWKSet(wrongJwk));
+
+    FirebaseApp realApp = FirebaseApp.initializeApp(firebaseOptions, "bad-sig-app");
+    AppCheckTokenVerifier realVerifier =
+        new AppCheckTokenVerifier(
+            realApp,
+            ApiClientUtils.newAuthorizedRequestFactory(realApp),
+            ApiClientUtils.getDefaultJsonFactory(),
+            null) {
+          @Override
+          protected JWKSource<SecurityContext> createKeySource() {
+            return keySource;
+          }
+        };
+
+    String token = createToken(header, claims);
+    FirebaseAppCheckException ex =
+        assertThrows(FirebaseAppCheckException.class, () -> realVerifier.verifyToken(token));
+    assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertTrue(ex.getMessage().contains("Failed to verify App Check token signature"));
+  }
+
+  @Test
+  public void testVerifyToken_RealJwtProcessor_ExpiredToken_ThrowsException() throws Exception {
+    RSAKey jwk =
+        new RSAKey.Builder((RSAPublicKey) rsaKeyPair.getPublic())
+            .keyID(KEY_ID)
+            .algorithm(JWSAlgorithm.RS256)
+            .build();
+    final JWKSource<SecurityContext> keySource = new ImmutableJWKSet<>(new JWKSet(jwk));
+
+    FirebaseApp realApp = FirebaseApp.initializeApp(firebaseOptions, "expired-token-app");
+    AppCheckTokenVerifier realVerifier =
+        new AppCheckTokenVerifier(
+            realApp,
+            ApiClientUtils.newAuthorizedRequestFactory(realApp),
+            ApiClientUtils.getDefaultJsonFactory(),
+            null) {
+          @Override
+          protected JWKSource<SecurityContext> createKeySource() {
+            return keySource;
+          }
+        };
+
+    Date pastIssueTime = new Date(System.currentTimeMillis() - 600000);
+    Date pastExpirationTime = new Date(System.currentTimeMillis() - 300000);
+    JWTClaimsSet expiredClaims =
+        new JWTClaimsSet.Builder()
+            .issuer(ISSUER)
+            .audience(AUDIENCE)
+            .subject(APP_ID)
+            .issueTime(pastIssueTime)
+            .expirationTime(pastExpirationTime)
+            .build();
+
+    String token = createToken(header, expiredClaims);
+    FirebaseAppCheckException ex =
+        assertThrows(FirebaseAppCheckException.class, () -> realVerifier.verifyToken(token));
+    assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertTrue(ex.getMessage().contains("Firebase App Check token has expired."));
   }
 }
