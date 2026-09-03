@@ -28,28 +28,45 @@ import com.google.firebase.internal.Nullable;
  */
 public class FirebaseAppCheckException extends FirebaseException {
 
+  private final AppCheckErrorCode errorCode;
+
+  public FirebaseAppCheckException(
+      @NonNull ErrorCode errorCode,
+      @NonNull String message,
+      @Nullable Throwable cause,
+      @Nullable IncomingHttpResponse response,
+      @Nullable AppCheckErrorCode appCheckErrorCode) {
+    super(errorCode, message, cause, response);
+    this.errorCode = appCheckErrorCode;
+  }
+
   public FirebaseAppCheckException(
       @NonNull ErrorCode errorCode,
       @NonNull String message,
       @Nullable Throwable cause,
       @Nullable IncomingHttpResponse response) {
-    super(errorCode, message, cause, response);
+    this(errorCode, message, cause, response, null);
   }
 
   public FirebaseAppCheckException(
       @NonNull ErrorCode errorCode,
       @NonNull String message,
       @Nullable Throwable cause) {
-    this(errorCode, message, cause, null);
+    this(errorCode, message, cause, null, null);
   }
 
   public FirebaseAppCheckException(
       @NonNull ErrorCode errorCode,
       @NonNull String message) {
-    this(errorCode, message, null, null);
+    this(errorCode, message, null, null, null);
   }
 
   public FirebaseAppCheckException(@NonNull FirebaseException base) {
-    this(base.getErrorCode(), base.getMessage(), base.getCause(), base.getHttpResponse());
+    this(base.getErrorCode(), base.getMessage(), base.getCause(), base.getHttpResponse(), null);
+  }
+
+  @Nullable
+  public AppCheckErrorCode getAppCheckErrorCode() {
+    return errorCode;
   }
 }

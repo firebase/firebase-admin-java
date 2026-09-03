@@ -44,6 +44,7 @@ import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
+import com.google.firebase.appcheck.AppCheckErrorCode;
 import com.google.firebase.appcheck.DecodedAppCheckToken;
 import com.google.firebase.appcheck.FirebaseAppCheckException;
 import com.google.firebase.appcheck.VerifyAppCheckTokenOptions;
@@ -506,6 +507,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> realVerifier.verifyToken(token));
     assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.INVALID_APP_CHECK_TOKEN, ex.getAppCheckErrorCode());
     assertTrue(ex.getMessage().contains("Failed to verify App Check token signature"));
   }
 
@@ -546,6 +548,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> realVerifier.verifyToken(token));
     assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.APP_CHECK_TOKEN_EXPIRED, ex.getAppCheckErrorCode());
     assertTrue(ex.getMessage().contains("Firebase App Check token has expired."));
   }
 }

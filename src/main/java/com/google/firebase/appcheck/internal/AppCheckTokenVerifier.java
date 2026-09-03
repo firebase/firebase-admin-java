@@ -31,6 +31,7 @@ import com.google.common.base.Strings;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.appcheck.AppCheckErrorCode;
 import com.google.firebase.appcheck.DecodedAppCheckToken;
 import com.google.firebase.appcheck.FirebaseAppCheckException;
 import com.google.firebase.appcheck.VerifyAppCheckTokenOptions;
@@ -146,22 +147,34 @@ public class AppCheckTokenVerifier {
       return new DecodedAppCheckToken(claims.getClaims());
     } catch (ParseException e) {
       throw new FirebaseAppCheckException(
-          ErrorCode.INVALID_ARGUMENT, "Failed to parse App Check JWT token: " + e.getMessage(), e);
+          ErrorCode.INVALID_ARGUMENT,
+          "Failed to parse App Check JWT token: " + e.getMessage(),
+          e,
+          null,
+          AppCheckErrorCode.INVALID_APP_CHECK_TOKEN);
     } catch (ExpiredJWTException e) {
       throw new FirebaseAppCheckException(
-          ErrorCode.INVALID_ARGUMENT, "Firebase App Check token has expired.", e);
+          ErrorCode.INVALID_ARGUMENT,
+          "Firebase App Check token has expired.",
+          e,
+          null,
+          AppCheckErrorCode.APP_CHECK_TOKEN_EXPIRED);
     } catch (BadJOSEException e) {
       throw new FirebaseAppCheckException(
           ErrorCode.INVALID_ARGUMENT,
           "Check your project: " + projectId + ". Failed to verify App Check token signature: "
               + e.getMessage(),
-          e);
+          e,
+          null,
+          AppCheckErrorCode.INVALID_APP_CHECK_TOKEN);
     } catch (JOSEException e) {
       throw new FirebaseAppCheckException(
           ErrorCode.INTERNAL,
           "Check your project: " + projectId + ". Internal error processing App Check token: "
               + e.getMessage(),
-          e);
+          e,
+          null,
+          AppCheckErrorCode.INTERNAL_ERROR);
     }
   }
 
@@ -172,17 +185,27 @@ public class AppCheckTokenVerifier {
           "App Check token has incorrect algorithm. Expected "
               + JWSAlgorithm.RS256.getName()
               + " but got: "
-              + header.getAlgorithm());
+              + header.getAlgorithm(),
+          null,
+          null,
+          AppCheckErrorCode.INVALID_APP_CHECK_TOKEN);
     }
     if (Strings.isNullOrEmpty(header.getKeyID())) {
       throw new FirebaseAppCheckException(
-          ErrorCode.INVALID_ARGUMENT, "App Check token has no 'kid' (key ID) header.");
+          ErrorCode.INVALID_ARGUMENT,
+          "App Check token has no 'kid' (key ID) header.",
+          null,
+          null,
+          AppCheckErrorCode.INVALID_APP_CHECK_TOKEN);
     }
     if (header.getType() == null || !JOSEObjectType.JWT.equals(header.getType())) {
       throw new FirebaseAppCheckException(
           ErrorCode.INVALID_ARGUMENT,
           "App Check token has incorrect 'typ' header. Expected JWT but got: "
-              + header.getType());
+              + header.getType(),
+          null,
+          null,
+          AppCheckErrorCode.INVALID_APP_CHECK_TOKEN);
     }
   }
 
@@ -192,7 +215,11 @@ public class AppCheckTokenVerifier {
 
     if (Strings.isNullOrEmpty(issuer)) {
       throw new FirebaseAppCheckException(
-          ErrorCode.INVALID_ARGUMENT, "App Check token has no 'iss' (issuer) claim.");
+          ErrorCode.INVALID_ARGUMENT,
+          "App Check token has no 'iss' (issuer) claim.",
+          null,
+          null,
+          AppCheckErrorCode.INVALID_APP_CHECK_TOKEN);
     }
 
     // The issuer is of the form https://firebaseappcheck.googleapis.com/<project_number>.
@@ -207,7 +234,10 @@ public class AppCheckTokenVerifier {
           "App Check token has incorrect issuer. Expected to start with: "
               + APP_CHECK_ISSUER
               + " but got: "
-              + issuer);
+              + issuer,
+          null,
+          null,
+          AppCheckErrorCode.INVALID_APP_CHECK_TOKEN);
     }
 
     List<String> audience = claims.getAudience();
@@ -218,12 +248,19 @@ public class AppCheckTokenVerifier {
           "App Check token has incorrect audience. Expected to contain: "
               + expectedAudience
               + " but got: "
-              + audience);
+              + audience,
+          null,
+          null,
+          AppCheckErrorCode.INVALID_APP_CHECK_TOKEN);
     }
 
     if (Strings.isNullOrEmpty(claims.getSubject())) {
       throw new FirebaseAppCheckException(
-          ErrorCode.INVALID_ARGUMENT, "App Check token has empty 'sub' (app ID) claim.");
+          ErrorCode.INVALID_ARGUMENT,
+          "App Check token has empty 'sub' (app ID) claim.",
+          null,
+          null,
+          AppCheckErrorCode.INVALID_APP_CHECK_TOKEN);
     }
   }
 
@@ -260,7 +297,11 @@ public class AppCheckTokenVerifier {
       return Boolean.TRUE.equals(alreadyConsumed);
     } catch (IOException e) {
       throw new FirebaseAppCheckException(
-          ErrorCode.INTERNAL, "Error verifying App Check token with backend: " + e.getMessage(), e);
+          ErrorCode.INTERNAL,
+          "Error verifying App Check token with backend: " + e.getMessage(),
+          e,
+          null,
+          AppCheckErrorCode.SERVICE_ERROR);
     } finally {
       ApiClientUtils.disconnectQuietly(httpResponse);
     }
