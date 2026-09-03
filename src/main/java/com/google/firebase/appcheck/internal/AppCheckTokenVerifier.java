@@ -83,11 +83,6 @@ public class AppCheckTokenVerifier {
         null);
   }
 
-  /**
-   * Package-private constructor designed explicitly for dependency injection
-   * of mock HTTP request factories, JSON factories, or mock JWT processors
-   * during isolated unit testing flows.
-   */
   @VisibleForTesting
   AppCheckTokenVerifier(
       FirebaseApp app,
