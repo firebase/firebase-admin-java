@@ -240,6 +240,40 @@ public class AppCheckTokenVerifierTest {
   }
 
   @Test
+  public void testVerifyToken_WithConsumeOption_HttpResponseException_AttachesHttpResponse()
+      throws Exception {
+    when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(claims);
+
+    MockLowLevelHttpResponse mockResponse = new MockLowLevelHttpResponse();
+    mockResponse.setStatusCode(403);
+    mockResponse.setContentType("application/json");
+    mockResponse.setContent("{\"error\": \"Forbidden\"}");
+
+    MockHttpTransport transport =
+        new MockHttpTransport.Builder().setLowLevelHttpResponse(mockResponse).build();
+
+    HttpRequestFactory mockRequestFactory = transport.createRequestFactory();
+    JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
+
+    FirebaseApp app = FirebaseApp.getInstance();
+    AppCheckTokenVerifier customVerifier =
+        new AppCheckTokenVerifier(app, mockRequestFactory, jsonFactory, mockJwtProcessor);
+
+    String token = createToken(header, claims);
+    VerifyAppCheckTokenOptions options =
+        VerifyAppCheckTokenOptions.builder().setConsume(true).build();
+    FirebaseAppCheckException ex =
+        assertThrows(
+            FirebaseAppCheckException.class, () -> customVerifier.verifyToken(token, options));
+
+    assertEquals(ErrorCode.INTERNAL, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.SERVICE_ERROR, ex.getAppCheckErrorCode());
+    assertNotNull(ex.getHttpResponse());
+    assertEquals(403, ex.getHttpResponse().getStatusCode());
+    assertEquals("{\"error\": \"Forbidden\"}", ex.getHttpResponse().getContent());
+  }
+
+  @Test
   public void testVerifyToken_NullOrEmptyToken_ThrowsException() {
     IllegalArgumentException ex1 =
         assertThrows(IllegalArgumentException.class, () -> verifier.verifyToken(null));

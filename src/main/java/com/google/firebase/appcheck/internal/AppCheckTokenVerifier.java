@@ -23,6 +23,7 @@ import com.google.api.client.http.GenericUrl;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
@@ -31,6 +32,7 @@ import com.google.common.base.Strings;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.ImplFirebaseTrampolines;
+import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.appcheck.AppCheckErrorCode;
 import com.google.firebase.appcheck.DecodedAppCheckToken;
 import com.google.firebase.appcheck.FirebaseAppCheckException;
@@ -281,9 +283,10 @@ public class AppCheckTokenVerifier {
     GenericJson requestPayload = new GenericJson();
     requestPayload.put("app_check_token", token);
 
+    HttpRequest httpRequest = null;
     HttpResponse httpResponse = null;
     try {
-      HttpRequest httpRequest =
+      httpRequest =
           requestFactory.buildPostRequest(
               genericUrl, new JsonHttpContent(jsonFactory, requestPayload));
       httpRequest.setParser(jsonFactory.createJsonObjectParser());
@@ -298,6 +301,15 @@ public class AppCheckTokenVerifier {
         alreadyConsumed = (Boolean) response.get("already_consumed");
       }
       return Boolean.TRUE.equals(alreadyConsumed);
+    } catch (HttpResponseException e) {
+      IncomingHttpResponse response =
+          httpRequest != null ? new IncomingHttpResponse(e, httpRequest) : null;
+      throw new FirebaseAppCheckException(
+          ErrorCode.INTERNAL,
+          "Error verifying App Check token with backend: " + e.getMessage(),
+          e,
+          response,
+          AppCheckErrorCode.SERVICE_ERROR);
     } catch (IOException e) {
       throw new FirebaseAppCheckException(
           ErrorCode.INTERNAL,
