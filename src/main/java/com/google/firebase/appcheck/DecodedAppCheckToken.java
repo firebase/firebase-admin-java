@@ -20,9 +20,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,7 +42,7 @@ public class DecodedAppCheckToken {
   public DecodedAppCheckToken(Map<String, Object> claims) {
     checkNotNull(claims, "Claims map must not be null");
     checkArgument(claims.containsKey("sub"), "Claims map must contain sub");
-    this.claims = ImmutableMap.copyOf(claims);
+    this.claims = Collections.unmodifiableMap(new HashMap<>(claims));
   }
 
   /**

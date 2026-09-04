@@ -160,4 +160,27 @@ public class DecodedAppCheckTokenTest {
     assertNull(token.getIssuedAt());
     assertNull(token.getExpirationTime());
   }
+
+  @Test
+  public void testClaims_WithNullValues_DoesNotThrow() {
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("sub", APP_ID);
+    claims.put("custom_null_claim", null);
+
+    DecodedAppCheckToken token = new DecodedAppCheckToken(claims);
+    assertNotNull(token);
+    assertEquals(APP_ID, token.getSubject());
+    assertTrue(token.getClaims().containsKey("custom_null_claim"));
+    assertNull(token.getClaims().get("custom_null_claim"));
+  }
+
+  @Test
+  public void testClaims_Unmodifiable() {
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("sub", APP_ID);
+
+    DecodedAppCheckToken token = new DecodedAppCheckToken(claims);
+    assertThrows(
+        UnsupportedOperationException.class, () -> token.getClaims().put("new_key", "value"));
+  }
 }
