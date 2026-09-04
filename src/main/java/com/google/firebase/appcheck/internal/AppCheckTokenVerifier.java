@@ -290,6 +290,9 @@ public class AppCheckTokenVerifier {
       httpResponse = httpRequest.execute();
 
       GenericJson response = httpResponse.parseAs(GenericJson.class);
+      if (response == null) {
+        return false;
+      }
       Boolean alreadyConsumed = (Boolean) response.get("alreadyConsumed");
       if (alreadyConsumed == null) {
         alreadyConsumed = (Boolean) response.get("already_consumed");

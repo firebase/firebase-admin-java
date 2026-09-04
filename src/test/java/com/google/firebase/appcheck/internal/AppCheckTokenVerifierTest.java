@@ -210,6 +210,36 @@ public class AppCheckTokenVerifierTest {
   }
 
   @Test
+  public void testVerifyToken_WithConsumeOption_EmptyBackendResponse_DoesNotThrow()
+      throws Exception {
+    when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(claims);
+
+    MockLowLevelHttpResponse mockResponse = new MockLowLevelHttpResponse();
+    mockResponse.setStatusCode(204);
+    mockResponse.setContent("");
+
+    MockHttpTransport transport =
+        new MockHttpTransport.Builder().setLowLevelHttpResponse(mockResponse).build();
+
+    HttpRequestFactory mockRequestFactory = transport.createRequestFactory();
+    JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
+
+    FirebaseApp app = FirebaseApp.getInstance();
+    AppCheckTokenVerifier customVerifier =
+        new AppCheckTokenVerifier(app, mockRequestFactory, jsonFactory, mockJwtProcessor);
+
+    String token = createToken(header, claims);
+    VerifyAppCheckTokenOptions options =
+        VerifyAppCheckTokenOptions.builder().setConsume(true).build();
+    VerifyAppCheckTokenResponse response = customVerifier.verifyToken(token, options);
+
+    assertNotNull(response);
+    assertEquals(APP_ID, response.getAppId());
+    assertTrue(response.isAlreadyConsumed().isPresent());
+    assertFalse(response.isAlreadyConsumed().get());
+  }
+
+  @Test
   public void testVerifyToken_NullOrEmptyToken_ThrowsException() {
     IllegalArgumentException ex1 =
         assertThrows(IllegalArgumentException.class, () -> verifier.verifyToken(null));
