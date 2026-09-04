@@ -154,6 +154,22 @@ public class DecodedAppCheckTokenTest {
   }
 
   @Test
+  public void testGetAudience_WithMixedAndNullElements_FiltersOnlyStrings() {
+    java.util.List<Object> rawAudience = new java.util.ArrayList<>();
+    rawAudience.add("aud1");
+    rawAudience.add(12345);
+    rawAudience.add(null);
+    rawAudience.add("aud2");
+
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("sub", APP_ID);
+    claims.put("aud", rawAudience);
+
+    DecodedAppCheckToken token = new DecodedAppCheckToken(claims);
+    assertEquals(ImmutableList.of("aud1", "aud2"), token.getAudience());
+  }
+
+  @Test
   public void testTimestamps_NullWhenMissingOrUnknownType() {
     Map<String, Object> claims = ImmutableMap.<String, Object>of("sub", APP_ID);
     DecodedAppCheckToken token = new DecodedAppCheckToken(claims);

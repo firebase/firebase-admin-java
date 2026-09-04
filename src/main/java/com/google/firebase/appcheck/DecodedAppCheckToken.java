@@ -81,9 +81,13 @@ public class DecodedAppCheckToken {
     if (audience instanceof String) {
       return ImmutableList.of((String) audience);
     } else if (audience instanceof List) {
-      @SuppressWarnings("unchecked")
-      List<String> audienceList = (List<String>) audience;
-      return ImmutableList.copyOf(audienceList);
+      ImmutableList.Builder<String> builder = ImmutableList.builder();
+      for (Object item : (List<?>) audience) {
+        if (item instanceof String) {
+          builder.add((String) item);
+        }
+      }
+      return builder.build();
     }
     return ImmutableList.of();
   }
