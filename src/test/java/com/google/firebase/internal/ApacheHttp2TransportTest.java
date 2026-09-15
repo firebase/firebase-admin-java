@@ -58,10 +58,9 @@ import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.Message;
 import org.apache.hc.core5.http.impl.bootstrap.HttpServer;
-import org.apache.hc.core5.http.impl.io.HttpService;
+import org.apache.hc.core5.http.impl.bootstrap.ServerBootstrap;
 import org.apache.hc.core5.http.io.HttpRequestHandler;
 import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
-import org.apache.hc.core5.http.io.support.BasicHttpServerRequestHandler;
 import org.apache.hc.core5.http.message.BasicHttpResponse;
 import org.apache.hc.core5.http.nio.AsyncPushConsumer;
 import org.apache.hc.core5.http.nio.AsyncRequestProducer;
@@ -434,31 +433,24 @@ public class ApacheHttp2TransportTest {
           return httpHandler;
         }
       };
-      server = new HttpServer(
-          0,
-          HttpService.builder()
-              .withHttpProcessor(
-                  new HttpProcessor() {
-                    @Override
-                    public void process(
-                        HttpRequest request, EntityDetails entity, HttpContext context)
-                        throws HttpException, IOException {
-                    }
+      server = ServerBootstrap.bootstrap()
+          .setListenerPort(0)
+          .setHttpProcessor(
+              new HttpProcessor() {
+                @Override
+                public void process(
+                    HttpRequest request, EntityDetails entity, HttpContext context)
+                    throws HttpException, IOException {
+                }
 
-                    @Override
-                    public void process(
-                        HttpResponse response, EntityDetails entity, HttpContext context)
-                        throws HttpException, IOException {
-                    }
-                  })
-              .withHttpServerRequestHandler(new BasicHttpServerRequestHandler(mapper))
-              .build(),
-          null,
-          null,
-          null,
-          null,
-          null,
-          null);
+                @Override
+                public void process(
+                    HttpResponse response, EntityDetails entity, HttpContext context)
+                    throws HttpException, IOException {
+                }
+              })
+          .setRequestRouter(mapper)
+          .create();
       server.start();
     }
 
