@@ -29,4 +29,25 @@ interface FirebaseMessagingClient {
    */
   BatchResponse sendAll(List<Message> messages, boolean dryRun) throws FirebaseMessagingException;
 
+  /**
+   * Subscribes a list of registration tokens to a topic via the FCM v1 API.
+   *
+   * @param topic Name of the topic.
+   * @param registrationTokens A list of registration tokens.
+   * @return A {@link TopicManagementResponse}.
+   * @throws FirebaseMessagingException If an error occurs.
+   */
+  TopicManagementResponse subscribeToTopic(
+      String topic, List<String> registrationTokens) throws FirebaseMessagingException;
+
+  /**
+   * Unsubscribes a list of registration tokens from a topic via the FCM v1 API.
+   *
+   * @param topic Name of the topic.
+   * @param registrationTokens A list of registration tokens.
+   * @return A {@link TopicManagementResponse}.
+   * @throws FirebaseMessagingException If an error occurs.
+   */
+  TopicManagementResponse unsubscribeFromTopic(
+      String topic, List<String> registrationTokens) throws FirebaseMessagingException;
 }

@@ -651,4 +651,94 @@ public class FirebaseMessagingClientImplTest {
 
     return builder.build();
   }
+
+  @Test
+  public void testSubscribeToTopic() throws Exception {
+    response.setContent("{}");
+    TopicManagementResponse result = client.subscribeToTopic(
+        "test-topic", ImmutableList.of("id1"));
+
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+    assertEquals(0, result.getErrors().size());
+    HttpRequest request = interceptor.getLastRequest();
+    assertEquals("POST", request.getRequestMethod());
+    assertEquals(
+        "https://fcm.googleapis.com/v1/projects/test-project/registrations/id1/topicSubscriptions?topic_name=test-topic",
+        request.getUrl().toString());
+    HttpHeaders headers = request.getHeaders();
+    assertEquals("2", headers.get("X-GOOG-API-FORMAT-VERSION"));
+    assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
+  }
+
+  @Test
+  public void testSubscribeToTopic409() throws Exception {
+    response.setStatusCode(409).setContent("{\"error\": {\"status\": \"ALREADY_EXISTS\"}}");
+    TopicManagementResponse result = client.subscribeToTopic(
+        "test-topic", ImmutableList.of("id1"));
+
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+  }
+
+  @Test
+  public void testUnsubscribeFromTopic() throws Exception {
+    response.setContent("{}");
+    TopicManagementResponse result = client.unsubscribeFromTopic(
+        "test-topic", ImmutableList.of("id1"));
+
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+    assertEquals(0, result.getErrors().size());
+    HttpRequest request = interceptor.getLastRequest();
+    assertEquals("DELETE", request.getRequestMethod());
+    assertEquals(
+        "https://fcm.googleapis.com/v1/projects/test-project/registrations/id1/topicSubscriptions/test-topic?allow_missing=true",
+        request.getUrl().toString());
+  }
+
+  @Test
+  public void testUnsubscribeFromTopic404() throws Exception {
+    response.setStatusCode(404).setContent("{\"error\": {\"status\": \"NOT_FOUND\"}}");
+    TopicManagementResponse result = client.unsubscribeFromTopic(
+        "test-topic", ImmutableList.of("id1"));
+
+    assertEquals(0, result.getSuccessCount());
+    assertEquals(1, result.getFailureCount());
+    assertEquals(1, result.getErrors().size());
+    assertEquals(0, result.getErrors().get(0).getIndex());
+    assertEquals("registration-token-not-registered", result.getErrors().get(0).getReason());
+  }
+
+  @Test
+  public void testTopicManagementFcmErrorDetails() throws Exception {
+    response.setStatusCode(404).setContent("{\n"
+        + "  \"error\": {\n"
+        + "    \"status\": \"NOT_FOUND\",\n"
+        + "    \"details\": [\n"
+        + "      {\n"
+        + "        \"@type\": \"type.googleapis.com/google.firebase.fcm.v1.FcmError\",\n"
+        + "        \"errorCode\": \"UNREGISTERED\"\n"
+        + "      }\n"
+        + "    ]\n"
+        + "  }\n"
+        + "}");
+    TopicManagementResponse result = client.subscribeToTopic(
+        "test-topic", ImmutableList.of("id1"));
+
+    assertEquals(0, result.getSuccessCount());
+    assertEquals(1, result.getFailureCount());
+    assertEquals("unregistered", result.getErrors().get(0).getReason());
+  }
+
+  @Test
+  public void testTopicManagement500Error() throws Exception {
+    response.setStatusCode(500).setContent("{}");
+    TopicManagementResponse result = client.subscribeToTopic(
+        "test-topic", ImmutableList.of("id1"));
+
+    assertEquals(0, result.getSuccessCount());
+    assertEquals(1, result.getFailureCount());
+    assertEquals("internal-error", result.getErrors().get(0).getReason());
+  }
 }
