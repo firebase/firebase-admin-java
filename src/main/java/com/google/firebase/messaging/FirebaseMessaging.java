@@ -557,6 +557,42 @@ public class FirebaseMessaging {
       final List<String> registrationTokens, final String topic) {
     checkRegistrationTokens(registrationTokens);
     checkTopic(topic);
+    final FirebaseMessagingClient messagingClient = getMessagingClient();
+    return new CallableOperation<TopicManagementResponse, FirebaseMessagingException>() {
+      @Override
+      protected TopicManagementResponse execute() throws FirebaseMessagingException {
+        return messagingClient.subscribeToTopic(topic, registrationTokens);
+      }
+    };
+  }
+
+  /**
+   * Subscribes a list of registration tokens to a topic using the legacy Instance ID API.
+   *
+   * @deprecated Use {@link #subscribeToTopic(List, String)} instead.
+   */
+  @Deprecated
+  public TopicManagementResponse subscribeToTopicLegacy(@NonNull List<String> registrationTokens,
+      @NonNull String topic) throws FirebaseMessagingException {
+    return subscribeLegacyOp(registrationTokens, topic).call();
+  }
+
+  /**
+   * Similar to {@link #subscribeToTopicLegacy(List, String)} but performs the operation
+   * asynchronously.
+   *
+   * @deprecated Use {@link #subscribeToTopicAsync(List, String)} instead.
+   */
+  @Deprecated
+  public ApiFuture<TopicManagementResponse> subscribeToTopicLegacyAsync(
+      @NonNull List<String> registrationTokens, @NonNull String topic) {
+    return subscribeLegacyOp(registrationTokens, topic).callAsync(app);
+  }
+
+  private CallableOperation<TopicManagementResponse, FirebaseMessagingException> subscribeLegacyOp(
+      final List<String> registrationTokens, final String topic) {
+    checkRegistrationTokens(registrationTokens);
+    checkTopic(topic);
     final InstanceIdClient instanceIdClient = getInstanceIdClient();
     return new CallableOperation<TopicManagementResponse, FirebaseMessagingException>() {
       @Override
@@ -595,6 +631,43 @@ public class FirebaseMessaging {
 
   private CallableOperation<TopicManagementResponse, FirebaseMessagingException> unsubscribeOp(
       final List<String> registrationTokens, final String topic) {
+    checkRegistrationTokens(registrationTokens);
+    checkTopic(topic);
+    final FirebaseMessagingClient messagingClient = getMessagingClient();
+    return new CallableOperation<TopicManagementResponse, FirebaseMessagingException>() {
+      @Override
+      protected TopicManagementResponse execute() throws FirebaseMessagingException {
+        return messagingClient.unsubscribeFromTopic(topic, registrationTokens);
+      }
+    };
+  }
+
+  /**
+   * Unsubscribes a list of registration tokens from a topic using the legacy Instance ID API.
+   *
+   * @deprecated Use {@link #unsubscribeFromTopic(List, String)} instead.
+   */
+  @Deprecated
+  public TopicManagementResponse unsubscribeFromTopicLegacy(
+      @NonNull List<String> registrationTokens,
+      @NonNull String topic) throws FirebaseMessagingException {
+    return unsubscribeLegacyOp(registrationTokens, topic).call();
+  }
+
+  /**
+   * Similar to {@link #unsubscribeFromTopicLegacy(List, String)} but performs the operation
+   * asynchronously.
+   *
+   * @deprecated Use {@link #unsubscribeFromTopicAsync(List, String)} instead.
+   */
+  @Deprecated
+  public ApiFuture<TopicManagementResponse> unsubscribeFromTopicLegacyAsync(
+      @NonNull List<String> registrationTokens, @NonNull String topic) {
+    return unsubscribeLegacyOp(registrationTokens, topic).callAsync(app);
+  }
+
+  private CallableOperation<TopicManagementResponse, FirebaseMessagingException>
+      unsubscribeLegacyOp(final List<String> registrationTokens, final String topic) {
     checkRegistrationTokens(registrationTokens);
     checkTopic(topic);
     final InstanceIdClient instanceIdClient = getInstanceIdClient();
