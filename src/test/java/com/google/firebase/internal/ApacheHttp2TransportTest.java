@@ -67,7 +67,7 @@ import org.apache.hc.core5.http.nio.AsyncRequestProducer;
 import org.apache.hc.core5.http.nio.AsyncResponseConsumer;
 import org.apache.hc.core5.http.nio.HandlerFactory;
 import org.apache.hc.core5.http.protocol.HttpContext;
-import org.apache.hc.core5.http.protocol.HttpProcessor;
+import org.apache.hc.core5.http.protocol.HttpProcessorBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -468,20 +468,7 @@ public class ApacheHttp2TransportTest {
       };
       server = ServerBootstrap.bootstrap()
           .setListenerPort(0)
-          .setHttpProcessor(
-              new HttpProcessor() {
-                @Override
-                public void process(
-                    HttpRequest request, EntityDetails entity, HttpContext context)
-                    throws HttpException, IOException {
-                }
-
-                @Override
-                public void process(
-                    HttpResponse response, EntityDetails entity, HttpContext context)
-                    throws HttpException, IOException {
-                }
-              })
+          .setHttpProcessor(HttpProcessorBuilder.create().build())
           .setRequestRouter(mapper)
           .create();
       server.start();
