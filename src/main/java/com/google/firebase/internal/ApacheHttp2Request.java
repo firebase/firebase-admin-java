@@ -49,6 +49,7 @@ final class ApacheHttp2Request extends LowLevelHttpRequest {
   private SimpleHttpRequest request;
   private final RequestConfig.Builder requestConfig;
   private int writeTimeout;
+  private int readTimeout;
   private ApacheHttp2AsyncEntityProducer entityProducer;
   private ApacheHttp2AsyncEntityConsumer entityConsumer;
 
@@ -57,6 +58,7 @@ final class ApacheHttp2Request extends LowLevelHttpRequest {
     this.httpAsyncClient = httpAsyncClient;
     this.requestBuilder = requestBuilder;
     this.writeTimeout = 0;
+    this.readTimeout = 0;
 
     this.requestConfig = RequestConfig.custom()
         .setRedirectsEnabled(false);
@@ -69,6 +71,7 @@ final class ApacheHttp2Request extends LowLevelHttpRequest {
 
   @Override
   public void setTimeout(int connectionTimeout, int readTimeout) throws IOException {
+    this.readTimeout = readTimeout;
     requestConfig
         .setConnectTimeout(Timeout.ofMilliseconds(connectionTimeout))
         .setResponseTimeout(Timeout.ofMilliseconds(readTimeout));
@@ -125,7 +128,10 @@ final class ApacheHttp2Request extends LowLevelHttpRequest {
 
     // Wait for response
     try {
-      final Message<HttpResponse, ApacheHttp2Entity> response = responseFuture.get();
+      final Message<HttpResponse, ApacheHttp2Entity> response =
+          readTimeout > 0
+              ? responseFuture.get(readTimeout, TimeUnit.MILLISECONDS)
+              : responseFuture.get();
       return new ApacheHttp2Response(response);
     } catch (ExecutionException e) {
       if (e.getCause() instanceof ConnectTimeoutException
@@ -142,6 +148,9 @@ final class ApacheHttp2Request extends LowLevelHttpRequest {
       throw new IOException("Request Interrupted", e);
     } catch (CancellationException e) {
       throw new IOException("Request Cancelled", e);
+    } catch (TimeoutException e) {
+      responseFuture.cancel(true);
+      throw new IOException("Stream exception in request", e);
     }
   }
 

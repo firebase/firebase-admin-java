@@ -422,6 +422,39 @@ public class ApacheHttp2TransportTest {
     }
   }
 
+  @Test
+  public void testReadTimeout() throws Exception {
+    final HttpRequestHandler handler = new HttpRequestHandler() {
+      @Override
+      public void handle(
+          ClassicHttpRequest request, ClassicHttpResponse response, HttpContext context)
+          throws HttpException, IOException {
+        try {
+          Thread.sleep(1000L);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+        response.setCode(HttpStatus.SC_OK);
+      }
+    };
+
+    try (FakeServer server = new FakeServer(handler)) {
+      HttpTransport transport = new ApacheHttp2Transport();
+      GenericUrl testUrl = new GenericUrl("http://localhost/timeout");
+      testUrl.setPort(server.getPort());
+      com.google.api.client.http.HttpRequest request = transport.createRequestFactory()
+          .buildGetRequest(testUrl);
+      request.setReadTimeout(100);
+
+      try {
+        request.execute();
+        Assert.fail("Expected IOException on read timeout");
+      } catch (IOException e) {
+        assertEquals("Stream exception in request", e.getMessage());
+      }
+    }
+  }
+
   private static class FakeServer implements AutoCloseable {
     private final HttpServer server;
 
