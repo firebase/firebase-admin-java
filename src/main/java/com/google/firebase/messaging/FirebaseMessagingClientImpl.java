@@ -38,6 +38,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseException;
@@ -61,6 +62,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -111,11 +113,18 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   }
 
   private static ExecutorService createDefaultExecutor(ThreadFactory threadFactory) {
+    ThreadFactory baseFactory =
+        threadFactory != null ? threadFactory : Executors.defaultThreadFactory();
+    ThreadFactory factory = new ThreadFactoryBuilder()
+        .setThreadFactory(baseFactory)
+        .setNameFormat("firebase-messaging-topics-%d")
+        .setDaemon(true)
+        .build();
     ThreadPoolExecutor pool = new ThreadPoolExecutor(
         100, 100,
         60L, TimeUnit.SECONDS,
         new LinkedBlockingQueue<Runnable>(),
-        threadFactory != null ? threadFactory : Executors.defaultThreadFactory());
+        factory);
     pool.allowCoreThreadTimeOut(true);
     return pool;
   }
@@ -244,9 +253,14 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     for (int i = 0; i < registrationTokens.size(); i++) {
       final int index = i;
       final String token = registrationTokens.get(i);
-      futures.add(CompletableFuture.supplyAsync(
-          () -> sendSingleTopicRequest(token, topicName, isSubscribe, index),
-          this.executor));
+      try {
+        futures.add(CompletableFuture.supplyAsync(
+            () -> sendSingleTopicRequest(token, topicName, isSubscribe, index),
+            this.executor));
+      } catch (RejectedExecutionException e) {
+        futures.add(CompletableFuture.completedFuture(
+            TopicResult.error(index, "REJECTED_BY_EXECUTOR")));
+      }
     }
 
     CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
