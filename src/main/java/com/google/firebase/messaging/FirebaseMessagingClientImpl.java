@@ -60,7 +60,10 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A helper class for interacting with Firebase Cloud Messaging service.
@@ -101,8 +104,20 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     this.httpClient = new ErrorHandlingHttpClient<>(requestFactory, jsonFactory, errorHandler)
       .setInterceptor(responseInterceptor);
     this.batchClient = new MessagingBatchClient(requestFactory.getTransport(), jsonFactory);
-    this.executor = builder.executor;
+    this.executor = builder.executor != null
+        ? builder.executor
+        : createDefaultExecutor(builder.threadFactory);
     this.threadFactory = builder.threadFactory;
+  }
+
+  private static ExecutorService createDefaultExecutor(ThreadFactory threadFactory) {
+    ThreadPoolExecutor pool = new ThreadPoolExecutor(
+        100, 100,
+        60L, TimeUnit.SECONDS,
+        new LinkedBlockingQueue<Runnable>(),
+        threadFactory != null ? threadFactory : Executors.defaultThreadFactory());
+    pool.allowCoreThreadTimeOut(true);
+    return pool;
   }
 
   @VisibleForTesting
@@ -123,6 +138,16 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   @VisibleForTesting
   JsonFactory getJsonFactory() {
     return jsonFactory;
+  }
+
+  @VisibleForTesting
+  ExecutorService getExecutor() {
+    return executor;
+  }
+
+  @VisibleForTesting
+  ThreadFactory getThreadFactory() {
+    return threadFactory;
   }
 
   public String send(Message message, boolean dryRun) throws FirebaseMessagingException {
@@ -212,43 +237,31 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
 
   private TopicManagementResponse sendTopicManagementRequest(
       String topic, List<String> registrationTokens, boolean isSubscribe) {
-    String topicName = topic.startsWith("/topics/") ? topic.substring("/topics/".length()) : topic;
+    String topicName = topic.startsWith("/topics/")
+        ? topic.substring("/topics/".length()) : topic;
 
-    ExecutorService pool = this.executor != null
-        ? this.executor
-        : (this.threadFactory != null
-            ? Executors.newFixedThreadPool(
-                Math.min(registrationTokens.size(), 100), this.threadFactory)
-            : Executors.newFixedThreadPool(Math.min(registrationTokens.size(), 100)));
-    boolean shouldShutdown = (this.executor == null);
+    List<CompletableFuture<TopicResult>> futures = new ArrayList<>();
+    for (int i = 0; i < registrationTokens.size(); i++) {
+      final int index = i;
+      final String token = registrationTokens.get(i);
+      futures.add(CompletableFuture.supplyAsync(
+          () -> sendSingleTopicRequest(token, topicName, isSubscribe, index),
+          this.executor));
+    }
 
-    try {
-      List<CompletableFuture<TopicResult>> futures = new ArrayList<>();
-      for (int i = 0; i < registrationTokens.size(); i++) {
-        final int index = i;
-        final String token = registrationTokens.get(i);
-        futures.add(CompletableFuture.supplyAsync(
-            () -> sendSingleTopicRequest(token, topicName, isSubscribe, index), pool));
-      }
+    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
-      CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
-      int successCount = 0;
-      List<TopicManagementResponse.Error> errors = new ArrayList<>();
-      for (CompletableFuture<TopicResult> future : futures) {
-        TopicResult result = future.join();
-        if (result.isSuccess()) {
-          successCount++;
-        } else {
-          errors.add(new TopicManagementResponse.Error(result.getIndex(), result.getReason()));
-        }
-      }
-      return new TopicManagementResponse(successCount, errors);
-    } finally {
-      if (shouldShutdown) {
-        pool.shutdown();
+    int successCount = 0;
+    List<TopicManagementResponse.Error> errors = new ArrayList<>();
+    for (CompletableFuture<TopicResult> future : futures) {
+      TopicResult result = future.join();
+      if (result.isSuccess()) {
+        successCount++;
+      } else {
+        errors.add(new TopicManagementResponse.Error(result.getIndex(), result.getReason()));
       }
     }
+    return new TopicManagementResponse(successCount, errors);
   }
 
   private TopicResult sendSingleTopicRequest(

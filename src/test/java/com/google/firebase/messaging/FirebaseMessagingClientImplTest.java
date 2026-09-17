@@ -53,6 +53,9 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import org.junit.Before;
 import org.junit.Test;
@@ -740,5 +743,37 @@ public class FirebaseMessagingClientImplTest {
     assertEquals(0, result.getSuccessCount());
     assertEquals(1, result.getFailureCount());
     assertEquals("internal-error", result.getErrors().get(0).getReason());
+  }
+
+  @Test
+  public void testCustomExecutorService() {
+    ExecutorService customExecutor = Executors.newSingleThreadExecutor();
+    try {
+      FirebaseMessagingClientImpl clientWithExecutor = FirebaseMessagingClientImpl.builder()
+          .setProjectId("test-project")
+          .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
+          .setRequestFactory(new MockHttpTransport().createRequestFactory())
+          .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
+          .setExecutor(customExecutor)
+          .build();
+
+      assertSame(customExecutor, clientWithExecutor.getExecutor());
+    } finally {
+      customExecutor.shutdown();
+    }
+  }
+
+  @Test
+  public void testCustomThreadFactory() {
+    ThreadFactory customThreadFactory = Executors.defaultThreadFactory();
+    FirebaseMessagingClientImpl clientWithThreadFactory = FirebaseMessagingClientImpl.builder()
+        .setProjectId("test-project")
+        .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
+        .setRequestFactory(new MockHttpTransport().createRequestFactory())
+        .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
+        .setThreadFactory(customThreadFactory)
+        .build();
+
+    assertSame(customThreadFactory, clientWithThreadFactory.getThreadFactory());
   }
 }
