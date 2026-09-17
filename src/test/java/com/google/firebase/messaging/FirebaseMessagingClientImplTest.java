@@ -53,10 +53,15 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -775,5 +780,83 @@ public class FirebaseMessagingClientImplTest {
         .build();
 
     assertSame(customThreadFactory, clientWithThreadFactory.getThreadFactory());
+  }
+
+  @Test
+  public void testDefaultExecutorUsesDaemonThreads() throws Exception {
+    FirebaseMessagingClientImpl clientWithDefaultExecutor =
+        FirebaseMessagingClientImpl.builder()
+            .setProjectId("test-project")
+            .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
+            .setRequestFactory(new MockHttpTransport().createRequestFactory())
+            .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
+            .build();
+
+    final AtomicBoolean isDaemon = new AtomicBoolean();
+    final AtomicReference<String> threadName = new AtomicReference<>();
+    final CountDownLatch latch = new CountDownLatch(1);
+    clientWithDefaultExecutor.getExecutor().execute(() -> {
+      Thread current = Thread.currentThread();
+      isDaemon.set(current.isDaemon());
+      threadName.set(current.getName());
+      latch.countDown();
+    });
+
+    assertTrue(latch.await(5, TimeUnit.SECONDS));
+    assertTrue(isDaemon.get());
+    assertNotNull(threadName.get());
+    assertTrue(threadName.get().startsWith("firebase-messaging-topics-"));
+  }
+
+  @Test
+  public void testTopicManagementRejectedExecution() throws Exception {
+    ExecutorService rejectingExecutor = new AbstractExecutorService() {
+      @Override
+      public void shutdown() {}
+
+      @Override
+      public List<Runnable> shutdownNow() {
+        return ImmutableList.of();
+      }
+
+      @Override
+      public boolean isShutdown() {
+        return false;
+      }
+
+      @Override
+      public boolean isTerminated() {
+        return false;
+      }
+
+      @Override
+      public boolean awaitTermination(long timeout, TimeUnit unit) {
+        return false;
+      }
+
+      @Override
+      public void execute(Runnable command) {
+        throw new RejectedExecutionException("Task rejected");
+      }
+    };
+
+    FirebaseMessagingClientImpl clientWithRejection = FirebaseMessagingClientImpl.builder()
+        .setProjectId("test-project")
+        .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
+        .setRequestFactory(new MockHttpTransport().createRequestFactory())
+        .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
+        .setExecutor(rejectingExecutor)
+        .build();
+
+    TopicManagementResponse result = clientWithRejection.subscribeToTopic(
+        "test-topic", ImmutableList.of("id1", "id2"));
+
+    assertEquals(0, result.getSuccessCount());
+    assertEquals(2, result.getFailureCount());
+    assertEquals(2, result.getErrors().size());
+    assertEquals(0, result.getErrors().get(0).getIndex());
+    assertEquals("rejected-by-executor", result.getErrors().get(0).getReason());
+    assertEquals(1, result.getErrors().get(1).getIndex());
+    assertEquals("rejected-by-executor", result.getErrors().get(1).getReason());
   }
 }
