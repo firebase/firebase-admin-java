@@ -53,7 +53,15 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -650,5 +658,205 @@ public class FirebaseMessagingClientImplTest {
         ));
 
     return builder.build();
+  }
+
+  @Test
+  public void testSubscribeToTopic() throws Exception {
+    response.setContent("{}");
+    TopicManagementResponse result = client.subscribeToTopic(
+        "test-topic", ImmutableList.of("id1"));
+
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+    assertEquals(0, result.getErrors().size());
+    HttpRequest request = interceptor.getLastRequest();
+    assertEquals("POST", request.getRequestMethod());
+    assertEquals(
+        "https://fcm.googleapis.com/v1/projects/test-project/registrations/id1/topicSubscriptions?topic_name=test-topic",
+        request.getUrl().toString());
+    HttpHeaders headers = request.getHeaders();
+    assertEquals("2", headers.get("X-GOOG-API-FORMAT-VERSION"));
+    assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
+  }
+
+  @Test
+  public void testSubscribeToTopic409() throws Exception {
+    response.setStatusCode(409).setContent("{\"error\": {\"status\": \"ALREADY_EXISTS\"}}");
+    TopicManagementResponse result = client.subscribeToTopic(
+        "test-topic", ImmutableList.of("id1"));
+
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+  }
+
+  @Test
+  public void testUnsubscribeFromTopic() throws Exception {
+    response.setContent("{}");
+    TopicManagementResponse result = client.unsubscribeFromTopic(
+        "test-topic", ImmutableList.of("id1"));
+
+    assertEquals(1, result.getSuccessCount());
+    assertEquals(0, result.getFailureCount());
+    assertEquals(0, result.getErrors().size());
+    HttpRequest request = interceptor.getLastRequest();
+    assertEquals("DELETE", request.getRequestMethod());
+    assertEquals(
+        "https://fcm.googleapis.com/v1/projects/test-project/registrations/id1/topicSubscriptions/test-topic?allow_missing=true",
+        request.getUrl().toString());
+  }
+
+  @Test
+  public void testUnsubscribeFromTopic404() throws Exception {
+    response.setStatusCode(404).setContent("{\"error\": {\"status\": \"NOT_FOUND\"}}");
+    TopicManagementResponse result = client.unsubscribeFromTopic(
+        "test-topic", ImmutableList.of("id1"));
+
+    assertEquals(0, result.getSuccessCount());
+    assertEquals(1, result.getFailureCount());
+    assertEquals(1, result.getErrors().size());
+    assertEquals(0, result.getErrors().get(0).getIndex());
+    assertEquals("registration-token-not-registered", result.getErrors().get(0).getReason());
+  }
+
+  @Test
+  public void testTopicManagementFcmErrorDetails() throws Exception {
+    response.setStatusCode(404).setContent("{\n"
+        + "  \"error\": {\n"
+        + "    \"status\": \"NOT_FOUND\",\n"
+        + "    \"details\": [\n"
+        + "      {\n"
+        + "        \"@type\": \"type.googleapis.com/google.firebase.fcm.v1.FcmError\",\n"
+        + "        \"errorCode\": \"UNREGISTERED\"\n"
+        + "      }\n"
+        + "    ]\n"
+        + "  }\n"
+        + "}");
+    TopicManagementResponse result = client.subscribeToTopic(
+        "test-topic", ImmutableList.of("id1"));
+
+    assertEquals(0, result.getSuccessCount());
+    assertEquals(1, result.getFailureCount());
+    assertEquals("unregistered", result.getErrors().get(0).getReason());
+  }
+
+  @Test
+  public void testTopicManagement500Error() throws Exception {
+    response.setStatusCode(500).setContent("{}");
+    TopicManagementResponse result = client.subscribeToTopic(
+        "test-topic", ImmutableList.of("id1"));
+
+    assertEquals(0, result.getSuccessCount());
+    assertEquals(1, result.getFailureCount());
+    assertEquals("internal-error", result.getErrors().get(0).getReason());
+  }
+
+  @Test
+  public void testCustomExecutorService() {
+    ExecutorService customExecutor = Executors.newSingleThreadExecutor();
+    try {
+      FirebaseMessagingClientImpl clientWithExecutor = FirebaseMessagingClientImpl.builder()
+          .setProjectId("test-project")
+          .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
+          .setRequestFactory(new MockHttpTransport().createRequestFactory())
+          .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
+          .setExecutor(customExecutor)
+          .build();
+
+      assertSame(customExecutor, clientWithExecutor.getExecutor());
+    } finally {
+      customExecutor.shutdown();
+    }
+  }
+
+  @Test
+  public void testCustomThreadFactory() {
+    ThreadFactory customThreadFactory = Executors.defaultThreadFactory();
+    FirebaseMessagingClientImpl clientWithThreadFactory = FirebaseMessagingClientImpl.builder()
+        .setProjectId("test-project")
+        .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
+        .setRequestFactory(new MockHttpTransport().createRequestFactory())
+        .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
+        .setThreadFactory(customThreadFactory)
+        .build();
+
+    assertSame(customThreadFactory, clientWithThreadFactory.getThreadFactory());
+  }
+
+  @Test
+  public void testDefaultExecutorUsesDaemonThreads() throws Exception {
+    FirebaseMessagingClientImpl clientWithDefaultExecutor =
+        FirebaseMessagingClientImpl.builder()
+            .setProjectId("test-project")
+            .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
+            .setRequestFactory(new MockHttpTransport().createRequestFactory())
+            .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
+            .build();
+
+    final AtomicBoolean isDaemon = new AtomicBoolean();
+    final AtomicReference<String> threadName = new AtomicReference<>();
+    final CountDownLatch latch = new CountDownLatch(1);
+    clientWithDefaultExecutor.getExecutor().execute(() -> {
+      Thread current = Thread.currentThread();
+      isDaemon.set(current.isDaemon());
+      threadName.set(current.getName());
+      latch.countDown();
+    });
+
+    assertTrue(latch.await(5, TimeUnit.SECONDS));
+    assertTrue(isDaemon.get());
+    assertNotNull(threadName.get());
+    assertTrue(threadName.get().startsWith("firebase-messaging-topics-"));
+  }
+
+  @Test
+  public void testTopicManagementRejectedExecution() throws Exception {
+    ExecutorService rejectingExecutor = new AbstractExecutorService() {
+      @Override
+      public void shutdown() {}
+
+      @Override
+      public List<Runnable> shutdownNow() {
+        return ImmutableList.of();
+      }
+
+      @Override
+      public boolean isShutdown() {
+        return false;
+      }
+
+      @Override
+      public boolean isTerminated() {
+        return false;
+      }
+
+      @Override
+      public boolean awaitTermination(long timeout, TimeUnit unit) {
+        return false;
+      }
+
+      @Override
+      public void execute(Runnable command) {
+        throw new RejectedExecutionException("Task rejected");
+      }
+    };
+
+    FirebaseMessagingClientImpl clientWithRejection = FirebaseMessagingClientImpl.builder()
+        .setProjectId("test-project")
+        .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
+        .setRequestFactory(new MockHttpTransport().createRequestFactory())
+        .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
+        .setExecutor(rejectingExecutor)
+        .build();
+
+    TopicManagementResponse result = clientWithRejection.subscribeToTopic(
+        "test-topic", ImmutableList.of("id1", "id2"));
+
+    assertEquals(0, result.getSuccessCount());
+    assertEquals(2, result.getFailureCount());
+    assertEquals(2, result.getErrors().size());
+    assertEquals(0, result.getErrors().get(0).getIndex());
+    assertEquals("rejected-by-executor", result.getErrors().get(0).getReason());
+    assertEquals(1, result.getErrors().get(1).getIndex());
+    assertEquals("rejected-by-executor", result.getErrors().get(1).getReason());
   }
 }

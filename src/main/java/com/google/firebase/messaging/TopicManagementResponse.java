@@ -61,6 +61,11 @@ public class TopicManagementResponse {
     this.errors = errors.build();
   }
 
+  TopicManagementResponse(int successCount, List<Error> errors) {
+    this.successCount = successCount;
+    this.errors = ImmutableList.copyOf(errors);
+  }
+
   /**
    * Gets the number of registration tokens that were successfully subscribed or unsubscribed.
    *
@@ -97,7 +102,7 @@ public class TopicManagementResponse {
     private final int index;
     private final String reason;
 
-    private Error(int index, String reason) {
+    Error(int index, String reason) {
       this.index = index;
       if (reason == null || reason.trim().isEmpty()) {
         this.reason = UNKNOWN_ERROR;
