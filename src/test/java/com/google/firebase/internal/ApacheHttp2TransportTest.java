@@ -58,17 +58,16 @@ import org.apache.hc.core5.http.HttpResponse;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.Message;
 import org.apache.hc.core5.http.impl.bootstrap.HttpServer;
-import org.apache.hc.core5.http.impl.io.HttpService;
+import org.apache.hc.core5.http.impl.bootstrap.ServerBootstrap;
 import org.apache.hc.core5.http.io.HttpRequestHandler;
 import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
-import org.apache.hc.core5.http.io.support.BasicHttpServerRequestHandler;
 import org.apache.hc.core5.http.message.BasicHttpResponse;
 import org.apache.hc.core5.http.nio.AsyncPushConsumer;
 import org.apache.hc.core5.http.nio.AsyncRequestProducer;
 import org.apache.hc.core5.http.nio.AsyncResponseConsumer;
 import org.apache.hc.core5.http.nio.HandlerFactory;
 import org.apache.hc.core5.http.protocol.HttpContext;
-import org.apache.hc.core5.http.protocol.HttpProcessor;
+import org.apache.hc.core5.http.protocol.HttpProcessorBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -423,6 +422,39 @@ public class ApacheHttp2TransportTest {
     }
   }
 
+  @Test
+  public void testReadTimeout() throws Exception {
+    final HttpRequestHandler handler = new HttpRequestHandler() {
+      @Override
+      public void handle(
+          ClassicHttpRequest request, ClassicHttpResponse response, HttpContext context)
+          throws HttpException, IOException {
+        try {
+          Thread.sleep(1000L);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+        }
+        response.setCode(HttpStatus.SC_OK);
+      }
+    };
+
+    try (FakeServer server = new FakeServer(handler)) {
+      HttpTransport transport = new ApacheHttp2Transport();
+      GenericUrl testUrl = new GenericUrl("http://localhost/timeout");
+      testUrl.setPort(server.getPort());
+      com.google.api.client.http.HttpRequest request = transport.createRequestFactory()
+          .buildGetRequest(testUrl);
+      request.setReadTimeout(100);
+
+      try {
+        request.execute();
+        Assert.fail("Expected IOException on read timeout");
+      } catch (IOException e) {
+        assertEquals("Stream exception in request", e.getMessage());
+      }
+    }
+  }
+
   private static class FakeServer implements AutoCloseable {
     private final HttpServer server;
 
@@ -434,31 +466,11 @@ public class ApacheHttp2TransportTest {
           return httpHandler;
         }
       };
-      server = new HttpServer(
-          0,
-          HttpService.builder()
-              .withHttpProcessor(
-                  new HttpProcessor() {
-                    @Override
-                    public void process(
-                        HttpRequest request, EntityDetails entity, HttpContext context)
-                        throws HttpException, IOException {
-                    }
-
-                    @Override
-                    public void process(
-                        HttpResponse response, EntityDetails entity, HttpContext context)
-                        throws HttpException, IOException {
-                    }
-                  })
-              .withHttpServerRequestHandler(new BasicHttpServerRequestHandler(mapper))
-              .build(),
-          null,
-          null,
-          null,
-          null,
-          null,
-          null);
+      server = ServerBootstrap.bootstrap()
+          .setListenerPort(0)
+          .setHttpProcessor(HttpProcessorBuilder.create().build())
+          .setRequestRouter(mapper)
+          .create();
       server.start();
     }
 
