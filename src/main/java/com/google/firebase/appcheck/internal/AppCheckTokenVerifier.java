@@ -69,7 +69,7 @@ public class AppCheckTokenVerifier {
   private static final String APP_CHECK_ISSUER = "https://firebaseappcheck.googleapis.com/";
   private static final String APP_CHECK_AUDIENCE_PREFIX = "projects/";
   private static final String VERIFY_TOKEN_URL_FORMAT =
-      "https://firebaseappcheck.googleapis.com/v1/projects/%s:verifyAppCheckToken";
+      "https://firebaseappcheck.googleapis.com/v1beta/projects/%s:verifyAppCheckToken";
   private static final long JWKS_CACHE_TTL_MILLIS = TimeUnit.HOURS.toMillis(6);
 
   private final FirebaseApp app;
@@ -296,11 +296,7 @@ public class AppCheckTokenVerifier {
       if (response == null) {
         return false;
       }
-      Boolean alreadyConsumed = (Boolean) response.get("alreadyConsumed");
-      if (alreadyConsumed == null) {
-        alreadyConsumed = (Boolean) response.get("already_consumed");
-      }
-      return Boolean.TRUE.equals(alreadyConsumed);
+      return Boolean.TRUE.equals(response.get("alreadyConsumed"));
     } catch (HttpResponseException e) {
       IncomingHttpResponse response =
           httpRequest != null ? new IncomingHttpResponse(e, httpRequest) : null;

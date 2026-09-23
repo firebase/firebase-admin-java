@@ -210,6 +210,44 @@ public class AppCheckTokenVerifierTest {
   }
 
   @Test
+  public void testVerifyToken_WithConsumeOption_SendsCorrectRequest() throws Exception {
+    when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(claims);
+
+    MockLowLevelHttpResponse mockResponse = new MockLowLevelHttpResponse();
+    mockResponse.setContentType("application/json");
+    mockResponse.setContent("{\"alreadyConsumed\": true}");
+
+    // Restricting the supported methods makes buildRequest() throw if the SDK
+    // ever sends anything other than a POST to the backend.
+    MockHttpTransport transport =
+        new MockHttpTransport.Builder()
+            .setSupportedMethods(Collections.singleton("POST"))
+            .setLowLevelHttpResponse(mockResponse)
+            .build();
+
+    FirebaseApp app = FirebaseApp.getInstance();
+    AppCheckTokenVerifier customVerifier =
+        new AppCheckTokenVerifier(
+            app,
+            transport.createRequestFactory(),
+            ApiClientUtils.getDefaultJsonFactory(),
+            mockJwtProcessor);
+
+    String token = createToken(header, claims);
+    VerifyAppCheckTokenOptions options =
+        VerifyAppCheckTokenOptions.builder().setConsume(true).build();
+    customVerifier.verifyToken(token, options);
+
+    MockLowLevelHttpRequest request = transport.getLowLevelHttpRequest();
+    assertEquals(
+        "https://firebaseappcheck.googleapis.com/v1beta/projects/"
+            + PROJECT_ID
+            + ":verifyAppCheckToken",
+        request.getUrl());
+    assertEquals("{\"app_check_token\":\"" + token + "\"}", request.getContentAsString());
+  }
+
+  @Test
   public void testVerifyToken_WithConsumeOption_EmptyBackendResponse_DoesNotThrow()
       throws Exception {
     when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(claims);
