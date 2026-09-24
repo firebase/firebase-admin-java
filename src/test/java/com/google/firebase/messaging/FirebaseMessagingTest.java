@@ -33,6 +33,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseException;
@@ -580,7 +581,7 @@ public class FirebaseMessagingTest {
     assertEquals(0, got.getFailureCount());
     assertTrue(got.getErrors().isEmpty());
     assertEquals("test-topic", client.lastTopic);
-    assertEquals(ImmutableList.of("id1", "id2"), client.lastBatch);
+    assertEquals(ImmutableSet.of("id1", "id2"), ImmutableSet.copyOf(client.lastBatch));
   }
 
   @Test
@@ -611,7 +612,7 @@ public class FirebaseMessagingTest {
     assertEquals(0, got.getFailureCount());
     assertTrue(got.getErrors().isEmpty());
     assertEquals("test-topic", client.lastTopic);
-    assertEquals(ImmutableList.of("id1", "id2"), client.lastBatch);
+    assertEquals(ImmutableSet.of("id1", "id2"), ImmutableSet.copyOf(client.lastBatch));
   }
 
   @Test
@@ -682,7 +683,7 @@ public class FirebaseMessagingTest {
     assertEquals(0, got.getFailureCount());
     assertTrue(got.getErrors().isEmpty());
     assertEquals("test-topic", client.lastTopic);
-    assertEquals(ImmutableList.of("id1", "id2"), client.lastBatch);
+    assertEquals(ImmutableSet.of("id1", "id2"), ImmutableSet.copyOf(client.lastBatch));
   }
 
   @Test
@@ -713,7 +714,7 @@ public class FirebaseMessagingTest {
     assertEquals(0, got.getFailureCount());
     assertTrue(got.getErrors().isEmpty());
     assertEquals("test-topic", client.lastTopic);
-    assertEquals(ImmutableList.of("id1", "id2"), client.lastBatch);
+    assertEquals(ImmutableSet.of("id1", "id2"), ImmutableSet.copyOf(client.lastBatch));
   }
 
   @Test
@@ -893,7 +894,7 @@ public class FirebaseMessagingTest {
     }
 
     @Override
-    public void subscribeToTopic(
+    public synchronized void subscribeToTopic(
         String topic, String registrationToken) throws FirebaseMessagingException {
       this.lastTopic = topic;
       if (this.lastBatch == null) {
@@ -906,7 +907,7 @@ public class FirebaseMessagingTest {
     }
 
     @Override
-    public void unsubscribeFromTopic(
+    public synchronized void unsubscribeFromTopic(
         String topic, String registrationToken) throws FirebaseMessagingException {
       this.lastTopic = topic;
       if (this.lastBatch == null) {
