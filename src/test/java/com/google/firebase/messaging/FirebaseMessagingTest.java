@@ -26,6 +26,8 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.json.GenericJson;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -33,16 +35,18 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseException;
 import com.google.firebase.FirebaseOptions;
+import com.google.firebase.IncomingHttpResponse;
+import com.google.firebase.OutgoingHttpRequest;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.Nullable;
-
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
 import org.junit.After;
 import org.junit.Test;
 
@@ -572,21 +576,26 @@ public class FirebaseMessagingTest {
     TopicManagementResponse got = messaging.subscribeToTopic(
         ImmutableList.of("id1", "id2"), "test-topic");
 
-    assertSame(TOPIC_MGT_RESPONSE, got);
+    assertEquals(2, got.getSuccessCount());
+    assertEquals(0, got.getFailureCount());
+    assertTrue(got.getErrors().isEmpty());
     assertEquals("test-topic", client.lastTopic);
     assertEquals(ImmutableList.of("id1", "id2"), client.lastBatch);
   }
 
   @Test
-  public void testSubscribeToTopicFailure() {
+  public void testSubscribeToTopicFailure() throws FirebaseMessagingException {
     MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromException(TEST_EXCEPTION);
     FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
 
-    try {
-      messaging.subscribeToTopic(ImmutableList.of("id1", "id2"), "test-topic");
-    } catch (FirebaseMessagingException e) {
-      assertSame(TEST_EXCEPTION, e);
-    }
+    TopicManagementResponse got = messaging.subscribeToTopic(
+        ImmutableList.of("id1", "id2"), "test-topic");
+
+    assertEquals(0, got.getSuccessCount());
+    assertEquals(2, got.getFailureCount());
+    assertEquals(2, got.getErrors().size());
+    assertEquals(0, got.getErrors().get(0).getIndex());
+    assertEquals(1, got.getErrors().get(1).getIndex());
   }
 
   @Test
@@ -598,19 +607,24 @@ public class FirebaseMessagingTest {
     TopicManagementResponse got = messaging.subscribeToTopicAsync(
         ImmutableList.of("id1", "id2"), "test-topic").get();
 
-    assertSame(TOPIC_MGT_RESPONSE, got);
+    assertEquals(2, got.getSuccessCount());
+    assertEquals(0, got.getFailureCount());
+    assertTrue(got.getErrors().isEmpty());
+    assertEquals("test-topic", client.lastTopic);
+    assertEquals(ImmutableList.of("id1", "id2"), client.lastBatch);
   }
 
   @Test
-  public void testSubscribeToTopicAsyncFailure() throws InterruptedException {
+  public void testSubscribeToTopicAsyncFailure() throws Exception {
     MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromException(TEST_EXCEPTION);
     FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
 
-    try {
-      messaging.subscribeToTopicAsync(ImmutableList.of("id1", "id2"), "test-topic").get();
-    } catch (ExecutionException e) {
-      assertSame(TEST_EXCEPTION, e.getCause());
-    }
+    TopicManagementResponse got = messaging.subscribeToTopicAsync(
+        ImmutableList.of("id1", "id2"), "test-topic").get();
+
+    assertEquals(0, got.getSuccessCount());
+    assertEquals(2, got.getFailureCount());
+    assertEquals(2, got.getErrors().size());
   }
 
   @Test
@@ -664,21 +678,26 @@ public class FirebaseMessagingTest {
     TopicManagementResponse got = messaging.unsubscribeFromTopic(
         ImmutableList.of("id1", "id2"), "test-topic");
 
-    assertSame(TOPIC_MGT_RESPONSE, got);
+    assertEquals(2, got.getSuccessCount());
+    assertEquals(0, got.getFailureCount());
+    assertTrue(got.getErrors().isEmpty());
     assertEquals("test-topic", client.lastTopic);
     assertEquals(ImmutableList.of("id1", "id2"), client.lastBatch);
   }
 
   @Test
-  public void testUnsubscribeFromTopicFailure() {
+  public void testUnsubscribeFromTopicFailure() throws FirebaseMessagingException {
     MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromException(TEST_EXCEPTION);
     FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
 
-    try {
-      messaging.unsubscribeFromTopic(ImmutableList.of("id1", "id2"), "test-topic");
-    } catch (FirebaseMessagingException e) {
-      assertSame(TEST_EXCEPTION, e);
-    }
+    TopicManagementResponse got = messaging.unsubscribeFromTopic(
+        ImmutableList.of("id1", "id2"), "test-topic");
+
+    assertEquals(0, got.getSuccessCount());
+    assertEquals(2, got.getFailureCount());
+    assertEquals(2, got.getErrors().size());
+    assertEquals(0, got.getErrors().get(0).getIndex());
+    assertEquals(1, got.getErrors().get(1).getIndex());
   }
 
   @Test
@@ -690,19 +709,59 @@ public class FirebaseMessagingTest {
     TopicManagementResponse got = messaging.unsubscribeFromTopicAsync(
         ImmutableList.of("id1", "id2"), "test-topic").get();
 
-    assertSame(TOPIC_MGT_RESPONSE, got);
+    assertEquals(2, got.getSuccessCount());
+    assertEquals(0, got.getFailureCount());
+    assertTrue(got.getErrors().isEmpty());
+    assertEquals("test-topic", client.lastTopic);
+    assertEquals(ImmutableList.of("id1", "id2"), client.lastBatch);
   }
 
   @Test
-  public void testUnsubscribeFromTopicAsyncFailure() throws InterruptedException {
+  public void testUnsubscribeFromTopicAsyncFailure() throws Exception {
     MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromException(TEST_EXCEPTION);
     FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
 
-    try {
-      messaging.unsubscribeFromTopicAsync(ImmutableList.of("id1", "id2"), "test-topic").get();
-    } catch (ExecutionException e) {
-      assertSame(TEST_EXCEPTION, e.getCause());
-    }
+    TopicManagementResponse got = messaging.unsubscribeFromTopicAsync(
+        ImmutableList.of("id1", "id2"), "test-topic").get();
+
+    assertEquals(0, got.getSuccessCount());
+    assertEquals(2, got.getFailureCount());
+    assertEquals(2, got.getErrors().size());
+  }
+
+  @Test
+  public void testExtractReason() {
+    FirebaseMessagingException messagingError =
+        FirebaseMessagingException.withMessagingErrorCode(
+            new FirebaseException(ErrorCode.INVALID_ARGUMENT, "bad arg", null),
+            MessagingErrorCode.UNREGISTERED);
+    assertEquals("UNREGISTERED", FirebaseMessaging.extractReason(messagingError));
+
+    FirebaseMessagingException platformError =
+        new FirebaseMessagingException(ErrorCode.PERMISSION_DENIED, "permission denied");
+    assertEquals("PERMISSION_DENIED", FirebaseMessaging.extractReason(platformError));
+
+    IncomingHttpResponse resp503 = new IncomingHttpResponse(
+        new HttpResponseException.Builder(503, "Unavailable", new HttpHeaders()).build(),
+        new OutgoingHttpRequest("GET", "https://example.com"));
+    FirebaseMessagingException unavailableError =
+        FirebaseMessagingException.withMessagingErrorCode(
+            new FirebaseException(ErrorCode.UNKNOWN, "unavailable", null, resp503),
+            null);
+    assertEquals("UNAVAILABLE", FirebaseMessaging.extractReason(unavailableError));
+
+    IncomingHttpResponse resp504 = new IncomingHttpResponse(
+        new HttpResponseException.Builder(504, "Gateway Timeout", new HttpHeaders()).build(),
+        new OutgoingHttpRequest("GET", "https://example.com"));
+    FirebaseMessagingException timeoutError =
+        FirebaseMessagingException.withMessagingErrorCode(
+            new FirebaseException(ErrorCode.UNKNOWN, "timeout", null, resp504),
+            null);
+    assertEquals("DEADLINE_EXCEEDED", FirebaseMessaging.extractReason(timeoutError));
+
+    FirebaseMessagingException unknownError =
+        new FirebaseMessagingException(ErrorCode.UNKNOWN, "something unknown");
+    assertEquals("UNKNOWN_ERROR", FirebaseMessaging.extractReason(unknownError));
   }
 
   @Test
@@ -834,25 +893,29 @@ public class FirebaseMessagingTest {
     }
 
     @Override
-    public TopicManagementResponse subscribeToTopic(
-        String topic, List<String> registrationTokens) throws FirebaseMessagingException {
+    public void subscribeToTopic(
+        String topic, String registrationToken) throws FirebaseMessagingException {
       this.lastTopic = topic;
-      this.lastBatch = registrationTokens;
+      if (this.lastBatch == null) {
+        this.lastBatch = new ArrayList<>();
+      }
+      this.lastBatch.add(registrationToken);
       if (exception != null) {
         throw exception;
       }
-      return topicManagementResponse;
     }
 
     @Override
-    public TopicManagementResponse unsubscribeFromTopic(
-        String topic, List<String> registrationTokens) throws FirebaseMessagingException {
+    public void unsubscribeFromTopic(
+        String topic, String registrationToken) throws FirebaseMessagingException {
       this.lastTopic = topic;
-      this.lastBatch = registrationTokens;
+      if (this.lastBatch == null) {
+        this.lastBatch = new ArrayList<>();
+      }
+      this.lastBatch.add(registrationToken);
       if (exception != null) {
         throw exception;
       }
-      return topicManagementResponse;
     }
   }
 

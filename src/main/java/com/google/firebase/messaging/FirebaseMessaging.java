@@ -537,7 +537,11 @@ public class FirebaseMessaging {
    */
   public TopicManagementResponse subscribeToTopic(@NonNull List<String> registrationTokens,
       @NonNull String topic) throws FirebaseMessagingException {
-    return subscribeOp(registrationTokens, topic).call();
+    try {
+      return subscribeToTopicAsync(registrationTokens, topic).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new FirebaseMessagingException(ErrorCode.CANCELLED, SERVICE_ID);
+    }
   }
 
   /**
@@ -550,20 +554,7 @@ public class FirebaseMessaging {
    */
   public ApiFuture<TopicManagementResponse> subscribeToTopicAsync(
       @NonNull List<String> registrationTokens, @NonNull String topic) {
-    return subscribeOp(registrationTokens, topic).callAsync(app);
-  }
-
-  private CallableOperation<TopicManagementResponse, FirebaseMessagingException> subscribeOp(
-      final List<String> registrationTokens, final String topic) {
-    checkRegistrationTokens(registrationTokens);
-    checkTopic(topic);
-    final FirebaseMessagingClient messagingClient = getMessagingClient();
-    return new CallableOperation<TopicManagementResponse, FirebaseMessagingException>() {
-      @Override
-      protected TopicManagementResponse execute() throws FirebaseMessagingException {
-        return messagingClient.subscribeToTopic(topic, registrationTokens);
-      }
-    };
+    return manageTopicAsync(registrationTokens, topic, true);
   }
 
   /**
@@ -612,7 +603,11 @@ public class FirebaseMessaging {
    */
   public TopicManagementResponse unsubscribeFromTopic(@NonNull List<String> registrationTokens,
       @NonNull String topic) throws FirebaseMessagingException {
-    return unsubscribeOp(registrationTokens, topic).call();
+    try {
+      return unsubscribeFromTopicAsync(registrationTokens, topic).get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new FirebaseMessagingException(ErrorCode.CANCELLED, SERVICE_ID);
+    }
   }
 
   /**
@@ -626,20 +621,127 @@ public class FirebaseMessaging {
    */
   public ApiFuture<TopicManagementResponse> unsubscribeFromTopicAsync(
       @NonNull List<String> registrationTokens, @NonNull String topic) {
-    return unsubscribeOp(registrationTokens, topic).callAsync(app);
+    return manageTopicAsync(registrationTokens, topic, false);
   }
 
-  private CallableOperation<TopicManagementResponse, FirebaseMessagingException> unsubscribeOp(
-      final List<String> registrationTokens, final String topic) {
+  private ApiFuture<TopicManagementResponse> manageTopicAsync(
+      final List<String> registrationTokens, final String topic, final boolean isSubscribe) {
     checkRegistrationTokens(registrationTokens);
     checkTopic(topic);
+    final String cleanTopic = topic.startsWith("/topics/")
+        ? topic.substring("/topics/".length()) : topic;
+    final List<String> immutableTokens = ImmutableList.copyOf(registrationTokens);
+
+    List<ApiFuture<TopicResult>> futures = new ArrayList<>(immutableTokens.size());
+    for (int i = 0; i < immutableTokens.size(); i++) {
+      futures.add(
+          manageTopicSingleOp(immutableTokens.get(i), cleanTopic, isSubscribe, i)
+              .callAsync(app));
+    }
+
+    ApiFuture<List<TopicResult>> resultsFuture = ApiFutures.allAsList(futures);
+    return ApiFutures.transform(
+        resultsFuture,
+        (results) -> {
+          int successCount = 0;
+          List<TopicManagementResponse.Error> errors = new ArrayList<>();
+          for (TopicResult result : results) {
+            if (result.isSuccess()) {
+              successCount++;
+            } else {
+              errors.add(new TopicManagementResponse.Error(
+                  result.getIndex(), result.getReason()));
+            }
+          }
+          return new TopicManagementResponse(successCount, errors);
+        },
+        MoreExecutors.directExecutor());
+  }
+
+  private CallableOperation<TopicResult, FirebaseMessagingException> manageTopicSingleOp(
+      final String token, final String topic, final boolean isSubscribe, final int index) {
     final FirebaseMessagingClient messagingClient = getMessagingClient();
-    return new CallableOperation<TopicManagementResponse, FirebaseMessagingException>() {
+    return new CallableOperation<TopicResult, FirebaseMessagingException>() {
       @Override
-      protected TopicManagementResponse execute() throws FirebaseMessagingException {
-        return messagingClient.unsubscribeFromTopic(topic, registrationTokens);
+      protected TopicResult execute() {
+        try {
+          if (isSubscribe) {
+            messagingClient.subscribeToTopic(topic, token);
+          } else {
+            messagingClient.unsubscribeFromTopic(topic, token);
+          }
+          return TopicResult.success(index);
+        } catch (FirebaseMessagingException e) {
+          return TopicResult.error(index, extractReason(e));
+        } catch (Exception e) {
+          return TopicResult.error(index, "UNKNOWN_ERROR");
+        }
       }
     };
+  }
+
+  @VisibleForTesting
+  static String extractReason(FirebaseMessagingException e) {
+    if (e.getMessagingErrorCode() != null) {
+      return e.getMessagingErrorCode().name();
+    }
+    if (e.getErrorCode() != null && e.getErrorCode() != ErrorCode.UNKNOWN) {
+      return e.getErrorCode().name();
+    }
+    if (e.getHttpResponse() != null) {
+      switch (e.getHttpResponse().getStatusCode()) {
+        case 400:
+          return "INVALID_ARGUMENT";
+        case 401:
+        case 403:
+          return "PERMISSION_DENIED";
+        case 404:
+          return "NOT_FOUND";
+        case 429:
+          return "RESOURCE_EXHAUSTED";
+        case 500:
+          return "INTERNAL";
+        case 503:
+          return "UNAVAILABLE";
+        case 504:
+          return "DEADLINE_EXCEEDED";
+        default:
+          return "UNKNOWN_ERROR";
+      }
+    }
+    return "UNKNOWN_ERROR";
+  }
+
+  private static class TopicResult {
+    private final int index;
+    private final boolean success;
+    private final String reason;
+
+    private TopicResult(int index, boolean success, String reason) {
+      this.index = index;
+      this.success = success;
+      this.reason = reason;
+    }
+
+    static TopicResult success(int index) {
+      return new TopicResult(index, true, null);
+    }
+
+    static TopicResult error(int index, String reason) {
+      return new TopicResult(index, false, reason);
+    }
+
+    int getIndex() {
+      return index;
+    }
+
+    boolean isSuccess() {
+      return success;
+    }
+
+    String getReason() {
+      return reason;
+    }
   }
 
   /**

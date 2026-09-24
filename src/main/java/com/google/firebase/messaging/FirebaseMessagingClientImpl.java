@@ -38,7 +38,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseException;
@@ -55,17 +54,8 @@ import com.google.firebase.messaging.internal.MessagingServiceResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A helper class for interacting with Firebase Cloud Messaging service.
@@ -90,13 +80,15 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   private final MessagingErrorHandler errorHandler;
   private final ErrorHandlingHttpClient<FirebaseMessagingException> httpClient;
   private final MessagingBatchClient batchClient;
-  private final ExecutorService executor;
-  private final ThreadFactory threadFactory;
 
   private FirebaseMessagingClientImpl(Builder builder) {
     checkArgument(!Strings.isNullOrEmpty(builder.projectId));
     this.projectId = builder.projectId;
-    this.fcmHost = Strings.isNullOrEmpty(builder.fcmHost) ? DEFAULT_FCM_HOST : builder.fcmHost;
+    String host = Strings.isNullOrEmpty(builder.fcmHost) ? DEFAULT_FCM_HOST : builder.fcmHost;
+    while (host.endsWith("/")) {
+      host = host.substring(0, host.length() - 1);
+    }
+    this.fcmHost = host;
     this.fcmSendUrl = String.format(FCM_URL, this.fcmHost, builder.projectId);
     this.requestFactory = checkNotNull(builder.requestFactory);
     this.childRequestFactory = checkNotNull(builder.childRequestFactory);
@@ -106,27 +98,6 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     this.httpClient = new ErrorHandlingHttpClient<>(requestFactory, jsonFactory, errorHandler)
       .setInterceptor(responseInterceptor);
     this.batchClient = new MessagingBatchClient(requestFactory.getTransport(), jsonFactory);
-    this.executor = builder.executor != null
-        ? builder.executor
-        : createDefaultExecutor(builder.threadFactory);
-    this.threadFactory = builder.threadFactory;
-  }
-
-  private static ExecutorService createDefaultExecutor(ThreadFactory threadFactory) {
-    ThreadFactory baseFactory =
-        threadFactory != null ? threadFactory : Executors.defaultThreadFactory();
-    ThreadFactory factory = new ThreadFactoryBuilder()
-        .setThreadFactory(baseFactory)
-        .setNameFormat("firebase-messaging-topics-%d")
-        .setDaemon(true)
-        .build();
-    ThreadPoolExecutor pool = new ThreadPoolExecutor(
-        100, 100,
-        60L, TimeUnit.SECONDS,
-        new LinkedBlockingQueue<Runnable>(),
-        factory);
-    pool.allowCoreThreadTimeOut(true);
-    return pool;
   }
 
   @VisibleForTesting
@@ -147,16 +118,6 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   @VisibleForTesting
   JsonFactory getJsonFactory() {
     return jsonFactory;
-  }
-
-  @VisibleForTesting
-  ExecutorService getExecutor() {
-    return executor;
-  }
-
-  @VisibleForTesting
-  ThreadFactory getThreadFactory() {
-    return threadFactory;
   }
 
   public String send(Message message, boolean dryRun) throws FirebaseMessagingException {
@@ -233,54 +194,22 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   }
 
   @Override
-  public TopicManagementResponse subscribeToTopic(
-      String topic, List<String> registrationTokens) throws FirebaseMessagingException {
-    return sendTopicManagementRequest(topic, registrationTokens, true);
+  public void subscribeToTopic(
+      String topic, String registrationToken) throws FirebaseMessagingException {
+    sendSingleTopicRequest(registrationToken, topic, true);
   }
 
   @Override
-  public TopicManagementResponse unsubscribeFromTopic(
-      String topic, List<String> registrationTokens) throws FirebaseMessagingException {
-    return sendTopicManagementRequest(topic, registrationTokens, false);
+  public void unsubscribeFromTopic(
+      String topic, String registrationToken) throws FirebaseMessagingException {
+    sendSingleTopicRequest(registrationToken, topic, false);
   }
 
-  private TopicManagementResponse sendTopicManagementRequest(
-      String topic, List<String> registrationTokens, boolean isSubscribe) {
-    String topicName = topic.startsWith("/topics/")
-        ? topic.substring("/topics/".length()) : topic;
-
-    List<CompletableFuture<TopicResult>> futures = new ArrayList<>();
-    for (int i = 0; i < registrationTokens.size(); i++) {
-      final int index = i;
-      final String token = registrationTokens.get(i);
-      try {
-        futures.add(CompletableFuture.supplyAsync(
-            () -> sendSingleTopicRequest(token, topicName, isSubscribe, index),
-            this.executor));
-      } catch (RejectedExecutionException e) {
-        futures.add(CompletableFuture.completedFuture(
-            TopicResult.error(index, "REJECTED_BY_EXECUTOR")));
-      }
-    }
-
-    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
-    int successCount = 0;
-    List<TopicManagementResponse.Error> errors = new ArrayList<>();
-    for (CompletableFuture<TopicResult> future : futures) {
-      TopicResult result = future.join();
-      if (result.isSuccess()) {
-        successCount++;
-      } else {
-        errors.add(new TopicManagementResponse.Error(result.getIndex(), result.getReason()));
-      }
-    }
-    return new TopicManagementResponse(successCount, errors);
-  }
-
-  private TopicResult sendSingleTopicRequest(
-      String token, String topicName, boolean isSubscribe, int index) {
+  private void sendSingleTopicRequest(
+      String token, String topic, boolean isSubscribe) throws FirebaseMessagingException {
     try {
+      String topicName = topic.startsWith("/topics/")
+          ? topic.substring("/topics/".length()) : topic;
       String encodedToken = URLEncoder.encode(token, StandardCharsets.UTF_8.name());
       String encodedTopic = URLEncoder.encode(topicName, StandardCharsets.UTF_8.name());
       HttpRequestInfo requestInfo;
@@ -299,15 +228,13 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
       }
 
       httpClient.send(requestInfo);
-      return TopicResult.success(index);
     } catch (FirebaseMessagingException e) {
       if (isSubscribe && isAlreadyExists(e)) {
-        return TopicResult.success(index);
+        return;
       }
-      String reason = extractReason(e);
-      return TopicResult.error(index, reason);
-    } catch (Exception e) {
-      return TopicResult.error(index, "UNKNOWN_ERROR");
+      throw e;
+    } catch (IOException e) {
+      throw errorHandler.handleIOException(e);
     }
   }
 
@@ -321,103 +248,17 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     return false;
   }
 
-  private String extractReason(FirebaseMessagingException e) {
-    if (e.getMessagingErrorCode() != null) {
-      return e.getMessagingErrorCode().name();
-    }
-    if (e.getHttpResponse() != null && !Strings.isNullOrEmpty(e.getHttpResponse().getContent())) {
-      try {
-        MessagingServiceErrorResponse parsed = jsonFactory.createJsonParser(
-            e.getHttpResponse().getContent())
-            .parseAndClose(MessagingServiceErrorResponse.class);
-        if (parsed.getMessagingErrorCode() != null) {
-          return parsed.getMessagingErrorCode().name();
-        }
-        if (!Strings.isNullOrEmpty(parsed.getStatus())) {
-          return parsed.getStatus();
-        }
-        if (!Strings.isNullOrEmpty(parsed.getErrorMessage())) {
-          return parsed.getErrorMessage();
-        }
-      } catch (Exception ignore) {
-        // Ignore JSON parsing errors
-      }
-    }
-    if (e.getErrorCode() != null && e.getErrorCode() != ErrorCode.UNKNOWN) {
-      return e.getErrorCode().name();
-    }
-    if (e.getHttpResponse() != null) {
-      switch (e.getHttpResponse().getStatusCode()) {
-        case 400:
-          return "INVALID_ARGUMENT";
-        case 401:
-        case 403:
-          return "PERMISSION_DENIED";
-        case 404:
-          return "NOT_FOUND";
-        case 429:
-          return "RESOURCE_EXHAUSTED";
-        case 500:
-          return "INTERNAL";
-        case 503:
-          return "DEADLINE_EXCEEDED";
-        default:
-          return "UNKNOWN_ERROR";
-      }
-    }
-    return "UNKNOWN_ERROR";
-  }
-
-  private static class TopicResult {
-    private final int index;
-    private final boolean success;
-    private final String reason;
-
-    private TopicResult(int index, boolean success, String reason) {
-      this.index = index;
-      this.success = success;
-      this.reason = reason;
-    }
-
-    static TopicResult success(int index) {
-      return new TopicResult(index, true, null);
-    }
-
-    static TopicResult error(int index, String reason) {
-      return new TopicResult(index, false, reason);
-    }
-
-    int getIndex() {
-      return index;
-    }
-
-    boolean isSuccess() {
-      return success;
-    }
-
-    String getReason() {
-      return reason;
-    }
-  }
-
   static FirebaseMessagingClientImpl fromApp(FirebaseApp app) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkArgument(!Strings.isNullOrEmpty(projectId),
         "Project ID is required to access messaging service. Use a service account credential or "
             + "set the project ID explicitly via FirebaseOptions. Alternatively you can also "
             + "set the project ID via the GOOGLE_CLOUD_PROJECT environment variable.");
-    ThreadFactory threadFactory = null;
-    try {
-      threadFactory = ImplFirebaseTrampolines.getThreadFactory(app);
-    } catch (Exception ignored) {
-      // Ignored
-    }
     return FirebaseMessagingClientImpl.builder()
         .setProjectId(projectId)
         .setRequestFactory(ApiClientUtils.newAuthorizedRequestFactory(app))
         .setChildRequestFactory(ApiClientUtils.newUnauthorizedRequestFactory(app))
         .setJsonFactory(app.getOptions().getJsonFactory())
-        .setThreadFactory(threadFactory)
         .build();
   }
 
@@ -433,8 +274,6 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     private HttpRequestFactory childRequestFactory;
     private JsonFactory jsonFactory;
     private HttpResponseInterceptor responseInterceptor;
-    private ExecutorService executor;
-    private ThreadFactory threadFactory;
 
     private Builder() { }
 
@@ -465,16 +304,6 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
 
     Builder setResponseInterceptor(HttpResponseInterceptor responseInterceptor) {
       this.responseInterceptor = responseInterceptor;
-      return this;
-    }
-
-    Builder setExecutor(ExecutorService executor) {
-      this.executor = executor;
-      return this;
-    }
-
-    Builder setThreadFactory(ThreadFactory threadFactory) {
-      this.threadFactory = threadFactory;
       return this;
     }
 
