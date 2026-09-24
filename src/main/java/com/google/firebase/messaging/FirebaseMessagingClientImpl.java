@@ -52,6 +52,8 @@ import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.messaging.internal.MessagingServiceErrorResponse;
 import com.google.firebase.messaging.internal.MessagingServiceResponse;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -60,13 +62,16 @@ import java.util.Map;
  */
 final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
 
-  private static final String FCM_URL = "https://fcm.googleapis.com/v1/projects/%s/messages:send";
+  private static final String DEFAULT_FCM_HOST = "https://fcm.googleapis.com";
+  private static final String FCM_URL = "%s/v1/projects/%s/messages:send";
 
   private static final Map<String, String> COMMON_HEADERS =
       ImmutableMap.of(
           "X-GOOG-API-FORMAT-VERSION", "2",
           "X-Firebase-Client", "fire-admin-java/" + SdkUtils.getVersion());
 
+  private final String projectId;
+  private final String fcmHost;
   private final String fcmSendUrl;
   private final HttpRequestFactory requestFactory;
   private final HttpRequestFactory childRequestFactory;
@@ -78,7 +83,13 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
 
   private FirebaseMessagingClientImpl(Builder builder) {
     checkArgument(!Strings.isNullOrEmpty(builder.projectId));
-    this.fcmSendUrl = String.format(FCM_URL, builder.projectId);
+    this.projectId = builder.projectId;
+    String host = Strings.isNullOrEmpty(builder.fcmHost) ? DEFAULT_FCM_HOST : builder.fcmHost;
+    while (host.endsWith("/")) {
+      host = host.substring(0, host.length() - 1);
+    }
+    this.fcmHost = host;
+    this.fcmSendUrl = String.format(FCM_URL, this.fcmHost, builder.projectId);
     this.requestFactory = checkNotNull(builder.requestFactory);
     this.childRequestFactory = checkNotNull(builder.childRequestFactory);
     this.jsonFactory = checkNotNull(builder.jsonFactory);
@@ -182,6 +193,61 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
     };
   }
 
+  @Override
+  public void subscribeToTopic(
+      String topic, String registrationToken) throws FirebaseMessagingException {
+    sendSingleTopicRequest(registrationToken, topic, true);
+  }
+
+  @Override
+  public void unsubscribeFromTopic(
+      String topic, String registrationToken) throws FirebaseMessagingException {
+    sendSingleTopicRequest(registrationToken, topic, false);
+  }
+
+  private void sendSingleTopicRequest(
+      String token, String topic, boolean isSubscribe) throws FirebaseMessagingException {
+    try {
+      String topicName = topic.startsWith("/topics/")
+          ? topic.substring("/topics/".length()) : topic;
+      String encodedToken = URLEncoder.encode(token, StandardCharsets.UTF_8.name());
+      String encodedTopic = URLEncoder.encode(topicName, StandardCharsets.UTF_8.name());
+      HttpRequestInfo requestInfo;
+      if (isSubscribe) {
+        String url = String.format(
+            "%s/v1/projects/%s/registrations/%s/topicSubscriptions?topic_name=%s",
+            fcmHost, projectId, encodedToken, encodedTopic);
+        requestInfo = HttpRequestInfo.buildJsonPostRequest(url, ImmutableMap.of())
+            .addAllHeaders(COMMON_HEADERS);
+      } else {
+        String url = String.format(
+            "%s/v1/projects/%s/registrations/%s/topicSubscriptions/%s?allow_missing=true",
+            fcmHost, projectId, encodedToken, encodedTopic);
+        requestInfo = HttpRequestInfo.buildDeleteRequest(url)
+            .addAllHeaders(COMMON_HEADERS);
+      }
+
+      httpClient.send(requestInfo);
+    } catch (FirebaseMessagingException e) {
+      if (isSubscribe && isAlreadyExists(e)) {
+        return;
+      }
+      throw e;
+    } catch (IOException e) {
+      throw errorHandler.handleIOException(e);
+    }
+  }
+
+  private boolean isAlreadyExists(FirebaseMessagingException e) {
+    if (e.getHttpResponse() != null && e.getHttpResponse().getStatusCode() == 409) {
+      return true;
+    }
+    if (e.getErrorCode() == ErrorCode.ALREADY_EXISTS || e.getErrorCode() == ErrorCode.CONFLICT) {
+      return true;
+    }
+    return false;
+  }
+
   static FirebaseMessagingClientImpl fromApp(FirebaseApp app) {
     String projectId = ImplFirebaseTrampolines.getProjectId(app);
     checkArgument(!Strings.isNullOrEmpty(projectId),
@@ -203,6 +269,7 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
   static final class Builder {
 
     private String projectId;
+    private String fcmHost = DEFAULT_FCM_HOST;
     private HttpRequestFactory requestFactory;
     private HttpRequestFactory childRequestFactory;
     private JsonFactory jsonFactory;
@@ -212,6 +279,11 @@ final class FirebaseMessagingClientImpl implements FirebaseMessagingClient {
 
     Builder setProjectId(String projectId) {
       this.projectId = projectId;
+      return this;
+    }
+
+    Builder setFcmHost(String fcmHost) {
+      this.fcmHost = fcmHost;
       return this;
     }
 

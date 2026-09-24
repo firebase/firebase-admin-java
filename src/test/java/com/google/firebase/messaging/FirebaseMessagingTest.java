@@ -26,23 +26,28 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.api.client.http.HttpHeaders;
+import com.google.api.client.http.HttpResponseException;
 import com.google.api.client.json.GenericJson;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseException;
 import com.google.firebase.FirebaseOptions;
+import com.google.firebase.IncomingHttpResponse;
+import com.google.firebase.OutgoingHttpRequest;
 import com.google.firebase.TestOnlyImplFirebaseTrampolines;
 import com.google.firebase.auth.MockGoogleCredentials;
 import com.google.firebase.internal.Nullable;
-
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
 import org.junit.After;
 import org.junit.Test;
 
@@ -547,9 +552,9 @@ public class FirebaseMessagingTest {
 
   @Test
   public void testInvalidSubscribe() throws FirebaseMessagingException {
-    MockInstanceIdClient client = MockInstanceIdClient.fromResponse(null);
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromResponse(null);
     FirebaseMessaging messaging = getMessagingForTopicManagement(
-        Suppliers.<InstanceIdClient>ofInstance(client));
+        Suppliers.<FirebaseMessagingClient>ofInstance(client));
 
     for (TopicMgtArgs args : INVALID_TOPIC_MGT_ARGS) {
       try {
@@ -565,55 +570,93 @@ public class FirebaseMessagingTest {
 
   @Test
   public void testSubscribeToTopic() throws FirebaseMessagingException {
-    MockInstanceIdClient client = MockInstanceIdClient.fromResponse(TOPIC_MGT_RESPONSE);
+    MockFirebaseMessagingClient client =
+        MockFirebaseMessagingClient.fromResponse(TOPIC_MGT_RESPONSE);
     FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
 
     TopicManagementResponse got = messaging.subscribeToTopic(
+        ImmutableList.of("id1", "id2"), "test-topic");
+
+    assertEquals(2, got.getSuccessCount());
+    assertEquals(0, got.getFailureCount());
+    assertTrue(got.getErrors().isEmpty());
+    assertEquals("test-topic", client.lastTopic);
+    assertEquals(ImmutableSet.of("id1", "id2"), ImmutableSet.copyOf(client.lastBatch));
+  }
+
+  @Test
+  public void testSubscribeToTopicFailure() throws FirebaseMessagingException {
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromException(TEST_EXCEPTION);
+    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+
+    TopicManagementResponse got = messaging.subscribeToTopic(
+        ImmutableList.of("id1", "id2"), "test-topic");
+
+    assertEquals(0, got.getSuccessCount());
+    assertEquals(2, got.getFailureCount());
+    assertEquals(2, got.getErrors().size());
+    assertEquals(0, got.getErrors().get(0).getIndex());
+    assertEquals(1, got.getErrors().get(1).getIndex());
+  }
+
+  @Test
+  public void testSubscribeToTopicAsync() throws Exception {
+    MockFirebaseMessagingClient client =
+        MockFirebaseMessagingClient.fromResponse(TOPIC_MGT_RESPONSE);
+    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+
+    TopicManagementResponse got = messaging.subscribeToTopicAsync(
+        ImmutableList.of("id1", "id2"), "test-topic").get();
+
+    assertEquals(2, got.getSuccessCount());
+    assertEquals(0, got.getFailureCount());
+    assertTrue(got.getErrors().isEmpty());
+    assertEquals("test-topic", client.lastTopic);
+    assertEquals(ImmutableSet.of("id1", "id2"), ImmutableSet.copyOf(client.lastBatch));
+  }
+
+  @Test
+  public void testSubscribeToTopicAsyncFailure() throws Exception {
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromException(TEST_EXCEPTION);
+    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+
+    TopicManagementResponse got = messaging.subscribeToTopicAsync(
+        ImmutableList.of("id1", "id2"), "test-topic").get();
+
+    assertEquals(0, got.getSuccessCount());
+    assertEquals(2, got.getFailureCount());
+    assertEquals(2, got.getErrors().size());
+  }
+
+  @Test
+  public void testSubscribeToTopicLegacy() throws FirebaseMessagingException {
+    MockInstanceIdClient client = MockInstanceIdClient.fromResponse(TOPIC_MGT_RESPONSE);
+    FirebaseMessaging messaging =
+        getMessagingForLegacyTopicManagement(Suppliers.ofInstance(client));
+
+    TopicManagementResponse got = messaging.subscribeToTopicLegacy(
         ImmutableList.of("id1", "id2"), "test-topic");
 
     assertSame(TOPIC_MGT_RESPONSE, got);
   }
 
   @Test
-  public void testSubscribeToTopicFailure() {
-    MockInstanceIdClient client = MockInstanceIdClient.fromException(TEST_EXCEPTION);
-    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
-
-    try {
-      messaging.subscribeToTopic(ImmutableList.of("id1", "id2"), "test-topic");
-    } catch (FirebaseMessagingException e) {
-      assertSame(TEST_EXCEPTION, e);
-    }
-  }
-
-  @Test
-  public void testSubscribeToTopicAsync() throws Exception {
+  public void testSubscribeToTopicLegacyAsync() throws Exception {
     MockInstanceIdClient client = MockInstanceIdClient.fromResponse(TOPIC_MGT_RESPONSE);
-    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+    FirebaseMessaging messaging =
+        getMessagingForLegacyTopicManagement(Suppliers.ofInstance(client));
 
-    TopicManagementResponse got = messaging.subscribeToTopicAsync(
+    TopicManagementResponse got = messaging.subscribeToTopicLegacyAsync(
         ImmutableList.of("id1", "id2"), "test-topic").get();
 
     assertSame(TOPIC_MGT_RESPONSE, got);
   }
 
   @Test
-  public void testSubscribeToTopicAsyncFailure() throws InterruptedException {
-    MockInstanceIdClient client = MockInstanceIdClient.fromException(TEST_EXCEPTION);
-    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
-
-    try {
-      messaging.subscribeToTopicAsync(ImmutableList.of("id1", "id2"), "test-topic").get();
-    } catch (ExecutionException e) {
-      assertSame(TEST_EXCEPTION, e.getCause());
-    }
-  }
-
-  @Test
   public void testInvalidUnsubscribe() throws FirebaseMessagingException {
-    MockInstanceIdClient client = MockInstanceIdClient.fromResponse(null);
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromResponse(null);
     FirebaseMessaging messaging = getMessagingForTopicManagement(
-        Suppliers.<InstanceIdClient>ofInstance(client));
+        Suppliers.<FirebaseMessagingClient>ofInstance(client));
 
     for (TopicMgtArgs args : INVALID_TOPIC_MGT_ARGS) {
       try {
@@ -629,48 +672,121 @@ public class FirebaseMessagingTest {
 
   @Test
   public void testUnsubscribeFromTopic() throws FirebaseMessagingException {
-    MockInstanceIdClient client = MockInstanceIdClient.fromResponse(TOPIC_MGT_RESPONSE);
+    MockFirebaseMessagingClient client =
+        MockFirebaseMessagingClient.fromResponse(TOPIC_MGT_RESPONSE);
     FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
 
     TopicManagementResponse got = messaging.unsubscribeFromTopic(
+        ImmutableList.of("id1", "id2"), "test-topic");
+
+    assertEquals(2, got.getSuccessCount());
+    assertEquals(0, got.getFailureCount());
+    assertTrue(got.getErrors().isEmpty());
+    assertEquals("test-topic", client.lastTopic);
+    assertEquals(ImmutableSet.of("id1", "id2"), ImmutableSet.copyOf(client.lastBatch));
+  }
+
+  @Test
+  public void testUnsubscribeFromTopicFailure() throws FirebaseMessagingException {
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromException(TEST_EXCEPTION);
+    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+
+    TopicManagementResponse got = messaging.unsubscribeFromTopic(
+        ImmutableList.of("id1", "id2"), "test-topic");
+
+    assertEquals(0, got.getSuccessCount());
+    assertEquals(2, got.getFailureCount());
+    assertEquals(2, got.getErrors().size());
+    assertEquals(0, got.getErrors().get(0).getIndex());
+    assertEquals(1, got.getErrors().get(1).getIndex());
+  }
+
+  @Test
+  public void testUnsubscribeFromTopicAsync() throws Exception {
+    MockFirebaseMessagingClient client =
+        MockFirebaseMessagingClient.fromResponse(TOPIC_MGT_RESPONSE);
+    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+
+    TopicManagementResponse got = messaging.unsubscribeFromTopicAsync(
+        ImmutableList.of("id1", "id2"), "test-topic").get();
+
+    assertEquals(2, got.getSuccessCount());
+    assertEquals(0, got.getFailureCount());
+    assertTrue(got.getErrors().isEmpty());
+    assertEquals("test-topic", client.lastTopic);
+    assertEquals(ImmutableSet.of("id1", "id2"), ImmutableSet.copyOf(client.lastBatch));
+  }
+
+  @Test
+  public void testUnsubscribeFromTopicAsyncFailure() throws Exception {
+    MockFirebaseMessagingClient client = MockFirebaseMessagingClient.fromException(TEST_EXCEPTION);
+    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+
+    TopicManagementResponse got = messaging.unsubscribeFromTopicAsync(
+        ImmutableList.of("id1", "id2"), "test-topic").get();
+
+    assertEquals(0, got.getSuccessCount());
+    assertEquals(2, got.getFailureCount());
+    assertEquals(2, got.getErrors().size());
+  }
+
+  @Test
+  public void testExtractReason() {
+    FirebaseMessagingException messagingError =
+        FirebaseMessagingException.withMessagingErrorCode(
+            new FirebaseException(ErrorCode.INVALID_ARGUMENT, "bad arg", null),
+            MessagingErrorCode.UNREGISTERED);
+    assertEquals("UNREGISTERED", FirebaseMessaging.extractReason(messagingError));
+
+    FirebaseMessagingException platformError =
+        new FirebaseMessagingException(ErrorCode.PERMISSION_DENIED, "permission denied");
+    assertEquals("PERMISSION_DENIED", FirebaseMessaging.extractReason(platformError));
+
+    IncomingHttpResponse resp503 = new IncomingHttpResponse(
+        new HttpResponseException.Builder(503, "Unavailable", new HttpHeaders()).build(),
+        new OutgoingHttpRequest("GET", "https://example.com"));
+    FirebaseMessagingException unavailableError =
+        FirebaseMessagingException.withMessagingErrorCode(
+            new FirebaseException(ErrorCode.UNKNOWN, "unavailable", null, resp503),
+            null);
+    assertEquals("UNAVAILABLE", FirebaseMessaging.extractReason(unavailableError));
+
+    IncomingHttpResponse resp504 = new IncomingHttpResponse(
+        new HttpResponseException.Builder(504, "Gateway Timeout", new HttpHeaders()).build(),
+        new OutgoingHttpRequest("GET", "https://example.com"));
+    FirebaseMessagingException timeoutError =
+        FirebaseMessagingException.withMessagingErrorCode(
+            new FirebaseException(ErrorCode.UNKNOWN, "timeout", null, resp504),
+            null);
+    assertEquals("DEADLINE_EXCEEDED", FirebaseMessaging.extractReason(timeoutError));
+
+    FirebaseMessagingException unknownError =
+        new FirebaseMessagingException(ErrorCode.UNKNOWN, "something unknown");
+    assertEquals("UNKNOWN_ERROR", FirebaseMessaging.extractReason(unknownError));
+  }
+
+  @Test
+  public void testUnsubscribeFromTopicLegacy() throws FirebaseMessagingException {
+    MockInstanceIdClient client = MockInstanceIdClient.fromResponse(TOPIC_MGT_RESPONSE);
+    FirebaseMessaging messaging =
+        getMessagingForLegacyTopicManagement(Suppliers.ofInstance(client));
+
+    TopicManagementResponse got = messaging.unsubscribeFromTopicLegacy(
         ImmutableList.of("id1", "id2"), "test-topic");
 
     assertSame(TOPIC_MGT_RESPONSE, got);
   }
 
   @Test
-  public void testUnsubscribeFromTopicFailure() {
-    MockInstanceIdClient client = MockInstanceIdClient.fromException(TEST_EXCEPTION);
-    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
-
-    try {
-      messaging.unsubscribeFromTopic(ImmutableList.of("id1", "id2"), "test-topic");
-    } catch (FirebaseMessagingException e) {
-      assertSame(TEST_EXCEPTION, e);
-    }
-  }
-
-  @Test
-  public void testUnsubscribeFromTopicAsync() throws Exception {
+  public void testUnsubscribeFromTopicLegacyAsync() throws Exception {
     MockInstanceIdClient client = MockInstanceIdClient.fromResponse(TOPIC_MGT_RESPONSE);
-    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
+    FirebaseMessaging messaging =
+        getMessagingForLegacyTopicManagement(Suppliers.ofInstance(client));
 
-    TopicManagementResponse got = messaging.unsubscribeFromTopicAsync(
+    TopicManagementResponse got = messaging.unsubscribeFromTopicLegacyAsync(
         ImmutableList.of("id1", "id2"), "test-topic").get();
 
     assertSame(TOPIC_MGT_RESPONSE, got);
-  }
-
-  @Test
-  public void testUnsubscribeFromTopicAsyncFailure() throws InterruptedException {
-    MockInstanceIdClient client = MockInstanceIdClient.fromException(TEST_EXCEPTION);
-    FirebaseMessaging messaging = getMessagingForTopicManagement(Suppliers.ofInstance(client));
-
-    try {
-      messaging.unsubscribeFromTopicAsync(ImmutableList.of("id1", "id2"), "test-topic").get();
-    } catch (ExecutionException e) {
-      assertSame(TEST_EXCEPTION, e.getCause());
-    }
   }
 
   private FirebaseMessaging getMessagingForSend(
@@ -684,6 +800,16 @@ public class FirebaseMessagingTest {
   }
 
   private FirebaseMessaging getMessagingForTopicManagement(
+      Supplier<? extends FirebaseMessagingClient> supplier) {
+    FirebaseApp app = FirebaseApp.initializeApp(TEST_OPTIONS);
+    return FirebaseMessaging.builder()
+        .setFirebaseApp(app)
+        .setMessagingClient(supplier)
+        .setInstanceIdClient(Suppliers.<InstanceIdClient>ofInstance(null))
+        .build();
+  }
+
+  private FirebaseMessaging getMessagingForLegacyTopicManagement(
       Supplier<? extends InstanceIdClient> supplier) {
     FirebaseApp app = FirebaseApp.initializeApp(TEST_OPTIONS);
     return FirebaseMessaging.builder()
@@ -697,16 +823,25 @@ public class FirebaseMessagingTest {
 
     private String messageId;
     private BatchResponse batchResponse;
+    private TopicManagementResponse topicManagementResponse;
     private FirebaseMessagingException exception;
 
     private Message lastMessage;
     private boolean isLastDryRun;
     private ImmutableMap<Message, SendResponse> messageMap;
+    private String lastTopic;
+    private List<String> lastBatch;
 
     private MockFirebaseMessagingClient(
         String messageId, BatchResponse batchResponse, FirebaseMessagingException exception) {
       this.messageId = messageId;
       this.batchResponse = batchResponse;
+      this.exception = exception;
+    }
+
+    private MockFirebaseMessagingClient(
+        TopicManagementResponse topicManagementResponse, FirebaseMessagingException exception) {
+      this.topicManagementResponse = topicManagementResponse;
       this.exception = exception;
     }
 
@@ -718,6 +853,10 @@ public class FirebaseMessagingTest {
 
     static MockFirebaseMessagingClient fromMessageId(String messageId) {
       return new MockFirebaseMessagingClient(messageId, null, null);
+    }
+
+    static MockFirebaseMessagingClient fromResponse(TopicManagementResponse response) {
+      return new MockFirebaseMessagingClient(response, null);
     }
 
     static MockFirebaseMessagingClient fromMessageMap(Map<Message, SendResponse> messageMap) {
@@ -752,6 +891,32 @@ public class FirebaseMessagingTest {
     public BatchResponse sendAll(
         List<Message> messages, boolean dryRun) throws FirebaseMessagingException {
       return batchResponse;
+    }
+
+    @Override
+    public synchronized void subscribeToTopic(
+        String topic, String registrationToken) throws FirebaseMessagingException {
+      this.lastTopic = topic;
+      if (this.lastBatch == null) {
+        this.lastBatch = new ArrayList<>();
+      }
+      this.lastBatch.add(registrationToken);
+      if (exception != null) {
+        throw exception;
+      }
+    }
+
+    @Override
+    public synchronized void unsubscribeFromTopic(
+        String topic, String registrationToken) throws FirebaseMessagingException {
+      this.lastTopic = topic;
+      if (this.lastBatch == null) {
+        this.lastBatch = new ArrayList<>();
+      }
+      this.lastBatch.add(registrationToken);
+      if (exception != null) {
+        throw exception;
+      }
     }
   }
 
