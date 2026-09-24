@@ -58,6 +58,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <skipTests>false</skipTests>
         <skipUTs>${skipTests}</skipUTs>
         <skipITs>${skipTests}</skipITs>
         <netty.version>4.2.18.Final</netty.version>
@@ -335,9 +336,6 @@
             <plugin>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>3.6.0</version>
-                <configuration>
-                    <skipITs>${skipITs}</skipITs>
-                </configuration>
                 <executions>
                     <execution>
                         <goals>
