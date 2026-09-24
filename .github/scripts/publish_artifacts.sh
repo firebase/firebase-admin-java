@@ -30,6 +30,7 @@ gpg --import --no-tty --batch --yes firebase.asc
 mvn -B clean deploy \
   -Dcheckstyle.skip \
   -DskipTests \
+  -DskipITs \
   -Prelease \
   --settings .github/resources/settings.xml
 
