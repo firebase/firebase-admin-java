@@ -106,6 +106,15 @@ jobs:
       id: preflight
       run: ./.github/scripts/publish_preflight_check.sh
 
+    - name: Publish to Maven Central
+      run: ./.github/scripts/publish_artifacts.sh
+      env:
+        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+        CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+        CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+
     # See: https://cli.github.com/manual/gh_release_create
     - name: Create release tag
       env:
@@ -116,12 +125,3 @@ jobs:
         gh release create "$RELEASE_VER" \
           --title "Firebase Admin Java SDK $RELEASE_VER" \
           --notes "$RELEASE_BODY"
-
-    - name: Publish to Maven Central
-      run: ./.github/scripts/publish_artifacts.sh
-      env:
-        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-        GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
-        CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
-        CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}

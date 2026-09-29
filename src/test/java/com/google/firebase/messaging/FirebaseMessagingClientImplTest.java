@@ -651,4 +651,108 @@ public class FirebaseMessagingClientImplTest {
 
     return builder.build();
   }
+
+  @Test
+  public void testSubscribeToTopic() throws Exception {
+    response.setContent("{}");
+    client.subscribeToTopic("test-topic", "id1");
+
+    HttpRequest request = interceptor.getLastRequest();
+    assertEquals("POST", request.getRequestMethod());
+    assertEquals(
+        "https://fcm.googleapis.com/v1/projects/test-project/registrations/id1"
+            + "/topicSubscriptions?topic_name=test-topic",
+        request.getUrl().toString());
+    HttpHeaders headers = request.getHeaders();
+    assertEquals("2", headers.get("X-GOOG-API-FORMAT-VERSION"));
+    assertEquals("fire-admin-java/" + SdkUtils.getVersion(), headers.get("X-Firebase-Client"));
+  }
+
+  @Test
+  public void testSubscribeToTopic409() throws Exception {
+    response.setStatusCode(409).setContent("{\"error\": {\"status\": \"ALREADY_EXISTS\"}}");
+    client.subscribeToTopic("test-topic", "id1");
+  }
+
+  @Test
+  public void testUnsubscribeFromTopic() throws Exception {
+    response.setContent("{}");
+    client.unsubscribeFromTopic("test-topic", "id1");
+
+    HttpRequest request = interceptor.getLastRequest();
+    assertEquals("DELETE", request.getRequestMethod());
+    assertEquals(
+        "https://fcm.googleapis.com/v1/projects/test-project/registrations/id1"
+            + "/topicSubscriptions/test-topic?allow_missing=true",
+        request.getUrl().toString());
+  }
+
+  @Test
+  public void testUnsubscribeFromTopic404() {
+    response.setStatusCode(404).setContent("{\"error\": {\"status\": \"NOT_FOUND\"}}");
+    try {
+      client.unsubscribeFromTopic("test-topic", "id1");
+      fail("No error thrown");
+    } catch (FirebaseMessagingException e) {
+      assertEquals(ErrorCode.NOT_FOUND, e.getErrorCode());
+    }
+  }
+
+  @Test
+  public void testTopicManagementFcmErrorDetails() {
+    response.setStatusCode(404).setContent("{\n"
+        + "  \"error\": {\n"
+        + "    \"status\": \"NOT_FOUND\",\n"
+        + "    \"details\": [\n"
+        + "      {\n"
+        + "        \"@type\": \"type.googleapis.com/google.firebase.fcm.v1.FcmError\",\n"
+        + "        \"errorCode\": \"UNREGISTERED\"\n"
+        + "      }\n"
+        + "    ]\n"
+        + "  }\n"
+        + "}");
+    try {
+      client.subscribeToTopic("test-topic", "id1");
+      fail("No error thrown");
+    } catch (FirebaseMessagingException e) {
+      assertEquals(MessagingErrorCode.UNREGISTERED, e.getMessagingErrorCode());
+    }
+  }
+
+  @Test
+  public void testTopicManagement500Error() {
+    response.setStatusCode(500).setContent("{}");
+    try {
+      client.subscribeToTopic("test-topic", "id1");
+      fail("No error thrown");
+    } catch (FirebaseMessagingException e) {
+      assertEquals(ErrorCode.INTERNAL, e.getErrorCode());
+    }
+  }
+
+  @Test
+  public void testFcmHostTrailingSlash() throws Exception {
+    TestResponseInterceptor testInterceptor = new TestResponseInterceptor();
+    MockHttpTransport transport = new MockHttpTransport.Builder()
+        .setLowLevelHttpResponse(new MockLowLevelHttpResponse().setContent("{}"))
+        .build();
+    FirebaseMessagingClientImpl clientWithSlash = FirebaseMessagingClientImpl.builder()
+        .setProjectId("test-project")
+        .setFcmHost("https://custom.fcm.host///")
+        .setJsonFactory(ApiClientUtils.getDefaultJsonFactory())
+        .setRequestFactory(transport.createRequestFactory())
+        .setChildRequestFactory(ApiClientUtils.getDefaultTransport().createRequestFactory())
+        .setResponseInterceptor(testInterceptor)
+        .build();
+
+    clientWithSlash.subscribeToTopic("test-topic", "id1");
+    HttpRequest request = testInterceptor.getLastRequest();
+    assertEquals(
+        "https://custom.fcm.host/v1/projects/test-project/registrations/id1"
+            + "/topicSubscriptions?topic_name=test-topic",
+        request.getUrl().toString());
+    assertEquals(
+        "https://custom.fcm.host/v1/projects/test-project/messages:send",
+        clientWithSlash.getFcmSendUrl());
+  }
 }
