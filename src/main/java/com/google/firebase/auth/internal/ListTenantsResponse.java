@@ -30,7 +30,7 @@ public final class ListTenantsResponse {
   @Key("tenants")
   private List<Tenant> tenants;
 
-  @Key("pageToken")
+  @Key("nextPageToken")
   private String pageToken;
 
   @VisibleForTesting
