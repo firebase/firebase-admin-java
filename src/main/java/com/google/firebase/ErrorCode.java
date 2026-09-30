@@ -106,4 +106,9 @@ public enum ErrorCode {
    * server to process the request) and the request did not finish within the deadline.
    */
   DEADLINE_EXCEEDED,
+
+  /**
+   * Operation is not implemented or not supported/enabled.
+   */
+  UNIMPLEMENTED
 }
