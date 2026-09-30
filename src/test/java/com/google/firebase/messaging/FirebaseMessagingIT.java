@@ -27,6 +27,7 @@ import com.google.api.client.http.HttpResponseException;
 import com.google.common.collect.ImmutableList;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.testing.IntegrationTestUtils;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -75,6 +76,55 @@ public class FirebaseMessagingIT {
         .build();
     String id = messaging.sendAsync(message, true).get();
     assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
+  }
+
+  @Test
+  public void testSendAndroidV2RemoteNotification() throws Exception {
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    String id = messaging.sendAsync(androidV2RemoteNotificationMessage(), true).get();
+    assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
+  }
+
+  @Test
+  public void testSendAndroidV2MinimalRemoteNotification() throws Exception {
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    String id = messaging.sendAsync(androidV2MinimalRemoteNotificationMessage(), true).get();
+    assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
+  }
+
+  @Test
+  public void testSendAndroidV2BackgroundSync() throws Exception {
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    String id = messaging.sendAsync(androidV2BackgroundSyncMessage(), true).get();
+    assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
+  }
+
+  @Test
+  public void testSendAndroidV2MinimalBackgroundSync() throws Exception {
+    FirebaseMessaging messaging = FirebaseMessaging.getInstance();
+    String id = messaging.sendAsync(androidV2MinimalBackgroundSyncMessage(), true).get();
+    assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
+  }
+
+  @Test
+  public void testSendEachAndroidV2() throws Exception {
+    List<Message> messages = ImmutableList.of(
+        androidV2RemoteNotificationMessage(),
+        androidV2MinimalRemoteNotificationMessage(),
+        androidV2BackgroundSyncMessage(),
+        androidV2MinimalBackgroundSyncMessage());
+
+    BatchResponse response = FirebaseMessaging.getInstance().sendEach(messages, true);
+
+    assertEquals(4, response.getSuccessCount());
+    assertEquals(0, response.getFailureCount());
+    assertEquals(4, response.getResponses().size());
+    for (SendResponse sendResponse : response.getResponses()) {
+      assertTrue(sendResponse.isSuccessful());
+      String id = sendResponse.getMessageId();
+      assertTrue(id != null && id.matches("^projects/.*/messages/.*$"));
+      assertNull(sendResponse.getException());
+    }
   }
 
   @Test
@@ -296,5 +346,105 @@ public class FirebaseMessagingIT {
     TopicManagementResponse results = messaging.unsubscribeFromTopicAsync(
         ImmutableList.of(TEST_REGISTRATION_TOKEN), "mock-topic").get();
     assertEquals(1, results.getSuccessCount() + results.getFailureCount());
+  }
+
+  private static AndroidNotificationV2 fullAndroidNotificationV2() {
+    return AndroidNotificationV2.builder()
+        .setTitle("test.title")
+        .setBody("test.body")
+        .setIcon("test.icon")
+        .setColor("#AABBCC")
+        .setSound("test.sound")
+        .setTag("test.tag")
+        .setClickAction("test.click.action")
+        .setBodyLocalizationKey("test.body.loc.key")
+        .addAllBodyLocalizationArgs(ImmutableList.of("body.arg1", "body.arg2"))
+        .setTitleLocalizationKey("test.title.loc.key")
+        .addAllTitleLocalizationArgs(ImmutableList.of("title.arg1", "title.arg2"))
+        .setChannelId("test.channel.id")
+        .setImage(TEST_IMAGE_URL)
+        .setTicker("test.ticker")
+        .setSticky(true)
+        .setEventTimeInMillis(System.currentTimeMillis())
+        .setLocalOnly(true)
+        .setNotificationPriority(AndroidNotificationV2.NotificationPriority.HIGH)
+        .setVibrateTimingsInMillis(new long[]{100L, 50L, 250L})
+        .setDefaultVibrateTimings(false)
+        .setDefaultSound(true)
+        .setLightSettings(LightSettings.builder()
+            .setColorFromString("#AABBCC")
+            .setLightOnDurationInMillis(200)
+            .setLightOffDurationInMillis(300)
+            .build())
+        .setDefaultLightSettings(false)
+        .setVisibility(AndroidNotificationV2.Visibility.PRIVATE)
+        .setNotificationCount(1)
+        .setId(42)
+        .build();
+  }
+
+  private static AndroidConfigV2.Builder fullAndroidConfigV2Base() {
+    return AndroidConfigV2.builder()
+        .setCollapseKey("test-key")
+        .setTtl(Duration.ofSeconds(5))
+        .setRestrictedPackageName("com.google.firebase.testing")
+        .putData("androidFoo", "androidBar")
+        .setFcmOptions(AndroidFcmOptions.withAnalyticsLabel("test-analytics"))
+        .setDirectBootOk(true)
+        .setBandwidthConstrainedOk(true)
+        .setRestrictedSatelliteOk(true);
+  }
+
+  private static Message androidV2RemoteNotificationMessage() {
+    AndroidConfigV2 config = fullAndroidConfigV2Base()
+        .setRemoteNotification(AndroidRemoteNotification.builder()
+            .setMutableContent(true)
+            .setNotification(fullAndroidNotificationV2())
+            .setUseAsV1DataMessage(true)
+            .build())
+        .build();
+    return Message.builder()
+        .setNotification(Notification.builder()
+            .setTitle("Title")
+            .setBody("Body")
+            .build())
+        .setAndroidConfigV2(config)
+        .setTopic("foo-bar")
+        .build();
+  }
+
+  private static Message androidV2MinimalRemoteNotificationMessage() {
+    AndroidConfigV2 config = AndroidConfigV2.builder()
+        .setRemoteNotification(AndroidRemoteNotification.builder()
+            .setNotification(AndroidNotificationV2.builder()
+                .setTitle("test.title")
+                .setBody("test.body")
+                .build())
+            .build())
+        .build();
+    return Message.builder()
+        .setAndroidConfigV2(config)
+        .setTopic("foo-bar")
+        .build();
+  }
+
+  private static Message androidV2BackgroundSyncMessage() {
+    AndroidConfigV2 config = fullAndroidConfigV2Base()
+        .setBackgroundSync(AndroidBackgroundSyncMessage.builder().build())
+        .build();
+    return Message.builder()
+        .setAndroidConfigV2(config)
+        .setTopic("foo-bar")
+        .build();
+  }
+
+  private static Message androidV2MinimalBackgroundSyncMessage() {
+    AndroidConfigV2 config = AndroidConfigV2.builder()
+        .setBackgroundSync(AndroidBackgroundSyncMessage.builder().build())
+        .build();
+    return Message.builder()
+        .setAndroidConfigV2(config)
+        .setTopic("foo-bar")
+        .build();
   }
 }

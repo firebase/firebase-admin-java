@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC
+ * Copyright 2026 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,29 @@
 package com.google.firebase.messaging;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.firebase.internal.NonNull;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 /**
- * Represents the Android-specific notification options that can be included in a {@link Message}.
+ * Represents the Android-specific notification options that can be included in a
+ * {@link AndroidRemoteNotification}.
  * Instances of this class are thread-safe and immutable.
- *
- * @deprecated Use {@link AndroidNotificationV2} instead.
  */
-@Deprecated
-public class AndroidNotification {
+public final class AndroidNotificationV2 {
 
   @Key("title")
   private final String title;
@@ -72,13 +73,13 @@ public class AndroidNotification {
 
   @Key("title_loc_args")
   private final List<String> titleLocArgs;
-  
+
   @Key("channel_id")
   private final String channelId;
-  
+
   @Key("image")
   private final String image;
- 
+
   @Key("ticker")
   private final String ticker;
 
@@ -105,7 +106,7 @@ public class AndroidNotification {
 
   @Key("light_settings")
   private final LightSettings lightSettings;
-  
+
   @Key("default_light_settings")
   private final Boolean defaultLightSettings;
 
@@ -115,24 +116,30 @@ public class AndroidNotification {
   @Key("notification_count")
   private final Integer notificationCount;
 
-  @Key("proxy")
-  private final String proxy;
+  @Key("id")
+  private final Integer id;
 
-  private static final Map<Priority, String> PRIORITY_MAP = 
-      ImmutableMap.<Priority, String>builder()
-          .put(Priority.MIN, "PRIORITY_MIN")
-          .put(Priority.LOW, "PRIORITY_LOW")
-          .put(Priority.DEFAULT, "PRIORITY_DEFAULT")
-          .put(Priority.HIGH, "PRIORITY_HIGH")
-          .put(Priority.MAX, "PRIORITY_MAX")
+  private static final Map<NotificationPriority, String> PRIORITY_MAP =
+      ImmutableMap.<NotificationPriority, String>builder()
+          .put(NotificationPriority.MIN, "PRIORITY_MIN")
+          .put(NotificationPriority.LOW, "PRIORITY_LOW")
+          .put(NotificationPriority.DEFAULT, "PRIORITY_DEFAULT")
+          .put(NotificationPriority.HIGH, "PRIORITY_HIGH")
+          .put(NotificationPriority.MAX, "PRIORITY_MAX")
           .build();
-  
-  private AndroidNotification(Builder builder) {
+
+  private static final Pattern COLOR_PATTERN = Pattern.compile("^#[0-9a-fA-F]{6}$");
+
+  private static final DateTimeFormatter EVENT_TIME_FORMATTER =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS000000'Z'")
+          .withZone(ZoneOffset.UTC);
+
+  private AndroidNotificationV2(Builder builder) {
     this.title = builder.title;
     this.body = builder.body;
     this.icon = builder.icon;
     if (builder.color != null) {
-      checkArgument(builder.color.matches("^#[0-9a-fA-F]{6}$"),
+      checkArgument(COLOR_PATTERN.matcher(builder.color).matches(),
           "color must be in the form #RRGGBB");
     }
     this.color = builder.color;
@@ -157,16 +164,13 @@ public class AndroidNotification {
       this.titleLocArgs = null;
     }
     this.channelId = builder.channelId;
-    this.image = builder.image;    
+    this.image = builder.image;
     this.ticker = builder.ticker;
     this.sticky = builder.sticky;
     this.eventTime = builder.eventTime;
     this.localOnly = builder.localOnly;
-    if (builder.priority != null) {
-      this.priority = builder.priority.toString();
-    } else {
-      this.priority = null;
-    }
+    this.priority = builder.priority != null ? PRIORITY_MAP.get(builder.priority) : null;
+
     if (!builder.vibrateTimings.isEmpty()) {
       this.vibrateTimings = ImmutableList.copyOf(builder.vibrateTimings);
     } else {
@@ -176,59 +180,49 @@ public class AndroidNotification {
     this.defaultSound = builder.defaultSound;
     this.lightSettings = builder.lightSettings;
     this.defaultLightSettings = builder.defaultLightSettings;
-    if (builder.visibility != null) {
-      this.visibility = builder.visibility.name().toLowerCase();
-    } else {
-      this.visibility = null;
-    }
+    this.visibility = (builder.visibility != null
+        && builder.visibility != Visibility.UNSPECIFIED)
+        ? builder.visibility.name().toLowerCase(Locale.ENGLISH) : null;
     if (builder.notificationCount != null) {
-      checkArgument(builder.notificationCount >= 0, 
+      checkArgument(builder.notificationCount >= 0,
           "notificationCount if specified must be zero or positive valued");
     }
-    if (builder.proxy != null) {
-      this.proxy = builder.proxy.name();
-    } else {
-      this.proxy = null;
-    }
     this.notificationCount = builder.notificationCount;
+    this.id = builder.id;
   }
 
-  public enum Priority {
+  /**
+   * Priority levels for {@link AndroidNotificationV2}.
+   */
+  public enum NotificationPriority {
+    UNSPECIFIED,
     MIN,
     LOW,
     DEFAULT,
     HIGH,
-    MAX;
-
-    @Override
-    public String toString() {
-      return PRIORITY_MAP.get(this);
-    }
-  }
-
-  public enum Visibility {
-    PRIVATE,
-    PUBLIC,
-    SECRET,
-  }
-
-  public enum Proxy {
-    ALLOW,
-    DENY,
-    IF_PRIORITY_LOWERED
+    MAX
   }
 
   /**
-   * Creates a new {@link AndroidNotification.Builder}.
+   * Visibility settings for {@link AndroidNotificationV2}.
+   */
+  public enum Visibility {
+    UNSPECIFIED,
+    PRIVATE,
+    PUBLIC,
+    SECRET
+  }
+
+  /**
+   * Creates a new {@link AndroidNotificationV2.Builder}.
    *
-   * @return A {@link AndroidNotification.Builder} instance.
+   * @return An {@link AndroidNotificationV2.Builder} instance.
    */
   public static Builder builder() {
     return new Builder();
   }
 
   public static class Builder {
-
     private String title;
     private String body;
     private String icon;
@@ -247,20 +241,19 @@ public class AndroidNotification {
     private Boolean sticky;
     private String eventTime;
     private Boolean localOnly;
-    private Priority priority;
+    private NotificationPriority priority;
     private List<String> vibrateTimings = new ArrayList<>();
     private Boolean defaultVibrateTimings;
     private Boolean defaultSound;
     private LightSettings lightSettings;
     private Boolean defaultLightSettings;
     private Visibility visibility;
-    private Proxy proxy;
+    private Integer id;
 
     private Builder() {}
 
     /**
-     * Sets the title of the Android notification. When provided, overrides the title set
-     * via {@link Notification}.
+     * Sets the title of the notification.
      *
      * @param title Title of the notification.
      * @return This builder.
@@ -271,8 +264,7 @@ public class AndroidNotification {
     }
 
     /**
-     * Sets the body of the Android notification. When provided, overrides the body set
-     * via {@link Notification}.
+     * Sets the body of the notification.
      *
      * @param body Body of the notification.
      * @return This builder.
@@ -283,7 +275,7 @@ public class AndroidNotification {
     }
 
     /**
-     * Sets the icon of the Android notification.
+     * Sets the icon of the notification.
      *
      * @param icon Icon resource for the notification.
      * @return This builder.
@@ -358,7 +350,7 @@ public class AndroidNotification {
      * @param arg Resource key string.
      * @return This builder.
      */
-    public Builder addBodyLocalizationArg(@NonNull String arg) {
+    public Builder addBodyLocalizationArg(String arg) {
       this.bodyLocArgs.add(arg);
       return this;
     }
@@ -371,6 +363,7 @@ public class AndroidNotification {
      * @return This builder.
      */
     public Builder addAllBodyLocalizationArgs(@NonNull List<String> args) {
+      checkNotNull(args, "args must not be null");
       this.bodyLocArgs.addAll(args);
       return this;
     }
@@ -394,7 +387,7 @@ public class AndroidNotification {
      * @param arg Resource key string.
      * @return This builder.
      */
-    public Builder addTitleLocalizationArg(@NonNull String arg) {
+    public Builder addTitleLocalizationArg(String arg) {
       this.titleLocArgs.add(arg);
       return this;
     }
@@ -407,6 +400,7 @@ public class AndroidNotification {
      * @return This builder.
      */
     public Builder addAllTitleLocalizationArgs(@NonNull List<String> args) {
+      checkNotNull(args, "args must not be null");
       this.titleLocArgs.addAll(args);
       return this;
     }
@@ -426,8 +420,7 @@ public class AndroidNotification {
     }
 
     /**
-     * Sets the URL of the image that is going to be displayed in the notification. When provided, 
-     * overrides the imageUrl set via {@link Notification}.
+     * Sets the URL of the image that is going to be displayed in the notification.
      *
      * @param imageUrl URL of the image that is going to be displayed in the notification.
      * @return This builder.
@@ -455,7 +448,7 @@ public class AndroidNotification {
      * dismissed when the user clicks it in the panel. When set to true, the notification 
      * persists even when the user clicks it.
      *
-     * @param sticky The sticky flag
+     * @param sticky The sticky flag.
      * @return This builder.
      */
     public Builder setSticky(boolean sticky) {
@@ -475,9 +468,7 @@ public class AndroidNotification {
      * @return This builder.
      */
     public Builder setEventTimeInMillis(long eventTimeInMillis) {
-      SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS000000'Z'");
-      dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-      this.eventTime = dateFormat.format(new Date(eventTimeInMillis));
+      this.eventTime = EVENT_TIME_FORMATTER.format(Instant.ofEpochMilli(eventTimeInMillis));
       return this;
     }
 
@@ -486,7 +477,7 @@ public class AndroidNotification {
      * notifications can be bridged to other devices for remote display, such as a Wear 
      * OS watch. This hint can be set to recommend this notification not be bridged.
      *
-     * @param localOnly The "local only" flag
+     * @param localOnly The "local only" flag.
      * @return This builder.
      */
     public Builder setLocalOnly(boolean localOnly) {
@@ -500,10 +491,10 @@ public class AndroidNotification {
      * may be hidden from the user in certain situations, while the user might be interrupted 
      * for a higher-priority notification.
      *
-     * @param priority The priority value, one of the values in {MIN, LOW, DEFAULT, HIGH, MAX}
+     * @param priority The priority value, one of the values in {MIN, LOW, DEFAULT, HIGH, MAX}.
      * @return This builder.
      */
-    public Builder setPriority(Priority priority) {
+    public Builder setNotificationPriority(NotificationPriority priority) {
       this.priority = priority;
       return this;
     }
@@ -521,6 +512,7 @@ public class AndroidNotification {
      * @return This builder.
      */
     public Builder setVibrateTimingsInMillis(long[] vibrateTimingsInMillis) {
+      checkNotNull(vibrateTimingsInMillis, "vibrateTimingsInMillis must not be null");
       List<String> list = new ArrayList<>();
       for (long value : vibrateTimingsInMillis) {
         checkArgument(value >= 0, "elements in vibrateTimingsInMillis must not be negative");
@@ -530,9 +522,9 @@ public class AndroidNotification {
           list.add(String.format("%d.%09ds", seconds, subsecondNanos));
         } else {
           list.add(String.format("%ds", seconds));
-        }   
+        }
       }
-      this.vibrateTimings = ImmutableList.copyOf(list);  
+      this.vibrateTimings = ImmutableList.copyOf(list);
       return this;
     }
 
@@ -576,7 +568,7 @@ public class AndroidNotification {
     }
 
     /**
-     * Sets the whether to use the default light settings. If set to true, use the Android
+     * Sets whether to use the default light settings. If set to true, use the Android
      * framework's default LED light settings for the notification. Default values are 
      * specified in config.xml. If {@code default_light_settings} is set to true and 
      * {@code light_settings} is also set, the user-specified {@code light_settings} is used
@@ -594,7 +586,7 @@ public class AndroidNotification {
     /**
      * Sets the visibility of this notification.
      *
-     * @param visibility The visibility value. one of the values in {PRIVATE, PUBLIC, SECRET}
+     * @param visibility The visibility value. One of the values in {PRIVATE, PUBLIC, SECRET}.
      * @return This builder.
      */
     public Builder setVisibility(Visibility visibility) {
@@ -603,11 +595,11 @@ public class AndroidNotification {
     }
 
     /**
-     * Sets the number of items this notification represents. May be displayed as a badge 
-     * count for launchers that support badging. If not invoked then notification count is left
+     * Sets the number of items this notification represents. May be displayed as a badge
+     * count for launchers that support badging. If not invoked, the notification count is left
      * unchanged. For example, this might be useful if you're using just one notification to
      * represent multiple new messages but you want the count here to represent the number of
-     * total new messages. If zero or unspecified, systems that support badging use the default, 
+     * total new messages. If zero or unspecified, systems that support badging use the default,
      * which is to increment a number displayed on the long-press menu each time a new
      * notification arrives.
      *
@@ -620,25 +612,27 @@ public class AndroidNotification {
     }
 
     /**
-     * Sets the proxy of this notification.
+     * Sets the notification ID. If specified, and a notification with the same tag/ID is already
+     * active, the new notification will replace the existing one in the notification drawer. If
+     * not specified, a new notification is created.
      *
-     * @param proxy The proxy value, one of the values in {ALLOW, DENY, IF_PRIORITY_LOWERED}
-     *
+     * @param id Notification ID.
      * @return This builder.
      */
-    public Builder setProxy(Proxy proxy) {
-      this.proxy = proxy;
+    public Builder setId(Integer id) {
+      this.id = id;
       return this;
     }
 
     /**
-     * Creates a new {@link AndroidNotification} instance from the parameters set on this builder.
+     * Creates a new {@link AndroidNotificationV2} instance from the parameters set on this
+     * builder.
      *
-     * @return A new {@link AndroidNotification} instance.
+     * @return A new {@link AndroidNotificationV2} instance.
      * @throws IllegalArgumentException If any of the parameters set on the builder are invalid.
      */
-    public AndroidNotification build() {
-      return new AndroidNotification(this);
+    public AndroidNotificationV2 build() {
+      return new AndroidNotificationV2(this);
     }
   }
 }
