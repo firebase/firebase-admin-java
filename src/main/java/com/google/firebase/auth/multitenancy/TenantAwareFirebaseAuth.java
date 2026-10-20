@@ -16,12 +16,9 @@
 
 package com.google.firebase.auth.multitenancy;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.google.api.core.ApiAsyncFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.common.base.Strings;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AbstractFirebaseAuth;

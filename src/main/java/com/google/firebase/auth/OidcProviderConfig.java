@@ -78,8 +78,7 @@ public final class OidcProviderConfig extends ProviderConfig {
     checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
     checkArgument(providerId.startsWith("oidc."),
         "Invalid OIDC provider ID (must be prefixed with 'oidc.'): " + providerId);
-    checkArgument(!providerId.equals("oidc.") && Utils.isSafeUrlSegment(providerId),
-        "Invalid OIDC provider ID: " + providerId);
+    checkArgument(Utils.isSafeUrlSegment(providerId), "Invalid OIDC provider ID: " + providerId);
   }
 
   static Map<String, Boolean> ensureResponseType(Map<String,Object> properties) {

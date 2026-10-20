@@ -85,8 +85,7 @@ public final class SamlProviderConfig extends ProviderConfig {
     checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
     checkArgument(providerId.startsWith("saml."),
         "Invalid SAML provider ID (must be prefixed with 'saml.'): " + providerId);
-    checkArgument(!providerId.equals("saml.") && Utils.isSafeUrlSegment(providerId),
-        "Invalid SAML provider ID: " + providerId);
+    checkArgument(Utils.isSafeUrlSegment(providerId), "Invalid SAML provider ID: " + providerId);
   }
 
   private static List<Object> ensureNestedList(Map<String, Object> outerMap, String id) {
