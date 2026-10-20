@@ -20,12 +20,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.api.client.json.JsonFactory;
+import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.ApiClientUtils;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.Test;
 
@@ -123,6 +126,24 @@ public class OidcProviderConfigTest {
     new OidcProviderConfig.CreateRequest().setProviderId("saml.provider-id");
   }
 
+  @Test
+  public void testCreateRequestInvalidProviderIdCharacters() {
+    List<String> invalidIds = ImmutableList.of(
+        "oidc.",
+        "oidc.provider.",
+        "oidc.provider/sub",
+        "oidc.provider?param=1",
+        "oidc.provider#frag");
+    for (String id : invalidIds) {
+      try {
+        new OidcProviderConfig.CreateRequest().setProviderId(id);
+        fail("No error thrown for invalid provider ID: " + id);
+      } catch (IllegalArgumentException expected) {
+        assertEquals("Invalid OIDC provider ID: " + id, expected.getMessage());
+      }
+    }
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void testCreateRequestMissingDisplayName() {
     new OidcProviderConfig.CreateRequest().setDisplayName(null);
@@ -198,6 +219,24 @@ public class OidcProviderConfigTest {
   @Test(expected = IllegalArgumentException.class)
   public void testUpdateRequestInvalidProviderId() {
     new OidcProviderConfig.UpdateRequest("saml.provider-id");
+  }
+
+  @Test
+  public void testUpdateRequestInvalidProviderIdCharacters() {
+    List<String> invalidIds = ImmutableList.of(
+        "oidc.",
+        "oidc.provider.",
+        "oidc.provider/sub",
+        "oidc.provider?param=1",
+        "oidc.provider#frag");
+    for (String id : invalidIds) {
+      try {
+        new OidcProviderConfig.UpdateRequest(id);
+        fail("No error thrown for invalid provider ID: " + id);
+      } catch (IllegalArgumentException expected) {
+        assertEquals("Invalid OIDC provider ID: " + id, expected.getMessage());
+      }
+    }
   }
 
   @Test(expected = IllegalArgumentException.class)

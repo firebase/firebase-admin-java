@@ -26,6 +26,7 @@ import com.google.common.base.Strings;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.internal.Utils;
 import com.google.firebase.auth.multitenancy.ListTenantsPage.DefaultTenantSource;
 import com.google.firebase.auth.multitenancy.ListTenantsPage.PageFactory;
 import com.google.firebase.auth.multitenancy.ListTenantsPage.TenantSource;
@@ -82,7 +83,7 @@ public final class TenantManager {
   }
 
   public synchronized TenantAwareFirebaseAuth getAuthForTenant(@NonNull String tenantId) {
-    checkArgument(!Strings.isNullOrEmpty(tenantId), "Tenant ID must not be null or empty.");
+    Utils.checkTenantId(tenantId);
     if (!tenantAwareAuths.containsKey(tenantId)) {
       tenantAwareAuths.put(tenantId, TenantAwareFirebaseAuth.fromApp(firebaseApp, tenantId));
     }
@@ -103,7 +104,7 @@ public final class TenantManager {
   }
 
   private CallableOperation<Tenant, FirebaseAuthException> getTenantOp(final String tenantId) {
-    checkArgument(!Strings.isNullOrEmpty(tenantId), "Tenant ID must not be null or empty.");
+    Utils.checkTenantId(tenantId);
     return new CallableOperation<Tenant, FirebaseAuthException>() {
       @Override
       protected Tenant execute() throws FirebaseAuthException {
@@ -280,7 +281,7 @@ public final class TenantManager {
   }
 
   private CallableOperation<Void, FirebaseAuthException> deleteTenantOp(final String tenantId) {
-    checkArgument(!Strings.isNullOrEmpty(tenantId), "Tenant ID must not be null or empty.");
+    Utils.checkTenantId(tenantId);
     return new CallableOperation<Void, FirebaseAuthException>() {
       @Override
       protected Void execute() throws FirebaseAuthException {

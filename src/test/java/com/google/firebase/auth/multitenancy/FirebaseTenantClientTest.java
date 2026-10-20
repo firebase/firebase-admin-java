@@ -100,6 +100,41 @@ public class FirebaseTenantClientTest {
   }
 
   @Test
+  public void testTenantOperationsInvalidTenantId() throws Exception {
+    initializeAppForTenantManagement("{}");
+    TenantManager tenantManager = FirebaseAuth.getInstance().getTenantManager();
+    List<String> invalidIds = ImmutableList.of(
+        ".",
+        "..",
+        "tenant.",
+        "tenant/sub",
+        "tenant?param=1",
+        "tenant#frag");
+    for (String id : invalidIds) {
+      try {
+        tenantManager.getAuthForTenant(id);
+        fail("No error thrown for getAuthForTenant with invalid tenant ID: " + id);
+      } catch (IllegalArgumentException expected) {
+        assertEquals("Invalid tenant ID: " + id, expected.getMessage());
+      }
+
+      try {
+        tenantManager.getTenant(id);
+        fail("No error thrown for getTenant with invalid tenant ID: " + id);
+      } catch (IllegalArgumentException expected) {
+        assertEquals("Invalid tenant ID: " + id, expected.getMessage());
+      }
+
+      try {
+        tenantManager.deleteTenant(id);
+        fail("No error thrown for deleteTenant with invalid tenant ID: " + id);
+      } catch (IllegalArgumentException expected) {
+        assertEquals("Invalid tenant ID: " + id, expected.getMessage());
+      }
+    }
+  }
+
+  @Test
   public void testGetTenantWithNotFoundError() {
     TestResponseInterceptor interceptor =
         initializeAppForTenantManagementWithStatusCode(404,

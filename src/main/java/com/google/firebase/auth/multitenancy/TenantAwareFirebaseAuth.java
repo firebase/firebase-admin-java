@@ -28,6 +28,7 @@ import com.google.firebase.auth.AbstractFirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.SessionCookieOptions;
+import com.google.firebase.auth.internal.Utils;
 
 /**
  * The tenant-aware Firebase client.
@@ -41,7 +42,7 @@ public final class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
 
   private TenantAwareFirebaseAuth(Builder builder) {
     super(builder);
-    checkArgument(!Strings.isNullOrEmpty(builder.tenantId));
+    Utils.checkTenantId(builder.tenantId);
     this.tenantId = builder.tenantId;
   }
 

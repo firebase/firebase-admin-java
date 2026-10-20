@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
+import com.google.firebase.auth.internal.Utils;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -77,6 +78,8 @@ public final class OidcProviderConfig extends ProviderConfig {
     checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
     checkArgument(providerId.startsWith("oidc."),
         "Invalid OIDC provider ID (must be prefixed with 'oidc.'): " + providerId);
+    checkArgument(!providerId.equals("oidc.") && Utils.isSafeUrlSegment(providerId),
+        "Invalid OIDC provider ID: " + providerId);
   }
 
   static Map<String, Boolean> ensureResponseType(Map<String,Object> properties) {

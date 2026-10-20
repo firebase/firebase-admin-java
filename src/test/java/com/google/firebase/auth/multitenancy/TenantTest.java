@@ -19,11 +19,14 @@ package com.google.firebase.auth.multitenancy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.api.client.json.JsonFactory;
+import com.google.common.collect.ImmutableList;
 import com.google.firebase.internal.ApiClientUtils;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import org.junit.Test;
 
@@ -73,6 +76,25 @@ public class TenantTest {
     assertEquals("DISPLAY_NAME", (String) properties.get("displayName"));
     assertFalse((boolean) properties.get("allowPasswordSignup"));
     assertTrue((boolean) properties.get("enableEmailLinkSignin"));
+  }
+
+  @Test
+  public void testUpdateRequestInvalidTenantId() {
+    List<String> invalidIds = ImmutableList.of(
+        ".",
+        "..",
+        "tenant.",
+        "tenant/sub",
+        "tenant?param=1",
+        "tenant#frag");
+    for (String id : invalidIds) {
+      try {
+        new Tenant.UpdateRequest(id);
+        fail("No error thrown for invalid tenant ID: " + id);
+      } catch (IllegalArgumentException expected) {
+        assertEquals("Invalid tenant ID: " + id, expected.getMessage());
+      }
+    }
   }
 
   @Test
