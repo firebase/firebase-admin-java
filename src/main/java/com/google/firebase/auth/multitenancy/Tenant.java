@@ -148,8 +148,7 @@ public final class Tenant {
      * @throws IllegalArgumentException If the tenant ID is null or empty.
      */
     public UpdateRequest(String tenantId) {
-      checkArgument(!Strings.isNullOrEmpty(tenantId), "tenant ID must not be null or empty");
-      checkArgument(Utils.isSafeUrlSegment(tenantId), "Invalid tenant ID: " + tenantId);
+      Utils.checkTenantId(tenantId);
       this.tenantId = tenantId;
     }
 
