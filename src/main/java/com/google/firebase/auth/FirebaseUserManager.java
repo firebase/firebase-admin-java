@@ -95,7 +95,7 @@ final class FirebaseUserManager {
       this.userMgtBaseUrl = idToolkitUrlV1;
       this.idpConfigMgtBaseUrl = idToolkitUrlV2;
     } else {
-      checkArgument(!tenantId.isEmpty(), "Tenant ID must not be empty.");
+      Utils.checkTenantId(tenantId);
       this.userMgtBaseUrl = idToolkitUrlV1 + "/tenants/" + tenantId;
       this.idpConfigMgtBaseUrl = idToolkitUrlV2 + "/tenants/" + tenantId;
     }
@@ -335,12 +335,12 @@ final class FirebaseUserManager {
   }
 
   private static String getOidcUrlSuffix(String providerId) {
-    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
+    OidcProviderConfig.checkOidcProviderId(providerId);
     return "/oauthIdpConfigs/" + providerId;
   }
 
   private static String getSamlUrlSuffix(String providerId) {
-    checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
+    SamlProviderConfig.checkSamlProviderId(providerId);
     return "/inboundSamlConfigs/" + providerId;
   }
 

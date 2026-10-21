@@ -26,6 +26,7 @@ import com.google.firebase.internal.AbstractPlatformErrorHandler;
 import com.google.firebase.internal.ErrorHandlingHttpClient;
 import com.google.firebase.internal.HttpRequestInfo;
 import com.google.firebase.internal.SdkUtils;
+import java.util.Map;
 
 final class HttpHelper {
 
@@ -51,6 +52,19 @@ final class HttpHelper {
       String requestIdentifierDescription) throws FirebaseProjectManagementException {
     return makeRequest(
         HttpRequestInfo.buildGetRequest(url),
+        parsedResponseInstance,
+        requestIdentifier,
+        requestIdentifierDescription);
+  }
+
+  <T> IncomingHttpResponse makeGetRequest(
+      String url,
+      Map<String, Object> queryParams,
+      T parsedResponseInstance,
+      String requestIdentifier,
+      String requestIdentifierDescription) throws FirebaseProjectManagementException {
+    return makeRequest(
+        HttpRequestInfo.buildGetRequest(url).addAllParameters(queryParams),
         parsedResponseInstance,
         requestIdentifier,
         requestIdentifierDescription);
