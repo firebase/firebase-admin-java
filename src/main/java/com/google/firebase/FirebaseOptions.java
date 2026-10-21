@@ -24,6 +24,7 @@ import com.google.api.client.json.JsonFactory;
 import com.google.api.client.util.Key;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.firestore.FirestoreOptions;
+import com.google.cloud.storage.StorageOptions;
 import com.google.common.base.Strings;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -87,6 +88,8 @@ public final class FirebaseOptions {
   private final ThreadManager threadManager;
   private final FirestoreOptions firestoreOptions;
 
+  private final StorageOptions storageOptions;
+
   private FirebaseOptions(@NonNull final FirebaseOptions.Builder builder) {
     this.databaseUrl = builder.databaseUrl;
     this.credentialsSupplier = checkNotNull(
@@ -116,6 +119,7 @@ public final class FirebaseOptions {
     checkArgument(builder.writeTimeout >= 0);
     this.writeTimeout = builder.writeTimeout;
     this.firestoreOptions = builder.firestoreOptions;
+    this.storageOptions = builder.storageOptions;
   }
 
   /**
@@ -227,6 +231,10 @@ public final class FirebaseOptions {
     return firestoreOptions;
   }
 
+  public StorageOptions getStorageOptions() {
+    return storageOptions;
+  }
+
   /**
    * Creates an empty builder.
    *
@@ -261,6 +269,8 @@ public final class FirebaseOptions {
 
     @Key("storageBucket")
     private String storageBucket;
+
+    private StorageOptions storageOptions;
 
     @Key("serviceAccountId")
     private String serviceAccountId;
@@ -303,6 +313,7 @@ public final class FirebaseOptions {
       readTimeout = options.readTimeout;
       writeTimeout = options.writeTimeout;
       firestoreOptions = options.firestoreOptions;
+      storageOptions = options.storageOptions;
     }
 
     /**
@@ -505,6 +516,11 @@ public final class FirebaseOptions {
      */
     public Builder setReadTimeout(int readTimeout) {
       this.readTimeout = readTimeout;
+      return this;
+    }
+
+    public Builder setStorageOptions(StorageOptions storageOptions) {
+      this.storageOptions = storageOptions;
       return this;
     }
 
