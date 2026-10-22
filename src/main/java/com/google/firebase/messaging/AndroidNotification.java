@@ -34,7 +34,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Represents the Android-specific notification options that can be included in a {@link Message}.
  * Instances of this class are thread-safe and immutable.
+ *
+ * @deprecated Use {@link AndroidNotificationV2} instead.
  */
+@Deprecated
 public class AndroidNotification {
 
   @Key("title")
@@ -534,7 +537,7 @@ public class AndroidNotification {
     }
 
     /**
-     * Sets the whether to use the default vibration timings. If set to true, use the Android 
+     * Sets whether to use the default vibration timings. If set to true, use the Android 
      * framework's default vibrate pattern for the notification. Default values are specified 
      * in {@code config.xml}. If {@code default_vibrate_timings} is set to true and 
      * {@code vibrate_timings} is also set, the default value is used instead of the 
@@ -549,7 +552,7 @@ public class AndroidNotification {
     }
 
     /**
-     * Sets the whether to use the default sound. If set to true, use the Android framework's 
+     * Sets whether to use the default sound. If set to true, use the Android framework's 
      * default sound for the notification. Default values are specified in config.xml.
      *
      * @param defaultSound The flag indicating whether to use the default sound
@@ -601,13 +604,12 @@ public class AndroidNotification {
 
     /**
      * Sets the number of items this notification represents. May be displayed as a badge 
-     * count for launchers that support badging. 
-     * If not invoked then notification count is left unchanged.
-     * For example, this might be useful if you're using just one notification to represent
-     * multiple new messages but you want the count here to represent the number of total
-     * new messages. If zero or unspecified, systems that support badging use the default, 
-     * which is to increment a number displayed on 
-     * the long-press menu each time a new notification arrives.
+     * count for launchers that support badging. If not invoked then notification count is left
+     * unchanged. For example, this might be useful if you're using just one notification to
+     * represent multiple new messages but you want the count here to represent the number of
+     * total new messages. If zero or unspecified, systems that support badging use the default, 
+     * which is to increment a number displayed on the long-press menu each time a new
+     * notification arrives.
      *
      * @param notificationCount Zero or positive value. Zero indicates leave unchanged.
      * @return This builder.

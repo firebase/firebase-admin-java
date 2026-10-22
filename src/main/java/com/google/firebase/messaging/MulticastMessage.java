@@ -18,9 +18,10 @@ package com.google.firebase.messaging;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.google.api.client.util.Strings;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.primitives.Booleans;
 import com.google.firebase.internal.NonNull;
 
 import java.util.Collection;
@@ -52,7 +53,9 @@ public class MulticastMessage {
   private final List<String> fids;
   private final Map<String, String> data;
   private final Notification notification;
+  @Deprecated
   private final AndroidConfig androidConfig;
+  private final AndroidConfigV2 androidConfigV2;
   private final WebpushConfig webpushConfig;
   private final ApnsConfig apnsConfig;
   private final FcmOptions fcmOptions;
@@ -71,9 +74,16 @@ public class MulticastMessage {
     for (String fid : this.fids) {
       checkArgument(!Strings.isNullOrEmpty(fid), "none of the fids can be null or empty");
     }
+    int androidConfigs = Booleans.countTrue(
+        builder.androidConfig != null,
+        builder.androidConfigV2 != null
+    );
+    checkArgument(androidConfigs <= 1,
+        "androidConfig and androidConfigV2 are mutually exclusive");
     this.data = builder.data.isEmpty() ? null : ImmutableMap.copyOf(builder.data);
     this.notification = builder.notification;
     this.androidConfig = builder.androidConfig;
+    this.androidConfigV2 = builder.androidConfigV2;
     this.webpushConfig = builder.webpushConfig;
     this.apnsConfig = builder.apnsConfig;
     this.fcmOptions = builder.fcmOptions;
@@ -103,6 +113,7 @@ public class MulticastMessage {
     Message.Builder builder = Message.builder()
         .setNotification(this.notification)
         .setAndroidConfig(this.androidConfig)
+        .setAndroidConfigV2(this.androidConfigV2)
         .setApnsConfig(this.apnsConfig)
         .setWebpushConfig(this.webpushConfig)
         .setFcmOptions(this.fcmOptions);
@@ -128,7 +139,9 @@ public class MulticastMessage {
     private final ImmutableList.Builder<String> fids = ImmutableList.builder();
     private final Map<String, String> data = new HashMap<>();
     private Notification notification;
+    @Deprecated
     private AndroidConfig androidConfig;
+    private AndroidConfigV2 androidConfigV2;
     private WebpushConfig webpushConfig;
     private ApnsConfig apnsConfig;
     private FcmOptions fcmOptions;
@@ -207,9 +220,22 @@ public class MulticastMessage {
      *
      * @param androidConfig An {@link AndroidConfig} instance.
      * @return This builder.
+     * @deprecated Use {@link #setAndroidConfigV2(AndroidConfigV2)} instead.
      */
+    @Deprecated
     public Builder setAndroidConfig(AndroidConfig androidConfig) {
       this.androidConfig = androidConfig;
+      return this;
+    }
+
+    /**
+     * Sets the Android-specific information to be included in the message.
+     *
+     * @param androidConfigV2 An {@link AndroidConfigV2} instance.
+     * @return This builder.
+     */
+    public Builder setAndroidConfigV2(AndroidConfigV2 androidConfigV2) {
+      this.androidConfigV2 = androidConfigV2;
       return this;
     }
 

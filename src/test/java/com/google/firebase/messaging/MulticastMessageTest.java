@@ -30,6 +30,10 @@ public class MulticastMessageTest {
   private static final AndroidConfig ANDROID = AndroidConfig.builder()
       .setCollapseKey("collapseKey")
       .build();
+  private static final AndroidConfigV2 ANDROID_V2 = AndroidConfigV2.builder()
+      .setCollapseKey("collapseKeyV2")
+      .setBackgroundSync(AndroidBackgroundSyncMessage.builder().build())
+      .build();
   private static final ApnsConfig APNS = ApnsConfig.builder()
       .setAps(Aps.builder()
         .setBadge(42)
@@ -70,6 +74,50 @@ public class MulticastMessageTest {
   @Test(expected = IllegalArgumentException.class)
   public void testNoTokens() {
     MulticastMessage.builder().build();
+  }
+
+  @Test
+  public void testMulticastMessageWithAndroidConfigV2() {
+    MulticastMessage multicastMessage = MulticastMessage.builder()
+        .setAndroidConfigV2(ANDROID_V2)
+        .setApnsConfig(APNS)
+        .setWebpushConfig(WEBPUSH)
+        .setNotification(NOTIFICATION)
+        .setFcmOptions(FCM_OPTIONS)
+        .putData("key1", "value1")
+        .putAllData(ImmutableMap.of("key2", "value2"))
+        .addFid("fid1")
+        .addAllFids(ImmutableList.of("fid2", "fid3"))
+        .build();
+
+    List<Message> messages = multicastMessage.getMessageList();
+
+    assertEquals(3, messages.size());
+    for (int i = 0; i < 3; i++) {
+      Message message = messages.get(i);
+      assertSame(ANDROID_V2, message.getAndroidConfigV2());
+      assertSame(APNS, message.getApnsConfig());
+      assertSame(WEBPUSH, message.getWebpushConfig());
+      assertSame(NOTIFICATION, message.getNotification());
+      assertSame(FCM_OPTIONS, message.getFcmOptions());
+      assertEquals(ImmutableMap.of("key1", "value1", "key2", "value2"), message.getData());
+      assertEquals("fid" + (i + 1), message.getFid());
+    }
+  }
+
+  @Test
+  public void testMultipleAndroidConfigs() {
+    try {
+      MulticastMessage.builder()
+          .setAndroidConfig(ANDROID)
+          .setAndroidConfigV2(ANDROID_V2)
+          .addToken("token1")
+          .build();
+      fail("No error thrown for multiple android configs");
+    } catch (IllegalArgumentException expected) {
+      assertEquals("androidConfig and androidConfigV2 are mutually exclusive",
+          expected.getMessage());
+    }
   }
 
   @Test

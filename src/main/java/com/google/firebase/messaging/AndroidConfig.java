@@ -28,7 +28,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Represents the Android-specific options that can be included in a {@link Message}.
  * Instances of this class are thread-safe and immutable.
+ *
+ * @deprecated Use {@link AndroidConfigV2} instead.
  */
+@Deprecated
 public class AndroidConfig {
 
   @Key("collapse_key")
