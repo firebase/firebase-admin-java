@@ -395,6 +395,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(token));
     assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.INVALID_APP_CHECK_TOKEN, ex.getAppCheckErrorCode());
     assertTrue(ex.getMessage().contains("incorrect algorithm"));
   }
 
@@ -407,6 +408,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(token));
     assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.INVALID_APP_CHECK_TOKEN, ex.getAppCheckErrorCode());
     assertTrue(ex.getMessage().contains("no 'kid'"));
   }
 
@@ -422,6 +424,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(token));
     assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.INVALID_APP_CHECK_TOKEN, ex.getAppCheckErrorCode());
     assertTrue(ex.getMessage().contains("incorrect 'typ'"));
   }
 
@@ -439,6 +442,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(token));
     assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.INVALID_APP_CHECK_TOKEN, ex.getAppCheckErrorCode());
     assertTrue(ex.getMessage().contains("no 'iss'"));
   }
 
@@ -457,6 +461,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(token));
     assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.INVALID_APP_CHECK_TOKEN, ex.getAppCheckErrorCode());
     assertTrue(ex.getMessage().contains("incorrect issuer"));
   }
 
@@ -474,6 +479,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(token));
     assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.INVALID_APP_CHECK_TOKEN, ex.getAppCheckErrorCode());
     assertTrue(ex.getMessage().contains("incorrect audience"));
   }
 
@@ -492,6 +498,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(token));
     assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.INVALID_APP_CHECK_TOKEN, ex.getAppCheckErrorCode());
     assertTrue(ex.getMessage().contains("incorrect audience"));
   }
 
@@ -509,6 +516,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(token));
     assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.INVALID_APP_CHECK_TOKEN, ex.getAppCheckErrorCode());
     assertTrue(ex.getMessage().contains("empty 'sub'"));
   }
 
@@ -565,6 +573,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(token));
     assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.APP_CHECK_TOKEN_EXPIRED, ex.getAppCheckErrorCode());
     assertTrue(ex.getMessage().contains("has expired"));
   }
 
@@ -577,6 +586,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(token));
     assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.INVALID_APP_CHECK_TOKEN, ex.getAppCheckErrorCode());
     assertTrue(ex.getMessage().contains("Failed to verify App Check token signature"));
   }
 
@@ -589,6 +599,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(token));
     assertEquals(ErrorCode.INTERNAL, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.INTERNAL_ERROR, ex.getAppCheckErrorCode());
     assertTrue(ex.getMessage().contains("Internal error processing App Check token"));
   }
 
@@ -599,6 +610,7 @@ public class AppCheckTokenVerifierTest {
     FirebaseAppCheckException ex =
         assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(invalidToken));
     assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.INVALID_APP_CHECK_TOKEN, ex.getAppCheckErrorCode());
     assertTrue(ex.getMessage().contains("Failed to parse App Check JWT token"));
   }
 
