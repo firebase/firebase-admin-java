@@ -40,6 +40,7 @@ import com.google.firebase.internal.CallableOperation;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppService {
 
@@ -190,29 +191,29 @@ class FirebaseProjectManagementServiceImpl implements AndroidAppService, IosAppS
       @Override
       protected List<T> execute() throws FirebaseProjectManagementException {
         String url = String.format(
-            "%s/v1beta1/projects/%s/%s?page_size=%d",
+            "%s/v1beta1/projects/%s/%s",
             FIREBASE_PROJECT_MANAGEMENT_URL,
             projectId,
-            platformResourceName,
-            MAXIMUM_LIST_APPS_PAGE_SIZE);
+            platformResourceName);
+        Map<String, Object> queryParams =
+            ImmutableMap.<String, Object>of("page_size", MAXIMUM_LIST_APPS_PAGE_SIZE);
         ImmutableList.Builder<T> builder = ImmutableList.builder();
         ListAppsResponse parsedResponse;
         do {
           parsedResponse = new ListAppsResponse();
-          httpHelper.makeGetRequest(url, parsedResponse, projectId, "Project ID");
+          httpHelper.makeGetRequest(
+              url, queryParams, parsedResponse, projectId, "Project ID");
           if (parsedResponse.apps == null) {
             break;
           }
           for (AppResponse app : parsedResponse.apps) {
             builder.add(createAppFromAppIdFunction.apply(app.appId));
           }
-          url = String.format(
-              "%s/v1beta1/projects/%s/%s?page_token=%s&page_size=%d",
-              FIREBASE_PROJECT_MANAGEMENT_URL,
-              projectId,
-              platformResourceName,
-              parsedResponse.nextPageToken,
-              MAXIMUM_LIST_APPS_PAGE_SIZE);
+          if (!Strings.isNullOrEmpty(parsedResponse.nextPageToken)) {
+            queryParams = ImmutableMap.<String, Object>of(
+                "page_token", parsedResponse.nextPageToken,
+                "page_size", MAXIMUM_LIST_APPS_PAGE_SIZE);
+          }
         } while (!Strings.isNullOrEmpty(parsedResponse.nextPageToken));
         return builder.build();
       }

@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.api.client.json.JsonFactory;
 import com.google.common.collect.ImmutableList;
@@ -137,6 +138,24 @@ public class SamlProviderConfigTest {
   @Test(expected = IllegalArgumentException.class)
   public void testCreateRequestInvalidProviderId() {
     new SamlProviderConfig.CreateRequest().setProviderId("oidc.provider-id");
+  }
+
+  @Test
+  public void testCreateRequestInvalidProviderIdCharacters() {
+    List<String> invalidIds = ImmutableList.of(
+        "saml.",
+        "saml.provider.",
+        "saml.provider/sub",
+        "saml.provider?param=1",
+        "saml.provider#frag");
+    for (String id : invalidIds) {
+      try {
+        new SamlProviderConfig.CreateRequest().setProviderId(id);
+        fail("No error thrown for invalid provider ID: " + id);
+      } catch (IllegalArgumentException expected) {
+        assertEquals("Invalid SAML provider ID: " + id, expected.getMessage());
+      }
+    }
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -268,6 +287,24 @@ public class SamlProviderConfigTest {
   @Test(expected = IllegalArgumentException.class)
   public void testUpdateRequestInvalidProviderId() {
     new SamlProviderConfig.UpdateRequest("oidc.invalid-saml-provider-id");
+  }
+
+  @Test
+  public void testUpdateRequestInvalidProviderIdCharacters() {
+    List<String> invalidIds = ImmutableList.of(
+        "saml.",
+        "saml.provider.",
+        "saml.provider/sub",
+        "saml.provider?param=1",
+        "saml.provider#frag");
+    for (String id : invalidIds) {
+      try {
+        new SamlProviderConfig.UpdateRequest(id);
+        fail("No error thrown for invalid provider ID: " + id);
+      } catch (IllegalArgumentException expected) {
+        assertEquals("Invalid SAML provider ID: " + id, expected.getMessage());
+      }
+    }
   }
 
   @Test(expected = IllegalArgumentException.class)
