@@ -52,11 +52,13 @@ import com.nimbusds.jose.proc.JWSVerificationKeySelector;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.jwt.proc.ExpiredJWTException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.text.ParseException;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -264,6 +266,38 @@ public class AppCheckTokenVerifier {
       throw new FirebaseAppCheckException(
           ErrorCode.INVALID_ARGUMENT,
           "App Check token has empty 'sub' (app ID) claim.",
+          null,
+          null,
+          AppCheckErrorCode.INVALID_APP_CHECK_TOKEN);
+    }
+
+    // Nimbus checks 'exp' only when it is present and does not check 'iat'.
+    if (claims.getExpirationTime() == null) {
+      throw new FirebaseAppCheckException(
+          ErrorCode.INVALID_ARGUMENT,
+          "App Check token has no 'exp' (expiration time) claim.",
+          null,
+          null,
+          AppCheckErrorCode.INVALID_APP_CHECK_TOKEN);
+    }
+
+    Date issueTime = claims.getIssueTime();
+    if (issueTime == null) {
+      throw new FirebaseAppCheckException(
+          ErrorCode.INVALID_ARGUMENT,
+          "App Check token has no 'iat' (issued-at time) claim.",
+          null,
+          null,
+          AppCheckErrorCode.INVALID_APP_CHECK_TOKEN);
+    }
+
+    long maxIssueTimeMillis = System.currentTimeMillis()
+        + TimeUnit.SECONDS.toMillis(DefaultJWTClaimsVerifier.DEFAULT_MAX_CLOCK_SKEW_SECONDS);
+    if (issueTime.getTime() > maxIssueTimeMillis) {
+      throw new FirebaseAppCheckException(
+          ErrorCode.INVALID_ARGUMENT,
+          "App Check token has an 'iat' (issued-at time) claim in the future: "
+              + issueTime.toInstant() + ".",
           null,
           null,
           AppCheckErrorCode.INVALID_APP_CHECK_TOKEN);

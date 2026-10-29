@@ -77,6 +77,7 @@ import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPublicKey;
 import java.util.Collections;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -509,6 +510,50 @@ public class AppCheckTokenVerifierTest {
         assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(token));
     assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
     assertTrue(ex.getMessage().contains("empty 'sub'"));
+  }
+
+  @Test
+  public void testVerifyClaims_MissingExpirationTime_ThrowsException() throws Exception {
+    assertInvalidClaims(
+        new JWTClaimsSet.Builder(claims).expirationTime(null).build(), "no 'exp'");
+  }
+
+  @Test
+  public void testVerifyClaims_MissingIssueTime_ThrowsException() throws Exception {
+    assertInvalidClaims(
+        new JWTClaimsSet.Builder(claims).issueTime(null).build(), "no 'iat'");
+  }
+
+  @Test
+  public void testVerifyClaims_IssueTimeInFuture_ThrowsException() throws Exception {
+    Date future = new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5));
+    assertInvalidClaims(
+        new JWTClaimsSet.Builder(claims).issueTime(future).build(),
+        "'iat' (issued-at time) claim in the future");
+  }
+
+  @Test
+  public void testVerifyClaims_IssueTimeWithinClockSkew_Succeeds() throws Exception {
+    Date slightlyAhead = new Date(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(30));
+    JWTClaimsSet skewedClaims = new JWTClaimsSet.Builder(claims).issueTime(slightlyAhead).build();
+    when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(skewedClaims);
+
+    VerifyAppCheckTokenResponse response =
+        verifier.verifyToken(createToken(header, skewedClaims));
+
+    assertEquals(APP_ID, response.getAppId());
+  }
+
+  private void assertInvalidClaims(JWTClaimsSet badClaims, String expectedMessage)
+      throws Exception {
+    String token = createToken(header, badClaims);
+    when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(badClaims);
+
+    FirebaseAppCheckException ex =
+        assertThrows(FirebaseAppCheckException.class, () -> verifier.verifyToken(token));
+    assertEquals(ErrorCode.INVALID_ARGUMENT, ex.getErrorCode());
+    assertEquals(AppCheckErrorCode.INVALID_APP_CHECK_TOKEN, ex.getAppCheckErrorCode());
+    assertTrue(ex.getMessage(), ex.getMessage().contains(expectedMessage));
   }
 
   @Test
