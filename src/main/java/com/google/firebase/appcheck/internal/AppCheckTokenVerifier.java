@@ -86,7 +86,7 @@ public class AppCheckTokenVerifier {
     this(
         app,
         ApiClientUtils.newAuthorizedRequestFactory(app),
-        ApiClientUtils.getDefaultJsonFactory(),
+        app.getOptions().getJsonFactory(),
         null);
   }
 
