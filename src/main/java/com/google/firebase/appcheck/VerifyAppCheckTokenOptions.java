@@ -49,9 +49,25 @@ public final class VerifyAppCheckTokenOptions {
     private Builder() {}
 
     /**
-     * Sets whether to consume the token during verification.
+     * To use the replay protection feature, set this to {@code true}. The
+     * {@link FirebaseAppCheck#verifyToken} method will mark the token as consumed after
+     * verifying it.
      *
-     * @param consume Set to true to consume the token.
+     * <p>Tokens that are found to be already consumed will not throw an exception. Instead,
+     * {@link VerifyAppCheckTokenResponse#isAlreadyConsumed()} returns {@code Optional.of(true)}
+     * in the response.
+     *
+     * <p>Tokens are only considered to be consumed if they are sent to the App Check backend by
+     * calling {@link FirebaseAppCheck#verifyToken} with this option set to {@code true}; other
+     * uses of the token do not consume it.
+     *
+     * <p>This replay protection feature requires an additional network call to the App Check
+     * backend and forces your clients to obtain a fresh attestation from your chosen attestation
+     * providers. This can therefore negatively impact performance and can potentially deplete
+     * your attestation providers' quotas faster. We recommend that you use this feature only for
+     * protecting low-volume, security-critical, or expensive operations.
+     *
+     * @param consume Set to {@code true} to consume the token.
      * @return This builder.
      */
     public Builder setConsume(boolean consume) {
@@ -60,7 +76,8 @@ public final class VerifyAppCheckTokenOptions {
     }
 
     /**
-     * Sets whether to consume the token during verification.
+     * Sets whether to consume the token during verification. See
+     * {@link #setConsume(boolean)} for details about the replay protection feature.
      *
      * @param consume Optional boolean value. Must not be null.
      * @return This builder.
