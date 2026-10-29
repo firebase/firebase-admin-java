@@ -19,18 +19,15 @@ package com.google.firebase.appcheck.internal;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
-import com.google.api.client.http.HttpResponse;
-import com.google.api.client.http.HttpResponseException;
-import com.google.api.client.http.json.JsonHttpContent;
 import com.google.api.client.json.GenericJson;
 import com.google.api.client.json.JsonFactory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseException;
 import com.google.firebase.ImplFirebaseTrampolines;
 import com.google.firebase.IncomingHttpResponse;
 import com.google.firebase.appcheck.AppCheckErrorCode;
@@ -38,7 +35,11 @@ import com.google.firebase.appcheck.DecodedAppCheckToken;
 import com.google.firebase.appcheck.FirebaseAppCheckException;
 import com.google.firebase.appcheck.VerifyAppCheckTokenOptions;
 import com.google.firebase.appcheck.VerifyAppCheckTokenResponse;
+import com.google.firebase.internal.AbstractPlatformErrorHandler;
 import com.google.firebase.internal.ApiClientUtils;
+import com.google.firebase.internal.ErrorHandlingHttpClient;
+import com.google.firebase.internal.HttpRequestInfo;
+import com.google.firebase.internal.SdkUtils;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -53,11 +54,11 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.jwt.proc.DefaultJWTProcessor;
 import com.nimbusds.jwt.proc.ExpiredJWTException;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.text.ParseException;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -71,11 +72,12 @@ public class AppCheckTokenVerifier {
   private static final String VERIFY_TOKEN_URL_FORMAT =
       "https://firebaseappcheck.googleapis.com/v1beta/projects/%s:verifyAppCheckToken";
   private static final long JWKS_CACHE_TTL_MILLIS = TimeUnit.HOURS.toMillis(6);
+  private static final Map<String, String> COMMON_HEADERS =
+      ImmutableMap.of("X-Firebase-Client", "fire-admin-java/" + SdkUtils.getVersion());
 
   private final FirebaseApp app;
   private final String projectId;
-  private final HttpRequestFactory requestFactory;
-  private final JsonFactory jsonFactory;
+  private final ErrorHandlingHttpClient<FirebaseAppCheckException> httpClient;
   private final DefaultJWTProcessor<SecurityContext> jwtProcessor;
 
   public AppCheckTokenVerifier(FirebaseApp app) {
@@ -94,8 +96,10 @@ public class AppCheckTokenVerifier {
       DefaultJWTProcessor<SecurityContext> jwtProcessor) {
     this.app = checkNotNull(app, "FirebaseApp must not be null");
     this.projectId = getProjectId(app);
-    this.requestFactory = checkNotNull(requestFactory, "HttpRequestFactory must not be null");
-    this.jsonFactory = checkNotNull(jsonFactory, "JsonFactory must not be null");
+    checkNotNull(requestFactory, "HttpRequestFactory must not be null");
+    checkNotNull(jsonFactory, "JsonFactory must not be null");
+    this.httpClient = new ErrorHandlingHttpClient<>(
+        requestFactory, jsonFactory, new AppCheckErrorHandler(jsonFactory));
     this.jwtProcessor = jwtProcessor != null ? jwtProcessor : createJwtProcessor();
   }
 
@@ -277,45 +281,17 @@ public class AppCheckTokenVerifier {
    */
   private boolean verifyOneTimeToken(String token)
       throws FirebaseAppCheckException {
-    String url = String.format(VERIFY_TOKEN_URL_FORMAT, this.projectId);
-    GenericUrl genericUrl = new GenericUrl(url);
-
-    GenericJson requestPayload = new GenericJson();
-    requestPayload.put("app_check_token", token);
-
-    HttpRequest httpRequest = null;
-    HttpResponse httpResponse = null;
-    try {
-      httpRequest =
-          requestFactory.buildPostRequest(
-              genericUrl, new JsonHttpContent(jsonFactory, requestPayload));
-      httpRequest.setParser(jsonFactory.createJsonObjectParser());
-      httpResponse = httpRequest.execute();
-
-      GenericJson response = httpResponse.parseAs(GenericJson.class);
-      if (response == null) {
-        return false;
-      }
-      return Boolean.TRUE.equals(response.get("alreadyConsumed"));
-    } catch (HttpResponseException e) {
-      IncomingHttpResponse response =
-          httpRequest != null ? new IncomingHttpResponse(e, httpRequest) : null;
-      throw new FirebaseAppCheckException(
-          ErrorCode.INTERNAL,
-          "Error verifying App Check token with backend: " + e.getMessage(),
-          e,
-          response,
-          AppCheckErrorCode.SERVICE_ERROR);
-    } catch (IOException e) {
-      throw new FirebaseAppCheckException(
-          ErrorCode.INTERNAL,
-          "Error verifying App Check token with backend: " + e.getMessage(),
-          e,
-          null,
-          AppCheckErrorCode.SERVICE_ERROR);
-    } finally {
-      ApiClientUtils.disconnectQuietly(httpResponse);
+    HttpRequestInfo request =
+        HttpRequestInfo.buildJsonPostRequest(
+                String.format(VERIFY_TOKEN_URL_FORMAT, this.projectId),
+                ImmutableMap.of("app_check_token", token))
+            .addAllHeaders(COMMON_HEADERS);
+    IncomingHttpResponse response = httpClient.send(request);
+    if (Strings.isNullOrEmpty(response.getContent())) {
+      return false;
     }
+    GenericJson body = httpClient.parse(response, GenericJson.class);
+    return Boolean.TRUE.equals(body.get("alreadyConsumed"));
   }
 
   private DefaultJWTProcessor<SecurityContext> createJwtProcessor() {
@@ -344,5 +320,18 @@ public class AppCheckTokenVerifier {
       throw new IllegalArgumentException("Project ID is required in FirebaseOptions.");
     }
     return projectId;
+  }
+
+  private static class AppCheckErrorHandler
+      extends AbstractPlatformErrorHandler<FirebaseAppCheckException> {
+
+    private AppCheckErrorHandler(JsonFactory jsonFactory) {
+      super(jsonFactory);
+    }
+
+    @Override
+    protected FirebaseAppCheckException createException(FirebaseException base) {
+      return new FirebaseAppCheckException(base);
+    }
   }
 }

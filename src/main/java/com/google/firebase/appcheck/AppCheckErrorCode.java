@@ -40,9 +40,4 @@ public enum AppCheckErrorCode {
    * Internal error encountered during App Check token verification.
    */
   INTERNAL_ERROR,
-
-  /**
-   * App Check verification service is temporarily unavailable or returned an error.
-   */
-  SERVICE_ERROR,
 }

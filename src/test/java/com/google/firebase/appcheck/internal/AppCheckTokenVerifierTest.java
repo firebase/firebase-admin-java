@@ -19,6 +19,7 @@ package com.google.firebase.appcheck.internal;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -51,6 +52,7 @@ import com.google.firebase.appcheck.VerifyAppCheckTokenOptions;
 import com.google.firebase.appcheck.VerifyAppCheckTokenResponse;
 import com.google.firebase.internal.ApiClientUtils;
 import com.google.firebase.internal.FirebaseProcessEnvironment;
+import com.google.firebase.internal.SdkUtils;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
 import com.nimbusds.jose.JOSEException;
@@ -278,37 +280,82 @@ public class AppCheckTokenVerifierTest {
   }
 
   @Test
-  public void testVerifyToken_WithConsumeOption_HttpResponseException_AttachesHttpResponse()
-      throws Exception {
+  public void testVerifyToken_WithConsumeOption_SendsHeaders() throws Exception {
     when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(claims);
 
     MockLowLevelHttpResponse mockResponse = new MockLowLevelHttpResponse();
-    mockResponse.setStatusCode(403);
     mockResponse.setContentType("application/json");
-    mockResponse.setContent("{\"error\": \"Forbidden\"}");
-
+    mockResponse.setContent("{}");
     MockHttpTransport transport =
         new MockHttpTransport.Builder().setLowLevelHttpResponse(mockResponse).build();
-
-    HttpRequestFactory mockRequestFactory = transport.createRequestFactory();
-    JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
-
-    FirebaseApp app = FirebaseApp.getInstance();
     AppCheckTokenVerifier customVerifier =
-        new AppCheckTokenVerifier(app, mockRequestFactory, jsonFactory, mockJwtProcessor);
+        new AppCheckTokenVerifier(
+            FirebaseApp.getInstance(),
+            transport.createRequestFactory(),
+            ApiClientUtils.getDefaultJsonFactory(),
+            mockJwtProcessor);
+
+    customVerifier.verifyToken(
+        createToken(header, claims), VerifyAppCheckTokenOptions.builder().setConsume(true).build());
+
+    MockLowLevelHttpRequest request = transport.getLowLevelHttpRequest();
+    assertEquals(
+        SdkUtils.getMetricsHeader(), request.getFirstHeaderValue("X-Goog-Api-Client"));
+    assertEquals(
+        "fire-admin-java/" + SdkUtils.getVersion(),
+        request.getFirstHeaderValue("X-Firebase-Client"));
+  }
+
+  @Test
+  public void testVerifyToken_WithConsumeOption_BackendError_MapsPlatformError()
+      throws Exception {
+    when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(claims);
+
+    String errorBody = "{\"error\": {\"code\": 403, "
+        + "\"message\": \"Firebase App Check token is invalid.\", "
+        + "\"status\": \"PERMISSION_DENIED\"}}";
+    FirebaseAppCheckException ex = consumeWithBackendResponse(403, errorBody);
+
+    assertEquals(ErrorCode.PERMISSION_DENIED, ex.getErrorCode());
+    assertEquals("Firebase App Check token is invalid.", ex.getMessage());
+    assertNull(ex.getAppCheckErrorCode());
+    assertNotNull(ex.getHttpResponse());
+    assertEquals(403, ex.getHttpResponse().getStatusCode());
+    assertEquals(errorBody, ex.getHttpResponse().getContent());
+  }
+
+  @Test
+  public void testVerifyToken_WithConsumeOption_NonJsonBackendError_MapsHttpStatus()
+      throws Exception {
+    when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(claims);
+
+    FirebaseAppCheckException ex = consumeWithBackendResponse(503, "Service Unavailable");
+
+    assertEquals(ErrorCode.UNAVAILABLE, ex.getErrorCode());
+    assertNull(ex.getAppCheckErrorCode());
+    assertEquals(503, ex.getHttpResponse().getStatusCode());
+  }
+
+  private FirebaseAppCheckException consumeWithBackendResponse(int status, String content)
+      throws Exception {
+    MockLowLevelHttpResponse mockResponse = new MockLowLevelHttpResponse();
+    mockResponse.setStatusCode(status);
+    mockResponse.setContentType("application/json");
+    mockResponse.setContent(content);
+    MockHttpTransport transport =
+        new MockHttpTransport.Builder().setLowLevelHttpResponse(mockResponse).build();
+    AppCheckTokenVerifier customVerifier =
+        new AppCheckTokenVerifier(
+            FirebaseApp.getInstance(),
+            transport.createRequestFactory(),
+            ApiClientUtils.getDefaultJsonFactory(),
+            mockJwtProcessor);
 
     String token = createToken(header, claims);
     VerifyAppCheckTokenOptions options =
         VerifyAppCheckTokenOptions.builder().setConsume(true).build();
-    FirebaseAppCheckException ex =
-        assertThrows(
-            FirebaseAppCheckException.class, () -> customVerifier.verifyToken(token, options));
-
-    assertEquals(ErrorCode.INTERNAL, ex.getErrorCode());
-    assertEquals(AppCheckErrorCode.SERVICE_ERROR, ex.getAppCheckErrorCode());
-    assertNotNull(ex.getHttpResponse());
-    assertEquals(403, ex.getHttpResponse().getStatusCode());
-    assertEquals("{\"error\": \"Forbidden\"}", ex.getHttpResponse().getContent());
+    return assertThrows(
+        FirebaseAppCheckException.class, () -> customVerifier.verifyToken(token, options));
   }
 
   @Test

@@ -29,7 +29,6 @@ public class AppCheckErrorCodeTest {
     assertNotNull(AppCheckErrorCode.valueOf("INVALID_APP_CHECK_TOKEN"));
     assertNotNull(AppCheckErrorCode.valueOf("APP_CHECK_TOKEN_EXPIRED"));
     assertNotNull(AppCheckErrorCode.valueOf("INTERNAL_ERROR"));
-    assertNotNull(AppCheckErrorCode.valueOf("SERVICE_ERROR"));
-    assertEquals(5, AppCheckErrorCode.values().length);
+    assertEquals(4, AppCheckErrorCode.values().length);
   }
 }
