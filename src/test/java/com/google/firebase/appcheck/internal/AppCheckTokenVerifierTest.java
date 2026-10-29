@@ -250,33 +250,46 @@ public class AppCheckTokenVerifierTest {
   }
 
   @Test
-  public void testVerifyToken_WithConsumeOption_EmptyBackendResponse_DoesNotThrow()
-      throws Exception {
+  public void testVerifyToken_WithConsumeOption_FirstConsume_ReturnsFalse() throws Exception {
     when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(claims);
 
     MockLowLevelHttpResponse mockResponse = new MockLowLevelHttpResponse();
-    mockResponse.setStatusCode(204);
-    mockResponse.setContent("");
-
+    mockResponse.setContentType("application/json");
+    mockResponse.setContent("{}");
     MockHttpTransport transport =
         new MockHttpTransport.Builder().setLowLevelHttpResponse(mockResponse).build();
-
-    HttpRequestFactory mockRequestFactory = transport.createRequestFactory();
-    JsonFactory jsonFactory = ApiClientUtils.getDefaultJsonFactory();
-
-    FirebaseApp app = FirebaseApp.getInstance();
     AppCheckTokenVerifier customVerifier =
-        new AppCheckTokenVerifier(app, mockRequestFactory, jsonFactory, mockJwtProcessor);
+        new AppCheckTokenVerifier(
+            FirebaseApp.getInstance(),
+            transport.createRequestFactory(),
+            ApiClientUtils.getDefaultJsonFactory(),
+            mockJwtProcessor);
 
-    String token = createToken(header, claims);
-    VerifyAppCheckTokenOptions options =
-        VerifyAppCheckTokenOptions.builder().setConsume(true).build();
-    VerifyAppCheckTokenResponse response = customVerifier.verifyToken(token, options);
+    VerifyAppCheckTokenResponse response = customVerifier.verifyToken(
+        createToken(header, claims), VerifyAppCheckTokenOptions.builder().setConsume(true).build());
 
-    assertNotNull(response);
-    assertEquals(APP_ID, response.getAppId());
     assertTrue(response.isAlreadyConsumed().isPresent());
     assertFalse(response.isAlreadyConsumed().get());
+  }
+
+  @Test
+  public void testVerifyToken_WithConsumeOption_UnexpectedBackendResponse_Throws()
+      throws Exception {
+    when(mockJwtProcessor.process(any(SignedJWT.class), any())).thenReturn(claims);
+
+    String[][] cases = {
+        {"", "Response body is empty."},
+        {"[]", "Expected a JSON object."},
+        {"{\"alreadyConsumed\": \"true\"}", "'alreadyConsumed' must be a boolean."},
+    };
+    for (String[] c : cases) {
+      FirebaseAppCheckException ex = consumeWithBackendResponse(200, c[0]);
+
+      assertEquals(c[0], ErrorCode.UNKNOWN, ex.getErrorCode());
+      assertEquals(c[0], "Unexpected response from App Check service. " + c[1], ex.getMessage());
+      assertNull(ex.getAppCheckErrorCode());
+      assertNotNull(c[0], ex.getHttpResponse());
+    }
   }
 
   @Test

@@ -277,7 +277,8 @@ public class AppCheckTokenVerifier {
    * @param token The raw App Check token string to consume.
    * @return {@code true} if the token was already consumed prior to this verification call;
    *         {@code false} otherwise.
-   * @throws FirebaseAppCheckException If an HTTP error or backend service failure occurs.
+   * @throws FirebaseAppCheckException If an HTTP error, backend service failure, or unexpected
+   *     response occurs.
    */
   private boolean verifyOneTimeToken(String token)
       throws FirebaseAppCheckException {
@@ -288,10 +289,34 @@ public class AppCheckTokenVerifier {
             .addAllHeaders(COMMON_HEADERS);
     IncomingHttpResponse response = httpClient.send(request);
     if (Strings.isNullOrEmpty(response.getContent())) {
+      throw unexpectedResponse("Response body is empty.", response, null);
+    }
+
+    GenericJson body;
+    try {
+      body = httpClient.parse(response, GenericJson.class);
+    } catch (IllegalArgumentException e) {
+      // Thrown for valid JSON that is not an object (e.g. an array or a string).
+      throw unexpectedResponse("Expected a JSON object.", response, e);
+    }
+
+    Object alreadyConsumed = body.get("alreadyConsumed");
+    if (alreadyConsumed == null) {
       return false;
     }
-    GenericJson body = httpClient.parse(response, GenericJson.class);
-    return Boolean.TRUE.equals(body.get("alreadyConsumed"));
+    if (!(alreadyConsumed instanceof Boolean)) {
+      throw unexpectedResponse("'alreadyConsumed' must be a boolean.", response, null);
+    }
+    return (Boolean) alreadyConsumed;
+  }
+
+  private static FirebaseAppCheckException unexpectedResponse(
+      String detail, IncomingHttpResponse response, Throwable cause) {
+    return new FirebaseAppCheckException(
+        ErrorCode.UNKNOWN,
+        "Unexpected response from App Check service. " + detail,
+        cause,
+        response);
   }
 
   private DefaultJWTProcessor<SecurityContext> createJwtProcessor() {
