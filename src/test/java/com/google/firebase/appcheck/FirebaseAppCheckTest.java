@@ -33,7 +33,6 @@ import com.google.firebase.appcheck.internal.AppCheckTokenVerifier;
 import com.google.firebase.internal.FirebaseProcessEnvironment;
 import com.google.firebase.testing.ServiceAccount;
 import com.google.firebase.testing.TestUtils;
-import java.lang.reflect.Field;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,15 +52,10 @@ public class FirebaseAppCheckTest {
   private FirebaseAppCheck firebaseAppCheck;
 
   @Before
-  public void setUp() throws Exception {
+  public void setUp() {
     MockitoAnnotations.openMocks(this);
-
-    FirebaseApp.initializeApp(firebaseOptions);
-    firebaseAppCheck = FirebaseAppCheck.getInstance();
-
-    Field verifierField = FirebaseAppCheck.class.getDeclaredField("tokenVerifier");
-    verifierField.setAccessible(true);
-    verifierField.set(firebaseAppCheck, mockVerifier);
+    FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions);
+    firebaseAppCheck = new FirebaseAppCheck(app, mockVerifier);
   }
 
   @After
