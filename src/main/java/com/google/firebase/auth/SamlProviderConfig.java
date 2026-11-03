@@ -24,6 +24,7 @@ import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.auth.internal.Utils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -84,6 +85,7 @@ public final class SamlProviderConfig extends ProviderConfig {
     checkArgument(!Strings.isNullOrEmpty(providerId), "Provider ID must not be null or empty.");
     checkArgument(providerId.startsWith("saml."),
         "Invalid SAML provider ID (must be prefixed with 'saml.'): " + providerId);
+    checkArgument(Utils.isSafeUrlSegment(providerId), "Invalid SAML provider ID: " + providerId);
   }
 
   private static List<Object> ensureNestedList(Map<String, Object> outerMap, String id) {

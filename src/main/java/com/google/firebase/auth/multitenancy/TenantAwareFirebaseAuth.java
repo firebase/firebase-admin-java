@@ -16,18 +16,16 @@
 
 package com.google.firebase.auth.multitenancy;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.google.api.core.ApiAsyncFunction;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
-import com.google.common.base.Strings;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AbstractFirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 import com.google.firebase.auth.SessionCookieOptions;
+import com.google.firebase.auth.internal.Utils;
 
 /**
  * The tenant-aware Firebase client.
@@ -41,7 +39,7 @@ public final class TenantAwareFirebaseAuth extends AbstractFirebaseAuth {
 
   private TenantAwareFirebaseAuth(Builder builder) {
     super(builder);
-    checkArgument(!Strings.isNullOrEmpty(builder.tenantId));
+    Utils.checkTenantId(builder.tenantId);
     this.tenantId = builder.tenantId;
   }
 

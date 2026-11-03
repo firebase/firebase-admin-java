@@ -118,7 +118,7 @@ final class FirebaseTenantClient {
   }
 
   private static String getTenantUrlSuffix(String tenantId) {
-    checkArgument(!Strings.isNullOrEmpty(tenantId), "Tenant ID must not be null or empty.");
+    Utils.checkTenantId(tenantId);
     return "/tenants/" + tenantId;
   }
 }
