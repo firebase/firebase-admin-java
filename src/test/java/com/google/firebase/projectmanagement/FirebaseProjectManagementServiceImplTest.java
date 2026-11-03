@@ -456,6 +456,39 @@ public class FirebaseProjectManagementServiceImplTest {
   }
 
   @Test
+  public void listIosAppsMultiplePagesEncodesPageToken() throws Exception {
+    firstRpcResponse.setContent(
+        "{\"apps\": ["
+            + "{\"name\" : \"projects/test-project-id/iosApps/test-ios-app-id-1\", "
+            + "\"appId\" : \"test-ios-app-id-1\", "
+            + "\"displayName\" : \"display-name\", "
+            + "\"projectId\" : \"test-project-id\", "
+            + "\"bundleId\" : \"test.ios.app1\"}], "
+            + "\"nextPageToken\" : \"token+1=2&b=3#frag\"}");
+    MockLowLevelHttpResponse secondRpcResponse = new MockLowLevelHttpResponse();
+    secondRpcResponse.setContent(LIST_IOS_APPS_PAGE_2_RESPONSE);
+    serviceImpl = initServiceImpl(
+        ImmutableList.of(firstRpcResponse, secondRpcResponse),
+        interceptor);
+
+    List<IosApp> iosAppList = serviceImpl.listIosApps(PROJECT_ID);
+
+    String firstRpcExpectedUrl = String.format(
+        "%s/v1beta1/projects/%s/iosApps?page_size=%d",
+        FIREBASE_PROJECT_MANAGEMENT_URL,
+        PROJECT_ID,
+        MAXIMUM_LIST_APPS_PAGE_SIZE);
+    String secondRpcExpectedUrl = String.format(
+        "%s/v1beta1/projects/%s/iosApps?page_token=token%%2B1%%3D2%%26b%%3D3%%23frag&page_size=%d",
+        FIREBASE_PROJECT_MANAGEMENT_URL,
+        PROJECT_ID,
+        MAXIMUM_LIST_APPS_PAGE_SIZE);
+    checkRequestHeader(0, firstRpcExpectedUrl, HttpMethod.GET);
+    checkRequestHeader(1, secondRpcExpectedUrl, HttpMethod.GET);
+    assertEquals(iosAppList.size(), 2);
+  }
+
+  @Test
   public void createIosApp() throws Exception {
     firstRpcResponse.setContent(CREATE_IOS_RESPONSE);
     MockLowLevelHttpResponse secondRpcResponse = new MockLowLevelHttpResponse();

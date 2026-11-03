@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.google.api.client.util.Key;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.firebase.auth.internal.Utils;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -147,7 +148,7 @@ public final class Tenant {
      * @throws IllegalArgumentException If the tenant ID is null or empty.
      */
     public UpdateRequest(String tenantId) {
-      checkArgument(!Strings.isNullOrEmpty(tenantId), "tenant ID must not be null or empty");
+      Utils.checkTenantId(tenantId);
       this.tenantId = tenantId;
     }
 
