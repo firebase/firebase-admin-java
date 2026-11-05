@@ -57,7 +57,7 @@ public class ListTenantsResponseTest {
           "tenants", ImmutableList.of(
             ImmutableMap.of("name", "projects/project-id/resource/TENANT_1"),
             ImmutableMap.of("name", "projects/project-id/resource/TENANT_2")),
-          "pageToken", "PAGE_TOKEN"));
+          "nextPageToken", "PAGE_TOKEN"));
     ListTenantsResponse response = JSON_FACTORY.fromString(json, ListTenantsResponse.class);
 
     assertEquals(2, response.getTenants().size());
